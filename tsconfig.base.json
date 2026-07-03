@@ -14,7 +14,11 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@acme/shared-design-system": ["libs/shared/design-system/src/index.ts"],
+      "@acme/shared-design-system/ui": ["libs/shared/design-system/src/ui/index.ts"],
+      "@acme/shared-design-system/styles": ["libs/shared/design-system/src/styles/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
