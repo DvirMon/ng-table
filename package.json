@@ -3,7 +3,8 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "npx nx serve demo"
+    "start": "npx nx serve demo",
+    "issa": "npx nx serve issa-landing-app"
   },
   "private": true,
   "dependencies": {
