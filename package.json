@@ -15,6 +15,7 @@
     "@angular/platform-browser": "21.2.9",
     "@angular/router": "21.2.9",
     "@ngrx/signals": "21.1.1",
+    "@radix-ui/react-label": "^2.1.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "rxjs": "~7.8.0"
