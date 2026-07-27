@@ -4,7 +4,7 @@
     "rootDir": ".",
     "sourceMap": true,
     "declaration": false,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
@@ -13,14 +13,13 @@
     "lib": ["es2020", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
-    "baseUrl": ".",
     "paths": {
-      "@acme/shared-design-system": ["libs/shared/design-system/src/index.ts"],
+      "@acme/shared-design-system": ["./libs/shared/design-system/src/index.ts"],
       "@acme/shared-design-system/styles": [
-        "libs/shared/design-system/src/styles/index.ts"
+        "./libs/shared/design-system/src/styles/index.ts"
       ],
       "@acme/shared-design-system/ui": [
-        "libs/shared/design-system/src/ui/index.ts"
+        "./libs/shared/design-system/src/ui/index.ts"
       ]
     }
   },
