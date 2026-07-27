@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
-    "start": "npx nx serve demo",
+    "demo": "npx nx serve demo",
     "issa": "npx nx serve issa-landing-app",
-    "issa:storybook": "npx nx run issa-landing-app:storybook",
+    "issa:sb": "npx nx run issa-landing-app:storybook",
     "issa:build-storybook": "npx nx run issa-landing-app:build-storybook"
   },
   "private": true,
