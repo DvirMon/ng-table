@@ -5,6 +5,12 @@
       "name": "issa-landing",
       "port": 4200,
       "url": "http://localhost:4200"
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "demo", "--port", "4201"],
+      "port": 4201
     }
   ]
 }
