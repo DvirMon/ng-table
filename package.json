@@ -17,7 +17,6 @@
     "@angular/forms": "22.0.8",
     "@angular/platform-browser": "22.0.8",
     "@angular/router": "22.0.8",
-    "@ngrx/signals": "22.0.0-rc.0",
     "@radix-ui/react-label": "^2.1.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
