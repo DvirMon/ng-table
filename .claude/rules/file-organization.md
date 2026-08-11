@@ -6,7 +6,9 @@ globs:
 
 # File organization: one concern per file
 
-Split generated/edited code by concern instead of putting everything in one file. Follow the naming pattern already used in `libs/shared/design-system/src/ui/table/` (`table.store.ts`, `table.types.ts`, `table.pipeline.ts`): `<feature>.<concern>.ts`, not a bare generic name — this avoids collisions when multiple features live in sibling folders and keeps imports self-describing.
+Split generated/edited code by concern instead of putting everything in one file. Use `<feature>.<concern>.ts`, not a bare generic name — this avoids collisions when multiple features live in sibling folders and keeps imports self-describing.
+
+Reference implementations: `apps/issa-landing/src/design-system/components/upload/FileUploader/` (flat, 24 files) and `libs/shared/design-system/src/ui/table/` (grouped — see "Once a domain outgrows flat" below).
 
 | Concern | File | Contents |
 |---|---|---|
@@ -22,6 +24,30 @@ Rules:
 - Don't inline mock/sample data in a component (e.g. a `-demo` component) — put it in `<feature>.mock.ts` and import it.
 - A folder's `index.ts` is a barrel: re-export the public API only, don't define logic there.
 - Keep each file scoped to its single concern — if a `.store.ts` file starts accumulating helper functions or type definitions, split them out rather than growing the file.
+
+## Once a domain outgrows flat — the worked example
+
+The general model (the three levels, how to pick a folder axis, the invariants once nested) is in
+the global `file-organization.md` rule, injected into every session. Don't restate it here. This
+section is only this repo's instance of it.
+
+`libs/shared/design-system/src/ui/table/` crossed the threshold at ~17 source files and now
+groups by contract boundary first, lifecycle phase second:
+
+```
+index.ts       ← the only definition of the public surface; no other barrels
+api/           ← everything a consumer touches (api/features/ = opt-in with-*() plugins)
+engine/        ← the runtime; nothing here is exported
+directives/    ← the view layer
+```
+
+`api/features/with-columns-schema/` shows the sub-split: `resolve.ts` (compile) → `wiring.ts`
+(run) → `feature.ts` (declare). Its siblings `with-sorting.ts` and `with-expansion.ts` are still
+single files — they haven't outgrown one.
+
+Full rationale, plus the Angular Signal Forms / TanStack / AG Grid comparison and the three
+Angular conventions deliberately rejected:
+[ADR-0004](../../libs/shared/design-system/docs/adr/0004-table-source-layout.md).
 
 This does not require rewriting existing single-file components; apply it to new features and when a file grows past one concern.
 
