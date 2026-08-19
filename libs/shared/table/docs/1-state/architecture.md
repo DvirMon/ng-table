@@ -204,6 +204,7 @@ Until it lands, repeating `<TRow>` per feature stands as an accepted cost. Do no
 
 These were flagged during drilling as needing resolution before the remaining 4 features can be safely specced, since they involve two or more features at once:
 
+- [ ] **PRIORITY — `renderRows` single-occupancy blocks feature combination.** `SlotRegistry.claimRenderRows()` throws if a second feature claims `renderRows` (`engine/slots.ts`, `engine/compose-table.ts`). Any feature that reshapes the render-row array — `withExpansion()`, `withGrouping()`, `withPagination()`, future `withVirtualScroll()` — currently cannot compose with another such feature (e.g. paginate + expand together is not possible today). Flagged as major, not cosmetic: several not-yet-drilled features in this doc assume this combination works. Needs resolution — e.g. a chained/composable `renderRows` pipeline instead of single-claim — before drilling `withPagination()`, `withSelection()`, or `withVirtualScroll()` against features that already own `renderRows`.
 - [ ] **`withPagination()` vs `withInfiniteScroll()`** — mutually exclusive in practice. Hard compile-time conflict, or documented convention only?
 - [ ] **`withSelection()` "select all" scope** — all rows *currently visible* (post-filter/current page) vs. *entire dataset* (including unfetched server rows)? Determines whether `withSelection()` needs a dependency on `withPagination()` / `withFiltering()`.
 - [ ] **`withDragDrop()` vs active sort** — does drag-reorder require sort to be cleared, or does it no-op silently while a sort is active?
@@ -217,7 +218,7 @@ See each reference file's own "Open Questions" section for issues local to that 
 
 ## Next Steps
 
-- [ ] Resolve the four cross-cutting open questions above before drilling `withSelection()`, `withPagination()`, `withInfiniteScroll()`, `withDragDrop()`.
+- [ ] Resolve the five cross-cutting open questions above before drilling `withSelection()`, `withPagination()`, `withInfiniteScroll()`, `withDragDrop()` — the `renderRows` single-occupancy question is priority, since it blocks composing any two render-row-owning features regardless of order drilled.
 - [ ] Drill remaining 4 features, one at a time, same process as this session.
 - [ ] Regenerate this index (bump version) once all 8 features + `columns` are complete.
 - [ ] Proceed to UI/directive layer spec only after full state layer sign-off.
