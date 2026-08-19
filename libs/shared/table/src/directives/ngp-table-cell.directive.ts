@@ -7,12 +7,10 @@ import { Directive, input, type InputSignal } from '@angular/core';
   selector: 'td[ngpTableCell], div[ngpTableCell]',
   host: {
     role: 'cell',
-    '[attr.aria-colindex]': 'colIndex() + 1',
+    '[attr.aria-colindex]': 'ngpTableCell() + 1',
   },
 })
 export class NgpTableCellDirective {
   // aria-colindex is 1-based per WAI-ARIA; the input is the 0-based column position.
-  readonly colIndex: InputSignal<number> = input.required<number>({
-    alias: 'ngpTableCellColIndex',
-  });
+  readonly ngpTableCell: InputSignal<number> = input.required<number>();
 }

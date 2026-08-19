@@ -15,11 +15,9 @@ import type { TableStore } from '../api/types';
     '[attr.aria-colcount]': 'ariaColCount()',
   },
 })
-export class NgpTableDirective {
-  readonly store: InputSignal<TableStore<unknown>> = input.required<TableStore<unknown>>({
-    alias: 'ngpTable',
-  });
+export class NgpTableDirective<TRow = unknown> {
+  readonly ngpTable: InputSignal<TableStore<TRow>> = input.required<TableStore<TRow>>();
 
-  readonly ariaRowCount: Signal<number> = computed(() => this.store().totalRowCount());
-  readonly ariaColCount: Signal<number> = computed(() => this.store().columns().length);
+  readonly ariaRowCount: Signal<number> = computed(() => this.ngpTable().totalRowCount());
+  readonly ariaColCount: Signal<number> = computed(() => this.ngpTable().columns().length);
 }

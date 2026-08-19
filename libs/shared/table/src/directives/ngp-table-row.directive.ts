@@ -9,18 +9,16 @@ import type { RenderRow, RowId } from '../api/types';
   providers: [{ provide: NGP_TABLE_ROW, useExisting: NgpTableRowDirective }],
   host: {
     role: 'row',
-    '[attr.data-row-kind]': 'renderRow().kind',
-    '[attr.data-depth]': 'renderRow().depth',
-    // aria-rowindex is 1-based per WAI-ARIA; `renderRow().index` is the 0-based array position.
-    '[attr.aria-rowindex]': 'renderRow().index + 1',
-    '[attr.aria-expanded]': 'renderRow().isExpanded ?? null',
+    '[attr.data-row-kind]': 'ngpTableRow().kind',
+    '[attr.data-depth]': 'ngpTableRow().depth',
+    // aria-rowindex is 1-based per WAI-ARIA; `ngpTableRow().index` is the 0-based array position.
+    '[attr.aria-rowindex]': 'ngpTableRow().index + 1',
+    '[attr.aria-expanded]': 'ngpTableRow().isExpanded ?? null',
   },
 })
-export class NgpTableRowDirective {
-  readonly renderRow: InputSignal<RenderRow<unknown>> = input.required<RenderRow<unknown>>({
-    alias: 'ngpTableRow',
-  });
+export class NgpTableRowDirective<TRow = unknown> {
+  readonly ngpTableRow: InputSignal<RenderRow<TRow>> = input.required<RenderRow<TRow>>();
 
-  readonly rowId: Signal<RowId> = computed(() => this.renderRow().id);
-  readonly isGroupHeader: Signal<boolean> = computed(() => this.renderRow().kind === 'group');
+  readonly rowId: Signal<RowId> = computed(() => this.ngpTableRow().id);
+  readonly isGroupHeader: Signal<boolean> = computed(() => this.ngpTableRow().kind === 'group');
 }

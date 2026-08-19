@@ -9,12 +9,10 @@ import { Directive, input, type InputSignal } from '@angular/core';
   selector: 'th[ngpTableHeaderCell], div[ngpTableHeaderCell]',
   host: {
     role: 'columnheader',
-    '[attr.aria-colindex]': 'colIndex() + 1',
+    '[attr.aria-colindex]': 'ngpTableHeaderCell() + 1',
   },
 })
 export class NgpTableHeaderCellDirective {
   // aria-colindex is 1-based per WAI-ARIA; the input is the 0-based column position.
-  readonly colIndex: InputSignal<number> = input.required<number>({
-    alias: 'ngpTableHeaderCellColIndex',
-  });
+  readonly ngpTableHeaderCell: InputSignal<number> = input.required<number>();
 }
