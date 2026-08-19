@@ -15,7 +15,7 @@ export interface ColumnRuleContext<TRow> {
 }
 
 /** @internal */
-export declare const COLUMN_RECORDER: unique symbol;
+export const COLUMN_RECORDER: unique symbol = Symbol('COLUMN_RECORDER');
 
 /**
  * Internal recorder every `apply*` call writes into. One instance per
