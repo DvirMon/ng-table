@@ -1,7 +1,7 @@
-import { signal, type Signal } from '@angular/core';
+import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
-import type { ColumnDef, SortRule } from '../types';
+import type { ColumnDef, SortDirection, SortRule } from '../types';
 
 export interface WithSortingConfig {
   manual?: boolean;
@@ -13,11 +13,20 @@ type SortingInput<TRow> = Pick<TableCore<TRow>, 'columns'>;
 
 export interface SortingMembers {
   readonly sorting: Signal<SortRule[]>;
+  readonly sortDirections: Signal<ReadonlyMap<string, SortDirection>>;
   readonly sortChanged: Observable<SortRule[]>;
 
   toggleSort(columnId: string): void;
   setSorting(rules: SortRule[]): void;
   clearSorting(): void;
+}
+
+function toSortDirectionsMap(rules: SortRule[]): ReadonlyMap<string, SortDirection> {
+  const directions = new Map<string, SortDirection>();
+  for (const rule of rules) {
+    directions.set(rule.columnId, rule.direction);
+  }
+  return directions;
 }
 
 function cycleSortRule(rules: SortRule[], columnId: string): SortRule[] {
@@ -109,6 +118,7 @@ export function withSorting<TRow = unknown>(config: WithSortingConfig = {}) {
 
   return (core: SortingInput<TRow>): TableFeatureSpec<TRow, SortingMembers> => {
     const sorting = signal<SortRule[]>([]);
+    const sortDirections = computed(() => toSortDirectionsMap(sorting()));
     const sortChangedSource = new Subject<SortRule[]>();
 
     function applySorting(rules: SortRule[]): void {
@@ -132,6 +142,7 @@ export function withSorting<TRow = unknown>(config: WithSortingConfig = {}) {
     return {
       members: {
         sorting: sorting.asReadonly(),
+        sortDirections,
         sortChanged: sortChangedSource.asObservable(),
         toggleSort,
         setSorting: applySorting,

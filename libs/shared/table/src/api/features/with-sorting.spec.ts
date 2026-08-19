@@ -159,6 +159,29 @@ describe('withSorting', () => {
     expect(store.sorting()).toEqual([]);
   });
 
+  it('sortDirections() derives a columnId -> direction lookup from sorting()', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withSorting<Row>({ multi: true })],
+    }));
+
+    expect(store.sortDirections()).toEqual(new Map());
+
+    store.toggleSort('status');
+    store.toggleSort('name');
+
+    expect(store.sortDirections()).toEqual(
+      new Map([
+        ['status', 'asc'],
+        ['name', 'asc'],
+      ])
+    );
+
+    store.toggleSort('status');
+    expect(store.sortDirections().get('status')).toBe('desc');
+  });
+
   it('setSorting() and clearSorting() drive state programmatically', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
