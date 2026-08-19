@@ -23,9 +23,8 @@ export { createTableFeature } from './api/create-table-feature';
 export { columnSchema } from './api/column-schema';
 export { applyVisible, applyVisibleAsync } from './api/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
-export { updateRows, addRow, removeRow, patchRow } from './api/row-mutations';
+export { addRow, removeRow, patchRow } from './api/row-mutations';
 export {
-  updateEditing,
   beginEdit,
   endEdit,
   clearEditing,
@@ -33,7 +32,6 @@ export {
   setSnapshot,
 } from './api/row-edit-mutations';
 export {
-  updateColumns,
   setColumns,
   reorderColumns,
   toggleColumnVisibility,

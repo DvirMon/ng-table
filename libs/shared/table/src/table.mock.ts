@@ -1,17 +1,20 @@
-import { signal, type WritableSignal } from '@angular/core';
+import { signal } from '@angular/core';
 
-import type { EditingMap, RowEditWritable } from './api/features/with-row-edit';
-import type { ColumnDef, RenderRow, TableStore, TrackByFn } from './api/types';
-import type { TableCore } from './engine/types';
+import type { EditingMap } from './api/features/with-row-edit';
+import type { RowEditMembers } from './api/features/with-row-edit';
+import type { EditingUpdater } from './api/row-edit-mutations';
+import type { ColumnDef, RenderRow, RowUpdater, TableStore, TrackByFn } from './api/types';
+import { createWritableView } from './engine/writable-view';
 
 /** Minimal `TableStore<unknown>` stub for directive DI-wiring tests — no real store behavior. */
 export function createMockTableStore(): TableStore<unknown> {
   return {
-    columns: signal<ColumnDef<unknown>[]>([]),
+    columns: createWritableView<ColumnDef<unknown>[], never>(() => [], () => undefined),
     rows: signal<unknown[]>([]),
     renderRows: signal<RenderRow<unknown>[]>([]),
     totalRowCount: signal(0),
     trackBy: () => 'stub-id',
+    value: createWritableView<unknown[], never>(() => [], () => undefined),
   };
 }
 
@@ -52,43 +55,59 @@ export const mockRows: MockRow[] = [
 export const mockTrackBy: TrackByFn<MockRow> = (row) => row.id;
 
 /**
- * Minimal store stub carrying a real writable `data` signal, for testing free functions
- * (`updateRows`) that write through to it — not a full `composeTable()` instance.
+ * Minimal store stub carrying a real writable `value` view, for testing updater factories
+ * through `table.value.update(...)` (D30) — not a full `composeTable()` instance.
  */
 export function createMockTableStoreWithData<TRow>(
   rows: TRow[],
   trackBy: TrackByFn<TRow>
-): TableStore<TRow> & Pick<TableCore<TRow>, 'data'> {
+): TableStore<TRow> {
+  const data = signal<TRow[]>(rows);
   return {
-    columns: signal<ColumnDef<TRow>[]>([]),
+    columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
     totalRowCount: signal(rows.length),
-    data: signal<TRow[]>(rows),
     trackBy,
+    value: createWritableView<TRow[], RowUpdater<TRow>>(
+      () => data(),
+      (updater) => data.update((current) => updater(current, { trackBy }))
+    ),
   };
 }
 
 /**
- * Minimal store stub carrying a writable `data` signal plus a standalone `editing` slice
- * (not wired through `withRowEdit()`/`composeTable()`) — for testing `row-edit-mutations.ts`
- * free functions in isolation.
+ * Minimal store stub carrying a writable `value` view plus a standalone `editing` view (not
+ * wired through `withRowEdit()`/`composeTable()`) — for testing `row-edit-mutations.ts`
+ * updater factories through `table.value`/`table.editing` in isolation.
  */
 export function createMockTableStoreWithEditing<TRow>(
   rows: TRow[],
   trackBy: TrackByFn<TRow>
-): TableStore<TRow> &
-  Pick<TableCore<TRow>, 'data' | 'trackBy'> &
-  RowEditWritable<TRow> & { editing: WritableSignal<EditingMap<TRow>> } {
+): TableStore<TRow> & RowEditMembers<TRow> {
+  const data = signal<TRow[]>(rows);
   const editing = signal<EditingMap<TRow>>(new Map());
+  const value = createWritableView<TRow[], RowUpdater<TRow>>(
+    () => data(),
+    (updater) => data.update((current) => updater(current, { trackBy }))
+  );
   return {
-    columns: signal<ColumnDef<TRow>[]>([]),
+    columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
     totalRowCount: signal(rows.length),
-    data: signal<TRow[]>(rows),
     trackBy,
-    editing,
-    applyEditing: (next) => editing.set(next),
+    value,
+    editing: createWritableView<EditingMap<TRow>, EditingUpdater<TRow>>(
+      () => editing(),
+      (updater) =>
+        editing.set(
+          updater(editing(), {
+            data: data(),
+            trackBy,
+            writeData: (rows) => value.update(() => rows),
+          })
+        )
+    ),
   };
 }

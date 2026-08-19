@@ -4,12 +4,7 @@ import { columnSchema } from '../../column-schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from '../../column-metadata';
 import { applyVisible, applyVisibleAsync } from '../../column-rules';
 import { createTable } from '../../create-table';
-import {
-  reorderColumns,
-  setColumns,
-  toggleColumnVisibility,
-  updateColumns,
-} from '../../update-columns';
+import { reorderColumns, setColumns, toggleColumnVisibility } from '../../update-columns';
 import type { ColumnDef, TableStore, TableStoreConfig } from '../../types';
 
 interface Row {
@@ -81,7 +76,7 @@ describe('withColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(true);
   });
 
-  it('applies a reactive applyVisible rule via updateColumns() when its signal changes', () => {
+  it('applies a reactive applyVisible rule when its signal changes', () => {
     const role = signal<'admin' | 'guest'>('guest');
     const store = makeStore(() => ({
       trackBy: 'id',
@@ -231,7 +226,7 @@ describe('withColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     TestBed.tick();
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(true);
 
-    updateColumns(store, toggleColumnVisibility('status'));
+    store.columns.update(toggleColumnVisibility('status'));
     TestBed.tick();
 
     // Rule still says visible — the imperative toggle is overridden, not applied.
@@ -250,8 +245,8 @@ describe('withColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
     TestBed.tick();
 
-    updateColumns(store, reorderColumns(['status', 'name']));
-    updateColumns(store, toggleColumnVisibility('name'));
+    store.columns.update(reorderColumns(['status', 'name']));
+    store.columns.update(toggleColumnVisibility('name'));
     TestBed.tick();
 
     expect(store.columns().find((c) => c.id === 'status')?.order).toBe(0);
@@ -297,7 +292,7 @@ describe('withColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'id')?.visible).toBe(true);
 
     expect(() => {
-      updateColumns(store, setColumns<Row>([{ id: 'status', visible: true }]));
+      store.columns.update(setColumns<Row>([{ id: 'status', visible: true }]));
       TestBed.tick();
     }).not.toThrow();
 
@@ -306,8 +301,7 @@ describe('withColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'id')).toBeUndefined();
 
     // `id` rejoins the list — its rule picks back up on the next evaluation, no re-registration.
-    updateColumns(
-      store,
+    store.columns.update(
       setColumns<Row>([
         { id: 'status', visible: true },
         { id: 'id', accessor: (row) => row.id, visible: false },

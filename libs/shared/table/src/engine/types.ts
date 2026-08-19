@@ -1,13 +1,16 @@
-import type { Signal, WritableSignal } from '@angular/core';
+import type { Signal } from '@angular/core';
 import type {
   ColumnDef,
   ColumnDefInput,
+  ColumnsUpdater,
+  RowUpdater,
   TableDataInput,
   TrackByConfig,
   TrackByFn,
 } from '../api/types';
 import type { ColumnRuleRegistry } from './columns';
 import type { PipelineStages, RenderRowsBuilder } from './pipeline';
+import type { WritableView } from './writable-view';
 
 /** Core config `composeTable()` needs. Resolved by `createTable()` from the public config. */
 export interface TableEngineConfig<TRow> {
@@ -26,20 +29,22 @@ export interface TableEngineConfig<TRow> {
  * complete before any consumer can read it.
  */
 export interface TableCore<TRow> {
-  readonly columns: Signal<ColumnDef<TRow>[]>;
+  /** Read: the folded, rule-applied column list. Write: `.update(updater)` targets the
+   * underlying `baseColumns` — never the fold itself (D30). */
+  readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
   /**
-   * Engine-internal only: the writable source `foldColumnRules` overlays rules onto to
-   * produce the derived `columns`. Read/written by `updateColumns`-style free functions via
-   * a typed cast (`api/update-columns.ts`). Never assigned to publicly on `TableStore`.
+   * Engine-internal only: the pre-fold declared columns `columns` overlays rules onto.
+   * Read-only here — `with-columns-schema` rule wiring reads against this (not the folded
+   * `columns`) to avoid a rule observing its own output. Never assigned to publicly on
+   * `TableStore`; writes go through `TableCore.columns.update(...)`.
    */
-  readonly baseColumns: WritableSignal<ColumnDef<TRow>[]>;
+  readonly baseColumns: Signal<ColumnDef<TRow>[]>;
   readonly rows: Signal<TRow[]>;
   readonly trackBy: TrackByFn<TRow>;
-  /**
-   * Engine-internal only: read by `updateRows`/`updateColumns`-style free functions via a
-   * typed cast (`api/row-mutations.ts`). Never assigned to publicly on `TableStore`.
-   */
-  readonly data: WritableSignal<TRow[]>;
+  /** Read: the consumer's own row data (D3/D4 — table never copies it). Write:
+   * `.update(updater)` writes through to that same signal, resolving `trackBy` internally
+   * for id-based updaters (D30). */
+  readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 }
 
 /**

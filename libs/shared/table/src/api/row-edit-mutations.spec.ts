@@ -5,9 +5,8 @@ import {
   endEdit,
   revertEdit,
   setSnapshot,
-  updateEditing,
 } from './row-edit-mutations';
-import { addRow, updateRows } from './row-mutations';
+import { addRow } from './row-mutations';
 import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -114,11 +113,11 @@ describe('setSnapshot', () => {
   });
 });
 
-describe('updateEditing', () => {
+describe('table.editing.update', () => {
   it('writes through the editing signal', () => {
     const fakeTable = createMockTableStoreWithEditing([...rows], trackBy);
 
-    updateEditing(fakeTable, beginEdit<Person>(2));
+    fakeTable.editing.update(beginEdit<Person>(2));
 
     expect(fakeTable.editing().get(2)).toEqual({ id: 2, name: 'Bea' });
   });
@@ -127,13 +126,13 @@ describe('updateEditing', () => {
     const fakeTable = createMockTableStoreWithEditing<Person>([], trackBy);
     const id = 99;
 
-    updateEditing(fakeTable, beginEdit<Person>(id));
-    updateRows(fakeTable, addRow<Person>({ id, name: '' }, { at: 0 }));
-    expect(fakeTable.data()).toEqual([{ id, name: '' }]);
+    fakeTable.editing.update(beginEdit<Person>(id));
+    fakeTable.value.update(addRow<Person>({ id, name: '' }, { at: 0 }));
+    expect(fakeTable.value()).toEqual([{ id, name: '' }]);
 
-    updateEditing(fakeTable, revertEdit<Person>(id));
+    fakeTable.editing.update(revertEdit<Person>(id));
 
-    expect(fakeTable.data()).toEqual([]);
+    expect(fakeTable.value()).toEqual([]);
     expect(fakeTable.editing().has(id)).toBe(false);
   });
 });

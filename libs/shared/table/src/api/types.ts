@@ -1,6 +1,7 @@
 import type { Signal, WritableSignal } from '@angular/core';
 import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from './column-schema.types';
 import type { TableFeature } from '../engine/types';
+import type { WritableView } from '../engine/writable-view';
 
 export type RowId = string | number;
 
@@ -144,11 +145,11 @@ export type ColumnsUpdater<TRow> = (
 ) => ColumnDef<TRow>[];
 
 /**
- * Pure row transform. `ctx.trackBy` is supplied by `updateRows` so id-based updaters
- * (`removeRow`, `patchRow`) can resolve identity without needing a store reference
- * themselves — this is what keeps them tree-shakeable and unit-testable standalone (D6).
- * The raw-lambda form `rows => rows.filter(...)` satisfies this type too; it just ignores
- * `ctx`.
+ * Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` (D30) so
+ * id-based updaters (`removeRow`, `patchRow`) can resolve identity without needing a store
+ * reference themselves — this is what keeps them tree-shakeable and unit-testable standalone
+ * (D6). The raw-lambda form `rows => rows.filter(...)` satisfies this type too; it just
+ * ignores `ctx`.
  */
 export type RowUpdater<TRow> = (
   rows: TRow[],
@@ -156,7 +157,9 @@ export type RowUpdater<TRow> = (
 ) => TRow[];
 
 export interface TableStore<TRow> {
-  readonly columns: Signal<ColumnDef<TRow>[]>;
+  /** Read: the folded, rule-applied column list. Write: `.update(updater)` (D30) — e.g.
+   * `table.columns.update(reorderColumns(ids))`. */
+  readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
   readonly rows: Signal<TRow[]>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly trackBy: TrackByFn<TRow>;
@@ -165,4 +168,8 @@ export interface TableStore<TRow> {
   // `renderRows().length` once virtualization/pagination renders fewer rows than exist.
   // Equals `rows().length` until a virtualization feature overrides it.
   readonly totalRowCount: Signal<number>;
+
+  /** Read: the row data (D3/D4 — the consumer's own signal, single source of truth). Write:
+   * `.update(updater)` (D30) — e.g. `table.value.update(addRow(row, { at: 0 }))`. */
+  readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 }

@@ -1,5 +1,3 @@
-import type { TableStore } from './types';
-import type { TableCore } from '../engine/types';
 import type { RowId, RowUpdater } from './types';
 
 /** D27: `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an
@@ -25,14 +23,4 @@ export function removeRow<TRow>(id: RowId): RowUpdater<TRow> {
 export function patchRow<TRow>(id: RowId, partial: Partial<TRow>): RowUpdater<TRow> {
   return (rows, { trackBy }) =>
     rows.map((row) => (trackBy(row) === id ? { ...row, ...partial } : row));
-}
-
-/** Free function, store first — mirrors `patchState(store, updater)` (D6). Writes through
- * to the consumer's `WritableSignal` (D3/D4); the store gains no write method of its own. */
-export function updateRows<TRow>(
-  table: TableStore<TRow>,
-  updater: RowUpdater<TRow>
-): void {
-  const { data, trackBy } = table as TableStore<TRow> & Pick<TableCore<TRow>, 'data'>;
-  data.update((rows) => updater(rows, { trackBy }));
 }

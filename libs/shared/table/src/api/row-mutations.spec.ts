@@ -1,4 +1,4 @@
-import { addRow, patchRow, removeRow, updateRows } from './row-mutations';
+import { addRow, patchRow, removeRow } from './row-mutations';
 import { createMockTableStoreWithData, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -73,12 +73,12 @@ describe('patchRow', () => {
   });
 });
 
-describe('updateRows', () => {
+describe('table.value.update', () => {
   it('writes through to the signal', () => {
     const fakeTable = createMockTableStoreWithData([...rows], trackBy);
 
-    updateRows(fakeTable, addRow<Person>({ id: 4, name: 'Dee' }));
+    fakeTable.value.update(addRow<Person>({ id: 4, name: 'Dee' }));
 
-    expect(fakeTable.data().map((r) => r.id)).toEqual([1, 2, 3, 4]);
+    expect(fakeTable.value().map((r) => r.id)).toEqual([1, 2, 3, 4]);
   });
 });

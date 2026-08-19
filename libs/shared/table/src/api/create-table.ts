@@ -35,7 +35,8 @@ import type {
  * `optsFn()` runs **once** at construction — `trackBy` / `columns` / `features` are
  * structural. Only `data` is reactive: the consumer's `WritableSignal<TRow[]>` is the single
  * source of truth, and the pipeline's `rows` `computed()` reads it directly — no internal
- * copy, no escape-hatch setter.
+ * copy. Row writes go through the returned store's `value` member
+ * (`table.value.update(addRow(...))`, D30) rather than a setter on `data` itself.
  */
 export function createTable<
   TRow,

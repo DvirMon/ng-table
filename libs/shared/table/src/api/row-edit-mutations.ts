@@ -1,18 +1,11 @@
-import type { TableCore } from '../engine/types';
-import {
-  ABSENT,
-  type EditingMap,
-  type RowEditMembers,
-  type RowEditWritable,
-  type RowSnapshot,
-} from './features/with-row-edit';
-import type { RowId, TableStore, TrackByFn } from './types';
+import { ABSENT, type EditingMap, type RowSnapshot } from './features/with-row-edit';
+import type { RowId, TrackByFn } from './types';
 
 export interface EditingUpdaterContext<TRow> {
   readonly data: TRow[];
   readonly trackBy: TrackByFn<TRow>;
-  /** Only `revertEdit` uses this — restoring/removing a row is one write, not two signal
-   * updates via `updateRows`. */
+  /** Only `revertEdit` uses this — restoring/removing a row is one write, not two calls to
+   * `table.value.update(...)` (D30). */
   writeData(rows: TRow[]): void;
 }
 
@@ -36,7 +29,7 @@ export function beginEdit<TRow>(id: RowId): EditingUpdater<TRow> {
 }
 
 /** Drops the entry, keeping whatever is currently in `data` (Save is composed elsewhere:
- * `updateRows(patchRow(...))` then `endEdit`, per D16). */
+ * `table.value.update(patchRow(...))` then `table.editing.update(endEdit(...))`, per D16/D30). */
 export function endEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (editing) => {
     if (!editing.has(id)) {
@@ -84,21 +77,4 @@ export function setSnapshot<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
     const snapshot: RowSnapshot<TRow> = row ?? findRow(data, trackBy, id) ?? ABSENT;
     return new Map(editing).set(id, snapshot);
   };
-}
-
-/** Free function, store first — mirrors `updateRows`/`updateColumns` (D16). Reads `data` for
- * updater context, then routes the result through the feature's `applyEditing` so single/
- * multiple enforcement always runs regardless of which updater produced it. */
-export function updateEditing<TRow>(table: TableStore<TRow>, updater: EditingUpdater<TRow>): void {
-  const store = table as TableStore<TRow> &
-    Pick<TableCore<TRow>, 'data' | 'trackBy'> &
-    RowEditMembers<TRow> &
-    RowEditWritable<TRow>;
-
-  const next = updater(store.editing(), {
-    data: store.data(),
-    trackBy: store.trackBy,
-    writeData: (rows) => store.data.set(rows),
-  });
-  store.applyEditing(next);
 }

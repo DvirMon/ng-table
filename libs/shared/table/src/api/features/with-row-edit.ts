@@ -1,5 +1,7 @@
-import { signal, type Signal } from '@angular/core';
-import type { TableFeatureSpec } from '../../engine/types';
+import { signal } from '@angular/core';
+import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import { createWritableView, type WritableView } from '../../engine/writable-view';
+import type { EditingUpdater } from '../row-edit-mutations';
 import type { RowId } from '../types';
 
 /** Sentinel snapshot value: the row did not exist in `data` when `beginEdit` captured it
@@ -18,16 +20,9 @@ export interface WithRowEditConfig {
 }
 
 export interface RowEditMembers<TRow> {
-  readonly editing: Signal<EditingMap<TRow>>;
-}
-
-/**
- * Internal write surface `row-edit-mutations.ts` reaches via a typed cast — the same trick
- * `TableCore.data`/`baseColumns` use to recover write access `RowEditMembers` intentionally
- * hides. Not part of the public contract; never assigned to publicly on `TableStore`.
- */
-export interface RowEditWritable<TRow> {
-  applyEditing(next: EditingMap<TRow>): void;
+  /** Read: which rows are open for editing, id to pre-edit snapshot. Write:
+   * `.update(updater)` (D30) — e.g. `table.editing.update(beginEdit(id))`. */
+  readonly editing: WritableView<EditingMap<TRow>, EditingUpdater<TRow>>;
 }
 
 /**
@@ -40,7 +35,7 @@ export interface RowEditWritable<TRow> {
 export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
   const multiple = config.multiple ?? false;
 
-  return (): TableFeatureSpec<TRow, RowEditMembers<TRow>> => {
+  return (core: TableCore<TRow>): TableFeatureSpec<TRow, RowEditMembers<TRow>> => {
     const editing = signal<EditingMap<TRow>>(new Map());
 
     // Enforces D14's single-mode "closes whatever was open" without any updater (beginEdit,
@@ -55,8 +50,17 @@ export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
     }
 
     const members = {
-      editing: editing.asReadonly(),
-      applyEditing,
+      editing: createWritableView<EditingMap<TRow>, EditingUpdater<TRow>>(
+        () => editing(),
+        (updater) =>
+          applyEditing(
+            updater(editing(), {
+              data: core.value(),
+              trackBy: core.trackBy,
+              writeData: (rows) => core.value.update(() => rows),
+            })
+          )
+      ),
     };
 
     return { members } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;

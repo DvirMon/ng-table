@@ -8,6 +8,7 @@ import {
 } from './pipeline';
 import { buildDefaultRenderRows, normalizeTrackBy } from './rows';
 import type { TableCore, TableEngineConfig } from './types';
+import { createWritableView } from './writable-view';
 
 /**
  * What `composeTable()` gets back from core construction. `stages`, `columnRules`, and the
@@ -70,11 +71,17 @@ export function createTableCore<TRow>(
   });
 
   const core: TableCore<TRow> = {
-    columns,
-    baseColumns,
+    columns: createWritableView(
+      () => columns(),
+      (updater) => baseColumns.update(updater)
+    ),
+    baseColumns: baseColumns.asReadonly(),
     rows,
     trackBy,
-    data: config.data,
+    value: createWritableView(
+      () => config.data(),
+      (updater) => config.data.update((rows) => updater(rows, { trackBy }))
+    ),
   };
 
   return {

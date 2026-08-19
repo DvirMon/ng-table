@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createTable } from '../create-table';
-import { beginEdit, updateEditing } from '../row-edit-mutations';
+import { beginEdit } from '../row-edit-mutations';
 import { withRowEdit } from './with-row-edit';
 import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 
@@ -47,10 +47,10 @@ describe('withRowEdit', () => {
       features: [withRowEdit<Row>()],
     }), makeRows());
 
-    updateEditing(store, beginEdit('r1'));
+    store.editing.update(beginEdit('r1'));
     expect(store.editing().has('r1')).toBe(true);
 
-    updateEditing(store, beginEdit('r2'));
+    store.editing.update(beginEdit('r2'));
     expect(store.editing().has('r1')).toBe(false);
     expect(store.editing().has('r2')).toBe(true);
     expect(store.editing().size).toBe(1);
@@ -63,8 +63,8 @@ describe('withRowEdit', () => {
       features: [withRowEdit<Row>({ multiple: true })],
     }), makeRows());
 
-    updateEditing(store, beginEdit('r1'));
-    updateEditing(store, beginEdit('r2'));
+    store.editing.update(beginEdit('r1'));
+    store.editing.update(beginEdit('r2'));
 
     expect(store.editing().has('r1')).toBe(true);
     expect(store.editing().has('r2')).toBe(true);

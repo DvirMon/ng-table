@@ -34,7 +34,7 @@ table.mock.ts   ← shared test fixtures
 | `index.ts` | Public API. `api/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
-| `api/update-columns.ts` | `updateColumns(table, updater)` free function + `setColumns`/`reorderColumns`/`toggleColumnVisibility` updaters — the only write path, targets `baseColumns` (never the derived `columns`) |
+| `api/update-columns.ts` | `setColumns`/`reorderColumns`/`toggleColumnVisibility` updater factories, consumed via `table.columns.update(updater)` (D30) — writes always target `baseColumns` internally, never the derived fold |
 | `api/table-schema.ts` | `createTableSchema()` — the config builder |
 | `api/column-schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
 | `api/column-rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
@@ -43,12 +43,13 @@ table.mock.ts   ← shared test fixtures
 | `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`. One file each |
 | `api/features/with-columns-schema/` | The one feature that outgrew a file — split by phase: `resolve.ts` (compile) → `wiring.ts` (run) → `feature.ts` (declare) |
 | `engine/compose-table.ts` | `composeTable()`: folds features, wires hooks. Nothing else |
-| `engine/core.ts` | `createTableCore()`: `data` is the required `WritableSignal<TRow[]>` and the single source of truth for rows (no internal row copy). Columns split the same way but through an extra derivation: `baseColumns` (writable, the actual write target) + `columnRules` (mutable array, populated additively by `composeTable()`'s `foldFeatures()` from each feature's `TableFeatureSpec.columnRules`) + `columns = computed(() => foldColumnRules(baseColumns(), columnRules))` — the public, read-only signal. Plus the pipeline computeds. No mutation methods — every write is a free function taking the store first (`updateRows`, `updateColumns`) |
+| `engine/core.ts` | `createTableCore()`: the consumer's row-data signal is the single source of truth for rows (no internal row copy), wrapped as `core.value` — a `WritableView` (`.update(updater)` writes through, D30). Columns split the same way but through an extra derivation: `baseColumns` (writable, private closure var, the actual write target) + `columnRules` (mutable array, populated additively by `composeTable()`'s `foldFeatures()` from each feature's `TableFeatureSpec.columnRules`) + `core.columns` — a `WritableView` reading `foldColumnRules(baseColumns(), columnRules)` and writing through to `baseColumns`. Plus the pipeline computeds. No bare mutation methods — every write is `table.<slice>.update(updater)` on the per-slice `WritableView` member (`engine/writable-view.ts`), D30 |
 | `engine/pipeline.ts` | `PIPELINE_ORDER` + `runPipeline()`. **`PipelineStages` is derived from the array** — one declaration, so a typed stage is always an executed stage |
 | `engine/columns.ts` | Pure `ColumnDef[] → ColumnDef[]` transforms. No signals, no Angular |
 | `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` |
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
+| `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/with-row-edit.ts` (`editing`) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 

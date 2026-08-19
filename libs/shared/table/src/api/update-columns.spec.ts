@@ -1,48 +1,21 @@
-import { signal, type WritableSignal } from '@angular/core';
 import { describe, expect, it } from 'vitest';
 import { resolveColumnDefs } from '../engine/columns';
 import type { MockRow } from '../table.mock';
-import {
-  reorderColumns,
-  setColumns,
-  toggleColumnVisibility,
-  updateColumns,
-} from './update-columns';
-import type { ColumnDef } from './types';
-
-/** Minimal fake satisfying `{ baseColumns: WritableSignal<ColumnDef<TRow>[]> }` — no full store. */
-function fakeTable(
-  columns: ColumnDef<MockRow>[]
-): { baseColumns: WritableSignal<ColumnDef<MockRow>[]> } {
-  return { baseColumns: signal(columns) };
-}
-
-describe('updateColumns', () => {
-  it('applies the given updater to the columns signal', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
-    const table = fakeTable(columns);
-
-    updateColumns(table, (cols) => cols.filter((column) => column.id === 'id'));
-
-    expect(table.baseColumns().map((column) => column.id)).toEqual(['id']);
-  });
-});
+import { reorderColumns, setColumns, toggleColumnVisibility } from './update-columns';
+import type { ColumnDef, ColumnsUpdater } from './types';
 
 describe('setColumns', () => {
   it('replaces the full column list, ignoring the previous one', () => {
-    const table = fakeTable(resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]));
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
 
-    updateColumns(table, setColumns<MockRow>([{ id: 'name' }]));
+    const result = setColumns<MockRow>([{ id: 'name' }])(columns);
 
-    expect(table.baseColumns().map((column) => column.id)).toEqual(['name']);
+    expect(result.map((column) => column.id)).toEqual(['name']);
   });
 
   it('resolves sparse ColumnDefInputs to full ColumnDefs (mirrors engine/columns.spec.ts)', () => {
-    const table = fakeTable([]);
+    const [column] = setColumns<MockRow>([{ id: 'name' }])([]);
 
-    updateColumns(table, setColumns<MockRow>([{ id: 'name' }]));
-
-    const [column] = table.baseColumns();
     expect(column.visible).toBe(true);
     expect(column.order).toBe(0);
     expect(column.label).toBe('name');
@@ -52,50 +25,50 @@ describe('setColumns', () => {
 
 describe('reorderColumns', () => {
   it('re-assigns order per the given id sequence', () => {
-    const table = fakeTable(resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]));
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
 
-    updateColumns(table, reorderColumns<MockRow>(['name', 'id']));
+    const result = reorderColumns<MockRow>(['name', 'id'])(columns);
 
-    expect(table.baseColumns().map((column) => [column.id, column.order])).toEqual([
+    expect(result.map((column) => [column.id, column.order])).toEqual([
       ['id', 1],
       ['name', 0],
     ]);
   });
 
   it('leaves ids absent from the list at their current order', () => {
-    const table = fakeTable(resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]));
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
 
-    updateColumns(table, reorderColumns<MockRow>(['name']));
+    const result = reorderColumns<MockRow>(['name'])(columns);
 
-    expect(table.baseColumns().find((column) => column.id === 'id')?.order).toBe(0);
+    expect(result.find((column) => column.id === 'id')?.order).toBe(0);
   });
 });
 
 describe('toggleColumnVisibility', () => {
   it('flips visible for the named column', () => {
-    const table = fakeTable(resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]));
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
 
-    updateColumns(table, toggleColumnVisibility<MockRow>('name'));
+    const result = toggleColumnVisibility<MockRow>('name')(columns);
 
-    expect(table.baseColumns().find((column) => column.id === 'name')?.visible).toBe(false);
-    expect(table.baseColumns().find((column) => column.id === 'id')?.visible).toBe(true);
+    expect(result.find((column) => column.id === 'name')?.visible).toBe(false);
+    expect(result.find((column) => column.id === 'id')?.visible).toBe(true);
   });
 
   it('calling it twice returns to the original value', () => {
-    const table = fakeTable(resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]));
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const applyTwice = (updater: ColumnsUpdater<MockRow>, cols: ColumnDef<MockRow>[]) =>
+      updater(updater(cols));
 
-    updateColumns(table, toggleColumnVisibility<MockRow>('name'));
-    updateColumns(table, toggleColumnVisibility<MockRow>('name'));
+    const result = applyTwice(toggleColumnVisibility<MockRow>('name'), columns);
 
-    expect(table.baseColumns().find((column) => column.id === 'name')?.visible).toBe(true);
+    expect(result.find((column) => column.id === 'name')?.visible).toBe(true);
   });
 
   it('is a no-op for an unknown id', () => {
     const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
-    const table = fakeTable(columns);
 
-    updateColumns(table, toggleColumnVisibility<MockRow>('nope'));
+    const result = toggleColumnVisibility<MockRow>('nope')(columns);
 
-    expect(table.baseColumns()).toEqual(columns);
+    expect(result).toEqual(columns);
   });
 });
