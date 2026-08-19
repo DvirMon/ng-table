@@ -14,7 +14,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
-      "@acme/shared-design-system": ["./libs/shared/design-system/src/index.ts"],
+      "@acme/shared-design-system": [
+        "./libs/shared/design-system/src/index.ts"
+      ],
       "@acme/shared-design-system/styles": [
         "./libs/shared/design-system/src/styles/index.ts"
       ],
