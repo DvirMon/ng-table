@@ -12,11 +12,26 @@ export * from './directives/ngp-table-cell.directive';
 export * from './api/features/with-sorting';
 export { withExpansion } from './api/features/with-expansion';
 export type { WithExpansionConfig } from './api/features/with-expansion';
+export { withRowEdit, ABSENT } from './api/features/with-row-edit';
+export type {
+  WithRowEditConfig,
+  RowEditMembers,
+  EditingMap,
+  RowSnapshot,
+} from './api/features/with-row-edit';
 export { createTableFeature } from './api/create-table-feature';
 export { columnSchema } from './api/column-schema';
 export { applyVisible, applyVisibleAsync } from './api/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
 export { updateRows, addRow, removeRow, patchRow } from './api/row-mutations';
+export {
+  updateEditing,
+  beginEdit,
+  endEdit,
+  clearEditing,
+  revertEdit,
+  setSnapshot,
+} from './api/row-edit-mutations';
 export {
   updateColumns,
   setColumns,

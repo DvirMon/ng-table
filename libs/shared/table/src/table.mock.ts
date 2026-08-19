@@ -1,5 +1,6 @@
-import { signal } from '@angular/core';
+import { signal, type WritableSignal } from '@angular/core';
 
+import type { EditingMap, RowEditWritable } from './api/features/with-row-edit';
 import type { ColumnDef, RenderRow, TableStore, TrackByFn } from './api/types';
 import type { TableCore } from './engine/types';
 
@@ -65,5 +66,29 @@ export function createMockTableStoreWithData<TRow>(
     totalRowCount: signal(rows.length),
     data: signal<TRow[]>(rows),
     trackBy,
+  };
+}
+
+/**
+ * Minimal store stub carrying a writable `data` signal plus a standalone `editing` slice
+ * (not wired through `withRowEdit()`/`composeTable()`) — for testing `row-edit-mutations.ts`
+ * free functions in isolation.
+ */
+export function createMockTableStoreWithEditing<TRow>(
+  rows: TRow[],
+  trackBy: TrackByFn<TRow>
+): TableStore<TRow> &
+  Pick<TableCore<TRow>, 'data' | 'trackBy'> &
+  RowEditWritable<TRow> & { editing: WritableSignal<EditingMap<TRow>> } {
+  const editing = signal<EditingMap<TRow>>(new Map());
+  return {
+    columns: signal<ColumnDef<TRow>[]>([]),
+    rows: signal<TRow[]>(rows),
+    renderRows: signal<RenderRow<TRow>[]>([]),
+    totalRowCount: signal(rows.length),
+    data: signal<TRow[]>(rows),
+    trackBy,
+    editing,
+    applyEditing: (next) => editing.set(next),
   };
 }
