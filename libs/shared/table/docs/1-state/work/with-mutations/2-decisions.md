@@ -190,6 +190,10 @@ updateColumns(table, toggleColumnVisibility('status'));
 **Rationale:** one shape for one idea, and maximally tree-shakeable — a table that never
 reorders columns doesn't carry the code.
 
+**Superseded:** the free-function/store-first call convention is replaced by per-slice store
+members — see D30. Updater purity/tree-shaking rationale carries over unchanged; only the
+call-site wrapper moves.
+
 **Consequences:**
 - Churns the just-migrated column API: `setColumns`, `updateColumns`, `reorderColumns`,
   `toggleColumnVisibility` move off `TableCore`/`TableStore` (`engine/core.ts`,
@@ -317,8 +321,8 @@ every structure keyed by `RowId` is affected:
 
 ```ts
 const saved = await this.service.save(row);
-updateEditing(table, endEdit(row.id));          // exit edit under the OLD id first
-updateRows(table, patchRow(row.id, saved));     // then swap in the server's id
+table.editing.update(endEdit(row.id));          // exit edit under the OLD id first
+table.value.update(patchRow(row.id, saved));    // then swap in the server's id
 ```
 
 Ending the edit before the swap means nothing is keyed by the temp id when it disappears, and the
@@ -352,6 +356,66 @@ semantics" in the public docs.
 
 **Consequence:** the add-blank-row-then-fill flow passes `{ at: 0 }` explicitly rather than relying
 on the default, since append puts the new row off-screen in a long table.
+
+## D30 — Writes move onto the store as members; `data` slice renamed `value` (2026-08-19)
+
+**Decision:** Supersedes D12 (mutation decisions) and D16 (editing decisions). The free-function,
+store-first call convention (`updateRows(table, updater)`, `updateColumns(table, updater)`,
+`updateEditing(table, updater)`) is replaced by per-slice members on the store, each shaped like
+a `WritableSignal` (`()` read, `.update()`/`.set()` write):
+
+```ts
+table.value.update(addRow(newRow, { at: 0 }));
+table.value.update(patchRow('42', { status: 'done' }));
+table.value.update(removeRow('42'));
+table.columns.update(reorderColumns(ids));
+table.editing.update(beginEdit('42'));
+```
+
+The row-data slice is exposed as `table.value`, not `table.data` — `data` stays the name of the
+input parameter (`createTable(data, config)`, D4), `value` is the store member, matching Signal
+Forms' root-`Field` convention where `field().value` is the write surface and the model variable
+passed into `form()` keeps its own name. `columns` and `editing` are separate concerns, not
+sub-paths of `value` — they keep descriptive names; only the primary row-data slice gets the
+generic `value`.
+
+**Rationale — reopened via Signal Forms comparison:**
+- `Field`/`FieldTree` is `() => FieldState`, not a bare `Signal`; `FieldState.value` is the actual
+  writable surface (`nameForm().value.set(...)`), and it lives **on the field**, not on a raw
+  signal the consumer holds separately. D12's "store keeps no write methods" modeled the wrong
+  precedent (`patchState`, a single free function over one store) — the closer, already-adopted
+  precedent (D15) is Signal Forms, which puts the write surface on the object being read, not
+  beside it.
+- Table has three independent slices (`value`/`columns`/`editing`), not one root model — ruled
+  out mirroring `field().value` at the *table* level (`table().value.update(...)`) since that
+  would force synthesizing one root object across slices, including the optional `editing` slice
+  (D8/D10: only present when `withRowEdit()` is composed), breaking tree-shaking and the
+  additive-feature-members model. Chose flat per-slice members instead of the full
+  callable-plus-`.value` `Field` shape — table members are plain `WritableSignal`-shaped
+  directly, no extra `()` call layer.
+- D6's core rationale is **unchanged**: updater factories (`addRow`, `patchRow`, `removeRow`,
+  `beginEdit`, `revertEdit`, `endEdit`, `reorderColumns`, `toggleColumnVisibility`, ...) stay
+  free, pure functions — tree-shakeable, unit-testable without a store. Only the call-site
+  wrapper moves off the free function (`updateRows(table, updater)`) onto the member
+  (`table.value.update(updater)`).
+
+**Consequences:**
+- `api/update-columns.ts`, `api/row-mutations.ts`, `api/row-edit-mutations.ts` — the
+  `updateRows`/`updateColumns`/`updateEditing` free-function wrappers are removed; updater
+  factories they export stay.
+- `engine/core.ts` — `TableCore` gains `value` (renamed from the internal `data` reference,
+  wrapping the consumer's signal with `.update()`/`.set()` that resolve `trackBy` internally for
+  id-based updaters) and a `columns` member with the same wrapper shape, folding into
+  `baseColumns` internally. `rows`/`renderRows` are untouched — pure derived reads, no write
+  surface, same as a computed `Field` path is never writable.
+- `withRowEdit()` — its `editing` member changes from `.asReadonly()` to the same
+  `WritableSignal`-shaped wrapper, closing over `trackBy` the same way `value` does.
+- Every call site (`directives/`, demos, `D18`/`D26` examples in the editing decisions) moves
+  from `updateX(table, updater)` to `table.slice.update(updater)`. `CLAUDE.md`'s "every write is
+  a free function taking the store first" line goes stale — needs rewriting to describe the
+  per-slice member shape.
+- D16 and D18's row-actions example and D26's recommended save order are updated in place (this
+  edit) rather than left to visibly disagree with the new decision.
 
 ## Open — carried forward
 

@@ -101,6 +101,11 @@ updateEditing(table, clearEditing());
 Save is composed, not a store verb: `updateRows(table, patchRow(id, value))` then
 `updateEditing(table, endEdit(id))`.
 
+**Superseded:** the free-function call convention (`updateEditing(table, updater)`) is replaced
+by a member on the store (`table.editing.update(updater)`) — see D30 in the mutation decisions.
+The updater factories named here (`beginEdit`, `revertEdit`, `endEdit`, `clearEditing`) are
+unchanged; only the call site moves.
+
 ## D17 — Editing state is `Map<RowId, TRow>`, holding pre-edit snapshots (2026-08-11)
 
 **Decision:** `withRowEdit()` holds `editing: Signal<Map<RowId, TRow>>` — id to the row's value
@@ -129,9 +134,9 @@ already exist:
 
 ```html
 <td>
-  <button (click)="updateRows(table, removeRow(row.id))">Delete</button>
-  <button (click)="updateEditing(table, beginEdit(row.id))">Edit</button>
-  <button (click)="updateRows(table, addRow({ ...row, id: newId() }))">Duplicate</button>
+  <button (click)="table.value.update(removeRow(row.id))">Delete</button>
+  <button (click)="table.editing.update(beginEdit(row.id))">Edit</button>
+  <button (click)="table.value.update(addRow({ ...row, id: newId() }))">Duplicate</button>
 </td>
 ```
 
@@ -523,8 +528,8 @@ revertEdit(id): snapshot === ABSENT ? removeRow(id) : restore(snapshot)
 
 ```ts
 const id = crypto.randomUUID();
-updateEditing(table, beginEdit(id));                    // nothing there yet → ABSENT
-updateRows(table, addRow({ id, ...blank }, { at: 0 })); // D26 temp id, D27 explicit `at: 0`
+table.editing.update(beginEdit(id));                    // nothing there yet → ABSENT
+table.value.update(addRow({ id, ...blank }, { at: 0 })); // D26 temp id, D27 explicit `at: 0`
                                                           // (mutation decisions)
 ```
 
@@ -597,6 +602,45 @@ Two things that file establishes and this one should be read against:
   counter alongside a live-value/committed-value column pair. `debounce(field, 'blur')` holds the
   commit boundary: typing does not move `data()`; blur does. `debounce(field, 0)` commits
   immediately. D22, D24, D29 and the closure of O18 stand on observation, no longer on inference.
+
+## D31 — Optimistic save: `endEdit({ keepSnapshot })` moves the entry to `pending` (2026-08-19)
+
+**Decision:** Optimistic save (close the row before the server answers) is supported inside
+`withRowEdit()`, not as a separate feature and not left to the consumer. No new save verb — the
+existing `endEdit` takes a config, per the standing "one operation with optional defaults"
+criterion.
+
+```ts
+endEdit(id)                          // close, drop the snapshot
+endEdit(id, { keepSnapshot: true })  // close, move entry: editing → pending
+removeSnapshot(id)                   // on success: settle
+revertEdit(id)                       // on failure: restore from either map, drop
+```
+
+**Why the entry moves rather than staying put.** `editing`'s key set is what templates read to
+decide which rows render inputs. A pending row has visually closed, so leaving it in `editing`
+renders a stuck editor until `removeSnapshot` runs — and only on the success path, the one least
+likely to be tested. Two signals, each with one meaning:
+
+```ts
+editing:  Signal<EditingMap<TRow>>   // open rows only — meaning and type unchanged
+pending:  Signal<EditingMap<TRow>>   // closed, still rollback-able
+```
+
+**`removeSnapshot(id)` is the sibling of D30's `setSnapshot(id, row?)`**, not a new concept — the
+snapshot was already writable; now it is also deletable.
+
+**Consequences:**
+- `editing`'s type is unchanged, so E2's demo and every existing template keep working. `pending`
+  is additive.
+- `revertEdit` must check both maps. `endEdit`'s move must be one operation, not a delete plus an
+  insert, or the two maps can drift.
+- A forgotten `removeSnapshot` still leaks, but degrades to a stale spinner rather than a row the
+  user cannot interact with.
+- Pessimistic save (row stays open during the request) needs none of this and already works:
+  `endEdit` on success, `revertEdit` on failure, entry alive throughout.
+- Re-opens fixes #3/#4/#5 from the E3/E4 review — `beginEdit` on a pending row, what single-mode
+  switching does to a pending row, and which map `revertEdit` reads first — all now need answers.
 
 ## D30 — The snapshot is writable; the library never watches `data` for staleness (2026-08-19)
 
