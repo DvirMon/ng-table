@@ -12,8 +12,8 @@ Core store, types, and state-management plugins.
 
 - **[PRD](1-state/prd.md)** — Requirements and acceptance criteria
 - **[Architecture](1-state/architecture.md)** — State machine, design, public API
-- **Engine** — how features compose: `engine/types.ts` (the `TableFeatureSpec` contract) and [ADR-0003](../../../../docs/adr/0003-in-house-table-store-engine.md)
-- **Source layout** — folders by lifecycle phase (`api/` / `engine/` / `directives/`): [ADR-0004](../../../../docs/adr/0004-table-source-layout.md) and the code-layout table in [`../CLAUDE.md`](../CLAUDE.md)
+- **Engine** — how features compose: `engine/types.ts` (the `TableFeatureSpec` contract) and [ADR-0003](adr/0003-in-house-table-store-engine.md)
+- **Source layout** — folders by lifecycle phase (`api/` / `engine/` / `directives/`): [ADR-0004](adr/0004-table-source-layout.md) and the code-layout table in [`../CLAUDE.md`](../CLAUDE.md)
 - **[Columns config](1-state/columns.md)** — Required core config (`createTable()` input)
 - **Features** `[1-state/features/](1-state/features/)` — Opt-in plugins (mirror `with-*.ts` files):
   - [Sorting](1-state/features/sorting.md)

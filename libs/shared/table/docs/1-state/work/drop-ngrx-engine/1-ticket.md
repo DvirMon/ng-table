@@ -1,7 +1,7 @@
 # Replace `@ngrx/signals` with an in-house signal store engine
 
 **Status:** ✅ landed 2026-08-11 — see [`2-decisions.md`](2-decisions.md) and
-[ADR-0003](../../../../../../docs/adr/0003-in-house-table-store-engine.md)
+[ADR-0003](../../../adr/0003-in-house-table-store-engine.md)
 **Created:** 2026-08-09
 **Layer:** state (`createTable()`)
 
@@ -82,10 +82,10 @@ experiments.
 
 Three facts make this migration internal-only:
 
-1. `TableStore<TRow>` ([`table.types.ts`](../../../../table.types.ts)) is already
+1. `TableStore<TRow>` ([`api/types.ts`](../../../../src/api/types.ts)) is already
    ngrx-free by design — its doc comment states swapping the state-management
    implementation must not be a breaking change.
-2. `buildStoreClass()` ([`table.store.ts:191`](../../../../table.store.ts)) already ends in
+2. `buildStoreClass()` ([`engine/core.ts`](../../../../src/engine/core.ts)) already ends in
    `signalStore(composedFeature) as unknown as Type<TableStore<TRow> & ComposedFeatureMembers<Features>>`.
    That cast is the boundary — the public return type is computed independently of ngrx.
 3. `ComposedFeatureMembers` reads `{ stateSignals, props, methods }` **structurally**. An

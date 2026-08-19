@@ -163,5 +163,5 @@ read by anything — a feature could set it and nothing would happen. Landed via
   visible-at-evaluation-time, not registration-time.
 
 The `TableFeatureSpec` contract's shape is unchanged; only what the engine does with an
-already-declared field changed. Not a new ADR — see `libs/shared/design-system/src/ui/table/docs/1-state/work/effect-free-column-reactivity/4-architecture.md`'s
+already-declared field changed. Not a new ADR — see `libs/shared/table/docs/1-state/work/effect-free-column-reactivity/4-architecture.md`'s
 open question 1.

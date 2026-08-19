@@ -1,7 +1,7 @@
 # Decisions — drop the `@ngrx/signals` engine
 
 **Landed:** 2026-08-11. Outcome recorded permanently in
-[ADR-0003](../../../../../../docs/adr/0003-in-house-table-store-engine.md).
+[ADR-0003](../../../adr/0003-in-house-table-store-engine.md).
 
 ## Open questions from `1-ticket.md`
 

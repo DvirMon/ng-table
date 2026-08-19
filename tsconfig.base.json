@@ -18,9 +18,7 @@
       "@acme/shared-design-system/styles": [
         "./libs/shared/design-system/src/styles/index.ts"
       ],
-      "@acme/shared-design-system/ui": [
-        "./libs/shared/design-system/src/ui/index.ts"
-      ]
+      "@acme/table": ["./libs/shared/table/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

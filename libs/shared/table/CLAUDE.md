@@ -10,7 +10,7 @@ Data table engine for Angular 19+. Three-layer stack: state management (`createT
 
 These are architectural constraints agreed in drilling sessions. Changing them requires cross-team decision and a new ADR.
 
-- **Native `<table>` or `<div>` grid, one directive set.** Superseded 2026-08-17 by [ADR-0005](../../../docs/adr/0005-generic-table-host.md) — selectors are dual-tag (`table[ngpTable], div[ngpTable]`, etc.), ARIA roles injected unconditionally regardless of host tag (matches Angular CDK Table precedent). Still no shadow DOM. Status `proposed`; div-grid path not yet implemented — see ADR open questions before building it.
+- **Native `<table>` or `<div>` grid, one directive set.** Superseded 2026-08-17 by [ADR-0005](docs/adr/0005-generic-table-host.md) — selectors are dual-tag (`table[ngpTable], div[ngpTable]`, etc.), ARIA roles injected unconditionally regardless of host tag (matches Angular CDK Table precedent). Still no shadow DOM. Status `proposed`; div-grid path not yet implemented — see ADR open questions before building it.
 - **Attribute-only directives** — never insert/remove/reorder DOM. Structural logic lives in the template (consumer's responsibility).
 - **`createTable()` returns an instance, not a class.** Consumers call `const table = createTable(…)`, not `new Table(…)`.
 - **`rows()` never returns wrapper objects.** Store yields `RenderRow<TRow>[]` directly; consumers get raw row data with layout/state fields colocated.
