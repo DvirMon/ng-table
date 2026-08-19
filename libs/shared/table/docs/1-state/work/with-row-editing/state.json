@@ -1,0 +1,13 @@
+{
+  "slug": "with-row-editing",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": null,
+  "workspaceRoot": "libs/shared/design-system/src/ui/table/docs/1-state/work/with-row-editing",
+  "decisionsPath": "libs/shared/design-system/src/ui/table/docs/1-state/work/with-row-editing/2-decisions.md",
+  "specPath": "libs/shared/design-system/src/ui/table/docs/1-state/prd.md",
+  "architecturePath": "libs/shared/design-system/src/ui/table/docs/1-state/architecture.md",
+  "githubIssues": [],
+  "checklist": { "intake": true, "grill": true, "spec": false, "issues": false, "tasks": false }
+}

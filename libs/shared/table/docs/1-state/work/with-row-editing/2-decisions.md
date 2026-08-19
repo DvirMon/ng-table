@@ -1,0 +1,645 @@
+---
+title: Decisions — Row Editing (NGP Table state layer)
+type: decisions
+status: in-progress
+date: 2026-08-11
+---
+
+# Decisions — Row Editing
+
+Episodic work folder for the editing feature cluster: F1 editable cells, F2 edit UI modes,
+F3 row actions, F5 dirty/validation/commit. Split out 2026-08-16 from
+[`work/with-mutations/2-decisions.md`](../with-mutations/2-decisions.md), which retains the
+mutation core this cluster builds on (`updateRows`, `addRow`/`removeRow`/`patchRow`, `at`
+semantics, temp-id handling — shipped as issue #47). No issue filed for this cluster yet.
+
+Decision numbering (D10, D13–D18, D20–D25, D28, D29) and open-question numbering (O2–O4,
+O10–O19, O21) are unchanged from the original log, so cross-references elsewhere in the repo
+still resolve.
+
+## D10 — Row edit mode is a store slice, mirroring `withExpansion()` (2026-08-11)
+
+**Decision:** F2b (button flips one row into edit) is a state-layer feature:
+`withRowEdit()` contributing `editingRows: Set<RowId>` plus `startEditing(rowId)`,
+`stopEditing(rowId)`, `toggleEditing(rowId)` — the same shape as `withExpansion()`'s
+`expandedRows`. UI directives read a single signal; behavior is consistent across tables.
+
+Scope boundary against D1 (mutation decisions) holds: the slice tracks **which rows are in
+edit mode**, nothing about the form. The form for an editing row is created and owned by the
+consumer.
+
+**Open sub-questions:** multi-row edit vs. single-row-at-a-time (expansion allows multi —
+does editing?); whether a `rowEditChanged` event fires; whether `withRowEdit()` is what F2a
+(always-edit) uses too, or F2a is purely a column/UI concern.
+
+## D13 — Always-edit (F2a) is not a state-layer concern (2026-08-11)
+
+**Decision:** `withRowEdit()` (D10) covers **only** the button-triggered mode (F2b). Always-edit
+tables — every row renders inputs — get no store involvement.
+
+**Rationale:** if every row is editable there is no per-row state to track, so a state slice
+would hold a constant. Per-cell readonly/disabled is column config plus the consumer's own
+Signal Form, which already owns exactly that surface (D1, mutation decisions).
+
+**Consequence:** "editable" is two distinct mental models, deliberately. F2a = column config +
+consumer form. F2b = `withRowEdit()` slice gating which rows show the form. Docs must draw this
+line explicitly or consumers will hunt for a feature that doesn't exist.
+
+**Superseded:** revised by D21, then D21 itself narrowed by D29 — see below.
+
+## D14 — `withRowEdit({ multiple })`, default single (2026-08-11)
+
+**Decision:** Multi-row edit is configurable, defaulting to one row at a time. In single mode
+`startEditing(id)` closes whatever row was open; in `{ multiple: true }` rows accumulate, like
+`expandedRows`.
+
+State shape stays `editingRows: Signal<Set<RowId>>` in both modes — single mode is a Set that
+never exceeds one entry — so UI directives read one signal regardless of configuration and the
+feature stays symmetric with `withExpansion`.
+
+**Consequence:** single-mode consumers read a Set to find one id. A convenience computed
+(`editingRow: Signal<RowId | null>`) is worth considering, but it lies in multi mode — decide
+alongside O4.
+
+## D15 — Signal Forms binds to the same `data` signal (2026-08-11)
+
+**Validated against the real API** (`@angular/forms` 22.0.8, `_structure-chunk.d.ts`):
+
+```ts
+readonly data  = signal<Person[]>(people);        // WritableSignal
+readonly table = createTable(this.data, () => ({ ... }));
+readonly rows  = form(this.data);                 // the same signal
+```
+
+`form(model: WritableSignal<TModel>)` requires exactly the contract D4/D11 (mutation decisions)
+chose for `createTable` — same shape both sides, no adapter, no bridging layer.
+
+**Two writers on one signal is not two sources of truth.** Neither side caches a copy (D11), so
+form edits flow into `data`, the pipeline recomputes and the table re-renders — live typing
+preview comes free — and table mutations flow into `data`, where the form's field tree
+reconciles. This is the strongest validation of D11.
+
+**Correction to an earlier assumption:** `FieldState.reset(value?)` resets **touched/dirty
+only** — "Note this does not change the data model, which can be reset directly if desired."
+Signal Forms tracks dirty/touched/validity and holds no pre-edit value. So the form owns
+validation state (D1 holds), but cancel-revert of row *values* has no owner in the stack.
+
+**Superseded:** the "live typing preview comes free" claim is corrected by D24.
+
+## D16 — No edit verbs on the store; editing state uses the updater pattern (2026-08-11)
+
+**Decision:** Supersedes D10's `startEditing` / `stopEditing` / `toggleEditing` methods. Editing
+state is written the same way rows and columns are (D12, mutation decisions):
+
+```ts
+updateEditing(table, beginEdit('42'));    // enter edit mode, capturing the row snapshot
+updateEditing(table, revertEdit('42'));   // restore the snapshot into `data`, exit edit mode
+updateEditing(table, endEdit('42'));      // exit edit mode, keep whatever is in `data`
+updateEditing(table, clearEditing());
+```
+
+Save is composed, not a store verb: `updateRows(table, patchRow(id, value))` then
+`updateEditing(table, endEdit(id))`.
+
+## D17 — Editing state is `Map<RowId, TRow>`, holding pre-edit snapshots (2026-08-11)
+
+**Decision:** `withRowEdit()` holds `editing: Signal<Map<RowId, TRow>>` — id to the row's value
+at the moment editing began. `beginEdit(id)` captures it; `revertEdit(id)` writes it back
+through `data` and drops the entry; `endEdit(id)` drops the entry without restoring.
+
+**Rationale:** cancel-revert needs a pre-edit copy and nothing else in the stack has one (D15).
+Consumers who never need revert simply never call `revertEdit`.
+
+**Consequences:**
+- Reintroduces a bounded second copy of row data — only for rows currently being edited, not
+  the whole set. Narrower than the `rawRows` copy D11 (mutation decisions) removed, but the same
+  category of thing.
+- A snapshot can go stale if `data` changes underneath from another source while a row is open.
+  Behavior undefined so far — tracked as O13.
+- D14's `{ multiple }` config still applies; the container is a `Map` rather than a `Set` in
+  both modes.
+
+**Widened:** by D28, from `Map<RowId, TRow>` to `Map<RowId, TRow | typeof ABSENT>`.
+
+## D18 — Row actions are consumer template code (2026-08-11)
+
+**Decision:** The store knows nothing about actions. No `withRowActions()`, no action registry,
+no directive. The consumer writes the actions cell and wires buttons to the updaters that
+already exist:
+
+```html
+<td>
+  <button (click)="updateRows(table, removeRow(row.id))">Delete</button>
+  <button (click)="updateEditing(table, beginEdit(row.id))">Edit</button>
+  <button (click)="updateRows(table, addRow({ ...row, id: newId() }))">Duplicate</button>
+</td>
+```
+
+**Rationale:** every operation an action could perform is already expressible through the
+updater API (D12/D16). An action registry would add a second way to say the same thing, and
+would drag label/icon/ordering — UI concepts — into a data-only store.
+
+**Consequence:** no shared markup, keyboard handling, or ARIA for the actions cell; each table
+builds its own. Revisit only if real duplication shows up across consumers, and then as a UI
+directive, not store state.
+
+## Analysis — form scope: one array form vs. one form per row (2026-08-11)
+
+Not yet decided. Recorded so the reasoning survives; the blocking question is at the end.
+
+### Verified against the real API (`@angular/forms` 22.0.8)
+
+- `form(model: WritableSignal<TModel>, schema?, options?)` — the model is a writable signal, the
+  same contract `createTable` requires (D4/D11, mutation decisions).
+- "form uses the given model as the source of truth and *does not* maintain its own copy of the
+  data" — confirms the two-writers-one-signal model of D15.
+- Arrays are **index-keyed only**: `TModel extends ReadonlyArray<infer U> ?
+  ReadonlyArrayLike<MaybeFieldTree<U, number>>`. A field knows its position via
+  `keyInParent: Signal<number>`. There is no identity/track-by option and no reconciliation
+  hook — grepped the whole surface. So O12 does not dissolve; index is the only addressing.
+- `FieldState.reset(value?)` resets touched/dirty only, never the data (see D15).
+- `applyEach(path, schema)` declares a per-item schema once for a whole array; `applyWhen` /
+  `applyWhenValue` / `disabled()` give conditional per-field logic.
+- `FormOptions.injector` exists, so `form()` can be created outside an injection context —
+  per-row forms created from a click handler are viable, and no `<td>`-level directive is
+  required to host them. (A directive that *creates* the form would also invert D1: the design
+  system would own the form, not the consumer.)
+
+### Why index instability is narrower than it looks
+
+The pipeline never mutates `data` — filter/sort/group produce a derived `rows()`. Positions in
+`data` shift **only** on structural mutation (`addRow`, `removeRow`, `moveRow`), never from
+sorting or filtering. And any index map is a `computed` over `data`, not a cached map, so there
+is nothing to keep in sync.
+
+`trackBy` and the index do not conflict: `trackBy` is row *identity* (stable — `@for` tracking,
+the editing Map, expansion), the index is *position in the form's backing array*. Orthogonal.
+
+### Tradeoffs
+
+| | Array form | Per-row form |
+|---|---|---|
+| Addressing | index into `data` (O12) | RowId only; the table already owns it |
+| Field state on delete | stale — row 3's dirty becomes row 4's | unaffected; dies with the session |
+| Live preview | yes — keystrokes hit `data`, pipeline reruns | no — writes land on save |
+| Schema declaration | once, via `applyEach` | repeated per form creation |
+| Cross-row validation | natural — one tree | hard — forms are isolated |
+| Whole-table validity | `rowsForm().valid()` | aggregate N forms yourself |
+| Cost at 10k rows | 10k field nodes, rendered or not | one node set per editing row |
+| Revert | needs D17's snapshot | free — discard the form |
+
+### What choosing the array form for *both* UI modes means
+
+1. `withRowEdit()` becomes purely presentational — the form exists for every row always, and
+   `editingRows` only decides whether a cell renders an `<input>` or text. D13's split collapses
+   into one mechanism plus a flag.
+2. **O10 answers itself** — per-cell readonly/disabled is declared once via `applyEach` +
+   `disabled()`/`applyWhen`. No `ColumnDef` field, no store involvement.
+3. O12 lands on the critical path — `fieldFor(form, table, rowId)` or `RenderRow.sourceIndex`,
+   one of them must ship.
+4. **Live preview becomes a behavior to design around, not a freebie.** Every keystroke writes
+   to `data`, so the pipeline reruns per character: sorted by the edited column ⇒ the row jumps
+   out from under the cursor mid-word; filtered on it ⇒ the row disappears while typing;
+   grouped by it ⇒ the row hops groups. D9 (mutation decisions) deferred this as an add-row edge
+   case; under an array form it is a per-keystroke reality for any table with an active sort or
+   filter.
+5. Validation runs over rows the user cannot see — `applyEach` covers filtered-out rows and
+   other pages, so `valid()` is false because row 4,000 has an empty name. Submit and "save all"
+   need scoping.
+6. Structural mutation misattributes field state (see the table above) — upstream in Signal
+   Forms; no index-delivery mechanism fixes it.
+7. Scale ceiling: N field nodes for N rows regardless of pagination or virtual scroll, since the
+   form is over `data`, not over rendered rows.
+8. D17's snapshot still earns its place — the form holds no pre-edit value.
+
+Net: one mechanism, declarative per-cell rules, cross-row validation — paid for with items 4, 6
+and 7. Item 4 shows up immediately in any table with sorting on, and has no clean answer inside
+Signal Forms. **Blocking question (O14): what happens to the pipeline while a row is being
+edited** — freeze it, debounce it, or exclude editing rows from it.
+
+## O14 — research vs. the stated assumption (2026-08-12)
+
+Research in `3-research-edit-pipeline.md`. The one load-bearing claim was verified directly
+against https://www.ag-grid.com/javascript-data-grid/change-detection/ — it holds, and is
+*stronger* than the assumption:
+
+> "The grid will **not**: Sort, Filter, Group" … "The reason why sorting, filtering and grouping
+> is not done automatically is that it would be considered bad user experience in most use cases
+> to change the displayed rows while editing."
+
+`refreshAfterGroupEdit` exists and **defaults to `false`**: "When set to `true`, the grid
+automatically reruns grouping, sorting and filtering after the edit is committed, so the row will
+move according to its new value."
+
+| Assumption stated before research | What sources show |
+|---|---|
+| Row under the cursor never moves | Confirmed — AG Grid, MUI X both hold position during edit |
+| Reposition on commit | **Not** the default anywhere. AG Grid: opt-in (`refreshAfterGroupEdit`). Excel/Sheets manual sort: never re-sorts. MUI X: on save |
+| Committed row failing the filter stays visible | Split. Grids: yes (no re-run). Airtable/Notion: no — row vanishes mid-keystroke |
+| New row pinned at insertion point | Confirmed across AG Grid, Airtable/Notion, Excel |
+| Pinning is presentational, not a pipeline stage | Not addressed by any source — still ours to decide |
+
+**What this changes:** the axis is not "when does the pipeline re-run during the edit" but **"does
+it re-run at all"**. Deferring to commit is the middle option, not the conservative one. Real grids
+treat a sort as a *snapshot* that goes stale, and make re-running it an explicit request.
+
+Accessibility backs the same direction: WCAG 3.2.2 On Input (A) — a row moving or vanishing
+mid-keystroke is a change of context the user was not warned about. WCAG 3.2.5 (AAA) wants
+post-commit movement user-initiated or toggleable. Neither is satisfied by a live pipeline.
+
+Sources leave three things open that we hit anyway: an uncommitted new row under an active filter
+(only Airtable/Notion document it, and they hide it); a row whose edit moves it across groups; and
+stale-snapshot conflicts from another writer (our O13).
+
+## D20 — Editing rows are exempt from the pipeline; "editing" means Map membership (2026-08-12)
+
+**Decision:** Resolves O14. The pipeline stays live — it reruns on every write to `data`, per
+keystroke — but rows present in `withRowEdit()`'s `editing` Map (D17) are **exempt** from
+filter/sort/group and hold their display position. They rejoin the pipeline when `endEdit` drops
+them from the Map.
+
+Rejected: the snapshot model (AG Grid's default) and the freeze-everything model. Both are global
+behavior changes that also stop unrelated rows and server pushes from updating; exemption is
+per-row and composes with everything else.
+
+**"Editing" has exactly one definition — membership in the `editing` Map.** The library detects no
+triggers: no blur listener, no change-event hook, no dirty checking. The consumer calls
+`beginEdit` / `endEdit`, and trigger policy is entirely theirs:
+
+```ts
+// button mode (F2b)
+(click)="updateEditing(table, beginEdit(row.id))"
+(click)="save(row)"          // updateRows(patchRow) then updateEditing(endEdit)
+
+// live edit — consumer's own trigger policy
+(focusin)="updateEditing(table, beginEdit(row.id))"
+(focusout)="updateEditing(table, endEdit(row.id))"
+
+// server-confirmed
+await save(row); updateEditing(table, endEdit(row.id));
+```
+
+The server-confirmed case needs no new API: the row stays pinned for the whole round trip because
+its id is still in the Map, and a failed save simply never calls `endEdit`, leaving the row pinned
+and open. Consistent with the standing design criterion — one set, one updater pair, policy on the
+consumer's side.
+
+**Consequences / still unspecified:**
+- Exemption must be expressible in the engine. Pipeline stages are `(rows) => rows`; there is no
+  current way for a stage to be told "skip these ids and preserve their slots".
+- "Holds its display position" is undefined when neighbors move underneath — absolute index in
+  `renderRows()`, or position relative to an anchor row?
+- Under an active filter, an exempt row stays visible even when it no longer matches. That is the
+  intended behavior during the edit; what happens on `endEdit` (row vanishes) is unaddressed.
+- Insertion at top is the same mechanism (see "Insertion position" in the mutation decisions) — an
+  added row is pinned by being in the Map, not by any value of `at`.
+
+**Superseded:** mechanism replaced by D24 (intent preserved).
+
+## D21 — `withRowEdit()` serves both UI modes; D13 revised (2026-08-12)
+
+**Decision:** Always-edit tables (F2a) use `withRowEdit()` too. D13's claim that always-edit needs
+no store state was true only while editing state meant "which rows show inputs" — under D20 the Map
+means "which rows are exempt from the pipeline", and an always-edit table absolutely has that state:
+the row the user is in right now.
+
+`withRowEdit()` is therefore not a mode gate. It is *which rows are currently exempt*. Button mode
+writes it on click; always-edit mode writes it on focusin/focusout. One Map, one updater pair, one
+pinning mechanism serving both modes.
+
+**Consequences:**
+- D13's two-mental-models split narrows to a UI-layer distinction (does the cell render an input
+  unconditionally, or gated on membership?). The state layer is now identical for both.
+- Always-edit consumers must wire focus handlers to get pinning; without them the Map stays empty
+  and rows move while typing.
+- `withRowEdit({ multiple })` (D14) still applies. Always-edit mode with focus triggers is
+  naturally single — focus is single — so the default fits.
+- Open: whether a UI-layer directive should ship those focusin/focusout handlers, so that
+  always-edit consumers get pinning without hand-wiring. That directive would be the first thing
+  able to initiate an edit-state change without the consumer calling anything — which is exactly
+  the condition O11 turns on.
+
+**Narrowed:** by D29 — always-edit tables need no `withRowEdit()` once D24 removes the pinning
+justification. D21's claim stands only when the consumer *chooses* to compose `withRowEdit()` for
+its remaining justifications (mode gate for F2b, revert).
+
+## D22 — One array form over `data`; no per-row forms (2026-08-12)
+
+**Decision:** The consumer creates a single `form(data)` over the same `WritableSignal<TRow[]>`
+that `createTable` takes (D15). Per-row forms are rejected. One approach only — the two are not
+offered side by side.
+
+```ts
+readonly data  = signal<Person[]>(people);
+readonly table = createTable(this.data, () => ({ ... }));
+readonly rows  = form(this.data);       // the same signal, no adapter
+```
+
+**Rationale:** the per-row alternative needs a `WritableSignal` per row to bind to, so it either
+copies out of `data` and writes back on save — reintroducing exactly the drift D11 (mutation
+decisions) removed — or needs a writable proxy slice per row, which is unbuilt machinery. The
+array form needs neither. D20 removed its worst cost (rows no longer jump mid-keystroke), and
+`applyEach` answers O10 without a `ColumnDef` field.
+
+**Consequences:**
+- **O12 is now on the critical path.** The form is indexed over `data`; the template iterates
+  `renderRows()`. Mapping a `RenderRow.id` to its `FieldTree` node must ship — either
+  `fieldFor(form, table, rowId)` or `RenderRow.sourceIndex`. No editable table works without it.
+- **O10 resolves** — per-cell readonly/disabled is `applyEach` + `disabled()`/`applyWhen` in the
+  consumer's schema. No `ColumnDef` field, no store involvement.
+- **D13's collapse completes.** With the form covering every row always, `withRowEdit()` decides
+  only whether a cell renders an input and whether the row is pipeline-exempt (D20/D21).
+- **D17's snapshot Map still earns its place.** The form holds no pre-edit value
+  (`FieldState.reset()` clears touched/dirty only), so revert has no other owner.
+- **Accepted costs:** N field nodes for N rows, independent of pagination or virtual scroll; and
+  structural mutation (`addRow`/`removeRow`) misattributing dirty/touched, since Signal Forms
+  arrays are index-keyed with no identity hook. Both are upstream limits with no local fix.
+- **Validation scope needs deciding** — `applyEach` covers filtered-out rows and other pages, so
+  `valid()` can be false because of a row the user cannot see. Submit and "save all" need scoping.
+  Tracked as O17.
+
+## D23 — `RenderRow.sourceIndex`, derived by the engine (2026-08-12)
+
+**Decision:** Resolves O12. A rendered row reaches its `FieldTree` node through an index the
+engine stamps on `RenderRow`, not through a resolver function:
+
+```ts
+interface RenderRow<TRow> {
+  /** Index into `data`. Undefined for synthesized rows (`kind: 'group'`, `data: null`). */
+  readonly sourceIndex?: number;
+}
+```
+
+```html
+@for (row of table.renderRows(); track row.id) {
+  @if (row.sourceIndex !== undefined) {
+    <td><input [field]="rowsForm[row.sourceIndex].name" /></td>
+  }
+}
+```
+
+**Why not `fieldFor(table, form, rowId)`** — prototyped both in
+`../../../o12-field-resolution.prototype.ts` (throwaway, typechecked). Ergonomics came out a wash:
+both need a per-row guard, and TS2538 covers the group-row case for `sourceIndex` as long as the
+field stays optional. Two objections killed the resolver:
+
+1. **Coupling.** Its signature cannot be `FieldTree<TRow>` — indexing a Signal Forms array field
+   yields `MaybeFieldTree<TRow, number>` and TS will not reduce `Exclude<TRow, undefined>` over an
+   unresolved generic (TS2322, reproduced). So the helper leaks `@angular/forms/signals` into our
+   public types. The table lib has no forms dependency today and D1 (mutation decisions)
+   deliberately kept it out.
+2. **A function call in a template.** `@let` narrows it to once per row per CD pass rather than
+   once per cell, but it stays a call. Exposing an index instead is a value, not a call.
+
+A `<td>` directive that resolves the field internally was also rejected: it relocates the same
+forms coupling into the UI layer instead of removing it.
+
+**The refinement that makes it safe — the engine derives it; no feature stamps it.** `sourceIndex`
+is *not* a contract each `renderRows` builder must honor. The engine computes it after the builder
+returns, from `data` + `trackBy`:
+
+```ts
+indexById  = computed(() => new Map(data().map((r, i) => [trackBy(r), i])));
+renderRows = computed(() => stamp(builder(pipeline(data(), stages)), indexById()));
+```
+
+`withGrouping()` cannot forget it or stamp it wrong, because it never touches it. Group rows carry
+`data: null` already, so they get `undefined` for free and keep the compile-time guard.
+
+**Reactivity and cost — checked, not assumed:**
+
+- Nothing to synchronize. `indexById` is derived, so there is no write path that can forget it and
+  no staleness window. This is why the map is not held as state.
+- `indexById` depends on `data` alone. Sort toggle, filter change, column visibility and expansion
+  leave it untouched; only the stamp pass re-runs, and `renderRows` was re-running regardless.
+- `addRow` / `removeRow` / a drag-reorder of `data` shift real indices — the rebuild is required.
+- `patchRow` rebuilds a Map with identical contents, since `data` emitted. The one avoidable case.
+- Both passes are O(n) against a pipeline already paying O(n log n) whenever a sort is active, and
+  the stamp's per-row spread is not a new allocation category — `buildDefaultRenderRows` already
+  allocates one object per row per recompute (`engine/rows.ts:22`).
+- **This cost is not attributable to D23.** `fieldFor` needed the identical map; the decision moves
+  where the index is read, not what it costs.
+
+## D24 — The commit boundary is Signal Forms `debounce()`, not pipeline exemption (2026-08-12)
+
+**Decision:** Supersedes D20's mechanism (D20's *intent* — the row must not move under the cursor —
+stands). The table builds no exemption for sort or group. The consumer declares when a field's
+value reaches `data`, using an Angular primitive:
+
+```ts
+declare function debounce<TValue>(
+  path: SchemaPath<TValue, …>,
+  config: number | 'blur' | Debouncer<TValue, …>
+): void;
+```
+
+A field carries two values (`_structure-chunk.d.ts`): `controlValue` — what the input holds, never
+debounced — and `value`, which reaches the data model and *is* debounced.
+
+```ts
+form(this.data, (path) => {
+  applyEach(path, (row) => {
+    debounce(row.name, 'blur');   // text: commits when the user leaves the cell
+    debounce(row.dept, 0);        // select: commits immediately
+  });
+});
+```
+
+Typing therefore never touches `data`, so the pipeline never reruns and **the row cannot move** —
+without the engine knowing anything about editing. On blur, `data` updates once and the row
+relocates. A dropdown or checkbox commits on change and the row jumps groups immediately, which is
+the intended UX.
+
+**Why this beats exemption:** both mechanisms depend on consumer configuration — D20's Map is only
+populated because the consumer calls `beginEdit`, and D20 made the library detect no triggers. Same
+guarantee, same failure mode (a consumer who wires neither gets jumping rows), except one is
+maintained by Angular and needs no engine surgery.
+
+**Non-live tables (button, then Save)** use a custom `Debouncer` — a promise resolving on the Save
+click — instead of `'blur'`. Same primitive, different resolution trigger.
+
+**This also answers the deferred question** "user clicks sort while a row is open in edit mode":
+`data` still holds the pre-edit value, so the row sorts by its old value and stays put. Falls out
+of the model rather than needing a rule.
+
+**Consequences:**
+- **D15's live-preview claim is now wrong.** "Live typing preview comes free" was true only while
+  every keystroke hit `data`. Under `debounce('blur')` other cells and aggregates derived from the
+  edited value do not update until commit. That is the intended UX, but D15's text needs revising.
+- **Binds the editing path to Signal Forms.** A consumer using `[(ngModel)]` or writing to `data`
+  from an `(input)` handler gets jumping rows and the table has no answer. D22 already made the
+  array form *the* editing path, so such a consumer has left the supported road — and would break
+  under exemption too, since the Map would be empty.
+- A server push mid-edit can still move the row: its own value is unchanged, but neighbours
+  reordering around it shift its position. True exemption would have held it. Accepted.
+- **Insertion is not solved by this**, so the earlier claim that add-blank-row-at-top and
+  don't-move-the-editing-row are one problem is **wrong** — they come apart. A blank row added
+  under an active sort still lands wherever empty values sort (the `withSorting()` null-ordering
+  gap), and under an active filter it is covered by D25 instead.
+- Open: whether to export a schema fragment (`editableRow(row, columns)`) so the commit boundary is
+  one call rather than per-column discipline. It would import Signal Forms types into our lib — the
+  coupling rejected for `fieldFor` in D23, though as an opt-in export rather than a core API type.
+  Tracked as O19.
+- Removes `withRowEdit()`'s pinning justification entirely — see D29.
+
+## D25 — A row edited out of the filter stays visible, marked, until the filter changes (2026-08-12)
+
+**Decision:** When a commit makes a row no longer match the active filter, the row is **not**
+removed. It stays in place, visually flagged as no longer matching, and leaves on the next filter
+change, re-query, or navigation.
+
+The same rule covers a row added under an active filter that does not match the predicate — which
+answers D9's (mutation decisions) "I clicked Add and nothing appeared". One retention rule, two
+entry points.
+
+**Rationale:** a sorted row that moves is still on screen; a filtered row is gone, and the user's
+own edit made it vanish. That is Airtable/Notion's documented behavior and the thing their users
+complain about in support threads, and it is the WCAG 3.2.2 exposure the research flagged. Rejected
+alternatives: dropping the row on commit (free, but the vanishing-row complaint), retaining it
+unmarked (the table silently contradicts its own filter with no explanation), and never re-filtering
+at all (AG Grid's default — a table-wide behavioral commitment far beyond editing).
+
+**Consequences:**
+- **O15 does not fully dissolve — it narrows from three stages to one.** Exemption is still needed,
+  but only for `filter`, and only for rows the user has just touched. Sort and group need nothing.
+- Exemption now needs a **lifetime**: a row enters the retained set on commit-or-insert and leaves
+  on the next filter change. That is a different trigger from `endEdit`, so the retained set is not
+  the editing Map.
+- Needs a UI affordance (chip, muted styling) so the user can tell why an out-of-filter row is
+  showing. UI-layer work, not state.
+
+## D28 — `revertEdit` derives add-cancel from edit-cancel via the snapshot (2026-08-13)
+
+**Decision:** Resolves O21. No flag and no second verb. `beginEdit` records absence when the id is
+not yet in `data`, and `revertEdit` branches on that:
+
+```ts
+beginEdit(id):  snapshot = data().find(id) ?? ABSENT
+revertEdit(id): snapshot === ABSENT ? removeRow(id) : restore(snapshot)
+```
+
+**Consequence — the blank-row flow has a canonical order:**
+
+```ts
+const id = crypto.randomUUID();
+updateEditing(table, beginEdit(id));                    // nothing there yet → ABSENT
+updateRows(table, addRow({ id, ...blank }, { at: 0 })); // D26 temp id, D27 explicit `at: 0`
+                                                          // (mutation decisions)
+```
+
+Reads slightly oddly — start editing a row that does not exist yet, then create it — but it needs
+no flag and the library never has to be told something it can observe.
+
+**The reverse order is not a bug, it is the other intent.** `addRow` then `beginEdit` snapshots the
+blank row, so cancel clears the user's typing and leaves the empty row in place — "reset this row"
+rather than "discard it". Both are real product behaviors, and the call order is what selects
+between them.
+
+**Accepted risk:** the two orders differ silently, with no error in either direction, because both
+are valid. Mitigation is documentation — the blank-row flow ships as one canonical snippet, and the
+reset-row variant is documented alongside it as a deliberate alternative rather than left to be
+discovered.
+
+**Consequences:**
+- `editing` (D17) widens from `Map<RowId, TRow>` to `Map<RowId, TRow | typeof ABSENT>`.
+- `revertEdit` gains a write to `data` in the ABSENT case, so it touches both signals — previously
+  only `restore` did.
+- Interacts with D26 (mutation decisions): a row reverted before save never reaches the server, so
+  its temp id simply disappears and no identity swap occurs.
+
+## D29 — `withRowEdit()` is optional; the minimal live table uses none of it (2026-08-13)
+
+**Corrects D21**, which said always-edit tables use `withRowEdit()` too. That was decided one day
+before D24, on a rationale D24 removed.
+
+`withRowEdit()` had three justifications. For an always-edit table with no Cancel button, all three
+are gone:
+
+| Justification | Status |
+|---|---|
+| Mode gate — which rows show inputs | never applied to always-edit (D13's original point) |
+| Pinning — which row is exempt from the pipeline | **deleted by D24**; `debounce()` holds the row still without knowing who is editing |
+| Snapshot for revert (D17) | nothing reverts without a Cancel affordance |
+
+**The minimal live editable table is therefore:** a `WritableSignal<TRow[]>`, one array `form(data)`
+with `debounce()` per column (D24), `addRow` for insertion (D26/D27, mutation decisions), and
+`sourceIndex` to reach field nodes (D23). No editing state, no `beginEdit`/`endEdit`, no
+`updateEditing`, no `withRowEdit()`.
+
+**`withRowEdit()` earns its place only when the consumer needs** a revert/Cancel affordance (D17's
+snapshot, D28's ABSENT marker) or a button-triggered mode where rows show inputs conditionally.
+
+**Consequences:**
+- D21 stands only in its narrow form: *if* an always-edit table composes `withRowEdit()`, the Map
+  means "which rows are exempt/active" rather than "which rows are in edit mode". It is no longer a
+  claim that such tables need the feature.
+- D26's (mutation decisions) identity-swap table shrinks for this configuration: with no editing Map
+  there is nothing to orphan, so only the `<tr>` teardown remains — and no focus is lost, because
+  nothing held it.
+- The spec must present the minimal table as the starting point and `withRowEdit()` as an addition,
+  or consumers will compose a feature they do not need.
+- Out of scope, and the consumer's: nothing prevents repeatedly adding blank rows, and abandoned
+  blanks persist in `data` until something removes them.
+
+## Delivery slicing
+
+Decisions here are sliced into shippable increments in [`4-increments.md`](./4-increments.md).
+Two things that file establishes and this one should be read against:
+
+- **D25, O15, O16 and O17 are phantom work** — they depend on `withFiltering()` and pagination,
+  neither of which exists (`api/features/` holds only `with-sorting.ts` and `with-expansion.ts`).
+  They are not deferred hard problems; they are problems about unwritten code, and should be
+  re-derived when that code exists rather than implemented from these notes.
+- **Everything from D22 onward is inferred from `@angular/forms` type definitions, not observed.**
+  The demo slice (E2) is the first point at which `debounce('blur')` is confirmed to keep `data`
+  untouched while typing. D24, D29 and the closure of O18 all rest on that being true.
+
+## Open — carried forward
+
+- **O13** A `beginEdit` snapshot (D17) can go stale if `data` changes from another source while
+  the row is open. Undefined so far — revert wins, refresh wins, or detect and drop?
+- **O11** Does `withRowEdit()` fire a `rowEditChanged` event (mirroring `withExpansion`'s
+  `rowExpanded` Observable), or is `editingRows` the only notification? Same question as O6
+  (mutation decisions) — decide both together.
+- **O15** *(narrowed by D24/D25 — filter only)* How does the `filter` stage express "keep these ids
+  even though the predicate rejects them"? Stages are `(rows) => rows` with no access to any set
+  outside their own feature's closure. Sort and group no longer need this; the filter retention of
+  D25 does.
+- **O16** *(largely dissolved by D24)* "Holds its display position" is no longer needed for sort or
+  group. What remains is narrower: where a *retained* row (D25) sits once it no longer matches the
+  filter — in place, or collected somewhere?
+- **O19** *(new, from D24)* Do we export a schema fragment (`editableRow(row, columns)`) so the
+  commit boundary is one call rather than per-column discipline? Lowers misconfiguration risk;
+  imports Signal Forms types into our lib, which is the coupling D23 rejected — though as an opt-in
+  export rather than a type in the core API.
+- **O17** *(new, from D22)* `applyEach` validates rows the user cannot see (filtered out, other
+  pages), so `valid()` can be false because of row 4,000. How are submit and "save all" scoped?
+- **O18** ~~*(from D20 + D22, surfaced while costing D23)*~~ **Closed by D24** — with
+  `debounce('blur')` there are no per-keystroke writes to `data`, so there is no per-keystroke
+  pipeline run to cost. Recompute happens once per commit. The original text is kept below because
+  the `indexById`-rebuild-on-`patchRow` observation still applies to bulk writes.
+
+  **Per-keystroke pipeline cost at
+  scale.** The array form writes to `data` on every character and D20 keeps the pipeline live, so
+  each keystroke runs filter + sort + group + the `indexById` rebuild over the entire row set — a
+  sort per character at 10k rows. This is the cost the snapshot model we rejected avoids by not
+  re-running at all. Two candidate mitigations, neither evaluated: skip the `indexById` rebuild
+  when `data`'s identity order is unchanged (covers the `patchRow` case), and debounce the pipeline
+  above some row count. Needs a measurement before either is chosen.
+
+  **D20 does not already cover this** — it fixes correctness (the row does not jump), not cost; the
+  pipeline still recomputes over the other n−1 rows per keystroke. But D20 supplies the invariant
+  that makes a fix sound: an exempt row is outside the comparison set, and filter/group membership
+  is per-row, so **editing an exempt row cannot change the pipeline output for any other row**.
+  When every changed row is exempt, the previous output is still correct and the run can be skipped
+  outright — which collapses the keystroke case rather than merely debouncing it.
+
+  What blocks that: the engine cannot tell *which* rows changed. `data` is a whole-array signal, so
+  an emission carries no row information. `updateRows(table, patchRow(id, …))` knows the exact id
+  at the write site and currently discards it. Making this work means the engine tracks a
+  changed-id set fed by the write path — new machinery, and unsound if a consumer bypasses
+  `updateRows` with a direct `data.set()`, which D4/D11 (mutation decisions) explicitly allow.
+
+**Resolved:** O2→D10, O3→D18, O4→D15/D16/D17, O11 (multi-row)→D14, O10→D22, O12→D23,
+O14→D20 (mechanism superseded by D24), O18→closed by D24, O21→D28, form scope→D22,
+D13→revised by D21, D20 mechanism→D24.

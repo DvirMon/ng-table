@@ -1,0 +1,134 @@
+import type { Signal } from '@angular/core';
+import type { ColumnMetaKey } from '../api/column-schema.types';
+import type { ColumnDef, ColumnDefInput } from '../api/types';
+
+// `ColumnMetaKey` is type-only and `column-schema.types.ts` has no import back into
+// `engine/`, so this reverse (engine -> api) edge doesn't close a cycle — it's just the one
+// place `engine/` needs an `api/` type to describe what it's folding.
+
+/**
+ * Pure `ColumnDef[]` transforms. No signals, no Angular — the store's column methods are thin
+ * `signal.update()` wrappers around these, so column behavior is testable without a live store.
+ */
+
+/**
+ * Fills in `accessor`/`visible`/`order`/`label` for any column def that omitted them, so the
+ * resolved state (`store.columns()`) is always a full `ColumnDef[]` regardless of how sparse
+ * the author-facing `ColumnDefInput[]` was.
+ */
+export function resolveColumnDefs<TRow>(
+  defs: ColumnDefInput<TRow>[]
+): ColumnDef<TRow>[] {
+  return defs.map((def, index) => ({
+    ...def,
+    accessor:
+      def.accessor ?? ((row: TRow) => (row as Record<string, unknown>)[def.id]),
+    visible: def.visible ?? true,
+    order: def.order ?? index,
+    label: def.label ?? def.id,
+  }));
+}
+
+/** Rewrites `order` from the given id list. Columns absent from `ids` keep their current order. */
+export function applyColumnOrder<TRow>(
+  columns: ColumnDef<TRow>[],
+  ids: string[]
+): ColumnDef<TRow>[] {
+  const orderById = new Map(ids.map((id, index) => [id, index]));
+  return columns.map((column) => ({
+    ...column,
+    order: orderById.get(column.id) ?? column.order,
+  }));
+}
+
+/** Sets `visible` on one column by id. Unknown ids are a no-op. */
+export function setColumnVisible<TRow>(
+  columns: ColumnDef<TRow>[],
+  id: string,
+  visible: boolean
+): ColumnDef<TRow>[] {
+  return columns.map((column) =>
+    column.id === id ? { ...column, visible } : column
+  );
+}
+
+/** Flips `visible` on one column by id. Unknown ids are a no-op. */
+export function toggleColumnVisible<TRow>(
+  columns: ColumnDef<TRow>[],
+  id: string
+): ColumnDef<TRow>[] {
+  return columns.map((column) =>
+    column.id === id ? { ...column, visible: !column.visible } : column
+  );
+}
+
+/**
+ * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`api/column-rules.ts`) write
+ * to under the hood — never exported from `index.ts`, so consumers can't read or collide with
+ * it via `readColumnMeta()`. `foldColumnRules` special-cases it below: unlike every other
+ * metadata key (single-writer, enforced by `resolve.ts`'s `assertMetadataKeysAreUnique`),
+ * multiple entries targeting `VISIBLE` on the same column are allowed and AND-combined —
+ * matching the pre-refactor `visible-reactive`/`visible-async` behavior. Same pattern as
+ * Signal Forms' own `REQUIRED`/`MIN_LENGTH` metadata keys backing `required()`/`minLength()`.
+ */
+export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
+
+/**
+ * One rule's contribution to the fold: which column and metadata key it targets, and a live
+ * signal of its current result. `undefined` means the rule hasn't resolved (e.g. an async rule
+ * before first resolution) and contributes nothing.
+ */
+export interface ColumnRuleEntry<TRow = unknown> {
+  readonly columnId: string;
+  readonly key: ColumnMetaKey<unknown>;
+  readonly result: Signal<unknown>;
+}
+
+/**
+ * The full set of registered rule entries a table folds over. Static for the table's lifetime
+ * (D9) — only the entries' `result` signals and the `columns` they're folded against change.
+ */
+export type ColumnRuleRegistry<TRow = unknown> = readonly ColumnRuleEntry<TRow>[];
+
+/**
+ * Folds registered rules onto `columns` — the single resolution path for both `visible` and
+ * consumer metadata, grouped by `(columnId, key)`. Per D4: `VISIBLE`-keyed entries on the same
+ * column are ANDed together; a group with no *defined* result yet contributes nothing, so the
+ * base column's `visible` stands. Every other key is single-writer (guaranteed by
+ * `resolve.ts`) and lands in `column.meta`. Entries whose `columnId` isn't in `columns` are
+ * skipped (D9 — no error). Columns with no registered rules pass through by identity.
+ */
+export function foldColumnRules<TRow>(
+  columns: ColumnDef<TRow>[],
+  registry: ColumnRuleRegistry<TRow>
+): ColumnDef<TRow>[] {
+  const valuesByColumnId = new Map<string, Map<ColumnMetaKey<unknown>, unknown[]>>();
+
+  for (const entry of registry) {
+    const value = entry.result();
+    if (value === undefined) continue;
+    const byKey = valuesByColumnId.get(entry.columnId) ?? new Map<ColumnMetaKey<unknown>, unknown[]>();
+    const values = byKey.get(entry.key);
+    if (values) values.push(value);
+    else byKey.set(entry.key, [value]);
+    valuesByColumnId.set(entry.columnId, byKey);
+  }
+
+  return columns.map((column) => {
+    const byKey = valuesByColumnId.get(column.id);
+    if (!byKey) return column;
+
+    const visibleValues = byKey.get(VISIBLE) as boolean[] | undefined;
+    const visible = visibleValues ? visibleValues.every(Boolean) : column.visible;
+
+    let meta: Map<ColumnMetaKey<unknown>, unknown> | undefined;
+    for (const [key, values] of byKey) {
+      if (key === VISIBLE) continue;
+      meta ??= new Map();
+      meta.set(key, values[values.length - 1]);
+    }
+
+    const withVisible = visible === column.visible ? column : { ...column, visible };
+    return meta ? { ...withVisible, meta } : withVisible;
+  });
+}

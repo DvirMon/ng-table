@@ -1,0 +1,13 @@
+{
+  "slug": "with-mutations",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": null,
+  "workspaceRoot": "libs/shared/design-system/src/ui/table/docs/1-state/work/with-mutations",
+  "decisionsPath": "libs/shared/design-system/src/ui/table/docs/1-state/work/with-mutations/2-decisions.md",
+  "specPath": "libs/shared/design-system/src/ui/table/docs/1-state/prd.md",
+  "architecturePath": "libs/shared/design-system/src/ui/table/docs/1-state/architecture.md",
+  "githubIssues": [46, 47, 48],
+  "checklist": { "intake": true, "grill": true, "spec": true, "issues": true, "tasks": true }
+}
