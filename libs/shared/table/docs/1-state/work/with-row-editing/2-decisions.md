@@ -391,8 +391,9 @@ field stays optional. Two objections killed the resolver:
 2. **A function call in a template.** `@let` narrows it to once per row per CD pass rather than
    once per cell, but it stays a call. Exposing an index instead is a value, not a call.
 
-A `<td>` directive that resolves the field internally was also rejected: it relocates the same
-forms coupling into the UI layer instead of removing it.
+~~A `<td>` directive that resolves the field internally was also rejected: it relocates the same
+forms coupling into the UI layer instead of removing it.~~ **Superseded by D31** — a structural
+directive behind a secondary entry point, not a `<td>`-level one, ships instead.
 
 **The refinement that makes it safe — the engine derives it; no feature stamps it.** `sourceIndex`
 is *not* a contract each `renderRows` builder must honor. The engine computes it after the builder
@@ -590,14 +591,98 @@ Two things that file establishes and this one should be read against:
   neither of which exists (`api/features/` holds only `with-sorting.ts` and `with-expansion.ts`).
   They are not deferred hard problems; they are problems about unwritten code, and should be
   re-derived when that code exists rather than implemented from these notes.
-- **Everything from D22 onward is inferred from `@angular/forms` type definitions, not observed.**
-  The demo slice (E2) is the first point at which `debounce('blur')` is confirmed to keep `data`
-  untouched while typing. D24, D29 and the closure of O18 all rest on that being true.
+- **~~Everything from D22 onward is inferred from `@angular/forms` type definitions, not observed.~~**
+  **Resolved 2026-08-19 — D24 confirmed by observation.** E2 shipped
+  (`apps/demo/src/app/table-edit-demo/`), instrumenting `data()` emissions with a `linkedSignal`
+  counter alongside a live-value/committed-value column pair. `debounce(field, 'blur')` holds the
+  commit boundary: typing does not move `data()`; blur does. `debounce(field, 0)` commits
+  immediately. D22, D24, D29 and the closure of O18 stand on observation, no longer on inference.
+
+## D30 — The snapshot is writable; the library never watches `data` for staleness (2026-08-19)
+
+**Decision:** Resolves O13. The library does not detect that a `beginEdit` snapshot (D17) has gone
+stale, because it cannot tell an external write apart from any other `data` change. The consumer
+knows when they wrote; they say so. One updater, following D16's pattern:
+
+```ts
+setSnapshot(id)        // re-read current data() as the new restore point
+setSnapshot(id, row)   // set an explicit restore point (e.g. the server's response)
+```
+
+One operation with an optional second argument, not a policy flag per scenario — the same shape as
+`updateRows`. Omitting `row` re-reads `data()`, which is exactly what `beginEdit` does on open, so
+the default case needs no argument.
+
+**Default stays "revert wins":** absent any `setSnapshot` call, `revertEdit` restores what was
+captured at `beginEdit`. No machinery watches `data`, and no per-row subscription exists.
+
+**Consequences:**
+- The two rejected policies become consumer-implementable rather than unavailable. *Refresh wins* is
+  `setSnapshot(id, incoming)` at the write site. *Detect and drop* is the consumer comparing and
+  calling `endEdit` instead of `revertEdit`. Neither is baked into the library.
+- `beginEdit` on an already-open row keeps whatever semantics E3 gives it; refreshing a restore
+  point now has its own verb, so the two intents never have to share one call.
+- No new coupling. `setSnapshot` reads and writes the same `Map<RowId, TRow | ABSENT>` (D17 + D28)
+  that `beginEdit`/`revertEdit` already own.
+- Ships with **E4**, not E3 — nothing reads snapshots until `revertEdit` exists.
+
+## D31 — `*ngpTableRowField`, behind a secondary entry point (2026-08-19)
+
+**Decision:** Supersedes D23's one-line rejection of a field-resolving directive. Ships
+`*ngpTableRowField`, a structural directive that folds the E2 pattern —
+`@if (row.sourceIndex !== undefined) { @let field = rows[row.sourceIndex]; }` — into one
+template line, guard and bind together. Exported from a **secondary entry point**,
+`@acme/table/forms`, not the root barrel — `src/index.ts` stays forms-free even at type level,
+and a consumer who never edits never sees `@angular/forms` in their import graph.
+
+**Rationale — re-scoring D23's two objections against a directive, not a resolver function:**
+
+1. *"A function call in a template"* — does not apply. A directive is not a call; it is
+   structural, like `*ngIf`.
+2. *"Coupling"* — applies, narrower than D23's text implies. D23's actual finding was that
+   `fieldFor()`'s **signature** forces `MaybeFieldTree` into the public API types (`RenderRow`,
+   `TableStore`, `ColumnDef`). A directive puts nothing into those types. Its only import is
+   `import type { FieldTree } from '@angular/forms/signals'`, which erases at compile — zero
+   runtime dependency. D1 (mutation decisions) keeping the table lib forms-free is honored; what
+   D23 actually guarded was the *core API surface*, not every file under `src/`.
+
+**What D23 didn't have, that changes the calculus:** its own strongest finding — indexing a
+Signal Forms array field yields `MaybeFieldTree<TRow, number>`, and TS will not reduce
+`Exclude<TRow, undefined>` over an unresolved generic `TRow` (TS2322, reproduced by D23) — is
+exactly the problem a structural directive's `ngTemplateContextGuard` exists to solve. The guard
+asserts the narrowed `FieldTree<TRow>` **once, at the directive boundary**, instead of leaking
+`MaybeFieldTree` to every call site the way a resolver function would. The blocker that killed
+`fieldFor()` is answerable in directive form; D23 dismissed the directive by analogy to the
+resolver without checking whether the same objection actually transfers.
+
+**Why a secondary entry point over the root barrel:** the root barrel documents itself as *the*
+consumer surface (`index.ts:1-3`); adding a forms-typed export there means every consumer's
+typecheck touches `@angular/forms/signals`, editing or not. `@acme/shared-design-system/styles`
+(`libs/shared/design-system/src/styles/index.ts`, mapped in `tsconfig.base.json`) is the
+existing precedent for this pattern in the repo — a path-mapped secondary barrel, no new Nx
+build target, no `project.json` change.
+
+**Consequences:**
+- Two barrels now exist for `@acme/table`: `index.ts` (forms-free, the default surface) and
+  `forms/index.ts` (opt-in, editing-only). A consumer who imports only `@acme/table` never
+  resolves `@angular/forms` through this lib.
+- D23's directive-rejection sentence is superseded, not deleted — the resolver-function
+  rejection (`fieldFor`) still stands in full; only the directive clause is revised.
+- Does not resolve **O19** (the `editableRow()` schema fragment). That is a different slice —
+  collapsing per-column `debounce()` discipline into one schema call — and stays open,
+  independent of this directive.
+- `lib` build (`project.json`, `browser: src/index.ts`) does not cover `forms/index.ts` — nothing
+  reachable from the root barrel imports it. Lint and unit tests do (both tsconfigs glob
+  `src/**`). A build target for the secondary entry point is out of scope here.
+- Inherits the engine's existing `sourceIndex` miss for expansion children: `indexById`
+  (`engine/core.ts`) is built from `data()`'s top-level entries only, so a nested expansion
+  child's `sourceIndex` is `undefined` even though `data` is non-null. Pre-existing behavior;
+  the directive surfaces it (renders nothing for such rows) rather than introducing it.
 
 ## Open — carried forward
 
-- **O13** A `beginEdit` snapshot (D17) can go stale if `data` changes from another source while
-  the row is open. Undefined so far — revert wins, refresh wins, or detect and drop?
+- **O13** ~~A `beginEdit` snapshot (D17) can go stale if `data` changes from another source while
+  the row is open.~~ **Closed by D30.**
 - **O11** Does `withRowEdit()` fire a `rowEditChanged` event (mirroring `withExpansion`'s
   `rowExpanded` Observable), or is `editingRows` the only notification? Same question as O6
   (mutation decisions) — decide both together.
@@ -611,7 +696,8 @@ Two things that file establishes and this one should be read against:
 - **O19** *(new, from D24)* Do we export a schema fragment (`editableRow(row, columns)`) so the
   commit boundary is one call rather than per-column discipline? Lowers misconfiguration risk;
   imports Signal Forms types into our lib, which is the coupling D23 rejected — though as an opt-in
-  export rather than a type in the core API.
+  export rather than a type in the core API. **Not resolved by D31** — the schema fragment and the
+  `*ngpTableRowField` directive are independent slices; D31 only settles the directive.
 - **O17** *(new, from D22)* `applyEach` validates rows the user cannot see (filtered out, other
   pages), so `valid()` can be false because of row 4,000. How are submit and "save all" scoped?
 - **O18** ~~*(from D20 + D22, surfaced while costing D23)*~~ **Closed by D24** — with
@@ -642,4 +728,4 @@ Two things that file establishes and this one should be read against:
 
 **Resolved:** O2→D10, O3→D18, O4→D15/D16/D17, O11 (multi-row)→D14, O10→D22, O12→D23,
 O14→D20 (mechanism superseded by D24), O18→closed by D24, O21→D28, form scope→D22,
-D13→revised by D21, D20 mechanism→D24.
+D13→revised by D21, D20 mechanism→D24, D23 directive clause→D31.

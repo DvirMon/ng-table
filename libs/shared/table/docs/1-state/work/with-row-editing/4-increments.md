@@ -134,6 +134,27 @@ writing the demo reveals. If `applyEach` + two `debounce` lines reads fine, O19 
 
 ---
 
+## E5' — `*ngpTableRowField` directive *(optional, any time after E2, independent of E5)*
+
+**Ships:** folds E2's `@if (row.sourceIndex !== undefined) { @let field = rows[row.sourceIndex]; }`
+into one structural directive line.
+
+**Decision:** D31, fully specified — supersedes D23's directive-clause rejection. Exported from a
+secondary entry point (`@acme/table/forms`), not the root barrel, so the core surface stays
+forms-free even at type level.
+
+**Depends on:** E1 (`sourceIndex`), E2 (the pattern it folds). Does not depend on, or block, E5 —
+the schema fragment and this directive solve different parts of the ergonomics gap and can ship in
+either order or both.
+
+**Open questions blocking it:** none.
+
+**Scope:** `directives/ngp-table-row-field.directive.ts` + `.resolve.ts`, `forms/index.ts` (new
+secondary barrel), `tsconfig.base.json` path entry, colocated spec, a standalone demo (not
+`table-edit-demo`, per the brief).
+
+---
+
 ## E6 — Sort staleness *(design incomplete)*
 
 **Ships:** a signal telling the consumer the sort no longer reflects the data, so they can render

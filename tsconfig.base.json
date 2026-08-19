@@ -20,7 +20,8 @@
       "@acme/shared-design-system/styles": [
         "./libs/shared/design-system/src/styles/index.ts"
       ],
-      "@acme/table": ["./libs/shared/table/src/index.ts"]
+      "@acme/table": ["./libs/shared/table/src/index.ts"],
+      "@acme/table/forms": ["./libs/shared/table/src/forms/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
