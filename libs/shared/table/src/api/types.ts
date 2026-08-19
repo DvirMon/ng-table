@@ -51,6 +51,11 @@ export interface RenderRow<TRow> {
 
   // `hasChildren` is true for a `group` row that has at least one child.
   readonly hasChildren?: boolean;
+
+  // Index into `data()` for the `TRow` this render row was built from, resolved by trackBy
+  // id (`engine/core.ts`). `undefined` for synthesized rows (`kind: 'group'`, or any row a
+  // feature's `renderRows` builder fabricates) — there is no `data()` entry to point to.
+  readonly sourceIndex?: number;
 }
 
 export interface ColumnDef<TRow = unknown> {

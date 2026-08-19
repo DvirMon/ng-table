@@ -108,8 +108,8 @@ describe('composeTable', () => {
     const store = composeWithRows(makeRows(), []);
 
     expect((store['renderRows'] as () => unknown[])()).toEqual([
-      { id: 'r1', depth: 0, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 0 },
-      { id: 'r2', depth: 0, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 1 },
+      { id: 'r1', depth: 0, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 0, sourceIndex: 0 },
+      { id: 'r2', depth: 0, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 1, sourceIndex: 1 },
     ]);
   });
 

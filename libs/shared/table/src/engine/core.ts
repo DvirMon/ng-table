@@ -44,13 +44,30 @@ export function createTableCore<TRow>(
 
   const rows = computed(() => runPipeline(config.data(), stages));
 
+  // Maps a row's trackBy id to its position in `data()` — the source of `sourceIndex`,
+  // stamped below. Built from `data()` directly (not `rows()`, the pipeline output), so a
+  // filter/group/sort/expand stage reordering or dropping rows doesn't change what index a
+  // surviving row resolves to.
+  const indexById = computed(() => {
+    const map = new Map<ReturnType<typeof trackBy>, number>();
+    config.data().forEach((row, index) => map.set(trackBy(row), index));
+    return map;
+  });
+
   // Downstream of `rows` (the pipeline output), not `data` directly — recomputes on every
   // filter/group/sort/expand change, not just when the consumer's `data` signal re-emits.
-  // `index` is assigned here, centrally, rather than by each `renderRows` builder — it's
-  // purely the row's position in the final array (ADR-0005's `aria-rowindex` source).
-  const renderRows = computed(() =>
-    buildRenderRows(rows()).map((row, index) => ({ ...row, index }))
-  );
+  // `index` and `sourceIndex` are assigned here, centrally, rather than by each `renderRows`
+  // builder: `index` is purely the row's position in the final array (ADR-0005's
+  // `aria-rowindex` source), and `sourceIndex` resolves via `indexById` — `undefined` for a
+  // synthesized row (`row.data === null`) since there is no `data()` entry to point to.
+  const renderRows = computed(() => {
+    const byId = indexById();
+    return buildRenderRows(rows()).map((row, index) => ({
+      ...row,
+      index,
+      sourceIndex: row.data === null ? undefined : byId.get(row.id),
+    }));
+  });
 
   const core: TableCore<TRow> = {
     columns,

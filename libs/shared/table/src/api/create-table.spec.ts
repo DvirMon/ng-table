@@ -75,8 +75,8 @@ describe('createTable', () => {
     const store = makeStore(makeColumns(), rows);
 
     expect(store.renderRows()).toEqual([
-      { id: 'r1', depth: 0, kind: 'row', data: rows[0], index: 0 },
-      { id: 'r2', depth: 0, kind: 'row', data: rows[1], index: 1 },
+      { id: 'r1', depth: 0, kind: 'row', data: rows[0], index: 0, sourceIndex: 0 },
+      { id: 'r2', depth: 0, kind: 'row', data: rows[1], index: 1, sourceIndex: 1 },
     ]);
   });
 
