@@ -7,11 +7,24 @@
   tabindex="0"
   [attr.aria-label]="accessibleName()"
 ><code [attr.data-language]="language()">@for (line of lines(); track $index) {<span class="line">{{ line }}</span>}</code></pre>
-<ngpt-icon-button
+<button
+  ngptIconButton
+  ngptCopyConfirm
+  #copy="ngptCopyConfirm"
   class="copy-button"
-  icon="lucideCopy"
-  label="Copy code"
   [size]="24"
-  [state]="copyState()"
-  (pressed)="onCopyPressed()"
-/>
+  [text]="code()"
+  idleLabel="Copy code"
+>
+  @switch (copy.state()) {
+    @case ('copied') {
+      <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+    }
+    @case ('failed') {
+      <ng-icon name="lucideTriangleAlert" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+    }
+    @default {
+      <ng-icon name="lucideCopy" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+    }
+  }
+</button>

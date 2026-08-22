@@ -1,4 +1,4 @@
-/** Visual variant for `ngpt-search-field`. `on-band` is the hero navbar's translucent well treatment. */
+/** Visual variant for `[ngptSearchField]`. `on-band` is the hero navbar's translucent well treatment. */
 export type SearchFieldVariant = 'default' | 'on-band';
 
 /**

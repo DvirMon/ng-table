@@ -1,31 +1,21 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCheck, lucideCopy, lucideTriangleAlert } from '@ng-icons/lucide';
+import { CopyConfirm } from '../copy-confirm/copy-confirm';
 import { IconButton } from '../icon-button/icon-button';
-import type { IconButtonState } from '../icon-button/icon-button.types';
-
-/**
- * Mirrors `--ngpt-comp-icon-btn-confirm-hold` (src/styles/tokens/sizing.css). A `setTimeout`
- * duration can't read a CSS custom property without a runtime `getComputedStyle` call — no
- * precedent for that in this app — so the value is duplicated here. See docs/decisions.md.
- */
-const COPY_CONFIRMATION_HOLD_MS = 1400;
 
 @Component({
   selector: 'ngpt-code-block',
-  imports: [IconButton],
+  imports: [IconButton, CopyConfirm, NgIcon],
   templateUrl: './code-block.html',
   styleUrl: './code-block.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  viewProviders: [provideIcons({ lucideCopy, lucideCheck, lucideTriangleAlert })],
 })
 export class CodeBlock {
   readonly code = input<string>();
   readonly language = input<string>();
   readonly showGutter = input<boolean>(true);
-
-  private readonly destroyRef = inject(DestroyRef);
-  private revertTimeoutId: ReturnType<typeof setTimeout> | undefined;
-
-  /** Drives the copy button's confirmation state — this component owns the clipboard write. */
-  protected readonly copyState = signal<IconButtonState>('idle');
 
   /**
    * No Shiki this round (spec `does_not_own`: syntax colors). Split into one span per line so
@@ -39,32 +29,4 @@ export class CodeBlock {
     const language = this.language();
     return language ? `${language} code sample, scrollable horizontally` : 'Code sample, scrollable horizontally';
   });
-
-  constructor() {
-    this.destroyRef.onDestroy(() => this.clearRevertTimeout());
-  }
-
-  protected async onCopyPressed(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(this.code() ?? '');
-      this.copyState.set('copied');
-    } catch {
-      this.copyState.set('failed');
-    }
-    this.scheduleRevert();
-  }
-
-  private scheduleRevert(): void {
-    this.clearRevertTimeout();
-    this.revertTimeoutId = setTimeout(() => {
-      this.copyState.set('idle');
-    }, COPY_CONFIRMATION_HOLD_MS);
-  }
-
-  private clearRevertTimeout(): void {
-    if (this.revertTimeoutId !== undefined) {
-      clearTimeout(this.revertTimeoutId);
-      this.revertTimeoutId = undefined;
-    }
-  }
 }
