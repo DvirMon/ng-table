@@ -58,6 +58,63 @@ container, matching the mock where `<a>` is the direct flex child. Also keeps `:
 /`:host([data-nested])` attribute selectors working normally (attribute selectors match regardless
 of the host's own `display`).
 
+## Converted to `a[ngptNavItem]` — ADR-0005
+
+| | Was | Now |
+|---|---|---|
+| Selector | `ngpt-nav-item` (element) | `a[ngptNavItem]` (attribute, camelCase) |
+| Host | inert `<ngpt-nav-item>` wrapping an inner `<a class="nav-item">` | the consumer's own `<a>` |
+| Inputs | `active`, `nested`, `href` | `active`, `nested` |
+
+Per [ADR-0005](../../../../../docs/adr/0005-attribute-hosted-components.md). This domain is one of
+the ADR's own named examples: it "splits state across two elements — `data-active` on the host and
+`aria-current` on the inner `<a>`, one logical state, two DOM nodes." All three attributes
+(`data-active`, `data-nested`, `aria-current`) now land on the single anchor. Kept as a
+`@Component` (not `@Directive`) so `styleUrl` stays colocated in this domain folder.
+
+### `href` dropped — reverses this file's own earlier decision
+
+The "`href` input added beyond the fixed contract" section above argued for `href = input('#')`
+because an anchor with no `href` is not focusable and the spec's Focus state would be unreachable.
+That reasoning was correct *given a wrapper*: the component owned the only `<a>` in play, so if it
+did not supply an `href` nobody could. Attribute-hosted, the consumer authors the `<a>` and its
+`href` directly, so the concern dissolves — and the `'#'` default goes with it. That default was
+always a placeholder standing in for a route the sidebar had not been built to supply yet; the
+sidebar now supplies a real one, or a `routerLink`, on its own element.
+
+### `active` / `nested` kept
+
+Neither mirrors a native attribute — they are this primitive's own state, per ADR-0005's
+"inputs carry only what is genuinely the primitive's own (`variant`, `active`, `state`)". `active`
+additionally drives `aria-current="page"`, which the spec's `a11y` front-matter requires.
+
+### Both need `transform: booleanAttribute`
+
+CONVENTIONS.md rule 1 scopes the requirement to "a boolean input mirroring a native attribute",
+and strictly neither of these does. Applied anyway, because the failure mode is about the *call
+form*, not about nativeness: both are set as bare attributes (`<a ngptNavItem active>`), which
+passes the string `''` — falsy — so without the transform `data-active` and `aria-current` would
+never be applied and only `[active]="true"` would work. That is precisely the defect that got
+`pill-button`'s `disabled` input deleted. Reading the rule narrowly here would ship the bug it
+exists to prevent, so the transform is on both.
+
+The alternative — requiring `[active]="true"` at every call site — was rejected: the bare
+attribute is the natural authoring form for a boolean on an element the consumer already owns, and
+nothing would flag the mistake at build time.
+
+### CSS
+
+`.nav-item` rules moved to `:host` and its state rules from `:host([data-active]) .nav-item` to
+`:host([data-active])`. `:host { display: contents }` is gone — it existed only to keep the wrapper
+from becoming the sidebar's flex item instead of the anchor; the anchor now *is* the host, so it is
+the flex child directly, which is what the mock's `.sidebar-nav > a` shape always assumed.
+`display: block` is retained on `:host` so the row full-bleeds across the column and the
+padding/left-border box applies (an `<a>` is inline by default).
+
+The `:host(:focus-visible)` rule is carried over as-is rather than deleted in favor of the global
+`:focus-visible` policy. It duplicates the global value, but removing it is a behavior change
+outside this conversion's scope — flagged, not acted on.
+
 ## No `nav-item.types.ts`
 
 No variant union — `active`/`nested` are plain booleans, `href` is a plain string. Nothing to put

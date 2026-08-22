@@ -1,8 +1,7 @@
+/* The host IS the consumer's <a> (ADR-0005). The old `:host { display: contents }` existed only to
+   hide a wrapper element that no longer ships; the `display: block` below is the anchor's own, so
+   the row full-bleeds and the padding/border box applies. */
 :host {
-  display: contents;
-}
-
-.nav-item {
   display: block;
   padding: var(--ngpt-sys-space-225) var(--ngpt-sys-space-250);
   margin-inline: calc(var(--ngpt-sys-space-250) * -1);
@@ -13,24 +12,24 @@
   text-decoration: none;
 }
 
-.nav-item:hover {
+:host(:hover) {
   background: var(--ngpt-bg-hover);
   color: var(--ngpt-text-secondary);
 }
 
-.nav-item:focus-visible {
+:host(:focus-visible) {
   box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
   outline: none;
 }
 
-:host([data-active]) .nav-item {
+:host([data-active]) {
   background: var(--ngpt-bg-active);
   border-left-color: var(--ngpt-accent);
   color: var(--ngpt-text-primary);
   font-weight: 600;
 }
 
-:host([data-nested][data-active]) .nav-item {
+:host([data-nested][data-active]) {
   background: var(--ngpt-accent-bg);
   border-left-color: var(--ngpt-accent);
   color: var(--ngpt-accent);

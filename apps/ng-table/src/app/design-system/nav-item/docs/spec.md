@@ -86,6 +86,27 @@ reaches 4.70:1 — see `foundations/Color.md`.
 
 Negative 10px horizontal margin so the row full-bleeds inside the 20px sidebar padding (`--ngpt-sys-space-500`).
 
+## API (as shipped)
+
+Attribute-hosted on the consumer's `<a>` — no wrapper element ships (ADR-0005).
+
+| | |
+|---|---|
+| Selector | `a[ngptNavItem]` |
+| Inputs | `active = input(false, { transform: booleanAttribute })`, `nested = input(false, { transform: booleanAttribute })` |
+| Host attributes | `data-active` / `data-nested` (empty-string presence attributes), `aria-current="page"` when `active` — all on the single anchor |
+| Content | projected label |
+
+`href` is **not** an input — the consumer sets the native attribute. No router wiring this round.
+
+```html
+<nav class="sidebar-nav">
+  <a ngptNavItem href="/docs/intro">Introduction</a>
+  <a ngptNavItem active href="/docs/styling">Styling</a>
+  <a ngptNavItem nested active href="/docs/sorting">Sorting</a>
+</nav>
+```
+
 ## HTML/CSS mock
 
 ```html
