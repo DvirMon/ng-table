@@ -1,0 +1,137 @@
+/* ngpt-prose — styles arbitrary projected article markup (headings, lists, blockquote, hr,
+   strong/em, heading anchors). ViewEncapsulation.None (CONVENTIONS.md #8): every selector below
+   is scoped under the .ngpt-prose host class so these global-scope rules never leak onto page
+   content outside this component.
+
+   Inline code and links are intentionally NOT restyled here — code-chip/inline-link are real
+   components with their own encapsulation, authored directly inside projected content
+   (<ngpt-code-chip>, <ngpt-inline-link>). See docs/decisions.md. */
+
+.ngpt-prose {
+  display: block;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Headings                                                                */
+/* ---------------------------------------------------------------------- */
+
+.ngpt-prose h1 {
+  font: var(--ngpt-sys-typescale-headline-large);
+  letter-spacing: -0.01em;
+  color: var(--ngpt-text-primary);
+  margin: 0 0 var(--ngpt-sys-space-350);
+}
+
+.ngpt-prose h2 {
+  font: var(--ngpt-sys-typescale-title-large);
+  color: var(--ngpt-text-primary);
+  margin: var(--ngpt-sys-space-800) 0 var(--ngpt-sys-space-250);
+}
+
+.ngpt-prose h3 {
+  font: var(--ngpt-sys-typescale-title-medium);
+  color: var(--ngpt-text-primary);
+  margin: var(--ngpt-sys-space-700) 0 var(--ngpt-sys-space-200);
+}
+
+.ngpt-prose h4 {
+  font: var(--ngpt-sys-typescale-title-small);
+  color: var(--ngpt-text-secondary);
+  margin: var(--ngpt-sys-space-500) 0 var(--ngpt-sys-space-150);
+}
+
+/* data-measure="marketing" (Home's section H2s): headline-marketing weight/line-height/family,
+   with the size overridden by the page's own clamp — the token's 36px is the clamp ceiling, not
+   a fixed size, mirroring how the Home hero H1 layers a clamp on top of display-large. */
+.ngpt-prose[data-measure='marketing'] h2 {
+  font: var(--ngpt-sys-typescale-headline-marketing);
+  font-size: clamp(26px, 3.4vw, 36px);
+  letter-spacing: -0.02em;
+}
+
+.ngpt-prose :is(h2, h3, h4) {
+  scroll-margin-top: var(--ngpt-sys-layout-scroll-offset);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Heading anchors — consumer-authored `<a class="heading-anchor">` inside */
+/* the heading; prose styles the reveal-on-hover/focus treatment only.     */
+/* ---------------------------------------------------------------------- */
+
+.ngpt-prose .heading-anchor {
+  margin-left: var(--ngpt-sys-space-200);
+  color: var(--ngpt-accent);
+  text-decoration: none;
+  opacity: 0;
+  transition: opacity var(--ngpt-sys-motion-duration-fast) var(--ngpt-sys-motion-easing-standard);
+}
+
+.ngpt-prose :is(h2, h3, h4):hover .heading-anchor,
+.ngpt-prose .heading-anchor:focus-visible {
+  opacity: 1;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Lists                                                                    */
+/* ---------------------------------------------------------------------- */
+
+.ngpt-prose :is(ul, ol) {
+  padding-left: var(--ngpt-comp-list-indent);
+  margin: 0 0 var(--ngpt-sys-space-600);
+  font: var(--ngpt-sys-typescale-body-medium);
+  color: var(--ngpt-text-tertiary);
+}
+
+.ngpt-prose li + li {
+  margin-top: var(--ngpt-sys-space-150);
+}
+
+.ngpt-prose li::marker {
+  color: var(--ngpt-text-muted);
+}
+
+.ngpt-prose ol {
+  font-variant-numeric: tabular-nums;
+}
+
+.ngpt-prose :is(ul, ol) :is(ul, ol) {
+  margin: var(--ngpt-sys-space-150) 0 0;
+  padding-left: var(--ngpt-sys-space-500);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Blockquote                                                               */
+/* ---------------------------------------------------------------------- */
+
+.ngpt-prose blockquote {
+  border-left: 2px solid var(--ngpt-border-strong);
+  padding-left: var(--ngpt-sys-space-400);
+  margin: var(--ngpt-sys-space-600) 0;
+  font: var(--ngpt-sys-typescale-body-medium);
+  font-style: normal;
+  color: var(--ngpt-text-tertiary);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Rule — visual treatment inferred (no Build spec table row); see          */
+/* docs/decisions.md.                                                       */
+/* ---------------------------------------------------------------------- */
+
+.ngpt-prose hr {
+  border: none;
+  border-top: 1px solid var(--ngpt-border-subtle);
+  margin: var(--ngpt-sys-space-600) 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Inline emphasis                                                          */
+/* ---------------------------------------------------------------------- */
+
+.ngpt-prose strong {
+  color: var(--ngpt-text-secondary);
+  font-weight: 600;
+}
+
+.ngpt-prose em {
+  font-style: italic;
+}
