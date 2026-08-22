@@ -1,0 +1,11 @@
+/* Token layer — imports the eight foundations token files verbatim.
+   Each file's :root block is copied 1:1 from its spec in src/styles/docs/;
+   never hardcode a value that has a token here or anywhere downstream. */
+@import './color.css';
+@import './typography.css';
+@import './spacing.css';
+@import './sizing.css';
+@import './shape.css';
+@import './motion.css';
+@import './icons.css';
+@import './responsive.css';

@@ -1,0 +1,23 @@
+:root {
+  --ngpt-sys-shape-corner-none: 0px;
+  --ngpt-sys-shape-corner-extra-small: 4px;
+  --ngpt-sys-shape-corner-extra-small-alt: 6px;
+  --ngpt-sys-shape-corner-small: 8px;
+  --ngpt-sys-shape-corner-small-alt: 10px;
+  --ngpt-sys-shape-corner-medium: 12px;
+  --ngpt-sys-shape-corner-large: 20px;
+  --ngpt-sys-shape-corner-full: 24px;
+  --ngpt-sys-elevation-level0: none;
+  --ngpt-sys-elevation-level1: none;
+  --ngpt-sys-elevation-level2: 0 8px 24px oklch(0 0 0 / 0.35);
+  --ngpt-bg-elevated: oklch(0.2 0.005 260);
+  --ngpt-sys-scrim: oklch(0 0 0 / 0.5);
+  --ngpt-sys-scrim-blur: 2px;
+  --ngpt-sys-z-base: 0;
+  --ngpt-sys-z-navbar: 10;
+  --ngpt-sys-z-drawer-scrim: 25;
+  --ngpt-sys-z-drawer: 30;
+  --ngpt-sys-z-popover: 40;
+  --ngpt-sys-z-modal-scrim: 50;
+  --ngpt-sys-z-modal: 60;
+}

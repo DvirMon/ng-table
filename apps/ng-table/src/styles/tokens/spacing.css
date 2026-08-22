@@ -1,0 +1,20 @@
+:root {
+  --ngpt-sys-space-050: 2px;
+  --ngpt-sys-space-075: 3px;
+  --ngpt-sys-space-100: 4px;
+  --ngpt-sys-space-150: 6px;
+  --ngpt-sys-space-200: 8px;
+  --ngpt-sys-space-225: 9px;
+  --ngpt-sys-space-250: 10px;
+  --ngpt-sys-space-275: 11px;
+  --ngpt-sys-space-300: 12px;
+  --ngpt-sys-space-350: 14px;
+  --ngpt-sys-space-400: 16px;
+  --ngpt-sys-space-450: 18px;
+  --ngpt-sys-space-500: 20px;
+  --ngpt-sys-space-600: 24px;
+  --ngpt-sys-space-700: 28px;
+  --ngpt-sys-space-800: 32px;
+  --ngpt-sys-space-900: 36px;
+  --ngpt-sys-space-1000: 40px;
+}

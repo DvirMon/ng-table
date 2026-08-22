@@ -1,0 +1,61 @@
+:root {
+  /* surfaces */
+  --ngpt-bg-app: oklch(0.16 0.005 260);
+  --ngpt-bg-deep: oklch(0.11 0.004 260);
+  --ngpt-bg-surface: oklch(0.13 0.004 260);
+  --ngpt-bg-raised: oklch(0.17 0.005 260);
+  --ngpt-bg-row: oklch(0.19 0.005 260);
+  --ngpt-bg-hover: oklch(0.2 0.005 260);
+  --ngpt-bg-elevated: oklch(0.2 0.005 260);
+  --ngpt-bg-active: oklch(0.24 0.005 260);
+  --ngpt-comp-tab-track-bg: oklch(0.22 0.005 260);
+  --ngpt-comp-tab-item-active-bg: oklch(0.3 0.005 260);
+  --ngpt-bg-code-chip: oklch(0.24 0.005 260);
+
+  /* borders */
+  --ngpt-border-subtle: oklch(0.26 0.005 260);
+  --ngpt-comp-row-divider: oklch(0.24 0.005 260);
+  --ngpt-comp-pagination-border: oklch(0.28 0.005 260);
+  --ngpt-comp-control-border-default: oklch(0.3 0.005 260);
+  --ngpt-comp-pill-border-default: oklch(0.32 0.005 260);
+  --ngpt-border-strong: oklch(0.34 0.005 260);
+  --ngpt-comp-pill-border-hover: oklch(0.45 0.005 260);
+
+  /* text */
+  --ngpt-text-primary: oklch(1 0 0);
+  --ngpt-text-secondary: oklch(0.85 0.01 260);
+  --ngpt-text-base: oklch(0.92 0.005 260);
+  --ngpt-comp-pagination-title-default: oklch(0.9 0.005 260);
+  --ngpt-comp-nav-text-default: oklch(0.78 0.005 260);
+  --ngpt-comp-dropdown-text: oklch(0.75 0.01 260);
+  --ngpt-comp-tab-text-inactive: oklch(0.64 0.01 260);
+  --ngpt-text-tertiary: oklch(0.62 0.01 260);
+  --ngpt-text-muted: oklch(0.6 0.01 260);
+  --ngpt-comp-select-placeholder: oklch(0.6 0.01 260);
+  --ngpt-comp-toc-nested-text: oklch(0.6 0.01 260);
+  --ngpt-comp-code-gutter-text: oklch(0.58 0.005 260);
+  --ngpt-comp-menu-text-disabled: oklch(0.42 0.005 260);
+
+  /* accent + state */
+  --ngpt-accent: oklch(0.62 0.19 52);
+  --ngpt-comp-link-hover: oklch(0.68 0.19 52);
+  --ngpt-accent-surface: oklch(0.57 0.19 52);
+  --ngpt-accent-bg: oklch(0.2 0.04 52);
+  --ngpt-onband-fill: white;
+  --ngpt-onband-fill-inverse: oklch(0.18 0.02 52);
+  --ngpt-navbar-scrolled: #18181C;
+  --ngpt-focus-ring: oklch(0.62 0.19 52 / 0.6);
+  --ngpt-status-success: oklch(0.75 0.13 150);
+  --ngpt-status-warning: oklch(0.8 0.12 85);
+  --ngpt-status-error: oklch(0.7 0.19 25);
+  --ngpt-status-neutral: oklch(0.6 0.01 260);
+
+  /* callout tints */
+  --ngpt-comp-callout-note-bg: oklch(0.19 0.005 260);
+  --ngpt-comp-callout-note-border: oklch(0.28 0.005 260);
+  --ngpt-comp-callout-note-accent: oklch(0.7 0.01 260);
+  --ngpt-comp-callout-warning-bg: oklch(0.21 0.03 85);
+  --ngpt-comp-callout-warning-border: oklch(0.34 0.06 85);
+  --ngpt-comp-callout-tip-bg: oklch(0.21 0.03 150);
+  --ngpt-comp-callout-tip-border: oklch(0.34 0.06 150);
+}
