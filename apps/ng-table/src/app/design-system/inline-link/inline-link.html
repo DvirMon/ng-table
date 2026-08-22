@@ -1,11 +1,4 @@
-<a
-  class="inline-link"
-  [attr.href]="href()"
-  [attr.target]="external() ? '_blank' : null"
-  [attr.rel]="external() ? 'noopener noreferrer' : null"
->
-  <ng-content />
-  @if (external()) {
-    <span class="visually-hidden"> (opens in new tab)</span>
-  }
-</a>
+<ng-content />
+@if (external()) {
+  <span class="visually-hidden"> (opens in new tab)</span>
+}

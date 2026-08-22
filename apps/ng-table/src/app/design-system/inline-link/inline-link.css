@@ -1,17 +1,14 @@
-/* Text-run component: the host must not introduce a box in the surrounding
-   prose flow — the anchor below is the only element that participates in layout. */
+/* The host IS the consumer's <a> (ADR-0005), so no `display` is set at all — an anchor is inline
+   by default and participates directly in the surrounding prose flow. The old
+   `:host { display: contents }` existed only to hide a wrapper element that no longer ships. */
 :host {
-  display: contents;
-}
-
-.inline-link {
   color: var(--ngpt-accent);
   text-decoration: underline;
   text-decoration-color: color-mix(in oklch, var(--ngpt-accent) 40%, transparent);
   text-underline-offset: 2px;
 }
 
-.inline-link:hover {
+:host(:hover) {
   color: var(--ngpt-comp-link-hover);
   text-decoration-color: currentColor;
 }

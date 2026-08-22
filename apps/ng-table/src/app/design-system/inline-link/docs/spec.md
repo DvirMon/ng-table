@@ -59,6 +59,26 @@ paragraph with several links still reads as prose.
 | Margin | none — inline within text flow | `—` |
 
 
+## API (as shipped)
+
+Attribute-hosted on the consumer's `<a>` — no wrapper element ships (ADR-0005).
+
+| | |
+|---|---|
+| Selector | `a[ngptInlineLink]` |
+| Inputs | `external = input(false, { transform: booleanAttribute })` |
+| Host attributes | `target="_blank"` + `rel="noopener noreferrer"` when `external`; otherwise the consumer's own authored values are preserved |
+| Content | projected label, followed by a visually-hidden `" (opens in new tab)"` span when `external` |
+
+`href` is **not** an input — the consumer sets the native attribute. So are `target` and `rel`
+for the non-external case; `external` is a shorthand that owns all three of `target`, `rel` and the
+screen-reader text together (see `docs/decisions.md`).
+
+```html
+<a ngptInlineLink href="/docs/directives">Core directives</a>
+<a ngptInlineLink external href="https://github.com/…">GitHub</a>
+```
+
 ## HTML/CSS mock
 
 ```html
