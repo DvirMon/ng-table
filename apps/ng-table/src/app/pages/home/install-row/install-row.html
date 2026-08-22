@@ -1,0 +1,8 @@
+<pre class="command"><span class="prompt" aria-hidden="true">$ </span>{{ command() }}</pre>
+<ngpt-icon-button
+  icon="lucideCopy"
+  [size]="30"
+  [state]="copyState()"
+  [label]="copyLabel()"
+  (pressed)="onCopyPressed()"
+/>

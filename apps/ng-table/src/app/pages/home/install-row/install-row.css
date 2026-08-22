@@ -1,0 +1,28 @@
+:host {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-300);
+  max-width: var(--ngpt-sys-layout-prose-measure);
+  padding: var(--ngpt-sys-space-350) var(--ngpt-sys-space-350) var(--ngpt-sys-space-350) var(--ngpt-sys-space-450);
+  background: var(--ngpt-bg-deep);
+  border: 1px solid var(--ngpt-border-subtle);
+  border-radius: var(--ngpt-sys-shape-corner-small-alt);
+}
+
+.command {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow-x: auto;
+  font: var(--ngpt-sys-typescale-code);
+  color: var(--ngpt-text-secondary);
+}
+
+.prompt {
+  color: var(--ngpt-text-muted);
+  user-select: none;
+}
+
+ngpt-icon-button {
+  flex: none;
+}
