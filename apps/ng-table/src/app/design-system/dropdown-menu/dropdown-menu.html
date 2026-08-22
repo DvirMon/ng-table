@@ -1,0 +1,27 @@
+@for (item of items(); track item.id; let i = $index) {
+  @if (isGroupStart(item, i)) {
+    @if (i > 0) {
+      <div class="menu-divider" role="separator"></div>
+    }
+    @if (item.group) {
+      <div class="menu-label">{{ item.group }}</div>
+    }
+  }
+  <div
+    #optionElement
+    class="menu-option"
+    [attr.role]="optionRole(item)"
+    [attr.aria-checked]="item.selected === undefined ? null : item.selected"
+    [attr.aria-disabled]="item.disabled ? 'true' : null"
+    [attr.data-selected]="item.selected ? '' : null"
+    [attr.data-disabled]="item.disabled ? '' : null"
+    [attr.data-focused]="highlightedId() === item.id ? '' : null"
+    [attr.tabindex]="highlightedId() === item.id ? 0 : -1"
+    (click)="onOptionClick(item)"
+  >
+    <span>{{ item.label }}</span>
+    @if (item.selected) {
+      <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" />
+    }
+  </div>
+}
