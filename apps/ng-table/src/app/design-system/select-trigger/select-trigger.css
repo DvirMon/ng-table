@@ -1,0 +1,63 @@
+/* :host is a plain positioning wrapper around the trigger button + the floating dropdown-menu it
+   opens — dropdown-menu owns its own box/motion but not its placement (its own docs/decisions.md),
+   so this file positions it relative to the trigger. */
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ngpt-sys-space-250);
+  width: 100%;
+  padding: var(--ngpt-sys-space-275) var(--ngpt-comp-select-px);
+  border-radius: var(--ngpt-sys-shape-corner-full);
+  border: 1px solid var(--ngpt-border-strong);
+  background: var(--ngpt-bg-raised);
+  color: var(--ngpt-comp-select-placeholder);
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard),
+    color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard),
+    box-shadow var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard);
+}
+
+.select-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* "filled" state (spec front-matter) — a value is selected but the trigger is neither open nor
+   focused. No dedicated token ships for this in the spec's Build spec table, so it reuses the
+   same secondary-text tier the mock already applies to the active state (docs/decisions.md). */
+:host([data-filled]) .select-trigger {
+  color: var(--ngpt-text-secondary);
+}
+
+/* Active/focus state (spec states table). Keyed off the `data-open` host attribute per
+   CONVENTIONS.md #3 (state as data-* attributes) rather than the mock's `.is-active` class or
+   `[aria-expanded]` selector. `:focus-visible` is native browser state, not app state, so it's
+   composed alongside rather than mirrored into a data attribute. */
+:host([data-open]) .select-trigger,
+.select-trigger:focus-visible {
+  border: 1.5px solid var(--ngpt-accent);
+  box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
+  color: var(--ngpt-text-secondary);
+  outline: none;
+}
+
+:host([data-open]) .select-trigger ng-icon,
+.select-trigger:focus-visible ng-icon {
+  color: var(--ngpt-accent);
+}
+
+/* dropdown-menu positions itself absolute + adds its own margin-top; this only sets *where*
+   relative to the trigger (its own decisions.md: "Positioning ... is the caller's job"). */
+ngpt-dropdown-menu {
+  top: 100%;
+  inset-inline-start: 0;
+}
