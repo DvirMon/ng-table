@@ -104,9 +104,14 @@ domain's implementation must follow so parallel agents never need to coordinate 
    (`src/styles/tokens/icons.css`). Map each spec's placeholder glyph (`▾ ⧉ ⚡ ← → ≡ × ⌕ ✓ ⓘ ⚠`) to
    the nearest real Lucide icon per `src/styles/docs/Iconography.md`'s mapping table, and record your
    choice in your domain's `docs/decisions.md`.
-8. **Prose is the one `ViewEncapsulation.None` exception.** `ngpt-prose` styles arbitrary projected article
-   markup (`h2`/`h3`/`p`/`ul`/`code`/…), which view encapsulation can't reach from outside. No other
-   component needs this.
+8. **Styling projected content means `ViewEncapsulation.None` — scoped under a host class.**
+   Emulated encapsulation stamps projected nodes with the *declaring* component's id, so a
+   component can never reach markup a consumer passed into it. `ngptProse` (arbitrary article
+   markup) and `ngptHomeFeatureGrid` (consumer-authored cells) both need this. Two rules when you
+   do: every selector in that stylesheet must be scoped under the component's own host class
+   (`.ngpt-prose`, `.ngpt-home-feature-grid`) so the global-scope rules cannot leak, and `:host`
+   stops working — don't reach for it. Do **not** use `::ng-deep` instead: it is deprecated.
+   A component that styles only its own template never needs any of this.
 9. **Reduced motion is each component's own job where it applies transforms.** `src/styles/global.css`
    handles the global scroll-behavior toggle and the generic transition-duration collapse under
    `prefers-reduced-motion: reduce`. A component that transforms on open/close (`dropdown-menu`, the

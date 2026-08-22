@@ -1,16 +1,23 @@
-:host {
+/* ViewEncapsulation.None — every rule here is global, so all of them stay scoped under the
+   .ngpt-home-feature-grid host class. Do NOT rewrite these as `:host`: `:host` does not apply
+   without encapsulation, and encapsulation is exactly what cannot reach the consumer-authored
+   cells. Same constraint as `prose` (CONVENTIONS.md #8). */
+
+/* 3→2→1 by measure, not by breakpoint (spec § Feature grid). The gap alone carries the
+   separation — no cards, borders, tint or icons. */
+.ngpt-home-feature-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--ngpt-sys-space-800);
 }
 
-h3 {
+.ngpt-home-feature-grid h3 {
   font: var(--ngpt-sys-typescale-title-medium);
   color: var(--ngpt-text-primary);
   margin: 0 0 var(--ngpt-sys-space-200);
 }
 
-p {
+.ngpt-home-feature-grid p {
   font: var(--ngpt-sys-typescale-body-medium);
   color: var(--ngpt-text-tertiary);
   margin: 0;
