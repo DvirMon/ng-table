@@ -14,7 +14,7 @@ depends_on:
 states:
   - "default"
 a11y:
-  - "role=\"contentinfo\""
+  - "contentinfo landmark — implicit on the native <footer> host; no explicit role= (see decisions.md). Requires the footer not be nested in <article>/<aside>/<main>/<nav>/<section>."
 tokens: [--ngpt-sys-space-700, --ngpt-comp-row-divider, --ngpt-sys-typescale-label-large-sm, --ngpt-text-tertiary]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
@@ -25,6 +25,39 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 Full-width strip below the page grid (outside the 3-column layout, spans the whole viewport width).
 
+
+## API
+
+Attribute-hosted (ADR-0005) — the consumer authors the footer's contents, the primitives style
+them. No `links` input; nothing here inserts, removes or reorders DOM.
+
+| Primitive | Selector | Inputs | Content |
+|---|---|---|---|
+| strip | `footer[ngptPageFooter]` | — | link row (optional) + copyright line |
+| link | `a[ngptPageFooterLink]` | — | the link label |
+
+`href`/`target`/`rel` are native, set by the consumer. The copyright line is projected content, not
+component-rendered — the spec's own mock has it as the `<footer>`'s text, and under the inversion
+that text is the consumer's to author (Home's copy lives in `home.content.ts`).
+
+```html
+<!-- docs pages: copyright only -->
+<footer ngptPageFooter>Copyright © 2026 NGP Table</footer>
+
+<!-- Home: link row above the copyright line -->
+<footer ngptPageFooter>
+  <nav aria-label="Footer">
+    <a ngptPageFooterLink href="https://github.com/sponsors/…" target="_blank" rel="noopener noreferrer">Sponsor</a>
+    <a ngptPageFooterLink href="https://discord.gg/…" target="_blank" rel="noopener noreferrer">Discord</a>
+    <a ngptPageFooterLink href="https://github.com/…" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </nav>
+  Copyright © 2026 NGP Table
+</footer>
+```
+
+The link row's `<nav aria-label="Footer">` carries no primitive and needs no styling: the strip is a
+centered column flex (16px gap), and each link's own 12px inline padding puts adjacent links 24px
+apart. `FooterLink` stays in `page-footer.types.ts` as the typed shape for authored link copy.
 
 ## Container
 

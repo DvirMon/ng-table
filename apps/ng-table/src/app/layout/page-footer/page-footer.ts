@@ -1,16 +1,17 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import type { FooterLink } from './page-footer.types';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 
+/**
+ * Attribute-hosted on the consumer's `<footer>` (ADR-0005). The consumer authors the link row and
+ * the copyright line; this owns the strip itself — divider, padding, centered muted type, and the
+ * column gap between whatever it is given.
+ *
+ * No `role="contentinfo"`: `<footer>` already exposes that landmark implicitly unless it is a
+ * descendant of `<article>`/`<aside>`/`<main>`/`<nav>`/`<section>`. See `docs/decisions.md`.
+ */
 @Component({
-  selector: 'ngpt-page-footer',
+  selector: 'footer[ngptPageFooter]',
   templateUrl: './page-footer.html',
   styleUrl: './page-footer.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    'attr.role': 'contentinfo',
-  },
 })
-export class PageFooter {
-  /** Empty renders the plain docs footer (copyright only); non-empty adds the link row above it. */
-  readonly links = input<readonly FooterLink[]>([]);
-}
+export class PageFooter {}
