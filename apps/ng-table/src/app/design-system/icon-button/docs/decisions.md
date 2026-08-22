@@ -79,3 +79,100 @@ wires the clipboard timer (install-row, code-block).
   var(--ngpt-text-primary)`) locally, per CONVENTIONS rule #4 ("don't restyle focus locally
   unless your spec says an element needs a different treatment") — the ring itself needs no
   different treatment here.
+
+---
+
+# Conversion to `button[ngptIconButton]` (ADR-0005)
+
+Everything above describes the pre-conversion `ngpt-icon-button` element wrapper. This section
+records the conversion and supersedes the parts of it that conflict.
+
+## Selector and shape
+
+`ngpt-icon-button` → `button[ngptIconButton]`. The template is now `<ng-content />` in
+`icon-button.html` (separate file — CONVENTIONS forbids inline templates even for a one-liner),
+and every `.icon-button` rule moved verbatim onto `:host` / `:host(:pseudo)`. No wrapper element
+ships; the host *is* the button, so consumers bind the native `(click)` and `pressed:
+output<void>()` is gone.
+
+`type="button"` is applied as a constructor default exactly as `pill-button` does — imperative,
+guarded on `hasAttribute('type')`, so a consumer's explicit `type="submit"` still wins where a
+host *binding* would have clobbered it. Unlike `pill-button` there is no `tagName` check, because
+the selector admits only `<button>`.
+
+## `icon` and the 13-icon registry are gone
+
+`icon: input<string>()` existed only because a component could inject a glyph a directive could
+not. With the glyph projected, the consumer authors `<ng-icon>` and registers it locally. That
+deletes the whole `provideIcons({ …13 icons… })` block and the "Local icon registration
+(ADR-0004)" note above along with it — the flag it raised ("if a later spec introduces a glyph
+outside this table, its call sites render nothing") is resolved by construction: each call site
+now registers exactly what it renders.
+
+The glyph size / `aria-hidden` / `color="currentColor"` recipe moves to each call site. The
+`color="currentColor"` part is load-bearing — the state coloring below only reaches the glyph
+because of it.
+
+## `label` **dropped** — not kept
+
+The conversion brief said to keep `label` (setting `aria-label` + `title`). It is dropped
+instead, for a reason that only surfaced once both halves were written:
+
+1. **It is native capability.** `aria-label` and `title` are attributes the consumer can now set
+   directly on the element, because there is no longer a wrapper hiding it. That is precisely the
+   case ADR-0005 says never to re-declare as an input, and the same call the ADR made for
+   `disabled`/`href`/`type`. `label` existed only to bridge the wrapper.
+2. **Keeping it is a real collision, not a style preference.** `[ngptCopyConfirm]` binds
+   `[attr.aria-label]` per state on the *same host*. Two directives binding the same attribute
+   both write it every change-detection pass; which one lands is decided by Angular's
+   directive-execution order, which is not part of the public contract. Worse, with `label` unset
+   `icon-button` would write `null` — *removing* the attribute the directive just set. The brief
+   asked for both "`label` sets `aria-label` on the host" and "per-state `aria-label` on the
+   host"; those cannot both be true of one element.
+
+Consequence for call sites: `label="Close"` becomes `aria-label="Close"`, and copy buttons drop
+it entirely in favor of `[ngptCopyConfirm]`'s `idleLabel`/`copiedLabel`/`failedLabel`.
+
+`title` is likewise native; `[ngptCopyConfirm]` sets it per state where it applies.
+
+## `state` / `displayIcon` / `accessibleLabel` / `confirmationMessage` / live region — moved
+
+All five moved to `[ngptCopyConfirm]`. `IconButtonState` was deleted from `icon-button.types.ts`
+and is now `CopyConfirmState` in `copy-confirm/copy-confirm.types.ts`. `icon-button.types.ts`
+keeps only `IconButtonSize`.
+
+The visually-hidden `<span aria-live="polite">` and its `.visually-hidden` CSS are deleted; a
+directive has no template, so the announcement is re-solved in
+`copy-confirm/copy-confirm.announcer.ts` — see that domain's `docs/decisions.md`.
+
+**Known breakage, deliberate:** `code-block.ts` and `install-row.ts` still import
+`IconButtonState` and bind `icon`/`state`/`(pressed)`. Those are out of this pass's write scope; a
+separate sequential pass converts them.
+
+## What stayed: `data-copy-state` coloring
+
+`:host([data-copy-state='copied'])` and `:host([data-copy-state='failed'])` stay in
+`icon-button.css` even though this component no longer sets the attribute. The attribute is the
+declared contract between the two (ADR-0005: "Host `[attr.data-copy-state]` so CSS can react"),
+`:host([attr])` matches regardless of who wrote the attribute, and the spec front-matter's `owns`
+still claims "icon color per state". A directive carries no stylesheet, so this is the only place
+the coloring can live without moving a domain's CSS out of its domain — the exact split ADR-0005
+rejected for `libs/shared/design-system`.
+
+Consequence: `[ngptCopyConfirm]` on a host *other* than `ngptIconButton` gets the behavior but no
+confirmed/failed color. Acceptable — coloring is chrome, and that host owns its own chrome.
+
+## `:host(:disabled)` added
+
+The source spec's States table has always listed `Disabled | disabled prop | Opacity 0.5`, and the
+pre-conversion decisions above record it as skipped because the fixed contract named no `disabled`
+input. With the host as the real button the input was never the point — `:host(:disabled)` reacts
+to the native attribute for free, matching `pill-button`. Added; costs one rule, closes a
+long-standing spec gap.
+
+## `padding: 0` added to `:host`
+
+New. A `<button>` carries UA padding (`1px 6px`); the old inner `.icon-button` inherited the same
+and got away with it because the fixed `width`/`height` plus `box-sizing: border-box` (global
+`reset.css`) already pinned the box and flex centering absorbed the rest. Zeroing it makes the
+30×30 box deterministic rather than incidentally correct. No visual change.

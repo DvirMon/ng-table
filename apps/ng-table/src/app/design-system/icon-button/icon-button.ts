@@ -1,86 +1,35 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import {
-  lucideArrowLeft,
-  lucideArrowRight,
-  lucideArrowUp,
-  lucideCheck,
-  lucideChevronDown,
-  lucideCopy,
-  lucideInfo,
-  lucideLightbulb,
-  lucideMenu,
-  lucideSearch,
-  lucideTriangleAlert,
-  lucideX,
-  lucideZap,
-} from '@ng-icons/lucide';
-import type { IconButtonSize, IconButtonState } from './icon-button.types';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input } from '@angular/core';
+import type { IconButtonSize } from './icon-button.types';
 
+/**
+ * Attribute-hosted on a real `<button>` (ADR-0005) — the host *is* the button, so there is no
+ * wrapper element and no re-plumbed native capability. Chrome and sizing only:
+ *
+ * - The glyph is consumer-authored (`<ng-icon>` projected through `<ng-content />`), so this
+ *   component registers no icons at all. Consumers register what they use (ADR-0004).
+ * - `aria-label` / `title` / `disabled` / `type` are native attributes the consumer sets directly.
+ * - Copy-confirmation behavior lives in `[ngptCopyConfirm]`, a directive the consumer places
+ *   beside this one. This stylesheet still reacts to the `data-copy-state` attribute that
+ *   directive writes — the attribute is the contract between the two.
+ */
 @Component({
-  selector: 'ngpt-icon-button',
-  imports: [NgIcon],
+  selector: 'button[ngptIconButton]',
   templateUrl: './icon-button.html',
   styleUrl: './icon-button.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [
-    provideIcons({
-      lucideArrowLeft,
-      lucideArrowRight,
-      lucideArrowUp,
-      lucideCheck,
-      lucideChevronDown,
-      lucideCopy,
-      lucideInfo,
-      lucideLightbulb,
-      lucideMenu,
-      lucideSearch,
-      lucideTriangleAlert,
-      lucideX,
-      lucideZap,
-    }),
-  ],
   host: {
     '[attr.data-size]': 'size()',
-    '[attr.data-copy-state]': 'state()',
   },
 })
 export class IconButton {
-  readonly icon = input<string>();
-  readonly label = input<string>();
   readonly size = input<IconButtonSize>(30);
-  readonly state = input<IconButtonState>('idle');
 
-  readonly pressed = output<void>();
-
-  /** Non-empty only for the confirmation states — doubles as the polite live-region text. */
-  protected readonly confirmationMessage = computed<string>(() => {
-    switch (this.state()) {
-      case 'copied':
-        return 'Copied';
-      case 'failed':
-        return 'Copy failed, select manually';
-      case 'idle':
-        return '';
+  constructor() {
+    // A bare <button> defaults to type="submit" inside a form, which this never wants. Set as a
+    // default rather than a host binding so a consumer's own type="submit" still wins.
+    const host = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+    if (!host.hasAttribute('type')) {
+      host.setAttribute('type', 'button');
     }
-  });
-
-  protected readonly displayIcon = computed<string | undefined>(() => {
-    switch (this.state()) {
-      case 'copied':
-        return 'lucideCheck';
-      case 'failed':
-        return 'lucideTriangleAlert';
-      case 'idle':
-        return this.icon();
-    }
-  });
-
-  protected readonly accessibleLabel = computed<string | undefined>(
-    () => this.confirmationMessage() || this.label(),
-  );
-
-  protected onPressed(): void {
-    this.pressed.emit();
   }
 }
