@@ -1,5 +1,16 @@
 # tab-switcher — decisions
 
+## Wired onto `ng-primitives/tabs`
+
+Rewired from a hand-rolled roving-tabindex implementation onto `NgpTabset` + `NgpTabList`
+(component `hostDirectives`, since `:host` is the track — no wrapper element) and `NgpTabButton`
+per item. `hostDirectives` input/output remapping (`ngpTabsetValue: selected`,
+`ngpTabsetValueChange: selectedChange`) keeps the component's public contract
+(`selected`/`selectedChange`) unchanged for consumers — no call sites existed yet, so this was a
+zero-risk rewire. Arrow-key roving focus, `role="tab"`/`role="tablist"`, `aria-selected`, and
+`data-active` all now come from the primitive instead of hand-rolled `viewChildren` + keydown
+logic.
+
 ## Manual activation, not selection-follows-focus
 
 The spec's `a11y` front-matter only says "arrow keys move between tabs, aria-selected on the
@@ -10,11 +21,14 @@ selection followed focus, a tab could never be simultaneously focused *and* inac
 keyboard, so that row would be unreachable. Read literally, the spec requires focus and
 selection to be decouplable — i.e. the ARIA APG **manual activation** pattern.
 
-Implemented as: ArrowLeft/ArrowRight move the roving-tabindex focus only (`tabButtons()[i].focus()`
-via a `viewChildren` query); Enter or Space on the focused tab calls `activate()`, which emits
-`selectedChange`. A pointer click also calls `activate()` directly (click is always immediate,
-manual-vs-automatic only concerns keyboard). This is the delta the fixed contract flagged as
-needing a spec check — flagging it here per the report contract.
+Implemented via `provideTabsConfig({ activateOnFocus: false })` (component-scoped provider, not
+global — this control's manual-activation requirement shouldn't leak to any future tabs
+component elsewhere in the app). With `activateOnFocus: false`, `NgpTabButton` only selects on
+its native `click` listener — moving roving focus with arrow keys does not select. Enter/Space
+activation on the focused tab needs no extra keydown handling: it's a real `<button>`, so the
+browser's own Enter/Space-triggers-click semantics fire the same `click` listener. This
+reproduces the previous hand-rolled behavior (arrow keys move focus only; click/Enter/Space
+activates) without any local keydown code.
 
 ## `TabItem` shape: `{ id, label }` only
 
@@ -48,10 +62,10 @@ inherited from the global policy, not duplicated.
 
 ## Roving-tabindex fallback when nothing is selected yet
 
-`selected` is an optional input (`input<string>()`, no default). If it's `undefined`, or set to
-an id not present in `tabs()`, `focusableId` falls back to `items()[0]?.id` so the tablist
-always has exactly one tab in the natural tab order (ARIA APG requirement), even before a
-parent has set an initial selection.
+`selected` is an optional input (remapped onto `NgpTabset`'s `value`, itself optional). If it's
+`undefined`, or set to an id not present in `tabs()`, `NgpTabset`'s own `selectedTab` computed
+falls back to the first non-disabled registered tab — the same fallback the hand-rolled
+`focusableId` computed used to provide locally, now handled by the primitive.
 
 ## No icon mapping needed
 
