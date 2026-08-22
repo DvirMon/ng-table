@@ -29,8 +29,47 @@ domain's implementation must follow so parallel agents never need to coordinate 
 
 ## This app's conventions
 
-1. **Selector prefix `ngpt`**, element selectors, kebab-case (`ngpt-pill-button`). Already set in
-   `project.json` `"prefix"` and `eslint.config.mjs`.
+1. **Selector prefix `ngpt`.** Which *kind* of selector depends on what the domain is (ADR-0005):
+
+   **Attribute-hosted** — **camelCase** attribute naming the elements it is valid on. Use this
+   whenever the domain exists to style or add behavior to an element that already has semantics:
+   ```ts
+   selector: 'button[ngptPillButton], a[ngptPillButton]'
+   ```
+   camelCase is the Angular directive-selector convention and what the rest of this repo already
+   uses — `acmeDropdown`, `acmeAutocompleteInput`, `ngpTableCell`, and `ng-primitives`' own
+   `ngpMenuTrigger`/`ngpSelect`. (Angular Material's `button[mat-button]` is a legacy exception;
+   `matTooltip`/`matInput`/`cdkDrag` are the rule.) Element selectors stay kebab-case — the two
+   naming styles are how a reader tells at a glance which kind of selector a domain declares.
+   Declared as a `@Component` with `template: '<ng-content />'` and a `styleUrl`, so the CSS stays
+   colocated in the domain folder under `:host()`. It hosts on the consumer's element — no wrapper
+   ships.
+
+   **Element** — kebab-case (`ngpt-code-block`), only for a domain that composes real structure of
+   its own and shadows no native element.
+
+   **The test:** if the template's root would be a semantic native element, or the host needs a
+   `role=`/`aria-*` to compensate for being a custom element, it is attribute-hosted. `<ngpt-callout
+   role="note">` was the tell for `aside[ngptCallout]`.
+
+   **Never re-declare native capability as an input.** `disabled`, `href`, `target`, `rel`, `type`
+   are set by the consumer on the element. Inputs carry only what is the primitive's own
+   (`variant`, `active`, `state`). An element wrapper forces every native affordance to be
+   re-plumbed one input at a time, and whatever isn't re-plumbed is simply unavailable.
+
+   **Opt-in behavior is a separate `@Directive` the consumer places** beside the component on the
+   same element — `<button ngptIconButton ngptCopyConfirm>`. Legal because only *component +
+   component* is forbidden on one host. Do not reach for `hostDirectives`: it is statically
+   resolved, so it applies the behavior to every consumer and forces the component to re-declare
+   the directive's inputs (`libs/shared/table/CLAUDE.md`). Behavior imported from `ng-primitives`
+   is the exception — it arrives through `hostDirectives` because it is unconditional for the
+   domain that declares it (`dropdown-pill`'s `NgpMenuTrigger`).
+
+   **Boolean inputs mirroring a native attribute need `transform: booleanAttribute`.** Without it,
+   `<button ngptPillButton disabled>` passes the string `''`, which is falsy, so a
+   `'[disabled]': 'disabled() || null'` host binding *removes* the attribute and silently
+   un-disables the button. Prefer dropping the input and letting the consumer set the native
+   attribute; keep it only where the value also drives styling.
 2. **Variants via input + `data-variant` host attribute.**
    ```ts
    variant = input<PillButtonVariant>('default');
