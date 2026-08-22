@@ -1,0 +1,80 @@
+<div class="search-scrim" aria-hidden="true" (click)="closed.emit()"></div>
+
+<div
+  #panel
+  class="search-panel"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Search docs"
+  (keydown)="onPanelKeydown($event)"
+>
+  <div class="search-input-row">
+    <ng-icon name="lucideSearch" size="var(--ngpt-sys-icon-size-md)" color="currentColor" aria-hidden="true" />
+    <input
+      #searchInput
+      class="search-input"
+      type="text"
+      role="combobox"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="Search docs"
+      aria-label="Search docs"
+      [value]="query()"
+      (input)="onQueryInput($event)"
+      [attr.aria-expanded]="hasResults()"
+      aria-controls="search-results-list"
+      [attr.aria-activedescendant]="activeResultId()"
+    />
+    <kbd class="kbd">esc</kbd>
+  </div>
+
+  <div id="search-results-list" class="search-results" [attr.role]="hasResults() ? 'listbox' : null">
+    @if (hasQuery()) {
+      @if (hasResults()) {
+        @for (group of resultGroups(); track group.label) {
+          <div class="search-group-label">{{ group.label }}</div>
+          @for (result of group.results; track result.id) {
+            <a
+              class="search-row"
+              role="option"
+              [id]="resultRowId(result.id)"
+              [attr.aria-selected]="resultRowId(result.id) === activeResultId()"
+              [attr.data-active]="resultRowId(result.id) === activeResultId() ? '' : null"
+              (mouseenter)="setActiveById(result.id)"
+              (click)="selectResult(result)"
+            >
+              <span class="search-row__title">{{ result.title }}</span>
+              <span class="search-row__path">{{ result.breadcrumb }}</span>
+            </a>
+          }
+        }
+      } @else {
+        <div class="search-empty-state">
+          <p class="search-empty-state__title">No results for &ldquo;{{ query() }}&rdquo;</p>
+          <p class="search-empty-state__hint">Try a shorter or different query.</p>
+        </div>
+      }
+    } @else {
+      @if (recentSearches().length > 0) {
+        <div class="search-group-label">Recent</div>
+        @for (entry of recentSearches(); track entry.query) {
+          <button type="button" class="search-row search-row--recent" (click)="selectRecent(entry)">
+            <span class="search-row__title">{{ entry.query }}</span>
+          </button>
+        }
+      } @else {
+        <div class="search-empty-state">
+          <p class="search-empty-state__title">Search the docs</p>
+        </div>
+      }
+    }
+  </div>
+
+  <div class="search-footer">
+    <kbd class="kbd">↑↓</kbd> navigate
+    <kbd class="kbd">↵</kbd> select
+    <kbd class="kbd">esc</kbd> close
+  </div>
+
+  <div class="sr-only" aria-live="polite">{{ liveRegionText() }}</div>
+</div>

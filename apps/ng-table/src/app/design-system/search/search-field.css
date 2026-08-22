@@ -1,0 +1,78 @@
+:host {
+  display: contents;
+}
+
+.search-field {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-200);
+  width: var(--ngpt-comp-search-field-width);
+  height: var(--ngpt-comp-search-field-height);
+  padding: 0 var(--ngpt-sys-space-250);
+  border-radius: var(--ngpt-sys-shape-corner-small);
+  border: 1px solid var(--ngpt-comp-control-border-default);
+  background: var(--ngpt-bg-raised);
+  color: var(--ngpt-text-muted);
+  font: var(--ngpt-sys-typescale-label-large-sm);
+  cursor: pointer;
+}
+
+.search-field:hover {
+  border-color: var(--ngpt-comp-pill-border-hover);
+}
+
+.search-field:focus-visible {
+  box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
+  outline: none;
+}
+
+.search-field__placeholder {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kbd {
+  flex-shrink: 0;
+  font: var(--ngpt-sys-typescale-code);
+  padding: var(--ngpt-sys-space-050) 5px;
+  border-radius: var(--ngpt-sys-shape-corner-extra-small);
+  background: var(--ngpt-bg-code-chip);
+  color: var(--ngpt-text-secondary);
+}
+
+/* on-band (Home hero navbar only): translucent white well over the accent band. Literal
+   oklch alpha values — no --ngpt-* token covers a translucent-white surface (matches the
+   precedent in pill-button.css's own on-band block). */
+:host([data-variant='on-band']) .search-field {
+  border-color: oklch(1 0 0 / 0.28);
+  background: oklch(1 0 0 / 0.12);
+  color: var(--ngpt-text-primary);
+}
+
+:host([data-variant='on-band']) .search-field:hover {
+  border-color: oklch(1 0 0 / 0.45);
+  background: oklch(1 0 0 / 0.18);
+}
+
+:host([data-variant='on-band']) .kbd {
+  background: transparent;
+  border: 1px solid oklch(1 0 0 / 0.28);
+  color: var(--ngpt-text-primary);
+}
+
+/* Below md: icon-only trigger — Search.md § Surface 1. */
+@media (max-width: 1023px) {
+  .search-field {
+    width: 32px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .search-field__placeholder,
+  .search-field .kbd {
+    display: none;
+  }
+}

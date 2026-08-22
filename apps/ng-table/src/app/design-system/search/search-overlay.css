@@ -1,0 +1,198 @@
+:host {
+  display: contents;
+}
+
+.search-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ngpt-sys-z-modal-scrim);
+  background: var(--ngpt-sys-scrim);
+  backdrop-filter: blur(var(--ngpt-sys-scrim-blur));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate);
+}
+
+.search-panel {
+  position: fixed;
+  top: 15vh;
+  left: 50%;
+  z-index: var(--ngpt-sys-z-modal);
+  display: flex;
+  flex-direction: column;
+  width: var(--ngpt-comp-search-panel-width);
+  max-height: var(--ngpt-comp-search-panel-max-height);
+  border-radius: var(--ngpt-sys-shape-corner-medium);
+  border: 1px solid var(--ngpt-border-subtle);
+  background: var(--ngpt-bg-elevated);
+  box-shadow: var(--ngpt-sys-elevation-level2);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -8px);
+  transition:
+    opacity var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate),
+    transform var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate);
+}
+
+:host([data-open='true']) .search-scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:host([data-open='true']) .search-panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.search-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-250);
+  flex-shrink: 0;
+  height: var(--ngpt-comp-search-input-height);
+  padding: 0 var(--ngpt-sys-space-400);
+  border-bottom: 1px solid var(--ngpt-border-subtle);
+  /* Spec cites oklch(0.55 0.01 260) for both this icon and the placeholder below it — the
+     same hue as --ngpt-text-muted's real token value (0.6), just a slightly stale restated
+     literal. Token wins per CONVENTIONS.md's hardcode rule. */
+  color: var(--ngpt-text-muted);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  font: var(--ngpt-sys-typescale-body-large);
+  color: var(--ngpt-text-primary);
+}
+
+.search-input::placeholder {
+  color: var(--ngpt-text-muted);
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngpt-sys-space-050);
+  padding: var(--ngpt-sys-space-200);
+}
+
+.search-group-label {
+  font: var(--ngpt-sys-typescale-label-small-alt);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ngpt-text-muted);
+  padding: var(--ngpt-sys-space-250) var(--ngpt-sys-space-250) var(--ngpt-sys-space-150);
+}
+
+.search-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngpt-sys-space-050);
+  padding: var(--ngpt-sys-space-250) var(--ngpt-sys-space-300);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small-alt);
+  border: none;
+  border-left: var(--ngpt-comp-nav-border-width) solid transparent;
+  text-decoration: none;
+  background: none;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.search-row__title {
+  font: var(--ngpt-sys-typescale-label-large);
+  color: var(--ngpt-text-secondary);
+}
+
+.search-row__path {
+  font-size: 12px;
+  color: var(--ngpt-text-muted);
+}
+
+.search-row:hover,
+.search-row[data-active] {
+  background: var(--ngpt-bg-active);
+  border-left-color: var(--ngpt-accent);
+}
+
+.search-row:hover .search-row__title,
+.search-row[data-active] .search-row__title {
+  color: var(--ngpt-text-primary);
+}
+
+.search-empty-state {
+  padding: var(--ngpt-sys-space-1000);
+  text-align: center;
+}
+
+.search-empty-state__title {
+  font: var(--ngpt-sys-typescale-label-large);
+  color: var(--ngpt-text-secondary);
+}
+
+.search-empty-state__hint {
+  font-size: 12px;
+  color: var(--ngpt-text-muted);
+  margin-block-start: var(--ngpt-sys-space-100);
+}
+
+.search-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-150);
+  flex-shrink: 0;
+  height: var(--ngpt-sys-space-900);
+  padding: 0 var(--ngpt-sys-space-300);
+  border-top: 1px solid var(--ngpt-border-subtle);
+  font: 400 11px Inter, sans-serif;
+  color: var(--ngpt-text-muted);
+}
+
+.kbd {
+  flex-shrink: 0;
+  font: var(--ngpt-sys-typescale-code);
+  padding: var(--ngpt-sys-space-050) 5px;
+  border-radius: var(--ngpt-sys-shape-corner-extra-small);
+  background: var(--ngpt-bg-code-chip);
+  color: var(--ngpt-text-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Media-feature values can't reference custom properties, so the sm/md breakpoints are
+   restated as literals here (matches Search.md's own CSS mock — not a hardcode violation,
+   a platform limitation). */
+@media (max-width: 639px) {
+  .search-panel {
+    width: calc(100vw - var(--ngpt-sys-space-800));
+    top: 8vh;
+  }
+}
+
+/* Transform-on-open/close suppression under reduced motion — each component's own job per
+   CONVENTIONS.md point 9 (global.css only shortens transition-duration, doesn't remove
+   transforms). The panel keeps its horizontal centering transform; only the vertical
+   open/close slide is removed, so it fades in place instead of sliding. */
+@media (prefers-reduced-motion: reduce) {
+  .search-panel,
+  :host([data-open='true']) .search-panel {
+    transform: translateX(-50%);
+  }
+}
