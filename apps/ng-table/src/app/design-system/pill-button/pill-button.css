@@ -7,6 +7,8 @@
   background: transparent;
   color: var(--ngpt-text-tertiary);
   cursor: pointer;
+  /* the `a[ngptPillButton]` host — a pill never reads as underlined body text */
+  text-decoration: none;
 }
 
 :host(:hover) {

@@ -71,3 +71,24 @@ Not applicable — pill-button is text-only per spec Composition ("Text label, n
 Per the task brief, the "Hero size override" (14.5px/600, 11px 20px padding) called out in the
 spec is a page-local CSS override the Home hero consumer applies via a host class or CSS custom
 property scoped to the hero — not built into this component.
+
+## `disabled` dropped; `<a>` added as a host — ADR-0005
+
+`disabled` was an `input<boolean>(false)` bound to `'[disabled]': 'disabled() || null'`. That is
+broken for the natural call form: `<button ngptPillButton disabled>` passes the *string* `''` from
+the attribute, which is falsy, so the host binding evaluated to `null` and **removed** the
+attribute — silently enabling the button. Only `[disabled]="true"` worked.
+
+Rather than patch it with `transform: booleanAttribute`, the input is gone. ADR-0005's rule is that
+native capability is never re-declared as an input; the consumer sets the native attribute and
+`:host(:disabled)` in the stylesheet already reacts to it. Nothing bound the input, so no call site
+changed.
+
+The selector gained `a[ngptPillButton]`. Home's hero CTAs navigate, so they must be links, not
+buttons with click handlers — the element-wrapper shape made that impossible, which is one of the
+reasons ADR-0005 exists. `text-decoration: none` was added to `:host` for the anchor case.
+
+`type="button"` moved from a static host attribute to a constructor default, because a static host
+attribute would also land on `<a>`, where `type` means something else entirely. Set imperatively
+only when the host is a `<button>` and the consumer has not specified one, so an explicit
+`type="submit"` still wins — which a host *binding* would have clobbered.
