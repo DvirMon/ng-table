@@ -1,0 +1,59 @@
+:host {
+  display: inline-flex;
+  --_ngpt-icon-btn-size: var(--ngpt-comp-icon-btn-size);
+}
+
+:host([data-size='24']) {
+  --_ngpt-icon-btn-size: 24px;
+}
+
+:host([data-size='32']) {
+  --_ngpt-icon-btn-size: 32px;
+}
+
+.icon-button {
+  width: var(--_ngpt-icon-btn-size);
+  height: var(--_ngpt-icon-btn-size);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ngpt-sys-shape-corner-small);
+  border: 1px solid var(--ngpt-comp-control-border-default);
+  background: transparent;
+  color: var(--ngpt-text-tertiary);
+  cursor: pointer;
+  transition:
+    color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard),
+    border-color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard),
+    background-color var(--ngpt-sys-motion-duration-base) var(--ngpt-sys-motion-easing-standard);
+}
+
+.icon-button:hover {
+  border-color: var(--ngpt-comp-pill-border-hover);
+  background: var(--ngpt-bg-hover);
+  color: var(--ngpt-text-secondary);
+}
+
+.icon-button:focus-visible {
+  color: var(--ngpt-text-primary);
+}
+
+:host([data-copy-state='copied']) .icon-button {
+  color: var(--ngpt-status-success);
+}
+
+:host([data-copy-state='failed']) .icon-button {
+  color: var(--ngpt-status-error);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

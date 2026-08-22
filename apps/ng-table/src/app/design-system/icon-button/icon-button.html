@@ -1,0 +1,10 @@
+<button
+  type="button"
+  class="icon-button"
+  [attr.aria-label]="accessibleLabel()"
+  [attr.title]="accessibleLabel()"
+  (click)="onPressed()"
+>
+  <ng-icon [name]="displayIcon()" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+  <span class="visually-hidden" aria-live="polite">{{ confirmationMessage() }}</span>
+</button>
