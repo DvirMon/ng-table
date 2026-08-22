@@ -1,0 +1,13 @@
+@if (links().length > 0) {
+  <nav class="page-footer__links" aria-label="Footer">
+    @for (link of links(); track link.href) {
+      <a
+        class="page-footer__link"
+        [href]="link.href"
+        [attr.target]="link.external ? '_blank' : null"
+        [attr.rel]="link.external ? 'noopener noreferrer' : null"
+      >{{ link.label }}</a>
+    }
+  </nav>
+}
+Copyright © 2026 NGP Table

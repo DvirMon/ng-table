@@ -1,0 +1,26 @@
+:host {
+  display: block;
+  text-align: center;
+  padding: var(--ngpt-sys-space-700);
+  font: var(--ngpt-sys-typescale-label-large-sm);
+  color: var(--ngpt-text-tertiary);
+  border-block-start: 1px solid var(--ngpt-comp-row-divider);
+}
+
+/* Home's link row (Sponsor / Discord / GitHub) — only rendered when `links()` is non-empty */
+.page-footer__links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--ngpt-sys-space-600);
+  margin-block-end: var(--ngpt-sys-space-400);
+}
+
+.page-footer__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.page-footer__link:hover {
+  color: var(--ngpt-text-secondary);
+}
