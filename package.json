@@ -20,6 +20,8 @@
     "@angular/forms": "22.1.2",
     "@angular/platform-browser": "22.1.2",
     "@angular/router": "22.1.2",
+    "@ng-icons/core": "^35.0.1",
+    "@ng-icons/lucide": "^35.0.1",
     "@radix-ui/react-label": "^2.1.15",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
