@@ -11,6 +11,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["nx", "serve", "demo", "--port", "4201"],
       "port": 4201
+    },
+    {
+      "name": "ng-table",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "ng-table", "--port", "4202"],
+      "port": 4202
     }
   ]
 }
