@@ -1,8 +1,6 @@
+/* The host IS the trigger <button> (ADR-0005) — these were `.search-field` rules on an inner
+   element before the attribute-hosted conversion. */
 :host {
-  display: contents;
-}
-
-.search-field {
   display: flex;
   align-items: center;
   gap: var(--ngpt-sys-space-200);
@@ -17,11 +15,11 @@
   cursor: pointer;
 }
 
-.search-field:hover {
+:host(:hover) {
   border-color: var(--ngpt-comp-pill-border-hover);
 }
 
-.search-field:focus-visible {
+:host(:focus-visible) {
   box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
   outline: none;
 }
@@ -46,13 +44,13 @@
 /* on-band (Home hero navbar only): translucent white well over the accent band. Literal
    oklch alpha values — no --ngpt-* token covers a translucent-white surface (matches the
    precedent in pill-button.css's own on-band block). */
-:host([data-variant='on-band']) .search-field {
+:host([data-variant='on-band']) {
   border-color: oklch(1 0 0 / 0.28);
   background: oklch(1 0 0 / 0.12);
   color: var(--ngpt-text-primary);
 }
 
-:host([data-variant='on-band']) .search-field:hover {
+:host([data-variant='on-band']:hover) {
   border-color: oklch(1 0 0 / 0.45);
   background: oklch(1 0 0 / 0.18);
 }
@@ -65,14 +63,14 @@
 
 /* Below md: icon-only trigger — Search.md § Surface 1. */
 @media (max-width: 1023px) {
-  .search-field {
+  :host {
     width: 32px;
     justify-content: center;
     padding: 0;
   }
 
   .search-field__placeholder,
-  .search-field .kbd {
+  .kbd {
     display: none;
   }
 }

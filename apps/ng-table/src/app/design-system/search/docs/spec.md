@@ -65,6 +65,35 @@ Sits in the navbar's right group, before the Sponsor pill. Below `md` (1024px) i
 
 It is a `<button>`, not an `<input>` — the real input lives in the overlay. This avoids two focusable text fields competing for the same query.
 
+### API
+
+Attribute-hosted on the consumer's `<button>` (ADR-0005) — the host **is** the trigger button, no
+wrapper element ships.
+
+```ts
+selector: 'button[ngptSearchField]'
+
+readonly variant = input<SearchFieldVariant>('default'); // 'default' | 'on-band'
+```
+
+No outputs. The host is the button, so the consumer binds the native `(click)` — a re-emitted
+`open` output would re-declare native capability, which ADR-0005 forbids.
+
+`aria-label="Search docs"` is a fixed static host attribute, not an input: the placeholder copy it
+mirrors is fixed in this component's own template, so an input could only make the two diverge.
+`type="button"` is applied as a constructor default (set only when the consumer hasn't set one), so
+the trigger never submits a surrounding form.
+
+Call form:
+
+```html
+<button ngptSearchField (click)="openSearch()"></button>
+<button ngptSearchField variant="on-band" (click)="openSearch()"></button>
+```
+
+The leading icon, the "Search docs" placeholder, and the ⌘K chip stay inside the component
+template — this is a pre-composed widget, not a generic wrapper, so there is nothing to project.
+
 ## Keyboard chip (shared atom)
 
 Used for the ⌘K hint and the overlay's footer legend.
@@ -153,7 +182,11 @@ Focus is trapped in the panel while open and the page behind it is scroll-locked
 
 ## HTML/CSS mock
 
+Reference render only. The field's `.search-field` block below is implemented as `:host` /
+`:host(:hover)` / `:host(:focus-visible)` on `button[ngptSearchField]` — the class no longer exists.
+
 ```html
+<!-- as built: <button ngptSearchField> — the inner content below is the component template -->
 <button class="search-field" aria-label="Search docs">
   <ng-icon name="lucideSearch" size="16px" />
   <span class="search-field__placeholder">Search docs</span>

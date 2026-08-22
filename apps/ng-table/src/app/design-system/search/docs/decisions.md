@@ -6,11 +6,11 @@ Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixe
 ## Final public API
 
 ```ts
-// search-field.ts
-@Component({ selector: 'ngpt-search-field', ... })
+// search-field.ts — attribute-hosted, see "§ search-field becomes attribute-hosted" below
+@Component({ selector: 'button[ngptSearchField]', host: { 'aria-label': 'Search docs' }, ... })
 export class SearchField {
   readonly variant = input<SearchFieldVariant>('default'); // 'default' | 'on-band'
-  readonly open = output<void>();                          // emits on click (native <button> covers Enter/Space)
+  // no outputs — the host IS the button, consumers bind the native (click)
 }
 
 // search-overlay.ts
@@ -24,7 +24,9 @@ export class SearchOverlay {
 }
 ```
 
-No additions beyond the fixed contract — both components match `CONVENTIONS.md`'s table exactly.
+No additions beyond the fixed contract at original build time. `search-field`'s selector and its
+`open` output have since changed under ADR-0005 — that supersedes `CONVENTIONS.md`'s
+`ngpt-search-field` row for the field. `search-overlay` is unchanged.
 
 ## Persistence and ranking — explicitly out of scope
 
