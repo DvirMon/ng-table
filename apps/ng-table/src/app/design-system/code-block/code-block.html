@@ -1,0 +1,17 @@
+<!-- No incidental whitespace inside <pre><code>…</code></pre> — every text node in there renders
+     literally (white-space: pre). Line breaks come from `.line { display: block }` in the CSS,
+     not from newline characters, matching Shiki's own compact-markup convention. -->
+<pre
+  class="code-block"
+  [class.code-block--numbered]="showGutter()"
+  tabindex="0"
+  [attr.aria-label]="accessibleName()"
+><code [attr.data-language]="language()">@for (line of lines(); track $index) {<span class="line">{{ line }}</span>}</code></pre>
+<ngpt-icon-button
+  class="copy-button"
+  icon="lucideCopy"
+  label="Copy code"
+  [size]="24"
+  [state]="copyState()"
+  (pressed)="onCopyPressed()"
+/>

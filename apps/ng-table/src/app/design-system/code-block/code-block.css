@@ -1,0 +1,61 @@
+:host {
+  position: relative;
+  display: block;
+  /* Margin lives on the host, not `.code-block` (the <pre>) — the <pre> itself is zeroed out so
+     its UA-stylesheet margin doesn't stack with this one. */
+  margin: 0 0 var(--ngpt-sys-space-700);
+}
+
+.code-block {
+  font: var(--ngpt-sys-typescale-code);
+  padding: var(--ngpt-sys-space-400) var(--ngpt-sys-space-450);
+  border-radius: var(--ngpt-sys-shape-corner-small-alt);
+  background: var(--ngpt-bg-deep);
+  border: 1px solid var(--ngpt-border-subtle);
+  color: var(--ngpt-text-secondary);
+  /* Long lines scroll horizontally at every viewport — never wrap, it destroys indentation. */
+  overflow-x: auto;
+  margin: 0;
+}
+
+.code-block code {
+  display: block;
+}
+
+/* Opt-in gutter: showGutter() is an explicit caller decision (e.g. "5+ lines"), not computed
+   from line count in here — see docs/decisions.md. */
+.code-block--numbered code {
+  counter-reset: line;
+}
+
+.code-block--numbered .line {
+  counter-increment: line;
+}
+
+.code-block--numbered .line::before {
+  content: counter(line);
+  display: inline-block;
+  width: var(--ngpt-comp-code-gutter-width);
+  margin-right: var(--ngpt-sys-space-400);
+  text-align: right;
+  color: var(--ngpt-comp-code-gutter-text);
+  user-select: none;
+}
+
+.line {
+  display: block;
+}
+
+/* Line-highlight treatment is in the spec's ownership table but its trigger (Shiki fence meta)
+   isn't wired up this round — no input sets `.is-highlighted` yet. Kept so a future fence-meta
+   pipeline only needs to toggle the class, not add CSS. */
+.line.is-highlighted {
+  background: var(--ngpt-bg-app);
+  box-shadow: inset 2px 0 var(--ngpt-accent);
+}
+
+.copy-button {
+  position: absolute;
+  top: var(--ngpt-sys-space-400);
+  right: var(--ngpt-sys-space-450);
+}
