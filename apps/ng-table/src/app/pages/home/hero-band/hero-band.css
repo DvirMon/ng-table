@@ -1,0 +1,117 @@
+/* Full-bleed accent band; :host owns the background and the overflow clip the decorative shape
+   needs (spec § Hero — full-bleed accent band, § Contrast: --ngpt-accent-surface, not
+   --ngpt-accent — deliberately darker so white text/lede/buttons all clear AA). */
+:host {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: var(--ngpt-accent-surface);
+
+  /* Local (non-token) value: the shared rail padding reused below and in the decorative shape's
+     left-anchor formula. No --ngpt-* token covers this composite clamp — see docs/decisions.md. */
+  --hero-band-rail: clamp(24px, 4vw, 48px);
+}
+
+/* Decorative shape: aria-hidden in the template, non-interactive, clipped by :host's
+   overflow:hidden. Anchored from its LEFT edge — not the right — so it simply runs further
+   off-screen as the viewport narrows once the copy column's clamp() hits its floor, rather than
+   colliding with the copy once a right-anchored offset stops scaling (spec's own rationale). */
+.hero-band__shape {
+  position: absolute;
+  top: -140px;
+  left: calc(max(var(--hero-band-rail), (100vw - var(--ngpt-sys-layout-wide-measure)) / 2) + 700px);
+  width: 620px;
+  height: 620px;
+  border-radius: 28%;
+  background: oklch(1 0 0 / 0.07); /* untokenized in spec — docs/decisions.md */
+  pointer-events: none;
+}
+
+.hero-band__content {
+  position: relative;
+  padding-block: clamp(28px, 3.5vw, 44px) clamp(32px, 4vw, 52px);
+  padding-inline: var(--hero-band-rail);
+}
+
+.hero-band__measure {
+  max-width: var(--ngpt-sys-layout-wide-measure);
+  margin-inline: auto;
+}
+
+/* Left-aligned, not centered, and capped narrower than the 1080px wide measure (spec § Hero). */
+.hero-band__copy {
+  max-width: 660px; /* one-off cap, spec-given; no --ngpt-* token at this exact step */
+}
+
+.hero-band__announcement {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px; /* no exact --ngpt-sys-space-* step matches 7px — docs/decisions.md */
+  padding: var(--ngpt-sys-space-100) var(--ngpt-sys-space-300) var(--ngpt-sys-space-100)
+    var(--ngpt-sys-space-225);
+  margin-bottom: var(--ngpt-sys-space-500); /* spec § Height: "20px under the pill" */
+  border-radius: var(--ngpt-sys-shape-corner-large);
+  /* Darkens the band rather than lightening it — a translucent white fill raises the local
+     background and drops the label below AA (spec § Contrast). Untokenized literal. */
+  background: oklch(0 0 0 / 0.15);
+  font: var(--ngpt-sys-typescale-label-large-medium);
+  color: var(--ngpt-text-primary);
+}
+
+.hero-band__announcement-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+/* Dot color keyed off the `data-status` host attribute (CONVENTIONS.md #3: state as
+   data-* attributes) — default success (green) matches the spec/frame's "Now in public beta". */
+.hero-band__announcement[data-status='success'] .hero-band__announcement-dot {
+  background: var(--ngpt-status-success);
+}
+
+.hero-band__announcement[data-status='warning'] .hero-band__announcement-dot {
+  background: var(--ngpt-status-warning);
+}
+
+.hero-band__announcement[data-status='error'] .hero-band__announcement-dot {
+  background: var(--ngpt-status-error);
+}
+
+.hero-band__announcement[data-status='neutral'] .hero-band__announcement-dot {
+  background: var(--ngpt-status-neutral);
+}
+
+.hero-band__headline {
+  margin: 0;
+  font: var(--ngpt-sys-typescale-display-large);
+  font-size: clamp(38px, 6vw, 64px);
+  letter-spacing: -0.025em;
+  color: var(--ngpt-text-primary);
+}
+
+.hero-band__lede {
+  margin: var(--ngpt-sys-space-450) 0 0; /* spec § Height: "18px above the lede" */
+  max-width: 520px;
+  font: var(--ngpt-sys-typescale-body-large);
+  /* Full white, never a reduced alpha — 85% white measured 3.19:1 and failed AA (spec § Contrast). */
+  color: var(--ngpt-text-primary);
+}
+
+.hero-band__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 11px; /* no exact --ngpt-sys-space-* step matches 11px — docs/decisions.md */
+  margin-top: 26px; /* spec § Height: "26px above the buttons" — no exact token step matches */
+}
+
+/* Hero-only pill-button size step (spec § Variant: on-band, "Hero size override" — 13px default
+   is too small to anchor a 64px headline). pill-button's own docs/decisions.md explicitly defers
+   this to its consumer and pill-button exposes no CSS custom-property override hooks, so there is
+   no non-piercing way to reach it without editing pill-button's files (out of scope here). Scoped
+   :host ::ng-deep is the sanctioned app-level last resort (this is a page-local block, not a DS
+   component — DS components may never do this). Both values are exact existing token matches. */
+:host ::ng-deep .hero-band__actions ngpt-pill-button .pill-button {
+  font: var(--ngpt-sys-typescale-title-small);
+  padding: var(--ngpt-sys-space-275) var(--ngpt-sys-space-500);
+}
