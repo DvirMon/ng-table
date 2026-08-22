@@ -1,0 +1,4 @@
+:host {
+  display: block;
+  padding: var(--ngpt-sys-space-400);
+}

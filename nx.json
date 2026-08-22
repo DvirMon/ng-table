@@ -43,6 +43,10 @@
     "build-storybook": {
       "cache": true,
       "inputs": ["default", "^production", "{projectRoot}/.storybook/**/*"]
+    },
+    "@angular/build:unit-test": {
+      "cache": true,
+      "inputs": ["default", "^production"]
     }
   },
   "generators": {
