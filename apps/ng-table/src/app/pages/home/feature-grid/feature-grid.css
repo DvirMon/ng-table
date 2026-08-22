@@ -1,0 +1,17 @@
+:host {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ngpt-sys-space-800);
+}
+
+h3 {
+  font: var(--ngpt-sys-typescale-title-medium);
+  color: var(--ngpt-text-primary);
+  margin: 0 0 var(--ngpt-sys-space-200);
+}
+
+p {
+  font: var(--ngpt-sys-typescale-body-medium);
+  color: var(--ngpt-text-tertiary);
+  margin: 0;
+}
