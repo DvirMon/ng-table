@@ -1,0 +1,31 @@
+<div class="navbar__inner">
+  <div class="navbar__left">
+    @if (variant() === 'docs') {
+      <ngpt-icon-button
+        class="navbar__hamburger"
+        icon="lucideMenu"
+        label="Open navigation"
+        [size]="24"
+      />
+    }
+    <span class="navbar__logo" aria-hidden="true"></span>
+    <span class="navbar__title">NGP Table</span>
+  </div>
+
+  <div class="navbar__right">
+    @switch (variant()) {
+      @case ('docs') {
+        <ngpt-search-field (open)="forwardOpenSearch()" />
+        <ngpt-pill-button class="navbar__sponsor">Sponsor</ngpt-pill-button>
+        <span class="navbar__dot" aria-hidden="true"></span>
+        <a class="navbar__link" href="#">Discord</a>
+        <a class="navbar__link" href="#">GitHub</a>
+      }
+      @case ('band') {
+        <ngpt-search-field variant="on-band" (open)="forwardOpenSearch()" />
+        <a class="navbar__link" href="#">Documentation</a>
+        <a class="navbar__link" href="#">GitHub</a>
+      }
+    }
+  </div>
+</div>
