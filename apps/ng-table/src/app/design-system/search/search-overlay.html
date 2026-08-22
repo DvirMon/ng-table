@@ -34,12 +34,13 @@
         @for (group of resultGroups(); track group.label) {
           <div class="search-group-label">{{ group.label }}</div>
           @for (result of group.results; track result.id) {
+            @let rowId = 'search-result-' + result.id;
             <a
               class="search-row"
               role="option"
-              [id]="resultRowId(result.id)"
-              [attr.aria-selected]="resultRowId(result.id) === activeResultId()"
-              [attr.data-active]="resultRowId(result.id) === activeResultId() ? '' : null"
+              [id]="rowId"
+              [attr.aria-selected]="rowId === activeResultId()"
+              [attr.data-active]="rowId === activeResultId() ? '' : null"
               (mouseenter)="setActiveById(result.id)"
               (click)="selectResult(result)"
             >

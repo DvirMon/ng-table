@@ -70,7 +70,7 @@ export class SearchOverlay {
   readonly hasResults = computed(() => this.flatResults().length > 0);
   readonly activeResultId = computed(() => {
     const active = this.flatResults()[this.activeResultIndex()];
-    return active ? this.resultRowId(active.id) : null;
+    return active ? `search-result-${active.id}` : null;
   });
   readonly liveRegionText = computed(() =>
     this.hasQuery() ? `${this.flatResults().length} results` : '',
@@ -98,10 +98,6 @@ export class SearchOverlay {
     this.destroyRef.onDestroy(() => {
       document.body.style.overflow = this.previousBodyOverflow;
     });
-  }
-
-  resultRowId(id: string): string {
-    return `search-result-${id}`;
   }
 
   onQueryInput(event: Event): void {
