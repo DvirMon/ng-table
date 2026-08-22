@@ -131,6 +131,41 @@ the Keyboard table).
 `lucideCheck`, registered via local `viewProviders: [provideIcons({ lucideCheck })]` per ADR-0004
 — matches `src/styles/docs/Iconography.md`'s `✓ → lucideCheck` mapping and the spec's own mock.
 
+## Wired onto `ng-primitives/menu` (post-shipped revision)
+
+Replaced the hand-rolled roving-tabindex/typeahead/outside-click/Escape/Tab machinery with
+`ng-primitives/menu`: `hostDirectives: [NgpMenu]` on this component's host, `ngpMenuItem` /
+`ngpMenuItemRadio` (inside one host-wide `ngpMenuItemRadioGroup`) on each option button. This is a
+breaking API change from the "Final public API" section above:
+
+- `open` input and `closed` output are **gone**. This component is no longer self-positioning or
+  self-opening — the caller renders it inside an `<ng-template>` bound to a real
+  `[ngpMenuTrigger]`/`[ngpSubmenuTrigger]`-style directive (see `dropdown-pill` and
+  `select-trigger`, wired in the same pass), which owns showing/hiding, positioning, the portal,
+  focus trap/return, outside-click, and Escape/Tab. Trigger owns "what opens it" even more
+  literally now than the original `does_not_own` already said.
+- `select` still emits the committed item's id — either from `onOptionClick` (plain command items)
+  or from `ngpMenuItemRadioGroupValueChange` (radio items). There's no separate `closed` — the
+  primitive handles closing on selection (`closeOnSelect`, default `true`), Escape, and outside
+  click without this component's involvement.
+- Role model is now enforced by the primitive rather than manually bound: `ngpMenuItem` sets
+  `role="menuitem"`, `ngpMenuItemRadio` sets `role="menuitemradio"` + `aria-checked` from its
+  membership in the `ngpMenuItemRadioGroup`. The `role: 'menu'` / `[attr.role]` / `[attr.aria-*]`
+  bindings this file used to own by hand are removed.
+- `data-open` (host) is gone — this element only exists in the DOM while the trigger has it open
+  (portaled content), so there's no "closed but present" state to key CSS off of. `data-enter` /
+  `data-exit` (set by the primitive while animating) replace the old opacity/transform transition
+  driven by `[data-open]`.
+- Per-option `data-focused` → `data-focus-visible`, `data-selected` → `data-checked` — these now
+  come from the primitive's own interaction/radio state instead of a hand-tracked
+  `highlightedId` signal; `data-disabled` keeps its name (primitive uses the same convention).
+- Grouping (`group` label + divider) is **not** an `ng-primitives/menu` concept — that logic is
+  unchanged, still computed per-item in the template from `group` transitions.
+
+`CONVENTIONS.md`'s fixed-contract row for `dropdown-menu` still lists the pre-wire `open`/`closed`
+shape; update it alongside `dropdown-pill`/`select-trigger` once those are rewired to match, since
+right now nothing in the repo constructs the `<ng-template>` this component expects to live in.
+
 ## Reduced motion
 
 `@media (prefers-reduced-motion: reduce)` in `dropdown-menu.css` zeroes the `translateY` transform

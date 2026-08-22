@@ -21,6 +21,26 @@ Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixe
   otherwise the host defaults to browser's generic `inline` for unknown elements, which is close
   but less predictable across the two host consumers.
 
+## Selector changed to `button[ngptPillButton]` (post-shipped revision)
+
+Was `ngpt-pill-button` (custom element wrapping its own inner `<button>` via `<ng-content>`).
+`dropdown-pill`'s rewire onto `ng-primitives/menu` needed `[ngpMenuTrigger]` to land its
+ARIA/focus wiring on the real focusable button, not an inert wrapper tag — the wrapper shape was
+flagged as a real gap in this component's own `docs/decisions.md` (§ "No ARIA/focus passthrough
+on pill-button") before this fix. Changed the selector to an attribute selector on `button`
+(`button[ngptPillButton]`), matching the convention `ng-primitives`' own reusable-component
+examples use (e.g. `button[app-menu-item]`) — this component's host **is** the button now, no
+inner wrapper. `<ng-content>` still projects the label directly onto that host.
+
+Consequence for every call site: `<ngpt-pill-button>Label</ngpt-pill-button>` becomes
+`<button ngptPillButton>Label</button>` (camelCase attribute selector, per ADR-0005 — see
+`apps/ng-table/docs/CONVENTIONS.md` § "Selector prefix `ngpt`"). Updated the three existing call
+sites (`navbar`, `hero-band`, `dropdown-pill`). `variant`/`disabled` inputs, `data-variant` host
+attribute, and all CSS (moved from a `.pill-button` inner-element rule to `:host`/`:host(:pseudo)`
+directly) are unchanged in behavior. `apps/ng-table/eslint.config.mjs`'s
+`@angular-eslint/component-selector` rule gained a second config entry (`type: 'attribute'`,
+`style: 'camelCase'`) alongside the existing element/kebab-case one to allow this.
+
 ## Untokenized on-band values
 
 The on-band variant table in the spec gives literal oklch values for hover backgrounds

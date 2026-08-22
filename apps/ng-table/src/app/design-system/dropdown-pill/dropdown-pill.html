@@ -1,8 +1,6 @@
-<ngpt-pill-button #trigger (click)="onTriggerClick($event)">
-  <span class="trigger-content">
-    {{ label() }}
-    <ng-icon name="lucideChevronDown" size="var(--ngpt-sys-icon-size-md)" color="currentColor" />
-  </span>
-</ngpt-pill-button>
+{{ label() }}
+<ng-icon name="lucideChevronDown" size="var(--ngpt-sys-icon-size-md)" color="currentColor" />
 
-<ngpt-dropdown-menu [items]="items()" [open]="open()" (select)="onSelect($event)" (closed)="onClosed()" />
+<ng-template #menu>
+  <ngpt-dropdown-menu [items]="items()" (select)="onSelect($event)" />
+</ng-template>

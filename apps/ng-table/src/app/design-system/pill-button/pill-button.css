@@ -1,8 +1,5 @@
 :host {
   display: inline-flex;
-}
-
-.pill-button {
   font: var(--ngpt-sys-typescale-label-large-medium);
   padding: var(--ngpt-sys-space-150) var(--ngpt-sys-space-300);
   border-radius: var(--ngpt-sys-shape-corner-large);
@@ -12,55 +9,55 @@
   cursor: pointer;
 }
 
-.pill-button:hover {
+:host(:hover) {
   border-color: var(--ngpt-comp-pill-border-hover);
   background: var(--ngpt-bg-hover);
   color: var(--ngpt-text-secondary);
 }
 
-.pill-button:focus-visible {
+:host(:focus-visible) {
   color: var(--ngpt-text-primary);
   box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
   outline: none;
 }
 
-.pill-button:disabled {
+:host(:disabled) {
   opacity: 0.5;
   pointer-events: none;
 }
 
 /* on-band variants (Home hero only): filled pills, no outline border — spec § Variant: on-band */
-:host([data-variant='on-band']) .pill-button,
-:host([data-variant='on-band-inverse']) .pill-button {
+:host([data-variant='on-band']),
+:host([data-variant='on-band-inverse']) {
   border: none;
 }
 
 /* Primary on-band: white fill, no dedicated token for this text hue — spec table leaves it untokenized */
-:host([data-variant='on-band']) .pill-button,
-:host([data-variant='on-band']) .pill-button:hover,
-:host([data-variant='on-band']) .pill-button:focus-visible {
+:host([data-variant='on-band']),
+:host([data-variant='on-band']:hover),
+:host([data-variant='on-band']:focus-visible) {
   color: oklch(0.2 0.03 52);
 }
 
-:host([data-variant='on-band']) .pill-button {
+:host([data-variant='on-band']) {
   background: var(--ngpt-onband-fill);
 }
 
-:host([data-variant='on-band']) .pill-button:hover {
+:host([data-variant='on-band']:hover) {
   background: oklch(0.95 0.01 52);
 }
 
 /* Secondary on-band (inverse): dark fill, white text already covered by --ngpt-text-primary */
-:host([data-variant='on-band-inverse']) .pill-button,
-:host([data-variant='on-band-inverse']) .pill-button:hover,
-:host([data-variant='on-band-inverse']) .pill-button:focus-visible {
+:host([data-variant='on-band-inverse']),
+:host([data-variant='on-band-inverse']:hover),
+:host([data-variant='on-band-inverse']:focus-visible) {
   color: var(--ngpt-text-primary);
 }
 
-:host([data-variant='on-band-inverse']) .pill-button {
+:host([data-variant='on-band-inverse']) {
   background: var(--ngpt-onband-fill-inverse);
 }
 
-:host([data-variant='on-band-inverse']) .pill-button:hover {
+:host([data-variant='on-band-inverse']:hover) {
   background: oklch(0.24 0.03 52);
 }

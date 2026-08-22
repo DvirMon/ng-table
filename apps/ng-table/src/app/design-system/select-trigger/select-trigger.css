@@ -1,12 +1,7 @@
-/* :host is a plain positioning wrapper around the trigger button + the floating dropdown-menu it
-   opens — dropdown-menu owns its own box/motion but not its placement (its own docs/decisions.md),
-   so this file positions it relative to the trigger. */
+/* :host is the real trigger <button> (button[ngptSelectTrigger]) — the option list lives in an
+   `<ng-template>` that `[ngpMenuTrigger]` (hostDirectives, select-trigger.ts) portals and positions
+   itself, so this file no longer anchors a child panel. */
 :host {
-  position: relative;
-  display: inline-flex;
-}
-
-.select-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -34,7 +29,7 @@
 /* "filled" state (spec front-matter) — a value is selected but the trigger is neither open nor
    focused. No dedicated token ships for this in the spec's Build spec table, so it reuses the
    same secondary-text tier the mock already applies to the active state (docs/decisions.md). */
-:host([data-filled]) .select-trigger {
+:host([data-filled]) {
   color: var(--ngpt-text-secondary);
 }
 
@@ -42,22 +37,15 @@
    CONVENTIONS.md #3 (state as data-* attributes) rather than the mock's `.is-active` class or
    `[aria-expanded]` selector. `:focus-visible` is native browser state, not app state, so it's
    composed alongside rather than mirrored into a data attribute. */
-:host([data-open]) .select-trigger,
-.select-trigger:focus-visible {
+:host([data-open]),
+:host(:focus-visible) {
   border: 1.5px solid var(--ngpt-accent);
   box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
   color: var(--ngpt-text-secondary);
   outline: none;
 }
 
-:host([data-open]) .select-trigger ng-icon,
-.select-trigger:focus-visible ng-icon {
+:host([data-open]) ng-icon,
+:host(:focus-visible) ng-icon {
   color: var(--ngpt-accent);
-}
-
-/* dropdown-menu positions itself absolute + adds its own margin-top; this only sets *where*
-   relative to the trigger (its own decisions.md: "Positioning ... is the caller's job"). */
-ngpt-dropdown-menu {
-  top: 100%;
-  inset-inline-start: 0;
 }

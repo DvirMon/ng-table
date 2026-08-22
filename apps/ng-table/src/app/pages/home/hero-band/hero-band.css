@@ -107,11 +107,11 @@
 
 /* Hero-only pill-button size step (spec § Variant: on-band, "Hero size override" — 13px default
    is too small to anchor a 64px headline). pill-button's own docs/decisions.md explicitly defers
-   this to its consumer and pill-button exposes no CSS custom-property override hooks, so there is
-   no non-piercing way to reach it without editing pill-button's files (out of scope here). Scoped
-   :host ::ng-deep is the sanctioned app-level last resort (this is a page-local block, not a DS
-   component — DS components may never do this). Both values are exact existing token matches. */
-:host ::ng-deep .hero-band__actions ngpt-pill-button .pill-button {
+   this to its consumer. Since pill-button is now attribute-hosted (`button[ngptPillButton]` — its
+   own docs/decisions.md), the button lives directly in this template with no encapsulated child
+   view to pierce, so plain descendant selection replaces the old `::ng-deep .pill-button` reach.
+   Both values are exact existing token matches. */
+.hero-band__actions [ngptPillButton] {
   font: var(--ngpt-sys-typescale-title-small);
   padding: var(--ngpt-sys-space-275) var(--ngpt-sys-space-500);
 }

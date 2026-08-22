@@ -124,7 +124,7 @@ upstream component's actual implementation to land first.
 
 | Component | Selector(s) | Contract |
 |---|---|---|
-| pill-button | `ngpt-pill-button` | `variant: input<'default'\|'on-band'\|'on-band-inverse'>('default')`; projected label; renders `<button>` |
+| pill-button | `button[ngptPillButton]` (attribute selector on a real `<button>`, wired for `[ngpMenuTrigger]`-style consumers — see its `docs/decisions.md`) | `variant: input<'default'\|'on-band'\|'on-band-inverse'>('default')`; projected label |
 | icon-button | `ngpt-icon-button` | `icon: input<string>()`, `label: input<string>()` (aria-label/title), `size: input<24\|30\|32>()`; confirmation variant `state: input<'idle'\|'copied'\|'failed'>('idle')` swaps glyph/color, host `[attr.data-copy-state]`; `pressed = output<void>()` |
 | category-badge | `ngpt-category-badge` | projected text only |
 | code-chip | `ngpt-code-chip` | projected code text only |
@@ -132,13 +132,13 @@ upstream component's actual implementation to land first.
 | nav-item | `ngpt-nav-item` | `active: input<boolean>(false)`, `nested: input<boolean>(false)`; no router wiring this round |
 | tab-switcher | `ngpt-tab-switcher` | `tabs: input<readonly TabItem[]>()`, `selected: input<string>()`, `selectedChange = output<string>()`; roving-tabindex per spec `a11y` |
 | pagination | `ngpt-pagination` | leaf this round, no consumers yet |
-| dropdown-menu | `ngpt-dropdown-menu` | `items: input<readonly DropdownMenuItem[]>()`, `open: input<boolean>(false)`, `select = output<string>()`; host `[attr.data-open]`; floating-surface recipe from `src/styles/docs/Radius and Elevation.md` |
+| dropdown-menu | `ngpt-dropdown-menu` | `items: input<readonly DropdownMenuItem[]>()`, `select = output<string>()`. Wired onto `ng-primitives/menu` (`hostDirectives: [NgpMenu]`, `ngpMenuItem`/`ngpMenuItemRadio` per option) — no `open` input, no `closed` output; caller renders this inside an `<ng-template>` bound to a real `[ngpMenuTrigger]`, which owns opening/closing, positioning, portal, ARIA sync, focus trap/return, outside-click, Escape. Floating-surface box/motion recipe from `src/styles/docs/Radius and Elevation.md`; motion now keyed off `[data-enter]`/`[data-exit]`, not `[data-open]` |
 | search | `ngpt-search-field` + `ngpt-search-overlay` | field: `variant: input<'default'\|'on-band'>('default')`, `open = output<void>()`. overlay: `open: input<boolean>(false)`, `closed = output<void>()`, ⌘K + Esc handling, scrim, focus trap/return. Index is **stubbed**: types from `Search Index.md` (still in `docs/design-handoff/specs/`), `search.mock.ts` ships an empty index + in-memory recent-searches list — no persistence, no ranking |
 | callout | `ngpt-callout` | `kind: input<'note'\|'tip'\|'warning'>('note')`; local lucide icons per kind |
 | page-footer | `ngpt-page-footer` | `links: input<readonly FooterLink[]>([])` — non-empty renders Home's link row above the copyright line; `role="contentinfo"` |
 | code-block | `ngpt-code-block` | consumes icon-button; `code: input<string>()`, `language: input<string>()`, `showGutter: input<boolean>(true)`; **no Shiki this round** — plain `<pre><code>` in the spec'd container, copy button reuses icon-button's confirmation states; note the syntax-highlight gap in `docs/decisions.md` |
-| dropdown-pill | `ngpt-dropdown-pill` | consumes pill-button + dropdown-menu; leaf this round |
-| select-trigger | `ngpt-select-trigger` | consumes dropdown-menu; leaf this round |
+| dropdown-pill | `button[ngptDropdownPill]` | consumes dropdown-menu; host is the real trigger `<button>` itself, `hostDirectives: [NgpMenuTrigger]`; inlines pill-button's default-variant CSS rather than composing `<button ngptPillButton>` |
+| select-trigger | `button[ngptSelectTrigger]` | consumes dropdown-menu; host is the real trigger `<button>` itself, `hostDirectives: [NgpMenuTrigger]`, `role="combobox"` set manually alongside it |
 | prose | `ngpt-prose` | consumes code-chip + inline-link; `ViewEncapsulation.None`; `data-measure: input<'default'\|'marketing'>('default')` for Home's headline scale |
 | preview-window | `ngpt-preview-window` | consumes tab-switcher + code-block + icon-button; leaf this round, no render surface yet |
 | navbar | `ngpt-navbar` | consumes search-field, pill-button, icon-button; `variant: input<'docs'\|'band'>('docs')`; band variant is transparent-over-band, white treatment, on-band search well, Documentation+GitHub only, inner row at the 1080px measure; owns its own scroll state — `signal` + passive `window` scroll listener registered via `afterNextRender`, cleaned up via `DestroyRef`, `scrolled = scrollY > 24` written to a signal (not a template expression) so zoneless CD picks it up, host `[attr.data-scrolled]`, 180ms surface transition, boolean threshold (no flicker) |

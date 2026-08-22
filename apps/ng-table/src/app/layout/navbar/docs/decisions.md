@@ -112,7 +112,7 @@ in `navbar.ts`.
    guessing at the open question. Whoever resolves the open question should also fill in the real
    hrefs — nothing here should be treated as load-bearing.
 
-5. **Sponsor pill and hamburger have no wired behavior.** `ngpt-pill-button` has no `href` or
+5. **Sponsor pill and hamburger have no wired behavior.** `ngptPillButton` has no `href` or
    navigation contract, and wiring the hamburger's `pressed` output to an actual sidebar drawer is
    out of scope — there is no drawer component yet. Both render correctly and are keyboard/SR
    accessible; a future docs-shell task connects them (mirrors `nav-item`'s "no router wiring this

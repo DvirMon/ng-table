@@ -120,3 +120,31 @@ its own file comment states placement is the caller's job. This component's styl
 under Angular's emulated encapsulation) and sets `top: 100%; inset-inline-start: 0;` so the panel
 opens flush under the trigger's left edge, composing with — not overriding — dropdown-menu's own
 `position: absolute` and `margin-top`.
+
+## Wired onto `ng-primitives/menu` (post-shipped revision)
+
+Rewired this component and `dropdown-menu` onto `ng-primitives/menu` in the same pass as
+`dropdown-pill`. Everything above this section describes the pre-wire implementation; several
+sections are now superseded:
+
+- **Selector changed:** `ngpt-select-trigger` → `button[ngptSelectTrigger]`. Host is the real
+  trigger `<button>` itself; `hostDirectives: [NgpMenuTrigger]` sets `aria-haspopup`/
+  `aria-expanded`/`aria-controls` on it directly. `role="combobox"` stays a manual static host
+  attribute — the "Accepted deviation" section's reasoning is unchanged, the primitive is
+  role-agnostic and only owns the open/ARIA-menu-state part of the contract.
+- **"Outside-click race" and "Closing returns focus to the trigger" sections are obsolete.** No
+  more `open` signal, `onTriggerClick`, `onClosed`, or `viewChild`-based `.focus()` call —
+  `NgpMenuTrigger` owns opening/closing (default `click` trigger), outside-click dismissal,
+  Escape, and returning focus to the trigger on every close path.
+- **`aria-controls` id note is obsolete** — no more manually-generated `ngpt-select-trigger-menu-N`
+  id / `nextInstanceId` counter; the primitive manages `aria-controls` against the portaled panel
+  itself.
+- **"Positioning the floating dropdown-menu" section above is obsolete.** No more
+  `ngpt-dropdown-menu { top: 100%; inset-inline-start: 0 }` — the panel now renders inside an
+  `<ng-template>` that `[ngpMenuTrigger]` portals and positions via floating-ui (default
+  `placement: 'bottom-start'`, `offset: 4`), not a CSS-anchored child.
+- **`data-open`** still drives the active/focus CSS treatment, but now reads
+  `injectMenuTriggerState().open()` via a `computed()` instead of a locally-owned signal.
+- **`valueChange` is unchanged** — still forwards the committed option's id; `items`/
+  `withSelection` composition (feeding dropdown-menu's radio-group `selected` values) is
+  unchanged.

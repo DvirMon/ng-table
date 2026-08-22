@@ -21,11 +21,23 @@ export default [
       ],
       '@angular-eslint/component-selector': [
         'error',
-        {
-          type: 'element',
-          prefix: 'ngpt',
-          style: 'kebab-case',
-        },
+        [
+          {
+            type: 'element',
+            prefix: 'ngpt',
+            style: 'kebab-case',
+          },
+          {
+            // Attribute-hosted components (ADR-0005): hosted on a real native element (e.g.
+            // `button[ngptPillButton]`) so a caller-bound directive (ARIA/focus wiring like
+            // `[ngpMenuTrigger]`) lands on that actual element instead of a wrapper — see
+            // design-system/pill-button/docs/decisions.md. camelCase matches Angular's own
+            // directive-selector convention (`ngpMenuTrigger`, `ngpTableCell`).
+            type: 'attribute',
+            prefix: 'ngpt',
+            style: 'camelCase',
+          },
+        ],
       ],
     },
   },

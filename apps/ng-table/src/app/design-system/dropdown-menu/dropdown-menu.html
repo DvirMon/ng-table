@@ -1,29 +1,41 @@
-@for (item of items(); track item.id; let i = $index) {
-  @let isGroupStart = item.group !== undefined && items()[i - 1]?.group !== item.group;
-  @let optionRole = item.selected === undefined ? 'menuitem' : 'menuitemradio';
-  @if (isGroupStart) {
-    @if (i > 0) {
-      <div class="menu-divider" role="separator"></div>
+<div
+  ngpMenuItemRadioGroup
+  [ngpMenuItemRadioGroupValue]="currentValue()"
+  (ngpMenuItemRadioGroupValueChange)="select.emit($event)"
+>
+  @for (item of items(); track item.id; let i = $index) {
+    @let isGroupStart = item.group !== undefined && items()[i - 1]?.group !== item.group;
+    @if (isGroupStart) {
+      @if (i > 0) {
+        <div class="menu-divider" role="separator"></div>
+      }
+      @if (item.group) {
+        <div class="menu-label">{{ item.group }}</div>
+      }
     }
-    @if (item.group) {
-      <div class="menu-label">{{ item.group }}</div>
+    @if (item.selected !== undefined) {
+      <button
+        type="button"
+        class="menu-option"
+        ngpMenuItemRadio
+        [ngpMenuItemRadioValue]="item.id"
+        [ngpMenuItemRadioDisabled]="item.disabled ?? false"
+      >
+        <span>{{ item.label }}</span>
+        @if (item.selected) {
+          <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" />
+        }
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="menu-option"
+        ngpMenuItem
+        [ngpMenuItemDisabled]="item.disabled ?? false"
+        (click)="onOptionClick(item)"
+      >
+        <span>{{ item.label }}</span>
+      </button>
     }
   }
-  <div
-    #optionElement
-    class="menu-option"
-    [attr.role]="optionRole"
-    [attr.aria-checked]="item.selected === undefined ? null : item.selected"
-    [attr.aria-disabled]="item.disabled ? 'true' : null"
-    [attr.data-selected]="item.selected ? '' : null"
-    [attr.data-disabled]="item.disabled ? '' : null"
-    [attr.data-focused]="highlightedId() === item.id ? '' : null"
-    [attr.tabindex]="highlightedId() === item.id ? 0 : -1"
-    (click)="onOptionClick(item)"
-  >
-    <span>{{ item.label }}</span>
-    @if (item.selected) {
-      <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" />
-    }
-  </div>
-}
+</div>

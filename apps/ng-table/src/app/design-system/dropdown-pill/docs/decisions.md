@@ -138,6 +138,44 @@ worth pill-button gaining an explicit focus/ARIA passthrough mechanism if a thir
 same thing, but not resolved here per the same "don't touch pill-button's files" constraint that
 applies to this build.
 
+## Wired onto `ng-primitives/menu` (post-shipped revision)
+
+Rewired this component and `dropdown-menu` onto `ng-primitives/menu` in the same pass. Everything
+above this section describes the pre-wire implementation and is superseded where noted below —
+kept for the historical record of *why* each original call was made, since most of the reasoning
+(icon choice, label semantics, gap token) still holds.
+
+- **Selector changed:** `ngpt-dropdown-pill` → `button[ngptDropdownPill]` (attribute-hosted,
+  camelCase per ADR-0005). This component's host is now the real trigger `<button>` itself;
+  `hostDirectives: [NgpMenuTrigger]` lands `aria-haspopup`/`aria-expanded`/`aria-controls`
+  directly on it. No more nested `<ngpt-pill-button>` — its default-variant CSS is inlined onto
+  this component's own `:host` instead (pill-button itself also moved to a
+  `button[ngptPillButton]` attribute selector for
+  the same reason; see its own `docs/decisions.md`). The resolved token overrides from
+  "Composing pill-button" above (`--ngpt-comp-control-border-default`, `--ngpt-comp-dropdown-text`,
+  font left at pill-button's own medium weight) are preserved as literal property values in the
+  new `:host` rule instead of CSS-custom-property redirection, since there's no longer a separate
+  component instance to redirect variables into.
+- **"No ARIA/focus passthrough on pill-button — handled imperatively" section is obsolete.** The
+  `viewChild` + `querySelector('button')` + manual `effect()` `setAttribute` hack, and the
+  `close()`/`.focus()` focus-return call, are all removed. `NgpMenuTrigger` owns ARIA sync,
+  showing/hiding, and returning focus to the trigger on every close path (selection, Escape,
+  outside click) — see the "Focus Management" line in the `menu` primitive's own accessibility
+  list.
+- **"Outside-click race — resolved with `stopPropagation()`" section is obsolete.** There's no
+  more manual `onTriggerClick`/`open` signal/`(document:click)` race to resolve — the primitive
+  handles opening (default `click` trigger) and outside dismissal internally, so `stopPropagation`
+  was removed along with the click handler.
+- **"Menu positioning" section is obsolete.** No more `:host { position: relative }` anchor +
+  `ngpt-dropdown-menu { top: 100%; left: 0 }` — floating-ui (via the primitive's default
+  `placement: 'bottom-start'`, `offset: 4`) positions the portaled panel now. Visually close to
+  the old fixed offset; not pixel-verified against the original mock.
+- **`data-open`** is still exposed on the host, but now reads `injectMenuTriggerState().open()`
+  (the primitive's own trigger state signal) via a `computed()`, rather than a locally-owned
+  `signal<boolean>` flipped by a click handler.
+- **`select` output is unchanged** — still forwards the committed item's id; closing itself is no
+  longer this component's job (see above).
+
 ## Icon: `▾` → `lucideChevronDown`
 
 Per `src/styles/docs/Iconography.md`'s mapping table ("▾ (dropdown chevron) → lucideChevronDown"),

@@ -1,39 +1,34 @@
-/* :host hosts two children: the ngpt-pill-button trigger and the absolutely-positioned
-   ngpt-dropdown-menu panel — relative anchor for the panel's own :host { position: absolute }
-   (dropdown-menu/docs/decisions.md: caller positions it "like any other absolutely-positioned box"). */
+/* :host is the real trigger <button> (button[ngptDropdownPill]) — the menu content lives in an
+   `<ng-template>` that `[ngpMenuTrigger]` (hostDirectives, dropdown-pill.ts) portals and positions
+   itself; this file owns only the trigger's own visual treatment. Composes pill-button's default
+   variant inline (not via `<button ngptPillButton>`) so the host directive lands on a real button
+   (docs/decisions.md). */
 :host {
-  position: relative;
-  display: inline-flex;
-}
-
-.trigger-content {
   display: inline-flex;
   align-items: center;
   gap: var(--ngpt-sys-space-150);
   white-space: nowrap; /* spec: label + chevron must render on one line */
+  font: var(--ngpt-sys-typescale-label-large-medium);
+  padding: var(--ngpt-sys-space-150) var(--ngpt-sys-space-300);
+  border-radius: var(--ngpt-sys-shape-corner-large);
+  border: 1px solid var(--ngpt-comp-control-border-default);
+  background: transparent;
+  color: var(--ngpt-comp-dropdown-text);
+  cursor: pointer;
 }
 
-/* pill-button's default variant reads different border/text tokens than this spec calls for
-   (docs/decisions.md § Composing pill-button). Custom properties inherit through the DOM
-   regardless of view encapsulation, so redirecting them here — scoped to just this instance —
-   is the only lever available without touching pill-button's own files. */
-ngpt-pill-button {
-  --ngpt-comp-pill-border-default: var(--ngpt-comp-control-border-default);
-  --ngpt-text-tertiary: var(--ngpt-comp-dropdown-text);
+:host(:hover) {
+  border-color: var(--ngpt-comp-pill-border-hover);
+  background: var(--ngpt-bg-hover);
 }
 
 /* Focus state (real DOM focus still on the trigger button) and Open state (front-matter `states`
-   list — DOM focus has moved into the menu's roving-tabindex options, so :focus-visible alone
-   can't carry this) share the same accent-border / white-text treatment. */
-:host(:focus-within) ngpt-pill-button,
-:host([data-open]) ngpt-pill-button {
-  --ngpt-comp-pill-border-default: var(--ngpt-accent);
-  --ngpt-text-tertiary: var(--ngpt-text-primary);
-}
-
-/* dropdown-menu owns its own box/motion; positioning relative to this trigger is the caller's job
-   (dropdown-menu/docs/decisions.md). */
-ngpt-dropdown-menu {
-  top: 100%;
-  left: 0;
+   list — DOM focus moves into the portaled menu's roving-tabindex options once open, so
+   :focus-visible alone can't carry this) share the same accent-border / white-text treatment. */
+:host(:focus-visible),
+:host([data-open]) {
+  border-color: var(--ngpt-accent);
+  color: var(--ngpt-text-primary);
+  box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
+  outline: none;
 }

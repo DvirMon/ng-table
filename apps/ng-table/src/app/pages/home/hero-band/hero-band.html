@@ -15,12 +15,12 @@
       <p class="hero-band__lede">{{ lede() }}</p>
 
       <div class="hero-band__actions">
-        <ngpt-pill-button variant="on-band" (click)="onPrimaryClick()">
+        <button ngptPillButton variant="on-band" (click)="onPrimaryClick()">
           {{ primaryLabel() }}
-        </ngpt-pill-button>
-        <ngpt-pill-button variant="on-band-inverse" (click)="onSecondaryClick()">
+        </button>
+        <button ngptPillButton variant="on-band-inverse" (click)="onSecondaryClick()">
           {{ secondaryLabel() }}
-        </ngpt-pill-button>
+        </button>
       </div>
     </div>
   </div>
