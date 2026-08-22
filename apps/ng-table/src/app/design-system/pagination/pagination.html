@@ -1,0 +1,20 @@
+<nav aria-label="Pagination">
+  @if (prev(); as prevEntry) {
+    <a class="page-card" data-side="prev" [href]="prevEntry.href">
+      <span class="page-card__eyebrow">
+        <ng-icon name="lucideArrowLeft" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+        Previous
+      </span>
+      <span class="page-card__title">{{ prevEntry.label }}</span>
+    </a>
+  }
+  @if (next(); as nextEntry) {
+    <a class="page-card" data-side="next" [href]="nextEntry.href">
+      <span class="page-card__eyebrow">
+        Next
+        <ng-icon name="lucideArrowRight" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      </span>
+      <span class="page-card__title">{{ nextEntry.label }}</span>
+    </a>
+  }
+</nav>
