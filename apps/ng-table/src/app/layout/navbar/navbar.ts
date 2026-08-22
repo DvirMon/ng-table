@@ -8,6 +8,8 @@ import {
   output,
   signal,
 } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideMenu } from '@ng-icons/lucide';
 import { IconButton } from '../../design-system/icon-button/icon-button';
 import { PillButton } from '../../design-system/pill-button/pill-button';
 import { SearchField } from '../../design-system/search/search-field';
@@ -33,7 +35,8 @@ const SCROLL_THRESHOLD_PX = 24;
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SearchField, PillButton, IconButton],
+  imports: [SearchField, PillButton, IconButton, NgIcon],
+  viewProviders: [provideIcons({ lucideMenu })],
   host: {
     role: 'banner',
     '[attr.data-variant]': 'variant()',

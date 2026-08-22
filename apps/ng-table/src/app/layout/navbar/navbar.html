@@ -1,12 +1,14 @@
 <div class="navbar__inner">
   <div class="navbar__left">
     @if (variant() === 'docs') {
-      <ngpt-icon-button
-        class="navbar__hamburger"
-        icon="lucideMenu"
-        label="Open navigation"
-        [size]="24"
-      />
+      <button ngptIconButton class="navbar__hamburger" aria-label="Open navigation" [size]="24">
+        <ng-icon
+          name="lucideMenu"
+          size="var(--ngpt-sys-icon-size-sm)"
+          color="currentColor"
+          aria-hidden="true"
+        />
+      </button>
     }
     <span class="navbar__logo" aria-hidden="true"></span>
     <span class="navbar__title">NGP Table</span>
@@ -15,14 +17,14 @@
   <div class="navbar__right">
     @switch (variant()) {
       @case ('docs') {
-        <ngpt-search-field (open)="forwardOpenSearch()" />
+        <button ngptSearchField (click)="forwardOpenSearch()"></button>
         <button ngptPillButton class="navbar__sponsor">Sponsor</button>
         <span class="navbar__dot" aria-hidden="true"></span>
         <a class="navbar__link" href="#">Discord</a>
         <a class="navbar__link" href="#">GitHub</a>
       }
       @case ('band') {
-        <ngpt-search-field variant="on-band" (open)="forwardOpenSearch()" />
+        <button ngptSearchField variant="on-band" (click)="forwardOpenSearch()"></button>
         <a class="navbar__link" href="#">Documentation</a>
         <a class="navbar__link" href="#">GitHub</a>
       }
