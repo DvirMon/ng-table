@@ -41,7 +41,30 @@ Small uppercase label sitting above an H1 to indicate section/category (e.g. "PR
 | Text | The resolved `eyebrow` from `Routing and Page State.md` (`entry.eyebrow ?? section.label`), uppercased by CSS | `—` |
 
 
+## API
+
+Attribute-hosted on the consumer's own `<span>` (ADR-0005) — no wrapper element ships. `<span>`
+rather than a semantic element because the a11y note above requires the eyebrow to add no meaning
+of its own; `:host` promotes it to `display: block`.
+
+| | |
+|---|---|
+| Selector | `span[ngptCategoryBadge]` |
+| Inputs | none — projected text only |
+| Outputs | none |
+| Host attributes | none |
+
+```html
+<span ngptCategoryBadge>Primitives</span>
+<h1>…</h1>
+```
+
 ## HTML/CSS mock
+
+The reference mock below predates ADR-0005. It ships as the API above: the `.eyebrow` class becomes
+the `ngptCategoryBadge` attribute on a `<span>` and its rules live on `:host`. The mock's `<div>` is
+not the shipped element — both are non-semantic, and the block layout it implies is preserved by
+`display: block`.
 
 ```html
 <div class="eyebrow">Primitives</div>
