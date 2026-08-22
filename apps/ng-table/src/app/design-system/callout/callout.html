@@ -1,0 +1,13 @@
+<ng-icon
+  class="callout-icon"
+  [name]="icon()"
+  size="var(--ngpt-sys-icon-size-md)"
+  color="currentColor"
+  aria-hidden="true"
+/>
+<div class="callout-content">
+  @if (title(); as titleText) {
+    <div class="callout-title">{{ titleText }}</div>
+  }
+  <ng-content />
+</div>
