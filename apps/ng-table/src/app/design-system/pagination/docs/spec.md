@@ -20,7 +20,7 @@ states:
   - "prev-only"
   - "next-only"
 a11y:
-  - "nav element with aria-label=\"Pagination\"; the eyebrow gives the direction in text"
+  - "nav element with aria-label=\"Pagination\" (set by nav[ngptPagination] as a host attribute); the eyebrow gives the direction in text"
 tokens: [--ngpt-sys-space-400, --ngpt-sys-space-350, --ngpt-sys-space-450, --ngpt-sys-shape-corner-small-alt, --ngpt-comp-pagination-border, --ngpt-sys-typescale-label-small-2, --ngpt-text-muted, --ngpt-sys-space-100, --ngpt-sys-typescale-body-medium, --ngpt-comp-pagination-title-default, --ngpt-accent, --ngpt-bg-hover, --ngpt-comp-pagination-arrow-shift]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
@@ -32,6 +32,31 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 **Atomic level:** Molecule
 
 Previous/Next link cards at the bottom of a docs page. Title text is neutral by default; accent color and arrow-shift only appear on hover, and the whole card (not just the text) is the hover target.
+
+## API
+
+Attribute-hosted pair (ADR-0005) — the consumer authors the markup, the primitives style it. No
+array/object inputs; nothing here inserts, removes or reorders DOM.
+
+| Primitive | Selector | Inputs | Content |
+|---|---|---|---|
+| container | `nav[ngptPagination]` | — (static host `aria-label="Pagination"`) | the cards |
+| card | `a[ngptPaginationLink]` | `side: input.required<PaginationSide>()` → host `data-side` | the card **title** only |
+
+`href` is native, set by the consumer. The eyebrow (arrow glyph + "Previous"/"Next") is rendered by
+the card from `side` — it is spec-fixed copy, not consumer content. `PaginationSide` and
+`PaginationEntry` live in `pagination.types.ts`; `PaginationEntry` is no longer an input, only the
+typed shape a docs page's content constants use.
+
+```html
+<nav ngptPagination>
+  <a ngptPaginationLink side="prev" href="/docs/getting-started">Getting Started</a>
+  <a ngptPaginationLink side="next" href="/docs/state-layer-architecture">State Layer Architecture</a>
+</nav>
+```
+
+One side only: the consumer omits that `<a>` (or wraps it in its own `@if`). The remaining card
+keeps its half of the row — it places itself via `grid-column`, keyed on `data-side`.
 
 ## Composition
 
@@ -72,6 +97,11 @@ next-only footer one right-aligned card on the right. The empty half stays empty
 stretching across it, so the direction stays readable at a glance.
 
 ## HTML/CSS mock
+
+> Reference render of the *visual* contract. The authoring shape is the API section above — the
+> `.page-card--prev`/`--next` classes are `data-side` in the implementation, and the outer
+> `.pagination-footer` wrapper's divider/top padding is page-composition context, not this
+> molecule (see `decisions.md`).
 
 ```html
 <div class="pagination-footer">

@@ -1,0 +1,10 @@
+<span class="page-card__eyebrow">
+  @if (side() === 'prev') {
+    <ng-icon name="lucideArrowLeft" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+  }
+  {{ directionLabel() }}
+  @if (side() === 'next') {
+    <ng-icon name="lucideArrowRight" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+  }
+</span>
+<span class="page-card__title"><ng-content /></span>

@@ -63,3 +63,78 @@ elements. `pagination.mock.ts` ships `PAGINATION_BOTH_SIDES_MOCK`, `PAGINATION_P
 
 Card titles render `label` alone (`{{ prevEntry.label }}` / `{{ nextEntry.label }}`) — not a composed
 "Section + Label" string — per the spec's restated `Content Model.md` decision.
+
+---
+
+# Inversion to attribute-hosted primitives (2026-08-23)
+
+## Old vs. new shape
+
+| | Before | After |
+|---|---|---|
+| Selector(s) | `ngpt-pagination` (element) | `nav[ngptPagination]` + `a[ngptPaginationLink]` |
+| Inputs | `prev`/`next`: `input<PaginationEntry \| null>(null)` | `side: input.required<PaginationSide>()` on the card only |
+| DOM | the component built the `<nav>` and both `<a class="page-card">` blocks from its inputs | the consumer authors the `<nav>` and each `<a>`; the primitives style them |
+| `href` | read off `PaginationEntry` | native, set by the consumer |
+| Card title | `{{ entry.label }}` | projected (`<ng-content />`) |
+
+## Why
+
+ADR-0005: a primitive whose job is to style an existing native element is attribute-hosted, never
+an element wrapper — `<ngpt-pagination>` emitted a non-semantic host around a `<nav>` it also
+built, and foreclosed the element (the cards could never be a `routerLink`-driven `<a>` the
+consumer controls, nor carry `target`/`rel`/`download`).
+
+More directly, this domain violated the invariant in `libs/shared/table/CLAUDE.md`: **"Attribute-only
+directives — never insert/remove/reorder DOM. Structural logic lives in the template (consumer's
+responsibility)."** The old component's `@if (prev())` / `@if (next())` *was* structural logic, and
+it lived here rather than in the consumer's template. That decision is now the consumer's: omitting
+a side means omitting its `<a>`.
+
+## The seam: container styles, card renders its eyebrow
+
+Two primitives, split at the grid cell:
+
+- `nav[ngptPagination]` owns only the two-column track and the gap. Template is `<ng-content />`.
+- `a[ngptPaginationLink]` keeps a **real template** — the eyebrow's arrow glyph *and* its
+  "Previous"/"Next" label are both a pure function of `side`, spec-fixed copy the consumer has no
+  say in, so projecting them would invite drift. Only the card **title** is projected. This is the
+  `callout` precedent (attribute-hosted, but composes its own icon + content column), and it keeps
+  `provideIcons({ lucideArrowLeft, lucideArrowRight })` local per ADR-0004.
+
+**Why the card is a primitive at all, rather than descendant rules in the container's CSS:** under
+emulated encapsulation, projected nodes carry the *consumer's* encapsulation id, so a container
+rule like `:host > a` never matches — the same mechanic ADR-0005 records for `prose`. Every rule
+that styles a card therefore has to live in a component hosted *on* that card. That includes its
+grid placement: `grid-column: 1 / 2` is keyed on `data-side` in `pagination-link.css`, i.e. the
+item places itself in its parent's track.
+
+`side` is `input.required` — it drives grid placement and the direction copy, so there is no
+defensible default, and a card without one would silently stack in column 1.
+
+## `aria-label` as a static host attribute
+
+The spec's a11y front-matter fixes the label to "Pagination" for every instance, so it is a static
+host attribute on `nav[ngptPagination]` rather than an input — the `callout` `role="note"`
+precedent. This does not contradict ADR-0005's "never re-declare native capability as an input":
+it is not an input, and no consumer-visible affordance is being shadowed.
+
+## Spec wording the inversion invalidated
+
+- Front-matter `a11y` said only `nav element with aria-label="Pagination"` — amended to name the
+  primitive that sets it, since the consumer now authors the `<nav>` and could otherwise assume the
+  label is theirs to supply.
+- The `## One side only` section's *rendering* claim (the component drops the absent card) is now a
+  consumer responsibility; the *layout* claim (the remaining card keeps its own half) still holds
+  and is still implemented here, via `grid-column`. Rewritten as such in the new `## API` section
+  rather than edited in place — the section is a design requirement, and it survives.
+- The `## HTML/CSS mock` is now reference-only for the visual contract: its `.page-card--prev` /
+  `--next` classes are `data-side` in the implementation, and its outer `.pagination-footer`
+  wrapper was already excluded from this molecule (see § Spec-vs-mock above). Flagged with a note
+  above the mock rather than rewritten.
+
+## `PaginationEntry` kept
+
+Nothing consumes it now. Kept anyway: a docs page still needs a typed shape for the `{ label, href }`
+pair it feeds into the authored `<a>` — the same role `FooterLink` plays for Home. `pagination.mock.ts`
+is unchanged and still valid (three fixtures: both sides, prev-only, next-only).

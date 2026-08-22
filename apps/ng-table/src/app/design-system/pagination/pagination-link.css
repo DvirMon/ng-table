@@ -1,0 +1,62 @@
+/* The host is the card itself — the old `.page-card` rules moved onto `:host`. */
+:host {
+  display: block;
+  border: 1px solid var(--ngpt-comp-pagination-border);
+  border-radius: var(--ngpt-sys-shape-corner-small-alt);
+  padding: var(--ngpt-sys-space-350) var(--ngpt-sys-space-450);
+  text-decoration: none;
+  transition: background var(--ngpt-sys-motion-duration-fast) var(--ngpt-sys-motion-easing-standard);
+}
+
+/* Self-placement in `nav[ngptPagination]`'s two-column track: the container cannot reach projected
+   children under emulated encapsulation, so the card owns its own column. */
+:host([data-side='prev']) {
+  grid-column: 1;
+  text-align: left;
+}
+
+:host([data-side='next']) {
+  grid-column: 2;
+  text-align: right;
+}
+
+:host(:hover) {
+  background: var(--ngpt-bg-hover);
+}
+
+.page-card__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-150);
+  font: var(--ngpt-sys-typescale-label-small-2);
+  color: var(--ngpt-text-muted);
+  margin-block-end: var(--ngpt-sys-space-100);
+}
+
+:host([data-side='next']) .page-card__eyebrow {
+  justify-content: flex-end;
+}
+
+.page-card__eyebrow ng-icon {
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--ngpt-sys-motion-duration-fast) var(--ngpt-sys-motion-easing-standard);
+}
+
+:host([data-side='prev']:hover) .page-card__eyebrow ng-icon {
+  transform: translateX(calc(-1 * var(--ngpt-comp-pagination-arrow-shift)));
+}
+
+:host([data-side='next']:hover) .page-card__eyebrow ng-icon {
+  transform: translateX(var(--ngpt-comp-pagination-arrow-shift));
+}
+
+.page-card__title {
+  display: block;
+  font: var(--ngpt-sys-typescale-title-small);
+  color: var(--ngpt-comp-pagination-title-default);
+}
+
+:host(:hover) .page-card__title {
+  color: var(--ngpt-accent);
+}
