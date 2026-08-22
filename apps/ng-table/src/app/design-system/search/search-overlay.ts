@@ -13,9 +13,10 @@ import {
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSearch } from '@ng-icons/lucide';
+import { NgpFocusTrap } from 'ng-primitives/focus-trap';
 import { RECENT_SEARCHES_MOCK, SEARCH_INDEX_MOCK } from './search.mock';
 import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from './search.types';
-import { getFocusableElements, wrapIndex } from './search-overlay.utils';
+import { wrapIndex } from './search-overlay.utils';
 
 /**
  * The ⌘K overlay: scrim, panel, query input, result list, empty/no-results states, recent
@@ -33,7 +34,7 @@ import { getFocusableElements, wrapIndex } from './search-overlay.utils';
   templateUrl: './search-overlay.html',
   styleUrl: './search-overlay.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
+  imports: [NgIcon, NgpFocusTrap],
   viewProviders: [provideIcons({ lucideSearch })],
   host: {
     '[attr.data-open]': 'open()',
@@ -46,7 +47,6 @@ export class SearchOverlay {
   readonly open = input<boolean>(false);
   readonly closed = output<void>();
 
-  private readonly panel = viewChild<ElementRef<HTMLDivElement>>('panel');
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   private readonly index = signal<readonly SearchResultRecord[]>(SEARCH_INDEX_MOCK);
@@ -134,9 +134,6 @@ export class SearchOverlay {
         event.preventDefault();
         this.closed.emit();
         break;
-      case 'Tab':
-        this.trapFocus(event);
-        break;
       case 'ArrowDown':
         event.preventDefault();
         this.moveActive(1);
@@ -164,26 +161,5 @@ export class SearchOverlay {
       return;
     }
     this.activeResultIndex.update((current) => wrapIndex(current + delta, total));
-  }
-
-  private trapFocus(event: KeyboardEvent): void {
-    const panelEl = this.panel()?.nativeElement;
-    if (!panelEl) {
-      return;
-    }
-    const focusable = getFocusableElements(panelEl);
-    if (focusable.length === 0) {
-      return;
-    }
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    const active = document.activeElement;
-    if (event.shiftKey && active === first) {
-      event.preventDefault();
-      last.focus();
-    } else if (!event.shiftKey && active === last) {
-      event.preventDefault();
-      first.focus();
-    }
   }
 }

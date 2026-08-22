@@ -31,6 +31,29 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 Admonition block for notes, warnings, and tips inside docs prose. Three variants, distinguished by hue and icon.
 
+## API
+
+**Selector:** `aside[ngptCallout]` — attribute-hosted on the consumer's own `<aside>`, per
+[ADR-0005](../../../../../docs/adr/0005-attribute-hosted-components.md). No wrapper element ships;
+`:host` in `callout.css` *is* the `<aside>`. (Was `ngpt-callout` through Wave 2.)
+
+| Input | Type | Default | Notes |
+|---|---|---|---|
+| `kind` | `CalloutKind` (`'note' \| 'tip' \| 'warning'`) | `'note'` | Drives the `data-kind` host attribute (tint + border) and the icon |
+| `heading` | `string \| undefined` | `undefined` | Optional visible title line, colored per `kind`. **Named `heading`, not `title`** — `title` is a global HTML attribute on the `<aside>` host and would collide (see `decisions.md`) |
+
+Body content arrives through the default `<ng-content />`.
+
+**Host attributes:** `role="note"` (static, all three kinds — `<aside>`'s implicit role is
+`complementary`, and `generic` once nested in prose; neither satisfies the `a11y` front-matter's
+`role="note"`, which `<aside>` explicitly permits as an override) and `[attr.data-kind]`.
+
+```html
+<aside ngptCallout kind="warning" heading="Breaking in v2">
+  <p><code>createTable</code> no longer accepts a bare array.</p>
+</aside>
+```
+
 ## Variants
 
 | Variant | Hue | Icon | Use for |

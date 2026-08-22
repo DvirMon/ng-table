@@ -56,13 +56,32 @@ explicitly scoped this build to the `search/` folder only. Marking the rest of t
 `aria-hidden` is an app-composition concern for whichever Wave 2 task mounts
 `<ngpt-search-overlay>` alongside the rest of the app.
 
-## Manual focus trap, no CDK
+## Focus trap wired onto `ng-primitives/focus-trap`
 
-No `@angular/cdk` dependency in this repo (confirmed against `package.json`) and ADR-0001 keeps
-this design system app-local, so the focus trap is hand-rolled in `search-overlay.utils.ts`
-(`getFocusableElements`, `wrapIndex`) rather than using `cdk/a11y`'s `FocusTrap`. Tab/Shift+Tab
-wrapping is handled in `SearchOverlay.trapFocus()`, keyed off `document.activeElement` against
-the panel's first/last focusable descendant.
+Was hand-rolled (`SearchOverlay.trapFocus()` + `search-overlay.utils.ts`'s
+`getFocusableElements`/`FOCUSABLE_SELECTOR`), citing "no `@angular/cdk` dependency in this repo"
+as the reason to hand-roll rather than use `cdk/a11y`'s `FocusTrap`. That reasoning doesn't rule
+out `ng-primitives/focus-trap` (`ngpFocusTrap`), which is already a repo dependency (see
+`dropdown-menu`/`dropdown-pill`/`select-trigger`/`tab-switcher`) and needed for a plain
+Tab/Shift+Tab cycle: `<div ngpFocusTrap [ngpFocusTrapDisabled]="!open()">` on `#panel` replaces
+the `Tab` case in `onPanelKeydown` and the whole selector-based focusable-element scan.
+
+Verified against the primitive's source (`ng-primitives/focus-trap`'s `NgpFocusTrap`) before
+wiring: outside an `NgpOverlay` context (this component has none — no portal/dialog wrapper),
+`setupFocusTrap()` runs once at directive construction and arms global `focusin`/`focusout`/
+`keydown` listeners immediately, but every handler checks `disabled()` at call-time — so toggling
+`ngpFocusTrapDisabled` off `!open()` correctly arms/disarms live Tab-trapping and focus
+containment without needing the panel to unmount, matching this component's existing
+always-mounted-plus-`inert` model (see below). The directive's own initial-auto-focus path is
+skipped while `disabled` is `true` at construction (the overlay starts closed) and never
+re-triggers later, so it doesn't race the component's own `queueMicrotask`-based initial-focus
+effect on open.
+
+Full `ng-primitives/dialog` was considered and rejected: it's built around `NgpDialogTrigger` +
+an `ng-template` + `NgpDialogManager` owning create-on-open/destroy-on-close portal mount, which
+conflicts with this component's `open` being externally/parent-controlled (⌘K) rather than
+locally triggered, and with the "DOM stays mounted" decision below. Scrim-click, Escape, body
+scroll-lock, and focus-restore-on-close have no ng-primitives equivalent and stay hand-rolled.
 
 ## DOM stays mounted; `inert` gates interactivity instead of `@if`
 
@@ -150,3 +169,94 @@ contract are written for the **results** listbox. Recent-search entries render a
 `<button>`s (real interactive elements, not `role="option"` rows) and aren't reachable via
 ↑/↓ — only via Tab, same as any other button in the panel. This keeps the accessibility
 contract exactly as specced rather than extending it to a state the spec doesn't describe.
+
+## `search-field` becomes attribute-hosted — ADR-0005 (post-shipped revision)
+
+`ngpt-search-field` → **`button[ngptSearchField]`**. Was an element component whose template root
+was a `<button>` it existed to style — exactly ADR-0005's test for attribute-hosted ("if the
+template's root is a semantic native element"). The wrapper is gone; the component now hosts on the
+consumer's `<button>`.
+
+`<a[ngptSearchField]>` was deliberately **not** added to the selector (unlike `pill-button`, which
+gained one). The field opens an overlay in place; it never navigates, so an anchor host would be
+wrong semantics.
+
+### What stayed in the template
+
+The leading `lucideSearch` icon, the "Search docs" placeholder span, and the `⌘K` `<kbd>` chip
+remain in `search-field.html` — only the wrapping `<button>` was deleted. This is a pre-composed
+widget, not a generic styling wrapper: that fixed content *is* the field's identity, there is
+nothing for a consumer to project, and the glyph is chosen by the component, so the local
+`viewProviders: [provideIcons({ lucideSearch })]` registration stays (ADR-0004). This is the
+difference from `icon-button`, which lost its `icon` input and its icon registry precisely because
+its glyph was the consumer's choice.
+
+### `open` output dropped
+
+`open = output<void>()` is gone; consumers bind the native `(click)`.
+
+On the old wrapper the output was mechanically necessary — `(click)` fired on the inner `<button>`
+and had to be re-surfaced on the host. Now the host is that button, so `(click)` already lands
+where it should, with Enter/Space handled natively.
+
+The judgment call was whether `open` still earns its keep as self-documenting API. It does not.
+The spec gives it no meaning beyond "the trigger was activated" — the field owns no open state
+(`SearchOverlay.open` is a separate input driven by the page), applies no guard, and does no work
+before emitting. The only call site confirms this: `navbar.html` bound
+`(open)="forwardOpenSearch()"`, and `Navbar.forwardOpenSearch()` is a bare `this.openSearch.emit()`
+pass-through. That is a plain click re-emit, which is what ADR-0005 rules out ("`icon-button` …
+loses `pressed: output<void>()` — consumers bind the native `(click)`"). Keeping it would also make
+`(click)` and `(open)` both work and both correct, with nothing declaring which is the contract.
+
+If a later round gives activation real semantics (e.g. the field owning debounce, or opening on
+focus as well as click, per `Search.md`'s "clicking *or focusing* it opens the overlay"), that is
+the point to reintroduce a named output — it would then carry meaning `(click)` cannot.
+
+### `aria-label="Search docs"` stays fixed, on the host
+
+Moved from the inner `<button>` to a **static host attribute**, not an input. The spec's a11y
+front-matter specifies ARIA only for the overlay (`role="dialog"`, activedescendant listbox); for
+the field, "Search docs" is fixed copy — it's the accessible name for a control whose visible
+placeholder text is the same string, hardcoded in this component's own template. An input could
+therefore only let the two drift apart. Static (not `[attr.aria-label]`) so a consumer with a
+genuinely different context can still override it on the element without fighting a binding, the
+same reasoning `pill-button` used for its `type` default.
+
+`type="button"` follows `pill-button` exactly: applied imperatively in the constructor when the
+consumer hasn't set one, rather than as a host binding that would clobber an explicit
+`type="submit"`. No `tagName` guard is needed here since the selector already restricts the host to
+`<button>`.
+
+### Call-site change (applied by the separate call-sites pass, not here)
+
+```html
+<!-- before -->
+<ngpt-search-field (open)="forwardOpenSearch()" />
+<ngpt-search-field variant="on-band" (open)="forwardOpenSearch()" />
+
+<!-- after -->
+<button ngptSearchField (click)="forwardOpenSearch()"></button>
+<button ngptSearchField variant="on-band" (click)="forwardOpenSearch()"></button>
+```
+
+`navbar.ts`'s `imports: [SearchField, …]` is unchanged. `navbar.css` never selected
+`ngpt-search-field`, so it needs no change either.
+
+### CSS: `.search-field` folded into `:host`
+
+`:host { display: contents; }` (the wrapper opt-out) is deleted. Every `.search-field` rule moved
+onto `:host`, and its pseudo-class rules onto `:host(:hover)` / `:host(:focus-visible)` /
+`:host([data-variant='on-band']:hover)`. Descendant rules (`.search-field__placeholder`, `.kbd`)
+are unchanged apart from losing their now-absent `.search-field` ancestor qualifier. No visual,
+token, or breakpoint change — the below-md icon-only collapse now sizes `:host` directly.
+
+### `search-overlay` intentionally left as an element component
+
+`search-overlay` keeps `selector: 'ngpt-search-overlay'` and was **not** touched by this pass.
+ADR-0005 names it explicitly among the domains for which an element selector remains correct: it
+composes real structure of its own (scrim + panel + input row + result list + footer) and shadows
+no single native element, so the attribute-host test doesn't apply. It is additionally earmarked
+for a later `NgpDialog` pass (ADR-0005 § Sequencing), which will own its focus trap, scrim, and Esc
+handling — converting its shape now would be rework. Its `open` input and `closed` output are
+unaffected by the field's dropped `open` output; the two were never wired to each other directly
+(the page composition mediates).

@@ -1,3 +1,4 @@
+/* `:host` is the consumer's own `<aside ngptCallout>` — no wrapper element ships (ADR-0005). */
 :host {
   display: grid;
   grid-template-columns: var(--ngpt-sys-space-500) 1fr;

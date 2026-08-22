@@ -1,11 +1,12 @@
 <div class="search-scrim" aria-hidden="true" (click)="closed.emit()"></div>
 
 <div
-  #panel
   class="search-panel"
   role="dialog"
   aria-modal="true"
   aria-label="Search docs"
+  ngpFocusTrap
+  [ngpFocusTrapDisabled]="!open()"
   (keydown)="onPanelKeydown($event)"
 >
   <div class="search-input-row">
