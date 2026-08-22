@@ -38,3 +38,36 @@ tokens (`--ngpt-sys-typescale-code`, `--ngpt-sys-space-050`, `--ngpt-sys-space-1
 
 `ngpt-code-chip`, projected code text only, no inputs, no icons, no a11y attributes (spec's
 `a11y: []`). Nothing else to report.
+
+## Converted to `code[ngptCodeChip]` — ADR-0005
+
+`ngpt-code-chip` → `code[ngptCodeChip]`. This was the textbook case ADR-0005 names: the template's
+root was a semantic native element the component existed only to style, so the custom element
+bought nothing and cost an extra node in the inline flow. The consumer now writes
+`<code ngptCodeChip>…</code>` and the component hosts on that `<code>` directly.
+
+Consequences:
+
+- **Template is `<ng-content />`.** The inner `<code class="code-chip">` is gone.
+- **`.code-chip` rules moved onto `:host`.** Same declarations, same tokens, no visual change.
+- **`:host { display: contents }` deleted.** It only existed to stop the custom element from
+  contributing a second box around the inner `<code>`. With the host *being* the `<code>`, the
+  element's own `inline` default is exactly what the spec's "inline within text flow" asks for, so
+  no `display` is declared at all now.
+- **`:host-context(a) .code-chip` → `:host-context(a)`.** The inside-a-link state still resolves
+  through the cascade with no input or host binding; only the descendant part of the selector was
+  dropped, since there is no descendant left.
+
+### Spec wording the conversion invalidated
+
+The **HTML/CSS mock** section still shows `<code class="code-chip">` with a `.code-chip` rule block.
+That form no longer ships — the class is now the `ngptCodeChip` attribute and the rules sit on
+`:host`. The mock was left in place (it is the distributed design-handoff text) with a note above it
+recording the mapping, and a new **API** section states what actually ships. The rendered DOM is
+byte-for-byte the mock's single `<code>` box, so nothing in the Build spec table changed.
+
+The old decision **"Host is `display: contents`, inner `<code>` carries the visual box"** above is
+superseded in full; it is kept for history. Its premise — "fixed contract pins the selector to
+`ngpt-code-chip`, so the host tag can't itself be `<code>`" — is the exact constraint ADR-0005
+removed, and CONVENTIONS.md § "Fixed component contracts" still lists the stale `ngpt-code-chip`
+row. That table is outside this domain and was not edited.

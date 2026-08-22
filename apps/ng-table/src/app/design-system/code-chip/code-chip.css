@@ -1,8 +1,4 @@
 :host {
-  display: contents;
-}
-
-.code-chip {
   font: var(--ngpt-sys-typescale-code);
   padding: var(--ngpt-sys-space-050) var(--ngpt-sys-space-150);
   border-radius: var(--ngpt-sys-shape-corner-extra-small);
@@ -12,6 +8,6 @@
 
 /* state: inside a link — inherit the ancestor <a>'s (ngpt-inline-link) accent color
    instead of the default secondary text color */
-:host-context(a) .code-chip {
+:host-context(a) {
   color: inherit;
 }
