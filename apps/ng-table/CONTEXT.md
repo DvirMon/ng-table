@@ -7,7 +7,7 @@ headless Angular table primitive: `createTable()` + `with-*()` feature plugins +
 Two zones: a marketing page at `/`, and docs under `/docs`. This app is the site; it does not implement the
 table itself.
 
-**This build round:** token foundations + all 17 DS components + the Home landing page (`/`) only. Docs
+**This build round:** token foundations + 16 DS components + the Home landing page (`/`) only. Docs
 pages, the sidebar/TOC/3-column shell, article content, and the nav tree are a later round — see
 `docs/design-handoff/README.md` § Two open items and `specs/Content Model.md` for what's still mock there.
 
@@ -44,13 +44,19 @@ Distributed during Wave 0 per the repo's docs-by-responsibility convention (`.cl
 
 | What | Where |
 | --- | --- |
-| Each of the 17 component specs | `src/app/design-system/<id>/docs/spec.md` |
+| Each of the 16 component specs | `src/app/design-system/<id>/docs/spec.md` |
 | Navbar, Page Footer specs | `src/app/layout/<id>/docs/spec.md` |
 | Home page spec | `src/app/pages/home/docs/spec.md` |
 | The 8 foundations token specs | `src/styles/docs/*.md` (mirrored as CSS in `src/styles/tokens/`) |
 | Everything not built this round (other 5 archetypes, sidebar/TOC/content-column/page-shell layout, Content Model, Routing and Page State, Search Index, Assets and Content Source, Frame Annotation, reviews, frames, screenshots) | `docs/design-handoff/` — untouched, for the next round |
 
 Each moved spec carries a one-line provenance note pointing back to `docs/design-handoff/`.
+
+**Descoped:** the handoff's `specs/index.md` lists 17 components; `Table Row.md` was dropped. It mocked
+the shipped NGP Table product's own row rendering (out of scope per `specs/index.md` § Out of scope: "The
+NGP Table product component itself — styled by the shipped library"), not a docs-site DS primitive. Its
+spec is recoverable from git history (moved in the spec-distribution commit) if a real need for it
+surfaces later.
 
 ## Build-time decisions
 

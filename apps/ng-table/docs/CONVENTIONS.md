@@ -92,7 +92,6 @@ upstream component's actual implementation to land first.
 | inline-link | `ngpt-inline-link` | `href: input<string>()`, `external: input<boolean>(false)` |
 | nav-item | `ngpt-nav-item` | `active: input<boolean>(false)`, `nested: input<boolean>(false)`; no router wiring this round |
 | tab-switcher | `ngpt-tab-switcher` | `tabs: input<readonly TabItem[]>()`, `selected: input<string>()`, `selectedChange = output<string>()`; roving-tabindex per spec `a11y` |
-| table-row | `ngpt-table-row` | leaf this round, no consumers yet |
 | pagination | `ngpt-pagination` | leaf this round, no consumers yet |
 | dropdown-menu | `ngpt-dropdown-menu` | `items: input<readonly DropdownMenuItem[]>()`, `open: input<boolean>(false)`, `select = output<string>()`; host `[attr.data-open]`; floating-surface recipe from `src/styles/docs/Radius and Elevation.md` |
 | search | `ngpt-search-field` + `ngpt-search-overlay` | field: `variant: input<'default'\|'on-band'>('default')`, `open = output<void>()`. overlay: `open: input<boolean>(false)`, `closed = output<void>()`, ⌘K + Esc handling, scrim, focus trap/return. Index is **stubbed**: types from `Search Index.md` (still in `docs/design-handoff/specs/`), `search.mock.ts` ships an empty index + in-memory recent-searches list — no persistence, no ranking |

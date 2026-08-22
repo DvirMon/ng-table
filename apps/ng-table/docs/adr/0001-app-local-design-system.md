@@ -6,7 +6,7 @@ Accepted — 2026-08-22
 
 ## Context
 
-This round builds token foundations, 17 DS components, and the Home landing page for a new docs/marketing
+This round builds token foundations, 16 DS components, and the Home landing page for a new docs/marketing
 site (`ng-table`) from a design handoff bundle. There is exactly one consumer app and no cross-app reuse
 requirement yet — the docs pages that would justify a second consumer (Doc Article, API Reference, etc.)
 are explicitly out of scope this round.

@@ -33,7 +33,7 @@ Never build/serve/test unprompted — ask first.
 ## Structure
 
 ```
-src/app/design-system/<id>/   17 DS components, each with docs/spec.md + docs/decisions.md
+src/app/design-system/<id>/   16 DS components, each with docs/spec.md + docs/decisions.md
 src/app/layout/<id>/          navbar, page-footer
 src/app/pages/home/           Home page composition + its page-local blocks (hero-band, feature-grid, install-row)
 src/styles/tokens/            --ngpt-* custom properties, one file per foundations spec
