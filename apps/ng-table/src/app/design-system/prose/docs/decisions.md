@@ -104,6 +104,10 @@ Not spec'd explicitly, but necessary: custom elements default to `display: inlin
 Template-level component wrapping full article content (headings, lists, block quotes) needs to lay
 out as a block. This is a structural default, not a design value, so it doesn't need a token.
 
+**Superseded by the attribute-host conversion below** — the rule is gone. The host is now the
+consumer's own `<article>`/`<div>`, both block-level already, so the rule normalized nothing and
+would only have fought a consumer that set its own `display` on that element.
+
 ## No runtime a11y enforcement
 
 The spec's a11y line ("One H1 per page; never skip a level. Anchor links have
@@ -111,3 +115,82 @@ The spec's a11y line ("One H1 per page; never skip a level. Anchor links have
 enforces at runtime — `prose.html` is a pure `<ng-content />` passthrough with no heading
 introspection, and the anchor `<a>` (including its `aria-label`) is authored directly by whoever
 writes the projected content, per the spec's own HTML mock.
+
+---
+
+# Attribute-host conversion (ADR-0005)
+
+## Selector: `ngpt-prose` → `article[ngptProse], div[ngptProse]`
+
+| | Before | After |
+|---|---|---|
+| Selector | `ngpt-prose` (element, kebab-case) | `article[ngptProse], div[ngptProse]` (attribute, camelCase) |
+| Host element | a custom `<ngpt-prose>` tag with no semantics | the consumer's own `<article>` / `<div>` |
+| Call form | `<ngpt-prose>…</ngpt-prose>` | `<article ngptProse>…</article>` |
+| `measure` input | unchanged | unchanged |
+| `data-measure` host attr | unchanged | unchanged |
+| `ViewEncapsulation.None` | unchanged | unchanged |
+| `class: 'ngpt-prose'` host binding | unchanged | unchanged |
+| Template | `<ng-content />` | `<ng-content />` |
+
+Driven by ADR-0005: a DS primitive whose job is to style existing native elements is
+attribute-hosted, never an element wrapper. Prose is the clearest case in the app — it emitted a
+non-semantic `<ngpt-prose>` tag around content that is, semantically, an article. ADR-0005's own
+Consequences section names `article[ngptProse]` explicitly.
+
+Stays a `@Component`, not a `@Directive`: a directive cannot carry `styleUrl` at all, and moving
+`prose.css` out of the domain folder is exactly what ADR-0005 rejected (`libs/shared/design-system`'s
+`@Directive` + `dropdown.global.scss` split).
+
+No call sites changed — prose has none today (`feature-grid` deliberately authors plain `<h3>`/`<p>`
+instead, per its own `docs/decisions.md`). This was the cheapest possible moment to convert.
+
+## Encapsulation and class scoping survive the conversion
+
+**Do not "fix" either of these later.** They are not leftovers from the element-selector shape.
+
+- **`ViewEncapsulation.None` stays.** The reason has nothing to do with the host element. Under
+  emulated encapsulation, nodes projected through `<ng-content>` carry the *declaring* component's
+  encapsulation id, not prose's — so a `:host h2` rule compiled with prose's `_nghost`/`_ngcontent`
+  attributes could never match the consumer's headings. Prose exists **only** to style content it
+  does not declare, so emulated encapsulation would leave it styling nothing at all. Changing
+  `<ngpt-prose>` to `<article ngptProse>` does not move the projected content into prose's template,
+  so it does not change this. CONVENTIONS.md #8 and ADR-0005 § Consequences both say so directly.
+- **`class: 'ngpt-prose'` stays, and every selector in `prose.css` stays scoped under it.** It is
+  the direct consequence of the point above: with `ViewEncapsulation.None` every rule in the file is
+  emitted global. `.ngpt-prose h2 { … }` is what stops it from restyling every `h2` on the site.
+  Removing the class, or rewriting the rules as `:host …`, silently converts a scoped stylesheet
+  into a global one.
+- The `[ngptProse]` attribute is **not** a substitute for the class. It is a selector for Angular's
+  compiler, and while `article[ngptProse] h2` would happen to work in CSS today, it would only
+  match the two hosts named in the selector and would drift the moment the selector list changes.
+  The class is set by the component itself, so it is always present and always exactly one token.
+
+## `article` and `div` are both justified — verified against `spec.md`
+
+The selector ships two hosts because the spec describes two distinct contexts, not because two
+looked convenient:
+
+- **`article`** — `spec.md`'s whole frame of reference is "elements that appear inside the Content
+  Column". `layout/Content Column.md` renders `<main role="main">` and the archetype frames
+  (`Doc Article.dc.html`, `API Reference.dc.html`, `Section Landing.dc.html`) each put exactly one
+  H1 plus a lede plus H2 sections inside it. That is a self-contained document: `<article>`.
+  `spec.md`'s a11y line ("One H1 per page; never skip a level") is an article-shaped contract.
+- **`div`** — `pages/home/docs/spec.md` § Section rhythm makes prose a *fragment*: every Home
+  section opens with a `category-badge` eyebrow, then "`prose` H2 at
+  `--ngpt-sys-typescale-headline-marketing`", then an optional single paragraph, all inside one
+  `<section>`. Slot 5 is the same shape ("`prose` H2 + one paragraph + a command row"). A heading
+  and one paragraph belonging to a surrounding section are not independently distributable, so
+  `<article>` there would be a false claim; and on a docs page, a nested `<article>` inside the
+  page's own `<article>` would be wrong for the same reason. `<div>` is the semantically neutral
+  host for that case.
+
+This is also what the `measure` input already encodes — `'default'` is the docs/article context and
+`'marketing'` is the Home-section context — so narrowing to a single element would have contradicted
+an input the component already ships.
+
+Deliberately **not** included: `section[ngptProse]`. A `<section>` needs an accessible name, and
+prose neither supplies one nor knows the heading it will be given; a consumer that wants prose
+inside a section puts the `<div ngptProse>` inside its own `<section>`, which is what the Home spec
+describes anyway. `main[ngptProse]` is likewise out — `Content Column.md` owns the `<main>`, its
+padding, its max-width and its `role="main"`, and prose explicitly `does_not_own` column width.

@@ -33,6 +33,56 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 Typographic elements that appear inside the Content Column but aren't components: deeper headings, lists, blockquotes, and heading anchor links. `foundations/Typography.md` defines H1/H2 and the body roles; this file covers everything below them.
 
+## API
+
+Attribute-hosted (ADR-0005) — prose applies typography to markup that already has semantics, so it
+hosts on the consumer's own element rather than shipping a wrapper tag.
+
+| | |
+|---|---|
+| Selector | `article[ngptProse], div[ngptProse]` |
+| Class | `Prose` (`prose.ts`) |
+| Template | `<ng-content />` — pure passthrough, no structure of its own |
+| Encapsulation | `ViewEncapsulation.None` — **required**, see below |
+| Host class | `ngpt-prose` — **required**, see below |
+
+| Input | Type | Default | Effect |
+|---|---|---|---|
+| `measure` | `ProseMeasure` = `'default' \| 'marketing'` (`prose.types.ts`) | `'default'` | Mirrored to `[attr.data-measure]` on the host. `'marketing'` remaps H2 only, to the marketing headline scale for Home's section headings. |
+
+No outputs. No native capability is re-declared as an input.
+
+**Which host element.** Both are legitimate and each has a spec-grounded caller:
+
+- `<article ngptProse>` — a standalone doc page's body, inside the Content Column's
+  `<main role="main">`. This is the Doc Article / API Reference / Section Landing archetype.
+- `<div ngptProse>` — a prose *run* inside a larger block, where `<article>` would be a lie:
+  Home's section rhythm (`pages/home/docs/spec.md` § Section rhythm, § Slots row 5) puts a
+  `category-badge` eyebrow, a prose H2, and one paragraph inside a `<section>`. That fragment is
+  not independently distributable, so it is not an `<article>`; and a nested `<article>` inside a
+  doc page's own `<article>` would be wrong for the same reason.
+
+```html
+<main role="main" class="content">
+  <article ngptProse>
+    <h1>Architecture</h1>
+    <h2 id="sec-signals">Signals as the contract<a class="heading-anchor" href="#sec-signals" aria-label="Link to this section">#</a></h2>
+    <ul><li>Composable via <ngpt-code-chip>withSorting()</ngpt-code-chip></li></ul>
+  </article>
+</main>
+
+<section>
+  <ngpt-category-badge>Get Started</ngpt-category-badge>
+  <div ngptProse measure="marketing">
+    <h2>Install it</h2>
+    <p>…</p>
+  </div>
+</section>
+```
+
+The `.content …` scoping in the HTML/CSS mock below is realized as `.ngpt-prose …` — see
+"Encapsulation" in `decisions.md` for why that class is not optional.
+
 ## Heading levels
 
 | Level | Font | Color | Margin |

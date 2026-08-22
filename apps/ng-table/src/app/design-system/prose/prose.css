@@ -1,15 +1,16 @@
-/* ngpt-prose — styles arbitrary projected article markup (headings, lists, blockquote, hr,
-   strong/em, heading anchors). ViewEncapsulation.None (CONVENTIONS.md #8): every selector below
-   is scoped under the .ngpt-prose host class so these global-scope rules never leak onto page
-   content outside this component.
+/* [ngptProse] — styles arbitrary projected article markup (headings, lists, blockquote, hr,
+   strong/em, heading anchors). ViewEncapsulation.None (CONVENTIONS.md #8, ADR-0005): emulated
+   encapsulation cannot reach projected content, so these rules are global — and the .ngpt-prose
+   host class is what keeps them from leaking onto page content outside this component. Do NOT
+   rewrite these selectors as :host — the component's own encapsulation id is not on the projected
+   nodes. Every selector below must stay scoped under .ngpt-prose.
+
+   No `display` rule: the host is the consumer's own <article>/<div>, already block-level. (The
+   old ngpt-prose element host needed `display: block` because unknown elements default to inline.)
 
    Inline code and links are intentionally NOT restyled here — code-chip/inline-link are real
    components with their own encapsulation, authored directly inside projected content
    (<ngpt-code-chip>, <ngpt-inline-link>). See docs/decisions.md. */
-
-.ngpt-prose {
-  display: block;
-}
 
 /* ---------------------------------------------------------------------- */
 /* Headings                                                                */
