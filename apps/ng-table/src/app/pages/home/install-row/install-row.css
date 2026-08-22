@@ -23,6 +23,6 @@
   user-select: none;
 }
 
-ngpt-icon-button {
+[ngptIconButton] {
   flex: none;
 }
