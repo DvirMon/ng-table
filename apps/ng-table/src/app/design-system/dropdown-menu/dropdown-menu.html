@@ -1,5 +1,7 @@
 @for (item of items(); track item.id; let i = $index) {
-  @if (isGroupStart(item, i)) {
+  @let isGroupStart = item.group !== undefined && items()[i - 1]?.group !== item.group;
+  @let optionRole = item.selected === undefined ? 'menuitem' : 'menuitemradio';
+  @if (isGroupStart) {
     @if (i > 0) {
       <div class="menu-divider" role="separator"></div>
     }
@@ -10,7 +12,7 @@
   <div
     #optionElement
     class="menu-option"
-    [attr.role]="optionRole(item)"
+    [attr.role]="optionRole"
     [attr.aria-checked]="item.selected === undefined ? null : item.selected"
     [attr.aria-disabled]="item.disabled ? 'true' : null"
     [attr.data-selected]="item.selected ? '' : null"

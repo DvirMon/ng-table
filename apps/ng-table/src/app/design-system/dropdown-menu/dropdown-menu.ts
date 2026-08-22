@@ -71,18 +71,6 @@ export class DropdownMenu {
     inject(DestroyRef).onDestroy(() => clearTimeout(this.typeaheadTimeoutId));
   }
 
-  /** New group starts at `index` when its `group` differs from the previous item's. */
-  protected isGroupStart(item: DropdownMenuItem, index: number): boolean {
-    if (item.group === undefined) {
-      return false;
-    }
-    return this.items()[index - 1]?.group !== item.group;
-  }
-
-  protected optionRole(item: DropdownMenuItem): 'menuitem' | 'menuitemradio' {
-    return item.selected === undefined ? 'menuitem' : 'menuitemradio';
-  }
-
   protected onOptionClick(item: DropdownMenuItem): void {
     if (item.disabled) {
       return;
