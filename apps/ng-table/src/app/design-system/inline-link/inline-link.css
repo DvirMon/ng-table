@@ -1,0 +1,34 @@
+/* Text-run component: the host must not introduce a box in the surrounding
+   prose flow — the anchor below is the only element that participates in layout. */
+:host {
+  display: contents;
+}
+
+.inline-link {
+  color: var(--ngpt-accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--ngpt-accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.inline-link:hover {
+  color: var(--ngpt-comp-link-hover);
+  text-decoration-color: currentColor;
+}
+
+/* Focus ring intentionally omitted here — the global :focus-visible policy
+   (src/styles/global.css) already applies `box-shadow: 0 0 0 2px var(--ngpt-focus-ring)`,
+   which matches this component's spec value exactly. */
+
+/* Screen-reader-only affordance for external links — see docs/decisions.md. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
