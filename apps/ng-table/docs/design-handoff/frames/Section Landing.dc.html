@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NGP Table — Overview</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: oklch(0.16 0.005 260); font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: oklch(0.62 0.19 52); text-decoration: none; }
+  a:hover { color: oklch(0.68 0.19 52); }
+  [data-skip]:focus { transform: translateY(0) !important; opacity: 1 !important; }
+  ::selection { background: oklch(0.62 0.19 52 / 0.3); }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:oklch(0.16 0.005 260);color:white;">
+
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 24px;background:oklch(0.21 0.03 85);border-bottom:1px solid oklch(0.34 0.06 85);">
+    <span style="font:700 11px Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.12 85);">Reference frame</span>
+    <span style="flex:1;min-width:260px;font:400 13px/1.5 Inter,sans-serif;color:oklch(0.85 0.06 85);">Layout and states are spec-accurate. <strong style="font-weight:600;">All prose is invented placeholder</strong> — there is no NGP Table source in this project. This is the docs root (<code style="font:400 12px 'JetBrains Mono',monospace;">/docs</code>), the one entry with no parent section: the eyebrow resolves to null and is therefore <em>absent</em>, and pagination has no previous side.</span>
+    <button type="button" onClick="{{ toggleAnnotations }}" style="flex:none;padding:6px 12px;border-radius:20px;border:1px solid oklch(0.5 0.1 85);background:transparent;color:oklch(0.85 0.06 85);font:500 12.5px Inter,sans-serif;cursor:pointer;" style-hover="background:oklch(0.28 0.04 85);color:white;">{{ annotationLabel }}</button>
+  </div>
+
+  <a data-skip data-role="skip-link" data-spec="specs/foundations/Focus and Keyboard.md" data-purpose="First focusable element in the document. Moves focus to the H1, not just the hash." data-content="derived" href="#main" style="position:fixed;top:8px;left:8px;z-index:80;padding:8px 14px;border-radius:8px;background:oklch(0.2 0.005 260);border:1px solid oklch(0.62 0.19 52);color:white;font:500 13px Inter,sans-serif;transform:translateY(-200%);opacity:0;transition:transform 120ms ease,opacity 120ms ease;">Skip to content</a>
+
+  <header data-role="navbar" data-spec="specs/layout/Top Navbar.md" data-purpose="Docs treatment: sticky, own surface, bottom border. The marketing Home page overrides all three." data-content="derived" role="banner" style="position:sticky;top:0;z-index:10;height:56px;padding:0 24px;background:oklch(0.11 0.004 260);border-bottom:1px solid oklch(0.26 0.005 260);display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button type="button" onClick="{{ toggleDrawer }}" aria-label="Open navigation" aria-expanded="{{ drawerExpanded }}" style="align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:oklch(0.17 0.005 260);color:oklch(0.78 0.005 260);font-size:15px;line-height:1;cursor:pointer;display:{{ hamburgerDisplay }};" style-hover="border-color:oklch(0.45 0.005 260);color:white;"><span aria-hidden="true">☰</span></button>
+      <div style="width:22px;height:22px;border-radius:6px;background:oklch(0.62 0.19 52);"></div>
+      <span style="font:600 15px/1.2 Inter,sans-serif;color:white;letter-spacing:-0.01em;">NGP Table</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button type="button" style="display:flex;align-items:center;gap:8px;width:220px;height:32px;padding:0 10px;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:oklch(0.17 0.005 260);color:oklch(0.6 0.01 260);font:400 13px Inter,sans-serif;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);">
+        <span aria-hidden="true" style="font-size:15px;line-height:1;">⌕</span>
+        <span style="flex:1;text-align:left;">Search docs</span>
+        <span style="font:400 11px 'JetBrains Mono',monospace;color:oklch(0.6 0.01 260);background:oklch(0.24 0.005 260);border-radius:4px;padding:2px 5px;">⌘K</span>
+      </button>
+      <a href="#" style="padding:5px 12px;border-radius:20px;border:1px solid oklch(0.3 0.005 260);color:oklch(0.78 0.005 260);font:500 13px Inter,sans-serif;" style-hover="border-color:oklch(0.45 0.005 260);color:white;background:oklch(0.2 0.005 260);">GitHub</a>
+    </div>
+  </header>
+
+  <div onClick="{{ closeDrawer }}" aria-hidden="true" style="position:fixed;inset:0;z-index:25;background:oklch(0 0 0 / 0.5);backdrop-filter:blur(2px);display:{{ scrimDisplay }};"></div>
+
+  <div style="display:grid;max-width:1440px;margin:0 auto;align-items:start;grid-template-columns:{{ gridColumns }};">
+
+    <nav data-role="sidebar" data-spec="specs/layout/Sidebar Navigation.md" data-purpose="Rendered from the nav tree in Content Model.md. Never hand-authored per page. Sticky with its own overflow scroll." data-content="derived" aria-label="Docs navigation" style="top:72px;max-height:calc(100vh - 72px);overflow-y:auto;padding:28px 20px;border-right:1px solid oklch(0.24 0.005 260);background:oklch(0.16 0.005 260);position:{{ sidebarPosition }};display:{{ sidebarDisplay }};width:{{ sidebarWidth }};z-index:{{ sidebarZ }};inset:{{ sidebarInset }};">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#" aria-current="page" style="margin:0 -10px;padding:9px 10px;border-left:2px solid oklch(0.62 0.19 52);background:oklch(0.24 0.005 260);color:white;font:600 13.5px Inter,sans-serif;">Overview</a>
+      </div>
+      <div style="font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:0.05em;color:oklch(0.6 0.01 260);margin:18px 0 8px;">1. State Layer</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">Architecture</a>
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">PRD</a>
+      </div>
+      <div style="font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:0.05em;color:oklch(0.6 0.01 260);margin:18px 0 8px;">3. UI Layer</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">Sorting</a>
+      </div>
+    </nav>
+
+    <main data-role="content-column" data-spec="specs/layout/Content Column.md" data-purpose="Section Landing: leads with a lede and a link list to the section's pages. No preview window, no code block above the first H2." data-content="MOCK" id="main" role="main" tabindex="-1" style="padding:36px 40px;max-width:760px;outline:none;">
+      <h1 data-role="prose.h1" data-spec="specs/Content Prose.md" data-purpose="Text is entry.label. No category-badge above it: the docs root has no parent section, so the eyebrow resolves to null and the block is omitted rather than filled with a stand-in." data-content="derived" style="margin:0 0 14px;font:700 32px Inter,sans-serif;letter-spacing:-0.01em;color:white;">Overview</h1>
+      <p data-role="prose.lede" data-spec="specs/Content Prose.md" data-purpose="One paragraph, then the link list. A landing page is one screen — if it needs a TOC it is a Doc Article." data-content="MOCK" style="margin:0 0 28px;font:400 15px/1.7 Inter,sans-serif;color:oklch(0.62 0.01 260);">NGP Table is a headless table primitive: state, sorting, selection and virtualization as composable behaviors, with no markup and no stylesheet of its own. Start with the state layer, then wire the UI you already have.</p>
+
+      <h2 data-role="prose.h2" data-spec="specs/Content Prose.md" data-purpose="Section start. On a landing page this is the only H2 — one H2 means no TOC column and a 2-column grid." data-content="MOCK" id="sec-start" style="margin:32px 0 10px;font:600 19px Inter,sans-serif;color:white;">Start here</h2>
+      <p style="margin:0 0 24px;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Three pages, in reading order. Each one assumes the previous.</p>
+      <ul data-role="prose" data-spec="specs/Content Prose.md" data-purpose="The link list is inline-links inside a prose list. Do not invent a card grid — that is the one thing this archetype forbids." data-content="derived" style="padding-left:22px;margin:0 0 24px;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">
+        <li style="margin-bottom:6px;"><a href="#" style="color:oklch(0.62 0.19 52);text-decoration:underline;text-decoration-color:oklch(0.62 0.19 52 / 0.4);text-underline-offset:2px;" style-hover="color:oklch(0.68 0.19 52);text-decoration-color:currentColor;">Architecture</a> — how state, behaviors and rendering divide.</li>
+        <li style="margin-bottom:6px;"><a href="#" style="color:oklch(0.62 0.19 52);text-decoration:underline;text-decoration-color:oklch(0.62 0.19 52 / 0.4);text-underline-offset:2px;" style-hover="color:oklch(0.68 0.19 52);text-decoration-color:currentColor;">PRD</a> — what the primitive promises, and what it refuses to do.</li>
+        <li><a href="#" style="color:oklch(0.62 0.19 52);text-decoration:underline;text-decoration-color:oklch(0.62 0.19 52 / 0.4);text-underline-offset:2px;" style-hover="color:oklch(0.68 0.19 52);text-decoration-color:currentColor;">Sorting</a> — the first behavior worth adding.</li>
+      </ul>
+
+      <nav data-role="pagination" data-spec="specs/Pagination Footer.md" data-purpose="Next-only: this is the first entry in flattened tree order, so prev is null and its half of the row stays empty rather than the remaining card stretching across it." data-content="derived" aria-label="Page navigation" style="display:flex;gap:16px;padding-top:24px;margin-top:32px;border-top:1px solid oklch(0.24 0.005 260);">
+        <div style="flex:1;" aria-hidden="true"></div>
+        <a href="#" style="flex:1;padding:14px 18px;border:1px solid oklch(0.28 0.005 260);border-radius:10px;text-align:right;" style-hover="background:oklch(0.2 0.005 260);">
+          <span style="display:flex;align-items:center;justify-content:flex-end;gap:6px;font:400 12.5px Inter,sans-serif;color:oklch(0.6 0.01 260);margin-bottom:4px;">Next <span aria-hidden="true">→</span></span>
+          <span style="display:block;font:600 14.5px Inter,sans-serif;color:oklch(0.9 0.005 260);">Architecture</span>
+        </a>
+      </nav>
+    </main>
+
+  </div>
+
+  <footer role="contentinfo" style="padding:28px;border-top:1px solid oklch(0.24 0.005 260);background:oklch(0.11 0.004 260);display:flex;justify-content:center;">
+    <span style="font:400 13px Inter,sans-serif;color:oklch(0.6 0.01 260);">© 2026 NGP Table. All rights reserved.</span>
+  </footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { annotated: false, narrow: false, drawerOpen: false };
+
+  componentDidMount() {
+    // The md collapse can't be expressed inline, so the breakpoint is observed in JS
+    // and drives inline styles. Threshold matches foundations/Responsive and Breakpoints.md.
+    this._mq = window.matchMedia('(max-width: 1023px)');
+    this._onMQ = (e) => this.setState({ narrow: e.matches, drawerOpen: false });
+    this._mq.addEventListener('change', this._onMQ);
+    this.setState({ narrow: this._mq.matches });
+  }
+
+  componentWillUnmount() {
+    this._mq?.removeEventListener('change', this._onMQ);
+  }
+
+  toggleDrawer = () => this.setState((s) => ({ drawerOpen: !s.drawerOpen }));
+  closeDrawer = () => this.setState({ drawerOpen: false });
+
+  toggleAnnotations = () => {
+    const on = !this.state.annotated;
+    this.setState({ annotated: on });
+    document.querySelectorAll('[data-role]').forEach((el) => {
+      const existing = el.querySelector(':scope > [data-annotation-tag]');
+      if (!on) { if (existing) existing.remove(); el.style.outline = ''; return; }
+      if (existing) return;
+      el.style.outline = '1px dashed oklch(0.62 0.19 52 / 0.55)';
+      if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+      const tag = document.createElement('div');
+      tag.setAttribute('data-annotation-tag', '');
+      tag.textContent = el.getAttribute('data-role');
+      tag.title = el.getAttribute('data-purpose') || '';
+      tag.style.cssText = 'position:absolute;top:-9px;left:8px;z-index:40;padding:1px 6px;border-radius:4px;background:oklch(0.62 0.19 52);color:oklch(0.16 0.02 52);font:600 10px Inter,sans-serif;letter-spacing:0.04em;text-transform:uppercase;pointer-events:auto;cursor:help;white-space:nowrap;';
+      el.appendChild(tag);
+    });
+  };
+
+  renderVals() {
+    const { narrow, drawerOpen } = this.state;
+    return {
+      toggleAnnotations: this.toggleAnnotations,
+      annotationLabel: this.state.annotated ? 'Hide roles' : 'Show roles',
+      toggleDrawer: this.toggleDrawer,
+      closeDrawer: this.closeDrawer,
+      gridColumns: narrow ? 'minmax(0,1fr)' : '270px minmax(0,1fr)',
+      tocDisplay: narrow ? 'none' : 'block',
+      hamburgerDisplay: narrow ? 'flex' : 'none',
+      sidebarPosition: narrow ? 'fixed' : 'sticky',
+      sidebarDisplay: narrow && !drawerOpen ? 'none' : 'block',
+      sidebarWidth: narrow ? '300px' : 'auto',
+      sidebarZ: narrow ? 30 : 'auto',
+      sidebarInset: narrow ? '56px auto 0 0' : 'auto',
+      scrimDisplay: narrow && drawerOpen ? 'block' : 'none',
+      drawerExpanded: narrow && drawerOpen ? 'true' : 'false',
+    };
+  }
+}
+</script>
+</body>
+</html>
