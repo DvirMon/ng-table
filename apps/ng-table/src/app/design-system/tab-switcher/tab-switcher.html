@@ -1,0 +1,15 @@
+@for (tab of items(); track tab.id; let i = $index) {
+  @let isSelected = tab.id === selected();
+  @let isFocusable = tab.id === focusableId();
+  <button
+    #tabButton
+    type="button"
+    role="tab"
+    class="tab-item"
+    [attr.aria-selected]="isSelected"
+    [attr.data-active]="isSelected ? '' : null"
+    [tabIndex]="isFocusable ? 0 : -1"
+    (click)="activate(tab)"
+    (keydown)="onKeydown($event, i)"
+  >{{ tab.label }}</button>
+}

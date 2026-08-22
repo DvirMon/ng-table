@@ -1,0 +1,26 @@
+:host {
+  display: inline-flex;
+  background: var(--ngpt-comp-tab-track-bg);
+  border-radius: var(--ngpt-sys-shape-corner-small);
+  padding: var(--ngpt-sys-space-075);
+}
+
+.tab-item {
+  padding: var(--ngpt-sys-space-150) var(--ngpt-comp-tab-item-px);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small-alt);
+  border: none;
+  background: transparent;
+  color: var(--ngpt-comp-tab-text-inactive);
+  font: var(--ngpt-sys-typescale-label-large-sm);
+  cursor: pointer;
+}
+
+.tab-item[data-active] {
+  background: var(--ngpt-comp-tab-item-active-bg);
+  color: var(--ngpt-text-primary);
+  font: var(--ngpt-sys-typescale-label-large-medium);
+}
+
+.tab-item:not([data-active]):hover {
+  background: var(--ngpt-border-subtle);
+}
