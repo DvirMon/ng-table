@@ -1,0 +1,39 @@
+/* :host hosts two children: the ngpt-pill-button trigger and the absolutely-positioned
+   ngpt-dropdown-menu panel — relative anchor for the panel's own :host { position: absolute }
+   (dropdown-menu/docs/decisions.md: caller positions it "like any other absolutely-positioned box"). */
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.trigger-content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-150);
+  white-space: nowrap; /* spec: label + chevron must render on one line */
+}
+
+/* pill-button's default variant reads different border/text tokens than this spec calls for
+   (docs/decisions.md § Composing pill-button). Custom properties inherit through the DOM
+   regardless of view encapsulation, so redirecting them here — scoped to just this instance —
+   is the only lever available without touching pill-button's own files. */
+ngpt-pill-button {
+  --ngpt-comp-pill-border-default: var(--ngpt-comp-control-border-default);
+  --ngpt-text-tertiary: var(--ngpt-comp-dropdown-text);
+}
+
+/* Focus state (real DOM focus still on the trigger button) and Open state (front-matter `states`
+   list — DOM focus has moved into the menu's roving-tabindex options, so :focus-visible alone
+   can't carry this) share the same accent-border / white-text treatment. */
+:host(:focus-within) ngpt-pill-button,
+:host([data-open]) ngpt-pill-button {
+  --ngpt-comp-pill-border-default: var(--ngpt-accent);
+  --ngpt-text-tertiary: var(--ngpt-text-primary);
+}
+
+/* dropdown-menu owns its own box/motion; positioning relative to this trigger is the caller's job
+   (dropdown-menu/docs/decisions.md). */
+ngpt-dropdown-menu {
+  top: 100%;
+  left: 0;
+}
