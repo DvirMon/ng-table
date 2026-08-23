@@ -23,7 +23,7 @@ import type { DropdownMenuItem } from './dropdown-menu.types';
 export class DropdownMenu {
   readonly items = input<readonly DropdownMenuItem[]>([]);
 
-  readonly select = output<string>();
+  readonly optionSelected = output<string>();
 
   /** Drives `ngpMenuItemRadioGroup`'s controlled value — the id of whichever item is `selected`. */
   protected readonly currentValue = computed<string | null>(
@@ -34,6 +34,6 @@ export class DropdownMenu {
     if (item.disabled) {
       return;
     }
-    this.select.emit(item.id);
+    this.optionSelected.emit(item.id);
   }
 }
