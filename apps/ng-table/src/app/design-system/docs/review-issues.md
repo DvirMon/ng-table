@@ -41,7 +41,7 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 
 ## Gaps (not violations — missing coverage)
 
-- [ ] G1 `preview-window/` has only `docs/spec.md`, no implementation — scaffold or drop from DS
+- [x] G1 `preview-window/` has only `docs/spec.md`, no implementation — scaffold or drop from DS
 
 ## Dismissed
 <!-- issue-id: reason -->
@@ -53,4 +53,8 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 <!-- populated as issues are resolved -->
 - [x] A1-A10: a11y pass — search trigger aria-expanded/haspopup/keyshortcuts wiring, select-trigger role fix, search-overlay listbox/combobox markup fix, decorative icons hidden (2026-08-23)
 - [x] C1-C7: code pass — extracted `withMenuTriggerPanel()` (dropdown-menu/with-menu-trigger-panel.ts), converged sr-only mechanism on `.visually-hidden`, select-trigger chevron token, tab-switcher default input, extracted search-overlay focus-lock helper, renamed select-trigger `options`→`items`, dropped dead `index` signal (2026-08-23)
+- [x] G1: `preview-window` built to `docs/CONVENTIONS.md`'s fixed contract (2026-08-23) — two
+  deltas it could not close from inside its own domain are recorded in its `docs/decisions.md`
+  and belong to whoever next edits `code-block`: the duplicate copy button, and the Source
+  panel's 12px-vs-10px radius
 - [x] S1-S8: styles pass — reconciled dropdown-pill/pill-button tokens, tokenized search-overlay font/spacing hardcodes, added onband hover/text tokens (color.css) and applied to pill-button, converted physical→logical properties across prose/nav-item/pagination-link/search-field/search-overlay, select-trigger border token reconciled (2026-08-23)
