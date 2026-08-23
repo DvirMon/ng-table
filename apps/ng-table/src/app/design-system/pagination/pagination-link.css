@@ -12,12 +12,12 @@
    children under emulated encapsulation, so the card owns its own column. */
 :host([data-side='prev']) {
   grid-column: 1;
-  text-align: left;
+  text-align: start;
 }
 
 :host([data-side='next']) {
   grid-column: 2;
-  text-align: right;
+  text-align: end;
 }
 
 :host(:hover) {
@@ -43,12 +43,22 @@
   transition: transform var(--ngpt-sys-motion-duration-fast) var(--ngpt-sys-motion-easing-standard);
 }
 
+/* translateX has no logical equivalent, so the shift direction is flipped explicitly under
+   :dir(rtl) — "prev" always shifts toward the reading-start edge, "next" toward reading-end. */
 :host([data-side='prev']:hover) .page-card__eyebrow ng-icon {
   transform: translateX(calc(-1 * var(--ngpt-comp-pagination-arrow-shift)));
 }
 
 :host([data-side='next']:hover) .page-card__eyebrow ng-icon {
   transform: translateX(var(--ngpt-comp-pagination-arrow-shift));
+}
+
+:host(:dir(rtl)[data-side='prev']:hover) .page-card__eyebrow ng-icon {
+  transform: translateX(var(--ngpt-comp-pagination-arrow-shift));
+}
+
+:host(:dir(rtl)[data-side='next']:hover) .page-card__eyebrow ng-icon {
+  transform: translateX(calc(-1 * var(--ngpt-comp-pagination-arrow-shift)));
 }
 
 .page-card__title {

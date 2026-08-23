@@ -30,15 +30,14 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 
 ## Styles
 
-- [ ] S1 HIGH `dropdown-pill.css:14` vs `pill-button.css:6` different border tokens for claimed-same variant — reconcile or document
-- [ ] S2 HIGH `dropdown-pill.css:16` vs `pill-button.css:8` different text-color tokens for claimed-same default variant — reconcile
-- [ ] S3 HIGH `search-overlay.css:154` hardcoded `font: 400 11px Inter` duplicates `--ngpt-sys-typescale-label-small-alt` at wrong weight — use token + weight override
-- [ ] S4 MED `search-overlay.css:115,141` raw `12px` font-size, `--ngpt-sys-typescale-label-small-2` (12.5px) undocumented near-match — use token or comment deviation
-- [ ] S5 MED `search-field.css:38` / `search-overlay.css:161` `.kbd` padding raw `5px`, no matching space token, undocumented — snap to 4px/6px token or comment
-- [ ] S6 MED `pill-button.css:41,49,64` / `search-field.css:48-60` hand-computed on-band hover oklch literals repeated across components — promote to `--ngpt-onband-fill-hover` etc. tokens
-- [ ] S7 MED physical properties instead of logical, repeated pattern: `prose.css:63,80,100,108-109`, `nav-item.css:8,27`, `pagination-link.css:15-16,46-51`, `search-field.css:29`, `search-overlay.css:100,104,122` — convert to inline-start/end equivalents
-- [ ] S8 LOW `select-trigger.css:12` uses `--ngpt-border-strong` vs sibling controls' `--ngpt-comp-control-border-default` — reconcile or note in decisions.md
-- [ ] S9 LOW `search-overlay.css:19,31,45,196` centers via physical `left`+`translate(-50%)` — stylistically inconsistent with logical-properties mandate, functionally RTL-neutral
+- [x] S1 HIGH `dropdown-pill.css:14` vs `pill-button.css:6` different border tokens for claimed-same variant — reconcile or document
+- [x] S2 HIGH `dropdown-pill.css:16` vs `pill-button.css:8` different text-color tokens for claimed-same default variant — reconcile
+- [x] S3 HIGH `search-overlay.css:154` hardcoded `font: 400 11px Inter` duplicates `--ngpt-sys-typescale-label-small-alt` at wrong weight — use token + weight override
+- [x] S4 MED `search-overlay.css:115,141` raw `12px` font-size, `--ngpt-sys-typescale-label-small-2` (12.5px) undocumented near-match — use token or comment deviation
+- [x] S5 MED `search-field.css:38` / `search-overlay.css:161` `.kbd` padding raw `5px`, no matching space token, undocumented — snap to 4px/6px token or comment
+- [x] S6 MED `pill-button.css:41,49,64` / `search-field.css:48-60` hand-computed on-band hover oklch literals repeated across components — promote to `--ngpt-onband-fill-hover` etc. tokens
+- [x] S7 MED physical properties instead of logical, repeated pattern: `prose.css:63,80,100,108-109`, `nav-item.css:8,27`, `pagination-link.css:15-16,46-51`, `search-field.css:29`, `search-overlay.css:100,104,122` — convert to inline-start/end equivalents
+- [x] S8 LOW `select-trigger.css:12` uses `--ngpt-border-strong` vs sibling controls' `--ngpt-comp-control-border-default` — reconcile or note in decisions.md
 
 ## Gaps (not violations — missing coverage)
 
@@ -48,8 +47,10 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 <!-- issue-id: reason -->
 - A11: WCAG 2.2 AA (2.5.8) forward-looking, not a 2.1 AA defect
 - C8: `code-block.html:6` state class confirmed intentional — wrapper component targeting inner `<pre>`, not `:host`
+- S9: `search-overlay.css` centering via physical `left`+`translate(-50%)` is functionally RTL-neutral at exact 50% — low priority, skipped
 
 ## Fixed
 <!-- populated as issues are resolved -->
 - [x] A1-A10: a11y pass — search trigger aria-expanded/haspopup/keyshortcuts wiring, select-trigger role fix, search-overlay listbox/combobox markup fix, decorative icons hidden (2026-08-23)
 - [x] C1-C7: code pass — extracted `withMenuTriggerPanel()` (dropdown-menu/with-menu-trigger-panel.ts), converged sr-only mechanism on `.visually-hidden`, select-trigger chevron token, tab-switcher default input, extracted search-overlay focus-lock helper, renamed select-trigger `options`→`items`, dropped dead `index` signal (2026-08-23)
+- [x] S1-S8: styles pass — reconciled dropdown-pill/pill-button tokens, tokenized search-overlay font/spacing hardcodes, added onband hover/text tokens (color.css) and applied to pill-button, converted physical→logical properties across prose/nav-item/pagination-link/search-field/search-overlay, select-trigger border token reconciled (2026-08-23)

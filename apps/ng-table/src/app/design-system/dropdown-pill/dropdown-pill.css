@@ -11,9 +11,9 @@
   font: var(--ngpt-sys-typescale-label-large-medium);
   padding: var(--ngpt-sys-space-150) var(--ngpt-sys-space-300);
   border-radius: var(--ngpt-sys-shape-corner-large);
-  border: 1px solid var(--ngpt-comp-control-border-default);
+  border: 1px solid var(--ngpt-comp-pill-border-default);
   background: transparent;
-  color: var(--ngpt-comp-dropdown-text);
+  color: var(--ngpt-text-tertiary);
   cursor: pointer;
 }
 

@@ -9,7 +9,7 @@
   width: 100%;
   padding: var(--ngpt-sys-space-275) var(--ngpt-comp-select-px);
   border-radius: var(--ngpt-sys-shape-corner-full);
-  border: 1px solid var(--ngpt-border-strong);
+  border: 1px solid var(--ngpt-comp-control-border-default);
   background: var(--ngpt-bg-raised);
   color: var(--ngpt-comp-select-placeholder);
   font-size: 14px;

@@ -34,11 +34,10 @@
   border: none;
 }
 
-/* Primary on-band: white fill, no dedicated token for this text hue — spec table leaves it untokenized */
 :host([data-variant='on-band']),
 :host([data-variant='on-band']:hover),
 :host([data-variant='on-band']:focus-visible) {
-  color: oklch(0.2 0.03 52);
+  color: var(--ngpt-onband-text);
 }
 
 :host([data-variant='on-band']) {
@@ -46,7 +45,7 @@
 }
 
 :host([data-variant='on-band']:hover) {
-  background: oklch(0.95 0.01 52);
+  background: var(--ngpt-onband-fill-hover);
 }
 
 /* Secondary on-band (inverse): dark fill, white text already covered by --ngpt-text-primary */
@@ -61,5 +60,5 @@
 }
 
 :host([data-variant='on-band-inverse']:hover) {
-  background: oklch(0.24 0.03 52);
+  background: var(--ngpt-onband-fill-inverse-hover);
 }

@@ -60,7 +60,7 @@
 /* ---------------------------------------------------------------------- */
 
 .ngpt-prose .heading-anchor {
-  margin-left: var(--ngpt-sys-space-200);
+  margin-inline-start: var(--ngpt-sys-space-200);
   color: var(--ngpt-accent);
   text-decoration: none;
   opacity: 0;
@@ -77,7 +77,7 @@
 /* ---------------------------------------------------------------------- */
 
 .ngpt-prose :is(ul, ol) {
-  padding-left: var(--ngpt-comp-list-indent);
+  padding-inline-start: var(--ngpt-comp-list-indent);
   margin: 0 0 var(--ngpt-sys-space-600);
   font: var(--ngpt-sys-typescale-body-medium);
   color: var(--ngpt-text-tertiary);
@@ -97,7 +97,7 @@
 
 .ngpt-prose :is(ul, ol) :is(ul, ol) {
   margin: var(--ngpt-sys-space-150) 0 0;
-  padding-left: var(--ngpt-sys-space-500);
+  padding-inline-start: var(--ngpt-sys-space-500);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -105,8 +105,8 @@
 /* ---------------------------------------------------------------------- */
 
 .ngpt-prose blockquote {
-  border-left: 2px solid var(--ngpt-border-strong);
-  padding-left: var(--ngpt-sys-space-400);
+  border-inline-start: 2px solid var(--ngpt-border-strong);
+  padding-inline-start: var(--ngpt-sys-space-400);
   margin: var(--ngpt-sys-space-600) 0;
   font: var(--ngpt-sys-typescale-body-medium);
   font-style: normal;

@@ -42,7 +42,10 @@
   --ngpt-accent-surface: oklch(0.57 0.19 52);
   --ngpt-accent-bg: oklch(0.2 0.04 52);
   --ngpt-onband-fill: white;
+  --ngpt-onband-fill-hover: oklch(0.95 0.01 52);
+  --ngpt-onband-text: oklch(0.2 0.03 52);
   --ngpt-onband-fill-inverse: oklch(0.18 0.02 52);
+  --ngpt-onband-fill-inverse-hover: oklch(0.24 0.03 52);
   --ngpt-navbar-scrolled: #18181C;
   --ngpt-focus-ring: oklch(0.62 0.19 52 / 0.6);
   --ngpt-status-success: oklch(0.75 0.13 150);
