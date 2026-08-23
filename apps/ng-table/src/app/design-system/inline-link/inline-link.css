@@ -17,15 +17,5 @@
    (src/styles/global.css) already applies `box-shadow: 0 0 0 2px var(--ngpt-focus-ring)`,
    which matches this component's spec value exactly. */
 
-/* Screen-reader-only affordance for external links — see docs/decisions.md. */
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
+/* Screen-reader-only affordance for external links — `.visually-hidden` in src/styles/global.css.
+   See docs/decisions.md. */

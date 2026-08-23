@@ -156,17 +156,7 @@
   color: var(--ngpt-text-muted);
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
+/* `.visually-hidden` now in src/styles/global.css. */
 
 /* Media-feature values can't reference custom properties, so the sm/md breakpoints are
    restated as literals here (matches Search.md's own CSS mock — not a hardcode violation,

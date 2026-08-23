@@ -110,11 +110,12 @@ following that precedent rather than adding an undeclared dependency.
   "attribute-only, never insert or reorder DOM". The announcer node goes into `document.body`, not
   into the consumer's subtree, so no consumer markup is inserted, reordered, or reflowed — but it
   is still a node this directive creates, and worth knowing about.
-- **Inline styles on that node.** CONVENTIONS rule 3 forbids inline styles. The visually-hidden
-  recipe is applied via `element.style` because the node is created outside any component's view,
-  so no encapsulated stylesheet reaches it, and this app has no global visually-hidden utility
-  class. Adding one to `src/styles/global.css` would be the cleaner fix but is outside this
-  domain's write scope — recommend it for a follow-up.
+- **Inline styles on that node — resolved.** CONVENTIONS rule 3 forbids inline styles. At the time
+  this was written there was no global visually-hidden utility, so the recipe was applied via
+  `element.style`. `src/styles/global.css` now has `.visually-hidden` (handoff B), and since it is
+  an unscoped global stylesheet it reaches this node same as any component's — encapsulation only
+  scopes a component's *own* stylesheet, not global ones. The node now gets
+  `region.classList.add('visually-hidden')` instead.
 
 ## `failedLabel` as an input — the live bug this closes
 

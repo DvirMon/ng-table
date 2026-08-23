@@ -53,20 +53,9 @@ export class CopyConfirmAnnouncer {
     region.setAttribute('aria-live', 'polite');
     region.setAttribute('aria-atomic', 'true');
 
-    // Inline rather than the `.visually-hidden` class components use (see inline-link.css,
-    // search-overlay.css): this node is created outside any component's view, so no
-    // encapsulated stylesheet reaches it.
-    const style = region.style;
-    style.position = 'absolute';
-    style.width = '1px';
-    style.height = '1px';
-    style.margin = '-1px';
-    style.padding = '0';
-    style.overflow = 'hidden';
-    style.clip = 'rect(0, 0, 0, 0)';
-    style.clipPath = 'inset(50%)';
-    style.whiteSpace = 'nowrap';
-    style.border = '0';
+    // `.visually-hidden` lives in src/styles/global.css, which is unscoped — it reaches this
+    // node even though the node sits outside any component's view.
+    region.classList.add('visually-hidden');
 
     this.document.body.appendChild(region);
     this.region = region;
