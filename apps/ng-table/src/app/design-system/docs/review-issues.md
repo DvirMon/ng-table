@@ -20,14 +20,13 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 
 ## Code
 
-- [ ] C1 HIGH `dropdown-pill.ts:38` / `select-trigger.ts:41` duplicate menu-trigger wiring (viewChild+injectMenuTriggerState+effect) — extract shared `withMenuTriggerPanel()` helper
-- [ ] C2 MED `inline-link.html:3` / `search-overlay.html:83` / `copy-confirm.announcer.ts:56` three different sr-only mechanisms — converge on one pattern
-- [ ] C3 MED `select-trigger.html:2` hardcodes `size="12px"` on chevron, siblings use icon-size token — use `--ngpt-sys-icon-size-*`
-- [ ] C4 MED `tab-switcher.ts:29` `tabs` input has no default + extra `items` computed, unlike sibling list-taking components — default input to `[]`, drop computed
-- [ ] C5 MED `search-overlay.ts:82` constructor effect mixes scroll-lock + focus-restore + query-reset lifecycles — extract focus-lock helper
-- [ ] C6 LOW `dropdown-menu.ts:24` / `select-trigger.ts:35` same concept named `items` vs `options` — pick one name
-- [ ] C7 LOW `search-overlay.ts:52` `index` signal never `.set()`, permanently mock constant — use constant directly or comment as seam
-- [ ] C8 LOW `code-block.html:6` state class bound in template, not host — confirm intentional (wrapper component, targets inner `<pre>`)
+- [x] C1 HIGH `dropdown-pill.ts:38` / `select-trigger.ts:41` duplicate menu-trigger wiring (viewChild+injectMenuTriggerState+effect) — extract shared `withMenuTriggerPanel()` helper
+- [x] C2 MED `inline-link.html:3` / `search-overlay.html:83` / `copy-confirm.announcer.ts:56` three different sr-only mechanisms — converge on one pattern
+- [x] C3 MED `select-trigger.html:2` hardcodes `size="12px"` on chevron, siblings use icon-size token — use `--ngpt-sys-icon-size-*`
+- [x] C4 MED `tab-switcher.ts:29` `tabs` input has no default + extra `items` computed, unlike sibling list-taking components — default input to `[]`, drop computed
+- [x] C5 MED `search-overlay.ts:82` constructor effect mixes scroll-lock + focus-restore + query-reset lifecycles — extract focus-lock helper
+- [x] C6 LOW `dropdown-menu.ts:24` / `select-trigger.ts:35` same concept named `items` vs `options` — pick one name
+- [x] C7 LOW `search-overlay.ts:52` `index` signal never `.set()`, permanently mock constant — use constant directly or comment as seam
 
 ## Styles
 
@@ -48,7 +47,9 @@ conventions (code), and `--ngpt-*` token vocabulary (styles), instead of a per-c
 ## Dismissed
 <!-- issue-id: reason -->
 - A11: WCAG 2.2 AA (2.5.8) forward-looking, not a 2.1 AA defect
+- C8: `code-block.html:6` state class confirmed intentional — wrapper component targeting inner `<pre>`, not `:host`
 
 ## Fixed
 <!-- populated as issues are resolved -->
 - [x] A1-A10: a11y pass — search trigger aria-expanded/haspopup/keyshortcuts wiring, select-trigger role fix, search-overlay listbox/combobox markup fix, decorative icons hidden (2026-08-23)
+- [x] C1-C7: code pass — extracted `withMenuTriggerPanel()` (dropdown-menu/with-menu-trigger-panel.ts), converged sr-only mechanism on `.visually-hidden`, select-trigger chevron token, tab-switcher default input, extracted search-overlay focus-lock helper, renamed select-trigger `options`→`items`, dropped dead `index` signal (2026-08-23)

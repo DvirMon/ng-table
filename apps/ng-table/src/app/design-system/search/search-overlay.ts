@@ -14,9 +14,10 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSearch } from '@ng-icons/lucide';
 import { NgpFocusTrap } from 'ng-primitives/focus-trap';
-import { RECENT_SEARCHES_MOCK, SEARCH_INDEX_MOCK } from './search.mock';
-import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from './search.types';
+import { closeFocusLock, openFocusLock, type FocusLockState } from './search-overlay.focus-lock';
 import { wrapIndex } from './search-overlay.utils';
+import { RECENT_SEARCHES_MOCK } from './search.mock';
+import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from './search.types';
 
 /**
  * The ⌘K overlay: scrim, panel, query input, result list, empty/no-results states, recent
@@ -49,17 +50,13 @@ export class SearchOverlay {
 
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-  private readonly index = signal<readonly SearchResultRecord[]>(SEARCH_INDEX_MOCK);
   /**
    * Grouped results for the current query. No matching/ranking is implemented — deferred to
-   * `Search Index.md` until Content Model.md is wired. Reads `index()` (always empty this
-   * round) so the reactive graph is already correct for when a real computation replaces the
-   * body; it doesn't branch on the query at all yet.
+   * `Search Index.md` until Content Model.md is wired. `SEARCH_INDEX_MOCK` is always empty this
+   * round, so this always returns `[]`; the render paths for "results" and "no results" both
+   * exist so a populated index needs no rework here.
    */
-  readonly resultGroups = computed<readonly SearchResultGroup[]>(() => {
-    this.index();
-    return [];
-  });
+  readonly resultGroups = computed<readonly SearchResultGroup[]>(() => []);
   readonly recentSearches = signal<readonly RecentSearchEntry[]>(RECENT_SEARCHES_MOCK);
 
   readonly query = signal('');
@@ -76,27 +73,25 @@ export class SearchOverlay {
     this.hasQuery() ? `${this.flatResults().length} results` : '',
   );
 
-  private previouslyFocused: HTMLElement | null = null;
-  private previousBodyOverflow = '';
+  private focusLock: FocusLockState | null = null;
 
   constructor() {
     effect(() => {
       if (this.open()) {
-        this.previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-        this.previousBodyOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        this.focusLock = openFocusLock();
         queueMicrotask(() => this.searchInput()?.nativeElement.focus());
-      } else {
-        document.body.style.overflow = this.previousBodyOverflow;
-        this.previouslyFocused?.focus();
-        this.previouslyFocused = null;
+      } else if (this.focusLock) {
+        closeFocusLock(this.focusLock);
+        this.focusLock = null;
         this.query.set('');
         this.activeResultIndex.set(0);
       }
     });
 
     this.destroyRef.onDestroy(() => {
-      document.body.style.overflow = this.previousBodyOverflow;
+      if (this.focusLock) {
+        document.body.style.overflow = this.focusLock.previousBodyOverflow;
+      }
     });
   }
 

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NgpTabButton, NgpTabList, NgpTabset, provideTabsConfig } from 'ng-primitives/tabs';
 import { TabItem } from './tab-switcher.types';
 
@@ -26,7 +26,5 @@ import { TabItem } from './tab-switcher.types';
   providers: [provideTabsConfig({ activateOnFocus: false })],
 })
 export class TabSwitcher {
-  readonly tabs = input<readonly TabItem[]>();
-
-  protected readonly items = computed<readonly TabItem[]>(() => this.tabs() ?? []);
+  readonly tabs = input<readonly TabItem[]>([]);
 }

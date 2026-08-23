@@ -53,8 +53,9 @@ export class CopyConfirmAnnouncer {
     region.setAttribute('aria-live', 'polite');
     region.setAttribute('aria-atomic', 'true');
 
-    // Inline rather than a class: this node is created outside any component's view, so no
-    // encapsulated stylesheet reaches it and the app has no global visually-hidden utility.
+    // Inline rather than the `.visually-hidden` class components use (see inline-link.css,
+    // search-overlay.css): this node is created outside any component's view, so no
+    // encapsulated stylesheet reaches it.
     const style = region.style;
     style.position = 'absolute';
     style.width = '1px';

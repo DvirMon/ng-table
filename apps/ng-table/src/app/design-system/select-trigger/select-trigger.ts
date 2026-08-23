@@ -1,10 +1,19 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, computed, effect, input, output, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  TemplateRef,
+  computed,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown } from '@ng-icons/lucide';
-import { NgpMenuTrigger, injectMenuTriggerState } from 'ng-primitives/menu';
+import { NgpMenuTrigger } from 'ng-primitives/menu';
 import type { NgpOverlayTemplateContext } from 'ng-primitives/portal';
 import { DropdownMenu } from '../dropdown-menu/dropdown-menu';
 import type { DropdownMenuItem } from '../dropdown-menu/dropdown-menu.types';
+import { withMenuTriggerPanel } from '../dropdown-menu/with-menu-trigger-panel';
 import { withSelection } from './select-trigger.utils';
 
 /**
@@ -31,28 +40,23 @@ import { withSelection } from './select-trigger.utils';
   },
 })
 export class SelectTrigger {
-  readonly options = input<readonly DropdownMenuItem[]>([]);
+  readonly items = input<readonly DropdownMenuItem[]>([]);
   readonly value = input<string>();
   readonly placeholder = input<string>('Select an option');
 
   readonly valueChange = output<string>();
 
   private readonly menu = viewChild.required<TemplateRef<NgpOverlayTemplateContext<unknown>>>('menu');
-  private readonly triggerState = injectMenuTriggerState();
 
-  protected readonly open = computed<boolean>(() => this.triggerState().open());
+  protected readonly open = withMenuTriggerPanel(this.menu).open;
 
-  protected readonly items = computed<readonly DropdownMenuItem[]>(() =>
-    withSelection(this.options(), this.value()),
+  protected readonly menuItems = computed<readonly DropdownMenuItem[]>(() =>
+    withSelection(this.items(), this.value()),
   );
 
   protected readonly selectedLabel = computed<string | undefined>(
-    () => this.options().find((option) => option.id === this.value())?.label,
+    () => this.items().find((option) => option.id === this.value())?.label,
   );
-
-  constructor() {
-    effect(() => this.triggerState().setMenu(this.menu()));
-  }
 
   protected onSelect(id: string): void {
     this.valueChange.emit(id);

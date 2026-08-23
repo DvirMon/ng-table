@@ -1,10 +1,11 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, computed, effect, input, output, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, TemplateRef, input, output, viewChild } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown } from '@ng-icons/lucide';
-import { NgpMenuTrigger, injectMenuTriggerState } from 'ng-primitives/menu';
+import { NgpMenuTrigger } from 'ng-primitives/menu';
 import type { NgpOverlayTemplateContext } from 'ng-primitives/portal';
 import { DropdownMenu } from '../dropdown-menu/dropdown-menu';
 import type { DropdownMenuItem } from '../dropdown-menu/dropdown-menu.types';
+import { withMenuTriggerPanel } from '../dropdown-menu/with-menu-trigger-panel';
 
 /**
  * Pill-styled trigger that opens a `ngpt-dropdown-menu` (spec: `docs/spec.md`). Host is the real
@@ -33,18 +34,13 @@ export class DropdownPill {
   readonly items = input<readonly DropdownMenuItem[]>([]);
   readonly label = input<string>('');
 
-  readonly select = output<string>();
+  readonly optionSelected = output<string>();
 
   private readonly menu = viewChild.required<TemplateRef<NgpOverlayTemplateContext<unknown>>>('menu');
-  private readonly triggerState = injectMenuTriggerState();
 
-  protected readonly open = computed<boolean>(() => this.triggerState().open());
-
-  constructor() {
-    effect(() => this.triggerState().setMenu(this.menu()));
-  }
+  protected readonly open = withMenuTriggerPanel(this.menu).open;
 
   protected onSelect(id: string): void {
-    this.select.emit(id);
+    this.optionSelected.emit(id);
   }
 }
