@@ -18,6 +18,12 @@
   margin: 0;
 }
 
+/* Panel radius seam: a host embedding this in a 12px-radius surface (e.g. Preview Window's Source
+   tab) opts in via [radius]="'panel'" instead of the standalone 10px above. */
+.code-block--panel-radius {
+  border-radius: var(--ngpt-sys-shape-corner-medium);
+}
+
 .code-block code {
   display: block;
 }

@@ -93,8 +93,26 @@ already registered by `icon-button`'s own `viewProviders`, so `code-block.ts` do
 icons itself; it only ever passes an icon *name* string to `ngpt-icon-button`. `copied`/`failed`
 glyphs (`lucideCheck` / `lucideTriangleAlert`) are icon-button's own concern, not code-block's.
 
+## Two seams added for `preview-window`: `showCopyButton`, `radius`
+
+`preview-window`'s own build left two gaps open against this component (`preview-window/docs/decisions.md`
+§§ "duplicate copy button" / "Source panel's 12px radius") because `::ng-deep` is banned and its
+task couldn't reach into `code-block`'s encapsulated view or template. Added two inputs here to
+close them from the outside instead of by reaching in:
+
+- `showCopyButton: input<boolean>(true)` — a host that renders its own copy affordance (Preview
+  Window's toolbar) passes `false` to suppress this component's button rather than showing two.
+- `radius: input<'standalone' | 'panel'>('standalone')` — `'panel'` swaps the spec's own 10px
+  (`--ngpt-sys-shape-corner-small-alt`) for `--ngpt-sys-shape-corner-medium` (12px), for a host
+  that embeds this inside an already-12px-radius surface (Preview Window's Source tab, matching
+  its canvas).
+
+Both default to the spec's own standalone look, so every other `ngpt-code-block` usage is
+unaffected. `.code-block--panel-radius` is a plain modifier class alongside `.code-block--numbered`,
+not a `::ng-deep` reach — `preview-window` sets the input, this component owns the class.
+
 ## No other deviations from the fixed contract
 
 `ngpt-code-block`; `code: input<string>()`, `language: input<string>()`,
 `showGutter: input<boolean>(true)` — matches the fixed contract exactly. No inputs added or
-dropped.
+dropped beyond the two seams above.

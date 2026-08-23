@@ -16,6 +16,10 @@ export class CodeBlock {
   readonly code = input<string>();
   readonly language = input<string>();
   readonly showGutter = input<boolean>(true);
+  /** Set false by a host that renders its own copy affordance (e.g. Preview Window's toolbar). */
+  readonly showCopyButton = input<boolean>(true);
+  /** 'panel' matches a containing surface's 12px radius (Preview Window's Source tab); 'standalone' keeps the spec's own 10px. */
+  readonly radius = input<'standalone' | 'panel'>('standalone');
 
   /**
    * No Shiki this round (spec `does_not_own`: syntax colors). Split into one span per line so

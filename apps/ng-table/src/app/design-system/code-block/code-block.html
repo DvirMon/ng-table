@@ -4,27 +4,30 @@
 <pre
   class="code-block"
   [class.code-block--numbered]="showGutter()"
+  [class.code-block--panel-radius]="radius() === 'panel'"
   tabindex="0"
   [attr.aria-label]="accessibleName()"
 ><code [attr.data-language]="language()">@for (line of lines(); track $index) {<span class="line">{{ line }}</span>}</code></pre>
-<button
-  ngptIconButton
-  ngptCopyConfirm
-  #copy="ngptCopyConfirm"
-  class="copy-button"
-  [size]="24"
-  [text]="code()"
-  idleLabel="Copy code"
->
-  @switch (copy.state()) {
-    @case ('copied') {
-      <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+@if (showCopyButton()) {
+  <button
+    ngptIconButton
+    ngptCopyConfirm
+    #copy="ngptCopyConfirm"
+    class="copy-button"
+    [size]="24"
+    [text]="code()"
+    idleLabel="Copy code"
+  >
+    @switch (copy.state()) {
+      @case ('copied') {
+        <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      }
+      @case ('failed') {
+        <ng-icon name="lucideTriangleAlert" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      }
+      @default {
+        <ng-icon name="lucideCopy" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      }
     }
-    @case ('failed') {
-      <ng-icon name="lucideTriangleAlert" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-    @default {
-      <ng-icon name="lucideCopy" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-  }
-</button>
+  </button>
+}

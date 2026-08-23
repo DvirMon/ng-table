@@ -74,7 +74,8 @@ within it — check here before "fixing" one.
 | **Home page** | Built (Wave 3) — `pages/home/home.*` composes hero-band/feature-grid/install-row per `pages/home/docs/spec.md`; `home.content.ts` copy is sourced from `libs/shared/table`'s own docs. See `pages/home/docs/decisions.md` |
 | **`preview-window`** | Built (Wave 3), narrowed to `docs/CONVENTIONS.md`'s fixed contract (tab-switcher + code-block + one copy icon-button) — no consumer yet, so the "Example CSS" dropdown-pill and Run button aren't built. See `design-system/preview-window/docs/decisions.md` |
 | **`feature-grid`, `page-footer`** | Called by Home (Wave 3) — the ADR-0005 inversion held, no friction surfaced |
-| **Duplicate copy button** | Still unresolved — `code-block`'s copy button is unconditional in its own template (no suppress input), so nesting it in `preview-window`'s Source tab still shows two. Needs a `code-block` change (e.g. a `showCopyButton` input) out of Wave 3's scope; see `design-system/preview-window/docs/decisions.md` |
+| **Duplicate copy button** | Resolved — `code-block` gained `showCopyButton: input<boolean>(true)`; `preview-window`'s Source tab passes `false` so only the toolbar's Copy button shows. See `design-system/code-block/docs/decisions.md` |
+| **Source panel radius** | Resolved — `code-block` gained `radius: input<'standalone' \| 'panel'>('standalone')`; `preview-window`'s Source tab passes `'panel'` for the spec's 12px. See `design-system/code-block/docs/decisions.md` |
 | **`tab-switcher`** | Still an element selector with an array input, being wired onto `ng-primitives`' `NgpTabset` in separate in-flight work. Do not convert it independently |
 | **`search-overlay`** | Stays an element component (composes real structure, shadows no native element). Earmarked for `NgpDialog` |
 | **Search index** | Stubbed — `search.mock.ts` ships an empty index and an in-memory recents list. No persistence, no ranking |
@@ -82,4 +83,4 @@ within it — check here before "fixing" one.
 | **`docs` navbar variant** | Built but unused — only `band` is exercised, by Home |
 | **Brand assets** | Logo, favicon and OG image are missing. Reserve boxes at the dimensions the Assets spec gives rather than inventing artwork |
 | **`icon-button/docs/spec.md`** | Describes a hidden-textarea + `document.execCommand` clipboard fallback that no implementation ever had. `execCommand` is deprecated — needs a deliberate add-or-strike decision |
-| **Visually-hidden utility** | `copy-confirm`'s announcer inlines the recipe because its node lives outside any component's view and the app has no global utility. Adding one to `src/styles/global.css` would let it drop the inline styles |
+| **Visually-hidden utility** | Review issue C2 converged the *class name* on `.visually-hidden`, not the *definition* — the recipe still exists three times: `inline-link.css`, `search-overlay.css`, and inlined as `style.*` assignments in `copy-confirm.announcer.ts` (which needs inline styles only because its node is created outside any component's view). One rule in `src/styles/global.css` collapses all three |

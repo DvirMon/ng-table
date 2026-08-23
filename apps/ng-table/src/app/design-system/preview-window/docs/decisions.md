@@ -22,23 +22,19 @@ render surface yet" note means there is no real live-example content this round;
 the component correct for whenever one exists, same reasoning `code-block`'s `.line` split
 documents for its own deferred Shiki integration.
 
-## The duplicate copy button (`CONTEXT.md` § Deliberate gaps) is not resolved here
+## The duplicate copy button (`CONTEXT.md` § Deliberate gaps) — resolved
 
-The gap note says settle it "when `preview-window` is built." It can't be, within this build's
-constraints: `code-block`'s own copy button is baked into its template unconditionally (fixed
-contract: "no Shiki this round" is the only stated flex point; the copy button isn't gated by an
-input), and `docs/CONVENTIONS.md` forbids reaching into a child component's encapsulated view
-(`::ng-deep` is banned) or editing another domain's component from this task. So the Source tab
-still shows two copy affordances: `code-block`'s own top-right button and this toolbar's. Fixing
-it needs a `code-block` change (e.g. a `showCopyButton` input) that is out of this task's scope —
-flagged for whoever next touches `code-block`, not fixed by improvising past the contract here.
+`code-block` now exposes `showCopyButton: input<boolean>(true)`. The Source tab's `ngpt-code-block`
+is called with `[showCopyButton]="false"`, so only this toolbar's Copy button renders — it already
+covers both tabs (its `[text]` is the same `code()`), so it, not `code-block`'s own button, is the
+one that survives. See `code-block/docs/decisions.md` for the seam itself.
 
-## Source panel's 12px radius vs. code-block's own 10px
+## Source panel's 12px radius vs. code-block's own 10px — resolved
 
 Spec: "Source panel radius 12px — matches the canvas, not the 10px of a standalone code block."
-Same encapsulation constraint as above — `code-block`'s `.code-block` radius is internal to its
-own stylesheet and unreachable from here without `::ng-deep`. Shipped with `code-block`'s own
-10px rather than fight it; noted as a spec delta, not silently "fixed" with a banned tool.
+`code-block` now exposes `radius: input<'standalone' | 'panel'>('standalone')`; the Source tab's
+`ngpt-code-block` is called with `radius="panel"`, which applies `--ngpt-sys-shape-corner-medium`
+(12px) instead of its own default 10px. See `code-block/docs/decisions.md` for the seam itself.
 
 ## Icon glyphs
 
