@@ -155,6 +155,11 @@ export class SearchOverlay {
     }
   }
 
+  /**
+   * Walks `resultGroups()` only — the "Recent" list (shown pre-query) is real `<button>`
+   * elements navigated with Tab, not `role="option"` rows in this listbox model, so it's
+   * intentionally excluded here.
+   */
   private moveActive(delta: number): void {
     const total = this.flatResults().length;
     if (total === 0) {

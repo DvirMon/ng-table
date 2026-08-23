@@ -16,6 +16,7 @@
       class="search-input"
       type="text"
       role="combobox"
+      aria-autocomplete="list"
       autocomplete="off"
       spellcheck="false"
       placeholder="Search docs"
@@ -36,7 +37,8 @@
           <div class="search-group-label">{{ group.label }}</div>
           @for (result of group.results; track result.id) {
             @let rowId = 'search-result-' + result.id;
-            <a
+            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- combobox option: focus stays on the input, keyboard selection is Enter via onPanelKeydown (aria-activedescendant model) -->
+            <div
               class="search-row"
               role="option"
               [id]="rowId"
@@ -47,7 +49,7 @@
             >
               <span class="search-row__title">{{ result.title }}</span>
               <span class="search-row__path">{{ result.breadcrumb }}</span>
-            </a>
+            </div>
           }
         }
       } @else {

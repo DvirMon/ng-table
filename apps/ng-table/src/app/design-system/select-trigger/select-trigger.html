@@ -1,6 +1,6 @@
 <span class="select-trigger-label">{{ selectedLabel() ?? placeholder() }}</span>
-<ng-icon name="lucideChevronDown" size="12px" color="currentColor" />
+<ng-icon name="lucideChevronDown" size="12px" color="currentColor" aria-hidden="true" />
 
 <ng-template #menu>
-  <ngpt-dropdown-menu [items]="items()" (select)="onSelect($event)" />
+  <ngpt-dropdown-menu [items]="items()" (optionSelected)="onSelect($event)" />
 </ng-template>

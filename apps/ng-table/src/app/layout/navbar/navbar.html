@@ -17,14 +17,16 @@
   <div class="navbar__right">
     @switch (variant()) {
       @case ('docs') {
-        <button ngptSearchField (click)="forwardOpenSearch()"></button>
+        <!-- eslint-disable-next-line @angular-eslint/template/elements-content -- attribute-hosted component (ADR-0005): content comes from search-field.ts's own templateUrl -->
+        <button ngptSearchField [open]="searchOpen()" (click)="forwardOpenSearch()"></button>
         <button ngptPillButton class="navbar__sponsor">Sponsor</button>
         <span class="navbar__dot" aria-hidden="true"></span>
         <a class="navbar__link" href="#">Discord</a>
         <a class="navbar__link" href="#">GitHub</a>
       }
       @case ('band') {
-        <button ngptSearchField variant="on-band" (click)="forwardOpenSearch()"></button>
+        <!-- eslint-disable-next-line @angular-eslint/template/elements-content -- attribute-hosted component (ADR-0005): content comes from search-field.ts's own templateUrl -->
+        <button ngptSearchField variant="on-band" [open]="searchOpen()" (click)="forwardOpenSearch()"></button>
         <a class="navbar__link" href="#">Documentation</a>
         <a class="navbar__link" href="#">GitHub</a>
       }

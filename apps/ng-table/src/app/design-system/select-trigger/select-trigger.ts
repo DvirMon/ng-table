@@ -8,12 +8,12 @@ import type { DropdownMenuItem } from '../dropdown-menu/dropdown-menu.types';
 import { withSelection } from './select-trigger.utils';
 
 /**
- * Select-style combobox trigger (spec: `docs/spec.md`). Host is the real `<button>` itself
+ * Select-style menu-button trigger (spec: `docs/spec.md`). Host is the real `<button>` itself
  * (`button[ngptSelectTrigger]`) so `[ngpMenuTrigger]` (hostDirectives) lands `aria-haspopup` /
- * `aria-expanded` / `aria-controls` on the actual focusable element; `role="combobox"` stays a
- * manual static attribute — the primitive is role-agnostic, only the ARIA menu-open state is its
- * job. Renders `ngpt-dropdown-menu` as the option list inside its own `<ng-template>`.
- * Role model deviates from a literal `role="listbox"` combobox — see `docs/decisions.md`.
+ * `aria-expanded` / `aria-controls` on the actual focusable element. No `role="combobox"` — the
+ * popup it opens is `ngpt-dropdown-menu` (`role="menu"`), and ARIA's combobox contract requires
+ * a listbox/tree/grid/dialog popup, so this follows the same Menu Button pattern as
+ * `dropdown-pill` instead. See `docs/decisions.md`.
  */
 @Component({
   selector: 'button[ngptSelectTrigger]',
@@ -25,7 +25,6 @@ import { withSelection } from './select-trigger.utils';
   viewProviders: [provideIcons({ lucideChevronDown })],
   host: {
     type: 'button',
-    role: 'combobox',
     class: 'select-trigger',
     '[attr.data-open]': 'open() || null',
     '[attr.data-filled]': 'selectedLabel() ? "" : null',

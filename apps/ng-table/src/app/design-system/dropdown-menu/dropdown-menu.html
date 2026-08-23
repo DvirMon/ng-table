@@ -1,7 +1,7 @@
 <div
   ngpMenuItemRadioGroup
   [ngpMenuItemRadioGroupValue]="currentValue()"
-  (ngpMenuItemRadioGroupValueChange)="select.emit($event)"
+  (ngpMenuItemRadioGroupValueChange)="optionSelected.emit($event)"
 >
   @for (item of items(); track item.id; let i = $index) {
     @let isGroupStart = item.group !== undefined && items()[i - 1]?.group !== item.group;
@@ -23,7 +23,7 @@
       >
         <span>{{ item.label }}</span>
         @if (item.selected) {
-          <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" />
+          <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
         }
       </button>
     } @else {

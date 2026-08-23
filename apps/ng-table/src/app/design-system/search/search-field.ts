@@ -26,11 +26,15 @@ import type { SearchFieldVariant } from './search.types';
   viewProviders: [provideIcons({ lucideSearch })],
   host: {
     'aria-label': 'Search docs',
+    'aria-haspopup': 'dialog',
+    'aria-keyshortcuts': 'Meta+K',
     '[attr.data-variant]': 'variant()',
+    '[attr.aria-expanded]': 'open()',
   },
 })
 export class SearchField {
   readonly variant = input<SearchFieldVariant>('default');
+  readonly open = input<boolean>(false);
 
   constructor() {
     // A bare <button> defaults to type="submit" inside a form, which a search trigger never wants.

@@ -48,6 +48,9 @@ export class Navbar {
 
   readonly variant = input<NavbarVariant>('docs');
 
+  /** Reflected onto the search trigger's `aria-expanded` — mirrors the Home composition's overlay state. */
+  readonly searchOpen = input<boolean>(false);
+
   /**
    * Re-emitted when the search trigger fires its own `open` output. The Home composition
    * (Wave 3) owns the actual `ngpt-search-overlay` instance and listens to this to open it.
