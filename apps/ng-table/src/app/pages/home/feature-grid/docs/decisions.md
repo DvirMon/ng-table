@@ -150,3 +150,62 @@ a host class", which is what both components actually do.
 The alternative considered and still rejected: a primitive per element (`h3` + `p` + cell). Three
 components to style two text elements is more ceremony than a page-local block earns, and it would
 force the consumer to annotate markup that reads perfectly well as plain HTML.
+
+## Reversed again: directive-per-part, `ViewEncapsulation.None` dropped
+
+Re-litigated after a research pass (`docs/encapsulation-research.md`) confirmed `None` disables
+scoping for the *entire* stylesheet, not just the projected-content rules — `CONVENTIONS.md` #8's
+host-class scoping is a hand-enforced convention, not compiler-enforced, so it can silently drift
+per file. Given this app is trying to avoid `None` for DS components generally, the "more ceremony"
+objection above was re-weighed against that leak risk and lost.
+
+Split into `ngptFeatureGridTitle` (`h3[ngptFeatureGridTitle]`) and `ngptFeatureGridText`
+(`p[ngptFeatureGridText]`) — each a tiny component that styles only its own `:host`, so both stay
+under default (Emulated) encapsulation. No cell primitive: `<article>` still carries no styling, so
+a third directive would have zero declarations (same reasoning as "One primitive, not two" above,
+still holds for the cell specifically). `FeatureGrid` itself also moved off `ViewEncapsulation.None`
+back to `:host` — it never needed to reach projected nodes, only its own host (`display: grid`).
+
+Cost accepted: consumers write two attributes per cell (`ngptFeatureGridTitle`, `ngptFeatureGridText`)
+instead of plain `<h3>`/`<p>`. Traded intentionally for zero global-scope risk and no
+`ViewEncapsulation.None` anywhere in this domain. This is now the app's reference pattern for
+structured (non-arbitrary) projected content — see `CONVENTIONS.md` #8. `ngpt-prose` keeps `None`:
+its content is arbitrary rich text (any heading level, lists, links, inline code), so there is no
+fixed part-set to hang directives on.
+
+---
+
+# Icons added to each cell (2026-08-23)
+
+## What changed
+
+Reverses the "no cards, borders, icons or tint" line from the original spec's Feature grid
+section (and this component's own former header comment / `CONVENTIONS.md`'s fixed-contract
+row) — **per explicit user request**, not a re-reading of the spec. Every other part of that
+line (no cards, no borders, no tint) still holds; only "no icons" is reversed.
+
+`FeatureCell` (`feature-grid.types.ts`) gained an `icon: string` field — a Lucide icon component
+name — populated per cell in `home.content.ts`. One Lucide icon per cell, chosen for conceptual
+fit: `lucideTable` (createTable()), `lucideColumns3` (column schema), `lucideTag`
+(attribute-only directives), `lucidePuzzle` (feature plugins), `lucideRows` (raw row data),
+`lucideZap` (zero runtime dependencies).
+
+## Where the icon lives and who registers it
+
+`FeatureGrid` itself stays icon-agnostic — per the "consumer authors each `<article>`" inversion
+above, `feature-grid.html` is still just `<ng-content />`; the six `<article>` elements are
+authored directly in `home.html`'s `@for` loop, so the `<ng-icon>` is markup `home.html` owns.
+Following ADR-0004 (local registration only) and `install-row.ts`'s precedent (a page-local
+component that renders `<ng-icon>` in its own template registers its own icons via
+`viewProviders: [provideIcons({...})]`), the six icons are registered on `Home`
+(`home.ts`), not on `FeatureGrid` — `FeatureGrid` never touches `<ng-icon>` and has no reason to
+carry the provider.
+
+## Styling
+
+`.home-feature-cell__icon` lives in `home.css` (not `feature-grid.css`), for the same
+reason: the icon element is markup `home.html` authors, not something `feature-grid.ts`'s own
+template renders. Size via `--ngpt-sys-icon-size-lg` (20px, the largest step — section-level
+feature icons, not inline button icons, per `icons.css`). Color via `--ngpt-accent`, matching
+`category-badge`'s existing use of that token for feature-adjacent iconography. Spacing below the
+icon via `--ngpt-sys-space-300` (12px), matching `callout`'s icon-to-text gap.

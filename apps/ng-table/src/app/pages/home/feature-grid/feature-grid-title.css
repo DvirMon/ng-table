@@ -1,0 +1,6 @@
+:host {
+  display: block;
+  font: var(--ngpt-sys-typescale-title-medium);
+  color: var(--ngpt-text-primary);
+  margin: 0 0 var(--ngpt-sys-space-200);
+}

@@ -104,14 +104,18 @@ domain's implementation must follow so parallel agents never need to coordinate 
    (`src/styles/tokens/icons.css`). Map each spec's placeholder glyph (`▾ ⧉ ⚡ ← → ≡ × ⌕ ✓ ⓘ ⚠`) to
    the nearest real Lucide icon per `src/styles/docs/Iconography.md`'s mapping table, and record your
    choice in your domain's `docs/decisions.md`.
-8. **Styling projected content means `ViewEncapsulation.None` — scoped under a host class.**
-   Emulated encapsulation stamps projected nodes with the *declaring* component's id, so a
-   component can never reach markup a consumer passed into it. `ngptProse` (arbitrary article
-   markup) and `ngptHomeFeatureGrid` (consumer-authored cells) both need this. Two rules when you
-   do: every selector in that stylesheet must be scoped under the component's own host class
-   (`.ngpt-prose`, `.ngpt-home-feature-grid`) so the global-scope rules cannot leak, and `:host`
-   stops working — don't reach for it. Do **not** use `::ng-deep` instead: it is deprecated.
-   A component that styles only its own template never needs any of this.
+8. **Styling projected content: directive-per-part first, `ViewEncapsulation.None` only for
+   genuinely arbitrary content.** Emulated encapsulation stamps projected nodes with the
+   *declaring* component's id, so a component can never reach markup a consumer passed into it
+   with a normal descendant selector. Default fix: give each structured part its own
+   attribute-hosted component (`h3[ngptFeatureGridTitle]`, `p[ngptFeatureGridText]` —
+   `feature-grid/docs/decisions.md`) that styles only its own `:host` — stays under default
+   encapsulation, zero leak risk. Reach for `ViewEncapsulation.None` only when the content has no
+   fixed part-set to hang directives on (`ngptProse`'s arbitrary rich text — any heading level,
+   lists, links, inline code). When you do use `None`: every selector in that stylesheet must be
+   scoped under the component's own host class (`.ngpt-prose`) so the global-scope rules cannot
+   leak, and `:host` stops working — don't reach for it. Do **not** use `::ng-deep` instead: it is
+   deprecated. A component that styles only its own template never needs any of this.
 9. **Reduced motion is each component's own job where it applies transforms.** `src/styles/global.css`
    handles the global scroll-behavior toggle and the generic transition-duration collapse under
    `prefers-reduced-motion: reduce`. A component that transforms on open/close (`dropdown-menu`, the
@@ -153,7 +157,7 @@ Where a row says an input was **dropped**, that capability is now the consumer's
 | preview-window | `ngpt-preview-window` | consumes tab-switcher + code-block + icon-button; leaf this round, no render surface yet |
 | navbar | `ngpt-navbar` | consumes search-field, pill-button, icon-button; `variant: input<'docs'\|'band'>('docs')`; band variant is transparent-over-band, white treatment, on-band search well, Documentation+GitHub only, inner row at the 1080px measure; owns its own scroll state — `signal` + passive `window` scroll listener registered via `afterNextRender`, cleaned up via `DestroyRef`, `scrolled = scrollY > 24` written to a signal (not a template expression) so zoneless CD picks it up, host `[attr.data-scrolled]`, 180ms surface transition, boolean threshold (no flicker) |
 | hero-band (page-local, `pages/home/hero-band/`) | `ngpt-home-hero-band` | consumes pill-button (on-band variants); projects the navbar via `<ng-content select="[navbar]">` so the band visually contains it per spec; owns the announcement pill, H1 clamp, lede, two filled buttons, decorative shape (`overflow: hidden`, left-anchored per spec) |
-| feature-grid (page-local, `pages/home/feature-grid/`) | `div[ngptHomeFeatureGrid]` | No inputs — the consumer authors each `<article><h3>…</h3><p>…</p></article>`. Owns the track formula (`repeat(auto-fit, minmax(240px, 1fr))`), the gap, and the cells' typography via `ViewEncapsulation.None` scoped under `.ngpt-home-feature-grid` (rule 8). No cards/borders/icons. `FeatureCell` kept for `home.content.ts`; "six cells" is now an authoring convention, not a type constraint |
+| feature-grid (page-local, `pages/home/feature-grid/`) | `div[ngptHomeFeatureGrid]` | No inputs — the consumer authors each `<article><ng-icon/><h3>…</h3><p>…</p></article>`, with `h3`/`p` styled via the directive-per-part `ngptFeatureGridTitle`/`ngptFeatureGridText` (no `ViewEncapsulation.None` in this domain). Owns only the track formula (`repeat(auto-fit, minmax(240px, 1fr))`) and the gap. No cards/borders/tint. Icons added per explicit user request (2026-08-23, `docs/decisions.md`) — `FeatureCell.icon` names a Lucide icon, registered locally on `Home` (not `FeatureGrid`, which stays icon-agnostic) since `home.html` authors the `<ng-icon>` directly. `FeatureCell` kept for `home.content.ts`; "six cells" is now an authoring convention, not a type constraint |
 | install-row (page-local, `pages/home/install-row/`) | `ngpt-home-install-row` | `command: input<string>()` — the only input. **Not** a code-block: a flex row in a bordered `--ngpt-bg-deep` surface. The copy button is a consumer-authored `<button ngptIconButton ngptCopyConfirm>` in its template, which owns the clipboard write and the hold; this component supplies `text` and the spec's `idleLabel`/`failedLabel` |
 
 `home.content.ts` (the authored marketing copy) is written only by the Wave 3 home-composition task —
