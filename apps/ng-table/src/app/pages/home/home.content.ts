@@ -24,14 +24,14 @@ export const HOME_CONTENT: HomeContent = {
         description: 'One factory returns a table instance — no class to extend, no store to configure by hand.',
       },
       {
-        icon: 'lucideColumns3',
-        title: 'Column schema',
-        description: 'Define columns once with createTableSchema() and columnSchema(); the table derives the rest.',
-      },
-      {
         icon: 'lucideTag',
         title: 'Attribute-only directives',
         description: 'ngp-prefixed directives style your table — never insert, remove, or reorder DOM.',
+      },
+      {
+        icon: 'lucideColumns3',
+        title: 'Column schema',
+        description: 'Define columns once with createTableSchema() and columnSchema(); the table derives the rest.',
       },
       {
         icon: 'lucidePuzzle',
@@ -44,9 +44,9 @@ export const HOME_CONTENT: HomeContent = {
         description: 'rows() yields your row type directly, with layout and state fields colocated — no wrapper objects to unwrap.',
       },
       {
-        icon: 'lucideZap',
-        title: 'Zero runtime dependencies',
-        description: 'Nothing beyond @angular/core. State lives in signals; UI state lives in data-* attributes.',
+        icon: 'lucideBlocks',
+        title: 'Composability',
+        description: 'Every state feature is composable — each plugs a lean, spec\'d member object straight into the table\'s state, no wrapper types to unwrap.',
       },
     ],
   },

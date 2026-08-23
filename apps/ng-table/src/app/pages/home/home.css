@@ -42,6 +42,13 @@
 /* Icon per feature cell (`home.content.ts`'s `FeatureCell.icon`, registered locally in
    `home.ts`'s `viewProviders`) — feature-grid itself stays icon-agnostic; the consumer authors
    each `<article>`, so the icon is markup home.html owns directly. */
+.home-feature-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
 .home-feature-cell__icon {
   display: block;
   margin-bottom: var(--ngpt-sys-space-300);

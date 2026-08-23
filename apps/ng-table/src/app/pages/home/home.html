@@ -19,7 +19,7 @@
     </div>
     <div ngptHomeFeatureGrid class="home-section__grid">
       @for (cell of content.features.cells; track cell.title) {
-        <article>
+        <article class="home-feature-cell">
           <ng-icon
             class="home-feature-cell__icon"
             [name]="cell.icon"
