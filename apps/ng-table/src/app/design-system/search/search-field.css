@@ -38,18 +38,31 @@
   gap: var(--ngpt-sys-space-050);
 }
 
-/* on-band (Home hero navbar only): translucent white well over the accent band. Literal
-   oklch alpha values — no --ngpt-* token covers a translucent-white surface (matches the
-   precedent in pill-button.css's own on-band block). */
+/* on-band (Home hero navbar only): darkened well sunk into the accent band — matches the
+   band's own darken-not-lighten convention (hero-band.css's announcement pill, navbar.css's
+   link hover), rather than a bright white overlay that pops off the band. Literal oklch
+   alpha values — no --ngpt-* token covers a translucent-black well on an accent band. */
 :host([data-variant='on-band']) {
-  border-color: oklch(1 0 0 / 0.28);
-  background: oklch(1 0 0 / 0.12);
+  border-color: transparent;
+  background: oklch(0 0 0 / 0.15);
   color: var(--ngpt-text-primary);
 }
 
 :host([data-variant='on-band']:hover) {
-  border-color: oklch(1 0 0 / 0.45);
-  background: oklch(1 0 0 / 0.18);
+  border-color: transparent;
+  background: oklch(0 0 0 / 0.22);
+}
+
+/* Scrolled band is already dark (navbar swaps to --ngpt-navbar-scrolled) — darkening further
+   would crush contrast, so lighten instead, mirroring navbar.css's own scrolled link-hover
+   swap. :host-context reaches the ngpt-navbar ancestor's [data-scrolled] attribute. */
+:host-context([data-scrolled='true'])[data-variant='on-band'] {
+  background: var(--ngpt-comp-tab-item-active-bg);
+}
+
+:host-context([data-scrolled='true'])[data-variant='on-band']:hover {
+  background: var(--ngpt-comp-tab-item-active-bg);
+  filter: brightness(1.2);
 }
 
 :host([data-variant='on-band']) [ngptKbd] {

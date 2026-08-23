@@ -1,7 +1,6 @@
 :host {
   flex-shrink: 0;
   font: 400 13px/1.6 var(--ngpt-sys-font-family-base);
-  padding: var(--ngpt-sys-space-050) var(--ngpt-sys-space-150);
   border-radius: var(--ngpt-sys-shape-corner-extra-small);
   background: var(--ngpt-bg-code-chip);
   color: var(--ngpt-text-secondary);

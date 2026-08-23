@@ -66,7 +66,7 @@
 .navbar__link {
   color: inherit;
   text-decoration: none;
-  padding: var(--ngpt-sys-space-100) var(--ngpt-sys-space-200);
+  padding: var(--ngpt-sys-space-150) var(--ngpt-sys-space-250);
   border-radius: var(--ngpt-sys-shape-corner-extra-small);
 }
 
@@ -118,12 +118,12 @@
 
 :host([data-variant='band']) .navbar__link {
   color: var(--ngpt-text-primary);
-  border-radius: var(--ngpt-sys-shape-corner-large);
 }
 
-/* Hover darkens the band — never lightens; a translucent white fill would drop the white
-   label below AA contrast (spec's own contrast note). No token covers a black scrim overlay. */
-:host([data-variant='band']) .navbar__link:hover {
+/* Hover darkens band — never lightens; translucent white would drop white label below AA
+   (spec's own contrast note). No token covers black scrim, so bare value here. Scoped to
+   un-scrolled only — stacking this on the already-dark scrolled bg swallowed the hover. */
+:host([data-variant='band']:not([data-scrolled='true'])) .navbar__link:hover {
   background: oklch(0 0 0 / 0.15);
   color: var(--ngpt-text-primary);
 }
@@ -132,4 +132,10 @@
   background: var(--ngpt-navbar-scrolled);
   border-block-end-color: var(--ngpt-border-subtle);
   box-shadow: 0 4px 16px oklch(0 0 0 / 0.35);
+}
+
+/* Scrolled bg already dark — lighten instead of darken so hover stays visible. */
+:host([data-variant='band'][data-scrolled='true']) .navbar__link:hover {
+  background: var(--ngpt-comp-tab-item-active-bg);
+  color: var(--ngpt-text-primary);
 }
