@@ -52,3 +52,6 @@ vitest.config.*.timestamp*
 .nx/self-healing
 tools/ai-migrations
 __screenshots__/
+
+# Scratch handoff docs — routing slips, not durable record (see apps/*/CONTEXT.md)
+handoffs/
