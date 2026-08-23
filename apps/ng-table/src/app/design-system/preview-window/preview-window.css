@@ -1,0 +1,21 @@
+:host {
+  display: block;
+  width: 100%;
+  max-width: var(--ngpt-sys-layout-content-max-width);
+}
+
+.preview-window__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ngpt-sys-space-250);
+}
+
+.preview-window__canvas {
+  display: flex;
+  justify-content: center;
+  padding: var(--ngpt-sys-space-1000) var(--ngpt-sys-space-800);
+  border-radius: var(--ngpt-sys-shape-corner-medium);
+  background: var(--ngpt-bg-surface);
+  border: 1px solid var(--ngpt-border-subtle);
+}

@@ -72,9 +72,9 @@ within it — check here before "fixing" one.
 | Gap | Status |
 |---|---|
 | **Home page** | `pages/home/home.*` is still the Wave-0 placeholder. `home.content.ts` (the authored marketing copy) does not exist yet. Its copy must be verifiable against `libs/shared/table`'s own docs — no invented benchmarks, adoption numbers, or version numbers |
-| **`preview-window`** | Never built. Its spec may still be undistributed in `docs/design-handoff/specs/` |
+| **`preview-window`** | Built (Wave 3), narrowed to `docs/CONVENTIONS.md`'s fixed contract (tab-switcher + code-block + one copy icon-button) — no consumer yet, so the "Example CSS" dropdown-pill and Run button aren't built. See `design-system/preview-window/docs/decisions.md` |
 | **`feature-grid`, `page-footer`** | Called by Home (Wave 3) — the ADR-0005 inversion held, no friction surfaced |
-| **Duplicate copy button** | `code-block`'s spec says the copy affordance belongs in `preview-window`'s toolbar; `code-block` ships one anyway. Unresolved — nesting one in the other shows two. Settle it when `preview-window` is built |
+| **Duplicate copy button** | Still unresolved — `code-block`'s copy button is unconditional in its own template (no suppress input), so nesting it in `preview-window`'s Source tab still shows two. Needs a `code-block` change (e.g. a `showCopyButton` input) out of Wave 3's scope; see `design-system/preview-window/docs/decisions.md` |
 | **`tab-switcher`** | Still an element selector with an array input, being wired onto `ng-primitives`' `NgpTabset` in separate in-flight work. Do not convert it independently |
 | **`search-overlay`** | Stays an element component (composes real structure, shadows no native element). Earmarked for `NgpDialog` |
 | **Search index** | Stubbed — `search.mock.ts` ships an empty index and an in-memory recents list. No persistence, no ranking |

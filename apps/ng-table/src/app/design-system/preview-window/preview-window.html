@@ -1,0 +1,33 @@
+<div class="preview-window__toolbar">
+  <ngpt-tab-switcher [tabs]="tabs" [selected]="activeTab()" (selectedChange)="activeTab.set($event ?? 'preview')" />
+
+  <button
+    ngptIconButton
+    ngptCopyConfirm
+    #copy="ngptCopyConfirm"
+    class="preview-window__copy"
+    [size]="24"
+    [text]="code()"
+    idleLabel="Copy code"
+  >
+    @switch (copy.state()) {
+      @case ('copied') {
+        <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      }
+      @case ('failed') {
+        <ng-icon name="lucideTriangleAlert" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      }
+      @default {
+        <ng-icon name="lucideCopy" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
+      }
+    }
+  </button>
+</div>
+
+@if (showsSource()) {
+  <ngpt-code-block [code]="code()" [language]="language()" [showGutter]="true" />
+} @else {
+  <div class="preview-window__canvas">
+    <ng-content />
+  </div>
+}
