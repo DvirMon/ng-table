@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ElementRef, inject, input } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSearch } from '@ng-icons/lucide';
+import { Kbd } from '../kbd/kbd';
 import type { SearchFieldVariant } from './search.types';
 
 /**
@@ -22,7 +23,7 @@ import type { SearchFieldVariant } from './search.types';
   templateUrl: './search-field.html',
   styleUrl: './search-field.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon],
+  imports: [NgIcon, Kbd],
   viewProviders: [provideIcons({ lucideSearch })],
   host: {
     'aria-label': 'Search docs',

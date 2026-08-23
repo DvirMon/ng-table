@@ -14,6 +14,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSearch } from '@ng-icons/lucide';
 import { NgpFocusTrap } from 'ng-primitives/focus-trap';
+import { Kbd } from '../kbd/kbd';
 import { closeFocusLock, openFocusLock, type FocusLockState } from './search-overlay.focus-lock';
 import { wrapIndex } from './search-overlay.utils';
 import { RECENT_SEARCHES_MOCK } from './search.mock';
@@ -35,7 +36,7 @@ import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from '.
   templateUrl: './search-overlay.html',
   styleUrl: './search-overlay.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, NgpFocusTrap],
+  imports: [NgIcon, NgpFocusTrap, Kbd],
   viewProviders: [provideIcons({ lucideSearch })],
   host: {
     '[attr.data-open]': 'open()',

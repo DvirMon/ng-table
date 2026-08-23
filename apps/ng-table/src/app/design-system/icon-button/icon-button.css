@@ -2,6 +2,7 @@
    before the conversion; behavior is unchanged, only the selector moved to `:host`. */
 :host {
   --_ngpt-icon-btn-size: var(--ngpt-comp-icon-btn-size);
+  --_ngpt-icon-btn-border: 1px solid var(--ngpt-comp-control-border-default);
 
   display: inline-flex;
   align-items: center;
@@ -10,7 +11,7 @@
   height: var(--_ngpt-icon-btn-size);
   padding: 0;
   border-radius: var(--ngpt-sys-shape-corner-small);
-  border: 1px solid var(--ngpt-comp-control-border-default);
+  border: var(--_ngpt-icon-btn-border);
   background: transparent;
   color: var(--ngpt-text-tertiary);
   cursor: pointer;

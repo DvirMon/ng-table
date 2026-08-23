@@ -27,7 +27,7 @@
       aria-controls="search-results-list"
       [attr.aria-activedescendant]="activeResultId()"
     />
-    <kbd class="kbd">esc</kbd>
+    <kbd ngptKbd>esc</kbd>
   </div>
 
   <div id="search-results-list" class="search-results" [attr.role]="hasResults() ? 'listbox' : null">
@@ -75,9 +75,9 @@
   </div>
 
   <div class="search-footer">
-    <kbd class="kbd">↑↓</kbd> navigate
-    <kbd class="kbd">↵</kbd> select
-    <kbd class="kbd">esc</kbd> close
+    <kbd ngptKbd>↑↓</kbd> navigate
+    <kbd ngptKbd>↵</kbd> select
+    <kbd ngptKbd>esc</kbd> close
   </div>
 
   <div class="visually-hidden" aria-live="polite">{{ liveRegionText() }}</div>

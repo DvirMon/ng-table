@@ -32,19 +32,10 @@
   white-space: nowrap;
 }
 
-.kbd {
+.search-field__keys {
+  display: flex;
   flex-shrink: 0;
-  font: var(--ngpt-sys-typescale-code);
-  padding: var(--ngpt-sys-space-050) var(--ngpt-sys-space-150);
-  border-radius: var(--ngpt-sys-shape-corner-extra-small);
-  background: var(--ngpt-bg-code-chip);
-  color: var(--ngpt-text-secondary);
-}
-
-/* Icon buttons inside a form field (this trigger's own border already frames the field) skip
-   their own border — double border reads wrong. Overrides icon-button's `--_ngpt-icon-btn-border`. */
-:host [ngptIconButton] {
-  --_ngpt-icon-btn-border: none;
+  gap: var(--ngpt-sys-space-050);
 }
 
 /* on-band (Home hero navbar only): translucent white well over the accent band. Literal
@@ -61,9 +52,8 @@
   background: oklch(1 0 0 / 0.18);
 }
 
-:host([data-variant='on-band']) .kbd {
+:host([data-variant='on-band']) [ngptKbd] {
   background: transparent;
-  border: 1px solid oklch(1 0 0 / 0.28);
   color: var(--ngpt-text-primary);
 }
 
@@ -76,7 +66,7 @@
   }
 
   .search-field__placeholder,
-  .kbd {
+  .search-field__keys {
     display: none;
   }
 }
