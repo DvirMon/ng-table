@@ -1,26 +1,26 @@
-<ng-content select="[navbar]" />
+<div class="hero-band__clip">
+  <div class="hero-band__shape" aria-hidden="true"></div>
 
-<div class="hero-band__shape" aria-hidden="true"></div>
+  <div class="hero-band__content">
+    <div class="hero-band__measure">
+      <div class="hero-band__copy">
+        <div class="hero-band__announcement" [attr.data-status]="announcementStatus()">
+          <span class="hero-band__announcement-dot"></span>
+          {{ announcement() }}
+        </div>
 
-<div class="hero-band__content">
-  <div class="hero-band__measure">
-    <div class="hero-band__copy">
-      <div class="hero-band__announcement" [attr.data-status]="announcementStatus()">
-        <span class="hero-band__announcement-dot"></span>
-        {{ announcement() }}
-      </div>
+        <h1 id="hero-h1" tabindex="-1" class="hero-band__headline">{{ h1() }}</h1>
 
-      <h1 id="hero-h1" tabindex="-1" class="hero-band__headline">{{ h1() }}</h1>
+        <p class="hero-band__lede">{{ lede() }}</p>
 
-      <p class="hero-band__lede">{{ lede() }}</p>
-
-      <div class="hero-band__actions">
-        <button ngptPillButton variant="on-band" (click)="onPrimaryClick()">
-          {{ primaryLabel() }}
-        </button>
-        <button ngptPillButton variant="on-band-inverse" (click)="onSecondaryClick()">
-          {{ secondaryLabel() }}
-        </button>
+        <div class="hero-band__actions">
+          <button ngptPillButton variant="on-band" (click)="onPrimaryClick()">
+            {{ primaryLabel() }}
+          </button>
+          <button ngptPillButton variant="on-band-inverse" (click)="onSecondaryClick()">
+            {{ secondaryLabel() }}
+          </button>
+        </div>
       </div>
     </div>
   </div>

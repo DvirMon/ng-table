@@ -6,9 +6,10 @@ import type { HeroBandAnnouncementStatus } from './hero-band.types';
  * Home page's full-bleed accent-surface hero band. Page-local (`pages/home/docs/spec.md`
  * § "Hero — full-bleed accent band") — not a design-system component, not in the manifest.
  *
- * Contains the navbar via `<ng-content select="[navbar]" />` so it visually reads as part of the
- * band. Owns the announcement pill, H1, lede, two on-band CTAs and the decorative shape. No copy
- * is hardcoded — everything textual comes in via inputs, authored by Wave 3's home-composition.
+ * Owns the announcement pill, H1, lede, two on-band CTAs and the decorative shape. No copy is
+ * hardcoded — everything textual comes in via inputs, authored by Wave 3's home-composition.
+ * Navbar is a sibling in home.html, not projected here — negative margin-top pulls this band up
+ * underneath it so it still visually reads as part of the band (see hero-band.css).
  */
 @Component({
   selector: 'ngpt-home-hero-band',

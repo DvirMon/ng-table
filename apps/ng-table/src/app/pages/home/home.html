@@ -1,3 +1,5 @@
+<ngpt-navbar variant="band" [searchOpen]="searchOpen()" (openSearch)="openSearch()" />
+
 <ngpt-home-hero-band
   [announcement]="content.hero.announcement"
   [announcementStatus]="content.hero.announcementStatus"
@@ -7,9 +9,7 @@
   [secondaryLabel]="content.hero.secondaryLabel"
   (primaryClick)="scrollToInstall()"
   (secondaryClick)="onSecondaryClick()"
->
-  <ngpt-navbar navbar variant="band" [searchOpen]="searchOpen()" (openSearch)="openSearch()" />
-</ngpt-home-hero-band>
+/>
 
 <section class="home-section home-section--features">
   <div class="home-section__measure">

@@ -17,7 +17,7 @@ readonly primaryClick = output<void>();
 readonly secondaryClick = output<void>();
 ```
 
-Plus `<ng-content select="[navbar]" />` for the projected navbar.
+Navbar is **not** projected into hero-band — see "Navbar moved out of hero-band" below.
 
 ## Buttons: string + output, not `{ label, href }` objects
 
@@ -63,14 +63,34 @@ default 20px (`--ngpt-sys-shape-corner-large`), but the spec's own "Hero size ov
 only calls out font-size/weight/padding, not radius. Spec wins over frame, so radius stays at
 pill-button's default.
 
+## Background: gradient (`--ngpt-hero-gradient`), replacing flat `--ngpt-accent-surface`
+
+Reference-matching change (not spec-driven): band background moved from a flat
+`--ngpt-accent-surface` fill to a new `--ngpt-hero-gradient` token
+(`src/styles/tokens/color.css`), a 4-stop `linear-gradient(90deg, ...)` at the same hue
+(52) as the existing accent family — only lightness varies per stop (0.57 / 0.555 /
+0.565 / 0.58), keeping every stop in the same tight luminance band the flat color
+already used. `--ngpt-accent-surface` is reused as the 0% stop rather than duplicated,
+so there's one source for that value.
+
+Lightness ceiling per stop was picked by re-running the same WCAG contrast check
+`--ngpt-accent-surface` was originally chosen for (`--ngpt-text-primary` white on the
+band): the lightest stop must stay ≤ ~0.58 L at this hue/chroma, since 0.605 L measured
+4.12:1 and fails AA (4.5:1) — 0.58 L measures 4.56:1 and holds. All four stops now sit
+between 4.56:1–5.06:1 against white text.
+
 ## Decorative shape
 
-Implemented exactly as the task brief and spec formula specify:
-`left: calc(max(var(--hero-band-rail), (100vw - var(--ngpt-sys-layout-wide-measure)) / 2) + 700px)`
-on `:host { position: relative; overflow: hidden; }`. `--hero-band-rail` is a local (non-`--ngpt-*`)
-custom property on `:host` holding `clamp(24px, 4vw, 48px)` — reused by both the shape's formula
-and `.hero-band__content`'s `padding-inline` so the one literal isn't duplicated in two places; it
-is not a design-system token, just DRY within this file.
+Was implemented but the CSS rule shipped commented-out (template's `.hero-band__shape`
+div rendered nothing); re-enabled as-is, unchanged, to match a reference redesign that
+also uses a large low-opacity angular shape bleeding off the band. Implemented exactly as
+the task brief and spec formula specify:
+`left: calc(max(var(--hero-band-rail), (100vw - var(--ngpt-sys-layout-wide-measure)) / 2) + 700px)`.
+The `overflow: hidden` clip this needs now lives on a `.hero-band__clip` wrapper around the shape
++ content, not on `:host` — see "Navbar moved out of hero-band" below for why. `--hero-band-rail`
+is a local (non-`--ngpt-*`) custom property on `:host` holding `clamp(24px, 4vw, 48px)` — reused by
+both the shape's formula and `.hero-band__content`'s `padding-inline` so the one literal isn't
+duplicated in two places; it is not a design-system token, just DRY within this file.
 
 `top: -140px` comes from the frame (spec.md only says "bleeding off the top-right" qualitatively);
 kept it since spec doesn't contradict a concrete number. `700px` is the spec's own literal, not the
@@ -104,13 +124,50 @@ itself is built elsewhere (page shell), not by this component.
 | `oklch(0 0 0 / 0.15)` | `.hero-band__announcement` background | same — spec's own contrast rationale is pinned to this exact value |
 | `7px` | announcement dot↔text gap | no exact `--ngpt-sys-space-*` step |
 | `11px` | `.hero-band__actions` gap | no exact step |
-| `26px` | `.hero-band__actions` margin-top | spec § Height calls this "26px above the buttons" explicitly, but still no exact step |
 | `660px` | `.hero-band__copy` max-width | spec-given copy cap, one-off |
 
 Where an exact token *did* match (20px → `--ngpt-sys-space-500`, 18px → `--ngpt-sys-space-450`, the
 hero button size step, the 1080px wide measure, all colors, all typescale bases), the token was
 used — these are the only true gaps, all pre-existing in `CONVENTIONS.md`'s "never hardcode a value
 that has a token" sense: no token exists to reference.
+
+`.hero-band__actions` margin-top (spec § Height: "26px above the buttons") had no exact token
+either side (24px/28px both 2px off) — snapped to `--ngpt-sys-space-600` (24px, user's call between
+the tie).
+
+## Margin, not `gap`, for the copy stack
+
+`.hero-band__copy`'s three inter-child spacings (announcement→headline, headline→lede,
+lede→actions) are 20px/18px/24px — three distinct values by spec, not a repeated uniform gap.
+`gap` sets one value for a whole flex/grid container; it can't vary per sibling pair without
+nesting a separate flex container per pair, which is worse than the margins it'd replace. Per-item
+`margin` is the correct tool here (CSS gap-vs-margin guideline: gap for uniform sibling spacing,
+margin for spacing that varies per element or isn't repeated) — this is not the "margin instead of
+gap" anti-pattern, since there's no uniform spacing being reimplemented as margin.
+
+## Navbar moved out of hero-band (bug fix, post-ship)
+
+Originally the `band`-variant navbar was projected into hero-band via
+`<ng-content select="[navbar]" />`, so hero-band's `:host` was its sticky containing block.
+Two bugs traced back to that:
+
+1. `:host { overflow: hidden }` (for the decorative shape) also clipped the projected sticky
+   navbar — an `overflow: hidden` ancestor can't scroll, so `position: sticky` inside it never
+   activates. Fixed by moving the clip to `.hero-band__clip`, wrapping only the shape + content.
+2. Even after (1), the sticky navbar stopped sticking once scroll passed the hero section and
+   entered `home-section--features`. A `position: sticky` element can only stay stuck within its
+   *parent's* box — and its parent was hero-band's `:host`, whose box ends with the hero.
+
+Fix: `ngpt-navbar` is now a plain sibling of `ngpt-home-hero-band` in `home.html`, before it in
+document order, not projected content. That makes `<body>`/the page the sticky containing block,
+so it sticks for the full scroll, not just within the hero's height.
+
+Moving navbar to normal flow means it now reserves its own height at the top of the page instead
+of overlapping the hero for free. To keep the original "transparent navbar overlaying the hero"
+look, hero-band's `:host` gets `margin-top: calc(-1 * var(--ngpt-comp-navbar-height))`, pulling the
+band up underneath navbar's reserved space so the band still visually starts at the very top.
+Paint order (navbar's own `z-index: var(--ngpt-sys-z-navbar)` vs. hero-band's `z-index: auto`)
+keeps navbar on top, unchanged from before.
 
 ## No icons
 
