@@ -46,7 +46,7 @@ const SCROLL_THRESHOLD_PX = 24;
 export class Navbar {
   private readonly destroyRef = inject(DestroyRef);
 
-  readonly variant = input<NavbarVariant>('docs');
+  readonly  variant = input<NavbarVariant>('docs');
 
   /** Reflected onto the search trigger's `aria-expanded` — mirrors the Home composition's overlay state. */
   readonly searchOpen = input<boolean>(false);
