@@ -36,6 +36,11 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 > Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
 
+> **2026-08-23 revision:** row icons, active-row fill, border-radius, footer glyphs, 5-item cap,
+> and field focus treatment updated against a live scrape of the Angular Primitives (Algolia
+> DocSearch) reference overlay. See `docs/gaps-ngp-reference.md` for the scrape evidence and the
+> refactor checklist — the component code has **not** been updated to this revision yet.
+
 # Search
 
 **Atomic level:** Organism
@@ -57,13 +62,17 @@ Sits in the navbar's right group, before the Sponsor pill. Below `md` (1024px) i
 | Background | oklch(0.17 0.005 260) | `--ngpt-bg-raised` |
 | Border (default) | 1px solid oklch(0.3 0.005 260) | `--ngpt-comp-control-border-default` |
 | Border (hover) | 1px solid oklch(0.45 0.005 260) | `--ngpt-comp-pill-border-hover` |
-| Focus ring | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Focus treatment | Leading icon recolors to `--ngpt-accent`; no box-shadow ring on the control | `--ngpt-accent` |
 | Leading icon | lucideSearch, 16px, oklch(0.6 0.01 260) | `--ngpt-sys-icon-size-md` |
 | Placeholder | "Search docs", 13px, oklch(0.6 0.01 260) | `--ngpt-text-muted` |
 | Trailing hint | ⌘K keyboard chip, right-aligned | see below |
 | Gap | 8px | `--ngpt-sys-space-200` |
 
 It is a `<button>`, not an `<input>` — the real input lives in the overlay. This avoids two focusable text fields competing for the same query.
+
+**Open a11y question (see `docs/gaps-ngp-reference.md` § 6):** an icon-only color change is a
+weaker focus indicator than the previous box-shadow ring — confirm it still meets WCAG 2.4.7
+before implementing.
 
 ### API
 
@@ -121,7 +130,7 @@ AA at 11px.
 | Panel max-height | 60vh | `--ngpt-comp-search-panel-max-height` |
 | Panel background | oklch(0.2 0.005 260) | `--ngpt-bg-elevated` |
 | Panel border | 1px solid oklch(0.26 0.005 260) | `--ngpt-border-subtle` |
-| Panel radius | 12px | `--ngpt-sys-shape-corner-medium` |
+| Panel radius | 6px | `--ngpt-sys-shape-corner-small` (was `-medium`/12px — confirm token value) |
 | Panel shadow | 0 8px 24px oklch(0 0 0 / 0.35) | `--ngpt-sys-elevation-level2` |
 
 ### Input row
@@ -146,15 +155,22 @@ No border or ring on the input itself — the panel is already the focused surfa
 | List padding | 8px | `--ngpt-sys-space-200` |
 | Group label | 11px / 600 / uppercase / 0.05em, oklch(0.55 0.01 260), padding 10px 10px 6px | `--ngpt-sys-typescale-label-small-alt` |
 | Row padding | 10px 12px | `--ngpt-sys-space-250 --ngpt-sys-space-300` |
-| Row radius | 6px | `--ngpt-sys-shape-corner-extra-small-alt` |
+| Row radius | 4px | `--ngpt-sys-shape-corner-extra-small` (was `-extra-small-alt`/6px — confirm token value) |
 | Row gap | 2px | `--ngpt-sys-space-050` |
+| Leading icon | 20px, page result → file icon, heading result → hash icon | see Iconography.md addition below |
+| Hierarchy connector | Heading results only — vertical + horizontal stroke line, no arrowhead, left of the leading icon | `—` (new, see gaps doc) |
+| Trailing icon | 20px return-arrow, rendered on **every** row regardless of active state | see Iconography.md addition below |
 | Title | Inter 13.5px, oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
 | Path / section line | Inter 12px, oklch(0.55 0.01 260), below title, 2px gap | `--ngpt-text-muted` |
 | Query match highlight | oklch(0.62 0.19 52), 600 weight (color only, no background) | `--ngpt-accent` |
-| Row active (hover or arrow focus) | bg `--ngpt-bg-active` (0.24), title → white, 2px left border accent | `—` |
-| Max visible | scrolls within panel max-height | `—` |
+| Row active (hover or arrow focus) | **Open decision** — solid accent fill, full row, no left-border accent. See `docs/decisions.md` § Active row: solid accent fill (open). | `—` (TBD) |
+| Max visible | Capped at 5 results per group — no scroll-to-fit | `—` |
 
 Exactly one row is active at all times, defaulting to the first — Enter always has an unambiguous target.
+
+Leading/trailing row icons and the hierarchy connector are new as of the 2026-08-23 revision —
+not yet in `Iconography.md`'s placeholder table. `docs/gaps-ngp-reference.md` § 1 has the exact
+reference SVG paths to source lucide equivalents from.
 
 ### Empty states
 
@@ -166,7 +182,13 @@ Exactly one row is active at all times, defaulting to the first — Enter always
 
 ### Footer legend
 
-36px row, 1px top border `--ngpt-border-subtle`, padding 0 12px, keyboard chips + 11px `--ngpt-text-muted` labels: ↑↓ navigate · ↵ select · esc close.
+36px row, 1px top border `--ngpt-border-subtle`, padding 0 12px, keyboard chips + 11px `--ngpt-text-muted` labels: Enter select · Arrow-down/Arrow-up navigate · Esc close.
+
+Each key renders its **own** 15px SVG glyph inside the shared `<kbd ngptKbd>` chip — four distinct
+icons (Enter, Arrow-down, Arrow-up, Escape), not literal `↑↓`/`↵`/`esc` text. Arrow-down and
+Arrow-up are two separate icons, not one combined glyph. See
+`docs/gaps-ngp-reference.md` § 4 for the reference SVG paths and the `Kbd` component change this
+requires.
 
 ## Keyboard and ARIA
 
@@ -202,13 +224,19 @@ Reference render only. The field's `.search-field` block below is implemented as
   </div>
   <div class="search-results">
     <div class="search-group-label">Primitives</div>
+    <!-- max 5 rows rendered per group, no scroll-to-fit -->
     <a class="search-row is-active">
+      <ng-icon name="lucideFile" size="20px" /> <!-- or lucideHash for heading results -->
+      <!-- heading results also get a tree-connector svg here, left of the icon -->
       <span class="search-row__title">Table Primitive</span>
       <span class="search-row__path">Primitives › Table › Sorting</span>
+      <ng-icon name="lucideCornerDownLeft" size="20px" class="search-row__action" /> <!-- always rendered, every row -->
     </a>
   </div>
   <div class="search-footer">
-    <kbd class="kbd">↑↓</kbd> navigate <kbd class="kbd">↵</kbd> select <kbd class="kbd">esc</kbd> close
+    <kbd class="kbd"><ng-icon name="lucideCornerDownLeft" size="15px" /></kbd> select
+    <kbd class="kbd"><ng-icon name="lucideArrowDown" size="15px" /></kbd><kbd class="kbd"><ng-icon name="lucideArrowUp" size="15px" /></kbd> navigate
+    <kbd class="kbd"><ng-icon name="lucideX" size="15px" /></kbd> close <!-- escape glyph, placeholder icon name -->
   </div>
 </div>
 ```
@@ -229,7 +257,8 @@ Reference render only. The field's `.search-field` block below is implemented as
   cursor: pointer;
 }
 .search-field:hover { border-color: var(--ngpt-comp-pill-border-hover); }
-.search-field:focus-visible { box-shadow: 0 0 0 2px var(--ngpt-focus-ring); outline: none; }
+.search-field:focus-visible { outline: none; } /* no box-shadow ring — see Open a11y question above */
+.search-field:focus-visible ng-icon { color: var(--ngpt-accent); }
 .search-field__placeholder { flex: 1; text-align: left; }
 
 .kbd {
@@ -260,7 +289,7 @@ Reference render only. The field's `.search-field` block below is implemented as
   flex-direction: column;
   width: var(--ngpt-comp-search-panel-width);
   max-height: var(--ngpt-comp-search-panel-max-height);
-  border-radius: var(--ngpt-sys-shape-corner-medium);
+  border-radius: var(--ngpt-sys-shape-corner-small); /* 6px, confirm token value */
   border: 1px solid var(--ngpt-border-subtle);
   background: var(--ngpt-bg-elevated);
   box-shadow: var(--ngpt-sys-elevation-level2);
@@ -300,21 +329,22 @@ Reference render only. The field's `.search-field` block below is implemented as
 }
 .search-row {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 10px;
   padding: 10px 12px;
-  border-radius: 6px;
-  border-left: 2px solid transparent;
+  border-radius: 4px; /* was 6px */
   text-decoration: none;
 }
+.search-row__content { display: flex; flex-direction: column; gap: 2px; flex: 1; }
 .search-row__title { font-size: 13.5px; color: var(--ngpt-text-secondary); }
 .search-row__path { font-size: 12px; color: var(--ngpt-text-muted); }
 .search-row mark { background: none; color: var(--ngpt-accent); font-weight: 600; }
+.search-row__action { flex-shrink: 0; } /* rendered on every row, not just active */
+/* Active row fill is an open decision — no left border in the reference, see decisions.md */
 .search-row.is-active {
-  background: var(--ngpt-bg-active);
-  border-left-color: var(--ngpt-accent);
+  background: var(--ngpt-accent); /* TBD: solid fill token pending decision */
 }
-.search-row.is-active .search-row__title { color: var(--ngpt-text-primary); }
+.search-row.is-active .search-row__title { color: var(--ngpt-text-primary); } /* TBD: confirm AA contrast against solid fill */
 
 .search-footer {
   display: flex;
