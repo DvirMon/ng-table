@@ -63,3 +63,23 @@ surfaces later.
 Each domain's `docs/decisions.md` (written by the agent that built it) records spec-vs-frame calls, lucide
 glyph choices for placeholder glyphs, and any contract delta from what `docs/CONVENTIONS.md` fixed in
 advance. Cross-domain decisions are ADRs in `docs/adr/`.
+
+## Deliberate gaps
+
+Known and accepted, not oversights. Each is out of scope for the current round rather than unfinished
+within it — check here before "fixing" one.
+
+| Gap | Status |
+|---|---|
+| **Home page** | `pages/home/home.*` is still the Wave-0 placeholder. `home.content.ts` (the authored marketing copy) does not exist yet. Its copy must be verifiable against `libs/shared/table`'s own docs — no invented benchmarks, adoption numbers, or version numbers |
+| **`preview-window`** | Never built. Its spec may still be undistributed in `docs/design-handoff/specs/` |
+| **`feature-grid`, `page-footer`** | Inverted to consumer-authored markup (ADR-0005) but never yet called. Home is their first consumer — if the inversion was wrong, that is where it surfaces |
+| **Duplicate copy button** | `code-block`'s spec says the copy affordance belongs in `preview-window`'s toolbar; `code-block` ships one anyway. Unresolved — nesting one in the other shows two. Settle it when `preview-window` is built |
+| **`tab-switcher`** | Still an element selector with an array input, being wired onto `ng-primitives`' `NgpTabset` in separate in-flight work. Do not convert it independently |
+| **`search-overlay`** | Stays an element component (composes real structure, shadows no native element). Earmarked for `NgpDialog` |
+| **Search index** | Stubbed — `search.mock.ts` ships an empty index and an in-memory recents list. No persistence, no ranking |
+| **Syntax highlighting** | No Shiki. `code-block` ships plain `<pre><code>`; the `.line` split is where Shiki output would slot in |
+| **`docs` navbar variant** | Built but unused — only `band` is exercised, by Home |
+| **Brand assets** | Logo, favicon and OG image are missing. Reserve boxes at the dimensions the Assets spec gives rather than inventing artwork |
+| **`icon-button/docs/spec.md`** | Describes a hidden-textarea + `document.execCommand` clipboard fallback that no implementation ever had. `execCommand` is deprecated — needs a deliberate add-or-strike decision |
+| **Visually-hidden utility** | `copy-confirm`'s announcer inlines the recipe because its node lives outside any component's view and the app has no global utility. Adding one to `src/styles/global.css` would let it drop the inline styles |
