@@ -134,15 +134,23 @@ today's behavior.
 both `string | undefined`. A required input would not type-check at either call site. Unset or
 empty makes `copy()` a no-op, matching `install-row`'s existing guard.
 
-## No `execCommand` fallback
+## No `execCommand` fallback — resolved, struck from spec
 
-`icon-button/docs/spec.md` § "Confirmation variant" describes a hidden-textarea +
+`icon-button/docs/spec.md` § "Confirmation variant" described a hidden-textarea +
 `document.execCommand('copy')` fallback wired to both the rejection handler and the no-API branch.
-Neither `code-block` nor `install-row` ever implemented it — both went straight to `failed` — so
-porting it would be new behavior, not extraction, and it would mean inserting a `<textarea>` into
-the document from a directive (see the DOM-insertion note above). `document.execCommand` is also
-deprecated. Kept the shipped behavior, flagging the gap: **the spec still describes a fallback
-that does not exist.** A deliberate decision to add or to strike it belongs in a separate pass.
+Neither `code-block` nor `install-row` ever implemented it — both went straight to `failed`. This
+was flagged as an open gap; now closed by striking the fallback from the spec rather than
+implementing it:
+
+- Porting it would be new behavior, not extraction.
+- It would mean inserting a `<textarea>` into the document from a directive — the same
+  DOM-insertion concern as the announcer node (see above), except the announcer's insertion is
+  scoped to `document.body`, outside any consumer's subtree, while a selection-fallback textarea
+  would need to sit next to the button *inside* the consumer's subtree to be selectable, which
+  crosses the attribute-hosted invariant outright rather than skirting it.
+- `document.execCommand` is deprecated.
+
+Spec now states directly that both failure branches land on `failed`, no selection fallback.
 
 ## No `copied`/`failed` outputs
 

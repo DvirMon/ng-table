@@ -150,9 +150,13 @@ The button stays the same size and border throughout — only the glyph changes,
 
 **The failure state is not theoretical.** `navigator.clipboard.writeText` can exist and still reject — an
 unfocused document, a permissions policy, a non-secure context, or an iframe without `clipboard-write` all
-produce a rejected promise rather than a missing API. So the selection fallback (hidden textarea +
-`document.execCommand`, whose boolean return is checked) is wired to **both** the rejection handler and the
-no-API branch, and only after both fail does the button show `failed`. `aria-label` and `title` change with
+produce a rejected promise rather than a missing API. Both the rejection and the no-API branch land
+directly on `failed` — no selection fallback. A hidden-textarea + `document.execCommand('copy')` fallback
+was specified here at one point; struck deliberately, not silently dropped. `document.execCommand` is
+deprecated, and the directive that owns this state machine (`copy-confirm/`, see ADR-0005) has no
+template, so a textarea would mean a `@Directive` inserting DOM nodes into the consumer's subtree — the
+one thing `libs/shared/table`'s attribute-hosted invariant forbids. Full reasoning in
+`../../copy-confirm/docs/decisions.md` § "No `execCommand` fallback". `aria-label` and `title` change with
 the glyph, and on failure the label tells the reader to select the text manually. A button that appears
 inert on click is worse than one that reports failure.
 
