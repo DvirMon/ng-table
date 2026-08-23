@@ -71,7 +71,7 @@ within it — check here before "fixing" one.
 
 | Gap | Status |
 |---|---|
-| **Home page** | `pages/home/home.*` is still the Wave-0 placeholder. `home.content.ts` (the authored marketing copy) does not exist yet. Its copy must be verifiable against `libs/shared/table`'s own docs — no invented benchmarks, adoption numbers, or version numbers |
+| **Home page** | Built (Wave 3) — `pages/home/home.*` composes hero-band/feature-grid/install-row per `pages/home/docs/spec.md`; `home.content.ts` copy is sourced from `libs/shared/table`'s own docs. See `pages/home/docs/decisions.md` |
 | **`preview-window`** | Built (Wave 3), narrowed to `docs/CONVENTIONS.md`'s fixed contract (tab-switcher + code-block + one copy icon-button) — no consumer yet, so the "Example CSS" dropdown-pill and Run button aren't built. See `design-system/preview-window/docs/decisions.md` |
 | **`feature-grid`, `page-footer`** | Called by Home (Wave 3) — the ADR-0005 inversion held, no friction surfaced |
 | **Duplicate copy button** | Still unresolved — `code-block`'s copy button is unconditional in its own template (no suppress input), so nesting it in `preview-window`'s Source tab still shows two. Needs a `code-block` change (e.g. a `showCopyButton` input) out of Wave 3's scope; see `design-system/preview-window/docs/decisions.md` |

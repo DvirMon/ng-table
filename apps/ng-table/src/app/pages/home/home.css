@@ -1,4 +1,72 @@
 :host {
   display: block;
-  padding: var(--ngpt-sys-space-400);
+}
+
+/* Every section from 4 onward shares one left rail and one 1080px wide measure (spec § Section
+   rhythm) — the hero band owns its own copy of this clamp (`hero-band.css`'s `--hero-band-rail`)
+   since it isn't a `.home-section`. */
+.home-section {
+  padding-block: clamp(64px, 8vw, 96px);
+  padding-inline: clamp(24px, 4vw, 48px);
+}
+
+.home-section--features {
+  background: var(--ngpt-bg-app);
+}
+
+.home-section--install {
+  background: var(--ngpt-bg-deep);
+}
+
+.home-section__measure {
+  max-width: var(--ngpt-sys-layout-wide-measure);
+  margin-inline: auto;
+}
+
+/* Prose cap is on the copy, not a re-centered container (spec § Section rhythm) — same rail,
+   narrower max-width. Install section overrides this below — see that comment. */
+[ngptCategoryBadge],
+[ngptProse] {
+  max-width: var(--ngpt-sys-layout-prose-measure);
+}
+
+[ngptProse] p {
+  margin: var(--ngpt-sys-space-250) 0 0;
+  color: var(--ngpt-text-tertiary);
+}
+
+.home-section__grid {
+  margin-top: var(--ngpt-sys-space-1000);
+}
+
+/* Icon per feature cell (`home.content.ts`'s `FeatureCell.icon`, registered locally in
+   `home.ts`'s `viewProviders`) — feature-grid itself stays icon-agnostic; the consumer authors
+   each `<article>`, so the icon is markup home.html owns directly. */
+.home-feature-cell__icon {
+  display: block;
+  margin-bottom: var(--ngpt-sys-space-300);
+  color: var(--ngpt-accent);
+}
+
+/* Install section is the one intentional exception to "Prose cap is on the copy, not a
+   re-centered container" (spec § Section rhythm): user confirmed the left-rail-aligned CTA
+   read as broken here (empty rail to the right on wide viewports), unlike the hero band and
+   features section, which stay left-aligned by design. */
+.home-section--install [ngptCategoryBadge],
+.home-section--install [ngptProse] {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.home-section--install [ngptProse] {
+  margin-bottom: var(--ngpt-sys-space-700);
+}
+
+.home-section--install ngpt-home-install-row {
+  margin-inline: auto;
+}
+
+.home-footer__links {
+  display: flex;
+  align-items: center;
 }

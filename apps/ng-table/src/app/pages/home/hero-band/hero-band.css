@@ -16,16 +16,16 @@
    overflow:hidden. Anchored from its LEFT edge — not the right — so it simply runs further
    off-screen as the viewport narrows once the copy column's clamp() hits its floor, rather than
    colliding with the copy once a right-anchored offset stops scaling (spec's own rationale). */
-.hero-band__shape {
+/* .hero-band__shape {
   position: absolute;
   top: -140px;
   left: calc(max(var(--hero-band-rail), (100vw - var(--ngpt-sys-layout-wide-measure)) / 2) + 700px);
   width: 620px;
   height: 620px;
   border-radius: 28%;
-  background: oklch(1 0 0 / 0.07); /* untokenized in spec — docs/decisions.md */
+  background: oklch(1 0 0 / 0.07);
   pointer-events: none;
-}
+} */
 
 .hero-band__content {
   position: relative;
