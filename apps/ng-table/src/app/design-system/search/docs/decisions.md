@@ -3,6 +3,34 @@
 Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixed contract in
 `apps/ng-table/docs/CONVENTIONS.md`.
 
+## 2026-08-23 — gap analysis against Angular Primitives reference (open items)
+
+`docs/spec.md` was revised against a live scrape of the Angular Primitives (Algolia DocSearch)
+⌘K overlay — see `docs/gaps-ngp-reference.md` for the full checklist and scrape evidence. Two
+items in that revision are marked TBD in the spec and need a call before implementation:
+
+### Active row: solid accent fill (open)
+
+Superseded here: the field-trigger vs. overlay-row focus/active distinction below no longer
+applies to the row's own active state. The reference renders the active row as a **solid**
+`--docsearch-highlight-color` fill (`#FF4651`, full-bleed, no left border), not our tint +
+left-border-accent treatment. Spec now says "solid accent fill" but doesn't specify: (a) which
+token supplies the fill — `--ngpt-accent` at full opacity, or a new
+`--ngpt-bg-accent-solid`-style token, and (b) what the title text recolors to for AA contrast
+against that fill (the reference just goes white-on-red; our token set has no "text-on-accent"
+value defined anywhere else in this app). Needs a design call, not an implementation guess.
+
+### Kbd glyphs: SVG per key, not shared literal text (supersedes "Icons" below)
+
+The "Icons" section further down states the `⌘K`/`↑↓`/`↵`/`esc` keyboard-chip glyphs are
+"literal text/Unicode inside `<kbd>`, not icons" and that this was a deliberate call because they
+weren't in `Iconography.md`'s placeholder table. The reference scrape shows DocSearch renders each
+footer key as a distinct hand-drawn SVG (Enter, Arrow-down, Arrow-up, Escape — four icons, not one
+combined `↑↓`). That original call is superseded for the **footer legend** specifically; the `⌘K`
+trigger-hint chip on the field itself was not part of this scrape and is unchanged. Needs
+`Iconography.md` to gain entries for these four glyphs (or confirm no suitable lucide equivalent
+exists and new inline SVGs are required) before the `Kbd` component can grow an icon-content mode.
+
 ## Final public API
 
 ```ts
