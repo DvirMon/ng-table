@@ -640,7 +640,48 @@ snapshot was already writable; now it is also deletable.
 - Pessimistic save (row stays open during the request) needs none of this and already works:
   `endEdit` on success, `revertEdit` on failure, entry alive throughout.
 - Re-opens fixes #3/#4/#5 from the E3/E4 review — `beginEdit` on a pending row, what single-mode
-  switching does to a pending row, and which map `revertEdit` reads first — all now need answers.
+  switching does to a pending row, and which map `revertEdit` reads first — resolved below.
+
+### D31.1 — `beginEdit` on a pending row re-opens it, keeping the original snapshot
+
+Entry moves `pending → editing`, carrying the snapshot captured at the *first* `beginEdit`. The row
+reopens showing its current (optimistic, unconfirmed) values, but Cancel still returns to the true
+pre-edit state — the oldest restore point wins, which is what Cancel means to a user.
+
+This also settles review finding #3 for the non-pending case: `beginEdit` must stop re-capturing
+over an existing snapshot. Re-capture is `setSnapshot`'s job (D30); `beginEdit` only ever captures
+when there is no entry in either map.
+
+**Known sharp edge, left to the consumer:** if the in-flight save then fails, the error handler's
+`revertEdit` fires on a row the user is actively typing in. The library does not suppress it — it
+cannot know whether the consumer wants the failure to win or the user's new input to win. Document
+this in the optimistic-save example.
+
+### D31.2 — Single-mode row switching is an implicit Save; `{ multiple }` stays
+
+Resolves review finding #4. With `multiple: false`, opening row B while row A is open closes A the
+way `endEdit` does — whatever blur already committed to `data` stands. Today's behavior, now a
+decision with a test rather than a side effect of `applyEditing` trimming.
+
+**Why Save and not Cancel:** under D24 the user's typed value was already committed on blur and
+visible in the row before they clicked away. Silently reverting it is the surprise, not keeping it.
+
+**Prior art checked (2026-08-19):** single-row-at-a-time is the norm, not an oddity — MUI X DataGrid
+allows only one row in edit mode and **commits on click-away** (Escape reverts;
+`stopRowEditMode({ ignoreModifications: true })` discards). AG Grid `editType: 'fullRow'` likewise
+permits only one row at a time. AG Grid's own recipe uses `stopEditing(true)` (cancel) when another
+row is clicked, but that recipe is for button-only commit — a different mode from ours, where blur
+has already committed.
+
+**`{ multiple }` (D14) is kept** despite neither reference shipping an equivalent, to cover
+bulk-edit tables without a later API change. Two consequences to carry:
+- `multiple: true` has no reference implementation to copy; its semantics are ours alone.
+- It multiplies against D31's pending state — N open rows × M in-flight saves is undesigned. Treat
+  `multiple: true` + optimistic save as unsupported until someone specs it.
+
+**Missing affordance, noted not decided:** both references bind Escape to revert. We have no
+keyboard story for edit mode at all — `revertEdit` exists but nothing calls it from a key handler.
+UI-layer concern; belongs with the directive work, not here.
 
 ## D30 — The snapshot is writable; the library never watches `data` for staleness (2026-08-19)
 
