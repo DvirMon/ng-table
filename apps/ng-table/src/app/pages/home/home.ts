@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, afterNextRender, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideBlocks, lucideColumns3, lucidePuzzle, lucideRows, lucideTable, lucideTag } from '@ng-icons/lucide';
 import { CategoryBadge } from '../../design-system/category-badge/category-badge';
@@ -11,6 +11,7 @@ import { FeatureGrid } from './feature-grid/feature-grid';
 import { FeatureGridText } from './feature-grid/feature-grid-text';
 import { FeatureGridTitle } from './feature-grid/feature-grid-title';
 import { HOME_CONTENT } from './home.content';
+import { injectGlobalShortcut } from './home.utils';
 import { HomeHeroBand } from './hero-band/hero-band';
 import { InstallRow } from './install-row/install-row';
 
@@ -47,19 +48,10 @@ export class Home {
   protected readonly searchOpen = signal(false);
 
   constructor() {
-    const destroyRef = inject(DestroyRef);
+    const isSearchShortcut = (event: KeyboardEvent): boolean =>
+      (event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k';
 
-    afterNextRender(() => {
-      const onKeydown = (event: KeyboardEvent): void => {
-        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-          event.preventDefault();
-          this.searchOpen.set(true);
-        }
-      };
-
-      window.addEventListener('keydown', onKeydown);
-      destroyRef.onDestroy(() => window.removeEventListener('keydown', onKeydown));
-    });
+    injectGlobalShortcut(isSearchShortcut, () => this.searchOpen.set(true));
   }
 
   protected openSearch(): void {
