@@ -16,7 +16,7 @@ depends_on:
   - "foundations/Color.md (color)"
 states: []
 a11y: []
-tokens: [--ngpt-sys-shape-corner-none, --ngpt-sys-shape-corner-extra-small, --ngpt-sys-shape-corner-extra-small-alt, --ngpt-sys-shape-corner-small, --ngpt-sys-shape-corner-small-alt, --ngpt-sys-shape-corner-medium, --ngpt-sys-shape-corner-large, --ngpt-sys-shape-corner-full, --ngpt-sys-elevation-level0, --ngpt-sys-elevation-level1, --ngpt-sys-elevation-level2, --ngpt-bg-elevated, --ngpt-sys-scrim, --ngpt-sys-scrim-blur, --ngpt-sys-z-base, --ngpt-sys-z-navbar, --ngpt-sys-z-drawer-scrim, --ngpt-sys-z-drawer, --ngpt-sys-z-popover, --ngpt-sys-z-modal-scrim, --ngpt-sys-z-modal, --ngpt-border-subtle, --ngpt-bg-hover, --ngpt-bg-active]
+tokens: [--ngpt-sys-shape-corner-none, --ngpt-sys-shape-corner-extra-small, --ngpt-sys-shape-corner-extra-small-alt, --ngpt-sys-shape-corner-small, --ngpt-sys-shape-corner-small-alt, --ngpt-sys-shape-corner-medium, --ngpt-sys-shape-corner-large, --ngpt-sys-shape-corner-full, --ngpt-sys-elevation-level0, --ngpt-sys-elevation-level1, --ngpt-sys-elevation-level2, --ngpt-bg-elevated, --ngpt-sys-scrim, --ngpt-sys-z-base, --ngpt-sys-z-navbar, --ngpt-sys-z-drawer-scrim, --ngpt-sys-z-drawer, --ngpt-sys-z-popover, --ngpt-sys-z-modal-scrim, --ngpt-sys-z-modal, --ngpt-border-subtle, --ngpt-bg-hover, --ngpt-bg-active]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -61,8 +61,7 @@ Shape tokens follow Material 3's corner-radius scale naming. Elevation in this U
   --ngpt-sys-elevation-level1: none;
   --ngpt-sys-elevation-level2: 0 8px 24px oklch(0 0 0 / 0.35);
   --ngpt-bg-elevated: oklch(0.2 0.005 260);
-  --ngpt-sys-scrim: oklch(0 0 0 / 0.5);
-  --ngpt-sys-scrim-blur: 2px;
+  --ngpt-sys-scrim: rgba(9, 10, 17, 0.8);
   --ngpt-sys-z-base: 0;
   --ngpt-sys-z-navbar: 10;
   --ngpt-sys-z-drawer-scrim: 25;
@@ -110,7 +109,14 @@ Elevated surfaces sit at 0.20 against a 0.16 page, so the global `--ngpt-bg-hove
 
 | Property | Value | Token |
 | --- | --- | --- |
-| Fill | oklch(0 0 0 / 0.5) | --ngpt-sys-scrim |
-| Backdrop filter | blur(2px) | --ngpt-sys-scrim-blur |
+| Fill | rgba(9, 10, 17, 0.8) | --ngpt-sys-scrim |
+| Backdrop filter | none | — |
 
-Shared by the mobile drawer and the search overlay. Clicking a scrim always dismisses what it sits under, and whatever it covers is scroll-locked.
+Shared by the mobile drawer (not yet built) and the search overlay. Clicking a scrim always
+dismisses what it sits under, and whatever it covers is scroll-locked.
+
+**2026-08-23:** changed from a translucent `oklch(0 0 0 / 0.5)` fill + 2px blur to a solid,
+unblurred fill, matched against a live scrape of the Angular Primitives reference overlay — see
+`apps/ng-table/src/app/design-system/search/docs/decisions.md` § scrim token. `--ngpt-sys-scrim-blur`
+was removed entirely (the reference has no blur, permanently, not a variable value) — the mobile
+drawer, when built, should not reintroduce it.

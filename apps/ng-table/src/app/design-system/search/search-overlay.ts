@@ -12,12 +12,16 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideSearch } from '@ng-icons/lucide';
+import { lucideArrowDown, lucideArrowUp, lucideCornerDownLeft, lucideSearch, lucideSearchX, lucideX } from '@ng-icons/lucide';
 import { NgpFocusTrap } from 'ng-primitives/focus-trap';
+import { IconButton } from '../icon-button/icon-button';
 import { Kbd } from '../kbd/kbd';
+import { PillButton } from '../pill-button/pill-button';
 import { closeFocusLock, openFocusLock, type FocusLockState } from './search-overlay.focus-lock';
-import { wrapIndex } from './search-overlay.utils';
-import { RECENT_SEARCHES_MOCK } from './search.mock';
+import { groupSearchResults, isLastHeadingInRun, wrapIndex } from './search-overlay.utils';
+import { SearchRecentRow } from './search-recent-row';
+import { SearchResultRow } from './search-result-row';
+import { RECENT_SEARCHES_MOCK, SEARCH_INDEX_MOCK, SEARCH_SUGGESTIONS_MOCK } from './search.mock';
 import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from './search.types';
 
 /**
@@ -36,8 +40,17 @@ import type { RecentSearchEntry, SearchResultGroup, SearchResultRecord } from '.
   templateUrl: './search-overlay.html',
   styleUrl: './search-overlay.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, NgpFocusTrap, Kbd],
-  viewProviders: [provideIcons({ lucideSearch })],
+  imports: [NgIcon, NgpFocusTrap, Kbd, IconButton, PillButton, SearchResultRow, SearchRecentRow],
+  viewProviders: [
+    provideIcons({
+      lucideSearch,
+      lucideCornerDownLeft,
+      lucideArrowDown,
+      lucideArrowUp,
+      lucideX,
+      lucideSearchX,
+    }),
+  ],
   host: {
     '[attr.data-open]': 'open()',
     '[attr.inert]': 'open() ? null : ""',
@@ -52,13 +65,16 @@ export class SearchOverlay {
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   /**
-   * Grouped results for the current query. No matching/ranking is implemented — deferred to
-   * `Search Index.md` until Content Model.md is wired. `SEARCH_INDEX_MOCK` is always empty this
-   * round, so this always returns `[]`; the render paths for "results" and "no results" both
-   * exist so a populated index needs no rework here.
+   * Grouped results for the current query, matched/ranked against `SEARCH_INDEX_MOCK` (a
+   * fixture, not real doc content — see `search.mock.ts`). Real indexing is still deferred to
+   * `Search Index.md` until Content Model.md is wired.
    */
-  readonly resultGroups = computed<readonly SearchResultGroup[]>(() => []);
+  readonly resultGroups = computed<readonly SearchResultGroup[]>(() =>
+    groupSearchResults(SEARCH_INDEX_MOCK, this.query()),
+  );
   readonly recentSearches = signal<readonly RecentSearchEntry[]>(RECENT_SEARCHES_MOCK);
+  protected readonly isLastHeadingInRun = isLastHeadingInRun;
+  readonly suggestions: readonly string[] = SEARCH_SUGGESTIONS_MOCK;
 
   readonly query = signal('');
   private readonly activeResultIndex = signal(0);
@@ -66,8 +82,20 @@ export class SearchOverlay {
   readonly hasQuery = computed(() => this.query().trim().length > 0);
   private readonly flatResults = computed(() => this.resultGroups().flatMap((group) => group.results));
   readonly hasResults = computed(() => this.flatResults().length > 0);
+  /**
+   * The active listbox — query results while there's a query, recent searches otherwise. Both
+   * render as `role="option"` rows sharing one `aria-activedescendant` model
+   * (`docs/gaps-ngp-reference.md` item 17), so keyboard nav and the active-id computation walk
+   * whichever one is currently showing.
+   */
+  private readonly flatSelectable = computed<readonly SearchResultRecord[] | readonly RecentSearchEntry[]>(
+    () => (this.hasQuery() ? this.flatResults() : this.recentSearches()),
+  );
+  readonly hasSelectableRows = computed(() => this.flatSelectable().length > 0);
+  /** Bare id of the active row — what each row component's `active` input compares against. */
+  readonly activeRowId = computed(() => this.flatSelectable()[this.activeResultIndex()]?.id ?? null);
   readonly activeResultId = computed(() => {
-    const active = this.flatResults()[this.activeResultIndex()];
+    const active = this.flatSelectable()[this.activeResultIndex()];
     return active ? `search-result-${active.id}` : null;
   });
   readonly liveRegionText = computed(() =>
@@ -104,22 +132,57 @@ export class SearchOverlay {
     }
   }
 
+  clearQuery(): void {
+    this.query.set('');
+    this.activeResultIndex.set(0);
+    this.searchInput()?.nativeElement.focus();
+  }
+
   setActiveById(id: string): void {
-    const matchIndex = this.flatResults().findIndex((result) => result.id === id);
+    const matchIndex = this.flatSelectable().findIndex((entry) => entry.id === id);
     if (matchIndex >= 0) {
       this.activeResultIndex.set(matchIndex);
     }
   }
 
-  selectResult(result: SearchResultRecord): void {
+  /**
+   * `(activate)` handler shared by both row types. Each row already filters out synthetic
+   * pointer events (e.g. from a keyboard-triggered `scrollIntoView`) via `createTrackedPointer`
+   * before emitting — see `search-overlay.utils.ts` — so this only ever sees genuine pointer
+   * movement and can just set active directly.
+   */
+  onRowActivate(id: string): void {
+    this.setActiveById(id);
+  }
+
+  onResultRowSelect(result: SearchResultRecord): void {
     this.setActiveById(result.id);
     // Navigation to `result.id` (Search Index.md § Selecting a result) is deferred to the
     // Routing and Page State.md wiring — out of scope this round. Closing is the only effect.
     this.closed.emit();
   }
 
-  selectRecent(entry: RecentSearchEntry): void {
+  onRecentRowSelect(entry: RecentSearchEntry): void {
     this.query.set(entry.query);
+    this.activeResultIndex.set(0);
+    this.searchInput()?.nativeElement.focus();
+  }
+
+  /**
+   * No "saved searches" feature exists yet — this only satisfies the reference's two-action
+   * trailing slot (`docs/gaps-ngp-reference.md` item 17). Deliberately a no-op; the row itself
+   * stops the click from bubbling into its own `select`.
+   */
+  onRecentRowSave(): void {
+    // no-op
+  }
+
+  onRecentRowRemove(entry: RecentSearchEntry): void {
+    this.recentSearches.update((entries) => entries.filter((current) => current.id !== entry.id));
+  }
+
+  selectSuggestion(suggestion: string): void {
+    this.query.set(suggestion);
     this.activeResultIndex.set(0);
     this.searchInput()?.nativeElement.focus();
   }
@@ -139,10 +202,14 @@ export class SearchOverlay {
         this.moveActive(-1);
         break;
       case 'Enter': {
-        const active = this.flatResults()[this.activeResultIndex()];
+        const active = this.flatSelectable()[this.activeResultIndex()];
         if (active) {
           event.preventDefault();
-          this.selectResult(active);
+          if ('kind' in active) {
+            this.onResultRowSelect(active);
+          } else {
+            this.onRecentRowSelect(active);
+          }
         }
         break;
       }
@@ -152,12 +219,12 @@ export class SearchOverlay {
   }
 
   /**
-   * Walks `resultGroups()` only — the "Recent" list (shown pre-query) is real `<button>`
-   * elements navigated with Tab, not `role="option"` rows in this listbox model, so it's
-   * intentionally excluded here.
+   * Walks `flatSelectable()` — query results while there's a query, recent searches otherwise
+   * (`docs/gaps-ngp-reference.md` item 17: recent rows share the same `aria-activedescendant`
+   * listbox as results, so arrow keys must reach them too).
    */
   private moveActive(delta: number): void {
-    const total = this.flatResults().length;
+    const total = this.flatSelectable().length;
     if (total === 0) {
       return;
     }

@@ -1,7 +1,125 @@
+## 2026-08-23 — pointer/keyboard active-row conflict fix
+
+Row highlight was double-driven: `.search-row:hover` (CSS, native pointer state) and
+`[data-active]` (JS `activeResultIndex`, keyboard nav). Bug: hover a row, then arrow-key away —
+old row stayed highlighted too, since mouse never moved so `:hover` stayed true. Fixed by
+dropping `:hover` from CSS entirely; highlight now painted only from `[data-active]`.
+
+Rows keep both `(mouseenter)` and `(mousemove)` so any real pointer movement — even within a
+row the cursor is already inside — reclaims the highlight, not just crossing into a new row.
+Checked this against how `ng-primitives` solves the same conflict in its `listbox` primitive
+(`activeDescendantManager`, `ng-primitives-a11y`): it uses `mouseenter` only, but adds a ~200ms
+"ignore pointer" window after any keyboard-origin move, guarding against a keyboard-triggered
+scroll-into-view firing a synthetic pointer event under a still cursor. Adopted that guard here
+too (`ignoringPointer` signal, `activateFromPointer()`), layered on top of our `mouseenter` +
+`mousemove` pair rather than replacing it — ng-primitives' `mouseenter`-only approach doesn't
+reclaim on in-row movement, which is a real requirement here. Generic writeup + Angular/React
+snippets: `~/.claude/skills/pointer-keyboard-active-state/SKILL.md` (reusable, not project-local).
+
 # Decisions — search (search-field, search-overlay)
 
 Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixed contract in
 `apps/ng-table/docs/CONVENTIONS.md`.
+
+## 2026-08-23 — second-pass gap decisions (user calls) — implemented, see entry below
+
+Item 11's own gap-doc entry was updated after these calls were made, to clarify it covers both
+the "Documentation" and "Recent" group labels identically — the accent-color call below already
+matches that.
+
+Resolving the open items from `docs/gaps-ngp-reference.md`'s deeper scrape pass:
+
+- **Item 6 (field focus ring):** keep icon-only color change on `:host(:focus-visible)`. Explicit
+  user call, made knowing this is no longer a reference-match claim (see the dedicated entry
+  above) — it's this app's own design preference. a11y sign-off (WCAG 2.4.7) stays open.
+- **Item 10 (panel/row/footer shadow):** switch to the hairline style, **search-component-local
+  only** — a new shadow value scoped to `search-overlay.css`, not a change to the shared
+  `--ngpt-sys-elevation-level2` token. Other modals/overlays using that token are unaffected.
+- **Item 12 (trailing action icon size):** match reference — 22px, one size step above the 20px
+  leading icons.
+- **Item 13 (scrim):** change the **shared** `--ngpt-sys-scrim` / `--ngpt-sys-scrim-blur` tokens
+  app-wide to the reference's solid `rgba(9,10,17,.8)`, no blur. Biggest-blast-radius option,
+  chosen deliberately — affects every modal/overlay using these tokens, not just search. Needs a
+  sweep of other scrim consumers before/while implementing to confirm none rely on the blur
+  specifically.
+- **Item 14 (no-results state):** full parity — add the 40px search-with-slash icon **and** the
+  "Try searching for:" prefill-suggestion chip list. The suggestions need a small new data source
+  (which queries to suggest) — not just a style change, needs its own design pass on what that
+  list contains for this app (likely top-level nav sections, mirroring the reference's own
+  "Documentation" suggestion).
+
+## 2026-08-23 — implementation of items 9–17 (refactor pass)
+
+Closes out the remaining open items from `docs/gaps-ngp-reference.md` (9, 10, 11, 12, 13, 14, 15,
+16, 17). Item 6 stays open (a11y sign-off only, no code change needed or made).
+
+- **Item 9 (input-row well):** `.search-input-row` gained its own margin, `border-radius:
+  var(--ngpt-sys-shape-corner-extra-small)`, and background. No existing token is an exact
+  "lighter than panel" surface — reused `--ngpt-bg-active` (0.24) rather than inventing a
+  literal, since it's the nearest existing token lighter than the panel's `--ngpt-bg-elevated`
+  (0.2) and already used elsewhere in this DS for "hover on an elevated surface." The
+  `border-bottom` separator is gone; `.search-results` now carries top padding
+  (`--ngpt-sys-space-300`) in its place.
+- **Item 10 (hairline shadow, search-local):** new `--_ngpt-search-shadow-hairline` custom
+  property defined on `:host` (`0 0 0 1px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.2)`, matching the
+  reference's measured value exactly), applied to `.search-panel`, `.search-input-row`,
+  `.search-row`, and `.search-footer`, replacing their `--ngpt-sys-elevation-level2` usage.
+  `--ngpt-sys-elevation-level2` itself is untouched — no other consumer in this app was changed.
+- **Item 11 (group-label accent color):** `.search-group-label` — `color: var(--ngpt-accent)`,
+  `line-height: 32px`, `padding: var(--ngpt-sys-space-200) var(--ngpt-sys-space-100) 0` (8px/4px,
+  exact token matches), `margin: 0 calc(-1 * var(--ngpt-sys-space-100))` (-4px). One class shared
+  by both the "Documentation" result-group label and the "Recent" label, so both get the change
+  for free — no per-state branching needed.
+- **Item 12 (trailing icon 22px):** `.search-row__action` bumped to 22px in the template. Applies
+  to result rows' return-arrow and the new recent-row save/remove action icons alike, since item
+  17 unified both onto `.search-row`.
+- **Item 13 (scrim, app-wide):** `--ngpt-sys-scrim` → `rgba(9, 10, 17, 0.8)`;
+  `--ngpt-sys-scrim-blur` removed entirely (not zeroed — the reference has no blur, permanently)
+  along with the `backdrop-filter` declaration in `search-overlay.css`. Swept `src/app` via
+  `grep -rl "\-\-ngpt-sys-scrim\b"` excluding `search/`: no other live consumer exists. The
+  foundations doc (`src/styles/docs/Radius and Elevation.md`) and its front-matter token list
+  were updated to match, including a note that the not-yet-built mobile drawer (which the doc
+  already earmarks as a future scrim consumer) should not reintroduce a blur token when built.
+- **Item 14 (no-results parity):** added a 40px `lucideSearchX` icon and a "Try searching for:"
+  chip row. Reused `ngptPillButton` (already attribute-hosted on `<button>`/`<a>`) for the chips
+  instead of writing new chip CSS. New `SEARCH_SUGGESTIONS_MOCK: readonly string[]` in
+  `search.mock.ts` — reuses `SEARCH_INDEX_MOCK`'s existing section labels (`Primitives`,
+  `Guides`) as the best available proxy for "top-level nav sections," since this app's navbar
+  doesn't have doc-section links (`Discord`/`GitHub`/`Documentation` only). Open to revision once
+  `Search Index.md`'s real indexing lands. Clicking a chip calls `selectSuggestion()`, which sets
+  `query` and refocuses the input — same shape as `selectRecent()`.
+- **Item 15 (height bump):** `--ngpt-comp-search-input-height` 52px → 56px in `sizing.css`.
+  `.search-row` gained `min-height: var(--ngpt-comp-search-input-height)` (reused the token
+  rather than adding a new one) instead of relying on padding alone.
+- **Item 16 (clear-button bare/ghost) — corrected 2026-08-23:** the transparent-on-hover
+  treatment below (matching the reference exactly) turned out to give no visible hover feedback
+  in practice. Per explicit user follow-up, hover/focus-visible now fills solid
+  `--ngpt-bg-accent-solid` with `--ngpt-text-on-accent` icon color — the same AA-checked pair
+  used for active rows (item 2) — instead of a transparent background with only an accent-colored
+  icon. Border stays removed in all states (the original "no outline" ask). Applied identically
+  to the clear-query button and the recent-row save/remove action buttons
+  (`.search-row__actions button`), which got the same bare-then-filled-hover treatment for
+  consistency even though they weren't explicitly covered by item 16's original text.
+- **Item 16 (clear-button bare/ghost):** confirmed no bare/ghost `IconButton` variant exists
+  anywhere in the DS today (`icon-button.ts`/`.css` only has `data-size`/`data-copy-state`
+  variants) — this is the first bare use case. Used a scoped override in `search-overlay.css`
+  (`.search-input-row__clear` and its `:hover`/`:focus-visible`) rather than generalizing
+  `icon-button`. If a second bare-button use case shows up elsewhere in the DS, that's the
+  trigger to promote this to a real `IconButton` variant instead of a second scoped override.
+- **Item 17 (unified recent-row listbox):** `RecentSearchEntry` gained an `id` field
+  (`search.types.ts`/`search.mock.ts`) so recent rows can share the `search-result-{id}`
+  `aria-activedescendant` scheme with query results. Recent rows now render as
+  `.search-row[role="option"]` — `lucideHistory` leading icon (not file/hash), title, and a
+  trailing two-button action slot (`lucideStar` save, `lucideX` remove) instead of the old bare
+  title-only `<button>`. `search-overlay.ts` gained a private `flatSelectable` computed
+  (`hasQuery() ? flatResults() : recentSearches()`) that `moveActive()`, `activeResultId`, and
+  `onPanelKeydown`'s Enter case now key off, so arrow keys and Enter reach recent entries when
+  there's no query. `saveSearch()` is a deliberate UI-only no-op (`event.stopPropagation()` only)
+  — no "saved searches" feature exists yet, matching the same out-of-scope-wiring treatment
+  `selectResult()`'s non-navigation already got. `removeRecent()` filters the `recentSearches`
+  signal. This fully supersedes the "Recent-search items aren't part of the
+  keyboard/activedescendant model" entry below (already flagged as superseded by the correction
+  entry above it) — that entry is left as historical record, not deleted.
 
 ## 2026-08-23 — gap analysis against Angular Primitives reference (open items)
 
@@ -9,27 +127,112 @@ Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixe
 ⌘K overlay — see `docs/gaps-ngp-reference.md` for the full checklist and scrape evidence. Two
 items in that revision are marked TBD in the spec and need a call before implementation:
 
-### Active row: solid accent fill (open)
+### Active row: solid accent fill — resolved 2026-08-23
 
 Superseded here: the field-trigger vs. overlay-row focus/active distinction below no longer
 applies to the row's own active state. The reference renders the active row as a **solid**
 `--docsearch-highlight-color` fill (`#FF4651`, full-bleed, no left border), not our tint +
-left-border-accent treatment. Spec now says "solid accent fill" but doesn't specify: (a) which
-token supplies the fill — `--ngpt-accent` at full opacity, or a new
-`--ngpt-bg-accent-solid`-style token, and (b) what the title text recolors to for AA contrast
-against that fill (the reference just goes white-on-red; our token set has no "text-on-accent"
-value defined anywhere else in this app). Needs a design call, not an implementation guess.
+left-border-accent treatment.
 
-### Kbd glyphs: SVG per key, not shared literal text (supersedes "Icons" below)
+Resolved as: new `--ngpt-bg-accent-solid` token (`src/styles/tokens/color.css`), aliased to
+`var(--ngpt-accent)` rather than a duplicate literal — `--ngpt-accent` was already full-opacity,
+nothing else in this app applies alpha to it, so "solid" just means "use it as a background,"
+not a new color value. Paired with a new `--ngpt-text-on-accent: oklch(0.15 0.01 260)` — chosen
+over white after computing contrast against the accent's oklch(0.62 0.19 52): white text lands
+~3.9:1 (fails WCAG AA's 4.5:1 for normal-size text), the near-black neutral lands ~5.1:1 (passes).
+The reference itself ships white-on-`#FF4651` at a similarly marginal ~3.4:1 — not followed here
+since this app has room to pick the AA-safe option instead of matching a borderline reference
+value.
+
+Applied in `search-overlay.css`: `.search-row:hover, .search-row[data-active]` now sets
+`background: var(--ngpt-bg-accent-solid)` and recolors title/path/icons/connector to
+`var(--ngpt-text-on-accent)`. The `border-inline-start` left-accent rule (and its base
+`transparent` default) is removed entirely, per the reference's full-bleed, no-left-border
+treatment — see "Token substitutions" below for the now-obsolete `--ngpt-comp-nav-border-width`
+reuse this replaces.
+
+### Kbd glyphs: SVG per key, not shared literal text (supersedes "Icons" below) — resolved 2026-08-23
 
 The "Icons" section further down states the `⌘K`/`↑↓`/`↵`/`esc` keyboard-chip glyphs are
 "literal text/Unicode inside `<kbd>`, not icons" and that this was a deliberate call because they
 weren't in `Iconography.md`'s placeholder table. The reference scrape shows DocSearch renders each
 footer key as a distinct hand-drawn SVG (Enter, Arrow-down, Arrow-up, Escape — four icons, not one
 combined `↑↓`). That original call is superseded for the **footer legend** specifically; the `⌘K`
-trigger-hint chip on the field itself was not part of this scrape and is unchanged. Needs
-`Iconography.md` to gain entries for these four glyphs (or confirm no suitable lucide equivalent
-exists and new inline SVGs are required) before the `Kbd` component can grow an icon-content mode.
+trigger-hint chip on the field itself was not part of this scrape and is unchanged.
+
+Resolved via lucide equivalents rather than new inline SVGs: `lucideCornerDownLeft` (Enter),
+`lucideArrowDown`/`lucideArrowUp` (arrow keys), `lucideX` (Escape — no dedicated "escape" glyph
+exists in the lucide set, per the spec mock's own "placeholder icon name" note). `Kbd`
+(`kbd.ts`/`.html`) needed no API change — it already only wraps `<ng-content>`, so each footer/esc
+call site in `search-overlay.html` simply projects `<ng-icon>` instead of text. The `esc` chip on
+the input row (line 30) got the same treatment for consistency, even though only the footer legend
+was in scope of the scrape.
+
+## 2026-08-23 — search-field focus ring moved to icon color (confirmed, not a reference match)
+
+Per `docs/gaps-ngp-reference.md` item 6: `:host(:focus-visible)` box-shadow ring removed from
+`search-field.css`; replaced with `:host(:focus-visible) ng-icon { color: var(--ngpt-accent); }`,
+matching the pattern already used in `select-trigger.css:48-51`. This is a visual-parity fix
+against the two reviewed screenshots, **not** an independently scraped DocSearch pattern — a
+deeper scrape pass found the reference has no focus treatment on its own trigger at all, so the
+"matches reference" framing this decision originally carried doesn't hold. Re-confirmed by
+explicit user decision on 2026-08-23 to keep the icon-only treatment anyway, as this app's own
+design choice rather than a parity fix.
+
+**Still open:** a11y sign-off — an icon-color-only change is a weaker focus indicator than a
+full-control ring; needs confirmation this still satisfies WCAG 2.4.7 (Focus Visible) before
+considered fully closed.
+
+## 2026-08-23 — overlay's own search input: no focus treatment (reverted)
+
+The `:focus-within` icon-color rule added to `search-overlay.css`'s `.search-input-row` under the
+original item 7 has been **reverted** — confirmed via live scrape that the reference genuinely has
+no focus indicator on its overlay input (blur/focus produce zero computed-style change on the
+form, icon, or input). The overlay's original spec line was correct: the panel itself is already
+the focused surface once open, so the input needs nothing further. This is a real reference match,
+unlike item 6 above.
+
+## 2026-08-23 — overlay input row gains the same focus-icon treatment
+
+Per `docs/gaps-ngp-reference.md` item 7: chose "add icon-color treatment for consistency" over
+leaving the overlay's `.search-input` ring-less. `search-overlay.css`: `.search-input-row:focus-within
+ng-icon { color: var(--ngpt-accent); }` — `:focus-within` on the row (not `:focus-visible` on the
+input) since the icon is a sibling of the input, not a descendant. Spec's "no border or ring on
+the input itself" line still holds (no box-shadow added) — only the icon recolors, matching the
+trigger button's item-6 pattern. Since `searchInput` autofocuses on open, the icon is accent-colored
+for essentially the whole time the overlay is open — accepted as correct, the input is the active
+surface.
+
+## 2026-08-23 — correction: overlay input row focus-icon treatment reverted (supersedes entry above)
+
+The entry immediately above ("overlay input row gains the same focus-icon treatment") is
+**reverted**. `docs/gaps-ngp-reference.md` item 7 was corrected after this decision was made:
+live-tested `.focus()`/`.blur()` on the reference's overlay input produces zero computed-style
+change anywhere (no ring, no icon-color shift) — the reference genuinely has no focus
+indicator on the overlay input, confirming the *original* spec line ("no border or ring on the
+input itself — the panel is already the focused surface") was correct all along. Removed
+`.search-input-row:focus-within .search-input-row__icon { color: var(--ngpt-accent); }` from
+`search-overlay.css` and the now-unused `search-input-row__icon` class from the leading
+`<ng-icon>` in `search-overlay.html`. Item 6 (the field-trigger's icon-only focus treatment) is
+unaffected — that's a separate, still-kept design decision on `search-field.css`, not a
+reference-match claim.
+
+## 2026-08-23 — real clear-query button added (separate from the Escape hint)
+
+Per `docs/gaps-ngp-reference.md` item 8: `search-overlay.html`'s input row previously only had
+the static Escape-hint `<kbd>` chip; the reference's `.DocSearch-Reset` is a real, separately
+interactive clear button. Added `<button ngptIconButton size="24" ...>` (reused `IconButton`,
+`../icon-button/icon-button`, rather than a bespoke button — it's already attribute-hosted with
+no icon registry of its own, exactly this use case) between `.search-input` and the esc `<kbd>`,
+shown only `@if (hasQuery())`. Wired to a new `SearchOverlay.clearQuery()` — resets `query` and
+`activeResultIndex`, refocuses the input, same shape as the existing `selectRecent()`. The
+Escape-hint kbd chip is untouched and stays a separate element, per the gap doc's explicit
+instruction not to collapse the two.
+
+The input row's `:focus-within` icon-color rule (item 7, above) needed narrowing to
+`.search-input-row__icon` (a class added to the leading search icon specifically) — otherwise it
+would have also recolored the new clear button's icon and the esc kbd's icon on every keystroke,
+which isn't the intended scope of that fix.
 
 ## Final public API
 
@@ -58,15 +261,19 @@ No additions beyond the fixed contract at original build time. `search-field`'s 
 
 ## Persistence and ranking — explicitly out of scope
 
-- `search.mock.ts` ships `SEARCH_INDEX_MOCK` as a permanently empty array and
-  `RECENT_SEARCHES_MOCK` as a static 3-entry in-memory fixture. Neither persists (no
-  `localStorage`) and neither is written back to by the running app.
-- `SearchOverlay.resultGroups` is a `computed` that reads the (always-empty) index signal and
-  returns `[]` unconditionally — no matching, filtering, or ranking logic is implemented. That
-  logic belongs to `Search Index.md`'s matching/ranking rules, which depend on Content
-  Model.md not being wired this round. The "results" and "no results" render branches both
-  exist in `search-overlay.html` so a populated index needs no template rework, only a real
-  `resultGroups` computation.
+- `search.mock.ts` ships `RECENT_SEARCHES_MOCK` as a static 3-entry in-memory fixture. It isn't
+  persisted (no `localStorage`) and isn't written back to by the running app.
+- `SEARCH_INDEX_MOCK` (2026-08-23) is now a small fixture of fake page/heading records —
+  populated so the result list (icons, active-row fill, keyboard nav, the 5-per-group cap) could
+  be manually verified against something. **Not real doc content** — Content Model.md still
+  isn't wired, so this is test data, not indexing.
+- `SearchOverlay.resultGroups` (2026-08-23) now runs a real case-insensitive substring match
+  (`search-overlay.utils.ts`'s `groupSearchResults`) against `SEARCH_INDEX_MOCK`, grouped by
+  section in `entryOrder`, capped at 5 per group (closes gap #5). This is intentionally the
+  simplest possible matching — no fuzzy match, no ranking/scoring, no highlighting of the
+  matched substring in the title (spec's "Query match highlight" row is still unimplemented).
+  `Search Index.md`'s full matching/ranking rules are still deferred until Content Model.md
+  replaces the fixture with real records.
 - `SearchOverlay.selectResult()` closes the overlay and syncs `activeResultId`, but does not
   navigate. `Search Index.md` § Selecting a result specifies `record.id` as the target, which
   requires `Routing and Page State.md` — not wired this round, and this dead code path never
@@ -124,12 +331,15 @@ whole subtree from focus, hit-testing, and the accessibility tree. This was nece
 
 ## Icons
 
-Only `lucideSearch` is used (leading icon on the field and the overlay's input row), per
+`lucideSearch` is the leading icon on the field and the overlay's input row, per
 `Iconography.md`'s mapping table (⌕ → `lucideSearch`). Registered locally in each component's
 own `viewProviders` (ADR-0004) — `search-field.ts` and `search-overlay.ts` each carry their own
-`provideIcons({ lucideSearch })` rather than sharing one registration. The `⌘K`, `↑↓`, `↵`, and
-`esc` keyboard-chip glyphs are literal text/Unicode inside `<kbd>`, not icons — they aren't in
-the Iconography.md placeholder table, and the spec's own HTML mock renders them as plain text.
+`provideIcons()` rather than sharing one registration. As of the 2026-08-23 gap-closure round,
+`search-overlay.ts`'s registration grew to also cover `lucideFile`/`lucideHash` (row leading
+icon, keyed off `SearchResultRecord.kind`), `lucideCornerDownLeft` (row trailing action + Enter
+kbd), and `lucideArrowDown`/`lucideArrowUp`/`lucideX` (footer + esc kbd glyphs) — see "Kbd
+glyphs" above, this supersedes the original "literal text/Unicode, not icons" call for those four
+keyboard chips.
 
 ## on-band variant: frame-sourced, not spec-sourced
 
@@ -157,11 +367,10 @@ CONVENTIONS.md's unconditional "never hardcode a value that has a token" rule:
   matches "Search docs" placeholder's stated 13px/Inter exactly.
 - **`--ngpt-sys-typescale-label-large`** (13.5px/1.4/400 Inter) for `.search-row__title` and
   the empty-state title — matches the spec's stated "Inter 13.5px" for both exactly.
-- **`--ngpt-comp-nav-border-width`** (2px) for the active row's left border width. Reused from
-  `nav-item`'s token rather than introducing a new one or hardcoding — same "flush left
-  border, active indicator" role `shape.css` already documents for nav rows. Flagged here as
-  the one cross-component token reuse in this build, in case a reviewer wants a
-  search-specific token instead.
+- **`--ngpt-comp-nav-border-width`** (2px) — was reused for the active row's left border width
+  at original build time. Removed 2026-08-23: the gap-closure round replaces the tint +
+  left-border active treatment with a full-bleed solid fill (see "Active row: solid accent
+  fill" above), which has no left border at all.
 - **`--ngpt-sys-space-900`** (36px) for the footer row's height, and **`--ngpt-sys-space-800`**
   (32px) inside the sub-640px panel-width `calc()` — both exact matches to spacing-scale steps
   the spec's prose gave as bare pixel numbers.
@@ -192,7 +401,18 @@ spec's own CSS mock:
 hardcode-rule violation, just a platform limitation. Matches how `Search.md`'s own CSS mock
 does the same thing.
 
-## Recent-search items aren't part of the keyboard/activedescendant model
+## 2026-08-23 — correction: recent-search items ARE part of the keyboard/activedescendant model in the reference
+
+The entry immediately below ("Recent-search items aren't part of the keyboard/activedescendant
+model") was a build-time judgment call made without reference evidence. A live scrape of the
+Angular Primitives search (populated by an actual click-through + reopen, not synthetic state)
+shows the opposite: `<li id="docsearch-recentSearches-item-0" role="option" aria-selected="true"
+class="DocSearch-Hit">`, inside the same `<ul id="docsearch-list">` as query results — same
+listbox, same `aria-selected`/arrow-key model, not a separate Tab-only affordance. See
+`docs/gaps-ngp-reference.md` item 17 for the full markup and task. The original entry below is
+left as historical record of the original (unevidenced) call, not deleted.
+
+## [Superseded by the entry above] Recent-search items aren't part of the keyboard/activedescendant model
 
 The spec's keyboard table (↑/↓/Enter/Tab) and its `role="combobox"` / `aria-activedescendant`
 contract are written for the **results** listbox. Recent-search entries render as plain

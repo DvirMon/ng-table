@@ -11,8 +11,10 @@
   --ngpt-sys-elevation-level1: none;
   --ngpt-sys-elevation-level2: 0 8px 24px oklch(0 0 0 / 0.35);
   --ngpt-bg-elevated: oklch(0.2 0.005 260);
-  --ngpt-sys-scrim: oklch(0 0 0 / 0.5);
-  --ngpt-sys-scrim-blur: 2px;
+  /* rgba, not oklch — matches the reference's measured near-black-with-blue-cast fill exactly;
+     no blur (docs/gaps-ngp-reference.md item 13). search/ was confirmed the only consumer of
+     both tokens at the time of this change (2026-08-23) — grep before reusing elsewhere. */
+  --ngpt-sys-scrim: rgba(9, 10, 17, 0.8);
   --ngpt-sys-z-base: 0;
   --ngpt-sys-z-navbar: 10;
   --ngpt-sys-z-drawer-scrim: 25;

@@ -1,0 +1,84 @@
+/* Host IS the <li> — unpainted spacer box only, same two-box split as search-result-row.css
+   (see that file's comment for the full reasoning: a painted box's own padding never creates
+   visible separation from its sibling). */
+:host {
+  display: block;
+  width: 100%;
+  padding-block-end: var(--ngpt-sys-space-100);
+}
+
+.search-row__surface {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-150);
+  padding: var(--ngpt-sys-space-250) var(--ngpt-sys-space-300);
+  min-height: var(--ngpt-comp-search-input-height);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small);
+  cursor: pointer;
+  background: var(--ngpt-bg-active);
+  box-shadow: var(--_ngpt-search-shadow-hairline);
+}
+
+.search-row__icon {
+  flex-shrink: 0;
+  color: var(--ngpt-text-muted);
+}
+
+.search-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngpt-sys-space-050);
+  flex: 1;
+  min-width: 0;
+}
+
+.search-row__actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--ngpt-sys-space-050);
+}
+
+/* Bare/ghost, same override as .search-input-row__clear (search-overlay.css item 16) — no
+   border, ever. Hover can't reuse --ngpt-bg-accent-solid like the clear button does: these
+   buttons live inside a row that's already accent-filled on hover/active, so an identical fill
+   on the button would be invisible against its own parent. A dark overlay reads as a distinct
+   highlight against both the idle row and the row's own accent fill. */
+.search-row__actions button {
+  border-color: transparent;
+  background: transparent;
+}
+
+.search-row__actions button:hover,
+.search-row__actions button:focus-visible {
+  border-color: transparent;
+  background: rgb(0 0 0 / 0.2);
+}
+
+/* Star icon: outline by default, filled white on hover/focus — signals the save action.
+   Sets color on the button itself (not just the svg) so currentColor resolves to white for
+   both the fill and the existing stroke, instead of inheriting the row's muted icon color. */
+.search-row__actions button[aria-label='Save this search']:hover,
+.search-row__actions button[aria-label='Save this search']:focus-visible {
+  color: white;
+}
+
+.search-row__actions button[aria-label='Save this search']:hover svg,
+.search-row__actions button[aria-label='Save this search']:focus-visible svg {
+  fill: currentColor;
+}
+
+.search-row__title {
+  font: var(--ngpt-sys-typescale-label-large);
+  color: var(--ngpt-text-secondary);
+}
+
+/* See search-result-row.css for why [data-active], never :hover. */
+:host([data-active]) .search-row__surface {
+  background: var(--ngpt-bg-accent-solid);
+}
+
+:host([data-active]) .search-row__title,
+:host([data-active]) .search-row__icon,
+:host([data-active]) .search-row__actions button {
+  color: var(--ngpt-text-on-accent);
+}

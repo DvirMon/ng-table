@@ -41,6 +41,13 @@
   --ngpt-comp-link-hover: oklch(0.68 0.19 52);
   --ngpt-accent-surface: oklch(0.57 0.19 52);
   --ngpt-accent-bg: oklch(0.2 0.04 52);
+  /* Solid on-accent row fill (search overlay active row, gaps-ngp-reference.md #2) — full-opacity
+     alias of --ngpt-accent, contrast-checked below rather than a new literal. */
+  --ngpt-bg-accent-solid: var(--ngpt-accent);
+  /* WCAG AA pick for text over --ngpt-bg-accent-solid: computed contrast vs. white text is
+     ~3.9:1 (fails 4.5:1 normal-text AA); this near-black neutral gives ~5.1:1 (passes). See
+     search/docs/decisions.md § Active row: solid accent fill. */
+  --ngpt-text-on-accent: oklch(0.15 0.01 260);
   --ngpt-hero-gradient: linear-gradient(
     90deg,
     var(--ngpt-accent-surface) 0%,

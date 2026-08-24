@@ -10,7 +10,12 @@
   (keydown)="onPanelKeydown($event)"
 >
   <div class="search-input-row">
-    <ng-icon name="lucideSearch" size="var(--ngpt-sys-icon-size-md)" color="currentColor" aria-hidden="true" />
+    <ng-icon
+      name="lucideSearch"
+      size="var(--ngpt-sys-icon-size-md)"
+      color="var(--ngpt-accent)"
+      aria-hidden="true"
+    />
     <input
       #searchInput
       class="search-input"
@@ -23,61 +28,127 @@
       aria-label="Search docs"
       [value]="query()"
       (input)="onQueryInput($event)"
-      [attr.aria-expanded]="hasResults()"
+      [attr.aria-expanded]="hasSelectableRows()"
       aria-controls="search-results-list"
       [attr.aria-activedescendant]="activeResultId()"
     />
-    <kbd ngptKbd>esc</kbd>
-  </div>
-
-  <div id="search-results-list" class="search-results" [attr.role]="hasResults() ? 'listbox' : null">
     @if (hasQuery()) {
-      @if (hasResults()) {
-        @for (group of resultGroups(); track group.label) {
-          <div class="search-group-label">{{ group.label }}</div>
-          @for (result of group.results; track result.id) {
-            @let rowId = 'search-result-' + result.id;
-            <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -- combobox option: focus stays on the input, keyboard selection is Enter via onPanelKeydown (aria-activedescendant model) -->
-            <div
-              class="search-row"
-              role="option"
-              [id]="rowId"
-              [attr.aria-selected]="rowId === activeResultId()"
-              [attr.data-active]="rowId === activeResultId() ? '' : null"
-              (mouseenter)="setActiveById(result.id)"
-              (click)="selectResult(result)"
-            >
-              <span class="search-row__title">{{ result.title }}</span>
-              <span class="search-row__path">{{ result.breadcrumb }}</span>
-            </div>
-          }
-        }
-      } @else {
-        <div class="search-empty-state">
-          <p class="search-empty-state__title">No results for &ldquo;{{ query() }}&rdquo;</p>
-          <p class="search-empty-state__hint">Try a shorter or different query.</p>
-        </div>
-      }
-    } @else {
-      @if (recentSearches().length > 0) {
-        <div class="search-group-label">Recent</div>
-        @for (entry of recentSearches(); track entry.query) {
-          <button type="button" class="search-row search-row--recent" (click)="selectRecent(entry)">
-            <span class="search-row__title">{{ entry.query }}</span>
-          </button>
-        }
-      } @else {
-        <div class="search-empty-state">
-          <p class="search-empty-state__title">Search the docs</p>
-        </div>
-      }
+    <button
+      ngptIconButton
+      [size]="24"
+      type="button"
+      class="search-input-row__clear"
+      aria-label="Clear the query"
+      title="Clear the query"
+      (click)="clearQuery()"
+    >
+      <ng-icon
+        name="lucideX"
+        size="16px"
+        color="currentColor"
+        aria-hidden="true"
+      />
+    </button>
     }
   </div>
 
+  <div id="search-results-list" class="search-results">
+    @if (hasQuery()) { @if (hasResults()) { @for (group of resultGroups(); track
+    group.label) {
+    <div class="search-group-label">{{ group.label }}</div>
+    <ul class="search-row-list" role="listbox">
+      @for (result of group.results; track result.id; let i = $index) {
+      <li
+        ngptSearchResultRow
+        [result]="result"
+        [active]="result.id === activeRowId()"
+        [last]="isLastHeadingInRun(group.results, i)"
+        (activate)="onRowActivate($event)"
+        (select)="onResultRowSelect($event)"
+      ></li>
+      }
+    </ul>
+    } } @else {
+    <div class="search-empty-state">
+      <ng-icon
+        name="lucideSearchX"
+        size="40px"
+        color="currentColor"
+        class="search-empty-state__icon"
+        aria-hidden="true"
+      />
+      <p class="search-empty-state__title">
+        No results for &ldquo;{{ query() }}&rdquo;
+      </p>
+      <p class="search-empty-state__hint">Try a shorter or different query.</p>
+      @if (suggestions.length > 0) {
+      <p class="search-empty-state__suggest-label">Try searching for:</p>
+      <div class="search-empty-state__suggestions">
+        @for (suggestion of suggestions; track suggestion) {
+        <button
+          ngptPillButton
+          type="button"
+          (click)="selectSuggestion(suggestion)"
+        >
+          {{ suggestion }}
+        </button>
+        }
+      </div>
+      }
+    </div>
+    } } @else { @if (recentSearches().length > 0) {
+    <div class="search-group-label">Recent</div>
+    <ul class="search-row-list" role="listbox">
+      @for (entry of recentSearches(); track entry.id) {
+      <li
+        ngptSearchRecentRow
+        [entry]="entry"
+        [active]="entry.id === activeRowId()"
+        (activate)="onRowActivate($event)"
+        (select)="onRecentRowSelect($event)"
+        (save)="onRecentRowSave()"
+        (remove)="onRecentRowRemove(entry)"
+      ></li>
+      }
+    </ul>
+    } @else {
+    <div class="search-empty-state">
+      <p class="search-empty-state__title">Search the docs</p>
+    </div>
+    } }
+  </div>
+
   <div class="search-footer">
-    <kbd ngptKbd>↑↓</kbd> navigate
-    <kbd ngptKbd>↵</kbd> select
-    <kbd ngptKbd>esc</kbd> close
+    <kbd ngptKbd
+      ><ng-icon
+        name="lucideArrowDown"
+        size="15px"
+        color="currentColor"
+        aria-hidden="true" /></kbd
+    ><kbd ngptKbd
+      ><ng-icon
+        name="lucideArrowUp"
+        size="15px"
+        color="currentColor"
+        aria-hidden="true"
+    /></kbd>
+    navigate
+    <kbd ngptKbd
+      ><ng-icon
+        name="lucideCornerDownLeft"
+        size="15px"
+        color="currentColor"
+        aria-hidden="true"
+    /></kbd>
+    select
+    <kbd ngptKbd
+      ><ng-icon
+        name="lucideX"
+        size="15px"
+        color="currentColor"
+        aria-hidden="true"
+    /></kbd>
+    close
   </div>
 
   <div class="visually-hidden" aria-live="polite">{{ liveRegionText() }}</div>

@@ -10,6 +10,8 @@ export type SearchFieldVariant = 'default' | 'on-band';
 export interface SearchResultRecord {
   /** `slug#anchor`, or `slug` for a page record — the row key and navigation target. */
   readonly id: string;
+  /** Drives the row's leading icon + hierarchy connector — page record vs. a heading within one. */
+  readonly kind: 'page' | 'heading';
   /** Heading text, or `entry.label` for a page record. */
   readonly title: string;
   /** The entry's parent section label — drives group assignment. */
@@ -30,6 +32,8 @@ export interface SearchResultGroup {
 
 /** A stored query string, not a result — `Search Index.md` § Recent searches. */
 export interface RecentSearchEntry {
+  /** Stable key — drives `role="option"` id and `aria-activedescendant`, mirroring `SearchResultRecord.id`. */
+  readonly id: string;
   readonly query: string;
   readonly searchedAt: number;
 }
