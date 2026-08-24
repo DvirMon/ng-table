@@ -10,7 +10,7 @@ export const HOME_CONTENT: HomeContent = {
     announcement: 'Built for Angular 19+',
     announcementStatus: 'success',
     h1: 'A headless table primitive for Angular',
-    lede: 'State management, column schema, and attribute-only UI directives — compose the table you need, style every pixel yourself.',
+    lede: 'State management, column schema, and attribute-only UI directives - compose the table you need, style every pixel yourself.',
     primaryLabel: 'Get Started',
     secondaryLabel: 'View on GitHub',
   },
