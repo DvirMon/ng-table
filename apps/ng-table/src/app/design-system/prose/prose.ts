@@ -22,7 +22,6 @@ import type { ProseMeasure } from './prose.types';
   templateUrl: './prose.html',
   styleUrl: './prose.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
   host: {
     class: 'ngpt-prose',
     '[attr.data-measure]': 'measure()',
