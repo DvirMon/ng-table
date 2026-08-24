@@ -55,13 +55,13 @@ Rounded outline button used for secondary actions (e.g. "Sponsor" in the top nav
 | Border radius | 20px | `--ngpt-sys-shape-corner-large` |
 | Border (default) | 1px solid oklch(0.32 0.005 260) | `--ngpt-comp-pill-border-default` |
 | Border (hover) | 1px solid oklch(0.45 0.005 260) | `--ngpt-comp-pill-border-hover` |
-| Border (focus) | 1px solid oklch(0.62 0.19 52) | `--ngpt-accent (border-mix)` |
+| Border (focus) | 1px solid oklch(0.68 0.22 328) | `--ngpt-accent (border-mix)` |
 | Background (default) | transparent | `—` |
 | Background (hover/focus) | oklch(0.2 0.005 260) | `--ngpt-bg-hover` |
 | Text (default) | oklch(0.62 0.01 260) | `--ngpt-text-tertiary` |
 | Text (hover) | oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
 | Text (focus) | white | `--ngpt-text-primary` |
-| Focus ring | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Focus ring | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
 | Width | hug content | `—` |
 
 ## Variant: on-band (Home hero only)
@@ -72,9 +72,9 @@ actions are **filled**, and the hierarchy comes from light vs. dark rather than 
 
 | | Primary | Secondary |
 |---|---|---|
-| Background | white (`--ngpt-onband-fill`) | oklch(0.18 0.02 52) (`--ngpt-onband-fill-inverse`) |
-| Background (hover) | oklch(0.95 0.01 52) | oklch(0.24 0.03 52) |
-| Text | oklch(0.2 0.03 52) | white |
+| Background | white (`--ngpt-onband-fill`) | oklch(0.18 0.02 328) (`--ngpt-onband-fill-inverse`) |
+| Background (hover) | oklch(0.95 0.01 328) | oklch(0.24 0.03 328) |
+| Text | oklch(0.2 0.03 328) | white |
 | Border | none | none |
 | Focus ring | `--ngpt-focus-ring` | `--ngpt-focus-ring` |
 

@@ -80,7 +80,7 @@ Depends on the floating-surface recipe and z-index scale in `foundations/Radius 
 | Option text (default) | oklch(0.62 0.01 260) | `--ngpt-text-tertiary` |
 | Option text (hover/focus) | oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
 | Option bg (hover/focus) | oklch(0.2 0.005 260) → use `--ngpt-bg-active` (0.24) for contrast against the elevated surface | `--ngpt-bg-active` |
-| Option text (selected) | oklch(0.62 0.19 52) | `--ngpt-accent` |
+| Option text (selected) | oklch(0.68 0.22 328) | `--ngpt-accent` |
 | Selected check icon | lucideCheck, 13px, accent | `--ngpt-sys-icon-size-sm` |
 | Option text (disabled) | oklch(0.42 0.005 260) | `--ngpt-comp-menu-text-disabled` |
 | Divider between groups | 1px solid oklch(0.26 0.005 260), margin 6px -6px | `--ngpt-border-subtle` |

@@ -36,7 +36,7 @@ Small uppercase label sitting above an H1 to indicate section/category (e.g. "PR
 |---|---|---|
 | Font | Inter, 12px / 700, uppercase | `--ngpt-sys-typescale-label-small` |
 | Letter spacing | 0.08em | `—` |
-| Color | oklch(0.62 0.19 52) | `--ngpt-accent` |
+| Color | oklch(0.68 0.22 328) | `--ngpt-accent` |
 | Margin | 0 0 6px (sits directly above H1) | `--ngpt-sys-comp-eyebrow-gap` |
 | Text | The resolved `eyebrow` from `Routing and Page State.md` (`entry.eyebrow ?? section.label`), uppercased by CSS | `—` |
 

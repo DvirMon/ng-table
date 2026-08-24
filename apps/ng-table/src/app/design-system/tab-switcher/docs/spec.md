@@ -60,7 +60,7 @@ Two-way (Preview/Source) segmented control used at the top of live example windo
 | Inactive text | oklch(0.64 0.01 260) | `--ngpt-comp-tab-text-inactive` |
 | Inactive hover bg | oklch(0.26 0.005 260) | `--ngpt-border-subtle (reused as tint)` |
 | Font | Inter, 13px / 400 inactive, 500 active | `--ngpt-sys-typescale-label-large-sm` / `-label-large-medium` |
-| Focus ring (inactive) | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Focus ring (inactive) | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
 
 ## Notes
 

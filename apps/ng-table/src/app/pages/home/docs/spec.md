@@ -129,9 +129,9 @@ the page's one block of color and the reason no other section is tinted.
   `border-radius: 12px 12px 0 0` so it read as continuing past the fold; **that visual was removed** and
   the band now ends on the buttons. If artwork returns, restore the zero bottom padding with it.
 
-**Contrast.** The band runs at `--ngpt-accent-surface` = `oklch(0.57 0.19 52)`, which is deliberately
-darker than `--ngpt-accent` (`oklch(0.62 0.19 52)`). At 0.62 white measured 3.86:1 and the 16px lede
-failed AA; 0.57 brings white to about 4.7:1, so the H1, the lede and the buttons all pass. The two
+**Contrast.** The band runs at `--ngpt-accent-surface` = `oklch(0.55 0.25 328)`, which is deliberately
+darker than `--ngpt-accent` (`oklch(0.68 0.22 328)`). On the accent white measures 3.21:1 and the 16px
+lede would fail AA; 0.55 brings white to 5.60:1, so the H1, the lede and the buttons all pass. The two
 tokens are therefore **not** interchangeable: the accent is for type and state on dark, the surface is
 for this band.
 

@@ -17,7 +17,7 @@ a new tab without warning is a known a11y gap (WCAG 3.2.5 context-change expecta
 
 ## Underline alpha via `color-mix()`, not the mock's literal oklch string
 
-The spec's HTML/CSS mock hardcodes `text-decoration-color: oklch(0.62 0.19 52 / 0.4)`, which is
+The spec's HTML/CSS mock hardcodes `text-decoration-color: oklch(0.68 0.22 328 / 0.4)`, which is
 `--ngpt-accent`'s own value with alpha appended — hardcoding it would duplicate the token per
 `docs/CONVENTIONS.md`'s "never hardcode a value that has a `--ngpt-*` token" rule. Used
 `color-mix(in oklch, var(--ngpt-accent) 40%, transparent)` instead so the 40%-alpha underline
@@ -25,7 +25,7 @@ stays derived from the token.
 
 ## Focus ring: no local override
 
-Spec's focus value (`0 0 0 2px oklch(0.62 0.19 52 / 0.6)`) matches `--ngpt-focus-ring` and the
+Spec's focus value (`0 0 0 2px oklch(0.68 0.22 328 / 0.6)`) matches `--ngpt-focus-ring` and the
 global `:focus-visible` policy in `src/styles/global.css` exactly (`box-shadow: 0 0 0 2px
 var(--ngpt-focus-ring)`), which already applies to the rendered `<a>` unscoped by Angular's
 emulated encapsulation. No local `:focus-visible` rule was added, per convention #4.

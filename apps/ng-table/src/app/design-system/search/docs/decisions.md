@@ -135,14 +135,17 @@ applies to the row's own active state. The reference renders the active row as a
 left-border-accent treatment.
 
 Resolved as: new `--ngpt-bg-accent-solid` token (`src/styles/tokens/color.css`), aliased to
-`var(--ngpt-accent)` rather than a duplicate literal — `--ngpt-accent` was already full-opacity,
-nothing else in this app applies alpha to it, so "solid" just means "use it as a background,"
-not a new color value. Paired with a new `--ngpt-text-on-accent: oklch(0.15 0.01 260)` — chosen
-over white after computing contrast against the accent's oklch(0.62 0.19 52): white text lands
-~3.9:1 (fails WCAG AA's 4.5:1 for normal-size text), the near-black neutral lands ~5.1:1 (passes).
-The reference itself ships white-on-`#FF4651` at a similarly marginal ~3.4:1 — not followed here
-since this app has room to pick the AA-safe option instead of matching a borderline reference
-value.
+another token rather than a duplicate literal — "solid" just means "use an accent-family value as
+a background," not a new color value. Paired with a new `--ngpt-text-on-accent`.
+
+**Revised 2026-08-24, accent re-hue to magenta 328.** The alias now points at
+`var(--ngpt-accent-surface)` (`oklch(0.55 0.25 328)`), not `var(--ngpt-accent)`: the accent is now
+the *text* tier at `oklch(0.68 0.22 328)`, too light to carry white text (3.21:1). The pairing
+inverts with it — `--ngpt-text-on-accent` is now **white** at 5.60:1 over the fill, where the
+near-black neutral it replaces would land at 3.51:1. Under the previous orange accent the result
+ran the other way (white ~3.9:1, near-black ~5.1:1), which is why this token was a dark neutral
+until now. The reference ships white-on-`#FF4651` at a marginal ~3.4:1; we land on the same text
+color by a different route, with AA headroom the reference does not have.
 
 Applied in `search-overlay.css`: `.search-row:hover, .search-row[data-active]` now sets
 `background: var(--ngpt-bg-accent-solid)` and recolors title/path/icons/connector to

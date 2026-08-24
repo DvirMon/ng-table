@@ -65,9 +65,9 @@ Single clickable row in the left nav. The TOC's items look similar but are owned
 | Bg (hover) | oklch(0.2 0.005 260) | `--ngpt-bg-hover` |
 | Bg (active, neutral) | oklch(0.24 0.005 260) | `--ngpt-bg-active` |
 | Text (active, neutral) | white | `--ngpt-text-primary` |
-| Bg (active, accent) | oklch(0.2 0.04 52) | `--ngpt-accent-bg` |
-| Text/border (active, accent) | oklch(0.62 0.19 52) | `--ngpt-accent` |
-| Focus ring | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Bg (active, accent) | oklch(0.2 0.05 328) | `--ngpt-accent-bg` |
+| Text/border (active, accent) | oklch(0.68 0.22 328) | `--ngpt-accent` |
+| Focus ring | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
 | Section label above group | 11px / 600 / uppercase / 0.05em | `--ngpt-sys-typescale-label-small-alt` |
 | Section label margin-top | 18px | `--ngpt-sys-comp-nav-section-gap` |
 

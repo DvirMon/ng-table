@@ -21,7 +21,7 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 # Foundations — Color
 
-Cool-neutral dark scale + one accent hue (orange, 52°) held at fixed chroma/lightness for state tints. No separate "primary" — every colored element in the source uses this one accent at varying lightness/chroma.
+Cool-neutral dark scale + one accent hue (magenta, 328°) held at fixed chroma/lightness for state tints. No separate "primary" — every colored element in the source uses this one accent at varying lightness/chroma.
 
 Component-scoped colors (`--ngpt-comp-*`) live here too. A component spec picks which token it uses; it never declares the value.
 
@@ -82,14 +82,16 @@ on a 0.16 page.
 
 | Token | Value | Usage |
 | --- | --- | --- |
-| --ngpt-accent | oklch(0.62 0.19 52) | Active state, links, icons, category badge. 5.0 on `--ngpt-bg-app` |
-| --ngpt-comp-link-hover | oklch(0.68 0.19 52) | Prose link hover |
-| --ngpt-accent-surface | oklch(0.57 0.19 52) | Full-bleed accent band. Marketing hero only — `pages/Home.md`. Never on a docs page. Darker than `--ngpt-accent` on purpose: at 0.62 white measured 3.9:1 and 16px body copy failed AA. At 0.57 white reaches 4.75:1. Body copy on it must be full white, never a reduced alpha. |
-| --ngpt-accent-bg | oklch(0.2 0.04 52) | Active nested-item tint. Was 0.24, where `--ngpt-accent` text on it measured 4.28:1 and failed AA; at 0.20 it reaches 4.70:1 and still reads as a tint against the 0.16 page. |
+| --ngpt-accent | oklch(0.68 0.22 328) | Active state, links, icons, category badge. 6.0 on `--ngpt-bg-app`. This is the **text** tier — never fill a surface with it: white on it is only 3.2:1. |
+| --ngpt-comp-link-hover | oklch(0.74 0.19 328) | Prose link hover. 7.7 on `--ngpt-bg-app` |
+| --ngpt-accent-surface | oklch(0.55 0.25 328) | Full-bleed accent band. Marketing hero only — `pages/Home.md`. Never on a docs page. The **fill** tier, darker than `--ngpt-accent` on purpose: white on it reaches 5.60:1, where the text tier would fail at 3.2:1. Body copy on it must be full white, never a reduced alpha. |
+| --ngpt-accent-bg | oklch(0.2 0.05 328) | Active nested-item tint. `--ngpt-accent` text on it measures 5.71:1; at 1.06 against the 0.16 page it still reads as a tint. |
+| --ngpt-bg-accent-solid | `var(--ngpt-accent-surface)` | Solid on-accent row fill — search overlay active row. Aliases the fill tier, not `--ngpt-accent`. |
+| --ngpt-text-on-accent | white | Text/icons over `--ngpt-bg-accent-solid`. 5.60:1. Was a near-black neutral under the old orange accent, where white failed at 3.9:1 — the darker magenta inverts that result. |
 | --ngpt-onband-fill | white | Primary action on the accent band — see `Pill Button.md` |
-| --ngpt-onband-fill-inverse | oklch(0.18 0.02 52) | Secondary action on the accent band |
+| --ngpt-onband-fill-inverse | oklch(0.18 0.02 328) | Secondary action on the accent band |
 | --ngpt-navbar-scrolled | #18181C | Home navbar once scrolled past the hero band. Deliberately not `--ngpt-bg-deep` — it must read as a distinct bar against the dark sections beneath it. Marketing page only. |
-| --ngpt-focus-ring | oklch(0.62 0.19 52 / 0.6) | Keyboard focus ring |
+| --ngpt-focus-ring | oklch(0.68 0.22 328 / 0.6) | Keyboard focus ring — tracks `--ngpt-accent` |
 | --ngpt-status-success | oklch(0.75 0.13 150) | "Active" status text; copy-confirmed glyph |
 | --ngpt-status-warning | oklch(0.8 0.12 85) | "Pending" status text; warning callout icon + title |
 | --ngpt-status-error | oklch(0.7 0.19 25) | Failure state — the copy affordance's failed glyph. 7.0 on `--ngpt-bg-deep` |
@@ -150,14 +152,16 @@ and 0.06 for borders so the tint reads as tone rather than color.
   --ngpt-comp-menu-text-disabled: oklch(0.42 0.005 260);
 
   /* accent + state */
-  --ngpt-accent: oklch(0.62 0.19 52);
-  --ngpt-comp-link-hover: oklch(0.68 0.19 52);
-  --ngpt-accent-surface: oklch(0.57 0.19 52);
-  --ngpt-accent-bg: oklch(0.2 0.04 52);
+  --ngpt-accent: oklch(0.68 0.22 328);
+  --ngpt-comp-link-hover: oklch(0.74 0.19 328);
+  --ngpt-accent-surface: oklch(0.55 0.25 328);
+  --ngpt-accent-bg: oklch(0.2 0.05 328);
+  --ngpt-bg-accent-solid: var(--ngpt-accent-surface);
+  --ngpt-text-on-accent: oklch(1 0 0);
   --ngpt-onband-fill: white;
-  --ngpt-onband-fill-inverse: oklch(0.18 0.02 52);
+  --ngpt-onband-fill-inverse: oklch(0.18 0.02 328);
   --ngpt-navbar-scrolled: #18181C;
-  --ngpt-focus-ring: oklch(0.62 0.19 52 / 0.6);
+  --ngpt-focus-ring: oklch(0.68 0.22 328 / 0.6);
   --ngpt-status-success: oklch(0.75 0.13 150);
   --ngpt-status-warning: oklch(0.8 0.12 85);
   --ngpt-status-error: oklch(0.7 0.19 25);

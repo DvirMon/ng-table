@@ -90,7 +90,7 @@ Everything else is native and set by the consumer directly on the element: `aria
 | Icon color (hover) | oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
 | Icon color (focus) | white | `--ngpt-text-primary` |
 | Background (hover/focus) | oklch(0.2 0.005 260) | `--ngpt-bg-hover` |
-| Focus ring | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Focus ring | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
 | Gap between buttons in a group | 8px | `--ngpt-sys-space-200` |
 
 

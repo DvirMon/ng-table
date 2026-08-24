@@ -55,11 +55,11 @@ Outline pill control with a trailing chevron, used for select-style toolbar drop
 | Border radius | 20px | `--ngpt-sys-shape-corner-large` |
 | Border (default) | 1px solid oklch(0.3 0.005 260) | `--ngpt-comp-control-border-default` |
 | Border (hover) | 1px solid oklch(0.45 0.005 260) | `--ngpt-comp-pill-border-hover` |
-| Border (focus) | 1px solid oklch(0.62 0.19 52) | `--ngpt-accent` |
+| Border (focus) | 1px solid oklch(0.68 0.22 328) | `--ngpt-accent` |
 | Text color | oklch(0.75 0.01 260) | `--ngpt-comp-dropdown-text` |
 | Background (hover/focus) | oklch(0.2 0.005 260) | `--ngpt-bg-hover` |
 | white-space | nowrap (must not wrap to 2 lines) | `—` |
-| Focus ring | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Focus ring | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
 
 ## Notes
 

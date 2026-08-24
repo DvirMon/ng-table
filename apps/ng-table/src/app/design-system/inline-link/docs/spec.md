@@ -50,11 +50,11 @@ paragraph with several links still reads as prose.
 
 | Property | Value | Token |
 |---|---|---|
-| Color (default) | oklch(0.62 0.19 52) | `--ngpt-accent` |
-| Color (hover) | oklch(0.68 0.19 52) | `--ngpt-comp-link-hover` |
-| Text decoration (default) | underline, `text-decoration-color: oklch(0.62 0.19 52 / 0.4)`, `text-underline-offset: 2px` | `--ngpt-accent` |
+| Color (default) | oklch(0.68 0.22 328) | `--ngpt-accent` |
+| Color (hover) | oklch(0.74 0.19 328) | `--ngpt-comp-link-hover` |
+| Text decoration (default) | underline, `text-decoration-color: oklch(0.68 0.22 328 / 0.4)`, `text-underline-offset: 2px` | `--ngpt-accent` |
 | Text decoration (hover) | underline, full-strength color | `—` |
-| Focus ring | 0 0 0 2px oklch(0.62 0.19 52 / 0.6) | `--ngpt-focus-ring` |
+| Focus ring | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
 | Font | inherits body size (13.5–15px) | `—` |
 | Margin | none — inline within text flow | `—` |
 
@@ -89,7 +89,7 @@ screen-reader text together (see `docs/decisions.md`).
 .inline-link {
   color: var(--ngpt-accent);
   text-decoration: underline;
-  text-decoration-color: oklch(0.62 0.19 52 / 0.4);
+  text-decoration-color: oklch(0.68 0.22 328 / 0.4);
   text-underline-offset: 2px;
 }
 .inline-link:hover {

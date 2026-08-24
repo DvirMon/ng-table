@@ -571,11 +571,13 @@ gets `padding-block-end: var(--ngpt-sys-space-100)` (4px) after the base padding
 diverging from the reference's 0 vertical padding on purpose, per explicit user decision.
 `docs/spec.md`'s Row padding row updated to note the override.
 
-## 22. Result rows aren't real links — no `href`, no URL affordances
+## 22. Result rows aren't real links — no `href`, no URL affordances — STILL OPEN, re-confirmed 2026-08-24
 
-**Current:** `search-overlay.html` renders each result as `<div role="option"
-(click)="selectResult(result)">` — a non-semantic container with a JS click handler. No `href`
-anywhere.
+**Current (re-checked against today's markup, post item-20's `<li>`/`<ul>` rework):**
+`search-result-row.html` renders `<li ngptSearchResultRow>` (host) wrapping `<span
+class="search-row__surface" (click)="...">` — a non-semantic `<span>` with a JS click handler,
+same gap as originally reported, just relocated from `<div>` to `<span>` by item 20. Still no
+`href` anywhere on any row (`search-result-row.html`, `search-recent-row.html`).
 
 **Reference:** every `.DocSearch-Hit` wraps its content in a real `<a
 href="https://angularprimitives.com/primitives/combobox/#combobox">`. Consequences of ours not
@@ -584,12 +586,14 @@ link address," no URL preview in the browser's status bar on hover, no crawlabil
 were ever server-rendered/indexed.
 
 **Task:** this depends on `SearchResultRecord` actually carrying a navigable `route`/`href` field
-— per `decisions.md`'s "Persistence and ranking — explicitly out of scope" note, `selectResult()`
-currently closes the overlay and syncs `activeResultId` but **does not navigate**, because
-`Routing and Page State.md` isn't wired yet and the index is permanently empty this round. So this
-gap is currently unfixable in isolation — swapping the `<div role="option">` to `<a
-[routerLink]="result.route" role="option">` only makes sense once routing lands. Flag as blocked on
-that dependency, not a standalone task.
+— per `decisions.md`'s "Persistence and ranking — explicitly out of scope" note,
+`onResultRowSelect()` (`search-overlay.ts`) currently sets active + closes the overlay but **does
+not navigate**, because `Routing and Page State.md` isn't wired yet and the index is permanently
+empty this round. So this gap is currently unfixable in isolation — swapping
+`.search-row__surface` from `<span>` to `<a [routerLink]="result.route">` only makes sense once
+routing lands. Flag as blocked on that dependency, not a standalone task. **Don't silently fix
+this in a future pass without also revisiting `search-recent-row.html`** — same gap, same fix,
+same blocker, currently undocumented as a duplicate but real (recent rows also have no `href`).
 
 ## Already checked, confirmed no gap
 

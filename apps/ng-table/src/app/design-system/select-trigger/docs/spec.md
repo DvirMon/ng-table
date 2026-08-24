@@ -52,7 +52,7 @@ Pill-shaped clickable field that opens a select/combobox dropdown.
 | Padding | 11px 18px | `--ngpt-sys-space-275 --ngpt-comp-select-px` |
 | Border radius | 24px (pill) | `--ngpt-sys-shape-corner-full` |
 | Border (default) | 1px solid oklch(0.34 0.005 260) | `--ngpt-border-strong` |
-| Border (active) | 1.5px solid oklch(0.62 0.19 52) + 2px ring | `--ngpt-accent` + `--ngpt-focus-ring` |
+| Border (active) | 1.5px solid oklch(0.68 0.22 328) + 2px ring | `--ngpt-accent` + `--ngpt-focus-ring` |
 | Background | oklch(0.17 0.005 260) | `--ngpt-bg-raised` |
 | Placeholder text | oklch(0.6 0.01 260), 14px | `--ngpt-comp-select-placeholder` |
 | Chevron size | 12px | `—` |

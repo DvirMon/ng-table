@@ -105,7 +105,7 @@ Every H2, H3, and H4 gets a copyable anchor.
 |---|---|---|
 | Glyph | `#` | `—` |
 | Position | trailing, 8px after the heading text | `--ngpt-sys-space-200` |
-| Color | oklch(0.62 0.19 52) | `--ngpt-accent` |
+| Color | oklch(0.68 0.22 328) | `--ngpt-accent` |
 | Opacity | 0 default → 1 on heading hover or anchor focus | `—` |
 | Transition | opacity, fast / standard | see `foundations/Motion.md` |
 | Scroll offset | target sits at the scroll offset, clear of the sticky navbar | `--ngpt-sys-layout-scroll-offset` |

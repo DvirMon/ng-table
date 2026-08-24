@@ -37,31 +37,33 @@
   --ngpt-comp-menu-text-disabled: oklch(0.42 0.005 260);
 
   /* accent + state */
-  --ngpt-accent: oklch(0.62 0.19 52);
-  --ngpt-comp-link-hover: oklch(0.68 0.19 52);
-  --ngpt-accent-surface: oklch(0.57 0.19 52);
-  --ngpt-accent-bg: oklch(0.2 0.04 52);
-  /* Solid on-accent row fill (search overlay active row, gaps-ngp-reference.md #2) — full-opacity
-     alias of --ngpt-accent, contrast-checked below rather than a new literal. */
-  --ngpt-bg-accent-solid: var(--ngpt-accent);
-  /* WCAG AA pick for text over --ngpt-bg-accent-solid: computed contrast vs. white text is
-     ~3.9:1 (fails 4.5:1 normal-text AA); this near-black neutral gives ~5.1:1 (passes). See
+  --ngpt-accent: oklch(0.68 0.22 328);
+  --ngpt-comp-link-hover: oklch(0.74 0.19 328);
+  --ngpt-accent-surface: oklch(0.55 0.25 328);
+  --ngpt-accent-bg: oklch(0.2 0.05 328);
+  /* Solid on-accent row fill (search overlay active row, gaps-ngp-reference.md #2) — aliases the
+     fill tier, not --ngpt-accent: the text tier is too light to carry white text (3.21:1). */
+  --ngpt-bg-accent-solid: var(--ngpt-accent-surface);
+  /* WCAG AA pick for text over --ngpt-bg-accent-solid: white measures 5.60:1 (passes 4.5:1
+     normal-text AA); a near-black neutral would give only 3.51:1. See
      search/docs/decisions.md § Active row: solid accent fill. */
-  --ngpt-text-on-accent: oklch(0.15 0.01 260);
+  --ngpt-text-on-accent: oklch(1 0 0);
+  /* Stops are lightness-only variations of --ngpt-accent-surface. Do not go below 0.545 at
+     chroma 0.25 on this hue — 0.535 falls outside sRGB. */
   --ngpt-hero-gradient: linear-gradient(
     90deg,
     var(--ngpt-accent-surface) 0%,
-    oklch(0.555 0.19 52) 31%,
-    oklch(0.565 0.19 52) 63%,
-    oklch(0.58 0.19 52) 100%
+    oklch(0.545 0.25 328) 31%,
+    oklch(0.555 0.25 328) 63%,
+    oklch(0.57 0.25 328) 100%
   );
   --ngpt-onband-fill: white;
-  --ngpt-onband-fill-hover: oklch(0.95 0.01 52);
-  --ngpt-onband-text: oklch(0.2 0.03 52);
-  --ngpt-onband-fill-inverse: oklch(0.18 0.02 52);
-  --ngpt-onband-fill-inverse-hover: oklch(0.24 0.03 52);
+  --ngpt-onband-fill-hover: oklch(0.95 0.01 328);
+  --ngpt-onband-text: oklch(0.2 0.03 328);
+  --ngpt-onband-fill-inverse: oklch(0.18 0.02 328);
+  --ngpt-onband-fill-inverse-hover: oklch(0.24 0.03 328);
   --ngpt-navbar-scrolled: #18181C;
-  --ngpt-focus-ring: oklch(0.62 0.19 52 / 0.6);
+  --ngpt-focus-ring: oklch(0.68 0.22 328 / 0.6);
   --ngpt-status-success: oklch(0.75 0.13 150);
   --ngpt-status-warning: oklch(0.8 0.12 85);
   --ngpt-status-error: oklch(0.7 0.19 25);

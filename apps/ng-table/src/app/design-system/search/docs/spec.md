@@ -172,7 +172,7 @@ No border or ring on the input itself — the panel is already the focused surfa
 | Trailing icon | Result rows: 22px return-arrow, every row regardless of active state. Recent rows: two 22px action buttons (save-search star, remove-from-history X). | see Iconography.md addition below |
 | Title | Inter 13.5px, oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
 | Path / section line | Inter 12px, oklch(0.55 0.01 260), below title, 2px gap. Result rows only — recent rows show title only. | `--ngpt-text-muted` |
-| Query match highlight | oklch(0.62 0.19 52), 600 weight (color only, no background) | `--ngpt-accent` |
+| Query match highlight | oklch(0.68 0.22 328), 600 weight (color only, no background) | `--ngpt-accent` |
 | Row active (hover or arrow focus) | Solid accent fill, full row, no left-border accent, text/icons recolor to an AA-checked on-accent value. See `docs/decisions.md` § Active row: solid accent fill. | `--ngpt-bg-accent-solid` / `--ngpt-text-on-accent` |
 | Max visible | Capped at 5 results per group — no scroll-to-fit. Implemented in `groupSearchResults()` against `SEARCH_INDEX_MOCK` (a fixture, not real doc content — see decisions.md § Persistence and ranking). | `—` |
 

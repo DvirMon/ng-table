@@ -83,7 +83,7 @@ keeps its half of the row — it places itself via `grid-column`, keyed on `data
 | Eyebrow-to-title gap | 4px | `--ngpt-sys-space-100` |
 | Title font (default) | 14.5px / 600 | `--ngpt-sys-typescale-title-small` |
 | Title color (default) | oklch(0.9 0.005 260) | `--ngpt-comp-pagination-title-default` |
-| Title color (hover) | oklch(0.62 0.19 52) | `--ngpt-accent` |
+| Title color (hover) | oklch(0.68 0.22 328) | `--ngpt-accent` |
 | Card bg (hover) | oklch(0.2 0.005 260) | `--ngpt-bg-hover` |
 | Arrow transform (hover) | translateX(±3px), fast / standard | `--ngpt-comp-pagination-arrow-shift` + `foundations/Motion.md` |
 | Alignment | Previous card left-aligned; Next card right-aligned | `—` |

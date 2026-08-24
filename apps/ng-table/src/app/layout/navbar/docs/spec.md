@@ -69,7 +69,7 @@ Full-width bar above the page grid. Sticky to the top of the viewport, sits abov
 | gap | 10px | --ngpt-sys-space-250-alt |
 | logo size | 22×22px | --ngpt-comp-navbar-logo-size |
 | logo radius | 6px | --ngpt-sys-shape-corner-extra-small-alt |
-| logo background | oklch(0.62 0.19 52) | --ngpt-accent |
+| logo background | oklch(0.68 0.22 328) | --ngpt-accent |
 | product name font | 600 / 15px | --ngpt-sys-typescale-title-nav |
 | product name color | white | --ngpt-text-primary |
 

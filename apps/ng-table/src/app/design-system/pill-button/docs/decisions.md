@@ -44,8 +44,8 @@ directly) are unchanged in behavior. `apps/ng-table/eslint.config.mjs`'s
 ## Untokenized on-band values
 
 The on-band variant table in the spec gives literal oklch values for hover backgrounds
-(`oklch(0.95 0.01 52)` primary, `oklch(0.24 0.03 52)` secondary) and the primary variant's text
-color (`oklch(0.2 0.03 52)`), but — unlike every other row — does **not** pair them with a
+(`oklch(0.95 0.01 328)` primary, `oklch(0.24 0.03 328)` secondary) and the primary variant's text
+color (`oklch(0.2 0.03 328)`), but — unlike every other row — does **not** pair them with a
 `--ngpt-*` token name, and the front-matter `tokens` list confirms it: it includes
 `--ngpt-onband-fill` / `--ngpt-onband-fill-inverse` but nothing for on-band hover or on-band
 primary text. `src/styles/tokens/color.css` has no matching custom property either. Per
