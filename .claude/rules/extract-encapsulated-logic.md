@@ -49,6 +49,26 @@ internal shape (a grid article, a list row) is its own scope too — pull it int
 - Extraction would require passing back most of the host's local state anyway — no real seam
   exists yet.
 
+## Guard against over-extraction
+
+Extraction is a trade: a name in exchange for a jump. Only take that trade when the jump is
+worth it. The test each time is net reading cost — does pulling this out make the host easier
+to hold in your head, or does it just relocate the same three lines behind an indirection the
+reader now has to chase?
+
+Signals you've gone too far:
+- Reading one flow now means opening 3+ files/functions with no independent reasoning of their
+  own — each is a thin pass-through, not a scope.
+- The extracted piece takes most of the host's state as parameters — it never had its own scope,
+  extraction just added a call boundary.
+- You extracted because the block was *long*, not because it *owned* something (state,
+  lifecycle, a name worth reasoning about independently). Length alone is not the test in this
+  rule — the state/lifecycle/reasoning test above is.
+
+When in doubt between inlining and extracting, and the block has no lifecycle/state of its own,
+default to inline. A slightly longer host that reads top-to-bottom beats a maze of one-call
+functions/components that all say "look elsewhere."
+
 ## Where it goes
 
 - Same file, named function/hook: the default when the extracted piece is small and has no
