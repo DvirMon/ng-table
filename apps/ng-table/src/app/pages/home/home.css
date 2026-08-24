@@ -1,5 +1,7 @@
 :host {
   display: block;
+  --home-prose-measure: 720px;
+  --home-prose-measure-narrow: 360px;
 }
 
 /* Every section from 4 onward shares one left rail and one 1080px wide measure (spec § Section
@@ -27,7 +29,7 @@
    narrower max-width. Install section overrides this below — see that comment. */
 [ngptCategoryBadge],
 [ngptProse] {
-  max-width: var(--ngpt-sys-layout-prose-measure);
+  max-width: var(--home-prose-measure);
 }
 
 [ngptProse] p {
