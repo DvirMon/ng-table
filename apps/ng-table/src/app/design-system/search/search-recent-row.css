@@ -55,16 +55,14 @@
 }
 
 /* Star icon: outline by default, filled white on hover/focus — signals the save action.
-   Sets color on the button itself (not just the svg) so currentColor resolves to white for
-   both the fill and the existing stroke, instead of inheriting the row's muted icon color. */
+   Sets color on the button itself so currentColor resolves to white for the stroke, instead of
+   inheriting the row's muted icon color. The fill half can't be done in CSS: `<ng-icon>` inserts
+   its svg via raw DOM insertion, not Angular's template compiler, so it never carries this
+   component's `_ngcontent` id and no scoped selector can reach it — see `[ngptFillIconOnHover]`
+   in fill-icon-on-hover.ts, applied on this button in search-recent-row.html. */
 .search-row__actions button[aria-label='Save this search']:hover,
 .search-row__actions button[aria-label='Save this search']:focus-visible {
   color: white;
-}
-
-.search-row__actions button[aria-label='Save this search']:hover svg,
-.search-row__actions button[aria-label='Save this search']:focus-visible svg {
-  fill: currentColor;
 }
 
 .search-row__title {

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, 
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideHistory, lucideStar, lucideX } from '@ng-icons/lucide';
 import { IconButton } from '../icon-button/icon-button';
+import { FillIconOnHover } from './fill-icon-on-hover';
 import { createTrackedPointer } from './search-overlay.utils';
 import type { RecentSearchEntry } from './search.types';
 
@@ -15,7 +16,7 @@ import type { RecentSearchEntry } from './search.types';
   templateUrl: './search-recent-row.html',
   styleUrl: './search-recent-row.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgIcon, IconButton],
+  imports: [NgIcon, IconButton, FillIconOnHover],
   viewProviders: [provideIcons({ lucideHistory, lucideStar, lucideX })],
   host: {
     role: 'option',
