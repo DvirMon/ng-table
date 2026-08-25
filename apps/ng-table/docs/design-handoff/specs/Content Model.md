@@ -99,24 +99,72 @@ owns only the tree it reads.
 
 ## Seed tree
 
-Evidenced by the reference frames — **incomplete**. The full page list is authored content, not design. Fill it in before building; do not infer the remainder.
+Filled from the source docs at `libs/shared/table/docs/` (2026-08-25). `Architecture` and `PRD` files are
+repo-internal (contributor-facing spec docs, not consumer API docs) — **dropped from the tree entirely**,
+same call in every section that had one (State Layer, Columns, UI Layer). They stay where they are under
+`libs/shared/table/docs/`, never routed on the docs site. State Layer and UI Layer keep separate entries
+per feature (e.g. two "Sorting" pages, one per layer) — same label, different section, different slug;
+each entry's own label still matches its own sidebar item / H1 / pagination card 1:1, so this does not
+violate the label rule above. Section "2. Columns" was inferred from the `2-columns/` doc folder sitting
+numerically between state (1) and UI (3) — not requested, flag before relying on it. Section "0. Getting
+Started" is new consumer-facing content with no source doc yet — Installation and First Table need
+authoring; "Building a Custom Feature" can likely draw on the `with-*()` plugin pattern already documented
+across State Layer, but still needs its own walkthrough written. Section 4+ still has no source folder —
+leave unknown, do not infer.
 
 ```
 - label: "Overview"
   slug: "/docs"
   archetype: "Section Landing"
 
+- section: "0. Getting Started"    # new — no source doc yet, needs authoring
+  entries:
+    - label: "Installation"            slug: "/docs/getting-started/installation"        archetype: "Doc Article"
+    - label: "First Table"             slug: "/docs/getting-started/first-table"          archetype: "Doc Article"
+    - label: "Building a Custom Feature" slug: "/docs/getting-started/custom-feature"     archetype: "Doc Article"
+
 - section: "1. State Layer"
   entries:
-    - label: "Architecture"    slug: "/docs/state-layer/architecture"    archetype: "Doc Article"
-    - label: "PRD"             slug: "/docs/state-layer/prd"             archetype: "Doc Article"
+    - label: "Columns"               slug: "/docs/state-layer/columns"           archetype: "Doc Article"
+    - label: "Row Mutations"         slug: "/docs/state-layer/row-mutations"     archetype: "Doc Article"
+    - label: "Drag & Drop"           slug: "/docs/state-layer/drag-drop"         archetype: "Doc Article"
+    - label: "Expansion"             slug: "/docs/state-layer/expansion"         archetype: "Doc Article"
+    - label: "Filtering"             slug: "/docs/state-layer/filtering"         archetype: "Doc Article"
+    - label: "Grouping"              slug: "/docs/state-layer/grouping"          archetype: "Doc Article"
+    - label: "Infinite Scroll"       slug: "/docs/state-layer/infinite-scroll"   archetype: "Doc Article"
+    - label: "Pagination"            slug: "/docs/state-layer/pagination"        archetype: "Doc Article"
+    - label: "Row Editing"           slug: "/docs/state-layer/row-editing"       archetype: "Doc Article"
+    - label: "Selection"             slug: "/docs/state-layer/selection"         archetype: "Doc Article"
+    - label: "Sorting"               slug: "/docs/state-layer/sorting"           archetype: "Doc Article"
+    - label: "Virtual Scroll"        slug: "/docs/state-layer/virtual-scroll"    archetype: "Doc Article"
+
+- section: "2. Columns"    # inferred from 2-columns/ — confirm before relying on it
+  entries:
+    - label: "Column Metadata"       slug: "/docs/columns/column-metadata"       archetype: "Doc Article"
+    - label: "Data-Derived Columns"  slug: "/docs/columns/data-derived"          archetype: "Doc Article"
+    - label: "Ownership Model"       slug: "/docs/columns/ownership-model"       archetype: "Doc Article"
+    - label: "Signal Forms Techniques" slug: "/docs/columns/signal-forms-techniques" archetype: "Doc Article"
+    - label: "Tier 1 — Intrinsic"    slug: "/docs/columns/tier-1-intrinsic"      archetype: "Doc Article"
+    - label: "Tier 2 — Layout"       slug: "/docs/columns/tier-2-layout"         archetype: "Doc Article"
+    - label: "Tier 3 — Feature Config" slug: "/docs/columns/tier-3-feature-config" archetype: "Doc Article"
 
 - section: "3. UI Layer"
   entries:
-    - label: "Sorting"         slug: "/docs/ui-layer/sorting"            archetype: "Doc Article"
+    - label: "Core Directives"       slug: "/docs/ui-layer/core"                 archetype: "Doc Article"
+    - label: "Column Identity"       slug: "/docs/ui-layer/columns"              archetype: "Doc Article"
+    - label: "Sort"                  slug: "/docs/ui-layer/sort"                 archetype: "Doc Article"
+    - label: "Selection"             slug: "/docs/ui-layer/selection"            archetype: "Doc Article"
+    - label: "Expansion"             slug: "/docs/ui-layer/expansion"            archetype: "Doc Article"
+    - label: "Grouping"              slug: "/docs/ui-layer/grouping"             archetype: "Doc Article"
+    - label: "Drag & Drop"           slug: "/docs/ui-layer/drag-drop"            archetype: "Doc Article"
+    - label: "Resizing"              slug: "/docs/ui-layer/resizing"             archetype: "Doc Article"
+    - label: "Row Reorder Animation" slug: "/docs/ui-layer/row-animation"        archetype: "Doc Article"   hidden: true  # not implemented — draft, not ticketed
+    - label: "Accessibility"         slug: "/docs/ui-layer/accessibility"        archetype: "Doc Article"
+    - label: "Styling & Tokens"      slug: "/docs/ui-layer/styling-tokens"       archetype: "Doc Article"
+    - label: "Virtual Scroll"        slug: "/docs/ui-layer/virtual-scroll"       archetype: "Doc Article"
 ```
 
-Sections 2 and 4+ are referenced by the numbering but their entries are unknown.
+Section 4+ is referenced by the numbering but its entries are still unknown — no source folder exists for it.
 
 The frames show a pagination card reading "State Layer Architecture", which is a *composed* string
 (section + label). **Resolved 2026-08-22: the card shows `label` alone.** `label` is the single source for
