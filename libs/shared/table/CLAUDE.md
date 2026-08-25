@@ -84,6 +84,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | Location | Purpose | Update pattern |
 |---|---|---|
 | `docs/1-state/prd.md`, `architecture.md`, `features/` | State-layer specs, one per feature plugin; feature-local config | Permanent; edited in place as code changes |
+| `docs/1-state/row-mutations.md` | Core-API spec — `table.value.update()` + the row updaters. Not in `features/` because mutation is core, not a `with-*()` plugin (D8) | Permanent |
 | `docs/2-columns/reference/` | Column schema reference (tier levels, ownership, derivation); read-only reference | Permanent; reflects current schema semantics |
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/work/<slug>/` | Episodic work folder: intake ticket, decisions, issues, task steps. One folder per implementation effort (e.g. `core-directives`, `with-expansion`) | Episodic; created fresh per effort, archived after ship |

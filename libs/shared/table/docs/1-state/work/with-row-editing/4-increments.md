@@ -213,6 +213,15 @@ sequential. E5 and E6 are optional and independent of each other.
 about features that do not exist (phantom), decisions superseded before implementation
 (D20 → D24, D21 → D29), and one genuinely undesigned piece (E6).
 
+## What shipped, and what is left
+
+E1, E2, E3, E4, E2b and E5' are delivered. The permanent spec for all of it is
+[`features/row-editing.md`](../../features/row-editing.md).
+
+E5 (`editableRow()` schema fragment) and E6 (sort staleness) remain as written above. Everything
+else outstanding — including work this file never sliced, like keyboard and focus — is in
+[`5-gaps.md`](./5-gaps.md), prioritized and split by owning layer.
+
 ## Standing risk
 
 Everything from D22 onward is inferred from type definitions, not observed. E2 is the cheapest place

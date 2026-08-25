@@ -10,6 +10,10 @@ date: 2026-08-11
 Episodic work folder for the row-mutation core (F4 static-vs-live table — row CRUD),
 raised 2026-08-11. Shipped as issue #47 (`updateRows`/`addRow`/`removeRow`/`patchRow`).
 
+**This file is the reasoning, not the contract.** The shipped surface is specced in
+[`row-mutations.md`](../../row-mutations.md). This log contains superseded decisions
+(D12→D30, D6's call convention→D30) that no longer describe the code.
+
 Editing (F1 editable cells, F2 edit UI modes, F3 row actions, F5 dirty/validation/commit)
 split out to [`work/with-row-editing/2-decisions.md`](../with-row-editing/2-decisions.md) —
 that cluster consumes the primitives decided here (`updateRows`, `addRow`/`removeRow`/`patchRow`,

@@ -17,6 +17,11 @@ Decision numbering (D10, D13–D18, D20–D25, D28, D29) and open-question numbe
 O10–O19, O21) are unchanged from the original log, so cross-references elsewhere in the repo
 still resolve.
 
+**This file is the reasoning, not the contract.** The shipped surface is specced in
+[`features/row-editing.md`](../../features/row-editing.md); what it does not yet cover is
+tracked, prioritized and split by layer in [`5-gaps.md`](./5-gaps.md). Read those first — this
+log contains superseded decisions (D13→D21→D29, D20→D24) that no longer describe the code.
+
 ## D10 — Row edit mode is a store slice, mirroring `withExpansion()` (2026-08-11)
 
 **Decision:** F2b (button flips one row into edit) is a state-layer feature:
