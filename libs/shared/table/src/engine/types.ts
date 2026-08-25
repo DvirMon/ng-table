@@ -3,6 +3,7 @@ import type {
   ColumnDef,
   ColumnDefInput,
   ColumnsUpdater,
+  RowId,
   RowUpdater,
   TableDataInput,
   TrackByConfig,
@@ -41,6 +42,10 @@ export interface TableCore<TRow> {
   readonly baseColumns: Signal<ColumnDef<TRow>[]>;
   readonly rows: Signal<TRow[]>;
   readonly trackBy: TrackByFn<TRow>;
+  /** Maps a row's trackBy id to its position in `data()`. Engine-internal only: not exposed on
+   * `TableStore`. Feeds the removal-reconciliation effect (ADR-0006) so it can diff ids without
+   * recomputing them a second time. */
+  readonly indexById: Signal<ReadonlyMap<RowId, number>>;
   /** Read: the consumer's own row data (D3/D4 — table never copies it). Write:
    * `.update(updater)` writes through to that same signal, resolving `trackBy` internally
    * for id-based updaters (D30). */
@@ -77,6 +82,10 @@ export interface TableFeatureSpec<TRow, Members extends object = object> {
   /** Runs after every feature is composed, inside the owner's injection context. */
   onInit?: () => void;
   onDestroy?: () => void;
+  /** Called with ids that just left `data` (ADR-0006). A feature storing `RowId`-keyed state
+   * declares this and prunes its own state — the engine never reaches into feature state
+   * itself. Fires for every removal, including a full `data.set(...)` replacement. */
+  onRowsRemoved?: (ids: readonly RowId[]) => void;
 }
 
 /**

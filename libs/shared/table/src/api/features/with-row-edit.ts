@@ -1,4 +1,5 @@
 import { computed, signal, type Signal } from '@angular/core';
+import { pruneByIds } from '../../engine/rows';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
 import type { EditingState, EditingUpdater } from '../row-edit-mutations';
@@ -106,6 +107,21 @@ export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
       pending: computed(() => pendingIds(state())),
     };
 
-    return { members } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;
+    // ADR-0006: an id that leaves `data` must leave both `open` (nothing left to show inputs
+    // for) and `snapshots` (nothing left to restore) — `pending` needs no pruning of its own,
+    // since it is derived from the other two, not stored. `open` is pruned independently of
+    // `snapshots`: `pendingIds()` treats "has a snapshot but isn't open" as pending, so leaving
+    // a removed id in `open` would surface it as newly pending. `ABSENT` snapshots (D28) are
+    // exempt — they were never backed by a row in `data` to begin with.
+    function onRowsRemoved(ids: readonly RowId[]): void {
+      const current = state();
+      const nextOpen = pruneByIds(current.open, ids);
+      const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value === ABSENT);
+      if (nextOpen !== current.open || nextSnapshots !== current.snapshots) {
+        applyEditingState({ open: nextOpen, snapshots: nextSnapshots });
+      }
+    }
+
+    return { members, onRowsRemoved } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;
   };
 }

@@ -1,5 +1,6 @@
 import { signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
+import { pruneByIds } from '../../engine/rows';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import type { RenderRow, RowId, TrackByFn } from '../types';
 
@@ -147,6 +148,16 @@ export function withExpansion<TRow = unknown>(config: WithExpansionConfig<TRow> 
       expandedRows.set(new Set());
     }
 
+    // ADR-0006: `expandedRows` answers "is this row live and expanded" — an id that leaves
+    // `data` must leave here too. `everExpanded` answers "has this id ever been expanded" and
+    // is deliberately exempt (see its member doc).
+    function onRowsRemoved(ids: readonly RowId[]): void {
+      const next = pruneByIds(expandedRows(), ids);
+      if (next !== expandedRows()) {
+        expandedRows.set(new Set(next));
+      }
+    }
+
     return {
       members: {
         expandedRows: expandedRows.asReadonly(),
@@ -164,6 +175,7 @@ export function withExpansion<TRow = unknown>(config: WithExpansionConfig<TRow> 
           childrenAccessor,
           isExpandable
         ),
+      onRowsRemoved,
     };
   };
 }

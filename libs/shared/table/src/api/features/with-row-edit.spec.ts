@@ -107,6 +107,72 @@ describe('withRowEdit', () => {
     expect(store.pending().size).toBe(0);
   });
 
+  it('removing an open row from data clears it from editing and pending (ADR-0006)', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    expect(store.editing().has('r1')).toBe(true);
+
+    data.update((rows) => rows.filter((row) => row.id !== 'r1'));
+    TestBed.tick();
+
+    expect(store.editing().has('r1')).toBe(false);
+    expect(store.pending().has('r1')).toBe(false);
+  });
+
+  it('removing a pending (closed, snapshot-kept) row drops its snapshot too (ADR-0006)', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    store.editing.update(endEdit('r1', { keepSnapshot: true }));
+    expect(store.pending().has('r1')).toBe(true);
+
+    data.update((rows) => rows.filter((row) => row.id !== 'r1'));
+    TestBed.tick();
+
+    expect(store.pending().has('r1')).toBe(false);
+  });
+
+  it('an ABSENT snapshot (D28 blank-row-add) survives removal — the keep exemption', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    // D28: beginEdit before the row exists in data captures ABSENT.
+    store.editing.update(beginEdit('new1'));
+
+    // The blank row is added, then removed again without ever being saved.
+    data.update((rows) => [...rows, { id: 'new1', name: 'Draft' }]);
+    TestBed.tick();
+    data.update((rows) => rows.filter((row) => row.id !== 'new1'));
+    TestBed.tick();
+
+    // `open` is still pruned — the row is gone, nothing shows inputs for it.
+    expect(store.editing().has('new1')).toBe(false);
+    // But the ABSENT snapshot itself is exempt from pruning (D28), so it stays "pending" —
+    // this asserts the keep-predicate wiring, not a claim about consumer-visible behavior.
+    expect(store.pending().has('new1')).toBe(true);
+  });
+
   it('claims no renderRows slot — renderRows() stays the default 1:1 mapping', () => {
     const store = makeStore(() => ({
       trackBy: 'id',

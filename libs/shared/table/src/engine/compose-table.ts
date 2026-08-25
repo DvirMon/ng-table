@@ -1,13 +1,15 @@
-import { computed, DestroyRef, inject } from '@angular/core';
-import type { AnyTableFeature, TableStore } from '../api/types';
+import { computed, DestroyRef, effect, inject } from '@angular/core';
+import type { AnyTableFeature, RowId, TableStore } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
 import { PIPELINE_ORDER } from './pipeline';
+import { diffRemovedIds } from './rows';
 import { describeFeature, SlotRegistry } from './slots';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
 
 interface FeatureHooks {
   readonly onInit: (() => void)[];
   readonly onDestroy: (() => void)[];
+  readonly onRowsRemoved: ((ids: readonly RowId[]) => void)[];
 }
 
 /**
@@ -22,7 +24,7 @@ function foldFeatures<TRow>(
   handle: TableCoreHandle<TRow>
 ): FeatureHooks {
   const registry = new SlotRegistry();
-  const hooks: FeatureHooks = { onInit: [], onDestroy: [] };
+  const hooks: FeatureHooks = { onInit: [], onDestroy: [], onRowsRemoved: [] };
 
   features.forEach((feature, index) => {
     const spec: TableFeatureSpec<TRow> = feature(core, composed);
@@ -55,6 +57,9 @@ function foldFeatures<TRow>(
     }
     if (spec.onDestroy) {
       hooks.onDestroy.push(spec.onDestroy);
+    }
+    if (spec.onRowsRemoved) {
+      hooks.onRowsRemoved.push(spec.onRowsRemoved);
     }
   });
 
@@ -100,6 +105,26 @@ export function composeTable<TRow>(
     for (const onDestroy of hooks.onDestroy) {
       destroyRef.onDestroy(onDestroy);
     }
+  }
+
+  // ADR-0006: reconciles feature state (expanded rows, open edits, ...) against `data`. An
+  // effect, not a hook inside `updateRows` — a full `data.set(...)` replacement (paging,
+  // refetch, a WebSocket snapshot) never passes through `core.value.update(...)`, so a
+  // write-site hook would miss exactly the case where every id is orphaned at once. Seeding
+  // `previousIds` before the effect exists means its first run diffs against itself instead of
+  // reporting every row as removed at construction.
+  if (hooks.onRowsRemoved.length > 0) {
+    let previousIds = new Set(handle.core.indexById().keys());
+    effect(() => {
+      const currentIds = new Set(handle.core.indexById().keys());
+      const removed = diffRemovedIds(previousIds, currentIds);
+      previousIds = currentIds;
+      if (removed.length > 0) {
+        for (const onRowsRemoved of hooks.onRowsRemoved) {
+          onRowsRemoved(removed);
+        }
+      }
+    });
   }
 
   // The one seam where static typing gives way to dynamic composition: `composed` is

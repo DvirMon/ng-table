@@ -239,6 +239,27 @@ describe('withExpansion', () => {
     expect(renderRows.find((row) => row.id === 'n1')?.depth).toBe(1);
   });
 
+  it('removing an expanded row from data clears it from expandedRows but not everExpanded (ADR-0006)', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withExpansion<Row>()],
+      }))
+    );
+
+    store.toggleExpanded('r1');
+    expect(store.expandedRows().has('r1')).toBe(true);
+    expect(store.everExpanded().has('r1')).toBe(true);
+
+    data.update((rows) => rows.filter((row) => row.id !== 'r1'));
+    TestBed.tick();
+
+    expect(store.expandedRows().has('r1')).toBe(false);
+    expect(store.everExpanded().has('r1')).toBe(true);
+  });
+
   it('composes with zero other features present — createTable({ features: [withExpansion()] }) alone works end-to-end', () => {
     const store = makeStore(() => ({
       trackBy: 'id',

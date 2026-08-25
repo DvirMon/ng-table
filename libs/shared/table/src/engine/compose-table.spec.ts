@@ -7,7 +7,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { composeTable } from './compose-table';
 import type { TableEngineConfig, TableFeature } from './types';
-import type { AnyTableFeature, ColumnDefInput } from '../api/types';
+import type { AnyTableFeature, ColumnDefInput, RowId } from '../api/types';
 
 interface Row {
   id: string;
@@ -195,5 +195,62 @@ describe('composeTable', () => {
 
     expect((first['rows'] as () => Row[])()).toHaveLength(2);
     expect((second['rows'] as () => Row[])()).toHaveLength(0);
+  });
+
+  describe('onRowsRemoved (ADR-0006)', () => {
+    function composeWithData(
+      data: ReturnType<typeof signal<Row[]>>,
+      onRowsRemoved: (ids: readonly RowId[]) => void
+    ): void {
+      const withReconciler: TableFeature<Row> = () => ({ onRowsRemoved });
+      const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+      TestBed.runInInjectionContext(() => composeTable(config, [withReconciler]));
+    }
+
+    it('fires with the diffed ids when data.update(...) drops a row', () => {
+      const data = signal(makeRows());
+      const removed: RowId[][] = [];
+      composeWithData(data, (ids) => removed.push([...ids]));
+
+      data.update((rows) => rows.filter((row) => row.id !== 'r1'));
+      TestBed.tick();
+
+      expect(removed).toEqual([['r1']]);
+    });
+
+    it('fires on a direct data.set(...) full replacement', () => {
+      const data = signal(makeRows());
+      const removed: RowId[][] = [];
+      composeWithData(data, (ids) => removed.push([...ids]));
+
+      data.set([{ id: 'r3', name: 'New', age: 1 }]);
+      TestBed.tick();
+
+      expect(removed).toEqual([['r1', 'r2']]);
+    });
+
+    it('does not fire when no composed feature declares onRowsRemoved', () => {
+      const data = signal(makeRows());
+      const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+      // No onRowsRemoved hook composed — the effect should never be created, so mutating
+      // `data` afterward must not throw or do anything observable here.
+      TestBed.runInInjectionContext(() => composeTable(config, []));
+
+      expect(() => {
+        data.set([]);
+        TestBed.tick();
+      }).not.toThrow();
+    });
+
+    it('does not fire when a data change only adds rows', () => {
+      const data = signal(makeRows());
+      const removed: RowId[][] = [];
+      composeWithData(data, (ids) => removed.push([...ids]));
+
+      data.update((rows) => [...rows, { id: 'r3', name: 'New', age: 1 }]);
+      TestBed.tick();
+
+      expect(removed).toEqual([]);
+    });
   });
 });

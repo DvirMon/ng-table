@@ -78,6 +78,7 @@ export function createTableCore<TRow>(
     baseColumns: baseColumns.asReadonly(),
     rows,
     trackBy,
+    indexById,
     value: createWritableView(
       () => config.data(),
       (updater) => config.data.update((rows) => updater(rows, { trackBy }))
