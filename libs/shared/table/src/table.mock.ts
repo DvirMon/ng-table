@@ -1,8 +1,8 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 
 import type { EditingMap } from './api/features/with-row-edit';
 import type { RowEditMembers } from './api/features/with-row-edit';
-import type { EditingUpdater } from './api/row-edit-mutations';
+import type { EditingState, EditingUpdater } from './api/row-edit-mutations';
 import type { ColumnDef, RenderRow, RowUpdater, TableStore, TrackByFn } from './api/types';
 import { createWritableView } from './engine/writable-view';
 
@@ -86,7 +86,7 @@ export function createMockTableStoreWithEditing<TRow>(
   trackBy: TrackByFn<TRow>
 ): TableStore<TRow> & RowEditMembers<TRow> {
   const data = signal<TRow[]>(rows);
-  const editing = signal<EditingMap<TRow>>(new Map());
+  const state = signal<EditingState<TRow>>({ editing: new Map(), pending: new Map() });
   const value = createWritableView<TRow[], RowUpdater<TRow>>(
     () => data(),
     (updater) => data.update((current) => updater(current, { trackBy }))
@@ -99,15 +99,16 @@ export function createMockTableStoreWithEditing<TRow>(
     trackBy,
     value,
     editing: createWritableView<EditingMap<TRow>, EditingUpdater<TRow>>(
-      () => editing(),
+      () => state().editing,
       (updater) =>
-        editing.set(
-          updater(editing(), {
+        state.set(
+          updater(state(), {
             data: data(),
             trackBy,
             writeData: (rows) => value.update(() => rows),
           })
         )
     ),
+    pending: computed(() => state().pending),
   };
 }

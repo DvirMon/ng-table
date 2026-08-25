@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createTable } from '../create-table';
-import { beginEdit } from '../row-edit-mutations';
+import { beginEdit, endEdit, settleEdit } from '../row-edit-mutations';
 import { withRowEdit } from './with-row-edit';
 import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 
@@ -69,6 +69,42 @@ describe('withRowEdit', () => {
     expect(store.editing().has('r1')).toBe(true);
     expect(store.editing().has('r2')).toBe(true);
     expect(store.editing().size).toBe(2);
+  });
+
+  it('single-mode switching closes the displaced row as a Save, not a Cancel (D31.2)', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withRowEdit<Row>()],
+    }), makeRows());
+
+    store.editing.update(beginEdit('r1'));
+    store.editing.update(beginEdit('r2'));
+
+    // Dropped outright: no snapshot is retained for r1, so nothing can revert it, and
+    // whatever blur already committed to `data` stands.
+    expect(store.editing().has('r1')).toBe(false);
+    expect(store.pending().has('r1')).toBe(false);
+  });
+
+  it('pending starts empty and receives endEdit({ keepSnapshot: true }) entries (D31)', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withRowEdit<Row>()],
+    }), makeRows());
+
+    expect(store.pending().size).toBe(0);
+
+    store.editing.update(beginEdit('r1'));
+    store.editing.update(endEdit('r1', { keepSnapshot: true }));
+
+    expect(store.editing().size).toBe(0);
+    expect(store.pending().get('r1')).toEqual({ id: 'r1', name: 'Ada' });
+
+    store.editing.update(settleEdit('r1'));
+
+    expect(store.pending().size).toBe(0);
   });
 
   it('claims no renderRows slot — renderRows() stays the default 1:1 mapping', () => {

@@ -122,6 +122,23 @@ a row is open and the snapshot goes stale. Genuinely blocking, but cheap: pick a
 
 ---
 
+## E2b — The gated editing demo *(shipped 2026-08-25)*
+
+**Ships:** the counterpart to E2 — a table where rows render text until Edit opens them, plus the
+blank-row add flow and optimistic save. This is where D28's call order and D31's `pending` map are
+falsifiable the way E2 made D24 falsifiable.
+
+**Decisions:** D28 (call order selects discard-vs-reset), D31/D31.1/D31.2 (optimistic save), D14
+single mode.
+
+**Depends on:** E3, E4, and D31's library work. Uses E5' (`*ngpTableRowField`) to bind fields.
+
+**Scope:** `apps/demo/src/app/table-row-edit-demo/` — a **new** component, not a mode toggle on
+`table-edit-demo`, which deliberately composes no editing feature at all (D29) and must keep
+showing the minimal table.
+
+---
+
 ## E5 — `editableRow()` schema fragment *(optional, any time after E2)*
 
 **Ships:** the commit boundary as one call instead of per-column discipline.

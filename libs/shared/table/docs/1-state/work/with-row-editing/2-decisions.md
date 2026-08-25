@@ -613,13 +613,13 @@ criterion.
 ```ts
 endEdit(id)                          // close, drop the snapshot
 endEdit(id, { keepSnapshot: true })  // close, move entry: editing → pending
-removeSnapshot(id)                   // on success: settle
+settleEdit(id)                   // on success: settle
 revertEdit(id)                       // on failure: restore from either map, drop
 ```
 
 **Why the entry moves rather than staying put.** `editing`'s key set is what templates read to
 decide which rows render inputs. A pending row has visually closed, so leaving it in `editing`
-renders a stuck editor until `removeSnapshot` runs — and only on the success path, the one least
+renders a stuck editor until `settleEdit` runs — and only on the success path, the one least
 likely to be tested. Two signals, each with one meaning:
 
 ```ts
@@ -627,7 +627,7 @@ editing:  Signal<EditingMap<TRow>>   // open rows only — meaning and type unch
 pending:  Signal<EditingMap<TRow>>   // closed, still rollback-able
 ```
 
-**`removeSnapshot(id)` is the sibling of D30's `setSnapshot(id, row?)`**, not a new concept — the
+**`settleEdit(id)` is the sibling of D30's `rebaseEdit(id, row?)`**, not a new concept — the
 snapshot was already writable; now it is also deletable.
 
 **Consequences:**
@@ -635,10 +635,12 @@ snapshot was already writable; now it is also deletable.
   is additive.
 - `revertEdit` must check both maps. `endEdit`'s move must be one operation, not a delete plus an
   insert, or the two maps can drift.
-- A forgotten `removeSnapshot` still leaks, but degrades to a stale spinner rather than a row the
+- A forgotten `settleEdit` still leaks, but degrades to a stale spinner rather than a row the
   user cannot interact with.
 - Pessimistic save (row stays open during the request) needs none of this and already works:
   `endEdit` on success, `revertEdit` on failure, entry alive throughout.
+- **Scope is optimistic update and create only.** Delete and move are uncovered, and structurally
+  so — see **O22**.
 - Re-opens fixes #3/#4/#5 from the E3/E4 review — `beginEdit` on a pending row, what single-mode
   switching does to a pending row, and which map `revertEdit` reads first — resolved below.
 
@@ -649,7 +651,7 @@ reopens showing its current (optimistic, unconfirmed) values, but Cancel still r
 pre-edit state — the oldest restore point wins, which is what Cancel means to a user.
 
 This also settles review finding #3 for the non-pending case: `beginEdit` must stop re-capturing
-over an existing snapshot. Re-capture is `setSnapshot`'s job (D30); `beginEdit` only ever captures
+over an existing snapshot. Re-capture is `rebaseEdit`'s job (D30); `beginEdit` only ever captures
 when there is no entry in either map.
 
 **Known sharp edge, left to the consumer:** if the in-flight save then fails, the error handler's
@@ -683,31 +685,101 @@ bulk-edit tables without a later API change. Two consequences to carry:
 keyboard story for edit mode at all — `revertEdit` exists but nothing calls it from a key handler.
 UI-layer concern; belongs with the directive work, not here.
 
-## D30 — The snapshot is writable; the library never watches `data` for staleness (2026-08-19)
+### D31.3 — Implementation resolutions (2026-08-25)
+
+Five edges D31 left implicit, settled while building it. All follow from "two signals, each with
+one meaning".
+
+- **The updater state is one value, not two maps.** `EditingUpdater` now takes and returns
+  `EditingState<TRow> = { editing, pending }`, and `withRowEdit()` backs both with a single
+  `signal<EditingState>`. This is what makes D31's "`endEdit`'s move must be one operation"
+  structural rather than a discipline — there is no write that can land on one map only.
+  `table.editing()` still reads the `editing` map alone, so D31's "type unchanged" holds.
+- **`settleEdit(id)` targets `pending` only.** It is a no-op on an open row: settling a
+  row that is still open has no meaning, and closing one is `endEdit`'s job. No-op rather than
+  throw, because every other updater no-ops on a miss.
+- **`rebaseEdit` stays `editing`-only — it is not a `pending` verb.** The two solve different
+  problems and only looked related because both stored a "snapshot" (see D31.4, which removes the
+  word). D30's `rebaseEdit` answers O13: the restore point of a row *the user is still typing in*
+  going stale because something else wrote `data`. `pending` holds the rollback for a row *already
+  closed* with a request in flight. Widening `rebaseEdit` to fall back to `pending` would cover
+  only the narrow window where an external write lands during an in-flight optimistic save —
+  unhit, and it would stretch D30 past its stated problem. Left alone.
+- **`clearEditing()` closes open rows and leaves `pending` alone.** Pending rows are already
+  closed; dropping their rollbacks would silently disarm every in-flight save.
+- **`revertEdit` reads `editing` first, then `pending`.** The order is not load-bearing — D31.1
+  makes the pending-to-editing move atomic, so an id is never in both maps — but it is fixed and
+  tested so it cannot drift into being load-bearing later.
+
+### D31.4 — The public verbs are the edit lifecycle; "snapshot" leaves the API (2026-08-25)
+
+`setSnapshot` (D30) and `removeSnapshot` (D31) both said "snapshot", which read as though they
+were two halves of one mechanism. They are not: one keeps an *open* row's restore point current,
+the other discards a *closed* row's rollback after the server confirms. The shared noun caused a
+real misreading during implementation review.
+
+Renamed so every public verb names a point in the edit lifecycle instead:
+
+| Was | Is | What it means |
+|---|---|---|
+| `setSnapshot(id, row?)` | `rebaseEdit(id, row?)` | move an open row's restore point forward |
+| `removeSnapshot(id)` | `settleEdit(id)` | a closed row's save is confirmed; drop the rollback |
+
+The full family is now `beginEdit` / `endEdit` / `revertEdit` / `rebaseEdit` / `settleEdit` /
+`clearEditing`. "Snapshot" survives only as internal vocabulary for the stored value
+(`RowSnapshot`, `EditingMap`) and in `endEdit`'s `{ keepSnapshot }` option, where it names the
+stored thing rather than an operation.
+
+**Cost accepted:** `setSnapshot` shipped in E4 and was exported from the barrel, so this is a
+breaking rename rather than an addition. Taken now because the only consumers are in-repo and the
+name had already misled once.
+
+## E3/E4 code review — disposition (2026-08-25)
+
+Seven findings were raised against the shipped `withRowEdit()`. Disposition, so none is re-raised:
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | E4's surface untested | **Fixed** — `api/row-edit-mutations.spec.ts` covers all six updaters plus the D28 blank-row round-trip and the D31 optimistic-save round trip |
+| 2 | `endEdit` drops the snapshot, so optimistic save cannot roll back | **Fixed** — D31 below, shipped 2026-08-25 with E2b |
+| 3 | `beginEdit` silently re-captures over an existing snapshot | **Decided** — D31.1 |
+| 4 | Single-mode row switching is Save-by-side-effect | **Decided** — D31.2 |
+| 5 | `revertEdit` cannot restore an externally-removed row | **Dissolved** by [ADR-0006](../../../adr/0006-row-id-state-reconciliation.md) — the entry is reconciled away at removal, so the case cannot arise |
+| 6 | `revertEdit`'s `writeData` bypasses the normal write path | **Dissolved** — ADR-0006 chose an effect watching `data`, which sees this write like any other. Would have mattered only under the rejected write-path hook |
+| 7 | `updateEditing` threw cryptically without `withRowEdit()` | **Moot** — `updateEditing` no longer exists; writes go through `table.editing.update(...)` (`WritableView`) |
+
+**Naming collision to fix:** this folder's D30 is `rebaseEdit`; the engine `CLAUDE.md` cites D30 as
+the `WritableView` write pattern. Different decisions, same number. Renumber one before an agent
+reads both.
+
+## D30 — The restore point is writable; the library never watches `data` for staleness (2026-08-19)
+
+**Renamed 2026-08-25:** this verb shipped as `setSnapshot`. It is now `rebaseEdit` — see D31.4.
+Behavior is unchanged; every mention below reads with the new name.
 
 **Decision:** Resolves O13. The library does not detect that a `beginEdit` snapshot (D17) has gone
 stale, because it cannot tell an external write apart from any other `data` change. The consumer
 knows when they wrote; they say so. One updater, following D16's pattern:
 
 ```ts
-setSnapshot(id)        // re-read current data() as the new restore point
-setSnapshot(id, row)   // set an explicit restore point (e.g. the server's response)
+rebaseEdit(id)        // re-read current data() as the new restore point
+rebaseEdit(id, row)   // set an explicit restore point (e.g. the server's response)
 ```
 
 One operation with an optional second argument, not a policy flag per scenario — the same shape as
 `updateRows`. Omitting `row` re-reads `data()`, which is exactly what `beginEdit` does on open, so
 the default case needs no argument.
 
-**Default stays "revert wins":** absent any `setSnapshot` call, `revertEdit` restores what was
+**Default stays "revert wins":** absent any `rebaseEdit` call, `revertEdit` restores what was
 captured at `beginEdit`. No machinery watches `data`, and no per-row subscription exists.
 
 **Consequences:**
 - The two rejected policies become consumer-implementable rather than unavailable. *Refresh wins* is
-  `setSnapshot(id, incoming)` at the write site. *Detect and drop* is the consumer comparing and
+  `rebaseEdit(id, incoming)` at the write site. *Detect and drop* is the consumer comparing and
   calling `endEdit` instead of `revertEdit`. Neither is baked into the library.
 - `beginEdit` on an already-open row keeps whatever semantics E3 gives it; refreshing a restore
   point now has its own verb, so the two intents never have to share one call.
-- No new coupling. `setSnapshot` reads and writes the same `Map<RowId, TRow | ABSENT>` (D17 + D28)
+- No new coupling. `rebaseEdit` reads and writes the same `Map<RowId, TRow | ABSENT>` (D17 + D28)
   that `beginEdit`/`revertEdit` already own.
 - Ships with **E4**, not E3 — nothing reads snapshots until `revertEdit` exists.
 
@@ -778,6 +850,41 @@ build target, no `project.json` change.
 - **O16** *(largely dissolved by D24)* "Holds its display position" is no longer needed for sort or
   group. What remains is narrower: where a *retained* row (D25) sits once it no longer matches the
   filter — in place, or collected somewhere?
+- **O22** *(new, from D31 — 2026-08-25)* **Is optimistic rollback an editing concern or a mutation
+  concern?** D31's `pending` map covers optimistic **update** (snapshot is the prior row) and
+  optimistic **create** (snapshot is `ABSENT`, so rollback removes the row — D28 gave this for
+  free). It does **not** cover **delete** or **move**, and not by omission:
+  - No entry point. `removeRow(id)` goes through `table.value.update()` and never touches the
+    editing maps, so nothing captures a snapshot to keep.
+  - `revertEdit` could not restore one anyway. It restores by mapping over `data`
+    (`data.map(row => trackBy(row) === id ? snapshot : row)`) — a row that is gone matches
+    nothing, so the write is a silent no-op. It replaces in place; it cannot re-insert.
+  - A snapshot holds a *value*, never an index, so position is unrecoverable even with a fixed
+    restore. Same reason `move` is uncovered.
+
+  This is review finding #5 seen from the other side: [ADR-0006](../../../adr/0006-row-id-state-reconciliation.md)
+  **dissolves** it by reconciling the entry away when the row leaves `data` — which locks in "no
+  optimistic delete" rather than fixing it. Worth re-reading O22 against ADR-0006 before that ADR
+  ships.
+
+  The mechanism as built is optimistic *editing*, not optimistic *CRUD*: it exists only when
+  `withRowEdit()` is composed, is keyed by row id, and every entry point is an editing verb. A
+  table with a Delete button and no editing feature (D18 — actions are consumer template code
+  calling `removeRow`) has no rollback story at all. Two coherent designs, and D31 picked the
+  first without weighing the second:
+  1. `pending` stays editing-scoped. Optimistic delete is the consumer's problem — they hold the
+     row and its index themselves and re-`addRow` on failure.
+  2. Optimistic-ness becomes its own concern — a pending-mutations slice over
+     `table.value.update()` holding an **inverse operation** rather than a value snapshot, so it
+     covers delete and move too. `withRowEdit()` would compose it rather than own it.
+
+  Deliberately **not designed now** (decided 2026-08-25). Option 2 needs an inverse-op
+  representation the library does not have, and no consumer needs optimistic delete yet. Re-derive
+  when one does, rather than implementing from these notes.
+
+  **Read against D32** (mutation decisions): bulk operations settle on widened arity plus
+  `batch()`, so an inverse-op design would have to cover a batched write as one rollback unit, not
+  N independent ones.
 - **O19** *(new, from D24)* Do we export a schema fragment (`editableRow(row, columns)`) so the
   commit boundary is one call rather than per-column discipline? Lowers misconfiguration risk;
   imports Signal Forms types into our lib, which is the coupling D23 rejected — though as an opt-in

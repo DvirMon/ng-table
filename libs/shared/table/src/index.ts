@@ -26,10 +26,17 @@ export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-meta
 export { addRow, removeRow, patchRow } from './api/row-mutations';
 export {
   beginEdit,
-  endEdit,
   clearEditing,
+  endEdit,
+  rebaseEdit,
   revertEdit,
-  setSnapshot,
+  settleEdit,
+} from './api/row-edit-mutations';
+export type {
+  EditingState,
+  EditingUpdater,
+  EditingUpdaterContext,
+  EndEditOptions,
 } from './api/row-edit-mutations';
 export {
   setColumns,

@@ -236,6 +236,56 @@ caller — `patchRow` is the save path and the row-actions path (see D18 in the 
 - **Plural forms (`removeRows(ids)`, `patchRows(…)`)** — bulk operations need a selection source,
   and `withSelection()` is unshipped. A consumer needing bulk today writes one lambda.
 
+**Shape settled ahead of time by D32** — when these land they are widened arity on the existing
+verbs plus one `batch()`, not new plural names.
+
+## D32 — Bulk is widened arity plus `batch()`; the word "bulk" never enters the API (2026-08-25)
+
+**Decision:** Settles the *naming and shape* of the operations D19 deferred, without building
+them. "Bulk" conflates two things that need different answers:
+
+**(a) One operation over N rows** — bulk delete, bulk patch. This is arity, not a new capability,
+so it widens the existing verbs rather than growing plural siblings:
+
+```ts
+removeRow(id | id[])
+patchRow(id | id[], partial)
+```
+
+One operation with optional cardinality, matching the same criterion that gave `addRow({ at })`
+and `rebaseEdit(id, row?)` their shape — not a verb per case.
+
+**(b) N operations in one write** — add two rows, delete three, patch one, as a single `data`
+emission. This is D19's deferred `compose`, renamed:
+
+```ts
+table.value.update(batch(removeRow(1), removeRow(2), patchRow(3, { dept: 'Ops' })));
+```
+
+`batch` is why (b) is worth having at all beyond tidiness: one emission means one pipeline run,
+one `indexById` rebuild (D23), and one undo step, instead of N of each.
+
+**Why this shape falls out of what already exists:** `RowUpdater` is `(rows: TRow[], ctx) =>
+TRow[]` — it already operates on the whole array, so single-row updaters are the *narrow* case,
+not the general one. Widening `removeRow` is a one-line change to its `filter` predicate, and
+`batch` is plain function composition over the existing type. Neither needs engine involvement.
+
+**Still not built, and the blocker is unchanged from D19:** bulk *edit* needs a selection source
+and `withSelection()` does not exist (`docs/1-state/features/selection.md` is a spec with no
+implementation; `api/features/` holds sorting, expansion, columns-schema, row-edit). Bulk
+delete/add are reachable without it when the consumer supplies ids, but neither has a caller yet.
+
+**Consequences:**
+- D19's "plural forms" deferral stands on timing; its *shape* is now decided, so whoever builds it
+  does not re-open the naming.
+- D19's `compose` deferral is superseded in name only — `batch` is the same function. Its stated
+  reason for deferral (commit-an-edit spans `data` *and* editing state, two signals, so `compose`
+  would not collapse it) still holds and is not what `batch` is for.
+- **Collides with D31.2 (editing decisions).** Bulk edit implies `multiple: true`, which combined
+  with optimistic save is explicitly undesigned — N open rows × M in-flight saves. Whoever specs
+  bulk edit resolves that first.
+- "Bulk" stays a product word for the UI affordance (a Bulk actions menu), never an API word.
+
 **Consequence:** three updaters to spec, test, and document. Each tree-shakes individually and is
 unit-testable without a store (D6).
 
