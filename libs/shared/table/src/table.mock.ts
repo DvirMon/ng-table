@@ -1,9 +1,8 @@
 import { computed, signal } from '@angular/core';
 
-import type { EditingMap } from './api/features/with-row-edit';
-import type { RowEditMembers } from './api/features/with-row-edit';
+import { pendingIds, type RowEditMembers } from './api/features/with-row-edit';
 import type { EditingState, EditingUpdater } from './api/row-edit-mutations';
-import type { ColumnDef, RenderRow, RowUpdater, TableStore, TrackByFn } from './api/types';
+import type { ColumnDef, RenderRow, RowId, RowUpdater, TableStore, TrackByFn } from './api/types';
 import { createWritableView } from './engine/writable-view';
 
 /** Minimal `TableStore<unknown>` stub for directive DI-wiring tests — no real store behavior. */
@@ -86,7 +85,7 @@ export function createMockTableStoreWithEditing<TRow>(
   trackBy: TrackByFn<TRow>
 ): TableStore<TRow> & RowEditMembers<TRow> {
   const data = signal<TRow[]>(rows);
-  const state = signal<EditingState<TRow>>({ editing: new Map(), pending: new Map() });
+  const state = signal<EditingState<TRow>>({ snapshots: new Map(), open: new Set() });
   const value = createWritableView<TRow[], RowUpdater<TRow>>(
     () => data(),
     (updater) => data.update((current) => updater(current, { trackBy }))
@@ -98,8 +97,8 @@ export function createMockTableStoreWithEditing<TRow>(
     totalRowCount: signal(rows.length),
     trackBy,
     value,
-    editing: createWritableView<EditingMap<TRow>, EditingUpdater<TRow>>(
-      () => state().editing,
+    editing: createWritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>(
+      () => state().open,
       (updater) =>
         state.set(
           updater(state(), {
@@ -109,6 +108,8 @@ export function createMockTableStoreWithEditing<TRow>(
           })
         )
     ),
-    pending: computed(() => state().pending),
+    // Same derivation the feature uses, imported rather than restated — this stub deliberately
+    // skips `withRowEdit()`'s single-mode trim, but `pending` must not drift from it.
+    pending: computed(() => pendingIds(state())),
   };
 }

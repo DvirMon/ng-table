@@ -1,4 +1,4 @@
-import { ABSENT } from './features/with-row-edit';
+import { ABSENT, pendingIds } from './features/with-row-edit';
 import {
   beginEdit,
   clearEditing,
@@ -21,21 +21,27 @@ function ctx(data: Person[] = rows) {
 }
 
 function state(
-  editing: [number, Person | typeof ABSENT][] = [],
-  pending: [number, Person | typeof ABSENT][] = []
+  snapshots: [number, Person | typeof ABSENT][] = [],
+  open: number[] = []
 ): EditingState<Person> {
-  return { editing: new Map(editing), pending: new Map(pending) };
+  return { snapshots: new Map(snapshots), open: new Set(open) };
+}
+
+/** Every updater must preserve it — `pendingIds` derives from it (D31.5). */
+function openIsSubsetOfSnapshots(result: EditingState<Person>): boolean {
+  return [...result.open].every((id) => result.snapshots.has(id));
 }
 
 describe('beginEdit', () => {
-  it('captures the row currently in data', () => {
+  it('captures the row currently in data as its restore point', () => {
     const result = beginEdit<Person>(2)(state(), ctx());
-    expect(result.editing.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.open.has(2)).toBe(true);
   });
 
   it('captures ABSENT for an id not yet in data (D28 blank-row flow)', () => {
     const result = beginEdit<Person>(99)(state(), ctx());
-    expect(result.editing.get(99)).toBe(ABSENT);
+    expect(result.snapshots.get(99)).toBe(ABSENT);
   });
 
   it('does not re-capture over an already-open row (D31.1)', () => {
@@ -44,37 +50,48 @@ describe('beginEdit', () => {
       opened,
       ctx([{ id: 2, name: 'Bea-typing' }, ...rows.slice(1)])
     );
-    expect(result.editing.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
   });
 
-  it('re-opens a pending row, carrying the snapshot from the first beginEdit (D31.1)', () => {
+  it('re-opens a pending row, keeping the restore point from the first beginEdit (D31.1)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const saved = endEdit<Person>(2, { keepSnapshot: true })(opened, ctx());
 
-    const result = beginEdit<Person>(2)(saved, ctx([{ id: 2, name: 'optimistic' }, ...rows.slice(1)]));
+    const result = beginEdit<Person>(2)(
+      saved,
+      ctx([{ id: 2, name: 'optimistic' }, ...rows.slice(1)])
+    );
 
-    expect(result.editing.get(2)).toEqual({ id: 2, name: 'Bea' });
-    expect(result.pending.has(2)).toBe(false);
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.open.has(2)).toBe(true);
+    expect(pendingIds(result).has(2)).toBe(false);
+  });
+
+  it('keeps open a subset of snapshots', () => {
+    const result = beginEdit<Person>(2)(beginEdit<Person>(1)(state(), ctx()), ctx());
+    expect(openIsSubsetOfSnapshots(result)).toBe(true);
   });
 });
 
 describe('endEdit', () => {
-  it('drops the entry without touching data', () => {
+  it('closes the row and spends its restore point', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const result = endEdit<Person>(2)(opened, ctx());
-    expect(result.editing.has(2)).toBe(false);
-    expect(result.pending.has(2)).toBe(false);
+    expect(result.open.has(2)).toBe(false);
+    expect(result.snapshots.has(2)).toBe(false);
+    expect(pendingIds(result).has(2)).toBe(false);
   });
 
-  it('{ keepSnapshot: true } moves the entry to pending (D31)', () => {
+  it('{ keepSnapshot: true } closes the row but holds the restore point, making it pending (D31)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const result = endEdit<Person>(2, { keepSnapshot: true })(opened, ctx());
 
-    expect(result.editing.has(2)).toBe(false);
-    expect(result.pending.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.open.has(2)).toBe(false);
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(pendingIds(result).has(2)).toBe(true);
   });
 
-  it('is a no-op when the id is not being edited', () => {
+  it('is a no-op when the id is not open', () => {
     const current = state();
     const result = endEdit<Person>(999)(current, ctx());
     expect(result).toBe(current);
@@ -82,24 +99,38 @@ describe('endEdit', () => {
 });
 
 describe('clearEditing', () => {
-  it('empties the editing map regardless of prior state', () => {
+  it('closes every open row', () => {
     const opened = beginEdit<Person>(2)(beginEdit<Person>(1)(state(), ctx()), ctx());
     const result = clearEditing<Person>()(opened, ctx());
-    expect(result.editing.size).toBe(0);
+    expect(result.open.size).toBe(0);
   });
 
-  it('leaves pending entries alone — they are already closed', () => {
+  it('drops the closed rows restore points, so none of them becomes pending', () => {
+    const opened = beginEdit<Person>(2)(beginEdit<Person>(1)(state(), ctx()), ctx());
+    const result = clearEditing<Person>()(opened, ctx());
+    expect(pendingIds(result).size).toBe(0);
+    expect(result.snapshots.size).toBe(0);
+  });
+
+  it('leaves an already-pending row alone — it is not open (D31.3)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const saved = endEdit<Person>(2, { keepSnapshot: true })(opened, ctx());
 
     const result = clearEditing<Person>()(saved, ctx());
 
-    expect(result.pending.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(pendingIds(result).has(2)).toBe(true);
+  });
+
+  it('is a no-op when nothing is open', () => {
+    const current = state();
+    const result = clearEditing<Person>()(current, ctx());
+    expect(result).toBe(current);
   });
 });
 
 describe('revertEdit', () => {
-  it('restores the snapshot into data and drops the entry', () => {
+  it('restores the snapshot into data and closes the row', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     let written: Person[] | undefined;
     const result = revertEdit<Person>(2)(opened, {
@@ -109,7 +140,8 @@ describe('revertEdit', () => {
     });
 
     expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
-    expect(result.editing.has(2)).toBe(false);
+    expect(result.open.has(2)).toBe(false);
+    expect(result.snapshots.has(2)).toBe(false);
   });
 
   it('removes the row when the snapshot is ABSENT (add-cancel)', () => {
@@ -123,7 +155,7 @@ describe('revertEdit', () => {
     });
 
     expect(written?.map((r) => r.id)).toEqual([1, 2, 3]);
-    expect(result.editing.has(99)).toBe(false);
+    expect(result.open.has(99)).toBe(false);
   });
 
   it('rolls back a pending row when the optimistic save failed (D31)', () => {
@@ -138,10 +170,10 @@ describe('revertEdit', () => {
     });
 
     expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
-    expect(result.pending.has(2)).toBe(false);
+    expect(pendingIds(result).has(2)).toBe(false);
   });
 
-  it('is a no-op when the id is in neither map', () => {
+  it('is a no-op when the id holds no restore point', () => {
     const current = state();
     const result = revertEdit<Person>(999)(current, ctx());
     expect(result).toBe(current);
@@ -155,13 +187,23 @@ describe('rebaseEdit', () => {
       opened,
       ctx([{ id: 2, name: 'Bea-refreshed' }, ...rows.slice(1)])
     );
-    expect(result.editing.get(2)).toEqual({ id: 2, name: 'Bea-refreshed' });
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea-refreshed' });
   });
 
   it('sets an explicit restore point when row is provided', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const result = rebaseEdit<Person>(2, { id: 2, name: 'Server value' })(opened, ctx());
-    expect(result.editing.get(2)).toEqual({ id: 2, name: 'Server value' });
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Server value' });
+  });
+
+  it('is a no-op for a pending row — settleEdit owns that restore point (D31.3)', () => {
+    const opened = beginEdit<Person>(2)(state(), ctx());
+    const saved = endEdit<Person>(2, { keepSnapshot: true })(opened, ctx());
+
+    const result = rebaseEdit<Person>(2)(saved, ctx([{ id: 2, name: 'moved-on' }, ...rows.slice(1)]));
+
+    expect(result).toBe(saved);
+    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
   });
 
   it('is a no-op when the id is not being edited', () => {
@@ -172,21 +214,28 @@ describe('rebaseEdit', () => {
 });
 
 describe('settleEdit', () => {
-  it('settles a pending entry once the save is confirmed (D31)', () => {
+  it('settles a pending row once the save is confirmed (D31)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const saved = endEdit<Person>(2, { keepSnapshot: true })(opened, ctx());
 
     const result = settleEdit<Person>(2)(saved, ctx());
 
-    expect(result.pending.size).toBe(0);
-    expect(result.editing.size).toBe(0);
+    expect(result.snapshots.size).toBe(0);
+    expect(result.open.size).toBe(0);
+    expect(pendingIds(result).size).toBe(0);
   });
 
   it('is a no-op for a row that is still open - closing one is the job of endEdit', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const result = settleEdit<Person>(2)(opened, ctx());
     expect(result).toBe(opened);
-    expect(result.editing.has(2)).toBe(true);
+    expect(result.open.has(2)).toBe(true);
+  });
+
+  it('is a no-op for an id holding no restore point', () => {
+    const current = state();
+    const result = settleEdit<Person>(999)(current, ctx());
+    expect(result).toBe(current);
   });
 });
 
@@ -196,7 +245,8 @@ describe('table.editing.update', () => {
 
     fakeTable.editing.update(beginEdit<Person>(2));
 
-    expect(fakeTable.editing().get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(fakeTable.editing().has(2)).toBe(true);
+    expect(fakeTable.pending().has(2)).toBe(false);
   });
 
   it('the canonical D28 blank-row sequence round-trips through revertEdit back to an empty table', () => {
@@ -221,11 +271,24 @@ describe('table.editing.update', () => {
     fakeTable.editing.update(endEdit<Person>(2, { keepSnapshot: true }));
 
     expect(fakeTable.editing().size).toBe(0);
-    expect(fakeTable.pending().get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(fakeTable.pending().has(2)).toBe(true);
 
     fakeTable.editing.update(revertEdit<Person>(2));
 
     expect(fakeTable.value().find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
     expect(fakeTable.pending().size).toBe(0);
+  });
+
+  it('the optimistic-save round trip: close-with-snapshot, succeed, settle (D31)', () => {
+    const fakeTable = createMockTableStoreWithEditing([...rows], trackBy);
+
+    fakeTable.editing.update(beginEdit<Person>(2));
+    fakeTable.value.update((data) => data.map((r) => (r.id === 2 ? { ...r, name: 'typed' } : r)));
+    fakeTable.editing.update(endEdit<Person>(2, { keepSnapshot: true }));
+    fakeTable.editing.update(settleEdit<Person>(2));
+
+    expect(fakeTable.pending().size).toBe(0);
+    expect(fakeTable.editing().size).toBe(0);
+    expect(fakeTable.value().find((r) => r.id === 2)).toEqual({ id: 2, name: 'typed' });
   });
 });

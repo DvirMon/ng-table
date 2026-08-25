@@ -1,18 +1,18 @@
-import { ABSENT, type EditingMap, type RowSnapshot } from './features/with-row-edit';
+import { ABSENT, type RowSnapshot, type SnapshotMap } from './features/with-row-edit';
 import type { RowId, TrackByFn } from './types';
 
 /**
- * The two snapshot maps an editing updater reads and writes (D31). One value, so a move
- * between the maps is a single write and they cannot drift.
+ * What an editing updater reads and writes (D31.5). Two orthogonal facts, not two copies of
+ * one: `snapshots` is *what Cancel restores*, `open` is *which rows show inputs*. `pending` is
+ * derived from the pair, never stored.
  */
 export interface EditingState<TRow> {
-  /** Rows open for editing. This is the key set templates read to decide which rows render
-   * inputs, and the only map `table.editing()` exposes. */
-  readonly editing: EditingMap<TRow>;
-  /** Rows closed by `endEdit(id, { keepSnapshot: true })` — visually done, still rollback-able
-   * while an optimistic save is in flight. Settled by `settleEdit`, rolled back by
-   * `revertEdit`. */
-  readonly pending: EditingMap<TRow>;
+  /** One restore point per row: its value at the first `beginEdit` (D17), or `ABSENT` when the
+   * id had no row yet (D28). Outlives closing when the close was optimistic. */
+  readonly snapshots: SnapshotMap<TRow>;
+  /** Rows currently open. Always a subset of `snapshots`' keys — every updater preserves that,
+   * and `pending` (`snapshots` minus `open`) depends on it. */
+  readonly open: ReadonlySet<RowId>;
 }
 
 export interface EditingUpdaterContext<TRow> {
@@ -29,8 +29,9 @@ export type EditingUpdater<TRow> = (
 ) => EditingState<TRow>;
 
 export interface EndEditOptions {
-  /** D31 optimistic save: move the entry to `pending` instead of dropping it, so a failed
-   * save can still `revertEdit`. Settle with `settleEdit(id)` on success. */
+  /** D31 optimistic save: keep the restore point after closing, so a failed save can still
+   * `revertEdit`. The row becomes `pending` by virtue of being closed but still held. Settle
+   * with `settleEdit(id)` on success. */
   keepSnapshot?: boolean;
 }
 
@@ -38,45 +39,50 @@ function findRow<TRow>(data: TRow[], trackBy: TrackByFn<TRow>, id: RowId): TRow 
   return data.find((row) => trackBy(row) === id);
 }
 
-function withEntry<TRow>(
-  map: EditingMap<TRow>,
+function withSnapshot<TRow>(
+  snapshots: SnapshotMap<TRow>,
   id: RowId,
   snapshot: RowSnapshot<TRow>
-): EditingMap<TRow> {
-  return new Map(map).set(id, snapshot);
+): SnapshotMap<TRow> {
+  return new Map(snapshots).set(id, snapshot);
 }
 
-function withoutEntry<TRow>(map: EditingMap<TRow>, id: RowId): EditingMap<TRow> {
-  const next = new Map(map);
+function withoutSnapshot<TRow>(snapshots: SnapshotMap<TRow>, id: RowId): SnapshotMap<TRow> {
+  const next = new Map(snapshots);
+  next.delete(id);
+  return next;
+}
+
+function withOpen(open: ReadonlySet<RowId>, id: RowId): ReadonlySet<RowId> {
+  return new Set(open).add(id);
+}
+
+function withoutOpen(open: ReadonlySet<RowId>, id: RowId): ReadonlySet<RowId> {
+  const next = new Set(open);
   next.delete(id);
   return next;
 }
 
 /**
- * D17/D28: captures the row's current value, or `ABSENT` when the id has no entry in `data`
- * yet (the blank-row-add flow — `beginEdit` before `addRow`).
+ * D17/D28: captures the row's current value as its restore point, or `ABSENT` when the id has
+ * no entry in `data` yet (the blank-row-add flow — `beginEdit` before `addRow`).
  *
- * D31.1: never re-captures over an existing snapshot. An already-open row is left alone; a
- * `pending` row re-opens carrying the snapshot taken at the *first* `beginEdit`, so Cancel
- * returns to the true pre-edit state rather than to the unconfirmed optimistic one.
- * Re-capturing a restore point is `rebaseEdit`'s job (D30).
+ * D31.1 needs no branch here: a row that already has a restore point keeps it, whether it is a
+ * `pending` row re-opening or a double `beginEdit`. Cancel therefore returns to the true
+ * pre-edit state rather than an unconfirmed optimistic one — the oldest restore point wins.
+ * Moving one forward is `rebaseEdit`'s job (D30).
  */
 export function beginEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state, { data, trackBy }) => {
-    if (state.editing.has(id)) {
+    if (state.open.has(id)) {
       return state;
     }
-
-    const kept = state.pending.get(id);
-    if (kept !== undefined) {
-      return {
-        editing: withEntry(state.editing, id, kept),
-        pending: withoutEntry(state.pending, id),
-      };
-    }
-
-    const snapshot: RowSnapshot<TRow> = findRow(data, trackBy, id) ?? ABSENT;
-    return { ...state, editing: withEntry(state.editing, id, snapshot) };
+    return {
+      snapshots: state.snapshots.has(id)
+        ? state.snapshots
+        : withSnapshot(state.snapshots, id, findRow(data, trackBy, id) ?? ABSENT),
+      open: withOpen(state.open, id),
+    };
   };
 }
 
@@ -84,38 +90,52 @@ export function beginEdit<TRow>(id: RowId): EditingUpdater<TRow> {
  * Closes the row, keeping whatever is currently in `data` (Save is composed elsewhere:
  * `table.value.update(patchRow(...))` then `table.editing.update(endEdit(...))`, per D16/D30).
  *
- * `{ keepSnapshot: true }` (D31) moves the entry to `pending` instead of dropping it — one
- * write, so the maps cannot drift.
+ * `{ keepSnapshot: true }` (D31) holds the restore point instead of dropping it. Nothing moves
+ * between containers — the row is `pending` because it is closed and still held.
  */
 export function endEdit<TRow>(id: RowId, options: EndEditOptions = {}): EditingUpdater<TRow> {
   return (state) => {
-    const snapshot = state.editing.get(id);
-    if (snapshot === undefined) {
+    if (!state.open.has(id)) {
       return state;
     }
     return {
-      editing: withoutEntry(state.editing, id),
-      pending: options.keepSnapshot ? withEntry(state.pending, id, snapshot) : state.pending,
+      snapshots: options.keepSnapshot ? state.snapshots : withoutSnapshot(state.snapshots, id),
+      open: withoutOpen(state.open, id),
     };
   };
 }
 
-/** Closes every open row. `pending` entries are already closed, so they are left alone. */
+/**
+ * Closes every open row, dropping their restore points the way a plain `endEdit` does.
+ *
+ * Dropping them is the point, not an oversight: closing without `keepSnapshot` and leaving the
+ * restore point behind would mark the row `pending`, arming a rollback for a save nobody
+ * started. Rows already pending are untouched — they are not open (D31.3).
+ */
 export function clearEditing<TRow>(): EditingUpdater<TRow> {
-  return (state) => ({ ...state, editing: new Map() });
+  return (state) => {
+    if (state.open.size === 0) {
+      return state;
+    }
+    const snapshots = new Map(state.snapshots);
+    for (const id of state.open) {
+      snapshots.delete(id);
+    }
+    return { snapshots, open: new Set() };
+  };
 }
 
 /**
  * D28: `snapshot === ABSENT` removes the row (it never existed); otherwise restores the
- * snapshot value. Either way drops the entry.
+ * snapshot value. Either way the restore point is spent and the row ends up closed.
  *
- * D31: reads `editing` first, then `pending` — so it rolls back a failed optimistic save just
- * as it cancels an open row. No-op when the id is in neither map.
+ * One lookup covers both cases D31 used to split: cancelling an open row and rolling back a
+ * failed optimistic save read the same restore point, because there is only one. No-op when the
+ * id has none.
  */
 export function revertEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData }) => {
-    const open = state.editing.has(id);
-    const snapshot = open ? state.editing.get(id) : state.pending.get(id);
+    const snapshot = state.snapshots.get(id);
     if (snapshot === undefined) {
       return state;
     }
@@ -126,9 +146,10 @@ export function revertEdit<TRow>(id: RowId): EditingUpdater<TRow> {
         : data.map((row) => (trackBy(row) === id ? snapshot : row))
     );
 
-    return open
-      ? { ...state, editing: withoutEntry(state.editing, id) }
-      : { ...state, pending: withoutEntry(state.pending, id) };
+    return {
+      snapshots: withoutSnapshot(state.snapshots, id),
+      open: withoutOpen(state.open, id),
+    };
   };
 }
 
@@ -139,24 +160,26 @@ export function revertEdit<TRow>(id: RowId): EditingUpdater<TRow> {
  *
  * Omitting `row` re-reads `data()` for the id (`ABSENT` if it's gone); an explicit `row` sets
  * that as the new restore point (e.g. the server's response). No-op if `id` isn't currently
- * *open* — a `pending` row's rollback is settled with `settleEdit`, not re-pointed.
+ * *open* — a pending row's rollback is settled with `settleEdit`, not re-pointed (D31.3).
  */
 export function rebaseEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
   return (state, { data, trackBy }) => {
-    if (!state.editing.has(id)) {
+    if (!state.open.has(id)) {
       return state;
     }
     const snapshot: RowSnapshot<TRow> = row ?? findRow(data, trackBy, id) ?? ABSENT;
-    return { ...state, editing: withEntry(state.editing, id, snapshot) };
+    return { ...state, snapshots: withSnapshot(state.snapshots, id, snapshot) };
   };
 }
 
 /**
- * D31: settles an optimistic save by dropping the `pending` entry once the server has
- * confirmed it — the row is done, nothing left to roll back to. No-op for an id that is still
- * open; closing an open row is `endEdit`'s job.
+ * D31: settles an optimistic save by dropping the restore point once the server has confirmed
+ * it — the row is done, nothing left to roll back to. No-op for an id that is still open
+ * (closing one is `endEdit`'s job) or that holds no restore point.
  */
 export function settleEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state) =>
-    state.pending.has(id) ? { ...state, pending: withoutEntry(state.pending, id) } : state;
+    state.open.has(id) || !state.snapshots.has(id)
+      ? state
+      : { ...state, snapshots: withoutSnapshot(state.snapshots, id) };
 }

@@ -100,7 +100,7 @@ describe('withRowEdit', () => {
     store.editing.update(endEdit('r1', { keepSnapshot: true }));
 
     expect(store.editing().size).toBe(0);
-    expect(store.pending().get('r1')).toEqual({ id: 'r1', name: 'Ada' });
+    expect(store.pending().has('r1')).toBe(true);
 
     store.editing.update(settleEdit('r1'));
 

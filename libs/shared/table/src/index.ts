@@ -16,8 +16,8 @@ export { withRowEdit, ABSENT } from './api/features/with-row-edit';
 export type {
   WithRowEditConfig,
   RowEditMembers,
-  EditingMap,
   RowSnapshot,
+  SnapshotMap,
 } from './api/features/with-row-edit';
 export { createTableFeature } from './api/create-table-feature';
 export { columnSchema } from './api/column-schema';

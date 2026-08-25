@@ -627,14 +627,19 @@ editing:  Signal<EditingMap<TRow>>   // open rows only — meaning and type unch
 pending:  Signal<EditingMap<TRow>>   // closed, still rollback-able
 ```
 
+**Types superseded by D31.5** — both are `Signal<ReadonlySet<RowId>>` now, and `pending` is a
+`computed`. The *decision* below — that a pending row leaves `editing` rather than lingering in
+it — is what stands; only the containers changed.
+
 **`settleEdit(id)` is the sibling of D30's `rebaseEdit(id, row?)`**, not a new concept — the
 snapshot was already writable; now it is also deletable.
 
 **Consequences:**
 - `editing`'s type is unchanged, so E2's demo and every existing template keep working. `pending`
   is additive.
-- `revertEdit` must check both maps. `endEdit`'s move must be one operation, not a delete plus an
-  insert, or the two maps can drift.
+- ~~`revertEdit` must check both maps. `endEdit`'s move must be one operation, not a delete plus
+  an insert, or the two maps can drift.~~ **Dissolved by D31.5** — `pending` is derived, so there
+  is no move and no second map to check.
 - A forgotten `settleEdit` still leaks, but degrades to a stale spinner rather than a row the
   user cannot interact with.
 - Pessimistic save (row stays open during the request) needs none of this and already works:
@@ -690,6 +695,10 @@ UI-layer concern; belongs with the directive work, not here.
 Five edges D31 left implicit, settled while building it. All follow from "two signals, each with
 one meaning".
 
+**Partly superseded by D31.5** — the first and fifth bullets described how to keep two snapshot
+maps consistent, and there is now only one. Bullets two through four stand unchanged, restated in
+the new vocabulary.
+
 - **The updater state is one value, not two maps.** `EditingUpdater` now takes and returns
   `EditingState<TRow> = { editing, pending }`, and `withRowEdit()` backs both with a single
   `signal<EditingState>`. This is what makes D31's "`endEdit`'s move must be one operation"
@@ -733,6 +742,61 @@ stored thing rather than an operation.
 **Cost accepted:** `setSnapshot` shipped in E4 and was exported from the barrel, so this is a
 breaking rename rather than an addition. Taken now because the only consumers are in-repo and the
 name had already misled once.
+
+### D31.5 — The state is restore points plus open ids; `pending` is derived (2026-08-25)
+
+**Supersedes D31.3's first and fifth bullets, and D31's "the move must be one operation".**
+
+D31 stored two maps of the same value type — `editing` (open + snapshot) and `pending` (closed +
+snapshot) — and D31.3 then had to make them one signal so a *move* between them could not tear.
+The question that broke it open: since `pending` already holds recovery data, why does `editing`
+hold any?
+
+Because the two maps were never two kinds of thing. They encoded **(restore point) × (is it
+open?)** as two containers. Split on the actual axes instead:
+
+```ts
+interface EditingState<TRow> {
+  readonly snapshots: SnapshotMap<TRow>;   // one restore point per row
+  readonly open: ReadonlySet<RowId>;       // which of them are showing inputs
+}
+
+pending = snapshots.keys() − open          // derived, never stored
+```
+
+**What stops existing** — each of these was a rule about keeping two containers consistent, not
+about editing:
+
+| Was | Now |
+|---|---|
+| `endEdit({ keepSnapshot })` *moves* an entry between maps; must be one write or they drift | `open.delete(id)`. There is no move. |
+| D31.1 branches to carry the original snapshot back when a pending row re-opens | the snapshot was never moved, so "oldest restore point wins" is not code |
+| `revertEdit` reads `editing` first, then `pending` — order fixed and tested so it cannot drift | one lookup, no branch, no order |
+| One state object so the two maps cannot tear (D31.3) | nothing to tear; `pending` cannot disagree with its own inputs |
+
+Three of D31.3's five resolutions were accidental complexity from the decomposition. They are
+struck rather than reworded.
+
+**Public type change:** `table.editing()` is `ReadonlySet<RowId>`, not `EditingMap<TRow>`;
+`table.pending()` likewise. `EditingMap` is renamed `SnapshotMap` and now names only the internal
+restore-point store. **Every read in the repo was already `.has(id)`** — three in
+`table-row-field-demo.html`, two in `table-row-edit-demo.html` — so no consumer read a snapshot
+value out of `editing()`, and the Map's values were paying rent on the public surface for zero
+readers.
+
+**Contradicts E3's stated rationale**, which shipped a Map before anything read snapshots
+specifically to avoid churning the public signal type later ("shipping a `Set` first and widening
+to a `Map` in E4 would churn the public signal type for every consumer"). That reasoning was
+sound then; it assumed the snapshot had to live beside the open flag. Taken now because the work
+is uncommitted and every consumer is in-repo — the same grounds as D31.4.
+
+**The one new coupling, and it is real:** closing a row without `keepSnapshot` must delete its
+restore point explicitly. Leaving it behind would satisfy "not open, still held" — the definition
+of pending — and silently arm a rollback for a save nobody started. Two places carry this, both
+tested: `clearEditing()` and the single-mode trim (D31.2).
+
+**Invariant:** `open` is always a subset of `snapshots`' keys. Every updater preserves it,
+`pendingIds` short-circuits on it, and it is asserted in the updater spec.
 
 ## E3/E4 code review — disposition (2026-08-25)
 
