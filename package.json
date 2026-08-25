@@ -9,6 +9,8 @@
     "issa:build-storybook": "npx nx run issa-landing-app:build-storybook",
     "ds:sb": "npx nx run shared-design-system:storybook",
     "ds:build-storybook": "npx nx run shared-design-system:build-storybook",
+    "ngtable:sb": "npx nx run ng-table:storybook",
+    "ngtable:build-storybook": "npx nx run ng-table:build-storybook",
     "test:design-system": "npx nx test shared-design-system",
     "proto:value-sync": "node --experimental-strip-types libs/shared/design-system/src/ui/autocomplete/prototype-value-sync/tui.ts"
   },

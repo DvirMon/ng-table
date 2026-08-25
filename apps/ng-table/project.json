@@ -76,6 +76,21 @@
         "staticFilePath": "dist/apps/ng-table/browser",
         "spa": true
       }
+    },
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "storybook dev -p 4401",
+        "cwd": "apps/ng-table"
+      }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/storybook/ng-table"],
+      "options": {
+        "command": "storybook build -o ../../dist/storybook/ng-table",
+        "cwd": "apps/ng-table"
+      }
     }
   }
 }
