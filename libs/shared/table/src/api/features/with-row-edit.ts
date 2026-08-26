@@ -1,4 +1,4 @@
-import { computed, signal, type Signal } from '@angular/core';
+import { computed, effect, signal, type Signal } from '@angular/core';
 import { pruneByIds } from '../../engine/rows';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
@@ -17,8 +17,12 @@ export type RowSnapshot<TRow> = TRow | typeof ABSENT;
 export type SnapshotMap<TRow> = ReadonlyMap<RowId, RowSnapshot<TRow>>;
 
 export interface WithRowEditConfig {
-  /** Default `false` (D14): a second `beginEdit` closes whatever row was already open. */
-  multiple?: boolean;
+  /** Default `false` (D14): a second `beginEdit` closes whatever row was already open.
+   * Accepts a plain accessor (`() => boolean`, e.g. `() => isWide()`) to react live — no need
+   * to write `computed()` yourself, this feature wraps it. Toggling `true` -> `false` while N
+   * rows are open collapses down to the most-recently-opened one, same as `closeAllButLast` on
+   * write. A `Signal<boolean>` works too since a signal is itself callable as `() => boolean`. */
+  multiple?: boolean | (() => boolean);
 }
 
 export interface RowEditMembers<TRow> {
@@ -78,7 +82,8 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * in-flight saves — and unsupported until someone specs it (D31.2).
  */
 export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
-  const multiple = config.multiple ?? false;
+  const multiple =
+    typeof config.multiple === 'function' ? computed(config.multiple) : signal(config.multiple ?? false);
 
   return (core: TableCore<TRow>): TableFeatureSpec<TRow, RowEditMembers<TRow>> => {
     // One signal over both facts: `pending` is derived from them together, so it can never
@@ -88,7 +93,7 @@ export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
     // Enforces D14's single-mode "closes whatever was open" without any updater (beginEdit,
     // etc.) needing to know about `multiple` — every write funnels through here.
     function applyEditingState(next: EditingState<TRow>): void {
-      const exceedsSingleMode = !multiple && next.open.size > 1;
+      const exceedsSingleMode = !multiple() && next.open.size > 1;
       state.set(exceedsSingleMode ? closeAllButLast(next) : next);
     }
 
@@ -122,6 +127,20 @@ export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
       }
     }
 
-    return { members, onRowsRemoved } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;
+    // Collapses to D14's single-mode automatically when `multiple` flips false live, not just
+    // on the next `editing.update()` — otherwise a signal-backed `multiple` would silently lag
+    // the config it's supposed to track. No-ops once collapsed (re-reads `state()` on any
+    // change, but `applyEditingState` is idempotent once `open.size <= 1`).
+    function onMultipleChanged(): void {
+      if (!multiple() && state().open.size > 1) {
+        applyEditingState(state());
+      }
+    }
+
+    return {
+      members,
+      onRowsRemoved,
+      onInit: () => effect(onMultipleChanged),
+    } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;
   };
 }
