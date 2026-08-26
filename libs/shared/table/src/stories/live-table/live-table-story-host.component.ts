@@ -34,8 +34,11 @@ export class LiveTableStoryHostComponent {
   }
 
   protected addRow(): void {
-    this.data.update(
-      addRow({ id: crypto.randomUUID(), name: '', dept: DEPT_OPTIONS[0] }, { at: this.insertAt() })
+    this.table.value.update(
+      addRow(
+        { id: crypto.randomUUID(), name: '', dept: DEPT_OPTIONS[0] },
+        { at: this.insertAt() },
+      ),
     );
   }
 }
