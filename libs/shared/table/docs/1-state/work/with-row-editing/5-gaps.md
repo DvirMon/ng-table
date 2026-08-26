@@ -1,8 +1,8 @@
 ---
 title: Gaps — Row Editing, prioritized and split by layer
 type: plan
-status: open
-date: 2026-08-25
+status: open — partially superseded 2026-08-26, see the banner
+date: 2026-08-26
 parent: ./2-decisions.md
 ---
 
@@ -14,6 +14,22 @@ at the end so they are not mistaken for oversights.
 
 Specs this register measures against: [`../../features/row-editing.md`](../../features/row-editing.md)
 and [`../../row-mutations.md`](../../row-mutations.md).
+
+> ## Superseded in part — 2026-08-26
+>
+> Two things happened after this register was written.
+>
+> **1. Storybook shipped** (`src/stories/`). G12 was written when no demo could reach three
+> verbs; four stories now can. See G12 for what actually remains.
+>
+> **2. The two-feature split was specified** —
+> [`work/with-optimistic/2-decisions.md`](../with-optimistic/2-decisions.md), D37–D44. Optimistic
+> rollback becomes `withOptimistic()`, composed internally by `withRowEdit()`, so a live table can
+> use it. That changes G3, G4 and G5's framing; each is annotated below. **It does not close G5** —
+> the split changes who owns a restore point, not what one can express.
+>
+> Verb names throughout this file are v1.0. `settleEdit` → `releaseEdit`, `rebaseEdit` →
+> `captureEdit`, `addNewRow` → `beginEdit({ insert })`, `keepSnapshot` removed.
 
 ## The split
 
@@ -67,6 +83,8 @@ Tests colocated. The disposition table's claim is now true rather than aspiratio
 
 ### G3 — Optimistic create has no identity story *(state layer)*
 
+**Tracked as [#53](https://github.com/DvirMon/acme/issues/53)** (opened 2026-08-26).
+
 **Re-derived 2026-08-25 against the shipped code.** The original entry was wrong on its
 mechanism: `snapshots` is a plain `Map` in the feature's own signal, not derived from `data`, so
 the temp key survives the swap and `settleEdit(tempId)` still finds it. Nothing is "about to
@@ -88,14 +106,24 @@ of `open`/`snapshots` hold `from`: it covers both defects with one verb and need
 heuristic. Engine-side swap detection was considered and rejected — `{removed: [temp],
 added: [server]}` in one recompute is indistinguishable from a delete plus an unrelated insert.
 
+**Also blocked on the D37 split — sequence this after it, not in parallel** (tracked as **O24**).
+`open` and `snapshots` end up in different features, so `swapRowId` straddles the boundary the
+same way `beginEdit` does. Designing it against the pre-split shape means designing it twice.
+
 ---
 
 ## Priority 2 — shipped surface is under-specified
 
 ### G4 — `{ multiple: true }` is a flag with no design *(state layer)*
 
-**What:** the config ships, has no reference implementation, no demo, and no test beyond the
-single-mode trim. D31.2 states outright that `multiple: true` combined with optimistic save is
+**Partially addressed 2026-08-26.** `src/stories/gated-edit/` now toggles `multiple` live, so the
+config has a demo and the live-reaction path is exercised. The *semantics* gap below stands.
+
+**Also narrowed by D39.** A live table's edit session is delimited by focus, which is inherently
+single, so D31.2's unsupported combination is now a **gated-table-only** problem.
+
+**What:** the config ships, has no reference implementation beyond that story, and no test beyond
+the single-mode trim. D31.2 states outright that `multiple: true` combined with optimistic save is
 **undesigned and unsupported** — N open rows × M in-flight saves.
 
 **Why P2:** nothing is wrong today, but the library accepts a configuration it cannot describe
@@ -112,6 +140,8 @@ see D35). A predicate matching N rows wants N rows open, so a row rule cannot be
 `multiple: true` has no semantics. G4 is no longer only a tidiness gap.
 
 ### G5 — Optimistic rollback covers update and create only *(state layer, deferred by decision)*
+
+**Tracked as [#54](https://github.com/DvirMon/acme/issues/54)** (opened 2026-08-26) — filed for visibility, not scheduled.
 
 **What:** `pending` covers optimistic update (snapshot = prior row) and optimistic create
 (snapshot = `ABSENT`). Delete and move are uncovered, structurally:
@@ -131,6 +161,12 @@ representation the library does not have, and no consumer needs optimistic delet
 **Listed here so it is visible, not to schedule it.** Re-derive when a consumer needs it. Read
 O22 against ADR-0006 (which locks in "no optimistic delete" rather than fixing it) and against
 D32 (a batched write is one rollback unit, not N).
+
+**Not closed by the D37 split, and the split makes it easier to misread.** D37 takes O22's
+*ownership* half — rollback becomes its own feature — and leaves the *representation* half
+untouched: a restore point still holds a value, never an index. A feature named `withOptimistic()`
+reads as covering optimistic delete when it cannot. D38 requires the non-coverage be stated in the
+feature's own JSDoc rather than only here.
 
 ### G6 — Expansion children get no `sourceIndex` *(state layer — engine)*
 
@@ -184,12 +220,29 @@ decision.
 
 ---
 
-### G12 — Shipped verbs with no demo coverage *(demo app)*
+### ~~G12 — Shipped verbs with no demo coverage~~ — **MOSTLY CLOSED 2026-08-26**
 
-**What:** three demos exist — `table-edit-demo` (E2, live table, composes nothing),
+**Closed by Storybook** (`src/stories/`, commits `ca5f56f` + `e681fda`). Four stories now cover
+what no demo could:
+
+| Was uncovered | Now |
+|---|---|
+| **`rebaseEdit`** | **closed** — `external-write/` pushes a write to `data` under an open row and calls `rebaseEdit(id, pushed)`. This was the suggested fix below, and it shipped. |
+| `clearEditing()` | **closed** — `gated-edit/` has a Close-all button |
+| `{ multiple: true }` | **closed** — `gated-edit/` toggles it live |
+| D28's reverse order | **dissolved by D36**, not demoed — there is one add path now |
+| Pessimistic save | **still open** — every story is optimistic; the row-stays-open-through-the-round-trip path is shown nowhere |
+| Single-mode switching (D31.2) | **still open** — reachable, but nothing on screen distinguishes A closing as a Save from a Cancel |
+
+**~~One new gap, from D39~~ — closed 2026-08-26:** the live table + `withOptimistic()` shape now
+has `src/stories/live-optimistic/` (S6), driven by focus/blur rather than buttons.
+
+The original entry follows.
+
+**What (2026-08-25):** three demos exist — `table-edit-demo` (E2, live table, composes nothing),
 `table-row-field-demo` (the D33 directive), `table-row-edit-demo` (E2b, gated + optimistic).
 Between them they exercise `beginEdit`, `endEdit({ keepSnapshot })`, `settleEdit`, `revertEdit`
-from both states, and D28's discard order. What no demo can trigger:
+from both states, and D28's discard order. What no demo could trigger at the time:
 
 | Uncovered | Note |
 |---|---|
@@ -249,7 +302,7 @@ re-derive when the stage does.
 | Row actions markup, keyboard, ARIA | D18 — every operation is already expressible through the updaters; an action registry would drag label/icon/ordering into a data-only store. Revisit only on real cross-consumer duplication, and then as a UI directive. |
 | Library-detected edit triggers (blur hooks, dirty checking) | D20 — "editing" has exactly one definition: membership in the map. Trigger policy is the consumer's. |
 | A store-owned form | D1 — the consumer creates `form(data)` and keeps its full surface. |
-| `withRowEdit()` for always-edit tables | D29 — D24 removed the pinning justification; the minimal live table composes nothing. |
+| `withRowEdit()` for always-edit tables | D29 — D24 removed the pinning justification; the minimal live table composes nothing. **Narrowed by D39:** still true of `withRowEdit()`, but a live table that wants rollback composes `withOptimistic()`. |
 | Pipeline exemption for editing rows | D24 superseded D20's mechanism. `debounce()` holds the row still without the engine knowing who is editing. |
 | `moveRow`, bulk arity, `batch()` | D19/D32 — shape settled, no v1 caller; bulk edit additionally blocked on `withSelection()`. |
 
@@ -260,8 +313,9 @@ re-derive when the stage does.
 ```
 G8  docs defects                     DONE 2026-08-25 (D33 / D34 renumber)
 G2  dead entry on external removal   DONE 2026-08-25 (ADR-0006 implemented)
-G12 demo coverage       ← gives rebaseEdit its first real run outside a unit test
-G3  optimistic create identity       (state, needs the O20 call — swapRowId)
+G12 demo coverage                    DONE 2026-08-26 (Storybook; pessimistic save remains)
+--- the D37 split lands here ---
+G3  optimistic create identity       (state, needs the O20 call — swapRowId; after the split, O24)
 G1  keyboard                         (UI — own work folder + ticket)
 G9  focus            ──┐
 G10 a11y             ──┴─ same directive effort as G1; scope together

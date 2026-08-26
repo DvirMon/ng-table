@@ -40,16 +40,19 @@ table.mock.ts   ← shared test fixtures
 | `api/column-rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
 | `api/column-metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `column-rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
 | `api/column-schema.types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
-| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`. One file each |
+| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withOptimistic()`, `withRowEdit()`. One file each |
+| `api/features/editing-state.ts` | The editing state model — `ABSENT`, `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, so neither reads the other's signal and composition never depends on `features` order (D37/A2) |
+| `api/optimistic-mutations.ts` | `captureEdit`/`releaseEdit`/`revertEdit` — the rollback verbs, meaningful under either editing feature |
+| `api/row-edit-mutations.ts` | `beginEdit`/`endEdit`/`clearEditing` — the edit-session verbs; no-ops without `withRowEdit()` |
 | `api/features/with-columns-schema/` | The one feature that outgrew a file — split by phase: `resolve.ts` (compile) → `wiring.ts` (run) → `feature.ts` (declare) |
 | `engine/compose-table.ts` | `composeTable()`: folds features, wires hooks. Nothing else |
 | `engine/core.ts` | `createTableCore()`: the consumer's row-data signal is the single source of truth for rows (no internal row copy), wrapped as `core.value` — a `WritableView` (`.update(updater)` writes through, D30). Columns split the same way but through an extra derivation: `baseColumns` (writable, private closure var, the actual write target) + `columnRules` (mutable array, populated additively by `composeTable()`'s `foldFeatures()` from each feature's `TableFeatureSpec.columnRules`) + `core.columns` — a `WritableView` reading `foldColumnRules(baseColumns(), columnRules)` and writing through to `baseColumns`. Plus the pipeline computeds. No bare mutation methods — every write is `table.<slice>.update(updater)` on the per-slice `WritableView` member (`engine/writable-view.ts`), D30 |
 | `engine/pipeline.ts` | `PIPELINE_ORDER` + `runPipeline()`. **`PipelineStages` is derived from the array** — one declaration, so a typed stage is always an executed stage |
 | `engine/columns.ts` | Pure `ColumnDef[] → ColumnDef[]` transforms. No signals, no Angular |
 | `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` |
-| `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here |
+| `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims stages, `renderRows`, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
-| `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/with-row-edit.ts` (`editing`) |
+| `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 
@@ -140,17 +143,21 @@ from `engine/types.ts` directly (as `withExpansion` does) since engine/ is alrea
 Rules:
 - Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
   `PipelineStages` derives from it, so there is no second list to keep in sync.
-- A second feature claiming the same `stages` key, or a second claiming `renderRows`, **throws
-  at construction** — this is why `withExpansion()` and a future `withGrouping()` cannot yet be
+- A second feature claiming the same `stages` key, the same **member key** (ADR-0007), or a
+  second claiming `renderRows`, **throws at construction** — this is why `withExpansion()` and a future `withGrouping()` cannot yet be
   composed together.
 - **If your feature stores `RowId`s, declare `onRowsRemoved`** ([ADR-0006](docs/adr/0006-row-id-state-reconciliation.md)).
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and
   the feature retains dead ids until someone deletes a row and notices. Exemptions are per slice
   and belong to the feature: `everExpanded` (additive ledger) and `ABSENT` snapshots (D28's
-  blank-row add) are the two that exist.
+  blank-row add) are the two that exist. Both editing features share one `onRowsRemoved` from
+  `createEditingStore()`, which prunes `open` and `snapshots` together and keeps the `ABSENT`
+  exemption; `pending` is derived and never pruned.
 - The factory's second parameter (`composed`) is the feature-to-feature seam: earlier features'
-  members at factory time, all features' members when read later. No feature uses it today.
+  members at factory time, all features' members when read later. **No feature uses it**, and the
+  two editing features deliberately do not: they share state through `createEditingStore()`
+  instead, so composition is never array-order dependent (D37/A2).
 - Export a named `*Members` interface — `ComposedFeatureMembers` reads it to type the store.
 
 Plugins compose via the `features` array in `createTable()`'s config, not chained calls:

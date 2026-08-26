@@ -257,7 +257,7 @@ patchRow(id | id[], partial)
 ```
 
 One operation with optional cardinality, matching the same criterion that gave `addRow({ at })`
-and `rebaseEdit(id, row?)` their shape — not a verb per case.
+and `rebaseEdit(id, row?)` (renamed `captureEdit` by D40) their shape — not a verb per case.
 
 **(b) N operations in one write** — add two rows, delete three, patch one, as a single `data`
 emission. This is D19's deferred `compose`, renamed:
