@@ -53,22 +53,23 @@ One entry may sit outside any section (the docs root, "Overview"). It renders ab
 
 ## Slug prefix
 
-Every entry in the tree lives under `/docs`. The docs root is `/docs` itself; everything else is
-`/docs/<section>/<entry>`.
+**Resolved 2026-08-25: dropped.** Entries no longer live under `/docs` — the docs root is `/overview`
+(not `/`, which stays reserved for the marketing Home page — see `pages/Home.md`); everything else is
+`/<section>/<entry>`.
 
-The site has two zones — a marketing page at `/` and the docs — and the prefix is what keeps them from
-colliding. A future `/pricing` or `/blog` can never shadow a docs slug, and the zone test stays
-mechanical: paths under `/docs` get the docs shell, paths outside it do not. No lookup, no exception for
-the root.
-
-The cost is longer URLs. Accepted.
+This trades away the mechanical zone test the prefix used to give for free (path starts with `/docs` →
+docs shell, else → marketing/other). Without it, zone resolution needs an explicit lookup against the
+tree's flattened slug list (or an exclusion list of non-docs routes) rather than a prefix check. A future
+`/pricing` or `/blog` route can collide with a docs slug and must be checked against the tree before being
+added — `Routing and Page State.md` owns that resolution and should be updated to reflect this before it's
+relied on.
 
 ## Entry fields
 
 | Field | Required | Rule |
 | --- | --- | --- |
 | `label` | yes | Single source for three things: the sidebar item, the page H1, and the pagination card. They are never worded differently. |
-| `slug` | yes | Absolute, leading slash, no trailing slash, lowercase, hyphenated. **Every docs entry begins `/docs`** — see the prefix rule above. The route, and the anchor-free part of every link to this page. |
+| `slug` | yes | Absolute, leading slash, no trailing slash, lowercase, hyphenated. No `/docs` prefix — see the prefix rule above (resolved 2026-08-25, dropped). The route, and the anchor-free part of every link to this page. |
 | `archetype` | yes | Must name a file in `specs/pages/`. Determines the page's slot composition. |
 | `eyebrow` | no | Overrides the `category-badge` text. Defaults to the parent section's label — see `pages/Doc Article.md`. |
 | `hidden` | no | Excluded from the sidebar but still routable and still indexed. Use sparingly. |
@@ -114,54 +115,55 @@ leave unknown, do not infer.
 
 ```
 - label: "Overview"
-  slug: "/docs"
+  slug: "/overview"
   archetype: "Section Landing"
 
 - section: "0. Getting Started"    # new — no source doc yet, needs authoring
   entries:
-    - label: "Installation"            slug: "/docs/getting-started/installation"        archetype: "Doc Article"
-    - label: "First Table"             slug: "/docs/getting-started/first-table"          archetype: "Doc Article"
-    - label: "Building a Custom Feature" slug: "/docs/getting-started/custom-feature"     archetype: "Doc Article"
+    - label: "Introduction"            slug: "/getting-started/introduction"        archetype: "Doc Article"
+    - label: "Installation"            slug: "/getting-started/installation"        archetype: "Doc Article"
+    - label: "First Table"             slug: "/getting-started/first-table"          archetype: "Doc Article"
+    - label: "Building a Custom Feature" slug: "/getting-started/custom-feature"     archetype: "Doc Article"
 
 - section: "1. State Layer"
   entries:
-    - label: "Columns"               slug: "/docs/state-layer/columns"           archetype: "Doc Article"
-    - label: "Row Mutations"         slug: "/docs/state-layer/row-mutations"     archetype: "Doc Article"
-    - label: "Drag & Drop"           slug: "/docs/state-layer/drag-drop"         archetype: "Doc Article"
-    - label: "Expansion"             slug: "/docs/state-layer/expansion"         archetype: "Doc Article"
-    - label: "Filtering"             slug: "/docs/state-layer/filtering"         archetype: "Doc Article"
-    - label: "Grouping"              slug: "/docs/state-layer/grouping"          archetype: "Doc Article"
-    - label: "Infinite Scroll"       slug: "/docs/state-layer/infinite-scroll"   archetype: "Doc Article"
-    - label: "Pagination"            slug: "/docs/state-layer/pagination"        archetype: "Doc Article"
-    - label: "Row Editing"           slug: "/docs/state-layer/row-editing"       archetype: "Doc Article"
-    - label: "Selection"             slug: "/docs/state-layer/selection"         archetype: "Doc Article"
-    - label: "Sorting"               slug: "/docs/state-layer/sorting"           archetype: "Doc Article"
-    - label: "Virtual Scroll"        slug: "/docs/state-layer/virtual-scroll"    archetype: "Doc Article"
+    - label: "Columns"               slug: "/state-layer/columns"           archetype: "Doc Article"
+    - label: "Row Mutations"         slug: "/state-layer/row-mutations"     archetype: "Doc Article"
+    - label: "Drag & Drop"           slug: "/state-layer/drag-drop"         archetype: "Doc Article"
+    - label: "Expansion"             slug: "/state-layer/expansion"         archetype: "Doc Article"
+    - label: "Filtering"             slug: "/state-layer/filtering"         archetype: "Doc Article"
+    - label: "Grouping"              slug: "/state-layer/grouping"          archetype: "Doc Article"
+    - label: "Infinite Scroll"       slug: "/state-layer/infinite-scroll"   archetype: "Doc Article"
+    - label: "Pagination"            slug: "/state-layer/pagination"        archetype: "Doc Article"
+    - label: "Row Editing"           slug: "/state-layer/row-editing"       archetype: "Doc Article"
+    - label: "Selection"             slug: "/state-layer/selection"         archetype: "Doc Article"
+    - label: "Sorting"               slug: "/state-layer/sorting"           archetype: "Doc Article"
+    - label: "Virtual Scroll"        slug: "/state-layer/virtual-scroll"    archetype: "Doc Article"
 
 - section: "2. Columns"    # inferred from 2-columns/ — confirm before relying on it
   entries:
-    - label: "Column Metadata"       slug: "/docs/columns/column-metadata"       archetype: "Doc Article"
-    - label: "Data-Derived Columns"  slug: "/docs/columns/data-derived"          archetype: "Doc Article"
-    - label: "Ownership Model"       slug: "/docs/columns/ownership-model"       archetype: "Doc Article"
-    - label: "Signal Forms Techniques" slug: "/docs/columns/signal-forms-techniques" archetype: "Doc Article"
-    - label: "Tier 1 — Intrinsic"    slug: "/docs/columns/tier-1-intrinsic"      archetype: "Doc Article"
-    - label: "Tier 2 — Layout"       slug: "/docs/columns/tier-2-layout"         archetype: "Doc Article"
-    - label: "Tier 3 — Feature Config" slug: "/docs/columns/tier-3-feature-config" archetype: "Doc Article"
+    - label: "Column Metadata"       slug: "/columns/column-metadata"       archetype: "Doc Article"
+    - label: "Data-Derived Columns"  slug: "/columns/data-derived"          archetype: "Doc Article"
+    - label: "Ownership Model"       slug: "/columns/ownership-model"       archetype: "Doc Article"
+    - label: "Signal Forms Techniques" slug: "/columns/signal-forms-techniques" archetype: "Doc Article"
+    - label: "Tier 1 — Intrinsic"    slug: "/columns/tier-1-intrinsic"      archetype: "Doc Article"
+    - label: "Tier 2 — Layout"       slug: "/columns/tier-2-layout"         archetype: "Doc Article"
+    - label: "Tier 3 — Feature Config" slug: "/columns/tier-3-feature-config" archetype: "Doc Article"
 
 - section: "3. UI Layer"
   entries:
-    - label: "Core Directives"       slug: "/docs/ui-layer/core"                 archetype: "Doc Article"
-    - label: "Column Identity"       slug: "/docs/ui-layer/columns"              archetype: "Doc Article"
-    - label: "Sort"                  slug: "/docs/ui-layer/sort"                 archetype: "Doc Article"
-    - label: "Selection"             slug: "/docs/ui-layer/selection"            archetype: "Doc Article"
-    - label: "Expansion"             slug: "/docs/ui-layer/expansion"            archetype: "Doc Article"
-    - label: "Grouping"              slug: "/docs/ui-layer/grouping"             archetype: "Doc Article"
-    - label: "Drag & Drop"           slug: "/docs/ui-layer/drag-drop"            archetype: "Doc Article"
-    - label: "Resizing"              slug: "/docs/ui-layer/resizing"             archetype: "Doc Article"
-    - label: "Row Reorder Animation" slug: "/docs/ui-layer/row-animation"        archetype: "Doc Article"   hidden: true  # not implemented — draft, not ticketed
-    - label: "Accessibility"         slug: "/docs/ui-layer/accessibility"        archetype: "Doc Article"
-    - label: "Styling & Tokens"      slug: "/docs/ui-layer/styling-tokens"       archetype: "Doc Article"
-    - label: "Virtual Scroll"        slug: "/docs/ui-layer/virtual-scroll"       archetype: "Doc Article"
+    - label: "Core Directives"       slug: "/ui-layer/core"                 archetype: "Doc Article"
+    - label: "Column Identity"       slug: "/ui-layer/columns"              archetype: "Doc Article"
+    - label: "Sort"                  slug: "/ui-layer/sort"                 archetype: "Doc Article"
+    - label: "Selection"             slug: "/ui-layer/selection"            archetype: "Doc Article"
+    - label: "Expansion"             slug: "/ui-layer/expansion"            archetype: "Doc Article"
+    - label: "Grouping"              slug: "/ui-layer/grouping"             archetype: "Doc Article"
+    - label: "Drag & Drop"           slug: "/ui-layer/drag-drop"            archetype: "Doc Article"
+    - label: "Resizing"              slug: "/ui-layer/resizing"             archetype: "Doc Article"
+    - label: "Row Reorder Animation" slug: "/ui-layer/row-animation"        archetype: "Doc Article"   hidden: true  # not implemented — draft, not ticketed
+    - label: "Accessibility"         slug: "/ui-layer/accessibility"        archetype: "Doc Article"
+    - label: "Styling & Tokens"      slug: "/ui-layer/styling-tokens"       archetype: "Doc Article"
+    - label: "Virtual Scroll"        slug: "/ui-layer/virtual-scroll"       archetype: "Doc Article"
 ```
 
 Section 4+ is referenced by the numbering but its entries are still unknown — no source folder exists for it.
@@ -174,6 +176,6 @@ re-introduces exactly the drift this file exists to prevent. See `Pagination Foo
 ## Open
 
 - Where the tree physically lives (a JSON/YAML file, front-matter across content files, or a generated manifest) is an implementation choice this spec does not make. It only requires that there be exactly one.
-- ~~The seed tree is inconsistent about prefixes~~ **resolved 2026-08-21:** every docs entry lives under
-  `/docs` — see the prefix rule above.
-- ~~Whether the home page is `/` with the `Section Landing` archetype, or a separate marketing page~~ **resolved 2026-08-21:** `/` is a marketing page with no sidebar — see `pages/Home.md`. It is **not** in the tree, so the first tree entry is the docs root (`/docs`, "Overview"). Home never appears in prev/next and is never the active nav item.
+- ~~The seed tree is inconsistent about prefixes~~ **resolved 2026-08-21, superseded 2026-08-25:** the
+  `/docs` prefix was dropped — see the prefix rule above.
+- ~~Whether the home page is `/` with the `Section Landing` archetype, or a separate marketing page~~ **resolved 2026-08-21:** `/` is a marketing page with no sidebar — see `pages/Home.md`. It is **not** in the tree, so the first tree entry is the docs root (`/overview`, "Overview"). Home never appears in prev/next and is never the active nav item.

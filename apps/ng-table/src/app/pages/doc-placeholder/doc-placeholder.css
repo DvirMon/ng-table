@@ -1,0 +1,10 @@
+.doc-placeholder__shell {
+  display: grid;
+  grid-template-columns: var(--ngpt-sys-layout-grid-columns);
+  max-width: var(--ngpt-sys-breakpoint-lg);
+  margin: 0 auto;
+}
+
+.doc-placeholder__content {
+  padding: var(--ngpt-sys-space-700) var(--ngpt-sys-space-600);
+}

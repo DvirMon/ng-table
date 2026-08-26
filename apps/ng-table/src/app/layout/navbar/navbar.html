@@ -26,7 +26,7 @@
       @case ('band') {
         <!-- eslint-disable-next-line @angular-eslint/template/elements-content -- attribute-hosted component (ADR-0005): content comes from search-field.ts's own templateUrl -->
         <button ngptSearchField variant="on-band" [open]="searchOpen()" (click)="forwardOpenSearch()"></button>
-        <a class="navbar__link" href="#">Documentation</a>
+        <a class="navbar__link" routerLink="/getting-started/introduction">Documentation</a>
         <a class="navbar__link" href="#">GitHub</a>
       }
     }

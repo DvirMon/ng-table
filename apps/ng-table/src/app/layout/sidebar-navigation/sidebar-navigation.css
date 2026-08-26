@@ -1,0 +1,29 @@
+:host {
+  display: block;
+  position: sticky;
+  top: var(--ngpt-sys-layout-scroll-offset);
+  max-height: calc(100vh - var(--ngpt-sys-layout-scroll-offset));
+  overflow-y: auto;
+  width: var(--ngpt-sys-layout-sidebar-width);
+  padding: var(--ngpt-sys-space-700) var(--ngpt-sys-space-500);
+  border-right: 1px solid var(--ngpt-comp-row-divider);
+  font: var(--ngpt-sys-typescale-label-large);
+}
+
+.sidebar__root {
+  margin-bottom: var(--ngpt-sys-space-250);
+}
+
+.sidebar__section-label {
+  font: var(--ngpt-sys-typescale-label-small-alt);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ngpt-text-muted);
+  margin: var(--ngpt-sys-comp-nav-section-gap) 0 var(--ngpt-sys-space-100);
+}
+
+.sidebar__section-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngpt-sys-space-100);
+}

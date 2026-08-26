@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideMenu } from '@ng-icons/lucide';
 import { IconButton } from '../../design-system/icon-button/icon-button';
@@ -21,7 +22,7 @@ import { ScrolledPastThreshold } from './scrolled-past-threshold';
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SearchField, IconButton, NgIcon],
+  imports: [SearchField, IconButton, NgIcon, RouterLink],
   viewProviders: [provideIcons({ lucideMenu })],
   hostDirectives: [ScrolledPastThreshold],
   host: {
