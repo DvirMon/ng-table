@@ -46,7 +46,12 @@ function foldFeatures<TRow>(
       handle.setRenderRowsBuilder(spec.renderRows);
     }
 
-    Object.assign(composed, spec.members);
+    if (spec.members) {
+      for (const key of Object.keys(spec.members)) {
+        registry.claimMember(key, label);
+      }
+      Object.assign(composed, spec.members);
+    }
 
     if (spec.columnRules) {
       handle.columnRules.push(...spec.columnRules);

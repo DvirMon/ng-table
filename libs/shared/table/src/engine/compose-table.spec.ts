@@ -139,6 +139,14 @@ describe('composeTable', () => {
     );
   });
 
+  it('throws when two features claim the same store member (ADR-0007)', () => {
+    const withEditing: TableFeature<Row> = () => ({ members: { editing: signal(0) } });
+
+    expect(() => compose([withEditing, withEditing])).toThrow(
+      /features\[0\] and features\[1\] both provide the "editing" store member/
+    );
+  });
+
   it('runs onInit only after every feature is composed', () => {
     let seenAtInit: unknown;
     const withLateReader: TableFeature<Row> = (_core, composed) => ({

@@ -12,6 +12,7 @@ export function describeFeature(index: number): string {
  */
 export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
+  private readonly ownerByMember = new Map<string, string>();
   private renderRowsOwner: string | undefined;
 
   claimStage(stage: PipelineStage, feature: string): void {
@@ -35,5 +36,23 @@ export class SlotRegistry {
       );
     }
     this.renderRowsOwner = feature;
+  }
+
+  /**
+   * ADR-0007. Members are merged with `Object.assign`, so without this the later feature wins
+   * silently and the earlier one's state signal is orphaned — still written by its own closures,
+   * read by nobody. Quieter than a stage collision (which at least produces visibly wrong rows),
+   * so it throws for the same reason the other two do.
+   */
+  claimMember(key: string, feature: string): void {
+    const currentOwner = this.ownerByMember.get(key);
+    const isAlreadyClaimed = currentOwner !== undefined;
+    if (isAlreadyClaimed) {
+      throw new Error(
+        `[createTable] ${currentOwner} and ${feature} both provide the "${key}" ` +
+          'store member. Only one feature may provide each member.'
+      );
+    }
+    this.ownerByMember.set(key, feature);
   }
 }

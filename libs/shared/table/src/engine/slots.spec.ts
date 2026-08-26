@@ -25,6 +25,23 @@ describe('SlotRegistry', () => {
     );
   });
 
+  it('allows different members', () => {
+    const registry = new SlotRegistry();
+
+    registry.claimMember('editing', 'features[0]');
+
+    expect(() => registry.claimMember('pending', 'features[1]')).not.toThrow();
+  });
+
+  it('throws naming both features when a member is claimed twice', () => {
+    const registry = new SlotRegistry();
+    registry.claimMember('editing', 'features[0]');
+
+    expect(() => registry.claimMember('editing', 'features[1]')).toThrowError(
+      /features\[0\] and features\[1\] both provide the "editing" store member/
+    );
+  });
+
   it('throws naming both features when renderRows is claimed twice', () => {
     const registry = new SlotRegistry();
     registry.claimRenderRows('features[0]');
