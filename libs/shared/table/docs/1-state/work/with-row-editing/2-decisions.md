@@ -636,7 +636,7 @@ pending:  Signal<EditingMap<TRow>>   // closed, still rollback-able
 `computed`. The *decision* below — that a pending row leaves `editing` rather than lingering in
 it — is what stands; only the containers changed.
 
-**`settleEdit(id)` is the sibling of D30's `rebaseEdit(id, row?)`**, not a new concept — the
+**`settleEdit(id)` is the sibling of D34's `rebaseEdit(id, row?)`**, not a new concept — the
 snapshot was already writable; now it is also deletable.
 
 **Consequences:**
@@ -661,7 +661,7 @@ reopens showing its current (optimistic, unconfirmed) values, but Cancel still r
 pre-edit state — the oldest restore point wins, which is what Cancel means to a user.
 
 This also settles review finding #3 for the non-pending case: `beginEdit` must stop re-capturing
-over an existing snapshot. Re-capture is `rebaseEdit`'s job (D30); `beginEdit` only ever captures
+over an existing snapshot. Re-capture is `rebaseEdit`'s job (D34); `beginEdit` only ever captures
 when there is no entry in either map.
 
 **Known sharp edge, left to the consumer:** if the in-flight save then fails, the error handler's
@@ -714,11 +714,11 @@ the new vocabulary.
   throw, because every other updater no-ops on a miss.
 - **`rebaseEdit` stays `editing`-only — it is not a `pending` verb.** The two solve different
   problems and only looked related because both stored a "snapshot" (see D31.4, which removes the
-  word). D30's `rebaseEdit` answers O13: the restore point of a row *the user is still typing in*
+  word). D34's `rebaseEdit` answers O13: the restore point of a row *the user is still typing in*
   going stale because something else wrote `data`. `pending` holds the rollback for a row *already
   closed* with a request in flight. Widening `rebaseEdit` to fall back to `pending` would cover
   only the narrow window where an external write lands during an in-flight optimistic save —
-  unhit, and it would stretch D30 past its stated problem. Left alone.
+  unhit, and it would stretch D34 past its stated problem. Left alone.
 - **`clearEditing()` closes open rows and leaves `pending` alone.** Pending rows are already
   closed; dropping their rollbacks would silently disarm every in-flight save.
 - **`revertEdit` reads `editing` first, then `pending`.** The order is not load-bearing — D31.1
@@ -727,7 +727,7 @@ the new vocabulary.
 
 ### D31.4 — The public verbs are the edit lifecycle; "snapshot" leaves the API (2026-08-25)
 
-`setSnapshot` (D30) and `removeSnapshot` (D31) both said "snapshot", which read as though they
+`setSnapshot` (D34) and `removeSnapshot` (D31) both said "snapshot", which read as though they
 were two halves of one mechanism. They are not: one keeps an *open* row's restore point current,
 the other discards a *closed* row's rollback after the server confirms. The shared noun caused a
 real misreading during implementation review.
@@ -817,11 +817,18 @@ Seven findings were raised against the shipped `withRowEdit()`. Disposition, so 
 | 6 | `revertEdit`'s `writeData` bypasses the normal write path | **Dissolved** — ADR-0006 chose an effect watching `data`, which sees this write like any other. Would have mattered only under the rejected write-path hook |
 | 7 | `updateEditing` threw cryptically without `withRowEdit()` | **Moot** — `updateEditing` no longer exists; writes go through `table.editing.update(...)` (`WritableView`) |
 
-**Naming collision to fix:** this folder's D30 is `rebaseEdit`; the engine `CLAUDE.md` cites D30 as
-the `WritableView` write pattern. Different decisions, same number. Renumber one before an agent
-reads both.
+**Naming collisions — resolved 2026-08-25 (G8).** Decision numbers are global across this folder
+and `../with-mutations/2-decisions.md`, so two files could not both hold a D30. Two collisions
+existed; both were renumbered here, leaving the mutation decisions untouched:
 
-## D30 — The restore point is writable; the library never watches `data` for staleness (2026-08-19)
+| Was | Now | Why this side moved |
+|---|---|---|
+| D30 — `rebaseEdit` (this folder) | **D34** | D30 in the mutation decisions is the `WritableView` write pattern, cited by the engine `CLAUDE.md` and `row-mutations.md` — the cross-cutting one keeps the number |
+| D31 — `*ngpTableRowField` (this folder) | **D33** | D31 in this folder is optimistic save, with D31.1–D31.5 sub-decisions hanging off it; the directive decision has none |
+
+## D34 — The restore point is writable; the library never watches `data` for staleness (2026-08-19)
+
+**Renumbered from D30 on 2026-08-25** — see the collision table above.
 
 **Renamed 2026-08-25:** this verb shipped as `setSnapshot`. It is now `rebaseEdit` — see D31.4.
 Behavior is unchanged; every mention below reads with the new name.
@@ -852,7 +859,9 @@ captured at `beginEdit`. No machinery watches `data`, and no per-row subscriptio
   that `beginEdit`/`revertEdit` already own.
 - Ships with **E4**, not E3 — nothing reads snapshots until `revertEdit` exists.
 
-## D31 — `*ngpTableRowField`, behind a secondary entry point (2026-08-19)
+## D33 — `*ngpTableRowField`, behind a secondary entry point (2026-08-19)
+
+**Renumbered from D31 on 2026-08-25** — see the collision table above.
 
 **Decision:** Supersedes D23's one-line rejection of a field-resolving directive. Ships
 `*ngpTableRowField`, a structural directive that folds the E2 pattern —
@@ -908,7 +917,7 @@ build target, no `project.json` change.
 ## Open — carried forward
 
 - **O13** ~~A `beginEdit` snapshot (D17) can go stale if `data` changes from another source while
-  the row is open.~~ **Closed by D30.**
+  the row is open.~~ **Closed by D34.**
 - **O11** Does `withRowEdit()` fire a `rowEditChanged` event (mirroring `withExpansion`'s
   `rowExpanded` Observable), or is `editingRows` the only notification? Same question as O6
   (mutation decisions) — decide both together.
@@ -987,6 +996,140 @@ build target, no `project.json` change.
   changed-id set fed by the write path — new machinery, and unsound if a consumer bypasses
   `updateRows` with a direct `data.set()`, which D4/D11 (mutation decisions) explicitly allow.
 
+- [ ] **O23** *(from D35)* Should openness also be **declarative** — an `applyEditable({ when })`
+      rule mirroring `applyVisible()`, so rows matching a predicate open without a call site? See
+      D35's "What this does not do" for the three collisions that have to be answered first.
+      **Blocked on G4** (`{ multiple: true }`), which a predicate matching N rows forces open.
+
 **Resolved:** O2→D10, O3→D18, O4→D15/D16/D17, O11 (multi-row)→D14, O10→D22, O12→D23,
 O14→D20 (mechanism superseded by D24), O18→closed by D24, O21→D28, form scope→D22,
-D13→revised by D21, D20 mechanism→D24, D23 directive clause→D31.
+D13→revised by D21, D20 mechanism→D24, D23 directive clause→D33.
+
+## D35 — `addNewRow(row, opts?)`: add and open as one write (2026-08-25)
+
+**Decision:** Ships a seventh editing updater. `addNewRow` writes the row into `data` and opens
+it, with the restore point set to `ABSENT` directly rather than derived from a lookup.
+
+```ts
+table.editing.update(addNewRow({ id: crypto.randomUUID(), ...blank }, { at: 0 }));
+```
+
+**What it replaces:** D28's two-call blank-row flow, where `beginEdit` → `addRow` versus
+`addRow` → `beginEdit` selects discard-vs-reset **by call order alone**, silently and with no
+error in either direction. D28's analysis stands — both intents are real — but only one of them
+now depends on getting an order right. Reset remains the explicit two-call sequence.
+
+**Why it cannot be `addRow(row, { edit: true })`**, which was the first thing asked for. The two
+slices have deliberately asymmetric updater contexts:
+
+| Updater kind | Signature | Can write |
+|---|---|---|
+| `RowUpdater` (`table.value`) | `(rows, { trackBy }) => TRow[]` | `data` only — it returns an array |
+| `EditingUpdater` (`table.editing`) | `(state, { data, trackBy, writeData }) => EditingState` | both — `writeData` is in its context |
+
+A flag on `addRow` has nothing to write to. The asymmetry is not incidental: `withRowEdit()` is
+opt-in and most tables do not compose it, so core mutations cannot reference it. The dependency
+runs plugin → core and never back — the same direction ADR-0006 enforces, where the engine
+announces removals and features prune their own state.
+
+The naming cost is accepted and real: the verb says "row", the call site says `.editing`. Every
+alternative hid one half or the other. `beginAdd` (symmetric with `beginEdit`) was rejected for
+naming the edit side while the consumer's intent is "add a row".
+
+**No-ops when the id is already in `data`** rather than throwing — the house rule for every
+updater. Adding a duplicate id would break `trackBy` uniqueness for every consumer of it and
+overwrite an existing restore point with `ABSENT`, so Cancel would delete a row it did not
+create. `patchRow` is the verb for an id that exists.
+
+### What this does not do — `applyEditable({ when })`, tracked as O23
+
+The alternative raised alongside it: a declarative rule on the schema, mirroring `applyVisible()`
+— *rows are editable when this predicate holds* (e.g. every field empty), so a row added by any
+path, including a wholesale `data.set(...)`, opens with no call site at all.
+
+The mechanism is expressible. D2/D4 of `../effect-free-column-reactivity/2-decisions.md` give the
+shape, and its D1 gives the constraint: never let a rule and an imperative write share one signal.
+Applied here that is `baseOpen` (writable, `beginEdit`/`endEdit`) plus a derived rule overlay,
+with `open` a `computed` over both.
+
+Three collisions have to be answered before it is worth building, and none is about the fold:
+
+1. **Unclosable rows.** D2's accepted consequence is that the rule wins over the imperative write.
+   For a column that is harmless — a column has no user-owned lifecycle. For a row it means
+   `endEdit(id)` is a no-op while the predicate holds. The motivating predicate (*all fields
+   empty*) traps exactly the user who opens a blank row, types nothing and blurs: neither Save nor
+   Cancel can close it.
+2. **It forces G4.** A predicate matching three rows wants three rows open; `{ multiple: false }`
+   is the default (D14). A row rule does not merely touch the undesigned `multiple: true`
+   configuration, it requires it resolved.
+3. **Emptiness is a proxy for provenance, and leaks both ways.** The real intent is "this row was
+   just added and never saved". A real row the user cleared matches the predicate; a new row with
+   a prefilled default does not. `addNewRow` states the provenance directly.
+
+**Where a rule would genuinely earn its place**, and `addNewRow` cannot reach: rows arriving
+already-editable from a wholesale `data.set(...)` — a server-supplied draft, a bulk import. There
+is no call site to hang an updater on. That is the case to design the mechanism for, not
+blank-row-add.
+
+## D36 — `addNewRow` stops forcing `ABSENT`; discard is composed, not a `revertEdit` option (shipped 2026-08-26)
+
+**Status: shipped.** Supersedes the part of D35 that ties `addNewRow`'s Cancel outcome to how
+the row was added. Went through two shapes in the same session — recorded because the rejected
+first shape's reasoning is instructive, not just the final one.
+
+**Decision:** `addNewRow(row, opts?)` captures `row` itself as the restore point — the same
+mechanism `beginEdit` uses on an existing row — instead of forcing `ABSENT`. This makes
+`addNewRow` and the `addRow` → `beginEdit` two-call sequence **behaviorally identical**;
+`addNewRow` is now pure ergonomics (one call instead of two), not a separate intent. Plain
+`revertEdit(id)` therefore **resets** an `addNewRow`'d row instead of removing it.
+
+`revertEdit` itself is **unchanged** — no new parameter, no discard option. A consumer who wants
+Cancel to remove the row instead composes it explicitly, the same shape Save already composes:
+
+```ts
+table.value.update(removeRow(id));   // core: data only
+table.editing.update(endEdit(id));   // closes the editing entry
+```
+
+**First shape, rejected:** `revertEdit(id, { discard?: boolean })`. Walked back because
+`revertEdit`'s contract is "go back to the snapshot" — a discard is not a revert, it is a
+different operation, and giving one function two unrelated jobs behind a boolean is the kind of
+flag `withRowEdit()` elsewhere avoids (no store verbs, D16/D30; composition over configuration).
+`removeRow` + `endEdit` already exists, already means exactly "remove this row and close its
+editing entry," and needs no new API surface at all.
+
+**Why D35's original premise was wrong, not just its API shape.** D35 reasoned discard-vs-reset
+had to be selected at add-time because nothing else knew whether the row was new. That conflates
+two separate things: the *mechanism* (what value gets captured — this only add-time can supply)
+and the *Cancel policy* (discard vs. reset — this is a consumer decision, not a fact about the
+row). `addNewRow`'s `row` argument already carries real field values, so capturing and restoring
+it is a valid default; a consumer who additionally wants "and delete on Cancel" already knows
+which button they wrote, and says so by composing `removeRow`, not by threading a flag back
+through `revertEdit`.
+
+**`ABSENT` is not removed from the model.** It stays exactly where it already serves a different,
+genuine purpose — a snapshot representing "no row exists for this id":
+- `beginEdit(id)` on an id not yet in `data` (D17's fallback path, `row-edit-mutations.ts`).
+- `rebaseEdit(id)` re-reading `data()` for an id that is gone.
+- ADR-0006's pruning exemption for `ABSENT` snapshots (`with-row-edit.ts`) — nothing to prune
+  when nothing was ever backed by a row.
+
+`revertEdit` still checks `snapshot === ABSENT` and removes unconditionally in that case — there
+is nothing to restore to. That branch is untouched by this decision; only `addNewRow`'s stopped
+forcing it.
+
+**What changed in code:**
+- `addNewRow` (`row-edit-mutations.ts`): captures `withSnapshot(state.snapshots, id, row)`
+  instead of unconditionally `ABSENT`.
+- `revertEdit`: unchanged signature; doc comment now points to the `removeRow` + `endEdit`
+  compose for the discard case.
+- `docs/1-state/features/row-editing.md` §2/§3 amended to match.
+- Tests (`row-edit-mutations.spec.ts`) updated: `addNewRow` now asserts a real-value snapshot;
+  a new test covers the `removeRow` + `endEdit` compose; a new test covers plain `revertEdit`
+  resetting an `addNewRow`'d row.
+
+**Not yet done:** story/demo call sites (`libs/shared/table/src/stories/gated-edit/*`,
+`apps/demo/.../table-row-edit-demo`) still call `revertEdit(id)` unconditionally from a single
+`cancelEdit` handler for both the discard-intent and reset-intent Add buttons — those need to
+route the discard-intent button through the composed `removeRow`+`endEdit` call instead, tracking
+per-row which intent applies (e.g. a `Set<RowId>` of ids added via the discard button).

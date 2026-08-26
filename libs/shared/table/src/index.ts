@@ -25,6 +25,7 @@ export { applyVisible, applyVisibleAsync } from './api/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
 export { addRow, removeRow, patchRow } from './api/row-mutations';
 export {
+  addNewRow,
   beginEdit,
   clearEditing,
   endEdit,

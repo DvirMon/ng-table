@@ -111,7 +111,7 @@ Raw form:
 }
 ```
 
-Folded, via the optional directive (D31, directive):
+Folded, via the optional directive (D33):
 
 ```ts
 import { NgpTableRowFieldDirective } from '@acme/table/forms';
@@ -217,14 +217,15 @@ table.editing.update(beginEdit(id));
 No verbs on the store (D16/D30). Updater factories are free, pure functions — tree-shakeable and
 unit-testable without a store.
 
-### The six updaters
+### The seven updaters
 
 | Updater | Effect | No-ops when |
 |---|---|---|
+| `addNewRow(row, { at? })` | adds the row to `data` **and** opens it, restore point = the row itself (D36) | the id is already in `data` |
 | `beginEdit(id)` | opens the row, capturing its current value — or `ABSENT` if the id is not in `data` | already open |
 | `endEdit(id)` | closes the row, keeping whatever is in `data`, spending the restore point | not open |
 | `endEdit(id, { keepSnapshot: true })` | closes the row, **holding** the restore point — the row becomes pending | not open |
-| `revertEdit(id)` | restores the snapshot into `data` (or removes the row if `ABSENT`) and closes it | no restore point |
+| `revertEdit(id)` | restores the snapshot into `data` and closes it; removes the row instead if the snapshot is `ABSENT` | no restore point |
 | `rebaseEdit(id, row?)` | moves an **open** row's restore point forward | not open |
 | `settleEdit(id)` | drops a **pending** row's restore point — the server confirmed | open, or not held |
 | `clearEditing()` | closes every open row, dropping their restore points; leaves pending rows alone | nothing open |
@@ -255,27 +256,45 @@ table.editing.update(beginEdit(id));    // snapshot captured
 table.editing.update(revertEdit(id));   // snapshot written back, entry dropped
 ```
 
-### Add a blank row — and the call order that selects the intent (D28)
+### Add a blank row (D35/D36)
 
 ```ts
-const id = crypto.randomUUID();                              // consumer's temp id (D26)
-table.editing.update(beginEdit(id));                         // nothing there yet → ABSENT
-table.value.update(addRow({ id, ...blank }, { at: 0 }));     // D27: explicit `at: 0`
+table.editing.update(addNewRow({ id: crypto.randomUUID(), ...blank }, { at: 0 }));
+// … user types; Cancel:
+table.editing.update(revertEdit(id));            // resets — row stays, blanked back out (default)
+
+// or, to discard the row instead — composed explicitly, the same shape Save uses:
+table.value.update(removeRow(id));
+table.editing.update(endEdit(id));
 ```
 
-Reads oddly — start editing a row that does not exist, then create it — but it needs no flag,
-and the library is never told something it can observe.
+One write to add. The row appears and is open, and its restore point is **the row itself** — the
+same mechanism `beginEdit` uses on an existing row (D36). `addNewRow` and the `addRow` →
+`beginEdit` two-call sequence are now behaviorally identical; `addNewRow` is purely the
+one-call ergonomic form, not a separate intent. Plain `revertEdit(id)` therefore **resets**.
 
-**The reverse order is not a bug; it is the other intent.**
+**`revertEdit` stays a pure revert — it does not take a discard option.** D36 first tried
+`revertEdit(id, { discard: true })`, then walked it back: `revertEdit`'s only job is "go back to
+the snapshot," and a discard is not a revert, it is a different operation. A consumer who wants
+Cancel to remove a row composes it themselves — `removeRow` (core, `data` only) + `endEdit`
+(closes the editing entry) — mirroring how Save is already composed (`patchRow` + `endEdit`),
+not a variant of Cancel.
 
-| Order | Snapshot | Cancel does |
-|---|---|---|
-| `beginEdit` → `addRow` | `ABSENT` | **discards** the row |
-| `addRow` → `beginEdit` | the blank row | **resets** the row, leaving it in place |
+**Why `addNewRow` lives on `table.editing` and not beside `addRow`.** Only an `EditingUpdater`
+can write both slices: its context carries `writeData`, while a `RowUpdater` returns an array
+and has no handle on editing state. That asymmetry is deliberate — `withRowEdit()` is opt-in, so
+core mutations cannot depend on it. The dependency runs plugin → core, never back.
 
-Both are real product behaviors, and the call order is what selects between them. They differ
-silently, with no error in either direction, because both are valid — which is why the canonical
-flow ships as one snippet with the variant documented beside it.
+D28 originally spelled discard-vs-reset as two add-time call sequences differing only in order,
+which selected the behavior silently, with no error in either direction. D35 fixed the ordering
+hazard for the discard path with `addNewRow` (forcing snapshot `ABSENT`), but that re-coupled
+the Cancel outcome to *how the row was added*. D36 removes that coupling: `addNewRow` always
+captures a real snapshot, so `revertEdit` always resets; discard is an explicit compose at the
+call site that knows it wants one, same as any other row removal.
+
+`ABSENT` is unaffected by this — it still exists, and `revertEdit` still discards unconditionally
+when the snapshot is `ABSENT` (nothing to restore to). That case now only arises from `beginEdit`
+on an id not yet in `data`, or `rebaseEdit` re-reading a since-removed row — not from `addNewRow`.
 
 ### Pessimistic save — needs none of the pending machinery
 
@@ -290,7 +309,7 @@ try {
 
 The row stays open for the whole round trip; the entry is alive throughout.
 
-### Optimistic save (D31, optimistic)
+### Optimistic save (D31)
 
 Close the row before the server answers:
 
@@ -317,7 +336,7 @@ the row. **Delete and move are not covered, structurally** — see G5.
 save then fails, `revertEdit` fires on a row they are actively typing in. The library does not
 suppress it — it cannot know whether the failure or the new input should win.
 
-### External write while a row is open (D30)
+### External write while a row is open (D34)
 
 The library does not detect a stale snapshot, because it cannot tell an external write from any
 other `data` change. The consumer knows when they wrote, so they say so:

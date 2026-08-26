@@ -1,4 +1,5 @@
 import { ABSENT, type RowSnapshot, type SnapshotMap } from './features/with-row-edit';
+import { addRow } from './row-mutations';
 import type { RowId, TrackByFn } from './types';
 
 /**
@@ -70,7 +71,7 @@ function withoutOpen(open: ReadonlySet<RowId>, id: RowId): ReadonlySet<RowId> {
  * D31.1 needs no branch here: a row that already has a restore point keeps it, whether it is a
  * `pending` row re-opening or a double `beginEdit`. Cancel therefore returns to the true
  * pre-edit state rather than an unconfirmed optimistic one — the oldest restore point wins.
- * Moving one forward is `rebaseEdit`'s job (D30).
+ * Moving one forward is `rebaseEdit`'s job (D34).
  */
 export function beginEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state, { data, trackBy }) => {
@@ -81,6 +82,45 @@ export function beginEdit<TRow>(id: RowId): EditingUpdater<TRow> {
       snapshots: state.snapshots.has(id)
         ? state.snapshots
         : withSnapshot(state.snapshots, id, findRow(data, trackBy, id) ?? ABSENT),
+      open: withOpen(state.open, id),
+    };
+  };
+}
+
+/**
+ * D35/D36: adds the row *and* opens it, as one write. The blank-row-add flow (D28) without the
+ * two-call sequence whose order silently selects Cancel's outcome.
+ *
+ * The restore point is the row itself (D36) — the same mechanism `beginEdit` uses on an
+ * existing row — not `ABSENT`. This makes `addNewRow` behaviorally identical to `addRow` →
+ * `beginEdit`; it is pure ergonomics (one call instead of two), not a separate intent. Plain
+ * `revertEdit(id)` therefore *resets* the row rather than removing it. A consumer who wants
+ * Cancel to remove it instead composes `removeRow` + `endEdit` explicitly at their own call
+ * site — see `revertEdit`'s doc comment.
+ *
+ * Lives on the editing slice, not beside `addRow`, because only an `EditingUpdater` can write
+ * both — `RowUpdater` returns an array and has no handle on editing state (`withRowEdit()` is
+ * opt-in, so core cannot depend on it).
+ */
+export function addNewRow<TRow>(
+  // `NoInfer` so `TRow` comes from the `table.editing.update(...)` call site, not from the row
+  // literal. Without it a literal argument fixes `TRow` to its own inferred shape
+  // (`crypto.randomUUID()` widens to a template-literal type, not `string`) and the updater no
+  // longer matches the table's row type.
+  row: NoInfer<TRow>,
+  opts?: { at?: number }
+): EditingUpdater<TRow> {
+  return (state, { data, trackBy, writeData }) => {
+    const id = trackBy(row);
+    // Guard, not a throw (the house rule — every updater no-ops on a miss). Adding a row whose
+    // id is already taken would break `trackBy`'s uniqueness for every consumer of it, and
+    // overwrite an existing restore point. `patchRow` is the verb for an id that already exists.
+    if (findRow(data, trackBy, id) !== undefined) {
+      return state;
+    }
+    writeData(addRow(row, opts)(data, { trackBy }));
+    return {
+      snapshots: withSnapshot(state.snapshots, id, row),
       open: withOpen(state.open, id),
     };
   };
@@ -129,6 +169,15 @@ export function clearEditing<TRow>(): EditingUpdater<TRow> {
  * D28: `snapshot === ABSENT` removes the row (it never existed); otherwise restores the
  * snapshot value. Either way the restore point is spent and the row ends up closed.
  *
+ * `revertEdit` only ever reverts — it does not take a discard option (D36 walked that back). A
+ * consumer who wants Cancel to remove a row they know has a real snapshot (e.g. a freshly
+ * `addNewRow`'d row) composes it explicitly, the same way Save composes `patchRow` + `endEdit`:
+ *
+ * ```ts
+ * table.value.update(removeRow(id));
+ * table.editing.update(endEdit(id));
+ * ```
+ *
  * One lookup covers both cases D31 used to split: cancelling an open row and rolling back a
  * failed optimistic save read the same restore point, because there is only one. No-op when the
  * id has none.
@@ -154,7 +203,7 @@ export function revertEdit<TRow>(id: RowId): EditingUpdater<TRow> {
 }
 
 /**
- * D30: moves an open row's restore point forward, so Cancel does not undo someone else's
+ * D34: moves an open row's restore point forward, so Cancel does not undo someone else's
  * write. Resolves a stale snapshot without the library watching `data` — it cannot tell an
  * external write from any other, so the consumer says when they wrote.
  *

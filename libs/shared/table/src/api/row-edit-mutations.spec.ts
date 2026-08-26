@@ -1,5 +1,6 @@
 import { ABSENT, pendingIds } from './features/with-row-edit';
 import {
+  addNewRow,
   beginEdit,
   clearEditing,
   endEdit,
@@ -8,7 +9,7 @@ import {
   settleEdit,
   type EditingState,
 } from './row-edit-mutations';
-import { addRow } from './row-mutations';
+import { addRow, removeRow } from './row-mutations';
 import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -31,6 +32,43 @@ function state(
 function openIsSubsetOfSnapshots(result: EditingState<Person>): boolean {
   return [...result.open].every((id) => result.snapshots.has(id));
 }
+
+describe('addNewRow', () => {
+  let written: Person[] | undefined;
+
+  function writingCtx(data: Person[] = rows) {
+    written = undefined;
+    return { data, trackBy, writeData: (next: Person[]) => void (written = next) };
+  }
+
+  it('writes the row into data and opens it in one updater (D35)', () => {
+    const result = addNewRow<Person>({ id: 99, name: '' }, { at: 0 })(state(), writingCtx());
+
+    expect(written?.[0]).toEqual({ id: 99, name: '' });
+    expect(result.open.has(99)).toBe(true);
+    expect(openIsSubsetOfSnapshots(result)).toBe(true);
+  });
+
+  it('captures the row itself as its restore point, not ABSENT (D36)', () => {
+    const result = addNewRow<Person>({ id: 99, name: '' })(state(), writingCtx());
+
+    expect(result.snapshots.get(99)).toEqual({ id: 99, name: '' });
+  });
+
+  it('honours `at` the way addRow does (D27)', () => {
+    addNewRow<Person>({ id: 99, name: '' }, { at: 1 })(state(), writingCtx());
+
+    expect(written?.map((row) => row.id)).toEqual([1, 99, 2, 3]);
+  });
+
+  it('no-ops for an id already in data — patchRow owns that case (D35)', () => {
+    const before = state([[2, { id: 2, name: 'Bea' }]], [2]);
+    const result = addNewRow<Person>({ id: 2, name: 'duplicate' })(before, writingCtx());
+
+    expect(written).toBeUndefined();
+    expect(result).toBe(before);
+  });
+});
 
 describe('beginEdit', () => {
   it('captures the row currently in data as its restore point', () => {
@@ -158,6 +196,21 @@ describe('revertEdit', () => {
     expect(result.open.has(99)).toBe(false);
   });
 
+  it('addNewRow\'s snapshot resets rather than removes on plain revertEdit (D36)', () => {
+    const opened = addNewRow<Person>({ id: 99, name: '' })(state(), ctx());
+    let written: Person[] | undefined;
+    const dataWithNewRow = [...rows, { id: 99, name: 'typed' }];
+
+    const result = revertEdit<Person>(99)(opened, {
+      data: dataWithNewRow,
+      trackBy,
+      writeData: (next) => (written = next),
+    });
+
+    expect(written?.find((r) => r.id === 99)).toEqual({ id: 99, name: '' });
+    expect(result.open.has(99)).toBe(false);
+  });
+
   it('rolls back a pending row when the optimistic save failed (D31)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const saved = endEdit<Person>(2, { keepSnapshot: true })(opened, ctx());
@@ -277,6 +330,34 @@ describe('table.editing.update', () => {
 
     expect(fakeTable.value().find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
     expect(fakeTable.pending().size).toBe(0);
+  });
+
+  it('addNewRow adds and opens in one write; discarding on Cancel is composed explicitly (D36)', () => {
+    const fakeTable = createMockTableStoreWithEditing<Person>([], trackBy);
+
+    fakeTable.editing.update(addNewRow<Person>({ id: 99, name: '' }, { at: 0 }));
+
+    expect(fakeTable.value()).toEqual([{ id: 99, name: '' }]);
+    expect(fakeTable.editing().has(99)).toBe(true);
+
+    // Discard is composed, not a `revertEdit` option — same shape Save composes with `patchRow`.
+    fakeTable.value.update(removeRow<Person>(99));
+    fakeTable.editing.update(endEdit<Person>(99));
+
+    expect(fakeTable.value()).toEqual([]);
+    expect(fakeTable.editing().has(99)).toBe(false);
+  });
+
+  it('addNewRow + plain revertEdit resets the row instead of removing it (D36)', () => {
+    const fakeTable = createMockTableStoreWithEditing<Person>([], trackBy);
+
+    fakeTable.editing.update(addNewRow<Person>({ id: 99, name: '' }, { at: 0 }));
+    fakeTable.value.update((data) => data.map((r) => (r.id === 99 ? { ...r, name: 'typed' } : r)));
+
+    fakeTable.editing.update(revertEdit<Person>(99));
+
+    expect(fakeTable.value()).toEqual([{ id: 99, name: '' }]);
+    expect(fakeTable.editing().has(99)).toBe(false);
   });
 
   it('the optimistic-save round trip: close-with-snapshot, succeed, settle (D31)', () => {
