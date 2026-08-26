@@ -17,6 +17,12 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["nx", "serve", "ng-table", "--port", "4202"],
       "port": 4202
+    },
+    {
+      "name": "shared-table-storybook",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "run", "shared-table:storybook"],
+      "port": 4403
     }
   ]
 }

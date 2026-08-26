@@ -38,6 +38,27 @@
         "watch": false,
         "coverage": true
       }
+    },
+    "storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "storybook dev -p 4403",
+        "cwd": "libs/shared/table"
+      }
+    },
+    "build-storybook": {
+      "executor": "nx:run-commands",
+      "outputs": ["{workspaceRoot}/dist/storybook/shared-table"],
+      "options": {
+        "command": "storybook build -o ../../../dist/storybook/shared-table",
+        "cwd": "libs/shared/table"
+      }
+    },
+    "test-storybook": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "test-storybook -c libs/shared/table/.storybook --url=http://localhost:4403"
+      }
     }
   }
 }

@@ -9,8 +9,9 @@
     "issa:build-storybook": "npx nx run issa-landing-app:build-storybook",
     "ds:sb": "npx nx run shared-design-system:storybook",
     "ds:build-storybook": "npx nx run shared-design-system:build-storybook",
-    "ngtable:sb": "npx nx run ng-table:storybook",
-    "ngtable:build-storybook": "npx nx run ng-table:build-storybook",
+    "ngpt": "npx nx serve ng-table",
+    "table:sb": "npx nx run shared-table:storybook",
+    "table:build-storybook": "npx nx run shared-table:build-storybook",
     "test:design-system": "npx nx test shared-design-system",
     "proto:value-sync": "node --experimental-strip-types libs/shared/design-system/src/ui/autocomplete/prototype-value-sync/tui.ts"
   },
@@ -80,6 +81,8 @@
     "jest-axe": "^10.0.0",
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
+    "msw": "^2.15.0",
+    "msw-storybook-addon": "^3.0.0",
     "ng-primitives": "^0.130.1",
     "nx": "23.1.1",
     "prettier": "~3.6.2",
@@ -90,5 +93,10 @@
     "typescript-eslint": "8.62.1",
     "vite": "8.2.1",
     "vitest": "4.1.9"
+  },
+  "msw": {
+    "workerDirectory": [
+      "libs/shared/table/public"
+    ]
   }
 }
