@@ -1,0 +1,59 @@
+<div class="row-edit-story">
+  <p class="row-edit-story__hint">
+    External write / reconciliation (S5) — open a row, then push a change or remove it from
+    outside the edit flow. "Simulate server push" calls <code>rebaseEdit</code> so Cancel
+    restores the pushed value. "Remove row externally" exercises ADR-0006's pruning of a live
+    editing entry.
+  </p>
+
+  <p class="row-edit-story__counter" role="status">editing map: {{ editingIds() | json }}</p>
+
+  <table class="row-edit-story__table">
+    <thead>
+      <tr>
+        <th class="row-edit-story__cell">name</th>
+        <th class="row-edit-story__cell">dept</th>
+        <th class="row-edit-story__cell">actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @let isEditing = table.editing().has(row.id);
+
+        <tr>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <input type="text" [formField]="field.name" placeholder="name" />
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.name }}</span>
+            }
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <select [formField]="field.dept">
+                  @for (dept of deptOptions; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.dept }}</span>
+            }
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
+              <button type="button" (click)="simulateServerPush(row.id)">Simulate server push</button>
+              <button type="button" (click)="removeRowExternally(row.id)">Remove row</button>
+            } @else {
+              <button type="button" (click)="openEdit(row.id)">Edit</button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

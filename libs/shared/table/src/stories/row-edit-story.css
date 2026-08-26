@@ -1,0 +1,82 @@
+.row-edit-story {
+  margin: 1rem;
+  max-width: 42rem;
+  font-family: system-ui, sans-serif;
+  color: #e5e7eb;
+}
+
+.row-edit-story__hint {
+  margin-block-end: 0.75rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.row-edit-story__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-end: 0.75rem;
+}
+
+.row-edit-story__error {
+  font-size: 0.85rem;
+  color: #f87171;
+}
+
+.row-edit-story__counter {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.row-edit-story__table {
+  border-collapse: collapse;
+  width: 100%;
+  background: #1f2937;
+}
+
+.row-edit-story__row--saving {
+  opacity: 0.6;
+}
+
+.row-edit-story__cell {
+  border: 1px solid #374151;
+  padding: 0.4rem 0.6rem;
+  text-align: start;
+  font-size: 0.9rem;
+}
+
+.row-edit-story__pending {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.row-edit-story__cell input,
+.row-edit-story__cell select {
+  color-scheme: dark;
+  background: #111827;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+  border-radius: 0.3rem;
+  font: inherit;
+  padding: 0.2rem 0.3rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.row-edit-story__toolbar button,
+.row-edit-story__cell button {
+  border: 1px solid #374151;
+  background: #1f2937;
+  color: #e5e7eb;
+  border-radius: 0.35rem;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-inline-end: 0.25rem;
+}
+
+.row-edit-story__toolbar button:hover,
+.row-edit-story__cell button:hover {
+  background: #111827;
+}

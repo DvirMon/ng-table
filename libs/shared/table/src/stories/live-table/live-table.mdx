@@ -1,0 +1,32 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as LiveTableStories from './live-table.stories';
+import hostClass from './live-table-story-host.component.ts?raw';
+import hostTemplate from './live-table-story-host.component.html?raw';
+import '../code-tabs.css';
+
+<Meta of={LiveTableStories} />
+
+# Live Table
+
+<Canvas of={LiveTableStories.Default} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-table-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-table-source" />
+      TS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="row-edit-story">
+  <p class="row-edit-story__hint">
+    Live table (S1) — no <code>withRowEdit()</code> composed (D29). Inputs render always;
+    <code>debounce('blur')</code> on name, <code>debounce(0)</code> on dept.
+  </p>
+
+  <div class="row-edit-story__toolbar">
+    <label>
+      at:
+      <input
+        type="number"
+        [value]="insertAt()"
+        (input)="insertAt.set($any($event.target).valueAsNumber)"
+      />
+    </label>
+    <button type="button" (click)="addRow()">Add row</button>
+    <span class="row-edit-story__counter">data() emissions: {{ commitCount() }}</span>
+  </div>
+
+  <table class="row-edit-story__table">
+    <thead>
+      <tr>
+        <th class="row-edit-story__cell">name</th>
+        <th class="row-edit-story__cell">dept</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.sourceIndex !== undefined) {
+          <tr>
+            <td class="row-edit-story__cell">
+              <input type="text" [formField]="rows[row.sourceIndex].name" placeholder="name" />
+            </td>
+            <td class="row-edit-story__cell">
+              <select [formField]="rows[row.sourceIndex].dept">
+                @for (dept of deptOptions; track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
