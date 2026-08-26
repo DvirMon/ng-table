@@ -12,7 +12,7 @@ import type { RenderRow } from '../api/types';
  * so the result cannot be assigned to `FieldTree<TRow> | undefined` without an assertion. This
  * is the same algebra that made `fieldFor()` untypeable (D23) — the assertion is made once,
  * here, at the one place the whole directive funnels through, instead of at every call site a
- * resolver function would have required. See D23/D31,
+ * resolver function would have required. See D23/D33,
  * `docs/1-state/work/with-row-editing/2-decisions.md`.
  */
 export function resolveRowField<TRow>(

@@ -143,6 +143,12 @@ Rules:
 - A second feature claiming the same `stages` key, or a second claiming `renderRows`, **throws
   at construction** — this is why `withExpansion()` and a future `withGrouping()` cannot yet be
   composed together.
+- **If your feature stores `RowId`s, declare `onRowsRemoved`** ([ADR-0006](docs/adr/0006-row-id-state-reconciliation.md)).
+  The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
+  state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and
+  the feature retains dead ids until someone deletes a row and notices. Exemptions are per slice
+  and belong to the feature: `everExpanded` (additive ledger) and `ABSENT` snapshots (D28's
+  blank-row add) are the two that exist.
 - The factory's second parameter (`composed`) is the feature-to-feature seam: earlier features'
   members at factory time, all features' members when read later. No feature uses it today.
 - Export a named `*Members` interface — `ComposedFeatureMembers` reads it to type the store.

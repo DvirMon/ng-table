@@ -156,7 +156,7 @@ writing the demo reveals. If `applyEach` + two `debounce` lines reads fine, O19 
 **Ships:** folds E2's `@if (row.sourceIndex !== undefined) { @let field = rows[row.sourceIndex]; }`
 into one structural directive line.
 
-**Decision:** D31, fully specified — supersedes D23's directive-clause rejection. Exported from a
+**Decision:** D33, fully specified — supersedes D23's directive-clause rejection. Exported from a
 secondary entry point (`@acme/table/forms`), not the root barrel, so the core surface stays
 forms-free even at type level.
 

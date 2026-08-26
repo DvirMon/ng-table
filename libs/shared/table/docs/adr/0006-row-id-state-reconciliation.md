@@ -1,6 +1,6 @@
 # ADR-0006 — Features reconcile their own row-id state when rows leave `data`
 
-**Status:** proposed
+**Status:** accepted — implemented 2026-08-25
 **Date:** 2026-08-25
 **Related:** [ADR-0003](0003-in-house-table-store-engine.md) (the feature contract this extends),
 [ADR-0004](0004-table-source-layout.md) (where the helper lives),
@@ -71,22 +71,36 @@ Collected in `compose-table.ts` into a hooks array, exactly like the existing `o
 **The trigger is an effect watching `data`**, not a hook inside `updateRows` — see "Effect policy"
 below for why this ADR accepts an effect.
 
-Each feature implements it in one line via a pure helper, so the delete loop is written once:
+Each feature implements it via a pure helper, so the delete loop is written once:
 
 ```ts
 // engine/rows.ts — pure, no signals, plain vitest
-export function dropRowIds<V>(
-  raw: WritableSignal<ReadonlyMap<RowId, V>>,
+export function pruneByIds<V>(
+  container: ReadonlyMap<RowId, V>,
+  removedIds: readonly RowId[],
   keep?: (value: V) => boolean
-): (ids: readonly RowId[]) => void;
+): ReadonlyMap<RowId, V>;
+export function pruneByIds(
+  container: ReadonlySet<RowId>,
+  removedIds: readonly RowId[]
+): ReadonlySet<RowId>;
 ```
 
+**As shipped this takes the container, not the signal.** The sketch above threaded a
+`WritableSignal` through the helper; the implementation keeps it pure and returns the same
+reference when nothing changed, so the feature owns its own `.set()` and the helper stays plain
+`vitest`. It gained the `ReadonlySet` overload for the same reason — `withRowEdit` prunes a Set
+(`open`) and a Map (`snapshots`) with one mechanism, and `withExpansion` prunes a Set.
+
 ```ts
-// with-row-edit.ts — ABSENT entries are pending adds (D28), not orphans
-onRowsRemoved: dropRowIds(rawEditing, (v) => v === ABSENT),
+// with-row-edit.ts — ABSENT entries are pending adds (D28), not orphans.
+// `open` is pruned unconditionally: `pendingIds()` reads "has a snapshot but isn't open" as
+// pending, so a removed id left in `open` would surface as newly pending.
+const nextOpen = pruneByIds(current.open, ids);
+const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value === ABSENT);
 
 // with-expansion.ts — everExpanded is an additive ledger by design, exempt
-onRowsRemoved: dropRowIds(rawExpanded),
+const next = pruneByIds(expandedRows(), ids);
 ```
 
 ### Exemptions are per slice, owned by the feature
@@ -186,4 +200,11 @@ exist, and defeats tree-shaking — the design NgRx explicitly refused.
   `patchRow` replaces a client id with the server's)? Under a pure id diff it does — the old id is
   genuinely gone — which would clean `editing` for a row the user is still editing. D26's
   recommended order (`endEdit` under the old id, *then* `patchRow`) avoids it, but the ADR should
-  not depend on call order alone. Needs a test and possibly an explicit swap-aware path.
+  not depend on call order alone.
+
+  **Two halves, confirmed against the implementation.** `open` *is* pruned on a swap, so a row
+  swapped while still open silently leaves edit mode. `snapshots` is *not*, when the snapshot is
+  `ABSENT` — which is exactly the optimistic-create case — so a pending entry orphans under the
+  temp key instead. Neither is fixed here. Tracked as **G3 / O20** in the gap register; engine-side
+  swap detection was rejected there because `{removed: [temp], added: [server]}` in one recompute
+  is indistinguishable from a delete plus an unrelated insert.

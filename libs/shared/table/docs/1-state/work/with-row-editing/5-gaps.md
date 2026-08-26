@@ -51,45 +51,42 @@ Needs a `docs/3-ui/work/<slug>/` folder and a ticket — no state-layer change.
 
 **Blocked on:** nothing. All the verbs it needs shipped in E4.
 
-### G2 — A row removed externally while open leaves a dead entry *(state layer)*
+### ~~G2 — A row removed externally while open leaves a dead entry~~ *(state layer)* — **CLOSED 2026-08-25**
 
-**What:** `revertEdit` restores by mapping over `data`
-(`data.map(row => trackBy(row) === id ? snapshot : row)`). A row that is gone matches nothing, so
-the write is a **silent no-op** — and the map entry is never cleared, so the row stays "open"
-forever from the store's point of view.
+**Was:** `revertEdit` restores by mapping over `data`, so a row that is gone matches nothing and
+the write is a silent no-op — while the entry is never cleared, leaving the row "open" forever
+from the store's point of view. The disposition table already claimed ADR-0006 dissolved this
+while ADR-0006 was an unimplemented, untracked file.
 
-**Why P1, and why it is easy to miss:** the E3/E4 review raised this as finding #5, and the
-disposition table marks it *"Dissolved by ADR-0006 — the entry is reconciled away at removal, so
-the case cannot arise."* **ADR-0006 is not implemented.** It is an untracked, deferred file. So
-the record reads resolved while the code still has the defect.
+**Closed by implementing ADR-0006** — status now `accepted`. `TableFeatureSpec.onRowsRemoved`,
+collected in `compose-table.ts` alongside `onInit`/`onDestroy`, fed by an effect diffing
+`indexById`; `withRowEdit()` and `withExpansion()` prune via `pruneByIds()` (`engine/rows.ts`).
+Tests colocated. The disposition table's claim is now true rather than aspirational.
 
-**Where:** `api/features/with-row-edit.ts` (the reconciliation effect ADR-0006 specifies), or a
-narrower fix in `revertEdit`.
-
-**Blocked on:** the ADR-0006 decision — it touches shipped `withExpansion()` and was deferred to
-its own PR. **First action is not code:** correct the disposition table so it stops claiming a
-fix that does not exist.
+**What it deliberately does not cover:** the temp-id swap, both halves — see G3.
 
 ### G3 — Optimistic create has no identity story *(state layer)*
 
-**What:** D26 says the consumer supplies a temp id. `pending` is keyed by it. The server returns
-the real id, and nothing carries the `pending` entry across the swap — `settleEdit(tempId)` is
-settling a key that is about to stop existing.
+**Re-derived 2026-08-25 against the shipped code.** The original entry was wrong on its
+mechanism: `snapshots` is a plain `Map` in the feature's own signal, not derived from `data`, so
+the temp key survives the swap and `settleEdit(tempId)` still finds it. Nothing is "about to
+stop existing". The two real defects are narrower and different:
 
-D26's recommended order (`endEdit` first, *then* `patchRow` the new id in) makes the orphaning
-harmless. **The optimistic path cannot follow that order** — the whole point is that the row
-closed before the server answered, so the swap arrives after `endEdit` has already moved the
-entry into `pending`.
+1. **A pending optimistic create orphans if settled under the server id.** `settleEdit(saved.id)`
+   is the natural thing to write and is a silent no-op; the row stays `pending` forever. ADR-0006
+   does not clean it either — the snapshot is `ABSENT` (D28), and `ABSENT` is exempt from pruning
+   by design, because D28 puts an id in `snapshots` *before* the row exists.
+2. **A row swapped while still open silently leaves edit mode.** `open` is not exempt, so
+   ADR-0006's reconciliation prunes it on the swap. This is D26's documented failure, still live,
+   and it has no consumer workaround.
 
-**Why P1:** optimistic *create* shipped in E2b. Its identity story did not. This is a real
-sequence a consumer will write.
-
-**Where:** `api/row-edit-mutations.ts`. Candidates: `settleEdit(tempId, serverId?)` doing the
-swap as one write, or the ADR-0006 reconciliation covering it.
+**Where:** `api/row-edit-mutations.ts`.
 
 **Blocked on:** **O20** (mutation decisions) — enforce the order, migrate the orphaned key, or
-document only. O20 was written before optimistic save existed and should be re-read with it in
-mind.
+document only. Leading candidate is `swapRowId(from, to)`, one editing updater re-keying whichever
+of `open`/`snapshots` hold `from`: it covers both defects with one verb and needs no engine
+heuristic. Engine-side swap detection was considered and rejected — `{removed: [temp],
+added: [server]}` in one recompute is indistinguishable from a delete plus an unrelated insert.
 
 ---
 
@@ -109,6 +106,10 @@ unsupported combination fail loudly at composition time.
 
 **Blocked on:** whoever specs bulk edit — D32 (mutations) routes bulk *edit* through this
 decision.
+
+**Now blocks something too:** **O23** (`applyEditable({ when })`, a declarative openness rule —
+see D35). A predicate matching N rows wants N rows open, so a row rule cannot be designed while
+`multiple: true` has no semantics. G4 is no longer only a tidiness gap.
 
 ### G5 — Optimistic rollback covers update and create only *(state layer, deferred by decision)*
 
@@ -165,18 +166,54 @@ phantom until filtering or pagination exists.
 
 Three, all cheap, all actively misleading:
 
-1. **Two decisions numbered D31 in one file.** `2-decisions.md` has *"D31 — Optimistic save"*
-   (line ~606) and *"D31 — `*ngpTableRowField`"* (line ~786). Any cross-reference to "D31" is
-   ambiguous.
-2. **D30 is used twice across files.** `rebaseEdit` here; the `WritableView` write pattern in the
-   mutation decisions, which the engine `CLAUDE.md` also cites. Already flagged in the file, not
-   yet fixed.
-3. **The disposition table claims finding #5 and #6 are dissolved by ADR-0006**, which is
-   unimplemented. See G2.
+**All three fixed 2026-08-25.** Decision numbers are global across this folder and
+`../with-mutations/2-decisions.md`, so both collisions were resolved by renumbering on *this*
+side, leaving the mutation decisions and the engine `CLAUDE.md` citations untouched:
 
-Renumber before an agent reads two of these files in one session and silently conflates them.
+1. ~~**Two decisions numbered D31 in one file.**~~ `*ngpTableRowField` is now **D33**. Optimistic
+   save keeps D31, since D31.1–D31.5 hang off it and the directive decision has no sub-decisions.
+2. ~~**D30 is used twice across files.**~~ `rebaseEdit` is now **D34**. The `WritableView` write
+   pattern keeps D30 — it is the cross-cutting one, cited by the engine `CLAUDE.md` and
+   `row-mutations.md`.
+3. ~~**The disposition table claims finding #5 and #6 are dissolved by ADR-0006**, which is
+   unimplemented.~~ ADR-0006 is implemented and `accepted`; the claim is now true. See G2.
+
+A collision table at the head of `2-decisions.md`'s renumbered section records both moves, so a
+stale cross-reference to "D30" or "D31" resolves rather than silently landing on the wrong
+decision.
 
 ---
+
+### G12 — Shipped verbs with no demo coverage *(demo app)*
+
+**What:** three demos exist — `table-edit-demo` (E2, live table, composes nothing),
+`table-row-field-demo` (the D33 directive), `table-row-edit-demo` (E2b, gated + optimistic).
+Between them they exercise `beginEdit`, `endEdit({ keepSnapshot })`, `settleEdit`, `revertEdit`
+from both states, and D28's discard order. What no demo can trigger:
+
+| Uncovered | Note |
+|---|---|
+| **`rebaseEdit`** | shipped public verb, exercised only in unit tests. Its reason for existing is O13 — a restore point going stale from an *external* write — and no demo has an external writer. |
+| `clearEditing()` | no affordance anywhere |
+| Pessimistic save | E2b is optimistic-only; the row-stays-open-through-the-round-trip path is never shown |
+| `{ multiple: true }` | E2b hardcodes single mode |
+| D28's reverse order (Cancel = reset, not discard) | lives only in a code comment |
+| Single-mode switching (D31.2) | *is* reachable — Edit row A, then Edit row B — but nothing on screen shows that A closed as a Save rather than a Cancel |
+
+**Why it matters beyond tidiness:** E2 and E2b were built to make D24 and D31 falsifiable, and
+both found things. `rebaseEdit` has never run outside a unit test, so the same check has not
+happened to it.
+
+**One addition covers most of it:** a "simulate server push" control on E2b that writes to `data`
+underneath whichever row is open — patch it, and remove it. Patching gives `rebaseEdit` a real
+trigger; removing exercises ADR-0006's reconciliation live rather than only in unit tests.
+
+Add **D28's reverse order** to that list as its own affordance now that D35 exists: `addNewRow`
+is the discard path, and nothing on screen demonstrates that `addRow` → `beginEdit` still means
+reset.
+
+**Where:** `apps/demo/src/app/table-row-edit-demo/`. E2's `table-edit-demo` must keep composing no
+editing feature (D29) — it is the reference for the minimal table and is not the place for this.
 
 ## Priority 3 — UI layer, after G1
 
@@ -221,9 +258,10 @@ re-derive when the stage does.
 ## Suggested order
 
 ```
-G8  docs defects        ← cheapest, and G2 is invisible until this is done
-G2  dead entry on external removal   (state, needs the ADR-0006 call)
-G3  optimistic create identity       (state, needs O20 re-read)
+G8  docs defects                     DONE 2026-08-25 (D33 / D34 renumber)
+G2  dead entry on external removal   DONE 2026-08-25 (ADR-0006 implemented)
+G12 demo coverage       ← gives rebaseEdit its first real run outside a unit test
+G3  optimistic create identity       (state, needs the O20 call — swapRowId)
 G1  keyboard                         (UI — own work folder + ticket)
 G9  focus            ──┐
 G10 a11y             ──┴─ same directive effort as G1; scope together
