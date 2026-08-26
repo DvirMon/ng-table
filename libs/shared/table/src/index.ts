@@ -12,33 +12,26 @@ export * from './directives/ngp-table-cell.directive';
 export * from './api/features/with-sorting';
 export { withExpansion } from './api/features/with-expansion';
 export type { WithExpansionConfig } from './api/features/with-expansion';
-export { withRowEdit, ABSENT } from './api/features/with-row-edit';
+export { withRowEdit } from './api/features/with-row-edit';
+export type { WithRowEditConfig, RowEditMembers } from './api/features/with-row-edit';
+export { withOptimistic } from './api/features/with-optimistic';
+export type { OptimisticMembers } from './api/features/with-optimistic';
+export { ABSENT } from './api/features/editing-state';
 export type {
-  WithRowEditConfig,
-  RowEditMembers,
+  EditingState,
+  EditingUpdater,
+  EditingUpdaterContext,
   RowSnapshot,
   SnapshotMap,
-} from './api/features/with-row-edit';
+} from './api/features/editing-state';
 export { createTableFeature } from './api/create-table-feature';
 export { columnSchema } from './api/column-schema';
 export { applyVisible, applyVisibleAsync } from './api/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
 export { addRow, removeRow, patchRow } from './api/row-mutations';
-export {
-  addNewRow,
-  beginEdit,
-  clearEditing,
-  endEdit,
-  rebaseEdit,
-  revertEdit,
-  settleEdit,
-} from './api/row-edit-mutations';
-export type {
-  EditingState,
-  EditingUpdater,
-  EditingUpdaterContext,
-  EndEditOptions,
-} from './api/row-edit-mutations';
+export { beginEdit, clearEditing, endEdit } from './api/row-edit-mutations';
+export type { BeginEditOptions } from './api/row-edit-mutations';
+export { captureEdit, releaseEdit, revertEdit } from './api/optimistic-mutations';
 export {
   setColumns,
   reorderColumns,

@@ -1,20 +1,7 @@
-import { computed, effect, signal, type Signal } from '@angular/core';
-import { pruneByIds } from '../../engine/rows';
+import { computed, effect, signal } from '@angular/core';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
-import { createWritableView, type WritableView } from '../../engine/writable-view';
-import type { EditingState, EditingUpdater } from '../row-edit-mutations';
-import type { RowId } from '../types';
-
-/** Sentinel snapshot value: the row did not exist in `data` when `beginEdit` captured it
- * (D28) — the blank-row-add flow. `revertEdit` reads this to remove the row instead of
- * restoring a value. */
-export const ABSENT = Symbol('row-edit-absent');
-
-export type RowSnapshot<TRow> = TRow | typeof ABSENT;
-
-/** id -> the row's value at the moment `beginEdit` first captured it (D17), or `ABSENT` (D28).
- * One restore point per row; whether that row is currently open is a separate fact. */
-export type SnapshotMap<TRow> = ReadonlyMap<RowId, RowSnapshot<TRow>>;
+import { createEditingStore, type EditingState } from './editing-state';
+import type { OptimisticMembers } from './with-optimistic';
 
 export interface WithRowEditConfig {
   /** Default `false` (D14): a second `beginEdit` closes whatever row was already open.
@@ -25,37 +12,11 @@ export interface WithRowEditConfig {
   multiple?: boolean | (() => boolean);
 }
 
-export interface RowEditMembers<TRow> {
-  /** Read: which rows are open for editing. Write: `.update(updater)` (D30) — e.g.
-   * `table.editing.update(beginEdit(id))`. Every updater, including the ones that only touch
-   * restore points, is applied through this one view. */
-  readonly editing: WritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>;
-  /** D31: rows closed by `endEdit(id, { keepSnapshot: true })` — visually done, still
-   * rollback-able while an optimistic save is in flight. Derived from the state, so a row can
-   * never be open and pending at once. */
-  readonly pending: Signal<ReadonlySet<RowId>>;
-}
-
-const NO_IDS: ReadonlySet<RowId> = new Set();
-
 /**
- * D31: holds a restore point but is no longer open. Derived rather than stored — this is what
- * makes `endEdit`'s "move to pending" a single `open.delete(id)` with no second container to
- * fall out of step with (D31.5).
+ * Adds nothing to `withOptimistic()`'s members — the edit session contributes `open`, which is
+ * read through the same `editing` view (D37). One door either way.
  */
-export function pendingIds<TRow>(state: EditingState<TRow>): ReadonlySet<RowId> {
-  const ids = new Set<RowId>();
-  for (const id of state.snapshots.keys()) {
-    if (!state.open.has(id)) {
-      ids.add(id);
-    }
-  }
-  // Shared empty set so the common case (nothing pending) keeps a stable identity and does not
-  // invalidate downstream computeds on every open/close. Checked after the scan, not before:
-  // a size comparison would depend on `open ⊆ snapshots` holding, and would return a silently
-  // wrong answer rather than fail if it ever stopped.
-  return ids.size === 0 ? NO_IDS : ids;
-}
+export type RowEditMembers<TRow> = OptimisticMembers<TRow>;
 
 /**
  * Single mode (D14): keeps only the most recently opened row. The rows it displaces are closed
@@ -72,74 +33,52 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
 }
 
 /**
- * Adds button-triggered edit-mode tracking (F2b) to a `createTable()` — which rows are
- * currently open for editing, plus their pre-edit restore points for `revertEdit` (D17/D28).
- * Mode gate only: claims no pipeline stage and no `renderRows` slot (D10, `4-increments.md`
- * E3). The consumer's own `form(data)` (D22) owns the actual field values; this feature only
- * tracks which rows show the form's inputs.
+ * Edit-session tracking (F2b) for a `createTable()` — which rows are currently open for editing,
+ * on top of the restore points `withOptimistic()` owns.
  *
- * `{ multiple: true }` combined with optimistic save (D31) is undesigned — N open rows × M
- * in-flight saves — and unsupported until someone specs it (D31.2).
+ * Mode gate only: claims no pipeline stage and no `renderRows` slot (D10, `4-increments.md` E3).
+ * The consumer's own `form(data)` (D22) owns the actual field values; this feature only tracks
+ * which rows show the form's inputs.
+ *
+ * **Composes `withOptimistic()` internally** (D37) — by calling its factory directly rather than
+ * reading the `composed` seam, so composition never depends on `features` array order. Listing
+ * both in `features` throws at construction (ADR-0007): they claim the same members.
+ *
+ * An always-editable table does not compose this (D29/D39). Its session is delimited by focus,
+ * which opens nothing — it composes `withOptimistic()` alone.
+ *
+ * `{ multiple: true }` combined with optimistic save is undesigned — N open rows × M in-flight
+ * saves — and unsupported until someone specs it (D31.2, G4).
  */
 export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
   const multiple =
-    typeof config.multiple === 'function' ? computed(config.multiple) : signal(config.multiple ?? false);
+    typeof config.multiple === 'function'
+      ? computed(config.multiple)
+      : signal(config.multiple ?? false);
 
   return (core: TableCore<TRow>): TableFeatureSpec<TRow, RowEditMembers<TRow>> => {
-    // One signal over both facts: `pending` is derived from them together, so it can never
-    // read a half-applied write (D31.5).
-    const state = signal<EditingState<TRow>>({ snapshots: new Map(), open: new Set() });
-
     // Enforces D14's single-mode "closes whatever was open" without any updater (beginEdit,
     // etc.) needing to know about `multiple` — every write funnels through here.
-    function applyEditingState(next: EditingState<TRow>): void {
+    function enforceSingleMode(next: EditingState<TRow>): EditingState<TRow> {
       const exceedsSingleMode = !multiple() && next.open.size > 1;
-      state.set(exceedsSingleMode ? closeAllButLast(next) : next);
+      return exceedsSingleMode ? closeAllButLast(next) : next;
     }
 
-    const members = {
-      editing: createWritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>(
-        () => state().open,
-        (updater) =>
-          applyEditingState(
-            updater(state(), {
-              data: core.value(),
-              trackBy: core.trackBy,
-              writeData: (rows) => core.value.update(() => rows),
-            })
-          )
-      ),
-      pending: computed(() => pendingIds(state())),
-    };
-
-    // ADR-0006: an id that leaves `data` must leave both `open` (nothing left to show inputs
-    // for) and `snapshots` (nothing left to restore) — `pending` needs no pruning of its own,
-    // since it is derived from the other two, not stored. `open` is pruned independently of
-    // `snapshots`: `pendingIds()` treats "has a snapshot but isn't open" as pending, so leaving
-    // a removed id in `open` would surface it as newly pending. `ABSENT` snapshots (D28) are
-    // exempt — they were never backed by a row in `data` to begin with.
-    function onRowsRemoved(ids: readonly RowId[]): void {
-      const current = state();
-      const nextOpen = pruneByIds(current.open, ids);
-      const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value === ABSENT);
-      if (nextOpen !== current.open || nextSnapshots !== current.snapshots) {
-        applyEditingState({ open: nextOpen, snapshots: nextSnapshots });
-      }
-    }
+    const store = createEditingStore<TRow>(core, { onWrite: enforceSingleMode });
 
     // Collapses to D14's single-mode automatically when `multiple` flips false live, not just
     // on the next `editing.update()` — otherwise a signal-backed `multiple` would silently lag
     // the config it's supposed to track. No-ops once collapsed (re-reads `state()` on any
-    // change, but `applyEditingState` is idempotent once `open.size <= 1`).
+    // change, but the write is idempotent once `open.size <= 1`).
     function onMultipleChanged(): void {
-      if (!multiple() && state().open.size > 1) {
-        applyEditingState(state());
+      if (!multiple() && store.state().open.size > 1) {
+        store.apply(store.state());
       }
     }
 
     return {
-      members,
-      onRowsRemoved,
+      members: { editing: store.editing, pending: store.pending },
+      onRowsRemoved: store.onRowsRemoved,
       onInit: () => effect(onMultipleChanged),
     } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;
   };

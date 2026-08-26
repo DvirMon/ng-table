@@ -1,7 +1,11 @@
 import { computed, signal } from '@angular/core';
 
-import { pendingIds, type RowEditMembers } from './api/features/with-row-edit';
-import type { EditingState, EditingUpdater } from './api/row-edit-mutations';
+import type { RowEditMembers } from './api/features/with-row-edit';
+import {
+  pendingIds,
+  type EditingState,
+  type EditingUpdater,
+} from './api/features/editing-state';
 import type { ColumnDef, RenderRow, RowId, RowUpdater, TableStore, TrackByFn } from './api/types';
 import { createWritableView } from './engine/writable-view';
 

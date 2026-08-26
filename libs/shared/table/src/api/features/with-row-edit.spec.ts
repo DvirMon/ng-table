@@ -1,7 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createTable } from '../create-table';
-import { beginEdit, endEdit, settleEdit } from '../row-edit-mutations';
+import { beginEdit, endEdit } from '../row-edit-mutations';
+import { captureEdit, releaseEdit, revertEdit } from '../optimistic-mutations';
 import { withRowEdit } from './with-row-edit';
 import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 
@@ -87,7 +88,7 @@ describe('withRowEdit', () => {
     expect(store.pending().has('r1')).toBe(false);
   });
 
-  it('pending starts empty and receives endEdit({ keepSnapshot: true }) entries (D31)', () => {
+  it('pending starts empty and receives endEdit entries (D31/D41)', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
@@ -97,12 +98,12 @@ describe('withRowEdit', () => {
     expect(store.pending().size).toBe(0);
 
     store.editing.update(beginEdit('r1'));
-    store.editing.update(endEdit('r1', { keepSnapshot: true }));
+    store.editing.update(endEdit('r1'));
 
     expect(store.editing().size).toBe(0);
     expect(store.pending().has('r1')).toBe(true);
 
-    store.editing.update(settleEdit('r1'));
+    store.editing.update(releaseEdit('r1'));
 
     expect(store.pending().size).toBe(0);
   });
@@ -138,7 +139,7 @@ describe('withRowEdit', () => {
     );
 
     store.editing.update(beginEdit('r1'));
-    store.editing.update(endEdit('r1', { keepSnapshot: true }));
+    store.editing.update(endEdit('r1'));
     expect(store.pending().has('r1')).toBe(true);
 
     data.update((rows) => rows.filter((row) => row.id !== 'r1'));
@@ -171,6 +172,95 @@ describe('withRowEdit', () => {
     // But the ABSENT snapshot itself is exempt from pruning (D28), so it stays "pending" —
     // this asserts the keep-predicate wiring, not a claim about consumer-visible behavior.
     expect(store.pending().has('new1')).toBe(true);
+  });
+
+  // A write through Signal Forms' root value signal (`form(data, schema)` writes back into
+  // `data`) is indistinguishable from any other `data.update(...)` — the table has no notion of
+  // a call site. These pin the sync contract for the writes ADR-0006 does *not* cover:
+  // additions and in-place patches, where nothing is pruned but state must still line up.
+  it('a row added externally renders but does not open itself', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    data.update((rows) => [...rows, { id: 'r3', name: 'Cid' }]);
+    TestBed.tick();
+
+    expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2', 'r3']);
+    expect(store.editing().size).toBe(0);
+    expect(store.pending().size).toBe(0);
+  });
+
+  it('keeps an open row open when rows are inserted before it, and sourceIndex follows', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    store.editing.update(beginEdit('r2'));
+    expect(store.renderRows().find((row) => row.id === 'r2')?.sourceIndex).toBe(1);
+
+    data.update((rows) => [{ id: 'r0', name: 'Zed' }, ...rows]);
+    TestBed.tick();
+
+    // Editing is keyed by trackBy id, so the shift cannot displace it — and `sourceIndex`
+    // (what `*ngpTableRowField` indexes the form's field tree with) moves with the row.
+    expect(store.editing().has('r2')).toBe(true);
+    expect(store.renderRows().find((row) => row.id === 'r2')?.sourceIndex).toBe(2);
+  });
+
+  it('does not move an open row restore point when data is patched externally (D34)', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    data.update((rows) => rows.map((row) => (row.id === 'r1' ? { ...row, name: 'Server' } : row)));
+    TestBed.tick();
+
+    // Stale by design: the library cannot tell an external write from the user's own typing,
+    // so Cancel still returns to the value captured at beginEdit. Moving it is captureEdit's job.
+    store.editing.update(revertEdit('r1'));
+
+    expect(data().find((row) => row.id === 'r1')?.name).toBe('Ada');
+  });
+
+  it('captureEdit after an external patch makes revertEdit restore the external value (D34/D40)', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    data.update((rows) => rows.map((row) => (row.id === 'r1' ? { ...row, name: 'Server' } : row)));
+    TestBed.tick();
+    store.editing.update(captureEdit('r1'));
+
+    // The user then types over it, and cancels.
+    data.update((rows) => rows.map((row) => (row.id === 'r1' ? { ...row, name: 'Typed' } : row)));
+    TestBed.tick();
+    store.editing.update(revertEdit('r1'));
+
+    expect(data().find((row) => row.id === 'r1')?.name).toBe('Server');
+    expect(store.editing().has('r1')).toBe(false);
   });
 
   it('claims no renderRows slot — renderRows() stays the default 1:1 mapping', () => {
