@@ -1,0 +1,68 @@
+<div class="row-edit-story">
+  <p class="row-edit-story__hint">
+    "Add via form" / "Delete via form" mutate <code>rows().value</code> directly instead of
+    going through <code>table.editing.update(beginEdit(id, { insert }))</code> /
+    <code>table.value.update(removeRow(...))</code>. That still writes valid data — what it
+    skips is table's optimistic-update support: the snapshot/pending machinery those utilities
+    compose with, which lets a save roll back cleanly on failure. Name/dept edits still use the
+    normal <code>beginEdit</code>/<code>formField</code> flow, so the contrast is isolated to
+    the row-structural mutations.
+  </p>
+
+  <div class="row-edit-story__toolbar">
+    <button type="button" (click)="addRowViaForm()">Add via form</button>
+    <span class="row-edit-story__counter" role="status">editing map: {{ editingIds() | json }}</span>
+    @if (saveError(); as message) {
+      <span class="row-edit-story__error" role="status">{{ message }}</span>
+    }
+  </div>
+
+  <table class="row-edit-story__table">
+    <thead>
+      <tr>
+        <th class="row-edit-story__cell">name</th>
+        <th class="row-edit-story__cell">dept</th>
+        <th class="row-edit-story__cell">actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @let isEditing = table.editing().has(row.id);
+
+        <tr>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <input type="text" [formField]="field.name" placeholder="name" />
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.name || '(blank)' }}</span>
+            }
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <select [formField]="field.dept">
+                  @for (dept of deptOptions; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.dept }}</span>
+            }
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <button type="button" (click)="saveEdit(row.id)">Save</button>
+              <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
+            } @else {
+              <button type="button" (click)="openEdit(row.id)">Edit</button>
+            }
+            <button type="button" (click)="removeRowViaForm(row.id)">Delete via form</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

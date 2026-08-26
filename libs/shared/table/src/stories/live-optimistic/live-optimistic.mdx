@@ -1,0 +1,39 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as LiveOptimisticStories from './live-optimistic.stories';
+import hostClass from './live-optimistic-story-host.component.ts?raw';
+import hostTemplate from './live-optimistic-story-host.component.html?raw';
+import '../code-tabs.css';
+
+<Meta of={LiveOptimisticStories} />
+
+# Live Table + Rollback
+
+The always-editable table with an undo path. Composes `withOptimistic()` and **not**
+`withRowEdit()` — there is no button to open a row, so there is no edit session to track. The
+focus session *is* the edit session (D39), which is why the same three rollback verbs work here
+and in the gated flow.
+
+`table.editing()` stays empty for the whole story. `table.pending()` is the in-flight set.
+
+<Canvas of={LiveOptimisticStories.Default} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-optimistic-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-optimistic-source" />
+      TS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+  </div>
+</div>

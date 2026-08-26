@@ -1,0 +1,55 @@
+<div class="row-edit-story">
+  <p class="row-edit-story__hint">
+    Live table with rollback (S6) — every row is always editable, so nothing ever opens and
+    <code>table.editing()</code> stays empty. Focusing a cell takes a restore point
+    (<code>captureEdit</code>); leaving it commits on blur and fires a real MSW-intercepted
+    <code>fetch</code>. Success drops the restore point (<code>releaseEdit</code>); failure puts
+    the captured value back (<code>revertEdit</code>). Use the Storybook controls to force a
+    failure or add latency.
+  </p>
+
+  @if (saveError(); as message) {
+    <p class="row-edit-story__error" role="status">{{ message }}</p>
+  }
+
+  <p class="row-edit-story__counter">
+    open rows: {{ table.editing().size }} (always 0) · in flight: {{ table.pending().size }}
+  </p>
+
+  <table class="row-edit-story__table">
+    <thead>
+      <tr>
+        <th class="row-edit-story__cell">name</th>
+        <th class="row-edit-story__cell">dept</th>
+        <th class="row-edit-story__cell">state</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id; let index = $index) {
+        @let isPending = table.pending().has(row.id);
+
+        <tr
+          [class.row-edit-story__row--saving]="isPending"
+          (focusin)="onEnterRow(row.id)"
+          (focusout)="onLeaveRow(row.id)"
+        >
+          <td class="row-edit-story__cell">
+            <input type="text" [formField]="rows[index].name" placeholder="name" />
+          </td>
+          <td class="row-edit-story__cell">
+            <select [formField]="rows[index].dept">
+              @for (dept of deptOptions; track dept) {
+                <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isPending) {
+              <span class="row-edit-story__pending">saving…</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
