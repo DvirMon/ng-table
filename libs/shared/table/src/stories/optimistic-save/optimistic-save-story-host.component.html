@@ -1,7 +1,7 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
     Optimistic save (S4) — Save closes the row immediately; a real MSW-intercepted
-    <code>fetch</code> resolves after. Success drops the restore point (<code>settleEdit</code>);
+    <code>fetch</code> resolves after. Success drops the restore point (<code>releaseEdit</code>);
     failure rolls it back (<code>revertEdit</code>) and the row re-opens with its pre-edit
     value. Use the Storybook controls to force a failure or add latency.
   </p>

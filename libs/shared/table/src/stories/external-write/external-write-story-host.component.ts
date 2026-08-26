@@ -2,7 +2,8 @@ import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { beginEdit, rebaseEdit, revertEdit } from '../../api/row-edit-mutations';
+import { beginEdit } from '../../api/row-edit-mutations';
+import { captureEdit, revertEdit } from '../../api/optimistic-mutations';
 import { removeRow } from '../../api/row-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
@@ -12,7 +13,7 @@ import type { EditRow } from '../row-edit.types';
 
 /**
  * S5 — external write while a row is open. "Simulate server push" patches `data` under the
- * open row and calls `rebaseEdit` (O13/D34) so Cancel restores the pushed value rather than
+ * open row and calls `captureEdit` (O13/D34, renamed by D40) so Cancel restores the pushed value rather than
  * the stale pre-edit one. "Remove row externally" deletes it from `data` while open, exercising
  * ADR-0006's `onRowsRemoved` reconciliation — the entry is pruned rather than left dangling.
  */
@@ -38,7 +39,7 @@ export class ExternalWriteStoryHostComponent {
   }
 
   protected cancelEdit(id: RowId): void {
-    // revertEdit: restores the row's snapshot (the pushed value, after rebaseEdit ran) and closes it.
+    // revertEdit: restores the row's snapshot (the pushed value, after captureEdit ran) and closes it.
     this.table.editing.update(revertEdit(id));
   }
 
@@ -51,9 +52,9 @@ export class ExternalWriteStoryHostComponent {
       DEPT_OPTIONS[(DEPT_OPTIONS.indexOf(row.dept as (typeof DEPT_OPTIONS)[number]) + 1) % DEPT_OPTIONS.length];
     const pushed: EditRow = { ...row, dept: nextDept };
     this.data.update((rows) => rows.map((candidate) => (candidate.id === id ? pushed : candidate)));
-    // rebaseEdit: moves the open row's restore point forward to the pushed value, so Cancel
-    // doesn't undo this external write.
-    this.table.editing.update(rebaseEdit(id, pushed));
+    // captureEdit: moves the open row's restore point forward to the pushed value, so Cancel
+    // doesn't undo this external write. Overwrites, unlike beginEdit's capture-if-absent (D40).
+    this.table.editing.update(captureEdit(id, pushed));
   }
 
   protected removeRowExternally(id: RowId): void {

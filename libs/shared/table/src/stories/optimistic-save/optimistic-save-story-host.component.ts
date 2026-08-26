@@ -1,7 +1,8 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { beginEdit, endEdit, revertEdit, settleEdit } from '../../api/row-edit-mutations';
+import { beginEdit, endEdit } from '../../api/row-edit-mutations';
+import { releaseEdit, revertEdit } from '../../api/optimistic-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
@@ -9,7 +10,7 @@ import { editRowsSchema, gatedTableSchema } from '../row-edit.schema';
 import type { EditRow } from '../row-edit.types';
 
 /**
- * S4 — optimistic save (D31). Closes the row immediately (`endEdit({ keepSnapshot: true })`),
+ * S4 — optimistic save (D31). Closes the row immediately (`endEdit`),
  * moving it to `pending`, then rolls back on a failed save or settles it on success. The save
  * itself is a real intercepted `fetch` (MSW), not a Promise stub — `forceFailure`/`latencyMs`
  * are Storybook-controlled request headers the handler reads.
@@ -37,9 +38,9 @@ export class OptimisticSaveStoryHostComponent {
 
   protected async saveEdit(id: RowId): Promise<void> {
     this.saveError.set(null);
-    // endEdit({ keepSnapshot: true }): closes the row immediately but keeps its restore point,
-    // so the row shows as `pending` until the fetch below settles or rolls it back.
-    this.table.editing.update(endEdit(id, { keepSnapshot: true }));
+    // endEdit: closes the row immediately but keeps its restore point (D41 — keeping is the
+    // only behavior now), so the row shows as `pending` until the fetch below resolves it.
+    this.table.editing.update(endEdit(id));
 
     const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
     if (row === undefined) {
@@ -60,8 +61,8 @@ export class OptimisticSaveStoryHostComponent {
         const errorBody = (await response.json()) as { message?: string };
         throw new Error(errorBody.message ?? 'Save failed.');
       }
-      // settleEdit: save confirmed — drops the held restore point, row is no longer pending.
-      this.table.editing.update(settleEdit(id));
+      // releaseEdit: save confirmed — drops the held restore point, row is no longer pending.
+      this.table.editing.update(releaseEdit(id));
     } catch (error) {
       this.saveError.set(error instanceof Error ? error.message : 'Save failed.');
       // revertEdit: save failed — restores the pre-edit snapshot and closes the row.

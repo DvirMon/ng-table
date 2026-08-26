@@ -1,7 +1,8 @@
 import { delay, http, HttpResponse } from 'msw';
 
 /**
- * Stand-in server for S4's optimistic save. Behavior is driven by request headers the story
+ * Stand-in server for the optimistic stories (S4 gated, S6 live). Behavior is driven by
+ * request headers the story
  * host sets from its Storybook `forceFailure`/`latencyMs` args — closer to a real endpoint
  * than a plain-Promise stub, since it's a genuine intercepted `fetch` round trip.
  */

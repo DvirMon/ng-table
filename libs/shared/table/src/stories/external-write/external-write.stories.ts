@@ -11,7 +11,7 @@ export default meta;
 type Story = StoryObj<ExternalWriteStoryHostComponent>;
 
 /**
- * S5 — `rebaseEdit` (a stale restore point from an external write) and ADR-0006's
+ * S5 — `captureEdit` (a stale restore point from an external write) and ADR-0006's
  * `onRowsRemoved` pruning (a row removed while its editing entry is still live), both only
  * previously exercised in unit tests (G12).
  */

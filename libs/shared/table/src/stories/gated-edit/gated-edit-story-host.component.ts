@@ -1,7 +1,8 @@
 import { Component, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { addNewRow, beginEdit, clearEditing, endEdit, revertEdit } from '../../api/row-edit-mutations';
+import { beginEdit, clearEditing, endEdit } from '../../api/row-edit-mutations';
+import { releaseEdit, revertEdit } from '../../api/optimistic-mutations';
 import { removeRow } from '../../api/row-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
@@ -40,15 +41,16 @@ export class GatedEditStoryHostComponent {
     this.multiple.update((value) => !value);
   }
 
-  /** One add path (D36): `addNewRow` opens the row with a real-value snapshot, same as
-   * `beginEdit` on an existing row. Discard-vs-reset is no longer chosen here — it's a Cancel
-   * choice available on any open row, not something tied to how the row was added. */
+  /** One add path (D36/D42): `beginEdit({ insert })` opens the row with a real-value snapshot,
+   * same as `beginEdit` on an existing row. Discard-vs-reset is no longer chosen here — it's a
+   * Cancel choice available on any open row, not something tied to how the row was added. */
   protected addBlankRow(): void {
+    const id = crypto.randomUUID();
     this.table.editing.update(
-      addNewRow(
-        { id: crypto.randomUUID(), name: '', dept: DEPT_OPTIONS[0] },
-        { at: this.insertAt() },
-      ),
+      beginEdit(id, {
+        insert: { id, name: '', dept: DEPT_OPTIONS[0] },
+        at: this.insertAt(),
+      }),
     );
   }
 
@@ -70,6 +72,7 @@ export class GatedEditStoryHostComponent {
     this.saveError.set(null);
     this.table.value.update(removeRow(id));
     this.table.editing.update(endEdit(id));
+    this.table.editing.update(releaseEdit(id));
   }
 
   protected clearAll(): void {
@@ -88,8 +91,10 @@ export class GatedEditStoryHostComponent {
 
     try {
       await saveRowPessimistic(row);
-      // endEdit: closes the row and drops its restore point (save succeeded, nothing to undo).
+      // D41: closing keeps the restore point, so a purely local save releases it too —
+      // otherwise the row would sit in `pending` with nothing left to confirm it.
       this.table.editing.update(endEdit(id));
+      this.table.editing.update(releaseEdit(id));
     } catch (error) {
       this.saveError.set(error instanceof Error ? error.message : 'Save failed.');
     }
