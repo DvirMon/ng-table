@@ -1,5 +1,6 @@
 import { resolveIndex } from '../engine/rows';
 import {
+  closeAll,
   findRow,
   withOpen,
   withoutOpen,
@@ -119,14 +120,5 @@ export function endEdit<TRow>(id: RowId): EditingUpdater<TRow> {
  * pending are untouched — they are not open (D31.3).
  */
 export function clearEditing<TRow>(): EditingUpdater<TRow> {
-  return (state) => {
-    if (state.open.size === 0) {
-      return state;
-    }
-    const snapshots = new Map(state.snapshots);
-    for (const id of state.open) {
-      snapshots.delete(id);
-    }
-    return { snapshots, open: new Set() };
-  };
+  return (state) => closeAll(state);
 }

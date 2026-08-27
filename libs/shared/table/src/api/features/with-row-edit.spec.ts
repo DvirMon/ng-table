@@ -290,6 +290,49 @@ describe('withRowEdit', () => {
     expect(store.editing().has('r1')).toBe(false);
   });
 
+  it('mode flip true -> false closes every open row, no survivor, dropping their restore points', () => {
+    const isMultiple = signal(true);
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>({ multiple: isMultiple })],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    store.editing.update(beginEdit('r2'));
+    expect(store.editing().size).toBe(2);
+
+    isMultiple.set(false);
+    TestBed.tick();
+
+    // Neither survives — a flip is nobody's request to keep one specific row open, unlike
+    // `beginEdit`'s on-write single-mode trim (D14).
+    expect(store.editing().size).toBe(0);
+    // Restore points are dropped along with the close, not left `pending` — a rejected save
+    // arriving later would otherwise find nothing to restore (D41).
+    expect(store.pending().size).toBe(0);
+  });
+
+  it('mode flip leaves a single open row alone — already valid under single mode', () => {
+    const isMultiple = signal(true);
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(signal(makeRows()), () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>({ multiple: isMultiple })],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    isMultiple.set(false);
+    TestBed.tick();
+
+    expect(store.editing().has('r1')).toBe(true);
+  });
+
   it('claims no renderRows slot — renderRows() stays the default 1:1 mapping', () => {
     const store = makeStore(() => ({
       trackBy: 'id',

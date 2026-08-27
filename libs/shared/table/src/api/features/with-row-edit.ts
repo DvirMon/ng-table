@@ -1,14 +1,15 @@
 import { computed, effect, signal } from '@angular/core';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
-import { createEditingStore, type EditingState } from './editing-state';
+import { closeAll, createEditingStore, type EditingState } from './editing-state';
 import type { OptimisticMembers } from './with-optimistic';
 
 export interface WithRowEditConfig {
   /** Default `false` (D14): a second `beginEdit` closes whatever row was already open.
    * Accepts a plain accessor (`() => boolean`, e.g. `() => isWide()`) to react live — no need
    * to write `computed()` yourself, this feature wraps it. Toggling `true` -> `false` while N
-   * rows are open collapses down to the most-recently-opened one, same as `closeAllButLast` on
-   * write. A `Signal<boolean>` works too since a signal is itself callable as `() => boolean`. */
+   * rows are open closes all of them, no survivor chosen (nobody asked for a specific row to
+   * stay open) — same shape as `clearEditing()`, not `closeAllButLast`'s keep-the-last-one. A
+   * `Signal<boolean>` works too since a signal is itself callable as `() => boolean`. */
   multiple?: boolean | (() => boolean);
 }
 
@@ -66,13 +67,18 @@ export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
 
     const store = createEditingStore<TRow>(core, { onWrite: enforceSingleMode });
 
-    // Collapses to D14's single-mode automatically when `multiple` flips false live, not just
-    // on the next `editing.update()` — otherwise a signal-backed `multiple` would silently lag
-    // the config it's supposed to track. No-ops once collapsed (re-reads `state()` on any
-    // change, but the write is idempotent once `open.size <= 1`).
+    // Reacts to `multiple` flipping false live, not just on the next `editing.update()` —
+    // otherwise a signal-backed `multiple` would silently lag the config it's supposed to
+    // track. A single open row is already valid under single mode, so this only fires above
+    // that; when it does, it closes every open row with no survivor (`closeAll`, not
+    // `closeAllButLast`): a mode flip is nobody's request for a specific row to stay open,
+    // unlike the on-write single-mode trim `enforceSingleMode` still performs for `beginEdit`.
+    // No-ops once collapsed — re-reads `state()` on any change, but idempotent once
+    // `open.size <= 1`.
     function onMultipleChanged(): void {
-      if (!multiple() && store.state().open.size > 1) {
-        store.apply(store.state());
+      const exceedsSingleMode = !multiple() && store.state().open.size > 1;
+      if (exceedsSingleMode) {
+        store.apply(closeAll(store.state()));
       }
     }
 
