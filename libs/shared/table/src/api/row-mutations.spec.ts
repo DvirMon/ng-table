@@ -1,4 +1,4 @@
-import { addRow, patchRow, removeRow } from './row-mutations';
+import { insertRow, patchRow, removeRow } from './row-mutations';
 import type { RowId } from './types';
 import { createMockTableStoreWithData, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
@@ -16,19 +16,19 @@ function indexById(data: Person[] = rows): ReadonlyMap<RowId, number> {
 
 const ctx = { trackBy, indexById: indexById(rows) };
 
-describe('addRow', () => {
+describe('insertRow', () => {
   it('appends when at is omitted', () => {
-    const result = addRow<Person>({ id: 4, name: 'Dee' })(rows, ctx);
+    const result = insertRow<Person>({ id: 4, name: 'Dee' })(rows, ctx);
     expect(result.map((r) => r.id)).toEqual([1, 2, 3, 4]);
   });
 
   it('inserts at 0 (prepend)', () => {
-    const result = addRow<Person>({ id: 0, name: 'Zed' }, { at: 0 })(rows, ctx);
+    const result = insertRow<Person>({ id: 0, name: 'Zed' }, { at: 0 })(rows, ctx);
     expect(result.map((r) => r.id)).toEqual([0, 1, 2, 3]);
   });
 
   it('inserts at a mid-range index, matching Array.prototype.splice', () => {
-    const result = addRow<Person>({ id: 9, name: 'Mid' }, { at: 1 })(rows, ctx);
+    const result = insertRow<Person>({ id: 9, name: 'Mid' }, { at: 1 })(rows, ctx);
     expect(result.map((r) => r.id)).toEqual([1, 9, 2, 3]);
   });
 
@@ -37,19 +37,19 @@ describe('addRow', () => {
     const abc = [1, 2, 3];
     const numTrackBy = (n: number) => n;
     const numCtx = { trackBy: numTrackBy, indexById: new Map(abc.map((n, i) => [n, i])) };
-    const result = addRow<number>(0, { at: -1 })(abc, numCtx);
+    const result = insertRow<number>(0, { at: -1 })(abc, numCtx);
     expect(result).toEqual([1, 2, 0, 3]);
   });
 
   it('clamps at beyond array length to append, without throwing', () => {
-    expect(() => addRow<Person>({ id: 9, name: 'X' }, { at: 100 })(rows, ctx)).not.toThrow();
-    const result = addRow<Person>({ id: 9, name: 'X' }, { at: 100 })(rows, ctx);
+    expect(() => insertRow<Person>({ id: 9, name: 'X' }, { at: 100 })(rows, ctx)).not.toThrow();
+    const result = insertRow<Person>({ id: 9, name: 'X' }, { at: 100 })(rows, ctx);
     expect(result.map((r) => r.id)).toEqual([1, 2, 3, 9]);
   });
 
   it('clamps at below -length to prepend, without throwing', () => {
-    expect(() => addRow<Person>({ id: 9, name: 'X' }, { at: -100 })(rows, ctx)).not.toThrow();
-    const result = addRow<Person>({ id: 9, name: 'X' }, { at: -100 })(rows, ctx);
+    expect(() => insertRow<Person>({ id: 9, name: 'X' }, { at: -100 })(rows, ctx)).not.toThrow();
+    const result = insertRow<Person>({ id: 9, name: 'X' }, { at: -100 })(rows, ctx);
     expect(result.map((r) => r.id)).toEqual([9, 1, 2, 3]);
   });
 });
@@ -86,7 +86,7 @@ describe('table.value.update', () => {
   it('writes through to the signal', () => {
     const fakeTable = createMockTableStoreWithData([...rows], trackBy);
 
-    fakeTable.value.update(addRow<Person>({ id: 4, name: 'Dee' }));
+    fakeTable.value.update(insertRow<Person>({ id: 4, name: 'Dee' }));
 
     expect(fakeTable.value().map((r) => r.id)).toEqual([1, 2, 3, 4]);
   });

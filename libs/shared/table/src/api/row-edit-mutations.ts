@@ -7,7 +7,7 @@ import {
   type EditingUpdater,
   type RowRestorePoint,
 } from './features/editing-state';
-import { addRow } from './row-mutations';
+import { insertRow } from './row-mutations';
 import type { RowId } from './types';
 
 /**
@@ -42,7 +42,7 @@ export interface BeginEditOptions<TRow> {
  * D36 established that this is pure ergonomics rather than a separate intent, which is why it is
  * an option here instead of the separate `addNewRow` verb it used to be.
  *
- * Inserting lives on the editing slice, not beside `addRow`, because only an `EditingUpdater` can
+ * Inserting lives on the editing slice, not beside `insertRow`, because only an `EditingUpdater` can
  * write both — a `RowUpdater` returns an array and has no handle on editing state.
  */
 export function beginEdit<TRow>(
@@ -62,7 +62,7 @@ export function beginEdit<TRow>(
       if (findRow(data, trackBy, id, indexById) !== undefined) {
         return state;
       }
-      const nextData = addRow<TRow>(insert, { at })(data, { trackBy, indexById });
+      const nextData = insertRow<TRow>(insert, { at })(data, { trackBy, indexById });
       writeData(nextData);
       // `indexById` from context is stale here on purpose — it reflects `data` *before* this
       // write. Resolve the just-inserted row's actual index against the newly written array;

@@ -29,7 +29,7 @@ export { columnSchema } from './api/column-schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './api/column-rules';
 export type { SortNullsOpts } from './api/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
-export { addRow, removeRow, patchRow } from './api/row-mutations';
+export { insertRow, removeRow, patchRow } from './api/row-mutations';
 export { beginEdit, clearEditing, endEdit } from './api/row-edit-mutations';
 export type { BeginEditOptions } from './api/row-edit-mutations';
 export {

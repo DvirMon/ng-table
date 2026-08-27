@@ -9,7 +9,7 @@ function clampSpliceIndex(at: number | undefined, length: number): number {
   return Math.min(Math.max(resolved, 0), length);
 }
 
-export function addRow<TRow>(row: NoInfer<TRow>, opts?: { at?: number }): RowUpdater<TRow> {
+export function insertRow<TRow>(row: NoInfer<TRow>, opts?: { at?: number }): RowUpdater<TRow> {
   return (rows) => {
     const next = rows.slice();
     next.splice(clampSpliceIndex(opts?.at, next.length), 0, row);

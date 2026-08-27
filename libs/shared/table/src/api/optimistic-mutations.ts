@@ -1,5 +1,5 @@
 import { resolveIndex } from '../engine/rows';
-import { addRow } from './row-mutations';
+import { insertRow } from './row-mutations';
 import {
   findRow,
   withSnapshot,
@@ -94,7 +94,7 @@ export function revertEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
     writeData(
       findRow(data, trackBy, id, indexById) !== undefined
         ? data.map((r) => (trackBy(r) === id ? value : r)) // still there — replace
-        : addRow<TRow>(value, { at: snapshot.at })(data, { trackBy, indexById }) // gone — put it back
+        : insertRow<TRow>(value, { at: snapshot.at })(data, { trackBy, indexById }) // gone — put it back
     );
 
     return {

@@ -104,7 +104,7 @@ describe('beginEdit({ insert })', () => {
     expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 3, false));
   });
 
-  it('honours `at` the way addRow does (D27)', () => {
+  it('honours `at` the way insertRow does (D27)', () => {
     beginEdit<Person>(99, { insert: { id: 99, name: '' }, at: 1 })(state(), writingCtx());
 
     expect(written?.map((row) => row.id)).toEqual([1, 99, 2, 3]);

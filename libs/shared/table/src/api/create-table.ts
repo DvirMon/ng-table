@@ -36,7 +36,7 @@ import type {
  * structural. Only `data` is reactive: the consumer's `WritableSignal<TRow[]>` is the single
  * source of truth, and the pipeline's `rows` `computed()` reads it directly — no internal
  * copy. Row writes go through the returned store's `value` member
- * (`table.value.update(addRow(...))`, D30) rather than a setter on `data` itself.
+ * (`table.value.update(insertRow(...))`, D30) rather than a setter on `data` itself.
  */
 export function createTable<
   TRow,

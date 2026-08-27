@@ -170,6 +170,6 @@ export interface TableStore<TRow> {
   readonly totalRowCount: Signal<number>;
 
   /** Read: the row data (D3/D4 — the consumer's own signal, single source of truth). Write:
-   * `.update(updater)` (D30) — e.g. `table.value.update(addRow(row, { at: 0 }))`. */
+   * `.update(updater)` (D30) — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 }

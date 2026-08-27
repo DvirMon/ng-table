@@ -1,7 +1,7 @@
 import { Component, effect, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { addRow } from '../../api/row-mutations';
+import { insertRow } from '../../api/row-mutations';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../row-edit.mock';
 import { editRowsSchema, liveTableSchema } from '../row-edit.schema';
 import type { EditRow } from '../row-edit.types';
@@ -33,9 +33,9 @@ export class LiveTableStoryHostComponent {
     });
   }
 
-  protected addRow(): void {
+  protected insertRow(): void {
     this.table.value.update(
-      addRow(
+      insertRow(
         { id: crypto.randomUUID(), name: '', dept: DEPT_OPTIONS[0] },
         { at: this.insertAt() },
       ),
