@@ -96,7 +96,14 @@ export function composeTable<TRow>(
   const totalRowCount = computed(() => handle.core.rows().length);
 
   const store = Object.assign(
-    { ...handle.core, renderRows: handle.renderRows, totalRowCount },
+    {
+      columns: handle.core.columns,
+      rows: handle.core.rows,
+      trackBy: handle.core.trackBy,
+      value: handle.core.value,
+      renderRows: handle.renderRows,
+      totalRowCount,
+    },
     composed
   );
 
