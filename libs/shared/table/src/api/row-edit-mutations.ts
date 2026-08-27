@@ -11,8 +11,12 @@ import { insertRow } from './row-mutations';
 import type { RowId } from './types';
 
 /**
- * The edit-session verbs — `withRowEdit()`'s slice (D37). They write `open`, so they no-op on a
- * table composing only `withOptimistic()`, where nothing opens a row.
+ * The edit-session verbs — `withRowEdit()`'s slice (D37). They write `open` unconditionally;
+ * there is no feature check. On a table composing only `withOptimistic()` this is
+ * meaningless-but-not-inert, not a no-op: calling `beginEdit` there populates `open`, which
+ * `withOptimistic()` never reads or clears, silently shrinking `pending` (derived as
+ * `snapshots` minus `open`) — the signal a live table actually reads. This is a misuse case
+ * the types don't prevent, not a supported no-op.
  *
  * The rollback verbs (`captureEdit` / `releaseEdit` / `revertEdit`) live in
  * `optimistic-mutations.ts` and work under either composition.
