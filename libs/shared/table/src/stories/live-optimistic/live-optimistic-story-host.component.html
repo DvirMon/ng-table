@@ -22,6 +22,7 @@
         <th class="row-edit-story__cell">name</th>
         <th class="row-edit-story__cell">dept</th>
         <th class="row-edit-story__cell">state</th>
+        <th class="row-edit-story__cell">actions</th>
       </tr>
     </thead>
     <tbody>
@@ -47,6 +48,9 @@
             @if (isPending) {
               <span class="row-edit-story__pending">saving…</span>
             }
+          </td>
+          <td class="row-edit-story__cell">
+            <button type="button" (click)="deleteRow(row.id)">Delete</button>
           </td>
         </tr>
       }

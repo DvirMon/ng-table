@@ -41,8 +41,8 @@ table.mock.ts   ← shared test fixtures
 | `api/column-metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `column-rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
 | `api/column-schema.types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
 | `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withOptimistic()`, `withRowEdit()`. One file each |
-| `api/features/editing-state.ts` | The editing state model — `ABSENT`, `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, so neither reads the other's signal and composition never depends on `features` order (D37/A2) |
-| `api/optimistic-mutations.ts` | `captureEdit`/`releaseEdit`/`revertEdit` — the rollback verbs, meaningful under either editing feature |
+| `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `detached`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, so neither reads the other's signal and composition never depends on `features` order (D37/A2) |
+| `api/optimistic-mutations.ts` | `captureEdit`/`releaseEdit`/`revertEdit`/`discardEdit`/`removeEdit`/`patchEdit` — the rollback and capture-composing verbs, meaningful under either editing feature |
 | `api/row-edit-mutations.ts` | `beginEdit`/`endEdit`/`clearEditing` — the edit-session verbs; no-ops without `withRowEdit()` |
 | `api/features/with-columns-schema/` | The one feature that outgrew a file — split by phase: `resolve.ts` (compile) → `wiring.ts` (run) → `feature.ts` (declare) |
 | `engine/compose-table.ts` | `composeTable()`: folds features, wires hooks. Nothing else |
@@ -150,10 +150,11 @@ Rules:
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and
   the feature retains dead ids until someone deletes a row and notices. Exemptions are per slice
-  and belong to the feature: `everExpanded` (additive ledger) and `ABSENT` snapshots (D28's
-  blank-row add) are the two that exist. Both editing features share one `onRowsRemoved` from
-  `createEditingStore()`, which prunes `open` and `snapshots` together and keeps the `ABSENT`
-  exemption; `pending` is derived and never pruned.
+  and belong to the feature: `everExpanded` (additive ledger) and `detached` restore points
+  (D45's delete rollback — captured by a verb that then removed the row) are the two that exist.
+  Both editing features share one `onRowsRemoved` from `createEditingStore()`, which prunes `open`
+  and `snapshots` together and keeps the `detached` exemption; `pending` is derived and never
+  pruned.
 - The factory's second parameter (`composed`) is the feature-to-feature seam: earlier features'
   members at factory time, all features' members when read later. **No feature uses it**, and the
   two editing features deliberately do not: they share state through `createEditingStore()`

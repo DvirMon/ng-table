@@ -1,7 +1,7 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { captureEdit, releaseEdit, revertEdit } from '../../api/optimistic-mutations';
+import { captureEdit, releaseEdit, removeEdit, revertEdit } from '../../api/optimistic-mutations';
 import type { RowId } from '../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
 import { editRowsSchema, liveOptimisticSchema } from '../row-edit.schema';
@@ -50,6 +50,17 @@ export class LiveOptimisticStoryHostComponent {
     setTimeout(() => void this.save(id));
   }
 
+  /**
+   * Delete-with-rollback: the third verb pairing, no prior `captureEdit`/`beginEdit` needed —
+   * `removeEdit` itself takes the restore point (row + index) before removing the row. Success
+   * drops it (`releaseEdit`); failure re-inserts the row at its captured index (`revertEdit`).
+   */
+  protected deleteRow(id: RowId): void {
+    this.saveError.set(null);
+    this.table.editing.update(removeEdit<EditRow>(id));
+    void this.remove(id);
+  }
+
   private async save(id: RowId): Promise<void> {
     this.saveError.set(null);
     const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
@@ -60,11 +71,7 @@ export class LiveOptimisticStoryHostComponent {
     try {
       const response = await fetch(`/api/rows/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Force-Failure': String(this.forceFailure()),
-          'X-Latency-Ms': String(this.latencyMs()),
-        },
+        headers: this.simulatedHeaders(),
         body: JSON.stringify(row),
       });
       if (!response.ok) {
@@ -78,5 +85,31 @@ export class LiveOptimisticStoryHostComponent {
       // revertEdit: rejected — put the captured value back. Nothing to close; nothing was open.
       this.table.editing.update(revertEdit<EditRow>(id));
     }
+  }
+
+  private async remove(id: RowId): Promise<void> {
+    try {
+      const response = await fetch(`/api/rows/${id}`, {
+        method: 'DELETE',
+        headers: this.simulatedHeaders(),
+      });
+      if (!response.ok) {
+        const errorBody = (await response.json()) as { message?: string };
+        throw new Error(errorBody.message ?? 'Delete failed.');
+      }
+      this.table.editing.update(releaseEdit<EditRow>(id));
+    } catch (error) {
+      this.saveError.set(error instanceof Error ? error.message : 'Delete failed.');
+      this.table.editing.update(revertEdit<EditRow>(id));
+    }
+  }
+
+  /** Headers driving MSW's simulated latency/failure, shared by save and delete requests. */
+  private simulatedHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-Force-Failure': String(this.forceFailure()),
+      'X-Latency-Ms': String(this.latencyMs()),
+    };
   }
 }

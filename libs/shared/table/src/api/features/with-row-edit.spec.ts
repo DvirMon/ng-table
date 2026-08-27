@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createTable } from '../create-table';
 import { beginEdit, endEdit } from '../row-edit-mutations';
-import { captureEdit, releaseEdit, revertEdit } from '../optimistic-mutations';
+import { captureEdit, releaseEdit, removeEdit, revertEdit } from '../optimistic-mutations';
 import { withRowEdit } from './with-row-edit';
 import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 
@@ -148,7 +148,7 @@ describe('withRowEdit', () => {
     expect(store.pending().has('r1')).toBe(false);
   });
 
-  it('an ABSENT snapshot (D28 blank-row-add) survives removal — the keep exemption', () => {
+  it('removeEdit on a never-opened row survives the ADR-0006 effect, and revertEdit reinserts it (Change 4)', () => {
     const data = signal(makeRows());
     const store = TestBed.runInInjectionContext(() =>
       createTable(data, () => ({
@@ -158,20 +158,47 @@ describe('withRowEdit', () => {
       }))
     );
 
-    // D28: beginEdit before the row exists in data captures ABSENT.
-    store.editing.update(beginEdit('new1'));
-
-    // The blank row is added, then removed again without ever being saved.
-    data.update((rows) => [...rows, { id: 'new1', name: 'Draft' }]);
-    TestBed.tick();
-    data.update((rows) => rows.filter((row) => row.id !== 'new1'));
+    store.editing.update(removeEdit<Row>('r1'));
     TestBed.tick();
 
-    // `open` is still pruned — the row is gone, nothing shows inputs for it.
-    expect(store.editing().has('new1')).toBe(false);
-    // But the ABSENT snapshot itself is exempt from pruning (D28), so it stays "pending" —
-    // this asserts the keep-predicate wiring, not a claim about consumer-visible behavior.
-    expect(store.pending().has('new1')).toBe(true);
+    // Without the `detached` exemption, the ADR-0006 reconciliation effect would have pruned
+    // this snapshot the instant removeEdit took the row out of `data` — Change 4's regression
+    // guard. The ordering is safe (writeData applies synchronously, before the effect flushes)
+    // but this is what pins it.
+    expect(store.pending().has('r1')).toBe(true);
+    expect(data().some((row) => row.id === 'r1')).toBe(false);
+
+    store.editing.update(revertEdit<Row>('r1'));
+
+    expect(data().find((row) => row.id === 'r1')?.name).toBe('Ada');
+    expect(store.pending().size).toBe(0);
+  });
+
+  it('removeEdit on an already-open row keeps its pre-edit restore point through the effect, and flips detached (Change 4)', () => {
+    const data = signal(makeRows());
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id',
+        columns: makeColumns(),
+        features: [withRowEdit<Row>()],
+      }))
+    );
+
+    store.editing.update(beginEdit('r1'));
+    data.update((rows) => rows.map((row) => (row.id === 'r1' ? { ...row, name: 'typed' } : row)));
+    TestBed.tick();
+
+    store.editing.update(removeEdit<Row>('r1'));
+    TestBed.tick();
+
+    expect(store.editing().has('r1')).toBe(false); // removeEdit clears open
+    expect(store.pending().has('r1')).toBe(true);
+
+    store.editing.update(revertEdit<Row>('r1'));
+
+    // The restore point held from `beginEdit` (pre-edit "Ada"), not the externally typed value —
+    // removeEdit on an already-open row keeps the true pre-edit snapshot rather than re-capturing.
+    expect(data().find((row) => row.id === 'r1')?.name).toBe('Ada');
   });
 
   // A write through Signal Forms' root value signal (`form(data, schema)` writes back into

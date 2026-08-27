@@ -1,4 +1,4 @@
-import { diffRemovedIds, pruneByIds } from './rows';
+import { diffRemovedIds, pruneByIds, resolveIndex } from './rows';
 
 describe('diffRemovedIds', () => {
   it('returns ids present in previous but not current', () => {
@@ -57,6 +57,38 @@ describe('pruneByIds — Map overload', () => {
     const next = pruneByIds(map, ['r1', 'r2'], (value) => value === 'ABSENT');
 
     expect([...next.keys()]).toEqual(['r2']);
+  });
+});
+
+describe('resolveIndex', () => {
+  const trackBy = (row: { id: number }) => row.id;
+
+  it('is an O(1) hit when indexById is fresh', () => {
+    const rows = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    const indexById = new Map(rows.map((r, i) => [r.id, i]));
+
+    expect(resolveIndex(rows, 2, { trackBy, indexById })).toBe(1);
+  });
+
+  it('falls back to a linear scan when indexById is stale', () => {
+    // Simulates a chained writeData inside one updater: `indexById` still reflects the array
+    // as it was before a row was inserted at the front, so the guard (`trackBy(rows[at]) ===
+    // id`) fails and the fallback takes over.
+    const staleIndexById = new Map([
+      [1, 0],
+      [2, 1],
+      [3, 2],
+    ]);
+    const rowsAfterInsert = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }];
+
+    expect(resolveIndex(rowsAfterInsert, 2, { trackBy, indexById: staleIndexById })).toBe(2);
+  });
+
+  it('returns -1 when the id is not present', () => {
+    const rows = [{ id: 1 }, { id: 2 }];
+    const indexById = new Map(rows.map((r, i) => [r.id, i]));
+
+    expect(resolveIndex(rows, 999, { trackBy, indexById })).toBe(-1);
   });
 });
 

@@ -19,7 +19,9 @@ still resolve.
 
 **This file is the reasoning, not the contract.** The shipped surface is specced in
 [`features/row-editing.md`](../../features/row-editing.md); what it does not yet cover is
-tracked, prioritized and split by layer in [`5-gaps.md`](./5-gaps.md). Read those first — this
+tracked in two registers split by owning layer — [`5-gaps.md`](./5-gaps.md) for the state layer,
+[`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md) for keyboard, focus,
+a11y and save-gating. Read those first — this
 log contains superseded decisions (D13→D21→D29, D20→D24) that no longer describe the code.
 
 ## D10 — Row edit mode is a store slice, mirroring `withExpansion()` (2026-08-11)
@@ -915,6 +917,10 @@ build target, no `project.json` change.
   the directive surfaces it (renders nothing for such rows) rather than introducing it.
 
 ## Open — carried forward
+
+> **The index of what is still open lives in the gap registers**, mapped to the gaps each
+> question gates: [state](./5-gaps.md#open-decisions), [UI](../../../3-ui/work/row-editing/5-gaps.md#open-decisions). This section keeps
+> the reasoning; go there for the current status.
 
 - **O13** ~~A `beginEdit` snapshot (D17) can go stale if `data` changes from another source while
   the row is open.~~ **Closed by D34.**

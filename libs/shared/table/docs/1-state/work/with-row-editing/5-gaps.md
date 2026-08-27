@@ -1,7 +1,7 @@
 ---
-title: Gaps — Row Editing, prioritized and split by layer
+title: Gaps — Row Editing, state layer
 type: plan
-status: open — partially superseded 2026-08-26, see the banner
+status: open — state layer only; UI gaps moved 2026-08-26, see the banner
 date: 2026-08-26
 parent: ./2-decisions.md
 ---
@@ -22,11 +22,12 @@ and [`../../row-mutations.md`](../../row-mutations.md).
 > **1. Storybook shipped** (`src/stories/`). G12 was written when no demo could reach three
 > verbs; four stories now can. See G12 for what actually remains.
 >
-> **2. The two-feature split was specified** —
-> [`work/with-optimistic/2-decisions.md`](../with-optimistic/2-decisions.md), D37–D44. Optimistic
-> rollback becomes `withOptimistic()`, composed internally by `withRowEdit()`, so a live table can
-> use it. That changes G3, G4 and G5's framing; each is annotated below. **It does not close G5** —
-> the split changes who owns a restore point, not what one can express.
+> **2. The two-feature split shipped** —
+> [`work/with-optimistic/2-decisions.md`](../with-optimistic/2-decisions.md), D37–D44, implemented
+> 2026-08-26. Optimistic rollback is now `withOptimistic()`, composed internally by
+> `withRowEdit()`, so a live table can use it. That changes G3, G4 and G5's framing; each is
+> annotated below. **It does not close G5** — the split changes who owns a restore point, not what
+> one can express.
 >
 > Verb names throughout this file are v1.0. `settleEdit` → `releaseEdit`, `rebaseEdit` →
 > `captureEdit`, `addNewRow` → `beginEdit({ insert })`, `keepSnapshot` removed.
@@ -45,27 +46,20 @@ Keyboard and accessibility are **UI-layer in full**. `revertEdit` exists and wor
 it from a key handler, and adding that call is directive work — no state-layer change is
 involved. Same for focus and announcements.
 
+**Those gaps moved out on 2026-08-26.** G1, G7, G9, G10 and G11 now live in [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md); this file keeps
+only what the state layer owns. Each moved entry leaves a one-line stub below so the G-numbering
+stays readable against older references.
+
 Two gaps are neither: they are defects in the decision record itself (G8).
 
 ---
 
 ## Priority 1 — shipped behavior is wrong or incomplete
 
-### G1 — No keyboard story at all *(UI layer)*
+### G1 — No keyboard story at all — **MOVED 2026-08-26**
 
-**What:** no Escape-to-cancel, no Enter-to-save, no Tab containment, nowhere in the stack.
-
-Both references bind Escape to revert — MUI X (`stopRowEditMode({ ignoreModifications: true })`)
-and AG Grid. We bind nothing. D31.2 flagged this as "missing affordance, noted not decided" and
-left it.
-
-**Why P1:** an edit mode without Escape is incomplete, not unpolished. It is also the only P1
-item that every single gated table hits, on the first row a user opens.
-
-**Where:** a row-scoped directive in `directives/`, calling the updaters that already exist.
-Needs a `docs/3-ui/work/<slug>/` folder and a ticket — no state-layer change.
-
-**Blocked on:** nothing. All the verbs it needs shipped in E4.
+UI layer in full. Now in [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md).
+No Escape-to-cancel, no Enter-to-save, no Tab containment; the verbs it needs all shipped in E4.
 
 ### ~~G2 — A row removed externally while open leaves a dead entry~~ *(state layer)* — **CLOSED 2026-08-25**
 
@@ -139,34 +133,31 @@ decision.
 see D35). A predicate matching N rows wants N rows open, so a row rule cannot be designed while
 `multiple: true` has no semantics. G4 is no longer only a tidiness gap.
 
-### G5 — Optimistic rollback covers update and create only *(state layer, deferred by decision)*
+### G5 — Optimistic rollback covers update, create, and (now) delete; move stays uncovered *(state layer)*
 
-**Tracked as [#54](https://github.com/DvirMon/acme/issues/54)** (opened 2026-08-26) — filed for visibility, not scheduled.
+**Tracked as [#54](https://github.com/DvirMon/acme/issues/54)** (opened 2026-08-26).
 
-**What:** `pending` covers optimistic update (snapshot = prior row) and optimistic create
-(snapshot = `ABSENT`). Delete and move are uncovered, structurally:
+**Delete closed 2026-08-27** — [`work/with-optimistic-crud/2-decisions.md`](../with-optimistic-crud/2-decisions.md),
+D45–D47. A restore point now carries its index (`RowRestorePoint.at`), and `removeEdit(id)`
+captures + removes in one write, so `revertEdit(id)` alone re-inserts it. `ABSENT` is gone
+(D46) — the mechanism that made delete unrepresentable no longer exists.
 
-- no entry point — `removeRow(id)` goes through `table.value.update()` and never touches the
-  editing state, so no restore point is ever captured;
-- `revertEdit` replaces in place and cannot re-insert;
-- a snapshot holds a **value**, never an index, so position is unrecoverable regardless.
+**Move is still uncovered**, and for the reason O22 originally gave: `RowRestorePoint` fixes a
+row's *position at capture time*, but no verb reorders rows, and undoing a reorder needs an
+inverse-operation representation (from-index/to-index or similar), not a fixed snapshot position.
+Re-derive when a `moveRow`/drag-and-drop feature exists — see the product doc's D-2.
 
-A table with a Delete button and no editing feature (D18 — actions are consumer template code)
-has no rollback story at all.
+**Original text, for history:**
 
-**Status: deliberately not designed** (decided 2026-08-25, recorded as **O22**). Option 2 there —
-a pending-mutations slice holding an *inverse operation* rather than a value snapshot — needs a
-representation the library does not have, and no consumer needs optimistic delete yet.
+~~**What:** `pending` covers optimistic update (snapshot = prior row) and optimistic create
+(snapshot = `ABSENT`). Delete and move are uncovered, structurally: no entry point —
+`removeRow(id)` goes through `table.value.update()` and never touches the editing state, so no
+restore point is ever captured; `revertEdit` replaces in place and cannot re-insert; a snapshot
+holds a **value**, never an index, so position is unrecoverable regardless.~~
 
-**Listed here so it is visible, not to schedule it.** Re-derive when a consumer needs it. Read
-O22 against ADR-0006 (which locks in "no optimistic delete" rather than fixing it) and against
-D32 (a batched write is one rollback unit, not N).
-
-**Not closed by the D37 split, and the split makes it easier to misread.** D37 takes O22's
-*ownership* half — rollback becomes its own feature — and leaves the *representation* half
-untouched: a restore point still holds a value, never an index. A feature named `withOptimistic()`
-reads as covering optimistic delete when it cannot. D38 requires the non-coverage be stated in the
-feature's own JSDoc rather than only here.
+**Not closed by the D37 split alone** — that was true until D45. D37 took O22's *ownership* half
+(rollback becomes its own feature) and left the *representation* half open; D45–D47 closed the
+representation half for delete specifically, leaving move as the one still-open case.
 
 ### G6 — Expansion children get no `sourceIndex` *(state layer — engine)*
 
@@ -183,20 +174,11 @@ when building the index.
 **Blocked on:** nothing, but it interacts with whatever `withGrouping()` eventually does to
 `renderRows`.
 
-### G7 — Save-gating and dirty state are unaddressed *(consumer + UI; no state-layer work)*
+### G7 — Save-gating and dirty state — **MOVED 2026-08-26**
 
-**What:** F5 (dirty / validation / commit) was in this cluster's stated scope and nothing
-addresses it. There is no documented recipe for disabling Save while a row is invalid, no
-table-level "any row dirty" signal, and no unsaved-changes guard. E2b validates server-side
-only.
-
-**Why it is not a state-layer gap:** the form already owns dirty, touched and validity (D1), and
-`table.editing()` already gives the row set. Everything needed exists; what is missing is the
-recipe and, for a "Save all" affordance, a UI component.
-
-**Where:** a section in [`features/row-editing.md`](../../features/row-editing.md) plus a demo
-addition. **O17** (validation scope — `applyEach` validates rows the user cannot see) stays
-phantom until filtering or pagination exists.
+Consumer + UI; no state-layer work. Now in [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md).
+The form owns dirty/validity (D1) and `table.editing()` gives the row set — what is missing is the
+recipe, not a mechanism.
 
 ### G8 — Decision-record defects *(neither layer — docs integrity)*
 
@@ -268,30 +250,10 @@ reset.
 **Where:** `apps/demo/src/app/table-row-edit-demo/`. E2's `table-edit-demo` must keep composing no
 editing feature (D29) — it is the reference for the minimal table and is not the place for this.
 
-## Priority 3 — UI layer, after G1
+## Priority 3 — UI layer — **MOVED 2026-08-26**
 
-### G9 — Focus management *(UI layer)*
-
-Nothing moves focus into the row on `beginEdit`, and nothing restores it to the Edit button on
-close. Related: D26 notes that the temp-id swap destroys and recreates the `<tr>`, taking focus
-inside it with it.
-
-### G10 — Accessibility beyond keyboard *(UI layer)*
-
-No announcement of edit-mode entry or exit, no `aria-*` contract for an editing row, no
-error-association pattern for a failed save. `ColumnDef.statusMessage` is drafted in specs and
-not wired to anything.
-
-WCAG exposure is already documented in the research: 3.2.2 On Input for a row that moves or
-vanishes mid-interaction — D24 removes the mid-typing case, but a committed edit still moves the
-row with no announcement.
-
-### G11 — Retained-row affordance *(UI layer — phantom)*
-
-D25 says a row edited out of the active filter stays visible and flagged until the filter
-changes. It needs a chip or muted styling so the user can tell why an out-of-filter row is
-showing. **Phantom** — `withFiltering()` does not exist. Do not build from these notes;
-re-derive when the stage does.
+G9 (focus management), G10 (accessibility beyond keyboard) and G11 (retained-row affordance,
+phantom) are now in [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md), alongside G1 and G7.
 
 ---
 
@@ -308,24 +270,50 @@ re-derive when the stage does.
 
 ---
 
+## Open decisions
+
+Every open question that gates a gap in this file, collapsed into one index. **The reasoning stays
+in the decision logs** — this table is the answer to "what has to be decided before I can start
+G*n*", nothing more. Follow the link before acting on any of them.
+
+| # | Question | Gates | Full text |
+|---|---|---|---|
+| **O24** | Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features? | **G3** ([#53](https://github.com/DvirMon/acme/issues/53)) — blocking | [with-optimistic](../with-optimistic/2-decisions.md) |
+| **O20** | On an id swap: enforce end-edit-first, migrate the orphaned key, or document the sequence? | **G3** — the policy call | [with-mutations](../with-mutations/2-decisions.md) |
+| **O22** | *(representation half, delete closed 2026-08-27)* Inverse operation instead of a fixed-position snapshot, so rollback can cover **move**? | **G5** ([#54](https://github.com/DvirMon/acme/issues/54)) — delete no longer blocked | [with-optimistic-crud](../with-optimistic-crud/2-decisions.md) |
+| **O23** | Should openness be declarative — `applyEditable({ when })` mirroring `applyVisible()`? | blocked *by* **G4** — a predicate matching N rows forces `multiple: true` | [with-row-editing](./2-decisions.md) |
+| **O15** | How does the `filter` stage express "keep these ids even though the predicate rejects them"? | phantom — needs `withFiltering()` | [with-row-editing](./2-decisions.md) |
+| **O16** | Where does a *retained* row sit once it no longer matches the filter — in place, or collected? | phantom — same | [with-row-editing](./2-decisions.md) |
+| **O11** | Does `withRowEdit()` fire a `rowEditChanged` Observable, or is `editing()` the only notification? | no gap — API surface. Decide with **O6** | [with-row-editing](./2-decisions.md) |
+| **O19** | Export an `editableRow(row, columns)` schema fragment so the commit boundary is one call? | no gap — E5 in [`4-increments.md`](./4-increments.md) | [with-row-editing](./2-decisions.md) |
+
+**O17** (`applyEach` validates rows the user cannot see) moved with G7 — see the
+[UI register](../../../3-ui/work/row-editing/5-gaps.md).
+
+**O6** (`rowsChanged` event) and **O8** (compile-time feature dependencies, `composed` untyped) are
+mutation- and engine-wide, not editing gaps. They live in
+[with-mutations](../with-mutations/2-decisions.md).
+
+**Closed since the last pass:** O13→D34, O18→D24, O25→D41+D44, O22's ownership half→D37.
+
+---
+
 ## Suggested order
 
 ```
 G8  docs defects                     DONE 2026-08-25 (D33 / D34 renumber)
 G2  dead entry on external removal   DONE 2026-08-25 (ADR-0006 implemented)
 G12 demo coverage                    DONE 2026-08-26 (Storybook; pessimistic save remains)
---- the D37 split lands here ---
+--- the D37 split landed here, 2026-08-26 ---
 G3  optimistic create identity       (state, needs the O20 call — swapRowId; after the split, O24)
-G1  keyboard                         (UI — own work folder + ticket)
-G9  focus            ──┐
-G10 a11y             ──┴─ same directive effort as G1; scope together
 G4  multiple: true design-or-reject  (state)
 G6  expansion child sourceIndex      (engine)
-G7  save-gating recipe               (docs + demo)
 ```
 
-G5 and G11 are not in the order — one is deferred by decision, the other is phantom.
+G5's delete half shipped 2026-08-27 (D45–D47), out of order relative to G3/G4/G6, since a
+consumer-visible worst-case failure mode (delete loses the row, no recovery) outweighed the
+sequencing. Its move half is still not in the order — no consumer need yet — tracked as
+[#54](https://github.com/DvirMon/acme/issues/54).
 
-**G1, G9 and G10 are one effort, not three.** They share a directive, a work folder and a
-ticket; splitting them produces a keyboard handler with no focus story, which is worse than
-neither.
+**The UI-layer order lives with the UI gaps** — G1/G9/G10 are one directive effort, G7 is docs +
+demo. See [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md).

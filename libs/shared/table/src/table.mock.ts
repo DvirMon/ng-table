@@ -57,6 +57,14 @@ export const mockRows: MockRow[] = [
 
 export const mockTrackBy: TrackByFn<MockRow> = (row) => row.id;
 
+/** Mirrors `engine/core.ts`'s `indexById` derivation, for the mock stores below — they don't
+ * compose the real engine, so they build the map by hand off their own `data` signal. */
+function mockIndexById<TRow>(rows: TRow[], trackBy: TrackByFn<TRow>): ReadonlyMap<RowId, number> {
+  const map = new Map<RowId, number>();
+  rows.forEach((row, index) => map.set(trackBy(row), index));
+  return map;
+}
+
 /**
  * Minimal store stub carrying a real writable `value` view, for testing updater factories
  * through `table.value.update(...)` (D30) — not a full `composeTable()` instance.
@@ -66,6 +74,7 @@ export function createMockTableStoreWithData<TRow>(
   trackBy: TrackByFn<TRow>
 ): TableStore<TRow> {
   const data = signal<TRow[]>(rows);
+  const indexById = computed(() => mockIndexById(data(), trackBy));
   return {
     columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
     rows: signal<TRow[]>(rows),
@@ -74,7 +83,7 @@ export function createMockTableStoreWithData<TRow>(
     trackBy,
     value: createWritableView<TRow[], RowUpdater<TRow>>(
       () => data(),
-      (updater) => data.update((current) => updater(current, { trackBy }))
+      (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() }))
     ),
   };
 }
@@ -89,10 +98,11 @@ export function createMockTableStoreWithEditing<TRow>(
   trackBy: TrackByFn<TRow>
 ): TableStore<TRow> & RowEditMembers<TRow> {
   const data = signal<TRow[]>(rows);
+  const indexById = computed(() => mockIndexById(data(), trackBy));
   const state = signal<EditingState<TRow>>({ snapshots: new Map(), open: new Set() });
   const value = createWritableView<TRow[], RowUpdater<TRow>>(
     () => data(),
-    (updater) => data.update((current) => updater(current, { trackBy }))
+    (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() }))
   );
   return {
     columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
@@ -109,6 +119,7 @@ export function createMockTableStoreWithEditing<TRow>(
             data: data(),
             trackBy,
             writeData: (rows) => value.update(() => rows),
+            indexById: indexById(),
           })
         )
     ),

@@ -22,6 +22,25 @@ export function buildDefaultRenderRows<TRow>(
     rows.map((row) => ({ id: trackBy(row), depth: 0, kind: 'row', data: row }));
 }
 
+/**
+ * Resolves `id`'s index in `rows`, O(1) via `indexById` when it still points at the right row,
+ * falling back to a linear scan when it doesn't (e.g. a chained `writeData` inside one updater,
+ * where `indexById` reflects the array *before* that write). The guard is one `trackBy` call —
+ * cheap insurance against every staleness question, and always correct since the fallback never
+ * trusts a stale hit.
+ */
+export function resolveIndex<TRow>(
+  rows: TRow[],
+  id: RowId,
+  { trackBy, indexById }: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
+): number {
+  const at = indexById.get(id);
+  if (at !== undefined && trackBy(rows[at]) === id) {
+    return at;
+  }
+  return rows.findIndex((row) => trackBy(row) === id);
+}
+
 /** Ids present in `previous` but not `current` — what left `data` this recompute. */
 export function diffRemovedIds(
   previous: ReadonlySet<RowId>,

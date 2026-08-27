@@ -1,7 +1,8 @@
-import { ABSENT, pendingIds, type EditingState } from './features/editing-state';
+import { pendingIds, type EditingState, type RowRestorePoint } from './features/editing-state';
 import { beginEdit, clearEditing, endEdit } from './row-edit-mutations';
 import { releaseEdit, revertEdit } from './optimistic-mutations';
-import { addRow, removeRow } from './row-mutations';
+import { removeRow } from './row-mutations';
+import type { RowId } from './types';
 import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -9,15 +10,25 @@ type Person = MockRow;
 const trackBy = mockTrackBy;
 const rows: Person[] = mockRows;
 
+function indexById(data: Person[] = rows): ReadonlyMap<RowId, number> {
+  const map = new Map<RowId, number>();
+  data.forEach((row, i) => map.set(trackBy(row), i));
+  return map;
+}
+
 function ctx(data: Person[] = rows) {
-  return { data, trackBy, writeData: () => undefined };
+  return { data, trackBy, writeData: () => undefined, indexById: indexById(data) };
 }
 
 function state(
-  snapshots: [number, Person | typeof ABSENT][] = [],
+  snapshots: [number, RowRestorePoint<Person>][] = [],
   open: number[] = []
 ): EditingState<Person> {
   return { snapshots: new Map(snapshots), open: new Set(open) };
+}
+
+function restorePoint(row: Person, at: number, detached = false): RowRestorePoint<Person> {
+  return { row, at, detached };
 }
 
 /** Every updater must preserve it — `pendingIds` derives from it (D31.5). */
@@ -28,13 +39,14 @@ function openIsSubsetOfSnapshots(result: EditingState<Person>): boolean {
 describe('beginEdit', () => {
   it('captures the row currently in data as its restore point', () => {
     const result = beginEdit<Person>(2)(state(), ctx());
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     expect(result.open.has(2)).toBe(true);
   });
 
-  it('captures ABSENT for an id not yet in data (D28 blank-row flow)', () => {
+  it('opens an id not in data without `{ insert }`, but sets no snapshot (misuse case)', () => {
     const result = beginEdit<Person>(99)(state(), ctx());
-    expect(result.snapshots.get(99)).toBe(ABSENT);
+    expect(result.open.has(99)).toBe(true);
+    expect(result.snapshots.has(99)).toBe(false);
   });
 
   it('does not re-capture over an already-open row (D31.1)', () => {
@@ -43,7 +55,7 @@ describe('beginEdit', () => {
       opened,
       ctx([{ id: 2, name: 'Bea-typing' }, ...rows.slice(1)])
     );
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
   });
 
   it('re-opens a pending row, keeping the restore point from the first beginEdit (D31.1)', () => {
@@ -55,7 +67,7 @@ describe('beginEdit', () => {
       ctx([{ id: 2, name: 'optimistic' }, ...rows.slice(1)])
     );
 
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     expect(result.open.has(2)).toBe(true);
     expect(pendingIds(result).has(2)).toBe(false);
   });
@@ -71,7 +83,7 @@ describe('beginEdit({ insert })', () => {
 
   function writingCtx(data: Person[] = rows) {
     written = undefined;
-    return { data, trackBy, writeData: (next: Person[]) => void (written = next) };
+    return { data, trackBy, writeData: (next: Person[]) => void (written = next), indexById: indexById(data) };
   }
 
   it('writes the row into data and opens it in one updater (D35/D42)', () => {
@@ -85,10 +97,11 @@ describe('beginEdit({ insert })', () => {
     expect(openIsSubsetOfSnapshots(result)).toBe(true);
   });
 
-  it('captures the row itself as its restore point, not ABSENT (D36)', () => {
+  it('captures the row itself as its restore point (D36)', () => {
     const result = beginEdit<Person>(99, { insert: { id: 99, name: '' } })(state(), writingCtx());
 
-    expect(result.snapshots.get(99)).toEqual({ id: 99, name: '' });
+    // Appended (no `at`) to the 3-row fixture — lands at index 3.
+    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 3, false));
   });
 
   it('honours `at` the way addRow does (D27)', () => {
@@ -98,7 +111,7 @@ describe('beginEdit({ insert })', () => {
   });
 
   it('no-ops for an id already in data — patchRow owns that case (D35)', () => {
-    const before = state([[2, { id: 2, name: 'Bea' }]], []);
+    const before = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1)]], []);
     const result = beginEdit<Person>(2, { insert: { id: 2, name: 'duplicate' } })(
       before,
       writingCtx()
@@ -115,7 +128,7 @@ describe('endEdit', () => {
     const result = endEdit<Person>(2)(opened, ctx());
 
     expect(result.open.has(2)).toBe(false);
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     expect(pendingIds(result).has(2)).toBe(true);
   });
 
@@ -159,7 +172,7 @@ describe('clearEditing', () => {
 
     const result = clearEditing<Person>()(saved, ctx());
 
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     expect(pendingIds(result).has(2)).toBe(true);
   });
 
@@ -178,20 +191,6 @@ describe('table.editing.update', () => {
 
     expect(fakeTable.editing().has(2)).toBe(true);
     expect(fakeTable.pending().has(2)).toBe(false);
-  });
-
-  it('the canonical D28 blank-row sequence round-trips through revertEdit back to an empty table', () => {
-    const fakeTable = createMockTableStoreWithEditing<Person>([], trackBy);
-    const id = 99;
-
-    fakeTable.editing.update(beginEdit<Person>(id));
-    fakeTable.value.update(addRow<Person>({ id, name: '' }, { at: 0 }));
-    expect(fakeTable.value()).toEqual([{ id, name: '' }]);
-
-    fakeTable.editing.update(revertEdit<Person>(id));
-
-    expect(fakeTable.value()).toEqual([]);
-    expect(fakeTable.editing().has(id)).toBe(false);
   });
 
   it('beginEdit({ insert }) adds and opens in one write; discarding on Cancel is composed explicitly (D36/D42)', () => {

@@ -1,12 +1,20 @@
 import { addRow, patchRow, removeRow } from './row-mutations';
+import type { RowId } from './types';
 import { createMockTableStoreWithData, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
 
 const trackBy = mockTrackBy;
-const ctx = { trackBy };
 
 const rows: Person[] = mockRows;
+
+function indexById(data: Person[] = rows): ReadonlyMap<RowId, number> {
+  const map = new Map<RowId, number>();
+  data.forEach((row, i) => map.set(trackBy(row), i));
+  return map;
+}
+
+const ctx = { trackBy, indexById: indexById(rows) };
 
 describe('addRow', () => {
   it('appends when at is omitted', () => {
@@ -27,7 +35,8 @@ describe('addRow', () => {
   it('at: -1 inserts before the last row (D27)', () => {
     // Verbatim D27 example: [1,2,3] -> [1,2,X,3]
     const abc = [1, 2, 3];
-    const numCtx = { trackBy: (n: number) => n };
+    const numTrackBy = (n: number) => n;
+    const numCtx = { trackBy: numTrackBy, indexById: new Map(abc.map((n, i) => [n, i])) };
     const result = addRow<number>(0, { at: -1 })(abc, numCtx);
     expect(result).toEqual([1, 2, 0, 3]);
   });

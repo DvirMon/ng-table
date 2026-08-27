@@ -473,6 +473,9 @@ generic `value`.
 
 ## Open — carried forward
 
+> **O20** is indexed in the editing gap register
+> ([state](../with-row-editing/5-gaps.md#open-decisions)) against the gap it gates, G3.
+
 - **O6** Does a `rowsChanged` event fire on `updateRows`, or is the signal the only notification?
 - **O8** Compile-time feature dependencies have no mechanism post-migration (`composed` is
   untyped). Affects `withGrouping`→`withExpansion` today, and any dependency `withRowEdit()`

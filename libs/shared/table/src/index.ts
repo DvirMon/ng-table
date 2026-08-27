@@ -16,11 +16,11 @@ export { withRowEdit } from './api/features/with-row-edit';
 export type { WithRowEditConfig, RowEditMembers } from './api/features/with-row-edit';
 export { withOptimistic } from './api/features/with-optimistic';
 export type { OptimisticMembers } from './api/features/with-optimistic';
-export { ABSENT } from './api/features/editing-state';
 export type {
   EditingState,
   EditingUpdater,
   EditingUpdaterContext,
+  RowRestorePoint,
   RowSnapshot,
   SnapshotMap,
 } from './api/features/editing-state';
@@ -31,7 +31,15 @@ export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-meta
 export { addRow, removeRow, patchRow } from './api/row-mutations';
 export { beginEdit, clearEditing, endEdit } from './api/row-edit-mutations';
 export type { BeginEditOptions } from './api/row-edit-mutations';
-export { captureEdit, releaseEdit, revertEdit } from './api/optimistic-mutations';
+export {
+  captureEdit,
+  discardEdit,
+  patchEdit,
+  releaseEdit,
+  removeEdit,
+  revertEdit,
+} from './api/optimistic-mutations';
+export type { PatchEditOptions } from './api/optimistic-mutations';
 export {
   setColumns,
   reorderColumns,

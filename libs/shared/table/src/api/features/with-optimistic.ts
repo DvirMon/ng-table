@@ -32,11 +32,10 @@ export interface OptimisticMembers<TRow> {
  * `withRowEdit()` composes the same state for gated tables and adds the open set on top; listing
  * both in `features` throws at construction (ADR-0007).
  *
- * **Scope — update and create only, never delete or move (D38, G5).** A restore point holds a
- * *value*, never an index: `revertEdit` replaces in place and cannot re-insert a removed row, and
- * a moved row's position is not part of a snapshot. Optimistic create works because its restore
- * point is `ABSENT`, so rolling back removes the row. Covering delete/move needs an
- * inverse-operation representation this library does not have — the open half of O22.
+ * **Scope — update, create, and delete; never move (D38, G5, extended by the optimistic-CRUD
+ * handoff).** A restore point now carries a position as well as a value, so `revertEdit` can
+ * re-insert a row `removeEdit` took out of `data`. A moved row's position is still not part of a
+ * snapshot — covering move needs an inverse-operation representation this library does not have.
  */
 export function withOptimistic<TRow = unknown>() {
   return (core: TableCore<TRow>): TableFeatureSpec<TRow, OptimisticMembers<TRow>> => {

@@ -1,3 +1,4 @@
+import { resolveIndex } from '../engine/rows';
 import type { RowId, RowUpdater } from './types';
 
 /** D27: `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an
@@ -17,10 +18,21 @@ export function addRow<TRow>(row: NoInfer<TRow>, opts?: { at?: number }): RowUpd
 }
 
 export function removeRow<TRow>(id: RowId): RowUpdater<TRow> {
-  return (rows, { trackBy }) => rows.filter((row) => trackBy(row) !== id);
+  return (rows, { trackBy, indexById }) => {
+    const at = resolveIndex(rows, id, { trackBy, indexById });
+    if (at === -1) return rows;
+    const next = rows.slice();
+    next.splice(at, 1);
+    return next;
+  };
 }
 
 export function patchRow<TRow>(id: RowId, partial: Partial<TRow>): RowUpdater<TRow> {
-  return (rows, { trackBy }) =>
-    rows.map((row) => (trackBy(row) === id ? { ...row, ...partial } : row));
+  return (rows, { trackBy, indexById }) => {
+    const at = resolveIndex(rows, id, { trackBy, indexById });
+    if (at === -1) return rows;
+    const next = rows.slice();
+    next[at] = { ...next[at], ...partial };
+    return next;
+  };
 }

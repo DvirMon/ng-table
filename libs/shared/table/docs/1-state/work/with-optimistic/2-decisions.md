@@ -329,6 +329,10 @@ so the invariant still lives with the feature that owns it.
 - **O25** ~~*(new, from D41)* `releaseEdit()` with no id discards every in-flight rollback.~~
   **Closed 2026-08-26 by D41 + D44** — there is no bulk form. Both verbs require an id; bulk
   teardown is `clearEditing()`, which stays atomic. The footgun cannot be spelled.
+**The index of what is still open lives in the gap registers**, mapped to the gaps each question
+gates: [state](../with-row-editing/5-gaps.md#open-decisions),
+[UI](../../../3-ui/work/row-editing/5-gaps.md#open-decisions).
+
 - **O11**, **O15**, **O16**, **O17**, **O19**, **O23** — unchanged, see
   [`../with-row-editing/2-decisions.md`](../with-row-editing/2-decisions.md).
 

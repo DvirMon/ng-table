@@ -153,7 +153,7 @@ export type ColumnsUpdater<TRow> = (
  */
 export type RowUpdater<TRow> = (
   rows: TRow[],
-  ctx: { trackBy: TrackByFn<TRow> }
+  ctx: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
 ) => TRow[];
 
 export interface TableStore<TRow> {

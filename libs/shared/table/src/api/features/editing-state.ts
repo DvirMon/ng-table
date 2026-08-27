@@ -1,29 +1,46 @@
 import { computed, signal, type Signal } from '@angular/core';
-import { pruneByIds } from '../../engine/rows';
+import { pruneByIds, resolveIndex } from '../../engine/rows';
 import type { TableCore } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
 import type { RowId, TrackByFn } from '../types';
 
 /**
- * The editing state model — the sentinel, the state shape, the updater contract, and the store
- * both editing features are built on. Types and factory live together the way
+ * The editing state model — the restore-point shape, the state shape, the updater contract, and
+ * the store both editing features are built on. Types and factory live together the way
  * `engine/writable-view.ts` keeps `WritableView` beside `createWritableView()`: they are one
- * concern, and splitting them would put a value import (`ABSENT`) in a `.types.ts` file and
- * create a cycle with the updater modules that consume both.
+ * concern, and splitting them would create a cycle with the updater modules that consume both.
  *
  * Not a feature. `withOptimistic()` and `withRowEdit()` each call `createEditingStore()`
  * themselves (D37) — neither reads the other's signal, and composition stays independent of
  * `features` array order.
  */
 
-/** Sentinel snapshot value: the row did not exist in `data` when it was captured (D28) — the
- * blank-row-add flow. `revertEdit` reads this to remove the row instead of restoring a value. */
-export const ABSENT = Symbol('row-edit-absent');
+/**
+ * A row's restore point. Carries its position as well as its value (Change 1 of the optimistic
+ * CRUD handoff) so `revertEdit` can re-insert a row that was removed, not just replace one still
+ * present.
+ */
+export interface RowRestorePoint<TRow> {
+  readonly row: TRow;
+  /** Index in `data` at capture time. Read **only** when the row is missing at revert — a row
+   * still present is replaced in place, since a sort or another write may have moved it. */
+  readonly at: number;
+  /** Captured by a verb that then removed the row, so ADR-0006 pruning must not drop it. */
+  readonly detached: boolean;
+}
 
-export type RowSnapshot<TRow> = TRow | typeof ABSENT;
+export type RowSnapshot<TRow> = RowRestorePoint<TRow>;
 
-/** id -> the row's value at the moment it was first captured (D17), or `ABSENT` (D28).
- * One restore point per row; whether that row is currently open is a separate fact. */
+/** Config for `patchEdit` (`optimistic-mutations.ts`). */
+export interface PatchEditOptions {
+  /** Default `'if-absent'` (D31.1 — oldest restore point wins, matches `beginEdit`). `'always'`
+   * overwrites the restore point on every call, matching `captureEdit`. */
+  capture?: 'if-absent' | 'always';
+}
+
+/** id -> the row's restore point, captured the moment it was first opened/removed/patched
+ * without one (D17). One restore point per row; whether that row is currently open is a separate
+ * fact. */
 export type SnapshotMap<TRow> = ReadonlyMap<RowId, RowSnapshot<TRow>>;
 
 /**
@@ -46,6 +63,10 @@ export interface EditingUpdaterContext<TRow> {
   readonly trackBy: TrackByFn<TRow>;
   /** Restoring/removing a row is one write, not two calls to `table.value.update(...)` (D30). */
   writeData(rows: TRow[]): void;
+  /** O(1) id -> index lookup, mirroring `RowUpdaterContext`. Resolved against `data` at read
+   * time — stale after a `writeData` earlier in the same updater, which is exactly what
+   * `resolveIndex`'s linear-scan fallback exists for. */
+  readonly indexById: ReadonlyMap<RowId, number>;
 }
 
 export type EditingUpdater<TRow> = (
@@ -82,9 +103,11 @@ export function pendingIds<TRow>(state: EditingState<TRow>): ReadonlySet<RowId> 
 export function findRow<TRow>(
   data: TRow[],
   trackBy: TrackByFn<TRow>,
-  id: RowId
+  id: RowId,
+  indexById: ReadonlyMap<RowId, number>
 ): TRow | undefined {
-  return data.find((row) => trackBy(row) === id);
+  const at = resolveIndex(data, id, { trackBy, indexById });
+  return at === -1 ? undefined : data[at];
 }
 
 export function withSnapshot<TRow>(
@@ -128,7 +151,7 @@ export interface EditingStore<TRow> {
   /** Writes state through `onWrite`. Exposed so a feature can re-apply the current state when
    * its own config changes, not just when an updater runs. */
   apply(next: EditingState<TRow>): void;
-  /** ADR-0006. Prunes `snapshots` (keeping `ABSENT`) and `open`. */
+  /** ADR-0006. Prunes `snapshots` (keeping detached restore points) and `open`. */
   onRowsRemoved(ids: readonly RowId[]): void;
 }
 
@@ -152,6 +175,7 @@ export function createEditingStore<TRow>(
           data: core.value(),
           trackBy: core.trackBy,
           writeData: (rows) => core.value.update(() => rows),
+          indexById: core.indexById(),
         })
       )
   );
@@ -160,12 +184,13 @@ export function createEditingStore<TRow>(
   // and `snapshots` (nothing left to restore) — `pending` needs no pruning of its own, since it
   // is derived from the other two, not stored. `open` is pruned independently of `snapshots`:
   // `pendingIds()` treats "has a snapshot but isn't open" as pending, so leaving a removed id in
-  // `open` would surface it as newly pending. `ABSENT` snapshots (D28) are exempt — they were
-  // never backed by a row in `data` to begin with.
+  // `open` would surface it as newly pending. A `detached` restore point is exempt — it was
+  // captured by a verb (`removeEdit`) that deliberately took the row out of `data`, so pruning it
+  // here would erase the rollback the verb exists to provide.
   function onRowsRemoved(ids: readonly RowId[]): void {
     const current = state();
     const nextOpen = pruneByIds(current.open, ids);
-    const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value === ABSENT);
+    const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value.detached);
     if (nextOpen !== current.open || nextSnapshots !== current.snapshots) {
       apply({ open: nextOpen, snapshots: nextSnapshots });
     }

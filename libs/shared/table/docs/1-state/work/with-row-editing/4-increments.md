@@ -219,8 +219,9 @@ E1, E2, E3, E4, E2b and E5' are delivered. The permanent spec for all of it is
 [`features/row-editing.md`](../../features/row-editing.md).
 
 E5 (`editableRow()` schema fragment) and E6 (sort staleness) remain as written above. Everything
-else outstanding — including work this file never sliced, like keyboard and focus — is in
-[`5-gaps.md`](./5-gaps.md), prioritized and split by owning layer.
+else outstanding is in one of two gap registers, split by owning layer: [`5-gaps.md`](./5-gaps.md)
+for the state layer, and [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md)
+for the work this file never sliced — keyboard, focus, a11y, save-gating.
 
 ## Standing risk
 

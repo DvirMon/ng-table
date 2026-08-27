@@ -1,6 +1,14 @@
-import { ABSENT, pendingIds, type EditingState } from './features/editing-state';
-import { captureEdit, releaseEdit, revertEdit } from './optimistic-mutations';
+import { pendingIds, type EditingState, type RowRestorePoint } from './features/editing-state';
+import {
+  captureEdit,
+  discardEdit,
+  patchEdit,
+  releaseEdit,
+  removeEdit,
+  revertEdit,
+} from './optimistic-mutations';
 import { beginEdit, endEdit } from './row-edit-mutations';
+import type { RowId } from './types';
 import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -8,54 +16,65 @@ type Person = MockRow;
 const trackBy = mockTrackBy;
 const rows: Person[] = mockRows;
 
+function indexById(data: Person[] = rows): ReadonlyMap<RowId, number> {
+  const map = new Map<RowId, number>();
+  data.forEach((row, i) => map.set(trackBy(row), i));
+  return map;
+}
+
 function ctx(data: Person[] = rows) {
-  return { data, trackBy, writeData: () => undefined };
+  return { data, trackBy, writeData: () => undefined, indexById: indexById(data) };
 }
 
 function state(
-  snapshots: [number, Person | typeof ABSENT][] = [],
+  snapshots: [number, RowRestorePoint<Person>][] = [],
   open: number[] = []
 ): EditingState<Person> {
   return { snapshots: new Map(snapshots), open: new Set(open) };
 }
 
+function restorePoint(row: Person, at: number, detached = false): RowRestorePoint<Person> {
+  return { row, at, detached };
+}
+
 describe('captureEdit', () => {
   it('re-reads data() when row is omitted', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
-    const result = captureEdit<Person>(2)(
-      opened,
-      ctx([{ id: 2, name: 'Bea-refreshed' }, ...rows.slice(1)])
-    );
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea-refreshed' });
+    const refreshed = rows.map((r) => (r.id === 2 ? { id: 2, name: 'Bea-refreshed' } : r));
+    const result = captureEdit<Person>(2)(opened, ctx(refreshed));
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea-refreshed' }, 1));
   });
 
   it('sets an explicit restore point when row is provided', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const result = captureEdit<Person>(2, { id: 2, name: 'Server value' })(opened, ctx());
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Server value' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Server value' }, 1));
   });
 
-  it('captures ABSENT when the id is no longer in data', () => {
-    const result = captureEdit<Person>(99)(state(), ctx());
-    expect(result.snapshots.get(99)).toBe(ABSENT);
+  it('no-ops when neither an explicit row nor a data lookup finds the row', () => {
+    const before = state();
+    const result = captureEdit<Person>(99)(before, ctx());
+    expect(result).toBe(before);
+    expect(result.snapshots.has(99)).toBe(false);
   });
 
   it('overwrites, unlike beginEdit which keeps the oldest restore point (D31.1/D40)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
-    const moved = ctx([{ id: 2, name: 'moved-on' }, ...rows.slice(1)]);
+    const moved = ctx(rows.map((r) => (r.id === 2 ? { id: 2, name: 'moved-on' } : r)));
 
-    expect(beginEdit<Person>(2)(opened, moved).snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
-    expect(captureEdit<Person>(2)(opened, moved).snapshots.get(2)).toEqual({
-      id: 2,
-      name: 'moved-on',
-    });
+    expect(beginEdit<Person>(2)(opened, moved).snapshots.get(2)).toEqual(
+      restorePoint({ id: 2, name: 'Bea' }, 1)
+    );
+    expect(captureEdit<Person>(2)(opened, moved).snapshots.get(2)).toEqual(
+      restorePoint({ id: 2, name: 'moved-on' }, 1)
+    );
   });
 
   it('captures on a row that is not open — the live-table entry point (D39/D40)', () => {
     const result = captureEdit<Person>(2)(state(), ctx());
 
     expect(result.open.size).toBe(0);
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     // With nothing open, every restore point is in flight.
     expect(pendingIds(result).has(2)).toBe(true);
   });
@@ -63,10 +82,11 @@ describe('captureEdit', () => {
   it('moves a pending rows restore point forward — D34s open-only guard is gone (D40)', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const pending = endEdit<Person>(2)(opened, ctx());
+    const moved = rows.map((r) => (r.id === 2 ? { id: 2, name: 'moved-on' } : r));
 
-    const result = captureEdit<Person>(2)(pending, ctx([{ id: 2, name: 'moved-on' }, ...rows.slice(1)]));
+    const result = captureEdit<Person>(2)(pending, ctx(moved));
 
-    expect(result.snapshots.get(2)).toEqual({ id: 2, name: 'moved-on' });
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'moved-on' }, 1));
   });
 });
 
@@ -109,10 +129,16 @@ describe('revertEdit', () => {
   it('restores the snapshot into data and closes the row', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     let written: Person[] | undefined;
+    const data = [
+      { id: 1, name: 'Ada' },
+      { id: 2, name: 'Bea-typing' },
+      { id: 3, name: 'Cid' },
+    ];
     const result = revertEdit<Person>(2)(opened, {
-      data: [{ id: 1, name: 'Ada' }, { id: 2, name: 'Bea-typing' }, { id: 3, name: 'Cid' }],
+      data,
       trackBy,
       writeData: (next) => (written = next),
+      indexById: indexById(data),
     });
 
     expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
@@ -120,18 +146,39 @@ describe('revertEdit', () => {
     expect(result.snapshots.has(2)).toBe(false);
   });
 
-  it('removes the row when the snapshot is ABSENT (add-cancel)', () => {
-    const opened = beginEdit<Person>(99)(state(), ctx());
+  it('re-inserts a deleted row at its captured index and closes it (Change 2)', () => {
+    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1, true)]]);
+    const dataWithoutRow = rows.filter((r) => r.id !== 2);
     let written: Person[] | undefined;
-    const dataWithNewRow = [...rows, { id: 99, name: '' }];
-    const result = revertEdit<Person>(99)(opened, {
-      data: dataWithNewRow,
+
+    const result = revertEdit<Person>(2)(snapshotState, {
+      data: dataWithoutRow,
       trackBy,
       writeData: (next) => (written = next),
+      indexById: indexById(dataWithoutRow),
     });
 
     expect(written?.map((r) => r.id)).toEqual([1, 2, 3]);
-    expect(result.open.has(99)).toBe(false);
+    expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
+    expect(result.open.has(2)).toBe(false);
+    expect(result.snapshots.has(2)).toBe(false);
+  });
+
+  it('replaces a present row in place, ignoring the snapshots at', () => {
+    // `at` deliberately wrong (0) — a present row is replaced in place, not moved.
+    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 0)]]);
+    const data = rows.map((r) => (r.id === 2 ? { id: 2, name: 'Bea-typing' } : r));
+    let written: Person[] | undefined;
+
+    revertEdit<Person>(2)(snapshotState, {
+      data,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(data),
+    });
+
+    expect(written?.map((r) => r.id)).toEqual([1, 2, 3]);
+    expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
   });
 
   it("an inserted row's snapshot resets rather than removes on plain revertEdit (D36)", () => {
@@ -143,10 +190,27 @@ describe('revertEdit', () => {
       data: dataWithNewRow,
       trackBy,
       writeData: (next) => (written = next),
+      indexById: indexById(dataWithNewRow),
     });
 
     expect(written?.find((r) => r.id === 99)).toEqual({ id: 99, name: '' });
     expect(result.open.has(99)).toBe(false);
+  });
+
+  it('uses a row override but the snapshots at when the row was removed', () => {
+    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1, true)]]);
+    const dataWithoutRow = rows.filter((r) => r.id !== 2);
+    let written: Person[] | undefined;
+
+    revertEdit<Person>(2, { id: 2, name: 'server-truth' })(snapshotState, {
+      data: dataWithoutRow,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(dataWithoutRow),
+    });
+
+    expect(written?.map((r) => r.id)).toEqual([1, 2, 3]);
+    expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'server-truth' });
   });
 
   it('writes the explicit row when one is provided, in place of the stored snapshot', () => {
@@ -157,6 +221,7 @@ describe('revertEdit', () => {
       data: [...rows],
       trackBy,
       writeData: (next) => (written = next),
+      indexById: indexById(rows),
     });
 
     expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'server-truth' });
@@ -166,11 +231,17 @@ describe('revertEdit', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const saved = endEdit<Person>(2)(opened, ctx());
     let written: Person[] | undefined;
+    const data = [
+      { id: 1, name: 'Ada' },
+      { id: 2, name: 'optimistic' },
+      { id: 3, name: 'Cid' },
+    ];
 
     const result = revertEdit<Person>(2)(saved, {
-      data: [{ id: 1, name: 'Ada' }, { id: 2, name: 'optimistic' }, { id: 3, name: 'Cid' }],
+      data,
       trackBy,
       writeData: (next) => (written = next),
+      indexById: indexById(data),
     });
 
     expect(written?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
@@ -181,6 +252,186 @@ describe('revertEdit', () => {
     const current = state();
     const result = revertEdit<Person>(999)(current, ctx());
     expect(result).toBe(current);
+  });
+
+  it('clamps a stale at on re-insert rather than throwing (D27)', () => {
+    // Captured when the array had 3 rows and this row was last (at: 2); the array has since
+    // shrunk, so `at` is now out of range and must clamp, not throw.
+    const snapshotState = state([[3, restorePoint({ id: 3, name: 'Cid' }, 2, true)]]);
+    const shrunkData = [{ id: 1, name: 'Ada' }];
+    let written: Person[] | undefined;
+
+    expect(() =>
+      revertEdit<Person>(3)(snapshotState, {
+        data: shrunkData,
+        trackBy,
+        writeData: (next) => (written = next),
+        indexById: indexById(shrunkData),
+      })
+    ).not.toThrow();
+
+    expect(written?.map((r) => r.id)).toEqual([1, 3]);
+  });
+});
+
+describe('discardEdit', () => {
+  it('no-ops when no restore point is held (OQ-C)', () => {
+    const before = state();
+    let written: Person[] | undefined;
+
+    const result = discardEdit<Person>(2)(before, {
+      data: rows,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(rows),
+    });
+
+    expect(result).toBe(before);
+    expect(written).toBeUndefined();
+  });
+
+  it('removes the row and drops the snapshot/open when one is held', () => {
+    const opened = beginEdit<Person>(2)(state(), ctx());
+    let written: Person[] | undefined;
+
+    const result = discardEdit<Person>(2)(opened, {
+      data: rows,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(rows),
+    });
+
+    expect(written?.map((r) => r.id)).toEqual([1, 3]);
+    expect(result.snapshots.has(2)).toBe(false);
+    expect(result.open.has(2)).toBe(false);
+  });
+});
+
+describe('removeEdit', () => {
+  it('is a no-op when the id is not present in data', () => {
+    const before = state();
+    let written: Person[] | undefined;
+
+    const result = removeEdit<Person>(999)(before, {
+      data: rows,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(rows),
+    });
+
+    expect(result).toBe(before);
+    expect(written).toBeUndefined();
+  });
+
+  it('captures a detached restore point and removes the row when none is held', () => {
+    const before = state();
+    let written: Person[] | undefined;
+
+    const result = removeEdit<Person>(2)(before, {
+      data: rows,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(rows),
+    });
+
+    expect(written?.map((r) => r.id)).toEqual([1, 3]);
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1, true));
+    expect(result.open.has(2)).toBe(false);
+  });
+
+  it('on an already-open row, keeps the pre-edit row/at but flips detached true', () => {
+    const opened = beginEdit<Person>(2)(state(), ctx()); // { row: Bea, at: 1, detached: false }
+    let written: Person[] | undefined;
+
+    const result = removeEdit<Person>(2)(opened, {
+      data: rows,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(rows),
+    });
+
+    expect(written?.map((r) => r.id)).toEqual([1, 3]);
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1, true));
+    expect(result.open.has(2)).toBe(false);
+  });
+});
+
+describe('patchEdit', () => {
+  it('is a no-op when the id is not present in data', () => {
+    const before = state();
+    let written: Person[] | undefined;
+
+    const result = patchEdit<Person>(999, { name: 'X' })(before, {
+      data: rows,
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById(rows),
+    });
+
+    expect(result).toBe(before);
+    expect(written).toBeUndefined();
+  });
+
+  it("default ('if-absent'): two successive patches then revert roll back to before the first", () => {
+    let data = rows;
+    let current = state();
+
+    function patch(partial: Partial<Person>) {
+      let written: Person[] | undefined;
+      current = patchEdit<Person>(2, partial)(current, {
+        data,
+        trackBy,
+        writeData: (next) => (written = next),
+        indexById: indexById(data),
+      });
+      data = written ?? data;
+    }
+
+    patch({ name: 'first' });
+    patch({ name: 'second' });
+
+    expect(current.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
+
+    let reverted: Person[] | undefined;
+    revertEdit<Person>(2)(current, {
+      data,
+      trackBy,
+      writeData: (next) => (reverted = next),
+      indexById: indexById(data),
+    });
+
+    expect(reverted?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'Bea' });
+  });
+
+  it("{ capture: 'always' }: two successive patches then revert roll back only to before the latest", () => {
+    let data = rows;
+    let current = state();
+
+    function patch(partial: Partial<Person>) {
+      let written: Person[] | undefined;
+      current = patchEdit<Person>(2, partial, { capture: 'always' })(current, {
+        data,
+        trackBy,
+        writeData: (next) => (written = next),
+        indexById: indexById(data),
+      });
+      data = written ?? data;
+    }
+
+    patch({ name: 'first' });
+    patch({ name: 'second' });
+
+    expect(current.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'first' }, 1));
+
+    let reverted: Person[] | undefined;
+    revertEdit<Person>(2)(current, {
+      data,
+      trackBy,
+      writeData: (next) => (reverted = next),
+      indexById: indexById(data),
+    });
+
+    expect(reverted?.find((r) => r.id === 2)).toEqual({ id: 2, name: 'first' });
   });
 });
 

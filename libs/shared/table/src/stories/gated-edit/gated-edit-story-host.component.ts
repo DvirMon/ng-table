@@ -2,8 +2,7 @@ import { Component, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
 import { beginEdit, clearEditing, endEdit } from '../../api/row-edit-mutations';
-import { releaseEdit, revertEdit } from '../../api/optimistic-mutations';
-import { removeRow } from '../../api/row-mutations';
+import { discardEdit, releaseEdit, revertEdit } from '../../api/optimistic-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
@@ -65,14 +64,12 @@ export class GatedEditStoryHostComponent {
     this.table.editing.update(revertEdit(id));
   }
 
-  /** Removes the row and closes it. Composed (D36) — not a `revertEdit` option — the same
-   * shape Save composes with `patchRow`. Available on any open row, whether it pre-existed or
-   * was just added: discarding an edit to an existing row removes it too, deliberately. */
+  /** Removes the row and closes it — one call (`discardEdit`). Available on any open row,
+   * whether it pre-existed or was just added: discarding an edit to an existing row removes it
+   * too, deliberately. */
   protected discardEdit(id: RowId): void {
     this.saveError.set(null);
-    this.table.value.update(removeRow(id));
-    this.table.editing.update(endEdit(id));
-    this.table.editing.update(releaseEdit(id));
+    this.table.editing.update(discardEdit(id));
   }
 
   protected clearAll(): void {

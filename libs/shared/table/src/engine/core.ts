@@ -81,7 +81,8 @@ export function createTableCore<TRow>(
     indexById,
     value: createWritableView(
       () => config.data(),
-      (updater) => config.data.update((rows) => updater(rows, { trackBy }))
+      (updater) =>
+        config.data.update((rows) => updater(rows, { trackBy, indexById: indexById() }))
     ),
   };
 
