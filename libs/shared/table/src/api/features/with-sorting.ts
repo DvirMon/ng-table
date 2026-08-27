@@ -1,6 +1,9 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
+import { SORT_NULLS } from '../../engine/columns';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import { readColumnMeta } from '../column-metadata';
+import type { SortNullsOpts } from '../column-rules';
 import type { ColumnDef, SortDirection, SortRule } from '../types';
 
 export interface WithSortingConfig {
@@ -73,6 +76,22 @@ function detectComparator<TRow>(
     String(accessor(a)).localeCompare(String(accessor(b)));
 }
 
+function readSortNulls<TRow>(column: ColumnDef<TRow>): SortNullsOpts | undefined {
+  return readColumnMeta(column, SORT_NULLS);
+}
+
+/** `null`/`undefined` are always empty; `''` only counts if the column opts in. */
+function isEmpty<TRow>(value: unknown, column: ColumnDef<TRow>): boolean {
+  if (value == null) {
+    return true;
+  }
+  return value === '' && readSortNulls(column)?.emptyString === 'is-empty';
+}
+
+function nullsOrderFor<TRow>(column: ColumnDef<TRow>): 'first' | 'last' {
+  return readSortNulls(column)?.order ?? 'last';
+}
+
 function sortRows<TRow>(
   rows: TRow[],
   rules: SortRule[],
@@ -89,7 +108,18 @@ function sortRows<TRow>(
     }
     const compare = column.sortFn ?? detectComparator(column.accessor, rows);
     const sign = rule.direction === 'asc' ? 1 : -1;
-    return [(a: TRow, b: TRow) => sign * compare(a, b)];
+    const nulls = nullsOrderFor(column);
+
+    return [(a: TRow, b: TRow): number => {
+      const aEmpty = isEmpty(column.accessor(a), column);
+      const bEmpty = isEmpty(column.accessor(b), column);
+      if (aEmpty || bEmpty) {
+        if (aEmpty && bEmpty) return 0;
+        // NOT multiplied by `sign` — placement stays on the same end regardless of direction.
+        return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
+      }
+      return sign * compare(a, b);
+    }];
   });
 
   return [...rows].sort((a, b) => {

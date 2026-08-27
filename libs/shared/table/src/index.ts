@@ -26,7 +26,8 @@ export type {
 } from './api/features/editing-state';
 export { createTableFeature } from './api/create-table-feature';
 export { columnSchema } from './api/column-schema';
-export { applyVisible, applyVisibleAsync } from './api/column-rules';
+export { applySortNulls, applyVisible, applyVisibleAsync } from './api/column-rules';
+export type { SortNullsOpts } from './api/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
 export { addRow, removeRow, patchRow } from './api/row-mutations';
 export { beginEdit, clearEditing, endEdit } from './api/row-edit-mutations';

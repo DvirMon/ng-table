@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { applySortNulls } from '../column-rules';
 import { createTable } from '../create-table';
 import { withSorting } from './with-sorting';
 import type {
@@ -306,6 +307,193 @@ describe('withSorting', () => {
       expect(emitted).toEqual([[{ columnId: 'name', direction: 'asc' }]]);
       // Rows are unchanged — manual mode assumes server-sorted data.
       expect(store.rows()).toEqual(rawRows);
+    });
+  });
+
+  describe('null ordering', () => {
+    interface NullableRow {
+      id: string;
+      age: number | undefined;
+      joined: Date | null;
+      note: string | null;
+    }
+
+    function makeNullableColumns(): ColumnDef<NullableRow>[] {
+      return [
+        { id: 'age', accessor: (row) => row.age, visible: true, order: 0, label: 'age' },
+        { id: 'joined', accessor: (row) => row.joined, visible: true, order: 1, label: 'joined' },
+        { id: 'note', accessor: (row) => row.note, visible: true, order: 2, label: 'note' },
+      ];
+    }
+
+    function makeNullableStore<const F extends readonly AnyTableFeature[]>(
+      cfg: () => TableStoreConfig<NullableRow, F>,
+      rows: NullableRow[]
+    ) {
+      return TestBed.runInInjectionContext(() =>
+        createTable(signal<NullableRow[]>(rows), cfg)
+      );
+    }
+
+    it('sorts a nullable Date column without throwing', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 1, joined: new Date('2024-01-01'), note: 'a' },
+        { id: 'r2', age: 2, joined: null, note: 'b' },
+        { id: 'r3', age: 3, joined: new Date('2022-01-01'), note: 'c' },
+      ];
+      const store = makeNullableStore(
+        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
+        rows
+      );
+
+      expect(() => store.toggleSort('joined')).not.toThrow();
+      expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+    });
+
+    it('keeps empties on the same end under asc and desc', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 1, joined: null, note: 'a' },
+        { id: 'r2', age: undefined, joined: null, note: 'b' },
+        { id: 'r3', age: 3, joined: null, note: 'c' },
+      ];
+      const store = makeNullableStore(
+        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
+        rows
+      );
+
+      store.toggleSort('age'); // asc
+      expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3', 'r2']);
+
+      store.toggleSort('age'); // desc
+      expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+    });
+
+    it('does not let a number column\'s undefined value corrupt the whole ordering', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 5, joined: null, note: 'a' },
+        { id: 'r2', age: undefined, joined: null, note: 'b' },
+        { id: 'r3', age: 1, joined: null, note: 'c' },
+      ];
+      const store = makeNullableStore(
+        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
+        rows
+      );
+
+      store.toggleSort('age');
+      expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+    });
+
+    it('does not sort a string column\'s null as the literal "null"', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 1, joined: null, note: 'zebra' },
+        { id: 'r2', age: 2, joined: null, note: null },
+        { id: 'r3', age: 3, joined: null, note: 'apple' },
+      ];
+      const store = makeNullableStore(
+        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
+        rows
+      );
+
+      store.toggleSort('note');
+      expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+    });
+
+    it('sorts "" as a normal string by default, and as empty when the column opts in', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 1, joined: null, note: 'banana' },
+        { id: 'r2', age: 2, joined: null, note: '' },
+        { id: 'r3', age: 3, joined: null, note: 'apple' },
+      ];
+
+      const defaultStore = makeNullableStore(
+        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
+        rows
+      );
+      defaultStore.toggleSort('note');
+      // '' sorts before 'apple' and 'banana' as a normal string.
+      expect(defaultStore.rows().map((row) => row.id)).toEqual(['r2', 'r3', 'r1']);
+
+      const optedInStore = makeNullableStore(
+        () => ({
+          trackBy: 'id',
+          columns: makeNullableColumns(),
+          columnsSchema: (path) => {
+            applySortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
+          },
+          features: [withSorting<NullableRow>()],
+        }),
+        rows
+      );
+      TestBed.tick();
+      optedInStore.toggleSort('note');
+      expect(optedInStore.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+    });
+
+    it('null-safety applies to a consumer-supplied sortFn too', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 5, joined: null, note: 'a' },
+        { id: 'r2', age: undefined, joined: null, note: 'b' },
+        { id: 'r3', age: 1, joined: null, note: 'c' },
+      ];
+      const store = makeNullableStore(
+        () => ({
+          trackBy: 'id',
+          columns: [
+            {
+              id: 'age',
+              accessor: (row) => row.age,
+              visible: true,
+              order: 0,
+              label: 'age',
+              sortFn: (a, b) => (a.age as number) - (b.age as number),
+            },
+            ...makeNullableColumns().slice(1),
+          ],
+          features: [withSorting<NullableRow>()],
+        }),
+        rows
+      );
+
+      expect(() => store.toggleSort('age')).not.toThrow();
+      expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+    });
+
+    it('throws at resolve time when applySortNulls is registered twice on one column', () => {
+      expect(() =>
+        TestBed.runInInjectionContext(() =>
+          createTable<NullableRow>(signal<NullableRow[]>([]), () => ({
+            trackBy: 'id',
+            columns: makeNullableColumns(),
+            columnsSchema: (path) => {
+              applySortNulls(path.note, { order: 'first' });
+              applySortNulls(path.note, { order: 'last' });
+            },
+          }))
+        )
+      ).toThrow(/Duplicate metadata\(\) registration/);
+    });
+
+    it('a multi-column sort falls through when the higher-priority column is all empty', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 3, joined: null, note: null },
+        { id: 'r2', age: 1, joined: null, note: null },
+        { id: 'r3', age: 2, joined: null, note: null },
+      ];
+      const store = makeNullableStore(
+        () => ({
+          trackBy: 'id',
+          columns: makeNullableColumns(),
+          features: [withSorting<NullableRow>({ multi: true })],
+        }),
+        rows
+      );
+
+      store.setSorting([
+        { columnId: 'note', direction: 'asc' },
+        { columnId: 'age', direction: 'asc' },
+      ]);
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r3', 'r1']);
     });
   });
 });

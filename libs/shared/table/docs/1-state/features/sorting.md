@@ -82,64 +82,47 @@ interface ColumnDef {
 - If omitted, the store falls back to built-in auto-detection (string/number/date comparison) — no auto-detection logic beyond this was specified.
 - `enableSorting: false` makes `toggleSort` a no-op for that column (default `true`).
 
-## Null / Empty Value Ordering — REQUIRED, NOT IMPLEMENTED
+## Null / Empty Value Ordering — shipped
 
-**Status:** gap identified 2026-08-12. No configuration exists and the built-in comparators
-mishandle null/undefined/empty outright. Must ship with, or before, editable rows.
+**Status:** implemented 2026-08-27, closing the gap identified 2026-08-12. Mechanical fix only —
+see `docs/1-state/work/sorting-null-ordering/1-handoff.md` for the full decision record.
 
-### Why it is required now
+### Shipped behavior
 
-The editable-rows work (`docs/1-state/work/with-mutations/`) adds a blank-row flow: insert an
-empty row, then fill it in. Under an active sort the blank row's position is decided entirely by
-how the comparator treats `""`/`null` — and today that position **flips with sort direction**
-(first ascending, last descending). A user who clicks "Add row", then toggles the sort header,
-watches the row they are filling jump from top to bottom.
+`sortRows` (`api/features/with-sorting.ts`) resolves nullish/empty values **before** the
+comparator runs and **outside** the direction multiplication, so placement is independent of
+sort direction — the empty branch does not multiply by `sign`. This applies uniformly to
+auto-detected comparators and to a consumer-supplied `sortFn`; a custom comparator does not need
+to re-implement null guards (an accepted trade — a `sortFn` that deliberately orders nulls itself
+is overridden, no escape hatch).
 
-### Current defects in `detectComparator` / `sortRows`
+- `null` / `undefined` are always empty. `""` is a real value, not empty, by default.
+- Default placement: `nulls: 'last'` (SQL / AG Grid convention).
+- Per-column override: `applySortNulls(path, { order?, emptyString? })` (`api/column-rules.ts`),
+  a declarative rule mirroring `applyVisible()` — writes to the internal `SORT_NULLS` metadata
+  key (`engine/columns.ts`). Single-writer: two `applySortNulls()` calls on one column throw at
+  resolve time. `emptyString: 'is-empty'` opts `""` into the empty branch for that column.
+- Requires `withColumnsSchema()` to override; a table passing a plain columns array gets the
+  default (`'last'`, `""` not empty) and cannot override per column — acceptable because the
+  default alone already fixes the crash and the direction flip for every table.
+- No table-wide `withSorting({ nulls })` default — not proposed; add later if a real table wants
+  `'first'` everywhere.
 
-`detectComparator` skips nullish values when *sampling* to detect the column type, but the
-comparators it returns never guard the individual values:
+This closes the Date `.getTime()` crash, the `NaN`/implementation-defined ordering for
+`undefined` numbers, `String(null)` sorting as `"null"`, and the direction-dependent flip for
+empty strings.
 
-| Detected type | Cell value | Actual behavior |
-|---|---|---|
-| Date | `null` / `undefined` | `(value as Date).getTime()` **throws `TypeError`** — a single empty date cell crashes the sort |
-| number | `null` | coerces to `0`; sorts among genuine zeros, indistinguishable |
-| number | `undefined` | comparator returns `NaN`; `Array.prototype.sort` ordering becomes implementation-defined for the whole array |
-| string | `null` / `undefined` | `String(null)` is `"null"` — sorts alphabetically among "n" words as if it were data |
-| string | `""` | sorts before all values ascending, after all descending — the blank-row flip |
+### Why this scope was sufficient — S1–S9 stay parked
 
-The Date case is a crash, not a mis-ordering, and is independent of the editing work — any table
-with a nullable date column and `withSorting()` hits it today.
+The unresolved scenarios below (S1–S9) exist because a blank row's landing spot mattered — the
+user was filling it in and needed to not lose it. Product **OQ-3**
+(`docs/0-product/row-editing.md` §5, S-1) decided the edited row **holds its display position for
+the whole gated edit session** — the row no longer moves while it's being worked on, so null
+ordering only needs to make empties land somewhere stable and predictable, not solve "don't lose
+the row I'm typing in." That dependency is real, not a convenience: if OQ-3's row-hold is ever
+dropped, S1–S9 come back into scope.
 
-### Required behavior
-
-Null ordering must be **independent of sort direction** — this is the whole point, and it is the
-SQL / AG Grid convention. Reversing the direction must not move empties from one end to the other.
-
-Proposed surface — **provisional, and its premise is now questioned** (see "Unresolved scenarios"
-below; the `nulls`-on-`ColumnDef` shape assumes emptiness is a per-cell property and that sorting
-is the right owner, both of which are open):
-
-```ts
-type NullsOrder = 'first' | 'last';
-
-interface ColumnDef {
-  sortFn?: (a: Row, b: Row) => number;
-  enableSorting?: boolean;   // default true
-  nulls?: NullsOrder;        // NEW — default TBD
-}
-```
-
-Nullish handling belongs in `sortRows`, wrapping whichever comparator is in play, so that it
-applies uniformly to auto-detected comparators **and** to consumer-supplied `sortFn` — a custom
-`sortFn` should not have to re-implement null guards. That also fixes the Date crash for free,
-since nullish values never reach `.getTime()`.
-
-What counts as "null" needs deciding too: `null` and `undefined` certainly; `""` is the open one,
-since an empty string is a legitimate value in some columns and a stand-in for "not filled in" in
-others — and the blank-row flow depends on which reading wins.
-
-### Unresolved scenarios — recorded 2026-08-12, deliberately not analyzed
+### Unresolved scenarios — recorded 2026-08-12, still parked
 
 Raised from a real case. Captured as-is so the editable-rows discussion is not derailed;
 no option here has been weighed, and nothing below implies a direction.
@@ -191,10 +174,11 @@ than them — S3 and S7 in particular may make some of them moot.
 
 Null ordering does **not** solve the editable blank-row problem on its own — it only makes the
 empty row's landing spot *stable and configurable*. Holding the row still while the user types is
-resolved separately (D24 — Signal Forms `debounce()` on the commit boundary, not a sort-stage
-exemption) in `docs/1-state/work/with-row-editing/2-decisions.md`. The two are independent
-controls and should not be conflated: `nulls` decides where empties land, `debounce()` decides
-whether the row moves at all.
+resolved separately (OQ-3, `docs/0-product/row-editing.md` §5, S-1 — the edited row holds its
+display position for the whole gated edit session) rather than by a sort-stage exemption. The two
+are independent controls and should not be conflated: `applySortNulls` decides where empties
+land when nothing is being edited; the edit-session row-hold decides whether the row moves at
+all while it is.
 
 ## Compile-Time Dependencies
 
@@ -207,8 +191,8 @@ None as a separate feature. Reads `sortFn` / `enableSorting` from the core `colu
 ## Open Questions
 
 - [ ] Auto-detection fallback logic (string/number/date) needs precise algorithm definition before implementation — not yet specced in detail.
-- [ ] **`nulls` default** — `'last'` matches the common grid convention (empties out of the way); `'first'` suits the blank-row-then-fill flow, where the row you just added should be where you can see it. Picking `'last'` as the default makes the editing feature pass `nulls: 'first'` per column, which may be the honest split.
-- [ ] **Does `""` count as null?** Legitimate value in some columns, "not filled in" in others. Options: always treat as null, never, or a separate `treatEmptyStringAsNull` flag. The blank-row flow's behavior depends on this.
-- [ ] **Per-column or table-wide default?** `nulls` on `ColumnDef` is per-column; a `withSorting({ nulls })` table-wide default that columns override may be worth it if most tables want one answer.
-- [ ] **Does `nulls` apply to consumer `sortFn`?** Proposed yes (wrap the comparator in `sortRows`), so custom comparators inherit null-safety without re-implementing it — but that overrides a `sortFn` author who deliberately handles nulls themselves. An escape hatch may be needed.
+- [x] **`nulls` default** — settled `'last'`, via `applySortNulls({ order })` per column. See "Shipped behavior" above.
+- [x] **Does `""` count as null?** Settled: no, by default. Opt in per column with `applySortNulls({ emptyString: 'is-empty' })`.
+- [ ] **Table-wide default?** Not proposed — `withSorting({ nulls })` covering every column may be worth it if a real table wants `'first'` everywhere. Add later; one config field plus a `nullsOrderFor` fallback.
+- [x] **Does the null-order fix apply to consumer `sortFn`?** Settled: yes, no escape hatch. Add one if a consumer asks.
 - [ ] Visual indicator for multi-sort priority (e.g. numbered badges on headers) is a UI-layer concern, deferred to the directive spec.

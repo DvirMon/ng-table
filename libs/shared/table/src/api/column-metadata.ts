@@ -88,8 +88,8 @@ export function metadataAsync<TRow, K extends Extract<keyof TRow, string>, TPara
  * engine (never a class/handle), unlike the per-slice `table.columns`/`table.value` write
  * members (D30).
  */
-export function readColumnMeta<T>(
-  column: ColumnDef<unknown>,
+export function readColumnMeta<TRow, T>(
+  column: ColumnDef<TRow>,
   key: ColumnMetaKey<T>
 ): T | undefined {
   return column.meta?.get(key) as T | undefined;

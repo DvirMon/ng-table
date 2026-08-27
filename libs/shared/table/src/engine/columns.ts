@@ -74,6 +74,18 @@ export function toggleColumnVisible<TRow>(
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
+ * Internal metadata key `applySortNulls()` (`api/column-rules.ts`) writes to — the per-column
+ * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
+ * writer: two `applySortNulls()` calls on the same column throw at resolve time
+ * (`resolve.ts`'s `assertMetadataKeysAreUnique`), so it needs no special case in
+ * `foldColumnRules` below — it flows through the generic `meta` map like any consumer key.
+ */
+export const SORT_NULLS: ColumnMetaKey<{
+  readonly order?: 'first' | 'last';
+  readonly emptyString?: 'is-empty';
+}> = { kind: 'column-meta-key' };
+
+/**
  * One rule's contribution to the fold: which column and metadata key it targets, and a live
  * signal of its current result. `undefined` means the rule hasn't resolved (e.g. an async rule
  * before first resolution) and contributes nothing.
