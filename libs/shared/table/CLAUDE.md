@@ -53,7 +53,7 @@ table.mock.ts   ← shared test fixtures
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims stages, `renderRows`, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
-| `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `tokens.ts` |
+| `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 
 Naming: the folder supplies the domain, so files inside drop the `table.` prefix
@@ -99,9 +99,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 **WARNING:** Several fields appear in docs but have no implementation yet:
 
 - `ColumnDef.width` — typed, sketched in `docs/2-columns/reference/`, not used by code. Blocked on presentation-fields ADR.
-- `ColumnDef.label` — conceptual, not implemented. Consumer code writes headers manually.
 - `statusMessage` — drafted in specs, not wired. Accessibility message channel TBD.
-- `everExpanded` on `withExpansion()` — specced 2026-08-07 in `docs/1-state/features/expansion.md`, not implemented. The UI layer's detail-panel path depends on it; tree expansion does not.
 
 Reading a spec that mentions these does NOT mean they work; check `api/types.ts` for what's actually exported.
 

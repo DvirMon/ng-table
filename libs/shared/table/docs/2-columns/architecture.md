@@ -3,7 +3,7 @@ title: Architecture — Column Schema DX (`columnsSchema`) — Hub
 type: architecture
 version: 0.3
 date: 2026-07-24
-status: drafted — spec only, not yet implemented
+status: partially implemented — schema wiring, `metadata()`/`applyVisible`/`applyVisibleAsync` (Tier 1) shipped; Tier 2/3 and the generic per-key reducer core are still spec only (see [column-metadata.md](2-columns/reference/column-metadata.md))
 audience: developers
 parent: 1-state/architecture.md
 ---
@@ -94,12 +94,17 @@ doc is the result of that design conversation.
   only for this opt-in path. Plain-array `columns` config keeps today's consumer-owned pattern as the
   default. Extended to the sync-*reactive* shape too — see
   [ownership-model.md](2-columns/reference/ownership-model.md).
-- **Conflicting rules on one column property are combined via a reducer, not rejected at build
-  time.** Superseded 2026-07-25 — see
+- **Conflicting rules on one column property: currently throws, not combined via a reducer.**
+  Superseded 2026-07-25 — see
   [signal-forms-techniques §2](2-columns/reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection-decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
-  Multiple `applyVisible`/`applyVisibleAsync` calls on the same column id no longer throw; each
-  `MetadataKey`'s reducer resolves them (`visible` defaults to `and` — visible only if every rule
-  agrees). Enabled by [§1's generic reducer core](2-columns/reference/signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply-hybrid-decided).
+  The generic per-key reducer this decision describes is **not implemented** — shipped code
+  (`assertMetadataKeysAreUnique` in `api/features/with-columns-schema/resolve.ts`) throws
+  synchronously on a duplicate `metadata()` registration for the same `(columnId, key)`. The one
+  exception is the internal `VISIBLE` key: multiple `applyVisible`/`applyVisibleAsync` calls on
+  the same column id are hardcoded AND-combined in `foldColumnRules` (`engine/columns.ts`), not
+  driven by a general per-key reducer table. See
+  [column-metadata.md](2-columns/reference/column-metadata.md) for the full implemented-vs-spec
+  breakdown.
 - **`apply*Async` has an optional `onError`**, mirroring `validateAsync`'s `onError` — lets a
   consumer choose the fallback on request failure instead of freezing at the last-resolved value.
 - **Data-derived column set — rejected 2026-07-31.** A `createColumns(data, schemaFn)` overload
