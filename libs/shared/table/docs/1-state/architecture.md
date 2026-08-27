@@ -42,9 +42,9 @@ updateRows(table, updater)          // the one general operation
 ```
 
 with a handful of pure updaters shipped as **convenience, not as the contract** — D19 ships exactly
-`addRow` / `removeRow` / `patchRow`, and explicitly defers `moveRow`, `compose`, and the plural
+`insertRow` / `removeRow` / `patchRow`, and explicitly defers `moveRow`, `compose`, and the plural
 forms, because a raw lambda covers them until a real caller appears. Duplicate-a-row was never
-designed: it falls out as `addRow({ ...row, id: newId() })`.
+designed: it falls out as `insertRow({ ...row, id: newId() })`.
 
 The properties that make this work, and that a candidate mechanism should be checked against:
 

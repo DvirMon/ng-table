@@ -17,7 +17,7 @@ mutate its rows, because `createTable()` already requires a writable source (D4)
 flag would gate nothing.
 
 One generic write plus pure updater factories (D5): `table.value.update(updater)`. Three
-updaters ship — `addRow`, `removeRow`, `patchRow` — and a raw lambda is always accepted, so an
+updaters ship — `insertRow`, `removeRow`, `patchRow` — and a raw lambda is always accepted, so an
 unshipped updater costs a consumer one inline function.
 
 Consumers who never edit still use this: a Delete button (D18, editing decisions), a server
@@ -56,7 +56,7 @@ There is no `setData()`. With no internal row set, there is nothing for it to wr
 to write, the shape of a `WritableSignal`:
 
 ```ts
-table.value.update(addRow(newRow, { at: 0 }));
+table.value.update(insertRow(newRow, { at: 0 }));
 table.value.update(patchRow('42', { status: 'done' }));
 table.value.update(removeRow('42'));
 table.value.update((rows) => rows.filter((r) => !r.stale));   // raw lambda, always allowed
@@ -85,18 +85,18 @@ ignoring `ctx`.
 
 | Updater | Signature | Notes |
 |---|---|---|
-| `addRow` | `addRow(row, { at?: number })` | splice semantics, never throws — see below |
+| `insertRow` | `insertRow(row, { at?: number })` | splice semantics, never throws — see below |
 | `removeRow` | `removeRow(id: RowId)` | filters by `trackBy` |
 | `patchRow` | `patchRow(id: RowId, partial: Partial<TRow>)` | shallow spread over the matched row |
 
 **Why exactly these three** (D19): the bar for shipping an updater is *error-proneness*, not
 convenience — it earns its place when hand-rolling it needs `trackBy` resolution or index math.
 All three clear it, and all three have a real caller: `patchRow` is the save path and the
-row-actions path, `removeRow` is delete, `addRow({ at: 0 })` is the add-blank-row flow.
+row-actions path, `removeRow` is delete, `insertRow({ at: 0 })` is the add-blank-row flow.
 
 ### `at` — splice semantics (D27)
 
-`addRow(row, { at })` behaves exactly as `Array.prototype.splice(at, 0, row)`.
+`insertRow(row, { at })` behaves exactly as `Array.prototype.splice(at, 0, row)`.
 
 | `at` | Behavior |
 |---|---|
@@ -143,7 +143,7 @@ A row added before the server assigns an id carries a **consumer-supplied** temp
 library never fabricates one:
 
 ```ts
-table.value.update(addRow({ id: crypto.randomUUID(), name: '', dept: '' }, { at: 0 }));
+table.value.update(insertRow({ id: crypto.randomUUID(), name: '', dept: '' }, { at: 0 }));
 ```
 
 The library *cannot* fabricate one: `trackBy` is `keyof TRow | ((row) => RowId)`, and when it is

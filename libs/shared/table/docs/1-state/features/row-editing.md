@@ -196,6 +196,15 @@ takes the *representation* half for delete (a restore point can hold a position)
 open is a verb to represent and undo a **move**, which needs a different representation again —
 see the gap register.
 
+**Why there is no `insertEdit`.** The family's asymmetry is principled, not an oversight.
+Capture exists to preserve information that would otherwise be lost — deleting a row loses its
+values and position, so `removeEdit` must snapshot them first. Inserting loses nothing: the prior
+state *is* nothing, and undoing an insert needs only the row's id, which the caller already holds
+because it supplied it (D26). An optimistic create is therefore complete as `table.value.update(insertRow(copy, { at }))`,
+rolled back on rejection with `table.value.update(removeRow(copy.id))` — no capture-composing verb
+needed. See [`work/with-duplicate-row/1-design.md`](../work/with-duplicate-row/1-design.md) for
+the fuller writeup (this was surfaced while designing duplicate-a-row).
+
 ### State shape
 
 ```ts
