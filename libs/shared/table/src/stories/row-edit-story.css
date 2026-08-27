@@ -51,6 +51,18 @@
   color: #9ca3af;
 }
 
+.row-edit-story__field--needs-change {
+  border-color: #fbbf24 !important;
+  outline: 1px solid #fbbf24;
+}
+
+.row-edit-story__field-hint {
+  display: block;
+  font-size: 0.7rem;
+  color: #fbbf24;
+  margin-block-start: 0.15rem;
+}
+
 .row-edit-story__cell input,
 .row-edit-story__cell select {
   color-scheme: dark;

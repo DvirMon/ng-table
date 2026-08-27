@@ -40,7 +40,21 @@
           <td class="row-edit-story__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
-                <input type="text" [formField]="field.name" placeholder="name" />
+                <input
+                  type="text"
+                  [formField]="field.name"
+                  placeholder="name"
+                  [class.row-edit-story__field--needs-change]="needsUniqueName().has(row.id)"
+                  [attr.aria-invalid]="needsUniqueName().has(row.id) ? true : null"
+                  [attr.aria-describedby]="
+                    needsUniqueName().has(row.id) ? 'gated-edit-duplicate-hint-' + row.id : null
+                  "
+                />
+                @if (needsUniqueName().has(row.id)) {
+                  <span class="row-edit-story__field-hint" [id]="'gated-edit-duplicate-hint-' + row.id">
+                    copied — needs a unique name
+                  </span>
+                }
               </ng-container>
             } @else {
               <span>{{ row.data?.name }}</span>

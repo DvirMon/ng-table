@@ -34,6 +34,11 @@ export class GatedEditStoryHostComponent {
   protected readonly saveError = signal<string | null>(null);
   protected readonly insertAt = signal(0);
 
+  /** Row ids whose `name` was copied verbatim from a duplicate's source — flagged so the UI can
+   * visibly mark the field as needing a change rather than silently copying a collision
+   * (`0-product/row-editing.md` §4.1). Cleared once the row leaves editing, whatever the exit. */
+  protected readonly needsUniqueName = signal<ReadonlySet<RowId>>(new Set());
+
   /** `withRowEdit()` reacts to `multiple` live, so flipping the signal is enough — no rebuild. */
   protected toggleMultiple(): void {
     this.saveError.set(null);
@@ -65,6 +70,9 @@ export class GatedEditStoryHostComponent {
     const at = sourceIndex + 1;
     const id = crypto.randomUUID();
     this.table.editing.update(beginEdit(id, { insert: { ...source, id }, at }));
+    // §4.1: `name` was copied verbatim from `source` — flag it as needing a change instead of
+    // silently copying a collision.
+    this.needsUniqueName.update((ids) => new Set(ids).add(id));
   }
 
   protected openEdit(id: RowId): void {
@@ -76,6 +84,7 @@ export class GatedEditStoryHostComponent {
   protected cancelEdit(id: RowId): void {
     this.saveError.set(null);
     this.table.editing.update(revertEdit(id));
+    this.clearNeedsUniqueName(id);
   }
 
   /** Removes the row and closes it — one call (`discardEdit`). Available on any open row,
@@ -84,12 +93,24 @@ export class GatedEditStoryHostComponent {
   protected discardEdit(id: RowId): void {
     this.saveError.set(null);
     this.table.editing.update(discardEdit(id));
+    this.clearNeedsUniqueName(id);
   }
 
   protected clearAll(): void {
     this.saveError.set(null);
     // clearEditing: closes every open row, dropping their restore points.
     this.table.editing.update(clearEditing());
+    this.needsUniqueName.set(new Set());
+  }
+
+  /** Drops `id`'s duplicate flag once its row leaves editing, whatever the exit path. */
+  private clearNeedsUniqueName(id: RowId): void {
+    if (!this.needsUniqueName().has(id)) return;
+    this.needsUniqueName.update((ids) => {
+      const next = new Set(ids);
+      next.delete(id);
+      return next;
+    });
   }
 
   /** Pessimistic save: the row stays open for the whole round trip. */
@@ -106,6 +127,7 @@ export class GatedEditStoryHostComponent {
       // otherwise the row would sit in `pending` with nothing left to confirm it.
       this.table.editing.update(endEdit(id));
       this.table.editing.update(releaseEdit(id));
+      this.clearNeedsUniqueName(id);
     } catch (error) {
       this.saveError.set(error instanceof Error ? error.message : 'Save failed.');
     }
