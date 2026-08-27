@@ -104,7 +104,9 @@ function collectExpandableRowIds<TRow>(
  * expanded children into `renderRows()` (see with-expansion.md), so it cannot be composed
  * alongside another feature that does the same.
  */
-export function withExpansion<TRow = unknown>(config: WithExpansionConfig<TRow> = {}) {
+export function withExpansion<TRow = unknown>(
+  config: WithExpansionConfig<TRow> = {}
+): (core: ExpansionInput<TRow>) => TableFeatureSpec<TRow, ExpansionMembers> {
   const childrenAccessor = config.childrenAccessor ?? defaultChildrenAccessor<TRow>;
   const isExpandable =
     config.isExpandable ?? ((row: TRow) => hasNonEmptyChildren(childrenAccessor(row)));

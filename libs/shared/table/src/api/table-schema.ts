@@ -16,7 +16,7 @@ export const createTableSchema = <
     features?: Features;
     columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;
   }
-) => () => ({
+): (() => TableStoreConfig<TRow, Features>) => () => ({
   trackBy: schema?.trackBy ?? ('id' as TrackByConfig<TRow>),
   columns,
   columnsSchema: schema?.columnsSchema,

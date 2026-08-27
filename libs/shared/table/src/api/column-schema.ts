@@ -6,6 +6,8 @@ import {
   type ColumnSchemaRecorder,
   type ColumnsPath,
   type ColumnsSchemaFn,
+  type MetadataAsyncRule,
+  type MetadataRule,
 } from './column-schema.types';
 
 /**
@@ -25,9 +27,16 @@ function createRecorderSession<TRow>(): {
 
   return {
     recorder: {
-      record(rule: ColumnRule<TRow>): void {
+      record<TParams, TResult, T>(
+        rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T>
+      ): void {
         assertOpen();
-        rules.push(rule);
+        // Sole generic-erasure boundary (mirrors create-table.ts's documented composition
+        // boundary): `TParams`/`TResult`/`T` only ever round-trip through the rule's own `key`
+        // object identity downstream (`wiring.ts`), never re-derived from this array's static
+        // `ColumnRule<TRow>` type, so collapsing them to `unknown` here is sound in practice
+        // even though TS can't prove it structurally at this one storage step.
+        rules.push(rule as ColumnRule<TRow>);
       },
     },
     rules,

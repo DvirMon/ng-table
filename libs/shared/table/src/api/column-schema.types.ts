@@ -24,7 +24,16 @@ export const COLUMN_RECORDER: unique symbol = Symbol('COLUMN_RECORDER');
  * @internal
  */
 export interface ColumnSchemaRecorder<TRow> {
-  record(rule: ColumnRule<TRow>): void;
+  /**
+   * Generic on `TParams`/`TResult`/`T` (not just `ColumnRule<TRow>`'s default-`unknown` shape)
+   * so a caller building a `MetadataRule<TRow, T>`/`MetadataAsyncRule<TRow, TParams, TResult,
+   * T>` at its own instantiated types can pass the literal straight through — contextual typing
+   * checks it directly, no erasing cast needed at the call site. The implementation still
+   * erases to `ColumnRule<TRow>` once, internally, to store the rule (see `column-schema.ts`).
+   */
+  record<TParams = unknown, TResult = unknown, T = unknown>(
+    rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T>
+  ): void;
 }
 
 /**

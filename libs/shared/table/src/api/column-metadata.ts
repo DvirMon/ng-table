@@ -4,8 +4,6 @@ import type {
   ColumnHandle,
   ColumnMetaKey,
   ColumnRuleContext,
-  MetadataAsyncRule,
-  MetadataRule,
 } from './column-schema.types';
 import type { ColumnDef } from './types';
 
@@ -49,7 +47,7 @@ export function metadata<TRow, K extends Extract<keyof TRow, string>, T>(
     columnId: path.id,
     key,
     logic,
-  } as MetadataRule<TRow>);
+  });
 }
 
 /**
@@ -79,7 +77,7 @@ export function metadataAsync<TRow, K extends Extract<keyof TRow, string>, TPara
     factory: opts.factory,
     onSuccess: opts.onSuccess,
     onError: opts.onError,
-  } as MetadataAsyncRule<TRow>);
+  });
 }
 
 /**

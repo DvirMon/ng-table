@@ -37,13 +37,15 @@ export interface OptimisticMembers<TRow> {
  * re-insert a row `removeEdit` took out of `data`. A moved row's position is still not part of a
  * snapshot — covering move needs an inverse-operation representation this library does not have.
  */
-export function withOptimistic<TRow = unknown>() {
+export function withOptimistic<TRow = unknown>(): (
+  core: TableCore<TRow>
+) => TableFeatureSpec<TRow, OptimisticMembers<TRow>> {
   return (core: TableCore<TRow>): TableFeatureSpec<TRow, OptimisticMembers<TRow>> => {
     const store = createEditingStore<TRow>(core);
 
     return {
       members: { editing: store.editing, pending: store.pending },
       onRowsRemoved: store.onRowsRemoved,
-    } as TableFeatureSpec<TRow, OptimisticMembers<TRow>>;
+    };
   };
 }

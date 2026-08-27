@@ -142,7 +142,9 @@ function sortRows<TRow>(
  * column alone. Pass `{ multi: true }` to accumulate a click-ordered,
  * multi-column priority sort instead.
  */
-export function withSorting<TRow = unknown>(config: WithSortingConfig = {}) {
+export function withSorting<TRow = unknown>(
+  config: WithSortingConfig = {}
+): (core: SortingInput<TRow>) => TableFeatureSpec<TRow, SortingMembers> {
   const manual = config.manual ?? false;
   const multi = config.multi ?? false;
 

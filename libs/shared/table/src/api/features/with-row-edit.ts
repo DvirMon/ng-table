@@ -51,7 +51,9 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * `{ multiple: true }` combined with optimistic save is undesigned — N open rows × M in-flight
  * saves — and unsupported until someone specs it (D31.2, G4).
  */
-export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
+export function withRowEdit<TRow = unknown>(
+  config: WithRowEditConfig = {}
+): (core: TableCore<TRow>) => TableFeatureSpec<TRow, RowEditMembers<TRow>> {
   const multiple =
     typeof config.multiple === 'function'
       ? computed(config.multiple)
@@ -86,6 +88,6 @@ export function withRowEdit<TRow = unknown>(config: WithRowEditConfig = {}) {
       members: { editing: store.editing, pending: store.pending },
       onRowsRemoved: store.onRowsRemoved,
       onInit: () => effect(onMultipleChanged),
-    } as TableFeatureSpec<TRow, RowEditMembers<TRow>>;
+    };
   };
 }

@@ -30,7 +30,7 @@ import {
  */
 export function withColumnsSchemaAsync<TRow>(
   rules: readonly ColumnRule<TRow>[]
-) {
+): (core: ColumnsSchemaStore<TRow>) => TableFeatureSpec<TRow> {
   const metadataRules = rules.filter(isMetadataRule);
   const metadataAsyncRules = rules.filter(isMetadataAsyncRule);
 
