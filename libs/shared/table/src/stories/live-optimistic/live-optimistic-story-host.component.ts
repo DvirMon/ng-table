@@ -36,8 +36,16 @@ export class LiveOptimisticStoryHostComponent {
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly saveError = signal<string | null>(null);
 
-  /** Focus opens nothing — it only takes the restore point this row will roll back to. */
+  /**
+   * Focus opens nothing — it only takes the restore point this row will roll back to. Guarded:
+   * a row already `pending()` holds a snapshot for an in-flight save, and re-capturing would
+   * overwrite it (2-decisions.md correction 2).
+   */
   protected onEnterRow(id: RowId): void {
+    const isRowPending = this.table.pending().has(id);
+    if (isRowPending) {
+      return;
+    }
     this.table.editing.update(captureEdit<EditRow>(id));
   }
 
