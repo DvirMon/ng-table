@@ -53,6 +53,20 @@ export class GatedEditStoryHostComponent {
     );
   }
 
+  /** Duplicates `sourceId`'s row directly below itself and opens the copy — `beginEdit({ insert })`
+   * (D42), the same call `addBlankRow()` uses, just seeded from an existing row instead of blank
+   * fields. No new library API (`1-design.md` §"Story this owes"). */
+  protected duplicateRow(sourceId: RowId): void {
+    const data = this.data();
+    const sourceIndex = data.findIndex((row) => this.table.trackBy(row) === sourceId);
+    if (sourceIndex === -1) return;
+
+    const source = data[sourceIndex];
+    const at = sourceIndex + 1;
+    const id = crypto.randomUUID();
+    this.table.editing.update(beginEdit(id, { insert: { ...source, id }, at }));
+  }
+
   protected openEdit(id: RowId): void {
     // beginEdit: opens the row; existing restore point wins if one is already held (D31.1).
     this.table.editing.update(beginEdit(id));
