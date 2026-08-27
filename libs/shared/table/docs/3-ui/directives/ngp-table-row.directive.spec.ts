@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { mockDataRenderRow, mockGroupRenderRow } from '../../../table.mock';
-import { NGP_TABLE_ROW } from '../../../directives/tokens';
+import { NGP_TABLE_ROW } from '../../../directives/table.tokens';
 import type { RenderRow } from '../../../api/types';
 
 @Component({

@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { createMockTableStore } from '../../../table.mock';
-import { NGP_TABLE_STORE } from '../../../directives/tokens';
+import { NGP_TABLE_STORE } from '../../../directives/table.tokens';
 import type { TableStore } from '../../../api/types';
 
 @Component({

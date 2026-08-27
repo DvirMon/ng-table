@@ -1,6 +1,6 @@
 import { computed, Directive, input, type InputSignal, type Signal } from '@angular/core';
 
-import { NGP_TABLE_ROW } from './tokens';
+import { NGP_TABLE_ROW } from './table.tokens';
 import type { RenderRow, RowId } from '../api/types';
 
 // ADR-0005: dual-tag selector, role set unconditionally regardless of host tag.

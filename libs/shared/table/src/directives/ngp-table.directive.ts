@@ -1,6 +1,6 @@
 import { computed, Directive, input, type InputSignal, type Signal } from '@angular/core';
 
-import { NGP_TABLE_STORE } from './tokens';
+import { NGP_TABLE_STORE } from './table.tokens';
 import type { TableStore } from '../api/types';
 
 // ADR-0005: dual-tag selector, native `<table>` and `<div>` grid share one directive. `role`
