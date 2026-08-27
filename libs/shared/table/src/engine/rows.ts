@@ -11,7 +11,15 @@ export function normalizeTrackBy<TRow>(
     return trackBy;
   }
   const key = trackBy;
-  return (row: TRow) => row[key] as RowId;
+  return (row: TRow) => {
+    const value = row[key];
+    if (typeof value === 'string' || typeof value === 'number') {
+      return value;
+    }
+    throw new Error(
+      `trackBy key "${String(key)}" must resolve to a string or number RowId, got ${typeof value}`
+    );
+  };
 }
 
 /** 1:1 wrap, no grouping — the render-row builder every table starts with. */
@@ -35,7 +43,8 @@ export function resolveIndex<TRow>(
   { trackBy, indexById }: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
 ): number {
   const at = indexById.get(id);
-  if (at !== undefined && trackBy(rows[at]) === id) {
+  const isFreshCacheHit = at !== undefined && trackBy(rows[at]) === id;
+  if (isFreshCacheHit) {
     return at;
   }
   return rows.findIndex((row) => trackBy(row) === id);

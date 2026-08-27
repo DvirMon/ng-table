@@ -63,11 +63,14 @@ export function createTableCore<TRow>(
   // synthesized row (`row.data === null`) since there is no `data()` entry to point to.
   const renderRows = computed(() => {
     const byId = indexById();
-    return buildRenderRows(rows()).map((row, index) => ({
-      ...row,
-      index,
-      sourceIndex: row.data === null ? undefined : byId.get(row.id),
-    }));
+    return buildRenderRows(rows()).map((row, index) => {
+      const isSynthesizedRow = row.data === null;
+      return {
+        ...row,
+        index,
+        sourceIndex: isSynthesizedRow ? undefined : byId.get(row.id),
+      };
+    });
   });
 
   const core: TableCore<TRow> = {

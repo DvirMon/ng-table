@@ -11,6 +11,12 @@ import type { ColumnDef, ColumnDefInput } from '../api/types';
  * `signal.update()` wrappers around these, so column behavior is testable without a live store.
  */
 
+// Narrows `unknown` to an indexable object before a default accessor reads `def.id` off it —
+// `TRow` is unconstrained here, so nothing guarantees `row` is actually object-shaped.
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
 /**
  * Fills in `accessor`/`visible`/`order`/`label` for any column def that omitted them, so the
  * resolved state (`store.columns()`) is always a full `ColumnDef[]` regardless of how sparse
@@ -22,7 +28,7 @@ export function resolveColumnDefs<TRow>(
   return defs.map((def, index) => ({
     ...def,
     accessor:
-      def.accessor ?? ((row: TRow) => (row as Record<string, unknown>)[def.id]),
+      def.accessor ?? ((row: TRow) => (isRecord(row) ? row[def.id] : undefined)),
     visible: def.visible ?? true,
     order: def.order ?? index,
     label: def.label ?? def.id,
@@ -130,8 +136,10 @@ export function foldColumnRules<TRow>(
     const byKey = valuesByColumnId.get(column.id);
     if (!byKey) return column;
 
-    const visibleValues = byKey.get(VISIBLE) as boolean[] | undefined;
-    const visible = visibleValues ? visibleValues.every(Boolean) : column.visible;
+    const visibleValues = byKey.get(VISIBLE);
+    const isEveryVisibleValueTrue =
+      visibleValues !== undefined && visibleValues.every((value) => value === true);
+    const visible = visibleValues ? isEveryVisibleValueTrue : column.visible;
 
     let meta: Map<ColumnMetaKey<unknown>, unknown> | undefined;
     for (const [key, values] of byKey) {
