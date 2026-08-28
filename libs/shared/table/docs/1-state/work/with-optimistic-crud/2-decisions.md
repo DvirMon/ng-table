@@ -13,10 +13,14 @@ recovery. Continues the numbering of
 O-numbers are global across the `with-row-editing`/`with-optimistic`/`with-mutations` folders).
 Last allocated before this file: **D44**.
 
+> **Implemented and closed.** The design brief this folder started from (`1-handoff.md`) was
+> deleted once the work landed — every decision it proposed is recorded below, at what actually
+> shipped rather than what was proposed. The remaining downstream doc and story updates are listed
+> at the end of this file.
+
 **This file is the reasoning, not the contract.** The shipped surface is specced in
 [`features/row-editing.md`](../../features/row-editing.md); the gap register is
-[`with-row-editing/5-gaps.md`](../with-row-editing/5-gaps.md); the design brief that started this
-is [`1-handoff.md`](./1-handoff.md).
+[`with-row-editing/5-gaps.md`](../with-row-editing/5-gaps.md).
 
 ## What started this
 
@@ -150,6 +154,26 @@ case bolted on afterward.
   for a consumer that wants each call to move the restore point forward, the way `captureEdit`
   does.
 
+## D48 — `restored` signal dropped, scroll/flash stays consumer-space
+
+Product OQ-2 asked for a table-owned `Signal<ReadonlySet<RowId>>` naming rows that just
+reappeared via `revertEdit`'s reinsert branch, for a future generic scroll/flash directive.
+
+**Dropped.** Grilled 2026-08-27: the fact only the state layer can produce (reinsert vs.
+replace-in-place, vs. an ordinary externally-added row) is real and not derivable by a consumer
+today — `revertEdit` clears the snapshot in the same call that reinserts, so by the time any
+public signal is readable the distinguishing fact is already gone, and a custom
+`createTableFeature()` has no visibility into it either (`snapshots`/`open`/`detached` are
+internal to `editing-state.ts`, never exported). So the signal was buildable and would have been
+consumer-unbuildable on its own — but the consumer decided the value isn't worth the API surface:
+scroll/flash is deferred to the consumer's own `error:` callback (which already has `id`), guarded
+with `afterNextRender`/an effect for the one real wrinkle — `revertEdit`'s `writeData` is
+synchronous but Angular's DOM update is not, so a same-tick DOM lookup can race the reinsert.
+
+No code changes from this decision. `RowRestorePoint`/`revertEdit`'s reinsert branch (D45–D47)
+are unaffected — only the *observability* of "this specific write was a reinsert" was declined as
+new public API.
+
 ## Carried forward — not closed by this effort
 
 **Move.** A `RowRestorePoint` fixes a row's position *at capture time*; nothing here adds a verb
@@ -166,7 +190,36 @@ job was making undo *possible*, which `pending()` plus `removeEdit`/`revertEdit`
 |---|---|
 | `features/row-editing.md` | v2.1 — new/changed verb tables, `RowRestorePoint` type box, delete-rollback flow, `ABSENT` removal noted as breaking |
 | `work/with-row-editing/5-gaps.md` | G5 narrowed to move-only; O22 delete half closed |
-| `docs/0-product/row-editing.md` | §3.1/§3.2 coverage marks updated — delete rollback now ✅ mechanism, live-optimistic story demonstrates it |
+| ~~`docs/0-product/row-editing.md`~~ | **Do not edit — owned by the product pass, already updated there 2026-08-27.** §3.1/§3.2, D-2 and OQ-5 already reflect delete rollback being unblocked. Editing it from this effort would clobber the OQ-1…OQ-7 resolutions recorded in the same file. |
+
+### Added 2026-08-27 by the product pass — two corrections in `features/row-editing.md`
+
+Both are in that file, neither is caused by this effort, and both currently mislead a reader. Landed
+here rather than done directly because this effort is the one holding that file open.
+
+**1. §9's "one-tick saving flicker" is not real.** It claims a local-only save (`endEdit` +
+`releaseEdit`) shows a `pending` flash on a table with no server. Both writes are synchronous in one
+block, so signals never render the intermediate state and no frame shows it. Only reachable if
+something `await`s between the two calls, which a local save has no reason to do. Correct the
+sentence or drop the bullet — as written it invites consumers to build a spinner-delay threshold
+against a problem they do not have.
+
+**2. §5's "known sharp edge, left to the consumer" understates what the library offers.** It says a
+rejected save firing `revertEdit` on a row the user has re-entered cannot be resolved by the
+library. True as to *policy*, but the consumer can guard it with state already exposed:
+
+```ts
+onFocus(id) {
+  if (!this.table.pending().has(id)) {          // an in-flight save still holds the restore point
+    this.table.editing.update(captureEdit(id));
+  }
+}
+```
+
+`pending()` is exactly "holds a restore point and is not open," which on a live table is the
+in-flight set. Gated mode never had the problem — re-opening goes through `beginEdit`, which is
+capture-if-absent. Add the guard to §5's live-optimistic snippet, and note that `captureEdit`'s
+always-overwrite semantics (D40) are why the guard is needed.
 
 ## Story updates this effort owes
 
@@ -174,3 +227,4 @@ job was making undo *possible*, which `pending()` plus `removeEdit`/`revertEdit`
 |---|---|
 | `gated-edit/` | `discardEdit()` handler collapses from 3 calls to the single new `discardEdit(id)` verb |
 | `live-optimistic/` | new Delete affordance — `removeEdit`/`releaseEdit`/`revertEdit` against a simulated DELETE request, the first story to demonstrate delete rollback |
+| `live-optimistic/` | **also** — `onEnterRow` currently calls `captureEdit` unguarded, so the story ships the hazard described in correction 2 above. Add the `pending()` guard; it is one `if`, and this story is the reference consumers copy. |
