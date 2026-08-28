@@ -139,7 +139,7 @@ export function withoutOpen(open: ReadonlySet<RowId>, id: RowId): ReadonlySet<Ro
 
 /**
  * Closes every open row, dropping their restore points — no survivor chosen. Shared by
- * `clearEditing()` (explicit "Cancel all") and `withRowEdit()`'s mode-flip `true` -> `false`
+ * `clearEdit()` (explicit "Cancel all") and `withRowEdit()`'s mode-flip `true` -> `false`
  * reaction, which must NOT reuse `closeAllButLast`'s keep-the-last-one behavior: nobody asked
  * for a specific row to survive a flip, so keeping one would be arbitrary (design doc,
  * `docs/1-state/work/with-multiple-edit/1-design.md`). Rows already `pending` are untouched.

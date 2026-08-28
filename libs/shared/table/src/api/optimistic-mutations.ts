@@ -58,7 +58,7 @@ export function captureEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
  * in-flight rollbacks: harmless on a gated table where most restore points belong to rows the
  * user is typing in, but on a live table nothing is ever open, so every restore point belongs to
  * a request still waiting on the server. A later rejection would find nothing to restore and the
- * rejected value would stay on screen with no error. Bulk teardown is `clearEditing()`, which
+ * rejected value would stay on screen with no error. Bulk teardown is `clearEdit()`, which
  * closes and releases atomically (D44).
  *
  * No-ops for an id that is still open (closing one is `endEdit`'s job) or that holds no restore

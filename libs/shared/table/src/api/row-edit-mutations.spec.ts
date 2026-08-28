@@ -1,5 +1,5 @@
 import { pendingIds, type EditingState, type RowRestorePoint } from './features/editing-state';
-import { beginEdit, clearEditing, endEdit } from './row-edit-mutations';
+import { beginEdit, clearEdit, endEdit } from './row-edit-mutations';
 import { releaseEdit, revertEdit } from './optimistic-mutations';
 import { removeRow } from './row-mutations';
 import type { RowId } from './types';
@@ -149,19 +149,19 @@ describe('endEdit', () => {
   });
 });
 
-// D44 note: `clearEditing()` cannot be spelled as a bulk `endEdit()` + `releaseEdit()` because
+// D44 note: `clearEdit()` cannot be spelled as a bulk `endEdit()` + `releaseEdit()` because
 // neither has a bulk form — both take a required id (D41). The hazard is closed by the API shape,
 // so there is no runtime behavior left to regression-test here.
-describe('clearEditing', () => {
+describe('clearEdit', () => {
   it('closes every open row', () => {
     const opened = beginEdit<Person>(2)(beginEdit<Person>(1)(state(), ctx()), ctx());
-    const result = clearEditing<Person>()(opened, ctx());
+    const result = clearEdit<Person>()(opened, ctx());
     expect(result.open.size).toBe(0);
   });
 
   it('drops the closed rows restore points, so none of them becomes pending', () => {
     const opened = beginEdit<Person>(2)(beginEdit<Person>(1)(state(), ctx()), ctx());
-    const result = clearEditing<Person>()(opened, ctx());
+    const result = clearEdit<Person>()(opened, ctx());
     expect(pendingIds(result).size).toBe(0);
     expect(result.snapshots.size).toBe(0);
   });
@@ -170,7 +170,7 @@ describe('clearEditing', () => {
     const opened = beginEdit<Person>(2)(state(), ctx());
     const saved = endEdit<Person>(2)(opened, ctx());
 
-    const result = clearEditing<Person>()(saved, ctx());
+    const result = clearEdit<Person>()(saved, ctx());
 
     expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     expect(pendingIds(result).has(2)).toBe(true);
@@ -178,7 +178,7 @@ describe('clearEditing', () => {
 
   it('is a no-op when nothing is open', () => {
     const current = state();
-    const result = clearEditing<Person>()(current, ctx());
+    const result = clearEdit<Person>()(current, ctx());
     expect(result).toBe(current);
   });
 });

@@ -8,7 +8,7 @@ export interface WithRowEditConfig {
    * Accepts a plain accessor (`() => boolean`, e.g. `() => isWide()`) to react live — no need
    * to write `computed()` yourself, this feature wraps it. Toggling `true` -> `false` while N
    * rows are open closes all of them, no survivor chosen (nobody asked for a specific row to
-   * stay open) — same shape as `clearEditing()`, not `closeAllButLast`'s keep-the-last-one. A
+   * stay open) — same shape as `clearEdit()`, not `closeAllButLast`'s keep-the-last-one. A
    * `Signal<boolean>` works too since a signal is itself callable as `() => boolean`. */
   multiple?: boolean | (() => boolean);
 }

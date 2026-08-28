@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { beginEdit, clearEditing, endEdit } from '../../api/row-edit-mutations';
+import { beginEdit, clearEdit, endEdit } from '../../api/row-edit-mutations';
 import { discardEdit, releaseEdit, revertEdit } from '../../api/optimistic-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
@@ -98,8 +98,8 @@ export class GatedEditStoryHostComponent {
 
   protected clearAll(): void {
     this.saveError.set(null);
-    // clearEditing: closes every open row, dropping their restore points.
-    this.table.editing.update(clearEditing());
+    // clearEdit: closes every open row, dropping their restore points.
+    this.table.editing.update(clearEdit());
     this.needsUniqueName.set(new Set());
   }
 

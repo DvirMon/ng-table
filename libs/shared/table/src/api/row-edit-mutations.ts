@@ -103,7 +103,7 @@ export function beginEdit<TRow>(
  *
  * Takes a **required** id. A bulk form would close every row while keeping every restore point,
  * leaking all of them into `pending` with nothing left to release them (D44) — bulk teardown is
- * `clearEditing()`.
+ * `clearEdit()`.
  */
 export function endEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state) =>
@@ -119,6 +119,6 @@ export function endEdit<TRow>(id: RowId): EditingUpdater<TRow> {
  * would mark each row `pending`, arming a rollback for a save nobody started. Rows already
  * pending are untouched — they are not open (D31.3).
  */
-export function clearEditing<TRow>(): EditingUpdater<TRow> {
+export function clearEdit<TRow>(): EditingUpdater<TRow> {
   return (state) => closeAll(state);
 }
