@@ -11,6 +11,10 @@ audience: product, design, engineering
 What a person sitting in front of an editable table needs to be able to do, and what they should
 experience when it goes wrong. Engineering derives API from this document, not the reverse.
 
+> **Ownership.** This file is maintained by the product pass and carries the resolutions to OQ-1…
+> OQ-7. State-layer efforts should **link** to it, not rewrite it — coverage marks here are updated
+> from the product side as capabilities land.
+
 ## Scope
 
 **Editing means full CRUD**: add a row, duplicate a row, delete a row, change values in place. The
@@ -250,8 +254,12 @@ invalid" signal, and the demo validates server-side only.
 
 **Failure behavior**
 
-- A partial failure leaves the failed rows open, marked with their reason; successful rows close.
-  The table does not roll all of them back because one failed.
+- A partial failure leaves the failed rows marked with their reason and recoverable; successful rows
+  settle. The table does not roll all of them back because one failed.
+- *Refined by the design (2026-08-27):* Save All **closes every row it saves**, so each row shows its
+  own saving state and a failure reopens or marks that row alone. Rows do not stay open across the
+  round trip — N open editors the person must not touch, with no indication which are still live, is
+  the failure mode this avoids.
 
 **Mode note.** Gated only. In live mode the session is wherever focus is, which is inherently one
 row, so there is no multi-row session to commit.
@@ -455,6 +463,18 @@ together — one history, one affordance.
 **Coverage:** ❌ everywhere. Duplicate exists only as one line in a decision-record snippet
 (`addRow({ ...row, id: newId() })`). No story, no demo, no placement rule, no unique-field handling.
 
+**Designed 2026-08-27** — [`1-state/work/with-duplicate-row/1-design.md`](../1-state/work/with-duplicate-row/1-design.md).
+In **gated** mode it needs no new API: it is `beginEdit(newId, { insert: {...source}, at:
+sourceIndex + 1 })`, the blank-row flow with a different starting value. In **live** mode there is a
+real gap — no insert-with-rollback verb exists, so an optimistic duplicate has no restore point
+unless the consumer hand-rolls one.
+
+**One acceptance criterion above cannot be met under an active sort.** "The copy appears immediately
+below its source" is storage order; the pipeline reorders it, and no insertion index can target a
+display position. It holds when no sort is active, and otherwise wants OQ-3's row-hold — duplicate
+is the strongest case for that hold, since comparing source against copy is the whole point of the
+operation.
+
 ## 4.2 — Cancelling a duplicate versus cancelling an add *(both)* — ❌ not covered, and the current default is wrong for both
 
 The brief asks whether these should behave the same. Working it through:
@@ -533,6 +553,14 @@ is worth re-reading D20/D24 before implementing.
 Sorting's own spec marks this **REQUIRED, NOT IMPLEMENTED** and notes the position flips with sort
 direction. It also records a crash on nullable date columns, which an editable table will reach the
 moment someone clears a date cell. Both must ship with or before editable rows.
+
+**Scheduled 2026-08-27** — [`1-state/work/sorting-null-ordering/1-handoff.md`](../1-state/work/sorting-null-ordering/1-handoff.md).
+Scoped to the mechanical fix: empties resolve before the comparator and **outside** the direction
+multiplication, which closes the crash and the flip together. Default `'last'`; `""` stays a real
+value; per-column override is a declarative rule rather than a `ColumnDef` field. The spec's nine
+parked "what is an empty row" scenarios (S1–S9) stay parked **because of OQ-3** — the edited row now
+holds its position, so null ordering no longer has to keep a row the person is filling in visible.
+If OQ-3's row-hold is ever dropped, those scenarios come back.
 
 ## Owned by filtering *(unbuilt)*
 
@@ -649,9 +677,13 @@ spec.
 sorts it, so under an active sort it lands wherever the sort puts it — possibly off screen. What is
 a choice is the feedback, and it splits by layer:
 
-- **State layer (now):** the table exposes *which rows just returned* as a signal, the same split
-  `pending()` already uses for saving state — the table owns the fact, the consumer owns the
-  presentation. No scrolling, no highlighting, no DOM.
+- ~~**State layer (now):** the table exposes *which rows just returned* as a signal~~ —
+  **overturned 2026-08-27** in the state layer's own grilling (`with-optimistic-crud/2-decisions.md`,
+  the `restored`-signal decision). The fact is genuinely state-layer-only — `revertEdit` clears the
+  snapshot in the same call that reinserts, so no consumer or custom feature can tell a reinsert
+  from an ordinary add — but the API surface was judged not worth it. Scroll/flash is driven from
+  the consumer's own `error:` callback, which already has the id, guarded with `afterNextRender`
+  because `writeData` is synchronous while Angular's DOM update is not.
 - **UI layer (later):** an opt-in directive reads that signal and scrolls the restored row into
   view and flashes it. It belongs with the G1/G9/G10 directive effort (keyboard, focus,
   announcements), not as a separate piece of work — a restored row also needs announcing, which is
@@ -741,7 +773,7 @@ representation problem. What is genuinely unspecified:
   independent ones.
 - **Partial failure**: which rows close, which stay open, and how the person is told. §1.8's
   acceptance criteria are the product answer; the state layer has to be able to express it.
-- **`clearEditing()` with saves in flight**: it drops the restore points of every open row, so a
+- **`clearEdit()` with saves in flight**: it drops the restore points of every open row, so a
   later rejection has nothing to roll back to. Harmless in single mode; not in bulk.
 - **Single-mode trim does not apply**, so the D14 invariant that keeps `open` bounded is gone.
 
@@ -751,6 +783,15 @@ no defined behavior).
 
 *Sequencing:* it needs `withSelection()` for the affordance, which does not exist. The **semantics**
 can be specced without it; the **UI** cannot. Spec first, ship with selection.
+
+**Specced 2026-08-27** — [`1-state/work/with-multiple-edit/1-design.md`](../1-state/work/with-multiple-edit/1-design.md).
+Most of the "N × M" concern turned out already well-defined (restore points are per row, so partial
+failure is three ordinary calls). What was real is one defect with two entry points: **`clearEdit()`
+and the single-mode trim drop every open row's restore point**, which under `multiple: true` can
+discard rollbacks for saves still in flight — reachable through the config's own documented idiom
+`multiple: () => isWide()`, i.e. a window resize. Resolution: bulk edit is optimistic-only (a save
+closes its row before firing), which makes the hazard unreachable with no new state. One open
+question remains there — whether a mode collapse should silently end N edit sessions.
 
 ---
 
