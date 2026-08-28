@@ -1,7 +1,7 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
     "Add via form" / "Delete via form" mutate <code>rows().value</code> directly instead of
-    going through <code>table.editing.update(beginEdit(id, { insert }))</code> /
+    going through <code>table.editing.update(beginEdit(id, {{ '{' }} insert {{ '}' }}))</code> /
     <code>table.value.update(removeRow(...))</code>. That still writes valid data — what it
     skips is table's optimistic-update support: the snapshot/pending machinery those utilities
     compose with, which lets a save roll back cleanly on failure. Name/dept edits still use the
