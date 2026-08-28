@@ -1,7 +1,7 @@
 ---
 title: Design — duplicate a row
 type: plan
-status: proposed — one new verb, one defect found; not implemented
+status: implemented 2026-08-27 — see docs/tasks/progress.md (4/4 steps)
 date: 2026-08-27
 parent: ../../features/row-editing.md
 ---
@@ -12,9 +12,16 @@ Product input: [`0-product/row-editing.md`](../../../0-product/row-editing.md) �
 marks duplicate ❌ not covered — it exists only as one line in D18's actions snippet
 (`addRow({ ...row, id: newId() })`), with no story, no placement rule, and no uniqueness handling.
 
-**Finding up front: in gated mode duplicate needs no new API.** It is `beginEdit` with `{ insert }`,
-already shipped for the blank-row flow (D42). What the exercise turns up is a **live-mode gap** and a
-**doc/code mismatch**, both below.
+**Finding up front: duplicate needs no new API in either mode.** In gated mode it is `beginEdit`
+with `{ insert }`, already shipped for the blank-row flow (D42); in live mode it is `insertRow` plus
+`removeRow` on rejection. What the exercise turned up was a **doc/code mismatch** in `beginEdit`'s
+header (fixed, below) and two renames.
+
+> **Implemented 2026-08-27.** All four steps landed — the `insertRow` rename, the `beginEdit`
+> invariant-comment fix, the doc updates, and a Duplicate action in `gated-edit/`. `clearEditing` →
+> `clearEdit` followed on the same day. Both tsconfig projects typecheck clean. This file is the
+> reasoning; the shipped surface is in
+> [`features/row-editing.md`](../../features/row-editing.md).
 
 ## What duplicate is, mechanically
 
@@ -89,9 +96,42 @@ breaking the surface this cycle — the two migrate together at no extra cost.
 Call sites: `index.ts`, `row-mutations.ts`, `row-edit-mutations.ts` (`beginEdit`'s `{ insert }`
 branch), `optimistic-mutations.ts` (`revertEdit`'s re-insert path), the specs, and the stories.
 
-## Defect found — `beginEdit` does not no-op on a live table
+### The suffix rule, stated (2026-08-27)
 
-`row-edit-mutations.ts`'s header states:
+**A verb that affects editing state gets `*Edit`. A verb that only writes rows gets `*Row`.**
+
+Editing state means `snapshots` **and** `open` — restore points are editing state, not a separate
+concept. So a verb that writes rows *and* touches a restore point is an `*Edit` verb; writing rows
+is not disqualifying, writing *only* rows is.
+
+Checked against the shipped surface, every name already complies:
+
+| Verb | Touches editing state | Suffix |
+|---|---|---|
+| `insertRow`, `removeRow`, `patchRow` | no — rows only | `*Row` ✅ |
+| `beginEdit`, `endEdit` | `open` | `*Edit` ✅ |
+| `captureEdit`, `releaseEdit` | `snapshots` | `*Edit` ✅ |
+| `revertEdit`, `discardEdit`, `removeEdit` | `snapshots` + `open` (+ rows) | `*Edit` ✅ |
+| `patchEdit` | `snapshots` (+ rows) | `*Edit` ✅ |
+
+**No renames follow from this beyond `insertRow`.** An earlier draft argued `removeEdit`/`patchEdit`
+were misnamed because they have nothing to do with an *edit session* — that read `Edit` as "session"
+rather than "editing state". Under the rule above they are correct as they stand.
+
+**One real inconsistency, now fixed:** `clearEditing` was the only verb using the gerund. Renamed to
+**`clearEdit`** on 2026-08-27, alongside `insertRow`. Definition, export, spec, stories and JSDoc
+all updated; both tsconfig projects typecheck clean.
+
+## Defect found — `beginEdit` does not no-op on a live table — **FIXED 2026-08-27**
+
+Resolved by the second of the two options below: the claim was deleted and replaced with what the
+code actually does. `row-edit-mutations.ts`'s header now states that the verbs write `open`
+unconditionally, that this is *meaningless-but-not-inert* on a `withOptimistic()`-only table, and
+that populating `open` there silently shrinks `pending` — the signal a live table actually reads.
+
+The original entry follows.
+
+`row-edit-mutations.ts`'s header stated:
 
 > The edit-session verbs — `withRowEdit()`'s slice (D37). They write `open`, so they no-op on a
 > table composing only `withOptimistic()`, where nothing opens a row.
@@ -107,7 +147,8 @@ Not covered by tests: `with-optimistic.spec.ts` never calls `beginEdit`.
 Two ways out, both cheap: make the claim true (the editing store knows whether an open set is
 meaningful, so the updaters can be no-ops under `withOptimistic` alone), or delete the claim and say
 plainly that the edit-session verbs are meaningless-but-not-inert on a live table. **Either is fine;
-leaving the doc asserting an untrue invariant is not.**
+leaving the doc asserting an untrue invariant is not.** — *The second was taken; the code is
+unchanged and only the comment moved.*
 
 ## Limitation — "below its source" is storage order, not display order
 
@@ -125,7 +166,7 @@ wants the row held in place for the duration of the edit, which is OQ-3's gated 
 is the strongest argument for that hold, since comparing source and copy side by side is the entire
 point of the operation.
 
-## Story this owes
+## Story this owed — delivered
 
 `gated-edit/` gains a Duplicate action — the first demonstration of it anywhere. It should show the
 copy landing directly under its source and Cancel removing it, since that pairing is what

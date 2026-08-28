@@ -337,7 +337,7 @@ state at all, so a `{ capture: true }` flag on either would have nothing to act 
 |---|---|---|
 | `beginEdit(id, { insert?, at? })` | opens the row, capturing its value **only if none is held** (D31.1). `insert` adds the row to `data` first | already open; or `insert` collides with an existing id |
 | `endEdit(id)` | closes the row, keeping whatever is in `data` **and** its restore point — the row becomes `pending` | not open |
-| `clearEditing()` | closes every open row and drops their restore points, in one write. Pending rows untouched | nothing open |
+| `clearEdit()` | closes every open row and drops their restore points, in one write. Pending rows untouched | nothing open |
 
 Everything no-ops on a miss rather than throwing, uniformly.
 
@@ -355,9 +355,9 @@ restore point discards in-flight rollbacks, which on a live table — where noth
 means a later rejection has nothing to roll back to and the rejected value stays on screen
 silently.
 
-**Two verbs are fused, for the same reason** (D44). `revertEdit` and `clearEditing` each do two
+**Two verbs are fused, for the same reason** (D44). `revertEdit` and `clearEdit` each do two
 things in one write because their halves are not independently safe apart —
-`clearEditing()` spelled as `endEdit()` + `releaseEdit()` closes every row first, leaving the
+`clearEdit()` spelled as `endEdit()` + `releaseEdit()` closes every row first, leaving the
 second call nothing to find, and every row leaks into `pending` forever.
 
 **Save is composed, never a store verb:**
@@ -383,12 +383,18 @@ for a save that writes through the table API directly (a row action, no form inv
 | `addNewRow(row, { at })` | `beginEdit(id, { insert: row, at })` | D36 established these were never separate intents |
 | `endEdit(id, { keepSnapshot: true })` | `endEdit(id)` | keeping is now the only behavior |
 | `endEdit(id, { keepSnapshot: false })` | `endEdit(id)` + `releaseEdit(id)` | **two calls** — see the accepted cost in §9 |
-| `clearEditing()` | `clearEditing()` | unchanged (D44) |
+| `clearEditing()` | `clearEditing()` | unchanged in v2.0 (D44); renamed to `clearEdit()` in v2.1 — see below |
 | — | `captureEdit(id)` | new as a live-table entry point |
 | `removeRow(id)` + `endEdit(id)` + `releaseEdit(id)` | `discardEdit(id)` *(v2.1, D46)* | **three calls → one** |
 | — | `removeEdit(id)` *(v2.1, D47)* | new — the delete-with-rollback entry point |
 | — | `patchEdit(id, partial, options?)` *(v2.1, D47)* | new — capture-composing patch for row actions/background writes |
 | `RowSnapshot<TRow> = TRow \| typeof ABSENT` | `RowSnapshot<TRow> = RowRestorePoint<TRow>` *(v2.1, D45/D46)* | **breaking** — `ABSENT` removed; every snapshot now holds a real value + position |
+| `addRow(row, { at })` | `insertRow(row, { at })` *(v2.1)* | **breaking** — rename only; "insert" matches the `splice(at, 0, row)` semantics the name has always had |
+| `clearEditing()` | `clearEdit()` *(v2.1)* | **breaking** — rename only; it was the sole verb using the gerund |
+
+**The suffix rule these follow:** a verb that touches editing state (`snapshots` or `open`) is
+`*Edit`; a verb that writes rows only is `*Row`. Writing rows as well is not disqualifying — which is
+why `removeEdit` and `patchEdit` are `*Edit` despite mutating `data`.
 
 ---
 

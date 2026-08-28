@@ -38,7 +38,7 @@ finds nothing to restore and the rejected value stays on screen silently.
 
 Two operations do exactly that bulk discard anyway:
 
-1. **`clearEditing()`** — drops the restore point of every open row (`row-edit-mutations.ts`).
+1. **`clearEdit()`** — drops the restore point of every open row (`row-edit-mutations.ts`).
 2. **`closeAllButLast()`** — the single-mode trim, which deletes the snapshots of every displaced
    row (`with-row-edit.ts:26`).
 
@@ -57,7 +57,7 @@ for the whole round trip**. So with `multiple: true`:
 4. A's save rejects. `revertEdit(A)` finds no restore point and **no-ops silently**. The rejected
    value stays on screen with no error and no rollback.
 
-`clearEditing()` reaches the same end state from a "Cancel all" button while pessimistic saves are
+`clearEdit()` reaches the same end state from a "Cancel all" button while pessimistic saves are
 in flight.
 
 ### The root cause — `pending` cannot express "open and saving"
@@ -87,7 +87,7 @@ for (const id of table.editing()) {
 This makes every hazard above unreachable **with no new state**:
 
 - A row with a save in flight is `pending`, never `open`.
-- `clearEditing()` and `closeAllButLast()` only ever touch open rows, so they cannot reach a
+- `clearEdit()` and `closeAllButLast()` only ever touch open rows, so they cannot reach a
   live restore point. D41's rule stops having a loophole.
 - Partial failure is per row and already expressible.
 - The UI follows naturally: click Save All, every row closes at once, each shows its own saving
@@ -102,7 +102,7 @@ with no indication which are still live.
 Preferred: **document it and let the shape carry it.** The safe sequence is also the natural one —
 a Save All button closes the rows it saved. No runtime check, no new API.
 
-Weaker alternatives, recorded so the choice is visible: a dev-mode warning when `clearEditing()`
+Weaker alternatives, recorded so the choice is visible: a dev-mode warning when `clearEdit()`
 or the single-mode trim would drop more than one restore point at once (cheap, catches the resize
 path, noisy for legitimate Cancel-all); or an explicit `busy` set the consumer marks around a save
 (honest, but it is a third row state the library has no other use for, and it exists only to make
@@ -113,7 +113,7 @@ pessimistic bulk edit work — a mode we are declining to support).
 | Affordance | State-layer meaning |
 |---|---|
 | **Save all** | `endEdit` per open row, then one write or N; `releaseEdit` / `revertEdit` per row as answers arrive |
-| **Cancel all** | `clearEditing()` — closes every open row and drops their restore points in one write. Pending rows untouched (D44), which is now load-bearing rather than incidental |
+| **Cancel all** | `clearEdit()` — closes every open row and drops their restore points in one write. Pending rows untouched (D44), which is now load-bearing rather than incidental |
 | **Partial failure** | per-row `revertEdit`; failed rows may be re-opened with `beginEdit`, which is capture-if-absent and so restores the *original* pre-edit point (D31.1) |
 | **Mode flip `true` → `false`** | closes every open row and drops their restore points, one write — no survivor chosen. Pending rows untouched. See the section below |
 
@@ -132,7 +132,7 @@ the trim path — the user just asked for that row. On a mode flip nobody asked 
 arbitrary, and it leaves one row open in a state the person did not request. Closing all is the
 honest reading of "this table now edits one row at a time."
 
-Mechanically this is `clearEditing()`'s behavior: close every open row, drop their restore points,
+Mechanically this is `clearEdit()`'s behavior: close every open row, drop their restore points,
 in one write. Rows that are `pending` are untouched — and under the optimistic-only rule above, an
 in-flight save is always `pending` and never `open`, so **no live restore point can be dropped by a
 mode flip.** That is what makes closing all safe here, and it is the same property that closes the

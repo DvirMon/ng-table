@@ -29,7 +29,7 @@ Specs measured against: [`3-ui/architecture.md`](../../architecture.md),
 gaps would call.
 
 > **Verb names are v2.0** (post-D37 split): `captureEdit`, `releaseEdit`, `revertEdit`,
-> `beginEdit`, `endEdit`, `clearEditing`. The state-layer register still carries v1.0 names in its
+> `beginEdit`, `endEdit`, `clearEdit`. The state-layer register still carries v1.0 names in its
 > body.
 
 ---
