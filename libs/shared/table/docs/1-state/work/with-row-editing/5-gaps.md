@@ -2,7 +2,7 @@
 title: Gaps — Row Editing, state layer
 type: plan
 status: open — state layer only; UI gaps moved 2026-08-26, see the banner
-date: 2026-08-26
+date: 2026-08-28
 parent: ./2-decisions.md
 ---
 
@@ -31,6 +31,23 @@ and [`../../row-mutations.md`](../../row-mutations.md).
 >
 > Verb names throughout this file are v1.0. `settleEdit` → `releaseEdit`, `rebaseEdit` →
 > `captureEdit`, `addNewRow` → `beginEdit({ insert })`, `keepSnapshot` removed.
+>
+> ## Also superseded — 2026-08-27/28, the product pass
+>
+> A product pass over editing produced [`0-product/row-editing.md`](../../../0-product/row-editing.md)
+> (user stories for both modes across add / duplicate / delete / change-in-place) and resolved seven
+> open product questions. Four state-layer efforts came out of it; three have shipped:
+>
+> | Effort | Closes | State |
+> |---|---|---|
+> | [`with-optimistic-crud/`](../with-optimistic-crud/2-decisions.md) D45–D48 | **G5's delete half** | shipped 2026-08-27 |
+> | [`with-multiple-edit/`](../with-multiple-edit/1-design.md) | **G4** | shipped 2026-08-27 |
+> | [`with-duplicate-row/`](../with-duplicate-row/1-design.md) | duplicate; `insertRow`/`clearEdit` renames | shipped 2026-08-27 |
+> | [`sorting-null-ordering/`](../sorting-null-ordering/1-handoff.md) | sorting's null defects | **designed, not implemented** |
+>
+> **v2.1 verb renames**, on top of the v1.0 list above: `addRow` → `insertRow`,
+> `clearEditing` → `clearEdit`, `ABSENT` removed, and three verbs added — `discardEdit`,
+> `removeEdit`, `patchEdit`.
 
 ## The split
 
@@ -108,7 +125,28 @@ same way `beginEdit` does. Designing it against the pre-split shape means design
 
 ## Priority 2 — shipped surface is under-specified
 
-### G4 — `{ multiple: true }` is a flag with no design *(state layer)*
+### ~~G4 — `{ multiple: true }` is a flag with no design~~ *(state layer)* — **CLOSED 2026-08-27**
+
+**Closed by [`with-multiple-edit/1-design.md`](../with-multiple-edit/1-design.md)** (status:
+implemented). Product OQ-7 chose "design the semantics" over "refuse the combination" — refusing was
+impractical, since an optimistic flow is a consumer wiring pattern, not config, so there is nothing
+to detect at composition time.
+
+**What the design found:** most of "N open rows × M in-flight saves" was already well-defined —
+restore points are per row, so partial failure of a batch is three ordinary calls. The real defect
+was narrower and had two entry points: `clearEdit()` and the single-mode trim **drop every open
+row's restore point**, which under `multiple: true` can discard rollbacks for saves still in flight.
+Reachable through the config's own documented idiom `multiple: () => isWide()` — i.e. a window
+resize. It is the same loophole D41 closed for `releaseEdit` by refusing it a bulk form.
+
+**Resolution:** bulk edit is optimistic-only (a save closes its row before firing), so an in-flight
+row is always `pending` and never `open` — the hazard becomes unreachable with no new state. A mode
+flip `true` → `false` now closes **all** open rows rather than keeping the most recently opened one.
+
+**Unblocks O23** (`applyEditable({ when })`) — a predicate matching N rows now has semantics to be
+designed against.
+
+**Original text, for history:**
 
 **Partially addressed 2026-08-26.** `src/stories/gated-edit/` now toggles `multiple` live, so the
 config has a demo and the live-reaction path is exercised. The *semantics* gap below stands.
@@ -309,6 +347,34 @@ G3  optimistic create identity       (state, needs the O20 call — swapRowId; a
 G4  multiple: true design-or-reject  (state)
 G6  expansion child sourceIndex      (engine)
 ```
+
+### Re-derived 2026-08-28, after the product pass
+
+```
+G4  multiple: true semantics         DONE 2026-08-27 (with-multiple-edit/)
+G5  delete rollback                  DONE 2026-08-27 (with-optimistic-crud/, D45-D47)
+--- next, in this order ---
+sorting null ordering                DESIGNED, not implemented — sorting-null-ordering/1-handoff.md
+                                     BLOCKS the editing release: sorting's own spec says its
+                                     comparator fixes ship with or before editable rows
+G6  expansion child sourceIndex      (engine, unblocked, no design needed)
+G3  optimistic create identity       (still blocked on O20 + O24)
+G5  move half                        (still blocked on O22's representation; no consumer need)
+```
+
+**Not in this register but competing for the same slot:** the UI layer's G1/G9/G10 (keyboard, focus,
+a11y) is the largest undesigned item in the whole editing cluster, and every gated table hits it on
+the first row a person opens. See the [UI register](../../../3-ui/work/row-editing/5-gaps.md).
+
+### Picking this up cold
+
+1. Read [`0-product/row-editing.md`](../../../0-product/row-editing.md) first — it is the current
+   scope statement for editing and carries the resolutions to OQ-1…OQ-7.
+2. Then this register and the [UI register](../../../3-ui/work/row-editing/5-gaps.md) for what is
+   still missing.
+3. Two handoffs are ready to execute with no open questions:
+   [`sorting-null-ordering/1-handoff.md`](../sorting-null-ordering/1-handoff.md) and
+   [`doc-corrections/1-handoff.md`](../doc-corrections/1-handoff.md).
 
 G5's delete half shipped 2026-08-27 (D45–D47), out of order relative to G3/G4/G6, since a
 consumer-visible worst-case failure mode (delete loses the row, no recovery) outweighed the

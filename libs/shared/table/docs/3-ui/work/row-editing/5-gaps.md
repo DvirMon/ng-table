@@ -1,8 +1,8 @@
 ---
 title: Gaps — Row Editing, UI layer
 type: plan
-status: open
-date: 2026-08-26
+status: open — nothing here has shipped; re-prioritized 2026-08-28 after the product pass
+date: 2026-08-28
 parent: ../../architecture.md
 ---
 
@@ -141,6 +141,27 @@ G9  focus            ──┼─ one directive, one work folder, one ticket
 G10 a11y             ──┘
 G7  save-gating recipe   (docs + demo — independent of the directive)
 ```
+
+### Re-derived 2026-08-28
+
+```
+G1/G9/G10   DESIGN FIRST, then build — key map, focus-restore policy, ARIA contract,
+            announcement wording. None of it exists. One effort, one work folder.
+            Now the largest undesigned item in the editing cluster.
+undo affordance   folds into the same directive — where Undo lives, how long it lasts,
+                  its keyboard binding. The state layer already makes it possible
+                  (removeEdit + an unreleased restore point; pending() is the undoable set).
+restored-row feedback   also the same directive — scroll-into-view + flash for a row that
+                        came back. Driven from the consumer's own error callback; the
+                        `restored` signal was considered and declined as public API.
+G7          docs + demo, independent, small
+G11         still phantom — needs withFiltering()
+```
+
+**Why undo and restored-row feedback belong here rather than in their own efforts:** all three are
+row-scoped, keyboard-driven, and need the same focus and announcement machinery. Splitting them
+produces a keyboard handler with no focus story, which the original entry already warns is worse
+than neither.
 
 **G1, G9 and G10 are one effort, not three.** They share a directive, a work folder and a ticket;
 splitting them produces a keyboard handler with no focus story, which is worse than neither.
