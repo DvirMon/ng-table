@@ -6,14 +6,26 @@ import '../code-tabs.css';
 
 <Meta of={LiveOptimisticStories} />
 
-# Live Table + Rollback
+# Optimistic Updates & Rollback
 
-The always-editable table with an undo path. Composes `withOptimistic()` and **not**
-`withRowEdit()` — there is no button to open a row, so there is no edit session to track. The
-focus session *is* the edit session (D39), which is why the same three rollback verbs work here
-and in the gated flow.
+A **Gated/Live** mode toggle proves the same three rollback verbs
+(`captureEdit`/`releaseEdit`/`revertEdit`) work under two different edit-session shapes:
 
-`table.editing()` stays empty for the whole story. `table.pending()` is the in-flight set.
+- **Live** (default) — composes `withOptimistic()` and **not** `withRowEdit()`: there is no
+  button to open a row, so there is no edit session to track. The focus session *is* the edit
+  session (D39). `table.editing()` stays empty for the whole story; `table.pending()` is exactly
+  the in-flight set.
+- **Gated** — composes `withRowEdit()`, which composes `withOptimistic()` internally (D37) rather
+  than the two being listed together in `features` (that throws at construction, ADR-0007: same
+  members). Save closes the row optimistically (`endEdit` before the fetch settles), so the same
+  rollback verbs apply on release/reject.
+
+Both modes are two separate `createTable()` instances sharing one `data` signal, switched by a
+`mode` signal — simpler than reconstructing a table's feature set on every toggle.
+
+Also on this canvas: a screen-reader announcement on each pending-state transition, a "Simulate
+leave page" guard demo (plus a real `beforeunload` listener), and an Undo control that reappears
+for a few seconds after a delete settles, before its restore point is released.
 
 <Canvas of={LiveOptimisticStories.Default} />
 

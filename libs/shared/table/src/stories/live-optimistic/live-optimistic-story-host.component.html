@@ -1,19 +1,33 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Live table with rollback (S6) — every row is always editable, so nothing ever opens and
-    <code>table.editing()</code> stays empty. Focusing a cell takes a restore point
-    (<code>captureEdit</code>); leaving it commits on blur and fires a real MSW-intercepted
-    <code>fetch</code>. Success drops the restore point (<code>releaseEdit</code>); failure puts
-    the captured value back (<code>revertEdit</code>). Use the Storybook controls to force a
-    failure or add latency.
+    Optimistic updates & rollback (S6) — toggle Gated/Live to prove the same three rollback
+    verbs (<code>captureEdit</code>/<code>releaseEdit</code>/<code>revertEdit</code>) work under
+    both a button-delimited edit session (<code>withRowEdit()</code>) and a focus-delimited one
+    (<code>withOptimistic()</code> alone). Use the Storybook controls to force a failure or add
+    latency.
   </p>
 
-  @if (saveError(); as message) {
+  <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
+
+  <div class="row-edit-story__toolbar">
+    <button type="button" (click)="toggleMode()">
+      Mode: {{ mode() === 'gated' ? 'Gated' : 'Live' }}
+    </button>
+    <button type="button" (click)="simulateLeavePage()">Simulate leave page</button>
+    @if (undoRowId(); as id) {
+      <button type="button" (click)="undoDelete()">Undo delete (Ctrl/Cmd+Z)</button>
+    }
+    @if (saveError(); as message) {
+      <span class="row-edit-story__error" role="status">{{ message }}</span>
+    }
+  </div>
+
+  @if (leavePageMessage(); as message) {
     <p class="row-edit-story__error" role="status">{{ message }}</p>
   }
 
   <p class="row-edit-story__counter">
-    open rows: {{ table.editing().size }} (always 0) · in flight: {{ table.pending().size }}
+    open rows: {{ table.editing().size }} · in flight: {{ table.pending().size }}
   </p>
 
   <table class="row-edit-story__table">
@@ -29,30 +43,70 @@
       @for (row of table.renderRows(); track row.id; let index = $index) {
         @let isPending = table.pending().has(row.id);
 
-        <tr
-          [class.row-edit-story__row--saving]="isPending"
-          (focusin)="onEnterRow(row.id)"
-          (focusout)="onLeaveRow(row.id)"
-        >
-          <td class="row-edit-story__cell">
-            <input type="text" [formField]="rows[index].name" placeholder="name" />
-          </td>
-          <td class="row-edit-story__cell">
-            <select [formField]="rows[index].dept">
-              @for (dept of deptOptions; track dept) {
-                <option [value]="dept">{{ dept }}</option>
+        @if (mode() === 'gated') {
+          @let isEditing = gatedTable.editing().has(row.id);
+
+          <tr [class.row-edit-story__row--saving]="isPending">
+            <td class="row-edit-story__cell">
+              @if (isEditing) {
+                <input type="text" [formField]="rows[index].name" placeholder="name" />
+              } @else {
+                <span>{{ row.data?.name }}</span>
               }
-            </select>
-          </td>
-          <td class="row-edit-story__cell">
-            @if (isPending) {
-              <span class="row-edit-story__pending">saving…</span>
-            }
-          </td>
-          <td class="row-edit-story__cell">
-            <button type="button" (click)="deleteRow(row.id)">Delete</button>
-          </td>
-        </tr>
+            </td>
+            <td class="row-edit-story__cell">
+              @if (isEditing) {
+                <select [formField]="rows[index].dept">
+                  @for (dept of deptOptions; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+              } @else {
+                <span>{{ row.data?.dept }}</span>
+              }
+            </td>
+            <td class="row-edit-story__cell">
+              @if (isPending) {
+                <span class="row-edit-story__pending">saving…</span>
+              }
+            </td>
+            <td class="row-edit-story__cell">
+              @if (isEditing) {
+                <button type="button" (click)="saveEditGated(row.id)">Save</button>
+                <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
+                <button type="button" (click)="discardEdit(row.id)">Discard</button>
+              } @else {
+                <button type="button" (click)="openEdit(row.id)">Edit</button>
+                <button type="button" (click)="deleteRow(row.id)">Delete</button>
+              }
+            </td>
+          </tr>
+        } @else {
+          <tr
+            [class.row-edit-story__row--saving]="isPending"
+            (focusin)="onEnterRow(row.id)"
+            (focusout)="onLeaveRow(row.id)"
+          >
+            <td class="row-edit-story__cell">
+              <input type="text" [formField]="rows[index].name" placeholder="name" />
+            </td>
+            <td class="row-edit-story__cell">
+              <select [formField]="rows[index].dept">
+                @for (dept of deptOptions; track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+            </td>
+            <td class="row-edit-story__cell">
+              @if (isPending) {
+                <span class="row-edit-story__pending">saving…</span>
+              }
+            </td>
+            <td class="row-edit-story__cell">
+              <button type="button" (click)="deleteRow(row.id)">Delete</button>
+            </td>
+          </tr>
+        }
       }
     </tbody>
   </table>

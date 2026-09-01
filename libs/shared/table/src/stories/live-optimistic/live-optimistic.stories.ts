@@ -3,7 +3,7 @@ import { LiveOptimisticStoryHostComponent } from './live-optimistic-story-host.c
 import { rowEditHandlers } from '../row-edit.handlers';
 
 const meta: Meta<LiveOptimisticStoryHostComponent> = {
-  title: 'Table / Row Editing / Live Table + Rollback',
+  title: 'Table / Row Editing / Optimistic Updates + Rollback',
   component: LiveOptimisticStoryHostComponent,
   parameters: {
     layout: 'padded',
