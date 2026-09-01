@@ -50,7 +50,12 @@
           <td class="row-edit-story__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
-                <ngp-nullable-text-field [formField]="field.dueDate" placeholder="YYYY-MM-DD" />
+                <input
+                  type="text"
+                  ngpNullableTextField
+                  [formField]="field.dueDate"
+                  placeholder="YYYY-MM-DD"
+                />
               </ng-container>
             } @else {
               <span>{{ row.data?.dueDate ?? '—' }}</span>

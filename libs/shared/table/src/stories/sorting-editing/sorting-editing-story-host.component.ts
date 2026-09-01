@@ -5,7 +5,7 @@ import { discardEdit, releaseEdit, revertEdit } from '../../api/optimistic-mutat
 import { beginEdit, endEdit } from '../../api/row-edit-mutations';
 import type { RowId } from '../../api/types';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
-import { NullableTextFieldComponent } from './nullable-text-field.component';
+import { NullableTextFieldDirective } from './nullable-text-field.directive';
 import { SORT_EDIT_ROWS_MOCK } from './sorting-editing.mock';
 import { sortEditRowsSchema, sortEditTableSchema } from './sorting-editing.schema';
 import type { SortEditRow } from './sorting-editing.types';
@@ -21,7 +21,7 @@ import { saveSortEditRow } from './sorting-editing.utils';
  */
 @Component({
   selector: 'ngp-sorting-editing-story-host',
-  imports: [FormField, NgpTableRowFieldDirective, NullableTextFieldComponent],
+  imports: [FormField, NgpTableRowFieldDirective, NullableTextFieldDirective],
   templateUrl: './sorting-editing-story-host.component.html',
   styleUrl: '../row-edit-story.css',
 })

@@ -23,11 +23,11 @@ export const sortEditTableSchema = createTableSchema(columns, {
   features: [withSorting<SortEditRow>(), withRowEdit<SortEditRow>()],
 });
 
-// Text commits on blur (D24) for both columns — `name` via a native `<input>`, `dueDate`
-// (`string | null`) via `NullableTextFieldComponent` (a `FormValueControl`, since Signal Forms'
-// native `<input>` binding only supports `string` or `number | null`, not a nullable string —
-// angular/angular#65839). Same commit boundary on both keeps the S-1 row-hold demo reproducible
-// regardless of which column is being edited.
+// Text commits on blur (D24) for both columns — `name` binds `[formField]` natively, `dueDate`
+// (`string | null`) via `NullableTextFieldDirective` (a directive-hosted `FormValueControl`,
+// since Signal Forms' native `<input>` binding only supports `string` or `number | null`, not a
+// nullable string — angular/angular#65839). Same commit boundary on both keeps the S-1 row-hold
+// demo reproducible regardless of which column is being edited.
 export const sortEditRowsSchema = schema<SortEditRow[]>((path) =>
   applyEach(path, (row) => {
     debounce(row.name, 'blur');
