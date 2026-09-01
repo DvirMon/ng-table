@@ -13,6 +13,8 @@ type Story = StoryObj<ExternalWriteStoryHostComponent>;
 /**
  * S5 — `captureEdit` (a stale restore point from an external write) and ADR-0006's
  * `onRowsRemoved` pruning (a row removed while its editing entry is still live), both only
- * previously exercised in unit tests (G12).
+ * previously exercised in unit tests (G12). Extended to close product doc §1.5's on-screen gap:
+ * a conflict banner with Keep mine / Take theirs / merge field-by-field, a quiet patch to a row
+ * that isn't open, and a deletion notice for a row removed while its editor was open.
  */
 export const Default: Story = {};
