@@ -90,6 +90,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/1-state/row-mutations.md` | Core-API spec — `table.value.update()` + the row updaters. Not in `features/` because mutation is core, not a `with-*()` plugin (D8) | Permanent |
 | `docs/2-columns/reference/` | Column schema reference (tier levels, ownership, derivation); read-only reference | Permanent; reflects current schema semantics |
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
+| `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |
 | `docs/3-ui/work/<slug>/` | Episodic work folder: intake ticket, decisions, issues, task steps. One folder per implementation effort (e.g. `core-directives`, `with-expansion`) | Episodic; created fresh per effort, archived after ship |
 
 **Key rule:** Specs live in the stream's numbered folder (e.g. `docs/1-state/features/expansion.md`). Work happens in `docs/3-ui/work/<slug>/` (or `docs/1-state/work/with-expansion/` for state-layer efforts). Specs are edited in place; work folders are episodic containers.
