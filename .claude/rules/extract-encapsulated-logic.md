@@ -8,6 +8,8 @@ globs:
   - "libs/**/*.tsx"
 ---
 
+> **Codified globally** (generalized, glob frontmatter stripped) in `~/.claude/rules/extract-encapsulated-logic.md` (2026-08-30) — this is now the acme-specific glob-scoped copy, kept for that reason.
+
 # Extract encapsulated logic, reuse not required
 
 While generating or editing a component/hook/service, watch for inline logic that has become
