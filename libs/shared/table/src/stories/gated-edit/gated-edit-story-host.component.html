@@ -1,11 +1,22 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Gated edit (S2) — rows show text until Edit opens them. Save is pessimistic (round trip
-    completes before the row closes). Discard vs. Cancel is a per-row Cancel-time choice (D36),
-    available on any open row — not tied to how the row was added.
+    Gated edit (S2/S4) — rows show text until Edit opens them. Cancel resets the row (D36);
+    Discard removes it — both are separate, clearly-labeled buttons on any open row, not tied to
+    how the row was added. Save mode picks pessimistic (round trip completes before the row
+    closes) or optimistic (row closes immediately, reconciled by a real MSW-intercepted
+    <code>fetch</code>). Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside
+    its cells.
   </p>
 
   <div class="row-edit-story__toolbar">
+    <button type="button" (click)="toggleSaveMode()">
+      Save mode: {{ saveMode() === 'optimistic' ? 'Optimistic' : 'Pessimistic' }}
+    </button>
+    @if (saveMode() === 'optimistic') {
+      <span class="row-edit-story__counter">
+        (force failure / latency are Storybook controls on this story)
+      </span>
+    }
     <button type="button" (click)="toggleMultiple()">
       Multiple: {{ multiple() ? 'on' : 'off' }}
     </button>
@@ -19,8 +30,9 @@
     </label>
     <button type="button" (click)="addBlankRow()">Add row</button>
     <button type="button" (click)="clearAll()">Clear all</button>
-    @if (saveError(); as message) {
-      <span class="row-edit-story__error" role="status">{{ message }}</span>
+    <button type="button" (click)="saveAll()">Save All</button>
+    @if (saveAllSummary(); as summary) {
+      <span class="row-edit-story__counter" role="status">{{ summary }}</span>
     }
   </div>
 
@@ -35,8 +47,14 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @let isEditing = table.editing().has(row.id);
+        @let isPending = table.pending().has(row.id);
+        @let isForcedInvalid = forcedInvalid().has(row.id);
+        @let rowError = rowErrors().get(row.id);
 
-        <tr>
+        <tr
+          [class.row-edit-story__row--saving]="isPending"
+          (keydown)="isEditing ? onRowKeydown($event, row.id) : null"
+        >
           <td class="row-edit-story__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
@@ -45,7 +63,9 @@
                   [formField]="field.name"
                   placeholder="name"
                   [class.row-edit-story__field--needs-change]="needsUniqueName().has(row.id)"
-                  [attr.aria-invalid]="needsUniqueName().has(row.id) ? true : null"
+                  [attr.aria-invalid]="
+                    needsUniqueName().has(row.id) || isForcedInvalid ? true : null
+                  "
                   [attr.aria-describedby]="
                     needsUniqueName().has(row.id) ? 'gated-edit-duplicate-hint-' + row.id : null
                   "
@@ -54,6 +74,9 @@
                   <span class="row-edit-story__field-hint" [id]="'gated-edit-duplicate-hint-' + row.id">
                     copied — needs a unique name
                   </span>
+                }
+                @if (isForcedInvalid) {
+                  <span class="row-edit-story__field-hint">forced invalid — Save disabled</span>
                 }
               </ng-container>
             } @else {
@@ -75,12 +98,30 @@
           </td>
           <td class="row-edit-story__cell">
             @if (isEditing) {
-              <button type="button" (click)="saveEdit(row.id)">Save</button>
-              <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
-              <button type="button" (click)="discardEdit(row.id)">Discard</button>
+              <button type="button" (click)="saveEdit(row.id)" [disabled]="isForcedInvalid">
+                Save
+              </button>
+              <button type="button" (click)="saveAndAddNext(row.id)" [disabled]="isForcedInvalid">
+                Save & add next
+              </button>
+              <button type="button" (click)="cancelEdit(row.id)">Cancel (reset)</button>
+              <button type="button" (click)="discardRow(row.id)">Discard (remove)</button>
+              <button type="button" (click)="toggleForceInvalid(row.id)">
+                Force invalid: {{ isForcedInvalid ? 'on' : 'off' }}
+              </button>
             } @else {
               <button type="button" (click)="openEdit(row.id)">Edit</button>
               <button type="button" (click)="duplicateRow(row.id)">Duplicate</button>
+              @if (isPending) {
+                <span class="row-edit-story__pending">saving…</span>
+              }
+            }
+            @if (rowError; as message) {
+              <p class="row-edit-story__error" role="status">
+                {{ message }}
+                <button type="button" (click)="retrySave(row.id)">Retry</button>
+                <button type="button" (click)="dismissError(row.id)">Dismiss</button>
+              </p>
             }
           </td>
         </tr>
