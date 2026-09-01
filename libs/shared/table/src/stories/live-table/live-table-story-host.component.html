@@ -14,7 +14,14 @@
       />
     </label>
     <button type="button" (click)="insertRow()">Add row</button>
+    <button type="button" (click)="table.toggleSort('name')">
+      Sort name {{ sortArrow('name') }}
+    </button>
+    <button type="button" (click)="table.toggleSort('dept')">
+      Sort dept {{ sortArrow('dept') }}
+    </button>
     <span class="row-edit-story__counter">data() emissions: {{ commitCount() }}</span>
+    <span class="row-edit-story__shortcut-hint">⌘Z / Ctrl+Z — undo last commit</span>
   </div>
 
   <table class="row-edit-story__table">
@@ -27,7 +34,7 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @if (row.sourceIndex !== undefined) {
-          <tr>
+          <tr [attr.data-row-new]="row.id === newRowId() ? row.id : null">
             <td class="row-edit-story__cell">
               <input type="text" [formField]="rows[row.sourceIndex].name" placeholder="name" />
             </td>

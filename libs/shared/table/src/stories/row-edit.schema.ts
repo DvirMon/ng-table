@@ -2,13 +2,16 @@ import { applyEach, debounce, schema } from '@angular/forms/signals';
 import { createTableSchema } from '../api/table-schema';
 import { withOptimistic } from '../api/features/with-optimistic';
 import { withRowEdit, type WithRowEditConfig } from '../api/features/with-row-edit';
+import { withSorting } from '../api/features/with-sorting';
 import type { ColumnDefInput } from '../api/types';
 import type { EditRow } from './row-edit.types';
 
 const columns: ColumnDefInput<EditRow>[] = [{ id: 'name' }, { id: 'dept' }];
 
-// S1 — no editing feature composed at all (D29): the live table needs nothing.
-export const liveTableSchema = createTableSchema(columns);
+// S1 — no editing feature composed at all (D29): the live table needs nothing but sorting.
+export const liveTableSchema = createTableSchema(columns, {
+  features: [withSorting<EditRow>()],
+});
 
 // S6 — always editable *and* rollback-capable (D39). No `withRowEdit()`: the edit session is
 // delimited by focus, so nothing ever opens. `withOptimistic()` alone supplies the restore

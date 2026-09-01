@@ -1,0 +1,10 @@
+.row-edit-story__table tr[data-row-new] {
+  outline: 2px solid #34d399;
+  outline-offset: -2px;
+}
+
+.row-edit-story__shortcut-hint {
+  margin-inline-start: auto;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
