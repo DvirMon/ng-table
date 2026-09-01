@@ -118,9 +118,8 @@ export class SortingEditingStoryHostComponent {
 
     try {
       await saveSortEditRow(row);
-      //TODO - why this are separate updates? Why not just one update with endEdit()?
       this.table.editing.update(endEdit(id));
-      // this.table.editing.update(releaseEdit(id));
+      this.table.editing.update(releaseEdit(id));
       this.clearOpenIndex(id);
     } catch (error) {
       this.saveError.set(error instanceof Error ? error.message : 'Save failed.');
