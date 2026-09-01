@@ -1,6 +1,6 @@
-import { computed, Directive, input, type InputSignal, type Signal } from '@angular/core';
+import { computed, Directive, inject, input, type InputSignal, type Signal } from '@angular/core';
 
-import { NGP_TABLE_ROW } from './table.tokens';
+import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
 import type { RenderRow, RowId } from '../api/types';
 
 // ADR-0005: dual-tag selector, role set unconditionally regardless of host tag.
@@ -14,6 +14,11 @@ import type { RenderRow, RowId } from '../api/types';
     // aria-rowindex is 1-based per WAI-ARIA; `ngpTableRow().index` is the 0-based array position.
     '[attr.aria-rowindex]': 'ngpTableRow().index + 1',
     '[attr.aria-expanded]': 'ngpTableRow().isExpanded ?? null',
+    // FLIP row-reorder animation — same mechanism verified in the `table-demo` prototype:
+    // transform written directly on the row (not via a `var()`-indirected custom property),
+    // transition gated by a class the consumer's own CSS defines. See row-animation.md.
+    '[style.transform]': 'flipTransform()',
+    '[class.ngp-table-row--flip]': 'isFlipping()',
   },
 })
 export class NgpTableRowDirective<TRow = unknown> {
@@ -21,4 +26,16 @@ export class NgpTableRowDirective<TRow = unknown> {
 
   readonly rowId: Signal<RowId> = computed(() => this.ngpTableRow().id);
   readonly isGroupHeader: Signal<boolean> = computed(() => this.ngpTableRow().kind === 'group');
+
+  // Optional: absent when `ngpTableRow` is used outside an `ngpTable`-hosted table.
+  private readonly parentTable = inject(NGP_TABLE_STORE, { optional: true });
+
+  readonly flipOffset: Signal<number> = computed(
+    () => this.parentTable?.flipOffsetFor(this.rowId()) ?? 0,
+  );
+  readonly flipTransform: Signal<string> = computed(() => {
+    const offset = this.flipOffset();
+    return offset !== 0 ? `translateY(${offset}px)` : '';
+  });
+  readonly isFlipping: Signal<boolean> = computed(() => this.parentTable?.isRowFlipping() ?? false);
 }

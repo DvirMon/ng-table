@@ -2,6 +2,7 @@ import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as SortingEditingStories from './sorting-editing.stories';
 import hostClass from './sorting-editing-story-host.component.ts?raw';
 import hostTemplate from './sorting-editing-story-host.component.html?raw';
+import hostStyles from './sorting-editing-flip.css?raw';
 import '../code-tabs.css';
 
 <Meta of={SortingEditingStories} />
@@ -20,6 +21,10 @@ import '../code-tabs.css';
       <input type="radio" name="sorting-editing-source" />
       TS
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      CSS
+    </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
@@ -27,6 +32,9 @@ import '../code-tabs.css';
     </div>
     <div className="code-tabs-panel">
       <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostStyles} language="css" />
     </div>
   </div>
 </div>

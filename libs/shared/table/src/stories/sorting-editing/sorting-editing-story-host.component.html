@@ -22,10 +22,10 @@
   </div>
 
   @if (rowHoldNotice(); as notice) {
-    <p class="row-edit-story__error" role="status">{{ notice }}</p>
+    <!-- <p class="row-edit-story__error" role="status">{{ notice }}</p> -->
   }
 
-  <table class="row-edit-story__table">
+  <table class="row-edit-story__table" [ngpTable]="table">
     <thead>
       <tr>
         <th class="row-edit-story__cell">name</th>
@@ -37,7 +37,7 @@
       @for (row of table.renderRows(); track row.id) {
         @let isEditing = table.editing().has(row.id);
 
-        <tr>
+        <tr [ngpTableRow]="row">
           <td class="row-edit-story__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
