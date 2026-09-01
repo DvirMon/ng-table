@@ -1,5 +1,6 @@
-import { computed, effect, signal } from '@angular/core';
+import { computed, effect, signal, type WritableSignal } from '@angular/core';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import { createDraftRows } from './draft-rows';
 import { closeAll, createEditingStore, type EditingState } from './editing-state';
 import type { OptimisticMembers } from './with-optimistic';
 
@@ -14,15 +15,27 @@ export interface WithRowEditConfig {
 }
 
 /**
- * Adds nothing to `withOptimistic()`'s members — the edit session contributes `open`, which is
- * read through the same `editing` view (D37). One door either way.
+ * Adds `draft` to `withOptimistic()`'s members — the edit session contributes `open`, which is
+ * read through the same `editing` view (D37), plus the draft-rows signal (`createDraftRows`)
+ * that holds the gated commit boundary. One door either way for `editing`/`pending`; `draft` is
+ * this feature's own, since it has no meaning without an edit session to gate.
  */
-export type RowEditMembers<TRow> = OptimisticMembers<TRow>;
+export type RowEditMembers<TRow> = OptimisticMembers<TRow> & {
+  /** Build `form(table.draft, schema)` against this instead of `table.value` — see
+   * `createDraftRows`. */
+  readonly draft: WritableSignal<TRow[]>;
+};
 
 /**
  * Single mode (D14): keeps only the most recently opened row. The rows it displaces are closed
- * the way `endEdit` does — their restore points go with them, since under D24 whatever the user
- * typed was already committed on blur and keeping it is the unsurprising outcome (D31.2).
+ * the way `endEdit` does — their restore points go with them.
+ *
+ * D31.2's original reasoning ("whatever the user typed was already committed on blur, keeping it
+ * is the unsurprising outcome") no longer holds now that `draft` gates the commit boundary
+ * (blur no longer writes `data` in gated mode) — a displaced row's typed-but-unsaved edit is
+ * discarded, not kept, since its `draft` entry re-derives from `data` the moment it's no longer
+ * open. Flagging as a real behavior change from what D31.2 decided, not just a stale comment —
+ * needs a product call on whether that's still the intended single-mode outcome.
  */
 function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
   const ids = [...state.open];
@@ -38,8 +51,10 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * on top of the restore points `withOptimistic()` owns.
  *
  * Mode gate only: claims no pipeline stage and no `renderRows` slot (D10, `4-increments.md` E3).
- * The consumer's own `form(data)` (D22) owns the actual field values; this feature only tracks
- * which rows show the form's inputs.
+ * The consumer's own `form(table.draft, schema)` (D22, superseded by `draft`'s commit-boundary
+ * fix — see `RowEditMembers`) owns the actual field values; this feature tracks which rows show
+ * the form's inputs, and derives the draft signal `form()` should be built over instead of
+ * `table.value` directly.
  *
  * **Composes `withOptimistic()` internally** (D37) — by calling its factory directly rather than
  * reading the `composed` seam, so composition never depends on `features` array order. Listing
@@ -68,6 +83,7 @@ export function withRowEdit<TRow = unknown>(
     }
 
     const store = createEditingStore<TRow>(core, { onWrite: enforceSingleMode });
+    const draft = createDraftRows(core.value, store.editing, core.trackBy, core.indexById);
 
     // Reacts to `multiple` flipping false live, not just on the next `editing.update()` —
     // otherwise a signal-backed `multiple` would silently lag the config it's supposed to
@@ -85,7 +101,7 @@ export function withRowEdit<TRow = unknown>(
     }
 
     return {
-      members: { editing: store.editing, pending: store.pending },
+      members: { editing: store.editing, pending: store.pending, draft },
       onRowsRemoved: store.onRowsRemoved,
       onInit: () => effect(onMultipleChanged),
     };

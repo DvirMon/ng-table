@@ -37,7 +37,10 @@ export class GatedEditStoryHostComponent {
     this.data,
     gatedTableSchema({ multiple: () => this.multiple() }),
   );
-  protected readonly rows = form(this.data, editRowsSchema);
+  /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
+   * of `data`, so a field's blur-commit can't move the row under the user or leak into the
+   * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
+  protected readonly rows = form(this.table.draft, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly insertAt = signal(0);
   protected readonly saveAllSummary = signal<string | null>(null);
@@ -218,9 +221,12 @@ export class GatedEditStoryHostComponent {
     this.addBlankRow();
   }
 
-  /** Pessimistic save (S2/S5): the row stays open for the whole round trip. */
+  /** Pessimistic save (S2/S5): the row stays open, unsorted, for the whole round trip — merging
+   * the draft into `data` and closing only on success (`endEdit(id, row)`) keeps the resort and
+   * the edit-mode close atomic, instead of resorting under a still-open row the moment Save is
+   * clicked. */
   private async saveEditPessimistic(id: RowId): Promise<void> {
-    const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
+    const row = this.table.draft().find((candidate) => this.table.trackBy(candidate) === id);
     if (row === undefined) {
       return;
     }
@@ -229,7 +235,7 @@ export class GatedEditStoryHostComponent {
       await saveRowPessimistic(row);
       // D41: closing keeps the restore point, so a purely local save releases it too —
       // otherwise the row would sit in `pending` with nothing left to confirm it.
-      this.table.editing.update(endEdit(id));
+      this.table.editing.update(endEdit(id, row));
       this.table.editing.update(releaseEdit(id));
       this.clearNeedsUniqueName(id);
     } catch (error) {
@@ -237,19 +243,19 @@ export class GatedEditStoryHostComponent {
     }
   }
 
-  /** Optimistic save (S4): closes the row immediately (`endEdit`), moving it to `pending`, then
-   * rolls back on a failed save or settles it on success. The save itself is a real intercepted
-   * `fetch` (MSW), not a Promise stub — `forceFailure`/`latencyMs` are Storybook-controlled
-   * request headers the handler reads (`row-edit.handlers.ts`). */
+  /** Optimistic save (S4): merges the draft into `data` and closes the row immediately
+   * (`endEdit(id, row)`), moving it to `pending`, then rolls back on a failed save or settles it
+   * on success. The save itself is a real intercepted `fetch` (MSW), not a Promise stub —
+   * `forceFailure`/`latencyMs` are Storybook-controlled request headers the handler reads
+   * (`row-edit.handlers.ts`). */
   private async saveEditOptimistic(id: RowId): Promise<void> {
-    // endEdit: closes the row immediately but keeps its restore point (D41), so the row shows
-    // as `pending` until the fetch below resolves it.
-    this.table.editing.update(endEdit(id));
-
-    const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
+    const row = this.table.draft().find((candidate) => this.table.trackBy(candidate) === id);
     if (row === undefined) {
       return;
     }
+    // endEdit(id, row): merges the draft and closes the row immediately, together — it shows as
+    // `pending` (restore point kept, D41) until the fetch below resolves it.
+    this.table.editing.update(endEdit(id, row));
 
     try {
       const response = await fetch(`/api/rows/${id}`, {

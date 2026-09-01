@@ -8,6 +8,7 @@ import {
   type EditingUpdater,
   type RowRestorePoint,
 } from './features/editing-state';
+import { patchEdit } from './optimistic-mutations';
 import { insertRow } from './row-mutations';
 import type { RowId } from './types';
 
@@ -95,19 +96,32 @@ export function beginEdit<TRow>(
 
 /**
  * Closes the row, keeping whatever is currently in `data` **and** its restore point — the row
- * becomes `pending`. Save is composed elsewhere (`table.value.update(patchRow(...))` then
- * `endEdit`, per D16/D30).
+ * becomes `pending`. Save is composed elsewhere (`endEdit(id, partial)` merges and closes in one
+ * call, then `releaseEdit`/`revertEdit` settles per the round trip's outcome, per D16/D30).
  *
  * D41 removed the `keepSnapshot` flag: keeping is now the only behavior, and dropping the restore
  * point is `releaseEdit`'s job. A purely local save that has nothing to confirm calls both.
+ *
+ * `partial`, when given, merges into `data` via `patchEdit` before closing — the same write +
+ * close is otherwise always two separate calls a consumer has to remember to pair and order
+ * correctly. There's no legitimate case for closing-with-keep *without* merging first (that's
+ * what makes this safe to fold in): a close that should discard the edit instead is
+ * `revertEdit`/`discardEdit`, a different verb entirely. `patchEdit` itself stays exported
+ * separately for its own real use — a background patch on a row that was never open at all
+ * (`optimistic-mutations.ts`).
  *
  * Takes a **required** id. A bulk form would close every row while keeping every restore point,
  * leaking all of them into `pending` with nothing left to release them (D44) — bulk teardown is
  * `clearEdit()`.
  */
-export function endEdit<TRow>(id: RowId): EditingUpdater<TRow> {
-  return (state) =>
-    state.open.has(id) ? { ...state, open: withoutOpen(state.open, id) } : state;
+export function endEdit<TRow>(id: RowId, partial?: Partial<TRow>): EditingUpdater<TRow> {
+  return (state, ctx) => {
+    if (!state.open.has(id)) {
+      return state;
+    }
+    const next = partial === undefined ? state : patchEdit<TRow>(id, partial)(state, ctx);
+    return { ...next, open: withoutOpen(next.open, id) };
+  };
 }
 
 /**

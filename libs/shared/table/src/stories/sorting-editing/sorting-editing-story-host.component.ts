@@ -4,6 +4,8 @@ import { createTable } from '../../api/create-table';
 import { discardEdit, releaseEdit, revertEdit } from '../../api/optimistic-mutations';
 import { beginEdit, endEdit } from '../../api/row-edit-mutations';
 import type { RowId } from '../../api/types';
+import { NgpTableDirective } from '../../directives/ngp-table.directive';
+import { NgpTableRowDirective } from '../../directives/ngp-table-row.directive';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import { NullableTextFieldDirective } from './nullable-text-field.directive';
 import { SORT_EDIT_ROWS_MOCK } from './sorting-editing.mock';
@@ -21,14 +23,23 @@ import { saveSortEditRow } from './sorting-editing.utils';
  */
 @Component({
   selector: 'ngp-sorting-editing-story-host',
-  imports: [FormField, NgpTableRowFieldDirective, NullableTextFieldDirective],
+  imports: [
+    FormField,
+    NgpTableDirective,
+    NgpTableRowDirective,
+    NgpTableRowFieldDirective,
+    NullableTextFieldDirective,
+  ],
   templateUrl: './sorting-editing-story-host.component.html',
-  styleUrl: '../row-edit-story.css',
+  styleUrls: ['../row-edit-story.css', './sorting-editing-flip.css'],
 })
 export class SortingEditingStoryHostComponent {
   protected readonly data = signal<SortEditRow[]>(SORT_EDIT_ROWS_MOCK);
   protected readonly table = createTable(this.data, sortEditTableSchema);
-  protected readonly rows = form(this.data, sortEditRowsSchema);
+  /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
+   * of `data`, so a field's blur-commit can't move the row under the user or feed the sort
+   * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
+  protected readonly rows = form(this.table.draft, sortEditRowsSchema);
   protected readonly saveError = signal<string | null>(null);
 
   /** Row id -> render-row index captured at `beginEdit` time, for the S-1 row-hold check below.
@@ -107,18 +118,20 @@ export class SortingEditingStoryHostComponent {
     this.clearOpenIndex(id);
   }
 
-  /** Pessimistic save: the row stays open for the whole round trip, same shape as
-   * `gated-edit/`'s Save. */
+  /** Pessimistic save: the row stays open, unsorted, for the whole round trip — merging the
+   * draft into `data` and closing only on success (`endEdit(id, row)`) keeps the resort and the
+   * edit-mode close atomic, instead of resorting under a still-open row the moment Save is
+   * clicked. */
   protected async saveEdit(id: RowId): Promise<void> {
     this.saveError.set(null);
-    const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
+    const row = this.table.draft().find((candidate) => this.table.trackBy(candidate) === id);
     if (row === undefined) {
       return;
     }
 
     try {
       await saveSortEditRow(row);
-      this.table.editing.update(endEdit(id));
+      this.table.editing.update(endEdit(id, row));
       this.table.editing.update(releaseEdit(id));
       this.clearOpenIndex(id);
     } catch (error) {

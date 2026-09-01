@@ -1,6 +1,7 @@
 import { computed, signal } from '@angular/core';
 
 import type { RowEditMembers } from './api/features/with-row-edit';
+import { createDraftRows } from './api/features/draft-rows';
 import {
   pendingIds,
   type EditingState,
@@ -104,6 +105,18 @@ export function createMockTableStoreWithEditing<TRow>(
     () => data(),
     (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() }))
   );
+  const editing = createWritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>(
+    () => state().open,
+    (updater) =>
+      state.set(
+        updater(state(), {
+          data: data(),
+          trackBy,
+          writeData: (rows) => value.update(() => rows),
+          indexById: indexById(),
+        })
+      )
+  );
   return {
     columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
     rows: signal<TRow[]>(rows),
@@ -111,20 +124,10 @@ export function createMockTableStoreWithEditing<TRow>(
     totalRowCount: signal(rows.length),
     trackBy,
     value,
-    editing: createWritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>(
-      () => state().open,
-      (updater) =>
-        state.set(
-          updater(state(), {
-            data: data(),
-            trackBy,
-            writeData: (rows) => value.update(() => rows),
-            indexById: indexById(),
-          })
-        )
-    ),
+    editing,
     // Same derivation the feature uses, imported rather than restated — this stub deliberately
     // skips `withRowEdit()`'s single-mode trim, but `pending` must not drift from it.
     pending: computed(() => pendingIds(state())),
+    draft: createDraftRows(() => data(), () => editing(), trackBy, () => indexById()),
   };
 }
