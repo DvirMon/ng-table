@@ -1,7 +1,10 @@
 ---
 title: Product — Row Editing User Stories
 type: product
-status: draft — scope-setting; not measured against an implementation plan yet
+status: OQ-1…OQ-7 resolved 2026-08-27. Shipped since: optimistic delete rollback (D45–D47),
+  multiple-open semantics (with-multiple-edit), duplicate row (gated), sorting null/empty ordering.
+  Remaining work is UI-layer (G1/G9/G10 keyboard/focus/a11y) and three leftover doc corrections
+  (see doc-corrections/1-handoff.md).
 date: 2026-08-27
 audience: product, design, engineering
 ---
@@ -264,12 +267,12 @@ invalid" signal, and the demo validates server-side only.
 **Mode note.** Gated only. In live mode the session is wherever focus is, which is inherently one
 row, so there is no multi-row session to commit.
 
-**Coverage:** 🟡. `multiple: true` ships and `gated-edit/` toggles it live, but a "save all"
-affordance does not exist, and the state layer states outright that multiple-open combined with
-optimistic saving is **undesigned and unsupported** (G4). **Decided 2026-08-27 (OQ-7): design the
-semantics** rather than refuse the combination. This story's acceptance criteria above are the
-product input to that design; partial-failure behavior is the part the state layer must be able to
-express.
+**Coverage:** 🟡. `multiple: true` ships and `gated-edit/` toggles it live. Semantics are now
+designed and shipped — [`with-multiple-edit/1-design.md`](../1-state/work/with-multiple-edit/1-design.md):
+bulk edit is optimistic-only (a save closes its row before firing), so the N-open-rows ×
+M-in-flight-saves hazard is unreachable with no new state, and a mode flip `true` → `false` now
+closes every open row rather than stranding one. What is still missing is the "save all" affordance
+itself — a UI component, not a state-layer gap.
 
 ---
 
@@ -313,9 +316,10 @@ out of edit mode and destroys focus (G3 / [#53](https://github.com/DvirMon/acme/
 - On commit it moves to its sorted position, visibly — it does not silently teleport off screen.
 - If it lands off screen, I am told where it went and can jump to it.
 
-**Coverage:** ❌, and the underlying comparator work is unbuilt: sorting's spec marks null/empty
-ordering "REQUIRED, NOT IMPLEMENTED" and notes a blank row's position **flips with sort direction**
-today. Tagged to sorting in §4, but listed here because the person meets it during Add.
+**Coverage:** ❌. The comparator half is now fixed — `applySortNulls()` gives a blank row a
+predictable, direction-stable placement (§5, S-2). What remains is holding the row's on-screen
+position for the duration of the fill (OQ-3's row-hold), which is designed but not implemented.
+Tagged to sorting in §4, but listed here because the person meets it during Add.
 
 ## 2.3 — Add several rows in a run *(both)* — ❌ not covered
 
@@ -438,7 +442,7 @@ together — one history, one affordance.
 
 # 4. Duplicate a row
 
-## 4.1 — Copy an existing record and change a couple of fields *(both)* — ❌ not covered
+## 4.1 — Copy an existing record and change a couple of fields *(both)* — ✅ covered (gated) / ❌ (live)
 
 > As someone entering next quarter's version of an existing contract, I want to duplicate the
 > current one and change the two fields that differ, instead of retyping fourteen fields.
@@ -460,14 +464,14 @@ together — one history, one affordance.
 - If the source row changes or is deleted after I started the copy, the copy is unaffected — it is
   its own row from the moment it appears.
 
-**Coverage:** ❌ everywhere. Duplicate exists only as one line in a decision-record snippet
-(`addRow({ ...row, id: newId() })`). No story, no demo, no placement rule, no unique-field handling.
+**Coverage: gated ✅, shipped 2026-08-27** — [`1-state/work/with-duplicate-row/1-design.md`](../1-state/work/with-duplicate-row/1-design.md),
+`src/stories/gated-edit/` "Duplicate" action. No new library API: `beginEdit(newId, { insert:
+{...source}, at: sourceIndex + 1 })`, the blank-row flow with a different starting value. The copy
+lands directly below its source, opens already open, and the copied `name` is flagged as needing a
+change rather than silently copied into a collision.
 
-**Designed 2026-08-27** — [`1-state/work/with-duplicate-row/1-design.md`](../1-state/work/with-duplicate-row/1-design.md).
-In **gated** mode it needs no new API: it is `beginEdit(newId, { insert: {...source}, at:
-sourceIndex + 1 })`, the blank-row flow with a different starting value. In **live** mode there is a
-real gap — no insert-with-rollback verb exists, so an optimistic duplicate has no restore point
-unless the consumer hand-rolls one.
+**Live ❌.** A real gap remains — no insert-with-rollback verb exists, so an optimistic duplicate has
+no restore point unless the consumer hand-rolls one.
 
 **One acceptance criterion above cannot be met under an active sort.** "The copy appears immediately
 below its source" is storage order; the pipeline reorders it, and no insertion index can target a
@@ -545,22 +549,19 @@ to sorting because sorting is what must change. Note this re-introduces a scoped
 D24 removed — narrower (one row, gated only, session-bounded), but the same mechanism family, so it
 is worth re-reading D20/D24 before implementing.
 
-### S-2 — A blank or empty value must sort somewhere predictable — ❌ not covered
+### S-2 — A blank or empty value must sort somewhere predictable — ✅ covered
 
 > As someone who just added a blank row to a sorted table, I want it in a predictable place, and in
 > the same place regardless of which way the column is sorted.
 
-Sorting's own spec marks this **REQUIRED, NOT IMPLEMENTED** and notes the position flips with sort
-direction. It also records a crash on nullable date columns, which an editable table will reach the
-moment someone clears a date cell. Both must ship with or before editable rows.
-
-**Scheduled 2026-08-27** — [`1-state/work/sorting-null-ordering/1-handoff.md`](../1-state/work/sorting-null-ordering/1-handoff.md).
-Scoped to the mechanical fix: empties resolve before the comparator and **outside** the direction
-multiplication, which closes the crash and the flip together. Default `'last'`; `""` stays a real
-value; per-column override is a declarative rule rather than a `ColumnDef` field. The spec's nine
-parked "what is an empty row" scenarios (S1–S9) stay parked **because of OQ-3** — the edited row now
-holds its position, so null ordering no longer has to keep a row the person is filling in visible.
-If OQ-3's row-hold is ever dropped, those scenarios come back.
+**Shipped** — `applySortNulls()` (`api/column-rules.ts`), wired into `withSorting()`. Empties
+resolve before the comparator and **outside** the direction multiplication, which closes the crash
+on nullable date columns and the direction-flip together. Default `'last'`; `""` stays a real value
+unless a column opts it into the empty branch (`emptyString: 'is-empty'`); per-column override is a
+declarative rule (single-writer metadata key), not a `ColumnDef` field. The spec's nine parked "what
+is an empty row" scenarios (S1–S9) stay parked **because of OQ-3** — the edited row now holds its
+position, so null ordering no longer has to keep a row the person is filling in visible. If OQ-3's
+row-hold is ever dropped, those scenarios come back.
 
 ## Owned by filtering *(unbuilt)*
 
@@ -708,8 +709,9 @@ clear start and end, which the old design lacked. Whoever implements it should r
 before choosing a mechanism, and should confirm the exemption applies to **sort only** — a row
 edited out of the *filter* is a different rule (D25, retention-with-flag).
 
-*Sequencing:* this is a sorting-owned change (§5, S-1), not an editing one. It cannot be specced
-before the sorting comparator defects listed in S-2 are fixed, since both touch the same stage.
+*Sequencing:* this is a sorting-owned change (§5, S-1), not an editing one. It was blocked on the
+sorting comparator defects in S-2, which have since shipped (`applySortNulls()`), so nothing external
+gates it now — it can be specced.
 
 **OQ-4 — When a slow save fails on a row the person has since started editing again, who wins? —
 RESOLVED 2026-08-27: the consumer's, entirely.** Which value wins is a product choice, and the app
