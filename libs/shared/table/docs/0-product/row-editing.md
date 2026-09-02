@@ -554,7 +554,7 @@ is worth re-reading D20/D24 before implementing.
 > As someone who just added a blank row to a sorted table, I want it in a predictable place, and in
 > the same place regardless of which way the column is sorted.
 
-**Shipped** — `applySortNulls()` (`api/column-rules.ts`), wired into `withSorting()`. Empties
+**Shipped** — `applySortNulls()` (`schema/column-rules.ts`), wired into `withSorting()`. Empties
 resolve before the comparator and **outside** the direction multiplication, which closes the crash
 on nullable date columns and the direction-flip together. Default `'last'`; `""` stays a real value
 unless a column opts it into the empty branch (`emptyString: 'is-empty'`); per-column override is a

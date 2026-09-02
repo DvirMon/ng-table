@@ -98,7 +98,7 @@ is overridden, no escape hatch).
 
 - `null` / `undefined` are always empty. `""` is a real value, not empty, by default.
 - Default placement: `nulls: 'last'` (SQL / AG Grid convention).
-- Per-column override: `applySortNulls(path, { order?, emptyString? })` (`api/column-rules.ts`),
+- Per-column override: `applySortNulls(path, { order?, emptyString? })` (`schema/column-rules.ts`),
   a declarative rule mirroring `applyVisible()` — writes to the internal `SORT_NULLS` metadata
   key (`engine/columns.ts`). Single-writer: two `applySortNulls()` calls on one column throw at
   resolve time. `emptyString: 'is-empty'` opts `""` into the empty branch for that column.

@@ -1,4 +1,4 @@
-import { pendingIds, type EditingState, type RowRestorePoint } from './features/editing-state';
+import { pendingIds, type EditingState, type RowRestorePoint } from '../api/features/editing-state';
 import {
   captureEdit,
   discardEdit,
@@ -8,7 +8,7 @@ import {
   revertEdit,
 } from './optimistic-mutations';
 import { beginEdit, endEdit } from './row-edit-mutations';
-import type { RowId } from './types';
+import type { RowId } from '../api/types';
 import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;

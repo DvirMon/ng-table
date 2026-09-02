@@ -75,7 +75,7 @@ export interface ColumnDef<TRow = unknown> {
 
   // Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity — never
   // interpreted by the engine. Read via `readColumnMeta()`, written via `metadata()`
-  // (`api/column-metadata.ts`).
+  // (`schema/column-metadata.ts`).
   meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
 }
 

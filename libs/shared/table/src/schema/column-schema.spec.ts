@@ -1,8 +1,8 @@
 import { columnSchema } from './column-schema';
 import { applyVisible, applyVisibleAsync } from './column-rules';
 import type { ColumnHandle, ColumnsPath } from './column-schema.types';
-import type { ColumnDefInput } from './types';
-import { resolveColumnsConfig } from './features/with-columns-schema';
+import type { ColumnDefInput } from '../api/types';
+import { resolveColumnsConfig } from '../api/features/with-columns-schema';
 
 interface Row {
   id: string;

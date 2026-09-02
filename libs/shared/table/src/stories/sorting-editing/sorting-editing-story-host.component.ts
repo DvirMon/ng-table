@@ -1,8 +1,8 @@
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { discardEdit, releaseEdit, revertEdit } from '../../api/optimistic-mutations';
-import { beginEdit, endEdit } from '../../api/row-edit-mutations';
+import { discardEdit, releaseEdit, revertEdit } from '../../mutations/optimistic-mutations';
+import { beginEdit, endEdit } from '../../mutations/row-edit-mutations';
 import type { RowId } from '../../api/types';
 import { NgpTableDirective } from '../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../directives/ngp-table-row.directive';

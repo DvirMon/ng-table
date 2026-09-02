@@ -1,5 +1,5 @@
 import type { Signal } from '@angular/core';
-import type { ColumnMetaKey } from '../api/column-schema.types';
+import type { ColumnMetaKey } from '../schema/column-schema.types';
 import type { ColumnDef, ColumnDefInput } from '../api/types';
 
 // `ColumnMetaKey` is type-only and `column-schema.types.ts` has no import back into
@@ -69,7 +69,7 @@ export function toggleColumnVisible<TRow>(
 }
 
 /**
- * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`api/column-rules.ts`) write
+ * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`schema/column-rules.ts`) write
  * to under the hood — never exported from `index.ts`, so consumers can't read or collide with
  * it via `readColumnMeta()`. `foldColumnRules` special-cases it below: unlike every other
  * metadata key (single-writer, enforced by `resolve.ts`'s `assertMetadataKeysAreUnique`),
@@ -80,7 +80,7 @@ export function toggleColumnVisible<TRow>(
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
- * Internal metadata key `applySortNulls()` (`api/column-rules.ts`) writes to — the per-column
+ * Internal metadata key `applySortNulls()` (`schema/column-rules.ts`) writes to — the per-column
  * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
  * writer: two `applySortNulls()` calls on the same column throw at resolve time
  * (`resolve.ts`'s `assertMetadataKeysAreUnique`), so it needs no special case in

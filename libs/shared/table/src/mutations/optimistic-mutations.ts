@@ -9,7 +9,7 @@ import {
   type PatchEditOptions,
   type RowRestorePoint,
 } from './features/editing-state';
-import type { RowId } from './types';
+import type { RowId } from '../api/types';
 
 export type { PatchEditOptions } from './features/editing-state';
 

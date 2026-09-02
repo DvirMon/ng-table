@@ -1,8 +1,8 @@
 import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { captureEdit, discardEdit, releaseEdit, removeEdit, revertEdit } from '../../api/optimistic-mutations';
-import { beginEdit, endEdit } from '../../api/row-edit-mutations';
+import { captureEdit, discardEdit, releaseEdit, removeEdit, revertEdit } from '../../mutations/optimistic-mutations';
+import { beginEdit, endEdit } from '../../mutations/row-edit-mutations';
 import type { RowId } from '../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
 import { editRowsSchema, gatedTableSchema, liveOptimisticSchema } from '../row-edit.schema';

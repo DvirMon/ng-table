@@ -1,5 +1,5 @@
 import { insertRow, patchRow, removeRow } from './row-mutations';
-import type { RowId } from './types';
+import type { RowId } from '../api/types';
 import { createMockTableStoreWithData, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;

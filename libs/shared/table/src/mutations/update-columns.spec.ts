@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { resolveColumnDefs } from '../engine/columns';
 import type { MockRow } from '../table.mock';
 import { reorderColumns, setColumns, toggleColumnVisibility } from './update-columns';
-import type { ColumnDef, ColumnsUpdater } from './types';
+import type { ColumnDef, ColumnsUpdater } from '../api/types';
 
 describe('setColumns', () => {
   it('replaces the full column list, ignoring the previous one', () => {

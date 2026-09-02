@@ -196,7 +196,7 @@ export interface ColumnHandle<TRow, K extends Extract<keyof TRow, string> = Extr
 ```
 
 Full `apply*` signatures live in the tier files. `ColumnRuleContext<TRow>` and the sync/async rule
-types live in `api/column-rules.ts` (see [File layout](#file-layout-for-the-implementation-session)).
+types live in `schema/column-rules.ts` (see [File layout](#file-layout-for-the-implementation-session)).
 
 ### Config surface
 
@@ -292,9 +292,9 @@ invisibility as `_pipeline` / `_sortChangedSource` today.
 | File | Concern |
 |---|---|
 | `api/types.ts` (edit) | Add optional `columnsSchema?: ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>` to `TableStoreConfig`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25. |
-| `api/column-schema.types.ts` (new) | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.) |
-| `api/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all `apply*` functions (Tier 1 first). Landing spot for every future tier. |
-| `api/column-schema.ts` (new) | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |
+| `schema/column-schema.types.ts` (new) | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.) |
+| `schema/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all `apply*` functions (Tier 1 first). Landing spot for every future tier. |
+| `schema/column-schema.ts` (new) | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |
 | `api/features/with-columns-schema/` (new) | `resolveColumnsConfig()` (normalize inline fn / `columnSchema()` value → `ColumnSchema`, sync/static resolution) and `withColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only. |
 | `api/create-table.ts` (edit) | Call `resolveColumnsConfig(config.columns, config.columnsSchema)`; splice `withColumnsSchemaAsync(rules)` into `coreFeature`. |
 | `index.ts` (edit) | Barrel-export the public `apply*` + `columnSchema` + public types. **Not** `COLUMN_RECORDER` / `ColumnSchemaRecorder` — internal only. |
@@ -354,7 +354,7 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 
 ## Next Steps
 
-- [ ] Implement per the File Layout table, in order: pure types/rules → `api/column-schema.ts` (testable
+- [ ] Implement per the File Layout table, in order: pure types/rules → `schema/column-schema.ts` (testable
   without DI) → `api/features/with-columns-schema/` (DI/reactivity, tested via `TestBed`) → `api/types.ts` /
   `api/create-table.ts` wiring (run the **existing** `table.store.spec.ts` first to confirm zero
   regressions on the legacy plain-array path) → barrel export → `1-state/columns.md` update.

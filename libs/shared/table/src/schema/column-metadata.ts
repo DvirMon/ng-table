@@ -5,12 +5,12 @@ import type {
   ColumnMetaKey,
   ColumnRuleContext,
 } from './column-schema.types';
-import type { ColumnDef } from './types';
+import type { ColumnDef } from '../api/types';
 
 /**
  * Consumer-defined, non-participating side channel for column data — modeled on Signal
  * Forms' `createMetadataKey()`/`metadata()`/`field().metadata(key)`. Unlike
- * `applyVisible`/`applyVisibleAsync` (`api/column-rules.ts`), nothing here is consumed by the
+ * `applyVisible`/`applyVisibleAsync` (`schema/column-rules.ts`), nothing here is consumed by the
  * table engine; it exists purely to be read back by the consumer's own code (e.g. a custom
  * `with-*()` feature). See `docs/2-columns/reference/column-metadata.md`.
  */
@@ -54,7 +54,7 @@ export function metadata<TRow, K extends Extract<keyof TRow, string>, T>(
  * Resource-backed counterpart to `metadata()` — records a `MetadataAsyncRule` instead of a
  * plain `MetadataRule`. Not exported from `index.ts`: consumer metadata has no async story
  * yet (see `docs/2-columns/reference/column-metadata.md`), this exists solely so
- * `applyVisibleAsync()` (`api/column-rules.ts`) can write to the internal `VISIBLE` key
+ * `applyVisibleAsync()` (`schema/column-rules.ts`) can write to the internal `VISIBLE` key
  * through the same recorder `metadata()` uses.
  * @internal
  */

@@ -1,5 +1,5 @@
 import type { ResourceRef, Signal } from '@angular/core';
-import type { ColumnDef } from './types';
+import type { ColumnDef } from '../api/types';
 
 /**
  * Read-only reactive context handed to a rule's `when`/`params` callback.
@@ -76,7 +76,7 @@ export interface ColumnMetaKey<T> {
 
 /**
  * Consumer-defined side-channel data attached to a column, plus the internal shape
- * `applyVisible()` (`api/column-rules.ts`) records under the unexported `VISIBLE` key
+ * `applyVisible()` (`schema/column-rules.ts`) records under the unexported `VISIBLE` key
  * (`engine/columns.ts`) — both go through the same recorder/resolve/wiring/fold path.
  * `logic` is either a plain value or a closure over `ColumnRuleContext<TRow>`, discriminated
  * at wiring time. Single-writer only for consumer keys: `resolve.ts` throws if two
@@ -95,7 +95,7 @@ export interface MetadataRule<TRow, T = unknown> {
 /**
  * Resource-backed counterpart to `MetadataRule`, generalized from the old `visible-async`
  * shape to carry an arbitrary `key` — used internally by `applyVisibleAsync()`
- * (`api/column-rules.ts`) to write to `VISIBLE`. Not part of the public `metadata()` surface
+ * (`schema/column-rules.ts`) to write to `VISIBLE`. Not part of the public `metadata()` surface
  * (no async story there yet); kept as its own rule kind because resource construction
  * (`factory(params)`) must happen once at wiring time, not on every fold, so it can't be
  * expressed as `MetadataRule`'s plain-value-or-closure `logic`.

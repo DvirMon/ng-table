@@ -73,7 +73,7 @@ multi-writer need surfaces — the fix is adding a reducer to `ColumnMetaKey` it
 path.
 
 The one existing exception is `VISIBLE`, the unexported internal key `applyVisible()`/
-`applyVisibleAsync()` (`api/column-rules.ts`) write to — see "Column visibility is now a
+`applyVisibleAsync()` (`schema/column-rules.ts`) write to — see "Column visibility is now a
 `metadata()` convenience wrapper" below. It's exempted from the single-writer check
 (`resolve.ts`) and AND-combined instead (`engine/columns.ts`'s `foldColumnRules`), because
 multiple `applyVisible()` calls on one column has always been legal and combines that way.
@@ -83,7 +83,7 @@ This is the table's one deliberate multi-writer key, mirroring how Signal Forms'
 
 ## Column visibility is now a `metadata()` convenience wrapper
 
-`applyVisible(path, { when })` and `applyVisibleAsync(path, opts)` (`api/column-rules.ts`) are
+`applyVisible(path, { when })` and `applyVisibleAsync(path, opts)` (`schema/column-rules.ts`) are
 no longer a separately-resolved rule kind — they're convenience wrappers that call
 `metadata(path, VISIBLE, when)` (sync) / an internal `metadataAsync(path, VISIBLE, opts)`
 (resource-backed) under the hood, where `VISIBLE: ColumnMetaKey<boolean>` lives in
@@ -117,7 +117,7 @@ pure `ColumnDef[] → ColumnDef[]` transforms with no methods).
 **Resolution:** `ColumnDef.meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>` is a plain bag
 field (`api/types.ts`), populated by `foldColumnRules` (`engine/columns.ts`) the same fold pass
 that already writes `visible`. Reading is a **free function**, `readColumnMeta(column, key)`
-(`api/column-metadata.ts`) — not a method — consistent with `updateColumns`/`updateRows`
+(`schema/column-metadata.ts`) — not a method — consistent with `updateColumns`/`updateRows`
 already being free functions that take their target as the first argument rather than store
 methods. One fact ("how do you read/write column state"), one convention, no exception carved
 out for metadata.
@@ -127,7 +127,7 @@ out for metadata.
 `metadata()` records a `MetadataRule<TRow>` (`kind: 'metadata'`); `applyVisible`/
 `applyVisibleAsync` record the same `MetadataRule` (sync) or a `MetadataAsyncRule<TRow>`
 (`kind: 'metadata-async'`, resource-backed) — all three go onto the same
-`ColumnSchemaRecorder` (`api/column-schema.types.ts`'s `ColumnRule` union).
+`ColumnSchemaRecorder` (`schema/column-schema.types.ts`'s `ColumnRule` union).
 `resolveColumnsConfig()` (`api/features/with-columns-schema/resolve.ts`) validates every rule
 the same way (`columnId` known, plus the single-writer check, `VISIBLE`-exempted).
 `withColumnsSchemaAsync` (`api/features/with-columns-schema/feature.ts`) builds a

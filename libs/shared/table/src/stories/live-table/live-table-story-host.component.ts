@@ -1,7 +1,7 @@
 import { Component, ElementRef, afterRenderEffect, effect, inject, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { insertRow, patchRow } from '../../api/row-mutations';
+import { insertRow, patchRow } from '../../mutations/row-mutations';
 import type { RowId } from '../../api/types';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../row-edit.mock';
 import { editRowsSchema, liveTableSchema } from '../row-edit.schema';

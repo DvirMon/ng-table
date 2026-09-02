@@ -1,8 +1,8 @@
 import { columnSchema } from './column-schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from './column-metadata';
 import type { ColumnsPath } from './column-schema.types';
-import { resolveColumnsConfig } from './features/with-columns-schema';
-import type { ColumnDefInput } from './types';
+import { resolveColumnsConfig } from '../api/features/with-columns-schema';
+import type { ColumnDefInput } from '../api/types';
 
 interface Row {
   id: string;

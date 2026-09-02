@@ -10,7 +10,7 @@ import {
 } from './features/editing-state';
 import { patchEdit } from './optimistic-mutations';
 import { insertRow } from './row-mutations';
-import type { RowId } from './types';
+import type { RowId } from '../api/types';
 
 /**
  * The edit-session verbs — `withRowEdit()`'s slice (D37). They write `open` unconditionally;

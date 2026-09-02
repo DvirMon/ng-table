@@ -42,7 +42,7 @@ type-narrowed per property). Internally, every `apply*` is a thin wrapper over o
 machinery per property — only a new `MetadataKey` + reducer registration. This is also how Signal
 Forms itself is built: `disabled()`/`hidden()`/`readonly()` are typed wrapper functions over the one
 generic `LogicNode`/reducer mechanism (`schema/logic_node.ts`, `api/rules/metadata.ts`) — not
-independent implementations. Implementation touches `api/column-rules.ts` (the shared
+independent implementations. Implementation touches `schema/column-rules.ts` (the shared
 `applyMeta` core) and each `apply*` in the tier files (becomes a wrapper call).
 
 ---
@@ -127,8 +127,8 @@ can't widen `TRow`. Portable directly to the `apply*` signatures.
 |---|---|---|---|
 | 3 | `{ when }` object form | ✅ adopt now | all `apply*` signatures |
 | 6 | `assertPathIsCurrent` | ✅ adopt now | `create-columns.ts` |
-| 7 | `NoInfer` args | ✅ adopt now | `api/column-rules.ts` |
-| 1 | metadata + reducer core | ✅ decided — hybrid (bespoke public, generic internal) | `api/column-rules.ts` core + each tier's `apply*` |
+| 7 | `NoInfer` args | ✅ adopt now | `schema/column-rules.ts` |
+| 1 | metadata + reducer core | ✅ decided — hybrid (bespoke public, generic internal) | `schema/column-rules.ts` core + each tier's `apply*` |
 | 2 | reducer vs reject | ✅ decided — reducer-combine (`and` default for `visible`) | hub Decisions, supersedes build-time rejection |
 | 4 | `applyEach` wildcard | ⏳ defer | future |
 | 5 | `apply`/`schema` reuse | ⏳ defer (revisits grounding) | future |

@@ -37,7 +37,7 @@ function assertRuleColumnIdsAreKnown<TRow>(
  * object identity, matching `createColumnMetaKey()`'s identity-is-the-key design.
  *
  * `VISIBLE` (`engine/columns.ts`) is exempted: `applyVisible()`/`applyVisibleAsync()`
- * (`api/column-rules.ts`) are allowed to target the same column multiple times, AND-combined
+ * (`schema/column-rules.ts`) are allowed to target the same column multiple times, AND-combined
  * by `foldColumnRules` — the one deliberate multi-writer key in the table.
  */
 function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): void {

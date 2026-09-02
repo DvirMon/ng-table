@@ -11,7 +11,7 @@ import type {
  * Run phase: turns compiled `ColumnRule`s into `ColumnRuleEntry` values the engine folds onto
  * `baseColumns` (`foldColumnRules`) — one path for both consumer `metadata()` and
  * `applyVisible`/`applyVisibleAsync` (convenience wrappers over the same primitive, see
- * `api/column-rules.ts`). Async entries construct a `resource()`, which requires an injection
+ * `schema/column-rules.ts`). Async entries construct a `resource()`, which requires an injection
  * context — every function here must be called from inside one (the engine guarantees that by
  * running `composeTable()` under the owner's).
  */

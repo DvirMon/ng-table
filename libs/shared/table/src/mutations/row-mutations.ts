@@ -1,5 +1,5 @@
 import { resolveIndex } from '../engine/rows';
-import type { RowId, RowUpdater } from './types';
+import type { RowId, RowUpdater } from '../api/types';
 
 /** D27: `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an
  * out-of-range or stale `at` clamps instead of crashing. */

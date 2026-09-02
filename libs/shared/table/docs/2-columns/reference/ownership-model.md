@@ -85,7 +85,7 @@ Ship the static + reactive shape for every feature. Add an `apply*Async` variant
 permission/role case demands it. The recorder pattern (see
 [the standalone `columnSchema()` helper](../2-columns/architecture.md#columnschema--the-standalone-helper))
 makes each async variant cheap to add later — one rule type + one function, landing in
-`api/column-rules.ts`.
+`schema/column-rules.ts`.
 
 ## Conflict handling — decided: reducer-combine
 

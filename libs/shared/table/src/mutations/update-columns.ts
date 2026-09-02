@@ -3,7 +3,7 @@ import {
   resolveColumnDefs,
   toggleColumnVisible,
 } from '../engine/columns';
-import type { ColumnDefInput, ColumnsUpdater } from './types';
+import type { ColumnDefInput, ColumnsUpdater } from '../api/types';
 
 /** Replaces the full column list, resolving sparse `ColumnDefInput`s to full `ColumnDef`s. */
 export function setColumns<TRow>(

@@ -25,13 +25,13 @@ export type {
   SnapshotMap,
 } from './api/features/editing-state';
 export { createTableFeature } from './api/create-table-feature';
-export { columnSchema } from './api/column-schema';
-export { applySortNulls, applyVisible, applyVisibleAsync } from './api/column-rules';
-export type { SortNullsOpts } from './api/column-rules';
-export { createColumnMetaKey, metadata, readColumnMeta } from './api/column-metadata';
-export { insertRow, removeRow, patchRow } from './api/row-mutations';
-export { beginEdit, clearEdit, endEdit } from './api/row-edit-mutations';
-export type { BeginEditOptions } from './api/row-edit-mutations';
+export { columnSchema } from './schema/column-schema';
+export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column-rules';
+export type { SortNullsOpts } from './schema/column-rules';
+export { createColumnMetaKey, metadata, readColumnMeta } from './schema/column-metadata';
+export { insertRow, removeRow, patchRow } from './mutations/row-mutations';
+export { beginEdit, clearEdit, endEdit } from './mutations/row-edit-mutations';
+export type { BeginEditOptions } from './mutations/row-edit-mutations';
 export {
   captureEdit,
   discardEdit,
@@ -39,13 +39,13 @@ export {
   releaseEdit,
   removeEdit,
   revertEdit,
-} from './api/optimistic-mutations';
-export type { PatchEditOptions } from './api/optimistic-mutations';
+} from './mutations/optimistic-mutations';
+export type { PatchEditOptions } from './mutations/optimistic-mutations';
 export {
   setColumns,
   reorderColumns,
   toggleColumnVisibility,
-} from './api/update-columns';
+} from './mutations/update-columns';
 export type {
   ColumnHandle,
   ColumnMetaKey,
@@ -54,4 +54,4 @@ export type {
   ColumnSchema,
   ColumnsPath,
   ColumnsSchemaFn,
-} from './api/column-schema.types';
+} from './schema/column-schema.types';
