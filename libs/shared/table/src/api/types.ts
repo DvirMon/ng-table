@@ -124,7 +124,7 @@ type UnionToIntersection<Union> = (
 
 // `members` is optional on `TableFeatureSpec`, so it must be inferred through an optional
 // property and un-widened — a feature contributing none (e.g. one that only wires an
-// `onInit`) yields `object`, which is inert inside the intersection below.
+// `setup`) yields `object`, which is inert inside the intersection below.
 type FeatureMembers<Feature> = Feature extends (...args: any[]) => infer Spec
   ? Spec extends { members?: infer Members }
     ? NonNullable<Members>

@@ -103,7 +103,7 @@ export function withRowEdit<TRow = unknown>(
     return {
       members: { editing: store.editing, pending: store.pending, draft },
       onRowsRemoved: store.onRowsRemoved,
-      onInit: () => effect(onMultipleChanged),
+      setup: () => effect(onMultipleChanged),
     };
   };
 }

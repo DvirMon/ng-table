@@ -17,9 +17,9 @@ import {
  * values the engine folds onto `baseColumns` (`foldColumnRules`) — declares, never mutates
  * the store.
  *
- * Entries are built at feature-factory time, not inside `onInit`: `composeTable()`'s
+ * Entries are built at feature-factory time, not inside `setup`: `composeTable()`'s
  * `foldFeatures()` reads `spec.columnRules` synchronously right after this factory returns,
- * before any `onInit` hook runs, so an async rule's `resource()` (built here) must already
+ * before any `setup` hook runs, so an async rule's `resource()` (built here) must already
  * exist by then. This is safe because `createTable()` already wraps the whole
  * `composeTable()` call in `runInInjectionContext()`.
  *

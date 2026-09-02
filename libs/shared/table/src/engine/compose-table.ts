@@ -7,7 +7,7 @@ import { describeFeature, SlotRegistry } from './slots';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
 
 interface FeatureHooks {
-  readonly onInit: (() => void)[];
+  readonly setup: (() => void)[];
   readonly onDestroy: (() => void)[];
   readonly onRowsRemoved: ((ids: readonly RowId[]) => void)[];
 }
@@ -24,7 +24,7 @@ function foldFeatures<TRow>(
   handle: TableCoreHandle<TRow>
 ): FeatureHooks {
   const registry = new SlotRegistry();
-  const hooks: FeatureHooks = { onInit: [], onDestroy: [], onRowsRemoved: [] };
+  const hooks: FeatureHooks = { setup: [], onDestroy: [], onRowsRemoved: [] };
 
   features.forEach((feature, index) => {
     const spec: TableFeatureSpec<TRow> = feature(core, composed);
@@ -57,8 +57,8 @@ function foldFeatures<TRow>(
       handle.columnRules.push(...spec.columnRules);
     }
 
-    if (spec.onInit) {
-      hooks.onInit.push(spec.onInit);
+    if (spec.setup) {
+      hooks.setup.push(spec.setup);
     }
     if (spec.onDestroy) {
       hooks.onDestroy.push(spec.onDestroy);
@@ -77,7 +77,7 @@ function foldFeatures<TRow>(
  * contribute (`members`, `stages`, `renderRows`, hooks); this function is the only place
  * that wires those declarations together.
  *
- * Must run inside an Angular injection context: `onInit` hooks create `effect()` /
+ * Must run inside an Angular injection context: `setup` hooks create `effect()` /
  * `resource()`, and `onDestroy` hooks register on the ambient `DestroyRef`.
  */
 export function composeTable<TRow>(
@@ -107,10 +107,10 @@ export function composeTable<TRow>(
     composed
   );
 
-  // Hooks run only once every feature is composed, so an `onInit` can read any other
+  // Hooks run only once every feature is composed, so a `setup` can read any other
   // feature's members.
-  for (const onInit of hooks.onInit) {
-    onInit();
+  for (const setup of hooks.setup) {
+    setup();
   }
   if (hooks.onDestroy.length > 0) {
     const destroyRef = inject(DestroyRef);

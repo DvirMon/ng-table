@@ -80,7 +80,7 @@ export interface TableFeatureSpec<TRow, Members extends object = object> {
   columnRules?: ColumnRuleRegistry<TRow>;
 
   /** Runs after every feature is composed, inside the owner's injection context. */
-  onInit?: () => void;
+  setup?: () => void;
   onDestroy?: () => void;
   /** Called with ids that just left `data` (ADR-0006). A feature storing `RowId`-keyed state
    * declares this and prunes its own state — the engine never reaches into feature state

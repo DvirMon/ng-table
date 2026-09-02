@@ -61,7 +61,7 @@ export function createTable<
     config.columnsSchema
   );
 
-  // The composition runs under the owner's injection context so feature `onInit` hooks
+  // The composition runs under the owner's injection context so feature `setup` hooks
   // can create `effect()` / `resource()`, and `onDestroy` hooks reach its `DestroyRef`.
   const store = runInInjectionContext(injector, () =>
     composeTable<TRow>({ columns, trackBy: config.trackBy, data }, [

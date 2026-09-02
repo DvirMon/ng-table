@@ -147,10 +147,10 @@ describe('composeTable', () => {
     );
   });
 
-  it('runs onInit only after every feature is composed', () => {
+  it('runs setup only after every feature is composed', () => {
     let seenAtInit: unknown;
     const withLateReader: TableFeature<Row> = (_core, composed) => ({
-      onInit: () => {
+      setup: () => {
         seenAtInit = composed['contributedLater'];
       },
     });
