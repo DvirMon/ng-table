@@ -2,8 +2,8 @@ import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { SORT_NULLS } from '../../engine/columns';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
-import { readColumnMeta } from '../column-metadata';
-import type { SortNullsOpts } from '../column-rules';
+import { readColumnMeta } from '../../schema/column-metadata';
+import type { SortNullsOpts } from '../../schema/column-rules';
 import type { ColumnDef, SortDirection, SortRule } from '../types';
 
 export interface WithSortingConfig {

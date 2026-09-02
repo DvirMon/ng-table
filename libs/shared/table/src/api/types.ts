@@ -1,5 +1,5 @@
 import type { Signal, WritableSignal } from '@angular/core';
-import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from './column-schema.types';
+import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from '../schema/column-schema.types';
 import type { TableFeature } from '../engine/types';
 import type { WritableView } from '../engine/writable-view';
 

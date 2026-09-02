@@ -7,7 +7,7 @@ import {
   withSnapshot,
   type EditingUpdater,
   type RowRestorePoint,
-} from './features/editing-state';
+} from '../api/features/editing-state';
 import { patchEdit } from './optimistic-mutations';
 import { insertRow } from './row-mutations';
 import type { RowId } from '../api/types';

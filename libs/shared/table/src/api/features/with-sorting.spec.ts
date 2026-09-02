@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { applySortNulls } from '../column-rules';
+import { applySortNulls } from '../../schema/column-rules';
 import { createTable } from '../create-table';
 import { withSorting } from './with-sorting';
 import type {

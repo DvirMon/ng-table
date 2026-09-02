@@ -8,10 +8,10 @@ import {
   type EditingUpdater,
   type PatchEditOptions,
   type RowRestorePoint,
-} from './features/editing-state';
+} from '../api/features/editing-state';
 import type { RowId } from '../api/types';
 
-export type { PatchEditOptions } from './features/editing-state';
+export type { PatchEditOptions } from '../api/features/editing-state';
 
 /**
  * The rollback verbs — `withOptimistic()`'s slice (D37). Meaningful whether or not an edit

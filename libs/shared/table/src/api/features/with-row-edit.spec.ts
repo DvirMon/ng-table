@@ -1,8 +1,8 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createTable } from '../create-table';
-import { beginEdit, endEdit } from '../row-edit-mutations';
-import { captureEdit, releaseEdit, removeEdit, revertEdit } from '../optimistic-mutations';
+import { beginEdit, endEdit } from '../../mutations/row-edit-mutations';
+import { captureEdit, releaseEdit, removeEdit, revertEdit } from '../../mutations/optimistic-mutations';
 import { withRowEdit } from './with-row-edit';
 import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 

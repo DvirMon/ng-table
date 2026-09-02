@@ -1,4 +1,4 @@
-import type { ColumnSchema, ColumnsSchemaFn } from './column-schema.types';
+import type { ColumnSchema, ColumnsSchemaFn } from '../schema/column-schema.types';
 import type {
   AnyTableFeature,
   ColumnDefInput,
