@@ -1,11 +1,10 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Gated edit (S2/S4) — rows show text until Edit opens them. Cancel resets the row (D36);
-    Discard removes it — both are separate, clearly-labeled buttons on any open row, not tied to
-    how the row was added. Save mode picks pessimistic (round trip completes before the row
-    closes) or optimistic (row closes immediately, reconciled by a real MSW-intercepted
-    <code>fetch</code>). Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside
-    its cells.
+    Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
+    are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
+    mode picks pessimistic (waits for the save to finish before closing the row) or optimistic
+    (closes the row immediately, then rolls back if the save fails). Keyboard: Escape cancels
+    the open row, Enter saves it, Tab stays inside its cells.
   </p>
 
   <div class="row-edit-story__toolbar">

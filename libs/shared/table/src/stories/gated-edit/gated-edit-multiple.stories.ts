@@ -25,10 +25,11 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * S2 — the gated table (`withRowEdit()`). `multiple` reacts live to the in-story toggle button
- * (a signal passed straight through to `withRowEdit({ multiple })`, wrapped in `computed()`
- * internally). Note: `multiple: true` combined with optimistic save is explicitly
- * undesigned/unsupported (D31.2/G4) — leave "Save mode" on Pessimistic when exercising multiple
- * mode and Save All.
+ * Edits several rows at once.
+ *
+ * - Toggle "Multi row" in the story controls to switch live between single-row and multi-row
+ *   editing.
+ * - Multi-row editing with Optimistic save mode isn't supported yet — keep "Save mode" on
+ *   Pessimistic when trying multiple mode and Save All.
  */
 export const MultipleMode: Story = {};

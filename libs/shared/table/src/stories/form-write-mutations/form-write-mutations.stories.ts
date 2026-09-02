@@ -13,7 +13,9 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * Add/delete bypass `table.editing`/`table.value` and write straight through the form's
- * root value signal — see what breaks vs. the normal `beginEdit({ insert })`/`removeRow` flow.
+ * Adds and deletes rows by writing straight through the form, bypassing the table's own
+ * add/delete actions.
+ *
+ * - Compare against the normal add/delete flow to see what guarantees are lost this way.
  */
 export const Default: Story = {};

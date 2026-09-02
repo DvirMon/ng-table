@@ -11,8 +11,9 @@ export default meta;
 type Story = StoryObj<LiveTableStoryHostComponent>;
 
 /**
- * S1 — the minimal editable table (D29). No editing feature composed at all; every row's
- * inputs are always rendered. Blur the name field or change dept to see the commit-boundary
- * counter tick — typing alone never touches `data()`.
+ * The simplest editable table — every row's fields are always editable, no edit mode to enter.
+ *
+ * - Blur the name field or change the department to see the save counter tick up.
+ * - Typing alone doesn't save anything until you commit the change (blur or change).
  */
 export const Default: Story = {};

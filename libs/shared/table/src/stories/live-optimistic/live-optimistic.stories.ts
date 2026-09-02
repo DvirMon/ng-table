@@ -22,13 +22,21 @@ export default meta;
 
 type Story = StoryObj<LiveOptimisticStoryHostComponent>;
 
-/** S6 — the happy path. Focus a cell, type, tab away: the value commits, the row shows as
- * in-flight, and `releaseEdit` drops the restore point once the request resolves. */
+/**
+ * The happy path for optimistic saves.
+ *
+ * - Focus a cell, type, tab away — the value commits right away and the row shows as in-flight.
+ * - Once the save succeeds, the in-flight marker clears.
+ */
 export const Default: Story = {};
 
-/** S6 — forced failure. The optimistic write lands on screen first, then the MSW handler
- * returns 500 and `revertEdit` puts the captured value back. Nothing closes, because nothing
- * was ever open. */
+/**
+ * A save that fails.
+ *
+ * - The edited value shows on screen immediately, same as the happy path.
+ * - When the save fails, the value reverts to what it was before the edit.
+ * - The row was never in an "open for editing" state, so nothing closes — it just reverts.
+ */
 export const ForcedFailure: Story = {
   args: { forceFailure: true },
 };

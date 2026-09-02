@@ -1,9 +1,9 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Sorting × Editing (S-1/S-2) — `withSorting()` + `withRowEdit()` composed together. Sort by
-    Name or Due Date, then Edit a row and change the sorted column's value: the row is expected
-    to jump today (OQ-3's row-hold isn't implemented). A blank Due Date always lands at the end,
-    regardless of direction (`applySortNulls()`'s shipped default).
+    Sorting combined with row editing. Sort by Name or Due Date, then edit a row and change the
+    sorted column's value — today the row jumps to its new sorted position right away (keeping
+    it in place while open isn't supported yet). A blank Due Date always sorts to the end,
+    regardless of sort direction.
   </p>
 
   <div class="row-edit-story__toolbar">

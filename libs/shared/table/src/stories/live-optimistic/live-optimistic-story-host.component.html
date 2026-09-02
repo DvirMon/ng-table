@@ -1,10 +1,8 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Optimistic updates & rollback (S6) — toggle Gated/Live to prove the same three rollback
-    verbs (<code>captureEdit</code>/<code>releaseEdit</code>/<code>revertEdit</code>) work under
-    both a button-delimited edit session (<code>withRowEdit()</code>) and a focus-delimited one
-    (<code>withOptimistic()</code> alone). Use the Storybook controls to force a failure or add
-    latency.
+    Optimistic updates & rollback — toggle Gated/Live to see the same rollback behavior whether
+    editing is button-based (Gated) or starts the moment you focus a field (Live). Use the
+    Storybook controls to force a failure or add latency.
   </p>
 
   <div class="sr-only" aria-live="polite">{{ announcement() }}</div>

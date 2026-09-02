@@ -11,10 +11,11 @@ export default meta;
 type Story = StoryObj<ExternalWriteStoryHostComponent>;
 
 /**
- * S5 — `captureEdit` (a stale restore point from an external write) and ADR-0006's
- * `onRowsRemoved` pruning (a row removed while its editing entry is still live), both only
- * previously exercised in unit tests (G12). Extended to close product doc §1.5's on-screen gap:
- * a conflict banner with Keep mine / Take theirs / merge field-by-field, a quiet patch to a row
- * that isn't open, and a deletion notice for a row removed while its editor was open.
+ * What happens when data changes from outside the table while a row is being edited.
+ *
+ * - Editing a row that's changed elsewhere shows a conflict banner: Keep mine, Take theirs, or
+ *   merge field-by-field.
+ * - A row that isn't open just gets patched quietly, no banner.
+ * - A row that's open when it gets deleted elsewhere shows a deletion notice instead.
  */
 export const Default: Story = {};

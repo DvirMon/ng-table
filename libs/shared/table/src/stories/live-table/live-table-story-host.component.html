@@ -1,7 +1,7 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Live table (S1) — no <code>withRowEdit()</code> composed (D29). Inputs render always;
-    <code>debounce('blur')</code> on name, <code>debounce(0)</code> on dept.
+    The simplest editable table — every field is always editable, no edit mode to enter. Name
+    commits on blur; department commits the instant you pick a value.
   </p>
 
   <div class="row-edit-story__toolbar">
@@ -20,7 +20,7 @@
     <button type="button" (click)="table.toggleSort('dept')">
       Sort dept {{ sortArrow('dept') }}
     </button>
-    <span class="row-edit-story__counter">data() emissions: {{ commitCount() }}</span>
+    <span class="row-edit-story__counter">commits: {{ commitCount() }}</span>
     <span class="row-edit-story__shortcut-hint">⌘Z / Ctrl+Z — undo last commit</span>
   </div>
 

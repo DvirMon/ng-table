@@ -1,10 +1,10 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    External write / reconciliation (S5) — open a row, then push a change or remove it from
-    outside the edit flow. "Simulate server push" stages a conflict instead of overwriting your
-    typed value — choose Keep mine, Take theirs, or merge field by field. "Push to row I'm not
-    editing" patches a closed row quietly, with no restore point and no focus/scroll steal.
-    "Remove row" exercises ADR-0006's pruning of a live editing entry and now leaves a notice.
+    Open a row, then push a change or remove it from outside the edit flow. "Simulate server
+    push" stages a conflict instead of overwriting your typed value — choose Keep mine, Take
+    theirs, or merge field by field. "Push to row I'm not editing" quietly patches a closed row,
+    no interruption. "Remove row" deletes a row while it's being edited and leaves a notice
+    behind.
   </p>
 
   <div class="row-edit-story__toolbar">

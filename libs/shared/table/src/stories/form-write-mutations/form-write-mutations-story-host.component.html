@@ -1,12 +1,9 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    "Add via form" / "Delete via form" mutate <code>rows().value</code> directly instead of
-    going through <code>table.editing.update(beginEdit(id, {{ '{' }} insert {{ '}' }}))</code> /
-    <code>table.value.update(removeRow(...))</code>. That still writes valid data — what it
-    skips is table's optimistic-update support: the snapshot/pending machinery those utilities
-    compose with, which lets a save roll back cleanly on failure. Name/dept edits still use the
-    normal <code>beginEdit</code>/<code>formField</code> flow, so the contrast is isolated to
-    the row-structural mutations.
+    "Add via form" / "Delete via form" add and remove rows by writing directly to the row data,
+    skipping the table's own add/delete actions. Data still ends up valid — what's lost is
+    rollback support: if a save then fails, there's nothing to fall back to. Name/dept edits
+    still go through the normal edit flow, so only adding and deleting rows is affected.
   </p>
 
   <div class="row-edit-story__toolbar">

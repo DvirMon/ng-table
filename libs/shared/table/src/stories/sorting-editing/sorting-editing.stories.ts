@@ -13,8 +13,10 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * S-1/S-2 (`0-product/row-editing.md` §5) — `withSorting()` + `withRowEdit()` composed on one
- * table. S-2 (null placement) is expected to pass; S-1 (row-hold while open) is expected to
- * fail today, on purpose — see the host component's doc-comment.
+ * Sorting combined with row editing.
+ *
+ * - Sorting a column with an edited-to-empty value places it predictably (this works today).
+ * - Keeping an open row in place while the table re-sorts around it does not work yet — a known
+ *   limitation, see the story's host component for detail.
  */
 export const Default: Story = {};
