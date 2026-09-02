@@ -2,9 +2,9 @@ import type {
   ColumnRule,
   ColumnRuleContext,
   ColumnsSchemaStore,
-} from '../../column-schema.types';
-import type { ColumnRuleEntry } from '../../../engine/columns';
-import type { TableFeatureSpec } from '../../../engine/types';
+} from '../../schema/column-schema.types';
+import type { ColumnRuleEntry } from '../columns';
+import type { TableFeatureSpec } from '../types';
 import {
   buildAsyncMetadataEntry,
   buildMetadataEntries,
@@ -28,7 +28,7 @@ import {
  *
  * Auto-composed by `createTable()`, unlike every other `with-*()` feature.
  */
-export function withColumnsSchemaAsync<TRow>(
+export function wireColumnsSchemaAsync<TRow>(
   rules: readonly ColumnRule<TRow>[]
 ): (core: ColumnsSchemaStore<TRow>) => TableFeatureSpec<TRow> {
   const metadataRules = rules.filter(isMetadataRule);

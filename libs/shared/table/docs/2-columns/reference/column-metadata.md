@@ -63,7 +63,7 @@ function readColumnMeta<T>(column: ColumnDef<unknown>, key: ColumnMetaKey<T>): T
 
 `metadata()` has **no reducer** for consumer keys. Two `metadata()` calls targeting the same
 `(columnId, key)` pair throw synchronously at `resolveColumnsConfig()` time
-(`assertMetadataKeysAreUnique` in `api/features/with-columns-schema/resolve.ts`) — the same
+(`assertMetadataKeysAreUnique` in `engine/columns-schema/resolve.ts`) — the same
 build-time-throw posture `resolveColumnsConfig()` already uses for an unknown `columnId`.
 
 This is a scope cut, not an oversight: the table has no scenario yet where two independent
@@ -97,7 +97,7 @@ switching on a `visible`-vs-`meta` rule kind, so there is exactly one resolution
 
 `logic` accepts a plain `T` or `(ctx: ColumnRuleContext<TRow>) => T`, discriminated at wiring
 time (`typeof rule.logic === 'function'`) in
-`api/features/with-columns-schema/wiring.ts`'s `buildMetadataEntries`. Both forms are wrapped in
+`engine/columns-schema/wiring.ts`'s `buildMetadataEntries`. Both forms are wrapped in
 the same `computed()` — a static value just never changes. This matches Signal Forms' own
 `metadata()`, where a plain value "just works" without an explicit wrapper.
 
@@ -128,9 +128,9 @@ out for metadata.
 `applyVisibleAsync` record the same `MetadataRule` (sync) or a `MetadataAsyncRule<TRow>`
 (`kind: 'metadata-async'`, resource-backed) — all three go onto the same
 `ColumnSchemaRecorder` (`schema/column-schema.types.ts`'s `ColumnRule` union).
-`resolveColumnsConfig()` (`api/features/with-columns-schema/resolve.ts`) validates every rule
+`resolveColumnsConfig()` (`engine/columns-schema/resolve.ts`) validates every rule
 the same way (`columnId` known, plus the single-writer check, `VISIBLE`-exempted).
-`withColumnsSchemaAsync` (`api/features/with-columns-schema/feature.ts`) builds a
+`wireColumnsSchemaAsync` (`engine/columns-schema/wire-columns-schema.ts`) builds a
 `ColumnRuleEntry<TRow>` — `{ columnId, key, result }`, one shape, no discriminant — per rule
 via `buildMetadataEntries`/`buildAsyncMetadataEntry` (`wiring.ts`) and contributes them to the
 same flat `columnRules` registry `foldColumnRules` (`engine/columns.ts`) folds every render:

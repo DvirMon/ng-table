@@ -114,10 +114,10 @@ export interface MetadataAsyncRule<TRow, TParams = unknown, TResult = unknown, T
 
 export type ColumnRule<TRow> = MetadataRule<TRow> | MetadataAsyncRule<TRow>;
 
-// --- Store-shape contracts shared across with-columns-schema.ts -----------
+// --- Store-shape contracts shared across wire-columns-schema.ts -----------
 
 /**
- * The slice of a table store `withColumnsSchemaAsync`'s rule wiring reads, and the feature's
+ * The slice of a table store `wireColumnsSchemaAsync`'s rule wiring reads, and the feature's
  * declared input. Read-only — the wiring builds `ColumnRuleEntry` values instead of writing
  * columns directly (`engine/compose-table.ts` folds them in). `TableCore<TRow>` satisfies it
  * structurally.

@@ -27,7 +27,7 @@ export function createColumnMetaKey<T>(): ColumnMetaKey<T> {
  * Registers a metadata value for one column under `key`, called inside a `columnSchema()`
  * body alongside `applyVisible`/`applyVisibleAsync`. `logic` is a plain value or a closure
  * over the same `ColumnRuleContext<TRow>` those rules read — both resolve the same way,
- * discriminated at wiring time (`api/features/with-columns-schema/wiring.ts`).
+ * discriminated at wiring time (`engine/columns-schema/wiring.ts`).
  *
  * Single-writer: a second `metadata()` call for the same `(column, key)` pair throws at
  * resolve time (`resolve.ts`'s `assertMetadataKeysAreUnique`) — no reducer/combine story.

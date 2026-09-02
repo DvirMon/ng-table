@@ -98,7 +98,7 @@ doc is the result of that design conversation.
   Superseded 2026-07-25 — see
   [signal-forms-techniques §2](2-columns/reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection-decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
   The generic per-key reducer this decision describes is **not implemented** — shipped code
-  (`assertMetadataKeysAreUnique` in `api/features/with-columns-schema/resolve.ts`) throws
+  (`assertMetadataKeysAreUnique` in `engine/columns-schema/resolve.ts`) throws
   synchronously on a duplicate `metadata()` registration for the same `(columnId, key)`. The one
   exception is the internal `VISIBLE` key: multiple `applyVisible`/`applyVisibleAsync` calls on
   the same column id are hardcoded AND-combined in `foldColumnRules` (`engine/columns.ts`), not
@@ -267,21 +267,21 @@ snapshot-diff patcher) applies uniformly across all three tiers.
 
 `createTable(data, optsFn)` evaluates `optsFn()` once at construction; `columns` / `columnsSchema`
 are read off that resolved config (see ADR-0002). `buildStoreClass()` gains one resolution step ahead
-of `withState`, and one new composed feature (`withColumnsSchemaAsync`) always spliced into
+of `withState`, and one new composed feature (`wireColumnsSchemaAsync`) always spliced into
 `coreFeature` right after the existing `withMethods` block:
 
 - No `columnsSchema` → `resolveColumnsConfig()` passes `columns` through unchanged, `asyncRules: []`.
 - `columnsSchema` present (inline fn or `columnSchema()` value) → normalize to `ColumnSchema<TRow>`,
   validate `columnId`s against `columns`, then: sync rules (static seeds) resolve into the initial
   `columns` array seeded into `withState` (last-rule-wins per field, unless the reducer decision
-  changes this); reactive + async rules are handed to `withColumnsSchemaAsync`.
-- `withColumnsSchemaAsync(rules)` is a `withHooks({ onInit })` feature: for each reactive rule it
+  changes this); reactive + async rules are handed to `wireColumnsSchemaAsync`.
+- `wireColumnsSchemaAsync(rules)` is a `withHooks({ onInit })` feature: for each reactive rule it
   builds an `effect()`, and for each async rule a `computed()` params source + the rule's `factory()`
   `ResourceRef` + an `effect()` that calls the store's own `updateColumns()` on resolve/error. With
   no reactive/async rules (the legacy path), the loop body never runs — zero new signals/effects for
   existing consumers.
 
-`withColumnsSchemaAsync` returns `EmptyFeatureResult` (contributes no state/props/methods), so it's
+`wireColumnsSchemaAsync` returns `EmptyFeatureResult` (contributes no state/props/methods), so it's
 invisible to `ComposedFeatureMembers<Features>` and the public `TableStore<TRow>` contract — same
 invisibility as `_pipeline` / `_sortChangedSource` today.
 
@@ -295,10 +295,10 @@ invisibility as `_pipeline` / `_sortChangedSource` today.
 | `schema/column-schema.types.ts` (new) | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.) |
 | `schema/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all `apply*` functions (Tier 1 first). Landing spot for every future tier. |
 | `schema/column-schema.ts` (new) | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |
-| `api/features/with-columns-schema/` (new) | `resolveColumnsConfig()` (normalize inline fn / `columnSchema()` value → `ColumnSchema`, sync/static resolution) and `withColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only. |
-| `api/create-table.ts` (edit) | Call `resolveColumnsConfig(config.columns, config.columnsSchema)`; splice `withColumnsSchemaAsync(rules)` into `coreFeature`. |
+| `engine/columns-schema/` (new) | `resolveColumnsConfig()` (normalize inline fn / `columnSchema()` value → `ColumnSchema`, sync/static resolution) and `wireColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only. |
+| `api/create-table.ts` (edit) | Call `resolveColumnsConfig(config.columns, config.columnsSchema)`; splice `wireColumnsSchemaAsync(rules)` into `coreFeature`. |
 | `index.ts` (edit) | Barrel-export the public `apply*` + `columnSchema` + public types. **Not** `COLUMN_RECORDER` / `ColumnSchemaRecorder` — internal only. |
-| `column-schema.spec.ts`, `with-columns-schema.spec.ts` (new) | Resolution + validation + conflict handling; reactive + async wiring via `TestBed` + a controllable `resource()` loader (mirrors `table.store.spec.ts`'s `TestBed.inject(Store)` pattern). |
+| `column-schema.spec.ts`, `wire-columns-schema.spec.ts` (new) | Resolution + validation + conflict handling; reactive + async wiring via `TestBed` + a controllable `resource()` loader (mirrors `table.store.spec.ts`'s `TestBed.inject(Store)` pattern). |
 
 ---
 
@@ -355,7 +355,7 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 ## Next Steps
 
 - [ ] Implement per the File Layout table, in order: pure types/rules → `schema/column-schema.ts` (testable
-  without DI) → `api/features/with-columns-schema/` (DI/reactivity, tested via `TestBed`) → `api/types.ts` /
+  without DI) → `engine/columns-schema/` (DI/reactivity, tested via `TestBed`) → `api/types.ts` /
   `api/create-table.ts` wiring (run the **existing** `table.store.spec.ts` first to confirm zero
   regressions on the legacy plain-array path) → barrel export → `1-state/columns.md` update.
 - [x] ~~Resolve the two ⚠️ open decisions (§1 metadata core, §2 reducer vs reject).~~ Already

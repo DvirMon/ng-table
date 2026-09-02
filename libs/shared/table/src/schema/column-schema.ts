@@ -120,7 +120,7 @@ export function runColumnsSchemaFn<TRow>(
  * Standalone reuse form of a column schema, mirroring Signal Forms'
  * `schema<T>(fn)`. Runs `fn` once, eagerly, at call time — no injection
  * context available here, so `apply*` calls only record rules; the store
- * wires the actual reactivity at construction (`withColumnsSchemaAsync`).
+ * wires the actual reactivity at construction (`wireColumnsSchemaAsync`).
  *
  * Does NOT validate `columnId`s against a `columns` array — `columns` isn't
  * known at this call site. That check happens in `resolveColumnsConfig()`.

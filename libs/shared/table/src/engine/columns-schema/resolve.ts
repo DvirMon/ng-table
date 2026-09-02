@@ -1,11 +1,11 @@
-import { VISIBLE } from '../../../engine/columns';
-import { columnSchema } from '../../column-schema';
+import { VISIBLE } from '../columns';
+import { columnSchema } from '../../schema/column-schema';
 import type {
   ColumnRule,
   ColumnSchema,
   ColumnsSchemaFn,
-} from '../../column-schema.types';
-import type { ColumnDefInput } from '../../types';
+} from '../../schema/column-schema.types';
+import type { ColumnDefInput } from '../../api/types';
 
 /** Compile phase: turns author-facing schema input into a validated flat `ColumnRule[]`. */
 
@@ -60,7 +60,7 @@ function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): 
 /**
  * Normalizes `columns` + an optional `columnsSchema` (inline fn or a
  * standalone `columnSchema()` value) into a resolved column list plus the
- * flat rule set `withColumnsSchemaAsync` wires up. Validates every rule's
+ * flat rule set `wireColumnsSchemaAsync` wires up. Validates every rule's
  * `columnId` exists in `columns`, throwing synchronously — this is the one
  * place both `columns` and the schema are available together.
  *

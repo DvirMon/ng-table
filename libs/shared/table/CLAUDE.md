@@ -42,7 +42,6 @@ table.mock.ts   ← shared test fixtures
 | `api/table-schema.ts` | `createTableSchema()` — the config builder |
 | `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withOptimistic()`, `withRowEdit()`. One file each |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `detached`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, so neither reads the other's signal and composition never depends on `features` order (D37/A2) |
-| `api/features/with-columns-schema/` | The one feature that outgrew a file — split by phase: `resolve.ts` (compile) → `wiring.ts` (run) → `feature.ts` (declare) |
 | `schema/column-schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
 | `schema/column-rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
 | `schema/column-metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `column-rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
@@ -59,6 +58,7 @@ table.mock.ts   ← shared test fixtures
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims stages, `renderRows`, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
+| `engine/columns-schema/` | Always-spliced internal composition step (ADR-0009), not a consumer `with*()` plugin — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 

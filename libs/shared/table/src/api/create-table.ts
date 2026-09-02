@@ -2,8 +2,8 @@ import { Injector, inject, runInInjectionContext } from '@angular/core';
 import { composeTable } from '../engine/compose-table';
 import {
   resolveColumnsConfig,
-  withColumnsSchemaAsync,
-} from './features/with-columns-schema';
+  wireColumnsSchemaAsync,
+} from '../engine/columns-schema';
 import type {
   AnyTableFeature,
   ComposedFeatureMembers,
@@ -55,7 +55,7 @@ export function createTable<
 
   // Resolves `columns` + optional `columnsSchema` (inline fn or a standalone
   // `columnSchema()` value) into the initial column list plus the flat reactive/async
-  // rule set `withColumnsSchemaAsync` wires up.
+  // rule set `wireColumnsSchemaAsync` wires up.
   const { columns, rules } = resolveColumnsConfig(
     config.columns,
     config.columnsSchema
@@ -65,7 +65,7 @@ export function createTable<
   // can create `effect()` / `resource()`, and `onDestroy` hooks reach its `DestroyRef`.
   const store = runInInjectionContext(injector, () =>
     composeTable<TRow>({ columns, trackBy: config.trackBy, data }, [
-      withColumnsSchemaAsync<TRow>(rules),
+      wireColumnsSchemaAsync<TRow>(rules),
       ...(config.features ?? []),
     ])
   );

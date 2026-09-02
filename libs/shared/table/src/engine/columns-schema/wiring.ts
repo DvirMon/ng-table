@@ -1,11 +1,11 @@
 import { computed, linkedSignal, type ResourceStatus } from '@angular/core';
-import type { ColumnRuleEntry } from '../../../engine/columns';
+import type { ColumnRuleEntry } from '../columns';
 import type {
   ColumnRule,
   ColumnRuleContext,
   MetadataAsyncRule,
   MetadataRule,
-} from '../../column-schema.types';
+} from '../../schema/column-schema.types';
 
 /**
  * Run phase: turns compiled `ColumnRule`s into `ColumnRuleEntry` values the engine folds onto

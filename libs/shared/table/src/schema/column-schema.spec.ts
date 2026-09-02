@@ -2,7 +2,7 @@ import { columnSchema } from './column-schema';
 import { applyVisible, applyVisibleAsync } from './column-rules';
 import type { ColumnHandle, ColumnsPath } from './column-schema.types';
 import type { ColumnDefInput } from '../api/types';
-import { resolveColumnsConfig } from '../api/features/with-columns-schema';
+import { resolveColumnsConfig } from '../engine/columns-schema';
 
 interface Row {
   id: string;

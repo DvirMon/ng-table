@@ -1,11 +1,11 @@
 import { signal, type ResourceRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { columnSchema } from '../../column-schema';
-import { createColumnMetaKey, metadata, readColumnMeta } from '../../column-metadata';
-import { applyVisible, applyVisibleAsync } from '../../column-rules';
-import { createTable } from '../../create-table';
-import { reorderColumns, setColumns, toggleColumnVisibility } from '../../update-columns';
-import type { ColumnDef, TableStore, TableStoreConfig } from '../../types';
+import { columnSchema } from '../../schema/column-schema';
+import { createColumnMetaKey, metadata, readColumnMeta } from '../../schema/column-metadata';
+import { applyVisible, applyVisibleAsync } from '../../schema/column-rules';
+import { createTable } from '../../api/create-table';
+import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
+import type { ColumnDef, TableStore, TableStoreConfig } from '../../api/types';
 
 interface Row {
   id: string;
@@ -30,7 +30,7 @@ function makeStore(cfg: () => TableStoreConfig<Row>): TableStore<Row> {
 
 /**
  * Minimal controllable `ResourceRef` test double — only the subset
- * `with-columns-schema.ts`'s async wiring actually reads (`status`,
+ * `wire-columns-schema.ts`'s async wiring actually reads (`status`,
  * `value`, `error`). The rest of the real `ResourceRef` interface
  * (`hasValue`, `set`, `reload`, ...) is never touched by that code path, so
  * it's cast rather than fully implemented.
@@ -67,7 +67,7 @@ function makeControllableResource<TResult>(): {
   };
 }
 
-describe('withColumnsSchemaAsync (via createTable columnsSchema wiring)', () => {
+describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => {
   it('is a zero-cost no-op when no columnsSchema is configured (legacy path)', () => {
     const store = makeStore(() => ({ trackBy: 'id', columns: makeColumns() }));
 

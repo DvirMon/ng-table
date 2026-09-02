@@ -35,7 +35,7 @@ export interface TableCore<TRow> {
   readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
   /**
    * Engine-internal only: the pre-fold declared columns `columns` overlays rules onto.
-   * Read-only here — `with-columns-schema` rule wiring reads against this (not the folded
+   * Read-only here — `wireColumnsSchemaAsync` rule wiring reads against this (not the folded
    * `columns`) to avoid a rule observing its own output. Never assigned to publicly on
    * `TableStore`; writes go through `TableCore.columns.update(...)`.
    */
