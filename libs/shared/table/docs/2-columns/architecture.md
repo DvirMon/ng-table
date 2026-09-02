@@ -133,8 +133,8 @@ doc is the result of that design conversation.
   resolution internals take. (Superseded 2026-08-11: the old
   `signalStoreFeature({state, props}, withState(...), ...)` chain and the `store._pipeline`
   mutation it relied on are gone — see ADR-0003.)
-- `TableFeatureSpec` carries `onInit` / `onDestroy` — the right primitive for the async wiring.
-  `composeTable()` runs every `onInit` after the full feature fold, inside the owner's injection
+- `TableFeatureSpec` carries `setup` / `onDestroy` — the right primitive for the async wiring.
+  `composeTable()` runs every `setup` after the full feature fold, inside the owner's injection
   context, so `inject()`, `effect()`, and `resource()` all work there with cleanup against that
   scope's `DestroyRef`.
 - Signal Forms API shapes confirmed against `node_modules/@angular/forms/types/signals.d.ts` (Angular

@@ -58,7 +58,7 @@ table.mock.ts   ← shared test fixtures
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims stages, `renderRows`, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
-| `engine/columns-schema/` | Always-spliced internal composition step (ADR-0009), not a consumer `with*()` plugin — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
+| `engine/columns-schema/` | Always-spliced internal composition step (ADR-0010), not a consumer `with*()` plugin — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 
@@ -78,7 +78,7 @@ stay `import type`; making either a value import breaks the build.
   `@ngrx/signals` (ADR-0003). If a future feature genuinely needs a private *store* member,
   reintroduce `OmitPrivate` in `api/types.ts` rather than leaking it.
 - **Features declare, never mutate.** A feature returns a `TableFeatureSpec` — `{ members,
-  stages, renderRows, onInit, onDestroy }`. Injecting behavior by writing to the store object
+  stages, renderRows, setup, onDestroy }`. Injecting behavior by writing to the store object
   is not a supported mechanism.
 
 - **Directive composition — `hostDirectives` vs. public directives:** `hostDirectives` is statically resolved, so use it only for behavior that is **unconditional** (always-present core bindings) or for sharing internal mechanism between feature directives (private, never exported from `index.ts`). Behavior that is **opt-in** gets its own public directive the consumer places. Host-composing a feature into a core directive applies it to every table, defeats tree-shaking, and forces the feature's inputs to be re-declared in the core directive's metadata. See the rejected-alternatives section of `docs/3-ui/directives/expansion.md`.
@@ -132,7 +132,7 @@ export function withFeature<TRow = unknown>(config: FeatureConfig = {}) {
       members: { someState: someState.asReadonly(), someMethod },
       stages: { sort: (rows) => ... },   // optional: one pipeline stage
       renderRows: (rows) => ...,          // optional: at most one feature may declare this
-      onInit: () => ...,                  // optional: runs after the full fold, in DI context
+      setup: () => ...,                   // optional: runs after the full fold, in DI context
     };
   });
 }
