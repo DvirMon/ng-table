@@ -2,23 +2,12 @@
   <p class="row-edit-story__hint">
     Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
     are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
-    mode picks pessimistic (waits for the save to finish before closing the row) or optimistic
-    (closes the row immediately, then rolls back if the save fails). Keyboard: Escape cancels
-    the open row, Enter saves it, Tab stays inside its cells.
+    closes the row immediately and reconciles over the network — a real MSW-intercepted `fetch`
+    that rolls the row back on failure (`forceFailure`/`latencyMs` are Storybook controls below).
+    Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside its cells.
   </p>
 
   <div class="row-edit-story__toolbar">
-    <button type="button" (click)="toggleSaveMode()">
-      Save mode: {{ saveMode() === 'optimistic' ? 'Optimistic' : 'Pessimistic' }}
-    </button>
-    @if (saveMode() === 'optimistic') {
-      <span class="row-edit-story__counter">
-        (force failure / latency are Storybook controls on this story)
-      </span>
-    }
-    <button type="button" (click)="toggleMultiple()">
-      Multiple: {{ multiple() ? 'on' : 'off' }}
-    </button>
     <label>
       at:
       <input
@@ -66,11 +55,11 @@
                     needsUniqueName().has(row.id) || isForcedInvalid ? true : null
                   "
                   [attr.aria-describedby]="
-                    needsUniqueName().has(row.id) ? 'gated-edit-duplicate-hint-' + row.id : null
+                    needsUniqueName().has(row.id) ? 'gated-single-optimistic-duplicate-hint-' + row.id : null
                   "
                 />
                 @if (needsUniqueName().has(row.id)) {
-                  <span class="row-edit-story__field-hint" [id]="'gated-edit-duplicate-hint-' + row.id">
+                  <span class="row-edit-story__field-hint" [id]="'gated-single-optimistic-duplicate-hint-' + row.id">
                     copied — needs a unique name
                   </span>
                 }

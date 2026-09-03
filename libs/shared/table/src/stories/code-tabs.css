@@ -43,6 +43,13 @@
 
 .code-tabs-list:has(.code-tabs-tab:nth-child(1) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(1),
 .code-tabs-list:has(.code-tabs-tab:nth-child(2) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(2),
-.code-tabs-list:has(.code-tabs-tab:nth-child(3) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(3) {
+.code-tabs-list:has(.code-tabs-tab:nth-child(3) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(3),
+.code-tabs-list:has(.code-tabs-tab:nth-child(4) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(4),
+.code-tabs-list:has(.code-tabs-tab:nth-child(5) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(5),
+.code-tabs-list:has(.code-tabs-tab:nth-child(6) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(6),
+.code-tabs-list:has(.code-tabs-tab:nth-child(7) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(7),
+.code-tabs-list:has(.code-tabs-tab:nth-child(8) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(8),
+.code-tabs-list:has(.code-tabs-tab:nth-child(9) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(9),
+.code-tabs-list:has(.code-tabs-tab:nth-child(10) input:checked) ~ .code-tabs-panels .code-tabs-panel:nth-child(10) {
   display: block;
 }

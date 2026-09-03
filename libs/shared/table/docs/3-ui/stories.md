@@ -1,14 +1,14 @@
 ---
 title: Storybook story conventions
 type: reference
-status: reflects current practice as of the 6 stories in src/stories/
-date: 2026-08-31
+status: reflects current practice as of the 9 stories in src/stories/
+date: 2026-09-03
 ---
 
 # Storybook story conventions — `libs/shared/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
-existing 6 stories already follow, so a new one doesn't drift from it. Not previously written
+existing 9 stories already follow, so a new one doesn't drift from it. Not previously written
 down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
 moves on.
 
@@ -113,25 +113,54 @@ Two tiers, by how much the story needs to prove:
 
 ## `.stories.ts` and `.mdx`
 
-- `.stories.ts` defines `Meta` + one exported story object per distinct mode/config the story
-  demonstrates (e.g. `SingleMode`/`MultipleMode` for `gated-edit/`, `Default`/`ForcedFailure`
-  for `optimistic-save/`). Don't add a second story object for something a control already
-  covers — see the general `story-plan` guidance on when a variant earns its own story vs. a
-  toggle.
-- `.mdx` stays a thin wrapper: `Meta`/`Canvas`/`Source`, plus the shared HTML/TS code-tabs
-  block every existing mdx repeats verbatim. It is not the place to describe what the story
-  proves — that's the host component's doc-comment (previous section). An exception:
-  `live-optimistic.mdx` carries a short prose paragraph explaining *why* no `withRowEdit()` is
-  composed here, because that's a non-obvious composition choice a reader needs before looking
-  at the code. Add prose to an mdx only for that kind of "why," not a restatement of what's
-  visible in the canvas.
+- `.stories.ts` defines `Meta` + one exported story object per distinct **Storybook-arg**
+  variant the story demonstrates (e.g. `Default`/`ForcedFailure` for `live-optimistic/`,
+  `gated-multiple-optimistic/` — a `forceFailure` arg toggling a real MSW-intercepted `fetch`).
+  A single `Default` is enough when there's nothing to vary this way (`gated-single-pessimistic/`,
+  whose save path is a stubbed `Promise` with no `forceFailure`/`latencyMs` to control). Don't
+  add a second story object for something a control already covers — see the general
+  `story-plan` guidance on when a variant earns its own story vs. a control.
+- **An on-canvas toggle that switches between two incompatible code paths is not a control —
+  it earns separate story folders, one host each.** A Storybook arg control (`forceFailure`,
+  `latencyMs`) varies *input* to one fixed code path; a button that flips `saveMode` or
+  `multiple` mid-story varies the *path itself*, which means the host's source always carries
+  a dead branch for whichever mode isn't active — the opposite of "copy-paste code" (below).
+  The row-editing cluster used to bundle Save-mode (Pessimistic/Optimistic) and session-shape
+  (Live/Gated) behind exactly these toggles; it's now `live-optimistic/`, `live-pessimistic/`,
+  `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/` — five
+  fixed-mode siblings, each host hardcoded to one path, cross-referencing the others in its
+  doc-comment for contrast. (`gated-multiple-pessimistic` has no story: bulk edit under
+  `multiple: true` is optimistic-only by design — see
+  `docs/1-state/work/with-multiple-edit/1-design.md`, which closes G4 — so that combination is
+  intentionally unsupported, not merely undemoed.)
+- `.mdx` stays a thin wrapper: `Meta`/`Canvas`/`Source`, plus a code-tabs block. It is not the
+  place to describe what the story proves — that's the host component's doc-comment (previous
+  section). An exception: `live-optimistic.mdx` carries a short prose paragraph explaining *why*
+  no `withRowEdit()` is composed here, because that's a non-obvious composition choice a reader
+  needs before looking at the code. Add prose to an mdx only for that kind of "why," not a
+  restatement of what's visible in the canvas.
+- **The code-tabs block covers every file the host component imports** — not just its own
+  `.ts`/`.html`. HTML and TS (the host class) always come first; after that, add one tab per
+  imported types/schema/mock/utils/directive/style file, `?raw`-imported and named for what it
+  is (`Types`, `Schema`, `Mock`, `Utils`, `Directive`, `Style`/`CSS`). A file local to the
+  story's own folder gets its concern name (`Types`); a file shared out of the story-cluster
+  root (`row-edit.*`, `row-edit-story.css`) gets the same name prefixed `Row ` (`Row Types`,
+  `Row Schema`) so a reader can tell at a glance which files are story-specific vs. shared
+  fixtures. `sorting-editing.mdx` is the fullest example (9 tabs — every file it imports is
+  local, so none carry the `Row ` prefix). `code-tabs.css`'s positional `:nth-child` pairing
+  between tab and panel currently supports up to 10 tabs; extend it (add another
+  `:nth-child(11)` pair to both selector lists) before adding an 11th tab to any story.
 
 ## Reference implementations
 
-- `gated-edit/` — the fullest example: multiple mutation verbs, a Storybook boolean arg wired
-  live into `withRowEdit()`'s config, per-row transient UI state (`needsUniqueName`) kept
-  separate from table state.
-- `live-optimistic/` + `optimistic-save/` — the MSW/simulated-server-round-trip pattern.
+- `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/` — the
+  fullest examples: multiple mutation verbs, per-row transient UI state (`needsUniqueName`) kept
+  separate from table state, and (for the two `-optimistic/` stories) `withRowEdit()`'s config
+  wired to a fixed `multiple` value. Three separate hosts, not one host with toggles — see
+  "`.stories.ts` and `.mdx`" above for why.
+- `live-optimistic/` + `live-pessimistic/` — the MSW/simulated-server-round-trip pattern, same
+  focus-triggered session shape under the two save strategies (revert-after-failure vs.
+  revert-before-send).
 - `external-write/` — demonstrates an effect from *outside* the story's own button clicks
   (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
   an open row, quiet patch on a closed one) — a worked example of the scope discipline above:

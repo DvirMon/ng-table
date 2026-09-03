@@ -63,8 +63,13 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * An always-editable table does not compose this (D29/D39). Its session is delimited by focus,
  * which opens nothing — it composes `withOptimistic()` alone.
  *
- * `{ multiple: true }` combined with optimistic save is undesigned — N open rows × M in-flight
- * saves — and unsupported until someone specs it (D31.2, G4).
+ * `{ multiple: true }` is optimistic-only (with-multiple-edit/1-design.md, closes G4): a save
+ * must close its row via `endEdit` before firing, so an in-flight save is always `pending`,
+ * never `open` — bulk close (`clearEdit()`, the single-mode trim) only ever touches `open` rows
+ * and so can never discard a live restore point. Pessimistic save (row stays open through the
+ * round trip) is unsupported under `multiple: true` for exactly that reason: a bulk close while
+ * an open row is mid-save would silently drop its restore point (D31.2's original "N open rows
+ * × M in-flight saves" concern, now resolved rather than open).
  */
 export function withRowEdit<TRow = unknown>(
   config: WithRowEditConfig = {}

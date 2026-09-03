@@ -7,36 +7,29 @@ import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.
 import type { RowId } from '../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
 import { editRowsSchema, gatedTableSchema } from '../row-edit.schema';
-import { containFocusTab, saveRowPessimistic } from '../row-edit.utils';
-import type { EditRow, SaveMode } from '../row-edit.types';
+import { containFocusTab } from '../row-edit.utils';
+import type { EditRow } from '../row-edit.types';
 
 /**
- * S2/S4 — the gated table (`withRowEdit()`), absorbing `optimistic-save/` (D-gap-analysis §1):
- * `saveMode` picks the pessimistic path (`saveRowPessimistic`, row stays open through the round
- * trip) or the optimistic one (`endEdit` first, then a real MSW-intercepted `fetch`, reconciled
- * by `releaseEdit`/`revertEdit`). `multiple` is passed as `this.multiple` (a signal, itself
- * callable as `() => boolean`) — `withRowEdit()` wraps it in a `computed()` internally and
- * reacts live, so a Storybook arg control can drive it without rebuilding the table.
+ * S4 — the gated table (`withRowEdit()`), fixed to single-row + optimistic save: `endEdit`
+ * merges the draft and closes the row immediately, then a real MSW-intercepted `fetch`
+ * reconciles it (`releaseEdit` on success, `revertEdit` on failure). `multiple` is left
+ * unconfigured — `gatedTableSchema()` defaults to single-row (D14). See `../gated-single-pessimistic/`
+ * for the same single-row surface with a pessimistic (wait-for-the-round-trip) save, and
+ * `../gated-multiple-optimistic/` for this same save path with several rows open at once.
  */
 @Component({
-  selector: 'ngp-gated-edit-story-host',
+  selector: 'ngp-gated-single-optimistic-story-host',
   imports: [FormField, NgpTableRowFieldDirective],
-  templateUrl: './gated-edit-story-host.component.html',
+  templateUrl: './gated-single-optimistic-story-host.component.html',
   styleUrl: '../row-edit-story.css',
 })
-export class GatedEditStoryHostComponent {
+export class GatedSingleOptimisticStoryHostComponent {
   readonly forceFailure = input(false);
   readonly latencyMs = input(600);
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly multiple = signal(false);
-  /** On-canvas toggle, same pattern as `multiple` — not a Storybook arg, since flipping it
-   * mid-flow (e.g. right after a failed save) is part of what the story demonstrates. */
-  protected readonly saveMode = signal<SaveMode>('pessimistic');
-  protected readonly table = createTable(
-    this.data,
-    gatedTableSchema({ multiple: () => this.multiple() }),
-  );
+  protected readonly table = createTable(this.data, gatedTableSchema());
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or leak into the
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
@@ -58,15 +51,6 @@ export class GatedEditStoryHostComponent {
    * visibly mark the field as needing a change rather than silently copying a collision
    * (`0-product/row-editing.md` §4.1). Cleared once the row leaves editing, whatever the exit. */
   protected readonly needsUniqueName = signal<ReadonlySet<RowId>>(new Set());
-
-  /** `withRowEdit()` reacts to `multiple` live, so flipping the signal is enough — no rebuild. */
-  protected toggleMultiple(): void {
-    this.multiple.update((value) => !value);
-  }
-
-  protected toggleSaveMode(): void {
-    this.saveMode.update((mode) => (mode === 'pessimistic' ? 'optimistic' : 'pessimistic'));
-  }
 
   /** One add path (D36/D42): `beginEdit({ insert })` opens the row with a real-value snapshot,
    * same as `beginEdit` on an existing row. Discard-vs-reset is no longer chosen here — it's a
@@ -158,8 +142,11 @@ export class GatedEditStoryHostComponent {
     }
   }
 
-  /** Dispatches to the pessimistic or optimistic save path per the `saveMode` control — the two
-   * verbs `optimistic-save/` and `gated-edit/`'s Save used to implement separately. */
+  /** Optimistic save (S4), the only path this story has: merges the draft into `data` and closes
+   * the row immediately (`endEdit(id, row)`), moving it to `pending`, then rolls back on a
+   * failed save or settles it on success. The save itself is a real intercepted `fetch` (MSW),
+   * not a Promise stub — `forceFailure`/`latencyMs` are Storybook-controlled request headers the
+   * handler reads (`row-edit.handlers.ts`). */
   protected async saveEdit(id: RowId): Promise<void> {
     this.clearRowError(id);
     if (this.forcedInvalid().has(id)) {
@@ -167,88 +154,6 @@ export class GatedEditStoryHostComponent {
       return;
     }
 
-    if (this.saveMode() === 'optimistic') {
-      await this.saveEditOptimistic(id);
-    } else {
-      await this.saveEditPessimistic(id);
-    }
-  }
-
-  /** Re-runs the same save path that just failed (§1.4's Retry). An optimistic failure already
-   * closed and reverted the row, so retrying reopens it first — a pessimistic failure leaves the
-   * row open, so this is a no-op there. */
-  protected retrySave(id: RowId): void {
-    if (!this.table.editing().has(id)) {
-      this.table.editing.update(beginEdit(id));
-    }
-    void this.saveEdit(id);
-  }
-
-  protected dismissError(id: RowId): void {
-    this.clearRowError(id);
-  }
-
-  /** §1.8 save-all: reuses `saveEdit` per open row rather than inventing a batched verb — the
-   * library has none for this. Only rows that actually saved end up closed; a pessimistic
-   * failure leaves its row open, an optimistic failure closes+reverts it (inherent to closing
-   * before the round trip settles, not a save-all-specific limitation). */
-  protected async saveAll(): Promise<void> {
-    this.saveAllSummary.set(null);
-    const openIds = Array.from(this.table.editing());
-    if (openIds.length === 0) {
-      this.saveAllSummary.set('No open rows to save.');
-      return;
-    }
-
-    await Promise.all(openIds.map((id) => this.saveEdit(id)));
-
-    const failedIds = openIds.filter((id) => this.rowErrors().has(id));
-    const succeededCount = openIds.length - failedIds.length;
-    this.saveAllSummary.set(
-      failedIds.length === 0
-        ? `Saved all ${succeededCount} row(s).`
-        : `Saved ${succeededCount} of ${openIds.length} row(s); ${failedIds.length} failed.`,
-    );
-  }
-
-  /** §2.3 "add several in a run": saves the open row, then — only once it actually saved —
-   * opens a fresh blank row via the same `beginEdit({ insert, at })` path `addBlankRow()` uses. */
-  protected async saveAndAddNext(id: RowId): Promise<void> {
-    await this.saveEdit(id);
-    if (this.rowErrors().has(id)) {
-      return;
-    }
-    this.addBlankRow();
-  }
-
-  /** Pessimistic save (S2/S5): the row stays open, unsorted, for the whole round trip — merging
-   * the draft into `data` and closing only on success (`endEdit(id, row)`) keeps the resort and
-   * the edit-mode close atomic, instead of resorting under a still-open row the moment Save is
-   * clicked. */
-  private async saveEditPessimistic(id: RowId): Promise<void> {
-    const row = this.table.draft().find((candidate) => this.table.trackBy(candidate) === id);
-    if (row === undefined) {
-      return;
-    }
-
-    try {
-      await saveRowPessimistic(row);
-      // D41: closing keeps the restore point, so a purely local save releases it too —
-      // otherwise the row would sit in `pending` with nothing left to confirm it.
-      this.table.editing.update(endEdit(id, row));
-      this.table.editing.update(releaseEdit(id));
-      this.clearNeedsUniqueName(id);
-    } catch (error) {
-      this.setRowError(id, error instanceof Error ? error.message : 'Save failed.');
-    }
-  }
-
-  /** Optimistic save (S4): merges the draft into `data` and closes the row immediately
-   * (`endEdit(id, row)`), moving it to `pending`, then rolls back on a failed save or settles it
-   * on success. The save itself is a real intercepted `fetch` (MSW), not a Promise stub —
-   * `forceFailure`/`latencyMs` are Storybook-controlled request headers the handler reads
-   * (`row-edit.handlers.ts`). */
-  private async saveEditOptimistic(id: RowId): Promise<void> {
     const row = this.table.draft().find((candidate) => this.table.trackBy(candidate) === id);
     if (row === undefined) {
       return;
@@ -279,6 +184,53 @@ export class GatedEditStoryHostComponent {
       // revertEdit: save failed — restores the pre-edit snapshot and closes the row.
       this.table.editing.update(revertEdit(id));
     }
+  }
+
+  /** Re-runs the save that just failed (§1.4's Retry). An optimistic failure always closes and
+   * reverts the row first, so retry always reopens it via `beginEdit` before saving again — not a
+   * mode branch, just this save path's shape. */
+  protected retrySave(id: RowId): void {
+    if (!this.table.editing().has(id)) {
+      this.table.editing.update(beginEdit(id));
+    }
+    void this.saveEdit(id);
+  }
+
+  protected dismissError(id: RowId): void {
+    this.clearRowError(id);
+  }
+
+  /** §1.8 save-all: reuses `saveEdit` per open row rather than inventing a batched verb — the
+   * library has none for this. Only rows that actually saved end up closed; a failed save closes
+   * and reverts its row anyway (inherent to closing before the round trip settles, not a
+   * save-all-specific limitation). */
+  protected async saveAll(): Promise<void> {
+    this.saveAllSummary.set(null);
+    const openIds = Array.from(this.table.editing());
+    if (openIds.length === 0) {
+      this.saveAllSummary.set('No open rows to save.');
+      return;
+    }
+
+    await Promise.all(openIds.map((id) => this.saveEdit(id)));
+
+    const failedIds = openIds.filter((id) => this.rowErrors().has(id));
+    const succeededCount = openIds.length - failedIds.length;
+    this.saveAllSummary.set(
+      failedIds.length === 0
+        ? `Saved all ${succeededCount} row(s).`
+        : `Saved ${succeededCount} of ${openIds.length} row(s); ${failedIds.length} failed.`,
+    );
+  }
+
+  /** §2.3 "add several in a run": saves the open row, then — only once it actually saved —
+   * opens a fresh blank row via the same `beginEdit({ insert, at })` path `addBlankRow()` uses. */
+  protected async saveAndAddNext(id: RowId): Promise<void> {
+    await this.saveEdit(id);
+    if (this.rowErrors().has(id)) {
+      return;
+    }
+    this.addBlankRow();
   }
 
   /** Drops `id`'s duplicate flag once its row leaves editing, whatever the exit path. */

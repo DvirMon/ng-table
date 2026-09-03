@@ -1,0 +1,72 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as GatedSinglePessimisticStories from './gated-single-pessimistic.stories';
+import hostClass from './gated-single-pessimistic-story-host.component.ts?raw';
+import hostTemplate from './gated-single-pessimistic-story-host.component.html?raw';
+import rowTypes from '../row-edit.types.ts?raw';
+import rowSchema from '../row-edit.schema.ts?raw';
+import rowMock from '../row-edit.mock.ts?raw';
+import rowUtils from '../row-edit.utils.ts?raw';
+import rowStyles from '../row-edit-story.css?raw';
+import '../code-tabs.css';
+
+<Meta of={GatedSinglePessimisticStories} name="Single, Pessimistic Docs" />
+
+# Gated — Single Row, Pessimistic Save
+
+<Canvas of={GatedSinglePessimisticStories.Default} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      Row Types
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      Row Schema
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      Row Mock
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      Row Utils
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      Row Style
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowTypes} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowMock} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowUtils} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="row-edit-story">
+  <p class="row-edit-story__hint">
+    Live + Pessimistic — focus a field to start its edit session, type, tab away. The field
+    reverts to its pre-edit value and locks immediately, before the save request is even sent;
+    the new value only appears once the server confirms it.
+  </p>
+
+  <div class="row-edit-story__toolbar">
+    @if (saveError(); as message) {
+      <span class="row-edit-story__error" role="status">{{ message }}</span>
+    }
+  </div>
+
+  <p class="row-edit-story__counter">
+    open rows: {{ liveTable.editing().size }} · in flight: {{ liveTable.pending().size }}
+  </p>
+
+  <table class="row-edit-story__table">
+    <thead>
+      <tr>
+        <th class="row-edit-story__cell">name</th>
+        <th class="row-edit-story__cell">dept</th>
+        <th class="row-edit-story__cell">state</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of liveTable.renderRows(); track row.id; let index = $index) {
+        @let isSaving = savingIds().has(row.id);
+
+        <tr
+          [class.row-edit-story__row--saving]="isSaving"
+          (focusin)="onEnterRow(row.id)"
+          (focusout)="onLeaveRow(row.id)"
+        >
+          <td class="row-edit-story__cell">
+            <input type="text" [formField]="rows[index].name" [disabled]="isSaving" placeholder="name" />
+          </td>
+          <td class="row-edit-story__cell">
+            <select [formField]="rows[index].dept" [disabled]="isSaving">
+              @for (dept of deptOptions; track dept) {
+                <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isSaving) {
+              <span class="row-edit-story__pending">confirming…</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
