@@ -30,7 +30,7 @@ export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column
 export type { SortNullsOpts } from './schema/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './schema/column-metadata';
 export { insertRow, removeRow, patchRow } from './mutations/row-mutations';
-export { beginEdit, clearEdit, endEdit } from './mutations/row-edit-mutations';
+export { beginEdit, clearEdit, createRow, endEdit } from './mutations/row-edit-mutations';
 export type { BeginEditOptions } from './mutations/row-edit-mutations';
 export {
   captureEdit,

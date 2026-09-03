@@ -336,6 +336,7 @@ state at all, so a `{ capture: true }` flag on either would have nothing to act 
 | Updater | Effect | No-ops when |
 |---|---|---|
 | `beginEdit(id, { insert?, at? })` | opens the row, capturing its value **only if none is held** (D31.1). `insert` adds the row to `data` first | already open; or `insert` collides with an existing id |
+| `createRow(id, row, { at? })` | `beginEdit(id, { insert: row, at })` under the name a consumer writing the create path reaches for — same call, same no-op rule | same as `beginEdit` with `insert` |
 | `endEdit(id)` | closes the row, keeping whatever is in `data` **and** its restore point — the row becomes `pending` | not open |
 | `clearEdit()` | closes every open row and drops their restore points, in one write. Pending rows untouched | nothing open |
 
@@ -614,8 +615,10 @@ table needs nothing. The live-optimistic path gets its own story (D39).
       restore point now carries a position (D45), so `removeEdit`/`revertEdit` cover it. What
       remains open is **move** — a position is captured but nothing re-orders, and undoing a move
       needs an inverse-operation representation this still doesn't have. G5 narrows to move only.
-- [ ] **O24** *(from D37)* — where does `swapRowId(from, to)` live now that `open` and `snapshots`
-      belong to different features? G3's fix straddles the boundary. Plan G3 after this effort.
+- [x] **O24** *(from D37)* — resolved 2026-09-03 by D49: `swapRowId(from, to)` is its own updater
+      in `mutations/optimistic-mutations.ts`, re-keying both maps, owned by neither feature. Also
+      resolves O20 (migrate the key; end-edit-first rejected). Handoff:
+      `work/swap-row-id/1-handoff.md`.
 - [ ] **O11** — does the feature fire a `rowEditChanged` event, or is the signal the only
       notification? Same question as O6 (mutations) — decide both together.
 - [ ] **O19** — do we export an `editableRow(row, columns)` schema fragment so the commit boundary

@@ -90,6 +90,18 @@ export function beginEdit<TRow>(
 }
 
 /**
+ * `beginEdit(id, { insert: row, at })` under a name that reads as what it does. A brand-new row
+ * is immediately open for editing — that's still an edit-session fact, so this stays on the
+ * editing slice — but "begin editing" is the wrong verb for a consumer writing the create path,
+ * not a misuse of the mechanism.
+ *
+ * `id` is required, not derived — `createRow` never reads `trackBy` itself.
+ */
+export function createRow<TRow>(id: RowId, row: NoInfer<TRow>, opts?: { at?: number }): EditingUpdater<TRow> {
+  return beginEdit<TRow>(id, { insert: row, at: opts?.at });
+}
+
+/**
  * Closes the row, keeping whatever is currently in `data` **and** its restore point — the row
  * becomes `pending`. Dropping the restore point instead is `releaseEdit`'s job; a purely local
  * save that has nothing to confirm calls both.
