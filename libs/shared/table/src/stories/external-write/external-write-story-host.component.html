@@ -1,26 +1,13 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
-    Open a row, then push a change or remove it from outside the edit flow. "Simulate server
-    push" stages a conflict instead of overwriting your typed value — choose Keep mine, Take
-    theirs, or merge field by field. "Push to row I'm not editing" quietly patches a closed row,
-    no interruption. "Remove row" deletes a row while it's being edited and leaves a notice
-    behind.
+    Open a row, then push a change from outside the edit flow. "Simulate server push" stages a
+    conflict instead of overwriting your typed value — choose Keep mine, Take theirs, or merge
+    field by field. "Push to row I'm not editing" quietly patches a closed row, no interruption.
   </p>
 
   <div class="row-edit-story__toolbar">
     <button type="button" (click)="pushToUnopenedRow()">Push to row I'm not editing</button>
   </div>
-
-  @if (deletedNotices().length > 0) {
-    <ul class="row-edit-story__notices">
-      @for (notice of deletedNotices(); track notice.id) {
-        <li class="row-edit-story__notice" role="status">
-          <span>"{{ notice.name }}" was deleted by someone else while you were editing it.</span>
-          <button type="button" (click)="dismissDeletedNotice(notice.id)">Dismiss</button>
-        </li>
-      }
-    </ul>
-  }
 
   <p class="row-edit-story__counter" role="status">editing map: {{ editingIds() | json }}</p>
 
@@ -64,7 +51,6 @@
             @if (isEditing) {
               <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
               <button type="button" (click)="simulateServerPush(row.id)">Simulate server push</button>
-              <button type="button" (click)="removeRowExternally(row.id)">Remove row</button>
             } @else {
               <button type="button" (click)="openEdit(row.id)">Edit</button>
             }

@@ -16,6 +16,5 @@ type Story = StoryObj<ExternalWriteStoryHostComponent>;
  * - Editing a row that's changed elsewhere shows a conflict banner: Keep mine, Take theirs, or
  *   merge field-by-field.
  * - A row that isn't open just gets patched quietly, no banner.
- * - A row that's open when it gets deleted elsewhere shows a deletion notice instead.
  */
 export const Default: Story = {};

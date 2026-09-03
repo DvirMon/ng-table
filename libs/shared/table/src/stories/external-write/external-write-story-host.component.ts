@@ -4,25 +4,24 @@ import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
 import { beginEdit } from '../../mutations/row-edit-mutations';
 import { captureEdit, revertEdit } from '../../mutations/optimistic-mutations';
-import { patchRow, removeRow } from '../../mutations/row-mutations';
+import { patchRow } from '../../mutations/row-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
 import { editRowsSchema, gatedTableSchema } from '../row-edit.schema';
 import type { EditRow } from '../row-edit.types';
 import { diffEditableFields, nextDept } from './external-write.utils';
-import type { DeletedRowNotice, EditableField, RowConflict } from './external-write.types';
+import type { EditableField, RowConflict } from './external-write.types';
 
 /**
- * S5 — external write while a row is open, extended to close the product doc's §1.5 gap: the
- * plumbing (`captureEdit` moving the restore point forward) was already covered, but nothing on
- * screen told the person a conflicting write had arrived. "Simulate server push" now stages a
- * `RowConflict` instead of writing straight into `data` — the person's typed value stays put
- * until they pick Keep mine / Take theirs / merge field-by-field, so doing nothing is never a
- * silent overwrite. "Push to row I'm not editing" patches a closed row the same way, but skips
- * `captureEdit` (no session to move forward) and any focus/scroll code, to demonstrate a quiet
- * update. "Remove row externally" now also surfaces a dismissible notice when the removed row
- * had an open editor, on top of ADR-0006's existing `onRowsRemoved` pruning.
+ * S5 — external write while a row is open, closing the product doc's §1.5 gap: the plumbing
+ * (`captureEdit` moving the restore point forward) was already covered, but nothing on screen told
+ * the person a conflicting write had arrived. "Simulate server push" now stages a `RowConflict`
+ * instead of writing straight into `data` — the person's typed value stays put until they pick
+ * Keep mine / Take theirs / merge field-by-field, so doing nothing is never a silent overwrite.
+ * "Push to row I'm not editing" patches a closed row the same way, but skips `captureEdit` (no
+ * session to move forward) and any focus/scroll code, per §1.5's fourth criterion: an external
+ * change to a row you're not editing applies quietly.
  */
 @Component({
   selector: 'ngp-external-write-story-host',
@@ -36,13 +35,10 @@ export class ExternalWriteStoryHostComponent {
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
 
-  // Surfaces ADR-0006 pruning directly: editingIds drops the removed row's id the
-  // instant onRowsRemoved runs, before the row itself disappears from the DOM.
   protected readonly editingIds = computed(() => Array.from(this.table.editing()));
 
   // Keyed by row id — at most one pending conflict per row, cleared once every field resolves.
   protected readonly conflicts = signal<Map<RowId, RowConflict>>(new Map());
-  protected readonly deletedNotices = signal<DeletedRowNotice[]>([]);
 
   protected openEdit(id: RowId): void {
     // beginEdit: opens the row and captures its current value as the restore point.
@@ -151,9 +147,9 @@ export class ExternalWriteStoryHostComponent {
     this.table.editing.update(captureEdit(id));
   }
 
-  /** Removes a conflict entry without touching the restore point — used by Cancel and row
-   * removal, where the row session is ending rather than being reconciled. Returns whether a
-   * conflict was actually present. */
+  /** Removes a conflict entry without touching the restore point — used by Cancel, where the row
+   * session is ending rather than being reconciled. Returns whether a conflict was actually
+   * present. */
   private dropConflict(id: RowId): boolean {
     if (!this.conflicts().has(id)) {
       return false;
@@ -164,19 +160,5 @@ export class ExternalWriteStoryHostComponent {
       return next;
     });
     return true;
-  }
-
-  protected removeRowExternally(id: RowId): void {
-    const wasOpen = this.table.editing().has(id);
-    const removedRow = this.data().find((candidate) => this.table.trackBy(candidate) === id);
-    this.table.value.update(removeRow(id));
-    this.dropConflict(id);
-    if (wasOpen && removedRow !== undefined) {
-      this.deletedNotices.update((notices) => [...notices, { id, name: removedRow.name }]);
-    }
-  }
-
-  protected dismissDeletedNotice(id: RowId): void {
-    this.deletedNotices.update((notices) => notices.filter((notice) => notice.id !== id));
   }
 }

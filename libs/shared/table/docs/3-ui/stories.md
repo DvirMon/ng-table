@@ -61,6 +61,35 @@ component in this repo (`file-organization.md`).
   `saveError`, per-row flags like `needsUniqueName`. The host wires `createTable()` and
   `form()` together; it does not reimplement table logic.
 
+## Story scope — copy-paste code, not a realistic app
+
+A story's code is what a consumer copies to implement the feature(s) it's proving — not a
+sketch of what a real app around that feature would also need. Two questions gate every line:
+
+- **Does this serve the feature this story proves?** If a real consumer would plausibly add it
+  regardless of which feature they're implementing (a confirm dialog before a destructive
+  action, a toast system, loading skeletons), it's app chrome, not the feature — leave it out
+  unless the story's whole point *is* that affordance.
+- **Is this feature inherent to the surface being shown, or merely adjacent?** A story may cover
+  several features at once only when they're inseparable from what that surface actually is —
+  `live-table/` shows sorting + editing + deletion together because a live table *is* that set of
+  capabilities, not because bundling them was convenient. A single-feature story (`external-write/`
+  proving §1.5 reconciliation) doesn't get a second feature bolted on just because it's plausible
+  a consumer would want it there too — that belongs to whichever story already proves it, or a
+  story of its own.
+
+**Exception — design stories.** When the story's subject is visual/interaction design itself
+(a component's states, a layout), the "copy-paste code" framing doesn't apply the same way —
+the story *is* the design surface being reviewed, not a feature implementation to lift. Scope
+still applies, just against the design surface being shown instead of a product feature.
+
+If review turns up a flow that doesn't answer "which feature does this line serve," cut it —
+even if it's realistic, even if it's already-written, even if removing it shrinks the demo.
+`external-write/` had exactly this: a deletion-notice UI attributed in its own doc-comment to
+the feature it was proving, but the acceptance criteria it actually cited belonged to a
+different, already-covered user story. Noise doesn't announce itself as noise — check the claim
+against the actual spec section, don't take the comment's word for it.
+
 ## Mocking actions: buttons over the actions panel
 
 Every mutation a person can trigger needs an on-canvas button calling a real table/form
@@ -104,5 +133,7 @@ Two tiers, by how much the story needs to prove:
   separate from table state.
 - `live-optimistic/` + `optimistic-save/` — the MSW/simulated-server-round-trip pattern.
 - `external-write/` — demonstrates an effect from *outside* the story's own button clicks
-  (`simulateServerPush`), which is why it also needs a `computed()` (`editingIds`) to make an
-  otherwise-invisible reconciliation effect (ADR-0006 pruning) visible on screen.
+  (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
+  an open row, quiet patch on a closed one) — a worked example of the scope discipline above:
+  it originally also carried a deletion-notice flow that belonged to a different user story
+  (§1.2) and was cut for that reason.

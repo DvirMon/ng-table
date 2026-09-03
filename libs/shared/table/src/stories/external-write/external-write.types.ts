@@ -21,9 +21,3 @@ export interface RowConflict {
   fields: FieldDiff[];
   merging: boolean;
 }
-
-/** Brief notice shown when a row with an open editor was deleted externally. */
-export interface DeletedRowNotice {
-  id: RowId;
-  name: string;
-}
