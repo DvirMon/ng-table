@@ -2,10 +2,8 @@ import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as LiveOptimisticStories from './live-optimistic.stories';
 import hostClass from './live-optimistic-story-host.component.ts?raw';
 import hostTemplate from './live-optimistic-story-host.component.html?raw';
-import rowTypes from '../row-edit.types.ts?raw';
-import rowSchema from '../row-edit.schema.ts?raw';
-import rowMock from '../row-edit.mock.ts?raw';
 import rowStyles from '../row-edit-story.css?raw';
+import rowSchema from '../row-edit.schema.ts?raw';
 import '../code-tabs.css';
 
 <Meta of={LiveOptimisticStories} />
@@ -39,19 +37,11 @@ for a few seconds after a delete settles, before its restore point is released.
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="live-optimistic-source" />
-      Row Types
+      CSS
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="live-optimistic-source" />
-      Row Schema
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="live-optimistic-source" />
-      Row Mock
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="live-optimistic-source" />
-      Row Style
+      row-edit.schema.ts
     </label>
   </div>
   <div className="code-tabs-panels">
@@ -62,16 +52,10 @@ for a few seconds after a delete settles, before its restore point is released.
       <Source code={hostClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={rowTypes} language="ts" />
+      <Source code={rowStyles} language="css" />
     </div>
     <div className="code-tabs-panel">
       <Source code={rowSchema} language="ts" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={rowMock} language="ts" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={rowStyles} language="css" />
     </div>
   </div>
 </div>

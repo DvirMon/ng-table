@@ -139,17 +139,35 @@ Two tiers, by how much the story needs to prove:
   no `withRowEdit()` is composed here, because that's a non-obvious composition choice a reader
   needs before looking at the code. Add prose to an mdx only for that kind of "why," not a
   restatement of what's visible in the canvas.
-- **The code-tabs block covers every file the host component imports** — not just its own
-  `.ts`/`.html`. HTML and TS (the host class) always come first; after that, add one tab per
-  imported types/schema/mock/utils/directive/style file, `?raw`-imported and named for what it
-  is (`Types`, `Schema`, `Mock`, `Utils`, `Directive`, `Style`/`CSS`). A file local to the
-  story's own folder gets its concern name (`Types`); a file shared out of the story-cluster
-  root (`row-edit.*`, `row-edit-story.css`) gets the same name prefixed `Row ` (`Row Types`,
-  `Row Schema`) so a reader can tell at a glance which files are story-specific vs. shared
-  fixtures. `sorting-editing.mdx` is the fullest example (9 tabs — every file it imports is
-  local, so none carry the `Row ` prefix). `code-tabs.css`'s positional `:nth-child` pairing
+- **The code-tabs block covers only what a consumer needs to copy to reproduce the feature** —
+  not every file the host happens to import. Matches the pattern Angular Material's own example
+  viewer uses (e.g. "Dialog Animations": `HTML | TS | CSS | dialog-animations-example-dialog.html`).
+  Tabs are two clusters, in this fixed order:
+  1. **The host's own files, generically labeled: `HTML`, then `TS`, then `CSS` if it has a
+     stylesheet** — always first, always in that order, always together. `CSS` means whatever
+     the host's `styleUrl`/`styleUrls` actually is, local or shared — `row-edit-story.css` fills
+     this slot generically labeled `CSS` for a story with no local override (`live-optimistic/`,
+     the `gated-*` stories). Only when a host has **two** stylesheets (its own local one plus the
+     shared one, e.g. `sorting-editing/`) does the local file take the `CSS` slot and the shared
+     one drop to cluster 2, filename-labeled — one generic `CSS` tab per story, never two.
+  2. **Extra files**, one tab each, labeled with the file's **literal filename** (not a made-up
+     name like "Schema") — e.g. `row-edit.schema.ts`, `row-edit-story.css`. A file shared out of
+     the story-cluster root is still just its own filename; there's no separate `Row ` prefix
+     scheme — the filename itself already says whether it's local or shared. A plain extra file
+     (schema/config logic) gets exactly one tab. An extra file that is itself a sub-component
+     (has its own `.ts` **and** `.html`) gets a tab per file, filename-labeled, the same way the
+     host's own two are — never collapsed into one.
+  **Types, Mock, Utils, and Directive tabs are excluded entirely** — none of them are something
+  a consumer copies: a row/data shape is inferred from the schema, not typed out by hand; mock
+  data is fixture-only; a "utils" file is usually story-only glue (a fake save function, a
+  demo-only diff/cycle helper) rather than reusable feature code; a directive is an import, not
+  something copied inline. `?raw`-import each included file. When a story has both a local and
+  a shared stylesheet (e.g. local `sorting-editing-flip.css` alongside shared
+  `row-edit-story.css`), the local one keeps the cluster-1 `CSS` slot and the shared one gets
+  its own filename-labeled tab in cluster 2. `code-tabs.css`'s positional `:nth-child` pairing
   between tab and panel currently supports up to 10 tabs; extend it (add another
-  `:nth-child(11)` pair to both selector lists) before adding an 11th tab to any story.
+  `:nth-child(11)` pair to both selector lists) before adding an 11th tab to any story —
+  unlikely to matter at this scope, since every story in this cluster tops out at 5.
 
 ## Reference implementations
 

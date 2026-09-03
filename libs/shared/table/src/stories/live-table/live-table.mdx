@@ -2,6 +2,9 @@ import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as LiveTableStories from './live-table.stories';
 import hostClass from './live-table-story-host.component.ts?raw';
 import hostTemplate from './live-table-story-host.component.html?raw';
+import hostStyles from './live-table-story-host.component.css?raw';
+import rowStyles from '../row-edit-story.css?raw';
+import rowSchema from '../row-edit.schema.ts?raw';
 import '../code-tabs.css';
 
 <Meta of={LiveTableStories} />
@@ -20,6 +23,18 @@ import '../code-tabs.css';
       <input type="radio" name="live-table-source" />
       TS
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-table-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-table-source" />
+      row-edit-story.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="live-table-source" />
+      row-edit.schema.ts
+    </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
@@ -27,6 +42,15 @@ import '../code-tabs.css';
     </div>
     <div className="code-tabs-panel">
       <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowSchema} language="ts" />
     </div>
   </div>
 </div>

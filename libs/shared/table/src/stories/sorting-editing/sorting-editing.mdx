@@ -3,6 +3,8 @@ import * as SortingEditingStories from './sorting-editing.stories';
 import hostClass from './sorting-editing-story-host.component.ts?raw';
 import hostTemplate from './sorting-editing-story-host.component.html?raw';
 import hostStyles from './sorting-editing-flip.css?raw';
+import rowStyles from '../row-edit-story.css?raw';
+import hostSchema from './sorting-editing.schema.ts?raw';
 import '../code-tabs.css';
 
 <Meta of={SortingEditingStories} />
@@ -25,6 +27,14 @@ import '../code-tabs.css';
       <input type="radio" name="sorting-editing-source" />
       CSS
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      row-edit-story.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      sorting-editing.schema.ts
+    </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
@@ -35,6 +45,12 @@ import '../code-tabs.css';
     </div>
     <div className="code-tabs-panel">
       <Source code={hostStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostSchema} language="ts" />
     </div>
   </div>
 </div>

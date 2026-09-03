@@ -2,6 +2,8 @@ import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as FormWriteMutationsStories from './form-write-mutations.stories';
 import hostClass from './form-write-mutations-story-host.component.ts?raw';
 import hostTemplate from './form-write-mutations-story-host.component.html?raw';
+import rowStyles from '../row-edit-story.css?raw';
+import rowSchema from '../row-edit.schema.ts?raw';
 import '../code-tabs.css';
 
 <Meta of={FormWriteMutationsStories} />
@@ -20,6 +22,14 @@ import '../code-tabs.css';
       <input type="radio" name="form-write-mutations-source" />
       TS
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="form-write-mutations-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="form-write-mutations-source" />
+      row-edit.schema.ts
+    </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
@@ -27,6 +37,12 @@ import '../code-tabs.css';
     </div>
     <div className="code-tabs-panel">
       <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowSchema} language="ts" />
     </div>
   </div>
 </div>
