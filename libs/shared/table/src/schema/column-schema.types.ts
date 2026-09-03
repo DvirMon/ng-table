@@ -8,7 +8,7 @@ import type { ColumnDef } from '../api/types';
  *
  * Resolves to `baseColumns`, never the derived `columns` — rules observe declared and
  * imperatively-updated column state, never another rule's own output. Reading `columns`
- * here would close the `columns → ruleResults → params → resource → ruleResults` cycle (D8).
+ * here would close the `columns → ruleResults → params → resource → ruleResults` cycle.
  */
 export interface ColumnRuleContext<TRow> {
   readonly columns: () => ColumnDef<TRow>[];

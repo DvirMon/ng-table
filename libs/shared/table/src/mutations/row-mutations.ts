@@ -1,8 +1,8 @@
 import { resolveIndex } from '../engine/rows';
 import type { RowId, RowUpdater } from '../api/types';
 
-/** D27: `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an
- * out-of-range or stale `at` clamps instead of crashing. */
+/** `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an out-of-range or
+ * stale `at` clamps instead of crashing. */
 function clampSpliceIndex(at: number | undefined, length: number): number {
   if (at === undefined) return length;
   const resolved = at < 0 ? length + at : at;

@@ -36,7 +36,7 @@ export function wireColumnsSchemaAsync<TRow>(
 
   return (core: ColumnsSchemaStore<TRow>): TableFeatureSpec<TRow> => {
     // Resolves to `baseColumns`, never the derived `columns` — see `ColumnRuleContext`'s doc
-    // comment (D8).
+    // comment for why.
     const ctx: ColumnRuleContext<TRow> = { columns: () => core.baseColumns() };
 
     const columnRules: ColumnRuleEntry<TRow>[] = [

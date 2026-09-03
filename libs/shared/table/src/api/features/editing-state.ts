@@ -11,14 +11,13 @@ import type { RowId, TrackByFn } from '../types';
  * concern, and splitting them would create a cycle with the updater modules that consume both.
  *
  * Not a feature. `withOptimistic()` and `withRowEdit()` each call `createEditingStore()`
- * themselves (D37) — neither reads the other's signal, and composition stays independent of
- * `features` array order.
+ * themselves — neither reads the other's signal, and composition stays independent of `features`
+ * array order.
  */
 
 /**
- * A row's restore point. Carries its position as well as its value (Change 1 of the optimistic
- * CRUD handoff) so `revertEdit` can re-insert a row that was removed, not just replace one still
- * present.
+ * A row's restore point. Carries its position as well as its value, so `revertEdit` can
+ * re-insert a row that was removed, not just replace one still present.
  */
 export interface RowRestorePoint<TRow> {
   readonly row: TRow;
@@ -33,22 +32,22 @@ export type RowSnapshot<TRow> = RowRestorePoint<TRow>;
 
 /** Config for `patchEdit` (`optimistic-mutations.ts`). */
 export interface PatchEditOptions {
-  /** Default `'if-absent'` (D31.1 — oldest restore point wins, matches `beginEdit`). `'always'`
+  /** Default `'if-absent'` — oldest restore point wins, matches `beginEdit`. `'always'`
    * overwrites the restore point on every call, matching `captureEdit`. */
   capture?: 'if-absent' | 'always';
 }
 
 /** id -> the row's restore point, captured the moment it was first opened/removed/patched
- * without one (D17). One restore point per row; whether that row is currently open is a separate
+ * without one. One restore point per row; whether that row is currently open is a separate
  * fact. */
 export type SnapshotMap<TRow> = ReadonlyMap<RowId, RowSnapshot<TRow>>;
 
 /**
- * What an editing updater reads and writes (D31.5). Two orthogonal facts, not two copies of
- * one: `snapshots` is *what a rollback restores*, `open` is *which rows show inputs*. `pending`
- * is derived from the pair, never stored.
+ * What an editing updater reads and writes. Two orthogonal facts, not two copies of one:
+ * `snapshots` is *what a rollback restores*, `open` is *which rows show inputs*. `pending` is
+ * derived from the pair, never stored.
  *
- * D37 splits ownership without splitting the shape — `withOptimistic()` writes `snapshots` and
+ * Ownership splits without splitting the shape — `withOptimistic()` writes `snapshots` and
  * leaves `open` permanently empty; `withRowEdit()` writes both.
  */
 export interface EditingState<TRow> {
@@ -61,7 +60,7 @@ export interface EditingState<TRow> {
 export interface EditingUpdaterContext<TRow> {
   readonly data: TRow[];
   readonly trackBy: TrackByFn<TRow>;
-  /** Restoring/removing a row is one write, not two calls to `table.value.update(...)` (D30). */
+  /** Restoring/removing a row is one write, not two calls to `table.value.update(...)`. */
   writeData(rows: TRow[]): void;
   /** O(1) id -> index lookup, mirroring `RowUpdaterContext`. Resolved against `data` at read
    * time — stale after a `writeData` earlier in the same updater, which is exactly what
@@ -77,9 +76,8 @@ export type EditingUpdater<TRow> = (
 const NO_IDS: ReadonlySet<RowId> = new Set();
 
 /**
- * D31: holds a restore point but is no longer open. Derived rather than stored — this is what
- * makes closing a row a single `open.delete(id)` with no second container to fall out of step
- * with (D31.5).
+ * Holds a restore point but is no longer open. Derived rather than stored — this is what makes
+ * closing a row a single `open.delete(id)` with no second container to fall out of step with.
  *
  * On a table composing only `withOptimistic()`, `open` is always empty, so this returns every
  * held restore point — exactly the in-flight set.
@@ -157,7 +155,7 @@ export function closeAll<TRow>(state: EditingState<TRow>): EditingState<TRow> {
 
 export interface EditingStoreOptions<TRow> {
   /** Runs on every write before it lands, so a feature can enforce an invariant the updaters
-   * know nothing about. `withRowEdit()` uses it for D14's single-mode trim; `withOptimistic()`
+   * know nothing about. `withRowEdit()` uses it for the single-mode trim; `withOptimistic()`
    * passes nothing. */
   onWrite?: (next: EditingState<TRow>) => EditingState<TRow>;
 }
@@ -178,7 +176,7 @@ export function createEditingStore<TRow>(
   options: EditingStoreOptions<TRow> = {}
 ): EditingStore<TRow> {
   // One signal over both facts: `pending` is derived from them together, so it can never read a
-  // half-applied write (D31.5).
+  // half-applied write.
   const state = signal<EditingState<TRow>>({ snapshots: new Map(), open: new Set() });
 
   function apply(next: EditingState<TRow>): void {

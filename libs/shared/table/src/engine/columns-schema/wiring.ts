@@ -50,10 +50,10 @@ export function buildMetadataEntries<TRow>(
 }
 
 /**
- * Builds the async rule's resource and its D5 retention cell: holds the last-resolved value
- * while a refetch is in flight (`loading`/`reloading`), applies `onSuccess`/`onError` on
- * settle, and defers to the column's declared visibility before first resolution (`result`
- * stays `undefined`, which `foldColumnRules` treats as "no opinion yet").
+ * Builds the async rule's resource and a retention cell: holds the last-resolved value while a
+ * refetch is in flight (`loading`/`reloading`), applies `onSuccess`/`onError` on settle, and
+ * defers to the column's declared visibility before first resolution (`result` stays
+ * `undefined`, which `foldColumnRules` treats as "no opinion yet").
  */
 export function buildAsyncMetadataEntry<TRow>(
   ctx: ColumnRuleContext<TRow>,

@@ -197,6 +197,29 @@ holds a **value**, never an index, so position is unrecoverable regardless.~~
 (rollback becomes its own feature) and left the *representation* half open; D45–D47 closed the
 representation half for delete specifically, leaving move as the one still-open case.
 
+### G13 — `closeAllButLast` may now discard a displaced row's unsaved edit, contradicting D31.2 *(state layer)*
+
+**Where:** `api/features/with-row-edit.ts`, `closeAllButLast()`.
+
+**What:** D31.2 decided single-mode row switching keeps whatever a displaced row's blur already
+committed to `data` ("Save, not Cancel" — silently reverting would be the surprise). That
+reasoning assumed blur writes `data` directly. Since `with-multiple-edit/`'s `draft` gates the
+commit boundary in gated mode (blur no longer writes `data`; a `draft` entry re-derives from
+`data` the moment the row is no longer open), a row displaced by `closeAllButLast` now has its
+typed-but-uncommitted edit discarded — the opposite of D31.2's outcome — with no decision on
+record that this change was intended.
+
+**Why P2, not P1:** nothing crashes and no data is corrupted; the discarded value was never
+written to `data` in the first place under the gated/`draft` flow. It is a silent behavior
+change from a documented decision, not a defect in what ships today.
+
+**Flagged 2026-09-03** while trimming decision-history narration out of `with-row-edit.ts`'s
+comments — the discrepancy surfaced as unresolved product behavior, not documentable history.
+
+**Blocked on:** a product call — is "discard the displaced row's draft" the intended single-mode
+outcome under gated/`draft` editing, or should `closeAllButLast` carry the draft forward (e.g.
+into the snapshot, or by refusing to displace a row with an unsaved draft)? Tracked as **O26**.
+
 ### G6 — Expansion children get no `sourceIndex` *(state layer — engine)*
 
 **What:** `indexById` (`engine/core.ts`) is built from `data()`'s **top-level** entries only. A
@@ -334,6 +357,7 @@ G*n*", nothing more. Follow the link before acting on any of them.
 | **O16** | Where does a *retained* row sit once it no longer matches the filter — in place, or collected? | phantom — same | [with-row-editing](./2-decisions.md) |
 | **O11** | Does `withRowEdit()` fire a `rowEditChanged` Observable, or is `editing()` the only notification? | no gap — API surface. Decide with **O6** | [with-row-editing](./2-decisions.md) |
 | **O19** | Export an `editableRow(row, columns)` schema fragment so the commit boundary is one call? | no gap — E5 in [`4-increments.md`](./4-increments.md) | [with-row-editing](./2-decisions.md) |
+| **O26** | Should a displaced row's unsaved `draft` be discarded (today's behavior) or carried forward when `closeAllButLast` fires? | **G13** | [with-row-edit.ts](../../../../src/api/features/with-row-edit.ts) |
 
 **O17** (`applyEach` validates rows the user cannot see) moved with G7 — see the
 [UI register](../../../3-ui/work/row-editing/5-gaps.md).

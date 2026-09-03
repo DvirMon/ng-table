@@ -6,12 +6,12 @@ import type { WritableView } from '../../engine/writable-view';
 
 export interface OptimisticMembers<TRow> {
   /** Read: which rows are open for editing — **always empty** unless `withRowEdit()` is composed,
-   * since nothing else opens a row. Write: `.update(updater)` (D30), e.g.
+   * since nothing else opens a row. Write: `.update(updater)`, e.g.
    * `table.editing.update(captureEdit(id))`. Every updater, including the ones that only touch
    * restore points, is applied through this one view. */
   readonly editing: WritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>;
-  /** D31: rows holding a restore point that is not open — an optimistic save in flight. Derived
-   * from the state, so a row can never be open and pending at once. On a live table this is every
+  /** Rows holding a restore point that is not open — an optimistic save in flight. Derived from
+   * the state, so a row can never be open and pending at once. On a live table this is every
    * held restore point, which is exactly the in-flight set. */
   readonly pending: Signal<ReadonlySet<RowId>>;
 }
@@ -20,8 +20,8 @@ export interface OptimisticMembers<TRow> {
  * Restore points around writes that can fail: capture before the write, release when the server
  * confirms, revert when it rejects.
  *
- * Composed on its own by an **always-editable** table (D39), whose edit session is delimited by
- * focus rather than by a button — there is nothing to open, so it needs no edit session at all:
+ * Composed on its own by an **always-editable** table, whose edit session is delimited by focus
+ * rather than by a button — there is nothing to open, so it needs no edit session at all:
  *
  * ```ts
  * onFocus: table.editing.update(captureEdit(id));
@@ -32,10 +32,10 @@ export interface OptimisticMembers<TRow> {
  * `withRowEdit()` composes the same state for gated tables and adds the open set on top; listing
  * both in `features` throws at construction (ADR-0007).
  *
- * **Scope — update, create, and delete; never move (D38, G5, extended by the optimistic-CRUD
- * handoff).** A restore point now carries a position as well as a value, so `revertEdit` can
- * re-insert a row `removeEdit` took out of `data`. A moved row's position is still not part of a
- * snapshot — covering move needs an inverse-operation representation this library does not have.
+ * **Scope — update, create, and delete; never move.** A restore point carries a position as well
+ * as a value, so `revertEdit` can re-insert a row `removeEdit` took out of `data`. A moved row's
+ * position is still not part of a snapshot — covering move needs an inverse-operation
+ * representation this library does not have.
  */
 export function withOptimistic<TRow = unknown>(): (
   core: TableCore<TRow>

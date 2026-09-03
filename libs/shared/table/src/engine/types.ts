@@ -31,7 +31,7 @@ export interface TableEngineConfig<TRow> {
  */
 export interface TableCore<TRow> {
   /** Read: the folded, rule-applied column list. Write: `.update(updater)` targets the
-   * underlying `baseColumns` — never the fold itself (D30). */
+   * underlying `baseColumns` — never the fold itself. */
   readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
   /**
    * Engine-internal only: the pre-fold declared columns `columns` overlays rules onto.
@@ -46,9 +46,9 @@ export interface TableCore<TRow> {
    * `TableStore`. Feeds the removal-reconciliation effect (ADR-0006) so it can diff ids without
    * recomputing them a second time. */
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
-  /** Read: the consumer's own row data (D3/D4 — table never copies it). Write:
+  /** Read: the consumer's own row data — the table never copies it. Write:
    * `.update(updater)` writes through to that same signal, resolving `trackBy` internally
-   * for id-based updaters (D30). */
+   * for id-based updaters. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 }
 

@@ -84,7 +84,7 @@ export function metadataAsync<TRow, K extends Extract<keyof TRow, string>, TPara
  * Reads a registered metadata value back off a resolved `ColumnDef`. A free function, not a
  * `.metadata(key)` method — `ColumnDef` is a plain, flat interface everywhere else in the
  * engine (never a class/handle), unlike the per-slice `table.columns`/`table.value` write
- * members (D30).
+ * members.
  */
 export function readColumnMeta<TRow, T>(
   column: ColumnDef<TRow>,

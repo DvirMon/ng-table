@@ -70,21 +70,19 @@ export function toggleColumnVisible<TRow>(
 
 /**
  * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`schema/column-rules.ts`) write
- * to under the hood — never exported from `index.ts`, so consumers can't read or collide with
- * it via `readColumnMeta()`. `foldColumnRules` special-cases it below: unlike every other
- * metadata key (single-writer, enforced by `resolve.ts`'s `assertMetadataKeysAreUnique`),
- * multiple entries targeting `VISIBLE` on the same column are allowed and AND-combined —
- * matching the pre-refactor `visible-reactive`/`visible-async` behavior. Same pattern as
- * Signal Forms' own `REQUIRED`/`MIN_LENGTH` metadata keys backing `required()`/`minLength()`.
+ * to — never exported, so consumers can't read or collide with it via `readColumnMeta()`.
+ * `foldColumnRules` special-cases it: unlike every other metadata key (single-writer, enforced
+ * by `resolve.ts`), multiple entries targeting `VISIBLE` on the same column are allowed and
+ * AND-combined. Same pattern as Signal Forms' `REQUIRED`/`MIN_LENGTH` keys.
  */
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
  * Internal metadata key `applySortNulls()` (`schema/column-rules.ts`) writes to — the per-column
  * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
- * writer: two `applySortNulls()` calls on the same column throw at resolve time
- * (`resolve.ts`'s `assertMetadataKeysAreUnique`), so it needs no special case in
- * `foldColumnRules` below — it flows through the generic `meta` map like any consumer key.
+ * writer: two `applySortNulls()` calls on the same column throw at resolve time, so it needs no
+ * special case in `foldColumnRules` — it flows through the generic `meta` map like any consumer
+ * key.
  */
 export const SORT_NULLS: ColumnMetaKey<{
   readonly order?: 'first' | 'last';
@@ -103,18 +101,18 @@ export interface ColumnRuleEntry<TRow = unknown> {
 }
 
 /**
- * The full set of registered rule entries a table folds over. Static for the table's lifetime
- * (D9) — only the entries' `result` signals and the `columns` they're folded against change.
+ * The full set of registered rule entries a table folds over. Static for the table's lifetime —
+ * only the entries' `result` signals and the `columns` they're folded against change.
  */
 export type ColumnRuleRegistry<TRow = unknown> = readonly ColumnRuleEntry<TRow>[];
 
 /**
  * Folds registered rules onto `columns` — the single resolution path for both `visible` and
- * consumer metadata, grouped by `(columnId, key)`. Per D4: `VISIBLE`-keyed entries on the same
- * column are ANDed together; a group with no *defined* result yet contributes nothing, so the
- * base column's `visible` stands. Every other key is single-writer (guaranteed by
- * `resolve.ts`) and lands in `column.meta`. Entries whose `columnId` isn't in `columns` are
- * skipped (D9 — no error). Columns with no registered rules pass through by identity.
+ * consumer metadata, grouped by `(columnId, key)`. `VISIBLE`-keyed entries on the same column
+ * are ANDed together; a group with no *defined* result yet contributes nothing, so the base
+ * column's `visible` stands. Every other key is single-writer (guaranteed by `resolve.ts`) and
+ * lands in `column.meta`. Entries whose `columnId` isn't in `columns` are silently skipped.
+ * Columns with no registered rules pass through by identity.
  */
 export function foldColumnRules<TRow>(
   columns: ColumnDef<TRow>[],

@@ -7,8 +7,8 @@ export type RowId = string | number;
 
 /**
  * Reactive row-data source handed to `createTable(data, ...)`. The consumer's
- * `WritableSignal<TRow[]>` is the single source of truth (D3/D4) — the pipeline reads it
- * directly via `computed()`, there is no internal copy to fall out of sync.
+ * `WritableSignal<TRow[]>` is the single source of truth — the pipeline reads it directly via
+ * `computed()`, there is no internal copy to fall out of sync.
  */
 export type TableDataInput<TRow> = WritableSignal<TRow[]>;
 
@@ -96,10 +96,9 @@ export type ColumnDefInput<TRow = unknown> = Pick<ColumnDef<TRow>, 'id'> &
 //
 // Consequence: consumers must repeat `<TRow>` on every feature call
 // (`withExpansion<Department>()`), since a feature is called before it receives the store,
-// so its call site has no argument to infer from. The fix — `features: (t) => [...]`, where
-// each feature takes the core as an argument — became possible once `@ngrx/signals` was
-// dropped, and is deliberately deferred. See ADR-0003 and `docs/1-state/architecture.md`,
-// "Rejected: inferring TRow into with-*() calls".
+// so its call site has no argument to infer from. See ADR-0003 and
+// `docs/1-state/architecture.md`, "Rejected: inferring TRow into with-*() calls", for why an
+// alternative isn't used.
 export type AnyTableFeature = TableFeature<any, any>;
 
 export interface TableStoreConfig<
@@ -137,19 +136,17 @@ export type ComposedFeatureMembers<Features extends readonly AnyTableFeature[]> 
 /**
  * Public surface of a store returned by `createTable()`. This is the contract consumers
  * program against — it never references engine types, so swapping the internal
- * state-management implementation is not a breaking change. Validated 2026-08-11: the
- * `@ngrx/signals` → `composeTable()` swap landed with zero consumer diff (ADR-0003).
+ * state-management implementation is not a breaking change (see ADR-0003).
  */
 export type ColumnsUpdater<TRow> = (
   columns: ColumnDef<TRow>[]
 ) => ColumnDef<TRow>[];
 
 /**
- * Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` (D30) so
- * id-based updaters (`removeRow`, `patchRow`) can resolve identity without needing a store
- * reference themselves — this is what keeps them tree-shakeable and unit-testable standalone
- * (D6). The raw-lambda form `rows => rows.filter(...)` satisfies this type too; it just
- * ignores `ctx`.
+ * Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` so id-based
+ * updaters (`removeRow`, `patchRow`) can resolve identity without needing a store reference
+ * themselves — keeps them tree-shakeable and unit-testable standalone. The raw-lambda form
+ * `rows => rows.filter(...)` satisfies this type too; it just ignores `ctx`.
  */
 export type RowUpdater<TRow> = (
   rows: TRow[],
@@ -157,7 +154,7 @@ export type RowUpdater<TRow> = (
 ) => TRow[];
 
 export interface TableStore<TRow> {
-  /** Read: the folded, rule-applied column list. Write: `.update(updater)` (D30) — e.g.
+  /** Read: the folded, rule-applied column list. Write: `.update(updater)` — e.g.
    * `table.columns.update(reorderColumns(ids))`. */
   readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
   readonly rows: Signal<TRow[]>;
@@ -169,7 +166,7 @@ export interface TableStore<TRow> {
   // Equals `rows().length` until a virtualization feature overrides it.
   readonly totalRowCount: Signal<number>;
 
-  /** Read: the row data (D3/D4 — the consumer's own signal, single source of truth). Write:
-   * `.update(updater)` (D30) — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
+  /** Read: the row data — the consumer's own signal, single source of truth. Write:
+   * `.update(updater)` — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 }

@@ -21,10 +21,9 @@ export interface NgpTableRowFieldContext<TRow> {
 }
 
 /**
- * Structural directive folding the E2 pattern —
- * `@if (row.sourceIndex !== undefined) { @let field = rows[row.sourceIndex]; }` — into one
- * template line. See D33, `docs/1-state/work/with-row-editing/2-decisions.md`, for why this
- * lives behind the `@acme/table/forms` secondary entry point rather than the root barrel.
+ * Structural directive folding `@if (row.sourceIndex !== undefined) { @let field =
+ * rows[row.sourceIndex]; }` into one template line. Exported from the `@acme/table/forms`
+ * secondary entry point, not the root barrel — the root stays forms-free even at type level.
  */
 @Directive({ selector: '[ngpTableRowField]' })
 export class NgpTableRowFieldDirective<TRow> {

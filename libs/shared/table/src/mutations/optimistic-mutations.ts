@@ -14,29 +14,21 @@ import type { RowId } from '../api/types';
 export type { PatchEditOptions } from '../api/features/editing-state';
 
 /**
- * The rollback verbs — `withOptimistic()`'s slice (D37). Meaningful whether or not an edit
- * session exists: they read and write `snapshots`, and touch `open` only to leave it (which is a
- * no-op on a table where nothing ever opens).
+ * The rollback verbs — `withOptimistic()`'s slice. Meaningful whether or not an edit session
+ * exists: they read and write `snapshots`, and touch `open` only to leave it (a no-op on a table
+ * where nothing ever opens).
  *
- * Scope is update, create, and delete (Change 1/2 of the optimistic-CRUD handoff extended D38/G5
- * to delete — a restore point now carries a position as well as a value). `moveRow` rollback is
- * still out of scope — position is representable, but the move verb itself doesn't exist (D19).
+ * Covers update, create, and delete rollback. `moveRow` rollback is out of scope — there's no
+ * `moveRow` updater to roll back yet.
  */
 
 /**
- * D40: captures a restore point for `id`, **overwriting** any existing one. Omitting `row`
- * re-reads `data()` for the id; if neither `row` nor a lookup finds a value, no snapshot is
- * written at all — capturing nothing is more honest than capturing a tombstone (post-D42, this
- * can only arise from a since-removed row).
+ * Captures a restore point for `id`, **always overwriting** any existing one. Omitting `row`
+ * re-reads `data()` for the id; if that finds nothing either, no snapshot is written.
  *
- * Two entry points, one difference: `beginEdit` captures *only if absent* (D31.1 — the oldest
- * restore point wins, so Cancel returns to the true pre-edit state), `captureEdit` always
- * overwrites. That is the whole of what the former `rebaseEdit` expressed, now a difference
- * between two verbs rather than a flag on one.
- *
- * Supersedes `rebaseEdit` (D34), whose open-only guard is dropped: capture is no longer a
- * session concern, and the guard would make this dead on a live table — the one place it is the
- * primary entry point.
+ * Use this to move the restore point forward (e.g. after accepting a live update while the row
+ * stays open). For "capture only if absent" — the usual open-a-row case, where the oldest
+ * restore point should win — use `beginEdit` instead.
  */
 export function captureEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
   return (state, { data, trackBy, indexById }) => {
@@ -51,18 +43,15 @@ export function captureEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
 }
 
 /**
- * D41: drops a restore point once the server has confirmed the write — the row is done, nothing
- * left to roll back to. Renamed from `settleEdit`, pairing with `captureEdit` as acquire/release.
+ * Drops the restore point once the server has confirmed the write — nothing left to roll back
+ * to. Pairs with `captureEdit` as acquire/release.
  *
- * Takes a **required** id, deliberately. A bulk form meaning "release everything" discards
- * in-flight rollbacks: harmless on a gated table where most restore points belong to rows the
- * user is typing in, but on a live table nothing is ever open, so every restore point belongs to
- * a request still waiting on the server. A later rejection would find nothing to restore and the
- * rejected value would stay on screen with no error. Bulk teardown is `clearEdit()`, which
- * closes and releases atomically (D44).
+ * Takes a required id — there's no bulk "release everything", since on a live table every
+ * restore point belongs to a request still in flight, and dropping it early would leave a
+ * rejected write silently stuck on screen. Bulk teardown is `clearEdit()` instead (closes and
+ * releases atomically).
  *
- * No-ops for an id that is still open (closing one is `endEdit`'s job) or that holds no restore
- * point.
+ * No-op for an id that's still open (closing it is `endEdit`'s job) or holds no restore point.
  */
 export function releaseEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state) =>
@@ -72,16 +61,16 @@ export function releaseEdit<TRow>(id: RowId): EditingUpdater<TRow> {
 }
 
 /**
- * Restores `id` to its held snapshot — and nothing else. If the row is still present in `data`
- * it is replaced in place (a sort or another write may have moved it, so position is ignored);
- * if it is gone (removed by `removeEdit`, or externally), it is re-inserted at the snapshot's
- * `at`. Either way the restore point is spent and the row ends up closed.
+ * Restores `id` to its held snapshot. If the row is still present in `data` it's replaced in
+ * place (position is ignored — a sort or write may have moved it); if it was removed (by
+ * `removeEdit` or externally), it's re-inserted at the snapshot's `at`. Either way the restore
+ * point is spent and the row ends up closed.
  *
  * The optional `row` overrides what gets written — revert to *this* value instead of the stored
- * snapshot's row, while still using the snapshot's `at` for a re-insert. Orthogonal to
- * `captureEdit`, which stays open and only moves the restore point for a *later* revert.
+ * snapshot, while still using the snapshot's `at` for a re-insert.
  *
- * No-op when the id holds no restore point. Removal is a different intent — see `discardEdit`.
+ * No-op when the id holds no restore point. To remove the row instead of restoring it, see
+ * `discardEdit`.
  */
 export function revertEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData, indexById }) => {
@@ -105,12 +94,10 @@ export function revertEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
 }
 
 /**
- * Drops the restore point and removes the row — the discard path. Counterpart to `revertEdit`,
- * not a mode of it. Replaces the three-call `removeRow` + `endEdit` + `releaseEdit` sequence the
- * docs previously prescribed.
+ * Drops the restore point and removes the row — the discard path, as opposed to `revertEdit`'s
+ * restore path.
  *
- * No-op when no restore point is held (house rule — every updater no-ops on a miss); plain
- * `removeRow` covers deleting a row nobody captured.
+ * No-op when no restore point is held; plain `removeRow` covers deleting a row nobody captured.
  */
 export function discardEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData }) => {
@@ -126,26 +113,25 @@ export function discardEdit<TRow>(id: RowId): EditingUpdater<TRow> {
 }
 
 /**
- * Captures row + index if none is held, then removes the row — one write. Needs no prior
- * `beginEdit`/`captureEdit`. Capture-if-absent (D31.1), so removing an already-open row keeps its
- * true pre-edit restore point. `revertEdit(id)` puts it back at `at`.
+ * Captures row + index if none is held (keeping any existing restore point, so removing an
+ * already-open row still reverts to its true pre-edit value), then removes the row — one write,
+ * no prior `beginEdit`/`captureEdit` needed. `revertEdit(id)` puts it back at `at`.
  *
  * Belongs to `withOptimistic`, not `withRowEdit` — it touches `open` only to clear it (a removed
- * row shows no inputs), no session semantics involved.
+ * row shows no inputs); no session semantics involved.
  */
 export function removeEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData, indexById }) => {
     const at = resolveIndex(data, id, { trackBy, indexById });
     if (at === -1) {
-      return state; // house rule: no-op on a miss
+      return state;
     }
 
     const held = state.snapshots.get(id);
+    // `detached: true` marks the row as gone from `data` so ADR-0006's pruning doesn't wipe this
+    // snapshot the moment the row disappears.
     const snapshot: RowRestorePoint<TRow> = held
-      ? { ...held, detached: true } // IMPORTANT: keep the captured row/at, but flip detached
-        // true — else ADR-0006 pruning wipes a snapshot that was captured while the row was
-        // still present (detached: false from beginEdit/captureEdit), the moment removeEdit
-        // fires.
+      ? { ...held, detached: true }
       : { row: data[at], at, detached: true };
 
     writeData(data.filter((row) => trackBy(row) !== id));

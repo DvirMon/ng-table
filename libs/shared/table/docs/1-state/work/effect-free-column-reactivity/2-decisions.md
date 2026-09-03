@@ -299,3 +299,18 @@ Both `effect()` calls in `wiring.ts` are removed. `wireReactiveVisibleRules` bec
 genuinely needs an injection context, and its result is produced by the D5 `linkedSignal`. The
 `no effect-driven state writes` invariant becomes true of the library's own internals, which
 is what made it unenforceable (gap report, "Why this matters").
+
+## Open — documentation gap: `MetadataAsyncRule`'s prior shape
+
+`schema/column-schema.types.ts`'s `MetadataAsyncRule` docblock states it was "generalized from
+the old `visible-async` shape to carry an arbitrary `key`" — implying a prior version scoped
+specifically to `visible`, later widened. D4 above generalizes the **sync** rule kind
+(`MetadataRule`) from a `visible`-only overlay to a keyed reducer, but no decision here covers
+an equivalent narrowing/widening of the **async** kind specifically.
+
+Flagged 2026-09-03 while trimming decision-history narration out of source comments: the claim
+couldn't be verified against this file, `1-gap-report.md`, or anywhere else under `docs/**`. Not
+resolved here — either the prior shape genuinely predates this log (find and cite the commit/PR)
+or the comment's framing is simply inaccurate and should be corrected to describe only the
+current, general shape. Left as `visible-async` framing in the source for now; whoever picks
+this up should settle it one way and update both the doc comment and this entry.
