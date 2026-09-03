@@ -1,8 +1,11 @@
 <div class="row-edit-story">
   <p class="row-edit-story__hint">
     The simplest editable table — every field is always editable, no edit mode to enter. Name
-    commits on blur; department commits the instant you pick a value.
+    commits on blur; department commits the instant you pick a value. Discarding a row removes it
+    straight away — undo is the safety net, not a confirm dialog.
   </p>
+
+  <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
 
   <div class="row-edit-story__toolbar">
     <label>
@@ -20,8 +23,11 @@
     <button type="button" (click)="table.toggleSort('dept')">
       Sort dept {{ sortArrow('dept') }}
     </button>
+    @if (undoLabel(); as label) {
+      <button type="button" [attr.aria-label]="label" (click)="undoLastAction()">Undo</button>
+    }
     <span class="row-edit-story__counter">commits: {{ commitCount() }}</span>
-    <span class="row-edit-story__shortcut-hint">⌘Z / Ctrl+Z — undo last commit</span>
+    <span class="row-edit-story__shortcut-hint">⌘Z / Ctrl+Z — undo last change</span>
   </div>
 
   <table class="row-edit-story__table">
@@ -29,6 +35,9 @@
       <tr>
         <th class="row-edit-story__cell">name</th>
         <th class="row-edit-story__cell">dept</th>
+        <th class="row-edit-story__cell row-edit-story__cell--actions">
+          <span class="sr-only">actions</span>
+        </th>
       </tr>
     </thead>
     <tbody>
@@ -44,6 +53,26 @@
                   <option [value]="dept">{{ dept }}</option>
                 }
               </select>
+            </td>
+            <td class="row-edit-story__cell row-edit-story__cell--actions">
+              <button
+                type="button"
+                class="row-edit-story__icon-button"
+                [attr.aria-label]="discardLabel(data()[row.sourceIndex])"
+                [title]="discardLabel(data()[row.sourceIndex])"
+                (click)="discardRow(row.id)"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M6.5 1.5h3M2.5 3.5h11M4.5 3.5l.7 9.4a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-9.4M6.7 6.3v5.4M9.3 6.3v5.4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
             </td>
           </tr>
         }

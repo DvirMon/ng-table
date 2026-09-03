@@ -570,7 +570,7 @@ Storybook stories (`src/stories/`) are the primary reference; the demo app preda
 
 | Story | Shows | Version |
 |---|---|---|
-| `live-table/` | S1 — the live table composing **no** feature (D29) | none |
+| `live-table/` | S1 — the live table composing **no** feature (D29); per-row discard (`removeRow`) with a host-held undo slot covering both the last field commit and the last discarded row (§1.3, §3.2) | none |
 | `live-optimistic/` | S6 — the live table + `withOptimistic()`, driven by focus/blur (D39); also the delete-with-rollback demo (D47) — `removeEdit`/`releaseEdit`/`revertEdit` against a simulated DELETE | new in v2.0, delete affordance added v2.1 |
 | `gated-edit/` | S2 — Edit/Save/Cancel, blank-row add, Close all; `multiple` toggled live; Discard now one call (`discardEdit`, D46) | migrated, updated v2.1 |
 | `optimistic-save/` | S4 — close-then-confirm, rollback on failure | migrated |

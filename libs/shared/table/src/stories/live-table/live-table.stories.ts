@@ -15,5 +15,8 @@ type Story = StoryObj<LiveTableStoryHostComponent>;
  *
  * - Blur the name field or change the department to see the save counter tick up.
  * - Typing alone doesn't save anything until you commit the change (blur or change).
+ * - The trash icon discards a row immediately, with no confirm dialog — Undo (or Ctrl/Cmd+Z) puts
+ *   it back at the index it was removed from.
+ * - One undo slot covers both: it restores whichever happened last, a field commit or a discard.
  */
 export const Default: Story = {};

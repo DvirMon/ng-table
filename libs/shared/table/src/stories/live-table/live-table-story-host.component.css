@@ -1,10 +1,32 @@
-.row-edit-story__table tr[data-row-new] {
-  outline: 2px solid #34d399;
-  outline-offset: -2px;
-}
-
 .row-edit-story__shortcut-hint {
   margin-inline-start: auto;
   font-size: 0.75rem;
   color: #9ca3af;
+}
+
+.row-edit-story__cell--actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Square, label-less discard control — its name lives in aria-label/title, not on screen. */
+.row-edit-story__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  margin-inline-end: 0;
+  color: #9ca3af;
+}
+
+.row-edit-story__icon-button:hover,
+.row-edit-story__icon-button:focus-visible {
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.row-edit-story__icon-button svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
 }

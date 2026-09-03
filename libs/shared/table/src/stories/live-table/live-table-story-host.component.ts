@@ -1,24 +1,31 @@
-import { Component, ElementRef, afterRenderEffect, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, afterRenderEffect, computed, effect, inject, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
-import { insertRow, patchRow } from '../../mutations/row-mutations';
+import { insertRow, patchRow, removeRow } from '../../mutations/row-mutations';
 import type { RowId } from '../../api/types';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../row-edit.mock';
 import { editRowsSchema, liveTableSchema } from '../row-edit.schema';
 import type { EditRow } from '../row-edit.types';
-import type { EditableField, FieldCommit } from './live-table.types';
+import type { EditableField, UndoableAction } from './live-table.types';
 
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
+
+/** What a row is called in announcements and accessible labels — its name, or a stand-in when a
+ * freshly-added row hasn't been named yet. */
+function rowLabel(row: EditRow): string {
+  return row.name.trim() === '' ? 'unnamed row' : `row ${row.name}`;
+}
 
 /**
  * S1 — the live table (D29): no `withRowEdit()` composed, inputs always render. `commitCount`
  * instruments `data()` emissions to make the `debounce('blur')` commit boundary observable —
  * typing does not tick it, blur/select-change does.
  *
- * Live mode has no Cancel (no session to cancel), so Ctrl+Z/Cmd+Z undoing the last *committed*
- * field value is the only recovery path (§1.3) — `snapshotChanges` diffs `data()` against its
- * previous emission to find that value, off the same commit boundary `commitCount` already
- * observes.
+ * Live mode has no Cancel (no session to cancel), so a single undo slot is the only recovery
+ * path (§1.3, §3.2): Ctrl+Z/Cmd+Z or the toolbar Undo restores either the last *committed* field
+ * value or the last *discarded* row, whichever happened last. Field commits are found by
+ * `snapshotChanges` diffing `data()` against its previous emission; discards record their row and
+ * index at the call site, since no feature holds a restore point here.
  */
 @Component({
   selector: 'ngp-live-table-story-host',
@@ -49,8 +56,21 @@ export class LiveTableStoryHostComponent {
    * for focus + styling until `snapshotChanges` clears it. */
   protected readonly newRowId = signal<RowId | null>(null);
 
-  /** Last committed field value, restorable via Ctrl+Z/Cmd+Z. `null` once nothing to undo. */
-  protected readonly lastCommit = signal<FieldCommit | null>(null);
+  /** Last undoable action — a committed field value or a discarded row. `null` once nothing is
+   * left to undo. */
+  protected readonly lastAction = signal<UndoableAction | null>(null);
+
+  /** Screen-reader announcement for the discard/undo pair — a removed row is otherwise a silent
+   * change (§3.1). */
+  protected readonly announcement = signal('');
+
+  protected readonly undoLabel = computed(() => {
+    const action = this.lastAction();
+    if (action === null) return null;
+    return action.kind === 'discard'
+      ? `Undo discard of ${rowLabel(action.row)}`
+      : 'Undo last commit';
+  });
 
   constructor() {
     effect(() => {
@@ -89,26 +109,59 @@ export class LiveTableStoryHostComponent {
     );
   }
 
-  /** Ctrl+Z / Cmd+Z restores `lastCommit`'s previous value — the only undo affordance live mode
-   * gets, since there's no open/Cancel session to fall back on (§1.3). */
+  /** Names the row a discard button removes, for its accessible label (§3.1) — the label carries
+   * the row's identity, not a bare "Delete". */
+  protected discardLabel(row: EditRow): string {
+    return `Discard ${rowLabel(row)}`;
+  }
+
+  /** The discard flow's forward half: removes the row and parks it — with the index it sat at —
+   * in the undo slot. No confirmation dialog: undo is the safety net for a single row (§3.2). */
+  protected discardRow(id: RowId): void {
+    const at = this.data().findIndex((row) => this.table.trackBy(row) === id);
+    if (at === -1) return;
+
+    const row = this.data()[at];
+    this.table.value.update(removeRow<EditRow>(id));
+    this.lastAction.set({ kind: 'discard', row, at });
+    this.announcement.set(`${rowLabel(row)} discarded. Undo available.`);
+    if (this.newRowId() === id) {
+      this.newRowId.set(null);
+    }
+  }
+
+  /** The discard flow's back half, shared with field-commit undo: a discarded row goes back at
+   * the index it was removed from, a committed field back to its previous value. */
+  protected undoLastAction(): void {
+    const action = this.lastAction();
+    if (action === null) return;
+
+    if (action.kind === 'discard') {
+      this.table.value.update(insertRow<EditRow>(action.row, { at: action.at }));
+      this.announcement.set(`${rowLabel(action.row)} restored.`);
+    } else {
+      const patch: Partial<EditRow> =
+        action.field === 'name' ? { name: action.previousValue } : { dept: action.previousValue };
+      this.table.value.update(patchRow<EditRow>(action.id, patch));
+    }
+    this.lastAction.set(null);
+  }
+
+  /** Ctrl+Z / Cmd+Z drives the same undo slot as the toolbar button — the only undo affordance
+   * live mode gets, since there's no open/Cancel session to fall back on (§1.3). */
   protected onKeydown(event: KeyboardEvent): void {
     const isUndoChord =
       (event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z';
-    if (!isUndoChord) return;
-
-    const commit = this.lastCommit();
-    if (commit === null) return;
+    if (!isUndoChord || this.lastAction() === null) return;
 
     event.preventDefault();
-    const patch: Partial<EditRow> =
-      commit.field === 'name' ? { name: commit.previousValue } : { dept: commit.previousValue };
-    this.table.value.update(patchRow<EditRow>(commit.id, patch));
-    this.lastCommit.set(null);
+    this.undoLastAction();
   }
 
   /** Diffs `current` against the previous emission: records the most recently changed field as
    * the undo target, and clears `newRowId`'s marking the first time its row picks up a real edit
-   * — an insert alone never counts, since the inserted id is absent from `previousData`. */
+   * — an insert alone never counts, since the inserted id is absent from `previousData`. A
+   * discard changes no surviving row, so it never overwrites the undo entry it just recorded. */
   private snapshotChanges(current: EditRow[]): void {
     const previousById = new Map(this.previousData.map((row) => [row.id, row]));
 
@@ -119,7 +172,8 @@ export class LiveTableStoryHostComponent {
       const changedField = EDITABLE_FIELDS.find((field) => row[field] !== previousRow[field]);
       if (changedField === undefined) continue;
 
-      this.lastCommit.set({
+      this.lastAction.set({
+        kind: 'commit',
         id: row.id,
         field: changedField,
         previousValue: previousRow[changedField],
