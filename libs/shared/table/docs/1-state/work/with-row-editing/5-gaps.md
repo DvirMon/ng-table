@@ -109,17 +109,16 @@ stop existing". The two real defects are narrower and different:
    ADR-0006's reconciliation prunes it on the swap. This is D26's documented failure, still live,
    and it has no consumer workaround.
 
-**Where:** `api/row-edit-mutations.ts`.
+**Where:** `mutations/optimistic-mutations.ts`.
 
-**Blocked on:** **O20** (mutation decisions) — enforce the order, migrate the orphaned key, or
-document only. Leading candidate is `swapRowId(from, to)`, one editing updater re-keying whichever
-of `open`/`snapshots` hold `from`: it covers both defects with one verb and needs no engine
-heuristic. Engine-side swap detection was considered and rejected — `{removed: [temp],
-added: [server]}` in one recompute is indistinguishable from a delete plus an unrelated insert.
-
-**Also blocked on the D37 split — sequence this after it, not in parallel** (tracked as **O24**).
-`open` and `snapshots` end up in different features, so `swapRowId` straddles the boundary the
-same way `beginEdit` does. Designing it against the pre-split shape means designing it twice.
+**No longer blocked — designed 2026-09-03.** O20 and O24 both resolved by
+[D49](../with-row-editing/2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03):
+"enforce end-edit-first" was rejected outright (it gates a consumer action on internal sync state,
+which the optimistic-table UX goal rules out), leaving migrate-the-key as the only option.
+`swapRowId(from, to)` re-keys whichever of `open`/`snapshots` hold `from` — one new editing
+updater, no engine heuristic. Full handoff, including why it doesn't touch `data` itself and why
+the two-call consumer order is safe (not just conventional):
+[`../swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md). **Status: ready to implement.**
 
 ---
 
@@ -349,8 +348,8 @@ G*n*", nothing more. Follow the link before acting on any of them.
 
 | # | Question | Gates | Full text |
 |---|---|---|---|
-| **O24** | Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features? | **G3** ([#53](https://github.com/DvirMon/acme/issues/53)) — blocking | [with-optimistic](../with-optimistic/2-decisions.md) |
-| **O20** | On an id swap: enforce end-edit-first, migrate the orphaned key, or document the sequence? | **G3** — the policy call | [with-mutations](../with-mutations/2-decisions.md) |
+| ~~**O24**~~ | ~~Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features?~~ **Resolved 2026-09-03** — its own updater in `mutations/optimistic-mutations.ts`, touching both maps, owned by neither feature | **G3** ([#53](https://github.com/DvirMon/acme/issues/53)) — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
+| ~~**O20**~~ | ~~On an id swap: enforce end-edit-first, migrate the orphaned key, or document the sequence?~~ **Resolved 2026-09-03** — migrate the key; end-edit-first rejected outright, it gates a consumer action on internal sync | **G3** — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
 | **O22** | *(representation half, delete closed 2026-08-27)* Inverse operation instead of a fixed-position snapshot, so rollback can cover **move**? | **G5** ([#54](https://github.com/DvirMon/acme/issues/54)) — delete no longer blocked | [with-optimistic-crud](../with-optimistic-crud/2-decisions.md) |
 | **O23** | Should openness be declarative — `applyEditable({ when })` mirroring `applyVisible()`? | blocked *by* **G4** — a predicate matching N rows forces `multiple: true` | [with-row-editing](./2-decisions.md) |
 | **O15** | How does the `filter` stage express "keep these ids even though the predicate rejects them"? | phantom — needs `withFiltering()` | [with-row-editing](./2-decisions.md) |
@@ -392,7 +391,7 @@ sorting null ordering                DONE 2026-08-27 (sorting-null-ordering/1-ha
 ADR-0011 chained render stages       unblocks withGrouping/withPagination/withSelection
 ADR-0012 withExpansion/withTree      depends on ADR-0011
 G6  expansion child sourceIndex      (now withTree-only; mostly falls out of ADR-0011/0012)
-G3  optimistic create identity       (still blocked on O20 + O24)
+G3  optimistic create identity       DESIGNED 2026-09-03 (D49) — swap-row-id/1-handoff.md, ready to implement
 G5  move half                        (still blocked on O22's representation; no consumer need)
 ```
 
@@ -406,9 +405,10 @@ the first row a person opens. See the [UI register](../../../3-ui/work/row-editi
    scope statement for editing and carries the resolutions to OQ-1…OQ-7.
 2. Then this register and the [UI register](../../../3-ui/work/row-editing/5-gaps.md) for what is
    still missing.
-3. `sorting-null-ordering/1-handoff.md` shipped 2026-08-27 (`2d13dda`). One handoff is still ready
-   to execute with no open questions:
-   [`doc-corrections/1-handoff.md`](../doc-corrections/1-handoff.md).
+3. `sorting-null-ordering/1-handoff.md` shipped 2026-08-27 (`2d13dda`). Two handoffs are ready to
+   execute with no open questions:
+   [`doc-corrections/1-handoff.md`](../doc-corrections/1-handoff.md) and
+   [`swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md) (closes G3).
 
 G5's delete half shipped 2026-08-27 (D45–D47), out of order relative to G3/G4/G6, since a
 consumer-visible worst-case failure mode (delete loses the row, no recovery) outweighed the

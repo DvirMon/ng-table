@@ -1139,3 +1139,53 @@ forcing it.
 `cancelEdit` handler for both the discard-intent and reset-intent Add buttons — those need to
 route the discard-intent button through the composed `removeRow`+`endEdit` call instead, tracking
 per-row which intent applies (e.g. a `Set<RowId>` of ids added via the discard button).
+
+## D49 — O20 resolved: `swapRowId(from, to)`, no forced end-edit (2026-09-03)
+
+**Status: designed, not yet implemented.** Handoff at
+[`../swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md). Resolves **O20** and, with it,
+**O24** (`swapRowId`'s home) — closes G3.
+
+**Decision:** reject "enforce end-edit-first" as the id-swap policy. Add one new `EditingUpdater`,
+`swapRowId(from, to)`, that re-keys whichever of `open`/`snapshots` hold `from` to `to`. A row may
+be open, mid-edit, when its temp id swaps to the server id — the swap does not close it, block it,
+or disable anything.
+
+**Why end-edit-first was rejected, not just deferred.** The product goal for optimistic tables
+(stated in this session) is that a consumer-visible action is never gated on the state layer's
+internal sync — the person keeps typing through a create/save round-trip regardless of when the
+server responds. Enforcing "no swap while open" only has two implementations, and both violate
+that goal: block the swap until the row closes (state visibly lags the server), or block opening
+a still-`pending` row for edit (an action disabled because of internal sync state — the exact
+thing ruled out). So the migrate-the-key option is not a preference between equally-valid choices;
+it is the only one left once "never block on internal sync" is taken as a constraint.
+
+**Why a new verb instead of reusing `patchRow`.** `patchRow` was considered — call it with the
+server's row, including the new id, and let existing machinery do the rest. Rejected: rewriting a
+row's trackBy-identifying field via `patchRow` makes `tempId` disappear from `indexById` on the
+next recompute, which is exactly what ADR-0006's removal-diff watches for — it fires
+`onRowsRemoved([tempId])`, and `pruneByIds` deletes the `open`/`snapshots` entry rather than
+migrating it. That is the same "indistinguishable from delete + unrelated insert" failure the
+gap register already named for engine-side detection; driving it through `patchRow` hits it from
+the consumer side instead of the engine side, same outcome.
+
+**Why `swapRowId` does not itself write `data`.** `trackBy` is `TrackByFn<TRow>`
+(`(row) => RowId`), not necessarily a key — a consumer may supply an arbitrary function, so no
+updater outside `createTable()`'s own config can generically know which field to overwrite to
+change a row's id. `swapRowId` therefore only touches `open`/`snapshots`; the consumer still
+calls `patchRow`/`insertRow`+`removeRow`/whatever produces the row under its new identity. Two
+calls, not one — narrower than the `discardEdit`-style "one call" precedent, and that gap is the
+one open risk this decision accepts (see the handoff's Open section).
+
+**Why the two-call order is safe, not just conventional.** ADR-0006's reconciliation runs in an
+`effect()` (`engine/compose-table.ts`), and Angular effects are scheduled, never synchronous
+within the writing call stack. A consumer calling `table.value.update(patchRow(...))` immediately
+followed by `table.editing.update(swapRowId(...))` in the same synchronous handler always has
+`swapRowId`'s re-key land before the reconciliation effect flushes — by the time it runs, `to` is
+already the key in `open`/`snapshots`, `from` never was, and the diff has nothing to prune. This
+is a real invariant of the current effect-scheduling model, not an assumption; the handoff adds a
+test pinning it so a future change to that scheduling can't silently reopen G3.
+
+**Not this decision:** the shape of the confirm-create call site (whether `swapRowId` composes
+with a `settleEdit`/`releaseEdit`-equivalent call, e.g. for a row that was also mid-save when the
+id landed) — out of scope, tracked as an open item in the handoff.
