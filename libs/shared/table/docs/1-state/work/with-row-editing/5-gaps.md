@@ -2,7 +2,7 @@
 title: Gaps — Row Editing, state layer
 type: plan
 status: open — state layer only; UI gaps moved 2026-08-26, see the banner
-date: 2026-08-28
+date: 2026-09-03
 parent: ./2-decisions.md
 ---
 
@@ -43,7 +43,7 @@ and [`../../row-mutations.md`](../../row-mutations.md).
 > | [`with-optimistic-crud/`](../with-optimistic-crud/2-decisions.md) D45–D48 | **G5's delete half** | shipped 2026-08-27 |
 > | [`with-multiple-edit/`](../with-multiple-edit/1-design.md) | **G4** | shipped 2026-08-27 |
 > | [`with-duplicate-row/`](../with-duplicate-row/1-design.md) | duplicate; `insertRow`/`clearEdit` renames | shipped 2026-08-27 |
-> | [`sorting-null-ordering/`](../sorting-null-ordering/1-handoff.md) | sorting's null defects | **designed, not implemented** |
+> | [`sorting-null-ordering/`](../sorting-null-ordering/1-handoff.md) | sorting's null defects | shipped 2026-08-27 (`2d13dda`) |
 >
 > **v2.1 verb renames**, on top of the v1.0 list above: `addRow` → `insertRow`,
 > `clearEditing` → `clearEdit`, `ABSENT` removed, and three verbs added — `discardEdit`,
@@ -353,10 +353,8 @@ G6  expansion child sourceIndex      (engine)
 ```
 G4  multiple: true semantics         DONE 2026-08-27 (with-multiple-edit/)
 G5  delete rollback                  DONE 2026-08-27 (with-optimistic-crud/, D45-D47)
+sorting null ordering                DONE 2026-08-27 (sorting-null-ordering/1-handoff.md, 2d13dda)
 --- next, in this order ---
-sorting null ordering                DESIGNED, not implemented — sorting-null-ordering/1-handoff.md
-                                     BLOCKS the editing release: sorting's own spec says its
-                                     comparator fixes ship with or before editable rows
 G6  expansion child sourceIndex      (engine, unblocked, no design needed)
 G3  optimistic create identity       (still blocked on O20 + O24)
 G5  move half                        (still blocked on O22's representation; no consumer need)
@@ -372,8 +370,8 @@ the first row a person opens. See the [UI register](../../../3-ui/work/row-editi
    scope statement for editing and carries the resolutions to OQ-1…OQ-7.
 2. Then this register and the [UI register](../../../3-ui/work/row-editing/5-gaps.md) for what is
    still missing.
-3. Two handoffs are ready to execute with no open questions:
-   [`sorting-null-ordering/1-handoff.md`](../sorting-null-ordering/1-handoff.md) and
+3. `sorting-null-ordering/1-handoff.md` shipped 2026-08-27 (`2d13dda`). One handoff is still ready
+   to execute with no open questions:
    [`doc-corrections/1-handoff.md`](../doc-corrections/1-handoff.md).
 
 G5's delete half shipped 2026-08-27 (D45–D47), out of order relative to G3/G4/G6, since a

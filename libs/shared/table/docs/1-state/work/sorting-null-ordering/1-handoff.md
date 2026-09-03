@@ -1,7 +1,7 @@
 ---
 title: Handoff — sorting null ordering and the nullable-Date crash
 type: plan
-status: open — scoped and decided 2026-08-27, not implemented
+status: shipped 2026-08-27 (2d13dda)
 date: 2026-08-27
 parent: ../../features/sorting.md
 ---
