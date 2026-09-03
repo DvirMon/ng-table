@@ -10,6 +10,16 @@ parent: ../1-state/architecture.md
 
 # withExpansion()
 
+> **Being split — [ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md) (`proposed`, 2026-09-03).**
+> This doc currently describes one feature covering two distinct shapes. Under ADR-0012:
+> `withExpansion()` keeps the name and becomes the **detail-panel** feature — open/closed id
+> tracking only, no row synthesis, no render stage, no `childrenAccessor`. Everything tree-specific
+> (`childrenAccessor`, `isExpandable`, `depth`, recursive child flattening) moves to a new
+> `withTree()`. Shared open-id machinery is extracted to a `createExpansionStore()` factory —
+> not a feature — mirroring `api/features/editing-state.ts` (D37/A2). Group collapse continues to
+> delegate here, which the split makes correct rather than a special case. This spec will split
+> into two on implementation; read the ADR before changing either feature.
+
 ## Executive Summary
 
 Multi-expand, hierarchical/tree-capable row expansion. Standalone feature with no compile-time dependencies — used both for detail-row expansion and (via delegation) group collapse/expand state in `withGrouping()`.

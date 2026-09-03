@@ -212,6 +212,16 @@ when building the index.
 **Blocked on:** nothing, but it interacts with whatever `withGrouping()` eventually does to
 `renderRows`.
 
+> **Rescoped 2026-09-03.** Challenged as a state-layer overreach into consumer-owned expansion UI.
+> Verdict: valid, but narrower than written. Detail-panel expansion needs no `sourceIndex` — its
+> content is consumer markup, never a render row. G6 is a defect of the **tree** half only, which
+> [ADR-0012](../../../adr/0012-split-expansion-into-panel-and-tree.md) moves to a new `withTree()`,
+> and [ADR-0011](../../../adr/0011-chained-render-stages.md) reframes as a property of the `'tree'`
+> render stage (each stage carries or clears `sourceIndex`) rather than an engine-wide index
+> change. Since no story composes the tree path and `depth > 0` appears only in tests, this drops
+> below the UI-layer keyboard/focus/a11y work (G1/G9/G10) and largely falls out of implementing
+> those two ADRs.
+
 ### G7 — Save-gating and dirty state — **MOVED 2026-08-26**
 
 Consumer + UI; no state-layer work. Now in [`3-ui/work/row-editing/5-gaps.md`](../../../3-ui/work/row-editing/5-gaps.md).
@@ -354,8 +364,10 @@ G6  expansion child sourceIndex      (engine)
 G4  multiple: true semantics         DONE 2026-08-27 (with-multiple-edit/)
 G5  delete rollback                  DONE 2026-08-27 (with-optimistic-crud/, D45-D47)
 sorting null ordering                DONE 2026-08-27 (sorting-null-ordering/1-handoff.md, 2d13dda)
---- next, in this order ---
-G6  expansion child sourceIndex      (engine, unblocked, no design needed)
+--- next, in this order (re-derived 2026-09-03) ---
+ADR-0011 chained render stages       unblocks withGrouping/withPagination/withSelection
+ADR-0012 withExpansion/withTree      depends on ADR-0011
+G6  expansion child sourceIndex      (now withTree-only; mostly falls out of ADR-0011/0012)
 G3  optimistic create identity       (still blocked on O20 + O24)
 G5  move half                        (still blocked on O22's representation; no consumer need)
 ```

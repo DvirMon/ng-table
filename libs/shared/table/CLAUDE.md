@@ -151,6 +151,11 @@ Rules:
 - A second feature claiming the same `stages` key, the same **member key** (ADR-0007), or a
   second claiming `renderRows`, **throws at construction** — this is why `withExpansion()` and a future `withGrouping()` cannot yet be
   composed together.
+  **Pending change:** [ADR-0011](docs/adr/0011-chained-render-stages.md) (`proposed`) replaces the
+  single-claim `renderRows` with an ordered, multi-claim `RENDER_ORDER` chain over `RenderRow[]`,
+  and [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) (`proposed`) splits
+  `withExpansion()` into a detail-panel feature (no render stage) plus a new `withTree()`. Read
+  both before touching `renderRows`, `SlotRegistry.claimRenderRows()`, or `withExpansion()`.
 - **If your feature stores `RowId`s, declare `onRowsRemoved`** ([ADR-0006](docs/adr/0006-row-id-state-reconciliation.md)).
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and
