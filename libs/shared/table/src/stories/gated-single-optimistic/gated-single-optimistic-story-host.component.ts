@@ -82,9 +82,26 @@ export class GatedSingleOptimisticStoryHostComponent {
     this.needsUniqueName.update((ids) => new Set(ids).add(id));
   }
 
+  /**
+   * D31.2: single-mode switches by discarding the displaced row's unsaved draft, cleanly — not a
+   * Save. Whether to warn before that discard is a consumer decision the library doesn't own; this
+   * demonstrates the pattern — check the outgoing row's own `dirty` state (Signal Forms already
+   * tracks it) and confirm before calling `beginEdit`, which is the only thing that triggers the
+   * switch.
+   */
   protected openEdit(id: RowId): void {
+    const displacedId = [...this.table.editing()].find((openId) => openId !== id);
+    if (displacedId !== undefined && this.isRowDirty(displacedId)) {
+      const discard = confirm('This row has unsaved changes. Discard them and switch rows?');
+      if (!discard) return;
+    }
     // beginEdit: opens the row; existing restore point wins if one is already held (D31.1).
     this.table.editing.update(beginEdit(id));
+  }
+
+  private isRowDirty(id: RowId): boolean {
+    const sourceIndex = this.table.renderRows().find((row) => row.id === id)?.sourceIndex;
+    return sourceIndex === undefined ? false : this.rows[sourceIndex]().dirty();
   }
 
   /** Resets the row to its snapshot and closes it. Available on any open row. */
