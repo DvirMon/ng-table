@@ -1,7 +1,7 @@
 ---
 title: Handoff — swapRowId(from, to), closing G3
 type: plan
-status: designed 2026-09-03, not implemented
+status: shipped 2026-09-03
 date: 2026-09-03
 parent: ../with-row-editing/2-decisions.md
 ---

@@ -673,12 +673,29 @@ this in the optimistic-save example.
 
 ### D31.2 — Single-mode row switching is an implicit Save; `{ multiple }` stays
 
-Resolves review finding #4. With `multiple: false`, opening row B while row A is open closes A the
-way `endEdit` does — whatever blur already committed to `data` stands. Today's behavior, now a
-decision with a test rather than a side effect of `applyEditing` trimming.
+**Wording corrected 2026-09-03 — the "implicit Save" framing is stale.** This was written
+2026-08-19 against the live-table model, where blur committed straight to `data`, so a close
+with no explicit merge was harmless — whatever was last typed was already there. OQ-3 later gave
+gated mode its own commit boundary (`table.draft`, merged into `data` only by an explicit
+`endEdit(id, row)` — a real Save), and this decision's *behavior* was never revisited against
+that change. Traced 2026-09-03: `closeAllButLast` (the single-mode trim) never merges the
+displaced row's draft into `data`; `createDraftRows`'s `resetClosedRows` then re-derives that
+row's draft from `data` the moment it leaves `open`. **Net effect under gated mode: switching
+rows discards the displaced row's unsaved draft, cleanly — it is not a Save.**
 
-**Why Save and not Cancel:** under D24 the user's typed value was already committed on blur and
-visible in the row before they clicked away. Silently reverting it is the surprise, not keeping it.
+This is not a bug. Whether to warn before discarding is a consumer UX decision this library
+does not own (D16/D18: no store verbs control UI, actions are consumer template code) — the
+consumer already has everything needed to gate it: they trigger the switch themselves
+(`table.editing.update(beginEdit(nextId))`), and Signal Forms already tracks the outgoing row's
+`dirty` state. A consumer wanting a confirm dialog checks dirty and gates their own call to
+`beginEdit`; the library's only obligation — met — is that the result is internally consistent
+(the draft resets cleanly, never stale) once the switch happens. See the demo pattern in
+`gated-single-optimistic-story-host.component.ts`.
+
+**Resolves review finding #4** — original text, true only under the live-table model: opening
+row B while row A is open closes A the way `endEdit` does, and under D24 the user's typed value
+was already committed on blur and visible before they clicked away, so silently reverting it
+would have been the surprise. Kept for history; does not describe gated mode's current behavior.
 
 **Prior art checked (2026-08-19):** single-row-at-a-time is the norm, not an oddity — MUI X DataGrid
 allows only one row in edit mode and **commits on click-away** (Escape reverts;
@@ -1142,7 +1159,7 @@ per-row which intent applies (e.g. a `Set<RowId>` of ids added via the discard b
 
 ## D49 — O20 resolved: `swapRowId(from, to)`, no forced end-edit (2026-09-03)
 
-**Status: designed, not yet implemented.** Handoff at
+**Status: implemented 2026-09-03.** Handoff at
 [`../swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md). Resolves **O20** and, with it,
 **O24** (`swapRowId`'s home) — closes G3.
 

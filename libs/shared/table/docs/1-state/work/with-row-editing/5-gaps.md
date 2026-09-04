@@ -92,7 +92,14 @@ Tests colocated. The disposition table's claim is now true rather than aspiratio
 
 **What it deliberately does not cover:** the temp-id swap, both halves — see G3.
 
-### G3 — Optimistic create has no identity story *(state layer)*
+### ~~G3 — Optimistic create has no identity story~~ *(state layer)* — **CLOSED 2026-09-03**
+
+**Closed by implementing `swapRowId(from, to)`** (`mutations/optimistic-mutations.ts`,
+`docs/1-state/work/swap-row-id/1-handoff.md`, D49). Both defects below are fixed: a pending
+create settled under the server id now re-keys `snapshots` instead of orphaning, and a row open
+for edit when the swap lands stays open under the new id instead of being pruned by ADR-0006's
+reconciliation. Tests colocated in `optimistic-mutations.spec.ts`, including the ordering-
+invariant test pinning the effect-scheduling assumption D49's decision record relies on.
 
 **Tracked as [#53](https://github.com/DvirMon/acme/issues/53)** (opened 2026-08-26).
 
@@ -118,7 +125,7 @@ which the optimistic-table UX goal rules out), leaving migrate-the-key as the on
 `swapRowId(from, to)` re-keys whichever of `open`/`snapshots` hold `from` — one new editing
 updater, no engine heuristic. Full handoff, including why it doesn't touch `data` itself and why
 the two-call consumer order is safe (not just conventional):
-[`../swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md). **Status: ready to implement.**
+[`../swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md). **Status: implemented 2026-09-03.**
 
 ---
 
@@ -182,7 +189,11 @@ captures + removes in one write, so `revertEdit(id)` alone re-inserts it. `ABSEN
 **Move is still uncovered**, and for the reason O22 originally gave: `RowRestorePoint` fixes a
 row's *position at capture time*, but no verb reorders rows, and undoing a reorder needs an
 inverse-operation representation (from-index/to-index or similar), not a fixed snapshot position.
-Re-derive when a `moveRow`/drag-and-drop feature exists — see the product doc's D-2.
+
+**Blocked on `withDragDrop()`/`moveRow` not existing yet** — see the product doc's D-2. There is
+nothing to design a rollback representation *for* until a move verb exists to define what
+"inverse" means; re-derive O22's representation half as part of that feature's own design, not
+ahead of it.
 
 **Original text, for history:**
 
@@ -219,7 +230,11 @@ comments — the discrepancy surfaced as unresolved product behavior, not docume
 outcome under gated/`draft` editing, or should `closeAllButLast` carry the draft forward (e.g.
 into the snapshot, or by refusing to displace a row with an unsaved draft)? Tracked as **O26**.
 
-### G6 — Expansion children get no `sourceIndex` *(state layer — engine)*
+### G6 — Expansion children get no `sourceIndex` *(state layer — engine)* — **IN PROGRESS, separate session**
+
+**Being handled outside this work folder** — via ADR-0011/ADR-0012 implementation, tracked
+elsewhere. Do not pick this up from here; check ADR-0011/ADR-0012 status before touching
+`engine/core.ts`'s index-building or the render-stage chain.
 
 **What:** `indexById` (`engine/core.ts`) is built from `data()`'s **top-level** entries only. A
 nested expansion child has non-null `data` but `sourceIndex === undefined`, so
@@ -376,7 +391,7 @@ G8  docs defects                     DONE 2026-08-25 (D33 / D34 renumber)
 G2  dead entry on external removal   DONE 2026-08-25 (ADR-0006 implemented)
 G12 demo coverage                    DONE 2026-08-26 (Storybook; pessimistic save remains)
 --- the D37 split landed here, 2026-08-26 ---
-G3  optimistic create identity       (state, needs the O20 call — swapRowId; after the split, O24)
+G3  optimistic create identity       DONE 2026-09-03 (swapRowId, D49)
 G4  multiple: true design-or-reject  (state)
 G6  expansion child sourceIndex      (engine)
 ```
@@ -390,9 +405,9 @@ sorting null ordering                DONE 2026-08-27 (sorting-null-ordering/1-ha
 --- next, in this order (re-derived 2026-09-03) ---
 ADR-0011 chained render stages       unblocks withGrouping/withPagination/withSelection
 ADR-0012 withExpansion/withTree      depends on ADR-0011
-G6  expansion child sourceIndex      (now withTree-only; mostly falls out of ADR-0011/0012)
-G3  optimistic create identity       DESIGNED 2026-09-03 (D49) — swap-row-id/1-handoff.md, ready to implement
-G5  move half                        (still blocked on O22's representation; no consumer need)
+G6  expansion child sourceIndex      IN PROGRESS elsewhere (now withTree-only; falls out of ADR-0011/0012)
+G3  optimistic create identity       DONE 2026-09-03 (D49) — swap-row-id/1-handoff.md, implemented
+G5  move half                        (blocked on withDragDrop()/moveRow existing — design it there, not ahead of it)
 ```
 
 **Not in this register but competing for the same slot:** the UI layer's G1/G9/G10 (keyboard, focus,
@@ -405,10 +420,10 @@ the first row a person opens. See the [UI register](../../../3-ui/work/row-editi
    scope statement for editing and carries the resolutions to OQ-1…OQ-7.
 2. Then this register and the [UI register](../../../3-ui/work/row-editing/5-gaps.md) for what is
    still missing.
-3. `sorting-null-ordering/1-handoff.md` shipped 2026-08-27 (`2d13dda`). Two handoffs are ready to
-   execute with no open questions:
-   [`doc-corrections/1-handoff.md`](../doc-corrections/1-handoff.md) and
-   [`swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md) (closes G3).
+3. `sorting-null-ordering/1-handoff.md` shipped 2026-08-27 (`2d13dda`).
+   [`swap-row-id/1-handoff.md`](../swap-row-id/1-handoff.md) shipped 2026-09-03 (closes G3).
+   [`doc-corrections/1-handoff.md`](../doc-corrections/1-handoff.md) is ready to execute with no
+   open questions.
 
 G5's delete half shipped 2026-08-27 (D45–D47), out of order relative to G3/G4/G6, since a
 consumer-visible worst-case failure mode (delete loses the row, no recovery) outweighed the

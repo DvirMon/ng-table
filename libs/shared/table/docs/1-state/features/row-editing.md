@@ -325,6 +325,7 @@ table.editing.update(beginEdit(id));
 | `discardEdit(id)` *(D46)* | drops the restore point and removes the row — the discard path, counterpart to `revertEdit`. One call, replacing the old `removeRow` + `endEdit` + `releaseEdit` sequence | no restore point held (OQ-C) |
 | `removeEdit(id)` *(D47)* | captures a restore point if none is held (or flips an existing one's `detached` to `true`), then removes the row and closes it — one call, no prior `beginEdit`/`captureEdit` needed. `revertEdit(id)` undoes it | the id is not in `data` |
 | `patchEdit(id, partial, { capture? })` *(D47)* | captures a restore point per `capture` (`'if-absent'` default, or `'always'`), then patches the row in place — for a write no form made (a row action, a background patch) | the id is not in `data` |
+| `swapRowId(from, to)` *(D49)* | re-keys `from` to `to` in whichever of `open`/`snapshots` hold it — the temp-id → server-id swap on an optimistic create. Does not touch `data`; the caller writes the row's new identity there (e.g. via `patchRow`) in the same synchronous handler, before this call | `from` holds neither `open` nor a restore point |
 
 `removeEdit`/`patchEdit` belong to `withOptimistic`, not `withRowEdit` — no `open` involvement
 beyond `removeEdit` clearing it. Structural reason in D47: an `EditingUpdater` can write both
@@ -389,13 +390,29 @@ for a save that writes through the table API directly (a row action, no form inv
 | `removeRow(id)` + `endEdit(id)` + `releaseEdit(id)` | `discardEdit(id)` *(v2.1, D46)* | **three calls → one** |
 | — | `removeEdit(id)` *(v2.1, D47)* | new — the delete-with-rollback entry point |
 | — | `patchEdit(id, partial, options?)` *(v2.1, D47)* | new — capture-composing patch for row actions/background writes |
+| — | `swapRowId(from, to)` *(v2.1, D49)* | new — the temp-id → server-id swap on an optimistic create; closes G3 |
 | `RowSnapshot<TRow> = TRow \| typeof ABSENT` | `RowSnapshot<TRow> = RowRestorePoint<TRow>` *(v2.1, D45/D46)* | **breaking** — `ABSENT` removed; every snapshot now holds a real value + position |
 | `addRow(row, { at })` | `insertRow(row, { at })` *(v2.1)* | **breaking** — rename only; "insert" matches the `splice(at, 0, row)` semantics the name has always had |
 | `clearEditing()` | `clearEdit()` *(v2.1)* | **breaking** — rename only; it was the sole verb using the gerund |
 
-**The suffix rule these follow:** a verb that touches editing state (`snapshots` or `open`) is
-`*Edit`; a verb that writes rows only is `*Row`. Writing rows as well is not disqualifying — which is
-why `removeEdit` and `patchEdit` are `*Edit` despite mutating `data`.
+**The suffix rule, revised 2026-09-03:** naming follows the consumer's primary intent for the
+call, not which internal slice the updater happens to reach. `*Edit` is for a verb whose point
+*is* changing a row's editable status — opening it, closing it, reverting it. `*Row` is for a
+verb whose point is the row's data or lifecycle from the consumer's side — create, patch, remove
+— even when it also writes `snapshots`/`open` internally to keep a rollback story consistent.
+That internal write is mechanism, not the thing the consumer is doing.
+
+**What this settles for `createRow`:** its point is "add a row"; that it also captures/opens
+internally (so a rollback exists and the row is immediately usable) is plumbing the name
+shouldn't advertise. `*Row` is correct as named — no exception needed under the revised rule.
+
+**What this reopens:** `removeEdit`/`patchEdit` were named `*Edit` under the old (touches-state)
+rule despite their consumer-facing point being "remove a row" / "patch a row" — arguably a
+clearer case than `createRow` was, since neither involves `open` in any way beyond `removeEdit`
+clearing it. Not renamed here — flagged for a separate pass, since it's a breaking rename on
+shipped verbs (`removeEdit` since D47/v2.1), not a new addition. `captureEdit`/`releaseEdit`/
+`revertEdit`/`discardEdit` stay `*Edit`: their consumer-facing point genuinely is the rollback/
+edit-session lifecycle itself, not row data.
 
 ---
 
@@ -617,8 +634,8 @@ table needs nothing. The live-optimistic path gets its own story (D39).
       needs an inverse-operation representation this still doesn't have. G5 narrows to move only.
 - [x] **O24** *(from D37)* — resolved 2026-09-03 by D49: `swapRowId(from, to)` is its own updater
       in `mutations/optimistic-mutations.ts`, re-keying both maps, owned by neither feature. Also
-      resolves O20 (migrate the key; end-edit-first rejected). Handoff:
-      `work/swap-row-id/1-handoff.md`.
+      resolves O20 (migrate the key; end-edit-first rejected). Implemented 2026-09-03; closes G3.
+      Handoff: `work/swap-row-id/1-handoff.md`.
 - [ ] **O11** — does the feature fire a `rowEditChanged` event, or is the signal the only
       notification? Same question as O6 (mutations) — decide both together.
 - [ ] **O19** — do we export an `editableRow(row, columns)` schema fragment so the commit boundary
