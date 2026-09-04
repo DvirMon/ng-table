@@ -1,4 +1,8 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
 import { pendingIds, type EditingState, type RowRestorePoint } from '../api/features/editing-state';
+import { createTable } from '../api/create-table';
+import { withRowEdit } from '../api/features/with-row-edit';
 import {
   captureEdit,
   discardEdit,
@@ -6,9 +10,11 @@ import {
   releaseEdit,
   removeEdit,
   revertEdit,
+  swapRowId,
 } from './optimistic-mutations';
-import { beginEdit, endEdit } from './row-edit-mutations';
-import type { RowId } from '../api/types';
+import { patchRow } from './row-mutations';
+import { beginEdit, createRow, endEdit } from './row-edit-mutations';
+import type { ColumnDef, RowId } from '../api/types';
 import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -494,5 +500,102 @@ describe('the gated optimistic-save round trip (D31)', () => {
     expect(fakeTable.pending().size).toBe(0);
     expect(fakeTable.editing().size).toBe(0);
     expect(fakeTable.value().find((r) => r.id === 2)).toEqual({ id: 2, name: 'typed' });
+  });
+});
+
+describe('swapRowId', () => {
+  it("re-keys an open entry: 'from' gone, 'to' present, same membership otherwise", () => {
+    const opened = beginEdit<Person>(2)(state(), ctx());
+    const withThird = beginEdit<Person>(3)(opened, ctx());
+
+    const result = swapRowId<Person>(2, 99)(withThird, ctx());
+
+    expect(result.open.has(2)).toBe(false);
+    expect(result.open.has(99)).toBe(true);
+    expect(result.open.has(3)).toBe(true);
+    expect(result.open.size).toBe(2);
+  });
+
+  it('re-keys a snapshots entry, preserving the restore point unchanged except the key', () => {
+    const opened = beginEdit<Person>(2)(state(), ctx());
+
+    const result = swapRowId<Person>(2, 99)(opened, ctx());
+
+    expect(result.snapshots.has(2)).toBe(false);
+    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
+  });
+
+  it('re-keys both open and snapshots in one call when the row holds both under from', () => {
+    const opened = beginEdit<Person>(2)(state(), ctx());
+
+    const result = swapRowId<Person>(2, 99)(opened, ctx());
+
+    expect(result.open.has(99)).toBe(true);
+    expect(result.snapshots.has(99)).toBe(true);
+  });
+
+  it('no-ops when from holds neither open nor a snapshot', () => {
+    const before = state();
+    const result = swapRowId<Person>(999, 1000)(before, ctx());
+    expect(result).toBe(before);
+  });
+
+  describe('composed with withRowEdit (real store, real ADR-0006 reconciliation effect)', () => {
+    function makeColumns(): ColumnDef<Person>[] {
+      return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];
+    }
+
+    function makeStore() {
+      return TestBed.runInInjectionContext(() =>
+        createTable(signal<Person[]>([...rows]), () => ({
+          trackBy: 'id' as const,
+          columns: makeColumns(),
+          features: [withRowEdit<Person>()],
+        }))
+      );
+    }
+
+    it(
+      'the ordering invariant: patchRow then swapRowId, synchronously, survives the ' +
+        'ADR-0006 reconciliation effect flush — the row stays open under the new id',
+      () => {
+        const store = makeStore();
+        const tempId = 100;
+        const draft: Person = { id: tempId, name: 'new person' };
+
+        store.editing.update(createRow<Person>(tempId, draft));
+        expect(store.editing().has(tempId)).toBe(true);
+
+        const saved: Person = { id: 200, name: 'new person' };
+        store.value.update(patchRow<Person>(tempId, saved));
+        store.editing.update(swapRowId<Person>(tempId, saved.id));
+
+        TestBed.tick(); // flushes the ADR-0006 effect — must not prune `saved.id`
+
+        expect(store.editing().has(saved.id)).toBe(true);
+        expect(store.editing().has(tempId)).toBe(false);
+        expect(store.pending().has(saved.id)).toBe(false); // still open, not pending
+      }
+    );
+
+    it('optimistic-create end-to-end: create, swap on confirm, still editable, then revert', () => {
+      const store = makeStore();
+      const tempId = 101;
+      const draft: Person = { id: tempId, name: 'draft person' };
+
+      store.editing.update(createRow<Person>(tempId, draft));
+
+      const saved: Person = { id: 201, name: 'draft person' };
+      store.value.update(patchRow<Person>(tempId, saved));
+      store.editing.update(swapRowId<Person>(tempId, saved.id));
+      TestBed.tick();
+
+      expect(store.editing().has(saved.id)).toBe(true);
+
+      store.editing.update(revertEdit<Person>(saved.id));
+
+      expect(store.editing().has(saved.id)).toBe(false);
+      expect(store.pending().has(saved.id)).toBe(false);
+    });
   });
 });

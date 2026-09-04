@@ -1,5 +1,5 @@
 import { resolveIndex } from '../engine/rows';
-import { insertRow } from './row-mutations';
+import { insertRow, patchRow, removeRow } from './row-mutations';
 import {
   findRow,
   withSnapshot,
@@ -134,7 +134,7 @@ export function removeEdit<TRow>(id: RowId): EditingUpdater<TRow> {
       ? { ...held, detached: true }
       : { row: data[at], at, detached: true };
 
-    writeData(data.filter((row) => trackBy(row) !== id));
+    writeData(removeRow<TRow>(id)(data, { trackBy, indexById }));
     return {
       snapshots: withSnapshot(state.snapshots, id, snapshot),
       open: withoutOpen(state.open, id),
@@ -162,7 +162,41 @@ export function patchEdit<TRow>(
       ? withSnapshot(state.snapshots, id, { row: data[at], at, detached: false })
       : state.snapshots;
 
-    writeData(data.map((row) => (trackBy(row) === id ? { ...row, ...partial } : row)));
+    writeData(patchRow<TRow>(id, partial)(data, { trackBy, indexById }));
     return { ...state, snapshots };
+  };
+}
+
+/**
+ * Re-keys `from` to `to` in whichever of `open`/`snapshots` hold it — the temp-id → server-id
+ * swap on an optimistic create. Does not touch `data`; the caller writes the row's new identity
+ * there (e.g. via `patchRow`) in the same synchronous handler, before this call. No-op when
+ * neither map holds `from` (house rule).
+ */
+export function swapRowId<TRow>(from: RowId, to: RowId): EditingUpdater<TRow> {
+  return (state) => {
+    const heldOpen = state.open.has(from);
+    const heldSnapshot = state.snapshots.get(from);
+    if (!heldOpen && heldSnapshot === undefined) {
+      return state;
+    }
+
+    let open = state.open;
+    if (heldOpen) {
+      const nextOpen = new Set(open);
+      nextOpen.delete(from);
+      nextOpen.add(to);
+      open = nextOpen;
+    }
+
+    let snapshots = state.snapshots;
+    if (heldSnapshot !== undefined) {
+      const nextSnapshots = new Map(snapshots);
+      nextSnapshots.delete(from);
+      nextSnapshots.set(to, heldSnapshot);
+      snapshots = nextSnapshots;
+    }
+
+    return { open, snapshots };
   };
 }

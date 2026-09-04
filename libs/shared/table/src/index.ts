@@ -39,6 +39,7 @@ export {
   releaseEdit,
   removeEdit,
   revertEdit,
+  swapRowId,
 } from './mutations/optimistic-mutations';
 export type { PatchEditOptions } from './mutations/optimistic-mutations';
 export {
