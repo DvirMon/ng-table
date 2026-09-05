@@ -156,6 +156,14 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   no `withRowEdit()` is composed here, because that's a non-obvious composition choice a reader
   needs before looking at the code. Add prose to an mdx only for that kind of "why," not a
   restatement of what's visible in the canvas.
+- **Why `ForcedFailure` earns its own story instead of staying a control you flip on `Default`:**
+  the rollback/error-recovery UI — a reverted value, a locked/error row, a Retry affordance — never
+  renders on the happy path. `Default`'s DOM literally never reaches that state. A control alone
+  buries it behind "remember to open Controls and flip the boolean"; a pinned story makes the one
+  UI state the whole feature exists for (recovering from a failed optimistic/close-then-confirm
+  save) permanently visible in the sidebar. This only applies where a save/close strategy actually
+  has a rollback or reopen-for-retry step to reveal — a story with nothing to roll back (see
+  `gated-multiple-pessimistic`'s non-existence, above) has no `ForcedFailure` to add.
 - **Every story that exports a `ForcedFailure` variant gets its own `## Forced failure` section
   in the `.mdx`, with a `<Canvas of={Stories.ForcedFailure} />` and a one-paragraph summary of
   what's different from `Default`.** Angular's Storybook docgen does not surface a CSF export's
@@ -164,6 +172,13 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   a code reader; without a matching `.mdx` section, `Default` and `ForcedFailure` render with the
   same (or no) description in Storybook, indistinguishable to a viewer. Keep the two in sync when
   either changes.
+- **The host's own on-canvas hint paragraph (`row-edit-story__hint`) must itself branch on
+  `forceFailure()`.** The `.mdx` "Forced failure" section (above) only shows up on that story's
+  separate Docs page — a person just clicking through `Default`/`ForcedFailure` in the sidebar and
+  looking at the rendered canvas never sees it, and would otherwise see the exact same static hint
+  text on both, with nothing on screen saying what's different. Every story with a `ForcedFailure`
+  export wraps its hint in `@if (forceFailure()) { ... } @else { ... }` so the one piece of text
+  actually visible while interacting with the story describes the state that story is in.
 - **The code-tabs block covers only what a consumer needs to copy to reproduce the feature** —
   not every file the host happens to import. Matches the pattern Angular Material's own example
   viewer uses (e.g. "Dialog Animations": `HTML | TS | CSS | dialog-animations-example-dialog.html`).
@@ -200,7 +215,13 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   fullest examples: multiple mutation verbs, per-row transient UI state (`needsUniqueName`) kept
   separate from table state, and (for the two `-optimistic/` stories) `withRowEdit()`'s config
   wired to a fixed `multiple` value. Three separate hosts, not one host with toggles — see
-  "`.stories.ts` and `.mdx`" above for why.
+  "`.stories.ts` and `.mdx`" above for why. **`saveAll()`/`clearAll()` live only in
+  `gated-multiple-optimistic/`** (removed 2026-09-05 from the two single-row stories) — single
+  mode caps at one open row, so neither button could ever do more than the existing Save/Cancel
+  already do there; keeping them would have been dead surface, not an extra demonstrated
+  behavior. Every other verb (add, duplicate, discard, Force Invalid, keyboard nav, Save & Add
+  Next) stays copy-pasted across all three deliberately — each host is a self-sufficient
+  copy-paste reference for its own mode combination, not a diff against its siblings.
 - `gated-bulk-optimistic/` — D32's batched-write answer: `createRow`'s array overload opens N rows
   in one call (no loop), `POST /api/rows/bulk` saves them in one request, one rollback unit.
   Scoped to only the bulk-create path (no update/delete) — that's the point of a standalone story

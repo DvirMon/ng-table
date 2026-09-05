@@ -1,12 +1,19 @@
 <div class="row-edit-story">
-  <p class="row-edit-story__hint">
-    Multiple rows may be open at once, editing independently — rows show as text until Edit opens
-    them. Cancel resets the row; Discard removes it — both are separate, clearly-labeled buttons
-    on any open row, no matter how the row was added. Save is optimistic only: it closes the row
-    immediately, then rolls back if the save fails. Save All closes every open row before any
-    write fires, so each row's own request settles independently. Keyboard: Escape cancels the
-    open row, Enter saves it, Tab stays inside its cells.
-  </p>
+  @if (forceFailure()) {
+    <p class="row-edit-story__hint">
+      Every save fails: rows still close immediately on Save All — closing never waits on the
+      round trip — then each reverts to its pre-edit value and shows a Retry/Dismiss control.
+    </p>
+  } @else {
+    <p class="row-edit-story__hint">
+      Multiple rows may be open at once, editing independently — rows show as text until Edit opens
+      them. Cancel resets the row; Discard removes it — both are separate, clearly-labeled buttons
+      on any open row, no matter how the row was added. Save is optimistic only: it closes the row
+      immediately, then rolls back if the save fails. Save All closes every open row before any
+      write fires, so each row's own request settles independently. Keyboard: Escape cancels the
+      open row, Enter saves it, Tab stays inside its cells.
+    </p>
+  }
 
   <div class="row-edit-story__toolbar">
     <span class="row-edit-story__counter">

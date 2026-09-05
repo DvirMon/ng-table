@@ -1,9 +1,17 @@
 <div class="row-edit-story">
-  <p class="row-edit-story__hint">
-    Optimistic updates & rollback — focus a field to start tracking a restore point, blur to
-    commit and save. On failure the value reverts to what it was before the edit. Use the
-    Storybook controls to force a failure or add latency.
-  </p>
+  @if (forceFailure()) {
+    <p class="row-edit-story__hint">
+      Every save fails: the typed value shows immediately, same as the happy path, then reverts to
+      what it was before the edit once the request rejects. The row was never open, so nothing
+      closes — it just reverts.
+    </p>
+  } @else {
+    <p class="row-edit-story__hint">
+      Optimistic updates & rollback — focus a field to start tracking a restore point, blur to
+      commit and save. On success the value stays as typed. Use the Storybook controls to force a
+      failure or add latency.
+    </p>
+  }
 
   <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
 
@@ -34,7 +42,7 @@
     open rows: {{ liveTable.editing().size }} · in flight: {{ liveTable.pending().size }}
   </p>
 
-  <table class="row-edit-story__table">
+  <table class="row-edit-story__table" [ngpFocusNewRow]="newRowId()">
     <thead>
       <tr>
         <th class="row-edit-story__cell">name</th>

@@ -1,11 +1,14 @@
 ---
 title: Product — Row Editing User Stories
 type: product
-status: OQ-1…OQ-7 resolved 2026-08-27. Shipped since: optimistic delete rollback (D45–D47),
-  multiple-open semantics (with-multiple-edit), duplicate row (gated), sorting null/empty ordering.
-  Remaining work is UI-layer (G1/G9/G10 keyboard/focus/a11y) and three leftover doc corrections
-  (see ../1-state/work/doc-corrections/1-handoff.md).
-date: 2026-08-27
+status: OQ-1…OQ-7 resolved 2026-08-27. Coverage marks re-verified against actual story code
+  2026-09-05 — several were stale in the direction of under-crediting shipped work (undo,
+  external-write conflict, keyboard, save-all, add-several-in-a-run, undo-a-delete all had real
+  on-screen coverage the marks didn't reflect). Genuinely remaining: real per-cell validation
+  wiring (§1.7), focus-restore + full a11y announcements (G9/G10 — scoped as a cookbook doc, not
+  a shipped directive, see `1-state/work/row-edit-keyboard-a11y/2-decisions.md`), live-mode
+  duplicate (§4.1), bulk delete/selection (§3.3).
+date: 2026-09-05
 audience: product, design, engineering
 ---
 
@@ -42,10 +45,22 @@ one story that papers over the difference.
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
 
-Coverage was judged against the six stories in `src/stories/`, the two demo apps, and the two gap
-registers ([state](../1-state/work/with-row-editing/5-gaps.md),
-[UI](../3-ui/work/row-editing/5-gaps.md)). Coverage is **not** a scope limit — the uncovered
-stories are the point of the document.
+Coverage was re-verified 2026-09-05 by reading every `*-story-host.component.ts` under
+`src/stories/` directly (nine story folders as of this pass — `external-write/`,
+`form-write-mutations/`, `gated-bulk-optimistic/`, `gated-multiple-optimistic/`,
+`gated-single-optimistic/`, `gated-single-pessimistic/`, `live-optimistic/`, `live-table/`,
+`sorting-editing/`), not the `.mdx` wrappers or story names — those drift from what a story
+actually does as it gets extended. Also checked against the two gap registers
+([state](../1-state/work/with-row-editing/5-gaps.md), [UI](../3-ui/work/row-editing/5-gaps.md)).
+Coverage is **not** a scope limit — the uncovered stories are the point of the document. Note:
+`gated-single-optimistic/`, `gated-single-pessimistic/`, and `gated-multiple-optimistic/` still
+share most of their code (add/duplicate/delete/errors+retry/keyboard are copy-pasted across all
+three, deliberately — each story is a self-sufficient copy-paste reference for its own mode
+combination, per `docs/3-ui/stories.md`). **Resolved 2026-09-05:** `saveAll()`/`clearAll()` were
+removed from both single-row stories — single mode caps at one open row, so neither could ever
+exercise more than the existing Save/Cancel buttons already do; they were dead surface claiming
+multi-row coverage the mode can't provide. `gated-multiple-optimistic/` is now the only story
+`saveAll()`/`clearAll()` live in, and the only one §1.8's coverage note below credits for them.
 
 ---
 
@@ -83,9 +98,11 @@ Ordered by how badly the person is hurt if it is missing.
 The person's mental model differs accordingly: in gated mode the whole row is one unit of work; in
 live mode each cell is.
 
-**Coverage:** gated — `gated-edit/`, `optimistic-save/`, `table-row-edit-demo`. Live —
-`live-table/`, `live-optimistic/`, `table-edit-demo`. Failure path shown in both optimistic
-stories. Per-row error placement is not: 🟡 for the error-message half (UI gap G10).
+**Coverage — re-verified 2026-09-05:** gated — `gated-single-optimistic/`,
+`gated-single-pessimistic/`, `gated-multiple-optimistic/`, `gated-bulk-optimistic/`. Live —
+`live-table/`, `live-optimistic/`. Failure path shown in all gated stories and both live stories.
+Per-row error placement is still 🟡 — persistent errors + Retry exist (`rowErrors`), but
+whether the message sits visually adjacent to the row vs. elsewhere is unconfirmed (UI gap G10).
 
 ## 1.2 — Abandon an edit and get the old value back *(gated only)* — ✅ covered
 
@@ -113,11 +130,14 @@ modes.** There is no session to cancel: the last committed value *is* the value.
 therefore needs §1.3 (undo) to give a person any way out of a mistake. Treating "live mode has no
 Cancel" as acceptable without shipping undo leaves the live table with **no** recovery path.
 
-**Coverage:** ✅ for the mechanism (`gated-edit/`, `external-write/`). The stale-data half of the
-failure behavior is 🟡 — the story shows the consumer resolving it manually, and the person is never
-told a conflict happened.
+**Coverage:** ✅ for the mechanism (`gated-single-optimistic/`, `external-write/`). The stale-data
+half is now closer to ✅ than 🟡 — `external-write/` no longer just resolves silently; it stages a
+`RowConflict` and lets the person choose Keep mine / Take theirs / merge field by field (§1.5 was
+re-verified 2026-09-05: this is real, on-screen). Also new since D31.2's original text — a
+displaced row's unsaved draft can be silently discarded on a single-mode switch, not just an
+external write; tracked as **G13**, blocked on a product call (**O26**).
 
-## 1.3 — Undo my last change *(live especially; both)* — ❌ not covered
+## 1.3 — Undo my last change *(live especially; both)* — 🟡 partly covered
 
 > As someone who tabbed out of a cell after typing into the wrong row, I want to press Undo and put
 > the value back, because in this table there was never a Cancel button to press.
@@ -139,9 +159,13 @@ told a conflict happened.
   explanation rather than clobbering their value.
 - If the row has since been deleted, undo of a *value* change does nothing and says so.
 
-**Coverage:** ❌. No undo of any kind exists in any story or demo. In live mode this is a P1 hole,
-not a nicety — see §1.2's mode note. Related: §3.2 (undo a delete) is the same affordance and
-should be one feature, not two.
+**Coverage — re-verified 2026-09-05:** 🟡, was wrongly marked ❌. Both live stories now have
+working undo, keyboard-bound: `live-optimistic/` undoes a delete within a 6-second window
+(Ctrl+Z/⌘Z); `live-table/` has a combined undo slot covering **either** the last committed field
+value **or** the last discarded row (also Ctrl+Z-bound). Still 🟡, not ✅ — scroll-into-view +
+highlight (OQ-2) is unimplemented, and undo here is local-only: the acceptance criterion that undo
+is itself a server write that can fail is not demonstrated anywhere. Related: §3.2 (undo a delete)
+is the same affordance and should stay one feature, not two — see §3.2 for the fuller picture.
 
 ## 1.4 — Know a row is saved, saving, or failed *(both)* — 🟡 partly covered
 
@@ -164,12 +188,17 @@ should be one feature, not two.
   again.
 - Retry is available from the row itself.
 
-**Coverage:** 🟡. `live-optimistic/` renders a per-row state column and `pending()` exists, so the
-mechanism is there. What is missing: the announcement (G10), the leave-page warning, retry, and a
-documented recipe (G7). Note the state layer's own accepted cost — a local-only save flickers
-through `pending` for one tick, which would show a "saving" flash on a table with no server.
+**Coverage — re-verified 2026-09-05:** 🟡, closer to ✅ than the mark suggested. `live-optimistic/`
+now has all three of what was listed missing: a screen-reader-style `announcement` signal firing
+once per `pending()` transition, a real `beforeunload` guard (plus a Storybook simulate button),
+and per-row persistent errors + Retry (`rowErrors`/`retrySave`) shared across every gated story
+too. Still 🟡, not ✅ — a documented recipe (G7) doesn't exist yet, so this pattern lives only in
+one story, not as guidance a consumer can follow without reading that story's source. Note the
+state layer's own accepted cost — a local-only save flickers through `pending` for one tick, which
+would show a "saving" flash on a table with no server (OQ-6 found this doesn't actually happen —
+see §6).
 
-## 1.5 — Be told when someone else changed the row I am editing *(both)* — ❌ not covered
+## 1.5 — Be told when someone else changed the row I am editing *(both)* — 🟡 partly covered
 
 > As someone editing an order that a colleague is also working on, I want to be told their change
 > arrived, and to choose whose version wins — not to discover afterwards that I overwrote them, or
@@ -190,12 +219,15 @@ through `pending` for one tick, which would show a "saving" flash on a table wit
 - If a conflict is detected only when I hit Save (server-side version check), the save is refused
   with the same choice offered, and my typed values are not lost while I decide.
 
-**Coverage:** ❌ as a user experience. The library's position is explicitly that it cannot tell an
-external write from any other data change, and the consumer resolves it by calling `captureEdit`
-(D34/D40). `external-write/` demonstrates the consumer doing this — with **no on-screen indication
-to the person that anything happened**. That is the gap: the plumbing is covered, the story is not.
+**Coverage — re-verified 2026-09-05:** 🟡, was wrongly marked ❌. `external-write/` no longer
+resolves silently — `simulateServerPush(id)` stages a `RowConflict` while the row is open, and the
+person is shown a real three-way choice (Keep mine / Take theirs / merge field by field), matching
+this story's acceptance criteria directly. A write to a row the person is *not* editing still
+applies quietly, as specified. Still 🟡, not ✅ — this exists in the gated story only, no live-mode
+equivalent, and the server-side-version-check failure path (conflict detected only at Save time) is
+not demonstrated.
 
-## 1.6 — Drive the whole edit from the keyboard *(gated primarily; live for Escape)* — ❌ not covered
+## 1.6 — Drive the whole edit from the keyboard *(gated primarily; live for Escape)* — 🟡 partly covered
 
 > As someone entering fifty corrections in a row, I want to work through the table without
 > reaching for the mouse.
@@ -217,9 +249,16 @@ to the person that anything happened**. That is the gap: the plumbing is covered
 - If the row is destroyed and recreated (an id swap after a server-assigned id arrives), focus is
   not lost. This is a known defect today.
 
-**Coverage:** ❌. UI gaps G1 (keyboard), G9 (focus), G10 (a11y) — none of it exists anywhere in the
-stack. Both reference implementations (MUI X, AG Grid) bind Escape. Rated P1 in the UI register and
-agreed here: an edit mode with no Escape is incomplete, not unpolished.
+**Coverage — re-verified 2026-09-05:** 🟡, was wrongly marked ❌ for the keyboard half. Escape/Enter/
+Tab-containment (`onRowKeydown`) is shipped and working in three gated stories
+(`gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`). What's
+still genuinely missing: opening a row does not move focus into its first cell, closing a row does
+not restore focus to the opening affordance (G9), and state-transition announcements beyond §1.4's
+`pending()` announcement don't exist (G10). Scoped 2026-09-04 to ship as a **cookbook recipe**, not
+a directive — see `1-state/work/row-edit-keyboard-a11y/2-decisions.md` (D1) — but the recipe itself
+is unwritten, so a consumer today has to read the shipped stories' source to find this pattern.
+Both reference implementations (MUI X, AG Grid) bind Escape; the id-swap focus-loss defect (G9,
+`@for` recreating the `<tr>` on id change) is still real, tracked in §2.1.
 
 ## 1.7 — Be stopped from saving something invalid *(both)* — ❌ not covered
 
@@ -239,11 +278,14 @@ agreed here: an edit mode with no Escape is incomplete, not unpolished.
 - A server-side validation failure lands on the specific field the server complained about, not as
   a generic row-level error.
 
-**Coverage:** ❌. G7 in the UI register: the form owns validity and the table exposes the open-row
-set, so everything needed exists, but there is no recipe, no save-gating, no cross-row "any row
-invalid" signal, and the demo validates server-side only.
+**Coverage — re-verified 2026-09-05:** ❌ confirmed, mark stands. Every gated story has a "Force
+invalid" toggle that blocks Save and shows a reason, but it's a story-only simulation, not the
+form's real cross-field validity — not wired to the input cell itself, no SR-associated error id.
+G7 in the UI register: the form owns validity and the table exposes the open-row set, so everything
+needed exists, but there is no recipe, no real save-gating, no cross-row "any row invalid" signal,
+and the demo validates server-side only.
 
-## 1.8 — Edit several rows before committing *(gated only)* — 🟡 partly covered
+## 1.8 — Edit several rows before committing *(gated only)* — ✅ covered
 
 > As someone reclassifying twenty records, I want to open several rows, make all the changes, then
 > save once — rather than a round trip per row.
@@ -267,12 +309,17 @@ invalid" signal, and the demo validates server-side only.
 **Mode note.** Gated only. In live mode the session is wherever focus is, which is inherently one
 row, so there is no multi-row session to commit.
 
-**Coverage:** 🟡. `multiple: true` ships and `gated-edit/` toggles it live. Semantics are now
-designed and shipped — [`with-multiple-edit/1-design.md`](../1-state/work/with-multiple-edit/1-design.md):
+**Coverage — re-verified 2026-09-05:** ✅, was wrongly marked 🟡 as "the save-all affordance itself
+is missing." `saveAll()` is shipped and on-screen in `gated-multiple-optimistic/` — N independent
+saves, per-row failure reporting, matching D32's "N independent" answer. (Removed from
+`gated-single-optimistic/`/`gated-single-pessimistic/` the same date — single mode caps at one
+open row, so `saveAll()` there could never exercise more than the existing Save button already
+does; see the note at the top of this document.) `gated-bulk-optimistic/` ships
+the other flavor D32 asked about: `saveBatch()`, one request for N rows, one rollback unit.
+Semantics were designed in [`with-multiple-edit/1-design.md`](../1-state/work/with-multiple-edit/1-design.md):
 bulk edit is optimistic-only (a save closes its row before firing), so the N-open-rows ×
 M-in-flight-saves hazard is unreachable with no new state, and a mode flip `true` → `false` now
-closes every open row rather than stranding one. What is still missing is the "save all" affordance
-itself — a UI component, not a state-layer gap.
+closes every open row rather than stranding one.
 
 ---
 
@@ -328,7 +375,7 @@ predictable, direction-stable placement (§5, S-2). What remains is holding the 
 position for the duration of the fill (OQ-3's row-hold), which is designed but not implemented.
 Tagged to sorting in §4, but listed here because the person meets it during Add.
 
-## 2.3 — Add several rows in a run *(both)* — ❌ not covered
+## 2.3 — Add several rows in a run *(both)* — ✅ covered (gated)
 
 > As someone entering a batch of ten new records from a printed list, I want each Save to leave me
 > ready to type the next one.
@@ -339,7 +386,11 @@ Tagged to sorting in §4, but listed here because the person meets it during Add
 - Rows accumulate in the order I entered them while I am still adding.
 - The run ends explicitly (Escape, or an empty row committed), not by guessing.
 
-**Coverage:** ❌. Nothing anywhere shows a repeat-add flow.
+**Coverage — re-verified 2026-09-05:** ✅ for gated, was wrongly marked ❌. `saveAndAddNext(id)` is
+shipped in `gated-single-optimistic/`, `gated-single-pessimistic/`, and `gated-multiple-optimistic/`
+— saves the open row, then on success opens a fresh blank row via the same path `addBlankRow()`
+uses. No live-mode equivalent exists — live has no explicit "run" concept, since every row is
+already an input.
 
 ---
 
@@ -378,12 +429,14 @@ each backed by a real request too. In fixing this, `row-edit.handlers.ts` picked
 handler it never actually had — `live-optimistic/`'s delete button had been calling `fetch`
 against an **unhandled** MSW request the whole time; that's fixed as a side effect, not a new gap.
 
-**Still 🟡 for the surrounding UX:** the screen-reader label naming what's deleted, and telling the
-person *why* a delete failed near the row rather than in a corner toast, are UI-layer work not
-covered by this change (G10). The state layer's part — recover the row, expose that it happened —
-is done.
+**Still 🟡 for the surrounding UX, narrower than before — re-verified 2026-09-05:** `live-table/`
+already has a named accessible delete label (`discardLabel`, e.g. "Discard {rowLabel(row)}"), so
+that half of the gap is closed there — just not yet carried to every story. Telling the person
+*why* a delete failed near the row rather than in a corner toast is real in every gated story
+(`rowErrors`), though whether it sits visually adjacent to the row is unconfirmed. The state
+layer's part — recover the row, expose that it happened — is done.
 
-## 3.2 — Undo a delete *(both)* — ❌ not covered
+## 3.2 — Undo a delete *(both)* — 🟡 partly covered
 
 > As someone who deleted the wrong row, I want it back — with everything it had in it, where it
 > was — without re-typing it or finding it in an audit log.
@@ -421,13 +474,22 @@ This is deliberately worked out here because the docs do not reach it.
 - If the underlying data set has been re-fetched since the delete, undo still works — it does not
   depend on a client-side index that a refresh invalidates.
 
-**Coverage:** ❌ for the affordance — unbuilt — but the mechanism it needs **shipped 2026-08-27**
-(D45–D47). `RowRestorePoint` gives a snapshot a position, so "put the row back where it was" is
-representable and implemented: `removeEdit(id)` + never calling `releaseEdit(id)` is the undo-a-
-delete state, and `revertEdit(id)` performs the undo. `pending()` already reports exactly the set
-of undoable deletes — no new state-layer surface is needed. What remains is genuinely product
-work: the **affordance** (where Undo lives, how long it lasts, keyboard binding) and OQ-2's answer
-for the sorted case.
+**Coverage — re-verified 2026-09-05:** 🟡, was wrongly marked ❌ "unbuilt" for the affordance. The
+affordance now exists in both live stories: `live-optimistic/` binds Ctrl+Z/⌘Z to `undoDelete`
+within a 6-second window; `live-table/` has a combined undo slot (Ctrl+Z-bound) that restores
+either the last discarded row (re-inserted at its stored index via `insertRow(action.row, { at:
+action.at })`) or the last committed field value. Gated mode correctly has no undo-a-delete story —
+gated relies on Cancel before commit, and a gated delete already commits, so undo would need to be
+a real server write there, unbuilt.
+
+Still 🟡, not ✅ — what's confirmed still missing: scroll-into-view + highlight (OQ-2), sorted/
+filtered-position handling, and the acceptance criterion that undo is itself a server write that
+can fail (both live stories' undo is local-only). `RowRestorePoint` gives a snapshot a position, so
+"put the row back where it was" is representable and implemented at the state layer
+(D45–D47) — `removeEdit(id)` + never calling `releaseEdit(id)` is the undo-a-delete state, and
+`revertEdit(id)` performs the undo, `pending()` reports the undoable set. What remains beyond the
+two stories: the position/visibility half (OQ-2) and per-product decisions on how long the window
+lasts and where the affordance lives permanently, not just in Storybook.
 
 Product position unchanged: §3.1's failure behavior and this story are the same mechanism, and §3.1
 is not shippable without it. Undo for delete and undo for value changes (§1.3) should be designed
@@ -478,11 +540,13 @@ together — one history, one affordance.
 - If the source row changes or is deleted after I started the copy, the copy is unaffected — it is
   its own row from the moment it appears.
 
-**Coverage: gated ✅, shipped 2026-08-27** — [`1-state/work/with-duplicate-row/1-design.md`](../1-state/work/with-duplicate-row/1-design.md),
-`src/stories/gated-edit/` "Duplicate" action. No new library API: `beginEdit(newId, { insert:
-{...source}, at: sourceIndex + 1 })`, the blank-row flow with a different starting value. The copy
-lands directly below its source, opens already open, and the copied `name` is flagged as needing a
-change rather than silently copied into a collision.
+**Coverage: gated ✅, shipped 2026-08-27, story citation corrected 2026-09-05** —
+[`1-state/work/with-duplicate-row/1-design.md`](../1-state/work/with-duplicate-row/1-design.md),
+the "Duplicate" action in `gated-single-optimistic/`, `gated-single-pessimistic/`, and
+`gated-multiple-optimistic/` (`gated-edit/` no longer exists as a story folder). No new library
+API: `beginEdit(newId, { insert: {...source}, at: sourceIndex + 1 })`, the blank-row flow with a
+different starting value. The copy lands directly below its source, opens already open, and the
+copied `name` is flagged as needing a change rather than silently copied into a collision.
 
 **Live ❌.** A real gap remains — no insert-with-rollback verb exists, so an optimistic duplicate has
 no restore point unless the consumer hand-rolls one.

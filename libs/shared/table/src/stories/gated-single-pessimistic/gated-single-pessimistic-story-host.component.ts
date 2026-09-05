@@ -1,8 +1,8 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { catchError, forkJoin, map, of, tap, type Observable } from 'rxjs';
+import { catchError, map, of, tap, type Observable } from 'rxjs';
 import { createTable } from '../../api/create-table';
-import { beginEdit, clearEdit, endEdit } from '../../mutations/row-edit-mutations';
+import { beginEdit, endEdit } from '../../mutations/row-edit-mutations';
 import { patchRow } from '../../mutations/row-mutations';
 import {
   discardEdit,
@@ -56,11 +56,9 @@ export class GatedSinglePessimisticStoryHostComponent {
   protected readonly rows = form(this.table.draft, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly insertAt = signal(0);
-  protected readonly saveAllSummary = signal<string | null>(null);
 
   /** id -> a save failure's message, persistent until dismissed or retried (§1.4) — unlike the
-   * old single `saveError` signal, this doesn't clear itself on an unrelated action, and it's
-   * keyed per row so `saveAll()` can report which rows failed. */
+   * old single `saveError` signal, this doesn't clear itself on an unrelated action. */
   protected readonly rowErrors = signal<ReadonlyMap<RowId, string>>(new Map());
 
   /** Row ids a "Force invalid" toggle has marked — disables Save and shows the reason at the
@@ -146,14 +144,6 @@ export class GatedSinglePessimisticStoryHostComponent {
       });
   }
 
-  protected clearAll(): void {
-    // clearEdit: closes every open row, dropping their restore points.
-    this.table.editing.update(clearEdit());
-    this.needsUniqueName.set(new Set());
-    this.rowErrors.set(new Map());
-    this.pendingCreateIds.set(new Set());
-  }
-
   /** §1.7: per-row toggle that blocks Save independent of form validity — "Force invalid". */
   protected toggleForceInvalid(id: RowId): void {
     this.forcedInvalid.update((ids) => {
@@ -202,30 +192,6 @@ export class GatedSinglePessimisticStoryHostComponent {
     this.clearRowError(id);
   }
 
-  /** §1.8 save-all: reuses `saveEdit$` per open row rather than inventing a batched verb — the
-   * library has none for this. `forkJoin` subscribes to every row's save Observable up front and
-   * completes once all of them have (each internally catches its own failure, so one row failing
-   * never short-circuits the others). A pessimistic failure leaves its row open, so only rows
-   * that actually saved end up closed. */
-  protected saveAll(): void {
-    this.saveAllSummary.set(null);
-    const openIds = Array.from(this.table.editing());
-    if (openIds.length === 0) {
-      this.saveAllSummary.set('No open rows to save.');
-      return;
-    }
-
-    forkJoin(openIds.map((id) => this.saveEdit$(id))).subscribe(() => {
-      const failedIds = openIds.filter((id) => this.rowErrors().has(id));
-      const succeededCount = openIds.length - failedIds.length;
-      this.saveAllSummary.set(
-        failedIds.length === 0
-          ? `Saved all ${succeededCount} row(s).`
-          : `Saved ${succeededCount} of ${openIds.length} row(s); ${failedIds.length} failed.`,
-      );
-    });
-  }
-
   /** §2.3 "add several in a run": saves the open row, then — only once it actually saved —
    * opens a fresh blank row via the same `beginEdit({ insert, at })` path `addBlankRow()` uses. */
   protected saveAndAddNext(id: RowId): void {
@@ -247,8 +213,8 @@ export class GatedSinglePessimisticStoryHostComponent {
    * swap, ADR-0006's reconciliation would prune the row (and its live edit) the instant
    * `patchRow` changes its id, instead of `swapRowId` beating that effect to the punch (D49).
    *
-   * Returns an `Observable<void>` (not a fire-and-forget `.subscribe()`) so `saveAll`/
-   * `saveAndAddNext` can compose completion via `forkJoin`/`.subscribe()` themselves. */
+   * Returns an `Observable<void>` (not a fire-and-forget `.subscribe()`) so `saveAndAddNext`
+   * can compose completion via `.subscribe()` itself. */
   private saveEdit$(id: RowId): Observable<void> {
     this.clearRowError(id);
     if (this.forcedInvalid().has(id)) {

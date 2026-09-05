@@ -1,11 +1,18 @@
 <div class="row-edit-story">
-  <p class="row-edit-story__hint">
-    Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
-    are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
-    is pessimistic: the row stays open until the save resolves, so a failure just leaves it open
-    with its draft intact — no rollback needed since nothing closed early. Keyboard: Escape
-    cancels the open row, Enter saves it, Tab stays inside its cells.
-  </p>
+  @if (forceFailure()) {
+    <p class="row-edit-story__hint">
+      Every save fails: the row stays open — pessimistic never closes early — the error shows
+      inline, and Retry re-runs the same request.
+    </p>
+  } @else {
+    <p class="row-edit-story__hint">
+      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
+      are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
+      is pessimistic: the row stays open until the save resolves, so a failure just leaves it open
+      with its draft intact — no rollback needed since nothing closed early. Keyboard: Escape
+      cancels the open row, Enter saves it, Tab stays inside its cells.
+    </p>
+  }
 
   <div class="row-edit-story__toolbar">
     <label>
@@ -17,11 +24,6 @@
       />
     </label>
     <button type="button" (click)="addBlankRow()">Add row</button>
-    <button type="button" (click)="clearAll()">Clear all</button>
-    <button type="button" (click)="saveAll()">Save All</button>
-    @if (saveAllSummary(); as summary) {
-      <span class="row-edit-story__counter" role="status">{{ summary }}</span>
-    }
   </div>
 
   <table class="row-edit-story__table">

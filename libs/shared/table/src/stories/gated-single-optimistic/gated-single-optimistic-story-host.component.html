@@ -1,11 +1,18 @@
 <div class="row-edit-story">
-  <p class="row-edit-story__hint">
-    Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
-    are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
-    closes the row immediately and reconciles over the network — a real MSW-intercepted `fetch`
-    that rolls the row back on failure (`forceFailure`/`latencyMs` are Storybook controls below).
-    Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside its cells.
-  </p>
+  @if (forceFailure()) {
+    <p class="row-edit-story__hint">
+      Every save fails: the row still closes immediately (optimistic), then reverts to its
+      pre-edit snapshot and reopens once Retry is clicked.
+    </p>
+  } @else {
+    <p class="row-edit-story__hint">
+      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
+      are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
+      closes the row immediately and reconciles over the network — a real MSW-intercepted `fetch`
+      that rolls the row back on failure (`forceFailure`/`latencyMs` are Storybook controls below).
+      Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside its cells.
+    </p>
+  }
 
   <div class="row-edit-story__toolbar">
     <label>
@@ -17,11 +24,6 @@
       />
     </label>
     <button type="button" (click)="addBlankRow()">Add row</button>
-    <button type="button" (click)="clearAll()">Clear all</button>
-    <button type="button" (click)="saveAll()">Save All</button>
-    @if (saveAllSummary(); as summary) {
-      <span class="row-edit-story__counter" role="status">{{ summary }}</span>
-    }
   </div>
 
   <table class="row-edit-story__table">

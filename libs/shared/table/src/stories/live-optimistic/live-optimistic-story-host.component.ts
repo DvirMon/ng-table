@@ -1,13 +1,4 @@
-import {
-  Component,
-  DestroyRef,
-  ElementRef,
-  afterRenderEffect,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
 import {
@@ -19,6 +10,7 @@ import {
 } from '../../mutations/optimistic-mutations';
 import { insertRow, patchRow } from '../../mutations/row-mutations';
 import type { RowId } from '../../api/types';
+import { FocusNewRowDirective } from '../focus-new-row.directive';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
 import { editRowsSchema, liveOptimisticSchema } from '../row-edit.schema';
 import { injectRowEditApi } from '../row-edit.http';
@@ -42,7 +34,7 @@ const UNDO_WINDOW_MS = 6000;
  */
 @Component({
   selector: 'ngp-live-optimistic-story-host',
-  imports: [FormField],
+  imports: [FormField, FocusNewRowDirective],
   templateUrl: './live-optimistic-story-host.component.html',
   styleUrl: '../row-edit-story.css',
   host: {
@@ -71,24 +63,12 @@ export class LiveOptimisticStoryHostComponent {
   protected readonly undoRowId = signal<RowId | null>(null);
 
   private readonly destroyRef = inject(DestroyRef);
-  private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly rowEditApi = injectRowEditApi();
   private undoTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor() {
     this.announcePendingTransitions();
     this.destroyRef.onDestroy(() => this.clearUndoTimer());
-
-    // Moves focus into the newly-inserted row's first input once it has rendered (§2.1).
-    afterRenderEffect({
-      write: () => {
-        const id = this.newRowId();
-        if (id === null) return;
-        this.elementRef.nativeElement
-          .querySelector<HTMLInputElement>(`tr[data-row-new="${id}"] input`)
-          ?.focus();
-      },
-    });
   }
 
   /** Inserts a blank row under a temp client id — nothing is saved yet; the row's first blur
