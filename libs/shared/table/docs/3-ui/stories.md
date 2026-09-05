@@ -34,12 +34,18 @@ split by concern per `file-organization.md`:
 | `row-edit.mock.ts` | Fixture rows, option lists (`EDIT_ROWS_MOCK`, `DEPT_OPTIONS`) |
 | `row-edit.schema.ts` | `createTableSchema()` calls per story variant (`gatedTableSchema`, `liveTableSchema`, `liveOptimisticSchema`) + the shared Signal Forms `editRowsSchema` |
 | `row-edit.utils.ts` | Pure helpers (`saveRowPessimistic`) |
+| `row-edit.http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
 | `row-edit.handlers.ts` | MSW request handlers |
 | `row-edit-story.css` | Shared story styling |
 | `code-tabs.css` | The mdx HTML/TS toggle, shared by every story's mdx |
 
 Don't inline mock data or a schema call inside a story-host component — same rule as any other
 component in this repo (`file-organization.md`).
+
+**Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
+via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack
+Query. No shared/cached server-state exists across these demo-only stories to justify TanStack's
+caching model, and `HttpClient` matches the repo's only other transport precedent.
 
 ## The story-host component
 
@@ -97,25 +103,29 @@ updater — never a Storybook actions-panel-only trigger, and never a bare `cons
 person reading the story should be able to click through the whole flow and see the resulting
 table state change, not just see an event logged in a side panel.
 
-Two tiers, by how much the story needs to prove:
+**Every CRUD op in every row-editing story is a real MSW-intercepted round trip** — add, edit,
+and delete alike, gated and live, optimistic and pessimistic. `forceFailure` and `latencyMs`
+Storybook controls thread into request headers `row-edit.handlers.ts` reads, so the
+failure/latency path is a real intercepted request, never a fake `await`. (Revised 2026-09-04 —
+this used to carve out an exception for "a pessimistic, no-rollback story doesn't need MSW, a
+plain `await` is enough." That's no longer the policy: pessimistic stories now hit the same mock
+server as their optimistic siblings, just with the request awaited before the row closes instead
+of after. Reserve a plain `await`/`Promise` stub for a story that isn't about save/delete at all.)
 
 - **Synchronous, local mutation** — call the verb directly off the button
   (`this.table.editing.update(beginEdit(id))`, `this.table.editing.update(revertEdit(id))`).
-  This is the default; most buttons in the existing stories are this shape.
-- **Simulated server round-trip** — when the story is specifically about save/delete
-  reliability (optimistic rollback, pending state, retry), intercept a real `fetch()` with MSW
-  rather than stubbing a `Promise`. `optimistic-save/` and `live-optimistic/` both do this: a
-  `forceFailure` boolean and `latencyMs` number are Storybook controls, threaded into request
-  headers the MSW handler reads (`row-edit.handlers.ts`), so the failure/latency path is a real
-  intercepted request, not a fake await. Reach for this whenever a story's whole point is
-  proving what happens when a save is slow or rejected — a pessimistic, no-rollback story
-  (`gated-edit/`'s plain Save) doesn't need it; a plain `await` is enough there.
+  This is the default for everything that isn't itself a CRUD write; most buttons in the
+  existing stories are this shape.
+- **Real server round-trip** — every add/edit/delete button, per the rule above.
+  `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`,
+  `live-table/`, `live-optimistic/`, and `live-pessimistic/` all do this.
 
 ## `.stories.ts` and `.mdx`
 
 - `.stories.ts` defines `Meta` + one exported story object per distinct **Storybook-arg**
   variant the story demonstrates (e.g. `Default`/`ForcedFailure` for `live-optimistic/`,
-  `gated-multiple-optimistic/` — a `forceFailure` arg toggling a real MSW-intercepted `fetch`).
+  `gated-multiple-optimistic/` — a `forceFailure` arg toggling a real MSW-intercepted `HttpClient`
+  request).
   A single `Default` is enough when there's nothing to vary this way (`gated-single-pessimistic/`,
   whose save path is a stubbed `Promise` with no `forceFailure`/`latencyMs` to control). Don't
   add a second story object for something a control already covers — see the general
