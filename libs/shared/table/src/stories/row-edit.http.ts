@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { catchError, throwError, type Observable } from 'rxjs';
+import { catchError, map, throwError, type Observable } from 'rxjs';
 import type { RowId } from '../api/types';
 import type { EditRow } from './row-edit.types';
 
@@ -12,12 +12,15 @@ export interface RowEditRequestOptions {
 export interface RowEditApi {
   readonly saveRow: (id: RowId, row: EditRow, isCreate: boolean, options: RowEditRequestOptions) => Observable<EditRow>;
   readonly deleteRow: (id: RowId, options: RowEditRequestOptions) => Observable<void>;
+  /** One request for every row in `rows` — a batch failure fails the whole array, never some of
+   * it. Used only by `../gated-bulk-optimistic/`. */
+  readonly saveBulk: (rows: EditRow[], options: RowEditRequestOptions) => Observable<EditRow[]>;
 }
 
 /** HttpClient wrapper for the row-edit stories' save/delete round trips — headers carry the
  * Storybook forceFailure/latencyMs controls that `row-edit.handlers.ts` (MSW) reads. Non-2xx and
- * network errors both normalize to the same `Error(message)` shape the five hosts' `error`
- * callbacks already expect. */
+ * network errors both normalize to the same `Error(message)` shape the hosts' `error` callbacks
+ * already expect. */
 export function injectRowEditApi(): RowEditApi {
   const http = inject(HttpClient);
 
@@ -48,7 +51,15 @@ export function injectRowEditApi(): RowEditApi {
       .pipe(catchError((error: unknown) => throwError(() => normalizeError(error, 'Delete failed.'))));
   }
 
-  return { saveRow, deleteRow };
+  function saveBulk(rows: EditRow[], options: RowEditRequestOptions): Observable<EditRow[]> {
+    const headers = headersFor(options);
+    return http.post<{ rows: EditRow[] }>('/api/rows/bulk', { rows }, { headers }).pipe(
+      map((response) => response.rows),
+      catchError((error: unknown) => throwError(() => normalizeError(error, 'Batch save failed.'))),
+    );
+  }
+
+  return { saveRow, deleteRow, saveBulk };
 }
 
 function normalizeError(error: unknown, fallback: string): Error {
