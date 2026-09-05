@@ -1,7 +1,7 @@
 ---
 title: Proposal — optimistic and pessimistic as a definitive API
 type: plan
-status: open — step 0 done (ADR-0013 + D50–D57 reserved); step 1 not started
+status: open — step 0 done (ADR-0013 + D50–D57 reserved); step 1 done (D53); step 2 not started
 date: 2026-09-05
 parent: ../../features/row-editing.md
 ---
@@ -198,10 +198,10 @@ Two parts genuinely could not wait, and are done:
 
 Still open in this step: `state.json`. D51–D57 rationale is written per step, below.
 
-**Step 1 — `op` replaces `detached`** *(mechanical)* · `Depends on: 0` (numbering only)
+**Step 1 — `op` replaces `detached`** *(mechanical)* · `Depends on: 0` (numbering only) · **DONE 2026-09-05**
 `editing-state.ts`, `optimistic-mutations.ts`, `row-edit-mutations.ts`, colocated specs,
 `index.ts` (+`PendingOp`). The ADR-0006 keep-predicate becomes `(v) => v.op === 'delete'`.
-`detached` appears nowhere in `src/stories/` — verified.
+`detached` appears nowhere in `src/stories/` — verified. See [D53](./2-decisions.md#d53--rowrestorepointdetached-becomes-op-create--update--delete-2026-09-05).
 
 **Step 2 — `pendingOps` + `unconfirmed`** *(additive, non-breaking)* · `Depends on: 1`
 `editing-state.ts` (shape, `pendingOps()`, prune `unconfirmed` with the exemption),

@@ -58,7 +58,41 @@ axis to gated tables only); narrows — does not reverse —
 undetectable *at composition time* remains true. Obliges D51–D57 and the step sequence in
 [`1-proposal.md`](./1-proposal.md).
 
-## D51–D57
+## D53 — `RowRestorePoint.detached` becomes `op: 'create' | 'update' | 'delete'` (2026-09-05)
+
+**Decision:** replace the boolean `detached` field with `op: PendingOp` (`'create' | 'update' |
+'delete'`), exported from `index.ts` alongside `RowRestorePoint`. The ADR-0006 keep-predicate in
+`createEditingStore()`'s `onRowsRemoved` becomes `(v) => v.op === 'delete'` — `detached` was always
+exactly `op === 'delete'` (ADR-0013 Decision 6), so this is a lossless field rename plus recovering
+the information `false` used to erase.
+
+**Where each value is assigned** — `detached: false` collapsed two different call-site facts into
+one boolean, so restoring the distinction is a per-site judgment, not a mechanical find/replace:
+
+| Verb | Site | `op` |
+|---|---|---|
+| `captureEdit`, `patchEdit` | snapshot the row already present in `data` | `'update'` |
+| `beginEdit(id)` (no `{ insert }`) | same — captures the found row | `'update'` |
+| `beginEdit(id, { insert })`, `createRow` (both overloads) | the row is new — inserted, not found | `'create'` |
+| `removeEdit` | takes the row out of `data` | `'delete'` (was `detached: true`) |
+
+`revertEdit`, `discardEdit`, `releaseEdit`, `swapRowId` only read or re-key an existing snapshot —
+none constructs a new one, so none needed a change beyond the type.
+
+**Consequences:**
+- Public breaking change lands now (foretold by D50/ADR-0013): `RowRestorePoint.detached` is gone;
+  `RowRestorePoint.op` and `PendingOp` are the replacement, both exported from `index.ts`.
+- `editing-state.ts`, `optimistic-mutations.ts`, `row-edit-mutations.ts` and their colocated specs
+  all updated in the same commit; `detached` appears nowhere in `src/` afterward (confirmed by
+  grep, including `src/stories/` as the proposal predicted).
+- No behavior change — `pending()`, `onRowsRemoved`'s pruning outcome, and every existing test
+  assertion are unchanged; only the vocabulary a failure handler can branch on grew (`op ===
+  'create'` is now askable, where before only `detached` — always `false` on every path except
+  `removeEdit` — was).
+- Sets up D54 (`unconfirmed`, step 2), which reads `op === 'create'` as its starting point before
+  layering in the "outlives a restore point" gap noted in `1-proposal.md`.
+
+## D51, D52, D54–D57
 
 Reserved; see the table above. Each is written when its step lands.
 

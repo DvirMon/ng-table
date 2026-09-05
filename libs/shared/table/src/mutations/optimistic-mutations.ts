@@ -37,7 +37,7 @@ export function captureEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
     if (found === undefined) {
       return state;
     }
-    const snapshot: RowRestorePoint<TRow> = { row: found, at, detached: false };
+    const snapshot: RowRestorePoint<TRow> = { row: found, at, op: 'update' };
     return { ...state, snapshots: withSnapshot(state.snapshots, id, snapshot) };
   };
 }
@@ -128,11 +128,11 @@ export function removeEdit<TRow>(id: RowId): EditingUpdater<TRow> {
     }
 
     const held = state.snapshots.get(id);
-    // `detached: true` marks the row as gone from `data` so ADR-0006's pruning doesn't wipe this
+    // `op: 'delete'` marks the row as gone from `data` so ADR-0006's pruning doesn't wipe this
     // snapshot the moment the row disappears.
     const snapshot: RowRestorePoint<TRow> = held
-      ? { ...held, detached: true }
-      : { row: data[at], at, detached: true };
+      ? { ...held, op: 'delete' }
+      : { row: data[at], at, op: 'delete' };
 
     writeData(removeRow<TRow>(id)(data, { trackBy, indexById }));
     return {
@@ -159,7 +159,7 @@ export function patchEdit<TRow>(
 
     const shouldCapture = (options.capture ?? 'if-absent') === 'always' || !state.snapshots.has(id);
     const snapshots = shouldCapture
-      ? withSnapshot(state.snapshots, id, { row: data[at], at, detached: false })
+      ? withSnapshot(state.snapshots, id, { row: data[at], at, op: 'update' })
       : state.snapshots;
 
     writeData(patchRow<TRow>(id, partial)(data, { trackBy, indexById }));

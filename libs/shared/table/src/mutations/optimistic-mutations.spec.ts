@@ -1,6 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { pendingIds, type EditingState, type RowRestorePoint } from '../api/features/editing-state';
+import {
+  pendingIds,
+  type EditingState,
+  type PendingOp,
+  type RowRestorePoint,
+} from '../api/features/editing-state';
 import { createTable } from '../api/create-table';
 import { withRowEdit } from '../api/features/with-row-edit';
 import {
@@ -39,8 +44,8 @@ function state(
   return { snapshots: new Map(snapshots), open: new Set(open) };
 }
 
-function restorePoint(row: Person, at: number, detached = false): RowRestorePoint<Person> {
-  return { row, at, detached };
+function restorePoint(row: Person, at: number, op: PendingOp = 'update'): RowRestorePoint<Person> {
+  return { row, at, op };
 }
 
 describe('captureEdit', () => {
@@ -153,7 +158,7 @@ describe('revertEdit', () => {
   });
 
   it('re-inserts a deleted row at its captured index and closes it (Change 2)', () => {
-    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1, true)]]);
+    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1, 'delete')]]);
     const dataWithoutRow = rows.filter((r) => r.id !== 2);
     let written: Person[] | undefined;
 
@@ -204,7 +209,7 @@ describe('revertEdit', () => {
   });
 
   it('uses a row override but the snapshots at when the row was removed', () => {
-    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1, true)]]);
+    const snapshotState = state([[2, restorePoint({ id: 2, name: 'Bea' }, 1, 'delete')]]);
     const dataWithoutRow = rows.filter((r) => r.id !== 2);
     let written: Person[] | undefined;
 
@@ -263,7 +268,7 @@ describe('revertEdit', () => {
   it('clamps a stale at on re-insert rather than throwing (D27)', () => {
     // Captured when the array had 3 rows and this row was last (at: 2); the array has since
     // shrunk, so `at` is now out of range and must clamp, not throw.
-    const snapshotState = state([[3, restorePoint({ id: 3, name: 'Cid' }, 2, true)]]);
+    const snapshotState = state([[3, restorePoint({ id: 3, name: 'Cid' }, 2, 'delete')]]);
     const shrunkData = [{ id: 1, name: 'Ada' }];
     let written: Person[] | undefined;
 
@@ -329,7 +334,7 @@ describe('removeEdit', () => {
     expect(written).toBeUndefined();
   });
 
-  it('captures a detached restore point and removes the row when none is held', () => {
+  it("captures an op: 'delete' restore point and removes the row when none is held", () => {
     const before = state();
     let written: Person[] | undefined;
 
@@ -341,12 +346,12 @@ describe('removeEdit', () => {
     });
 
     expect(written?.map((r) => r.id)).toEqual([1, 3]);
-    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1, true));
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1, 'delete'));
     expect(result.open.has(2)).toBe(false);
   });
 
-  it('on an already-open row, keeps the pre-edit row/at but flips detached true', () => {
-    const opened = beginEdit<Person>(2)(state(), ctx()); // { row: Bea, at: 1, detached: false }
+  it("on an already-open row, keeps the pre-edit row/at but flips op to 'delete'", () => {
+    const opened = beginEdit<Person>(2)(state(), ctx()); // { row: Bea, at: 1, op: 'update' }
     let written: Person[] | undefined;
 
     const result = removeEdit<Person>(2)(opened, {
@@ -357,7 +362,7 @@ describe('removeEdit', () => {
     });
 
     expect(written?.map((r) => r.id)).toEqual([1, 3]);
-    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1, true));
+    expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1, 'delete'));
     expect(result.open.has(2)).toBe(false);
   });
 });

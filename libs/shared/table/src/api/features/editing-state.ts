@@ -16,6 +16,12 @@ import type { RowId, TrackByFn } from '../types';
  */
 
 /**
+ * Which CRUD operation armed this restore point. `'delete'` is what `detached` used to mean —
+ * captured by a verb that then removed the row, so ADR-0006 pruning must not drop it (ADR-0013).
+ */
+export type PendingOp = 'create' | 'update' | 'delete';
+
+/**
  * A row's restore point. Carries its position as well as its value, so `revertEdit` can
  * re-insert a row that was removed, not just replace one still present.
  */
@@ -24,8 +30,7 @@ export interface RowRestorePoint<TRow> {
   /** Index in `data` at capture time. Read **only** when the row is missing at revert — a row
    * still present is replaced in place, since a sort or another write may have moved it. */
   readonly at: number;
-  /** Captured by a verb that then removed the row, so ADR-0006 pruning must not drop it. */
-  readonly detached: boolean;
+  readonly op: PendingOp;
 }
 
 export type RowSnapshot<TRow> = RowRestorePoint<TRow>;
@@ -167,7 +172,7 @@ export interface EditingStore<TRow> {
   /** Writes state through `onWrite`. Exposed so a feature can re-apply the current state when
    * its own config changes, not just when an updater runs. */
   apply(next: EditingState<TRow>): void;
-  /** ADR-0006. Prunes `snapshots` (keeping detached restore points) and `open`. */
+  /** ADR-0006. Prunes `snapshots` (keeping `op: 'delete'` restore points) and `open`. */
   onRowsRemoved(ids: readonly RowId[]): void;
 }
 
@@ -200,13 +205,13 @@ export function createEditingStore<TRow>(
   // and `snapshots` (nothing left to restore) — `pending` needs no pruning of its own, since it
   // is derived from the other two, not stored. `open` is pruned independently of `snapshots`:
   // `pendingIds()` treats "has a snapshot but isn't open" as pending, so leaving a removed id in
-  // `open` would surface it as newly pending. A `detached` restore point is exempt — it was
-  // captured by a verb (`removeEdit`) that deliberately took the row out of `data`, so pruning it
-  // here would erase the rollback the verb exists to provide.
+  // `open` would surface it as newly pending. A restore point whose `op` is `'delete'` is exempt —
+  // it was captured by a verb (`removeEdit`) that deliberately took the row out of `data`, so
+  // pruning it here would erase the rollback the verb exists to provide.
   function onRowsRemoved(ids: readonly RowId[]): void {
     const current = state();
     const nextOpen = pruneByIds(current.open, ids);
-    const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value.detached);
+    const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value.op === 'delete');
     if (nextOpen !== current.open || nextSnapshots !== current.snapshots) {
       apply({ open: nextOpen, snapshots: nextSnapshots });
     }

@@ -20,6 +20,7 @@ export type {
   EditingState,
   EditingUpdater,
   EditingUpdaterContext,
+  PendingOp,
   RowRestorePoint,
   RowSnapshot,
   SnapshotMap,

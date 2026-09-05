@@ -161,7 +161,7 @@ describe('withRowEdit', () => {
     store.editing.update(removeEdit<Row>('r1'));
     TestBed.tick();
 
-    // Without the `detached` exemption, the ADR-0006 reconciliation effect would have pruned
+    // Without the `op === 'delete'` exemption, the ADR-0006 reconciliation effect would have pruned
     // this snapshot the instant removeEdit took the row out of `data` — Change 4's regression
     // guard. The ordering is safe (writeData applies synchronously, before the effect flushes)
     // but this is what pins it.
@@ -174,7 +174,7 @@ describe('withRowEdit', () => {
     expect(store.pending().size).toBe(0);
   });
 
-  it('removeEdit on an already-open row keeps its pre-edit restore point through the effect, and flips detached (Change 4)', () => {
+  it("removeEdit on an already-open row keeps its pre-edit restore point through the effect, and flips op to 'delete' (Change 4)", () => {
     const data = signal(makeRows());
     const store = TestBed.runInInjectionContext(() =>
       createTable(data, () => ({

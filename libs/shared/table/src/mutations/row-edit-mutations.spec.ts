@@ -1,4 +1,9 @@
-import { pendingIds, type EditingState, type RowRestorePoint } from '../api/features/editing-state';
+import {
+  pendingIds,
+  type EditingState,
+  type PendingOp,
+  type RowRestorePoint,
+} from '../api/features/editing-state';
 import { beginEdit, clearEdit, createRow, endEdit } from './row-edit-mutations';
 import { releaseEdit, revertEdit } from './optimistic-mutations';
 import { removeRow } from './row-mutations';
@@ -27,8 +32,8 @@ function state(
   return { snapshots: new Map(snapshots), open: new Set(open) };
 }
 
-function restorePoint(row: Person, at: number, detached = false): RowRestorePoint<Person> {
-  return { row, at, detached };
+function restorePoint(row: Person, at: number, op: PendingOp = 'update'): RowRestorePoint<Person> {
+  return { row, at, op };
 }
 
 /** Every updater must preserve it — `pendingIds` derives from it (D31.5). */
@@ -101,7 +106,7 @@ describe('beginEdit({ insert })', () => {
     const result = beginEdit<Person>(99, { insert: { id: 99, name: '' } })(state(), writingCtx());
 
     // Appended (no `at`) to the 3-row fixture — lands at index 3.
-    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 3, false));
+    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 3, 'create'));
   });
 
   it('honours `at` the way insertRow does (D27)', () => {
@@ -142,8 +147,8 @@ describe('createRow (array form, D32)', () => {
     expect(written?.map((r) => r.id)).toEqual([98, 99, 1, 2, 3]);
     expect(result.open.has(98)).toBe(true);
     expect(result.open.has(99)).toBe(true);
-    expect(result.snapshots.get(98)).toEqual(restorePoint({ id: 98, name: '' }, 0));
-    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 1));
+    expect(result.snapshots.get(98)).toEqual(restorePoint({ id: 98, name: '' }, 0, 'create'));
+    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 1, 'create'));
   });
 
   it('skips an entry whose id already exists in data, still writes the rest (no-op per entry)', () => {

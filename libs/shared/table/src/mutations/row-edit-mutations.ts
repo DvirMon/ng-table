@@ -70,7 +70,7 @@ export function beginEdit<TRow>(
       // `resolveIndex`'s linear-scan fallback makes this correct regardless.
       const insertedAt = resolveIndex(nextData, id, { trackBy, indexById });
       return {
-        snapshots: withSnapshot(state.snapshots, id, { row: insert, at: insertedAt, detached: false }),
+        snapshots: withSnapshot(state.snapshots, id, { row: insert, at: insertedAt, op: 'create' }),
         open: withOpen(state.open, id),
       };
     }
@@ -81,7 +81,7 @@ export function beginEdit<TRow>(
       return { ...state, open: withOpen(state.open, id) };
     }
 
-    const snapshot: RowRestorePoint<TRow> = { row: data[foundAt], at: foundAt, detached: false };
+    const snapshot: RowRestorePoint<TRow> = { row: data[foundAt], at: foundAt, op: 'update' };
     return {
       snapshots: state.snapshots.has(id) ? state.snapshots : withSnapshot(state.snapshots, id, snapshot),
       open: withOpen(state.open, id),
@@ -131,7 +131,7 @@ export function createRow<TRow>(
     let open = state.open;
     for (const entry of fresh) {
       const insertedAt = resolveIndex(nextData, entry.id, { trackBy, indexById });
-      snapshots = withSnapshot(snapshots, entry.id, { row: entry.row, at: insertedAt, detached: false });
+      snapshots = withSnapshot(snapshots, entry.id, { row: entry.row, at: insertedAt, op: 'create' });
       open = withOpen(open, entry.id);
     }
     return { snapshots, open };
