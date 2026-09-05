@@ -112,6 +112,40 @@ this ADR exists to avoid.
 `RENDER_ORDER`'s membership is fixed by the engine, not by features, for the same reason
 `PIPELINE_ORDER` is: order must not depend on the `features` array.
 
+Naming `'paginate'` before `withPagination()` exists follows the precedent already set by
+`PIPELINE_ORDER`, which lists `'filter'` and `'group'` for features that do not exist yet. Adding a
+stage stays a one-line edit to the array.
+
+### 6. Ordering rationale, and why tree-vs-paginate is *not* an ordering question
+
+**`'group'` before `'tree'`.** Grouping is the outer structure: it inserts `kind: 'group'` headers
+over the row list, and tree then expands each row's children in place beneath their parent, inside
+the group. Reversed, the tree would flatten first and grouping would scatter children away from
+their parents into value-clusters of their own.
+
+**`'paginate'` last**, and — the part worth recording — *whether a page counts expanded children is
+a config flag on `withPagination()`, not a reordering of this array*. Both prior-art libraries put
+pagination last unconditionally and expose a flag consumed by the pagination step:
+
+| Library | Flag | Default | Effect |
+|---|---|---|---|
+| TanStack | `paginateExpandedRows` | `true` | children counted; a parent's children may span pages |
+| AG Grid | `paginateChildRows` | `false` | page holds N *top-level* rows; expanding grows the page |
+
+**Decision: default to AG Grid's behavior** — paginate top-level rows; expanding grows the current
+page rather than pushing rows onto the next one. A flag (`paginateChildRows`, name matching the
+behavior it selects) opts into strict page size.
+
+Rationale: expanding is a frequent, exploratory action on a tree table, and under TanStack's
+default every expand reflows every subsequent page — rows the user was not looking at move
+underneath them. Stable page boundaries are worth more than a strict page count here. Strict count
+matters mainly when page size is a render budget, which is `withVirtualScroll()`'s job in this
+library, not pagination's. Detail-panel expansion ([ADR-0012](0012-split-expansion-into-panel-and-tree.md))
+is unaffected either way — panel content is never a render row, so pagination never sees it.
+
+This is recorded here because the flag's default is a product decision, but the *ordering* it might
+otherwise have implied is not: `'paginate'` is last in both modes.
+
 ## Alternatives considered
 
 | Option | Why not |
@@ -120,6 +154,7 @@ this ADR exists to avoid.
 | Keep single-occupancy; make grouping+tree one mega-feature | Same coupling, plus it forces consumers who want only grouping to ship the tree walk. Also just relocates the collision to the next reshaping feature (`withPagination()`) |
 | Keep the slot; let `features` array order decide | This is the pre-ADR-0003 `@ngrx/signals` behavior that single-occupancy was introduced to kill. Silent wrong rows |
 | Let features append to an unordered transform list | Execution order would depend on `features` order — the exact property `PIPELINE_ORDER` was designed to remove. A named, engine-fixed order is the point |
+| Make `RENDER_ORDER` consumer-configurable, so tree-vs-paginate can be reordered per table | Considered specifically for the "do expanded children count toward page size" case, and rejected: neither TanStack nor AG Grid reorders for it — both keep pagination last and put the choice in a flag the pagination step reads (see §6). A configurable order would make every stage's input shape unpredictable to every other stage, to buy one behavior a boolean already buys |
 | Generalize `renderRows` to `RenderRow[] → RenderRow[]` but keep it single-claim | Solves nothing; the slot is the constraint, not its signature |
 
 ## Consequences

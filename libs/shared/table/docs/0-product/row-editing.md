@@ -670,8 +670,11 @@ semantics resolved first (G4) — the two features cannot be specified independe
 > As someone editing a line item inside an expanded order, I expect the child row to be editable
 > the same way the parent is.
 
-Today a nested child renders no editable field at all (G6, an engine-level index gap). Belongs to
-expansion because expansion is what the engine's index does not consult.
+Today a nested child renders no editable field at all (G6). Rescoped 2026-09-03 — narrowed to the
+tree/render-stage half of expansion, tracked under
+[ADR-0011](../adr/0011-chained-render-stages.md) / [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md);
+still unshipped. Belongs to expansion because expansion is what the engine's index does not
+consult.
 
 ---
 
