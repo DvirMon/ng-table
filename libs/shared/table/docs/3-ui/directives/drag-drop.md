@@ -3,7 +3,9 @@ title: UI Layer — Drag & Drop (ngpTableDragHandle)
 type: architecture
 version: 0.1
 date: 2026-07-20
-status: stub — not yet drilled
+capability: drag-drop
+spec: stub
+code: none
 audience: developers
 ---
 

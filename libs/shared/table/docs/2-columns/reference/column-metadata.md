@@ -5,7 +5,7 @@ version: 0.1
 date: 2026-08-19
 status: implemented
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Column Metadata
@@ -16,7 +16,7 @@ Angular Signal Forms' `createMetadataKey()` / `metadata()` / `field().metadata(k
 
 ## Not the same thing as `signal-forms-techniques.md` §1's *generic per-key reducer*
 
-[signal-forms-techniques.md §1](signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply-hybrid-decided)
+[signal-forms-techniques.md §1](signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid)
 sketches an *internal* generic `metadata()` + reducer core, where every `apply*` (`applyVisible`,
 `applyWidth`, ...) routes through this mechanism and each key declares its own reducer
 (`and`/`or`/`min`/`max`/...). That generic-reducer system is still **not implemented** — only

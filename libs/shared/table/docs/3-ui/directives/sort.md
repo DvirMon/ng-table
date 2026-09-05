@@ -3,7 +3,9 @@ title: UI Layer — Sort (ngpTableSort)
 type: architecture
 version: 0.3
 date: 2026-07-31
-status: draft — revised (directive owns activation handling); diverges from shipped withSorting(), see note
+capability: sorting
+spec: drafted
+code: none
 audience: developers
 ---
 
@@ -13,7 +15,9 @@ audience: developers
 
 Opt-in directive on `<th>` that reflects sort state via `aria-sort` **and now owns activation handling** — reading the configured modifier key off the triggering event and calling `store.toggleSort(columnId, { accumulate })`. **This revises the prior session's decision** that the directive was purely display-only with the consumer wiring `(click)` directly to the store; see "Why This Reverses the Prior Decision" below.
 
-**Compile-time dependency:** requires `ngpTableColumn` on the same element (reads `columnId()` from it via sibling DI) — unchanged.
+**Compile-time dependency:** requires `ngpTableColumn` on the same element (reads `columnId()` from it via sibling DI) — unchanged. `ngpTableColumn` is itself unimplemented (see [`columns.md`](columns.md)), so this directive cannot be built until it lands.
+
+**This spec diverges from the shipped `api/features/with-sorting.ts`** — it requires a state-layer change that is not ticketed. See [Divergence From the Shipped `withSorting()`](#️-divergence-from-the-shipped-withsorting) below before building against it.
 
 ---
 

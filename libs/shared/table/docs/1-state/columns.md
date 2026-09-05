@@ -159,3 +159,17 @@ Other features read `columns` directly rather than declaring a compile-time feat
   `withColumnPinning()` feature's own `columnPinning: { left, right }` state slice, mirroring
   TanStack's `columnPinningFeature.ts`. Neither is part of this file's State Shape. See
   `../1-state/architecture.md` (feature stubs) and `../2-columns/reference/tier-2-layout.md`.
+
+---
+
+## Competitive position
+
+**Verdict: ahead** on visibility — `toggleColumnVisibility` plus `columnsSchema`'s declarative,
+async-resolved, multi-writer `applyVisible`/`applyVisibleAsync` rules exist in none of the four.
+
+**Verdict: missing** on sizing and pinning — all four ship both in core, and neither is implemented
+here (see [features/column-sizing.md](./features/column-sizing.md) and
+[features/column-pinning.md](./features/column-pinning.md)).
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).

@@ -5,7 +5,7 @@ version: 0.1
 date: 2026-07-24
 status: drafted — spec only, not yet implemented
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Tier 3 — Feature Config (store-owned, column-seeded)
@@ -22,7 +22,7 @@ static seed input**, same as `applyPinned` in Tier 2.
 > **Dead without the feature.** `applySortFn(path, {when})` does nothing unless `withSorting()` is in
 > `features`. Whether that mismatch is a compile error or a silent no-op is an open decision below.
 
-## Sorting — feeds [`withSorting()`](../1-state/features/sorting.md)
+## Sorting — feeds [`withSorting()`](../../1-state/features/sorting.md)
 
 ```ts
 applyEnableSorting<TRow, K>(path, enabled: { when: (ctx) => boolean }): void;   // reactive only — static: array `enableSorting` field
@@ -34,7 +34,7 @@ applyDefaultSort<TRow, K>(path, sort: { direction: 'asc' | 'desc'; index?: numbe
   there's no array field for "default sort direction," so this keeps its static form.
 - **AG-Grid analog:** `sort` / `sortType` / `sortIndex`; `sortSvc.updateColSort`.
 
-## Filtering — feeds [`withFiltering()`](../1-state/features/filtering.md)
+## Filtering — feeds [`withFiltering()`](../../1-state/features/filtering.md)
 
 ```ts
 applyEnableFiltering<TRow, K>(path, enabled: { when: (ctx) => boolean }): void;   // reactive only — static: array `enableFiltering` field
@@ -46,7 +46,7 @@ applyFilterFn<TRow, K>(path, filterFn: { when: (ctx) => (value: unknown, filterV
   (rare, but a real case — e.g. locale-dependent comparator).
 - **AG-Grid analog:** `filter` colDef field + filter model.
 
-## Grouping & Aggregation — feeds [`withGrouping()`](../1-state/features/grouping.md)
+## Grouping & Aggregation — feeds [`withGrouping()`](../../1-state/features/grouping.md)
 
 ```ts
 applyGroup<TRow, K>(path, group: boolean | { index?: number } | { when: (ctx) => boolean | { index?: number } }): void;   // seed + reactive — no ColumnDef equivalent
@@ -81,8 +81,8 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
   rejects at type-check time when `withGrouping()` is absent from `features` — matches the store's
   `type<>` dependency posture. Requires threading feature presence into the `columnsSchema` /
   `columnSchema()` generic. Same resolution should apply to the analogous case in
-  [`1-state/architecture.md`](../1-state/architecture.md).
+  [`1-state/architecture.md`](../../1-state/architecture.md).
 - [x] **Reusable archetypes** — RESOLVED 2026-07-31: deferred. No confirmed repeated-bundle use
   case yet; ship Tier 1-3 `apply*` functions first, revisit `apply(path, schema)` composability
   (a `moneyColumn`-style archetype) once a real case surfaces. See
-  [Signal Forms techniques §5](signal-forms-techniques.md#5--applypath-schema--schema-reuse-revisits-no-composability).
+  [Signal Forms techniques §5](signal-forms-techniques.md#5--applypath-schema--schema-reuse--defer--revisits-no-composability).

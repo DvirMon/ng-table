@@ -25,13 +25,16 @@ sibling folders, matching how Angular's own `api/` stays narrow by keeping `fiel
 as top-level siblings rather than subfolders. See ADR-0008.
 
 ```
-index.ts        ← the ONLY definition of the public surface. No other barrels.
-api/            ← factory + declaration surface a consumer touches
-schema/         ← column schema DSL: columnSchema(), metadata, visibility/sort rules
-mutations/      ← row and column mutation verbs
-engine/         ← the runtime; nothing here is exported
-directives/     ← UI layer
-table.mock.ts   ← shared test fixtures
+src/
+  index.ts      ← the ONLY definition of the public surface. No other barrels.
+  api/          ← factory + declaration surface a consumer touches
+  schema/       ← column schema DSL: columnSchema(), metadata, visibility/sort rules
+  mutations/    ← row and column mutation verbs
+  engine/       ← the runtime; nothing here is exported
+  directives/   ← UI layer
+  table.mock.ts ← shared test fixtures
+tools/          ← repo-side utilities, OUTSIDE src/ so they stay out of the published build
+docs/           ← this library's own docs (see "Docs structure" below)
 ```
 
 | File | Purpose |
@@ -62,6 +65,7 @@ table.mock.ts   ← shared test fixtures
 | `engine/columns-schema/` | Always-spliced internal composition step (ADR-0010), not a consumer `with*()` plugin — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
+| `tools/generate-status.ts` | Regenerates `docs/status.md` from the specs' frontmatter. Run `npm run table:status` (add `-- --dry-run` to print instead of write). Deliberately outside `src/` — `tsconfig.lib.json` includes `src/**/*.ts`, so anything there ships in the published build |
 
 Naming: the folder supplies the domain, so files inside drop the `table.` prefix
 (`engine/pipeline.ts`, not `engine/table.pipeline.ts`). Kebab-case, not Angular's internal
@@ -94,13 +98,38 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | Location | Purpose | Update pattern |
 |---|---|---|
 | `docs/1-state/prd.md`, `architecture.md`, `features/` | State-layer specs, one per feature plugin; feature-local config | Permanent; edited in place as code changes |
+| `docs/status.md` | Every capability's spec/code maturity, state and UI layer side by side. The entry point for "what's the state of X?" | **Generated** — `npm run table:status`. Never hand-edit; fix the owning spec's frontmatter and regenerate |
 | `docs/1-state/row-mutations.md` | Core-API spec — `table.value.update()` + the row updaters. Not in `features/` because mutation is core, not a `with-*()` plugin (D8) | Permanent |
+| `docs/1-state/state-persistence.md` | Cross-feature spec — one atomic snapshot of sort + columns + filters + pagination. Sibling of `row-mutations.md` for the same D8 reason: persistence spans features, it isn't one plugin's state | Permanent |
 | `docs/2-columns/reference/` | Column schema reference (tier levels, ownership, derivation); read-only reference | Permanent; reflects current schema semantics |
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |
 | `docs/3-ui/work/<slug>/` | Episodic work folder: intake ticket, decisions, issues, task steps. One folder per implementation effort (e.g. `core-directives`, `with-expansion`) | Episodic; created fresh per effort, archived after ship |
 
 **Key rule:** Specs live in the stream's numbered folder (e.g. `docs/1-state/features/expansion.md`). Work happens in `docs/3-ui/work/<slug>/` (or `docs/1-state/work/with-expansion/` for state-layer efforts). Specs are edited in place; work folders are episodic containers.
+
+### Feature-spec frontmatter — required fields
+
+Feature-scoped specs (`docs/1-state/features/*.md`, `docs/3-ui/directives/*.md`, and
+cross-feature capability specs like `docs/1-state/state-persistence.md`) declare three machine-read
+fields. Architecture, PRD and reference docs do **not** — they keep a free-text `status:`.
+
+```yaml
+capability: selection                    # groups the state and UI docs for one feature
+spec: none | stub | drafted | drilled    # none → no file; stub → placeholder; drafted → written, never drilled; drilled → contract settled
+code: none | partial | shipped           # state-layer implementation in src/
+```
+
+Two axes, not one: `spec: drafted, code: none` (designed, unbuilt) and `spec: drilled, code:
+partial` are both real states that a single free-text `status:` string cannot express — which is
+why the old one-line form is gone.
+
+`docs/status.md` is **generated** from these fields — one row per `capability:`, pairing its state
+and UI docs. Never hand-edit it; fix the owning spec's frontmatter and regenerate. Omit these
+fields on a new feature spec and it silently vanishes from the roll-up.
+
+Vocabulary, per-file assigned values, and the competitive-verdict block format:
+[`docs/1-state/work/state-feature-competitive-audit/decisions.md`](docs/1-state/work/state-feature-competitive-audit/decisions.md).
 
 ## The `ColumnDef` footprint — incomplete
 

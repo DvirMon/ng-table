@@ -3,9 +3,11 @@ title: State Layer Reference — withFiltering()
 type: architecture
 version: 1.0
 date: 2026-07-19
-status: drafted
+capability: filtering
+spec: drafted
+code: none
 audience: developers
-parent: ../1-state/architecture.md
+parent: ../architecture.md
 ---
 
 # withFiltering()
@@ -68,3 +70,10 @@ None as a separate feature. Reads `filterFn` / `enableFiltering` from the core `
 
 - [ ] Exact interaction with `withGrouping()`'s aggregation: does `aggregateFn` run over filtered rows within a group, or all rows regardless of active filters? (Flagged here and in `with-grouping.md` — needs one shared answer.)
 - [ ] Global filter is string-contains only by default — no fuzzy matching, case-sensitivity option, or debounce behavior specified yet. Likely fine for v1 but worth confirming before implementation.
+
+## Competitive position
+
+**Verdict: missing** — spec drafted, zero code: no `withFiltering()`, no filter state, and `ColumnDef.filterFn`/`enableFiltering` are already typed but unconsumed; column + global filtering is baseline in all four competitors' free tier, so this is a real baseline gap rather than a nuance.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

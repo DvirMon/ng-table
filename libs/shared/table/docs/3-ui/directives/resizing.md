@@ -3,7 +3,9 @@ title: UI Layer — Resizing (ngpTableResizable)
 type: architecture
 version: 0.1
 date: 2026-07-20
-status: stub — not yet drilled
+capability: column-sizing
+spec: stub
+code: none
 audience: developers
 ---
 

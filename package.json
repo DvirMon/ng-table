@@ -12,6 +12,7 @@
     "ngpt": "npx nx serve ng-table",
     "table:sb": "npx nx run shared-table:storybook",
     "table:build-storybook": "npx nx run shared-table:build-storybook",
+    "table:status": "node --experimental-strip-types libs/shared/table/tools/generate-status.ts",
     "test:design-system": "npx nx test shared-design-system",
     "proto:value-sync": "node --experimental-strip-types libs/shared/design-system/src/ui/autocomplete/prototype-value-sync/tui.ts"
   },

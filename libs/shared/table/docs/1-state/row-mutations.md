@@ -132,11 +132,12 @@ The second intent is the editing cluster's "don't move the row I'm editing", res
 D24's commit boundary rather than by pipeline exemption. See
 [`features/row-editing.md`](./features/row-editing.md).
 
-**Related gap, not a mutation concern:** where a *blank* row lands under an active sort is
-decided by how the comparator treats `""`/`null`, and today that position flips with sort
-direction. Recorded in [`features/sorting.md`](./features/sorting.md) ("Null / Empty Value
-Ordering — REQUIRED, NOT IMPLEMENTED"), which also carries three real comparator defects
-including a `TypeError` on nullable Date columns. It must ship with or before editable rows.
+**Related concern, not a mutation concern — closed:** where a *blank* row lands under an active
+sort is decided by how the comparator treats `""`/`null`. That position used to flip with sort
+direction; the null-ordering contract shipped 2026-08-27 (`nulls: 'last'` by default, `''`
+treated as a real value unless opted out via `applySortNulls`), so a blank row now holds a
+predictable position in both directions. See
+[`features/sorting.md`](./features/sorting.md) ("Null / Empty Value Ordering").
 
 ## Row Identity and the Temp-Id Swap (D26)
 
@@ -219,3 +220,15 @@ with optimistic save is explicitly undesigned.
       untyped `Record<string, unknown>`). Engine-wide, not specific to mutations.
 - [ ] **O20** — on an id swap, does the table enforce the end-edit-first order, detect an
       orphaned key and migrate it, or just document the sequence? See G3 in the gap register.
+
+---
+
+## Competitive position
+
+**Verdict: ahead** — TanStack, Material React Table and PrimeNG ship no transaction or patch API
+at all (mutation is consumer-owned there), and while the updater verbs plus ADR-0006 removal
+reconciliation are comparable in intent to AG Grid's `applyTransaction`, they are narrower in scope
+— no batch or async variant yet.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).

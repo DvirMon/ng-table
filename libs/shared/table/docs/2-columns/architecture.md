@@ -3,28 +3,28 @@ title: Architecture — Column Schema DX (`columnsSchema`) — Hub
 type: architecture
 version: 0.3
 date: 2026-07-24
-status: partially implemented — schema wiring, `metadata()`/`applyVisible`/`applyVisibleAsync` (Tier 1) shipped; Tier 2/3 and the generic per-key reducer core are still spec only (see [column-metadata.md](2-columns/reference/column-metadata.md))
+status: partially implemented — schema wiring, `metadata()`/`applyVisible`/`applyVisibleAsync` (Tier 1) shipped; Tier 2/3 and the generic per-key reducer core are still spec only (see [column-metadata.md](reference/column-metadata.md))
 audience: developers
-parent: 1-state/architecture.md
+parent: ../1-state/architecture.md
 ---
 
 # Architecture — Column Schema DX (`columnsSchema`)
 
 Hub/index for the `columnsSchema` design. Cross-cutting decisions, grounding, core types, and
-store wiring live here; per-concern detail is split into [`2-columns/reference/`](2-columns/reference/) (the
+store wiring live here; per-concern detail is split into [`2-columns/reference/`](reference/) (the
 same per-file split `1-state/architecture.md` uses for state features).
 
 ## Companion documents
 
 | Doc | Covers |
 |---|---|
-| [2-columns/reference/ownership-model.md](2-columns/reference/ownership-model.md) | The seed-vs-rule contract, three input shapes (static / reactive / async), store-owns-reactivity law, snapshot-diff patcher. **Read first.** |
-| [2-columns/reference/tier-1-intrinsic.md](2-columns/reference/tier-1-intrinsic.md) | `applyVisible` (+Async), `applyOrder` — column-owned, no store feature. First-impl scope. |
-| [2-columns/reference/tier-2-layout.md](2-columns/reference/tier-2-layout.md) | `applyWidth`, `applyFlex` — column-owned sizing. `applyPinned` — seeds a new `withColumnPinning()` store feature, not a column field. The real gaps. |
-| [2-columns/reference/tier-3-feature-config.md](2-columns/reference/tier-3-feature-config.md) | `applyEnableSorting`, `applySortFn`, `applyDefaultSort`, `applyEnableFiltering`, `applyFilterFn`, `applyGroup`, `applyAggregateFn` — seed opt-in store features. |
-| [2-columns/reference/data-derived.md](2-columns/reference/data-derived.md) | **REJECTED** — data-derived column set (from row keys). Kept for historical record only; `columnsSchema` alone covers the DX need. |
-| [2-columns/reference/signal-forms-techniques.md](2-columns/reference/signal-forms-techniques.md) | Seven techniques mined from Signal Forms source — metadata+reducer, reducer-vs-reject, `{ when }`, `applyEach`, `apply`/`schema`, `assertPathIsCurrent`, `NoInfer`. Two are open decisions. |
-| [2-columns/reference/column-metadata.md](2-columns/reference/column-metadata.md) | **Implemented.** `createColumnMetaKey`/`metadata`/`readColumnMeta` — consumer-facing, non-participating column side channel. Not the same as this table's internal metadata+reducer core sketched in signal-forms-techniques.md §1. |
+| [2-columns/reference/ownership-model.md](reference/ownership-model.md) | The seed-vs-rule contract, three input shapes (static / reactive / async), store-owns-reactivity law, snapshot-diff patcher. **Read first.** |
+| [2-columns/reference/tier-1-intrinsic.md](reference/tier-1-intrinsic.md) | `applyVisible` (+Async), `applyOrder` — column-owned, no store feature. First-impl scope. |
+| [2-columns/reference/tier-2-layout.md](reference/tier-2-layout.md) | `applyWidth`, `applyFlex` — column-owned sizing. `applyPinned` — seeds a new `withColumnPinning()` store feature, not a column field. The real gaps. |
+| [2-columns/reference/tier-3-feature-config.md](reference/tier-3-feature-config.md) | `applyEnableSorting`, `applySortFn`, `applyDefaultSort`, `applyEnableFiltering`, `applyFilterFn`, `applyGroup`, `applyAggregateFn` — seed opt-in store features. |
+| [2-columns/reference/data-derived.md](reference/data-derived.md) | **REJECTED** — data-derived column set (from row keys). Kept for historical record only; `columnsSchema` alone covers the DX need. |
+| [2-columns/reference/signal-forms-techniques.md](reference/signal-forms-techniques.md) | Seven techniques mined from Signal Forms source — metadata+reducer, reducer-vs-reject, `{ when }`, `applyEach`, `apply`/`schema`, `assertPathIsCurrent`, `NoInfer`. Two are open decisions. |
+| [2-columns/reference/column-metadata.md](reference/column-metadata.md) | **Implemented.** `createColumnMetaKey`/`metadata`/`readColumnMeta` — consumer-facing, non-participating column side channel. Not the same as this table's internal metadata+reducer core sketched in signal-forms-techniques.md §1. |
 
 ## Executive Summary
 
@@ -93,17 +93,17 @@ doc is the result of that design conversation.
   scoped reversal of "reactivity lives in the consumer" (recorded in `1-state/columns.md`) — but
   only for this opt-in path. Plain-array `columns` config keeps today's consumer-owned pattern as the
   default. Extended to the sync-*reactive* shape too — see
-  [ownership-model.md](2-columns/reference/ownership-model.md).
+  [ownership-model.md](reference/ownership-model.md).
 - **Conflicting rules on one column property: currently throws, not combined via a reducer.**
   Superseded 2026-07-25 — see
-  [signal-forms-techniques §2](2-columns/reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection-decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
+  [signal-forms-techniques §2](reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection--decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
   The generic per-key reducer this decision describes is **not implemented** — shipped code
   (`assertMetadataKeysAreUnique` in `engine/columns-schema/resolve.ts`) throws
   synchronously on a duplicate `metadata()` registration for the same `(columnId, key)`. The one
   exception is the internal `VISIBLE` key: multiple `applyVisible`/`applyVisibleAsync` calls on
   the same column id are hardcoded AND-combined in `foldColumnRules` (`engine/columns.ts`), not
   driven by a general per-key reducer table. See
-  [column-metadata.md](2-columns/reference/column-metadata.md) for the full implemented-vs-spec
+  [column-metadata.md](reference/column-metadata.md) for the full implemented-vs-spec
   breakdown.
 - **`apply*Async` has an optional `onError`**, mirroring `validateAsync`'s `onError` — lets a
   consumer choose the fallback on request failure instead of freezing at the last-resolved value.
@@ -113,10 +113,10 @@ doc is the result of that design conversation.
   `columns` array) was independently rejected too: it reintroduces the union/`Array.isArray()`
   discriminant the sibling-field design above avoids, and can't carry async/reactive rules since it
   wouldn't run inside `createTable()`'s store-construction DI context. See
-  [data-derived.md](2-columns/reference/data-derived.md) (kept for historical record only).
+  [data-derived.md](reference/data-derived.md) (kept for historical record only).
 - **Every `apply*` accepts three input shapes — static / reactive / async — and the store always owns
   reactivity.** The reactive form uses `{ when }` (not a bare function). Full contract in
-  [ownership-model.md](2-columns/reference/ownership-model.md).
+  [ownership-model.md](reference/ownership-model.md).
 
   > **Revision (2026-07-24):** reverses an earlier position that made `applyVisible`'s function form
   > snapshot-once/eager. The store owns the reactive `effect()` at construction, so the reactive
@@ -142,16 +142,16 @@ doc is the result of that design conversation.
   `validateAsync(path, {params, factory, onSuccess, onError})`. `columnsSchema` borrows the
   `model + schemaFn` shape and the async rule shape; it does **not** borrow `apply`/`applyWhen`/
   `schema` composability in the first pass (revisit per
-  [techniques §5](2-columns/reference/signal-forms-techniques.md#5--applypath-schema--schema-reuse-revisits-no-composability)).
+  [techniques §5](reference/signal-forms-techniques.md#5--applypath-schema--schema-reuse--defer--revisits-no-composability)).
 - Signal Forms **internals** confirmed against fetched `angular/angular` source: the schema-path
   proxy is purely structural — `FIELD_PATH_PROXY_HANDLER`
   (`packages/forms/signals/src/schema/path_node.ts:102-110`) fabricates a child for *any* property
   accessed and reads zero model data; typing is 100% compile-time. The data-bound field tree is a
   *separate* reactive computed deriving fields via `Object.keys(value)` (`field/structure.ts:346`),
   tracking array items by a synthetic identity symbol (`structure.ts:365`). This two-tree decoupling
-  grounds [data-derived.md](2-columns/reference/data-derived.md). Rule accumulation + reducers
+  grounds [data-derived.md](reference/data-derived.md). Rule accumulation + reducers
   (`schema/logic_node.ts`, `api/rules/metadata.ts`) ground
-  [techniques §1–2](2-columns/reference/signal-forms-techniques.md).
+  [techniques §1–2](reference/signal-forms-techniques.md).
 
 ---
 
@@ -237,7 +237,7 @@ Validates and throws synchronously so a bad schema fails at module load:
 Inline `columnsSchema: (path) => {...}` and `columnsSchema: columnSchema(fn)` compile to the same
 internal `ColumnSchema<TRow>` — the store normalizes an inline fn by running it through the same
 recorder. Adopt `assertPathIsCurrent` (reject a `path.x` used outside the running fn) and `NoInfer`
-on rule args — see [techniques §6–7](2-columns/reference/signal-forms-techniques.md#6--assertpathiscurrent--guard-stale-path-handles--adopt).
+on rule args — see [techniques §6–7](reference/signal-forms-techniques.md#6--assertpathiscurrent--guard-stale-path-handles--adopt).
 
 ---
 
@@ -250,15 +250,15 @@ traces the store-owned vs column-owned line the whole architecture is built on
 
 | Tier | Property class | Owner | Detail |
 |---|---|---|---|
-| **1 — Intrinsic** | identity / presence | column def only (no store feature) | [tier-1-intrinsic.md](2-columns/reference/tier-1-intrinsic.md) |
-| **2 — Layout** | geometry / framing | mixed: sizing = column def only; pinning = seeds `withColumnPinning()` store feature | [tier-2-layout.md](2-columns/reference/tier-2-layout.md) |
-| **3 — Feature config** | pipeline behavior | store feature; column seeds it | [tier-3-feature-config.md](2-columns/reference/tier-3-feature-config.md) |
+| **1 — Intrinsic** | identity / presence | column def only (no store feature) | [tier-1-intrinsic.md](reference/tier-1-intrinsic.md) |
+| **2 — Layout** | geometry / framing | mixed: sizing = column def only; pinning = seeds `withColumnPinning()` store feature | [tier-2-layout.md](reference/tier-2-layout.md) |
+| **3 — Feature config** | pipeline behavior | store feature; column seeds it | [tier-3-feature-config.md](reference/tier-3-feature-config.md) |
 
 **Ship order = tier order.** Tier 1 first (first-impl scope), then Tier 2 (the real gaps), then
 Tier 3 (future work). Rationale: more users hit sizing/pinning than custom sort/filter predicates,
 and Tier 3 degrades to store defaults while Tier 2 has nothing today.
 
-The [ownership model](2-columns/reference/ownership-model.md) (seed vs rule, three input shapes,
+The [ownership model](reference/ownership-model.md) (seed vs rule, three input shapes,
 snapshot-diff patcher) applies uniformly across all three tiers.
 
 ---
@@ -307,7 +307,7 @@ invisibility as `_pipeline` / `_sortChangedSource` today.
 Applied ahead of implementation (docs can lead code for a spec-only feature): Executive Summary
 pointer, `columnsSchema` registration variant, new "Declarative Column Schemas" section, and the
 Pattern A / Pattern B split of the async section. Also resolved that file's stale width open
-question there, consistent with [tier-2-layout.md](2-columns/reference/tier-2-layout.md)'s
+question there, consistent with [tier-2-layout.md](reference/tier-2-layout.md)'s
 sizing-vs-pinning ownership split above.
 
 ---
@@ -317,15 +317,15 @@ sizing-vs-pinning ownership split above.
 Feature-local open questions live in each tier / companion file. Cross-cutting ones:
 
 - [x] **~~`applyVisible`'s function form is snapshot-once, not reactive.~~** RESOLVED 2026-07-24 —
-  superseded by the [ownership model](2-columns/reference/ownership-model.md); reactive `{ when }` is live.
+  superseded by the [ownership model](reference/ownership-model.md); reactive `{ when }` is live.
 - [x] **~~Metadata+reducer core vs bespoke `apply*`.~~** RESOLVED 2026-07-25 — hybrid: bespoke
   typed `apply*` public surface, one generic `applyMeta`+reducer core internally. See
-  [techniques §1](2-columns/reference/signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply-hybrid-decided).
+  [techniques §1](reference/signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid).
 - [x] **~~Reducer-combine vs build-time rejection.~~** RESOLVED 2026-07-25 — reducer-combine, see
-  [techniques §2](2-columns/reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection-decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
+  [techniques §2](reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection--decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
 - [x] **~~Derived/computed columns~~** (not 1:1 with a `TRow` field — `fullName`, an actions column).
   RESOLVED 2026-07-31: already supported by the array config as-is — `ColumnDef.id: string` /
-  `accessor: (row: TRow) => unknown` in [api/types.ts](../api/types.ts:24-26) are not
+  `accessor: (row: TRow) => unknown` in [api/types.ts](../../src/api/types.ts:24-26) are not
   `keyof TRow`-constrained, so `{ id: 'actions', accessor: (row) => row }` works with zero code
   change. The actual gap was narrower: the schema `path` proxy is typed 100% off `keyof TRow`
   (ownership-model.md), so `applyVisible(path.actions, ...)` etc. couldn't target a derived column.
@@ -335,20 +335,20 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
   generic only widens what the existing `apply*` functions can type-check against — no new
   `applyAction`/`applyCustom*` functions.
 - [x] **~~Column order under the data overload.~~** MOOT — overload rejected 2026-07-31, see
-  [data-derived.md](2-columns/reference/data-derived.md).
+  [data-derived.md](reference/data-derived.md).
 - [x] **~~Tier 2 sizing state ownership.~~** RESOLVED 2026-07-25 — column-owned seed by default,
   `withColumnSizing()` if resizable, same precedent as pinning. See
-  [tier-2-layout.md](2-columns/reference/tier-2-layout.md#open-questions-tier-2).
+  [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
 - [x] **~~Tier 2 reactive `applyWidth`/`applyPinned` demand.~~** RESOLVED 2026-07-31 — static-only,
-  consumer template/CSS owns width. See [tier-2-layout.md](2-columns/reference/tier-2-layout.md#open-questions-tier-2).
+  consumer template/CSS owns width. See [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
 - [x] **~~Tier 3 feature-absent handling.~~** RESOLVED 2026-07-31 — compile error (threads feature
   presence into `columnsSchema`/`columnSchema()` generic). See
-  [tier-3-feature-config.md](2-columns/reference/tier-3-feature-config.md#open-questions-tier-3).
+  [tier-3-feature-config.md](reference/tier-3-feature-config.md#open-questions-tier-3).
 - [x] **~~Tier 3 reusable archetypes (`apply(path, schema)` composability).~~** RESOLVED 2026-07-31 —
   deferred, no confirmed use case yet.
 - [x] **~~`applyGroup` reactivity.~~** RESOLVED 2026-07-31 — accepts static seed **and** reactive
   `{ when }` form (unlike `applyPinned`/`applyDefaultSort`), store `effect()` calls `withGrouping()`'s
-  own patcher method on change. See [tier-3-feature-config.md](2-columns/reference/tier-3-feature-config.md).
+  own patcher method on change. See [tier-3-feature-config.md](reference/tier-3-feature-config.md).
 
 ---
 
@@ -368,3 +368,14 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 
 **Generated by:** Claude (design session, grounded on fetched `angular/angular` + `ag-grid/ag-grid` source)
 **Last Updated:** 2026-07-24
+
+---
+
+## Competitive position
+
+**Verdict: ahead** — a declarative, async-resolved, multi-writer column-visibility rule system
+(`applyVisible` / `applyVisibleAsync`, AND-combined) exists in none of TanStack, AG Grid, Material
+React Table or PrimeNG.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../1-state/work/state-feature-competitive-audit/gap-analysis.md).

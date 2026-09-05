@@ -5,7 +5,7 @@ version: 0.1
 date: 2026-07-24
 status: REJECTED 2026-07-31 — createColumns(data, schemaFn) API rejected; focus stays on columnsSchema function. Column-order open question below is moot.
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Data-Derived Columns — `createColumns(data, schemaFn)`

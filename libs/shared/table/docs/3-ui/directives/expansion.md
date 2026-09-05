@@ -3,7 +3,9 @@ title: UI Layer — Expansion (ngpTableExpandable, ngpTableExpandToggle, ngpTabl
 type: architecture
 version: 0.4
 date: 2026-08-07
-status: drilled — API contract decided, not yet implemented
+capability: expansion
+spec: drilled
+code: none
 audience: developers
 ---
 

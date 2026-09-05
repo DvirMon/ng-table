@@ -3,7 +3,9 @@ title: UI Layer — Core Structural Directives
 type: architecture
 version: 0.3
 date: 2026-07-31
-status: draft — revised (store connection reworked for createTable(); ngpTableRow now carries RenderRow)
+capability: core
+spec: drilled
+code: partial
 audience: developers
 ---
 
@@ -12,6 +14,10 @@ audience: developers
 ## Executive Summary
 
 Always-present, one-per-element directives (`ngpTable`, `ngpTableRow`, `ngpTableCell`) and the store-connection mechanism they all rely on. These exist on every NGP Table instance regardless of which optional features are composed in.
+
+**Revised 2026-07-31:** the store connection was reworked for `createTable()` (which returns an instance, not a class), and `ngpTableRow` now carries a `RenderRow` rather than a raw row or a bare `RowId`. Both revisions are recorded in their own sections below.
+
+**What is shipped vs. specced here:** `ngpTable` and `ngpTableRow` match this spec. `ngpTableCell` exists but diverges — the shipped directive takes a **0-based column index** and writes `role`/`aria-colindex` only, not the `[ngpTableCell]="columnId"` + `data-column-id` + token-driven styling described below. A `ngpTableHeaderCell` directive also ships without being specced in this file.
 
 ---
 

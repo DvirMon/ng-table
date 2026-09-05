@@ -3,7 +3,9 @@ title: UI Layer — Grouping (group row rendering)
 type: architecture
 version: 0.1
 date: 2026-08-07
-status: stub — scope decided (file, no new directive), not yet drilled; blocked on withGrouping() itself
+capability: grouping
+spec: stub
+code: none
 audience: developers
 ---
 

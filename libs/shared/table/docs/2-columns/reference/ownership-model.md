@@ -5,7 +5,7 @@ version: 0.1
 date: 2026-07-24
 status: drafted — spec only, not yet implemented
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Columns Schema — Ownership Model
@@ -58,7 +58,7 @@ all routing to the same store-owned patcher:
 > **`{ when }` object form, not a bare function.** Signal Forms deprecated passing a raw function to
 > `hidden`/`disabled` (`packages/forms/signals/src/api/rules/hidden.ts:45-50`) precisely because the
 > `boolean | fn` overload is ambiguous. Adopt the object form for the reactive shape. See
-> [Signal Forms techniques](signal-forms-techniques.md#3--when-object-form-not-bare-fn).
+> [Signal Forms techniques](signal-forms-techniques.md#3---when--object-form-not-bare-fn--adopt).
 
 **Seeds keep a static input** (e.g. `applyPinned(path.id, 'left')`) — the narrowing above only
 removes static from *rule* functions that duplicate an existing `ColumnDef`/array field. A seed like
@@ -83,7 +83,7 @@ flash-then-hide UX bug and gives per-property change events for free.
 
 Ship the static + reactive shape for every feature. Add an `apply*Async` variant only when a real
 permission/role case demands it. The recorder pattern (see
-[the standalone `columnSchema()` helper](../2-columns/architecture.md#columnschema--the-standalone-helper))
+[the standalone `columnSchema()` helper](../architecture.md#columnschema--the-standalone-helper))
 makes each async variant cheap to add later — one rule type + one function, landing in
 `schema/column-rules.ts`.
 
@@ -91,6 +91,6 @@ makes each async variant cheap to add later — one rule type + one function, la
 
 Two rules targeting the same column property **combine via a reducer** (Signal Forms' model), not
 build-time rejection — decided 2026-07-25, see
-[Signal Forms techniques §2](signal-forms-techniques.md#2--reducers-replace-conflict-rejection-decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
+[Signal Forms techniques §2](signal-forms-techniques.md#2--reducers-replace-conflict-rejection--decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
 Each `MetadataKey` (§1's generic core) carries its own reducer; `visible` defaults to `and`. This
 supersedes the hub's earlier "reject at build time" Decisions entry.

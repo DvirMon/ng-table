@@ -5,7 +5,7 @@ version: 0.1
 date: 2026-07-24
 status: drafted — spec only, not yet implemented
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Tier 1 — Intrinsic (column-owned)

@@ -11,7 +11,7 @@ audience: developers
 
 ## Executive Summary
 
-The NGP Table is a two-layer composable architecture: a directive-based UI layer that consumers write directly on native HTML elements, and an abstracted signal-based state layer built on NgRx Signal Store. Consumers own the markup and create the store **instance** at the component field level via `createTable(data, optsFn)` — no DI provider registration, no `inject()`. NgRx Signal Store is an internal implementation detail; the public API is `createTable()`, which returns a live store instance (see ADR-0002).
+The NGP Table is a composable architecture documented as **three streams**, numbered by dependency order: state layer (1) → columns schema layer (2) → UI layer (3). The UI layer is directive-based — consumers write directives directly on native HTML elements — and the state layer is an abstracted signal-based layer built on the in-house `composeTable()` engine over Angular signals, with zero runtime dependencies outside `@angular/*` and `rxjs` (see ADR-0003). Consumers own the markup and create the store **instance** at the component field level via `createTable(data, optsFn)` — no DI provider registration, no `inject()`. The engine is an internal implementation detail; the public API is `createTable()`, which returns a live store instance (see ADR-0002).
 
 ---
 
@@ -29,9 +29,11 @@ The NGP Table is a two-layer composable architecture: a directive-based UI layer
 
 ---
 
-## Architecture: Two Layers
+## Architecture: Streams
 
-### Layer 1 — UI Layer (Directives)
+> This document details the **state** stream (1) and the **UI** stream (3). The **columns schema** stream (2) has its own docs — see `2-columns/architecture.md` and `2-columns/reference/`.
+
+### UI Stream (3) — Directives
 
 Consumers write native HTML. Directives are applied to HTML elements to enhance them. No monolithic table component exists. This follows Angular Material's composable directive pattern.
 
@@ -78,7 +80,7 @@ Consumers write native HTML. Directives are applied to HTML elements to enhance 
 
 ---
 
-### Layer 2 — State Layer (`createTable`)
+### State Stream (1) — `createTable`
 
 The state layer is exposed via our own factory function. Consumers compose only the features they need — tree-shakeable by design.
 
@@ -114,7 +116,7 @@ export class ProductsComponent {
 }
 ```
 
-**NgRx Signal Store is never imported by consumers.** All feature composition happens inside `createTable()`, and it returns a live instance — there is no DI token to provide or inject. This allows us to swap the internal implementation without a breaking change (see ADR-0002).
+**The `composeTable()` engine is never imported by consumers.** All feature composition happens inside `createTable()`, and it returns a live instance — there is no DI token to provide or inject. This is what allowed the state-management implementation to be swapped out with zero consumer diff (see ADR-0002 and ADR-0003).
 
 **The store owns data/state events** — e.g. `selectionChanged`, `sortChanged`, `pageChanged`.
 
@@ -195,9 +197,9 @@ Internally, string shorthand is normalized to a function **once at store initial
 
 ## State Layer: Feature Dependencies
 
-Features declare required state slices using NgRx's `type<>` helper. Missing dependencies are caught at **compile time** — TypeScript throws if a consumer uses a feature without its required dependencies.
+Each feature annotates its own factory parameter (a `Pick<TableCore<TRow>, …>`), which types the `core` it reads. Cross-feature composition-time validation — TypeScript rejecting a feature composed without its dependency — is **not implemented**; the old `@ngrx/signals` `type<>` markers never actually provided it either, and it is deferred until a feature genuinely depends on another (see ADR-0003, "Not rebuilt").
 
-Example: `withGrouping()` declares a compile-time dependency on `withExpansion()` (it delegates collapse state there). `columns`, by contrast, is **core config** — required on every `createTable()` call, like `trackBy` — so column-reading features (`withSorting()`, `withGrouping()`, `withFiltering()`) simply read the always-present `columns` config rather than declaring a feature dependency on it. See `1-state/architecture.md` (Dependency Graph) and `1-state/columns.md`.
+Example: `withGrouping()` is specified to depend on `withExpansion()` (it delegates collapse state there) — a documented contract, not a compile-time one. `columns`, by contrast, is **core config** — required on every `createTable()` call, like `trackBy` — so column-reading features (`withSorting()`, `withGrouping()`, `withFiltering()`) simply read the always-present `columns` config rather than declaring a feature dependency on it. See `1-state/architecture.md` (Dependency Graph) and `1-state/columns.md`.
 
 ---
 
@@ -231,7 +233,7 @@ createTable(data, optsFn, { injector });
 
 ## Open Questions & Next Steps
 
-- [x] **Structural vs. native control flow for rendering** — Resolved 2026-07-19: no custom structural directives; native `@for`/`@if` everywhere, all NGP Table directives are attribute-only. See Layer 1 above.
+- [x] **Structural vs. native control flow for rendering** — Resolved 2026-07-19: no custom structural directives; native `@for`/`@if` everywhere, all NGP Table directives are attribute-only. See the UI stream section above.
 - [ ] **Directive-to-store connection pattern** — How directives find the store (directive input vs host-directive parent injection). Owned by the UI-directive spec session (in progress). Note: ADR-0002 makes the store a plain **instance** with no DI token, so directives cannot `inject()` the store class — they receive the instance by input / host-directive, not by providing-and-injecting a token.
 - [x] **Column definitions** — Resolved: `columns` is **core config** on `createTable()` (required, like `trackBy`), not an opt-in `withColumns()` feature. A declarative schema DX layers on top via the optional `columnsSchema` config field — see `2-columns/architecture.md` + `2-columns/reference/`. Behavior fields (`sortFn`/`filterFn`/`accessor`) feed the row pipeline; presentation fields (`visible`/`order`) feed the template.
 - [ ] **Feature-by-feature deep drill** — Each feature needs its own state shape, methods, outputs, and `manual` contract fully specified. Planned for next session.

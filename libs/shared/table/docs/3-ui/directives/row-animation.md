@@ -3,7 +3,9 @@ title: UI Layer — Row Reorder Animation (ngpTableRow FLIP)
 type: architecture
 version: 0.2
 date: 2026-09-01
-status: implemented — see core.md for the ngpTableRow contract this extends
+capability: row-animation
+spec: drilled
+code: shipped
 audience: developers
 ---
 
@@ -19,6 +21,9 @@ DS engine; that prototype's mechanism is what shipped here — an earlier draft 
 proposed a different (CSS custom-property + `data-*` attribute) contract that was never
 implemented and turned out not to work when tried, see "Rejected: custom-property indirection"
 below.
+
+This extends the `ngpTableRow` contract specced in [`core.md`](core.md); read that file first for the
+directive's base inputs and DI wiring.
 
 ## Why FLIP, not AG Grid's technique
 

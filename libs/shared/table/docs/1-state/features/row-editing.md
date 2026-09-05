@@ -3,7 +3,9 @@ title: State Layer Reference — Row Editing
 type: architecture
 version: 2.1
 date: 2026-08-27
-status: shipped — the two-feature split (D37–D44) landed 2026-08-26; optimistic CRUD (D45–D49) landed 2026-08-27
+capability: row-editing
+spec: drilled
+code: shipped
 audience: developers
 parent: ../architecture.md
 ---
@@ -32,6 +34,9 @@ Angular Signal Forms and keeps its full surface. This library tracks **which row
 table has both. A live table has only the first — its edit session is delimited by focus, not by
 a button, so there is nothing to open. Optimistic rollback is therefore not an editing feature
 that a live table has to fake its way into; it is its own feature that editing composes (D37).
+
+**Shipped.** The two-feature split (D37–D44) landed 2026-08-26; optimistic CRUD (D45–D49) landed
+2026-08-27.
 
 Prior decision logs: [`work/with-row-editing/`](../work/with-row-editing/2-decisions.md) (D10–D36),
 [`work/with-mutations/`](../work/with-mutations/2-decisions.md). Gap registers, split by owning
@@ -644,3 +649,15 @@ table needs nothing. The live-optimistic path gets its own story (D39).
       row 4,000. Phantom until filtering or pagination exists.
 - [ ] **O15 / O16** and **D25** (filter retention) — phantom; `withFiltering()` does not exist.
       Re-derive against that code rather than implementing from the notes.
+
+---
+
+## Competitive position
+
+**Verdict: ahead** — the optimistic/gated split sharing one `EditingState` core, plus
+`RowRestorePoint` making rollback structurally sound (including re-inserting a removed row at its
+captured index), is a more considered answer to dirty tracking, rollback and undo than anything in
+the four libraries, none of which has shipped one.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

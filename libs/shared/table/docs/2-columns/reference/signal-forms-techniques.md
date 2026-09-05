@@ -5,7 +5,7 @@ version: 0.1
 date: 2026-07-24
 status: drafted — some are open decisions (flagged)
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Signal Forms Techniques to Adopt
@@ -27,7 +27,7 @@ Signal Forms does **not** hand-code a function per field property. One primitive
 MetadataReducer = { list, min, max, or, and, latest }   // metadata.ts:72-131
 ```
 
-The [Feature Catalog](../2-columns/architecture.md#feature-catalog) is ~12 bespoke `apply*`. Signal
+The [Feature Catalog](../architecture.md#feature-catalog) is ~12 bespoke `apply*`. Signal
 Forms' model would be ~12 `MetadataKey`s sharing **one** `metadata()` primitive. Reducers give
 behavior for free:
 

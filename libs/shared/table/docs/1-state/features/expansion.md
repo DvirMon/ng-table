@@ -3,9 +3,11 @@ title: State Layer Reference — withExpansion()
 type: architecture
 version: 1.1
 date: 2026-08-07
-status: shipped — `everExpanded` specced, not yet implemented
+capability: expansion
+spec: drilled
+code: partial
 audience: developers
-parent: ../1-state/architecture.md
+parent: ../architecture.md
 ---
 
 # withExpansion()
@@ -60,6 +62,8 @@ interface WithExpansionConfig<TRow> {
 
   Known cost: grows monotonically within a dataset, bounded by how many rows a user actually opens. An LRU cap is possible later; deliberately not in v1.
 
+  **Specced, not yet implemented.** The rest of `withExpansion()` is shipped; `everExpanded` has no code in `src/` yet, so this section is the contract to build against rather than a description of current behavior. This is why the spec's `code:` axis reads `partial`.
+
 - **Dual use:** this feature backs both (a) row detail/tree-child expansion, and (b) group row collapse/expand state for `withGrouping()` (see `with-grouping.md`) — group rows are treated as rows with an id, tracked in the same `expandedRows` set. A group row's id is synthesized by `withGrouping()`'s render layer (e.g. `` `group:${columnId}:${value}` ``), not a real `TRow` id — `expandedRows` doesn't care whether an id belongs to a real row or a synthetic group header, it's just a set of ids.
 
 ## Methods
@@ -90,3 +94,15 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
 
 - [x] Should `rowExpanded` fire separately for expand vs. collapse, or is a single event with inspectable state sufficient? Resolved — single `rowExpanded` event, direction inferable from `expandedRows` after the change. Shipped as specced.
 - [ ] Precise lazy-load UX contract (e.g. per-row loading indicator) not addressed — likely a UI-layer concern once directives are specced, but the *state* for "is this row currently loading children" hasn't been assigned to any feature yet.
+
+---
+
+## Competitive position
+
+**Verdict: on par** — sub-rows and tree data match TanStack and Material React Table, and
+`withExpansion()` already covers the detail-panel use MRT keeps as a separate concept; the
+panel-vs-tree split that would make that explicit is still pending in
+[ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md).
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

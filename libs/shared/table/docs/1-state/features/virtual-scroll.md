@@ -3,9 +3,11 @@ title: State Layer Reference — withVirtualScroll()
 type: architecture
 version: 0.1
 date: 2026-07-31
-status: drafted — not yet fully specced (added alongside the renderRows render-layer design)
+capability: virtual-scroll
+spec: drafted
+code: none
 audience: developers
-parent: ../1-state/architecture.md
+parent: ../architecture.md
 ---
 
 # withVirtualScroll()
@@ -44,3 +46,10 @@ None. Reads only `renderRows()`, which is always present on the core store (see 
 - [ ] Overscan/buffer config shape (`overscan?: number`, rows or pixels?) not yet decided.
 - [ ] Interaction with `depth`-based indentation (does virtualization need to account for variable-width group-header rows differently from leaf rows)?
 - [ ] Not yet drilled in an interview session — this file is a placeholder capturing the render-layer contract it depends on, per the 2026-07-31 grouping/expansion research session.
+
+## Competitive position
+
+**Verdict: not assessed** — the audit was deliberately scoped to the state layer, and the competitors' virtualization is a rendering concern, so it produced no findings here; the silence is that scoping decision, not an oversight.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

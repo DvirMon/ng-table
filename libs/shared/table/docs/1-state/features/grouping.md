@@ -3,9 +3,11 @@ title: State Layer Reference — withGrouping()
 type: architecture
 version: 1.0
 date: 2026-07-19
-status: drafted
+capability: grouping
+spec: drafted
+code: none
 audience: developers
-parent: ../1-state/architecture.md
+parent: ../architecture.md
 ---
 
 # withGrouping()
@@ -133,3 +135,10 @@ Researched against three popular table libraries before locking this shape:
 
 - [x] ~~Precise data shape for "group node" objects~~ — resolved above via `RenderRow<TRow>` + `renderRows`.
 - [x] ~~Whether/how grouping interacts with active filters~~ — resolved: `aggregateFn` receives post-filter rows, since `group` clustering runs after the `filter` stage.
+
+## Competitive position
+
+**Verdict: missing** — spec drafted, zero code: no `withGrouping()`, no `aggregateFn` consumption, no `'group'` pipeline/render stage claimed though both slots are reserved; the single-level scope **deliberately** sidesteps TanStack's unresolved depth-0 aggregation-correctness bug by not attempting depth at all in v1 — do not "fix" the scope by adding arbitrary depth.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

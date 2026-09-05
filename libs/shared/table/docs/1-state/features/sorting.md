@@ -3,9 +3,11 @@ title: State Layer Reference — withSorting()
 type: architecture
 version: 1.2
 date: 2026-08-12
-status: drafted
+capability: sorting
+spec: drilled
+code: shipped
 audience: developers
-parent: ../1-state/architecture.md
+parent: ../architecture.md
 ---
 
 # withSorting()
@@ -196,3 +198,15 @@ None as a separate feature. Reads `sortFn` / `enableSorting` from the core `colu
 - [ ] **Table-wide default?** Not proposed — `withSorting({ nulls })` covering every column may be worth it if a real table wants `'first'` everywhere. Add later; one config field plus a `nullsOrderFor` fallback.
 - [x] **Does the null-order fix apply to consumer `sortFn`?** Settled: yes, no escape hatch. Add one if a consumer asks.
 - [ ] Visual indicator for multi-sort priority (e.g. numbered badges on headers) is a UI-layer concern, deferred to the directive spec.
+
+---
+
+## Competitive position
+
+**Verdict: on par** — the sort model itself (ordered rule array, three-state toggle, per-column
+comparator, `manual`) matches all four; null ordering is **ahead** of them, since the `nulls: 'last'`
+default and per-column `applySortNulls` are a deliberate contract where all four leave the behavior
+silent or undefined.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

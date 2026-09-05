@@ -2,6 +2,10 @@
 
 Stream map and navigation for table architecture. Docs are organized by implementation layer.
 
+**[status.md](status.md)** — **Start here.** Every capability's spec and code maturity, state and
+UI layer side by side, in one table. Generated from the specs' own frontmatter
+(`npm run table:status`) — never hand-edited, so it can't drift from what the specs say.
+
 ## Layers
 
 **[overview.md](overview.md)** — High-level architecture map, dependency order, key concepts.
@@ -15,6 +19,8 @@ Core store, types, and state-management plugins.
 - **Engine** — how features compose: `engine/types.ts` (the `TableFeatureSpec` contract) and [ADR-0003](adr/0003-in-house-table-store-engine.md)
 - **Source layout** — folders by lifecycle phase (`api/` / `engine/` / `directives/`): [ADR-0004](adr/0004-table-source-layout.md) and the code-layout table in [`../CLAUDE.md`](../CLAUDE.md)
 - **[Columns config](1-state/columns.md)** — Required core config (`createTable()` input)
+- **[Row mutations](1-state/row-mutations.md)** — Core API, not a plugin: `table.value.update()` and the row updater verbs (D8)
+- **[State persistence](1-state/state-persistence.md)** — Cross-feature, not a plugin: one atomic round-trippable snapshot of sort + columns + filters + pagination
 - **Features** `[1-state/features/](1-state/features/)` — Opt-in plugins (mirror `with-*.ts` files):
   - [Sorting](1-state/features/sorting.md)
   - [Filtering](1-state/features/filtering.md)
@@ -22,6 +28,8 @@ Core store, types, and state-management plugins.
   - [Selection](1-state/features/selection.md)
   - [Expansion](1-state/features/expansion.md)
   - [Pagination](1-state/features/pagination.md)
+  - [Column sizing](1-state/features/column-sizing.md)
+  - [Column pinning](1-state/features/column-pinning.md)
   - [Infinite scroll](1-state/features/infinite-scroll.md)
   - [Drag & drop](1-state/features/drag-drop.md)
   - [Virtual scroll](1-state/features/virtual-scroll.md)
@@ -64,6 +72,7 @@ In-progress work is tracked in `work/` folders at each layer. Each effort has st
 
 - **[1-state/work/](1-state/work/)** — State layer efforts
   - [drop-ngrx-engine](1-state/work/drop-ngrx-engine/) — Replaced `@ngrx/signals` with the in-house `composeTable()` engine (✅ landed, ADR-0003)
+  - [state-feature-competitive-audit](1-state/work/state-feature-competitive-audit/) — State-layer feature comparison against TanStack Table, AG Grid, Material React Table and PrimeNG, the resulting [gap analysis](1-state/work/state-feature-competitive-audit/gap-analysis.md), and the build priority it ranked (✅ audit landed; the features it identifies are not built)
 - **[2-columns/work/](2-columns/work/)** — Columns schema efforts
 - **[3-ui/work/](3-ui/work/)** — UI layer efforts
   - [core-directives](3-ui/work/core-directives/) — Core directive implementation (🔄 in progress)

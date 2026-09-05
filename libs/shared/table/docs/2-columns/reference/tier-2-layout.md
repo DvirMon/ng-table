@@ -5,7 +5,7 @@ version: 0.2
 date: 2026-07-25
 status: drafted — spec only, not yet implemented
 audience: developers
-parent: ../2-columns/architecture.md
+parent: ../architecture.md
 ---
 
 # Tier 2 — Layout (sizing column-owned, pinning store-owned)
@@ -45,7 +45,7 @@ export function applyFlex<TRow, K extends Extract<keyof TRow, string>>(
   `columnFlexService.ts` owns flex distribution.
 - **`width`/`flex` mutually exclusive per column — flex wins if both set** (matches AG-Grid).
 - **Biggest missing story:** the table has zero sizing model today.
-- **`min`/`max` reducer link:** if the [metadata+reducer core](signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply-biggest-one)
+- **`min`/`max` reducer link:** if the [metadata+reducer core](signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid)
   is adopted, `opts.min`/`opts.max` fall out of `MetadataReducer.min`/`.max` for free instead of
   bespoke clamp code.
 

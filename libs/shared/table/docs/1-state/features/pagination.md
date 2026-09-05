@@ -3,14 +3,14 @@ title: State Layer Reference — withPagination()
 type: architecture
 version: 0.1
 date: 2026-07-19
-status: not yet drilled
+capability: pagination
+spec: stub
+code: none
 audience: developers
-parent: ../1-state/architecture.md
+parent: ../architecture.md
 ---
 
 # withPagination()
-
-**Status: not yet drilled.**
 
 Known from `overview.md`:
 - State shape sketch: `{ pageIndex, pageSize, totalRows }`.
@@ -21,3 +21,10 @@ Known from `overview.md`:
 Is the `withPagination()` / `withInfiniteScroll()` conflict a hard compile-time restriction (TypeScript error if both registered) or just documented convention?
 
 To be drilled in a future session: full state shape, methods, `manual` contract, compile-time dependencies, open questions.
+
+## Competitive position
+
+**Verdict: missing** — a stub, so the design is not settled either, unlike filtering/grouping which are spec-complete; `RENDER_ORDER` reserves a `'paginate'` slot and nothing claims it, while all four competitors ship pagination in their free/core tier.
+
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

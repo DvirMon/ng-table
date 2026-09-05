@@ -3,7 +3,9 @@ title: UI Layer — Column Identity (ngpTableColumn)
 type: architecture
 version: 0.2
 date: 2026-07-31
-status: draft — revised (synced to createTable()/ColumnDefInput/columnsSchema)
+capability: columns
+spec: drafted
+code: none
 audience: developers
 ---
 
@@ -12,6 +14,10 @@ audience: developers
 ## Executive Summary
 
 `ngpTableColumn` resolves a template-referenced column id against the store's column config, and is the boundary directive between store-owned data contract and directive-local presentation overrides.
+
+**Revised 2026-07-31** to sync with `createTable()`, `ColumnDefInput` and `columnsSchema` — see "Where Column Definitions Live" below.
+
+**Not implemented.** No `NgpTableColumnDirective` exists in `src/directives/`, and nothing is exported for it from `index.ts`. Every directive that names it as a dependency (`sort.md`, `resizing.md`) is blocked on this file shipping first.
 
 ---
 

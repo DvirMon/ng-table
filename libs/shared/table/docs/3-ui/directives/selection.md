@@ -3,7 +3,9 @@ title: UI Layer — Selection (ngpTableSelectionCheckbox)
 type: architecture
 version: 0.1
 date: 2026-07-20
-status: stub — not yet drilled
+capability: selection
+spec: stub
+code: none
 audience: developers
 ---
 
