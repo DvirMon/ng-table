@@ -16,9 +16,6 @@ alone supplies the three rollback verbs (`captureEdit`/`releaseEdit`/`revertEdit
 a restore point, blur commits and saves, and a rejected save reverts to the captured value.
 `table.editing()` stays empty for the whole story; `table.pending()` is exactly the in-flight set.
 
-See `../live-pessimistic/` for the same focus-triggered session shape under the opposite save
-strategy.
-
 Also on this canvas: a screen-reader announcement on each pending-state transition, a "Simulate
 leave page" guard demo (plus a real `beforeunload` listener), and an Undo control that reappears
 for a few seconds after a delete settles, before its restore point is released.

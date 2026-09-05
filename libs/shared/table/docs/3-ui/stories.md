@@ -1,14 +1,14 @@
 ---
 title: Storybook story conventions
 type: reference
-status: reflects current practice as of the 9 stories in src/stories/
+status: reflects current practice as of the 8 stories in src/stories/
 date: 2026-09-03
 ---
 
 # Storybook story conventions — `libs/shared/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
-existing 9 stories already follow, so a new one doesn't drift from it. Not previously written
+existing 8 stories already follow, so a new one doesn't drift from it. Not previously written
 down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
 moves on.
 
@@ -118,7 +118,7 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   existing stories are this shape.
 - **Real server round-trip** — every add/edit/delete button, per the rule above.
   `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`,
-  `live-table/`, `live-optimistic/`, and `live-pessimistic/` all do this.
+  `gated-bulk-optimistic/`, `live-table/`, and `live-optimistic/` all do this.
 
 ## `.stories.ts` and `.mdx`
 
@@ -136,13 +136,20 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   `multiple` mid-story varies the *path itself*, which means the host's source always carries
   a dead branch for whichever mode isn't active — the opposite of "copy-paste code" (below).
   The row-editing cluster used to bundle Save-mode (Pessimistic/Optimistic) and session-shape
-  (Live/Gated) behind exactly these toggles; it's now `live-optimistic/`, `live-pessimistic/`,
-  `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/` — five
-  fixed-mode siblings, each host hardcoded to one path, cross-referencing the others in its
-  doc-comment for contrast. (`gated-multiple-pessimistic` has no story: bulk edit under
-  `multiple: true` is optimistic-only by design — see
+  (Live/Gated) behind exactly these toggles; it's now `live-optimistic/`,
+  `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`,
+  `gated-bulk-optimistic/` — five fixed-mode siblings, each host hardcoded to one path,
+  cross-referencing the others in its doc-comment for contrast. Save-mode (Pessimistic/Optimistic)
+  is a **gated**-only axis — it means "does the row stay open until the server confirms, or close
+  right away" (`endEdit` after vs. before the fetch), which only makes sense where there's a
+  session to hold open in the first place. A live table has no session (D29), so `live-pessimistic/`
+  — added for verb symmetry with `live-optimistic/`, not from a product requirement — was removed;
+  live's only axis is rollback vs. no rollback (`live-optimistic/` vs. `live-table/`).
+  (`gated-multiple-pessimistic` has
+  no story: bulk edit under `multiple: true` is optimistic-only by design — see
   `docs/1-state/work/with-multiple-edit/1-design.md`, which closes G4 — so that combination is
-  intentionally unsupported, not merely undemoed.)
+  intentionally unsupported, not merely undemoed. `gated-bulk-optimistic/` is optimistic-only for
+  the same reason.)
 - `.mdx` stays a thin wrapper: `Meta`/`Canvas`/`Source`, plus a code-tabs block. It is not the
   place to describe what the story proves — that's the host component's doc-comment (previous
   section). An exception: `live-optimistic.mdx` carries a short prose paragraph explaining *why*
@@ -186,9 +193,15 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   separate from table state, and (for the two `-optimistic/` stories) `withRowEdit()`'s config
   wired to a fixed `multiple` value. Three separate hosts, not one host with toggles — see
   "`.stories.ts` and `.mdx`" above for why.
-- `live-optimistic/` + `live-pessimistic/` — the MSW/simulated-server-round-trip pattern, same
-  focus-triggered session shape under the two save strategies (revert-after-failure vs.
-  revert-before-send).
+- `gated-bulk-optimistic/` — D32's batched-write answer: `createRow`'s array overload opens N rows
+  in one call (no loop), `POST /api/rows/bulk` saves them in one request, one rollback unit.
+  Scoped to only the bulk-create path (no update/delete) — that's the point of a standalone story
+  here, not an oversight.
+- `live-table/` + `live-optimistic/` — grouped under one `Live` nav entry (both focus-triggered,
+  no session, per D29). `live-table/` is the no-rollback baseline (sorting + editing + deletion,
+  persistent per-row errors with Retry, one manual undo slot); `live-optimistic/` isolates just
+  the `withOptimistic()` rollback verbs (capture on focus, revert-after-failure on blur), plus a
+  timed Undo affordance for delete.
 - `external-write/` — demonstrates an effect from *outside* the story's own button clicks
   (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
   an open row, quiet patch on a closed one) — a worked example of the scope discipline above:

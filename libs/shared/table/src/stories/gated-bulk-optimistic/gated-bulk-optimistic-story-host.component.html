@@ -1,0 +1,83 @@
+<div class="row-edit-story">
+  <p class="row-edit-story__hint">
+    Gated + Optimistic, bulk create — "Add N rows" opens several blank rows in one call (no loop);
+    "Save batch" sends every one of them in a single request instead of N separate ones. A failure
+    reverts and reopens the whole batch together, not row by row (D32). Editing or deleting an
+    existing row isn't shown here — see the other gated stories for that.
+  </p>
+
+  <div class="row-edit-story__toolbar">
+    <label>
+      count:
+      <input
+        type="number"
+        min="1"
+        [value]="ui.count()"
+        (input)="ui.count.set($any($event.target).valueAsNumber)"
+      />
+    </label>
+    <label>
+      at:
+      <input
+        type="number"
+        [value]="ui.insertAt()"
+        (input)="ui.insertAt.set($any($event.target).valueAsNumber)"
+      />
+    </label>
+    <button type="button" (click)="addBulkRows()">Add N rows</button>
+    <button type="button" (click)="saveBatch()">Save batch</button>
+    <button type="button" (click)="discardAllPending()">Discard all pending</button>
+    @if (ui.summary(); as summary) {
+      <span class="row-edit-story__counter" role="status">{{ summary }}</span>
+    }
+  </div>
+
+  <table class="row-edit-story__table">
+    <thead>
+      <tr>
+        <th class="row-edit-story__cell">name</th>
+        <th class="row-edit-story__cell">dept</th>
+        <th class="row-edit-story__cell">actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @let isPendingCreate = ui.pendingIds().has(row.id);
+        @let isEditing = table.editing().has(row.id);
+        @let isSaving = table.pending().has(row.id) && !isEditing;
+
+        <tr [class.row-edit-story__row--saving]="isSaving">
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <input type="text" [formField]="field.name" placeholder="name" />
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.name }}</span>
+            }
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <select [formField]="field.dept">
+                  @for (dept of deptOptions; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.dept }}</span>
+            }
+          </td>
+          <td class="row-edit-story__cell">
+            @if (isPendingCreate && isEditing) {
+              <button type="button" (click)="discardPendingRow(row.id)">Discard</button>
+            } @else if (isSaving) {
+              <span class="row-edit-story__pending">saving batch…</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

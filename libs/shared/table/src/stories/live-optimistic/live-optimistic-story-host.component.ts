@@ -39,9 +39,6 @@ const UNDO_WINDOW_MS = 6000;
  * failure `revertEdit`s to blank, same as this story's existing revert-after-failure character
  * (a deliberate difference from `../live-table/`'s create failure, which keeps typed values for
  * retry — different stories are allowed different, self-consistent answers here).
- *
- * See `../live-pessimistic/` for the same focus-triggered session shape under the opposite save
- * strategy (revert-before-send vs. this story's revert-after-failure).
  */
 @Component({
   selector: 'ngp-live-optimistic-story-host',

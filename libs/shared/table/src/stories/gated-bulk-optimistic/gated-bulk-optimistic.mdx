@@ -1,0 +1,54 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as GatedBulkOptimisticStories from './gated-bulk-optimistic.stories';
+import hostClass from './gated-bulk-optimistic-story-host.component.ts?raw';
+import hostTemplate from './gated-bulk-optimistic-story-host.component.html?raw';
+import rowStyles from '../row-edit-story.css?raw';
+import rowSchema from '../row-edit.schema.ts?raw';
+import '../code-tabs.css';
+
+<Meta of={GatedBulkOptimisticStories} />
+
+# Gated Edit — Bulk Create, Optimistic Save
+
+Answers D32 (`docs/0-product/row-editing.md` §1.8/OQ-7, `docs/1-state/row-mutations.md`): opening
+several new rows uses `createRow`'s array overload — one call, no consumer loop — and saving them
+sends one `POST /api/rows/bulk` request instead of N separate ones, so a failure reverts and
+reopens the whole batch together. `../gated-multiple-optimistic/`'s Save All is the other, older
+answer to the same open question: N independent requests, N independent outcomes.
+
+<Canvas of={GatedBulkOptimisticStories.Default} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-bulk-optimistic-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-bulk-optimistic-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-bulk-optimistic-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-bulk-optimistic-source" />
+      row-edit.schema.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowSchema} language="ts" />
+    </div>
+  </div>
+</div>
