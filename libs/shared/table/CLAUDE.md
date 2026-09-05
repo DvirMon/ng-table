@@ -53,9 +53,10 @@ table.mock.ts   ← shared test fixtures
 | `engine/compose-table.ts` | `composeTable()`: folds features, wires hooks. Nothing else |
 | `engine/core.ts` | `createTableCore()`: the consumer's row-data signal is the single source of truth for rows (no internal row copy), wrapped as `core.value` — a `WritableView` (`.update(updater)` writes through, D30). Columns split the same way but through an extra derivation: `baseColumns` (writable, private closure var, the actual write target) + `columnRules` (mutable array, populated additively by `composeTable()`'s `foldFeatures()` from each feature's `TableFeatureSpec.columnRules`) + `core.columns` — a `WritableView` reading `foldColumnRules(baseColumns(), columnRules)` and writing through to `baseColumns`. Plus the pipeline computeds. No bare mutation methods — every write is `table.<slice>.update(updater)` on the per-slice `WritableView` member (`engine/writable-view.ts`), D30 |
 | `engine/pipeline.ts` | `PIPELINE_ORDER` + `runPipeline()`. **`PipelineStages` is derived from the array** — one declaration, so a typed stage is always an executed stage |
+| `engine/render-stages.ts` | `RENDER_ORDER` + `runRenderStages()` — the `RenderRow[] → RenderRow[]` mirror of `pipeline.ts` (ADR-0011). **`RenderStages` is derived from the array**, same invariant as `PipelineStages` |
 | `engine/columns.ts` | Pure `ColumnDef[] → ColumnDef[]` transforms. No signals, no Angular |
-| `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` |
-| `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims stages, `renderRows`, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
+| `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` — the always-run `RenderRow[]` seed a render stage chain starts from (ADR-0011) |
+| `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims pipeline stages, render stages, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
 | `engine/columns-schema/` | Always-spliced internal composition step (ADR-0010), not a consumer `with*()` plugin — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
@@ -71,14 +72,14 @@ stay `import type`; making either a value import breaks the build.
 
 ## Naming conventions — internal state and type narrowing
 
-- **No private store members.** The engine exposes nothing internal on the store: pipeline stages
-  and the render-row builder are `composeTable()` closure variables, and a feature's internal
-  state (a `Subject`, an unread signal) stays a closure variable in its factory. There is no
-  `_`-prefix convention and no `OmitPrivate` type stripping them — both were removed with
-  `@ngrx/signals` (ADR-0003). If a future feature genuinely needs a private *store* member,
-  reintroduce `OmitPrivate` in `api/types.ts` rather than leaking it.
+- **No private store members.** The engine exposes nothing internal on the store: pipeline stages,
+  render stages, and the render-row seed are `composeTable()`/`createTableCore()` closure
+  variables, and a feature's internal state (a `Subject`, an unread signal) stays a closure
+  variable in its factory. There is no `_`-prefix convention and no `OmitPrivate` type stripping
+  them — both were removed with `@ngrx/signals` (ADR-0003). If a future feature genuinely needs a
+  private *store* member, reintroduce `OmitPrivate` in `api/types.ts` rather than leaking it.
 - **Features declare, never mutate.** A feature returns a `TableFeatureSpec` — `{ members,
-  stages, renderRows, setup, onDestroy }`. Injecting behavior by writing to the store object
+  stages, renderStages, setup, onDestroy }`. Injecting behavior by writing to the store object
   is not a supported mechanism.
 
 - **Directive composition — `hostDirectives` vs. public directives:** `hostDirectives` is statically resolved, so use it only for behavior that is **unconditional** (always-present core bindings) or for sharing internal mechanism between feature directives (private, never exported from `index.ts`). Behavior that is **opt-in** gets its own public directive the consumer places. Host-composing a feature into a core directive applies it to every table, defeats tree-shaking, and forces the feature's inputs to be re-declared in the core directive's metadata. See the rejected-alternatives section of `docs/3-ui/directives/expansion.md`.
@@ -130,8 +131,8 @@ export function withFeature<TRow = unknown>(config: FeatureConfig = {}) {
 
     return {
       members: { someState: someState.asReadonly(), someMethod },
-      stages: { sort: (rows) => ... },   // optional: one pipeline stage
-      renderRows: (rows) => ...,          // optional: at most one feature may declare this
+      stages: { sort: (rows) => ... },          // optional: one pipeline stage
+      renderStages: { tree: (rows) => ... },    // optional: one or more named render stages
       setup: () => ...,                   // optional: runs after the full fold, in DI context
     };
   });
@@ -148,14 +149,15 @@ from `engine/types.ts` directly (as `withExpansion` does) since engine/ is alrea
 Rules:
 - Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
   `PipelineStages` derives from it, so there is no second list to keep in sync.
-- A second feature claiming the same `stages` key, the same **member key** (ADR-0007), or a
-  second claiming `renderRows`, **throws at construction** — this is why `withExpansion()` and a future `withGrouping()` cannot yet be
-  composed together.
-  **Pending change:** [ADR-0011](docs/adr/0011-chained-render-stages.md) (`proposed`) replaces the
-  single-claim `renderRows` with an ordered, multi-claim `RENDER_ORDER` chain over `RenderRow[]`,
-  and [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) (`proposed`) splits
-  `withExpansion()` into a detail-panel feature (no render stage) plus a new `withTree()`. Read
-  both before touching `renderRows`, `SlotRegistry.claimRenderRows()`, or `withExpansion()`.
+- Add a render stage by editing `RENDER_ORDER` in `engine/render-stages.ts` — nothing else.
+  `RenderStages` derives from it, same invariant as `PipelineStages`.
+- A second feature claiming the same `stages` key, the same `renderStages` key, or the same
+  **member key** (ADR-0007), **throws at construction**. Render stages are per-named-stage
+  collision, not whole-layer (ADR-0011, accepted) — `withExpansion()` claims `'tree'`, leaving
+  `'group'`/`'paginate'` free for `withGrouping()`/`withPagination()` once built.
+  **Pending change:** [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md)
+  (`proposed`) splits `withExpansion()` into a detail-panel feature (no render stage) plus a new
+  `withTree()` claiming `'tree'`. Read it before touching `renderStages` or `withExpansion()`.
 - **If your feature stores `RowId`s, declare `onRowsRemoved`** ([ADR-0006](docs/adr/0006-row-id-state-reconciliation.md)).
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and

@@ -42,12 +42,20 @@ describe('SlotRegistry', () => {
     );
   });
 
-  it('throws naming both features when renderRows is claimed twice', () => {
+  it('allows different render stages', () => {
     const registry = new SlotRegistry();
-    registry.claimRenderRows('features[0]');
 
-    expect(() => registry.claimRenderRows('features[1]')).toThrowError(
-      /features\[0\] and features\[1\] both provide `renderRows`/
+    registry.claimRenderStage('tree', 'features[0]');
+
+    expect(() => registry.claimRenderStage('group', 'features[1]')).not.toThrow();
+  });
+
+  it('throws naming both features when a render stage is claimed twice', () => {
+    const registry = new SlotRegistry();
+    registry.claimRenderStage('tree', 'features[0]');
+
+    expect(() => registry.claimRenderStage('tree', 'features[1]')).toThrowError(
+      /features\[0\] and features\[1\] both provide the "tree" render stage/
     );
   });
 });

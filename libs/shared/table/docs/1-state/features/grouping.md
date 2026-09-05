@@ -99,15 +99,17 @@ interface RenderRow<TRow> {
 
 `store.renderRows: Signal<RenderRow<TRow>[]>` is always present on the core store, degenerating to a 1:1 wrap of `rows()` (`{ kind: 'row', depth: 0, data: row, id: trackBy(row) }`) when no grouping is composed — **zero behavior change for every table shipped before this feature**.
 
-> **Blocker resolved 2026-09-03 — [ADR-0011](../../adr/0011-chained-render-stages.md).** From
-> 2026-08-11 (ADR-0003) until then, `renderRows` was a single-occupancy slot and `withExpansion()`
-> already claimed it, so `withGrouping()` could not be composed alongside expansion. This doc
-> previously proposed merging the two render-row builders into one; **that option was rejected** in
-> ADR-0011 as an enumerated fix (every new reshaping feature would edit one shared function).
-> Instead the engine gains an ordered, multi-claim `RENDER_ORDER` chain over `RenderRow[]`,
-> mirroring `PIPELINE_ORDER`. `withGrouping()` claims the `'group'` render stage; tree children
-> move to `withTree()`'s `'tree'` stage ([ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md)).
-> Both ADRs are `proposed` — implement ADR-0011 before building this feature.
+> **Blocker resolved 2026-09-03 — [ADR-0011](../../adr/0011-chained-render-stages.md) (accepted,
+> implemented).** From 2026-08-11 (ADR-0003) until then, `renderRows` was a single-occupancy slot
+> and `withExpansion()` already claimed it, so `withGrouping()` could not be composed alongside
+> expansion. This doc previously proposed merging the two render-row builders into one; **that
+> option was rejected** in ADR-0011 as an enumerated fix (every new reshaping feature would edit
+> one shared function). Instead the engine now has an ordered, multi-claim `RENDER_ORDER` chain
+> over `RenderRow[]`, mirroring `PIPELINE_ORDER` — `withExpansion()` already migrated to claim the
+> `'tree'` stage, leaving `'group'` free. `withGrouping()` claims `'group'` once built; tree
+> children will move to `withTree()`'s `'tree'` stage under
+> [ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md) (`proposed`, not yet
+> implemented).
 
 `withGrouping()` claims the `'group'` render stage to walk the clustered `rows()`, insert a `kind: 'group'` header at each cluster boundary — `id` synthesized as e.g. `` `group:${columnId}:${value}` ``, `aggregates` computed via each column's `aggregateFn` over that cluster's rows — and, when `withExpansion()` is also composed, check `store.expandedRows?.()` (optional read) to omit a cluster's member rows if its group id isn't in the set. This is why `withExpansion()`'s `expandedRows: Set<RowId>` transparently covers group ids alongside real row ids (see `with-expansion.md`, Dual Use).
 

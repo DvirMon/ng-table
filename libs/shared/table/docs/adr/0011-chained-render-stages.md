@@ -1,6 +1,6 @@
 # ADR-0011 — Chained render stages replace the single-occupancy `renderRows` slot
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-09-03
 **Related:** [ADR-0003](0003-in-house-table-store-engine.md) (introduced the single-claim slot),
 [ADR-0005](0005-generic-table-host.md) (central `index` assignment),

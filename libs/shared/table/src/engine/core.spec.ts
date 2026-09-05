@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { createTableCore } from './core';
 import type { RenderRow } from '../api/types';
-import type { RenderRowsBuilder } from './pipeline';
+import type { RenderRowTransform } from './render-stages';
 
 interface Row {
   id: string;
@@ -41,16 +41,16 @@ describe('createTableCore — sourceIndex', () => {
   });
 
   it('leaves sourceIndex undefined for a synthesized row with no backing data() entry', () => {
-    const { renderRows, setRenderRowsBuilder } = createTableCore<Row>({
+    const { renderRows, renderStages } = createTableCore<Row>({
       columns,
       trackBy: 'id',
       data: signal(makeRows()),
     });
-    const withGroupRow: RenderRowsBuilder<Row> = (rows) => [
+    const withGroupRow: RenderRowTransform<Row> = (rows) => [
       { id: 'group-1', depth: 0, kind: 'group', data: null },
-      ...rows.map((row) => ({ id: row.id, depth: 1, kind: 'row' as const, data: row })),
+      ...rows.map((row) => ({ ...row, depth: 1 })),
     ];
-    setRenderRowsBuilder(withGroupRow);
+    renderStages.group = withGroupRow;
 
     const [groupRow, ...rest]: RenderRow<Row>[] = renderRows();
 

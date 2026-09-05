@@ -10,7 +10,8 @@ import type {
   TrackByFn,
 } from '../api/types';
 import type { ColumnRuleRegistry } from './columns';
-import type { PipelineStages, RenderRowsBuilder } from './pipeline';
+import type { PipelineStages } from './pipeline';
+import type { RenderStages } from './render-stages';
 import type { WritableView } from './writable-view';
 
 /** Core config `composeTable()` needs. Resolved by `createTable()` from the public config. */
@@ -68,8 +69,13 @@ export interface TableFeatureSpec<TRow, Members extends object = object> {
    */
   stages?: PipelineStages<TRow>;
 
-  /** Builds `renderRows()` from the pipeline output. At most one feature may provide it. */
-  renderRows?: RenderRowsBuilder<TRow>;
+  /**
+   * Render-row transforms over the pipeline output, once wrapped as `RenderRow[]`. The engine
+   * folds registered stages in the fixed order `group -> tree -> paginate` (`RENDER_ORDER`),
+   * never in `features` array order. Two features claiming the same key is a composition error
+   * (ADR-0011).
+   */
+  renderStages?: RenderStages<TRow>;
 
   /**
    * Rule entries this feature contributes to the `columns` fold (`foldColumnRules`). Additive

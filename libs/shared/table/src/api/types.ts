@@ -26,7 +26,7 @@ export type TrackByConfig<TRow> = keyof TRow | TrackByFn<TRow>;
 /**
  * Render-layer row: `rows()`'s pipeline output flattened for template/virtual-scroll
  * consumption. `kind: 'group'` rows are synthetic — no `TRow` backs them, hence `data:
- * null` — introduced by `withGrouping()`'s `_buildRenderRows` override.
+ * null` — introduced by `withGrouping()`'s `'group'` render stage (ADR-0011).
  */
 export type RowKind = 'row' | 'group';
 
@@ -38,10 +38,10 @@ export interface RenderRow<TRow> {
   readonly kind: RowKind;
   readonly data: TRow | null;
 
-  // Position in the final `renderRows()` array, assigned centrally after any feature's
-  // `renderRows` builder runs (`engine/core.ts`) — never set by a builder itself. Feeds
-  // `aria-rowindex` on `ngpTableRow` (ADR-0005), since a `<div>`-hosted grid loses the free
-  // DOM-order inference native `<table>` gives for free.
+  // Position in the final `renderRows()` array, assigned centrally after the whole
+  // `RENDER_ORDER` stage chain runs (`engine/core.ts`, ADR-0011) — never set by a stage
+  // itself. Feeds `aria-rowindex` on `ngpTableRow` (ADR-0005), since a `<div>`-hosted grid
+  // loses the free DOM-order inference native `<table>` gives for free.
   readonly index: number;
 
   // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
@@ -55,7 +55,7 @@ export interface RenderRow<TRow> {
 
   // Index into `data()` for the `TRow` this render row was built from, resolved by trackBy
   // id (`engine/core.ts`). `undefined` for synthesized rows (`kind: 'group'`, or any row a
-  // feature's `renderRows` builder fabricates) — there is no `data()` entry to point to.
+  // render stage fabricates) — there is no `data()` entry to point to.
   readonly sourceIndex?: number;
 }
 

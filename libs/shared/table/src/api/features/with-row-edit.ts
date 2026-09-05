@@ -47,7 +47,7 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * Edit-session tracking for a `createTable()` — which rows are currently open for editing, on
  * top of the restore points `withOptimistic()` owns.
  *
- * Mode gate only: claims no pipeline stage and no `renderRows` slot. The consumer's own
+ * Mode gate only: claims no pipeline stage and no render stage. The consumer's own
  * `form(table.draft, schema)` owns the actual field values; this feature tracks which rows show
  * the form's inputs, and derives the draft signal `form()` should be built over instead of
  * `table.value` directly.

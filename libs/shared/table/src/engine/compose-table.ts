@@ -2,6 +2,7 @@ import { computed, DestroyRef, effect, inject } from '@angular/core';
 import type { AnyTableFeature, RowId, TableStore } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
 import { PIPELINE_ORDER } from './pipeline';
+import { RENDER_ORDER } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, SlotRegistry } from './slots';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
@@ -41,9 +42,15 @@ function foldFeatures<TRow>(
       }
     }
 
-    if (spec.renderRows) {
-      registry.claimRenderRows(label);
-      handle.setRenderRowsBuilder(spec.renderRows);
+    if (spec.renderStages) {
+      for (const stage of RENDER_ORDER) {
+        const transform = spec.renderStages[stage];
+        if (!transform) {
+          continue;
+        }
+        registry.claimRenderStage(stage, label);
+        handle.renderStages[stage] = transform;
+      }
     }
 
     if (spec.members) {
@@ -74,7 +81,7 @@ function foldFeatures<TRow>(
 /**
  * Composes the table's state layer from a core config plus an ordered feature list, and
  * returns a live store **instance** — no class, no DI token. Features declare what they
- * contribute (`members`, `stages`, `renderRows`, hooks); this function is the only place
+ * contribute (`members`, `stages`, `renderStages`, hooks); this function is the only place
  * that wires those declarations together.
  *
  * Must run inside an Angular injection context: `setup` hooks create `effect()` /

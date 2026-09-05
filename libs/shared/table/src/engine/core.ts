@@ -1,18 +1,15 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { ColumnDef, RenderRow } from '../api/types';
 import { foldColumnRules, resolveColumnDefs, type ColumnRuleEntry } from './columns';
-import {
-  runPipeline,
-  type PipelineStages,
-  type RenderRowsBuilder,
-} from './pipeline';
+import { runPipeline, type PipelineStages } from './pipeline';
+import { runRenderStages, type RenderStages } from './render-stages';
 import { buildDefaultRenderRows, normalizeTrackBy } from './rows';
 import type { TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
 
 /**
- * What `composeTable()` gets back from core construction. `stages`, `columnRules`, and the
- * render-rows builder are handed out as mutable registries rather than store members — the
+ * What `composeTable()` gets back from core construction. `stages`, `renderStages`, and
+ * `columnRules` are handed out as mutable registries rather than store members — the
  * `rows` / `renderRows` / `columns` computeds read them at *evaluation* time, so features
  * registering during the fold are visible by the time a consumer first reads any of them
  * (ADR-0003).
@@ -21,8 +18,8 @@ export interface TableCoreHandle<TRow> {
   readonly core: TableCore<TRow>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly stages: PipelineStages<TRow>;
+  readonly renderStages: RenderStages<TRow>;
   readonly columnRules: ColumnRuleEntry<TRow>[];
-  setRenderRowsBuilder(build: RenderRowsBuilder<TRow>): void;
 }
 
 /**
@@ -41,7 +38,10 @@ export function createTableCore<TRow>(
   const columns = computed(() => foldColumnRules(baseColumns(), columnRules));
 
   const stages: PipelineStages<TRow> = {};
-  let buildRenderRows: RenderRowsBuilder<TRow> = buildDefaultRenderRows(trackBy);
+  const renderStages: RenderStages<TRow> = {};
+  // Always runs first, never replaced (ADR-0011) — the `RenderRow[]` seed every render stage
+  // chain starts from.
+  const seedRenderRows = buildDefaultRenderRows(trackBy);
 
   const rows = computed(() => runPipeline(config.data(), stages));
 
@@ -57,13 +57,15 @@ export function createTableCore<TRow>(
 
   // Downstream of `rows` (the pipeline output), not `data` directly — recomputes on every
   // filter/group/sort/expand change, not just when the consumer's `data` signal re-emits.
-  // `index` and `sourceIndex` are assigned here, centrally, rather than by each `renderRows`
-  // builder: `index` is purely the row's position in the final array (ADR-0005's
-  // `aria-rowindex` source), and `sourceIndex` resolves via `indexById` — `undefined` for a
-  // synthesized row (`row.data === null`) since there is no `data()` entry to point to.
+  // `index` and `sourceIndex` are assigned here, centrally, rather than by any render stage:
+  // `index` is purely the row's position in the final array (ADR-0005's `aria-rowindex`
+  // source), assigned once after the whole `RENDER_ORDER` chain runs (ADR-0011), and
+  // `sourceIndex` resolves via `indexById` — `undefined` for a synthesized row
+  // (`row.data === null`) since there is no `data()` entry to point to.
   const renderRows = computed(() => {
     const byId = indexById();
-    return buildRenderRows(rows()).map((row, index) => {
+    const shaped = runRenderStages(seedRenderRows(rows()), renderStages);
+    return shaped.map((row, index) => {
       const isSynthesizedRow = row.data === null;
       return {
         ...row,
@@ -93,9 +95,7 @@ export function createTableCore<TRow>(
     core,
     renderRows,
     stages,
+    renderStages,
     columnRules,
-    setRenderRowsBuilder(build: RenderRowsBuilder<TRow>): void {
-      buildRenderRows = build;
-    },
   };
 }

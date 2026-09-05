@@ -333,7 +333,7 @@ describe('withRowEdit', () => {
     expect(store.editing().has('r1')).toBe(true);
   });
 
-  it('claims no renderRows slot — renderRows() stays the default 1:1 mapping', () => {
+  it('claims no render stage — renderRows() stays the default 1:1 mapping', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),

@@ -1,5 +1,4 @@
-import type { RowId, TrackByConfig, TrackByFn } from '../api/types';
-import type { RenderRowsBuilder } from './pipeline';
+import type { RenderRow, RowId, TrackByConfig, TrackByFn } from '../api/types';
 
 /** Pure row-identity and render-row helpers. No signals, no Angular. */
 
@@ -22,10 +21,10 @@ export function normalizeTrackBy<TRow>(
   };
 }
 
-/** 1:1 wrap, no grouping — the render-row builder every table starts with. */
+/** 1:1 wrap, no grouping — the render-row seed every render stage chain starts from. */
 export function buildDefaultRenderRows<TRow>(
   trackBy: TrackByFn<TRow>
-): RenderRowsBuilder<TRow> {
+): (rows: TRow[]) => Omit<RenderRow<TRow>, 'index'>[] {
   return (rows) =>
     rows.map((row) => ({ id: trackBy(row), depth: 0, kind: 'row', data: row }));
 }

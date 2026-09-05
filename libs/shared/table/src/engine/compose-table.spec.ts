@@ -104,7 +104,7 @@ describe('composeTable', () => {
     expect(row.name).toBe('Ann-filter-group-sort-expand');
   });
 
-  it('1:1-wraps rows into render rows when no feature provides renderRows', () => {
+  it('1:1-wraps rows into render rows when no feature provides a render stage', () => {
     const store = composeWithRows(makeRows(), []);
 
     expect((store['renderRows'] as () => unknown[])()).toEqual([
@@ -113,13 +113,14 @@ describe('composeTable', () => {
     ]);
   });
 
-  it('lets a feature replace the render-row builder', () => {
-    const withFlatRenderRows: TableFeature<Row> = () => ({
-      renderRows: (rows) =>
-        rows.map((row) => ({ id: row.id, depth: 1, kind: 'row' as const, data: row })),
+  it('lets a feature claim a render stage', () => {
+    const withDepthOne: TableFeature<Row> = () => ({
+      renderStages: {
+        tree: (rows) => rows.map((row) => ({ ...row, depth: 1 })),
+      },
     });
 
-    const store = composeWithRows(makeRows(), [withFlatRenderRows]);
+    const store = composeWithRows(makeRows(), [withDepthOne]);
 
     const [first] = (store['renderRows'] as () => { depth: number }[])();
     expect(first.depth).toBe(1);
@@ -131,12 +132,60 @@ describe('composeTable', () => {
     ).toThrow(/features\[0\] and features\[1\] both provide the "sort" pipeline stage/);
   });
 
-  it('throws when two features claim renderRows', () => {
-    const withRenderRows: TableFeature<Row> = () => ({ renderRows: (rows) => rows.map((row) => ({ id: row.id, depth: 0, kind: 'row' as const, data: row })) });
+  it('throws when two features claim the same render stage', () => {
+    const withTreeStage: TableFeature<Row> = () => ({
+      renderStages: { tree: (rows) => rows },
+    });
 
-    expect(() => compose([withRenderRows, withRenderRows])).toThrow(
-      /features\[0\] and features\[1\] both provide `renderRows`/
+    expect(() => compose([withTreeStage, withTreeStage])).toThrow(
+      /features\[0\] and features\[1\] both provide the "tree" render stage/
     );
+  });
+
+  it('composes render stages in RENDER_ORDER regardless of features array order', () => {
+    const withGroupStage: TableFeature<Row> = () => ({
+      renderStages: {
+        group: (rows) => [
+          { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
+          ...rows,
+        ],
+      },
+    });
+    const withTreeStage: TableFeature<Row> = () => ({
+      renderStages: {
+        tree: (rows) => rows.map((row) => (row.data === null ? row : { ...row, depth: row.depth + 1 })),
+      },
+    });
+
+    const forward = composeWithRows(makeRows(), [withGroupStage, withTreeStage]);
+    const reversed = composeWithRows(makeRows(), [withTreeStage, withGroupStage]);
+
+    const forwardRows = (forward['renderRows'] as () => unknown[])();
+    const reversedRows = (reversed['renderRows'] as () => unknown[])();
+
+    expect(forwardRows).toEqual(reversedRows);
+    expect(forwardRows).toEqual([
+      { id: 'group-1', depth: 0, kind: 'group', data: null, index: 0, sourceIndex: undefined },
+      { id: 'r1', depth: 1, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 1, sourceIndex: 0 },
+      { id: 'r2', depth: 1, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 2, sourceIndex: 1 },
+    ]);
+  });
+
+  it('assigns a contiguous 0-based index after a chain that both inserts and drops rows', () => {
+    const withGroupAndDrop: TableFeature<Row> = () => ({
+      renderStages: {
+        group: (rows) => [
+          { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
+          ...rows,
+        ],
+        tree: (rows) => rows.filter((row) => row.id !== 'r1'),
+      },
+    });
+
+    const store = composeWithRows(makeRows(), [withGroupAndDrop]);
+    const rows = (store['renderRows'] as () => { index: number }[])();
+
+    expect(rows.map((row) => row.index)).toEqual([0, 1]);
   });
 
   it('throws when two features claim the same store member (ADR-0007)', () => {

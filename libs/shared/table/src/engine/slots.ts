@@ -1,4 +1,5 @@
 import type { PipelineStage } from './pipeline';
+import type { RenderStage } from './render-stages';
 
 /** Names a feature by its position in the `features` array, for collision messages. */
 export function describeFeature(index: number): string {
@@ -12,30 +13,44 @@ export function describeFeature(index: number): string {
  */
 export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
+  private readonly ownerByRenderStage = new Map<RenderStage, string>();
   private readonly ownerByMember = new Map<string, string>();
-  private renderRowsOwner: string | undefined;
 
-  claimStage(stage: PipelineStage, feature: string): void {
-    const currentOwner = this.ownerByStage.get(stage);
+  private claim<TKey>(
+    owners: Map<TKey, string>,
+    key: TKey,
+    claimant: string,
+    describeCollision: (currentOwner: string, claimant: string) => string
+  ): void {
+    const currentOwner = owners.get(key);
     const isAlreadyClaimed = currentOwner !== undefined;
     if (isAlreadyClaimed) {
-      throw new Error(
-        `[createTable] ${currentOwner} and ${feature} both provide the "${stage}" ` +
-          'pipeline stage. Only one feature may provide each stage.'
-      );
+      throw new Error(describeCollision(currentOwner, claimant));
     }
-    this.ownerByStage.set(stage, feature);
+    owners.set(key, claimant);
   }
 
-  claimRenderRows(feature: string): void {
-    const isAlreadyClaimed = this.renderRowsOwner !== undefined;
-    if (isAlreadyClaimed) {
-      throw new Error(
-        `[createTable] ${this.renderRowsOwner} and ${feature} both provide ` +
-          '`renderRows`. Only one feature may override how render rows are built.'
-      );
-    }
-    this.renderRowsOwner = feature;
+  claimStage(stage: PipelineStage, feature: string): void {
+    this.claim(
+      this.ownerByStage,
+      stage,
+      feature,
+      (currentOwner, claimant) =>
+        `[createTable] ${currentOwner} and ${claimant} both provide the "${stage}" ` +
+        'pipeline stage. Only one feature may provide each stage.'
+    );
+  }
+
+  /** ADR-0011: named-stage collision replaces the old whole-layer `claimRenderRows()`. */
+  claimRenderStage(stage: RenderStage, feature: string): void {
+    this.claim(
+      this.ownerByRenderStage,
+      stage,
+      feature,
+      (currentOwner, claimant) =>
+        `[createTable] ${currentOwner} and ${claimant} both provide the "${stage}" ` +
+        'render stage. Only one feature may provide each render stage.'
+    );
   }
 
   /**
@@ -45,14 +60,13 @@ export class SlotRegistry {
    * so it throws for the same reason the other two do.
    */
   claimMember(key: string, feature: string): void {
-    const currentOwner = this.ownerByMember.get(key);
-    const isAlreadyClaimed = currentOwner !== undefined;
-    if (isAlreadyClaimed) {
-      throw new Error(
-        `[createTable] ${currentOwner} and ${feature} both provide the "${key}" ` +
-          'store member. Only one feature may provide each member.'
-      );
-    }
-    this.ownerByMember.set(key, feature);
+    this.claim(
+      this.ownerByMember,
+      key,
+      feature,
+      (currentOwner, claimant) =>
+        `[createTable] ${currentOwner} and ${claimant} both provide the "${key}" ` +
+        'store member. Only one feature may provide each member.'
+    );
   }
 }

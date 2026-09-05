@@ -48,32 +48,58 @@ function hasNonEmptyChildren<TRow>(children: TRow[] | undefined): children is TR
   return !!children && children.length > 0;
 }
 
-function buildExpansionRenderRows<TRow>(
-  rows: TRow[],
+/** Wraps a raw `TRow` child as an unstamped render row, at its parent's `depth + 1`. */
+function toChildRenderRow<TRow>(
+  row: TRow,
+  depth: number,
+  trackBy: TrackByFn<TRow>
+): Omit<RenderRow<TRow>, 'index'> {
+  return { id: trackBy(row), depth, kind: 'row', data: row };
+}
+
+/**
+ * The `'tree'` render stage (ADR-0011). Passes through any row a preceding stage already
+ * produced (e.g. a `'group'` header, `data === null`) untouched, and for a data-backed row
+ * stamps `hasChildren`/`isExpanded` onto it, then — once expanded — appends its children,
+ * recursively, at `row.depth + 1`.
+ *
+ * Takes `expandedRows` as a `Signal` and reads it inside the returned transform, not at
+ * declaration time: `composeTable()` calls a feature's factory once during the fold and
+ * keeps the returned `renderStages.tree` function forever, so a value read at declaration
+ * time would freeze the first render forever instead of tracking later toggles.
+ */
+function buildTreeStage<TRow>(
   trackBy: TrackByFn<TRow>,
-  expandedRows: Set<RowId>,
+  expandedRows: Signal<Set<RowId>>,
   childrenAccessor: (row: TRow) => TRow[] | undefined,
-  isExpandable: (row: TRow) => boolean,
-  depth = 0
-): Omit<RenderRow<TRow>, 'index'>[] {
-  return rows.flatMap((row) => {
-    const id = trackBy(row);
-    const children = childrenAccessor(row);
-    const hasChildren = isExpandable(row);
-    const isExpanded = expandedRows.has(id);
+  isExpandable: (row: TRow) => boolean
+): (rows: Omit<RenderRow<TRow>, 'index'>[]) => Omit<RenderRow<TRow>, 'index'>[] {
+  function expandRow(
+    row: Omit<RenderRow<TRow>, 'index'>,
+    expanded: Set<RowId>
+  ): Omit<RenderRow<TRow>, 'index'>[] {
+    if (row.data === null) {
+      return [row];
+    }
     const self: Omit<RenderRow<TRow>, 'index'> = {
-      id,
-      depth,
-      kind: 'row',
-      data: row,
-      hasChildren,
-      isExpanded,
+      ...row,
+      hasChildren: isExpandable(row.data),
+      isExpanded: expanded.has(row.id),
     };
-    const nested = hasNonEmptyChildren(children) && isExpanded
-      ? buildExpansionRenderRows(children, trackBy, expandedRows, childrenAccessor, isExpandable, depth + 1)
-      : [];
+    const children = childrenAccessor(row.data);
+    if (!hasNonEmptyChildren(children) || !self.isExpanded) {
+      return [self];
+    }
+    const nested = children.flatMap((child) =>
+      expandRow(toChildRenderRow(child, row.depth + 1, trackBy), expanded)
+    );
     return [self, ...nested];
-  });
+  }
+
+  return (rows) => {
+    const expanded = expandedRows();
+    return rows.flatMap((row) => expandRow(row, expanded));
+  };
 }
 
 // Recursively collects the id of every expandable row, at any depth — used by `expandAll()`
@@ -100,9 +126,9 @@ function collectExpandableRowIds<TRow>(
 
 /**
  * Adds multi-expand, tree-capable row expansion to a `createTable()`. Standalone — reads
- * only core members, no dependency on any other feature. Declares `renderRows` to flatten
- * expanded children into `renderRows()` (see with-expansion.md), so it cannot be composed
- * alongside another feature that does the same.
+ * only core members, no dependency on any other feature. Claims the `'tree'` render stage
+ * (ADR-0011) to flatten expanded children into `renderRows()` (see with-expansion.md), so it
+ * cannot be composed alongside another feature also claiming `'tree'`.
  */
 export function withExpansion<TRow = unknown>(
   config: WithExpansionConfig<TRow> = {}
@@ -169,14 +195,9 @@ export function withExpansion<TRow = unknown>(
         expandAll,
         collapseAll,
       },
-      renderRows: (rows) =>
-        buildExpansionRenderRows(
-          rows,
-          core.trackBy,
-          expandedRows(),
-          childrenAccessor,
-          isExpandable
-        ),
+      renderStages: {
+        tree: buildTreeStage(core.trackBy, expandedRows, childrenAccessor, isExpandable),
+      },
       onRowsRemoved,
     };
   };
