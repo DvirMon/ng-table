@@ -795,6 +795,14 @@ discard rollbacks for saves still in flight — reachable through the config's o
 closes its row before firing), which makes the hazard unreachable with no new state. One open
 question remains there — whether a mode collapse should silently end N edit sessions.
 
+**Save-all's "N independent or one batched write" (D32), bulk-add half resolved 2026-09-05.**
+`createRow`/`insertRow` gained a widened-arity overload (`docs/1-state/row-mutations.md`) — a
+consumer opens N new rows in one call instead of looping single-row `createRow`, one `data` write
+regardless of N. This is the *local add* half only. Batching the *save* itself (one `POST` for N
+rows, one rollback unit) is a story/consumer concern layered on top, not a new state-layer verb —
+D32 already rejected a `bulk`-prefixed API. Bulk *edit*/*delete* (`removeRow(id[])`,
+`patchRow(id[], partial)`) stay unshipped, blocked on `withSelection()`.
+
 ---
 
 # 7. Not user-facing

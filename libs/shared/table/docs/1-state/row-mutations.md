@@ -3,7 +3,8 @@ title: State Layer Reference — Row Mutations
 type: architecture
 version: 1.0
 date: 2026-08-25
-status: shipped — issue #47; `moveRow` and bulk arity deferred (D19/D32)
+status: shipped — issue #47; `moveRow` and selection-gated bulk (`removeRow`/`patchRow`) deferred
+  (D19/D32). `insertRow`/`createRow` widened arity (bulk-add) shipped 2026-09-05.
 audience: developers
 parent: ./architecture.md
 ---
@@ -85,7 +86,7 @@ ignoring `ctx`.
 
 | Updater | Signature | Notes |
 |---|---|---|
-| `insertRow` | `insertRow(row, { at?: number })` | splice semantics, never throws — see below |
+| `insertRow` | `insertRow(row \| row[], { at?: number })` | splice semantics, never throws — see below. Array overload (D32, shipped 2026-09-05) inserts every row as one contiguous block in one write |
 | `removeRow` | `removeRow(id: RowId)` | filters by `trackBy` |
 | `patchRow` | `patchRow(id: RowId, partial: Partial<TRow>)` | shallow spread over the matched row |
 
@@ -196,6 +197,13 @@ actually lives — resolved there as D24/D25.
 **Bulk is widened arity plus `batch()`; "bulk" never enters the API** (D32). It is a product
 word for the UI affordance, not an API word. Plural verbs (`removeRows`) were rejected — the
 shape falls out of `RowUpdater` already being whole-array.
+
+**`insertRow`'s and `createRow`'s widened arity shipped 2026-09-05** — the create side of D32,
+answering the bulk-add question: a consumer opens N new rows in one call
+(`createRow([{ id, row }, …], { at })`, `mutations/row-edit-mutations.ts`) instead of looping N
+single-row `createRow` calls, and it resolves in one `data` write / one `{ snapshots, open }`
+transition, not N. `removeRow`/`patchRow` stay unshipped — they're the bulk-*edit*/bulk-*delete*
+half, still blocked on `withSelection()` as tabled above.
 
 `batch()` earns its place beyond tidiness: one `data` emission means one pipeline run, one
 `indexById` rebuild, and one undo step, instead of N of each.

@@ -52,6 +52,24 @@ describe('insertRow', () => {
     const result = insertRow<Person>({ id: 9, name: 'X' }, { at: -100 })(rows, ctx);
     expect(result.map((r) => r.id)).toEqual([9, 1, 2, 3]);
   });
+
+  it('array form (D32) inserts every row as one contiguous block, in array order', () => {
+    const result = insertRow<Person>(
+      [{ id: 8, name: 'Ann' }, { id: 9, name: 'Bo' }],
+      { at: 1 },
+    )(rows, ctx);
+    expect(result.map((r) => r.id)).toEqual([1, 8, 9, 2, 3]);
+  });
+
+  it('array form appends when at is omitted, same as the single-row form', () => {
+    const result = insertRow<Person>([{ id: 8, name: 'Ann' }, { id: 9, name: 'Bo' }])(rows, ctx);
+    expect(result.map((r) => r.id)).toEqual([1, 2, 3, 8, 9]);
+  });
+
+  it('array form with an empty array is a no-op', () => {
+    const result = insertRow<Person>([])(rows, ctx);
+    expect(result).toEqual(rows);
+  });
 });
 
 describe('removeRow', () => {

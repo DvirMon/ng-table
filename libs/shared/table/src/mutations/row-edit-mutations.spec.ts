@@ -1,5 +1,5 @@
 import { pendingIds, type EditingState, type RowRestorePoint } from '../api/features/editing-state';
-import { beginEdit, clearEdit, endEdit } from './row-edit-mutations';
+import { beginEdit, clearEdit, createRow, endEdit } from './row-edit-mutations';
 import { releaseEdit, revertEdit } from './optimistic-mutations';
 import { removeRow } from './row-mutations';
 import type { RowId } from '../api/types';
@@ -116,6 +116,53 @@ describe('beginEdit({ insert })', () => {
       before,
       writingCtx()
     );
+
+    expect(written).toBeUndefined();
+    expect(result).toBe(before);
+  });
+});
+
+describe('createRow (array form, D32)', () => {
+  let written: Person[] | undefined;
+
+  function writingCtx(data: Person[] = rows) {
+    written = undefined;
+    return { data, trackBy, writeData: (next: Person[]) => void (written = next), indexById: indexById(data) };
+  }
+
+  it('opens every entry in one write — one data splice, one { snapshots, open }', () => {
+    const result = createRow<Person>(
+      [
+        { id: 98, row: { id: 98, name: '' } },
+        { id: 99, row: { id: 99, name: '' } },
+      ],
+      { at: 0 },
+    )(state(), writingCtx());
+
+    expect(written?.map((r) => r.id)).toEqual([98, 99, 1, 2, 3]);
+    expect(result.open.has(98)).toBe(true);
+    expect(result.open.has(99)).toBe(true);
+    expect(result.snapshots.get(98)).toEqual(restorePoint({ id: 98, name: '' }, 0));
+    expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 1));
+  });
+
+  it('skips an entry whose id already exists in data, still writes the rest (no-op per entry)', () => {
+    const result = createRow<Person>(
+      [
+        { id: 2, row: { id: 2, name: 'dup' } },
+        { id: 99, row: { id: 99, name: '' } },
+      ],
+      { at: 0 },
+    )(state(), writingCtx());
+
+    expect(written?.map((r) => r.id)).toEqual([99, 1, 2, 3]);
+    expect(result.open.has(2)).toBe(false);
+    expect(result.open.has(99)).toBe(true);
+  });
+
+  it('is a no-op (no write at all) when every entry collides', () => {
+    const before = state();
+    const result = createRow<Person>([{ id: 2, row: { id: 2, name: 'dup' } }])(before, writingCtx());
 
     expect(written).toBeUndefined();
     expect(result).toBe(before);

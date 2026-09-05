@@ -90,15 +90,52 @@ export function beginEdit<TRow>(
 }
 
 /**
- * `beginEdit(id, { insert: row, at })` under a name that reads as what it does. A brand-new row
- * is immediately open for editing — that's still an edit-session fact, so this stays on the
- * editing slice — but "begin editing" is the wrong verb for a consumer writing the create path,
- * not a misuse of the mechanism.
+ * `beginEdit(id, { insert: row, at })` under a name that reads as what it does.
  *
- * `id` is required, not derived — `createRow` never reads `trackBy` itself.
+ * `id` is required, not derived — `createRow` never reads `trackBy` itself. The array overload
+ * opens every entry in **one** write — one `data` splice, one `{ snapshots, open }` — instead of
+ * a consumer looping single-row calls. Entries are `{ id, row }` pairs, not parallel arrays. An
+ * entry whose id already exists in `data` is skipped (same no-op-on-miss rule as the single-row
+ * form); the rest of the batch still writes.
  */
-export function createRow<TRow>(id: RowId, row: NoInfer<TRow>, opts?: { at?: number }): EditingUpdater<TRow> {
-  return beginEdit<TRow>(id, { insert: row, at: opts?.at });
+export function createRow<TRow>(id: RowId, row: NoInfer<TRow>, opts?: { at?: number }): EditingUpdater<TRow>;
+export function createRow<TRow>(
+  rows: { id: RowId; row: NoInfer<TRow> }[],
+  opts?: { at?: number },
+): EditingUpdater<TRow>;
+export function createRow<TRow>(
+  idOrRows: RowId | { id: RowId; row: NoInfer<TRow> }[],
+  rowOrOpts?: NoInfer<TRow> | { at?: number },
+  maybeOpts?: { at?: number },
+): EditingUpdater<TRow> {
+  if (!Array.isArray(idOrRows)) {
+    return beginEdit<TRow>(idOrRows, { insert: rowOrOpts as NoInfer<TRow>, at: maybeOpts?.at });
+  }
+
+  const entries = idOrRows;
+  const opts = rowOrOpts as { at?: number } | undefined;
+
+  return (state, { data, trackBy, writeData, indexById }) => {
+    const fresh = entries.filter((entry) => findRow(data, trackBy, entry.id, indexById) === undefined);
+    if (fresh.length === 0) {
+      return state;
+    }
+
+    const nextData = insertRow<TRow>(
+      fresh.map((entry) => entry.row),
+      { at: opts?.at },
+    )(data, { trackBy, indexById });
+    writeData(nextData);
+
+    let snapshots = state.snapshots;
+    let open = state.open;
+    for (const entry of fresh) {
+      const insertedAt = resolveIndex(nextData, entry.id, { trackBy, indexById });
+      snapshots = withSnapshot(snapshots, entry.id, { row: entry.row, at: insertedAt, detached: false });
+      open = withOpen(open, entry.id);
+    }
+    return { snapshots, open };
+  };
 }
 
 /**
