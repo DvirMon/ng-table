@@ -13,6 +13,13 @@ import '../code-tabs.css';
 
 <Canvas of={LiveTableStories.Default} />
 
+## Forced failure
+
+Every request fails: an edit reverts to its pre-commit value, a create leaves the typed values in
+place for Retry, and a discard comes back instead of disappearing.
+
+<Canvas of={LiveTableStories.ForcedFailure} />
+
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">

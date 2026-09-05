@@ -18,6 +18,14 @@ answer to the same open question: N independent requests, N independent outcomes
 
 <Canvas of={GatedBulkOptimisticStories.Default} />
 
+## Forced failure
+
+Every row in the batch reverts to blank and reopens together — not some succeeding while others
+fail, which is the contrast with `../gated-multiple-optimistic/`'s Save All (N independent
+requests, N independent outcomes).
+
+<Canvas of={GatedBulkOptimisticStories.ForcedFailure} />
+
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">

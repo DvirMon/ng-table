@@ -22,6 +22,14 @@ for a few seconds after a delete settles, before its restore point is released.
 
 <Canvas of={LiveOptimisticStories.Default} />
 
+## Forced failure
+
+The edited value shows on screen immediately, same as the happy path. When the save fails, the
+value reverts to what it was before the edit — the row was never in an "open for editing" state,
+so nothing closes, it just reverts.
+
+<Canvas of={LiveOptimisticStories.ForcedFailure} />
+
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">

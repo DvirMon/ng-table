@@ -156,6 +156,14 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   no `withRowEdit()` is composed here, because that's a non-obvious composition choice a reader
   needs before looking at the code. Add prose to an mdx only for that kind of "why," not a
   restatement of what's visible in the canvas.
+- **Every story that exports a `ForcedFailure` variant gets its own `## Forced failure` section
+  in the `.mdx`, with a `<Canvas of={Stories.ForcedFailure} />` and a one-paragraph summary of
+  what's different from `Default`.** Angular's Storybook docgen does not surface a CSF export's
+  own JSDoc comment into the UI — only the `.mdx` is an actual visible description surface — so
+  the doc-comment above `export const ForcedFailure` in `.stories.ts` is source-only context for
+  a code reader; without a matching `.mdx` section, `Default` and `ForcedFailure` render with the
+  same (or no) description in Storybook, indistinguishable to a viewer. Keep the two in sync when
+  either changes.
 - **The code-tabs block covers only what a consumer needs to copy to reproduce the feature** —
   not every file the host happens to import. Matches the pattern Angular Material's own example
   viewer uses (e.g. "Dialog Animations": `HTML | TS | CSS | dialog-animations-example-dialog.html`).

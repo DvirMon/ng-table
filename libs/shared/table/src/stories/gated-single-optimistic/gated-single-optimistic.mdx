@@ -12,6 +12,13 @@ import '../code-tabs.css';
 
 <Canvas of={GatedSingleOptimisticStories.Default} />
 
+## Forced failure
+
+The row still closes immediately, then reverts to its pre-edit snapshot and reopens once Retry is
+clicked.
+
+<Canvas of={GatedSingleOptimisticStories.ForcedFailure} />
+
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">

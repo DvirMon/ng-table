@@ -12,6 +12,13 @@ import '../code-tabs.css';
 
 <Canvas of={GatedSinglePessimisticStories.Default} />
 
+## Forced failure
+
+The row stays open — pessimistic never closes early — the error shows inline, and Retry re-runs
+the same request.
+
+<Canvas of={GatedSinglePessimisticStories.ForcedFailure} />
+
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
