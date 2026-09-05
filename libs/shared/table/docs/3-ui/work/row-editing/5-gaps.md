@@ -44,10 +44,21 @@ Both references bind Escape to revert — MUI X (`stopRowEditMode({ ignoreModifi
 and AG Grid. We bind nothing. D31.2 flagged this as "missing affordance, noted not decided" and
 left it.
 
-**Why P1:** an edit mode without Escape is incomplete, not unpolished. It is also the only P1 item
-that every single gated table hits, on the first row a user opens.
+**Why still P1:** an edit mode without Escape is incomplete, not unpolished. Every single gated
+table hits it, on the first row a user opens.
 
-**Where:** a row-scoped directive in `directives/`, calling the updaters that already exist —
+> **Re-scoped 2026-09-04** — see
+> [`work/row-edit-keyboard-a11y/2-decisions.md`](../row-edit-keyboard-a11y/2-decisions.md) (D1).
+> This does **not** ship as a library directive. Row-editing's trigger policy is deliberately
+> consumer-owned (D20/D43) — live/gated/optimistic tables want different Escape/Enter/focus
+> semantics, unlike expansion's unambiguous Enter/Space activation. Closes via a **documented
+> recipe** (cookbook page: build your own row-scoped directive on `revertEdit`/`endEdit`/
+> `captureEdit`/`beginEdit` + `NGP_TABLE_ROW`/`NGP_TABLE_STORE`), not shipped code. Shelved, not
+> rejected — same standing D18 gives row actions; revisit only on real cross-consumer
+> duplication. No longer "the largest undesigned item in the editing cluster" as a code effort —
+> it is a docs effort now.
+
+**Where:** a cookbook doc, not a directive. The updaters it demonstrates already exist —
 `revertEdit(id)` for Escape, `endEdit(id)` for Enter.
 
 **Blocked on:** nothing. All the verbs it needs shipped in E4.
@@ -64,6 +75,9 @@ inside it with it — see
 [G3](../../../1-state/work/with-row-editing/5-gaps.md) /
 [#53](https://github.com/DvirMon/acme/issues/53) for the state-layer half of that.
 
+**Re-scoped 2026-09-04** — same as G1 (D1 in `work/row-edit-keyboard-a11y/2-decisions.md`):
+documented recipe, not a shipped directive.
+
 ### G10 — Accessibility beyond keyboard
 
 No announcement of edit-mode entry or exit, no `aria-*` contract for an editing row, no
@@ -73,6 +87,9 @@ wired to anything.
 WCAG exposure is already documented in the research: 3.2.2 On Input for a row that moves or
 vanishes mid-interaction — D24 removes the mid-typing case, but a committed edit still moves the
 row with no announcement.
+
+**Re-scoped 2026-09-04** — same as G1 (D1 in `work/row-edit-keyboard-a11y/2-decisions.md`):
+documented recipe, not a shipped directive.
 
 ### G11 — Retained-row affordance *(phantom)*
 
@@ -142,16 +159,16 @@ G10 a11y             ──┘
 G7  save-gating recipe   (docs + demo — independent of the directive)
 ```
 
-### Re-derived 2026-08-28
+### Re-derived 2026-08-28, re-scoped 2026-09-04
 
 ```
-G1/G9/G10   DESIGN FIRST, then build — key map, focus-restore policy, ARIA contract,
-            announcement wording. None of it exists. One effort, one work folder.
-            Now the largest undesigned item in the editing cluster.
-undo affordance   folds into the same directive — where Undo lives, how long it lasts,
+G1/G9/G10   DESIGN FIRST, then write the recipe — key map, focus-restore policy, ARIA contract,
+            announcement wording. None of it exists. One effort, one work folder
+            (row-edit-keyboard-a11y/), one cookbook doc — NOT a shipped directive (D1).
+undo affordance   folds into the same recipe — where Undo lives, how long it lasts,
                   its keyboard binding. The state layer already makes it possible
                   (removeEdit + an unreleased restore point; pending() is the undoable set).
-restored-row feedback   also the same directive — scroll-into-view + flash for a row that
+restored-row feedback   also the same recipe — scroll-into-view + flash for a row that
                         came back. Driven from the consumer's own error callback; the
                         `restored` signal was considered and declined as public API.
 G7          docs + demo, independent, small
@@ -163,7 +180,8 @@ row-scoped, keyboard-driven, and need the same focus and announcement machinery.
 produces a keyboard handler with no focus story, which the original entry already warns is worse
 than neither.
 
-**G1, G9 and G10 are one effort, not three.** They share a directive, a work folder and a ticket;
-splitting them produces a keyboard handler with no focus story, which is worse than neither.
+**G1, G9 and G10 are one effort, not three.** They share a work folder and a cookbook doc, not a
+directive (re-scoped 2026-09-04, D1) — splitting them produces a keyboard recipe with no focus
+story, which is worse than neither.
 
 G11 is not in the order — it is phantom until `withFiltering()` exists.
