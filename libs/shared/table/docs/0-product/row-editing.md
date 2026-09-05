@@ -4,7 +4,7 @@ type: product
 status: OQ-1…OQ-7 resolved 2026-08-27. Shipped since: optimistic delete rollback (D45–D47),
   multiple-open semantics (with-multiple-edit), duplicate row (gated), sorting null/empty ordering.
   Remaining work is UI-layer (G1/G9/G10 keyboard/focus/a11y) and three leftover doc corrections
-  (see doc-corrections/1-handoff.md).
+  (see ../1-state/work/doc-corrections/1-handoff.md).
 date: 2026-08-27
 audience: product, design, engineering
 ---
