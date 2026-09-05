@@ -1,7 +1,23 @@
-import { Component, ElementRef, afterRenderEffect, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  afterRenderEffect,
+  computed,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createTable } from '../../api/create-table';
 import { insertRow, patchRow, removeRow } from '../../mutations/row-mutations';
+import {
+  captureEdit,
+  releaseEdit,
+  removeEdit,
+  revertEdit,
+  swapRowId,
+} from '../../mutations/optimistic-mutations';
 import type { RowId } from '../../api/types';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../row-edit.mock';
 import { editRowsSchema, liveTableSchema } from '../row-edit.schema';
@@ -17,15 +33,28 @@ function rowLabel(row: EditRow): string {
 }
 
 /**
- * S1 — the live table (D29): no `withRowEdit()` composed, inputs always render. `commitCount`
- * instruments `data()` emissions to make the `debounce('blur')` commit boundary observable —
- * typing does not tick it, blur/select-change does.
+ * S1 — the live table (D29): no `withRowEdit()` composed, inputs always render — there is still
+ * no *session*, no Edit/Save/Cancel. `commitCount` instruments `data()` emissions to make the
+ * `debounce('blur')` commit boundary observable — typing does not tick it, blur/select-change
+ * does. `withOptimistic()` is composed (see `row-edit.schema.ts`) purely for its rollback verbs:
+ * every commit is now a real MSW-intercepted round trip, not a local-only write.
  *
- * Live mode has no Cancel (no session to cancel), so a single undo slot is the only recovery
- * path (§1.3, §3.2): Ctrl+Z/Cmd+Z or the toolbar Undo restores either the last *committed* field
- * value or the last *discarded* row, whichever happened last. Field commits are found by
- * `snapshotChanges` diffing `data()` against its previous emission; discards record their row and
- * index at the call site, since no feature holds a restore point here.
+ * - **Edit**: on a field commit, `captureEdit(id, previousRow)` takes the pre-commit value, then
+ *   a real `PUT` fires; failure calls `revertEdit(id)` (§1.1's failure behavior), success calls
+ *   `releaseEdit(id)`.
+ * - **Add**: `insertRow()` inserts a blank row under a temp client id (`pendingCreateIds`); its
+ *   *first* field commit is what actually creates it (`POST`, not `PUT`) — a blank row is nothing
+ *   to save yet. On success, `patchRow` lands the server's id and `swapRowId(tempId, saved.id)`
+ *   re-keys the pending-create bookkeeping. On failure, the typed values are left alone (§2.1's
+ *   failure behavior: "the blank row and my typed values are still there") — no revert, since
+ *   there's nothing to revert *to*; the row just stays a `pendingCreateIds` retry target.
+ * - **Delete**: `removeEdit(id)` captures + removes optimistically, a real `DELETE` follows;
+ *   failure calls `revertEdit(id)` to bring the row back (§3.1's failure behavior).
+ *
+ * Live mode still has no Cancel (no session to cancel), so the single local undo slot (§1.3,
+ * §3.2) is unchanged and **stays local-only** (no server-backed undo — that's §3.2's own,
+ * separately-tracked, still-❌ story): Ctrl+Z/Cmd+Z or the toolbar Undo restores either the last
+ * *committed* field value or the last *confirmed-discarded* row, whichever happened last.
  */
 @Component({
   selector: 'ngp-live-table-story-host',
@@ -37,6 +66,9 @@ function rowLabel(row: EditRow): string {
   },
 })
 export class LiveTableStoryHostComponent {
+  readonly forceFailure = input(false);
+  readonly latencyMs = input(600);
+
   private readonly elementRef = inject<ElementRef<HTMLElement>>(ElementRef);
 
   /** Plain (non-signal) snapshot of the previous `data()` emission — diffed on every emission to
@@ -63,6 +95,13 @@ export class LiveTableStoryHostComponent {
   /** Screen-reader announcement for the discard/undo pair — a removed row is otherwise a silent
    * change (§3.1). */
   protected readonly announcement = signal('');
+
+  /** Ids inserted this session that have never reached the server — their first field commit
+   * `POST`s (create) instead of `PUT`s (update). Cleared once that create succeeds. */
+  protected readonly pendingCreateIds = signal<ReadonlySet<RowId>>(new Set());
+
+  /** id -> a save/create/delete failure's message, persistent until dismissed or retried. */
+  protected readonly rowErrors = signal<ReadonlyMap<RowId, string>>(new Map());
 
   protected readonly undoLabel = computed(() => {
     const action = this.lastAction();
@@ -101,6 +140,7 @@ export class LiveTableStoryHostComponent {
   protected insertRow(): void {
     const id = crypto.randomUUID();
     this.newRowId.set(id);
+    this.pendingCreateIds.update((ids) => new Set(ids).add(id));
     this.table.value.update(
       insertRow(
         { id, name: '', dept: DEPT_OPTIONS[0] },
@@ -109,24 +149,76 @@ export class LiveTableStoryHostComponent {
     );
   }
 
+  /** Re-sends the row's current value — a create `POST`s again, an update `PUT`s again. Simple
+   * by design: a retried update just re-saves whatever `revertEdit` already put back on screen. */
+  protected retryRow(id: RowId): void {
+    const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
+    if (row === undefined) return;
+
+    if (this.pendingCreateIds().has(id)) {
+      void this.postCreate(id, row);
+    } else {
+      void this.putUpdate(id, row);
+    }
+  }
+
+  protected dismissError(id: RowId): void {
+    this.clearRowError(id);
+  }
+
   /** Names the row a discard button removes, for its accessible label (§3.1) — the label carries
    * the row's identity, not a bare "Delete". */
   protected discardLabel(row: EditRow): string {
     return `Discard ${rowLabel(row)}`;
   }
 
-  /** The discard flow's forward half: removes the row and parks it — with the index it sat at —
-   * in the undo slot. No confirmation dialog: undo is the safety net for a single row (§3.2). */
+  /** The discard flow's forward half: removes the row immediately (optimistic — §3.1: "the row
+   * disappears immediately on activation") and parks it — with the index it sat at — in the undo
+   * slot once the delete is confirmed. No confirmation dialog: undo is the safety net for a
+   * single row (§3.2). A row never saved to the server (`pendingCreateIds`) has nothing to
+   * delete remotely — removing it locally is correct and final. */
   protected discardRow(id: RowId): void {
     const at = this.data().findIndex((row) => this.table.trackBy(row) === id);
     if (at === -1) return;
-
     const row = this.data()[at];
-    this.table.value.update(removeRow<EditRow>(id));
-    this.lastAction.set({ kind: 'discard', row, at });
-    this.announcement.set(`${rowLabel(row)} discarded. Undo available.`);
-    if (this.newRowId() === id) {
-      this.newRowId.set(null);
+    this.clearRowError(id);
+
+    if (this.pendingCreateIds().has(id)) {
+      this.table.value.update(removeRow<EditRow>(id));
+      this.removePendingCreate(id);
+      this.lastAction.set({ kind: 'discard', row, at });
+      this.announcement.set(`${rowLabel(row)} discarded. Undo available.`);
+      if (this.newRowId() === id) this.newRowId.set(null);
+      return;
+    }
+
+    // removeEdit: captures the restore point and removes the row in one call — a real `DELETE`
+    // follows; a failure calls `revertEdit` below to bring it back (§3.1's failure behavior).
+    this.table.editing.update(removeEdit<EditRow>(id));
+    if (this.newRowId() === id) this.newRowId.set(null);
+    void this.deleteRow(id, row, at);
+  }
+
+  private async deleteRow(id: RowId, row: EditRow, at: number): Promise<void> {
+    try {
+      const response = await fetch(`/api/rows/${id}`, {
+        method: 'DELETE',
+        headers: this.simulatedHeaders(),
+      });
+      if (!response.ok) {
+        const errorBody = (await response.json()) as { message?: string };
+        throw new Error(errorBody.message ?? 'Delete failed.');
+      }
+      // Confirmed — drop the restore point and hand the discard to the local undo slot, same as
+      // every other discard (§3.2's own undo, unrelated to the rollback `removeEdit` just held).
+      this.table.editing.update(releaseEdit<EditRow>(id));
+      this.lastAction.set({ kind: 'discard', row, at });
+      this.announcement.set(`${rowLabel(row)} discarded. Undo available.`);
+    } catch (error) {
+      // Refused — revertEdit puts the row back where it was; no Undo needed, it never left.
+      this.table.editing.update(revertEdit<EditRow>(id));
+      this.setRowError(id, error instanceof Error ? error.message : 'Delete failed.');
+      this.announcement.set(`${rowLabel(row)} could not be deleted.`);
     }
   }
 
@@ -181,8 +273,103 @@ export class LiveTableStoryHostComponent {
       if (this.newRowId() === row.id) {
         this.newRowId.set(null);
       }
+
+      // A commit is what actually saves in live mode (there's no separate Save button) — the
+      // first one on a `pendingCreateIds` row creates it, every other commit updates it.
+      if (this.pendingCreateIds().has(row.id)) {
+        void this.postCreate(row.id, row);
+      } else {
+        void this.putUpdate(row.id, previousRow);
+      }
     }
 
     this.previousData = current;
+  }
+
+  /** Create: fires only from a `pendingCreateIds` row's first commit — a blank row is nothing to
+   * save yet. No `captureEdit`/`revertEdit` on failure: per §2.1's failure behavior the typed
+   * values stay on screen for a retry, there's no snapshot to roll back *to*. On success,
+   * `patchRow` lands the server's id and `swapRowId(id, saved.id)` re-keys `snapshots` so a
+   * later commit's `captureEdit`/`releaseEdit` addresses the right row (D49). */
+  private async postCreate(id: RowId, row: EditRow): Promise<void> {
+    this.clearRowError(id);
+    try {
+      const response = await fetch('/api/rows', {
+        method: 'POST',
+        headers: this.simulatedHeaders(),
+        body: JSON.stringify(row),
+      });
+      if (!response.ok) {
+        const errorBody = (await response.json()) as { message?: string };
+        throw new Error(errorBody.message ?? 'Create failed.');
+      }
+      const saved = (await response.json()) as EditRow;
+      this.table.value.update(patchRow<EditRow>(id, saved));
+      this.table.editing.update(swapRowId<EditRow>(id, saved.id));
+      this.removePendingCreate(id);
+    } catch (error) {
+      this.setRowError(id, error instanceof Error ? error.message : 'Create failed.');
+    }
+  }
+
+  /** Update: `captureEdit(id, previousRow)` takes the pre-commit value *before* the request goes
+   * out, so `table.pending()` reflects the in-flight save immediately; `releaseEdit` on
+   * confirmation, `revertEdit` (back to `previousRow`) on failure — §1.1's failure behavior. */
+  private async putUpdate(id: RowId, previousRow: EditRow): Promise<void> {
+    this.clearRowError(id);
+    this.table.editing.update(captureEdit<EditRow>(id, previousRow));
+
+    const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
+    if (row === undefined) {
+      this.table.editing.update(releaseEdit<EditRow>(id));
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/rows/${id}`, {
+        method: 'PUT',
+        headers: this.simulatedHeaders(),
+        body: JSON.stringify(row),
+      });
+      if (!response.ok) {
+        const errorBody = (await response.json()) as { message?: string };
+        throw new Error(errorBody.message ?? 'Save failed.');
+      }
+      this.table.editing.update(releaseEdit<EditRow>(id));
+    } catch (error) {
+      this.setRowError(id, error instanceof Error ? error.message : 'Save failed.');
+      this.table.editing.update(revertEdit<EditRow>(id));
+    }
+  }
+
+  private removePendingCreate(id: RowId): void {
+    if (!this.pendingCreateIds().has(id)) return;
+    this.pendingCreateIds.update((ids) => {
+      const next = new Set(ids);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  private setRowError(id: RowId, message: string): void {
+    this.rowErrors.update((errors) => new Map(errors).set(id, message));
+  }
+
+  private clearRowError(id: RowId): void {
+    if (!this.rowErrors().has(id)) return;
+    this.rowErrors.update((errors) => {
+      const next = new Map(errors);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  /** Headers driving MSW's simulated latency/failure, shared by every request this story fires. */
+  private simulatedHeaders(): Record<string, string> {
+    return {
+      'Content-Type': 'application/json',
+      'X-Force-Failure': String(this.forceFailure()),
+      'X-Latency-Ms': String(this.latencyMs()),
+    };
   }
 }

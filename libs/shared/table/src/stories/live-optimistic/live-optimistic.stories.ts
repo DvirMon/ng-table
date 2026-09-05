@@ -27,6 +27,9 @@ type Story = StoryObj<LiveOptimisticStoryHostComponent>;
  *
  * - Focus a cell, type, tab away — the value commits right away and the row shows as in-flight.
  * - Once the save succeeds, the in-flight marker clears.
+ * - Add row inserts a blank row under a temp id; its first blur creates it server-side
+ *   (`POST`, id assigned by the server) instead of updating (`PUT`) — `swapRowId` keeps the row
+ *   addressable under its new id.
  */
 export const Default: Story = {};
 

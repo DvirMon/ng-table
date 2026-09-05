@@ -8,9 +8,12 @@ import type { EditRow } from './row-edit.types';
 
 const columns: ColumnDefInput<EditRow>[] = [{ id: 'name' }, { id: 'dept' }];
 
-// S1 — no editing feature composed at all (D29): the live table needs nothing but sorting.
+// S1 — no *session* feature (D29 stands: `withRowEdit()` still buys nothing here, since live
+// mode has no open/close to manage). `withOptimistic()` is composed for its rollback verbs only
+// — a real create/edit/delete round trip now needs somewhere to hold a restore point and,
+// on create, somewhere for `swapRowId` to re-key.
 export const liveTableSchema = createTableSchema(columns, {
-  features: [withSorting<EditRow>()],
+  features: [withSorting<EditRow>(), withOptimistic<EditRow>()],
 });
 
 // S6 — always editable *and* rollback-capable (D39). No `withRowEdit()`: the edit session is

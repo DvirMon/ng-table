@@ -300,10 +300,17 @@ itself — a UI component, not a state-layer gap.
 - If the server assigns its own id on save, nothing visible changes — the row does not blink,
   re-render, lose focus, or drop out of edit mode.
 
-**Coverage:** gated ✅ for the add-and-fill flow (`gated-edit/` "Add row", inserted at index 0).
-Live 🟡 — `live-table/` has an Add row button, but focus does not land in it and it is not marked as
-new. The server-id half of the failure behavior is ❌ today: the temp-id swap silently drops the row
-out of edit mode and destroys focus (G3 / [#53](https://github.com/DvirMon/acme/issues/53)).
+**Coverage: gated ✅, live 🟡 — updated 2026-09-04.** Gated: `gated-single-optimistic/`,
+`gated-single-pessimistic/`, `gated-multiple-optimistic/` all add-and-fill (inserted at
+`insertAt`) through a real server create; the server-id half of the failure behavior is now ✅
+too — `swapRowId(from, to)` (D49, closes G3 / [#53](https://github.com/DvirMon/acme/issues/53))
+keeps the row open and addressable under its new id, demonstrated end to end (create → server
+assigns id → row stays editable) in all three. Live: `live-table/` and `live-optimistic/` both
+gained a real create round trip with the same `swapRowId` re-keying (and `live-table/`'s Add row
+now focuses the new row); still 🟡 because the state-layer fix doesn't reach the DOM/focus
+half — Angular's `@for (...; track row.id)` still recreates the `<tr>` on an id change, which can
+take focus with it (G9, `docs/3-ui/work/row-editing/5-gaps.md`) — a UI-layer gap `swapRowId`
+was never designed to fix.
 
 ## 2.2 — Find the row I just added, under a sort *(both)* — ❌ not covered
 
@@ -360,9 +367,16 @@ Tagged to sorting in §4, but listed here because the person meets it during Add
 **Coverage: ✅ for the mechanism and the failure path, shipped 2026-08-27** (D45–D47,
 [`1-state/work/with-optimistic-crud/2-decisions.md`](../1-state/work/with-optimistic-crud/2-decisions.md)).
 `removeEdit(id)` captures row + position and removes the row in one call; a failed delete rolls
-back via `revertEdit(id)`, no consumer bookkeeping required. `src/stories/live-optimistic/` now
+back via `revertEdit(id)`, no consumer bookkeeping required. `src/stories/live-optimistic/`
 demonstrates it end to end — Delete button, simulated server failure, row reappearing. "Delete
 failed, row lost" is no longer the shipped behavior.
+
+**Updated 2026-09-04 — delete is now server-backed everywhere, not just `live-optimistic/`.**
+Every gated story's "Discard (remove)" now calls a real `DELETE` (previously local-only,
+no round trip at all); `live-table/` and `live-pessimistic/` gained delete for the first time,
+each backed by a real request too. In fixing this, `row-edit.handlers.ts` picked up a `DELETE`
+handler it never actually had — `live-optimistic/`'s delete button had been calling `fetch`
+against an **unhandled** MSW request the whole time; that's fixed as a side effect, not a new gap.
 
 **Still 🟡 for the surrounding UX:** the screen-reader label naming what's deleted, and telling the
 person *why* a delete failed near the row rather than in a corner toast, are UI-layer work not
@@ -736,10 +750,11 @@ onFocus(id) {
 in-flight set. Gated mode never had the problem — re-opening goes through `beginEdit`, which is
 capture-if-absent.
 
-*What this does leave:* a **docs and story defect**, not an API one. `src/stories/live-optimistic/`
-and `features/row-editing.md` §5 both show the unguarded `captureEdit` on every focus, so the
-pattern shipped as the reference has the hazard in it. Add the guard to the story and a sentence to
-the spec.
+*What this does leave:* a **docs defect**, not an API one, and smaller than it was.
+`src/stories/live-optimistic/` now guards `captureEdit` on focus with `pending().has(id)`
+(`live-optimistic-story-host.component.ts`), so the reference story no longer carries the hazard.
+What remains: `features/row-editing.md` §5 still shows the unguarded pattern — add the guard
+sentence there.
 
 **OQ-5 — Delete: confirm, or undo, or both? — the library half is RESOLVED 2026-08-27.** The table
 will support undoing a delete: the restore point carries its position and `removeEdit(id)` captures

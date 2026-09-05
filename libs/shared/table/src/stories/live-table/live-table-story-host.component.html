@@ -43,7 +43,13 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @if (row.sourceIndex !== undefined) {
-          <tr [attr.data-row-new]="row.id === newRowId() ? row.id : null">
+          @let isPending = table.pending().has(row.id);
+          @let rowError = rowErrors().get(row.id);
+
+          <tr
+            [attr.data-row-new]="row.id === newRowId() ? row.id : null"
+            [class.row-edit-story__row--saving]="isPending"
+          >
             <td class="row-edit-story__cell">
               <input type="text" [formField]="rows[row.sourceIndex].name" placeholder="name" />
             </td>
@@ -55,6 +61,9 @@
               </select>
             </td>
             <td class="row-edit-story__cell row-edit-story__cell--actions">
+              @if (isPending) {
+                <span class="row-edit-story__pending">saving…</span>
+              }
               <button
                 type="button"
                 class="row-edit-story__icon-button"
@@ -73,6 +82,13 @@
                   />
                 </svg>
               </button>
+              @if (rowError; as message) {
+                <p class="row-edit-story__error" role="status">
+                  {{ message }}
+                  <button type="button" (click)="retryRow(row.id)">Retry</button>
+                  <button type="button" (click)="dismissError(row.id)">Dismiss</button>
+                </p>
+              }
             </td>
           </tr>
         }
