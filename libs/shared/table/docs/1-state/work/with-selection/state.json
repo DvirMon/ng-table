@@ -1,0 +1,19 @@
+{
+  "slug": "with-selection",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": false,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/with-selection",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/with-selection/2-decisions.md",
+  "specPath": "libs/shared/table/docs/1-state/work/with-selection/3-spec.md",
+  "architecturePath": "libs/shared/table/docs/1-state/architecture.md",
+  "githubIssues": [],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": false,
+    "tasks": false
+  }
+}
