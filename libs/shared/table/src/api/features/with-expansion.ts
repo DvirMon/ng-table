@@ -19,6 +19,16 @@ export interface WithExpansionConfig<TRow> {
 /** The slice of the core store this feature reads. */
 type ExpansionInput<TRow> = Pick<TableCore<TRow>, 'rows' | 'trackBy'>;
 
+/**
+ * Suppresses the `rowExpanded` emission a write would otherwise produce. For writes that carry
+ * no user intent — restoring persisted state, syncing from a server — where a subscriber would
+ * otherwise mistake the write for an interaction. Mirrors Angular reactive forms'
+ * `setValue(v, { emitEvent: false })`.
+ */
+export interface ExpansionWriteOptions {
+  emitEvent?: boolean;
+}
+
 export interface ExpansionMembers {
   readonly expandedRows: Signal<Set<RowId>>;
 
@@ -29,9 +39,9 @@ export interface ExpansionMembers {
 
   readonly rowExpanded: Observable<RowId>;
 
-  toggleExpanded(rowId: RowId): void;
-  expandAll(): void;
-  collapseAll(): void;
+  toggleExpanded(rowId: RowId, options?: ExpansionWriteOptions): void;
+  expandAll(options?: ExpansionWriteOptions): void;
+  collapseAll(options?: ExpansionWriteOptions): void;
 }
 
 function hasChildrenField<TRow>(
@@ -144,7 +154,14 @@ export function withExpansion<TRow = unknown>(
     const everExpanded = signal(new Set<RowId>());
     const rowExpandedSource = new Subject<RowId>();
 
-    function toggleExpanded(rowId: RowId): void {
+    function emitChanged(ids: readonly RowId[], options?: ExpansionWriteOptions): void {
+      if (options?.emitEvent === false) {
+        return;
+      }
+      ids.forEach((id) => rowExpandedSource.next(id));
+    }
+
+    function toggleExpanded(rowId: RowId, options?: ExpansionWriteOptions): void {
       const next = new Set(expandedRows());
       const isCollapsing = next.has(rowId);
       if (isCollapsing) {
@@ -154,10 +171,10 @@ export function withExpansion<TRow = unknown>(
         everExpanded.update((seen) => new Set(seen).add(rowId));
       }
       expandedRows.set(next);
-      rowExpandedSource.next(rowId);
+      emitChanged([rowId], options);
     }
 
-    function expandAll(): void {
+    function expandAll(options?: ExpansionWriteOptions): void {
       const ids = collectExpandableRowIds(
         core.rows(),
         core.trackBy,
@@ -172,13 +189,13 @@ export function withExpansion<TRow = unknown>(
         return next;
       });
       expandedRows.set(new Set(ids));
-      newlyExpanded.forEach((id) => rowExpandedSource.next(id));
+      emitChanged(newlyExpanded, options);
     }
 
-    function collapseAll(): void {
+    function collapseAll(options?: ExpansionWriteOptions): void {
       const collapsed = [...expandedRows()];
       expandedRows.set(new Set());
-      collapsed.forEach((id) => rowExpandedSource.next(id));
+      emitChanged(collapsed, options);
     }
 
     // ADR-0006: `expandedRows` answers "is this row live and expanded" — an id that leaves
@@ -203,6 +220,7 @@ export function withExpansion<TRow = unknown>(
       renderStages: {
         tree: buildTreeStage(core.trackBy, expandedRows, childrenAccessor, isExpandable),
       },
+      onDestroy: () => rowExpandedSource.complete(),
       onRowsRemoved,
     };
   };

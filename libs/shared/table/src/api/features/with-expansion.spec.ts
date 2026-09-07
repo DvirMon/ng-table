@@ -146,6 +146,44 @@ describe('withExpansion', () => {
     expect(emitted).toEqual([]);
   });
 
+  it('rowExpanded completes when the table is destroyed, so subscribers do not leak', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withExpansion<Row>()],
+    }), makeRows());
+
+    let completed = false;
+    store.rowExpanded.subscribe({ complete: () => (completed = true) });
+    expect(completed).toBe(false);
+
+    TestBed.resetTestingModule();
+
+    expect(completed).toBe(true);
+  });
+
+  it('emitEvent: false suppresses the emission on every write verb, state still changes', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withExpansion<Row>()],
+    }), makeRows());
+
+    const emitted: RowId[] = [];
+    store.rowExpanded.subscribe((id) => emitted.push(id));
+
+    store.toggleExpanded('r1', { emitEvent: false });
+    expect(store.expandedRows().has('r1')).toBe(true);
+
+    store.expandAll({ emitEvent: false });
+    expect(store.expandedRows().size).toBeGreaterThan(1);
+
+    store.collapseAll({ emitEvent: false });
+    expect(store.expandedRows().size).toBe(0);
+
+    expect(emitted).toEqual([]);
+  });
+
   it('collapseAll() emits rowExpanded once per previously expanded id', () => {
     const store = makeStore(() => ({
       trackBy: 'id',

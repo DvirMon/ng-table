@@ -1,7 +1,7 @@
 ---
 title: State Layer Reference — withExpansion()
 type: architecture
-version: 1.3
+version: 1.4
 date: 2026-09-07
 capability: expansion
 spec: drilled
@@ -79,9 +79,12 @@ children are loaded — for lazy-loaded children, where `childrenAccessor` legit
 
 | Method | Description |
 |---|---|
-| `toggleExpanded(rowId: RowId)` | Toggle a single row/group's expanded state. Emits `rowExpanded` once. |
-| `expandAll()` | Expand every expandable row/group. Emits `rowExpanded` once per newly expanded id. |
-| `collapseAll()` | Collapse every row/group. Emits `rowExpanded` once per previously expanded id. Does **not** clear `everExpanded`. |
+| `toggleExpanded(rowId: RowId, options?)` | Toggle a single row/group's expanded state. Emits `rowExpanded` once. |
+| `expandAll(options?)` | Expand every expandable row/group. Emits `rowExpanded` once per newly expanded id. |
+| `collapseAll(options?)` | Collapse every row/group. Emits `rowExpanded` once per previously expanded id. Does **not** clear `everExpanded`. |
+
+Every write verb takes `options?: { emitEvent?: boolean }` — see
+[Silent writes](#silent-writes-emitevent-false).
 
 ## Initial State and Persistence
 
@@ -115,6 +118,31 @@ Deliberately not a `Signal<RowId[]>` and not a predicate:
 `readonly RowId[]` rather than `Set<RowId>` because that is what round-trips through JSON to a
 storage backend without a converter.
 
+### Silent writes (`emitEvent: false`)
+
+Every write verb takes `options?: { emitEvent?: boolean }`. `{ emitEvent: false }` sets the state
+without emitting `rowExpanded`. Precedent: Angular reactive forms' `setValue(v, { emitEvent:
+false })`. Adopted from `withSelection()` D18 rather than invented here — the two features use one
+shape, not two.
+
+Its reason to exist: **a restore carries no user intent.** A subscriber lazy-loading children on
+expand, or saving state on change, should not see a restore as an interaction. Without this,
+restoring 200 expanded ids fires 200 `rowExpanded` events, which trips both.
+
+This is the primitive the snapshot feature needs, not a competitor to it — the slice's `write()`
+below uses this path, which is what satisfies [state-persistence.md](../state-persistence.md)'s
+Rule 2 ("feature `*Changed` events must not fire N times mid-restore") and Rule 3 ("restoring must
+not trigger a save"). Exposing it publicly rather than keeping it internal also means a consumer
+can restore asynchronously **today**, before that feature exists:
+
+```ts
+// ids arriving after construction — the sync `initialExpanded` seed is already spent
+this.savedIds.subscribe((ids) => this.table.expandAll({ emitEvent: false }));
+```
+
+Known failure mode, accepted: a caller forgets the flag and gets a *visible* spurious emission —
+preferable to the silent no-op a latched signal input would produce (D18's reasoning).
+
 ### Async restore belongs to the snapshot feature, not here
 
 There is deliberately **no `initialExpandedAsync`**. A `resource()`-backed per-feature restore
@@ -139,12 +167,22 @@ Expansion's whole participation in `serialize()`/`restore()`, under that spec's 
 `FeatureSnapshotSlice` mechanism:
 
 ```ts
-{ key: 'expansion', read: () => [...expandedRows()], write: (ids) => expandedRows.set(new Set(ids)) }
+{
+  key: 'expansion',
+  read: () => [...expandedRows()],
+  write: (ids) => setExpanded(ids, { emitEvent: false }),
+}
 ```
 
-`write()` is called by `restore()` — an imperative consumer call, not a reactive context — so it
-writes the signal directly. No effect, and none of the derived-fallback machinery a per-feature
-async restore would have needed.
+Note `setExpanded(ids, options)` — "the expanded set is exactly these ids" — **does not exist
+yet**. No current verb expresses it: `toggleExpanded()` is per-id and relative, `expandAll()` is
+all-or-nothing. The slice needs one, and it is the same verb a multi-id write would need, so the
+two should be designed together rather than separately.
+
+`write()` goes through the silent-write path above, which is what satisfies Rule 2 — matching
+`withSelection()` D19, where the same option is "not a competitor to the persistence design; it is
+the primitive that design requires." It is called by `restore()`, an imperative consumer call
+rather than a reactive context, so no effect is involved.
 
 `everExpanded` is **not** in the slice. It is a lazy-mount ledger, not layout, and `write()`
 seeding it is `initialExpanded`'s job at construction. Whether the restore path should union
@@ -168,6 +206,10 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
 
   **Per affected id, including the bulk verbs.** `toggleExpanded()` emits once. `expandAll()` emits once per id it actually expanded (ids already expanded are not re-emitted, so a repeated `expandAll()` is silent). `collapseAll()` emits once per id that was expanded before the call. There is no separate bulk event: the contract is one id per state change, whatever caused it, so a consumer lazy-loading children on first expand (PRD #29) works identically for a toolbar "expand all" and a per-row toggle.
 
+  **Completes on destroy.** `TableFeatureSpec.onDestroy` calls `rowExpandedSource.complete()`, so
+  subscribers terminate with the table rather than leaking. The subject is a plain non-replaying
+  `Subject` — a replaying variant would deliver stale expansion state to every late subscriber.
+
   Emission order: state is written first, then the ids are emitted — a subscriber always reads the post-change `expandedRows` regardless of which verb fired it. Bulk emissions are sequential `next()` calls on one `Subject`, not a batched array; a consumer that wants to coalesce them can `bufferTime`/`debounce` on its own.
 
 ## Open Questions
@@ -181,6 +223,12 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
   `group:*` ids are never real rows), so this is staleness, not corruption. Undecided: drop
   unknown ids at apply time (safe, but breaks rows that arrive later via async data) or keep
   them (consistent with today's design). Same question for the snapshot slice — decide once.
+
+  Worse than restore alone, per `work/with-selection/2-decisions.md`: `indexById` is built from
+  `config.data().forEach(...)` (`engine/core.ts`), so it holds **top-level rows only**. ADR-0006
+  can therefore never announce removal of a nested id — and `toggleExpanded(childId)` puts nested
+  ids in `expandedRows` during ordinary use, no restore involved. So the prune gap is already live
+  today, not something restore introduces.
 - [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initialExpanded`?
 - [ ] Precise lazy-load UX contract (e.g. per-row loading indicator) not addressed — likely a UI-layer concern once directives are specced, but the *state* for "is this row currently loading children" hasn't been assigned to any feature yet.
 
