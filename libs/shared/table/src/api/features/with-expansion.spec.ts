@@ -128,6 +128,43 @@ describe('withExpansion', () => {
     expect(emitted).toEqual(['r1', 'r1']);
   });
 
+  it('expandAll() emits rowExpanded once per newly expanded id, and nothing on a repeat', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withExpansion<Row>()],
+    }), makeRows());
+
+    const emitted: RowId[] = [];
+    store.rowExpanded.subscribe((id) => emitted.push(id));
+
+    store.expandAll();
+    expect([...emitted].sort()).toEqual([...store.expandedRows()].sort());
+
+    emitted.length = 0;
+    store.expandAll();
+    expect(emitted).toEqual([]);
+  });
+
+  it('collapseAll() emits rowExpanded once per previously expanded id', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withExpansion<Row>()],
+    }), makeRows());
+
+    store.expandAll();
+    const expandedBefore = [...store.expandedRows()];
+
+    const emitted: RowId[] = [];
+    store.rowExpanded.subscribe((id) => emitted.push(id));
+
+    store.collapseAll();
+
+    expect([...emitted].sort()).toEqual([...expandedBefore].sort());
+    expect(store.expandedRows().size).toBe(0);
+  });
+
   it("renderRows() excludes a row's children when collapsed (default state)", () => {
     const store = makeStore(() => ({
       trackBy: 'id',

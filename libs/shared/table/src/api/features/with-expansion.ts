@@ -164,16 +164,21 @@ export function withExpansion<TRow = unknown>(
         childrenAccessor,
         isExpandable
       );
+      const previous = expandedRows();
+      const newlyExpanded = ids.filter((id) => !previous.has(id));
       everExpanded.update((seen) => {
         const next = new Set(seen);
         ids.forEach((id) => next.add(id));
         return next;
       });
       expandedRows.set(new Set(ids));
+      newlyExpanded.forEach((id) => rowExpandedSource.next(id));
     }
 
     function collapseAll(): void {
+      const collapsed = [...expandedRows()];
       expandedRows.set(new Set());
+      collapsed.forEach((id) => rowExpandedSource.next(id));
     }
 
     // ADR-0006: `expandedRows` answers "is this row live and expanded" — an id that leaves
