@@ -1,7 +1,7 @@
 ---
 title: State Layer Reference — withExpansion()
 type: architecture
-version: 1.4
+version: 1.5
 date: 2026-09-07
 capability: expansion
 spec: drilled
@@ -85,6 +85,35 @@ children are loaded — for lazy-loaded children, where `childrenAccessor` legit
 
 Every write verb takes `options?: { emitEvent?: boolean }` — see
 [Silent writes](#silent-writes-emitevent-false).
+
+### `expansionState` — proposed, not implemented
+
+```ts
+readonly expansionState: Signal<'all' | 'some' | 'none'>;
+```
+
+The one member the cross-library audit justified adding. A consumer **cannot** compute it cheaply
+from outside: answering "are all rows expanded?" means re-walking the tree through
+`childrenAccessor` + `isExpandable` to count expandable ids — logic this feature already owns in
+`collectExpandableRowIds()` and keeps private. Everything else the audit surfaced (per-row reads,
+toggle bindings, default-open) a consumer already has or can trivially write.
+
+Its use is a toolbar expand-all control, which needs tri-state to render correctly. TanStack and
+MRT ship this as two booleans (`getIsAllRowsExpanded()` + `getIsSomeRowsExpanded()`), which a
+caller must fetch and combine; one signal answers directly and cannot return an incoherent pair.
+A `computed()` over `rows()` + `expandedRows()` — a signal, not a getter.
+
+**Undecided: when it lands.** It is tree-shaped, so under
+[ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md) it belongs to `withTree()`, not
+the detail-panel `withExpansion()`. Either add it here now and relocate at the split (a move, not
+a contract change), or specify it in the ADR and build it there. Not decided.
+
+Also proposed and undecided, from the same discussion: a multi-id write —
+`toggleExpanded(ids: RowId | readonly RowId[], expanded?: boolean)`, with `expandAll`/`collapseAll`
+becoming sugar over it. It is the same verb the snapshot slice needs (see
+[Snapshot slice](#snapshot-slice)), so the two should be designed together. Open sub-question:
+whether `expanded` is required when an array is passed, since per-id toggling of a mixed-state
+array is rarely what a caller wants.
 
 ## Initial State and Persistence
 
@@ -230,6 +259,10 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
   ids in `expandedRows` during ordinary use, no restore involved. So the prune gap is already live
   today, not something restore introduces.
 - [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initialExpanded`?
+- [ ] **Does `expansionState` land here or in `withTree()`?** The member is justified (see
+  [above](#expansionstate--proposed-not-implemented)); only its timing is open, because ADR-0012
+  is already reopening this feature's surface. Same question applies to the proposed multi-id
+  `toggleExpanded`/`setExpanded` write.
 - [ ] Precise lazy-load UX contract (e.g. per-row loading indicator) not addressed — likely a UI-layer concern once directives are specced, but the *state* for "is this row currently loading children" hasn't been assigned to any feature yet.
 
 ---
