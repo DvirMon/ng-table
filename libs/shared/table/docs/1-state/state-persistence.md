@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — State Persistence
 type: architecture
-version: 0.1
-date: 2026-09-05
+version: 0.2
+date: 2026-09-07
 capability: state-persistence
 spec: drafted
 code: none
@@ -199,9 +199,21 @@ speculative one. These are the acceptance tests, not a wishlist.
   its persisted slice set. Selection is arguably session state, not layout — but it is also
   the audit's #1 gap and `withSelection()` doesn't exist yet, so this cannot be decided until
   the selection-scope concept (page/filtered/all) is settled.
-- [ ] **Is expansion persisted?** Same shape of question, plus a real hazard: `expandedRows`
-  holds `RowId`s, and a restored id may no longer exist in `data`. ADR-0006's prune runs on
-  removal, not on restore.
+- [x] **Is expansion persisted?** Resolved 2026-09-07 — **yes, as a slice**, and the slice
+  mechanism above is the *only* restore path expansion gets. `withExpansion()` contributes
+  `{ key: 'expansion', read: () => [...expandedRows()], write: (ids) => … }`; it deliberately
+  ships **no** `initialExpandedAsync` config, because a per-feature async restore violates rule 1
+  (a second write path) and cannot satisfy rule 2 (each feature's resource resolves on its own
+  clock, so cross-feature atomicity is unachievable per-feature). A separate, non-persistence
+  `initialExpanded?: readonly RowId[]` construction seed exists for synchronously-available
+  state; it is not part of this mechanism. See
+  [features/expansion.md](./features/expansion.md#initial-state-and-persistence).
+
+  Still open, and shared with selection: the stale-id hazard. `expandedRows` holds `RowId`s and a
+  restored id may no longer exist in `data`; ADR-0006's prune runs on removal, so an id whose row
+  never arrives is never pruned. Drop-unknown-at-apply breaks async data that arrives later;
+  keep-unknown matches how synthetic `group:*` ids already live in that Set. Decide once, for
+  both features.
 - [ ] **Migration policy beyond "discard".** Rule 7 discards an unknown version. A
   `migrate?: (unknown) => TableSnapshot | null` escape hatch would let consumers upgrade
   their own stored payloads, but invites exactly the field-probing rule 7 forbids.

@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withExpansion()
 type: architecture
-version: 1.1
-date: 2026-08-07
+version: 1.3
+date: 2026-09-07
 capability: expansion
 spec: drilled
 code: partial
@@ -45,8 +45,17 @@ interface Row {
 ```ts
 interface WithExpansionConfig<TRow> {
   childrenAccessor?: (row: TRow) => TRow[] | undefined;
+  isExpandable?: (row: TRow) => boolean;
+  initialExpanded?: readonly RowId[];
 }
 ```
+
+`isExpandable` decides whether a row renders the expand toggle independently of whether its
+children are loaded — for lazy-loaded children, where `childrenAccessor` legitimately returns
+`undefined`/`[]` until the row has been opened once. Defaults to "non-empty array from
+`childrenAccessor`".
+
+`initialExpanded` is covered under [Initial State and Persistence](#initial-state-and-persistence).
 
 `childrenAccessor` reads a row's nested children. Defaults to `(row) => (row as { children?: TRow[] }).children` — pass a custom accessor when children live under a different key. No `manual` config — see `2-decisions.md`; the `manual` contract below described no actual behavior difference from the default, so nothing exists for it to toggle.
 
@@ -70,9 +79,76 @@ interface WithExpansionConfig<TRow> {
 
 | Method | Description |
 |---|---|
-| `toggleExpanded(rowId: RowId)` | Toggle a single row/group's expanded state |
-| `expandAll()` | Expand every expandable row/group |
-| `collapseAll()` | Collapse every row/group. Does **not** clear `everExpanded`. |
+| `toggleExpanded(rowId: RowId)` | Toggle a single row/group's expanded state. Emits `rowExpanded` once. |
+| `expandAll()` | Expand every expandable row/group. Emits `rowExpanded` once per newly expanded id. |
+| `collapseAll()` | Collapse every row/group. Emits `rowExpanded` once per previously expanded id. Does **not** clear `everExpanded`. |
+
+## Initial State and Persistence
+
+**Specced 2026-09-07, not implemented.** Decided while resolving the `rowExpanded` bulk-verb
+gap; see [expansion-state-audit.md](../work/with-expansion/expansion-state-audit.md).
+
+### `initialExpanded` — a construction-time seed
+
+```ts
+withExpansion<Dept>({ initialExpanded: savedIds() })
+```
+
+A **plain array, read once** when the feature factory runs. It seeds `expandedRows` and
+`everExpanded` (a restored-open row *has* been opened, so its detail panel mounts immediately
+rather than waiting for a toggle) and emits **no** `rowExpanded` — nothing changed, the table
+started this way.
+
+Deliberately not a `Signal<RowId[]>` and not a predicate:
+
+- **Not a signal.** Storing one forces an answer to "what happens when it emits again?", and
+  both answers are wrong: re-apply stomps every toggle the user has made since (the two-writer
+  problem), and ignoring it makes accepting a signal a lie. A plain array makes the question
+  unrepresentable. A consumer whose saved ids *are* a signal unwraps at the call site —
+  `initialExpanded: this.savedIds()` in a field initializer reads outside any reactive context,
+  so nothing is tracked.
+- **Not a predicate** (`(row, depth) => boolean`). Rejected: a predicate presumes the condition
+  lives in row data, which is only one of the real cases — restored ids, a route param and a
+  user preference are all external to the row. Conditional expansion against row data is
+  consumer-owned; they compute the ids and pass them.
+
+`readonly RowId[]` rather than `Set<RowId>` because that is what round-trips through JSON to a
+storage backend without a converter.
+
+### Async restore belongs to the snapshot feature, not here
+
+There is deliberately **no `initialExpandedAsync`**. A `resource()`-backed per-feature restore
+was considered and rejected against [state-persistence.md](../state-persistence.md):
+
+- Its rule 1 ("one write path, one read path — no per-feature save/restore hooks") makes a
+  second per-feature restore entry point a direct violation.
+- Its rule 2 (restore is one transaction) is unachievable when each feature owns its own async
+  source: expansion's resource resolving at 200ms and selection's at 400ms cannot be made
+  atomic by any per-feature implementation, however careful.
+- Apply-once semantics, stale-id validation and save-suppression all have to be solved by the
+  snapshot feature anyway for columns/sort/filters. Solving them a second time per feature is
+  the enumerated surface that spec's "not a `with-*()` feature" reasoning already rejects.
+
+A consumer with a synchronously-readable backend (localStorage, sessionStorage, a route param)
+uses `initialExpanded` directly. One with an async backend either defers constructing the table
+until the snapshot resolves, or waits for the snapshot feature.
+
+### Snapshot slice
+
+Expansion's whole participation in `serialize()`/`restore()`, under that spec's proposed
+`FeatureSnapshotSlice` mechanism:
+
+```ts
+{ key: 'expansion', read: () => [...expandedRows()], write: (ids) => expandedRows.set(new Set(ids)) }
+```
+
+`write()` is called by `restore()` — an imperative consumer call, not a reactive context — so it
+writes the signal directly. No effect, and none of the derived-fallback machinery a per-feature
+async restore would have needed.
+
+`everExpanded` is **not** in the slice. It is a lazy-mount ledger, not layout, and `write()`
+seeding it is `initialExpanded`'s job at construction. Whether the restore path should union
+into it is folded into the open question below.
 
 ## Compile-Time Dependencies
 
@@ -90,9 +166,22 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
 
 - `rowExpanded` — fires whenever a row/group's expanded state changes (covers both expand and collapse — direction is inferable from current `expandedRows` state).
 
+  **Per affected id, including the bulk verbs.** `toggleExpanded()` emits once. `expandAll()` emits once per id it actually expanded (ids already expanded are not re-emitted, so a repeated `expandAll()` is silent). `collapseAll()` emits once per id that was expanded before the call. There is no separate bulk event: the contract is one id per state change, whatever caused it, so a consumer lazy-loading children on first expand (PRD #29) works identically for a toolbar "expand all" and a per-row toggle.
+
+  Emission order: state is written first, then the ids are emitted — a subscriber always reads the post-change `expandedRows` regardless of which verb fired it. Bulk emissions are sequential `next()` calls on one `Subject`, not a batched array; a consumer that wants to coalesce them can `bufferTime`/`debounce` on its own.
+
 ## Open Questions
 
 - [x] Should `rowExpanded` fire separately for expand vs. collapse, or is a single event with inspectable state sufficient? Resolved — single `rowExpanded` event, direction inferable from `expandedRows` after the change. Shipped as specced.
+- [x] Do `expandAll()`/`collapseAll()` emit `rowExpanded`? Resolved 2026-09-06 — yes, once per affected id; no separate bulk event. The bulk verbs previously mutated `expandedRows` silently, which contradicted this doc and broke the lazy-load-on-expand use in PRD #29. Cross-library comparison, and why the AG Grid–style separate bulk event was not chosen (yet): [expansion-state-audit.md](../work/with-expansion/expansion-state-audit.md).
+- [ ] **Stale restored ids.** `initialExpanded` (and a snapshot `write()`) can carry ids whose
+  rows are absent from `data` — deleted server-side since the state was saved. ADR-0006's prune
+  runs on *removal*, and these ids never arrive to be removed, so they sit in `expandedRows`
+  indefinitely. Note the Set is already designed to hold ids absent from `data` (synthetic
+  `group:*` ids are never real rows), so this is staleness, not corruption. Undecided: drop
+  unknown ids at apply time (safe, but breaks rows that arrive later via async data) or keep
+  them (consistent with today's design). Same question for the snapshot slice — decide once.
+- [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initialExpanded`?
 - [ ] Precise lazy-load UX contract (e.g. per-row loading indicator) not addressed — likely a UI-layer concern once directives are specced, but the *state* for "is this row currently loading children" hasn't been assigned to any feature yet.
 
 ---
