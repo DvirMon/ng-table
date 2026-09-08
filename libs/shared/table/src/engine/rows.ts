@@ -85,7 +85,8 @@ export function pruneByIds<V>(
 ): ReadonlyMap<RowId, V>;
 export function pruneByIds(
   container: ReadonlySet<RowId>,
-  removedIds: readonly RowId[]
+  removedIds: readonly RowId[],
+  keep?: (id: RowId) => boolean
 ): ReadonlySet<RowId>;
 export function pruneByIds(
   container: ReadonlyMap<RowId, unknown> | ReadonlySet<RowId>,
@@ -108,9 +109,13 @@ export function pruneByIds(
 
   let next: Set<RowId> | undefined;
   for (const id of removedIds) {
-    if (container.has(id)) {
-      (next ??= new Set(container)).delete(id);
+    if (!container.has(id)) {
+      continue;
     }
+    if (keep?.(id)) {
+      continue;
+    }
+    (next ??= new Set(container)).delete(id);
   }
   return next ?? container;
 }

@@ -3,6 +3,7 @@ import {
   closeAll,
   findRow,
   withOpen,
+  withUnconfirmed,
   withoutOpen,
   withSnapshot,
   type EditingUpdater,
@@ -70,8 +71,10 @@ export function beginEdit<TRow>(
       // `resolveIndex`'s linear-scan fallback makes this correct regardless.
       const insertedAt = resolveIndex(nextData, id, { trackBy, indexById });
       return {
+        ...state,
         snapshots: withSnapshot(state.snapshots, id, { row: insert, at: insertedAt, op: 'create' }),
         open: withOpen(state.open, id),
+        unconfirmed: withUnconfirmed(state.unconfirmed, id),
       };
     }
 
@@ -83,6 +86,7 @@ export function beginEdit<TRow>(
 
     const snapshot: RowRestorePoint<TRow> = { row: data[foundAt], at: foundAt, op: 'update' };
     return {
+      ...state,
       snapshots: state.snapshots.has(id) ? state.snapshots : withSnapshot(state.snapshots, id, snapshot),
       open: withOpen(state.open, id),
     };
@@ -129,12 +133,14 @@ export function createRow<TRow>(
 
     let snapshots = state.snapshots;
     let open = state.open;
+    let unconfirmed = state.unconfirmed;
     for (const entry of fresh) {
       const insertedAt = resolveIndex(nextData, entry.id, { trackBy, indexById });
       snapshots = withSnapshot(snapshots, entry.id, { row: entry.row, at: insertedAt, op: 'create' });
       open = withOpen(open, entry.id);
+      unconfirmed = withUnconfirmed(unconfirmed, entry.id);
     }
-    return { snapshots, open };
+    return { snapshots, open, unconfirmed };
   };
 }
 

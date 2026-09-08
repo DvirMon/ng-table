@@ -48,18 +48,22 @@ export interface PatchEditOptions {
 export type SnapshotMap<TRow> = ReadonlyMap<RowId, RowSnapshot<TRow>>;
 
 /**
- * What an editing updater reads and writes. Two orthogonal facts, not two copies of one:
- * `snapshots` is *what a rollback restores*, `open` is *which rows show inputs*. `pending` is
- * derived from the pair, never stored.
+ * What an editing updater reads and writes. Three orthogonal facts, not copies of one another:
+ * `snapshots` is *what a rollback restores*, `open` is *which rows show inputs*, `unconfirmed` is
+ * *which client ids the server has never acknowledged*. `pending`/`pendingOps` are derived from
+ * `snapshots` and `open` together, never stored.
  *
  * Ownership splits without splitting the shape — `withOptimistic()` writes `snapshots` and
- * leaves `open` permanently empty; `withRowEdit()` writes both.
+ * `unconfirmed`, leaving `open` permanently empty; `withRowEdit()` writes all three.
  */
 export interface EditingState<TRow> {
   readonly snapshots: SnapshotMap<TRow>;
   /** Rows currently open. Always a subset of `snapshots`' keys — every updater preserves that,
    * and `pending` (`snapshots` minus `open`) depends on it. */
   readonly open: ReadonlySet<RowId>;
+  /** Client ids the server never acknowledged. Outlives a restore point: a failed create's
+   * `revertEdit` spends the snapshot, but the row must still POST on retry (ADR-0013). */
+  readonly unconfirmed: ReadonlySet<RowId>;
 }
 
 export interface EditingUpdaterContext<TRow> {
@@ -79,26 +83,36 @@ export type EditingUpdater<TRow> = (
 ) => EditingState<TRow>;
 
 const NO_IDS: ReadonlySet<RowId> = new Set();
+const NO_OPS: ReadonlyMap<RowId, PendingOp> = new Map();
 
 /**
- * Holds a restore point but is no longer open. Derived rather than stored — this is what makes
- * closing a row a single `open.delete(id)` with no second container to fall out of step with.
+ * Holds a restore point but is no longer open, paired with which operation armed it. Derived
+ * rather than stored — this is what makes closing a row a single `open.delete(id)` with no
+ * second container to fall out of step with. `pendingIds` is a thin projection of this, so the
+ * two can never disagree.
  *
  * On a table composing only `withOptimistic()`, `open` is always empty, so this returns every
  * held restore point — exactly the in-flight set.
  */
-export function pendingIds<TRow>(state: EditingState<TRow>): ReadonlySet<RowId> {
-  const ids = new Set<RowId>();
-  for (const id of state.snapshots.keys()) {
+export function pendingOps<TRow>(state: EditingState<TRow>): ReadonlyMap<RowId, PendingOp> {
+  const ops = new Map<RowId, PendingOp>();
+  for (const [id, snapshot] of state.snapshots) {
     if (!state.open.has(id)) {
-      ids.add(id);
+      ops.set(id, snapshot.op);
     }
   }
-  // Shared empty set so the common case (nothing pending) keeps a stable identity and does not
+  // Shared empty map so the common case (nothing pending) keeps a stable identity and does not
   // invalidate downstream computeds on every open/close. Checked after the scan, not before:
   // a size comparison would depend on `open ⊆ snapshots` holding, and would return a silently
   // wrong answer rather than fail if it ever stopped.
-  return ids.size === 0 ? NO_IDS : ids;
+  return ops.size === 0 ? NO_OPS : ops;
+}
+
+/** Same in-flight set as `pendingOps`, without the operation — kept for the non-breaking
+ * `pending` member shape (ADR-0013). */
+export function pendingIds<TRow>(state: EditingState<TRow>): ReadonlySet<RowId> {
+  const ops = pendingOps(state);
+  return ops.size === 0 ? NO_IDS : new Set(ops.keys());
 }
 
 /* --- pure helpers over the state shape, shared by both updater modules --- */
@@ -140,6 +154,16 @@ export function withoutOpen(open: ReadonlySet<RowId>, id: RowId): ReadonlySet<Ro
   return next;
 }
 
+export function withUnconfirmed(unconfirmed: ReadonlySet<RowId>, id: RowId): ReadonlySet<RowId> {
+  return new Set(unconfirmed).add(id);
+}
+
+export function withoutUnconfirmed(unconfirmed: ReadonlySet<RowId>, id: RowId): ReadonlySet<RowId> {
+  const next = new Set(unconfirmed);
+  next.delete(id);
+  return next;
+}
+
 /**
  * Closes every open row, dropping their restore points — no survivor chosen. Shared by
  * `clearEdit()` (explicit "Cancel all") and `withRowEdit()`'s mode-flip `true` -> `false`
@@ -155,7 +179,7 @@ export function closeAll<TRow>(state: EditingState<TRow>): EditingState<TRow> {
   for (const id of state.open) {
     snapshots.delete(id);
   }
-  return { snapshots, open: new Set() };
+  return { ...state, snapshots, open: new Set() };
 }
 
 export interface EditingStoreOptions<TRow> {
@@ -169,10 +193,13 @@ export interface EditingStore<TRow> {
   readonly state: Signal<EditingState<TRow>>;
   readonly editing: WritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>;
   readonly pending: Signal<ReadonlySet<RowId>>;
+  readonly pendingOps: Signal<ReadonlyMap<RowId, PendingOp>>;
+  readonly unconfirmed: Signal<ReadonlySet<RowId>>;
   /** Writes state through `onWrite`. Exposed so a feature can re-apply the current state when
    * its own config changes, not just when an updater runs. */
   apply(next: EditingState<TRow>): void;
-  /** ADR-0006. Prunes `snapshots` (keeping `op: 'delete'` restore points) and `open`. */
+  /** ADR-0006. Prunes `snapshots` (keeping `op: 'delete'` restore points), `open`, and
+   * `unconfirmed` (same exemption — a row mid-delete-rollback is still unconfirmed). */
   onRowsRemoved(ids: readonly RowId[]): void;
 }
 
@@ -180,9 +207,13 @@ export function createEditingStore<TRow>(
   core: TableCore<TRow>,
   options: EditingStoreOptions<TRow> = {}
 ): EditingStore<TRow> {
-  // One signal over both facts: `pending` is derived from them together, so it can never read a
-  // half-applied write.
-  const state = signal<EditingState<TRow>>({ snapshots: new Map(), open: new Set() });
+  // One signal over all three facts: `pending` is derived from them together, so it can never
+  // read a half-applied write.
+  const state = signal<EditingState<TRow>>({
+    snapshots: new Map(),
+    open: new Set(),
+    unconfirmed: new Set(),
+  });
 
   function apply(next: EditingState<TRow>): void {
     state.set(options.onWrite ? options.onWrite(next) : next);
@@ -201,19 +232,30 @@ export function createEditingStore<TRow>(
       )
   );
 
-  // ADR-0006: an id that leaves `data` must leave both `open` (nothing left to show inputs for)
-  // and `snapshots` (nothing left to restore) — `pending` needs no pruning of its own, since it
-  // is derived from the other two, not stored. `open` is pruned independently of `snapshots`:
-  // `pendingIds()` treats "has a snapshot but isn't open" as pending, so leaving a removed id in
-  // `open` would surface it as newly pending. A restore point whose `op` is `'delete'` is exempt —
-  // it was captured by a verb (`removeEdit`) that deliberately took the row out of `data`, so
-  // pruning it here would erase the rollback the verb exists to provide.
+  // ADR-0006: an id that leaves `data` must leave `open` (nothing left to show inputs for),
+  // `snapshots` (nothing left to restore), and `unconfirmed` (nothing left to retry) —
+  // `pending` needs no pruning of its own, since it is derived from the other two, not stored.
+  // `open` is pruned independently of `snapshots`: `pendingIds()` treats "has a snapshot but
+  // isn't open" as pending, so leaving a removed id in `open` would surface it as newly pending.
+  // A restore point whose `op` is `'delete'` is exempt — it was captured by a verb
+  // (`removeEdit`) that deliberately took the row out of `data`, so pruning it here would erase
+  // the rollback the verb exists to provide. `unconfirmed` shares that exemption: a row mid
+  // delete-rollback still needs its retry-on-revert identity (ADR-0013).
   function onRowsRemoved(ids: readonly RowId[]): void {
     const current = state();
     const nextOpen = pruneByIds(current.open, ids);
     const nextSnapshots = pruneByIds(current.snapshots, ids, (value) => value.op === 'delete');
-    if (nextOpen !== current.open || nextSnapshots !== current.snapshots) {
-      apply({ open: nextOpen, snapshots: nextSnapshots });
+    const nextUnconfirmed = pruneByIds(
+      current.unconfirmed,
+      ids,
+      (id) => nextSnapshots.get(id)?.op === 'delete'
+    );
+    if (
+      nextOpen !== current.open ||
+      nextSnapshots !== current.snapshots ||
+      nextUnconfirmed !== current.unconfirmed
+    ) {
+      apply({ open: nextOpen, snapshots: nextSnapshots, unconfirmed: nextUnconfirmed });
     }
   }
 
@@ -221,6 +263,8 @@ export function createEditingStore<TRow>(
     state: state.asReadonly(),
     editing,
     pending: computed(() => pendingIds(state())),
+    pendingOps: computed(() => pendingOps(state())),
+    unconfirmed: computed(() => state().unconfirmed),
     apply,
     onRowsRemoved,
   };

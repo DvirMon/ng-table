@@ -27,9 +27,10 @@ function ctx(data: Person[] = rows) {
 
 function state(
   snapshots: [number, RowRestorePoint<Person>][] = [],
-  open: number[] = []
+  open: number[] = [],
+  unconfirmed: number[] = []
 ): EditingState<Person> {
-  return { snapshots: new Map(snapshots), open: new Set(open) };
+  return { snapshots: new Map(snapshots), open: new Set(open), unconfirmed: new Set(unconfirmed) };
 }
 
 function restorePoint(row: Person, at: number, op: PendingOp = 'update'): RowRestorePoint<Person> {
@@ -46,6 +47,7 @@ describe('beginEdit', () => {
     const result = beginEdit<Person>(2)(state(), ctx());
     expect(result.snapshots.get(2)).toEqual(restorePoint({ id: 2, name: 'Bea' }, 1));
     expect(result.open.has(2)).toBe(true);
+    expect(result.unconfirmed.has(2)).toBe(false); // an update, not a create
   });
 
   it('opens an id not in data without `{ insert }`, but sets no snapshot (misuse case)', () => {
@@ -109,6 +111,11 @@ describe('beginEdit({ insert })', () => {
     expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 3, 'create'));
   });
 
+  it('marks the inserted id unconfirmed (D54)', () => {
+    const result = beginEdit<Person>(99, { insert: { id: 99, name: '' } })(state(), writingCtx());
+    expect(result.unconfirmed.has(99)).toBe(true);
+  });
+
   it('honours `at` the way insertRow does (D27)', () => {
     beginEdit<Person>(99, { insert: { id: 99, name: '' }, at: 1 })(state(), writingCtx());
 
@@ -149,6 +156,8 @@ describe('createRow (array form, D32)', () => {
     expect(result.open.has(99)).toBe(true);
     expect(result.snapshots.get(98)).toEqual(restorePoint({ id: 98, name: '' }, 0, 'create'));
     expect(result.snapshots.get(99)).toEqual(restorePoint({ id: 99, name: '' }, 1, 'create'));
+    expect(result.unconfirmed.has(98)).toBe(true);
+    expect(result.unconfirmed.has(99)).toBe(true);
   });
 
   it('skips an entry whose id already exists in data, still writes the rest (no-op per entry)', () => {

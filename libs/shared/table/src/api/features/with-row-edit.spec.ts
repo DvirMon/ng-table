@@ -1,8 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createTable } from '../create-table';
-import { beginEdit, endEdit } from '../../mutations/row-edit-mutations';
+import { beginEdit, createRow, endEdit } from '../../mutations/row-edit-mutations';
 import { captureEdit, releaseEdit, removeEdit, revertEdit } from '../../mutations/optimistic-mutations';
+import type { OptimisticMembers } from './with-optimistic';
 import { withRowEdit } from './with-row-edit';
 import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 
@@ -342,4 +343,70 @@ describe('withRowEdit', () => {
 
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
   });
+
+  it('exposes pendingOps and unconfirmed — same member set withOptimistic declares (D54/R2)', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withRowEdit<Row>()],
+    }), makeRows());
+
+    const optimisticKeys: (keyof OptimisticMembers<Row>)[] = [
+      'editing',
+      'pending',
+      'pendingOps',
+      'unconfirmed',
+    ];
+    for (const key of optimisticKeys) {
+      expect(typeof store[key]).toBe('function');
+    }
+    expect(store.pendingOps().size).toBe(0);
+    expect(store.unconfirmed().size).toBe(0);
+  });
+
+  it('createRow marks the id unconfirmed; releaseEdit clears it once confirmed', () => {
+    const store = makeStore(() => ({
+      trackBy: 'id',
+      columns: makeColumns(),
+      features: [withRowEdit<Row>()],
+    }), makeRows());
+
+    store.editing.update(createRow<Row>('r3', { id: 'r3', name: 'Cid' }));
+    expect(store.unconfirmed().has('r3')).toBe(true);
+
+    store.editing.update(endEdit<Row>('r3'));
+    store.editing.update(releaseEdit<Row>('r3'));
+
+    expect(store.unconfirmed().has('r3')).toBe(false);
+  });
+
+  it(
+    'removeEdit on an unconfirmed create survives the ADR-0006 prune, and revertEdit ' +
+      'preserves unconfirmed for retry (D54/R1)',
+    () => {
+      const data = signal(makeRows());
+      const store = TestBed.runInInjectionContext(() =>
+        createTable(data, () => ({
+          trackBy: 'id',
+          columns: makeColumns(),
+          features: [withRowEdit<Row>()],
+        }))
+      );
+
+      store.editing.update(createRow<Row>('r3', { id: 'r3', name: 'Cid' }));
+      expect(store.unconfirmed().has('r3')).toBe(true);
+
+      store.editing.update(removeEdit<Row>('r3'));
+      TestBed.tick(); // flushes ADR-0006 — must not prune the delete-pending snapshot or unconfirmed
+
+      expect(store.unconfirmed().has('r3')).toBe(true);
+      expect(store.pending().has('r3')).toBe(true);
+
+      store.editing.update(revertEdit<Row>('r3'));
+
+      expect(data().some((row) => row.id === 'r3')).toBe(true);
+      expect(store.unconfirmed().has('r3')).toBe(true); // still needs a retry POST
+      expect(store.pending().has('r3')).toBe(false);
+    }
+  );
 });

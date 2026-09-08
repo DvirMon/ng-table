@@ -112,4 +112,12 @@ describe('pruneByIds — Set overload', () => {
 
     expect(pruneByIds(set, [])).toBe(set);
   });
+
+  it('keeps an id that keep() returns true for', () => {
+    const set = new Set(['r1', 'r2']);
+
+    const next = pruneByIds(set, ['r1', 'r2'], (id) => id === 'r2');
+
+    expect([...next]).toEqual(['r2']);
+  });
 });

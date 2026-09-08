@@ -40,7 +40,7 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
   for (const displaced of ids.slice(0, -1)) {
     snapshots.delete(displaced);
   }
-  return { snapshots, open: new Set(ids.slice(-1)) };
+  return { ...state, snapshots, open: new Set(ids.slice(-1)) };
 }
 
 /**
@@ -101,7 +101,13 @@ export function withRowEdit<TRow = unknown>(
     }
 
     return {
-      members: { editing: store.editing, pending: store.pending, draft },
+      members: {
+        editing: store.editing,
+        pending: store.pending,
+        pendingOps: store.pendingOps,
+        unconfirmed: store.unconfirmed,
+        draft,
+      },
       onRowsRemoved: store.onRowsRemoved,
       setup: () => effect(onMultipleChanged),
     };

@@ -46,6 +46,21 @@ describe('withOptimistic', () => {
     expect(store.pending().size).toBe(0);
   });
 
+  it('exposes pendingOps and unconfirmed, both empty at construction (D54)', () => {
+    const store = optimisticStore();
+
+    expect(store.pendingOps().size).toBe(0);
+    expect(store.unconfirmed().size).toBe(0);
+  });
+
+  it('pendingOps pairs a pending id with the op that armed it', () => {
+    const store = optimisticStore();
+
+    store.editing.update(captureEdit<Row>('r1'));
+
+    expect(store.pendingOps().get('r1')).toBe('update');
+  });
+
   it('never opens a row — editing stays empty even after a capture (D39)', () => {
     const store = optimisticStore();
 

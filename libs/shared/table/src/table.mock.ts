@@ -4,6 +4,7 @@ import type { RowEditMembers } from './api/features/with-row-edit';
 import { createDraftRows } from './api/features/draft-rows';
 import {
   pendingIds,
+  pendingOps,
   type EditingState,
   type EditingUpdater,
 } from './api/features/editing-state';
@@ -100,7 +101,11 @@ export function createMockTableStoreWithEditing<TRow>(
 ): TableStore<TRow> & RowEditMembers<TRow> {
   const data = signal<TRow[]>(rows);
   const indexById = computed(() => mockIndexById(data(), trackBy));
-  const state = signal<EditingState<TRow>>({ snapshots: new Map(), open: new Set() });
+  const state = signal<EditingState<TRow>>({
+    snapshots: new Map(),
+    open: new Set(),
+    unconfirmed: new Set(),
+  });
   const value = createWritableView<TRow[], RowUpdater<TRow>>(
     () => data(),
     (updater) => data.update((current) => updater(current, { trackBy, indexById: indexById() }))
@@ -128,6 +133,8 @@ export function createMockTableStoreWithEditing<TRow>(
     // Same derivation the feature uses, imported rather than restated — this stub deliberately
     // skips `withRowEdit()`'s single-mode trim, but `pending` must not drift from it.
     pending: computed(() => pendingIds(state())),
+    pendingOps: computed(() => pendingOps(state())),
+    unconfirmed: computed(() => state().unconfirmed),
     draft: createDraftRows(() => data(), () => editing(), trackBy, () => indexById()),
   };
 }

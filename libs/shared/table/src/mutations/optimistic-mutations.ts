@@ -5,6 +5,7 @@ import {
   withSnapshot,
   withoutOpen,
   withoutSnapshot,
+  withoutUnconfirmed,
   type EditingUpdater,
   type PatchEditOptions,
   type RowRestorePoint,
@@ -51,13 +52,25 @@ export function captureEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
  * rejected write silently stuck on screen. Bulk teardown is `clearEdit()` instead (closes and
  * releases atomically).
  *
- * No-op for an id that's still open (closing it is `endEdit`'s job) or holds no restore point.
+ * No-op for an id that's still open (closing it is `endEdit`'s job) or holds neither a restore
+ * point nor unconfirmed identity. Clears both on release — `unconfirmed` outlives a spent
+ * restore point (a failed create that reverted, then retried), so releasing must not require one
+ * to still be held (ADR-0013).
  */
 export function releaseEdit<TRow>(id: RowId): EditingUpdater<TRow> {
-  return (state) =>
-    state.open.has(id) || !state.snapshots.has(id)
-      ? state
-      : { ...state, snapshots: withoutSnapshot(state.snapshots, id) };
+  return (state) => {
+    if (state.open.has(id)) {
+      return state;
+    }
+    if (!state.snapshots.has(id) && !state.unconfirmed.has(id)) {
+      return state;
+    }
+    return {
+      ...state,
+      snapshots: withoutSnapshot(state.snapshots, id),
+      unconfirmed: withoutUnconfirmed(state.unconfirmed, id),
+    };
+  };
 }
 
 /**
@@ -87,6 +100,7 @@ export function revertEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
     );
 
     return {
+      ...state,
       snapshots: withoutSnapshot(state.snapshots, id),
       open: withoutOpen(state.open, id),
     };
@@ -98,6 +112,7 @@ export function revertEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
  * restore path.
  *
  * No-op when no restore point is held; plain `removeRow` covers deleting a row nobody captured.
+ * Clears `unconfirmed` too — a discarded create is abandoned, not retried.
  */
 export function discardEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData }) => {
@@ -106,8 +121,10 @@ export function discardEdit<TRow>(id: RowId): EditingUpdater<TRow> {
     }
     writeData(data.filter((r) => trackBy(r) !== id));
     return {
+      ...state,
       snapshots: withoutSnapshot(state.snapshots, id),
       open: withoutOpen(state.open, id),
+      unconfirmed: withoutUnconfirmed(state.unconfirmed, id),
     };
   };
 }
@@ -136,6 +153,7 @@ export function removeEdit<TRow>(id: RowId): EditingUpdater<TRow> {
 
     writeData(removeRow<TRow>(id)(data, { trackBy, indexById }));
     return {
+      ...state,
       snapshots: withSnapshot(state.snapshots, id, snapshot),
       open: withoutOpen(state.open, id),
     };
@@ -171,13 +189,17 @@ export function patchEdit<TRow>(
  * Re-keys `from` to `to` in whichever of `open`/`snapshots` hold it — the temp-id → server-id
  * swap on an optimistic create. Does not touch `data`; the caller writes the row's new identity
  * there (e.g. via `patchRow`) in the same synchronous handler, before this call. No-op when
- * neither map holds `from` (house rule).
+ * nothing holds `from` (house rule).
+ *
+ * `unconfirmed` is dropped for `from`, never added for `to` — a swap **is** the server's
+ * acknowledgement, so the new id is confirmed from the moment it exists (ADR-0013).
  */
 export function swapRowId<TRow>(from: RowId, to: RowId): EditingUpdater<TRow> {
   return (state) => {
     const heldOpen = state.open.has(from);
     const heldSnapshot = state.snapshots.get(from);
-    if (!heldOpen && heldSnapshot === undefined) {
+    const heldUnconfirmed = state.unconfirmed.has(from);
+    if (!heldOpen && heldSnapshot === undefined && !heldUnconfirmed) {
       return state;
     }
 
@@ -197,6 +219,10 @@ export function swapRowId<TRow>(from: RowId, to: RowId): EditingUpdater<TRow> {
       snapshots = nextSnapshots;
     }
 
-    return { open, snapshots };
+    const unconfirmed = heldUnconfirmed
+      ? withoutUnconfirmed(state.unconfirmed, from)
+      : state.unconfirmed;
+
+    return { open, snapshots, unconfirmed };
   };
 }

@@ -39,9 +39,10 @@ function ctx(data: Person[] = rows) {
 
 function state(
   snapshots: [number, RowRestorePoint<Person>][] = [],
-  open: number[] = []
+  open: number[] = [],
+  unconfirmed: number[] = []
 ): EditingState<Person> {
-  return { snapshots: new Map(snapshots), open: new Set(open) };
+  return { snapshots: new Map(snapshots), open: new Set(open), unconfirmed: new Set(unconfirmed) };
 }
 
 function restorePoint(row: Person, at: number, op: PendingOp = 'update'): RowRestorePoint<Person> {
@@ -602,5 +603,116 @@ describe('swapRowId', () => {
       expect(store.editing().has(saved.id)).toBe(false);
       expect(store.pending().has(saved.id)).toBe(false);
     });
+  });
+});
+
+describe('unconfirmed (D54)', () => {
+  it('createRow marks the id unconfirmed', () => {
+    const result = createRow<Person>(99, { id: 99, name: '' })(state(), ctx());
+    expect(result.unconfirmed.has(99)).toBe(true);
+  });
+
+  it('createRow (array form) marks every fresh entry unconfirmed', () => {
+    const result = createRow<Person>([{ id: 98, row: { id: 98, name: '' } }])(state(), ctx());
+    expect(result.unconfirmed.has(98)).toBe(true);
+  });
+
+  it('releaseEdit clears unconfirmed once the create is confirmed', () => {
+    const created = createRow<Person>(99, { id: 99, name: '' })(state(), ctx());
+    const closed = endEdit<Person>(99)(created, ctx());
+
+    const result = releaseEdit<Person>(99)(closed, ctx());
+
+    expect(result.unconfirmed.has(99)).toBe(false);
+  });
+
+  it('releaseEdit clears a lingering unconfirmed id even with no restore point left (relaxed guard)', () => {
+    // Simulates a failed-create retry: the snapshot was already spent by an earlier revertEdit,
+    // but `unconfirmed` outlives it (ADR-0013) — release must still clear it, not bail on a
+    // missing snapshot.
+    const before: EditingState<Person> = { snapshots: new Map(), open: new Set(), unconfirmed: new Set([99]) };
+
+    const result = releaseEdit<Person>(99)(before, ctx());
+
+    expect(result.unconfirmed.has(99)).toBe(false);
+  });
+
+  it('discardEdit clears unconfirmed — an abandoned create is not retried', () => {
+    const created = createRow<Person>(99, { id: 99, name: '' })(state(), ctx());
+    let written: Person[] | undefined;
+
+    const result = discardEdit<Person>(99)(created, {
+      data: [...rows, { id: 99, name: '' }],
+      trackBy,
+      writeData: (next) => (written = next),
+      indexById: indexById([...rows, { id: 99, name: '' }]),
+    });
+
+    expect(written?.some((r) => r.id === 99)).toBe(false);
+    expect(result.unconfirmed.has(99)).toBe(false);
+  });
+
+  it('removeEdit keeps unconfirmed — a rolled-back delete may still need its create retried', () => {
+    const created = createRow<Person>(99, { id: 99, name: '' })(state(), ctx());
+    const dataWithNewRow = [...rows, { id: 99, name: '' }];
+
+    const result = removeEdit<Person>(99)(created, {
+      data: dataWithNewRow,
+      trackBy,
+      writeData: () => undefined,
+      indexById: indexById(dataWithNewRow),
+    });
+
+    expect(result.unconfirmed.has(99)).toBe(true);
+  });
+
+  it('revertEdit keeps unconfirmed — a failed create must still POST on retry', () => {
+    const created = createRow<Person>(99, { id: 99, name: '' })(state(), ctx());
+    const dataWithNewRow = [...rows, { id: 99, name: '' }];
+
+    const result = revertEdit<Person>(99)(created, {
+      data: dataWithNewRow,
+      trackBy,
+      writeData: () => undefined,
+      indexById: indexById(dataWithNewRow),
+    });
+
+    expect(result.unconfirmed.has(99)).toBe(true);
+  });
+
+  it("swapRowId deletes 'from' but does not add 'to' — a swap is itself the acknowledgement", () => {
+    const created = createRow<Person>(100, { id: 100, name: '' })(state(), ctx());
+
+    const result = swapRowId<Person>(100, 200)(created, ctx());
+
+    expect(result.unconfirmed.has(100)).toBe(false);
+    expect(result.unconfirmed.has(200)).toBe(false);
+  });
+
+  it("delete → revert keeps unconfirmed through the ADR-0006 prune exemption (R1)", () => {
+    const data = signal<Person[]>([...rows]);
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: 'id' as const,
+        columns: [{ id: 'name', accessor: (row: Person) => row.name, visible: true, order: 0, label: 'name' }],
+        features: [withRowEdit<Person>()],
+      }))
+    );
+
+    const tempId = 300;
+    store.editing.update(createRow<Person>(tempId, { id: tempId, name: 'draft' }));
+    expect(store.unconfirmed().has(tempId)).toBe(true);
+
+    store.editing.update(removeEdit<Person>(tempId));
+    TestBed.tick(); // flushes ADR-0006 — must not prune the delete-pending snapshot or unconfirmed
+
+    expect(store.unconfirmed().has(tempId)).toBe(true);
+    expect(store.pending().has(tempId)).toBe(true);
+
+    store.editing.update(revertEdit<Person>(tempId));
+
+    expect(data().some((row) => row.id === tempId)).toBe(true);
+    expect(store.unconfirmed().has(tempId)).toBe(true); // still needs a retry POST
+    expect(store.pending().has(tempId)).toBe(false);
   });
 });

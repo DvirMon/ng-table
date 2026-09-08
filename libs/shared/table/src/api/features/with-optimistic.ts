@@ -1,7 +1,7 @@
 import type { Signal } from '@angular/core';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import type { RowId } from '../types';
-import { createEditingStore, type EditingUpdater } from './editing-state';
+import { createEditingStore, type EditingUpdater, type PendingOp } from './editing-state';
 import type { WritableView } from '../../engine/writable-view';
 
 export interface OptimisticMembers<TRow> {
@@ -14,6 +14,12 @@ export interface OptimisticMembers<TRow> {
    * the state, so a row can never be open and pending at once. On a live table this is every
    * held restore point, which is exactly the in-flight set. */
   readonly pending: Signal<ReadonlySet<RowId>>;
+  /** `pending`, paired with which operation armed each row — the fact a consumer cannot derive
+   * from `pending` alone (ADR-0013). */
+  readonly pendingOps: Signal<ReadonlyMap<RowId, PendingOp>>;
+  /** Client ids the server never acknowledged — outlives a restore point, since a failed
+   * create's `revertEdit` spends the snapshot but the row must still POST on retry. */
+  readonly unconfirmed: Signal<ReadonlySet<RowId>>;
 }
 
 /**
@@ -44,7 +50,12 @@ export function withOptimistic<TRow = unknown>(): (
     const store = createEditingStore<TRow>(core);
 
     return {
-      members: { editing: store.editing, pending: store.pending },
+      members: {
+        editing: store.editing,
+        pending: store.pending,
+        pendingOps: store.pendingOps,
+        unconfirmed: store.unconfirmed,
+      },
       onRowsRemoved: store.onRowsRemoved,
     };
   };
