@@ -1,7 +1,7 @@
 ---
 title: Proposal — optimistic and pessimistic as a definitive API
 type: plan
-status: open — step 0 done (ADR-0013 + D50–D57 reserved); step 1 done (D53); step 2 not started
+status: open — step 0 done (ADR-0013 + D50–D57 reserved); step 1 done (D53); step 2 done (D54); step 3a not started
 date: 2026-09-05
 parent: ../../features/row-editing.md
 ---
@@ -203,12 +203,16 @@ Still open in this step: `state.json`. D51–D57 rationale is written per step, 
 `index.ts` (+`PendingOp`). The ADR-0006 keep-predicate becomes `(v) => v.op === 'delete'`.
 `detached` appears nowhere in `src/stories/` — verified. See [D53](./2-decisions.md#d53--rowrestorepointdetached-becomes-op-create--update--delete-2026-09-05).
 
-**Step 2 — `pendingOps` + `unconfirmed`** *(additive, non-breaking)* · `Depends on: 1`
+**Step 2 — `pendingOps` + `unconfirmed`** *(additive, non-breaking)* · `Depends on: 1` · **DONE 2026-09-05**
 `editing-state.ts` (shape, `pendingOps()`, prune `unconfirmed` with the exemption),
-**`engine/rows.ts` — `pruneByIds`'s Set overload gains `keep?: (id: RowId) => boolean`** (today it
-has none, :86-89, and the Set branch ignores the argument entirely), `with-optimistic.ts`,
-`with-row-edit.ts`, `optimistic-mutations.ts` (including the relaxed `releaseEdit` guard),
-`row-edit-mutations.ts`, `index.ts`. All 9 stories still compile.
+`engine/rows.ts` — `pruneByIds`'s Set overload gains `keep?: (id: RowId) => boolean`,
+`with-optimistic.ts`, `with-row-edit.ts`, `optimistic-mutations.ts` (including the relaxed
+`releaseEdit` guard), `row-edit-mutations.ts`. All 9 stories still compile — no story reads either
+new member yet (that's step 5). See
+[D54](./2-decisions.md#d54--unconfirmed-becomes-a-library-slice-2026-09-05).
+
+Not touched: `index.ts` — `pendingOps`/`unconfirmed` reach consumers as `OptimisticMembers`/
+`RowEditMembers` fields (both types already exported), not as new standalone exports.
 
 **Step 3a — new verbs alongside the old** *(judgment)* · `Depends on: 2`
 Add standalone `createRow` (with `open`), `commitEdit`, `closeEdit`. Mark `beginEdit`'s options

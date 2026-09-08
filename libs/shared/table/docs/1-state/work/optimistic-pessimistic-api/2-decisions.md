@@ -92,7 +92,67 @@ none constructs a new one, so none needed a change beyond the type.
 - Sets up D54 (`unconfirmed`, step 2), which reads `op === 'create'` as its starting point before
   layering in the "outlives a restore point" gap noted in `1-proposal.md`.
 
-## D51, D52, D54–D57
+## D54 — `unconfirmed` becomes a library slice (2026-09-05)
+
+**Decision:** add `unconfirmed: ReadonlySet<RowId>` to `EditingState`, `pendingOps: ReadonlyMap<RowId,
+PendingOp>` alongside the existing `pending`, and export both as members from `createEditingStore()`
+— so `withOptimistic()` and `withRowEdit()` gain them identically, from the one store (D37/A2).
+`pendingOps` replaces `pendingIds`'s internal role: `pendingIds` is now a thin projection of it
+(`new Set(pendingOps().keys())`), so the two can never disagree (ADR-0013 Decision 6).
+
+**Why not derive it from `op === 'create'` alone:** nearly works, but a failed create's
+`revertEdit` spends the restore point — the exact verb a failure handler calls — while the row
+must still POST on retry. `unconfirmed` is the identity that survives that spend; `op` does not
+(`1-proposal.md`'s "State: what the library owns").
+
+**Per-verb effect** (the table `1-proposal.md` specifies, implemented verb-for-verb):
+
+| Verb | Effect | Where |
+|---|---|---|
+| `createRow` (single overload, via `beginEdit`'s `{ insert }` branch) / `createRow` (array overload) | adds | `row-edit-mutations.ts` |
+| `swapRowId(from, to)` | deletes `from`, never adds `to` — a swap **is** the acknowledgement | `optimistic-mutations.ts` |
+| `releaseEdit(id)` | clears | `optimistic-mutations.ts` |
+| `discardEdit(id)` | clears | `optimistic-mutations.ts` |
+| `removeEdit(id)` | keeps (unchanged, via full-state spread) | `optimistic-mutations.ts` |
+| `revertEdit(id)` | keeps (unchanged, via full-state spread) | `optimistic-mutations.ts` |
+| `captureEdit`, `patchEdit`, `beginEdit` (no `{ insert }`) | untouched — these are `'update'`, not a create | both files |
+
+**`releaseEdit`'s guard relaxes** (`1-proposal.md`'s R1 risk, foretold): it bailed when
+`!state.snapshots.has(id)`, which is exactly the state a reverted-then-retried create is in —
+`unconfirmed` still holds the id, no snapshot left to spend a second time. The guard now bails
+only when **neither** `snapshots` nor `unconfirmed` holds the id, and clears whichever it finds.
+
+**`pruneByIds`'s Set overload gains an id-keyed `keep` predicate** (`engine/rows.ts`) — it had
+none; the Set branch silently ignored a third argument if one were passed. `onRowsRemoved`
+(ADR-0006) now prunes `unconfirmed` with the same exemption `snapshots` already has: an id whose
+surviving restore point is `op: 'delete'` (i.e. `removeEdit` deliberately took it out of `data`)
+keeps its `unconfirmed` membership too, so a subsequent `revertEdit` reinserts a row that still
+correctly demands a retry POST. Verified by a new integration test (`with-row-edit.spec.ts` and
+`optimistic-mutations.spec.ts`): create → `removeEdit` → flush the ADR-0006 effect → `unconfirmed`
+and `pending` both survive → `revertEdit` → row is back in `data`, still `unconfirmed`, no longer
+`pending`.
+
+**Every full-state-literal return in `optimistic-mutations.ts` and `row-edit-mutations.ts` now
+spreads `...state`** (`revertEdit`, `discardEdit`, `removeEdit`, `beginEdit`'s two non-insert
+branches) instead of naming `{ snapshots, open }` by hand — the previous 2-field shape happened to
+be exhaustive; a 3rd field made the omission a real bug (silently dropping `unconfirmed` on every
+one of those returns) rather than a style choice. `closeAll` and `closeAllButLast`
+(`with-row-edit.ts`) get the same fix; neither touches `unconfirmed` per the table above, so both
+pass it through unchanged.
+
+**Consequences:**
+- Additive, non-breaking: `pending`'s shape and behavior are unchanged; `EditingState` gains a
+  required field, but it is constructed only inside `editing-state.ts`, `table.mock.ts`, and test
+  `state()` helpers — all updated in this commit, so nothing outside the library can observe the
+  widening as a break.
+- `OptimisticMembers<TRow>` (and therefore `RowEditMembers<TRow>`, which extends it) gains
+  `pendingOps` and `unconfirmed`. Both features declare them from the same `createEditingStore()`
+  call, so R2 (`1-proposal.md`) — the two features' member sets silently diverging — cannot occur
+  without editing this one factory.
+- Sets up step 5 (`1-proposal.md`): `pendingCreateIds`, hand-rolled in 6 stories, is now
+  redundant — every read it answers (`table.unconfirmed().has(id)`) is a library fact.
+
+## D51, D52, D55–D57
 
 Reserved; see the table above. Each is written when its step lands.
 
