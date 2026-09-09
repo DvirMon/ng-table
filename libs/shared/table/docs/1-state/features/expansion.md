@@ -245,19 +245,37 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
 
 - [x] Should `rowExpanded` fire separately for expand vs. collapse, or is a single event with inspectable state sufficient? Resolved — single `rowExpanded` event, direction inferable from `expandedRows` after the change. Shipped as specced.
 - [x] Do `expandAll()`/`collapseAll()` emit `rowExpanded`? Resolved 2026-09-06 — yes, once per affected id; no separate bulk event. The bulk verbs previously mutated `expandedRows` silently, which contradicted this doc and broke the lazy-load-on-expand use in PRD #29. Cross-library comparison, and why the AG Grid–style separate bulk event was not chosen (yet): [expansion-state-audit.md](../work/with-expansion/expansion-state-audit.md).
-- [ ] **Stale restored ids.** `initialExpanded` (and a snapshot `write()`) can carry ids whose
+- [x] **Stale restored ids.** `initialExpanded` (and a snapshot `write()`) can carry ids whose
   rows are absent from `data` — deleted server-side since the state was saved. ADR-0006's prune
   runs on *removal*, and these ids never arrive to be removed, so they sit in `expandedRows`
-  indefinitely. Note the Set is already designed to hold ids absent from `data` (synthetic
-  `group:*` ids are never real rows), so this is staleness, not corruption. Undecided: drop
-  unknown ids at apply time (safe, but breaks rows that arrive later via async data) or keep
-  them (consistent with today's design). Same question for the snapshot slice — decide once.
+  indefinitely. **Resolved 2026-09-08 — keep them; staleness is caller-owned.** This adopts
+  selection's [D8](../work/with-selection/2-decisions.md) verbatim, so both id-set features
+  answer it the same way: neither set carries a data-backed invariant, and an id matching no row
+  renders nothing.
 
-  Worse than restore alone, per `work/with-selection/2-decisions.md`: `indexById` is built from
+  Dropping unknown ids at apply time was rejected on one case that no amount of care fixes:
+  **an id can be valid but not yet loaded.** Restore runs before the first fetch resolves, or the
+  row lives on a page not yet requested. Nothing is stale, there is nothing to validate against,
+  and filtering the seed would silently discard a correct restore. That case is indistinguishable
+  at apply time from a genuinely dead id.
+
+  While persistence is consumer-owned — `initialExpanded` fed from localStorage, a route param,
+  a server profile — keeping saved ids in step with the server is the call site's job, and the
+  call site is the only place with both the saved ids and the fetched rows. Revisit when
+  [state-persistence.md](../state-persistence.md) is actually built, since `restore()` is
+  library-owned and moves that obligation inward; that spec is deliberately sequenced last, and
+  its own rules already require stale-id validation for columns/sort/filters, so this feature
+  should inherit whatever it decides rather than pre-empt it.
+
+  The set is already designed to hold ids absent from `data` — synthetic `group:*` ids are never
+  real rows — so this is staleness, not corruption. And per
+  `work/with-selection/2-decisions.md`, it is not restore-specific: `indexById` is built from
   `config.data().forEach(...)` (`engine/core.ts`), so it holds **top-level rows only**. ADR-0006
-  can therefore never announce removal of a nested id — and `toggleExpanded(childId)` puts nested
-  ids in `expandedRows` during ordinary use, no restore involved. So the prune gap is already live
-  today, not something restore introduces.
+  can therefore never announce removal of a nested id, and `toggleExpanded(childId)` puts nested
+  ids in `expandedRows` during ordinary use, no restore involved. The prune gap is live today;
+  restore does not introduce it, and rejecting stale ids at the seed would not close it.
+
+  Applies to the snapshot slice on the same terms — one answer for both, as the question asked.
 - [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initialExpanded`?
 - [ ] **Does `expansionState` land here or in `withTree()`?** The member is justified (see
   [above](#expansionstate--proposed-not-implemented)); only its timing is open, because ADR-0012

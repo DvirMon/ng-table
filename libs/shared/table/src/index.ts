@@ -16,6 +16,13 @@ export { withRowEdit } from './api/features/with-row-edit';
 export type { WithRowEditConfig, RowEditMembers } from './api/features/with-row-edit';
 export { withOptimistic } from './api/features/with-optimistic';
 export type { OptimisticMembers } from './api/features/with-optimistic';
+export { withSelection } from './api/features/with-selection';
+export type {
+  WithSelectionConfig,
+  SelectionChange,
+  SelectionWriteOptions,
+  SelectionMembers,
+} from './api/features/with-selection';
 export type {
   EditingState,
   EditingUpdater,

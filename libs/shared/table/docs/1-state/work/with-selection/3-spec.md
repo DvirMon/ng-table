@@ -195,6 +195,20 @@ interface SelectionMembers {
 - **Unknown ids are still selectable (D8).** A write never checks whether an id is data-backed; the
   predicate defaults to permissive when no row resolves. A checkbox must respond to a click. The set
   is a pure id set with no data-backed invariant.
+
+  This also covers the restore path (D8, extended 2026-09-08 — the same call now settles the
+  matching question in [expansion.md](../../features/expansion.md)). `initialSelection` and any
+  future snapshot write keep ids that match no row, because **a valid id may simply not be loaded
+  yet** — construction can precede the first fetch, and under pagination a selected row may live
+  on a page never requested. Validating the seed against `indexById()` would silently discard a
+  correct restore, and at apply time an unloaded id is indistinguishable from a deleted one.
+  `onRowsRemoved` never prunes such an id, since it only announces ids that left `data()`.
+
+  Keeping saved ids in step with the server is therefore the call site's job — it holds both the
+  saved ids and the fetched rows, which the feature does not. Revisit if
+  [state-persistence.md](../../state-persistence.md) takes selection into its scope, as `restore()`
+  is library-owned; D19 keeps it out for now. Residual harm, accepted: `[...selectedRows()]` passed
+  straight into a bulk request can carry an id the server no longer has.
 - **Selection is read from a signal, never stamped onto rows (D5).** No feature-contributed render
   row field, no render stage claimed. Deliberately different from expansion, which stamps its state
   because it changes *which rows exist*; selection does not.

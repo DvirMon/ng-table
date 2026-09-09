@@ -103,6 +103,25 @@ _(appended as they settle)_
   so a synthetic or stale id entering the set is never pruned by it. Accepted — with D5 (no
   `RenderRow` stamp) an unmatched id renders nothing, so it is inert rather than corrupting.
 
+  **Extended 2026-09-08, deciding the same question for expansion**
+  ([expansion.md](../../features/expansion.md), "Stale restored ids"). The rationale above is
+  written for a *click*; it is the restore path that makes rejecting unknown ids actively wrong,
+  and that argument belongs on this decision because both features now cite it:
+
+  - **An id can be valid but not yet loaded.** `initialSelection` is applied at construction,
+    which may precede the first fetch, and under pagination a selected row may live on a page
+    never requested. Validating the seed against `indexById()` would silently discard a correct
+    restore, and at apply time that case is indistinguishable from a genuinely dead id.
+  - **Staleness is caller-owned while persistence is.** Keeping saved ids in step with the server
+    is the call site's job — it is the only place holding both the saved ids and the fetched
+    rows. This is worth revisiting once [state-persistence.md](../../state-persistence.md) ships,
+    because `restore()` is library-owned and moves the obligation inward. D19 already keeps
+    selection out of that spec's scope for now, so nothing here changes yet.
+
+  The residual harm is one shape: `[...selectedRows()]` passed straight into a bulk request can
+  carry an id the server no longer has. Left with the caller deliberately — the library cannot
+  know which ids a given backend considers live without the fetch the caller already owns.
+
 ## Open questions
 
 - **Group-header select-all.** A checkbox on a `withGrouping()` group header should plausibly mean
