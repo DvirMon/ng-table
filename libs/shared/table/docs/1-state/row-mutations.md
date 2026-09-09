@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — Row Mutations
 type: architecture
-version: 1.0
-date: 2026-08-25
+version: 1.1
+date: 2026-09-09
 status: shipped — issue #47; `moveRow` and selection-gated bulk (`removeRow`/`patchRow`) deferred
   (D19/D32). `insertRow`/`createRow` widened arity (bulk-add) shipped 2026-09-05.
 audience: developers
@@ -193,7 +193,7 @@ actually lives — resolved there as D24/D25.
 |---|---|---|
 | `moveRow(id, to)` | no v1 caller — sorting owns order, `withDragDrop()` is unshipped | no |
 | `batch(...updaters)` | no v1 flow batches two row writes | yes — D32 |
-| bulk `removeRow(id[])` / `patchRow(id[], partial)` | needs a selection source; `withSelection()` does not exist | yes — D32 |
+| bulk `removeRow(id[])` / `patchRow(id[], partial)` | unblocked by `withSelection()` (shipped), not yet built | yes — D32 |
 
 **Bulk is widened arity plus `batch()`; "bulk" never enters the API** (D32). It is a product
 word for the UI affordance, not an API word. Plural verbs (`removeRows`) were rejected — the
@@ -204,7 +204,7 @@ answering the bulk-add question: a consumer opens N new rows in one call
 (`createRow([{ id, row }, …], { at })`, `mutations/row-edit-mutations.ts`) instead of looping N
 single-row `createRow` calls, and it resolves in one `data` write / one `{ snapshots, open }`
 transition, not N. `removeRow`/`patchRow` stay unshipped — they're the bulk-*edit*/bulk-*delete*
-half, still blocked on `withSelection()` as tabled above.
+half, unblocked by `withSelection()` (shipped) but not yet built, as tabled above.
 
 `batch()` earns its place beyond tidiness: one `data` emission means one pipeline run, one
 `indexById` rebuild, and one undo step, instead of N of each.

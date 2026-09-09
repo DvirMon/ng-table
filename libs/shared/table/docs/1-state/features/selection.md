@@ -1,30 +1,154 @@
 ---
 title: State Layer Reference — withSelection()
 type: architecture
-version: 0.1
-date: 2026-07-19
+version: 1.0
+date: 2026-09-09
 capability: selection
-spec: stub
-code: none
+spec: drilled
+code: shipped
 audience: developers
 parent: ../architecture.md
 ---
 
 # withSelection()
 
-Known from `overview.md`:
-- Single public feature, with internal `withSingleSelection` / `withMultiSelection` composition (implementation detail, not exposed to consumers).
-- State shape sketch: `{ selection: Record<id, boolean>, mode: 'single' | 'multi' }`.
-- Owns the `selectionChanged` event.
+## Executive Summary
 
-**Flagged cross-cutting question raised in a prior session (not yet resolved):**
-Does "select all" mean all rows *currently visible* (post-filter, current page) or *all rows in the entire dataset* (including other pages / unfetched server rows)? This affects whether `withSelection()` needs a runtime or compile-time dependency on `withPagination()` / `withFiltering()`.
+Owns a set of selected row ids, the verbs that change it, and a delta stream announcing what
+changed. Refuses the "select all" scope ambiguity rather than resolving it: every write names
+the ids it applies to, so there is no runtime or compile-time dependency on `withPagination()` /
+`withFiltering()`. Single-select is a rule on the write verbs (`enableMultiRowSelection`,
+per-row or table-wide), never stored mode state. Standalone — no dependency on any other
+feature.
 
-To be drilled in a future session: full state shape, methods, `manual` contract (if applicable — selection may not need one, TBD), compile-time dependencies, open questions.
+Full decision record: [`work/with-selection/2-decisions.md`](../work/with-selection/2-decisions.md)
+(D1–D19). Spec: [`work/with-selection/3-spec.md`](../work/with-selection/3-spec.md).
+
+## State Shape
+
+```ts
+interface WithSelectionConfig<TRow> {
+  enableMultiRowSelection?: boolean | ((row: TRow) => boolean);   // default true
+  initialSelection?: RowId[];
+}
+
+interface SelectionChange {
+  readonly added: readonly RowId[];
+  readonly removed: readonly RowId[];
+}
+
+interface SelectionWriteOptions {
+  emitEvent?: boolean;                                            // default true
+}
+```
+
+Selection is a flat `Set<RowId>`, closure-local to the feature — no `mode: 'single' | 'multi'`
+union, no children accessor, no cascade (D13). Not stamped onto `RenderRow` and no render stage
+claimed (D5): a consumer reads `selectedRows().has(row.id)` directly.
+
+## Methods
+
+```ts
+interface SelectionMembers {
+  readonly selectedRows: Signal<ReadonlySet<RowId>>;
+  readonly selectionChanged: Observable<SelectionChange>;
+  toggle(id: RowId, opts?: SelectionWriteOptions): void;
+  select(ids: RowId[], opts?: SelectionWriteOptions): void;
+  deselect(ids: RowId[], opts?: SelectionWriteOptions): void;
+  clearSelection(opts?: SelectionWriteOptions): void;
+  selectionStateOf(ids: readonly RowId[]): 'none' | 'some' | 'all';
+}
+```
+
+| Method | Description |
+|---|---|
+| `toggle(id, opts?)` | Adds `id` if absent, removes it if present. Subject to the multi-select rule (see below) when adding. |
+| `select(ids, opts?)` | Bulk add in one write; duplicate ids collapse (D15). |
+| `deselect(ids, opts?)` | Bulk remove in one write; never subject to the multi-select rule — removal can't violate single-select. |
+| `clearSelection(opts?)` | Empties the set. |
+| `selectionStateOf(ids)` | `'none' \| 'some' \| 'all'` for exactly the given id set (D7) — the caller supplies the denominator; unaffected by selection state on ids outside it. |
+
+Every write verb never checks whether an id is data-backed — an unknown id still
+toggles/selects, and the multi-select predicate defaults permissive when no row resolves (D8).
+
+## `enableMultiRowSelection` Contract
+
+```ts
+withSelection({ enableMultiRowSelection: false })                       // table-wide single-select
+withSelection({ enableMultiRowSelection: (row) => row.status !== 'draft' }) // per-row exception
+```
+
+Not stored mode state (D2) — resolved per row, inside each write verb, against the row(s)
+involved. The rule is checked against the **whole resulting candidate set** for a write
+(previously-selected ids plus newly requested ids), not just the id named in that call (D14):
+if any id in that set forbids co-selection, the write keeps only the last requested id,
+discarding the rest.
+
+- Under `ngDevMode`, this discard **throws**, naming the discarded ids.
+- In production builds, it truncates silently — `select(ids)` is frequently fed by runtime data
+  (a restored selection, a server response) rather than authored literals, so a hard throw would
+  turn a data mismatch into a crash on a startup or response path.
+
+`initialSelection` is written directly into `selectedRows` at construction — never routed
+through `select()`, which emits (D16) — but is still subject to this same truncation rule.
+
+## Compile-Time Dependencies
+
+None. Standalone — reads only `rows` (for the multi-select predicate's row lookup) and
+`trackBy` off the core store (D13, D42).
+
+## Events Owned
+
+- `selectionChanged: Observable<SelectionChange>` — a delta (`added`/`removed`), current state
+  read from `selectedRows()`, never carried in the payload (D9). Exactly one emission per write
+  verb; a no-op write (nothing actually changed) emits nothing; duplicate ids within a call
+  collapse (D15). Backed by a plain, non-replaying `Subject` — never `ReplaySubject`/
+  `BehaviorSubject` (D16), so a late subscriber never receives construction/seed state.
+- `emitEvent: false` on any write verb suppresses that write's emission without skipping the
+  state change (D18) — used for async/programmatic restores.
+- Reconciliation (`onRowsRemoved`, ADR-0006) prunes `selectedRows` with no exemption when a
+  selected row leaves `data()`, but the pruning itself emits nothing on `selectionChanged` (D11)
+  — it carries no user intent, so it isn't a write verb.
+- The stream completes in the feature's `onDestroy` hook (D17).
+
+## Not Shipped
+
+| Deferred | Reason | Shape already settled |
+|---|---|---|
+| Bulk `removeRow(id[])` / `patchRow(id[], partial)` | This effort ships `withSelection()` alone; bulk *edit* needs D31.2 resolved first | yes — D12 |
+| Selection checkbox directive + header directive (UI layer) | Tracked separately, now unblocked | no |
+| Auto-wiring component checkbox hosts (Angular Material, a consumer's own DS wrapper) | An attribute directive's host bindings can't reach a sibling component's inputs — Angular's own bridging mechanism is private API (D6) | deferred, documented recipe instead |
+| Persistence of selection | `withSelection()` will declare a snapshot slice once cross-feature persistence ships; its `write()` will use the `emitEvent: false` silent path (D18/D19) | yes — D19 |
+| Group-header select-all, parent/child cascade | `withGrouping()` doesn't exist yet; data is flat by invariant (D13) | no |
+| A cause discriminator (`'checkboxSelected' | 'apiSelectAll' | …`) on `SelectionChange` | Recorded from AG Grid's `source` idea, not adopted (D10) | no |
+| Disabled / non-selectable rows | `enableMultiRowSelection` only restricts co-selection, not selectability — every write verb always responds (D8). Unresearched gap, not a rejected design | no — tracked in #57 |
+
+## Open Questions
+
+- [ ] **Group-header select-all.** A checkbox on a `withGrouping()` group header should
+      plausibly mean "select every row in this group." D8 makes the synthetic group id
+      *selectable*, but selecting the header id is not the same as selecting its members.
+      Undecided whether this is library API or consumer code. Not blocking — `withGrouping()`
+      is unbuilt.
+- [ ] **`withPagination()` / `withInfiniteScroll()` mutual exclusivity** — unrelated to
+      selection directly, but selection's scope-free design assumes rows are addressable by id
+      regardless of which is composed; revisit if that assumption changes.
+
+---
 
 ## Competitive position
 
-**Verdict: missing** — the single biggest baseline gap: all four competitors ship row selection in core, and it is the audit's #1-ranked developer pain point; decide selection scope (page / filtered / all) deliberately on day one, because nobody else has done it cleanly — a chance to lead rather than inherit the ambiguity.
+**Verdict: ahead on the emission contract, on par on the state model.** `selectionChanged`'s
+`{ added, removed }` delta matches Angular CDK's `SelectionModel` — the only one of five
+researched libraries whose sole responsibility is selection state (no rendering) and the only
+one shipping a delta at all. PrimeNG approximates it with two events (`onRowSelect`/
+`onRowUnselect`, which can't describe a single-select replace in one emission); AG Grid and
+TanStack Table ship no delta. On "select all" scope, `withSelection()` refuses the scope
+concept entirely (D1) where AG Grid and Material React Table leak the ambiguity into a `source`
+enum / `forceAll` flag after the fact — this was the audit's #1-ranked gap and is now resolved,
+not just narrowed.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Assessed 2026-09-05/06 against Angular CDK, TanStack Table v8, AG Grid, Material React Table,
+and PrimeNG. Full reasoning:
+[research-selection-change-events.md](../work/with-selection/research-selection-change-events.md),
+[gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

@@ -19,13 +19,13 @@
 | `core` | — | — | drilled | partial | [ui](3-ui/directives/core.md) |
 | `drag-drop` | stub | none | stub | none | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
 | `expansion` | drilled | partial | drilled | none | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
-| `filtering` | drafted | none | — | — | [state](1-state/features/filtering.md) |
+| `filtering` | drafted | partial | — | — | [state](1-state/features/filtering.md) |
 | `grouping` | drafted | none | stub | none | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) |
 | `infinite-scroll` | stub | none | — | — | [state](1-state/features/infinite-scroll.md) |
 | `pagination` | stub | none | — | — | [state](1-state/features/pagination.md) |
 | `row-animation` | — | — | drilled | shipped | [ui](3-ui/directives/row-animation.md) |
 | `row-editing` | drilled | shipped | — | — | [state](1-state/features/row-editing.md) |
-| `selection` | stub | none | stub | none | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) |
+| `selection` | drilled | shipped | stub | none | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) |
 | `sorting` | drilled | shipped | drafted | none | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) |
 | `state-persistence` | drafted | none | — | — | [state](1-state/state-persistence.md) |
 | `virtual-scroll` | drafted | none | — | — | [state](1-state/features/virtual-scroll.md) |

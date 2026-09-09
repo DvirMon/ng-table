@@ -1,9 +1,9 @@
 ---
 title: Architecture — State Layer Feature Specs
 type: architecture
-version: 0.2
-date: 2026-07-19
-status: draft — partial (4 of 8 features drilled)
+version: 0.3
+date: 2026-09-09
+status: draft — partial (5 of 8 features drilled)
 audience: developers
 ---
 
@@ -13,7 +13,7 @@ audience: developers
 
 This document indexes the feature-by-feature design of the NGP Table state layer (`createTable()`), continuing from the top-level decisions locked in `overview.md`. Each feature has its own reference file with full detail: state shape, methods, events, `manual` contract, compile-time dependencies, and open questions. **This is an architecture/spec document, not an implementation** — it defines the contract a developer builds against, not the working `signalStoreFeature()` code itself.
 
-**Status: 4 of 8 state layer features fully drilled**, plus the core `columns` config. The remaining 4 features are present as stub files awaiting a future drilling session.
+**Status: 5 of 8 state layer features fully drilled**, plus the core `columns` config. The remaining 3 features are present as stub files awaiting a future drilling session.
 
 ---
 
@@ -92,12 +92,12 @@ that general mechanisms can be layered on them.
 | `withGrouping()` | [with-grouping.md](1-state/features/grouping.md) | Single-level, per-column `aggregateFn`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
 | `withExpansion()` | [with-expansion.md](1-state/features/expansion.md) | Multi-expand, hierarchical/tree-capable, standalone (no dependencies) |
 | `withFiltering()` | [with-filtering.md](1-state/features/filtering.md) | Per-column + global filter, AND combine logic, per-column opt-out |
+| `withSelection()` | [with-selection.md](1-state/features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
 
 ## Features — Not Yet Drilled
 
 | Feature | Reference | Known from Overview |
 |---|---|---|
-| `withSelection()` | [with-selection.md](1-state/features/selection.md) | Single public API, internal single/multi composition |
 | `withPagination()` | [with-pagination.md](1-state/features/pagination.md) | `{ pageIndex, pageSize, totalRows }` |
 | `withInfiniteScroll()` | [with-infinite-scroll.md](1-state/features/infinite-scroll.md) | `{ hasMore, isLoading }` |
 | `withDragDrop()` | [with-drag-drop.md](1-state/features/drag-drop.md) | `{ dragState }` |
