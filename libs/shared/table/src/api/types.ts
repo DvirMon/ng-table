@@ -19,6 +19,11 @@ export interface SortRule {
   direction: SortDirection;
 }
 
+export interface FilterRule {
+  columnId: string;
+  value: unknown;
+}
+
 export type TrackByFn<TRow> = (row: TRow) => RowId;
 
 export type TrackByConfig<TRow> = keyof TRow | TrackByFn<TRow>;

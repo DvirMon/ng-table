@@ -10,6 +10,7 @@ export * from './directives/ngp-table-row.directive';
 export * from './directives/ngp-table-header-cell.directive';
 export * from './directives/ngp-table-cell.directive';
 export * from './api/features/with-sorting';
+export * from './api/features/with-filtering';
 export { withExpansion } from './api/features/with-expansion';
 export type { WithExpansionConfig } from './api/features/with-expansion';
 export { withRowEdit } from './api/features/with-row-edit';
