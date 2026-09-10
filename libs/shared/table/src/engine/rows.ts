@@ -83,10 +83,10 @@ export function pruneByIds<V>(
   removedIds: readonly RowId[],
   keep?: (value: V) => boolean
 ): ReadonlyMap<RowId, V>;
-export function pruneByIds(
+export function pruneByIds<V extends RowId = RowId>(
   container: ReadonlySet<RowId>,
   removedIds: readonly RowId[],
-  keep?: (id: RowId) => boolean
+  keep?: (id: V) => boolean
 ): ReadonlySet<RowId>;
 export function pruneByIds(
   container: ReadonlyMap<RowId, unknown> | ReadonlySet<RowId>,

@@ -461,7 +461,7 @@ describe('withSorting', () => {
     it('throws at resolve time when applySortNulls is registered twice on one column', () => {
       expect(() =>
         TestBed.runInInjectionContext(() =>
-          createTable<NullableRow>(signal<NullableRow[]>([]), () => ({
+          createTable(signal<NullableRow[]>([]), () => ({
             trackBy: 'id',
             columns: makeNullableColumns(),
             columnsSchema: (path) => {

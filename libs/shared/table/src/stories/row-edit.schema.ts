@@ -13,14 +13,14 @@ const columns: ColumnDefInput<EditRow>[] = [{ id: 'name' }, { id: 'dept' }];
 // — a real create/edit/delete round trip now needs somewhere to hold a restore point and,
 // on create, somewhere for `swapRowId` to re-key.
 export const liveTableSchema = createTableSchema(columns, {
-  features: [withSorting<EditRow>(), withOptimistic<EditRow>()],
+  features: [withSorting(), withOptimistic()],
 });
 
 // S6 — always editable *and* rollback-capable (D39). No `withRowEdit()`: the edit session is
 // delimited by focus, so nothing ever opens. `withOptimistic()` alone supplies the restore
 // points, and `pending()` is exactly the set of in-flight saves.
 export const liveOptimisticSchema = createTableSchema(columns, {
-  features: [withOptimistic<EditRow>()],
+  features: [withOptimistic()],
 });
 
 // S2/S4/S5 — the gated table. `config.multiple` may be a signal/accessor (`withRowEdit()`

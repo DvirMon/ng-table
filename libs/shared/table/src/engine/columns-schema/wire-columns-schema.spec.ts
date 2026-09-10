@@ -375,7 +375,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   it('throws synchronously at store construction for an unknown columnId', () => {
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable<Row>(signal<Row[]>([]), () => ({
+        createTable(signal<Row[]>([]), () => ({
           trackBy: 'id',
           columns: makeColumns(),
           columnsSchema: (path) => {
@@ -453,7 +453,7 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
 
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable<Row>(signal<Row[]>([]), () => ({
+        createTable(signal<Row[]>([]), () => ({
           trackBy: 'id',
           columns: makeColumns(),
           columnsSchema: (path) => {

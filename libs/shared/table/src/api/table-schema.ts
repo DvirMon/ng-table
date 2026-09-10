@@ -1,14 +1,10 @@
+import type { TableFeature } from '../engine/types';
 import type { ColumnSchema, ColumnsSchemaFn } from '../schema/column-schema.types';
-import type {
-  AnyTableFeature,
-  ColumnDefInput,
-  TableStoreConfig,
-  TrackByConfig,
-} from './types';
+import type { ColumnDefInput, TableStoreConfig, TrackByConfig } from './types';
 
 export const createTableSchema = <
   TRow,
-  Features extends readonly AnyTableFeature[] = []
+  Features extends readonly TableFeature<NoInfer<TRow>, any>[]
 >(
   columns: ColumnDefInput<TRow>[],
   schema?: {

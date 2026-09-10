@@ -55,7 +55,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     expect(store.expandedRows().has('r1')).toBe(false);
@@ -71,7 +71,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     store.toggleExpanded('r1');
@@ -85,7 +85,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     store.expandAll();
@@ -102,7 +102,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     store.expandAll();
@@ -116,7 +116,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     const emitted: RowId[] = [];
@@ -132,7 +132,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     const emitted: RowId[] = [];
@@ -150,7 +150,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     let completed = false;
@@ -166,7 +166,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     const emitted: RowId[] = [];
@@ -188,7 +188,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     store.expandAll();
@@ -207,7 +207,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     const ids = store.renderRows().map((row) => row.id);
@@ -218,7 +218,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     store.toggleExpanded('r1');
@@ -236,7 +236,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     // Only r1 expanded — grandchild g1 (under c1) must not appear yet.
@@ -256,7 +256,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     store.toggleExpanded('r1');
@@ -297,7 +297,7 @@ describe('withExpansion', () => {
         trackBy: 'id',
         columns,
         features: [
-          withExpansion<CustomChildrenRow>({
+          withExpansion({
             childrenAccessor: (row) => row.nested,
           }),
         ],
@@ -320,7 +320,7 @@ describe('withExpansion', () => {
       createTable(data, () => ({
         trackBy: 'id',
         columns: makeColumns(),
-        features: [withExpansion<Row>()],
+        features: [withExpansion()],
       }))
     );
 
@@ -339,7 +339,7 @@ describe('withExpansion', () => {
     const store = makeStore(() => ({
       trackBy: 'id',
       columns: makeColumns(),
-      features: [withExpansion<Row>()],
+      features: [withExpansion()],
     }), makeRows());
 
     expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r2']);

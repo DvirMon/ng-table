@@ -104,7 +104,7 @@ describe('createTable', () => {
         () => ({
           trackBy: 'id',
           columns: makeColumns(),
-          features: [withSorting<Row>()],
+          features: [withSorting()],
         })
       )
     );

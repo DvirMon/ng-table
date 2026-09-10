@@ -108,7 +108,7 @@ export type AnyTableFeature = TableFeature<any, any>;
 
 export interface TableStoreConfig<
   TRow,
-  Features extends readonly AnyTableFeature[] = []
+  Features extends readonly TableFeature<NoInfer<TRow>, any>[] = []
 > {
   trackBy: TrackByConfig<TRow>;
   columns: ColumnDefInput<TRow>[];

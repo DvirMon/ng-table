@@ -4,8 +4,8 @@ import {
   resolveColumnsConfig,
   wireColumnsSchemaAsync,
 } from '../engine/columns-schema';
+import type { TableFeature } from '../engine/types';
 import type {
-  AnyTableFeature,
   ComposedFeatureMembers,
   TableDataInput,
   TableStore,
@@ -40,7 +40,7 @@ import type {
  */
 export function createTable<
   TRow,
-  const Features extends readonly AnyTableFeature[] = []
+  const Features extends readonly TableFeature<NoInfer<TRow>, any>[]
 >(
   data: TableDataInput<TRow>,
   optsFn: () => TableStoreConfig<TRow, Features>,
