@@ -122,6 +122,47 @@ _(appended as they settle)_
   carry an id the server no longer has. Left with the caller deliberately — the library cannot
   know which ids a given backend considers live without the fetch the caller already owns.
 
+- **D58 (2026-09-09) — row selectability ships as `enableRowSelection`, a write-path gate.**
+  Answers Q1 of [#57](https://github.com/DvirMon/acme/issues/57); research at
+  [research-row-selectability.md](research-row-selectability.md).
+
+  ```ts
+  export interface WithSelectionConfig<TRow> {
+    /** Whether a row may be selected at all. Default: `true`. */
+    enableRowSelection?: boolean | ((row: TRow) => boolean);
+    enableMultiRowSelection?: boolean | ((row: TRow) => boolean);
+    initialSelection?: RowId[];
+  }
+  ```
+
+  Same shape as `enableMultiRowSelection`, applied the same way — a rule on the write verbs, never
+  stored state — and permissive when the id resolves to no row, so **D8 is untouched for
+  unresolvable ids**. The two rules are not the same question: D8 governs ids with no row behind
+  them; `enableRowSelection` governs rows that resolve and answer `false`.
+
+  Scope, all three halves settled by unanimous precedent (research §2–§4):
+
+  - **Gates id-adding writes only** — `toggle`, `select`, and the `initialSelection` seed. Never
+    `deselect`/`clearSelection`, so a row that becomes non-selectable while selected stays
+    escapable. Mirrors how `applyMultiSelectRule` is already scoped.
+  - **Write path, not read path.** `selectedRows()` and `selectionStateOf()` do not consult the
+    predicate — selection stays a plain id set.
+  - **No reconcile.** A row turning non-selectable while selected is *not* auto-deselected. AG Grid
+    is the only library that reconciles, and it needs a `SelectionEventSourceType` on its event to
+    explain the library-caused change; our `SelectionChange` delta has no `source` field, and
+    pruning ids the user never deselected is what D8 refuses.
+
+  Rejected: leaving it to the consumer (a `disabled` checkbox in their own markup). The write
+  surface is two verbs plus the seed, and only the click path runs through consumer markup —
+  `select(ids)` and the D1 header directive (`[ngpTableSelectAllFor]`) take id arrays assembled at
+  the call site, so the consumer would have to re-filter at every call site and keep that filter in
+  step with the checkbox's own `disabled` expression. Two hand-maintained copies of one fact.
+
+  Consequence for the UI layer: `ngpTableSelectionCheckbox` binds `[disabled]` from this predicate
+  rather than the consumer wiring it separately, and renders the control disabled rather than
+  hiding it (`aria-disabled`, still focusable — CDK listbox's baseline, research §6). Belongs in
+  [`3-ui/directives/selection.md`](../../../3-ui/directives/selection.md) when that file is drilled.
+
 ## Open questions
 
 - **Group-header select-all.** A checkbox on a `withGrouping()` group header should plausibly mean
@@ -130,6 +171,19 @@ _(appended as they settle)_
   that expands a group id to its member ids) or consumer code (`select(groupRows.map(r => r.id))`).
   Not blocking `withSelection()` — `withGrouping()` is unbuilt. Must be represented in the product
   use-cases / story set either way.
+- **Non-selectable rows — residual questions after D58**
+  ([#57](https://github.com/DvirMon/acme/issues/57), research at
+  [research-row-selectability.md](research-row-selectability.md)). D58 settles *whether* the gate
+  ships and its write-path scope. Still open, each answerable in isolation:
+  - Does `selectionStateOf(ids)` exclude non-selectable ids from its denominator? Under D1 the
+    caller supplies the id set and could pre-filter. No library precedent transfers — nobody else
+    pushed the denominator to the caller.
+  - Does a blocked write need to be distinguishable from a no-op? Today a blocked `toggle` changes
+    nothing, so it emits no `selectionChanged`. Note the asymmetry with `applyMultiSelectRule`,
+    which *throws* in dev mode on violation — an unresolved inconsistency, not a decision.
+  - Is `withExpansion()` the same question? It cites D8 for stale restored ids
+    ([expansion.md](../../features/expansion.md)); if "non-expandable row" lands, the two shapes
+    should not diverge.
 - **D9 (2026-09-06) — `selectionChanged: Observable<SelectionChange>`, CDK-shaped, delta payload.**
 
   ```ts

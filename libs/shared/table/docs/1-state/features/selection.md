@@ -1,11 +1,11 @@
 ---
 title: State Layer Reference — withSelection()
 type: architecture
-version: 1.0
+version: 1.1
 date: 2026-09-09
 capability: selection
 spec: drilled
-code: shipped
+code: partial
 audience: developers
 parent: ../architecture.md
 ---
@@ -22,7 +22,13 @@ per-row or table-wide), never stored mode state. Standalone — no dependency on
 feature.
 
 Full decision record: [`work/with-selection/2-decisions.md`](../work/with-selection/2-decisions.md)
-(D1–D19). Spec: [`work/with-selection/3-spec.md`](../work/with-selection/3-spec.md).
+(D1–D19, D58). Spec: [`work/with-selection/3-spec.md`](../work/with-selection/3-spec.md).
+
+> **D58 (2026-09-09) not yet implemented.** `enableRowSelection` — a row-selectability gate on
+> `toggle`/`select`/`initialSelection` only, never `deselect`/`clearSelection`, never consulted
+> by `selectedRows()`/`selectionStateOf()` — is design-settled but absent from
+> `src/api/features/with-selection.ts`. See "Not Shipped" below and
+> [research-row-selectability.md](../work/with-selection/research-row-selectability.md).
 
 ## State Shape
 
@@ -121,7 +127,7 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 | Persistence of selection | `withSelection()` will declare a snapshot slice once cross-feature persistence ships; its `write()` will use the `emitEvent: false` silent path (D18/D19) | yes — D19 |
 | Group-header select-all, parent/child cascade | `withGrouping()` doesn't exist yet; data is flat by invariant (D13) | no |
 | A cause discriminator (`'checkboxSelected' | 'apiSelectAll' | …`) on `SelectionChange` | Recorded from AG Grid's `source` idea, not adopted (D10) | no |
-| Disabled / non-selectable rows | `enableMultiRowSelection` only restricts co-selection, not selectability — every write verb always responds (D8). Unresearched gap, not a rejected design | no — tracked in #57 |
+| Disabled / non-selectable rows | Settled as `enableRowSelection` (D58, resolves #57) — gates id-adding writes only, never a reconcile of already-selected rows. Not yet coded | yes — D58 |
 
 ## Open Questions
 
@@ -133,6 +139,12 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 - [ ] **`withPagination()` / `withInfiniteScroll()` mutual exclusivity** — unrelated to
       selection directly, but selection's scope-free design assumes rows are addressable by id
       regardless of which is composed; revisit if that assumption changes.
+- [ ] **Residual questions after D58** (each answerable in isolation, see
+      [2-decisions.md](../work/with-selection/2-decisions.md)): does `selectionStateOf(ids)`
+      exclude non-selectable ids from its denominator; does a blocked write need to be
+      distinguishable from a no-op (asymmetry with `applyMultiSelectRule`'s dev-mode throw); is
+      "non-expandable row" in `withExpansion()` the same question, and should the two shapes
+      converge.
 
 ---
 

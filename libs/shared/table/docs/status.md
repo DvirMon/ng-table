@@ -25,7 +25,7 @@
 | `pagination` | stub | none | — | — | [state](1-state/features/pagination.md) |
 | `row-animation` | — | — | drilled | shipped | [ui](3-ui/directives/row-animation.md) |
 | `row-editing` | drilled | shipped | — | — | [state](1-state/features/row-editing.md) |
-| `selection` | drilled | shipped | stub | none | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) |
+| `selection` | drilled | partial | stub | none | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) |
 | `sorting` | drilled | shipped | drafted | none | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) |
 | `state-persistence` | drafted | none | — | — | [state](1-state/state-persistence.md) |
 | `virtual-scroll` | drafted | none | — | — | [state](1-state/features/virtual-scroll.md) |
