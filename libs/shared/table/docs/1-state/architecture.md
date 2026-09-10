@@ -1,9 +1,9 @@
 ---
 title: Architecture — State Layer Feature Specs
 type: architecture
-version: 0.3
+version: 0.4
 date: 2026-09-09
-status: draft — partial (5 of 8 features drilled)
+status: draft — partial (4 of 8 features drilled, 1 superseded mid-grill)
 audience: developers
 ---
 
@@ -91,7 +91,7 @@ that general mechanisms can be layered on them.
 | `withSorting()` | [with-sorting.md](1-state/features/sorting.md) | Multi-column, three-state toggle, additive by click order |
 | `withGrouping()` | [with-grouping.md](1-state/features/grouping.md) | Single-level, per-column `aggregateFn`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
 | `withExpansion()` | [with-expansion.md](1-state/features/expansion.md) | Multi-expand, hierarchical/tree-capable, standalone (no dependencies) |
-| `withFiltering()` | [with-filtering.md](1-state/features/filtering.md) | Per-column + global filter, AND combine logic, per-column opt-out |
+| `withFiltering()` | [with-filtering.md](1-state/features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](1-state/work/with-filtering/design-options-hybrid-api.md) |
 | `withSelection()` | [with-selection.md](1-state/features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
 
 ## Features — Not Yet Drilled

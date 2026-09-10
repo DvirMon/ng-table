@@ -12,10 +12,30 @@ parent: ./architecture.md
 
 # State Persistence
 
+> **⚠️ The `filters` slice conflicts with the filtering redesign (2026-09-09).**
+> This spec puts `filters?: { columnFilters: FilterRule[]; globalFilter: string }` inside the
+> table's snapshot. The filtering design has since moved filter state **out of the table** into a
+> standalone `createFilters()` primitive (forced by server-side mode, where filters feed the
+> request that produces the data), and `FilterRule` / `globalFilter` no longer exist as shapes.
+> The table therefore cannot populate that slice.
+>
+> Two ways out, to be settled when this feature is designed: drop the slice and let the consumer
+> merge two objects, or make persistence a shared utility taking the table's snapshot and a
+> filters model as separate inputs. The second is the current preference — the four hard parts
+> (debounced writes, version stamp + migration, revive for non-JSON values, drift rules) are
+> identical for both, and solving them once gives one unified persistence DX.
+>
+> See [work/with-filtering/design-options-hybrid-api.md](./work/with-filtering/design-options-hybrid-api.md),
+> R10, R21 and R22.
+
 ## Executive Summary
 
 Save and restore a table's layout — sort, column order/visibility/width/pin, filters,
 pagination, grouping — as **one atomic, versioned, round-trippable object**.
+
+Filters are the exception to "a table's layout" as of the banner above: they now live outside the
+table in a standalone `createFilters()` object, so persisting them means taking a second input,
+not reading a table slice.
 
 **Not a `with-*()` feature** (same reasoning as [row-mutations.md](./row-mutations.md), D8,
 which is why this file is its sibling rather than living under `features/`). Persistence is
@@ -27,7 +47,8 @@ edit — see the mechanism proposed below.
 **Sequenced last, deliberately.** Priority #6 in
 [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md#priority-ranking-for-what-to-build-next):
 column sizing, pinning, filtering and pagination all have to exist before there is a layout
-worth persisting. Today the snapshot would contain sort rules and column order and nothing
+worth persisting. (Filtering now lands as a standalone primitive rather than a table feature —
+it still gates this work, but as a second persistence input rather than another table slice.) Today the snapshot would contain sort rules and column order and nothing
 else — and a shape fixed against that toy payload is a shape that needs migrating four
 times before it is ever useful. This spec exists now to *fix the contract each of those
 features writes toward*, not to be built now.
