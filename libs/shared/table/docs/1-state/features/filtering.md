@@ -1,10 +1,10 @@
 ---
 title: State Layer Reference — withFiltering()
 type: architecture
-version: 1.1
-date: 2026-09-09
+version: 2.0
+date: 2026-09-10
 capability: filtering
-spec: drafted
+spec: drilled
 code: partial
 audience: developers
 parent: ../architecture.md
@@ -12,96 +12,148 @@ parent: ../architecture.md
 
 # withFiltering()
 
-> **⚠️ Superseded design — do not implement from this file as-is (2026-09-09).**
-> Everything below describes an imperative, store-owned API (`setColumnFilter()` /
-> `setGlobalFilter()`). That design was walked back during the grill; the direction is now a
-> standalone `createFilters()` primitive. See
-> [work/with-filtering/design-options-hybrid-api.md](../work/with-filtering/design-options-hybrid-api.md)
-> (Option E) and [work/with-filtering/research-filter-state-ownership.md](../work/with-filtering/research-filter-state-ownership.md).
->
-> **Only D2 survives.** An earlier version of this banner claimed D1–D3 all still held
-> behaviorally; that was wrong. D1 (case-insensitive global match) and D3 (auto-detected default
-> predicate) describe the auto-scanning global filter and the missing-`filterFn` fallback — both
-> removed by the redesign, which lists search paths and predicates explicitly and requires every
-> filter to name its predicate. D2 (no built-in debounce) stands. See R12 and R25 in the design
-> doc.
->
-> `src/api/features/with-filtering.ts` + its spec exist on disk implementing this superseded
-> shape. Whether to keep, rewrite, or delete them is an open decision.
+> **⚠️ The shipped code does not match this spec (2026-09-10).**
+> `src/api/features/with-filtering.ts` — committed in `be39054`, exported from `src/index.ts:13`
+> — implements the superseded imperative shape (`setColumnFilter()` / `setGlobalFilter()` /
+> `clearFilters()`, store-owned `FilterRule[]`). This document describes what replaces it.
+> Removing the old surface is a **breaking public-API change** and is sequenced *after*
+> `createFilters()` lands, so filtering never regresses to nothing (R26).
 
 ## Executive Summary
 
-Supports both per-column filters and a single global/quick-search filter. Per-column matching uses a custom predicate function; global search defaults to string-contains across all column accessors. Multiple active filters combine with AND logic.
-
-## State Shape
+The client-side half of filtering, and **only** that half. It applies a
+[`createFilters()`](../filters.md) object to the rows in the pipeline's `filter` stage.
 
 ```ts
-interface FilterRule {
-  columnId: string;
-  value: unknown;
-}
+readonly filters = createFilters<Invoice>((path) => {
+  equals(path.status);
+  inRange(path.amount);
+});
 
-interface FilteringState {
-  columnFilters: FilterRule[];
-  globalFilter: string;
+readonly table = createTable(this.data, () => ({
+  trackBy: 'id',
+  columns: [...],
+  features: [withFiltering({ filters: this.filters })],
+}));
+```
+
+It owns no filter state. Criteria, predicates, keys, `value()`, `active()`, `reset()` and
+`dirty()` all belong to the filters object, which the consumer holds and which works with no
+table at all — see [filters.md](../filters.md) for the whole contract. This feature is the
+adapter that makes a table honour one.
+
+**In server mode this feature is not composed at all.** The filters feed the request that
+produces the data; the table renders rows that arrive already filtered (R10).
+
+## Config
+
+```ts
+interface WithFilteringConfig<TRow> {
+  filters: Filters<TRow>;
+  manual?: boolean;
 }
 ```
+
+`TRow` infers from the enclosing `createTable()` config — no per-call generic (`5a3a09d`).
+
+| Field | Purpose |
+|---|---|
+| `filters` | the object returned by `createFilters<TRow>()`. Required — the feature has nothing to do without one |
+| `manual` | skip the client-side filter stage; state still updates normally |
 
 ## Behavior
 
-- **Both per-column and global filtering are supported** simultaneously.
-- **Per-column match logic:** custom predicate per column — `filterFn(value, filterValue) => boolean`, TanStack-style, consistent with `sortFn`/`aggregateFn`.
-- **Global filter match logic:** default behavior is a case-insensitive string-contains match against every column's `accessor(row)` value, across all columns (D1). No custom `globalFilterFn` override was specified — default-only, not configurable.
-- **Debounce:** `withFiltering()` owns no debounce (D2). `setColumnFilter`/`setGlobalFilter` apply immediately on every call, consistent with other `with-*()` setters. Consumers debounce their own input handler (e.g. a search box) before calling the setter.
-- **Combining logic:** when multiple per-column filters are active at once, a row must pass **all** of them (AND). The global filter is applied as an additional condition alongside column filters (also AND'd — a row must satisfy every active column filter AND match the global filter).
-- **Per-column opt-out:** `enableFiltering: boolean` (default `true`) on the column def — `filterFn`/global matching skip a column when `enableFiltering: false`.
-- **Default column filter (no `filterFn`, D3):** when a column has an active column filter but no `filterFn`, fall back to an auto-detected default — case-insensitive string-contains when `accessor(row)` yields a string, strict equality (`===`) otherwise. Mirrors `withSorting()`'s `detectComparator` auto-detect pattern.
+- Claims the `filter` pipeline stage. Filtering runs **first**, before group/sort/expand
+  (unchanged), so `aggregateFn` never sees unfiltered rows.
+- Reads `filters().active()` and applies each active filter's predicate to each row.
+- **Combination:** within an `anyOf` group, **OR**; across filters, **AND**.
+- **Empty criteria** are skipped before evaluation and never reach the stage.
+- **Null/undefined cells** follow the matcher policy in [filters.md](../filters.md#semantics)
+  (R27) — the feature adds no policy of its own.
 
-## Methods
-
-| Method | Description |
-|---|---|
-| `setColumnFilter(columnId: string, value: unknown)` | Set or update a single column's filter value |
-| `clearColumnFilter(columnId: string)` | Remove one column's active filter |
-| `setGlobalFilter(query: string)` | Set the global/quick-search query |
-| `clearFilters()` | Clear all column filters and the global filter |
-
-## `manual` Contract
+## `manual`
 
 ```ts
-withFiltering({ manual: true })
+withFiltering({ filters: this.filters, manual: true })
 ```
 
-- State (`columnFilters`, `globalFilter`) updates normally on every call.
-- Pipeline **skips the client-side filter stage** entirely (both column and global).
-- `filterChanged` event fires; consumer's own `effect()` fetches filtered data from the server and writes it into their own `data` signal.
-- Consistent with the `manual` contract used by `withSorting()` / `withGrouping()` / `withExpansion()`.
+- Criteria update normally; `value()`, `active()` and `dirty()` behave identically.
+- The pipeline **skips the client-side filter stage** entirely.
+
+**Retained for symmetry, not necessity** (R23). Under R10 the ordinary server-side path does not
+compose this feature at all, which makes `manual` redundant for the common case. It is kept
+because `withSorting` carries the same flag, and a table filtering server-side while sorting
+client-side composes two features whose `manual` settings differ — dropping it from one would
+make the contract irregular for no gain.
+
+Precision on the precedent: `manual` is a **two-feature** convention, not a universal one. Only
+`withSorting` and the superseded `withFiltering` accept it; `withExpansion`'s config has just
+`childrenAccessor` / `isExpandable`, and `withGrouping` does not exist (it appears only as a
+doc-comment in `api/types.ts`).
+
+## Errors
+
+Per [ADR-0014](../../adr/0014-runtime-error-policy.md). A predicate that throws deactivates that
+filter for the evaluation and is reported once per filter per evaluation; it never takes the
+table down. Full statement in [filters.md](../filters.md#errors).
 
 ## Compile-Time Dependencies
 
-None as a separate feature. Reads `filterFn` / `enableFiltering` from the core `columns` config directly (see [../columns.md](../columns.md)) — no feature dependency to declare.
+None. The feature reads nothing from other features and contributes no members.
+
+It no longer reads anything from the columns config either: `ColumnDef.filterFn` and
+`ColumnDef.enableFiltering` are removed (R12). `filterFn` has no criterion to pair with once
+predicates live in the schema keyed by path, and `enableFiltering` existed only to exclude a
+column from a global filter that auto-scanned every column — `anyOf` lists its paths explicitly
+instead.
+
+## Members Owned
+
+**None.** Deliberate: there is no `table.filters`, no `table.setColumnFilter()`. The consumer
+already holds the filters object, and adding a table-side mirror would create a second path to one
+piece of state.
 
 ## Events Owned
 
-- `filterChanged` — fires on any column filter or global filter change.
+**None.** The old `filterChanged` observable is gone — `filters().value` is a signal, so a
+consumer who wants to react reads it, and a resource that depends on `active()` re-runs on its
+own.
 
 ## Decisions
 
-- **D1 (2026-09-09):** Global filter match is case-insensitive, not configurable per table.
-- **D2 (2026-09-09):** No built-in debounce. Immediate-apply setters; debounce is a consumer concern.
-- **D3 (2026-09-09):** Missing `filterFn` on an actively-filtered column falls back to an auto-detected default (string-contains / equality), not a no-op and not a throw.
+Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filtering/design-options-hybrid-api.md)
+(R1–R31). The three that governed this file specifically:
+
+- **R10** — `createFilters()` is standalone, not a config field of this feature. Forced by server
+  mode: filters feed the request that produces the data, so a table-owned filter object cannot be
+  constructed at all.
+- **R23** — `manual` is kept for cross-feature consistency.
+- **R26** — the superseded implementation stays on disk until `createFilters()` lands; its
+  removal is a planned breaking change, not a cleanup.
+
+Superseded behavioral decisions from v1.1 of this file, kept here so the change is traceable:
+
+| | Old decision | Status |
+|---|---|---|
+| D1 | Global filter match is case-insensitive, not configurable | **Gone.** It described an auto-scan over every filterable column. `anyOf` lists its paths and predicates explicitly, so case sensitivity is whatever the chosen predicate does |
+| D2 | No built-in debounce | **Stands** — reaffirmed by R25, which routes debouncing through the Signal Form over the model |
+| D3 | Missing `filterFn` falls back to an auto-detected default | **Gone.** Every filter names its predicate; there is no "missing predicate" case left |
 
 ## Resolved Questions
 
-- [x] ~~Exact interaction with `withGrouping()`'s aggregation~~ — resolved 2026-07-31 (see `architecture.md`, Compile-Time Dependency Graph section): `aggregateFn` runs over filtered rows. The `group` pipeline stage clusters after `filter` (fixed order `filter → group → sort → expand`), so `aggregateFn` never sees unfiltered rows. This spec predates that resolution; backported here.
-- [x] ~~Global filter case-sensitivity / debounce~~ — resolved 2026-09-09, see D1/D2 above.
+- [x] ~~Interaction with `withGrouping()`'s aggregation~~ — resolved 2026-07-31 (`architecture.md`):
+  `aggregateFn` runs over filtered rows, since `group` clusters after `filter` in the fixed
+  pipeline order.
+- [x] ~~Global filter case-sensitivity / debounce~~ — resolved 2026-09-09 (D1/D2), then
+  superseded as above.
+- [x] ~~Where filter state lives~~ — resolved 2026-09-09, R10. Not here.
 
 ## Competitive position
 
-**Verdict: still missing** — code exists on disk (`api/features/with-filtering.ts`) but
-implements the superseded imperative shape flagged in the banner above, so the baseline gap is
-not closed.
+**Verdict: still missing.** Committed code exists (`api/features/with-filtering.ts`) but
+implements the superseded imperative shape, so the baseline gap is not closed. It closes when
+`createFilters()` ships and this adapter replaces that file.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table, and PrimeNG —
+Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table and PrimeNG —
 column + global filtering is baseline in all four competitors' free tier. Full reasoning:
 [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

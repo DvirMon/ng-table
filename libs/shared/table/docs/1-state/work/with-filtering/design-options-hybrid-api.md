@@ -1,7 +1,7 @@
 ---
 title: Filtering API — design decisions (createFilters)
 type: design
-status: grill complete — 26 decisions recorded, ready to spec
+status: grill complete — 31 decisions recorded, ready to spec
 date: 2026-09-09
 audience: developers
 ---
@@ -10,7 +10,7 @@ audience: developers
 
 **Read [The design, consolidated](#the-design-consolidated) — it is the whole API in one place,
 and it is what a spec should be written from.** [Resolved during the grill](#resolved-during-the-grill-2026-09-09)
-(R1–R26) holds the rationale behind each line of it. Everything between the two is the history
+(R1–R31) holds the rationale behind each line of it. Everything between the two is the history
 that produced them: a scenario, four options that were eliminated, and Option E, which R1–R25
 then refined and in places corrected.
 
@@ -27,9 +27,10 @@ at all.
 >
 > **Option A is not hypothetical, though.** `withFiltering()`, `setColumnFilter()`,
 > `clearColumnFilter()`, `setGlobalFilter()` and `clearFilters()` all exist and work today in
-> `src/api/features/with-filtering.ts` (untracked in the working tree, re-exported from
-> `src/index.ts`, wired into the pipeline via `stages: { filter }`). That implementation is the
-> superseded shape this document argues against — see R12 for what removing it entails.
+> `src/api/features/with-filtering.ts` (**committed** in `be39054`, re-exported from
+> `src/index.ts:13`, wired into the pipeline via `stages: { filter }`). That implementation is the
+> superseded shape this document argues against — see R12 for what removing it entails, and R26
+> for when.
 
 ---
 
@@ -43,7 +44,7 @@ carries the decision that produced it; the R-numbers are the rationale, not extr
 ```ts
 readonly filters = createFilters<Invoice>((path) => {
   equals(path.status);                                 // key `status`, reads row.status
-  toggle(path.isArchived);
+  equals(path.isArchived);                             // boolean column — no separate toggle (R28)
   inRange(path.amount, { source: () => bounds() });    // server-supplied default
   inDateRange(path.dueDate);
 
@@ -58,14 +59,14 @@ readonly filters = createFilters<Invoice>((path) => {
   });
 
   filter(path.tags, (cell, c: { include: string[]; exclude: string[] }) =>
-    hasAny(cell, c.include) && hasNone(cell, c.exclude));   // the general rule
+    hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude));  // the general rule
 }, { injector });                                      // optional, R24
 ```
 
 | Element | Decision |
 |---|---|
 | `createFilters<TRow>(schema, opts?)` — no `data` argument, `TRow` annotated | R10, R11, R24 |
-| Named rules (`equals`, `contains`, `inRange`, `toggle`, `hasAny`, …) called on a path | R7 |
+| Named rules (`equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone`) called on a path | R7, R28 |
 | `filter(path, predicate)` — the general rule, peer of Signal Forms' `validate()` | R7 |
 | Matchers also exported as plain `(cell, criterion) => boolean` functions | R7 |
 | `anyOf(key, schema)` — one criterion, many paths, each with its own predicate | R8 |
@@ -74,6 +75,7 @@ readonly filters = createFilters<Invoice>((path) => {
 | Key borrowed from the path when there is one; named positionally for a group | R3, R9 |
 | A criterion may be a compound object (`{min,max}`, `{from,to}`) | R2 |
 | `{ source }` — a server-supplied default the user can override | R19 |
+| `{ as }` — override the key borrowed from the path | R31 |
 
 ## State
 
@@ -106,7 +108,8 @@ filters.status().dirty()
 
 ```ts
 // client — the feature filters the rows
-features: [withFiltering<Invoice>({ filters: this.filters })]
+// TRow infers from the enclosing config since 5a3a09d — no per-call generic
+features: [withFiltering({ filters: this.filters })]
 
 // server — the feature is not composed; filters feed the request that produces the data
 readonly invoices = resource({
@@ -129,29 +132,39 @@ readonly filterForm = form(this.filters().value, (path) => {
 - **Combination:** within an `anyOf` group, **OR**; across filters, **AND** (R8).
 - **Empty criteria** skip their predicate. What counts as empty is per-predicate, declared beside
   it (`autoRemove`-shaped), and applied before evaluation (R14).
-- **Null/undefined cell values:** one stated library-wide policy — still to be specified.
+- **Null/undefined cell values:** a null or undefined cell **fails every positive matcher** and
+  **passes every negative one** (`hasNone` — a row with no tags has none of them). Guarded inside
+  each shipped matcher, never in the runner, so a custom `filter()` predicate receives the cell
+  unguarded and owns its own handling. No consumer-facing option (R27).
 - **Pipeline:** filtering runs first, before group/sort/expand (unchanged).
+- **A throwing predicate** deactivates that filter for the evaluation and reports once; it never
+  takes the table down. Construction-time errors still throw. ADR-0014, R29.
 
 ## Deliberately not shipped
 
 | Not shipped | Instead | Decision |
 |---|---|---|
 | Runtime operator picker (AG Grid / PrimeNG column menu) | operators are fixed at declaration | R1 |
-| `{ as: }` for a second filter on one path | one predicate over a compound criterion | R6 |
+| A *second* filter on one path (`as` renames, it does not duplicate) | one predicate over a compound criterion | R6, R31 |
 | `ColumnDef.filterFn` / `enableFiltering` | predicates live in the schema | R12 |
 | Per-filter `encode` for server params | consumer maps `active()` | R16 |
 | Debounce | Signal Forms' `debounce()` over the model | R25 |
 | Persistence / storage adapter | consumer's `JSON.stringify` + `reset(value)` | R21 |
 | Data-derived filter options (set filters) | consumer computes them | R11 |
+| Any null/empty-cell option (`matchEmpty`, `cell:`, `isBlank`, `orEmpty`) | one internal policy; `filter()` for anything else | R27 |
+| `toggle()` | `equals()` over a boolean column | R28 |
 
 ## Still open at spec time
 
-1. Null/undefined cell-value policy — stated once, centrally.
-2. What happens when a predicate throws.
-3. Which symbols the barrel exports, and from which file.
+1. ~~Null/undefined cell-value policy~~ — resolved, see R27.
+2. ~~What happens when a predicate throws.~~ — resolved, see R29 and ADR-0014.
+3. ~~Which symbols the barrel exports, and from which file~~ — unblocked by R30; the list is in
+   [filters.md](../../filters.md#public-api).
 4. ~~The fate of the superseded `with-filtering.ts`~~ — resolved, see R26.
-5. Issue #5: close-and-replace, or rewrite (R13).
+5. Issue #5: close-and-replace, or rewrite (R13). **Belongs at `/to-issues`, not spec time.**
 6. `state-persistence.md`'s filter slice (R22), and the shared persistence feature (R21).
+   **Deferred by design** — R21 hands it to a separate persistence feature; do not solve it here.
+7. ~~Matcher/rule name collision~~ — resolved, see R30.
 
 ---
 
@@ -516,6 +529,13 @@ The trade was taken knowingly: include/exclude is a genuinely common pattern and
 custom predicate. Chosen on reversibility — adding `{ as: }` later is additive and
 non-breaking; removing it is not. Revisit if the escape hatch is reached for repeatedly.
 
+**Re-examined and upheld under R31 (2026-09-10).** `as` gives every single-path rule an
+optional key override, which mechanically *could* make two rules on one path legal by giving them
+distinct keys. It deliberately does not: R5's single-occupancy check is on the **path**, not the
+key, so two rules on one path throw whether or not their `as` names differ. Granting the escape
+hatch is still the additive, non-breaking move it was here — moving that check from the path to
+the key is a one-line change if the workaround proves to be reached for repeatedly.
+
 **R7 — Named rules and one general rule, side by side. Exported matchers underneath.** The
 schema body is written in Signal Forms' style: named rules called directly on a path, with a
 single general rule reached for only when none fits. `filter()` is the peer of `validate()`, not
@@ -532,9 +552,14 @@ form(model, (path) => {                  createFilters<Invoice>((path) => {
                                          });
 ```
 
-The **matchers** (`equals`, `contains`, `inRange`, `hasAny`, `hasNone`, …) are also exported as
-plain binary functions, so a custom predicate is assembled from shipped parts rather than written
-from scratch. That is what makes R6's trade affordable.
+The **matchers** are also exported as plain binary functions, so a custom predicate is assembled
+from shipped parts rather than written from scratch. That is what makes R6's trade affordable.
+
+> **Naming superseded by R30.** The examples in this decision give the matchers the same names as
+> the rules, which cannot compile — one identifier cannot be both a one-argument declaration and a
+> two-argument boolean test. Matchers are `isEqual` / `isContaining` / `isInRange` /
+> `isInDateRange` / `hasAnyOf` / `hasNoneOf`; the rules keep the bare verbs. The mechanism R7
+> describes is unchanged.
 
 Rejected on the way here: collapsing the two forms into one, so that declaring a filter was
 always `filter(path.x, equals)`. It removes a concept but reads as indirection — a schema rule
@@ -663,7 +688,7 @@ surface only. Whether to close-and-replace or rewrite it is deferred to spec tim
 
 **R14 — Empty criteria skip their predicate but stay in the aggregate.** Two halves:
 
-*Skipping is forced.* `contains(cell, '')` would match everything and
+*Skipping is forced.* `isContaining(cell, '')` would match everything and
 `inRange(cell, {min:null,max:null})` would throw, so an empty criterion must skip evaluation.
 What counts as empty is **per-predicate** — `''`, `null`, `{min:null,max:null}`, `[]` — so each
 shipped predicate declares its own emptiness test, and `filter()` must let a custom predicate
@@ -1052,6 +1077,19 @@ the library with no filtering at all for the whole spec-writing window. R12 is u
 *decision* — the fields go — but it is executed as a step in the implementation plan, sequenced
 with the code that replaces them, so filtering never regresses to nothing.
 
+**Corrected 2026-09-10 — the code is committed, not untracked.** This decision was first recorded
+while `with-filtering.ts` was an untracked file, on the reasoning that nothing would be lost.
+`be39054 feat(shared-table): add withFiltering() feature plugin` has since committed it, and
+`index.ts:13` exports it, so `withFiltering()`, `FilterRule`, `setColumnFilter()`,
+`clearColumnFilter()`, `setGlobalFilter()` and `clearFilters()` are **published public API**.
+The decision stands and is in fact stronger — deleting them is now a breaking change to the
+public surface, not a cleanup — but the removal step must be planned as one:
+
+- It is a `feat!`/`BREAKING CHANGE` commit, not a chore.
+- `docs/1-state/features/filtering.md`'s competitive-verdict block currently reads "still
+  missing" on the grounds that the code implements a superseded shape. That framing predates the
+  commit and should be re-checked when the spec is rewritten.
+
 Consequences for the spec pipeline:
 
 - `/to-tasks` must emit an explicit removal step: delete `with-filtering.ts` + `.spec.ts`, remove
@@ -1059,6 +1097,231 @@ Consequences for the spec pipeline:
   `ColumnDef`. It depends on `createFilters()` landing first.
 - Until that step runs, `features/filtering.md`'s superseded banner stays accurate and must keep
   saying the code exists.
+
+**R27 — Null/undefined cells are handled inside the matchers, with no consumer-facing option**
+(resolves Still-open #1).
+
+The policy, in full:
+
+> A null or undefined cell value fails every positive matcher (`equals`, `contains`, `inRange`,
+> `inDateRange`, `hasAny`) and passes every negative one (`hasNone`) — a row with no tags has
+> none of them. Custom `filter()` predicates receive the cell unguarded and own their own
+> handling.
+
+```ts
+// positive — a null/undefined cell fails
+equals      = (cell, c) => cell != null && cell === c;
+contains    = (cell, c) => cell != null && String(cell).toLowerCase().includes(c.toLowerCase());
+inRange     = (cell, c) => cell != null && (c.min == null || cell >= c.min) && (c.max == null || cell <= c.max);
+inDateRange = (cell, c) => cell != null && (c.from == null || cell >= c.from) && (c.to == null || cell <= c.to);
+hasAny      = (cell, c) => cell != null && c.some((v) => cell.includes(v));
+
+// negative — a null/undefined cell passes
+hasNone     = (cell, c) => cell == null || !c.some((v) => cell.includes(v));
+```
+
+**The positive/negative split is not symmetry for its own sake.** PrimeNG returns `false` for a
+null field in every operator *except* `notEquals`, which returns `true`
+([research-generic-filter-utilities.md](research-generic-filter-utilities.md), Finding 5). That
+carve-out reads as an inconsistency until you write out the sentence: "this row's tags do not
+include 'draft'" is *true* of a row with no tags. A blanket "null always fails" rule would ship
+that as a silent bug in the one negative matcher we have.
+
+Order of evaluation — the null check is third, not first:
+
+```
+criterion empty (R14)?  → skip the filter entirely; absent from active()
+      ↓ no
+read the cell via its path
+      ↓
+matcher runs; it owns its own null branch
+```
+
+So a null cell is only ever reached by an *active* filter. `equals(path.status)` with criterion
+`null` evaluates nothing.
+
+**The guard is in the matchers, never in the runner.** A runner-level short-circuit would produce
+the same result for shipped matchers while making one whole class of filter unwritable — "show me
+only the rows where this is blank", which is an ordinary table feature (AG Grid ships
+blank/notBlank operators). Guarding per matcher keeps it expressible with no library feature at
+all:
+
+```ts
+filter(path.notes, (cell, want: boolean) => want === (cell == null || cell === ''));
+```
+
+`''` gets no special status: it is a normal value that positive matchers happen to return `false`
+for. Deliberately unlike `applySortNulls()`'s `emptyString: 'is-empty'` opt-in
+(`schema/column-rules.ts:49`) — sorting needs it because `''` must be *placed* somewhere in an
+order, and filtering has no equivalent need.
+
+**Four alternatives were prototyped and deferred, not rejected on merit.** Sketches kept because
+the exploration is the expensive part:
+
+| Sketch | Shape | Why deferred |
+|---|---|---|
+| `matchEmpty: boolean` | `contains(path.notes, { matchEmpty: true })` — an empty cell passes | Solves a case no consumer has asked for. Library must also fix one definition of "empty" |
+| `cell: (v) => v` | `inRange(path.amount, { cell: (v) => v === 0 ? null : v })` — normalize before matching | More reach than the boolean (sentinels, trimming, and R8's cell-type problem), but every null case costs a lambda |
+| `isBlank()` / `isPresent()` | named rules, toggle-shaped criterion | The one case a user actually raised — but nothing in this repo needs it yet |
+| `orEmpty()` / `onlyEmpty()` | combinators over the exported matchers (R7) | Most consistent with R6/R7; pushes the non-default case out of the named-rule syntax R3 was built for |
+
+All four are **purely additive to a rule's opts object or to the exported-matcher set**, so
+shipping any of them later is non-breaking — the same reversibility test R6 used to defer
+`{ as: }`. The forced part of this decision is only that shipped matchers must not crash on real
+data (`null.includes()` throws); everything past that sentence is configurability, and
+[`general-mechanism-over-enumerated-cases`](../../../../../../.claude/rules/general-mechanism-over-enumerated-cases.md)
+cuts against shipping a mechanism nobody has extended yet.
+
+Revisit when a real screen needs blank filtering. That day it is a custom `filter()` predicate;
+sugar the day after.
+
+**R28 — `toggle()` is dropped; a boolean column uses `equals()`.**
+
+`toggle(path.isArchived)` and `equals(path.isArchived)` are the same predicate — `cell === c`.
+The only difference `toggle` could carry is a different emptiness rule, treating criterion `false`
+as empty rather than as "show unarchived rows". That reading was never decided, and deciding it
+would make one matcher's R14 emptiness test disagree with every other matcher's for no gain.
+
+```ts
+equals(path.isArchived);     // null → filter off; false → show unarchived; true → show archived
+```
+
+Dropping it removes a shipped matcher and closes the open question about criterion `false` in the
+same step. The consumer's UI control is still a toggle; the rule behind it is `equals`.
+
+**R29 — A throwing predicate deactivates its filter; it never takes the table down**
+(resolves Still-open #2). Full reasoning in
+[ADR-0014](../../../adr/0014-runtime-error-policy.md), which this decision produced and which
+governs every consumer callback in the library, not just filter predicates.
+
+The filter-specific half:
+
+- A predicate that throws → **that filter does not apply for this evaluation**. Other filters
+  still narrow; the table still renders.
+- Reported once per filter per evaluation (not per row), with the filter key, the predicate, and
+  the offending cell — in production as well as dev.
+- Wrapped **per filter**, not per row. Per-row catching yields an inconsistent row set (some rows
+  tested, some skipped) and puts a `try` in the hot loop.
+- Construction-time errors are unaffected and still throw: a duplicate filter on one path (R5),
+  an unknown path, an `anyOf` without a key.
+
+Why this came up here rather than in sorting, which has the same exposure: R27 hands custom
+`filter()` predicates an unguarded cell **by design**, so that matching nulls stays writable. That
+makes a consumer predicate the likeliest thing in the library to throw, and R21's
+consumer-owned `JSON.parse` persistence makes a stale criterion the likeliest reason.
+
+Residue, carried into the specs: a filter that failed still appears in `active()`, because
+`active()` describes which criteria are *set* (R14), not which evaluations succeeded.
+
+**R30 — Rules keep the bare verb; matchers take a boolean-guard prefix** (resolves Still-open #7,
+unblocks #3).
+
+R7 shipped both forms under one name, which cannot compile: `equals(path.status)` registers a
+filter (one argument, a path, returns `void`), while `equals(cell, criterion)` tests a value (two
+arguments, returns `boolean`). One identifier, two functions.
+
+Resolved by the repo's naming convention rather than by namespacing: **a function returning a
+boolean guard is named `is*` / `has*`**; a bare verb is reserved for a function that *does*
+something — here, registering a filter.
+
+| Rule (declares, returns `void`) | Matcher (tests, returns `boolean`) |
+|---|---|
+| `equals(path)` | `isEqual(cell, criterion)` |
+| `contains(path)` | `isContaining(cell, criterion)` |
+| `inRange(path)` | `isInRange(cell, criterion)` |
+| `inDateRange(path)` | `isInDateRange(cell, criterion)` |
+| `hasAny(path)` | `hasAnyOf(cell, criterion)` |
+| `hasNone(path)` | `hasNoneOf(cell, criterion)` |
+
+```ts
+// rule form — declaration
+contains(path.customer);
+
+// matcher form — assembling a custom predicate from shipped parts
+filter(path.tags, (cell, c) => hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude));
+```
+
+Both arguments of a matcher arrive at **evaluation** time — the cell from the row, the criterion
+from filter state. A matcher never carries a constant; it is the same function the library calls
+internally per row.
+
+Rejected: namespacing the matchers (`matchers.equals`) — it reads as a second-class surface and
+makes the assembled-predicate case, which R6's affordability argument depends on, wordier at
+exactly the point it needs to be cheap. Also rejected: discriminating on arity — one overloaded
+export whose meaning flips on argument count is the kind of API a reader has to memorise.
+
+Note `hasAny`/`hasNone` were already boolean-shaped names in the rule position; `hasAnyOf` /
+`hasNoneOf` moves the guard reading to the matcher and leaves the rule reading as a declaration.
+
+**R31 — `as` overrides a borrowed key; it does not license a second filter on the path.**
+
+R9 borrows the key from the path when there is one, and `anyOf` takes a key positionally because
+a group has none to borrow. `as` completes that symmetry: the key is *available* from the path
+but is not always the right name to expose.
+
+```ts
+equals(path.customerAccountName, { as: 'customer' });   // → filters.customer
+inDateRange(path.dueDate, { as: 'due' });               // → filters.due, ?due=…
+```
+
+The model's field name, the URL parameter, the persisted snapshot key and the binding-site name
+are four different concerns that happen to coincide most of the time. When they don't, renaming
+at the declaration is cheaper than the mapping function R16 otherwise leaves to the consumer.
+
+Typing: the `as` value must be a **string literal** so it can flow into `Filters<TRow>`. A
+`string`-typed variable widens the handle map and is rejected at compile time.
+
+**Deliberately does not reopen R6.** An `as` makes two rules on one path produce two distinct
+keys, which is mechanically the `{ as: 'name' }` escape hatch R6 rejected. That is not what this
+ships:
+
+- **R5 is unchanged and checked on the *path*, not the key.** Two rules on one path throw at
+  construction whether or not their `as` names differ.
+- **Duplicate keys also throw** — two rules given the same `as`, or an `as` colliding with
+  another filter's borrowed key.
+
+So the single-occupancy rule survives intact, and combining operators on one column still means
+dropping to `filter()` with a compound criterion. Removing the path check later — and thereby
+granting R6's escape hatch — remains additive and non-breaking, which is the same reversibility
+argument R6 itself was decided on.
+
+**R32 — `Filters<TRow, TState>` takes a second, caller-supplied type parameter.**
+
+`createFilters<TRow>(schema)`'s single-param signature (R11) assumed `TState` — the flat
+criterion map, one key per declared filter — could be derived from the schema fn's recorded rule
+calls, the way `ComposedFeatureMembers` derives a table's member type from its `features` array.
+It can't: `features` is a value with its own static tuple type for TypeScript to read back;
+`schema: (path) => void` returns `void`, so there is no channel to observe which keys a
+void-returning function's body touched. `createFilters<TRow, TState extends Record<string,
+unknown> = Record<string, unknown>>(...)` is the fallback: correct, precise per-key typing once
+`TState` is supplied, at the cost of writing it out once at each call site (on top of R11's
+existing `TRow` cost). A consequence, not separately decided: enforcing `as` as a string literal
+(R31) needs the same missing channel — `TState`'s shape isn't derived from `as` calls either, so
+nothing currently rejects a `string`-typed `as` value at compile time. Revisit if TypeScript
+gains a way to invert an imperative builder into an inferred return type; until then this is
+accepted the same way R11 accepted `TRow`'s cost.
+
+**R33 — `anyOf`/`applyWhen` recover their enclosing recorder from an ambient stack, not a parameter.**
+
+Every single-path rule (`equals`, `contains`, …) gets its recorder from the `FilterHandle` it's
+called with — the handle carries it. `anyOf(key, schema)` and `applyWhen(path, condition,
+schema)` both need to push one compiled record into the *outer* schema's recorder once their own
+nested schema fn finishes, but neither has a path argument built for that purpose (`anyOf` has no
+path at all; `applyWhen`'s `path` argument only anchors `TRow` for inference, mirroring how a
+single-path rule's argument does the same). A stack of "whichever recorder is synchronously
+running right now" (pushed by `createFilters()` and by each nested `anyOf`/`applyWhen` call,
+popped in a `finally`) stands in for the missing parameter. Sound only because schema functions
+are synchronous by contract (R24's own premise) — an `await` inside one before its session
+closes would interleave with a concurrent call's stack frame. Not reentrant-safe by design,
+because nothing about `createFilters()` is meant to run concurrently with itself.
+
+**Known gap — `anyOf`'s inner schema callback cannot infer `TRow` from context.** Unlike
+`applyWhen`, `anyOf(key, schema)` carries no argument typed by the outer `TRow`, so
+`anyOf('search', (path) => { … })` written bare — as shown above — does not compile; call sites
+need `anyOf<Invoice>('search', (path) => { … })`. `applyWhen` doesn't have this gap, since its
+`path` parameter anchors `TRow` the same way a single-path rule's argument does. Filed here
+rather than reopened as a design question: fixing it would mean changing `anyOf`'s parameter
+order or count, which is out of scope for the primitive as specified.
 
 ## Open questions for the grill
 
