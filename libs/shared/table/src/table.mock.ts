@@ -59,6 +59,28 @@ export const mockRows: MockRow[] = [
 
 export const mockTrackBy: TrackByFn<MockRow> = (row) => row.id;
 
+export interface GroupingMockRow {
+  id: number;
+  region: string;
+  category: string;
+  amount: number;
+}
+
+/** Deliberately unequal cluster sizes per (region, category) — `US > Electronics` has 2 rows,
+ * every other leaf cluster has 1, so a parent average computed from its children's already-
+ * computed averages (125) differs from the true leaf-level average (150) for `region: 'US'`.
+ * See with-grouping Step 5 plan, "depth-correctness case." */
+export const mockGroupingRows: GroupingMockRow[] = [
+  { id: 1, region: 'US', category: 'Electronics', amount: 100 },
+  { id: 2, region: 'US', category: 'Electronics', amount: 300 },
+  { id: 3, region: 'US', category: 'Furniture', amount: 50 },
+  { id: 4, region: 'EU', category: 'Electronics', amount: 20 },
+  { id: 5, region: 'EU', category: 'Furniture', amount: 10 },
+  { id: 6, region: 'EU', category: 'Furniture', amount: 90 },
+];
+
+export const mockGroupingTrackBy: TrackByFn<GroupingMockRow> = (row) => row.id;
+
 /** Mirrors `engine/core.ts`'s `indexById` derivation, for the mock stores below — they don't
  * compose the real engine, so they build the map by hand off their own `data` signal. */
 function mockIndexById<TRow>(rows: TRow[], trackBy: TrackByFn<TRow>): ReadonlyMap<RowId, number> {

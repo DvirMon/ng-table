@@ -95,6 +95,15 @@ export interface ColumnDef<TRow = unknown> {
 export type ColumnDefInput<TRow = unknown> = Pick<ColumnDef<TRow>, 'id'> &
   Partial<Omit<ColumnDef<TRow>, 'id'>>;
 
+/**
+ * D14 — known row keys autocomplete; any other string still compiles, so derived columns
+ * (`accessor`-only, no matching `keyof TRow`) and columns added later via `setColumns()` stay
+ * expressible.
+ */
+export type ColumnId<TRow> = Extract<keyof TRow, string> | (string & {});
+
+export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
+
 // Opaque handle for a `createTable()` feature (`withSorting()`, `withGrouping()`, etc.) —
 // consumers never construct this by hand, it's the return type of the feature functions
 // the design system exports.

@@ -17,6 +17,9 @@ export { withRowEdit } from './api/features/with-row-edit';
 export type { WithRowEditConfig, RowEditMembers } from './api/features/with-row-edit';
 export { withOptimistic } from './api/features/with-optimistic';
 export type { OptimisticMembers } from './api/features/with-optimistic';
+export { withGrouping } from './api/features/with-grouping';
+export type { WithGroupingConfig, GroupingMembers } from './api/features/with-grouping';
+export type { ColumnId } from './api/types';
 export { withSelection } from './api/features/with-selection';
 export type {
   WithSelectionConfig,
@@ -65,3 +68,24 @@ export type {
   ColumnsPath,
   ColumnsSchemaFn,
 } from './schema/column-schema.types';
+export { createFilters } from './api/create-filters';
+export type { Filters, FilterNode, FilterOptions } from './api/filters.types';
+export {
+  anyOf,
+  applyWhen,
+  contains,
+  equals,
+  filter,
+  hasAny,
+  hasNone,
+  inDateRange,
+  inRange,
+} from './api/filters/rules';
+export {
+  hasAnyOf,
+  hasNoneOf,
+  isContaining,
+  isEqual,
+  isInDateRange,
+  isInRange,
+} from './api/filters/matchers';

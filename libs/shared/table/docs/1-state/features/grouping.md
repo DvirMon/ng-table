@@ -1,16 +1,37 @@
 ---
 title: State Layer Reference — withGrouping()
 type: architecture
-version: 1.0
-date: 2026-07-19
+version: 1.1
+date: 2026-09-10
 capability: grouping
 spec: drafted
-code: none
+code: partial
 audience: developers
 parent: ../architecture.md
 ---
 
 # withGrouping()
+
+> **⚠️ Two sections superseded — D1/D3/D9 shipped (issue #6, 2026-09-10); D4/D6–D8/D11 still
+> unbuilt, read the decisions first for those.**
+> [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D15) settles the
+> API surface, and [work/with-grouping/3-spec.md](../work/with-grouping/3-spec.md) (`status: ready`)
+> writes it up as a contract. Superseded here:
+> - **Methods** — `setGrouping()`/`clearGrouping()` never shipped. The real write surface is
+>   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
+>   (D1, shipped) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. A
+>   `groupingRule` overlay and declarative `applyGrouping()` sugar (D6–D8) are still unbuilt (#60).
+> - **Single-level only** — wrong, and no longer just "reopened": `withGrouping()` ships
+>   multi-level clustering today. `grouping` is `string[]`, ordered, index 0 = outermost level
+>   (D3), with aggregation computed at every depth from that cluster's own leaves, never a
+>   descendant's already-computed aggregate (D9). Grand totals and pivoting stay out of scope
+>   (D9).
+>
+> Still current, unshipped: group ordering via `groupOrder` (D4, #58), the `groupingRule`
+> base+overlay fold and `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60), and
+> collapse/expand coupling via `withExpansion()`'s `expandedRows` (D11, #59) — every cluster
+> currently renders fully expanded, unconditionally. Read the decisions doc before building any
+> of these.
 
 ## Executive Summary
 
@@ -138,7 +159,18 @@ Researched against three popular table libraries before locking this shape:
 
 ## Competitive position
 
-**Verdict: missing** — spec drafted, zero code: no `withGrouping()`, no `aggregateFn` consumption, no `'group'` pipeline/render stage claimed though both slots are reserved; the single-level scope **deliberately** sidesteps TanStack's unresolved depth-0 aggregation-correctness bug by not attempting depth at all in v1 — do not "fix" the scope by adding arbitrary depth.
+**Verdict: missing** — spec drafted, zero code: no `withGrouping()`, no `aggregateFn` consumption,
+no `'group'` pipeline/render stage claimed though both slots are reserved.
+
+> **Scope sentence corrected 2026-09-10.** This paragraph previously read "the single-level scope
+> **deliberately** sidesteps TanStack's unresolved depth-0 aggregation-correctness bug by not
+> attempting depth at all in v1 — do not 'fix' the scope by adding arbitrary depth." **D9 did
+> exactly that**, and deliberately: full multi-level ships. The reasoning that produced the old
+> sentence was that TanStack's depth bug came from depth itself; re-examined, it comes from its
+> `Row`-wrapper row-model architecture, which this codebase does not share. D9's two invariants —
+> aggregates always compute over a cluster's own **leaf** rows, never over a child cluster's
+> already-computed aggregate, and `groupOrder` orders siblings within a parent — are what actually
+> close that bug class, and they hold at any depth. Grand totals and pivoting remain out of scope.
 
 Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
 and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
