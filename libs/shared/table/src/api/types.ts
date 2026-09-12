@@ -19,11 +19,6 @@ export interface SortRule {
   direction: SortDirection;
 }
 
-export interface FilterRule {
-  columnId: string;
-  value: unknown;
-}
-
 export type TrackByFn<TRow> = (row: TRow) => RowId;
 
 export type TrackByConfig<TRow> = keyof TRow | TrackByFn<TRow>;
@@ -75,8 +70,6 @@ export interface ColumnDef<TRow = unknown> {
   sortFn?: (a: TRow, b: TRow) => number;
   enableSorting?: boolean;
   aggregateFn?: (rows: TRow[]) => unknown;
-  filterFn?: (value: unknown, filterValue: unknown) => boolean;
-  enableFiltering?: boolean;
 
   // Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity — never
   // interpreted by the engine. Read via `readColumnMeta()`, written via `metadata()`

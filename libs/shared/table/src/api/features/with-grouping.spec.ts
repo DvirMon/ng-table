@@ -2,7 +2,9 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockGroupingRows, mockGroupingTrackBy, type GroupingMockRow } from '../../table.mock';
 import { setGroupLevels } from '../../mutations/update-grouping';
+import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
+import { filter } from '../filters/rules';
 import { withFiltering } from './with-filtering';
 import { withGrouping } from './with-grouping';
 import { withSorting } from './with-sorting';
@@ -27,18 +29,6 @@ function makeColumns(): ColumnDef<GroupingMockRow>[] {
       aggregateFn: (rows) => rows.reduce((sum, row) => sum + row.amount, 0) / rows.length,
     },
   ];
-}
-
-/** Same shape as `makeColumns()` plus a `filterFn` on `amount`, used only by the filter→group
- * interaction case — kept separate so the other cases' columns stay exactly what the step's
- * plan specifies. */
-function makeFilterableColumns(): ColumnDef<GroupingMockRow>[] {
-  const columns = makeColumns();
-  return columns.map((column) =>
-    column.id === 'amount'
-      ? { ...column, filterFn: (value: unknown, filterValue: unknown) => value !== filterValue }
-      : column
-  );
 }
 
 // Mirrors `with-selection.spec.ts`: rows are seeded at construction via the `data` signal —
@@ -177,19 +167,29 @@ describe('withGrouping', () => {
   });
 
   it('filter -> group pipeline order: group aggregates reflect only post-filter rows', () => {
+    const filters = TestBed.runInInjectionContext(() =>
+      createFilters<GroupingMockRow>((path) => {
+        filter<GroupingMockRow, 'amount', number | null>(
+          path.amount,
+          (cell, criterion) => cell !== criterion,
+          { isEmpty: (v) => v == null, emptyValue: null }
+        );
+      })
+    );
+
     const store = makeStore(
       () => ({
         trackBy: mockGroupingTrackBy,
-        columns: makeFilterableColumns(),
+        columns: makeColumns(),
         features: [
-          withFiltering<GroupingMockRow>(),
+          withFiltering<GroupingMockRow>({ filters }),
           withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
         ],
       }),
       mockGroupingRows
     );
 
-    store.setColumnFilter('amount', 300); // drops id 2 (US > Electronics, amount 300)
+    filters['amount']().value.set(300); // drops id 2 (US > Electronics, amount 300)
 
     const usHeader = store
       .renderRows()

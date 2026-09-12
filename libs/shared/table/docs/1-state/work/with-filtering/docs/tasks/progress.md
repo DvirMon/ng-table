@@ -1,7 +1,7 @@
-# Implementation Progress — createFilters() standalone primitive
+# Implementation Progress — filtering (createFilters() + withFiltering())
 
-**Issue:** #61
-**Status:** 6 / 6 complete
+**Issues:** #61 (createFilters() standalone primitive), #62 (withFiltering() client adapter)
+**Status:** 9 / 9 complete
 
 | Step | Title | Status | PR |
 |---|---|---|---|
@@ -11,3 +11,6 @@
 | 4 | createFilters() core | ✅ done | — |
 | 5 | Rules + public exports | ✅ done | — |
 | 6 | createFilters() spec | ✅ done | — |
+| 7 | withFiltering() adapter, retire imperative surface | ✅ done | — |
+| 8 | withFiltering() spec | ✅ done | — |
+| 9 | Fix with-grouping filter -> group interaction test | ✅ done | — |

@@ -90,4 +90,4 @@ Cover, per `filters.md`:
 - [ ] `nx test shared-table` passes
 
 ---
-← [Step 5: Rules + public exports](step-5-filters-rules-and-exports.plan.md)
+← [Step 5: Rules + public exports](step-5-filters-rules-and-exports.plan.md) | [Step 7: withFiltering() adapter](step-7-with-filtering-adapter.plan.md) →
