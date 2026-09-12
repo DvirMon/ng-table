@@ -91,6 +91,16 @@ stay `import type`; making either a value import breaks the build.
 
 - **Type narrowing:** Use `as const` on discriminators (`data-row-kind: 'header' | 'body' as const`); never use bare `as` assertions. Type guards preferred over assertions.
 
+- **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md), `proposed`).
+  Wiring errors — slot/member collisions, duplicate registration, a `trackBy` naming no field —
+  throw, and every existing throw site is one of these. A **consumer callback** (`accessor`,
+  `sortFn`, `aggregateFn`, a filter predicate) must never take the table down: it falls back to a
+  defined value, chosen so the failure is visible rather than silent, and reports once per
+  callback per evaluation in production as well as dev. Wrap per callback, never per row.
+  A new feature taking a consumer callback names its own fallback in the ADR's table.
+  **Not enforced by types** — and `sortFn`/`accessor`/`aggregateFn` are still unguarded pending
+  the retrofit, so absence of a wrap in existing code is not precedent.
+
 ## Docs structure — three streams, permanent vs. episodic
 
 Docs are numbered by dependency order: state layer (1) → columns layer (2) → UI layer (3).
@@ -101,6 +111,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/status.md` | Every capability's spec/code maturity, state and UI layer side by side. The entry point for "what's the state of X?" | **Generated** — `npm run table:status`. Never hand-edit; fix the owning spec's frontmatter and regenerate |
 | `docs/1-state/row-mutations.md` | Core-API spec — `table.value.update()` + the row updaters. Not in `features/` because mutation is core, not a `with-*()` plugin (D8) | Permanent |
 | `docs/1-state/state-persistence.md` | Cross-feature spec — one atomic snapshot of sort + columns + filters + pagination. Sibling of `row-mutations.md` for the same D8 reason: persistence spans features, it isn't one plugin's state | Permanent |
+| `docs/1-state/filters.md` | Core-API spec — the standalone `createFilters()` primitive. Not in `features/` (same D8 reason): it is usable with no table at all, and in server mode the table never composes a filtering feature. `features/filtering.md` is the thin client-side adapter over it | Permanent |
 | `docs/2-columns/reference/` | Column schema reference (tier levels, ownership, derivation); read-only reference | Permanent; reflects current schema semantics |
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |

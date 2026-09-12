@@ -11,24 +11,25 @@
 >
 > Field vocabulary: [decisions.md](1-state/work/state-feature-competitive-audit/decisions.md) (D1–D3).
 
-| Capability | State spec | State code | UI spec | UI code | Docs |
-|---|---|---|---|---|---|
-| `column-pinning` | drafted | none | — | — | [state](1-state/features/column-pinning.md) |
-| `column-sizing` | drafted | none | stub | none | [state](1-state/features/column-sizing.md) · [ui](3-ui/directives/resizing.md) |
-| `columns` | — | — | drafted | none | [ui](3-ui/directives/columns.md) |
-| `core` | — | — | drilled | partial | [ui](3-ui/directives/core.md) |
-| `drag-drop` | stub | none | stub | none | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
-| `expansion` | drilled | partial | drilled | none | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
-| `filtering` | drafted | partial | — | — | [state](1-state/features/filtering.md) |
-| `grouping` | drafted | none | stub | none | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) |
-| `infinite-scroll` | stub | none | — | — | [state](1-state/features/infinite-scroll.md) |
-| `pagination` | stub | none | — | — | [state](1-state/features/pagination.md) |
-| `row-animation` | — | — | drilled | shipped | [ui](3-ui/directives/row-animation.md) |
-| `row-editing` | drilled | shipped | — | — | [state](1-state/features/row-editing.md) |
-| `selection` | drilled | partial | stub | none | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) |
-| `sorting` | drilled | shipped | drafted | none | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) |
-| `state-persistence` | drafted | none | — | — | [state](1-state/state-persistence.md) |
-| `virtual-scroll` | drafted | none | — | — | [state](1-state/features/virtual-scroll.md) |
+| Capability | State spec | State code | UI spec | UI code | Story research | Docs |
+|---|---|---|---|---|---|---|
+| `column-pinning` | drafted | none | — | — | — | [state](1-state/features/column-pinning.md) |
+| `column-sizing` | drafted | none | stub | none | — | [state](1-state/features/column-sizing.md) · [ui](3-ui/directives/resizing.md) |
+| `columns` | — | — | drafted | none | — | [ui](3-ui/directives/columns.md) |
+| `core` | — | — | drilled | partial | — | [ui](3-ui/directives/core.md) |
+| `drag-drop` | stub | none | stub | none | — | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
+| `expansion` | drilled | partial | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
+| `filtering` | drilled | shipped | — | — | [✅](0-product/filtering.md) | [state](1-state/features/filtering.md) · [product](0-product/filtering.md) |
+| `filters` | drilled | none | — | — | — | [state](1-state/filters.md) |
+| `grouping` | drafted | partial | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
+| `infinite-scroll` | stub | none | — | — | — | [state](1-state/features/infinite-scroll.md) |
+| `pagination` | stub | none | — | — | — | [state](1-state/features/pagination.md) |
+| `row-animation` | — | — | drilled | shipped | — | [ui](3-ui/directives/row-animation.md) |
+| `row-editing` | drilled | shipped | — | — | [✅](0-product/row-editing.md) | [state](1-state/features/row-editing.md) · [product](0-product/row-editing.md) |
+| `selection` | drilled | partial | stub | none | [✅](0-product/selection.md) | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) · [product](0-product/selection.md) |
+| `sorting` | drilled | shipped | drafted | none | — | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) |
+| `state-persistence` | drafted | none | — | — | — | [state](1-state/state-persistence.md) |
+| `virtual-scroll` | drafted | none | — | — | — | [state](1-state/features/virtual-scroll.md) |
 
 `—` — that layer has no doc for this capability.
 `?` — the doc exists but its field is missing or unrecognised; the generator logged a diagnostic.

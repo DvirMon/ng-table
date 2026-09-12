@@ -163,14 +163,74 @@ _(appended as they settle)_
   hiding it (`aria-disabled`, still focusable — CDK listbox's baseline, research §6). Belongs in
   [`3-ui/directives/selection.md`](../../../3-ui/directives/selection.md) when that file is drilled.
 
+- **D59 (2026-09-11) — `selectAllIds()` ships as a standalone helper, never a `withSelection()`
+  config or method.** Raised by filtering's product pass
+  ([`0-product/filtering.md`](../../../0-product/filtering.md), story F-S1 / OQ-2): "select all
+  currently-matching rows" needs the call site to stop hand-picking between `table.rows()` and
+  `table.value()`. D1 already named the shape ("select all is the call site passing the id set it
+  means... `table.rows().map(r => r.id)`") — this decision only formalizes the ergonomics D1 left
+  to the caller, it does not revisit D1 itself.
+
+  ```ts
+  export function selectAllIds<TRow>(
+    table: Pick<TableStore<TRow>, 'rows' | 'value' | 'trackBy'>,
+    opts?: { includeHidden?: boolean }
+  ): RowId[] {
+    const rows = opts?.includeHidden ? table.value() : table.rows();
+    return rows.map(table.trackBy);
+  }
+  ```
+
+  ```ts
+  table.select(selectAllIds(table));                          // visible/matching — default
+  table.select(selectAllIds(table, { includeHidden: true }));  // every row, filtered or not
+  table.deselect(selectAllIds(table));                         // "deselect all visible" — same helper
+  ```
+
+  Scope:
+
+  - Reads only `rows` / `value` / `trackBy` off the **core** `TableStore` — not a `SelectionMembers`
+    addition, no dependency on `withFiltering()` or any other feature. D1's "no runtime or
+    compile-time dependency on `withPagination()`/`withFiltering()`" is untouched: `select()` and
+    `deselect()` are unchanged, `withSelection()` gains nothing.
+  - **Boolean, not a `scope` enum, deliberately.** Exactly two datasets exist at the core level,
+    permanently: `rows` (pipeline output) and `value` (raw source). A third value would need a
+    third core-level dataset that doesn't exist. A future page- or group-scoped "select all" is a
+    fresh id array (`table.renderRows()` filtered by `kind === 'row'`, or a group's own rows)
+    passed straight to `select()`/`deselect()` — never a third branch grafted onto this helper.
+  - Implementable today — depends only on `TableStore` (`rows`/`value`/`trackBy`), which already
+    ships. Not blocked on `createFilters()`. Not yet coded; proposed home is a sibling file to
+    `with-selection.ts` (e.g. `api/features/selection.utils.ts`), since it is a plain function, not
+    a feature factory, and needs no DI context.
+
+  Rejected: `selectAll(scope: 'visible' | 'all')` as a new method on `SelectionMembers`. Would not
+  have actually broken D1 (`core.rows`/`core.value` are available to every feature factory, not
+  filtering-specific), but was dropped anyway to keep `select()`/`deselect()` as the only two
+  imperative write verbs, with scope resolution kept in helpers around them rather than growing
+  the feature's own method surface. Curried binding (`bindSelectAllIds(table)` returning a
+  table-free callable) was also considered and dropped — explicit `table` at the call site was
+  preferred over hiding it behind a bound closure.
+
+  Verified against `research-filter-community-pain.md` Theme 1 (57 cited issues): covers "select-all
+  grabs the unfiltered set" (MUI X #976/#1863) and "selection doesn't accumulate across filter
+  changes" (MUI X #14074) structurally — one source of truth (`table.rows()`), additive `select()`
+  (D15's duplicate-collapse). **Does not cover**, and isn't meant to: page-scoped select-all (AG
+  Grid #2139 — blocked on pagination; `paginate` is a *render* stage per `RENDER_ORDER`, so it runs
+  after `rows()` is produced, meaning a page-scoped id list needs `renderRows()`, not `rows()`) or
+  the read-side "are all currently-visible rows already selected" signal a select-all checkbox
+  needs for its own state (TanStack #4781). Both routed to
+  [`computed-state-mechanism/1-intake.md`](../computed-state-mechanism/1-intake.md) as candidates
+  for a future cross-feature derived-state design, not solved here.
+
 ## Open questions
 
-- **Group-header select-all.** A checkbox on a `withGrouping()` group header should plausibly mean
-  "select every row in this group." D8 makes the synthetic group id *selectable*, but selecting the
-  header id is not the same as selecting its members. Undecided whether this is library API (a verb
-  that expands a group id to its member ids) or consumer code (`select(groupRows.map(r => r.id))`).
-  Not blocking `withSelection()` — `withGrouping()` is unbuilt. Must be represented in the product
-  use-cases / story set either way.
+- ~~**Group-header select-all.**~~ **Resolved 2026-09-12 by D16** (from `withGrouping()`'s own
+  grilling, `0-product/grouping.md` §5 X-G1): the library ships no cascade semantics.
+  `table.rowsOf(group)` (issue #65) hands back the group's members; the consumer builds whatever
+  cascade policy they want on top (`select(rowsOf(group).map(r => r.id))`) — consumer code, not a
+  library verb, matching D1's existing flat, caller-supplies-the-id-set design. `withGrouping()`
+  is no longer unbuilt (`spec: drafted, code: partial`); represented in the product use-cases at
+  [`0-product/selection.md`](../../../0-product/selection.md) §6.
 - **D60 (2026-09-12) — a blocked write is a silent no-op; no throw, no warn.** Answers Q5 of
   [#57](https://github.com/DvirMon/acme/issues/57); implemented as part of
   [#63](https://github.com/DvirMon/acme/issues/63). When `enableRowSelection` filters ids out of a

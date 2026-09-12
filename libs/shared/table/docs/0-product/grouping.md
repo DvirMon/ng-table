@@ -598,7 +598,7 @@ correct group instantly". Our own state side already flagged the insertion half
 
 ## Owned by selection *(built)*
 
-### X-G1 — Ticking a group's checkbox — ❌ not covered *(forward-looking)*
+### X-G1 — Ticking a group's checkbox — ❌ not covered, resolved as consumer-owned (D16, 2026-09-12)
 
 > As someone selecting everything in a region so I can act on it in bulk, I want to tick the
 > region's checkbox once, and I want to know exactly what I just selected.
@@ -629,10 +629,20 @@ row"), and ag-grid again on the filtered variant
 ([#11209](https://github.com/ag-grid/ag-grid/issues/11209) — a group shows partially selected when
 every *visible* child is selected).
 
-Internally this is already flagged twice: `selection.md:128`/`:134-137`, and
+Internally this was flagged twice: `selection.md:128`/`:134-137`, and
 `with-selection/2-decisions.md:168-173` with an explicit instruction — "**Must be represented in
-the product use-cases / story set either way.**" This story is that representation. Raised as
-**OQ-1**.
+the product use-cases / story set either way.**" This story was that representation.
+
+**Resolved 2026-09-12, D16: the library ships no cascade semantics.** `table.rowsOf(group)`
+(issue #65) hands back the group's member rows; the consumer builds whatever cascade policy they
+want on top (`select(rowsOf(group).map(r => r.id))`), the same pattern `withSelection()` already
+uses everywhere else (D1's flat, caller-supplies-the-id-set design). No `groupSelects`-style
+library switch, no auto-cascade. This is the considered position, not a default-by-omission — the
+three-way vendor split above (AG Grid `'self'`, TanStack cascade-all, MUI X bidirectional) means
+there's no majority default to inherit, and PrimeNG's rowGroup/selection features actively
+conflicting in production for years is the concrete cost of *not* deciding this deliberately.
+Discharges the instruction in `with-selection/2-decisions.md:168-173`; `selection.md`'s own open
+question is updated to match.
 
 ## Owned by sorting *(built)*
 

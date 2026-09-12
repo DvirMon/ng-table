@@ -12,9 +12,9 @@ parent: ../architecture.md
 
 # withGrouping()
 
-> **⚠️ Two sections superseded — D1/D3/D4/D9/D16 shipped (issues #6, #58, #65); D6–D8/D11 still
-> unbuilt, read the decisions first for those.**
-> [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D15) settles the
+> **⚠️ Two sections superseded — D1/D3/D4/D9/D11/D16/D17 shipped (issues #6, #58, #59, #65); D6–D8
+> still unbuilt, read the decisions first for those.**
+> [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D17) settles the
 > API surface, and [work/with-grouping/3-spec.md](../work/with-grouping/3-spec.md) (`status: ready`)
 > writes it up as a contract. Superseded here:
 > - **Methods** — `setGrouping()`/`clearGrouping()` never shipped. The real write surface is
@@ -33,10 +33,15 @@ parent: ../architecture.md
 >   leaf row beneath a header, at any depth; the consumer owns any selection cascade. A group's
 >   row count is `rowsOf(group).length` — there is no separate count field on `RenderRow`.
 >
+> - **Collapse/expand shipped** — `withGrouping()` reads `withExpansion()`'s `expandedRows` set
+>   optionally, via the `composed` feature-to-feature seam (D11, shipped, issue #59). Collapsing a
+>   group id omits its descendants from `renderRows()`; the header itself always still renders.
+>   `rowsOf(group)` stays correct under collapse (D17, shipped, issue #59) — it re-derives the
+>   cluster tree from `rows()` (pipeline output) rather than scanning `renderRows()`.
+>
 > Still current, unshipped: the `groupingRule` base+overlay fold and
-> `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60), and collapse/expand coupling via
-> `withExpansion()`'s `expandedRows` (D11, #59) — every cluster currently renders fully expanded,
-> unconditionally. Read the decisions doc before building any of these.
+> `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60). Read the decisions doc before
+> building this.
 
 ## Executive Summary
 

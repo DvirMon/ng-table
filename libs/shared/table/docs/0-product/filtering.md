@@ -1,6 +1,7 @@
 ---
 title: Product — Filtering User Stories
 type: product
+capability: filtering
 status: >
   First pass, 2026-09-10. Written after `filters.md` and `features/filtering.md` (both
   `spec: drilled`, R1–R31 settled), not before — so this doc's job is to find what the design
@@ -431,7 +432,7 @@ selection story below, decided in one place rather than two.
 
 ## Owned by selection *(built)*
 
-### F-S1 — Selecting everything I can currently see stays true to what I see — ❌ not covered *(forward-looking)*
+### F-S1 — Selecting everything I can currently see stays true to what I see — 🟡 partly covered *(updated 2026-09-12)*
 
 > As someone who filtered a list down to "unpaid" and ticked "select all," I expect to have
 > selected the unpaid invoices — not every invoice in the table, and not nothing.
@@ -451,11 +452,16 @@ selection story below, decided in one place rather than two.
 - If the count of selected-but-hidden rows can't be computed for some reason, the selection state
   itself is never guessed at or reset as a side effect — only the count display degrades.
 
-**Design status — gap, and the highest-value one in this document.** `selection.md:17-22` already
-states, deliberately, that `withSelection()` has **no dependency on `withFiltering()`** — "every
-selection write names its own ids," refusing to resolve the "select all" scope question at all
-rather than guessing wrong. That non-dependency is a real design position, but it leaves this
-story fully unowned. The community evidence is the largest single cluster found across the entire
+**Design status — half-shipped since D59 (2026-09-11).** `selectAllIds(table)` now gives bullet 1
+a real, shipped answer: its default scope is `rows()` (post-filter/post-sort), so "select all"
+under an active filter selects exactly the currently-matching rows, not the full unfiltered set —
+`selection.md:17-22`'s deliberate non-dependency on `withFiltering()` (D1) turned out not to block
+this; the consumer just supplies the right id array. **Bullet 2 (retention + "N selected, M hidden"
+count) is still genuinely unbuilt** — no read-side signal exists for it yet, tracked from
+selection's side at
+[`0-product/selection.md`](selection.md) §2.5/§8.1 (S1) and routed to
+`work/computed-state-mechanism/1-intake.md`. The community evidence below is the largest single
+cluster found across the entire
 research pass — a near-universal, decade-spanning bug class, not a one-off: MUI X
 **[#976](https://github.com/mui/mui-x/issues/976)** (closed, "makes selection + filtering
 effectively useless when combined," per the maintainer), **[#1141](https://github.com/mui/mui-x/issues/1141)**,
@@ -533,18 +539,18 @@ member surface instead — `createFilters()` has no data to count without a tabl
 of four surveyed trackers.
 
 **OQ-2 — What does "select all" mean under an active filter, and what happens to a hidden
-selection? — open.**
-*Recommendation:* select all *currently matching* rows; never silently drop a prior selection just
-because a new filter hides it — show it as "N selected, M not currently visible" instead. This
-follows directly from the community evidence: every library that auto-drops or silently
-re-scopes a selection under a filter has fielded years of "selection doesn't work with filtering"
-reports, and the ones that keep the selection and just tell the person what's hidden don't appear
-in that list.
-*To decide:* whether `withSelection()`'s deliberate non-dependency on `withFiltering()`
-(`selection.md:17-22`) should be revisited to let it read `active()`/matched-row-ids, or whether
-this stays entirely the consumer's problem to wire (computing "select all" over whatever rows they
-already have on screen). The non-dependency was a real design choice, not an oversight — reversing
-it is not free.
+selection? — half-resolved 2026-09-11 (D59).**
+*Resolved:* "select all" means *currently matching* rows — `selectAllIds(table)` reads `rows()`
+(post-filter/post-sort) by default, `{ includeHidden: true }` for the full unfiltered set. The
+non-dependency on `withFiltering()` (`selection.md:17-22`, D1) was kept, not reversed — the
+consumer supplies the id array, `withSelection()` never reads `active()` directly.
+*Still open:* the "never silently drop a prior selection... show it as 'N selected, M not
+currently visible'" half. No read-side signal exists for the hidden count yet — tracked from
+selection's side as [`0-product/selection.md`](selection.md) OQ-1/OQ-4 and
+`work/computed-state-mechanism/1-intake.md`.
+*To decide:* whether that hidden-count signal belongs on `createFilters()` (it already computes
+`active()`) or on the computed-state mechanism selection's own doc routes it to — a cross-feature
+question, not filtering's alone.
 *Sequencing:* both features ship; this is a change to how they compose, not to either alone.
 Already anticipated once, narrowly, in `grouping.md`'s own OQ-1 (ticking a collapsed group's
 checkbox under a filter) — decide together, not twice.

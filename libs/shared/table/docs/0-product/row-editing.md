@@ -1,6 +1,7 @@
 ---
 title: Product — Row Editing User Stories
 type: product
+capability: row-editing
 status: OQ-1…OQ-7 resolved 2026-08-27. Coverage marks re-verified against actual story code
   2026-09-05 — several were stale in the direction of under-crediting shipped work (undo,
   external-write conflict, keyboard, save-all, add-several-in-a-run, undo-a-delete all had real
@@ -720,12 +721,18 @@ rejected. If drag-and-drop ships before that is designed, it ships without undo.
 - A validation error on a row I cannot see (another page, filtered out) never blocks a save without
   telling me which row and letting me get to it. The state register already flags this as O17.
 
-## Owned by selection *(unbuilt)*
+## Owned by selection *(built, blocked on bulk write verbs)*
 
-### X-1 — Bulk delete and bulk edit — ❌ not covered (forward-looking)
+### X-1 — Bulk delete and bulk edit — ❌ not covered (forward-looking) — updated 2026-09-12
 
-§3.3 and §1.8 both need a selection source. Bulk *edit* additionally needs the multiple-open
-semantics resolved first (G4) — the two features cannot be specified independently.
+§3.3 and §1.8 both need a selection source. **The selection source itself is no longer the
+blocker** — `withSelection()` has shipped, tested code (`spec: drilled, code: partial`,
+`docs/status.md`). What's still missing is the bulk write verbs it would feed:
+`removeRow(id[])`/`patchRow(id[], partial)` are explicitly out of scope for that effort (D12,
+[`1-state/work/with-selection/2-decisions.md`](../1-state/work/with-selection/2-decisions.md)).
+Bulk *edit* additionally needs the multiple-open semantics resolved first (G4) — the two features
+cannot be specified independently. See [`0-product/selection.md`](selection.md) §6 for the
+selection-side accounting of this story.
 
 ## Owned by expansion *(built)*
 

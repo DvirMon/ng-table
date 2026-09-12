@@ -1,7 +1,9 @@
 ---
 title: Decisions — withGrouping()
 type: decisions
-status: drilling — D1–D15 settled, 2 open (both deferred out of scope, not blocking a spec)
+status: drilling — D1–D17 settled, 2 open (both deferred out of scope, not blocking a spec).
+  D16 (group selection) came from the product pass, not the grill, and its call-site form is
+  pending ADR-0015.
 date: 2026-09-10
 audience: developers
 ---
@@ -158,7 +160,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   where that would come from, so grouping should be specced to accept it rather than needing
   rework when it lands. Handoff written for that work.
 
-- **D11 (2026-09-10) — Nested-group collapse is grouping's own subtree walk.**
+- **D11 (2026-09-10) — Nested-group collapse is grouping's own subtree walk — shipped, issue #59.**
   `'group'` runs *before* `'tree'` in `RENDER_ORDER`, so grouping cannot lean on
   `withExpansion()`'s tree-walking — by the time `'tree'` runs, grouping has already emitted its
   rows. Skipping descendants of a collapsed group id is the `'group'` stage's own logic.
@@ -168,6 +170,17 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   `withExpansion()` today and moves to `withTree()` under
   [ADR-0012](../../../adr/0012-split-expansion-into-panel-and-tree.md) (**proposed**, not
   implemented) — an optional read stays correct on both sides of that split.
+
+- **D17 (2026-09-12) — `rowsOf` resolves by re-deriving the cluster tree from `rows()`, not by
+  scanning `renderRows()` — shipped, issue #59.** D16 shipped `rowsOf` before collapse existed,
+  reading `renderRows()` between a header and the next row at or above its depth. Once D11 makes
+  `renderRows()` omit a collapsed group's descendants, that scan finds nothing for a collapsed
+  header and silently returns `[]` — breaking the selection-cascade recipe the moment a group is
+  collapsed. `0-product/grouping.md` X-G1 specs the correct behavior directly: "I never select
+  rows I cannot see and was never told about" describes what I *can* select, not what currently
+  renders. `rowsBeneathGroup` now re-clusters `rows()` (pipeline output, never collapse-affected)
+  and locates the target group by its synthetic id path, matching `emitGroupRows`'s own id
+  construction. Cost model unchanged from D16 (derived on call, no library-side cache).
 
 - **D12 (2026-09-10) — Multi-level performance is a design constraint, not a later concern.**
   Recursive clustering plus per-cluster aggregation at every depth is the first table feature with
@@ -258,6 +271,106 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   `aggregateFn` already has its fallback in ADR-0014's table (*"that aggregate reads `undefined`;
   the group still renders"*) — unchanged by multi-level (D9), since it wraps per callback and a
   deeper cluster is just another call.
+
+- **D16 (2026-09-12) — A group header is a *view over rows*, not a row. The library exposes a
+  group's member rows; the consumer owns any cascade.**
+
+  ```ts
+  rowsOf(group: RenderRow<TRow>): readonly TRow[]   // leaf rows beneath this group header
+  ```
+
+  **Derived on call, never materialized.** Walks the current cluster when asked and holds nothing.
+  The rejected alternative was a `rowIds?: readonly RowId[]` field stamped on every group
+  `RenderRow`: it costs N ids × every depth on every render even for the majority of grouped tables
+  that never select, and a new array identity per render breaks `@for` track and rebuilds every
+  group cell. Nothing held also means nothing to prune when rows are removed or a regroup happens —
+  which is the exact bug TanStack shipped ([#5822](https://github.com/TanStack/table/issues/5822):
+  a pinned group id outliving its group).
+
+  **Rows, not ids.** The asymmetry decides it: row→id is `trackBy(row)` — pure, total, available to
+  every consumer. id→row needs `indexById`, which is engine-internal. Returning ids optimizes for
+  selection and taxes every other consumer (export, bulk edit, custom aggregation). Selection pays
+  one `.map(trackBy)`. Also keeps one concept with D4's `GroupSummary.rows`.
+
+  **Leaf rows, not immediate children** — same shape as D9's aggregate invariant, so ticking a
+  parent reaches every leaf beneath it regardless of depth.
+
+  **What this settles beyond grouping.** A group header is a view: it never enters `selectedRows`,
+  never holds an id another feature stores, never counts toward "3 of 40 selected". The one
+  deliberate exception is `withExpansion()`'s `expandedRows`, which holds synthetic
+  `group:${columnId}:${value}` ids — principled because that set holds *toggles*, not records, and
+  load-bearing because it is what makes group expansion survive a refetch for free (ADR-0006 never
+  prunes them).
+
+  **The cascade is consumer code.** AG Grid needs `groupSelects: 'self' | 'descendants' |
+  'filteredDescendants'` because it owns the behavior; we own none of it, so we default none of it:
+
+  ```ts
+  // 'descendants' — and 'filteredDescendants' is the same call, because `filter`
+  // precedes `group` in PIPELINE_ORDER, so rowsOf() is post-filter by construction
+  const ids = table.rowsOf(group).map(table.trackBy);
+  table.selectionStateOf(ids) === 'all' ? table.deselect(ids) : table.select(ids);
+  ```
+
+  Tri-state needs no new API: `selectionStateOf(ids)` already returns `'none' | 'some' | 'all'`
+  (`with-selection.ts:139-146`).
+
+  **Consequences.** The group row count is `rowsOf(group).length` — not a new `RenderRow` field and
+  not an `aggregates` entry, since it exists whether or not any column defines an `aggregateFn`
+  (resolves `0-product/grouping.md` OQ-2). The filtered-vs-unfiltered question in OQ-1 dissolves:
+  there is no unfiltered set to hand out. OQ-1 itself narrows from "what are the semantics" to
+  nothing — we ship no semantics.
+
+  **Accepted costs.** (1) A consumer can select unfiltered ids while a header shows a filtered
+  count; the directive layer should ship the correct wiring as its default so most people never
+  hold it wrong. (2) `rowsOf` is O(n) per call, called twice per checkbox in the naive template —
+  fine at 50 groups, not at 5,000. Documented recipe is a `computed()` keyed by group id, not a
+  library-side cache. Belongs with D12 / `0-product/performance.md` axis 1. (3) A bulk operation
+  can never be addressed to a group as an object, because no such object is selectable.
+
+  **Call-site form is not settled here.** Whether this reads `table.rowsOf(g)` or
+  `table.grouping.rowsOf(g)` is [ADR-0015](../../../adr/0015-feature-member-namespacing.md)
+  (`proposed`) — this feature's first behavior function is what opened it.
+
+  **D16.1 (2026-09-12) — two implementation constraints, both part of the contract rather than
+  details left to whoever builds it.**
+
+  1. **Resolve the group by id, never by object identity.** `renderRows()` rebuilds its
+     `RenderRow` objects every render pass, so a consumer holding a header across renders passes a
+     stale object — but `RenderRow.id` (`types.ts:39`) is the stable
+     `group:${columnId}:${value}`, so the stale object still carries the right key. An
+     implementation doing `renderRows().find(r => r === group)` returns `[]` for a group that is
+     plainly still on screen; `.find(r => r.id === group.id)` is correct regardless of which pass
+     the argument came from. **This is the constraint that matters. The parameter type is a
+     secondary ergonomics call** — `RowId` would remove the identity trap from the surface and let
+     a consumer ask from a saved id with no header in hand, while `RenderRow` reads better in a
+     template that already has the row (`rowsOf(row)` vs `rowsOf(row.id)`). Taking `RenderRow`;
+     either works once resolution is by id.
+
+  2. **It must read `renderRows()`, so it composes inside `computed()`.** The motivating case is a
+     consumer deriving one group's rows reactively:
+
+     ```ts
+     readonly categoryRows = computed(() => {
+       const header = this.table.renderRows().find(
+         (r) => r.kind === 'group' && r.groupKey?.value === this.category(),
+       );
+       return header ? this.table.rowsOf(header) : [];
+     });
+     ```
+
+     That tracks both the consumer's own signal and every pipeline change — data, filter, grouping
+     — because `renderRows()` is read. An implementation closing over an already-materialized
+     cluster would be silently non-reactive inside a `computed()`, which is the kind of defect that
+     surfaces as "my totals stopped updating" weeks later. Stated here so it is specced, not
+     discovered.
+
+     Accepted cost: `renderRows()` also changes on a sort, so such a `computed()` recomputes even
+     when the group's membership did not, and returns a fresh array each time. Over-triggering, not
+     incorrect — same bucket as D16's O(n) note.
+
+  **A group that no longer exists returns `[]`** — the category was deleted, grouping switched
+  columns. Correct degrade per D14, and independent of both constraints above.
 
 ## Open
 

@@ -107,6 +107,23 @@ doc is the result of that design conversation.
   breakdown.
 - **`apply*Async` has an optional `onError`**, mirroring `validateAsync`'s `onError` — lets a
   consumer choose the fallback on request failure instead of freezing at the last-resolved value.
+- **Which variant to use — `applyVisible` vs. `applyVisibleAsync` — is about who owns the value at
+  runtime, not whether it happened to be fetched.** Backported from
+  [`work/with-grouping/2-decisions.md`](../1-state/work/with-grouping/2-decisions.md) D13, which
+  names the same criterion for `applyGrouping`/`applyGroupingAsync`; this file described the two
+  as counterparts without ever stating when to choose which.
+
+  | | `applyVisible` (sync/reactive) | `applyVisibleAsync` (resource-backed) |
+  |---|---|---|
+  | Use when | the value is settled by the time it matters, however it was obtained | the server owns it at runtime and it can change; the rule must re-query |
+  | Owns fetching | consumer | the rule (`params`/`factory`) |
+  | Owns success/error | consumer, upstream | the rule (`onSuccess`/`onError`) |
+
+  A value fetched once at init and closed over (e.g. `linkedSignal(() => prefs.value()?.canSeeCol
+  ?? …)` read inside `{ when }`) is the sync case, not the async one — it is async only in *how*
+  it was obtained, and `applyVisible`'s `{ when }` already runs reactively off that signal.
+  `applyVisibleAsync` is strictly heavier and is for the case that must re-query: default to
+  `applyVisible`, reach for `applyVisibleAsync` only when the rule itself must own re-fetching.
 - **Data-derived column set — rejected 2026-07-31.** A `createColumns(data, schemaFn)` overload
   deriving columns from row-data keys at runtime was proposed and rejected — never a dependency of
   `columnsSchema`, and a later variant (`createColumns(baseColumns, schemaFn)` wrapping the existing

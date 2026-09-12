@@ -257,13 +257,18 @@ function reorderGroupLevels<TRow>(from: number, to: number): GroupingUpdater<TRo
   implementable but deferred (ADR-0003, `architecture.md`'s "Known DX cost"). D8's schema fn needs
   a typed `path` proxy, and `ctx` is where that would come from — grouping is specced to accept it
   rather than needing rework when it lands.
-- **Nested-group collapse is grouping's own subtree walk (D11).** `'group'` runs before `'tree'`
-  in `RENDER_ORDER`, so grouping cannot lean on `withExpansion()`'s tree-walking — by the time
-  `'tree'` runs, grouping has already emitted its rows. Skipping descendants of a collapsed group
-  id is the `'group'` stage's own logic. Group collapse state still reads `expandedRows`
-  **optionally** (`store.expandedRows?.()`) rather than declaring a hard dependency — that member
-  moves to `withTree()` under [ADR-0012](../../../adr/0012-split-expansion-into-panel-and-tree.md)
-  (`proposed`, not implemented), and an optional read stays correct on both sides of that split.
+- **Nested-group collapse is grouping's own subtree walk (D11) — shipped, issue #59.** `'group'`
+  runs before `'tree'` in `RENDER_ORDER`, so grouping cannot lean on `withExpansion()`'s
+  tree-walking — by the time `'tree'` runs, grouping has already emitted its rows. Skipping
+  descendants of a collapsed group id is the `'group'` stage's own logic. Group collapse state
+  still reads `expandedRows` **optionally** (via the `composed` feature-to-feature seam) rather
+  than declaring a hard dependency — that member moves to `withTree()` under
+  [ADR-0012](../../../adr/0012-split-expansion-into-panel-and-tree.md) (`proposed`, not
+  implemented), and an optional read stays correct on both sides of that split.
+- **`rowsOf` stays correct under collapse (D17) — shipped, issue #59.** See `2-decisions.md` D17
+  for the full rationale — `rowsBeneathGroup` re-derives the cluster tree from `rows()` (pipeline
+  output, never collapse-affected) instead of scanning `renderRows()`, so a collapsed group still
+  resolves its full leaf set.
 - **Multi-level performance is a design constraint, not a later concern (D12).** Recursive
   clustering plus per-cluster aggregation at every depth is the first table feature with a
   plausible super-linear shape. Depth behavior must be explored with row-count and cell-cost
@@ -318,8 +323,8 @@ function reorderGroupLevels<TRow>(from: number, to: number): GroupingUpdater<TRo
   callback and a deeper cluster is just another call.
 - **A group header is a view over rows; the library ships no selection cascade (D16, D16.1).**
   `rowsOf(group)` returns every leaf row beneath a header, at any depth, resolved by `group.id`
-  (never object identity) and reading `renderRows()` so it composes inside a consumer
-  `computed()`. Rows, not ids — row→id is `trackBy(row)`, pure and total; the reverse needs
+  (never object identity) and reading `rows()` (pipeline output, independent of collapse state —
+  see D17). Rows, not ids — row→id is `trackBy(row)`, pure and total; the reverse needs
   engine-internal `indexById`. Nothing is materialized or cached; a group that no longer exists
   returns `[]`. See `2-decisions.md` for the full rationale and rejected alternatives
   (a `rowIds` field on every group `RenderRow`, an id-returning surface).
@@ -373,6 +378,8 @@ wrong file.
   once per evaluation.
 - With `withExpansion()` composed, collapsing a group id omits its descendant rows; without it,
   all rows render flat and expanded.
+- `rowsOf` on a collapsed group still returns the full leaf set, not `[]` (D17) — resolved by
+  re-deriving the cluster tree from `rows()`, never affected by `expandedRows`.
 - Removing rows that were the sole members of a cluster removes that cluster from `renderRows`
   without residual state.
 - `rowsOf` returns every leaf beneath a header at any depth; a header captured from an earlier

@@ -1,6 +1,6 @@
 /**
  * Generates `docs/status.md` — one row per `capability:`, pairing a feature's
- * state-layer spec with its UI-layer spec.
+ * state-layer spec, UI-layer spec, and story-research (`docs/0-product/`) doc.
  *
  * Run: `npm run table:status` (add `-- --dry-run` to print without writing).
  * Contract for the frontmatter fields it reads:
@@ -17,7 +17,17 @@ const GENERATOR_PATH = 'libs/shared/table/tools/generate-status.ts';
 /** D3: only these carry `capability:`/`spec:`/`code:`. Everything else keeps free-text `status:`. */
 const STATE_FEATURES_DIR = join(DOCS_ROOT, '1-state', 'features');
 const UI_DIRECTIVES_DIR = join(DOCS_ROOT, '3-ui', 'directives');
-const CROSS_FEATURE_FILES = [join(DOCS_ROOT, '1-state', 'state-persistence.md')];
+const CROSS_FEATURE_FILES = [
+  join(DOCS_ROOT, '1-state', 'state-persistence.md'),
+  join(DOCS_ROOT, '1-state', 'filters.md'),
+];
+
+/**
+ * `docs/0-product/*.md` (story-research output) carry `capability:` only — no `spec:`/`code:`,
+ * since maturity there isn't spec/code, it's "does a user-stories doc exist". A cross-cutting
+ * doc (e.g. `performance.md`) has no `capability:` and is silently excluded, not diagnosed.
+ */
+const PRODUCT_DOCS_DIR = join(DOCS_ROOT, '0-product');
 
 const SPEC_VALUES = ['none', 'stub', 'drafted', 'drilled'] as const;
 const CODE_VALUES = ['none', 'partial', 'shipped'] as const;
@@ -27,7 +37,7 @@ const INVALID_VALUE_CELL = '`?`';
 
 type SpecStatus = (typeof SPEC_VALUES)[number];
 type CodeStatus = (typeof CODE_VALUES)[number];
-type Layer = 'state' | 'ui';
+type Layer = 'state' | 'ui' | 'product';
 
 interface SpecDoc {
   /** Path relative to `docs/`, posix-separated — usable directly as a link href. */
@@ -42,6 +52,7 @@ interface CapabilityRow {
   capability: string;
   state: SpecDoc | null;
   ui: SpecDoc | null;
+  product: SpecDoc | null;
 }
 
 function isSpecStatus(value: string): value is SpecStatus {
@@ -140,6 +151,23 @@ function readEnumField<TValue extends string>(
   return raw;
 }
 
+function readProductDoc(absolutePath: string): SpecDoc | null {
+  const href = toHref(absolutePath);
+  const fields = parseFrontmatter(readFileSync(absolutePath, 'utf8'));
+
+  if (fields === null) {
+    reportDiagnostic(href, 'no YAML frontmatter block — expected capability:');
+    return null;
+  }
+
+  const capability = fields.get('capability') ?? '';
+  if (capability === '') {
+    return null; // cross-cutting doc (e.g. performance.md) — not per-capability, excluded silently
+  }
+
+  return { href, layer: 'product', capability, spec: null, code: null };
+}
+
 function listMarkdownFiles(directory: string): string[] {
   if (!existsSync(directory)) {
     return [];
@@ -153,18 +181,20 @@ function listMarkdownFiles(directory: string): string[] {
 function collectSpecDocs(): SpecDoc[] {
   const stateFiles = [...listMarkdownFiles(STATE_FEATURES_DIR), ...CROSS_FEATURE_FILES.filter(existsSync)];
   const uiFiles = listMarkdownFiles(UI_DIRECTIVES_DIR);
+  const productFiles = listMarkdownFiles(PRODUCT_DOCS_DIR);
 
   const stateDocs = stateFiles.map((file) => readSpecDoc(file, 'state'));
   const uiDocs = uiFiles.map((file) => readSpecDoc(file, 'ui'));
+  const productDocs = productFiles.map((file) => readProductDoc(file));
 
-  return [...stateDocs, ...uiDocs].filter((doc): doc is SpecDoc => doc !== null);
+  return [...stateDocs, ...uiDocs, ...productDocs].filter((doc): doc is SpecDoc => doc !== null);
 }
 
 function groupByCapability(docs: SpecDoc[]): CapabilityRow[] {
   const rows = new Map<string, CapabilityRow>();
 
   for (const doc of docs) {
-    const row = rows.get(doc.capability) ?? { capability: doc.capability, state: null, ui: null };
+    const row = rows.get(doc.capability) ?? { capability: doc.capability, state: null, ui: null, product: null };
     const occupant = row[doc.layer];
 
     if (occupant !== null) {
@@ -197,7 +227,14 @@ function renderDocsCell(row: CapabilityRow): string {
   if (row.ui !== null) {
     links.push(`[ui](${row.ui.href})`);
   }
+  if (row.product !== null) {
+    links.push(`[product](${row.product.href})`);
+  }
   return links.length > 0 ? links.join(' · ') : MISSING_LAYER_CELL;
+}
+
+function renderStoryResearchCell(row: CapabilityRow): string {
+  return row.product !== null ? `[✅](${row.product.href})` : MISSING_LAYER_CELL;
 }
 
 function renderRow(row: CapabilityRow): string {
@@ -207,6 +244,7 @@ function renderRow(row: CapabilityRow): string {
     renderStatusCell(row.state, 'code'),
     renderStatusCell(row.ui, 'spec'),
     renderStatusCell(row.ui, 'code'),
+    renderStoryResearchCell(row),
     renderDocsCell(row),
   ];
   return `| ${cells.join(' | ')} |`;
@@ -232,8 +270,8 @@ function renderHeader(): string {
 
 function renderStatusDoc(rows: CapabilityRow[]): string {
   const table = [
-    '| Capability | State spec | State code | UI spec | UI code | Docs |',
-    '|---|---|---|---|---|---|',
+    '| Capability | State spec | State code | UI spec | UI code | Story research | Docs |',
+    '|---|---|---|---|---|---|---|',
     ...rows.map(renderRow),
   ].join('\n');
 

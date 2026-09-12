@@ -87,9 +87,17 @@ interface TableSnapshot {
   sorting?: SortRule[];                                       // withSorting()
   filters?: { columnFilters: FilterRule[]; globalFilter: string };  // withFiltering()
   pagination?: { pageIndex: number; pageSize: number };       // withPagination()
-  grouping?: string | null;                                   // withGrouping()
+  grouping?: string[];                                        // withGrouping() — ordered, index 0 = outermost
 }
 ```
+
+**`grouping` is an ordered array, corrected 2026-09-10.** It was `string | null` while
+`withGrouping()` was scoped single-level; D9 reopened that and full multi-level ships
+([`work/with-grouping/2-decisions.md`](work/with-grouping/2-decisions.md), D3/D9), so the old shape
+could not represent a saved two-level arrangement at all — not degrade it, represent it. Absent
+means the feature was not composed; `[]` means the table was composed with grouping and actively
+grouped by nothing. On restore, a level naming a column that no longer exists is dropped and the
+rest apply (D14's runtime branch), rather than failing the whole snapshot.
 
 **Per-column entries, not parallel slice arrays.** This is the one shape decision worth
 defending. AG Grid's `getColumnState()` — an array of per-column records — is the audit's
@@ -218,8 +226,13 @@ speculative one. These are the acceptance tests, not a wishlist.
 
 - [ ] **Is selection persisted?** PrimeNG deliberately excludes selection and expansion from
   its persisted slice set. Selection is arguably session state, not layout — but it is also
-  the audit's #1 gap and `withSelection()` doesn't exist yet, so this cannot be decided until
-  the selection-scope concept (page/filtered/all) is settled.
+  the audit's #1 gap. Both preconditions that used to block this are gone: `withSelection()`
+  has shipped, tested code (`spec: drilled, code: partial`), and D1 settled the selection-scope
+  question (no scope concept — every write names its own ids) on 2026-09-06. `selection.md`'s
+  own D19 already answers the substance: `withSelection()` will declare a persistence slice
+  later, using the `emitEvent: false` silent-write path (D18); it ships none today, by design.
+  Still open here only as a scheduling question — when the slice actually lands, not whether it
+  will.
 - [x] **Is expansion persisted?** Resolved 2026-09-07 — **yes, as a slice**, and the slice
   mechanism above is the *only* restore path expansion gets. `withExpansion()` contributes
   `{ key: 'expansion', read: () => [...expandedRows()], write: (ids) => … }`; it deliberately
