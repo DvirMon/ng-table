@@ -45,9 +45,9 @@ function isEmptyDateRange(criterion: DateRangeCriterion): boolean {
   return criterion.from == null && criterion.to == null;
 }
 
-export function equals<TRow, K extends Extract<keyof TRow, string>>(
+export function equals<TRow, K extends Extract<keyof TRow, string>, TAs extends string = string>(
   path: FilterHandle<TRow, K>,
-  options?: FilterOptions<TRow[K]>
+  options?: FilterOptions<TRow[K], TAs>
 ): void {
   const recorder = assertFilterPathIsCurrent(path);
   recorder.record({
@@ -61,10 +61,11 @@ export function equals<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies FilterRuleRecord<TRow>);
 }
 
-export function contains<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
-  options?: FilterOptions<string>
-): void {
+export function contains<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TAs extends string = string
+>(path: FilterHandle<TRow, K>, options?: FilterOptions<string, TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
   recorder.record({
     kind: 'single',
@@ -77,10 +78,11 @@ export function contains<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies FilterRuleRecord<TRow>);
 }
 
-export function inRange<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
-  options?: FilterOptions<RangeCriterion>
-): void {
+export function inRange<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TAs extends string = string
+>(path: FilterHandle<TRow, K>, options?: FilterOptions<RangeCriterion, TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
   recorder.record({
     kind: 'single',
@@ -93,10 +95,11 @@ export function inRange<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies FilterRuleRecord<TRow>);
 }
 
-export function inDateRange<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
-  options?: FilterOptions<DateRangeCriterion>
-): void {
+export function inDateRange<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TAs extends string = string
+>(path: FilterHandle<TRow, K>, options?: FilterOptions<DateRangeCriterion, TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
   recorder.record({
     kind: 'single',
@@ -109,10 +112,11 @@ export function inDateRange<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies FilterRuleRecord<TRow>);
 }
 
-export function hasAny<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
-  options?: FilterOptions<readonly unknown[]>
-): void {
+export function hasAny<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TAs extends string = string
+>(path: FilterHandle<TRow, K>, options?: FilterOptions<readonly unknown[], TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
   recorder.record({
     kind: 'single',
@@ -125,10 +129,11 @@ export function hasAny<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies FilterRuleRecord<TRow>);
 }
 
-export function hasNone<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
-  options?: FilterOptions<readonly unknown[]>
-): void {
+export function hasNone<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TAs extends string = string
+>(path: FilterHandle<TRow, K>, options?: FilterOptions<readonly unknown[], TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
   recorder.record({
     kind: 'single',
@@ -154,10 +159,15 @@ export function hasNone<TRow, K extends Extract<keyof TRow, string>>(
  * consumer's own default `value` (via `options.source`, or `undefined` with no source) is
  * evaluated on every pass. Documented here since `filters.md` leaves this choice unspecified.
  */
-export function filter<TRow, K extends Extract<keyof TRow, string>, TCriterion>(
+export function filter<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TCriterion,
+  TAs extends string = string
+>(
   path: FilterHandle<TRow, K>,
   predicate: (cell: TRow[K], criterion: TCriterion) => boolean,
-  options?: FilterOptions<TCriterion> & {
+  options?: FilterOptions<TCriterion, TAs> & {
     isEmpty?: (criterion: TCriterion) => boolean;
     emptyValue?: TCriterion;
   }

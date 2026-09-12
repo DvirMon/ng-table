@@ -1,14 +1,21 @@
 import type { WritableSignal } from '@angular/core';
 
 /**
+ * Rejects a widened `string` while passing any string literal (or literal union) through
+ * unchanged — `string extends T` is only true once `T` has been widened to the base type,
+ * which happens exactly when the caller passed a plain `string`-typed variable instead of a
+ * literal. Resolves R32: `TAs` is inferred per rule call from `FilterOptions.as` itself, so no
+ * schema-wide `TState` derivation is needed to enforce this.
+ */
+type EnforceLiteralKey<T extends string> = string extends T ? never : T;
+
+/**
  * Per-filter override — a default the user can subsequently edit (`source`), and a rename for
  * the borrowed path key (`as`). See `docs/1-state/filters.md`'s "Sources" and "Keys".
  */
-export interface FilterOptions<TSource = unknown> {
+export interface FilterOptions<TSource = unknown, TAs extends string = string> {
   readonly source?: () => TSource;
-  /** Not restricted to string literals at the type level (R32) — a `string`-typed variable is
-   *  not rejected here, unlike `filters.md`'s documented intent. */
-  readonly as?: string;
+  readonly as?: EnforceLiteralKey<TAs>;
 }
 
 /**

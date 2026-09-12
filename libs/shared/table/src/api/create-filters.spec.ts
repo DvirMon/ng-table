@@ -98,6 +98,14 @@ describe('createFilters — keys', () => {
     expect(filters.due().value()).toEqual({ from: null, to: null });
   });
 
+  it('rejects a widened `string` variable for `as` at compile time (filters.md: "must be a string literal")', () => {
+    build<InvoiceFilterState>((path) => {
+      const dynamicName = String('status'); // widened to `string`, not a literal
+      // @ts-expect-error — `as` must be a string literal, not a `string`-typed variable (R32 fix).
+      equals(path.status, { as: dynamicName });
+    });
+  });
+
   it('anyOf takes its key positionally, never borrowed from a path', () => {
     const filters = build<{ search: string }>((path) => {
       anyOf<Invoice>('search', (p) => {
