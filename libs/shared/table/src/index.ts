@@ -27,6 +27,7 @@ export type {
   SelectionWriteOptions,
   SelectionMembers,
 } from './api/features/with-selection';
+export { selectAllIds } from './api/features/selection.utils';
 export type {
   EditingState,
   EditingUpdater,

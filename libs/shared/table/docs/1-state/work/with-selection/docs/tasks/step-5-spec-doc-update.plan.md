@@ -77,4 +77,4 @@ in sync with shipped code for #62.
 - [ ] `2-decisions.md`'s Open questions section is unchanged (Q4/Q5 still open).
 
 ---
-← [Step 4: enableRowSelection() spec coverage](step-4-enable-row-selection-spec.plan.md)
+← [Step 4: enableRowSelection() spec coverage](step-4-enable-row-selection-spec.plan.md) | [Step 6: selectAllIds() helper (D59)](step-6-select-all-ids-helper.plan.md) →

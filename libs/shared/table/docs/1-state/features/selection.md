@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withSelection()
 type: architecture
-version: 1.1
-date: 2026-09-09
+version: 1.2
+date: 2026-09-11
 capability: selection
 spec: drilled
 code: partial
@@ -22,7 +22,7 @@ per-row or table-wide), never stored mode state. Standalone — no dependency on
 feature.
 
 Full decision record: [`work/with-selection/2-decisions.md`](../work/with-selection/2-decisions.md)
-(D1–D19, D58). Spec: [`work/with-selection/3-spec.md`](../work/with-selection/3-spec.md).
+(D1–D19, D58–D59). Spec: [`work/with-selection/3-spec.md`](../work/with-selection/3-spec.md).
 
 ## State Shape
 
@@ -116,6 +116,37 @@ discarding the rest.
 `initialSelection` is written directly into `selectedRows` at construction — never routed
 through `select()`, which emits (D16) — but is still subject to this same truncation rule.
 
+## `selectAllIds()` helper
+
+```ts
+export function selectAllIds<TRow>(
+  table: Pick<TableStore<TRow>, 'rows' | 'value' | 'trackBy'>,
+  opts?: { includeHidden?: boolean }
+): RowId[]
+```
+
+Not a `SelectionMembers` method — a standalone function reading only the **core** `TableStore`
+(`rows`/`value`/`trackBy`), so it adds nothing to `withSelection()` and creates no dependency on
+`withFiltering()` (D59). Produces the id array `select()`/`deselect()` already take; it never
+becomes a third write verb.
+
+```ts
+table.select(selectAllIds(table));                          // visible/matching — default
+table.select(selectAllIds(table, { includeHidden: true }));  // every row, filtered or not
+table.deselect(selectAllIds(table));                         // "deselect all visible" toggle half
+```
+
+`includeHidden` is a boolean, not a `scope` enum — exactly two datasets exist at the core level
+(`rows`, `value`), permanently. A future page- or group-scoped select-all builds its own id array
+(`table.renderRows()` filtered by `kind === 'row'`, or a group's rows) and passes it to
+`select()`/`deselect()` directly, rather than becoming a third case here (D59).
+
+Shipped at `api/features/selection.utils.ts` (D59) — a plain function, no DI/injection context,
+against the already-shipped `TableStore` surface; not blocked on `createFilters()`. What it
+deliberately does not solve: page-scoped select-all; the read-side "are all visible rows
+selected" signal, routed to
+[`work/computed-state-mechanism/1-intake.md`](../work/computed-state-mechanism/1-intake.md).
+
 ## Compile-Time Dependencies
 
 None. Standalone — reads only `rows` (for the multi-select predicate's row lookup) and
@@ -148,11 +179,11 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 
 ## Open Questions
 
-- [ ] **Group-header select-all.** A checkbox on a `withGrouping()` group header should
-      plausibly mean "select every row in this group." D8 makes the synthetic group id
-      *selectable*, but selecting the header id is not the same as selecting its members.
-      Undecided whether this is library API or consumer code. Not blocking — `withGrouping()`
-      is unbuilt.
+- [x] **Group-header select-all.** Resolved 2026-09-12 by D16 — no library cascade semantics;
+      `table.rowsOf(group)` (issue #65) plus a consumer-owned cascade
+      (`select(rowsOf(group).map(r => r.id))`), matching D1's flat, caller-supplies-the-id-set
+      design. See [`2-decisions.md`](../work/with-selection/2-decisions.md) and
+      [`0-product/selection.md`](../../0-product/selection.md) §6.
 - [ ] **`withPagination()` / `withInfiniteScroll()` mutual exclusivity** — unrelated to
       selection directly, but selection's scope-free design assumes rows are addressable by id
       regardless of which is composed; revisit if that assumption changes.
