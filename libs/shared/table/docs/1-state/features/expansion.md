@@ -243,6 +243,13 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
 
 ## Open Questions
 
+- [ ] **Non-expandable rows.** Selection shipped a per-row gate —
+  [D58](../work/with-selection/2-decisions.md): `enableRowSelection?: boolean | ((row) => boolean)`,
+  gating id-adding writes only, permissive when the id resolves to no row (so D8 holds), no
+  reconcile. Expansion has no equivalent and already adopts D8 verbatim below, so if
+  "non-expandable row" is ever wanted it should take the same shape rather than diverge. Not
+  scheduled — recorded so it is findable from this side. Research:
+  [research-row-selectability.md](../work/with-selection/research-row-selectability.md).
 - [x] Should `rowExpanded` fire separately for expand vs. collapse, or is a single event with inspectable state sufficient? Resolved — single `rowExpanded` event, direction inferable from `expandedRows` after the change. Shipped as specced.
 - [x] Do `expandAll()`/`collapseAll()` emit `rowExpanded`? Resolved 2026-09-06 — yes, once per affected id; no separate bulk event. The bulk verbs previously mutated `expandedRows` silently, which contradicted this doc and broke the lazy-load-on-expand use in PRD #29. Cross-library comparison, and why the AG Grid–style separate bulk event was not chosen (yet): [expansion-state-audit.md](../work/with-expansion/expansion-state-audit.md).
 - [x] **Stale restored ids.** `initialExpanded` (and a snapshot `write()`) can carry ids whose

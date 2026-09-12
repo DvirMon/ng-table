@@ -171,19 +171,41 @@ _(appended as they settle)_
   that expands a group id to its member ids) or consumer code (`select(groupRows.map(r => r.id))`).
   Not blocking `withSelection()` — `withGrouping()` is unbuilt. Must be represented in the product
   use-cases / story set either way.
+- **D60 (2026-09-12) — a blocked write is a silent no-op; no throw, no warn.** Answers Q5 of
+  [#57](https://github.com/DvirMon/acme/issues/57); implemented as part of
+  [#63](https://github.com/DvirMon/acme/issues/63). When `enableRowSelection` filters ids out of a
+  `toggle`/`select`/seed, nothing is logged and nothing is emitted — a fully-blocked write falls
+  through `applyNextSelection`'s existing no-op guard.
+
+  The asymmetry with `applyMultiSelectRule`, which *throws* in dev mode, is deliberate — the two
+  rules fail for different reasons:
+
+  - `enableMultiRowSelection` throws because `select([a, b])` under single-select is the caller
+    contradicting their own config, and the discard is lossy and arbitrary (last id wins). A caller
+    bug worth surfacing loudly.
+  - `enableRowSelection` filtering is the **designed path**, not a mistake. D58 has `select(ids)`
+    take an unfiltered array and drop what it must, and D59's `select(selectAllIds(table))` passes
+    every id by construction. Throwing would make select-all throw in any table holding one
+    non-selectable row.
+
+  Rejected: a dev-mode `console.warn` on a fully-blocked write. `select([oneBlockedId])` and
+  select-all over an all-disabled group are the same call signature, so a warning cannot tell a
+  caller mistake from the intended path — it would fire on correct code.
+
 - **Non-selectable rows — residual questions after D58**
   ([#57](https://github.com/DvirMon/acme/issues/57), research at
   [research-row-selectability.md](research-row-selectability.md)). D58 settles *whether* the gate
   ships and its write-path scope. Still open, each answerable in isolation:
   - Does `selectionStateOf(ids)` exclude non-selectable ids from its denominator? Under D1 the
     caller supplies the id set and could pre-filter. No library precedent transfers — nobody else
-    pushed the denominator to the caller.
-  - Does a blocked write need to be distinguishable from a no-op? Today a blocked `toggle` changes
-    nothing, so it emits no `selectionChanged`. Note the asymmetry with `applyMultiSelectRule`,
-    which *throws* in dev mode on violation — an unresolved inconsistency, not a decision.
+    pushed the denominator to the caller. **Tracked as
+    [#66](https://github.com/DvirMon/acme/issues/66)** — latent until
+    `3-ui/directives/selection.md` is drilled, visible the moment it is.
+  - ~~Does a blocked write need to be distinguishable from a no-op?~~ Answered by **D60** below.
   - Is `withExpansion()` the same question? It cites D8 for stale restored ids
     ([expansion.md](../../features/expansion.md)); if "non-expandable row" lands, the two shapes
-    should not diverge.
+    should not diverge. No issue — conditional on expansion work ADR-0012 may restructure; recorded
+    as an open question in `expansion.md` so it is findable from that side.
 - **D9 (2026-09-06) — `selectionChanged: Observable<SelectionChange>`, CDK-shaped, delta payload.**
 
   ```ts
