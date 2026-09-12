@@ -1,10 +1,10 @@
 import { signal } from '@angular/core';
-import { buildGroupRenderRows, clusterRows } from '../../engine/grouping';
+import { buildGroupRenderRows, clusterRows, rowsBeneathGroup } from '../../engine/grouping';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
-import type { ColumnId, GroupingUpdater, GroupSummary } from '../types';
+import type { ColumnId, GroupingUpdater, GroupSummary, RenderRow } from '../types';
 
-type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns'>;
+type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns' | 'renderRows'>;
 
 export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
@@ -19,6 +19,11 @@ export interface WithGroupingConfig<TRow> {
 
 export interface GroupingMembers<TRow> {
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;
+  /** Leaf rows beneath a group header, at any depth — post-filter by construction, since
+   * `filter` precedes `group` in `PIPELINE_ORDER`. Resolved by `group.id`, so a header from an
+   * earlier render pass still works; a group that no longer exists returns `[]`. Reads
+   * `renderRows()`, so it composes inside a `computed()`. */
+  readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
 }
 
 /**
@@ -47,8 +52,11 @@ export function withGrouping<TRow = unknown>(
       (updater) => baseGrouping.update(updater)
     );
 
+    const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
+      rowsBeneathGroup(core.renderRows(), group.id);
+
     return {
-      members: { grouping },
+      members: { grouping, rowsOf },
       stages: {
         group: (rows) => clusterRows(rows, baseGrouping(), core.columns(), config.groupOrder),
       },

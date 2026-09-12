@@ -1,13 +1,15 @@
 ---
 title: Product — Grouping User Stories
 type: product
+capability: grouping
 status: >
   First pass, 2026-09-10. Written after D1–D15 and `3-spec.md` (`status: ready`), not before — so
   this doc's job is to find what the design does not cover, and it does. §8 splits the gaps by
   owning layer: 11 state, 10 UI, 5 needing both, plus 2 direct contradictions with shipped docs.
   §9 lists 5 capabilities with no doc at all, checked against the generated registry. Coverage is
-  ❌ across the board because `withGrouping()` has zero code. OQ-1…OQ-8 all open, none silently
-  picked.
+  ❌ across the board — though `code: partial` landed 2026-09-10 (D1/D3/D9, issue #6), so §2's
+  marks need a re-verify pass. OQ-1 and OQ-2 resolved 2026-09-12 by D16 (group selection); OQ-3…OQ-8
+  still open, none silently picked.
 date: 2026-09-10
 audience: product, design, engineering
 ---
@@ -803,11 +805,15 @@ the grid hard-errors on an id that no longer exists. mui-x
 state, so a user's saved view cannot restore it. Four instances, three libraries, one unanswered
 question.
 
-**Our current position is split and nobody has noticed.** `RenderRow.kind: 'group'` with
-`data: null` says *view*. But `expandedRows` holding synthetic `group:${columnId}:${value}` ids
-says *row* — and that is load-bearing, because it is exactly what gives us §2.5 for free. So the
-honest answer is "a view everywhere except expansion, deliberately" — which is fine, but it is
-currently an accident rather than a decision, and X-G1 cannot be answered without stating it.
+**Answered 2026-09-12 — [D16](../1-state/work/with-grouping/2-decisions.md): a view, with one named
+exception.** `RenderRow.kind: 'group'` with `data: null` already said *view*; `expandedRows` holding
+synthetic `group:${columnId}:${value}` ids said *row*. Both stay, and the exception is principled
+rather than a fudge: `expandedRows` is a set of **toggles**, not of records. Selection, editing,
+pinning and mutations are sets of records, and a group is not a record — so a group id never enters
+any of them. The exception is also load-bearing: it is exactly what gives §2.5 (expansion surviving
+a refetch) for free, since ADR-0006 never prunes those ids.
+
+This was an accident until it was written down. Stating it is what made X-G1 answerable.
 
 ---
 
@@ -815,28 +821,37 @@ currently an accident rather than a decision, and X-G1 cannot be answered withou
 
 Each carries a recommendation and what would settle it. None silently picked.
 
-**OQ-1 — What does ticking a group's checkbox do? — open.**
-The three majors disagree by default, so there is no convention to inherit.
-*Recommendation:* select the group's **filtered** descendants; the group header itself never enters
-the selection set; a partly-selected group renders indeterminate. This follows from §6's "view, not
-row" reading, and it makes the selection count always mean rows. AG Grid's `'self'` default is the
-least surprising in a vacuum but makes the checkbox nearly useless; MUI X's upward propagation
-mutates state the person did not touch and should not be copied.
-*To decide:* whether ticking a collapsed group under an active filter should select what the count
-says (filtered) or everything in the group (unfiltered). Recommendation says filtered — the count
-and the selection must agree or both are untrustworthy.
-*Sequencing:* `withSelection()` ships; this is a change to it, and it is already flagged as owed in
-`with-selection/2-decisions.md:168-173`.
+**OQ-1 — What does ticking a group's checkbox do? — RESOLVED 2026-09-12: the library takes no
+position, because it ships no cascade.**
+The three majors disagree by default, so there was no convention to inherit — and
+[D16](../1-state/work/with-grouping/2-decisions.md) concluded that the reason they each need a
+config flag (`groupSelects: 'self' | 'descendants' | 'filteredDescendants'`) is that they own the
+behavior. We ship one derived function, `table.rowsOf(group)` (issue #65), returning the leaf rows
+beneath a group header; all three modes are then ordinary consumer code and we default none of
+them. A group header never enters `selectedRows`.
 
-**OQ-2 — Does a group header show a row count by default? — open.**
-*Recommendation:* yes, with a way to turn it off. AG Grid, MUI X and MRT all render one by default;
-TanStack is the only one that does not, and it renders nothing at all. Not showing a count would be
+*What settled the sub-question:* filtered vs. unfiltered descendants dissolved rather than being
+decided. `filter` precedes `group` in `PIPELINE_ORDER`, so `rowsOf()` is post-filter by
+construction — there is no unfiltered set available to hand out by mistake.
+
+*What this costs:* the "count and selection always agree" property is now the consumer's to keep,
+not the library's. A consumer can select ids that disagree with the count a header shows. The
+directive layer, when it lands, should ship the correct wiring as its default so most people never
+hold it wrong.
+
+*Still open, narrowly:* `rowsOf` shipped flat as `table.rowsOf(g)`; whether it stays there or
+moves under `table.grouping.rowsOf(g)` is not decided — [ADR-0015](../adr/0015-feature-member-namespacing.md),
+`proposed`. Grouping's first behavior function is what opened that ADR.
+
+**OQ-2 — Does a group header show a row count by default? — RESOLVED 2026-09-12: yes, and it needs
+no new state.**
+The count is `rowsOf(group).length` (D16). Not a `RenderRow` field, not an `aggregates` entry — it
+exists whether or not any column defines an `aggregateFn`, which is precisely why it never belonged
+in `aggregates`. AG Grid, MUI X and MRT all render a count by default; not rendering one would be
 the surprising choice.
-*To decide:* whether the count is part of `aggregates` or its own field on `RenderRow` — a count is
-the one summary that exists whether or not any column defines an `aggregateFn`, which argues for
-its own field.
 *Note:* the research pass looked for a community complaint that counts are missing and **did not
-find one** — this recommendation rests on convention, not on evidence of demand.
+find one** — the default rests on convention, not on evidence of demand. Under a filter the count
+is of visible rows, per D16's post-filter guarantee.
 
 **OQ-3 — Which grouping affordances does the library own, and which does the consumer build? — open.**
 Three affordances are missing and grouped here because they are one question: expand-all/collapse-all
@@ -923,7 +938,7 @@ Owned by `1-state/work/with-grouping/` and the feature docs it supersedes.
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| S1 | Group row count is not derived and has nowhere to live | 1.2 | `RenderRow` has `hasChildren?` but no count; whether it belongs in `aggregates` or its own field is OQ-2 |
+| ~~S1~~ | ~~Group row count is not derived and has nowhere to live~~ | 1.2 | **Closed by D16** — the count is `rowsOf(group).length`; no new field needed |
 | S2 | Per-group aggregation failure has no named fallback | 1.3 | D15 names fallbacks for `groupOrder` and `when`; `aggregateFn` throwing on one group's rows is unaddressed |
 | S3 | Expansion survival across refresh/sort/regroup is unstated | 2.5 | May already work — `expandedRows` keeps synthetic group ids, ADR-0006 never prunes them. Unconfirmed, untested, so not a guarantee. OQ-4 |
 | S4 | No "is everything expanded" signal | 2.2 | Without it an Expand All control cannot label itself — ag-grid #8621 is exactly this |
@@ -932,8 +947,9 @@ Owned by `1-state/work/with-grouping/` and the feature docs it supersedes.
 | S7 | Missing / null group values are undefined behavior | 4.1 | D14 covers an unknown column *id*, not a missing *value*. `sorting.md:167-169` already flags the same hole from its side. OQ-5 |
 | S8 | Non-primitive group values have no key contract | 4.2 | `RenderRow` has **no `groupKey` field** though `features/grouping.md:108` specifies one — a group header cannot say what it is a group of. OQ-5 |
 | S9 | Single-row group behavior unstated | 4.3 | OQ-6 |
-| S10 | Group-header selection semantics undecided | X-G1 | Already flagged as owed in `with-selection/2-decisions.md:168-173`. OQ-1 |
-| S11 | "Is a group header a row or a view" is unrecorded | §6 | Currently split — `data: null` says view, synthetic ids in `expandedRows` say row. Load-bearing, and X-G1 cannot be answered until it is stated |
+| ~~S10~~ | ~~Group-header selection semantics undecided~~ | X-G1 | **Closed by D16** — the library ships no semantics; `rowsOf(group)` plus consumer cascade. Discharges the instruction in `with-selection/2-decisions.md:168-173` |
+| ~~S11~~ | ~~"Is a group header a row or a view" is unrecorded~~ | §6 | **Closed by D16** — a view, with `expandedRows` the one named exception, because that set holds toggles rather than records |
+| S12 | `rowsOf()` call-site form unsettled | X-G1 | **Shape shipped (issue #65)** as `table.rowsOf(g)`, flat. Only whether it stays flat or moves under `table.grouping.rowsOf(g)` is open — [ADR-0015](../adr/0015-feature-member-namespacing.md), `proposed` |
 
 **Two direct contradictions, not forward-looking notes:**
 

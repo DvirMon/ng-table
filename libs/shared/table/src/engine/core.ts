@@ -82,6 +82,7 @@ export function createTableCore<TRow>(
     ),
     baseColumns: baseColumns.asReadonly(),
     rows,
+    renderRows,
     trackBy,
     indexById,
     value: createWritableView(

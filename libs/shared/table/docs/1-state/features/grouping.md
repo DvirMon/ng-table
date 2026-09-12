@@ -12,7 +12,7 @@ parent: ../architecture.md
 
 # withGrouping()
 
-> **⚠️ Two sections superseded — D1/D3/D4/D9 shipped (issues #6, #58); D6–D8/D11 still
+> **⚠️ Two sections superseded — D1/D3/D4/D9/D16 shipped (issues #6, #58, #65); D6–D8/D11 still
 > unbuilt, read the decisions first for those.**
 > [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D15) settles the
 > API surface, and [work/with-grouping/3-spec.md](../work/with-grouping/3-spec.md) (`status: ready`)
@@ -29,6 +29,9 @@ parent: ../architecture.md
 >   (D3), with aggregation computed at every depth from that cluster's own leaves, never a
 >   descendant's already-computed aggregate (D9). Grand totals and pivoting stay out of scope
 >   (D9).
+> - **Group selection has no cascade** — `rowsOf(group)` (D16, shipped, issue #65) returns every
+>   leaf row beneath a header, at any depth; the consumer owns any selection cascade. A group's
+>   row count is `rowsOf(group).length` — there is no separate count field on `RenderRow`.
 >
 > Still current, unshipped: the `groupingRule` base+overlay fold and
 > `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60), and collapse/expand coupling via

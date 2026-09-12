@@ -175,6 +175,7 @@ withGrouping<TRow>((path: ColumnsPath<TRow>) => {
 
 interface GroupingMembers<TRow> {
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;  // D1, D6
+  readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];      // D16, D16.1
 }
 
 type GroupingUpdater<TRow> = (grouping: string[]) => string[];
@@ -315,6 +316,13 @@ function reorderGroupLevels<TRow>(from: number, to: number): GroupingUpdater<TRo
   `aggregateFn` already has its fallback in ADR-0014's own table (*"that aggregate reads
   `undefined`; the group still renders"*), unchanged by multi-level (D9) since it wraps per
   callback and a deeper cluster is just another call.
+- **A group header is a view over rows; the library ships no selection cascade (D16, D16.1).**
+  `rowsOf(group)` returns every leaf row beneath a header, at any depth, resolved by `group.id`
+  (never object identity) and reading `renderRows()` so it composes inside a consumer
+  `computed()`. Rows, not ids — row→id is `trackBy(row)`, pure and total; the reverse needs
+  engine-internal `indexById`. Nothing is materialized or cached; a group that no longer exists
+  returns `[]`. See `2-decisions.md` for the full rationale and rejected alternatives
+  (a `rowIds` field on every group `RenderRow`, an id-returning surface).
 
 ### Documentation updates this work owes
 
@@ -367,6 +375,14 @@ wrong file.
   all rows render flat and expanded.
 - Removing rows that were the sole members of a cluster removes that cluster from `renderRows`
   without residual state.
+- `rowsOf` returns every leaf beneath a header at any depth; a header captured from an earlier
+  `renderRows()` pass still resolves correctly (id, not object identity); a group that no longer
+  exists returns `[]`, no throw.
+- `rowsOf` reflects post-filter membership — with `withFiltering()` composed, an excluded row
+  never appears in a group's `rowsOf()`.
+- The documented selection-cascade recipe (`table.rowsOf(g).map(table.trackBy)` →
+  `selectionStateOf` → `select`/`deselect`) puts exactly the leaf ids into `selectedRows`, never
+  a `group:` id.
 
 ## Out of Scope
 

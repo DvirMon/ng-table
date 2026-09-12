@@ -3,6 +3,7 @@ import type {
   ColumnDef,
   ColumnDefInput,
   ColumnsUpdater,
+  RenderRow,
   RowId,
   RowUpdater,
   TableDataInput,
@@ -42,6 +43,10 @@ export interface TableCore<TRow> {
    */
   readonly baseColumns: Signal<ColumnDef<TRow>[]>;
   readonly rows: Signal<TRow[]>;
+  /** The render-layer output every render stage chain produced, `index`/`sourceIndex` already
+   * stamped. Same lazy-computed safety as `rows`: reading it from a member function or
+   * `computed()` sees the complete stage registry. */
+  readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly trackBy: TrackByFn<TRow>;
   /** Maps a row's trackBy id to its position in `data()`. Engine-internal only: not exposed on
    * `TableStore`. Feeds the removal-reconciliation effect (ADR-0006) so it can diff ids without

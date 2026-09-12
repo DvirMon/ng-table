@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { computed, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockGroupingRows, mockGroupingTrackBy, type GroupingMockRow } from '../../table.mock';
 import { setGroupLevels } from '../../mutations/update-grouping';
@@ -7,11 +7,13 @@ import { createTable } from '../create-table';
 import { filter } from '../filters/rules';
 import { withFiltering } from './with-filtering';
 import { withGrouping } from './with-grouping';
+import { withSelection } from './with-selection';
 import { withSorting } from './with-sorting';
 import type {
   AnyTableFeature,
   ColumnDef,
   ComposedFeatureMembers,
+  RenderRow,
   TableStore,
   TableStoreConfig,
 } from '../types';
@@ -414,5 +416,194 @@ describe('withGrouping', () => {
     expect(rows.filter((row) => row.kind === 'group')).toHaveLength(5); // 2 region + 3 remaining category
     // aggregates.amount === 20 was unique to the removed EU > Electronics header.
     expect(rows.some((row) => row.aggregates?.['amount'] === 20)).toBe(false);
+  });
+});
+
+/** Finds a `kind: 'group'` render row by id — the recipe every `rowsOf` test below shares. */
+function findHeader(
+  rows: readonly RenderRow<GroupingMockRow>[],
+  id: string
+): RenderRow<GroupingMockRow> | undefined {
+  return rows.find((row) => row.kind === 'group' && row.id === id);
+}
+
+const US_HEADER_ID = 'group:>region:string:US';
+const US_ELECTRONICS_HEADER_ID = 'group:>region:string:US>category:string:Electronics';
+const EU_ELECTRONICS_HEADER_ID = 'group:>region:string:EU>category:string:Electronics';
+
+describe('rowsOf', () => {
+  it('depth: the outer header returns every leaf under both inner clusters; an inner header returns only its own', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
+      }),
+      mockGroupingRows
+    );
+
+    const rows = store.renderRows();
+    const usHeader = findHeader(rows, US_HEADER_ID)!;
+    const usElectronicsHeader = findHeader(rows, US_ELECTRONICS_HEADER_ID)!;
+
+    expect(store.rowsOf(usHeader).map((row) => row.id)).toEqual([1, 2, 3]);
+    expect(store.rowsOf(usElectronicsHeader).map((row) => row.id)).toEqual([1, 2]);
+  });
+
+  it('stale header: a header captured before a new render pass still resolves the same leaves by id', () => {
+    const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+          withSorting<GroupingMockRow>(),
+        ],
+      }))
+    );
+
+    const staleHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+
+    // Force a new render pass unrelated to the header's own cluster contents.
+    store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
+    TestBed.tick();
+
+    const freshHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    // The trigger must actually rebuild the RenderRow objects — otherwise this test proves
+    // nothing about "stale" resolution.
+    expect(staleHeader).not.toBe(freshHeader);
+
+    expect(store.rowsOf(staleHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('reactivity: a computed() reading rowsOf recomputes after a data write, a filter change, and a grouping change', () => {
+    const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
+    const filters = TestBed.runInInjectionContext(() =>
+      createFilters<GroupingMockRow>((path) => {
+        filter<GroupingMockRow, 'amount', number | null>(
+          path.amount,
+          (cell, criterion) => cell !== criterion,
+          { isEmpty: (v) => v == null, emptyValue: null }
+        );
+      })
+    );
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withFiltering<GroupingMockRow>({ filters }),
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+        ],
+      }))
+    );
+
+    const usLeafIds = computed(() => {
+      const header = findHeader(store.renderRows(), US_HEADER_ID);
+      return header ? store.rowsOf(header).map((row) => row.id) : [];
+    });
+
+    expect(usLeafIds()).toEqual([1, 2, 3]);
+
+    // Data write: a new US row joins the cluster.
+    data.update((rows) => [
+      ...rows,
+      { id: 7, region: 'US', category: 'Electronics', amount: 40 },
+    ]);
+    TestBed.tick();
+    expect(usLeafIds()).toEqual([1, 2, 3, 7]);
+
+    // Filter change: excludes the row just added.
+    filters['amount']().value.set(40);
+    TestBed.tick();
+    expect(usLeafIds()).toEqual([1, 2, 3]);
+
+    // Grouping change: adding a nested level leaves the region-level header id unchanged, but
+    // is a distinct trigger from the data/filter writes above.
+    store.grouping.update(setGroupLevels(['region', 'category']));
+    TestBed.tick();
+    expect(usLeafIds()).toEqual([1, 2, 3]);
+  });
+
+  it('post-filter: a row excluded by a predicate never appears in rowsOf() for its group', () => {
+    const filters = TestBed.runInInjectionContext(() =>
+      createFilters<GroupingMockRow>((path) => {
+        filter<GroupingMockRow, 'amount', number | null>(
+          path.amount,
+          (cell, criterion) => cell !== criterion,
+          { isEmpty: (v) => v == null, emptyValue: null }
+        );
+      })
+    );
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withFiltering<GroupingMockRow>({ filters }),
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    filters['amount']().value.set(300); // excludes id 2 (US > Electronics)
+
+    const usElectronicsHeader = findHeader(store.renderRows(), US_ELECTRONICS_HEADER_ID)!;
+    expect(store.rowsOf(usElectronicsHeader).map((row) => row.id)).toEqual([1]);
+  });
+
+  it('missing group: holding a header after every row in its cluster is removed returns [], no throw', () => {
+    const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(data, () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
+      }))
+    );
+
+    const euElectronicsHeader = findHeader(store.renderRows(), EU_ELECTRONICS_HEADER_ID)!;
+    expect(store.rowsOf(euElectronicsHeader).map((row) => row.id)).toEqual([4]);
+
+    data.update((rows) => rows.filter((row) => row.id !== 4)); // sole member of EU > Electronics
+    TestBed.tick();
+
+    expect(() => store.rowsOf(euElectronicsHeader)).not.toThrow();
+    expect(store.rowsOf(euElectronicsHeader)).toEqual([]);
+  });
+
+  it('cascade recipe: rowsOf -> trackBy -> selectionStateOf -> select/deselect selects exactly the leaf ids, no group: id', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+          withSelection<GroupingMockRow>(),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    const usHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    const ids = store.rowsOf(usHeader).map((row) => store.trackBy(row));
+    expect(ids.sort()).toEqual([1, 2, 3]);
+
+    expect(store.selectionStateOf(ids)).toBe('none');
+
+    store.select(ids);
+    expect(store.selectionStateOf(ids)).toBe('all');
+    expect([...store.selectedRows()].sort()).toEqual([1, 2, 3]);
+    expect([...store.selectedRows()].some((id) => String(id).startsWith('group:'))).toBe(false);
+
+    store.deselect([ids[0]]);
+    expect(store.selectionStateOf(ids)).toBe('some');
+
+    // Second run of the recipe deselects the rest.
+    store.deselect(ids);
+    expect(store.selectionStateOf(ids)).toBe('none');
+    expect(store.selectedRows().size).toBe(0);
   });
 });

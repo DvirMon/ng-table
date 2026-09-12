@@ -1,4 +1,4 @@
-import type { ColumnDef, GroupSummary, RenderRow } from '../api/types';
+import type { ColumnDef, GroupSummary, RenderRow, RowId } from '../api/types';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
@@ -222,4 +222,29 @@ export function buildGroupRenderRows<TRow>(
     { done: false }
   );
   return emitGroupRows(ordered, 0, '', columns);
+}
+
+/**
+ * Every leaf row beneath a group header, at any depth — not just immediate children. Resolves by
+ * `id`, never object identity: `renderRows()` rebuilds its objects each pass, so a header held
+ * across renders is a stale object carrying a stable id. An id matching no current header
+ * returns `[]`.
+ */
+export function rowsBeneathGroup<TRow>(
+  rows: readonly RenderRow<TRow>[],
+  groupId: RowId
+): TRow[] {
+  const start = rows.findIndex((row) => row.kind === 'group' && row.id === groupId);
+  if (start === -1) {
+    return [];
+  }
+  const headerDepth = rows[start].depth;
+  const leaves: TRow[] = [];
+  for (let i = start + 1; i < rows.length && rows[i].depth > headerDepth; i++) {
+    const row = rows[i];
+    if (row.kind !== 'group' && row.data !== null) {
+      leaves.push(row.data);
+    }
+  }
+  return leaves;
 }

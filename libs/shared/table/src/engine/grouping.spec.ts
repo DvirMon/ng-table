@@ -1,8 +1,9 @@
-import type { ColumnDef, GroupSummary, RenderRow } from '../api/types';
+import type { ColumnDef, GroupSummary, RenderRow, RowId } from '../api/types';
 import {
   buildClusters,
   buildGroupRenderRows,
   clusterRows,
+  rowsBeneathGroup,
   sortClusters,
   type ClusterNode,
 } from './grouping';
@@ -302,5 +303,87 @@ describe('buildGroupRenderRows', () => {
     expect(new Set(headerIds).size).toBe(headerIds.length);
     expect(headerIds).toContain('group:>region:string:US>category:string:Electronics');
     expect(headerIds).toContain('group:>region:string:EU>category:string:Electronics');
+  });
+});
+
+interface Leaf {
+  id: number;
+  value: string;
+}
+
+function header(id: RowId, depth: number, hasChildren = true): RenderRow<Leaf> {
+  return { id, depth, kind: 'group', data: null, index: 0, hasChildren };
+}
+
+function leaf(id: number, depth: number, value: string, index: number): RenderRow<Leaf> {
+  return { id, depth, kind: 'row', data: { id, value }, index };
+}
+
+/**
+ * Mirrors `buildGroupRenderRows`'s shape: two depth-0 clusters ('group:A', 'group:B'); 'group:A'
+ * nests two depth-1 sub-clusters ('group:A>1', 'group:A>2') whose leaves sit at depth 2;
+ * 'group:B' has no sub-header, its one leaf sits directly at depth 1.
+ */
+function twoClusterFixture(): RenderRow<Leaf>[] {
+  return [
+    header('group:A', 0),
+    header('group:A>1', 1),
+    leaf(1, 2, 'a', 0),
+    leaf(2, 2, 'a', 1),
+    header('group:A>2', 1),
+    leaf(3, 2, 'b', 2),
+    header('group:B', 0),
+    leaf(4, 1, 'c', 3),
+  ];
+}
+
+describe('rowsBeneathGroup', () => {
+  it('returns every leaf beneath a header at depth 2+, not just its immediate children', () => {
+    const rows = twoClusterFixture();
+
+    const result = rowsBeneathGroup(rows, 'group:A');
+
+    expect(result.map((row) => row.id)).toEqual([1, 2, 3]);
+  });
+
+  it("nested 'group' rows are skipped as values but walked through to reach their own leaves", () => {
+    const rows = twoClusterFixture();
+
+    // 'group:A>1' and 'group:A>2' sit between the header and its depth-2 leaves — none of
+    // their (null) data leaks into the result, yet the walk continues past them.
+    const result = rowsBeneathGroup(rows, 'group:A');
+
+    expect(result.every((row) => row !== null)).toBe(true);
+    expect(result.map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
+
+  it("stops at the next sibling at or above the header's depth — a later cluster's leaves never leak in", () => {
+    const rows = twoClusterFixture();
+
+    const result = rowsBeneathGroup(rows, 'group:A');
+
+    // Leaf 4 belongs to 'group:B', a depth-0 sibling that terminates 'group:A's walk.
+    expect(result.map((row) => row.id)).not.toContain(4);
+  });
+
+  it("a nested header's own rowsOf never includes a sibling sub-cluster's leaves", () => {
+    const rows = twoClusterFixture();
+
+    const result = rowsBeneathGroup(rows, 'group:A>1');
+
+    expect(result.map((row) => row.id)).toEqual([1, 2]);
+  });
+
+  it('an id matching no row returns []', () => {
+    const rows = twoClusterFixture();
+
+    expect(rowsBeneathGroup(rows, 'group:nope')).toEqual([]);
+  });
+
+  it("a 'row' id (matches no header) returns [], no throw", () => {
+    const rows = twoClusterFixture();
+
+    expect(() => rowsBeneathGroup(rows, 1)).not.toThrow();
+    expect(rowsBeneathGroup(rows, 1)).toEqual([]);
   });
 });
