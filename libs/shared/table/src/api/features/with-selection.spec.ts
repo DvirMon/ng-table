@@ -150,6 +150,87 @@ describe('withSelection', () => {
     });
   });
 
+  it('enableRowSelection blocks toggle() from adding a non-selectable row', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
+    }), mockRows);
+
+    store.toggle(1);
+    expect(store.selectedRows().size).toBe(0);
+  });
+
+  it('enableRowSelection drops only the non-selectable ids from a select(ids) mixed array', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
+    }), mockRows);
+
+    store.select([1, 2]);
+    expect([...store.selectedRows()]).toEqual([2]);
+  });
+
+  it('deselect() of an already-selected row is ungated even after the row becomes non-selectable', () => {
+    const selectableIds = new Set([1, 2, 3]);
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [
+        withSelection<MockRow>({ enableRowSelection: (row) => selectableIds.has(row.id) }),
+      ],
+    }), mockRows);
+
+    store.toggle(1);
+    expect(store.selectedRows().has(1)).toBe(true);
+
+    selectableIds.delete(1); // row 1 becomes non-selectable while selected
+
+    store.deselect([1]);
+    expect(store.selectedRows().has(1)).toBe(false);
+  });
+
+  it('enableRowSelection gates the initialSelection seed', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [
+        withSelection<MockRow>({
+          initialSelection: [1, 2],
+          enableRowSelection: (row) => row.id !== 1,
+        }),
+      ],
+    }), mockRows);
+
+    expect([...store.selectedRows()]).toEqual([2]);
+  });
+
+  it('enableRowSelection stays permissive for an id that resolves to no row (D8)', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [withSelection<MockRow>({ enableRowSelection: () => false })],
+    }), mockRows);
+
+    store.toggle(999);
+    expect(store.selectedRows().has(999)).toBe(true);
+  });
+
+  it('a write fully blocked by enableRowSelection emits no selectionChanged', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
+    }), mockRows);
+
+    const emissions: SelectionChange[] = [];
+    store.selectionChanged.subscribe((change) => emissions.push(change));
+
+    store.select([1]);
+    expect(emissions).toEqual([]);
+  });
+
   it('an id absent from the seeded row data still toggles/selects', () => {
     const store = makeStore(() => ({
       trackBy: mockTrackBy,

@@ -5,6 +5,8 @@ import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import type { RowId } from '../types';
 
 export interface WithSelectionConfig<TRow> {
+  /** Whether a row may be selected at all. Default: `true`. */
+  enableRowSelection?: boolean | ((row: TRow) => boolean);
   /** Whether a row may be co-selected with others. Default: `true`. */
   enableMultiRowSelection?: boolean | ((row: TRow) => boolean);
   initialSelection?: RowId[];
@@ -47,14 +49,18 @@ declare const ngDevMode: boolean | undefined;
  * no dependency on any other feature. Never stamps a `RenderRow` field or claims a render
  * stage (D5): selection is read from `selectedRows` only.
  */
+/** Normalizes an `enable*` config field into a per-row predicate, permissive by default. */
+function toRowPredicate<TRow>(
+  config: boolean | ((row: TRow) => boolean) | undefined
+): (row: TRow) => boolean {
+  return typeof config === 'function' ? config : () => config ?? true;
+}
+
 export function withSelection<TRow = unknown>(
   config: WithSelectionConfig<TRow> = {}
 ): (core: SelectionInput<TRow>) => TableFeatureSpec<TRow, SelectionMembers> {
-  const multiSelectConfig = config.enableMultiRowSelection;
-  const canMultiSelect: (row: TRow) => boolean =
-    typeof multiSelectConfig === 'function'
-      ? multiSelectConfig
-      : () => multiSelectConfig ?? true;
+  const canSelect = toRowPredicate(config.enableRowSelection);
+  const canMultiSelect = toRowPredicate(config.enableMultiRowSelection);
 
   return (core: SelectionInput<TRow>): TableFeatureSpec<TRow, SelectionMembers> => {
     const selectedIds = signal(new Set<RowId>());
@@ -65,6 +71,14 @@ export function withSelection<TRow = unknown>(
 
     function resolveRow(id: RowId): TRow | undefined {
       return core.rows().find((row) => core.trackBy(row) === id);
+    }
+
+    // Row-selectability gate (D58) — contract in docs/1-state/features/selection.md.
+    function applyRowSelectionGate(ids: readonly RowId[]): readonly RowId[] {
+      return ids.filter((id) => {
+        const row = resolveRow(id);
+        return row === undefined || canSelect(row);
+      });
     }
 
     // Multi-select is a rule on the write verbs, never stored state (D2/D14) — it never holds
@@ -116,13 +130,13 @@ export function withSelection<TRow = unknown>(
         applyNextSelection(next, opts);
         return;
       }
-      const kept = applyMultiSelectRule([...previous, id]);
+      const kept = applyMultiSelectRule([...previous, ...applyRowSelectionGate([id])]);
       applyNextSelection(new Set(kept), opts);
     }
 
     function select(ids: RowId[], opts?: SelectionWriteOptions): void {
       const previous = selectedIds();
-      const kept = applyMultiSelectRule([...previous, ...ids]);
+      const kept = applyMultiSelectRule([...previous, ...applyRowSelectionGate(ids)]);
       applyNextSelection(new Set(kept), opts);
     }
 
@@ -146,8 +160,9 @@ export function withSelection<TRow = unknown>(
     }
 
     // D16: written directly into the signal, never routed through `select()` (which emits).
-    // Still subject to the multi-select truncation rule — a write in every sense but emission.
-    const seedIds = applyMultiSelectRule(config.initialSelection ?? []);
+    // Still subject to the row-selection gate and the multi-select truncation rule — a write in
+    // every sense but emission.
+    const seedIds = applyMultiSelectRule(applyRowSelectionGate(config.initialSelection ?? []));
     selectedIds.set(new Set(seedIds));
 
     // ADR-0006: reconciliation, not a write verb — prunes silently, no `selectionChanged`.

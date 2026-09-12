@@ -71,4 +71,4 @@ Step 1 — needs `withSelection()`'s public members to exist.
 - [ ] `npm run test` (or the project's scoped equivalent for this package) passes — user runs this, per this repo's "never run tests unprompted" convention; report what's worth verifying instead of running it.
 
 ---
-← [Step 1: withSelection() feature plugin](step-1-with-selection-plugin.plan.md)
+← [Step 1: withSelection() feature plugin](step-1-with-selection-plugin.plan.md) | [Step 3: enableRowSelection() write-path gate (D58)](step-3-enable-row-selection-gate.plan.md) →

@@ -150,6 +150,7 @@ Shape settled in D2, D7, D9, D14, D16, D18:
 
 ```ts
 interface WithSelectionConfig<TRow> {
+  enableRowSelection?: boolean | ((row: TRow) => boolean);        // default true
   enableMultiRowSelection?: boolean | ((row: TRow) => boolean);   // default true
   initialSelection?: RowId[];
 }
@@ -209,6 +210,19 @@ interface SelectionMembers {
   [state-persistence.md](../../state-persistence.md) takes selection into its scope, as `restore()`
   is library-owned; D19 keeps it out for now. Residual harm, accepted: `[...selectedRows()]` passed
   straight into a bulk request can carry an id the server no longer has.
+- **Row selectability ships as a write-path gate (D58).** `enableRowSelection` answers a
+  different question than D8: D8 governs ids with no row behind them, `enableRowSelection`
+  governs rows that resolve and answer `false`. Scope, all settled by unanimous competitive
+  precedent (D58, [`2-decisions.md`](./2-decisions.md)):
+  - **Gates id-adding writes only** — `toggle`, `select`, and the `initialSelection` seed. Never
+    `deselect`/`clearSelection`, so a row that becomes non-selectable while selected stays
+    escapable.
+  - **Write path, not read path** — `selectedRows()` and `selectionStateOf()` do not consult the
+    predicate; selection stays a plain id set.
+  - **No reconcile** — a row turning non-selectable while selected is not auto-deselected. AG
+    Grid is the only library that reconciles, and needs a `source` field on its event to explain
+    the library-caused change; our delta has none, and pruning ids the user never deselected is
+    what D8 already refuses.
 - **Selection is read from a signal, never stamped onto rows (D5).** No feature-contributed render
   row field, no render stage claimed. Deliberately different from expansion, which stamps its state
   because it changes *which rows exist*; selection does not.
@@ -289,6 +303,13 @@ ones.
 - Removing a row from the data prunes its id from the selection and emits nothing.
 - Selection is unaffected by sorting or by a data write that reorders without removing.
 - The stream completes when the table is destroyed.
+- With `enableRowSelection` false for a row, `toggle` and `select` do not add it; a mixed
+  `select(ids)` call drops only the non-selectable ids.
+- `deselect` of an already-selected row stays ungated even after the row becomes
+  non-selectable.
+- `initialSelection` is gated the same way as `toggle`/`select`.
+- An id that resolves to no row stays selectable regardless of `enableRowSelection` (D8).
+- A write fully blocked by `enableRowSelection` emits no `selectionChanged`.
 
 ## Out of Scope
 

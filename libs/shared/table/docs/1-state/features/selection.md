@@ -24,16 +24,11 @@ feature.
 Full decision record: [`work/with-selection/2-decisions.md`](../work/with-selection/2-decisions.md)
 (D1–D19, D58). Spec: [`work/with-selection/3-spec.md`](../work/with-selection/3-spec.md).
 
-> **D58 (2026-09-09) not yet implemented.** `enableRowSelection` — a row-selectability gate on
-> `toggle`/`select`/`initialSelection` only, never `deselect`/`clearSelection`, never consulted
-> by `selectedRows()`/`selectionStateOf()` — is design-settled but absent from
-> `src/api/features/with-selection.ts`. See "Not Shipped" below and
-> [research-row-selectability.md](../work/with-selection/research-row-selectability.md).
-
 ## State Shape
 
 ```ts
 interface WithSelectionConfig<TRow> {
+  enableRowSelection?: boolean | ((row: TRow) => boolean);        // default true
   enableMultiRowSelection?: boolean | ((row: TRow) => boolean);   // default true
   initialSelection?: RowId[];
 }
@@ -75,7 +70,30 @@ interface SelectionMembers {
 | `selectionStateOf(ids)` | `'none' \| 'some' \| 'all'` for exactly the given id set (D7) — the caller supplies the denominator; unaffected by selection state on ids outside it. |
 
 Every write verb never checks whether an id is data-backed — an unknown id still
-toggles/selects, and the multi-select predicate defaults permissive when no row resolves (D8).
+toggles/selects, and both the row-selection and multi-select predicates default permissive when
+no row resolves (D8).
+
+## `enableRowSelection` Contract
+
+```ts
+withSelection({ enableRowSelection: false })                          // no row selectable
+withSelection({ enableRowSelection: (row) => row.status !== 'locked' }) // per-row exception
+```
+
+D58 (#63). A rule on the write verbs, never stored state — resolved per row, inside each write,
+against the row(s) involved.
+
+- **Gates id-adding writes only** — `toggle`, `select`, and the `initialSelection` seed. Never
+  `deselect`/`clearSelection`, so a row that becomes non-selectable while selected stays
+  escapable.
+- **Write path, not read path** — `selectedRows()` and `selectionStateOf()` do not consult the
+  predicate; selection stays a plain id set.
+- **No reconcile** — a row turning non-selectable while selected is not auto-deselected.
+- **Permissive when the id resolves to no row** (D8 untouched) — this rule answers a different
+  question than D8: D8 governs ids with no row behind them, `enableRowSelection` governs rows
+  that resolve and answer `false`.
+- Answers a different write path than `enableMultiRowSelection` below — a blocked id is simply
+  dropped from the candidate set before the multi-select rule runs, never truncated/thrown.
 
 ## `enableMultiRowSelection` Contract
 
@@ -127,7 +145,6 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 | Persistence of selection | `withSelection()` will declare a snapshot slice once cross-feature persistence ships; its `write()` will use the `emitEvent: false` silent path (D18/D19) | yes — D19 |
 | Group-header select-all, parent/child cascade | `withGrouping()` doesn't exist yet; data is flat by invariant (D13) | no |
 | A cause discriminator (`'checkboxSelected' | 'apiSelectAll' | …`) on `SelectionChange` | Recorded from AG Grid's `source` idea, not adopted (D10) | no |
-| Disabled / non-selectable rows | Settled as `enableRowSelection` (D58, resolves #57) — gates id-adding writes only, never a reconcile of already-selected rows. Not yet coded | yes — D58 |
 
 ## Open Questions
 
