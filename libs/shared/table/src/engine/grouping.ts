@@ -1,4 +1,4 @@
-import type { ColumnDef, RenderRow } from '../api/types';
+import type { ColumnDef, GroupSummary, RenderRow } from '../api/types';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
@@ -73,6 +73,53 @@ function flattenLeaves<T>(nodes: ClusterNode<T>[]): T[] {
   );
 }
 
+function reportGroupOrderError(): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    '[withGrouping] groupOrder threw while ordering group siblings. Falling back to stable ' +
+      'first-occurrence order for the affected level(s) in this evaluation.'
+  );
+}
+
+/**
+ * Recursively re-orders each node list's own siblings by `groupOrder`, never against a
+ * different parent's children. `toRows` bridges `T` (raw `TRow` for the pipeline stage, a
+ * render-row wrapper for the render stage) to `GroupSummary.rows`. `reported` is shared across
+ * the whole recursive walk for one caller's evaluation. See `withGrouping()`'s decisions doc,
+ * D4/D9/D15.
+ */
+export function sortClusters<T, TRow>(
+  nodes: ClusterNode<T>[],
+  groupOrder: ((a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number) | undefined,
+  toRows: (items: T[]) => TRow[],
+  reported: { done: boolean }
+): ClusterNode<T>[] {
+  if (!groupOrder) {
+    return nodes;
+  }
+  let ordered = nodes;
+  try {
+    const summaries = nodes.map((node) => ({
+      node,
+      summary: { key: node.value, rows: toRows(node.items) } satisfies GroupSummary<TRow>,
+    }));
+    ordered = [...summaries]
+      .sort((a, b) => groupOrder(a.summary, b.summary))
+      .map((entry) => entry.node);
+  } catch {
+    if (!reported.done) {
+      reported.done = true;
+      reportGroupOrderError();
+    }
+    ordered = nodes;
+  }
+  return ordered.map((node) => ({
+    ...node,
+    children: sortClusters(node.children, groupOrder, toRows, reported),
+  }));
+}
+
 /**
  * The `group` pipeline stage (`PIPELINE_ORDER`, `engine/pipeline.ts`) — `TRow[] => TRow[]`,
  * stable clustering, contiguous at every depth. Empty/all-unknown `grouping` is a reference-
@@ -81,7 +128,8 @@ function flattenLeaves<T>(nodes: ClusterNode<T>[]): T[] {
 export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
 ): TRow[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -91,7 +139,8 @@ export function clusterRows<TRow>(
   const nodes = buildClusters(rows, levels, (row, columnId) =>
     columnById.get(columnId)!.accessor(row)
   );
-  return flattenLeaves(nodes);
+  const ordered = sortClusters(nodes, groupOrder, (items) => items, { done: false });
+  return flattenLeaves(ordered);
 }
 
 /** Per-cluster aggregate row: `rows` is always a cluster's own leaves — see D9. */
@@ -149,7 +198,8 @@ function emitGroupRows<TRow>(
 export function buildGroupRenderRows<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
 ): Omit<RenderRow<TRow>, 'index'>[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -165,5 +215,11 @@ export function buildGroupRenderRows<TRow>(
     }
     return columnById.get(columnId)!.accessor(item.data);
   });
-  return emitGroupRows(nodes, 0, '', columns);
+  const ordered = sortClusters(
+    nodes,
+    groupOrder,
+    (items) => items.map((item) => item.data).filter(isRowData),
+    { done: false }
+  );
+  return emitGroupRows(ordered, 0, '', columns);
 }

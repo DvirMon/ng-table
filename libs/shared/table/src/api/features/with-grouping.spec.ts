@@ -31,6 +31,14 @@ function makeColumns(): ColumnDef<GroupingMockRow>[] {
   ];
 }
 
+/** `[kind, depth, id-if-a-row]` per render row — the shape shared by the `groupOrder` ordering
+ * assertions below. */
+function toShape(
+  rows: readonly { kind: string; depth: number; data: GroupingMockRow | null }[]
+): [string, number, number | undefined][] {
+  return rows.map((row) => [row.kind, row.depth, row.data?.id]);
+}
+
 // Mirrors `with-selection.spec.ts`: rows are seeded at construction via the `data` signal —
 // pass `rows` for tests that need them, omit for state-only tests.
 function makeStore<const F extends readonly AnyTableFeature[]>(
@@ -234,6 +242,156 @@ describe('withGrouping', () => {
     const rows = store.renderRows();
     expect(rows.filter((row) => row.kind === 'group')).toHaveLength(2); // region only
     expect(rows.every((row) => row.kind !== 'group' || row.depth === 0)).toBe(true); // no second level
+  });
+
+  it('groupOrder omitted preserves first-occurrence cluster order (regression, unchanged from issue #6)', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
+      }),
+      mockGroupingRows
+    );
+
+    const groupIds = store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => row.id);
+
+    expect(groupIds).toEqual(['group:>region:string:US', 'group:>region:string:EU']);
+  });
+
+  it('groupOrder reorders group headers by their contents without disturbing row order within a cluster', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({
+            initialGrouping: ['region', 'category'],
+            groupOrder: (a, b) => b.rows.length - a.rows.length,
+          }),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    const rows = store.renderRows();
+
+    // Region siblings (US, EU) are tied at 3 rows each — unaffected, first-occurrence order.
+    // Within EU, Furniture (2 rows: id 5, 6) now sorts ahead of Electronics (1 row: id 4) —
+    // reordered from insertion order. Within US the count-descending order already matched
+    // insertion order, so it's unchanged. Row order within every cluster stays input order.
+    expect(toShape(rows)).toEqual([
+      ['group', 0, undefined], // US
+      ['group', 1, undefined], // US > Electronics
+      ['row', 2, 1],
+      ['row', 2, 2],
+      ['group', 1, undefined], // US > Furniture
+      ['row', 2, 3],
+      ['group', 0, undefined], // EU
+      ['group', 1, undefined], // EU > Furniture (reordered ahead of Electronics)
+      ['row', 2, 5],
+      ['row', 2, 6],
+      ['group', 1, undefined], // EU > Electronics
+      ['row', 2, 4],
+    ]);
+  });
+
+  it('a groupOrder that reorders one depth never reorders sub-clusters at a different depth, or mixes them across parents', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({
+            initialGrouping: ['region', 'category'],
+            // Ascending alphabetical by key — reorders the region level (EU < US) but is a
+            // no-op on category order within either region (Electronics < Furniture already).
+            groupOrder: (a, b) => String(a.key).localeCompare(String(b.key)),
+          }),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    const rows = store.renderRows();
+
+    expect(toShape(rows)).toEqual([
+      ['group', 0, undefined], // EU (reordered ahead of US)
+      ['group', 1, undefined], // EU > Electronics
+      ['row', 2, 4],
+      ['group', 1, undefined], // EU > Furniture
+      ['row', 2, 5],
+      ['row', 2, 6],
+      ['group', 0, undefined], // US
+      ['group', 1, undefined], // US > Electronics
+      ['row', 2, 1],
+      ['row', 2, 2],
+      ['group', 1, undefined], // US > Furniture
+      ['row', 2, 3],
+    ]);
+  });
+
+  it('sorting the grouped column is a no-op on cluster order when groupOrder is not supplied (D5)', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+          withSorting<GroupingMockRow>(),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    const unsortedClusterOrder = store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => row.id);
+
+    store.setSorting([{ columnId: 'region', direction: 'desc' }]);
+
+    const sortedClusterOrder = store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => row.id);
+
+    expect(sortedClusterOrder).toEqual(unsortedClusterOrder);
+  });
+
+  it('a throwing groupOrder falls back to stable order instead of throwing through renderRows()', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              initialGrouping: ['region'],
+              groupOrder: () => {
+                throw new Error('boom');
+              },
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(() => store.renderRows()).not.toThrow();
+
+      const groupIds = store
+        .renderRows()
+        .filter((row) => row.kind === 'group')
+        .map((row) => row.id);
+      expect(groupIds).toEqual(['group:>region:string:US', 'group:>region:string:EU']);
+      expect(reportSpy).toHaveBeenCalled();
+    } finally {
+      reportSpy.mockRestore();
+    }
   });
 
   it("removing a cluster's sole members removes that cluster from renderRows() with no residual", () => {

@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { buildGroupRenderRows, clusterRows } from '../../engine/grouping';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
-import type { ColumnId, GroupingUpdater } from '../types';
+import type { ColumnId, GroupingUpdater, GroupSummary } from '../types';
 
 type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns'>;
 
@@ -10,6 +10,11 @@ export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
    * parallel to `engine/rows.ts`'s `trackBy` throw site (D14). */
   initialGrouping?: ColumnId<TRow>[];
+  /** Orders clusters by their contents, siblings only, at every depth. Omitted: stable
+   * first-occurrence order. Throws: falls back to stable order for the affected level and
+   * reports once per evaluation. Decoupled from `sorting`. See `withGrouping()`'s decisions
+   * doc, D4/D5/D9/D15. */
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
 }
 
 export interface GroupingMembers<TRow> {
@@ -21,7 +26,7 @@ export interface GroupingMembers<TRow> {
  * no dependency on any other feature. Claims the `'group'` pipeline and render stages
  * (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` reads
  * `baseGrouping` directly — the D6 base+overlay fold (`groupingRule`) is issue #60, out of
- * scope here (see the step's scope note).
+ * scope here (see the step's scope note). `groupOrder` orders cluster siblings (D4).
  */
 export function withGrouping<TRow = unknown>(
   config: WithGroupingConfig<TRow> = {}
@@ -45,10 +50,11 @@ export function withGrouping<TRow = unknown>(
     return {
       members: { grouping },
       stages: {
-        group: (rows) => clusterRows(rows, baseGrouping(), core.columns()),
+        group: (rows) => clusterRows(rows, baseGrouping(), core.columns(), config.groupOrder),
       },
       renderStages: {
-        group: (rows) => buildGroupRenderRows(rows, baseGrouping(), core.columns()),
+        group: (rows) =>
+          buildGroupRenderRows(rows, baseGrouping(), core.columns(), config.groupOrder),
       },
     };
   };

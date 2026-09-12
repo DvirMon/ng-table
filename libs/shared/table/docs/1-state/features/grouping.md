@@ -12,7 +12,7 @@ parent: ../architecture.md
 
 # withGrouping()
 
-> **⚠️ Two sections superseded — D1/D3/D9 shipped (issue #6, 2026-09-10); D4/D6–D8/D11 still
+> **⚠️ Two sections superseded — D1/D3/D4/D9 shipped (issues #6, #58); D6–D8/D11 still
 > unbuilt, read the decisions first for those.**
 > [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D15) settles the
 > API surface, and [work/with-grouping/3-spec.md](../work/with-grouping/3-spec.md) (`status: ready`)
@@ -21,17 +21,19 @@ parent: ../architecture.md
 >   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
 >   (D1, shipped) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. A
 >   `groupingRule` overlay and declarative `applyGrouping()` sugar (D6–D8) are still unbuilt (#60).
+>   Cluster order is `groupOrder` on `withGrouping()`'s config (D4, shipped, issue #58) — omitted,
+>   stable first-occurrence order; supplied, orders siblings within a parent by their contents,
+>   fully decoupled from `sorting` (D5).
 > - **Single-level only** — wrong, and no longer just "reopened": `withGrouping()` ships
 >   multi-level clustering today. `grouping` is `string[]`, ordered, index 0 = outermost level
 >   (D3), with aggregation computed at every depth from that cluster's own leaves, never a
 >   descendant's already-computed aggregate (D9). Grand totals and pivoting stay out of scope
 >   (D9).
 >
-> Still current, unshipped: group ordering via `groupOrder` (D4, #58), the `groupingRule`
-> base+overlay fold and `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60), and
-> collapse/expand coupling via `withExpansion()`'s `expandedRows` (D11, #59) — every cluster
-> currently renders fully expanded, unconditionally. Read the decisions doc before building any
-> of these.
+> Still current, unshipped: the `groupingRule` base+overlay fold and
+> `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60), and collapse/expand coupling via
+> `withExpansion()`'s `expandedRows` (D11, #59) — every cluster currently renders fully expanded,
+> unconditionally. Read the decisions doc before building any of these.
 
 ## Executive Summary
 

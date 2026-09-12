@@ -1,5 +1,11 @@
-import type { ColumnDef, RenderRow } from '../api/types';
-import { buildClusters, buildGroupRenderRows, clusterRows, type ClusterNode } from './grouping';
+import type { ColumnDef, GroupSummary, RenderRow } from '../api/types';
+import {
+  buildClusters,
+  buildGroupRenderRows,
+  clusterRows,
+  sortClusters,
+  type ClusterNode,
+} from './grouping';
 
 interface Order {
   id: number;
@@ -104,6 +110,90 @@ describe('buildClusters', () => {
 
     for (const node of nodes) {
       assertItemsCoverChildren(node);
+    }
+  });
+});
+
+describe('sortClusters', () => {
+  function twoParentFixture(): {
+    A: ClusterNode<string>;
+    B: ClusterNode<string>;
+    nodes: ClusterNode<string>[];
+  } {
+    // A's children are inserted out-of-order relative to their size (a2 before a1); B's
+    // children are already in ascending-size order — proving a per-parent sort reorders A's
+    // siblings without disturbing B's, which a global cross-parent sort (flattening both
+    // parents' children into one list before sorting) would not preserve.
+    const a1: ClusterNode<string> = { columnId: 'sub', value: 'a1', items: ['w'], children: [] };
+    const a2: ClusterNode<string> = {
+      columnId: 'sub',
+      value: 'a2',
+      items: ['x', 'y', 'z'],
+      children: [],
+    };
+    const A: ClusterNode<string> = {
+      columnId: 'top',
+      value: 'A',
+      items: [...a2.items, ...a1.items],
+      children: [a2, a1],
+    };
+    const b1: ClusterNode<string> = { columnId: 'sub', value: 'b1', items: ['p'], children: [] };
+    const b2: ClusterNode<string> = {
+      columnId: 'sub',
+      value: 'b2',
+      items: ['q', 'r', 's'],
+      children: [],
+    };
+    const B: ClusterNode<string> = {
+      columnId: 'top',
+      value: 'B',
+      items: [...b1.items, ...b2.items],
+      children: [b1, b2],
+    };
+    return { A, B, nodes: [A, B] };
+  }
+
+  it("reorders each parent's own children by rows.length, never mixing one parent's siblings with another's", () => {
+    const { nodes } = twoParentFixture();
+    const groupOrder = (a: GroupSummary<string>, b: GroupSummary<string>): number =>
+      a.rows.length - b.rows.length;
+
+    const result = sortClusters(nodes, groupOrder, (items) => items, { done: false });
+
+    expect(result.map((node) => node.value)).toEqual(['A', 'B']);
+    expect(result[0].children.map((node) => node.value)).toEqual(['a1', 'a2']); // reordered
+    expect(result[1].children.map((node) => node.value)).toEqual(['b1', 'b2']); // unchanged
+  });
+
+  it('groupOrder omitted (undefined) returns the nodes array unchanged, by reference, at every level', () => {
+    const { nodes, A } = twoParentFixture();
+
+    const result = sortClusters(nodes, undefined, (items) => items, { done: false });
+
+    expect(result).toBe(nodes);
+    expect(result[0]).toBe(A);
+    expect(result[0].children).toBe(A.children);
+  });
+
+  it('a throwing groupOrder falls back to the pre-sort order for every affected level and reports exactly once per call, not once per comparison', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { nodes } = twoParentFixture();
+      const throwingGroupOrder = (): number => {
+        throw new Error('boom');
+      };
+
+      const result = sortClusters(nodes, throwingGroupOrder, (items) => items, { done: false });
+
+      // Top level and both parents' children each hit the throw independently, yet all fall
+      // back to their pre-sort (insertion) order.
+      expect(result.map((node) => node.value)).toEqual(['A', 'B']);
+      expect(result[0].children.map((node) => node.value)).toEqual(['a2', 'a1']);
+      expect(result[1].children.map((node) => node.value)).toEqual(['b1', 'b2']);
+
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      reportSpy.mockRestore();
     }
   });
 });

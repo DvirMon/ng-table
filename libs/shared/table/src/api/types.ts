@@ -97,6 +97,15 @@ export type ColumnId<TRow> = Extract<keyof TRow, string> | (string & {});
 
 export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
 
+/** A group's raw clustering value, opaque to consumers. See `withGrouping()`'s decisions doc,
+ * D4. */
+export type GroupKey = unknown;
+
+export interface GroupSummary<TRow> {
+  readonly key: GroupKey;
+  readonly rows: readonly TRow[];
+}
+
 // Opaque handle for a `createTable()` feature (`withSorting()`, `withGrouping()`, etc.) —
 // consumers never construct this by hand, it's the return type of the feature functions
 // the design system exports.
