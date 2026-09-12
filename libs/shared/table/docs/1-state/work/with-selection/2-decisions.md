@@ -252,15 +252,44 @@ _(appended as they settle)_
   select-all over an all-disabled group are the same call signature, so a warning cannot tell a
   caller mistake from the intended path — it would fire on correct code.
 
+- **D61 (2026-09-12) — `isSelectable(id)` ships as a `SelectionMembers` read method, exposing
+  the D58 predicate.** Answers Q4 of [#57](https://github.com/DvirMon/acme/issues/57)/**#66**.
+
+  ```ts
+  isSelectable(id: RowId): boolean;   // resolveRow(id) === undefined || canSelect(row) — D8-permissive
+  ```
+
+  Chosen over the other two options recorded on #66:
+  1. ~~Filter inside `selectionStateOf` itself.~~ Rejected — would narrow D58's explicit
+     "write path, not read path" (`selectedRows()`/`selectionStateOf()` stay predicate-free),
+     and a settled decision isn't reopened without new information the original call didn't have.
+  2. **Caller pre-filters — chosen.** Consistent with D1 (caller owns the denominator) and D59's
+     already-established shape (a helper the caller composes, not a method that grows
+     `selectionStateOf()`'s contract). The cost D66 flagged — each call site repeats the filter
+     and must track `enableRowSelection` — is removed by exposing the predicate itself as
+     `isSelectable`, so there is exactly one implementation of the rule (inside `withSelection()`'s
+     closure), never a second copy at the call site:
+     ```ts
+     const ids = selectAllIds(table).filter(table.isSelectable);
+     table.select(ids);
+     table.selectionStateOf(ids);   // 'all' — matches what select() actually stored
+     ```
+  3. ~~The directive filters.~~ Deferred, not rejected — `[ngpTableSelectAllFor]` doesn't exist
+     yet (`3-ui/directives/selection.md` still `code: none`). `isSelectable` is exactly the
+     primitive that directive will need once built, so building it now unblocks both the
+     immediate bug and the future directive with one predicate, not two.
+
+  `applyRowSelectionGate` (the existing write-path filter) is rewritten in terms of
+  `isSelectable` rather than duplicating the `resolveRow`/`canSelect` check — one gate, read and
+  write sides both call it.
+
 - **Non-selectable rows — residual questions after D58**
   ([#57](https://github.com/DvirMon/acme/issues/57), research at
   [research-row-selectability.md](research-row-selectability.md)). D58 settles *whether* the gate
-  ships and its write-path scope. Still open, each answerable in isolation:
-  - Does `selectionStateOf(ids)` exclude non-selectable ids from its denominator? Under D1 the
-    caller supplies the id set and could pre-filter. No library precedent transfers — nobody else
-    pushed the denominator to the caller. **Tracked as
-    [#66](https://github.com/DvirMon/acme/issues/66)** — latent until
-    `3-ui/directives/selection.md` is drilled, visible the moment it is.
+  ships and its write-path scope.
+  - ~~Does `selectionStateOf(ids)` exclude non-selectable ids from its denominator?~~ Answered by
+    **D61** above (#66) — the caller filters via `isSelectable`, `selectionStateOf()` itself is
+    unchanged.
   - ~~Does a blocked write need to be distinguishable from a no-op?~~ Answered by **D60** below.
   - Is `withExpansion()` the same question? It cites D8 for stale restored ids
     ([expansion.md](../../features/expansion.md)); if "non-expandable row" lands, the two shapes

@@ -262,6 +262,32 @@ describe('withSelection', () => {
     expect(store.selectionStateOf([1, 2])).toBe('all');
   });
 
+  it('isSelectable(id) mirrors enableRowSelection, permissive for an unresolvable id (D8, D61)', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
+    }), mockRows);
+
+    expect(store.isSelectable(1)).toBe(false);
+    expect(store.isSelectable(2)).toBe(true);
+    expect(store.isSelectable(999)).toBe(true);
+  });
+
+  it('D61: selectionStateOf(ids) matches select(ids) when the caller pre-filters with isSelectable', () => {
+    const store = makeStore(() => ({
+      trackBy: mockTrackBy,
+      columns: makeColumns(),
+      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
+    }), mockRows);
+
+    const ids = [1, 2, 3];
+    const selectableIds = ids.filter(store.isSelectable);
+    store.select(selectableIds);
+
+    expect(store.selectionStateOf(selectableIds)).toBe('all');
+  });
+
   it('every write verb emits exactly one selectionChanged delta with correct added/removed', () => {
     const store = makeStore(() => ({
       trackBy: mockTrackBy,

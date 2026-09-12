@@ -58,6 +58,7 @@ interface SelectionMembers {
   deselect(ids: RowId[], opts?: SelectionWriteOptions): void;
   clearSelection(opts?: SelectionWriteOptions): void;
   selectionStateOf(ids: readonly RowId[]): 'none' | 'some' | 'all';
+  isSelectable(id: RowId): boolean;
 }
 ```
 
@@ -68,6 +69,7 @@ interface SelectionMembers {
 | `deselect(ids, opts?)` | Bulk remove in one write; never subject to the multi-select rule — removal can't violate single-select. |
 | `clearSelection(opts?)` | Empties the set. |
 | `selectionStateOf(ids)` | `'none' \| 'some' \| 'all'` for exactly the given id set (D7) — the caller supplies the denominator; unaffected by selection state on ids outside it. |
+| `isSelectable(id)` | The `enableRowSelection` predicate, read-side, for one id (D61). Permissive for an id that resolves to no row (D8). Lets a caller pre-filter its own denominator against the same rule `select()` enforces, instead of duplicating `enableRowSelection`'s logic. |
 
 Every write verb never checks whether an id is data-backed — an unknown id still
 toggles/selects, and both the row-selection and multi-select predicates default permissive when
@@ -87,7 +89,10 @@ against the row(s) involved.
   `deselect`/`clearSelection`, so a row that becomes non-selectable while selected stays
   escapable.
 - **Write path, not read path** — `selectedRows()` and `selectionStateOf()` do not consult the
-  predicate; selection stays a plain id set.
+  predicate; selection stays a plain id set. The predicate is readable on its own via
+  `isSelectable(id)` (D61) — a caller composes it with `selectionStateOf()`'s id set instead of
+  the tri-state helper doing the filtering itself; D58 governs the two write-adjacent reads
+  unchanged.
 - **No reconcile** — a row turning non-selectable while selected is not auto-deselected.
 - **Permissive when the id resolves to no row** (D8 untouched) — this rule answers a different
   question than D8: D8 governs ids with no row behind them, `enableRowSelection` governs rows
@@ -147,6 +152,21 @@ deliberately does not solve: page-scoped select-all; the read-side "are all visi
 selected" signal, routed to
 [`work/computed-state-mechanism/1-intake.md`](../work/computed-state-mechanism/1-intake.md).
 
+## `isSelectable()` — denominator recipe (D61, #66)
+
+```ts
+const ids = selectAllIds(table).filter(table.isSelectable);
+table.select(ids);
+table.selectionStateOf(ids);   // 'all' — same id set select() actually stored
+```
+
+Resolves the Q4/#57 residual question: `select(ids)` drops non-selectable ids (D58), so an
+unfiltered `selectAllIds(table)` fed straight to `selectionStateOf()` under-reports (`'some'`
+forever, never `'all'`). `isSelectable(id)` gives the caller the exact predicate `select()`
+enforces, so the two sides agree without either side duplicating `enableRowSelection`'s logic —
+the same "helper, caller composes it" shape as `selectAllIds()` (D59), not a change to
+`selectionStateOf()` itself or to D58's write/read split.
+
 ## Compile-Time Dependencies
 
 None. Standalone — reads only `rows` (for the multi-select predicate's row lookup) and
@@ -187,12 +207,13 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 - [ ] **`withPagination()` / `withInfiniteScroll()` mutual exclusivity** — unrelated to
       selection directly, but selection's scope-free design assumes rows are addressable by id
       regardless of which is composed; revisit if that assumption changes.
-- [ ] **Residual questions after D58** (each answerable in isolation, see
-      [2-decisions.md](../work/with-selection/2-decisions.md)): does `selectionStateOf(ids)`
-      exclude non-selectable ids from its denominator; does a blocked write need to be
-      distinguishable from a no-op (asymmetry with `applyMultiSelectRule`'s dev-mode throw); is
-      "non-expandable row" in `withExpansion()` the same question, and should the two shapes
-      converge.
+- [x] **`selectionStateOf(ids)` denominator vs. `enableRowSelection`.** Resolved 2026-09-12 by
+      D61 (#66): `isSelectable(id)` exposes the D58 predicate read-side; the caller pre-filters
+      (`selectAllIds(table).filter(table.isSelectable)`) rather than `selectionStateOf()`
+      consulting the predicate itself. D58's write/read split is unchanged.
+- [ ] **Residual questions after D58** (see [2-decisions.md](../work/with-selection/2-decisions.md)):
+      is "non-expandable row" in `withExpansion()` the same question as `enableRowSelection`, and
+      should the two shapes converge.
 
 ---
 

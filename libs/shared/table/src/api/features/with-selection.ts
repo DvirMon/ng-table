@@ -34,6 +34,11 @@ export interface SelectionMembers {
   deselect(ids: RowId[], opts?: SelectionWriteOptions): void;
   clearSelection(opts?: SelectionWriteOptions): void;
   selectionStateOf(ids: readonly RowId[]): 'none' | 'some' | 'all';
+  /** The D58 gate, read-side (D61) — `enableRowSelection` for one id, permissive for an
+   *  unresolvable id (D8). Lets a caller pre-filter its own denominator (e.g. before
+   *  `selectionStateOf()`) against the same predicate `select()` enforces, instead of
+   *  duplicating `enableRowSelection`'s logic at the call site. */
+  isSelectable(id: RowId): boolean;
 }
 
 /** The slice of the core store this feature reads. */
@@ -74,11 +79,13 @@ export function withSelection<TRow = unknown>(
     }
 
     // Row-selectability gate (D58) — contract in docs/1-state/features/selection.md.
+    function isSelectable(id: RowId): boolean {
+      const row = resolveRow(id);
+      return row === undefined || canSelect(row);
+    }
+
     function applyRowSelectionGate(ids: readonly RowId[]): readonly RowId[] {
-      return ids.filter((id) => {
-        const row = resolveRow(id);
-        return row === undefined || canSelect(row);
-      });
+      return ids.filter(isSelectable);
     }
 
     // Multi-select is a rule on the write verbs, never stored state (D2/D14) — it never holds
@@ -182,6 +189,7 @@ export function withSelection<TRow = unknown>(
         deselect,
         clearSelection,
         selectionStateOf,
+        isSelectable,
       },
       onDestroy: () => selectionChangedSource.complete(),
       onRowsRemoved,
