@@ -5,6 +5,7 @@ import { setGroupLevels } from '../../mutations/update-grouping';
 import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
 import { filter } from '../filters/rules';
+import { withExpansion } from './with-expansion';
 import { withFiltering } from './with-filtering';
 import { withGrouping } from './with-grouping';
 import { withSelection } from './with-selection';
@@ -605,5 +606,170 @@ describe('rowsOf', () => {
     store.deselect(ids);
     expect(store.selectionStateOf(ids)).toBe('none');
     expect(store.selectedRows().size).toBe(0);
+  });
+});
+
+const EU_HEADER_ID = 'group:>region:string:EU';
+const US_FURNITURE_HEADER_ID = 'group:>region:string:US>category:string:Furniture';
+
+describe('collapse/expand (#59)', () => {
+  it('no withExpansion() composed: every cluster renders flat and fully expanded (regression, unchanged from #6)', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
+      }),
+      mockGroupingRows
+    );
+
+    const rows = store.renderRows();
+    expect(rows.filter((row) => row.kind === 'group')).toHaveLength(2); // US, EU
+    expect(rows.filter((row) => row.kind === 'row')).toHaveLength(6); // every source row present
+  });
+
+  it('withExpansion() composed, nothing toggled: every group renders collapsed by default — descendants omitted', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
+          withExpansion<GroupingMockRow>(),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    const rows = store.renderRows();
+    // Only the two depth-0 headers render — no category headers, no leaves.
+    expect(rows).toHaveLength(2);
+    expect(rows.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
+  });
+
+  it('toggleExpanded(headerId) reveals that header\'s descendants; sibling headers stay collapsed', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+          withExpansion<GroupingMockRow>(),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    store.toggleExpanded(US_HEADER_ID);
+
+    const rows = store.renderRows();
+    const usLeafIds = rows
+      .filter((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'US')
+      .map((row) => (row.data as GroupingMockRow).id);
+    expect(usLeafIds.sort()).toEqual([1, 2, 3]);
+    // EU was never toggled — still just its header, no leaves.
+    expect(rows.some((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'EU')).toBe(
+      false
+    );
+  });
+
+  it('two-level grouping, expand outer only: the outer header\'s own child headers appear, but their leaves stay hidden until individually toggled', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
+          withExpansion<GroupingMockRow>(),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    store.toggleExpanded(US_HEADER_ID);
+
+    const rows = store.renderRows();
+    expect(findHeader(rows, US_ELECTRONICS_HEADER_ID)).toBeDefined();
+    expect(findHeader(rows, US_FURNITURE_HEADER_ID)).toBeDefined();
+    // Neither inner category header was itself toggled — no leaves anywhere yet.
+    expect(rows.filter((row) => row.kind === 'row')).toHaveLength(0);
+    // EU was never toggled — not even its own category headers appear.
+    expect(findHeader(rows, EU_HEADER_ID)).toBeDefined();
+    expect(rows.some((row) => row.kind === 'group' && row.id.toString().startsWith(EU_HEADER_ID + '>'))).toBe(
+      false
+    );
+  });
+
+  it('feature array order does not affect collapse behavior', () => {
+    function buildRows(features: readonly AnyTableFeature[]): readonly [string, number][] {
+      const store = TestBed.runInInjectionContext(() =>
+        createTable(signal<GroupingMockRow[]>(mockGroupingRows), () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features,
+        }))
+      );
+      store.toggleExpanded(US_HEADER_ID);
+      return store
+        .renderRows()
+        .map((row: RenderRow<GroupingMockRow>) => [String(row.id), row.depth]);
+    }
+
+    const groupingFirst = buildRows([
+      withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+      withExpansion<GroupingMockRow>(),
+    ]);
+    const expansionFirst = buildRows([
+      withExpansion<GroupingMockRow>(),
+      withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+    ]);
+
+    expect(expansionFirst).toEqual(groupingFirst);
+  });
+
+  it('composing withGrouping() without withExpansion() never throws or warns, at construction or on renderRows()', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
+        }),
+        mockGroupingRows
+      );
+
+      expect(() => store.renderRows()).not.toThrow();
+      expect(warnSpy).not.toHaveBeenCalled();
+      expect(errorSpy).not.toHaveBeenCalled();
+    } finally {
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('rowsOf() on a collapsed group still returns the full leaf set, not [] (D17 regression)', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [
+          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
+          withExpansion<GroupingMockRow>(),
+        ],
+      }),
+      mockGroupingRows
+    );
+
+    // Header captured while collapsed (default: nothing toggled).
+    const collapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    expect(store.rowsOf(collapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+
+    // Same resolution holds for a header captured after an expand/collapse round-trip.
+    store.toggleExpanded(US_HEADER_ID);
+    store.toggleExpanded(US_HEADER_ID);
+    const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
   });
 });

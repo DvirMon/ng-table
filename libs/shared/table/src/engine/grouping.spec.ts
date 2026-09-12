@@ -304,86 +304,102 @@ describe('buildGroupRenderRows', () => {
     expect(headerIds).toContain('group:>region:string:US>category:string:Electronics');
     expect(headerIds).toContain('group:>region:string:EU>category:string:Electronics');
   });
+
+  it('expandedRows omitting a depth-0 header id omits every descendant beneath it, at every depth, while the header itself still renders', () => {
+    const seed = toSeedRenderRows(orders);
+    // Everything under EU is a member; nothing under US is — isolates the omitted subtree.
+    const expandedRows = new Set<RowId>([
+      'group:>region:string:EU',
+      'group:>region:string:EU>category:string:Electronics',
+      'group:>region:string:EU>category:string:Books',
+    ]);
+
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, expandedRows);
+
+    const usHeader = result.find((row) => row.id === 'group:>region:string:US')!;
+    expect(usHeader.depth).toBe(0);
+    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Electronics')).toBe(false);
+    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Books')).toBe(false);
+    expect(result.filter((row) => row.kind === 'row' && row.data?.region === 'US')).toEqual([]);
+    // EU's subtree, whose id and both children's ids are all members, renders in full.
+    expect(result.some((row) => row.id === 'group:>region:string:EU>category:string:Electronics')).toBe(true);
+    expect(result.filter((row) => row.kind === 'row' && row.data?.region === 'EU')).toHaveLength(2);
+  });
+
+  it('expandedRows including a header but omitting one of its children only omits that grandchild subtree — gating is per-node, not whole-subtree', () => {
+    const seed = toSeedRenderRows(orders);
+    // US is a member, and so is its Electronics child — but its Books child is not.
+    const expandedRows = new Set<RowId>([
+      'group:>region:string:US',
+      'group:>region:string:US>category:string:Electronics',
+    ]);
+
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, expandedRows);
+
+    // Both of US's own children (headers) render — US itself is expanded.
+    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Electronics')).toBe(true);
+    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Books')).toBe(true);
+    // Electronics is expanded, so its leaves render.
+    expect(result.filter((row) => row.kind === 'row' && row.data?.category === 'Electronics' && row.data?.region === 'US')).toHaveLength(2);
+    // Books is not expanded, so its own leaf is omitted even though its parent (US) is.
+    expect(result.some((row) => row.kind === 'row' && row.data?.category === 'Books' && row.data?.region === 'US')).toBe(false);
+  });
+
+  it('expandedRows omitted (undefined) behaves identically to unconditional expansion — the regression case for no withExpansion() composed', () => {
+    const seed = toSeedRenderRows(orders);
+
+    const withoutArg = buildGroupRenderRows(seed, ['region', 'category'], columns);
+    const withExplicitUndefined = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, undefined);
+
+    expect(withoutArg).toEqual(withExplicitUndefined);
+    // Every header and every leaf is present — nothing is gated.
+    expect(withoutArg.filter((row) => row.kind === 'group')).toHaveLength(6); // 2 regions + 4 region>category headers
+    expect(withoutArg.filter((row) => row.kind === 'row')).toHaveLength(5);
+  });
+
+  it('an empty expandedRows set renders every header but omits every descendant — distinct from undefined (no expansion feature at all)', () => {
+    const seed = toSeedRenderRows(orders);
+
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, new Set());
+
+    // Only the two depth-0 headers render; nothing beneath them (no nested headers, no leaves).
+    expect(result).toHaveLength(2);
+    expect(result.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
+  });
 });
 
-interface Leaf {
-  id: number;
-  value: string;
-}
-
-function header(id: RowId, depth: number, hasChildren = true): RenderRow<Leaf> {
-  return { id, depth, kind: 'group', data: null, index: 0, hasChildren };
-}
-
-function leaf(id: number, depth: number, value: string, index: number): RenderRow<Leaf> {
-  return { id, depth, kind: 'row', data: { id, value }, index };
-}
-
-/**
- * Mirrors `buildGroupRenderRows`'s shape: two depth-0 clusters ('group:A', 'group:B'); 'group:A'
- * nests two depth-1 sub-clusters ('group:A>1', 'group:A>2') whose leaves sit at depth 2;
- * 'group:B' has no sub-header, its one leaf sits directly at depth 1.
- */
-function twoClusterFixture(): RenderRow<Leaf>[] {
-  return [
-    header('group:A', 0),
-    header('group:A>1', 1),
-    leaf(1, 2, 'a', 0),
-    leaf(2, 2, 'a', 1),
-    header('group:A>2', 1),
-    leaf(3, 2, 'b', 2),
-    header('group:B', 0),
-    leaf(4, 1, 'c', 3),
-  ];
-}
-
 describe('rowsBeneathGroup', () => {
-  it('returns every leaf beneath a header at depth 2+, not just its immediate children', () => {
-    const rows = twoClusterFixture();
+  // Type-enforced, not runtime-asserted: `rowsBeneathGroup` takes `TRow[]` (the pipeline's raw
+  // rows) and never accepts `expandedRows` or `renderRows()` output — there is no collapse-
+  // related parameter to even pass, which is the whole point of D17's rewrite.
 
-    const result = rowsBeneathGroup(rows, 'group:A');
+  it("a depth-0 group id returns every leaf under all of its sub-clusters", () => {
+    const result = rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:>region:string:US');
 
-    expect(result.map((row) => row.id)).toEqual([1, 2, 3]);
+    expect(result.map((row) => row.id).sort()).toEqual([1, 3, 4]);
   });
 
-  it("nested 'group' rows are skipped as values but walked through to reach their own leaves", () => {
-    const rows = twoClusterFixture();
+  it("a depth-1 (nested) group id returns only its own sub-cluster's leaves, never a sibling sub-cluster's", () => {
+    const result = rowsBeneathGroup(
+      orders,
+      ['region', 'category'],
+      columns,
+      'group:>region:string:US>category:string:Electronics'
+    );
 
-    // 'group:A>1' and 'group:A>2' sit between the header and its depth-2 leaves — none of
-    // their (null) data leaks into the result, yet the walk continues past them.
-    const result = rowsBeneathGroup(rows, 'group:A');
-
-    expect(result.every((row) => row !== null)).toBe(true);
-    expect(result.map((row) => row.id).sort()).toEqual([1, 2, 3]);
+    expect(result.map((row) => row.id).sort()).toEqual([1, 4]);
+    expect(result.map((row) => row.id)).not.toContain(3);
   });
 
-  it("stops at the next sibling at or above the header's depth — a later cluster's leaves never leak in", () => {
-    const rows = twoClusterFixture();
-
-    const result = rowsBeneathGroup(rows, 'group:A');
-
-    // Leaf 4 belongs to 'group:B', a depth-0 sibling that terminates 'group:A's walk.
-    expect(result.map((row) => row.id)).not.toContain(4);
+  it('an id matching no cluster returns [], no throw', () => {
+    expect(() =>
+      rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope')
+    ).not.toThrow();
+    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope')).toEqual([]);
   });
 
-  it("a nested header's own rowsOf never includes a sibling sub-cluster's leaves", () => {
-    const rows = twoClusterFixture();
-
-    const result = rowsBeneathGroup(rows, 'group:A>1');
-
-    expect(result.map((row) => row.id)).toEqual([1, 2]);
-  });
-
-  it('an id matching no row returns []', () => {
-    const rows = twoClusterFixture();
-
-    expect(rowsBeneathGroup(rows, 'group:nope')).toEqual([]);
-  });
-
-  it("a 'row' id (matches no header) returns [], no throw", () => {
-    const rows = twoClusterFixture();
-
-    expect(() => rowsBeneathGroup(rows, 1)).not.toThrow();
-    expect(rowsBeneathGroup(rows, 1)).toEqual([]);
+  it('a malformed/non-group id returns [], no throw', () => {
+    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 1)).toEqual([]);
+    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'not-a-group-id')).toEqual([]);
   });
 });

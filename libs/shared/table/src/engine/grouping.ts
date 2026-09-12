@@ -16,6 +16,17 @@ function toGroupKey(value: unknown): string {
   return `${typeof value}:${String(value)}`;
 }
 
+/** The one place `parentPath>columnId:key` is built — `emitGroupRows` and `findClusterByPath`
+ * both call this instead of reconstructing the format, so the two can never silently drift out
+ * of sync (the id an emitted header carries vs. the id a lookup resolves). */
+function buildGroupPath(parentPath: string, columnId: string, value: unknown): string {
+  return `${parentPath}>${columnId}:${toGroupKey(value)}`;
+}
+
+function toGroupId(path: string): RowId {
+  return `group:${path}`;
+}
+
 /** D14 runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
  * rest." Construction-time validation (a bad `initialGrouping` id) is Step 4's job, not this. */
 export function resolveGroupingLevels<TRow>(
@@ -120,6 +131,18 @@ export function sortClusters<T, TRow>(
   }));
 }
 
+/** Shared by `clusterRows` and `rowsBeneathGroup` — both cluster a raw `TRow[]` by the same
+ * resolved levels via the same `columnById` accessor; only what they do with the resulting
+ * tree differs. */
+function buildClusterNodes<TRow>(
+  rows: TRow[],
+  levels: readonly string[],
+  columns: ColumnDef<TRow>[]
+): ClusterNode<TRow>[] {
+  const columnById = new Map(columns.map((c) => [c.id, c]));
+  return buildClusters(rows, levels, (row, columnId) => columnById.get(columnId)!.accessor(row));
+}
+
 /**
  * The `group` pipeline stage (`PIPELINE_ORDER`, `engine/pipeline.ts`) — `TRow[] => TRow[]`,
  * stable clustering, contiguous at every depth. Empty/all-unknown `grouping` is a reference-
@@ -135,10 +158,7 @@ export function clusterRows<TRow>(
   if (levels.length === 0) {
     return rows;
   }
-  const columnById = new Map(columns.map((c) => [c.id, c]));
-  const nodes = buildClusters(rows, levels, (row, columnId) =>
-    columnById.get(columnId)!.accessor(row)
-  );
+  const nodes = buildClusterNodes(rows, levels, columns);
   const ordered = sortClusters(nodes, groupOrder, (items) => items, { done: false });
   return flattenLeaves(ordered);
 }
@@ -159,19 +179,22 @@ function computeAggregates<TRow>(
 
 /**
  * Depth-first header + leaf walk over a `buildClusters` tree. Emits one `kind: 'group'` header
- * per node, immediately followed by its nested headers/leaves — contiguous at every depth,
- * unconditionally expanded (no `expandedRows` read here, that's #59's job).
+ * per node, immediately followed by its nested headers/leaves. `expandedRows === undefined`
+ * means unconditionally expanded (no `withExpansion()` composed, #6 regression); otherwise a
+ * header's descendants are omitted unless its own id is a member.
  */
 function emitGroupRows<TRow>(
   nodes: ClusterNode<Omit<RenderRow<TRow>, 'index'>>[],
   depth: number,
   parentPath: string,
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
+  expandedRows: ReadonlySet<RowId> | undefined
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
-    const path = `${parentPath}>${node.columnId}:${toGroupKey(node.value)}`;
+    const path = buildGroupPath(parentPath, node.columnId, node.value);
+    const id = toGroupId(path);
     const header: Omit<RenderRow<TRow>, 'index'> = {
-      id: `group:${path}`,
+      id,
       depth,
       kind: 'group',
       data: null,
@@ -181,9 +204,11 @@ function emitGroupRows<TRow>(
         columns
       ),
     };
-    const nested =
-      node.children.length > 0
-        ? emitGroupRows(node.children, depth + 1, path, columns)
+    const isExpanded = expandedRows === undefined || expandedRows.has(id);
+    const nested = !isExpanded
+      ? []
+      : node.children.length > 0
+        ? emitGroupRows(node.children, depth + 1, path, columns, expandedRows)
         : node.items.map((item) => ({ ...item, depth: depth + 1 }));
     return [header, ...nested];
   });
@@ -199,7 +224,8 @@ export function buildGroupRenderRows<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number,
+  expandedRows?: ReadonlySet<RowId>
 ): Omit<RenderRow<TRow>, 'index'>[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -221,30 +247,45 @@ export function buildGroupRenderRows<TRow>(
     (items) => items.map((item) => item.data).filter(isRowData),
     { done: false }
   );
-  return emitGroupRows(ordered, 0, '', columns);
+  return emitGroupRows(ordered, 0, '', columns, expandedRows);
+}
+
+function findClusterByPath<T>(
+  nodes: ClusterNode<T>[],
+  parentPath: string,
+  targetId: RowId
+): ClusterNode<T> | undefined {
+  for (const node of nodes) {
+    const path = buildGroupPath(parentPath, node.columnId, node.value);
+    if (toGroupId(path) === targetId) {
+      return node;
+    }
+    const found = findClusterByPath(node.children, path, targetId);
+    if (found) {
+      return found;
+    }
+  }
+  return undefined;
 }
 
 /**
- * Every leaf row beneath a group header, at any depth — not just immediate children. Resolves by
- * `id`, never object identity: `renderRows()` rebuilds its objects each pass, so a header held
- * across renders is a stale object carrying a stable id. An id matching no current header
- * returns `[]`.
+ * Every leaf row beneath a group id, at any depth — D16's "leaf rows, not immediate children".
+ * Re-derives the cluster tree from the pipeline's `TRow[]` (post-filter, post-group-clustering,
+ * never affected by collapse) rather than scanning `renderRows()`, so a collapsed group still
+ * resolves its full leaf set (`0-product/grouping.md` X-G1). An id matching no cluster returns
+ * `[]` (D14 runtime degrade).
  */
 export function rowsBeneathGroup<TRow>(
-  rows: readonly RenderRow<TRow>[],
+  rows: TRow[],
+  grouping: readonly string[],
+  columns: ColumnDef<TRow>[],
   groupId: RowId
 ): TRow[] {
-  const start = rows.findIndex((row) => row.kind === 'group' && row.id === groupId);
-  if (start === -1) {
+  const levels = resolveGroupingLevels(grouping, columns);
+  if (levels.length === 0) {
     return [];
   }
-  const headerDepth = rows[start].depth;
-  const leaves: TRow[] = [];
-  for (let i = start + 1; i < rows.length && rows[i].depth > headerDepth; i++) {
-    const row = rows[i];
-    if (row.kind !== 'group' && row.data !== null) {
-      leaves.push(row.data);
-    }
-  }
-  return leaves;
+  const nodes = buildClusterNodes(rows, levels, columns);
+  const node = findClusterByPath(nodes, '', groupId);
+  return node ? flattenLeaves([node]) : [];
 }

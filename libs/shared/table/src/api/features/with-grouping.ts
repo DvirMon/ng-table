@@ -1,10 +1,18 @@
-import { signal } from '@angular/core';
+import { signal, type Signal } from '@angular/core';
 import { buildGroupRenderRows, clusterRows, rowsBeneathGroup } from '../../engine/grouping';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
-import type { ColumnId, GroupingUpdater, GroupSummary, RenderRow } from '../types';
+import type { ColumnId, GroupingUpdater, GroupSummary, RenderRow, RowId } from '../types';
 
-type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns' | 'renderRows'>;
+type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns' | 'rows'>;
+
+/** A shallow duck-type check (callable, not a full `Signal<Set<RowId>>` shape check) — safe only
+ * because `SlotRegistry` (ADR-0007) guarantees `composed['expandedRows']` can be nothing but
+ * `withExpansion()`'s signal or `undefined`; a second feature claiming that member key throws
+ * at construction before this ever runs. */
+function isExpandedRowsSignal(value: unknown): value is Signal<ReadonlySet<RowId>> {
+  return typeof value === 'function';
+}
 
 export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
@@ -22,7 +30,7 @@ export interface GroupingMembers<TRow> {
   /** Leaf rows beneath a group header, at any depth — post-filter by construction, since
    * `filter` precedes `group` in `PIPELINE_ORDER`. Resolved by `group.id`, so a header from an
    * earlier render pass still works; a group that no longer exists returns `[]`. Reads
-   * `renderRows()`, so it composes inside a `computed()`. */
+   * `core.rows()` (pipeline output), independent of collapse/expand state. */
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
 }
 
@@ -35,8 +43,14 @@ export interface GroupingMembers<TRow> {
  */
 export function withGrouping<TRow = unknown>(
   config: WithGroupingConfig<TRow> = {}
-): (core: GroupingInput<TRow>) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
-  return (core: GroupingInput<TRow>): TableFeatureSpec<TRow, GroupingMembers<TRow>> => {
+): (
+  core: GroupingInput<TRow>,
+  composed: Record<string, unknown>
+) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
+  return (
+    core: GroupingInput<TRow>,
+    composed: Record<string, unknown>
+  ): TableFeatureSpec<TRow, GroupingMembers<TRow>> => {
     const initial: string[] = config.initialGrouping ?? [];
     const knownIds = new Set(core.columns().map((c) => c.id));
     const unknownIds = initial.filter((id) => !knownIds.has(id));
@@ -53,7 +67,7 @@ export function withGrouping<TRow = unknown>(
     );
 
     const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
-      rowsBeneathGroup(core.renderRows(), group.id);
+      rowsBeneathGroup(core.rows(), baseGrouping(), core.columns(), group.id);
 
     return {
       members: { grouping, rowsOf },
@@ -61,8 +75,19 @@ export function withGrouping<TRow = unknown>(
         group: (rows) => clusterRows(rows, baseGrouping(), core.columns(), config.groupOrder),
       },
       renderStages: {
-        group: (rows) =>
-          buildGroupRenderRows(rows, baseGrouping(), core.columns(), config.groupOrder),
+        group: (rows) => {
+          const expandedRowsMember = composed['expandedRows'];
+          const expandedRows = isExpandedRowsSignal(expandedRowsMember)
+            ? expandedRowsMember()
+            : undefined;
+          return buildGroupRenderRows(
+            rows,
+            baseGrouping(),
+            core.columns(),
+            config.groupOrder,
+            expandedRows
+          );
+        },
       },
     };
   };
