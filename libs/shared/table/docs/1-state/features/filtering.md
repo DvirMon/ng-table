@@ -5,19 +5,12 @@ version: 2.0
 date: 2026-09-10
 capability: filtering
 spec: drilled
-code: partial
+code: shipped
 audience: developers
 parent: ../architecture.md
 ---
 
 # withFiltering()
-
-> **⚠️ The shipped code does not match this spec (2026-09-10).**
-> `src/api/features/with-filtering.ts` — committed in `be39054`, exported from `src/index.ts:13`
-> — implements the superseded imperative shape (`setColumnFilter()` / `setGlobalFilter()` /
-> `clearFilters()`, store-owned `FilterRule[]`). This document describes what replaces it.
-> Removing the old surface is a **breaking public-API change** and is sequenced *after*
-> `createFilters()` lands, so filtering never regresses to nothing (R26).
 
 ## Executive Summary
 
@@ -150,9 +143,8 @@ Superseded behavioral decisions from v1.1 of this file, kept here so the change 
 
 ## Competitive position
 
-**Verdict: still missing.** Committed code exists (`api/features/with-filtering.ts`) but
-implements the superseded imperative shape, so the baseline gap is not closed. It closes when
-`createFilters()` ships and this adapter replaces that file.
+**Verdict: closed.** `api/features/with-filtering.ts` now implements this adapter over
+`createFilters()` (#62), replacing the superseded imperative shape.
 
 Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table and PrimeNG —
 column + global filtering is baseline in all four competitors' free tier. Full reasoning:
