@@ -1,0 +1,97 @@
+// R4 — createTable(this.data, { trackBy, columns, columnsSchema?, injector? }, ...features)
+// Required config stays a plain object (no with* wrapper, no thunk); with* = optional only.
+import { computed, signal, type Injector, type Signal } from '@angular/core';
+import type {
+  ColumnDefInput, ColumnId, GroupingMembers, SelectionMembers, SortDirection,
+  TableDataInput, TableStore, TrackByConfig,
+} from '@acme/table';
+import type { ColumnSchema, ColumnsSchemaFn } from '@table/engine/../schema/column-schema.types';
+
+interface Invoice { id: string; total: number; status: 'paid' | 'open'; customer: string }
+type DerivedDict = Record<string, Signal<unknown>>;
+const data = signal<Invoice[]>([]);
+
+type Shape = { rows: Signal<readonly any[]> };
+type RowOf<S> = S extends { rows: Signal<readonly (infer R)[]> } ? R : never;
+interface Feature<In extends Shape, Out extends object> {
+  (input: In): Out;
+  readonly __in?: In;
+  readonly __out?: Out;
+}
+interface TableConfig<TRow> {
+  trackBy: TrackByConfig<TRow>;
+  columns: ColumnDefInput<TRow>[];
+  columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;
+  injector?: Injector;
+}
+
+declare function withSelection<In extends Shape, D extends DerivedDict = {}>(
+  a?: { canMultiSelect?: (row: RowOf<In>) => boolean } | Feature<In & SelectionMembers, D>,
+  b?: Feature<In & SelectionMembers, D>
+): Feature<In, SelectionMembers & D>;
+declare function withGrouping<In extends Shape>(
+  config?: { initial?: ColumnId<RowOf<In>>[] }
+): Feature<In, GroupingMembers<RowOf<In>>>;
+declare function withSorting<In extends Shape>(config?: {
+  initial?: { columnId: ColumnId<RowOf<In>>; direction: SortDirection }[];
+}): Feature<In, { sort: Signal<readonly { columnId: string }[]> }>;
+declare function withComputed<In extends Shape, D extends DerivedDict>(
+  factory: (store: In) => D
+): Feature<In, D>;
+
+// data direct, config plain object, then N feature slots
+declare function createTable<TRow>(
+  data: TableDataInput<TRow>, config: TableConfig<TRow>
+): TableStore<TRow>;
+declare function createTable<TRow, O1 extends object>(
+  data: TableDataInput<TRow>, config: TableConfig<TRow>,
+  f1: Feature<TableStore<TRow>, O1>
+): TableStore<TRow> & O1;
+declare function createTable<TRow, O1 extends object, O2 extends object>(
+  data: TableDataInput<TRow>, config: TableConfig<TRow>,
+  f1: Feature<TableStore<TRow>, O1>, f2: Feature<TableStore<TRow> & O1, O2>
+): TableStore<TRow> & O1 & O2;
+declare function createTable<TRow, O1 extends object, O2 extends object, O3 extends object,
+  O4 extends object>(
+  data: TableDataInput<TRow>, config: TableConfig<TRow>,
+  f1: Feature<TableStore<TRow>, O1>,
+  f2: Feature<TableStore<TRow> & O1, O2>,
+  f3: Feature<TableStore<TRow> & O1 & O2, O3>,
+  f4: Feature<TableStore<TRow> & O1 & O2 & O3, O4>
+): TableStore<TRow> & O1 & O2 & O3 & O4;
+
+// ---- the call ---------------------------------------------------------------------------
+export const table: never = createTable(
+  data,
+  {
+    trackBy: 'id',
+    columns: [{ id: 'customer' }, { id: 'total' }, { id: 'status' }],
+    columnsSchema: (c) => { const revealSchema: never = c; return []; },
+  },
+  withSelection(
+    { canMultiSelect: (row) => { const revealRow: never = row; return row.status === 'open' } },
+    withComputed((store) => {
+      const revealDerive: never = store;
+      return { hiddenSelected: computed(() => store.selectedRows().size - store.rows().length) };
+    }),
+  ),
+  withGrouping({ initial: ['status'] }),
+  withSorting({ initial: [{ columnId: 'total', direction: 'desc' }] }),
+  withComputed((store) => {
+    const revealLast: never = store;
+    return { tick: computed(() => store.hiddenSelected() + store.grouping().length) };
+  }),
+);
+
+// ---- no features at all -----------------------------------------------------------------
+export const bare: never = createTable(data, { trackBy: 'id', columns: [{ id: 'total' }] });
+
+// ---- negatives --------------------------------------------------------------------------
+const n1 = createTable(data, { trackBy: 'nope', columns: [] });
+const n2 = createTable(data, { trackBy: 'id', columns: [] }, withGrouping({ initial: ['zzz'] }));
+const n3 = createTable(
+  data,
+  { trackBy: 'id', columns: [] },
+  withComputed((store) => ({ bad: computed(() => store.selectedRows().size) })), // slot 1
+  withSelection(),
+);
