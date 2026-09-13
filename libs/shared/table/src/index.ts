@@ -38,6 +38,7 @@ export type {
 } from './api/features/editing-state';
 export { createTableFeature } from './api/create-table-feature';
 export { withComputed } from './api/features/with-computed';
+export { composeFeatures } from './api/features/compose-features';
 export { columnSchema } from './schema/column-schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column-rules';
 export type { SortNullsOpts } from './schema/column-rules';

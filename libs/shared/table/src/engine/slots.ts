@@ -42,6 +42,14 @@ export function describeInternalFeature(position: number): string {
   return `internal feature ${position}`;
 }
 
+/** Names a feature nested inside `composeFeatures()` by its 1-based position within the
+ * composite. The composite's own argument position is not known at runtime — a `Feature`
+ * receives only the store — so the label names the composite by kind. */
+export function describeInnerFeature(position: number, displayName?: string): string {
+  const base = `composeFeatures inner feature ${position}`;
+  return displayName ? `${base} (${displayName})` : base;
+}
+
 /**
  * Tracks which feature claimed each single-occupancy slot, so a collision can name both sides.
  * Under the previous `@ngrx/signals` engine features injected behavior by mutating a shared

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   CORE_MEMBER_KEYS,
   describeFeature,
+  describeInnerFeature,
   describeInternalFeature,
   SlotRegistry,
 } from './slots';
@@ -19,6 +20,18 @@ describe('describeFeature', () => {
 describe('describeInternalFeature', () => {
   it('names an engine-internal feature by its 1-based position', () => {
     expect(describeInternalFeature(1)).toBe('internal feature 1');
+  });
+});
+
+describe('describeInnerFeature', () => {
+  it('names a feature by its 1-based position inside a composite', () => {
+    expect(describeInnerFeature(2)).toBe('composeFeatures inner feature 2');
+  });
+
+  it('appends the display name when given one', () => {
+    expect(describeInnerFeature(1, 'withSorting')).toBe(
+      'composeFeatures inner feature 1 (withSorting)'
+    );
   });
 });
 

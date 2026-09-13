@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
+import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
 import { columnSchema } from '../schema/column-schema';
 import { applyVisible } from '../schema/column-rules';
@@ -669,6 +670,194 @@ describe('createTable', () => {
       });
 
       void sees;
+    });
+
+    // -------------------------------------------------------------------------------------
+    // composeFeatures() (#71) — composite slots, nesting, the arity escape hatch, not-any.
+    // Same fixtures as above; `withC` is the third contribution nesting needs.
+    // -------------------------------------------------------------------------------------
+
+    function withC(): Feature<
+      TableStore<Invoice> & { a: Signal<number> } & { b(): void },
+      { c: Signal<boolean> }
+    > {
+      return createTableFeature(() => ({ members: { c: signal(false).asReadonly() } }));
+    }
+
+    /** The case 35 composition — a composite in slot 1, a plain feature reading it in slot 2.
+     * Shared with case 39, which asserts the same table is not `any`. */
+    function composeCompositeTable() {
+      return TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          composeFeatures(withA(), withB()),
+          createTableFeature((input) => {
+            expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
+            expectTypeOf(input.b).toEqualTypeOf<() => void>();
+            return { members: {} };
+          })
+        )
+      );
+    }
+
+    it('case 35 — a following slot sees the composite’s full contribution', () => {
+      const table = composeCompositeTable();
+
+      expectTypeOf<keyof typeof table>().toEqualTypeOf<
+        'a' | 'b' | keyof TableStore<Invoice>
+      >();
+    });
+
+    it('case 36 — an inner feature sees earlier inners and the slot before the composite', () => {
+      // `withB` declares `In` as `TableStore<Invoice> & { a }` — that it type-checks as inner
+      // slot 1 of a composite placed *after* `withA()` is the compile assertion itself.
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withA(),
+          composeFeatures(
+            withB(),
+            createTableFeature((input) => {
+              expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
+              expectTypeOf(input.b).toEqualTypeOf<() => void>();
+              return { members: {} };
+            })
+          )
+        )
+      );
+
+      void table;
+    });
+
+    it('case 37 — a nested composite flattens into the outer slot’s contribution', () => {
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          composeFeatures(withA(), composeFeatures(withB(), withC())),
+          createTableFeature((input) => {
+            expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
+            expectTypeOf(input.b).toEqualTypeOf<() => void>();
+            expectTypeOf(input.c).toEqualTypeOf<Signal<boolean>>();
+            return { members: {} };
+          })
+        )
+      );
+
+      expectTypeOf<keyof typeof table>().toEqualTypeOf<
+        'a' | 'b' | 'c' | keyof TableStore<Invoice>
+      >();
+    });
+
+    it('case 38 — the arity escape hatch: 15 inner features per composite, nestable', () => {
+      // `{ members: {} }` contributes `{}`, not `object` — case 23 guards why that matters.
+      const inert = createTableFeature((store: TableStore<Invoice>) => {
+        void store;
+        return { members: {} };
+      });
+
+      // (a) 15 inner features in one slot.
+      const fifteen = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          composeFeatures(
+            inert, inert, inert, inert, inert,
+            inert, inert, inert, inert, inert,
+            inert, inert, inert, inert, inert
+          )
+        )
+      );
+      void fifteen;
+
+      // (b) nesting escapes the cap entirely — 16 features reachable through one slot.
+      const sixteen = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          composeFeatures(
+            composeFeatures(
+              inert, inert, inert, inert, inert,
+              inert, inert, inert, inert, inert,
+              inert, inert, inert, inert, inert
+            ),
+            withA()
+          )
+        )
+      );
+
+      expectTypeOf(sixteen.a).toEqualTypeOf<Signal<number>>();
+
+      // (c) a 16th *direct* inner argument still matches no overload (mirrors case 22).
+      composeFeatures(
+        inert, inert, inert, inert, inert,
+        inert, inert, inert, inert, inert,
+        inert, inert, inert, inert, inert,
+        // @ts-expect-error — composeFeatures caps at 15 inner features, same as createTable.
+        inert
+      );
+    });
+
+    it('case 39 — a composed store is never widened to any', () => {
+      const table = composeCompositeTable();
+
+      expectTypeOf(table).not.toBeAny();
+      expectTypeOf(table.a).not.toBeAny();
+    });
+
+    it('case 40 — a standalone composite keeps its contribution, but loses the row type', () => {
+      const withStandard = composeFeatures(withA(), withB());
+
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withStandard,
+          createTableFeature((input) => {
+            expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
+            expectTypeOf(input.b).toEqualTypeOf<() => void>();
+            return { members: {} };
+          })
+        )
+      );
+
+      void table;
+
+      // Known limitation (#78): declared standalone there is no contextual `In`, so
+      // `withMatchFlag`'s own `In` falls back to its `Shape` constraint and `RowOf<Shape>`
+      // is `unknown` — the same call inline in a slot below recovers `Invoice`.
+      const standalone = composeFeatures(
+        withMatchFlag((row) => {
+          expectTypeOf(row).toEqualTypeOf<unknown>();
+          return true;
+        })
+      );
+      void standalone;
+
+      const inline = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          composeFeatures(
+            withMatchFlag((row) => {
+              expectTypeOf(row).toEqualTypeOf<Invoice>();
+              return row.status === 'open';
+            })
+          )
+        )
+      );
+      void inline;
+    });
+
+    // Trap 3 at composeFeatures' own declaration site: one `Feature` whose `Out` is the
+    // intersection, not an intersection *of features*. Cases 19 and 31 assert the same of the
+    // derive helper and of `withComputed()`.
+    it('case 41 — trap 3: composeFeatures() returns one Feature, not an intersection', () => {
+      expectTypeOf(composeFeatures(withA(), withB())).toEqualTypeOf<
+        Feature<TableStore<Invoice>, { a: Signal<number> } & { b(): void }>
+      >();
     });
   });
 });
