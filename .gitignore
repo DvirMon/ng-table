@@ -55,3 +55,7 @@ __screenshots__/
 
 # Scratch handoff docs — routing slips, not durable record (see apps/*/CONTEXT.md)
 handoffs/
+
+# tsc --incremental caches (tsconfig points these at dist/out-tsc; CLI overrides land in-tree)
+*.tsbuildinfo
+*.tsbuildinfo.*
