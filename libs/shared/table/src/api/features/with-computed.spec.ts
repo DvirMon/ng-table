@@ -160,8 +160,8 @@ describe('withComputed', () => {
       );
       const attempt = () => makeStore(signal([...mockRows]), shadowsRows);
 
-      expect(attempt).toThrow(expect.stringContaining('feature 1 (withComputed)'));
-      expect(attempt).toThrow(expect.stringContaining('"rows"'));
+      expect(attempt).toThrow('feature 1 (withComputed)');
+      expect(attempt).toThrow('"rows"');
     });
 
     it('throws naming an earlier feature and withComputed for a repeated member key', () => {
@@ -170,8 +170,8 @@ describe('withComputed', () => {
       }));
       const attempt = () => makeStore(signal([...mockRows]), fA(), collidesWithA);
 
-      expect(attempt).toThrow(expect.stringContaining('feature 1'));
-      expect(attempt).toThrow(expect.stringContaining('feature 2 (withComputed)'));
+      expect(attempt).toThrow('feature 1');
+      expect(attempt).toThrow('feature 2 (withComputed)');
     });
 
     it('throws naming both positions when two withComputed blocks claim the same key', () => {
@@ -182,8 +182,8 @@ describe('withComputed', () => {
         withComputed(() => ({ x: computed(() => 2) }));
       const attempt = () => makeStore(signal([...mockRows]), first, second);
 
-      expect(attempt).toThrow(expect.stringContaining('feature 1 (withComputed)'));
-      expect(attempt).toThrow(expect.stringContaining('feature 2 (withComputed)'));
+      expect(attempt).toThrow('feature 1 (withComputed)');
+      expect(attempt).toThrow('feature 2 (withComputed)');
     });
 
     it('throws naming a non-signal member', () => {
@@ -194,7 +194,7 @@ describe('withComputed', () => {
       );
       const attempt = () => makeStore(signal([...mockRows]), nonSignal);
 
-      expect(attempt).toThrow(expect.stringContaining('"n"'));
+      expect(attempt).toThrow('"n"');
     });
 
     it('wraps a block that throws while declaring members, preserving the original as cause', () => {

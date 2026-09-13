@@ -466,26 +466,28 @@ describe('createTable', () => {
       const data = signal<Invoice[]>([]);
       const config = { trackBy: 'id' as const, columns: invoiceColumns };
 
-      createTable(
-        data,
-        config,
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        noop(),
-        // @ts-expect-error — ARITY is 15; a 16th feature argument has no matching overload.
-        noop()
+      TestBed.runInInjectionContext(() =>
+        createTable(
+          data,
+          config,
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          noop(),
+          // @ts-expect-error — ARITY is 15; a 16th feature argument has no matching overload.
+          noop()
+        )
       );
     });
 
