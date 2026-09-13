@@ -28,7 +28,7 @@ component"); flagged for whoever next touches `navbar` rather than edited here.
 ## Copy sourced from `libs/shared/table`'s own docs only
 
 Every claim in `home.content.ts` traces to `libs/shared/table/README.md` or `CLAUDE.md` verbatim
-(e.g. "Angular 19+", `createTable()`, `createTableSchema()`/`columnSchema()`, `withSorting()`/
+(e.g. "Angular 19+", `createTable()`, `columnSchema()`, `withSorting()`/
 `withExpansion()`, "`rows()` never returns wrapper objects", "zero runtime dependencies beyond
 `@angular/core`"). Deliberately did not repeat `CLAUDE.md`'s "div-grid" mention in the
 attribute-only-directives cell — its own doc marks that path `status: proposed`, not implemented,

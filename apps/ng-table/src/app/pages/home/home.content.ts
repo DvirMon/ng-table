@@ -31,12 +31,12 @@ export const HOME_CONTENT: HomeContent = {
       {
         icon: 'lucideColumns3',
         title: 'Column schema',
-        description: 'Define columns once with createTableSchema() and columnSchema(); the table derives the rest.',
+        description: 'Define columns once in the config object and shape them with columnSchema(); the table derives the rest.',
       },
       {
         icon: 'lucidePuzzle',
         title: 'Feature plugins',
-        description: "Opt into withSorting() and withExpansion() by adding them to the features array — nothing ships you don't use.",
+        description: "Opt into withSorting() and withExpansion() by passing them to createTable() after the config — nothing ships you don't use.",
       },
       {
         icon: 'lucideRows',
