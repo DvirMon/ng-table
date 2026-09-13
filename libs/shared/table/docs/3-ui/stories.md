@@ -15,6 +15,32 @@ moves on.
 For which stories a feature *needs* (coverage against the product doc, merge/standalone
 decisions), that's a separate concern — see the `story-plan` skill.
 
+## Where a story's inputs live
+
+Planning a story for a feature means reading three doc classes, in three different places. The
+product doc is the *output* of the research, not the research — reading only `0-product/` and
+calling that the input set is how a plan ends up inventing affordances.
+
+| Input | Path | Answers |
+|---|---|---|
+| Product user stories | `docs/0-product/<feature>.md` | what a person needs to be able to do; the coverage marks a plan re-derives |
+| Research corpus | `docs/1-state/work/with-<feature>/research-*.md` | the evidence behind the product doc |
+| Story conventions | this file | the shape a story takes in this repo |
+
+Inside the research corpus, `research-<feature>-ux-capabilities.md` is the one that decides what
+a story's buttons look like — a version-pinned, URL-cited inventory of what a person can click,
+tap and press across AG Grid, TanStack Table v8, MUI X Data Grid, PrimeNG, Material React Table
+and (for selection) Angular CDK's `SelectionModel`. Its siblings carry community pain
+(`research-<feature>-community-pain.md`), what this library already ships
+(`research-<feature>-internal-coverage.md`), and per-feature design questions.
+
+Where that research shows peer libraries converging on one affordance, a story demonstrates that
+convention by default. Deviations are stated and justified, not silent.
+
+Worked examples of a plan built this way: `work/selection-stories/`, `work/filtering-stories/`,
+`work/grouping-stories/` — each carries a "Conventions from peer libraries" matrix ahead of its
+target story set.
+
 ## File layout — one folder per story, one concern per file
 
 ```

@@ -9,7 +9,8 @@ status: >
   state, 7 UI, 3 needing both. §9 names 2 capabilities with no doc anywhere. Coverage is ❌ across
   the board — the state surface is real and tested, but zero Storybook stories compose
   `withSelection()` and the UI directive is an undrilled stub, so nothing is demonstrable to a
-  person yet. OQ-1…OQ-6 all open, none silently picked. Two stale cross-feature references found
+  person yet. **Re-derived 2026-09-13** as 12 🟡 / 10 ❌ in
+  `3-ui/work/selection-stories/1-gap-analysis.md`. OQ-1…OQ-6 all open, none silently picked. Two stale cross-feature references found
   in sibling docs during research are named in "Report the deltas" at the end, not fixed here.
 date: 2026-09-12
 audience: product, design, engineering
@@ -69,6 +70,13 @@ never loaded at all.
 | ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+
+> **Correction, 2026-09-13.** The blanket ❌ holds as *story* coverage but overstates the gap: under
+> this table's own legend 12 of the 22 stories are **🟡** — the verb ships and is unit-tested, only
+> the affordance is missing (no checkbox directive exists). Re-derived per story in
+> [`3-ui/work/selection-stories/1-gap-analysis.md`](../3-ui/work/selection-stories/1-gap-analysis.md).
+> One note in the other direction: `research-selection-internal-coverage.md` predates `isSelectable`
+> (`with-selection.ts:41`, commit `ab618f8`), so the research is the stale side on that point.
 
 **Every story in this document is ❌, and that is not a judgement call.** Verified 2026-09-12
 (`1-state/work/with-selection/research-selection-internal-coverage.md` §2): grepping every

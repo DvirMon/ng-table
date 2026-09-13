@@ -7,8 +7,9 @@ status: >
   `spec: drilled`, R1–R31 settled), not before — so this doc's job is to find what the design
   does not cover, and it does. §8 splits the gaps by owning layer: 6 state, 6 UI, 2 needing both.
   §9 lists 4 capabilities with no owner, one of them the `filters` capability itself, which is
-  missing from the generated registry entirely. Coverage is ❌ across the board — `createFilters()`
-  has zero code, and the shipped `withFiltering()` still implements the shape it replaces.
+  missing from the generated registry entirely. Coverage is ❌ across the board — **the stated reason is
+  superseded 2026-09-13**: `createFilters()` and the `api/filters/` engine ship with spec coverage.
+  Re-derived per story in `3-ui/work/filtering-stories/1-gap-analysis.md`.
   OQ-1…OQ-7 all open, none silently picked.
 date: 2026-09-10
 audience: product, design, engineering
@@ -70,6 +71,14 @@ differently.
 | ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+
+> **Correction, 2026-09-13.** Two premises below are now false: `createFilters()` does **not** have
+> zero code (the full `api/filters/` engine ships, spec-covered), and `withFiltering()` no longer
+> implements the superseded shape — it is a v2.0 adapter, currently an identity pass-through that
+> still claims the `filter` stage. The ❌ marks survive as *story* coverage (nothing is on screen),
+> but several stories are **🟡** under this table's legend. Re-derived in
+> [`3-ui/work/filtering-stories/1-gap-analysis.md`](../3-ui/work/filtering-stories/1-gap-analysis.md),
+> which also closes §8.1's S3/S4 and settles the server-mode composition question.
 
 **Every story in this document is ❌, and that is not a judgement call.** Verified 2026-09-10
 (`1-state/work/with-filtering/research-filter-internal-coverage.md` §4): no Storybook story

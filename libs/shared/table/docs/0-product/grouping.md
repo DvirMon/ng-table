@@ -7,8 +7,9 @@ status: >
   this doc's job is to find what the design does not cover, and it does. §8 splits the gaps by
   owning layer: 11 state, 10 UI, 5 needing both, plus 2 direct contradictions with shipped docs.
   §9 lists 5 capabilities with no doc at all, checked against the generated registry. Coverage is
-  ❌ across the board — though `code: partial` landed 2026-09-10 (D1/D3/D9, issue #6), so §2's
-  marks need a re-verify pass. OQ-1 and OQ-2 resolved 2026-09-12 by D16 (group selection); OQ-3…OQ-8
+  ❌ across the board — **superseded 2026-09-13**: #58/#59/#65 and issue #60 all landed, so most
+  marks are now 🟡 (mechanism ships, no affordance). Re-derived per story in
+  `3-ui/work/grouping-stories/1-gap-analysis.md`. OQ-1 and OQ-2 resolved 2026-09-12 by D16 (group selection); OQ-3…OQ-8
   still open, none silently picked.
 date: 2026-09-10
 audience: product, design, engineering
@@ -64,6 +65,14 @@ and §7 records the finance case where auto-expanded is what users actually want
 | ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+
+> **Correction, 2026-09-13.** The blanket ❌ below is superseded. Its stated justification — "there
+> is no `with-grouping.ts`", no clustering function, nothing registering the `'group'` stage — was
+> true on 2026-09-10 and is false now: #58/#59/#65 shipped and issue #60 completed, so `applyGrouping`
+> is live and `withGrouping()` composes it. Under this table's own legend most stories are therefore
+> **🟡, not ❌** — the mechanism ships, the affordance does not. Per-story marks are re-derived in
+> [`3-ui/work/grouping-stories/1-gap-analysis.md`](../3-ui/work/grouping-stories/1-gap-analysis.md);
+> the headings below are left at their 2026-09-10 values rather than hand-edited one by one.
 
 **Every story in this document is ❌, and that is not a judgement call.** Verified 2026-09-10
 (`1-state/work/with-grouping/research-grouping-internal-coverage.md` §4–§5): there is no
