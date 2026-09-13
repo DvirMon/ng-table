@@ -44,6 +44,10 @@ export interface RenderRow<TRow> {
   // loses the free DOM-order inference native `<table>` gives for free.
   readonly index: number;
 
+  // The column and value a `group` row was clustered on, so a header can render its own
+  // label without parsing it back out of the composite `id`. Set only for `kind: 'group'`.
+  readonly groupKey?: { columnId: string; value: unknown };
+
   // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
   readonly aggregates?: Record<string, unknown>;
 
