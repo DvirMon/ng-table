@@ -1,8 +1,5 @@
 import { applyEach, debounce, schema } from '@angular/forms/signals';
-import type {
-  ColumnDefInput,
-  TableConfig
-} from '../../../api/types';
+import type { ColumnDefInput, TableConfig } from '../../../api/types';
 import type { SortEditRow } from './sorting-editing.types';
 
 const columns: ColumnDefInput<SortEditRow>[] = [{ id: 'name' }, { id: 'dueDate' }];

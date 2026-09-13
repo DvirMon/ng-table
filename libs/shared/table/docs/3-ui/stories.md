@@ -83,7 +83,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 |---|---|
 | `row-edit/fixtures/types.ts` | The shared row shape (`EditRow`) |
 | `row-edit/fixtures/mock.ts` | Fixture rows, option lists (`EDIT_ROWS_MOCK`, `DEPT_OPTIONS`) |
-| `row-edit/fixtures/schema.ts` | `createTableSchema()` calls per story variant (`gatedTableSchema`, `liveTableSchema`, `liveOptimisticSchema`) + the shared Signal Forms `editRowsSchema` |
+| `row-edit/fixtures/schema.ts` | `editTableConfig` (`TableConfig<EditRow>`, `trackBy: 'id'` + `columns`) shared by all nine hosts, and the shared Signal Forms `editRowsSchema`. Each host composes its own features inline: `createTable(this.data, editTableConfig, ...features)` |
 | `row-edit/fixtures/utils.ts` | Pure helpers (`saveRowPessimistic`) |
 | `row-edit/fixtures/http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
 | `row-edit/fixtures/handlers.ts` | MSW request handlers |
@@ -94,8 +94,9 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 No barrel. Stories are not public API and `.storybook/main.ts` globs `../src/stories/**`, so
 depth is free.
 
-Don't inline mock data or a schema call inside a story-host component — same rule as any other
-component in this repo (`file-organization.md`).
+Don't inline mock data, column definitions, or the table config inside a story-host component —
+the host composes features on `createTable(...)`, the fixtures file owns the config and the
+Signal Forms schema — same rule as any other component in this repo (`file-organization.md`).
 
 **Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
 via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack
