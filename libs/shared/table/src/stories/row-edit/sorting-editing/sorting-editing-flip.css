@@ -1,4 +1,4 @@
-@import '../../row-flip.css';
+@import '../../../row-flip.css';
 
 /* Row-flip needs separate borders — collapsed borders don't follow a `transform`. */
 .story-host__table {
