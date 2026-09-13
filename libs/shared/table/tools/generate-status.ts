@@ -1,6 +1,6 @@
 /**
  * Generates `docs/status.md` — one row per `capability:`, pairing a feature's
- * state-layer spec, UI-layer spec, and story-research (`docs/0-product/`) doc.
+ * state-layer spec, UI-layer spec, and story-discovery (`docs/0-product/`) doc.
  *
  * Run: `npm run table:status` (add `-- --dry-run` to print without writing).
  * Contract for the frontmatter fields it reads:
@@ -23,7 +23,7 @@ const CROSS_FEATURE_FILES = [
 ];
 
 /**
- * `docs/0-product/*.md` (story-research output) carry `capability:` only — no `spec:`/`code:`,
+ * `docs/0-product/*.md` (story-discovery output) carry `capability:` only — no `spec:`/`code:`,
  * since maturity there isn't spec/code, it's "does a user-stories doc exist". A cross-cutting
  * doc (e.g. `performance.md`) has no `capability:` and is silently excluded, not diagnosed.
  */

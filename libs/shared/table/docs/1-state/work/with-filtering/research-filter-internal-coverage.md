@@ -3,7 +3,7 @@ title: Research — internal coverage audit for filtering (N3)
 type: research
 status: complete
 date: 2026-09-10
-audience: product (story-research), developers
+audience: product (story-discovery), developers
 ---
 
 # Filtering — internal coverage audit

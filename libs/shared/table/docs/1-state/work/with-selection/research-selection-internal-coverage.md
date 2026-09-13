@@ -3,7 +3,7 @@ title: Research — internal coverage audit for selection (N3)
 type: research
 status: complete
 date: 2026-09-12
-audience: product (story-research), developers
+audience: product (story-discovery), developers
 ---
 
 # Selection — internal coverage audit
