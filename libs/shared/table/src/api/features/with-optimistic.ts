@@ -1,8 +1,9 @@
 import type { Signal } from '@angular/core';
-import type { TableCore, TableFeatureSpec } from '../../engine/types';
-import type { RowId } from '../types';
-import { createEditingStore, type EditingUpdater, type PendingOp } from './editing-state';
+import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import type { WritableView } from '../../engine/writable-view';
+import { createTableFeature } from '../create-table-feature';
+import type { DerivedDict, RowId } from '../types';
+import { createEditingStore, type EditingStoreInput, type EditingUpdater, type PendingOp } from './editing-state';
 
 export interface OptimisticMembers<TRow> {
   /** Read: which rows are open for editing — **always empty** unless `withRowEdit()` is composed,
@@ -22,6 +23,11 @@ export interface OptimisticMembers<TRow> {
   readonly unconfirmed: Signal<ReadonlySet<RowId>>;
 }
 
+/** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`.
+ * `& Shape` is the bootstrap `RowOf<In>` needs, not a read: this feature touches only
+ * `value`/`trackBy`/`indexById`, which is what `createEditingStore` reads. */
+type OptimisticInput<In> = EditingStoreInput<RowOf<In>> & Shape;
+
 /**
  * Restore points around writes that can fail: capture before the write, release when the server
  * confirms, revert when it rejects.
@@ -35,20 +41,26 @@ export interface OptimisticMembers<TRow> {
  * server:  ok ? releaseEdit(id) : revertEdit(id);
  * ```
  *
- * `withRowEdit()` composes the same state for gated tables and adds the open set on top; listing
- * both in `features` throws at construction (ADR-0007).
+ * `withRowEdit()` composes the same state for gated tables and adds the open set on top;
+ * composing both throws at construction (ADR-0007).
  *
  * **Scope — update, create, and delete; never move.** A restore point carries a position as well
  * as a value, so `revertEdit` can re-insert a row `removeEdit` took out of `data`. A moved row's
  * position is still not part of a snapshot — covering move needs an inverse-operation
  * representation this library does not have.
  */
-export function withOptimistic<TRow = unknown>(): (
-  core: TableCore<TRow>
-) => TableFeatureSpec<TRow, OptimisticMembers<TRow>> {
-  return (core: TableCore<TRow>): TableFeatureSpec<TRow, OptimisticMembers<TRow>> => {
-    const store = createEditingStore<TRow>(core);
-
+export function withOptimistic<In extends OptimisticInput<In>>(): Feature<
+  In,
+  OptimisticMembers<RowOf<In>>
+>;
+export function withOptimistic<In extends OptimisticInput<In>, D extends DerivedDict>(
+  derive: Feature<NoInfer<In> & OptimisticMembers<RowOf<In>>, D>
+): Feature<In, OptimisticMembers<RowOf<In>> & D>;
+export function withOptimistic(derive?: Feature<any, any>): Feature<any, any> {
+  const factory = <In extends OptimisticInput<In>>(
+    input: In
+  ): TableFeatureSpec<RowOf<In>, OptimisticMembers<RowOf<In>>> => {
+    const store = createEditingStore<RowOf<In>>(input);
     return {
       members: {
         editing: store.editing,
@@ -59,4 +71,8 @@ export function withOptimistic<TRow = unknown>(): (
       onRowsRemoved: store.onRowsRemoved,
     };
   };
+  const feature: Feature<any, any> = derive
+    ? createTableFeature(factory, derive)
+    : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withOptimistic' });
 }

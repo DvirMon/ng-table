@@ -1,16 +1,13 @@
-import { signal } from '@angular/core';
+import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { expectTypeOf } from 'vitest';
+import { removeRow } from '../../mutations/row-mutations';
 import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
 import { createTable } from '../create-table';
-import { withSelection, type SelectionChange } from './with-selection';
+import { withComputed } from './with-computed';
+import { withSelection, type SelectionChange, type SelectionMembers } from './with-selection';
 import { withSorting } from './with-sorting';
-import type {
-  AnyTableFeature,
-  ColumnDef,
-  ComposedFeatureMembers,
-  TableStore,
-  TableStoreConfig,
-} from '../types';
+import type { ColumnDef, RowId, TableStore } from '../types';
 
 // `globalThis`'s static type has no `ngDevMode` — this is the one place the flag is poked,
 // so the shape is named once here rather than casting inline at every read/write.
@@ -23,13 +20,9 @@ function makeColumns(): ColumnDef<MockRow>[] {
   ];
 }
 
-// Mirrors `with-expansion.spec.ts`: rows are seeded at construction via the `data` signal —
-// pass `rows` for tests that need them, omit for state-only tests.
-function makeStore<const F extends readonly AnyTableFeature[]>(
-  cfg: () => TableStoreConfig<MockRow, F>,
-  rows: MockRow[] = []
-): TableStore<MockRow> & ComposedFeatureMembers<F> {
-  return TestBed.runInInjectionContext(() => createTable(signal<MockRow[]>(rows), cfg));
+/** Runs a `createTable()` build inside an Angular injection context. */
+function inContext<T>(build: () => T): T {
+  return TestBed.runInInjectionContext(build);
 }
 
 /** Sets the global `ngDevMode` flag for the duration of one test, restoring it afterward. */
@@ -45,11 +38,13 @@ function withNgDevMode<T>(value: boolean, run: () => T): T {
 
 describe('withSelection', () => {
   it('toggle(id) adds, toggling again removes, and repeated toggles alternate', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     expect(store.selectedRows().has(1)).toBe(false);
 
@@ -65,11 +60,13 @@ describe('withSelection', () => {
   });
 
   it('select(ids)/deselect(ids) apply in one write; duplicate ids within a call collapse', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     store.select([1, 2, 1]);
     expect([...store.selectedRows()].sort()).toEqual([1, 2]);
@@ -79,11 +76,13 @@ describe('withSelection', () => {
   });
 
   it('clearSelection() empties the set', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     store.select([1, 2]);
     store.clearSelection();
@@ -92,11 +91,13 @@ describe('withSelection', () => {
 
   it('with enableMultiRowSelection: false, toggle() on a second row replaces rather than adds', () => {
     withNgDevMode(false, () => {
-      const store = makeStore(() => ({
-        trackBy: mockTrackBy,
-        columns: makeColumns(),
-        features: [withSelection<MockRow>({ enableMultiRowSelection: false })],
-      }), mockRows);
+      const store = inContext(() =>
+        createTable(
+          signal<MockRow[]>(mockRows),
+          { trackBy: mockTrackBy, columns: makeColumns() },
+          withSelection({ enableMultiRowSelection: false })
+        )
+      );
 
       store.toggle(1);
       expect([...store.selectedRows()]).toEqual([1]);
@@ -108,11 +109,13 @@ describe('withSelection', () => {
 
   it('with enableMultiRowSelection: false, select([a, b]) keeps only the last id (production, no throw)', () => {
     withNgDevMode(false, () => {
-      const store = makeStore(() => ({
-        trackBy: mockTrackBy,
-        columns: makeColumns(),
-        features: [withSelection<MockRow>({ enableMultiRowSelection: false })],
-      }), mockRows);
+      const store = inContext(() =>
+        createTable(
+          signal<MockRow[]>(mockRows),
+          { trackBy: mockTrackBy, columns: makeColumns() },
+          withSelection({ enableMultiRowSelection: false })
+        )
+      );
 
       store.select([1, 2]);
       expect([...store.selectedRows()]).toEqual([2]);
@@ -121,11 +124,13 @@ describe('withSelection', () => {
 
   it('under ngDevMode, a multi-id write that violates enableMultiRowSelection throws', () => {
     withNgDevMode(true, () => {
-      const store = makeStore(() => ({
-        trackBy: mockTrackBy,
-        columns: makeColumns(),
-        features: [withSelection<MockRow>({ enableMultiRowSelection: false })],
-      }), mockRows);
+      const store = inContext(() =>
+        createTable(
+          signal<MockRow[]>(mockRows),
+          { trackBy: mockTrackBy, columns: makeColumns() },
+          withSelection({ enableMultiRowSelection: false })
+        )
+      );
 
       expect(() => store.select([1, 2])).toThrow();
     });
@@ -133,14 +138,14 @@ describe('withSelection', () => {
 
   it('with a per-row predicate, co-selection is forbidden only for the rows it names', () => {
     withNgDevMode(false, () => {
-      const store = makeStore(() => ({
-        trackBy: mockTrackBy,
-        columns: makeColumns(),
-        // Row 1 forbids co-selection; rows 2 and 3 allow it.
-        features: [
-          withSelection<MockRow>({ enableMultiRowSelection: (row) => row.id !== 1 }),
-        ],
-      }), mockRows);
+      const store = inContext(() =>
+        createTable(
+          signal<MockRow[]>(mockRows),
+          { trackBy: mockTrackBy, columns: makeColumns() },
+          // Row 1 forbids co-selection; rows 2 and 3 allow it.
+          withSelection({ enableMultiRowSelection: (row) => row.id !== 1 })
+        )
+      );
 
       store.select([2, 3]);
       expect([...store.selectedRows()].sort()).toEqual([2, 3]);
@@ -151,22 +156,26 @@ describe('withSelection', () => {
   });
 
   it('enableRowSelection blocks toggle() from adding a non-selectable row', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: (row) => row.id !== 1 })
+      )
+    );
 
     store.toggle(1);
     expect(store.selectedRows().size).toBe(0);
   });
 
   it('enableRowSelection drops only the non-selectable ids from a select(ids) mixed array', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: (row) => row.id !== 1 })
+      )
+    );
 
     store.select([1, 2]);
     expect([...store.selectedRows()]).toEqual([2]);
@@ -174,13 +183,13 @@ describe('withSelection', () => {
 
   it('deselect() of an already-selected row is ungated even after the row becomes non-selectable', () => {
     const selectableIds = new Set([1, 2, 3]);
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [
-        withSelection<MockRow>({ enableRowSelection: (row) => selectableIds.has(row.id) }),
-      ],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: (row) => selectableIds.has(row.id) })
+      )
+    );
 
     store.toggle(1);
     expect(store.selectedRows().has(1)).toBe(true);
@@ -192,37 +201,41 @@ describe('withSelection', () => {
   });
 
   it('enableRowSelection gates the initialSelection seed', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [
-        withSelection<MockRow>({
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({
           initialSelection: [1, 2],
           enableRowSelection: (row) => row.id !== 1,
-        }),
-      ],
-    }), mockRows);
+        })
+      )
+    );
 
     expect([...store.selectedRows()]).toEqual([2]);
   });
 
   it('enableRowSelection stays permissive for an id that resolves to no row (D8)', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ enableRowSelection: () => false })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: () => false })
+      )
+    );
 
     store.toggle(999);
     expect(store.selectedRows().has(999)).toBe(true);
   });
 
   it('a write fully blocked by enableRowSelection emits no selectionChanged', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: (row) => row.id !== 1 })
+      )
+    );
 
     const emissions: SelectionChange[] = [];
     store.selectionChanged.subscribe((change) => emissions.push(change));
@@ -232,22 +245,26 @@ describe('withSelection', () => {
   });
 
   it('an id absent from the seeded row data still toggles/selects', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     store.toggle(999);
     expect(store.selectedRows().has(999)).toBe(true);
   });
 
   it('selectionStateOf(ids) returns none/some/all for the given id set, unaffected by ids outside it', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     expect(store.selectionStateOf([1, 2])).toBe('none');
 
@@ -263,11 +280,13 @@ describe('withSelection', () => {
   });
 
   it('isSelectable(id) mirrors enableRowSelection, permissive for an unresolvable id (D8, D61)', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: (row) => row.id !== 1 })
+      )
+    );
 
     expect(store.isSelectable(1)).toBe(false);
     expect(store.isSelectable(2)).toBe(true);
@@ -275,11 +294,13 @@ describe('withSelection', () => {
   });
 
   it('D61: selectionStateOf(ids) matches select(ids) when the caller pre-filters with isSelectable', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ enableRowSelection: (row) => row.id !== 1 })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableRowSelection: (row) => row.id !== 1 })
+      )
+    );
 
     const ids = [1, 2, 3];
     const selectableIds = ids.filter(store.isSelectable);
@@ -289,11 +310,13 @@ describe('withSelection', () => {
   });
 
   it('every write verb emits exactly one selectionChanged delta with correct added/removed', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     const emissions: SelectionChange[] = [];
     store.selectionChanged.subscribe((change) => emissions.push(change));
@@ -312,11 +335,13 @@ describe('withSelection', () => {
   });
 
   it('a no-op write emits nothing; emitEvent: false changes state but emits nothing', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     const emissions: SelectionChange[] = [];
     store.selectionChanged.subscribe((change) => emissions.push(change));
@@ -332,11 +357,13 @@ describe('withSelection', () => {
   });
 
   it('initialSelection seeds selectedRows and emits nothing, including to a subscriber attached right after construction', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>({ initialSelection: [1, 2] })],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ initialSelection: [1, 2] })
+      )
+    );
 
     const emissions: SelectionChange[] = [];
     store.selectionChanged.subscribe((change) => emissions.push(change));
@@ -347,12 +374,12 @@ describe('withSelection', () => {
 
   it('removing a selected row from data prunes its id from selectedRows and emits nothing', () => {
     const data = signal([...mockRows]);
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: mockTrackBy,
-        columns: makeColumns(),
-        features: [withSelection<MockRow>()],
-      }))
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
     );
 
     store.select([1, 2]);
@@ -368,14 +395,37 @@ describe('withSelection', () => {
     expect(emissions).toEqual([]);
   });
 
+  it('removing a selected row via table.value.update(removeRow(...)) prunes its id and emits nothing', () => {
+    const store = inContext(() =>
+      createTable(
+        signal([...mockRows]),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
+
+    store.select([1, 2]);
+
+    const emissions: SelectionChange[] = [];
+    store.selectionChanged.subscribe((change) => emissions.push(change));
+
+    store.value.update(removeRow(1));
+    TestBed.tick();
+
+    expect(store.selectedRows().has(1)).toBe(false);
+    expect(store.selectedRows().has(2)).toBe(true);
+    expect(emissions).toEqual([]);
+  });
+
   it('selection is unaffected by sorting or by a data write that reorders without removing', () => {
     const data = signal([...mockRows]);
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: mockTrackBy,
-        columns: makeColumns(),
-        features: [withSelection<MockRow>(), withSorting<MockRow>()],
-      }))
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection(),
+        withSorting<MockRow>() // #72 strips the type argument
+      )
     );
 
     store.select([1, 2]);
@@ -390,11 +440,13 @@ describe('withSelection', () => {
   });
 
   it('selectionChanged completes when the table is destroyed', () => {
-    const store = makeStore(() => ({
-      trackBy: mockTrackBy,
-      columns: makeColumns(),
-      features: [withSelection<MockRow>()],
-    }), mockRows);
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection()
+      )
+    );
 
     let completed = false;
     store.selectionChanged.subscribe({ complete: () => (completed = true) });
@@ -403,5 +455,73 @@ describe('withSelection', () => {
     TestBed.resetTestingModule();
 
     expect(completed).toBe(true);
+  });
+
+  // Issue #73 acceptance: "the `hiddenSelected` example from the spec compiles and evaluates
+  // correctly." The example is a count difference (selectedRows().size - rows().length), not a
+  // set difference — asserted below is what it actually computes, not a literal "hidden" count.
+  it('hiddenSelected (spec headline case): withComputed derives off withSelection, types and runtime', () => {
+    const store = inContext(() =>
+      createTable(
+        signal([...mockRows]),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection(
+          {
+            enableMultiRowSelection: (row) => {
+              expectTypeOf(row).toEqualTypeOf<MockRow>();
+              return row.id !== 2;
+            },
+          },
+          withComputed((s) => {
+            expectTypeOf(s.selectedRows).toEqualTypeOf<Signal<ReadonlySet<RowId>>>();
+            expectTypeOf(s.value).toEqualTypeOf<Signal<MockRow[]>>();
+            return {
+              hiddenSelected: computed(() => s.selectedRows().size - s.rows().length),
+            };
+          })
+        )
+      )
+    );
+
+    expectTypeOf(store.hiddenSelected).toEqualTypeOf<Signal<number>>();
+
+    expect(store.hiddenSelected()).toBe(-3);
+
+    store.select([1]);
+    expect(store.hiddenSelected()).toBe(-2);
+  });
+
+  // -------------------------------------------------------------------------------------
+  // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — inert at
+  // runtime, only enforced by `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`.
+  // -------------------------------------------------------------------------------------
+  describe('types', () => {
+    it('withSelection() alone contributes exactly SelectionMembers, never widened to any', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<MockRow[]>(mockRows),
+          { trackBy: mockTrackBy, columns: makeColumns() },
+          withSelection()
+        )
+      );
+
+      expectTypeOf<keyof typeof store>().toEqualTypeOf<
+        keyof TableStore<MockRow> | keyof SelectionMembers
+      >();
+      expectTypeOf(store).not.toBeAny();
+    });
+
+    it('derive-first withSelection(withComputed(...)) compiles and contributes its member', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<MockRow[]>(mockRows),
+          { trackBy: mockTrackBy, columns: makeColumns() },
+          withSelection(withComputed((s) => ({ count: computed(() => s.selectedRows().size) })))
+        )
+      );
+
+      expectTypeOf(store.count).toEqualTypeOf<Signal<number>>();
+      expectTypeOf(store).toHaveProperty('selectedRows');
+    });
   });
 });

@@ -19,6 +19,7 @@ export function createMockTableStore(): TableStore<unknown> {
     renderRows: signal<RenderRow<unknown>[]>([]),
     totalRowCount: signal(0),
     trackBy: () => 'stub-id',
+    indexById: signal(new Map<RowId, number>()),
     value: createWritableView<unknown[], never>(() => [], () => undefined),
   };
 }
@@ -104,6 +105,7 @@ export function createMockTableStoreWithData<TRow>(
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
     totalRowCount: signal(rows.length),
+    indexById,
     trackBy,
     value: createWritableView<TRow[], RowUpdater<TRow>>(
       () => data(),
@@ -149,6 +151,7 @@ export function createMockTableStoreWithEditing<TRow>(
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
     totalRowCount: signal(rows.length),
+    indexById,
     trackBy,
     value,
     editing,

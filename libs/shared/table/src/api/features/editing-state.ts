@@ -1,8 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { pruneByIds, resolveIndex } from '../../engine/rows';
-import type { TableCore } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
-import type { RowId, TrackByFn } from '../types';
+import type { RowId, TableStore, TrackByFn } from '../types';
 
 /**
  * The editing state model — the restore-point shape, the state shape, the updater contract, and
@@ -10,9 +9,9 @@ import type { RowId, TrackByFn } from '../types';
  * `engine/writable-view.ts` keeps `WritableView` beside `createWritableView()`: they are one
  * concern, and splitting them would create a cycle with the updater modules that consume both.
  *
- * Not a feature. `withOptimistic()` and `withRowEdit()` each call `createEditingStore()`
- * themselves — neither reads the other's signal, and composition stays independent of `features`
- * array order.
+ * Not a feature. Each editing feature builds its own instance of this store — `withRowEdit()`
+ * adds the open set on top, `withOptimistic()` stops at the restore points. Composing both is a
+ * collision, not a sharing arrangement (ADR-0007).
  */
 
 /**
@@ -189,6 +188,9 @@ export interface EditingStoreOptions<TRow> {
   onWrite?: (next: EditingState<TRow>) => EditingState<TRow>;
 }
 
+/** The store slice the editing store reads and writes through. */
+export type EditingStoreInput<TRow> = Pick<TableStore<TRow>, 'value' | 'trackBy' | 'indexById'>;
+
 export interface EditingStore<TRow> {
   readonly state: Signal<EditingState<TRow>>;
   readonly editing: WritableView<ReadonlySet<RowId>, EditingUpdater<TRow>>;
@@ -204,7 +206,7 @@ export interface EditingStore<TRow> {
 }
 
 export function createEditingStore<TRow>(
-  core: TableCore<TRow>,
+  input: EditingStoreInput<TRow>,
   options: EditingStoreOptions<TRow> = {}
 ): EditingStore<TRow> {
   // One signal over all three facts: `pending` is derived from them together, so it can never
@@ -224,10 +226,10 @@ export function createEditingStore<TRow>(
     (updater) =>
       apply(
         updater(state(), {
-          data: core.value(),
-          trackBy: core.trackBy,
-          writeData: (rows) => core.value.update(() => rows),
-          indexById: core.indexById(),
+          data: input.value(),
+          trackBy: input.trackBy,
+          writeData: (rows) => input.value.update(() => rows),
+          indexById: input.indexById(),
         })
       )
   );

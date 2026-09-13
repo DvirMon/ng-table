@@ -1,8 +1,9 @@
 import { signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { pruneByIds } from '../../engine/rows';
-import type { TableCore, TableFeatureSpec } from '../../engine/types';
-import type { RenderRow, RowId, TrackByFn } from '../types';
+import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
+import { createTableFeature } from '../create-table-feature';
+import type { DerivedDict, RenderRow, RowId, TableStore, TrackByFn } from '../types';
 
 export interface WithExpansionConfig<TRow> {
   /** Reads a row's nested children. Default: `(row as { children?: TRow[] }).children`. */
@@ -16,8 +17,9 @@ export interface WithExpansionConfig<TRow> {
   isExpandable?: (row: TRow) => boolean;
 }
 
-/** The slice of the core store this feature reads. */
-type ExpansionInput<TRow> = Pick<TableCore<TRow>, 'rows' | 'trackBy'>;
+/** The slice of the store this feature reads, F-bounded so a factory body gets
+ *  `input.rows(): RowOf<In>[]` etc. with no cast. */
+type ExpansionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
 
 /**
  * Suppresses the `rowExpanded` emission a write would otherwise produce. For writes that carry
@@ -135,93 +137,121 @@ function collectExpandableRowIds<TRow>(
 }
 
 /**
- * Adds multi-expand, tree-capable row expansion to a `createTable()`. Standalone — reads
- * only core members, no dependency on any other feature. Claims the `'tree'` render stage
- * (ADR-0011) to flatten expanded children into `renderRows()` (see with-expansion.md), so it
- * cannot be composed alongside another feature also claiming `'tree'`.
+ * The factory body: builds the feature spec from the store slice it reads plus its resolved
+ * config. Shared by every `withExpansion()` overload via the generic `factory` below.
  */
-export function withExpansion<TRow = unknown>(
-  config: WithExpansionConfig<TRow> = {}
-): (core: ExpansionInput<TRow>) => TableFeatureSpec<TRow, ExpansionMembers> {
+function buildExpansionSpec<TRow>(
+  input: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
+  config: WithExpansionConfig<TRow>
+): TableFeatureSpec<TRow, ExpansionMembers> {
   const childrenAccessor = config.childrenAccessor ?? defaultChildrenAccessor<TRow>;
   const isExpandable =
     config.isExpandable ?? ((row: TRow) => hasNonEmptyChildren(childrenAccessor(row)));
 
-  return (
-    core: ExpansionInput<TRow>
-  ): TableFeatureSpec<TRow, ExpansionMembers> => {
-    const expandedRows = signal(new Set<RowId>());
-    const everExpanded = signal(new Set<RowId>());
-    const rowExpandedSource = new Subject<RowId>();
+  const expandedRows = signal(new Set<RowId>());
+  const everExpanded = signal(new Set<RowId>());
+  const rowExpandedSource = new Subject<RowId>();
 
-    function emitChanged(ids: readonly RowId[], options?: ExpansionWriteOptions): void {
-      if (options?.emitEvent === false) {
-        return;
-      }
-      ids.forEach((id) => rowExpandedSource.next(id));
+  function emitChanged(ids: readonly RowId[], options?: ExpansionWriteOptions): void {
+    if (options?.emitEvent === false) {
+      return;
     }
+    ids.forEach((id) => rowExpandedSource.next(id));
+  }
 
-    function toggleExpanded(rowId: RowId, options?: ExpansionWriteOptions): void {
-      const next = new Set(expandedRows());
-      const isCollapsing = next.has(rowId);
-      if (isCollapsing) {
-        next.delete(rowId);
-      } else {
-        next.add(rowId);
-        everExpanded.update((seen) => new Set(seen).add(rowId));
-      }
-      expandedRows.set(next);
-      emitChanged([rowId], options);
+  function toggleExpanded(rowId: RowId, options?: ExpansionWriteOptions): void {
+    const next = new Set(expandedRows());
+    const isCollapsing = next.has(rowId);
+    if (isCollapsing) {
+      next.delete(rowId);
+    } else {
+      next.add(rowId);
+      everExpanded.update((seen) => new Set(seen).add(rowId));
     }
+    expandedRows.set(next);
+    emitChanged([rowId], options);
+  }
 
-    function expandAll(options?: ExpansionWriteOptions): void {
-      const ids = collectExpandableRowIds(
-        core.rows(),
-        core.trackBy,
-        childrenAccessor,
-        isExpandable
-      );
-      const previous = expandedRows();
-      const newlyExpanded = ids.filter((id) => !previous.has(id));
-      everExpanded.update((seen) => {
-        const next = new Set(seen);
-        ids.forEach((id) => next.add(id));
-        return next;
-      });
-      expandedRows.set(new Set(ids));
-      emitChanged(newlyExpanded, options);
+  function expandAll(options?: ExpansionWriteOptions): void {
+    const ids = collectExpandableRowIds(
+      input.rows(),
+      input.trackBy,
+      childrenAccessor,
+      isExpandable
+    );
+    const previous = expandedRows();
+    const newlyExpanded = ids.filter((id) => !previous.has(id));
+    everExpanded.update((seen) => {
+      const next = new Set(seen);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    expandedRows.set(new Set(ids));
+    emitChanged(newlyExpanded, options);
+  }
+
+  function collapseAll(options?: ExpansionWriteOptions): void {
+    const collapsed = [...expandedRows()];
+    expandedRows.set(new Set());
+    emitChanged(collapsed, options);
+  }
+
+  // ADR-0006: `expandedRows` answers "is this row live and expanded" — an id that leaves
+  // `data` must leave here too. `everExpanded` answers "has this id ever been expanded" and
+  // is deliberately exempt (see its member doc).
+  function onRowsRemoved(ids: readonly RowId[]): void {
+    const next = pruneByIds(expandedRows(), ids);
+    if (next !== expandedRows()) {
+      expandedRows.set(new Set(next));
     }
+  }
 
-    function collapseAll(options?: ExpansionWriteOptions): void {
-      const collapsed = [...expandedRows()];
-      expandedRows.set(new Set());
-      emitChanged(collapsed, options);
-    }
-
-    // ADR-0006: `expandedRows` answers "is this row live and expanded" — an id that leaves
-    // `data` must leave here too. `everExpanded` answers "has this id ever been expanded" and
-    // is deliberately exempt (see its member doc).
-    function onRowsRemoved(ids: readonly RowId[]): void {
-      const next = pruneByIds(expandedRows(), ids);
-      if (next !== expandedRows()) {
-        expandedRows.set(new Set(next));
-      }
-    }
-
-    return {
-      members: {
-        expandedRows: expandedRows.asReadonly(),
-        everExpanded: everExpanded.asReadonly(),
-        rowExpanded: rowExpandedSource.asObservable(),
-        toggleExpanded,
-        expandAll,
-        collapseAll,
-      },
-      renderStages: {
-        tree: buildTreeStage(core.trackBy, expandedRows, childrenAccessor, isExpandable),
-      },
-      onDestroy: () => rowExpandedSource.complete(),
-      onRowsRemoved,
-    };
+  return {
+    members: {
+      expandedRows: expandedRows.asReadonly(),
+      everExpanded: everExpanded.asReadonly(),
+      rowExpanded: rowExpandedSource.asObservable(),
+      toggleExpanded,
+      expandAll,
+      collapseAll,
+    },
+    renderStages: {
+      tree: buildTreeStage(input.trackBy, expandedRows, childrenAccessor, isExpandable),
+    },
+    onDestroy: () => rowExpandedSource.complete(),
+    onRowsRemoved,
   };
+}
+
+/**
+ * Adds multi-expand, tree-capable row expansion to a `createTable()`. Standalone — reads
+ * only the store slice it needs, no dependency on any other feature. Claims the `'tree'`
+ * render stage (ADR-0011) to flatten expanded children into `renderRows()` (see
+ * with-expansion.md), so it cannot be composed alongside another feature also claiming
+ * `'tree'`.
+ */
+export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
+  derive: Feature<NoInfer<In> & ExpansionMembers, D>
+): Feature<In, ExpansionMembers & D>;
+export function withExpansion<In extends ExpansionInput<In>>(
+  config?: WithExpansionConfig<RowOf<In>>
+): Feature<In, ExpansionMembers>;
+export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
+  config: WithExpansionConfig<RowOf<In>> | undefined,
+  derive: Feature<NoInfer<In> & ExpansionMembers, D>
+): Feature<In, ExpansionMembers & D>;
+export function withExpansion(
+  configOrDerive: WithExpansionConfig<any> | Feature<any, any> = {},
+  maybeDerive?: Feature<any, any>
+): Feature<any, any> {
+  const isDeriveFirst = typeof configOrDerive === 'function';
+  const config: WithExpansionConfig<any> = isDeriveFirst ? {} : configOrDerive;
+  const derive = isDeriveFirst ? configOrDerive : maybeDerive;
+  const factory = <In extends ExpansionInput<In>>(
+    input: In
+  ): TableFeatureSpec<RowOf<In>, ExpansionMembers> => buildExpansionSpec(input, config);
+  const feature: Feature<any, any> = derive
+    ? createTableFeature(factory, derive)
+    : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withExpansion' });
 }

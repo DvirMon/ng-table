@@ -1,7 +1,14 @@
-import { computed, effect, signal, type WritableSignal } from '@angular/core';
-import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import { computed, effect, signal, type Signal, type WritableSignal } from '@angular/core';
+import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
+import { createTableFeature } from '../create-table-feature';
+import type { DerivedDict, TableStore } from '../types';
 import { createDraftRows } from './draft-rows';
-import { closeAll, createEditingStore, type EditingState } from './editing-state';
+import {
+  closeAll,
+  createEditingStore,
+  type EditingState,
+  type EditingStoreInput,
+} from './editing-state';
 import type { OptimisticMembers } from './with-optimistic';
 
 export interface WithRowEditConfig {
@@ -26,6 +33,11 @@ export type RowEditMembers<TRow> = OptimisticMembers<TRow> & {
   readonly draft: WritableSignal<TRow[]>;
 };
 
+/** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`.
+ * `& Shape` is the bootstrap `RowOf<In>` needs, not a read: this feature touches only
+ * `value`/`trackBy`/`indexById`, which is what `createEditingStore` and `createDraftRows` read. */
+type RowEditInput<In> = EditingStoreInput<RowOf<In>> & Shape;
+
 /**
  * Single mode: keeps only the most recently opened row. The rows it displaces are closed the way
  * `endEdit` does — their restore points go with them, and a displaced row's unsaved `draft` is
@@ -44,6 +56,53 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
 }
 
 /**
+ * Builds the row-edit spec for one store. `multiple` is resolved once by `withRowEdit()` and
+ * threaded through here so both the on-write trim and the live mode-flip reaction share the same
+ * signal.
+ */
+function buildRowEditSpec<TRow>(
+  input: EditingStoreInput<TRow>,
+  multiple: Signal<boolean>
+): TableFeatureSpec<TRow, RowEditMembers<TRow>> {
+  // Enforces single-mode's "closes whatever was open" without any updater (beginEdit, etc.)
+  // needing to know about `multiple` — every write funnels through here.
+  function enforceSingleMode(next: EditingState<TRow>): EditingState<TRow> {
+    const exceedsSingleMode = !multiple() && next.open.size > 1;
+    return exceedsSingleMode ? closeAllButLast(next) : next;
+  }
+
+  const store = createEditingStore<TRow>(input, { onWrite: enforceSingleMode });
+  const draft = createDraftRows(input.value, store.editing, input.trackBy, input.indexById);
+
+  // Reacts to `multiple` flipping false live, not just on the next `editing.update()` —
+  // otherwise a signal-backed `multiple` would silently lag the config it's supposed to
+  // track. A single open row is already valid under single mode, so this only fires above
+  // that; when it does, it closes every open row with no survivor (`closeAll`, not
+  // `closeAllButLast`): a mode flip is nobody's request for a specific row to stay open,
+  // unlike the on-write single-mode trim `enforceSingleMode` still performs for `beginEdit`.
+  // No-ops once collapsed — re-reads `state()` on any change, but idempotent once
+  // `open.size <= 1`.
+  function onMultipleChanged(): void {
+    const exceedsSingleMode = !multiple() && store.state().open.size > 1;
+    if (exceedsSingleMode) {
+      store.apply(closeAll(store.state()));
+    }
+  }
+
+  return {
+    members: {
+      editing: store.editing,
+      pending: store.pending,
+      pendingOps: store.pendingOps,
+      unconfirmed: store.unconfirmed,
+      draft,
+    },
+    onRowsRemoved: store.onRowsRemoved,
+    setup: () => effect(onMultipleChanged),
+  };
+}
+
+/**
  * Edit-session tracking for a `createTable()` — which rows are currently open for editing, on
  * top of the restore points `withOptimistic()` owns.
  *
@@ -52,9 +111,8 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * the form's inputs, and derives the draft signal `form()` should be built over instead of
  * `table.value` directly.
  *
- * **Composes `withOptimistic()` internally** — by calling its factory directly rather than
- * reading the `composed` seam, so composition never depends on `features` array order. Listing
- * both in `features` throws at construction (ADR-0007): they claim the same members.
+ * Builds the same editing store `withOptimistic()` builds and adds the open set on top;
+ * composing both throws at construction (ADR-0007).
  *
  * An always-editable table does not compose this — its session is delimited by focus, which
  * opens nothing, so it composes `withOptimistic()` alone.
@@ -66,50 +124,37 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  * trip) is unsupported under `multiple: true` for exactly that reason: a bulk close while an
  * open row is mid-save would silently drop its restore point.
  */
-export function withRowEdit<TRow = unknown>(
-  config: WithRowEditConfig = {}
-): (core: TableCore<TRow>) => TableFeatureSpec<TRow, RowEditMembers<TRow>> {
-  const multiple =
+export function withRowEdit<In extends RowEditInput<In>, D extends DerivedDict>(
+  derive: Feature<NoInfer<In> & RowEditMembers<RowOf<In>>, D>
+): Feature<In, RowEditMembers<RowOf<In>> & D>;
+export function withRowEdit<In extends RowEditInput<In>>(
+  config?: WithRowEditConfig
+): Feature<In, RowEditMembers<RowOf<In>>>;
+export function withRowEdit<In extends RowEditInput<In>, D extends DerivedDict>(
+  config: WithRowEditConfig | undefined,
+  derive: Feature<NoInfer<In> & RowEditMembers<RowOf<In>>, D>
+): Feature<In, RowEditMembers<RowOf<In>> & D>;
+export function withRowEdit(
+  configOrDerive: WithRowEditConfig | Feature<any, any> = {},
+  maybeDerive?: Feature<any, any>
+): Feature<any, any> {
+  const isDeriveFirst = typeof configOrDerive === 'function';
+  const config: WithRowEditConfig = isDeriveFirst ? {} : configOrDerive;
+  const derive = isDeriveFirst ? configOrDerive : maybeDerive;
+
+  const multiple: Signal<boolean> =
     typeof config.multiple === 'function'
       ? computed(config.multiple)
       : signal(config.multiple ?? false);
 
-  return (core: TableCore<TRow>): TableFeatureSpec<TRow, RowEditMembers<TRow>> => {
-    // Enforces single-mode's "closes whatever was open" without any updater (beginEdit, etc.)
-    // needing to know about `multiple` — every write funnels through here.
-    function enforceSingleMode(next: EditingState<TRow>): EditingState<TRow> {
-      const exceedsSingleMode = !multiple() && next.open.size > 1;
-      return exceedsSingleMode ? closeAllButLast(next) : next;
-    }
+  const factory = <In extends RowEditInput<In>>(
+    input: In
+  ): TableFeatureSpec<RowOf<In>, RowEditMembers<RowOf<In>>> => buildRowEditSpec(input, multiple);
 
-    const store = createEditingStore<TRow>(core, { onWrite: enforceSingleMode });
-    const draft = createDraftRows(core.value, store.editing, core.trackBy, core.indexById);
-
-    // Reacts to `multiple` flipping false live, not just on the next `editing.update()` —
-    // otherwise a signal-backed `multiple` would silently lag the config it's supposed to
-    // track. A single open row is already valid under single mode, so this only fires above
-    // that; when it does, it closes every open row with no survivor (`closeAll`, not
-    // `closeAllButLast`): a mode flip is nobody's request for a specific row to stay open,
-    // unlike the on-write single-mode trim `enforceSingleMode` still performs for `beginEdit`.
-    // No-ops once collapsed — re-reads `state()` on any change, but idempotent once
-    // `open.size <= 1`.
-    function onMultipleChanged(): void {
-      const exceedsSingleMode = !multiple() && store.state().open.size > 1;
-      if (exceedsSingleMode) {
-        store.apply(closeAll(store.state()));
-      }
-    }
-
-    return {
-      members: {
-        editing: store.editing,
-        pending: store.pending,
-        pendingOps: store.pendingOps,
-        unconfirmed: store.unconfirmed,
-        draft,
-      },
-      onRowsRemoved: store.onRowsRemoved,
-      setup: () => effect(onMultipleChanged),
-    };
-  };
+  // The `Feature<any, any>` annotation is load-bearing: without a contextual type the ternary
+  // infers the generic factory's `In` as its own constraint fallback.
+  const feature: Feature<any, any> = derive
+    ? createTableFeature(factory, derive)
+    : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withRowEdit' });
 }

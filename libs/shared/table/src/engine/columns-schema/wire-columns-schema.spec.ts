@@ -5,7 +5,7 @@ import { createColumnMetaKey, metadata, readColumnMeta } from '../../schema/colu
 import { applyVisible, applyVisibleAsync } from '../../schema/column-rules';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
-import type { ColumnDef, TableStore, TableStoreConfig } from '../../api/types';
+import type { ColumnDef, TableConfig, TableStore } from '../../api/types';
 
 interface Row {
   id: string;
@@ -22,7 +22,7 @@ function makeColumns(): ColumnDef<Row>[] {
 
 // Mirrors `table.store.spec.ts` / `with-sorting.spec.ts` — builds a live
 // store instance inside an injection context.
-function makeStore(cfg: () => TableStoreConfig<Row>): TableStore<Row> {
+function makeStore(cfg: TableConfig<Row>): TableStore<Row> {
   return TestBed.runInInjectionContext(() =>
     createTable(signal<Row[]>([]), cfg)
   );
@@ -69,7 +69,7 @@ function makeControllableResource<TResult>(): {
 
 describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => {
   it('is a zero-cost no-op when no columnsSchema is configured (legacy path)', () => {
-    const store = makeStore(() => ({ trackBy: 'id', columns: makeColumns() }));
+    const store = makeStore({ trackBy: 'id', columns: makeColumns() });
 
     TestBed.tick();
 
@@ -78,13 +78,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
   it('applies a reactive applyVisible rule when its signal changes', () => {
     const role = signal<'admin' | 'guest'>('guest');
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
         applyVisible(path.status, { when: () => role() === 'admin' });
       },
-    }));
+    });
 
     TestBed.tick();
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(false);
@@ -97,14 +97,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   it('combines multiple applyVisible rules on the same column via the `and` reducer', () => {
     const hasPermission = signal(true);
     const isFeatureEnabled = signal(true);
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
         applyVisible(path.status, { when: () => hasPermission() });
         applyVisible(path.status, { when: () => isFeatureEnabled() });
       },
-    }));
+    });
 
     TestBed.tick();
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(true);
@@ -122,11 +122,11 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const sharedSchema = columnSchema<Row>((path) => {
       applyVisible(path.status, { when: () => false });
     });
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: sharedSchema,
-    }));
+    });
 
     TestBed.tick();
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(
@@ -136,7 +136,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
   it('applyVisibleAsync sets visible via onSuccess when the resource resolves', () => {
     const control = makeControllableResource<boolean>();
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
@@ -147,7 +147,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
           onError: () => false,
         });
       },
-    }));
+    });
 
     TestBed.tick();
     // Still idle — no patch yet, column keeps its seeded `visible: true`.
@@ -160,7 +160,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
   it('applyVisibleAsync applies onError on failure when provided', () => {
     const control = makeControllableResource<boolean>();
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
@@ -171,7 +171,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
           onError: () => false,
         });
       },
-    }));
+    });
 
     control.resolve(true);
     TestBed.tick();
@@ -188,7 +188,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     // error/success cycles rather than just the single resolve-then-reject the existing
     // "applies onError on failure when provided" case already covers.
     const control = makeControllableResource<boolean>();
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
@@ -199,7 +199,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
           onError: () => false,
         });
       },
-    }));
+    });
 
     control.reject(new Error('first'));
     TestBed.tick();
@@ -215,13 +215,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   });
 
   it('D2: an imperative visibility toggle loses to a rule governing the same column', () => {
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
         applyVisible(path.status, { when: () => true });
       },
-    }));
+    });
 
     TestBed.tick();
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(true);
@@ -235,13 +235,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
   it('D2: an imperative reorder and an unruled toggle survive an unrelated rule re-evaluating', () => {
     const role = signal<'admin' | 'guest'>('guest');
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
         applyVisible(path.status, { when: () => role() === 'admin' });
       },
-    }));
+    });
 
     TestBed.tick();
 
@@ -278,14 +278,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       { id: 'id', accessor: (row) => row.id, visible: false, order: 2, label: 'id' },
     ];
 
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: initialColumns,
       columnsSchema: (path) => {
         applyVisible(path.name, { when: () => false });
         applyVisible(path.id, { when: () => true });
       },
-    }));
+    });
 
     TestBed.tick();
     expect(store.columns().find((c) => c.id === 'name')?.visible).toBe(false);
@@ -314,7 +314,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
   it('D5: an async rule holds its previously resolved value while a second fetch is in flight', () => {
     const control = makeControllableResource<boolean>();
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
@@ -325,7 +325,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
           onError: () => false,
         });
       },
-    }));
+    });
 
     control.resolve(false);
     TestBed.tick();
@@ -345,7 +345,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   });
 
   it('D8: a rule reading ctx.columns() resolves against base state, never its own rule result', () => {
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
@@ -356,7 +356,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
             !(ctx.columns().find((c) => c.id === 'status')?.visible ?? true),
         });
       },
-    }));
+    });
 
     expect(() => TestBed.tick()).not.toThrow();
     // `status.visible` is declared `true` in `makeColumns()` and the base never changes, so the
@@ -375,7 +375,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   it('throws synchronously at store construction for an unknown columnId', () => {
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(signal<Row[]>([]), () => ({
+        createTable(signal<Row[]>([]), {
           trackBy: 'id',
           columns: makeColumns(),
           columnsSchema: (path) => {
@@ -386,7 +386,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
               { when: () => true }
             );
           },
-        }))
+        })
       )
     ).toThrow(/Unknown column id "missing"/);
   });
@@ -395,13 +395,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 describe('metadata() (via createTable columnsSchema wiring)', () => {
   it('resolves a static value onto the matching column', () => {
     const KEY = createColumnMetaKey<string>();
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
         metadata(path.status, KEY, 'admin-only');
       },
-    }));
+    });
 
     TestBed.tick();
     const status = store.columns().find((c) => c.id === 'status');
@@ -411,7 +411,7 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
   it('resolves a reactive closure and updates when its signal changes', () => {
     const KEY = createColumnMetaKey<string>();
     const role = signal<'admin' | 'guest'>('guest');
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
@@ -419,7 +419,7 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
           role() === 'admin' ? 'full-access' : 'read-only'
         );
       },
-    }));
+    });
 
     TestBed.tick();
     expect(
@@ -435,13 +435,13 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
 
   it('leaves an unrelated column untouched', () => {
     const KEY = createColumnMetaKey<string>();
-    const store = makeStore(() => ({
+    const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
         metadata(path.status, KEY, 'x');
       },
-    }));
+    });
 
     TestBed.tick();
     const name = store.columns().find((c) => c.id === 'name');
@@ -453,14 +453,14 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
 
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(signal<Row[]>([]), () => ({
+        createTable(signal<Row[]>([]), {
           trackBy: 'id',
           columns: makeColumns(),
           columnsSchema: (path) => {
             metadata(path.status, KEY, 'a');
             metadata(path.status, KEY, 'b');
           },
-        }))
+        })
       )
     ).toThrow(/Duplicate metadata\(\) registration/);
   });

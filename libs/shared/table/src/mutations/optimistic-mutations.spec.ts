@@ -553,11 +553,11 @@ describe('swapRowId', () => {
 
     function makeStore() {
       return TestBed.runInInjectionContext(() =>
-        createTable(signal<Person[]>([...rows]), () => ({
-          trackBy: 'id' as const,
-          columns: makeColumns(),
-          features: [withRowEdit<Person>()],
-        }))
+        createTable(
+          signal<Person[]>([...rows]),
+          { trackBy: 'id', columns: makeColumns() },
+          withRowEdit()
+        )
       );
     }
 
@@ -692,11 +692,14 @@ describe('unconfirmed (D54)', () => {
   it("delete → revert keeps unconfirmed through the ADR-0006 prune exemption (R1)", () => {
     const data = signal<Person[]>([...rows]);
     const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: 'id' as const,
-        columns: [{ id: 'name', accessor: (row: Person) => row.name, visible: true, order: 0, label: 'name' }],
-        features: [withRowEdit<Person>()],
-      }))
+      createTable(
+        data,
+        {
+          trackBy: 'id',
+          columns: [{ id: 'name', accessor: (row: Person) => row.name, visible: true, order: 0, label: 'name' }],
+        },
+        withRowEdit()
+      )
     );
 
     const tempId = 300;

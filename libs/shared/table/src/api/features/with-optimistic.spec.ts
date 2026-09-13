@@ -1,11 +1,15 @@
-import { signal } from '@angular/core';
+import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { expectTypeOf } from 'vitest';
 import { createTable } from '../create-table';
 import { captureEdit, releaseEdit, revertEdit } from '../../mutations/optimistic-mutations';
-import { patchRow } from '../../mutations/row-mutations';
-import { withOptimistic } from './with-optimistic';
+import { patchRow, removeRow } from '../../mutations/row-mutations';
+import type { WritableView } from '../../engine/writable-view';
+import type { ColumnDef, RowId, TableStore } from '../types';
+import type { EditingUpdater } from './editing-state';
+import { withComputed } from './with-computed';
+import { withOptimistic, type OptimisticMembers } from './with-optimistic';
 import { withRowEdit } from './with-row-edit';
-import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
 
 interface Row {
   id: string;
@@ -23,18 +27,15 @@ function makeRows(): Row[] {
   ];
 }
 
-// Mirrors `with-row-edit.spec.ts`.
-function makeStore<const F extends readonly AnyTableFeature[]>(
-  cfg: () => TableStoreConfig<Row, F>,
-  rows: Row[] = []
-) {
-  return TestBed.runInInjectionContext(() => createTable(signal<Row[]>(rows), cfg));
+/** Runs `build` inside an Angular injection context — `createTable()` requires one unless
+ *  `config.injector` is passed. */
+function inContext<T>(build: () => T): T {
+  return TestBed.runInInjectionContext(build);
 }
 
 function optimisticStore(rows: Row[] = makeRows()) {
-  return makeStore(
-    () => ({ trackBy: 'id', columns: makeColumns(), features: [withOptimistic<Row>()] }),
-    rows
+  return inContext(() =>
+    createTable(signal<Row[]>(rows), { trackBy: 'id', columns: makeColumns() }, withOptimistic())
   );
 }
 
@@ -116,14 +117,10 @@ describe('withOptimistic', () => {
     expect(store.value().find((row) => row.id === 'r1')?.name).toBe('external');
   });
 
-  it('prunes a removed rows restore point (ADR-0006)', () => {
+  it('prunes a removed row\'s restore point via the raw data signal (ADR-0006)', () => {
     const data = signal<Row[]>(makeRows());
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: 'id' as const,
-        columns: makeColumns(),
-        features: [withOptimistic<Row>()],
-      }))
+    const store = inContext(() =>
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withOptimistic())
     );
 
     store.editing.update(captureEdit<Row>('r1'));
@@ -134,18 +131,100 @@ describe('withOptimistic', () => {
 
     expect(store.pending().has('r1')).toBe(false);
   });
+
+  it("prunes a removed row's restore point via the store's value WritableView (ADR-0006)", () => {
+    const store = optimisticStore();
+
+    store.editing.update(captureEdit<Row>('r1'));
+    expect(store.pending().has('r1')).toBe(true);
+
+    store.value.update(removeRow('r1'));
+    TestBed.tick();
+
+    expect(store.pending().has('r1')).toBe(false);
+  });
+
+  // -------------------------------------------------------------------------------------
+  // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — it is
+  // inert at runtime. These are only enforced by `tsc -p libs/shared/table/tsconfig.spec.json
+  // --noEmit`, which is the verification step for this describe block.
+  // -------------------------------------------------------------------------------------
+  describe('types', () => {
+    it('withOptimistic() alone: composed members are recovered exactly, never widened to any', () => {
+      const store = optimisticStore();
+
+      expectTypeOf<keyof typeof store>().toEqualTypeOf<
+        keyof TableStore<Row> | keyof OptimisticMembers<Row>
+      >();
+      expectTypeOf(store).not.toBeAny();
+      expectTypeOf(store.editing).toEqualTypeOf<
+        WritableView<ReadonlySet<RowId>, EditingUpdater<Row>>
+      >();
+    });
+
+    it('withComputed() as a trailing derive block adds inFlight, derived from pending', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withOptimistic(
+            withComputed((s) => {
+              expectTypeOf(s.editing).toEqualTypeOf<Signal<ReadonlySet<RowId>>>();
+              return { inFlight: computed(() => s.pending().size) };
+            })
+          )
+        )
+      );
+
+      expectTypeOf(store.inFlight).toEqualTypeOf<Signal<number>>();
+
+      expect(store.inFlight()).toBe(0);
+
+      store.editing.update(captureEdit<Row>('r1'));
+      expect(store.inFlight()).toBe(1);
+
+      store.editing.update(releaseEdit<Row>('r1'));
+      expect(store.inFlight()).toBe(0);
+    });
+  });
 });
 
 describe('withOptimistic + withRowEdit composed together', () => {
   it('throws — withRowEdit already composes the optimistic slice (ADR-0007/D37)', () => {
     expect(() =>
-      makeStore(
-        () => ({
-          trackBy: 'id',
-          columns: makeColumns(),
-          features: [withOptimistic<Row>(), withRowEdit<Row>()],
-        }),
-        makeRows()
+      inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withOptimistic(),
+          withRowEdit()
+        )
+      )
+    ).toThrow(/both provide the "editing" store member/);
+  });
+
+  it('names both features in the collision message: feature 1 (withOptimistic), feature 2 (withRowEdit)', () => {
+    expect(() =>
+      inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withOptimistic(),
+          withRowEdit()
+        )
+      )
+    ).toThrow(expect.stringContaining('feature 1 (withOptimistic) and feature 2 (withRowEdit)'));
+  });
+
+  it('throws in the reverse order too — withRowEdit first, withOptimistic second', () => {
+    expect(() =>
+      inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withRowEdit(),
+          withOptimistic()
+        )
       )
     ).toThrow(/both provide the "editing" store member/);
   });
