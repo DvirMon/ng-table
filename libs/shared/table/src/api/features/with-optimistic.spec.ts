@@ -213,7 +213,7 @@ describe('withOptimistic + withRowEdit composed together', () => {
           withRowEdit()
         )
       )
-    ).toThrow(expect.stringContaining('feature 1 (withOptimistic) and feature 2 (withRowEdit)'));
+    ).toThrow('feature 1 (withOptimistic) and feature 2 (withRowEdit)');
   });
 
   it('throws in the reverse order too — withRowEdit first, withOptimistic second', () => {
