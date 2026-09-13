@@ -1,0 +1,56 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as SortingEditingStories from './sorting-editing.stories';
+import hostClass from './sorting-editing-story-host.component.ts?raw';
+import hostTemplate from './sorting-editing-story-host.component.html?raw';
+import hostStyles from './sorting-editing-flip.css?raw';
+import rowStyles from '../../styles/story-host.css?raw';
+import hostSchema from './sorting-editing.schema.ts?raw';
+import '../../styles/code-tabs.css';
+
+<Meta of={SortingEditingStories} />
+
+# Sorting × Editing
+
+<Canvas of={SortingEditingStories.Default} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="sorting-editing-source" />
+      sorting-editing.schema.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostSchema} language="ts" />
+    </div>
+  </div>
+</div>

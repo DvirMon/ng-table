@@ -1,0 +1,55 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as GatedSinglePessimisticStories from './gated-single-pessimistic.stories';
+import hostClass from './gated-single-pessimistic-story-host.component.ts?raw';
+import hostTemplate from './gated-single-pessimistic-story-host.component.html?raw';
+import rowStyles from '../../styles/story-host.css?raw';
+import rowSchema from '../fixtures/schema.ts?raw';
+import '../../styles/code-tabs.css';
+
+<Meta of={GatedSinglePessimisticStories} name="Single, Pessimistic Docs" />
+
+# Gated — Single Row, Pessimistic Save
+
+<Canvas of={GatedSinglePessimisticStories.Default} />
+
+## Forced failure
+
+The row stays open — pessimistic never closes early — the error shows inline, and Retry re-runs
+the same request.
+
+<Canvas of={GatedSinglePessimisticStories.ForcedFailure} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="gated-single-pessimistic-source" />
+      row-edit.schema.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowSchema} language="ts" />
+    </div>
+  </div>
+</div>
