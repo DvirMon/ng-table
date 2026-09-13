@@ -3,9 +3,9 @@ import * as ExternalWriteStories from './external-write.stories';
 import hostClass from './external-write-story-host.component.ts?raw';
 import hostTemplate from './external-write-story-host.component.html?raw';
 import hostStyles from './external-write.css?raw';
-import rowStyles from '../row-edit-story.css?raw';
-import rowSchema from '../row-edit.schema.ts?raw';
-import '../code-tabs.css';
+import rowStyles from '../shared/styles/story-host.css?raw';
+import rowSchema from '../shared/row-edit/schema.ts?raw';
+import '../shared/styles/code-tabs.css';
 
 <Meta of={ExternalWriteStories} />
 
@@ -29,7 +29,7 @@ import '../code-tabs.css';
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="external-write-source" />
-      row-edit-story.css
+      story-host.css
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="external-write-source" />

@@ -1,12 +1,12 @@
-<div class="row-edit-story">
+<div class="story-host">
   @if (forceFailure()) {
-    <p class="row-edit-story__hint">
+    <p class="story-host__hint">
       The batch request fails: every row in the batch reverts to blank and reopens together — not
       some succeeding while others fail, unlike Save All's N independent requests/outcomes
       elsewhere in this cluster.
     </p>
   } @else {
-    <p class="row-edit-story__hint">
+    <p class="story-host__hint">
       Gated + Optimistic, bulk create — "Add N rows" opens several blank rows in one call (no loop);
       "Save batch" sends every one of them in a single request instead of N separate ones. A failure
       reverts and reopens the whole batch together, not row by row (D32). Editing or deleting an
@@ -14,7 +14,7 @@
     </p>
   }
 
-  <div class="row-edit-story__toolbar">
+  <div class="story-host__toolbar">
     <label>
       count:
       <input
@@ -36,16 +36,16 @@
     <button type="button" (click)="saveBatch()">Save batch</button>
     <button type="button" (click)="discardAllPending()">Discard all pending</button>
     @if (ui.summary(); as summary) {
-      <span class="row-edit-story__counter" role="status">{{ summary }}</span>
+      <span class="story-host__counter" role="status">{{ summary }}</span>
     }
   </div>
 
-  <table class="row-edit-story__table">
+  <table class="story-host__table">
     <thead>
       <tr>
-        <th class="row-edit-story__cell">name</th>
-        <th class="row-edit-story__cell">dept</th>
-        <th class="row-edit-story__cell">actions</th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell">actions</th>
       </tr>
     </thead>
     <tbody>
@@ -54,8 +54,8 @@
         @let isEditing = table.editing().has(row.id);
         @let isSaving = table.pending().has(row.id) && !isEditing;
 
-        <tr [class.row-edit-story__row--saving]="isSaving">
-          <td class="row-edit-story__cell">
+        <tr [class.story-host__row--saving]="isSaving">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <input type="text" [formField]="field.name" placeholder="name" />
@@ -64,7 +64,7 @@
               <span>{{ row.data?.name }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <select [formField]="field.dept">
@@ -77,11 +77,11 @@
               <span>{{ row.data?.dept }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isPendingCreate && isEditing) {
               <button type="button" (click)="discardPendingRow(row.id)">Discard</button>
             } @else if (isSaving) {
-              <span class="row-edit-story__pending">saving batch…</span>
+              <span class="story-host__pending">saving batch…</span>
             }
           </td>
         </tr>

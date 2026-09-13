@@ -1,4 +1,4 @@
-import type { DealOwner, DealRow } from './grouping.types';
+import type { DealOwner, DealRow } from './types';
 
 export const REGION_OPTIONS = ['North East', 'Midwest', 'South'] as const;
 

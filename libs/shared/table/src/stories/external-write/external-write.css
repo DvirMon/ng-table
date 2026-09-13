@@ -1,4 +1,4 @@
-.row-edit-story__conflict {
+.story-host__conflict {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -11,12 +11,12 @@
   color: #fde68a;
 }
 
-.row-edit-story__conflict p {
+.story-host__conflict p {
   margin: 0;
   flex: 1 1 100%;
 }
 
-.row-edit-story__conflict-field {
+.story-host__conflict-field {
   display: flex;
   align-items: center;
   gap: 0.5rem;

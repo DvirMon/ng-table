@@ -7,9 +7,9 @@ import { captureEdit, revertEdit } from '../../mutations/optimistic-mutations';
 import { patchRow } from '../../mutations/row-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
-import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
-import { editRowsSchema, gatedTableSchema } from '../row-edit.schema';
-import type { EditRow } from '../row-edit.types';
+import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../shared/row-edit/mock';
+import { editRowsSchema, gatedTableSchema } from '../shared/row-edit/schema';
+import type { EditRow } from '../shared/row-edit/types';
 import { diffEditableFields, nextDept } from './external-write.utils';
 import type { EditableField, RowConflict } from './external-write.types';
 
@@ -27,7 +27,7 @@ import type { EditableField, RowConflict } from './external-write.types';
   selector: 'ngp-external-write-story-host',
   imports: [FormField, JsonPipe, NgpTableRowFieldDirective],
   templateUrl: './external-write-story-host.component.html',
-  styleUrls: ['../row-edit-story.css', './external-write.css'],
+  styleUrls: ['../shared/styles/story-host.css', './external-write.css'],
 })
 export class ExternalWriteStoryHostComponent {
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);

@@ -1,5 +1,5 @@
-import { DEPT_OPTIONS } from '../row-edit.mock';
-import type { EditRow } from '../row-edit.types';
+import { DEPT_OPTIONS } from '../shared/row-edit/mock';
+import type { EditRow } from '../shared/row-edit/types';
 import type { EditableField, FieldDiff } from './external-write.types';
 
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];

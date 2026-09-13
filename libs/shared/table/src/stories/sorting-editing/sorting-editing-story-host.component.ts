@@ -31,7 +31,7 @@ import { saveSortEditRow } from './sorting-editing.utils';
     NullableTextFieldDirective,
   ],
   templateUrl: './sorting-editing-story-host.component.html',
-  styleUrls: ['../row-edit-story.css', './sorting-editing-flip.css'],
+  styleUrls: ['../shared/styles/story-host.css', './sorting-editing-flip.css'],
 })
 export class SortingEditingStoryHostComponent {
   protected readonly data = signal<SortEditRow[]>(SORT_EDIT_ROWS_MOCK);

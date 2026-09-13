@@ -1,4 +1,4 @@
-import type { RowId } from '../api/types';
+import type { RowId } from '../../../api/types';
 
 /** Fixture row for the selection stories. `locked` drives `enableRowSelection`; `dept` is the
  * filterable/groupable field. Wider than `EditRow` so select-all, a count and a

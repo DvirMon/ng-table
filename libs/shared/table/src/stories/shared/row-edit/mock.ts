@@ -1,4 +1,4 @@
-import type { EditRow } from './row-edit.types';
+import type { EditRow } from './types';
 
 export const EDIT_ROWS_MOCK: EditRow[] = [
   { id: 'r1', name: 'Ada Lovelace', dept: 'Engineering' },

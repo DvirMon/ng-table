@@ -1,4 +1,4 @@
-/* Layered after row-edit-story.css — every selection host loads both, this one second. */
+/* Layered after story-host.css — every selection host loads both, this one second. */
 
 /* Count banner, above the table. */
 .selection-story__banner {
@@ -42,13 +42,13 @@
   filter: grayscale(1);
 }
 
-.selection-story__row--selected > .row-edit-story__cell,
+.selection-story__row--selected > .story-host__cell,
 .selection-story__row--selected > .selection-story__cell--control {
   background: #1e3a8a;
 }
 
 /* A locked row must read as locked without clicking it. */
-.selection-story__row--locked > .row-edit-story__cell,
+.selection-story__row--locked > .story-host__cell,
 .selection-story__row--locked > .selection-story__cell--control {
   background: repeating-linear-gradient(
     135deg,

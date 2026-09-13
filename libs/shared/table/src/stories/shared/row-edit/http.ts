@@ -1,8 +1,8 @@
 import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { catchError, map, throwError, type Observable } from 'rxjs';
-import type { RowId } from '../api/types';
-import type { EditRow } from './row-edit.types';
+import type { RowId } from '../../../api/types';
+import type { EditRow } from './types';
 
 export interface RowEditRequestOptions {
   readonly forceFailure: boolean;

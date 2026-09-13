@@ -1,11 +1,11 @@
-<div class="row-edit-story">
+<div class="story-host">
   @if (forceFailure()) {
-    <p class="row-edit-story__hint">
+    <p class="story-host__hint">
       Every save fails: rows still close immediately on Save All — closing never waits on the
       round trip — then each reverts to its pre-edit value and shows a Retry/Dismiss control.
     </p>
   } @else {
-    <p class="row-edit-story__hint">
+    <p class="story-host__hint">
       Multiple rows may be open at once, editing independently — rows show as text until Edit opens
       them. Cancel resets the row; Discard removes it — both are separate, clearly-labeled buttons
       on any open row, no matter how the row was added. Save is optimistic only: it closes the row
@@ -15,8 +15,8 @@
     </p>
   }
 
-  <div class="row-edit-story__toolbar">
-    <span class="row-edit-story__counter">
+  <div class="story-host__toolbar">
+    <span class="story-host__counter">
       (force failure / latency are Storybook controls on this story)
     </span>
     <label>
@@ -31,16 +31,16 @@
     <button type="button" (click)="clearAll()">Clear all</button>
     <button type="button" (click)="saveAll()">Save All</button>
     @if (saveAllSummary(); as summary) {
-      <span class="row-edit-story__counter" role="status">{{ summary }}</span>
+      <span class="story-host__counter" role="status">{{ summary }}</span>
     }
   </div>
 
-  <table class="row-edit-story__table">
+  <table class="story-host__table">
     <thead>
       <tr>
-        <th class="row-edit-story__cell">name</th>
-        <th class="row-edit-story__cell">dept</th>
-        <th class="row-edit-story__cell">actions</th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell">actions</th>
       </tr>
     </thead>
     <tbody>
@@ -51,17 +51,17 @@
         @let rowError = rowErrors().get(row.id);
 
         <tr
-          [class.row-edit-story__row--saving]="isPending"
+          [class.story-host__row--saving]="isPending"
           (keydown)="isEditing ? onRowKeydown($event, row.id) : null"
         >
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <input
                   type="text"
                   [formField]="field.name"
                   placeholder="name"
-                  [class.row-edit-story__field--needs-change]="needsUniqueName().has(row.id)"
+                  [class.story-host__field--needs-change]="needsUniqueName().has(row.id)"
                   [attr.aria-invalid]="
                     needsUniqueName().has(row.id) || isForcedInvalid ? true : null
                   "
@@ -70,19 +70,19 @@
                   "
                 />
                 @if (needsUniqueName().has(row.id)) {
-                  <span class="row-edit-story__field-hint" [id]="'gated-multiple-optimistic-duplicate-hint-' + row.id">
+                  <span class="story-host__field-hint" [id]="'gated-multiple-optimistic-duplicate-hint-' + row.id">
                     copied — needs a unique name
                   </span>
                 }
                 @if (isForcedInvalid) {
-                  <span class="row-edit-story__field-hint">forced invalid — Save disabled</span>
+                  <span class="story-host__field-hint">forced invalid — Save disabled</span>
                 }
               </ng-container>
             } @else {
               <span>{{ row.data?.name }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <select [formField]="field.dept">
@@ -95,7 +95,7 @@
               <span>{{ row.data?.dept }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <button type="button" (click)="saveEdit(row.id)" [disabled]="isForcedInvalid">
                 Save
@@ -112,11 +112,11 @@
               <button type="button" (click)="openEdit(row.id)">Edit</button>
               <button type="button" (click)="duplicateRow(row.id)">Duplicate</button>
               @if (isPending) {
-                <span class="row-edit-story__pending">saving…</span>
+                <span class="story-host__pending">saving…</span>
               }
             }
             @if (rowError; as message) {
-              <p class="row-edit-story__error" role="status">
+              <p class="story-host__error" role="status">
                 {{ message }}
                 <button type="button" (click)="retrySave(row.id)">Retry</button>
                 <button type="button" (click)="dismissError(row.id)">Dismiss</button>

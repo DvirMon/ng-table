@@ -1,4 +1,4 @@
-/* Layered after row-edit-story.css — every grouping host loads both, this one second. */
+/* Layered after story-host.css — every grouping host loads both, this one second. */
 
 /* Depth reads as one offset multiplier keyed off the row's own data-depth attribute. */
 .grouping-story__table {
@@ -14,7 +14,7 @@
 [data-depth='2'] { --grouping-depth: 2; }
 [data-depth='3'] { --grouping-depth: 3; }
 
-[data-row-kind='group'] > .row-edit-story__cell {
+[data-row-kind='group'] > .story-host__cell {
   background: #111827;
   font-weight: 600;
 }
@@ -79,7 +79,7 @@
 }
 
 /* The whole header row is an enlarged hit area delegating to the chevron. */
-[data-row-kind='group']:hover > .row-edit-story__cell {
+[data-row-kind='group']:hover > .story-host__cell {
   background: #172033;
   cursor: pointer;
 }
@@ -128,7 +128,7 @@
 }
 
 /* Opt-in sticky group headers. */
-.grouping-story__table--sticky [data-row-kind='group'] > .row-edit-story__cell {
+.grouping-story__table--sticky [data-row-kind='group'] > .story-host__cell {
   position: sticky;
   top: 0;
   z-index: 1;

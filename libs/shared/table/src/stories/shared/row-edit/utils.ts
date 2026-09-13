@@ -1,4 +1,4 @@
-import type { EditRow } from './row-edit.types';
+import type { EditRow } from './types';
 
 const SAVE_LATENCY_MS = 700;
 const FOCUSABLE_SELECTOR =

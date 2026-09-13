@@ -10,13 +10,13 @@ import {
   swapRowId,
 } from '../../mutations/optimistic-mutations';
 import type { RowId } from '../../api/types';
-import { CommitCounterComponent } from '../commit-counter.component';
-import { FocusNewRowDirective } from '../focus-new-row.directive';
-import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../row-edit.mock';
-import { injectRowEditApi, type RowEditRequestOptions } from '../row-edit.http';
-import { createLocalUndoSlot } from '../local-undo-slot';
-import { editRowsSchema, liveTableSchema } from '../row-edit.schema';
-import type { EditRow } from '../row-edit.types';
+import { CommitCounterComponent } from '../shared/ui/commit-counter.component';
+import { FocusNewRowDirective } from '../shared/ui/focus-new-row.directive';
+import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../shared/row-edit/mock';
+import { injectRowEditApi, type RowEditRequestOptions } from '../shared/row-edit/http';
+import { createLocalUndoSlot } from '../shared/ui/local-undo-slot';
+import { editRowsSchema, liveTableSchema } from '../shared/row-edit/schema';
+import type { EditRow } from '../shared/row-edit/types';
 import type { EditableField } from './live-table.types';
 
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
@@ -56,7 +56,7 @@ function rowLabel(row: EditRow): string {
   selector: 'ngp-live-table-story-host',
   imports: [FormField, FocusNewRowDirective, CommitCounterComponent],
   templateUrl: './live-table-story-host.component.html',
-  styleUrls: ['../row-edit-story.css', './live-table-story-host.component.css'],
+  styleUrls: ['../shared/styles/story-host.css', './live-table-story-host.component.css'],
   host: {
     '(keydown)': 'onKeydown($event)',
   },

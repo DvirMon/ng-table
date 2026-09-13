@@ -1,12 +1,12 @@
-<div class="row-edit-story">
-  <p class="row-edit-story__hint">
+<div class="story-host">
+  <p class="story-host__hint">
     Sorting combined with row editing. Sort by Name or Due Date, then edit a row and change the
     sorted column's value — today the row jumps to its new sorted position right away (keeping
     it in place while open isn't supported yet). A blank Due Date always sorts to the end,
     regardless of sort direction.
   </p>
 
-  <div class="row-edit-story__toolbar">
+  <div class="story-host__toolbar">
     <button type="button" (click)="table.toggleSort('name')">
       Sort Name {{ sortArrow('name') }}
     </button>
@@ -17,20 +17,20 @@
     <button type="button" (click)="addRowWhileSorted()">Add row while sorted</button>
     <button type="button" (click)="addRowWithBlankDueDate()">Add row with blank due date</button>
     @if (saveError(); as message) {
-      <span class="row-edit-story__error" role="status">{{ message }}</span>
+      <span class="story-host__error" role="status">{{ message }}</span>
     }
   </div>
 
   @if (rowHoldNotice(); as notice) {
-    <!-- <p class="row-edit-story__error" role="status">{{ notice }}</p> -->
+    <!-- <p class="story-host__error" role="status">{{ notice }}</p> -->
   }
 
-  <table class="row-edit-story__table" [ngpTable]="table">
+  <table class="story-host__table" [ngpTable]="table">
     <thead>
       <tr>
-        <th class="row-edit-story__cell">name</th>
-        <th class="row-edit-story__cell">dueDate</th>
-        <th class="row-edit-story__cell">actions</th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dueDate</th>
+        <th class="story-host__cell">actions</th>
       </tr>
     </thead>
     <tbody>
@@ -38,7 +38,7 @@
         @let isEditing = table.editing().has(row.id);
 
         <tr [ngpTableRow]="row">
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <input type="text" [formField]="field.name" placeholder="name" />
@@ -47,7 +47,7 @@
               <span>{{ row.data?.name }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <input
@@ -61,7 +61,7 @@
               <span>{{ row.data?.dueDate ?? '—' }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <button type="button" (click)="saveEdit(row.id)">Save</button>
               <button type="button" (click)="cancelEdit(row.id)">Cancel</button>

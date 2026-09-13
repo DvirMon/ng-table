@@ -1,5 +1,5 @@
-import type { RowId } from '../api/types';
-import type { SelectionRow } from './selection.types';
+import type { RowId } from '../../../api/types';
+import type { SelectionRow } from './types';
 
 export const SELECTION_ROWS_MOCK: SelectionRow[] = [
   { id: 's1', name: 'Ada Lovelace', dept: 'Engineering', locked: false },

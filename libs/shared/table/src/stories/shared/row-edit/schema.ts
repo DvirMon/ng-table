@@ -1,10 +1,10 @@
 import { applyEach, debounce, schema } from '@angular/forms/signals';
-import { createTableSchema } from '../api/table-schema';
-import { withOptimistic } from '../api/features/with-optimistic';
-import { withRowEdit, type WithRowEditConfig } from '../api/features/with-row-edit';
-import { withSorting } from '../api/features/with-sorting';
-import type { ColumnDefInput } from '../api/types';
-import type { EditRow } from './row-edit.types';
+import { createTableSchema } from '../../../api/table-schema';
+import { withOptimistic } from '../../../api/features/with-optimistic';
+import { withRowEdit, type WithRowEditConfig } from '../../../api/features/with-row-edit';
+import { withSorting } from '../../../api/features/with-sorting';
+import type { ColumnDefInput } from '../../../api/types';
+import type { EditRow } from './types';
 
 const columns: ColumnDefInput<EditRow>[] = [{ id: 'name' }, { id: 'dept' }];
 

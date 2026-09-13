@@ -1,5 +1,5 @@
 import { Directive, ElementRef, afterRenderEffect, inject, input } from '@angular/core';
-import type { RowId } from '../api/types';
+import type { RowId } from '../../../api/types';
 
 /**
  * Demo-only opt-in pattern (not part of the table's public directive surface): moves focus into

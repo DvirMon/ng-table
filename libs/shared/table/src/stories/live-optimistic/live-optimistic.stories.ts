@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { LiveOptimisticStoryHostComponent } from './live-optimistic-story-host.component';
-import { rowEditHandlers } from '../row-edit.handlers';
+import { rowEditHandlers } from '../shared/row-edit/handlers';
 
 const meta: Meta<LiveOptimisticStoryHostComponent> = {
   title: 'Table / Row Editing / Live / Optimistic',

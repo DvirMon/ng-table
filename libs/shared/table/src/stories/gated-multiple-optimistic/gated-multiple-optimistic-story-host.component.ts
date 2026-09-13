@@ -12,11 +12,11 @@ import {
 } from '../../mutations/optimistic-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
-import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
-import { editRowsSchema, gatedTableSchema } from '../row-edit.schema';
-import { injectRowEditApi } from '../row-edit.http';
-import { containFocusTab } from '../row-edit.utils';
-import type { EditRow } from '../row-edit.types';
+import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../shared/row-edit/mock';
+import { editRowsSchema, gatedTableSchema } from '../shared/row-edit/schema';
+import { injectRowEditApi } from '../shared/row-edit/http';
+import { containFocusTab } from '../shared/row-edit/utils';
+import type { EditRow } from '../shared/row-edit/types';
 
 /**
  * S4/S8 — the gated table (`withRowEdit()`), fixed to multiple-row + optimistic save:
@@ -41,7 +41,7 @@ import type { EditRow } from '../row-edit.types';
   selector: 'ngp-gated-multiple-optimistic-story-host',
   imports: [FormField, NgpTableRowFieldDirective],
   templateUrl: './gated-multiple-optimistic-story-host.component.html',
-  styleUrl: '../row-edit-story.css',
+  styleUrl: '../shared/styles/story-host.css',
 })
 export class GatedMultipleOptimisticStoryHostComponent {
   readonly forceFailure = input(false);

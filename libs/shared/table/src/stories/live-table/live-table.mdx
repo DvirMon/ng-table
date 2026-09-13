@@ -3,9 +3,9 @@ import * as LiveTableStories from './live-table.stories';
 import hostClass from './live-table-story-host.component.ts?raw';
 import hostTemplate from './live-table-story-host.component.html?raw';
 import hostStyles from './live-table-story-host.component.css?raw';
-import rowStyles from '../row-edit-story.css?raw';
-import rowSchema from '../row-edit.schema.ts?raw';
-import '../code-tabs.css';
+import rowStyles from '../shared/styles/story-host.css?raw';
+import rowSchema from '../shared/row-edit/schema.ts?raw';
+import '../shared/styles/code-tabs.css';
 
 <Meta of={LiveTableStories} />
 
@@ -36,7 +36,7 @@ place for Retry, and a discard comes back instead of disappearing.
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="live-table-source" />
-      row-edit-story.css
+      story-host.css
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="live-table-source" />

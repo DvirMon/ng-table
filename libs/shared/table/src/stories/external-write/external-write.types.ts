@@ -1,5 +1,5 @@
 import type { RowId } from '../../api/types';
-import type { EditRow } from '../row-edit.types';
+import type { EditRow } from '../shared/row-edit/types';
 
 /** Fields the person can edit, excluding the identity column. */
 export type EditableField = keyof Omit<EditRow, 'id'>;

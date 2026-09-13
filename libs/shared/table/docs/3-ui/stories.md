@@ -41,29 +41,56 @@ Worked examples of a plan built this way: `work/selection-stories/`, `work/filte
 `work/grouping-stories/` — each carries a "Conventions from peer libraries" matrix ahead of its
 target story set.
 
-## File layout — one folder per story, one concern per file
+## File layout — one folder per story, `shared/` for the rest
+
+`src/stories/` holds **only** story folders plus `shared/`. No loose files at its root — that
+was the pre-2026-09-13 layout and it mixed three unrelated groups (see ADR note below).
 
 ```
-src/stories/<story-name>/
-├── <story-name>-story-host.component.ts     ← the demo component
-├── <story-name>-story-host.component.html   ← template — NEVER inline
-├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
-└── <story-name>.mdx                         ← thin wrapper: Meta/Canvas/Source only
+src/stories/
+├── shared/                                  ← anything more than one story imports
+│   ├── row-edit/                            ← the row-editing fixture cluster
+│   │   ├── types.ts  mock.ts  schema.ts
+│   │   └── utils.ts  http.ts  handlers.ts
+│   ├── ui/                                  ← demo-only components/directives
+│   │   ├── commit-counter.component.ts
+│   │   ├── focus-new-row.directive.ts
+│   │   └── local-undo-slot.ts
+│   └── styles/
+│       ├── story-host.css                   ← the shared host styling (`.story-host__*`)
+│       └── code-tabs.css                    ← the mdx HTML/TS toggle
+└── <story-name>/
+    ├── <story-name>-story-host.component.ts     ← the demo component
+    ├── <story-name>-story-host.component.html   ← template — NEVER inline
+    ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
+    ├── <story-name>.mdx                         ← thin wrapper: Meta/Canvas/Source only
+    └── fixtures/                                ← this story's own mock/types, when it has any
 ```
 
-Shared fixtures for a cluster of related stories (the row-editing set) live one level up,
-split by concern per `file-organization.md`:
+The folder supplies the domain, so files inside drop the redundant prefix —
+`shared/row-edit/mock.ts`, not `shared/row-edit/row-edit.mock.ts`.
 
-| File | Contents |
+**A fixture starts inside its own story folder and moves to `shared/<cluster>/` on the second
+importer** — promote on evidence, not in anticipation (`file-organization.md`).
+
+| Shared file | Contents |
 |---|---|
-| `row-edit.types.ts` | The shared row shape (`EditRow`) |
-| `row-edit.mock.ts` | Fixture rows, option lists (`EDIT_ROWS_MOCK`, `DEPT_OPTIONS`) |
-| `row-edit.schema.ts` | `createTableSchema()` calls per story variant (`gatedTableSchema`, `liveTableSchema`, `liveOptimisticSchema`) + the shared Signal Forms `editRowsSchema` |
-| `row-edit.utils.ts` | Pure helpers (`saveRowPessimistic`) |
-| `row-edit.http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
-| `row-edit.handlers.ts` | MSW request handlers |
-| `row-edit-story.css` | Shared story styling |
-| `code-tabs.css` | The mdx HTML/TS toggle, shared by every story's mdx |
+| `shared/row-edit/types.ts` | The shared row shape (`EditRow`) |
+| `shared/row-edit/mock.ts` | Fixture rows, option lists (`EDIT_ROWS_MOCK`, `DEPT_OPTIONS`) |
+| `shared/row-edit/schema.ts` | `createTableSchema()` calls per story variant (`gatedTableSchema`, `liveTableSchema`, `liveOptimisticSchema`) + the shared Signal Forms `editRowsSchema` |
+| `shared/row-edit/utils.ts` | Pure helpers (`saveRowPessimistic`) |
+| `shared/row-edit/http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
+| `shared/row-edit/handlers.ts` | MSW request handlers |
+| `shared/ui/*` | Demo-only instrumentation (`CommitCounterComponent`, `focusNewRow`, `localUndoSlot`) — never table API |
+| `shared/styles/story-host.css` | Shared story styling; BEM block `.story-host` |
+| `shared/styles/code-tabs.css` | The mdx HTML/TS toggle, shared by every story's mdx |
+
+No barrel. Stories are not public API and `.storybook/main.ts` globs `../src/stories/**`, so
+depth is free.
+
+Three story folders currently hold fixtures with no story yet — `filtering/`, `grouping/`,
+`selection/`. Their hosts land beside those fixtures when the plans in
+`work/{filtering,grouping,selection}-stories/` ship.
 
 Don't inline mock data or a schema call inside a story-host component — same rule as any other
 component in this repo (`file-organization.md`).
@@ -131,7 +158,7 @@ table state change, not just see an event logged in a side panel.
 
 **Every CRUD op in every row-editing story is a real MSW-intercepted round trip** — add, edit,
 and delete alike, gated and live, optimistic and pessimistic. `forceFailure` and `latencyMs`
-Storybook controls thread into request headers `row-edit.handlers.ts` reads, so the
+Storybook controls thread into request headers `shared/row-edit/handlers.ts` reads, so the
 failure/latency path is a real intercepted request, never a fake `await`. (Revised 2026-09-04 —
 this used to carve out an exception for "a pessimistic, no-rollback story doesn't need MSW, a
 plain `await` is enough." That's no longer the policy: pessimistic stories now hit the same mock
@@ -198,7 +225,7 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   a code reader; without a matching `.mdx` section, `Default` and `ForcedFailure` render with the
   same (or no) description in Storybook, indistinguishable to a viewer. Keep the two in sync when
   either changes.
-- **The host's own on-canvas hint paragraph (`row-edit-story__hint`) must itself branch on
+- **The host's own on-canvas hint paragraph (`story-host__hint`) must itself branch on
   `forceFailure()`.** The `.mdx` "Forced failure" section (above) only shows up on that story's
   separate Docs page — a person just clicking through `Default`/`ForcedFailure` in the sidebar and
   looking at the rendered canvas never sees it, and would otherwise see the exact same static hint
@@ -211,13 +238,13 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   Tabs are two clusters, in this fixed order:
   1. **The host's own files, generically labeled: `HTML`, then `TS`, then `CSS` if it has a
      stylesheet** — always first, always in that order, always together. `CSS` means whatever
-     the host's `styleUrl`/`styleUrls` actually is, local or shared — `row-edit-story.css` fills
+     the host's `styleUrl`/`styleUrls` actually is, local or shared — `shared/styles/story-host.css` fills
      this slot generically labeled `CSS` for a story with no local override (`live-optimistic/`,
      the `gated-*` stories). Only when a host has **two** stylesheets (its own local one plus the
      shared one, e.g. `sorting-editing/`) does the local file take the `CSS` slot and the shared
      one drop to cluster 2, filename-labeled — one generic `CSS` tab per story, never two.
   2. **Extra files**, one tab each, labeled with the file's **literal filename** (not a made-up
-     name like "Schema") — e.g. `row-edit.schema.ts`, `row-edit-story.css`. A file shared out of
+     name like "Schema") — e.g. `shared/row-edit/schema.ts`, `shared/styles/story-host.css`. A file shared out of
      the story-cluster root is still just its own filename; there's no separate `Row ` prefix
      scheme — the filename itself already says whether it's local or shared. A plain extra file
      (schema/config logic) gets exactly one tab. An extra file that is itself a sub-component
@@ -229,7 +256,7 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   demo-only diff/cycle helper) rather than reusable feature code; a directive is an import, not
   something copied inline. `?raw`-import each included file. When a story has both a local and
   a shared stylesheet (e.g. local `sorting-editing-flip.css` alongside shared
-  `row-edit-story.css`), the local one keeps the cluster-1 `CSS` slot and the shared one gets
+  `shared/styles/story-host.css`), the local one keeps the cluster-1 `CSS` slot and the shared one gets
   its own filename-labeled tab in cluster 2. `code-tabs.css`'s positional `:nth-child` pairing
   between tab and panel currently supports up to 10 tabs; extend it (add another
   `:nth-child(11)` pair to both selector lists) before adding an 11th tab to any story —

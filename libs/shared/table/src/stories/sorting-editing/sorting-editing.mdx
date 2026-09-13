@@ -3,9 +3,9 @@ import * as SortingEditingStories from './sorting-editing.stories';
 import hostClass from './sorting-editing-story-host.component.ts?raw';
 import hostTemplate from './sorting-editing-story-host.component.html?raw';
 import hostStyles from './sorting-editing-flip.css?raw';
-import rowStyles from '../row-edit-story.css?raw';
+import rowStyles from '../shared/styles/story-host.css?raw';
 import hostSchema from './sorting-editing.schema.ts?raw';
-import '../code-tabs.css';
+import '../shared/styles/code-tabs.css';
 
 <Meta of={SortingEditingStories} />
 
@@ -29,7 +29,7 @@ import '../code-tabs.css';
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="sorting-editing-source" />
-      row-edit-story.css
+      story-host.css
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="sorting-editing-source" />

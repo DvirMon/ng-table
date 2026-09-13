@@ -1,17 +1,17 @@
-.row-edit-story {
+.story-host {
   margin: 1rem;
   max-width: 42rem;
   font-family: system-ui, sans-serif;
   color: #e5e7eb;
 }
 
-.row-edit-story__hint {
+.story-host__hint {
   margin-block-end: 0.75rem;
   font-size: 0.85rem;
   color: #9ca3af;
 }
 
-.row-edit-story__toolbar {
+.story-host__toolbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -19,52 +19,52 @@
   margin-block-end: 0.75rem;
 }
 
-.row-edit-story__error {
+.story-host__error {
   font-size: 0.85rem;
   color: #f87171;
 }
 
-.row-edit-story__counter {
+.story-host__counter {
   font-size: 0.8rem;
   color: #9ca3af;
 }
 
-.row-edit-story__table {
+.story-host__table {
   border-collapse: collapse;
   width: 100%;
   background: #1f2937;
 }
 
-.row-edit-story__row--saving {
+.story-host__row--saving {
   opacity: 0.6;
 }
 
-.row-edit-story__cell {
+.story-host__cell {
   border: 1px solid #374151;
   padding: 0.4rem 0.6rem;
   text-align: start;
   font-size: 0.9rem;
 }
 
-.row-edit-story__pending {
+.story-host__pending {
   font-size: 0.75rem;
   color: #9ca3af;
 }
 
-.row-edit-story__field--needs-change {
+.story-host__field--needs-change {
   border-color: #fbbf24 !important;
   outline: 1px solid #fbbf24;
 }
 
-.row-edit-story__field-hint {
+.story-host__field-hint {
   display: block;
   font-size: 0.7rem;
   color: #fbbf24;
   margin-block-start: 0.15rem;
 }
 
-.row-edit-story__cell input,
-.row-edit-story__cell select {
+.story-host__cell input,
+.story-host__cell select {
   color-scheme: dark;
   background: #111827;
   color: #e5e7eb;
@@ -76,8 +76,8 @@
   box-sizing: border-box;
 }
 
-.row-edit-story__toolbar button,
-.row-edit-story__cell button {
+.story-host__toolbar button,
+.story-host__cell button {
   border: 1px solid #374151;
   background: #1f2937;
   color: #e5e7eb;
@@ -88,8 +88,8 @@
   margin-inline-end: 0.25rem;
 }
 
-.row-edit-story__toolbar button:hover,
-.row-edit-story__cell button:hover {
+.story-host__toolbar button:hover,
+.story-host__cell button:hover {
   background: #111827;
 }
 

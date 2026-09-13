@@ -2,9 +2,9 @@ import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as GatedMultipleOptimisticStories from './gated-multiple-optimistic.stories';
 import hostClass from './gated-multiple-optimistic-story-host.component.ts?raw';
 import hostTemplate from './gated-multiple-optimistic-story-host.component.html?raw';
-import rowStyles from '../row-edit-story.css?raw';
-import rowSchema from '../row-edit.schema.ts?raw';
-import '../code-tabs.css';
+import rowStyles from '../shared/styles/story-host.css?raw';
+import rowSchema from '../shared/row-edit/schema.ts?raw';
+import '../shared/styles/code-tabs.css';
 
 <Meta of={GatedMultipleOptimisticStories} />
 

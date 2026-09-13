@@ -5,7 +5,7 @@ import { ChangeDetectionStrategy, Component, effect, input, signal } from '@angu
 @Component({
   selector: 'ngp-commit-counter',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<span class="row-edit-story__counter">commits: {{ count() }}</span>`,
+  template: `<span class="story-host__counter">commits: {{ count() }}</span>`,
 })
 export class CommitCounterComponent {
   readonly data = input.required<readonly unknown[]>();

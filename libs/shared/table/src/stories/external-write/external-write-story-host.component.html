@@ -1,22 +1,22 @@
-<div class="row-edit-story">
-  <p class="row-edit-story__hint">
+<div class="story-host">
+  <p class="story-host__hint">
     Open a row, then push a change from outside the edit flow. "Simulate server push" stages a
     conflict instead of overwriting your typed value — choose Keep mine, Take theirs, or merge
     field by field. "Push to row I'm not editing" quietly patches a closed row, no interruption.
   </p>
 
-  <div class="row-edit-story__toolbar">
+  <div class="story-host__toolbar">
     <button type="button" (click)="pushToUnopenedRow()">Push to row I'm not editing</button>
   </div>
 
-  <p class="row-edit-story__counter" role="status">editing map: {{ editingIds() | json }}</p>
+  <p class="story-host__counter" role="status">editing map: {{ editingIds() | json }}</p>
 
-  <table class="row-edit-story__table">
+  <table class="story-host__table">
     <thead>
       <tr>
-        <th class="row-edit-story__cell">name</th>
-        <th class="row-edit-story__cell">dept</th>
-        <th class="row-edit-story__cell">actions</th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell">actions</th>
       </tr>
     </thead>
     <tbody>
@@ -25,7 +25,7 @@
         @let conflict = conflicts().get(row.id);
 
         <tr>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <input type="text" [formField]="field.name" placeholder="name" />
@@ -34,7 +34,7 @@
               <span>{{ row.data?.name }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
                 <select [formField]="field.dept">
@@ -47,7 +47,7 @@
               <span>{{ row.data?.dept }}</span>
             }
           </td>
-          <td class="row-edit-story__cell">
+          <td class="story-host__cell">
             @if (isEditing) {
               <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
               <button type="button" (click)="simulateServerPush(row.id)">Simulate server push</button>
@@ -59,8 +59,8 @@
 
         @if (conflict) {
           <tr>
-            <td class="row-edit-story__cell" colspan="3">
-              <div class="row-edit-story__conflict" role="alert">
+            <td class="story-host__cell" colspan="3">
+              <div class="story-host__conflict" role="alert">
                 @if (!conflict.merging) {
                   <p>
                     Updated by someone else —
@@ -73,7 +73,7 @@
                   <button type="button" (click)="startMerge(row.id)">Merge field by field</button>
                 } @else {
                   @for (fieldDiff of conflict.fields; track fieldDiff.field) {
-                    <div class="row-edit-story__conflict-field">
+                    <div class="story-host__conflict-field">
                       <span>
                         {{ fieldDiff.field }}: mine "{{ fieldDiff.mineValue }}" vs. theirs "{{ fieldDiff.theirsValue }}"
                       </span>

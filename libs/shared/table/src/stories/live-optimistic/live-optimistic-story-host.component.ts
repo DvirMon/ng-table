@@ -10,11 +10,11 @@ import {
 } from '../../mutations/optimistic-mutations';
 import { insertRow, patchRow } from '../../mutations/row-mutations';
 import type { RowId } from '../../api/types';
-import { FocusNewRowDirective } from '../focus-new-row.directive';
-import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
-import { editRowsSchema, liveOptimisticSchema } from '../row-edit.schema';
-import { injectRowEditApi } from '../row-edit.http';
-import type { EditRow } from '../row-edit.types';
+import { FocusNewRowDirective } from '../shared/ui/focus-new-row.directive';
+import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../shared/row-edit/mock';
+import { editRowsSchema, liveOptimisticSchema } from '../shared/row-edit/schema';
+import { injectRowEditApi } from '../shared/row-edit/http';
+import type { EditRow } from '../shared/row-edit/types';
 
 /** How long a delete's Undo affordance stays live before its restore point is released. */
 const UNDO_WINDOW_MS = 6000;
@@ -36,7 +36,7 @@ const UNDO_WINDOW_MS = 6000;
   selector: 'ngp-live-optimistic-story-host',
   imports: [FormField, FocusNewRowDirective],
   templateUrl: './live-optimistic-story-host.component.html',
-  styleUrl: '../row-edit-story.css',
+  styleUrl: '../shared/styles/story-host.css',
   host: {
     '(window:beforeunload)': 'onBeforeUnload($event)',
     '(window:keydown)': 'onWindowKeydown($event)',

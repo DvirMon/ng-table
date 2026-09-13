@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { GatedSinglePessimisticStoryHostComponent } from './gated-single-pessimistic-story-host.component';
-import { rowEditHandlers } from '../row-edit.handlers';
+import { rowEditHandlers } from '../shared/row-edit/handlers';
 
 type Host = InstanceType<typeof GatedSinglePessimisticStoryHostComponent>;
 

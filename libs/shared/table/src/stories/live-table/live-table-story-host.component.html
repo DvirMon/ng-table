@@ -1,11 +1,11 @@
-<div class="row-edit-story">
+<div class="story-host">
   @if (forceFailure()) {
-    <p class="row-edit-story__hint">
+    <p class="story-host__hint">
       Every request fails: an edit reverts to its pre-commit value, a create leaves the typed
       values in place for Retry, and a discard comes back instead of disappearing.
     </p>
   } @else {
-    <p class="row-edit-story__hint">
+    <p class="story-host__hint">
       The simplest editable table — every field is always editable, no edit mode to enter. Name
       commits on blur; department commits the instant you pick a value. Discarding a row removes it
       straight away — undo is the safety net, not a confirm dialog.
@@ -14,7 +14,7 @@
 
   <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
 
-  <div class="row-edit-story__toolbar">
+  <div class="story-host__toolbar">
     <label>
       at:
       <input
@@ -34,15 +34,15 @@
       <button type="button" [attr.aria-label]="label" (click)="undoLastAction()">Undo</button>
     }
     <ngp-commit-counter [data]="data()" />
-    <span class="row-edit-story__shortcut-hint">⌘Z / Ctrl+Z — undo last change</span>
+    <span class="story-host__shortcut-hint">⌘Z / Ctrl+Z — undo last change</span>
   </div>
 
-  <table class="row-edit-story__table" [ngpFocusNewRow]="newRowId()">
+  <table class="story-host__table" [ngpFocusNewRow]="newRowId()">
     <thead>
       <tr>
-        <th class="row-edit-story__cell">name</th>
-        <th class="row-edit-story__cell">dept</th>
-        <th class="row-edit-story__cell row-edit-story__cell--actions">
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell story-host__cell--actions">
           <span class="sr-only">actions</span>
         </th>
       </tr>
@@ -55,25 +55,25 @@
 
           <tr
             [attr.data-row-new]="row.id === newRowId() ? row.id : null"
-            [class.row-edit-story__row--saving]="isPending"
+            [class.story-host__row--saving]="isPending"
           >
-            <td class="row-edit-story__cell">
+            <td class="story-host__cell">
               <input type="text" [formField]="rows[row.sourceIndex].name" placeholder="name" />
             </td>
-            <td class="row-edit-story__cell">
+            <td class="story-host__cell">
               <select [formField]="rows[row.sourceIndex].dept">
                 @for (dept of deptOptions; track dept) {
                   <option [value]="dept">{{ dept }}</option>
                 }
               </select>
             </td>
-            <td class="row-edit-story__cell row-edit-story__cell--actions">
+            <td class="story-host__cell story-host__cell--actions">
               @if (isPending) {
-                <span class="row-edit-story__pending">saving…</span>
+                <span class="story-host__pending">saving…</span>
               }
               <button
                 type="button"
-                class="row-edit-story__icon-button"
+                class="story-host__icon-button"
                 [attr.aria-label]="discardLabel(data()[row.sourceIndex])"
                 [title]="discardLabel(data()[row.sourceIndex])"
                 (click)="discardRow(row.id)"
@@ -90,7 +90,7 @@
                 </svg>
               </button>
               @if (rowError; as message) {
-                <p class="row-edit-story__error" role="status">
+                <p class="story-host__error" role="status">
                   {{ message }}
                   <button type="button" (click)="retryRow(row.id)">Retry</button>
                   <button type="button" (click)="dismissError(row.id)">Dismiss</button>

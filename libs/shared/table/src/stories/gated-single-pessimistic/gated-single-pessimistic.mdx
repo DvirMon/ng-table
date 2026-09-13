@@ -2,9 +2,9 @@ import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as GatedSinglePessimisticStories from './gated-single-pessimistic.stories';
 import hostClass from './gated-single-pessimistic-story-host.component.ts?raw';
 import hostTemplate from './gated-single-pessimistic-story-host.component.html?raw';
-import rowStyles from '../row-edit-story.css?raw';
-import rowSchema from '../row-edit.schema.ts?raw';
-import '../code-tabs.css';
+import rowStyles from '../shared/styles/story-host.css?raw';
+import rowSchema from '../shared/row-edit/schema.ts?raw';
+import '../shared/styles/code-tabs.css';
 
 <Meta of={GatedSinglePessimisticStories} name="Single, Pessimistic Docs" />
 

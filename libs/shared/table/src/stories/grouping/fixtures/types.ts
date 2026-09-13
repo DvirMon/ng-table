@@ -1,4 +1,4 @@
-import type { RowId } from '../api/types';
+import type { RowId } from '../../../api/types';
 
 /** Owner of a deal — an object-valued column, kept as a field rather than flattened so a
  * grouping level can be pointed at it. */

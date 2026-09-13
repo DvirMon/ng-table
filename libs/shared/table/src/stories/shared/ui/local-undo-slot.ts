@@ -1,5 +1,5 @@
 import { computed, signal, type Signal } from '@angular/core';
-import type { RowId } from '../api/types';
+import type { RowId } from '../../../api/types';
 
 /** Snapshot of the last committed field value, restorable via Ctrl+Z/Cmd+Z. */
 export interface FieldCommitUndo<TField extends string = string> {

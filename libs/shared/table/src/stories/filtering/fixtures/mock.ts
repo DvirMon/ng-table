@@ -1,4 +1,4 @@
-import type { InvoiceRow, InvoiceStatus } from './filter-demo.types';
+import type { InvoiceRow, InvoiceStatus } from './types';
 
 /** Hand-supplied, not derived from the rows — `createFilters()` takes no data argument, so a
  * select's options are the consumer's to provide. */

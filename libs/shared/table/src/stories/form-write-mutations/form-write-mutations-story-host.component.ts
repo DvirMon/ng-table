@@ -6,10 +6,10 @@ import { beginEdit, endEdit } from '../../mutations/row-edit-mutations';
 import { releaseEdit, revertEdit } from '../../mutations/optimistic-mutations';
 import { NgpTableRowFieldDirective } from '../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../api/types';
-import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../row-edit.mock';
-import { editRowsSchema, gatedTableSchema } from '../row-edit.schema';
-import { saveRowPessimistic } from '../row-edit.utils';
-import type { EditRow } from '../row-edit.types';
+import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../shared/row-edit/mock';
+import { editRowsSchema, gatedTableSchema } from '../shared/row-edit/schema';
+import { saveRowPessimistic } from '../shared/row-edit/utils';
+import type { EditRow } from '../shared/row-edit/types';
 
 /**
  * Add/remove go straight through the form's own root value signal (`rows().value.update(...)`)
@@ -25,7 +25,7 @@ import type { EditRow } from '../row-edit.types';
   selector: 'ngp-form-write-mutations-story-host',
   imports: [FormField, JsonPipe, NgpTableRowFieldDirective],
   templateUrl: './form-write-mutations-story-host.component.html',
-  styleUrl: '../row-edit-story.css',
+  styleUrl: '../shared/styles/story-host.css',
 })
 export class FormWriteMutationsStoryHostComponent {
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
