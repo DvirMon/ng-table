@@ -148,6 +148,49 @@ are not the same thing. `editing` is the case where they differ: `withOptimistic
 `withRowEdit()` both feed `table.editing`, and naming slices after features would produce
 `table.optimistic` / `table.rowEdit` — the two doors D37 exists to prevent.
 
+## Where a `withComputed()` block lands (settled 2026-09-12)
+
+`docs/1-state/work/computed-state-mechanism/` (D21/D22, `ready for issues`) lets a consumer declare
+derived state in two positions. Under a flat surface both land flat. Under slices, placement needs a
+rule, because the nested position has an obvious owner and the top-level one does not.
+
+**The rule: placement follows declaration site.**
+
+```ts
+createTable(data, config,
+  withSelection(cfg, withComputed((store) => ({ hiddenSelected: ... }))),  // → table.selection.hiddenSelected()
+  withGrouping(),
+  withComputed((store) => ({ groupTick: ... })),                           // → table.groupTick()
+);
+```
+
+- **Nested in a feature** → that feature's slice. A derive declared there can only *see* core plus
+  that feature's members (D22), so it is that feature's knowledge, and the receiver states the
+  precondition — the same argument `rowIdsOf` is decided on, applied to consumer code.
+- **Top-level** → flat. It sees every feature before it and belongs to none of them.
+
+**This does not break D22's "one type serves both placements."** `withComputed` returns the same
+`Feature<In, D>` either way and does not know where it sits; the **host** decides the merge target —
+`withSelection()` merges `D` onto its own slice, `createTable()` merges it flat. D22's unification is
+about the type, not the merge site.
+
+**Three properties this buys.**
+
+1. **Placement is derivable, not judged.** The consumer chooses by where they write the block. No
+   per-derivation decision, and moving a block moves its member — visibly.
+2. **Flat becomes the consumer namespace; slices are the library namespace.** Once the four shipped
+   features migrate, nothing library-owned is flat, so a bare `table.hiddenSelected()` reads
+   unambiguously as consumer-declared. The two spaces stop competing for the same keys.
+3. **Fewer collisions, not more.** Two features each nesting a derive named `count` produce
+   `table.selection.count` and `table.grouping.count`. Flat, they collide and ADR-0007 throws.
+
+**To verify before implementing.** `withSelection(cfg, derive)` must return
+`Feature<In, { selection: SelectionSlice & D }>`. D22 recorded counter-evidence that an intersection
+in the *return type* of `withComputed` breaks slot inference (`probe-r1-featurederive.ts.txt`,
+degrading to `Signal<any>`). The intersection here sits inside the members object rather than in the
+feature's return type, so it should be unaffected — but it is the same mechanism and wants its own
+probe, not an assumption.
+
 ## Consequences of deciding either way
 
 Deciding **flat**: `withGrouping()`'s remaining unbuilt members (D4, D6–D8, D11) ship flat and the
