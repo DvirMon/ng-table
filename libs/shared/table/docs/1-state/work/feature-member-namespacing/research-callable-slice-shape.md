@@ -184,22 +184,15 @@ a *feature-private* type as another feature's argument — then no handoff exist
 question returns. Nothing does that today; keeping it that way is the condition under which
 single-slice namespacing is sufficient.
 
-## What is still genuinely open
+## Open questions at the time of writing — all now closed
 
-Finding 4 removes the stated obstacle; Finding 5 closes the first open question. Two remain:
+Resolved in [ADR-0015](../../../adr/0015-feature-member-namespacing.md), accepted 2026-09-13. Kept
+for the reasoning, not as live questions; the ADR is authoritative.
 
-1. **What does a feature with no callable slice hang verbs on?** Sharpened by Finding 5, because
-   selection is exactly that case: `selectedRows` is a bare `Signal`, not a `WritableView`, so
-   `table.selection` does not exist. `selectionStateOf(ids)` is flat-named and reads as a core
-   capability — ADR-0015's original complaint, already in shipped code. Option 4 wants
-   `table.selection.stateOf(ids)`, which means promoting `selectedRows` to a callable slice first.
-2. **Is the flat surface deprecated or grandfathered?** D30 already grandfathers `withSorting()`'s
-   bare `toggleSort`/`setSorting`/`clearSorting` as pre-D30. Permanent grandfathering is a stable
-   two-convention surface; deprecation is the migration Option 3 was rejected for.
-
-## Corrections ADR-0015 needs regardless of which option wins
-
-- Strike the Signal Forms dismissal in Option 4 (Finding 1) — replace with Finding 2's real
-  distinction.
-- Move "The objection that must be answered" under Options 2/3 (Finding 4).
-- Option 4 currently reads as speculative; it is the shape four members already ship (Finding 3).
+1. **What does a feature with no callable slice hang verbs on?** Selection was the case:
+   `selectedRows` is a bare `Signal`, so `table.selection` does not exist and
+   `selectionStateOf(ids)` ships flat-named. **Closed** — every feature gets a callable slice, so
+   `selectedRows` is promoted and the verb becomes `table.selection.stateOf(ids)`.
+2. **Is the flat surface deprecated or grandfathered?** **Closed** — deprecated. All four shipped
+   features migrate in this migration, including `withSorting()`'s pre-D30 bare verbs. A bounded
+   breaking change ending in one convention beat a permanent mixed surface.

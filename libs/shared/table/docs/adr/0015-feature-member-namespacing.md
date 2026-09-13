@@ -1,6 +1,8 @@
-# ADR-0015 — Should a feature's behavior functions live under a feature namespace?
+# ADR-0015 — A feature exposes one callable slice, keyed by state concern
 
-**Status:** proposed — not decided, opened 2026-09-11
+**Status:** accepted — decided 2026-09-13, unimplemented
+**Decision:** every feature exposes exactly one **callable slice**, keyed by state concern. All four
+shipped features migrate in this migration — nothing is grandfathered.
 **Date:** 2026-09-11
 **Related:** [ADR-0007](0007-feature-member-claims.md) (rejected namespacing as a collision fix —
 this reopens it on different grounds), [ADR-0003](0003-in-house-table-store-engine.md) (the feature
@@ -52,35 +54,44 @@ argument* whose flat name misrepresents which feature it requires. Whether the "
 extends to behavior functions is the actual open question, and ADR-0007 does not answer it because
 it never faced one.
 
-## The objection that must be answered
+## The D37 objection — real for feature namespacing, void for slices
 
-D37's "one door" is the serious obstacle, not the migration cost.
+The objection this ADR opened on: `withRowEdit()` composes `withOptimistic()` internally, so
+`table.editing` means the same thing regardless of which the consumer composed. Namespacing would
+give `table.rowEdit.editing` and `table.optimistic.editing` — two doors, the exact coupling D37
+removed.
 
-`withRowEdit()` composes `withOptimistic()` internally and re-exposes its members as its own, so
-`table.editing` means the same thing regardless of which of the two the consumer composed. Under
-namespacing, `table.rowEdit.editing` and `table.optimistic.editing` are different doors, and the
-consumer must know which feature is underneath — precisely the coupling D37 removed.
+**That kills Options 2 and 3 and leaves Option 4 untouched**, because a slice is keyed by **state
+concern**, not by feature. D37 already guarantees one slice per concern, which is precisely what
+makes the slice shape work: `table.editing.captureEdit(id)` is reached through the same single door
+as `table.editing()`, under either feature. This ADR does not overturn D37 — it depends on it. See
+the naming corollary under the primary-signal rule.
 
-A proposal that namespaces everything contradicts this directly. Any proposal that survives must
-either overturn D37's one-door property deliberately, or draw a defensible line between state
-(flat, one door) and behavior functions (namespaced) — and a line that the composing-feature case
-does not immediately break.
+## Options, weighed
 
-## Options, not yet weighed
+1. **Leave flat.** `table.rowIdsOf(group)`. Zero migration. Rejected — the flat surface accumulates
+   feature-specific verbs whose preconditions are invisible at the call site, and
+   `selectionStateOf(ids)` already ships as exactly that.
+2. **Namespace behavior only, keep state flat.** Rejected — ships two conventions permanently, and
+   the state/behavior boundary has to be guessed for every new member.
+3. **Namespace per feature** (`table.rowEdit.editing`). Rejected — the D37 objection above, in full
+   force.
+4. **A callable slice per state concern.** ✅ **Chosen.** `table.grouping()` returns state,
+   `table.grouping.rowIdsOf(g)` is behavior — the shape `WritableView<T, Updater>` (D30) already
+   ships for `value`, `columns`, `editing` and `grouping`.
 
-1. **Leave flat.** `table.rowIdsOf(group)`. Zero migration. Accepts that the flat surface will
-   accumulate feature-specific verbs whose preconditions are invisible at the call site.
-2. **Namespace behavior only, keep state flat.** `table.selectedRows()` stays; `table.grouping
-   .rowIdsOf(g)` is new-style. Answers the readability problem without touching D37's state doors —
-   but ships two conventions, and the state/behavior boundary needs defining precisely enough that
-   nobody has to guess which side a new member falls on.
-3. **Namespace everything.** Consistent, and a breaking change to four shipped features plus every
-   story template and directive that reads them. Must overturn D37 explicitly.
-4. **A callable slice object** — `table.grouping()` returns state, `table.grouping.rowIdsOf(g)` is
-   behavior, the shape `WritableView<T, Updater>` (D30) already has. Note the Angular Signal Forms
-   analogy that prompted this is **not** precedent: `field.errors()` is state hanging off a
-   callable, not a function of an argument. The shape may still be right; the citation is not
-   support for it.
+**Correction to this ADR as originally written.** Option 4 was filed with a note that the Angular
+Signal Forms analogy "is not precedent: `field.errors()` is state hanging off a callable, not a
+function of an argument." That is wrong on the facts, and it was the sentence keeping Option 4
+unweighed. Verified against installed `@angular/forms` 22.1.2: `FieldState` carries `getError(kind)`,
+`metadata(key)` and `hasMetadata(key)` — functions of an argument, on a callable.
+
+The stronger precedent is mainline Angular rather than Forms. `signal()` is itself built this way
+(`core/fesm2022/_pending_tasks-chunk.mjs:2769` — a getter function with `set`/`update`/`asReadonly`
+assigned onto it), and `model()` goes further, carrying `subscribe` and `destroyRef`: members that
+are neither writes nor state. Angular already treats the callable as a general namespace for
+everything belonging to that reactive cell. Full write-up:
+[`research-callable-slice-shape.md`](../1-state/work/feature-member-namespacing/research-callable-slice-shape.md).
 
 ## The primary-signal rule (settled 2026-09-11)
 
@@ -184,22 +195,72 @@ about the type, not the merge site.
 3. **Fewer collisions, not more.** Two features each nesting a derive named `count` produce
    `table.selection.count` and `table.grouping.count`. Flat, they collide and ADR-0007 throws.
 
-**To verify before implementing.** `withSelection(cfg, derive)` must return
-`Feature<In, { selection: SelectionSlice & D }>`. D22 recorded counter-evidence that an intersection
-in the *return type* of `withComputed` breaks slot inference (`probe-r1-featurederive.ts.txt`,
-degrading to `Signal<any>`). The intersection here sits inside the members object rather than in the
-feature's return type, so it should be unaffected — but it is the same mechanism and wants its own
-probe, not an assumption.
+**Verified, 2026-09-13** — type-level probe against the shipped
+`createTable`/`withComputed`/`Feature<In, Out>` (post-#69/#73). The probe was a scratch file, not
+kept; the signature and results below are the record, and it is a few minutes to rebuild from them.
 
-## Consequences of deciding either way
+D22 recorded counter-evidence that an intersection in `withComputed`'s *return type* collapsed the
+derived member to `Signal<any>` (`probe-r1-featurederive.ts.txt`). The intersection here sits inside
+the members object instead — `Feature<In, { selection: SelectionSlice & D }>` — and slot inference
+survives it. Four checks, all green:
 
-Deciding **flat**: `withGrouping()`'s remaining unbuilt members (D4, D6–D8, D11) ship flat and the
-question is closed for this feature. Cheapest, and the accumulated cost lands on whoever reads the
-table surface in a year.
+| Check | Result |
+|---|---|
+| `table.selection` is not `any` | ✅ |
+| `table.selection.hiddenSelected` is `Signal<number>`, not `Signal<any>` | ✅ |
+| The slice's own callable and verbs still resolve alongside `D` | ✅ |
+| `RowOf<In>` still flows to the **next** slot after a sliced feature | ✅ |
 
-Deciding **namespaced**: grouping is the cheapest feature to shape, since most of its surface is
-unbuilt. Shipped features migrate as separate work rather than blocking it — which means a period
-with two conventions live either way, and a decision on whether that period is bounded.
+Negative control run: flipping the expected type to `Signal<string>` fails with `TS2344`, so the
+assertions bite rather than passing vacuously.
+
+The proposed host signature, as probed:
+
+```ts
+declare function withSelectionSliced<In extends Shape, D extends DerivedDict>(
+  config: WithSelectionConfig<RowOf<In>> | undefined,
+  derive: Feature<NoInfer<In> & { selection: SelectionSlice }, D>
+): Feature<In, { selection: SelectionSlice & D }>;
+```
+
+## Consequences
+
+**All four shipped features migrate here; nothing is grandfathered.** A bounded breaking change
+ending in one convention beats a permanent mixed surface. `withSorting()`'s pre-D30 bare verbs
+(`toggleSort`/`setSorting`/`clearSorting`), grandfathered by D30, stop being grandfathered.
+
+**Cost, priced against the current tree.** Smaller than ADR-0007 assumed — it named "the flat store
+surface every existing feature and directive reads", and the directive half is false:
+`src/directives/` reads **zero** feature members. Of ~105 `src/` member reads, ~100 are Storybook
+hosts.
+
+| Slice | Change |
+|---|---|
+| `value`, `columns`, `grouping`, `editing` | already callable — siblings fold onto them |
+| `sorting`, `selection`, `expansion` | no callable today; every verb moves |
+| `filtering` | non-callable namespace (primary-signal rule, part 3) |
+
+`editing` is nearly free: every `table.editing.update(verb)` call site is untouched, because D30
+already put the write path on the slice. `sorting`/`selection`/`expansion` carry the real cost —
+`table.toggleSort(id)` becomes `table.sorting.toggle(id)`, `table.selectionStateOf(ids)` becomes
+`table.selection.stateOf(ids)`.
+
+**The shared-pass window with the positional migration has closed.** Issues #72–#74 converted every
+`with-*()` file to `Feature<In, Out>` and #75 rewrote the library's Storybook hosts, so this is a
+second pass over those same files. Only #76's consumer apps (`apps/demo`, `apps/ng-table`) are still
+unwritten and can absorb both changes at once.
+
+**Sequencing.** Do not start implementation before #77 (*integrate and verify positional
+composition*) is green. Stacking a second structural migration on an unverified one gives any
+failure two candidate causes. Spec work is not blocked.
+
+**The flat namespace becomes the consumer's.** Once migration completes no library member is flat,
+so a bare `table.hiddenSelected()` reads unambiguously as declared by this team — see the
+`withComputed()` placement rule.
+
+**ADR-0007's member-claim registry stays, and guards less.** Each feature claims one key, so
+collisions become near-impossible by construction rather than by check. Keep it: the D37 case still
+claims one key from two features, and consumer `withComputed` blocks still collide in the flat space.
 
 ## Not in scope
 
