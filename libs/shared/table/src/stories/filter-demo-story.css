@@ -1,0 +1,108 @@
+/* Layered after row-edit-story.css — every filtering host loads both, this one second. */
+
+/* Always-visible filter row above the table, one control per filtered column. */
+.filter-demo-story__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.6rem;
+  margin-block-end: 0.75rem;
+  padding: 0.6rem;
+  border: 1px solid #374151;
+  border-radius: 0.35rem;
+  background: #111827;
+}
+
+.filter-demo-story__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 8rem;
+}
+
+.filter-demo-story__field--range {
+  flex-direction: row;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.filter-demo-story__label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+
+.filter-demo-story__filters input,
+.filter-demo-story__filters select {
+  color-scheme: dark;
+  background: #1f2937;
+  color: #e5e7eb;
+  border: 1px solid #374151;
+  border-radius: 0.3rem;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.35rem;
+  box-sizing: border-box;
+}
+
+.filter-demo-story__filters input[type='number'],
+.filter-demo-story__filters input[type='date'] {
+  width: 7rem;
+}
+
+/* A field holding a non-empty criterion is marked, so "why is this row missing" is answerable
+   without reading every control. */
+.filter-demo-story__field--active .filter-demo-story__label::after {
+  content: '●';
+  margin-inline-start: 0.25rem;
+  color: #60a5fa;
+}
+
+.filter-demo-story__field--active input,
+.filter-demo-story__field--active select {
+  border-color: #60a5fa;
+}
+
+/* Summary row: matched count against the dataset total. */
+.filter-demo-story__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block: 0.5rem;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+.filter-demo-story__summary strong {
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+.filter-demo-story__summary--empty {
+  color: #fbbf24;
+}
+
+.filter-demo-story__cell--numeric {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A nullable cell rendering nothing is a fixture case, not a rendering bug — say so on screen. */
+.filter-demo-story__blank::after {
+  content: '—';
+  color: #6b7280;
+}
+
+.filter-demo-story__tag {
+  display: inline-block;
+  margin-inline-end: 0.2rem;
+  padding: 0.05rem 0.3rem;
+  border: 1px solid #374151;
+  border-radius: 0.25rem;
+  background: #1f2937;
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
