@@ -1,13 +1,14 @@
 import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createTable } from '../../../api/create-table';
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
 import { releaseEdit, revertEdit } from '../../../mutations/optimistic-mutations';
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../fixtures/mock';
-import { editRowsSchema, gatedTableSchema } from '../fixtures/schema';
+import { createTable } from '../../../api/create-table';
+import { withRowEdit } from '../../../api/features/with-row-edit';
+import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { saveRowPessimistic } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
 
@@ -29,7 +30,7 @@ import type { EditRow } from '../fixtures/types';
 })
 export class FormWriteMutationsStoryHostComponent {
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, gatedTableSchema());
+  protected readonly table = createTable(this.data, editTableConfig, withRowEdit());
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
 

@@ -1,13 +1,14 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createTable } from '../../../api/create-table';
 import { beginEdit, createRow, endEdit } from '../../../mutations/row-edit-mutations';
 import { discardEdit, releaseEdit, revertEdit, swapRowId } from '../../../mutations/optimistic-mutations';
 import { patchRow } from '../../../mutations/row-mutations';
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../fixtures/mock';
-import { editRowsSchema, gatedTableSchema } from '../fixtures/schema';
+import { createTable } from '../../../api/create-table';
+import { withRowEdit } from '../../../api/features/with-row-edit';
+import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { injectRowEditApi, type RowEditRequestOptions } from '../fixtures/http';
 import type { EditRow } from '../fixtures/types';
 import { createBulkAddUi } from './gated-bulk-optimistic.state';
@@ -43,7 +44,7 @@ export class GatedBulkOptimisticStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, gatedTableSchema({ multiple: () => true }));
+  protected readonly table = createTable(this.data, editTableConfig, withRowEdit({ multiple: () => true }));
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`. */
   protected readonly rows = form(this.table.draft, editRowsSchema);

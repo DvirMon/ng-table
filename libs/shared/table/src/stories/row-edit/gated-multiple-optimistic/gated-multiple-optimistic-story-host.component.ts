@@ -1,7 +1,6 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { catchError, forkJoin, map, of, tap, type Observable } from 'rxjs';
-import { createTable } from '../../../api/create-table';
 import { beginEdit, clearEdit, endEdit } from '../../../mutations/row-edit-mutations';
 import { patchRow } from '../../../mutations/row-mutations';
 import {
@@ -13,14 +12,16 @@ import {
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../fixtures/mock';
-import { editRowsSchema, gatedTableSchema } from '../fixtures/schema';
+import { createTable } from '../../../api/create-table';
+import { withRowEdit } from '../../../api/features/with-row-edit';
+import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { injectRowEditApi } from '../fixtures/http';
 import { containFocusTab } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
 
 /**
  * S4/S8 — the gated table (`withRowEdit()`), fixed to multiple-row + optimistic save:
- * `gatedTableSchema({ multiple: () => true })` keeps several rows open at once. Per
+ * `withRowEdit({ multiple: () => true })` keeps several rows open at once. Per
  * `docs/1-state/work/with-multiple-edit/1-design.md`, bulk edit under `multiple: true` is
  * optimistic-only *by design*, not by accident of this demo: `saveAll()` closes every open row
  * (`endEdit`) before firing any write, so a row with a save in flight is always `pending`, never
@@ -50,7 +51,7 @@ export class GatedMultipleOptimisticStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, gatedTableSchema({ multiple: () => true }));
+  protected readonly table = createTable(this.data, editTableConfig, withRowEdit({ multiple: () => true }));
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or leak into the
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */

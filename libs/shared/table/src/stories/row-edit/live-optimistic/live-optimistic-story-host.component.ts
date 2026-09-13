@@ -1,6 +1,5 @@
 import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createTable } from '../../../api/create-table';
 import {
   captureEdit,
   releaseEdit,
@@ -12,7 +11,9 @@ import { insertRow, patchRow } from '../../../mutations/row-mutations';
 import type { RowId } from '../../../api/types';
 import { FocusNewRowDirective } from '../ui/focus-new-row.directive';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../fixtures/mock';
-import { editRowsSchema, liveOptimisticSchema } from '../fixtures/schema';
+import { createTable } from '../../../api/create-table';
+import { withOptimistic } from '../../../api/features/with-optimistic';
+import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { injectRowEditApi } from '../fixtures/http';
 import type { EditRow } from '../fixtures/types';
 
@@ -47,7 +48,7 @@ export class LiveOptimisticStoryHostComponent {
   readonly latencyMs = input(600);
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly liveTable = createTable(this.data, liveOptimisticSchema);
+  protected readonly liveTable = createTable(this.data, editTableConfig, withOptimistic());
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly saveError = signal<string | null>(null);

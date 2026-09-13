@@ -1,6 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createTable } from '../../../api/create-table';
 import { discardEdit, releaseEdit, revertEdit } from '../../../mutations/optimistic-mutations';
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
 import type { RowId } from '../../../api/types';
@@ -9,9 +8,12 @@ import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directiv
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import { NullableTextFieldDirective } from './nullable-text-field.directive';
 import { SORT_EDIT_ROWS_MOCK } from './sorting-editing.mock';
-import { sortEditRowsSchema, sortEditTableSchema } from './sorting-editing.schema';
+import { sortEditTableConfig, sortEditRowsSchema } from './sorting-editing.schema';
 import type { SortEditRow } from './sorting-editing.types';
 import { saveSortEditRow } from './sorting-editing.utils';
+import { createTable } from '../../../api/create-table';
+import { withSorting } from '../../../api/features/with-sorting';
+import { withRowEdit } from '../../../api/features/with-row-edit';
 
 /**
  * S-1 / S-2 (`0-product/row-editing.md` §5) — `withSorting()` + `withRowEdit()` composed
@@ -35,7 +37,7 @@ import { saveSortEditRow } from './sorting-editing.utils';
 })
 export class SortingEditingStoryHostComponent {
   protected readonly data = signal<SortEditRow[]>(SORT_EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, sortEditTableSchema);
+  protected readonly table = createTable(this.data, sortEditTableConfig, withSorting(), withRowEdit())
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or feed the sort
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */

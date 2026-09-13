@@ -1,6 +1,5 @@
 import { Component, computed, effect, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createTable } from '../../../api/create-table';
 import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import {
   captureEdit,
@@ -15,7 +14,10 @@ import { FocusNewRowDirective } from '../ui/focus-new-row.directive';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../fixtures/mock';
 import { injectRowEditApi, type RowEditRequestOptions } from '../fixtures/http';
 import { createLocalUndoSlot } from '../ui/local-undo-slot';
-import { editRowsSchema, liveTableSchema } from '../fixtures/schema';
+import { createTable } from '../../../api/create-table';
+import { withOptimistic } from '../../../api/features/with-optimistic';
+import { withSorting } from '../../../api/features/with-sorting';
+import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import type { EditRow } from '../fixtures/types';
 import type { EditableField } from './live-table.types';
 
@@ -31,8 +33,7 @@ function rowLabel(row: EditRow): string {
  * S1 — the live table (D29): no `withRowEdit()` composed, inputs always render — there is still
  * no *session*, no Edit/Save/Cancel. The `ngp-commit-counter` in the template instruments
  * `data()` emissions to make the `debounce('blur')` commit boundary observable — typing does not
- * tick it, blur/select-change does. `withOptimistic()` is composed (see `row-edit.schema.ts`)
- * purely for its rollback verbs:
+ * tick it, blur/select-change does. `withOptimistic()` is composed purely for its rollback verbs:
  * every commit is now a real MSW-intercepted round trip, not a local-only write.
  *
  * - **Edit**: on a field commit, `captureEdit(id, previousRow)` takes the pre-commit value, then
@@ -73,7 +74,7 @@ export class LiveTableStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, liveTableSchema);
+  protected readonly table = createTable(this.data, editTableConfig, withSorting(), withOptimistic());
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly insertAt = signal(0);

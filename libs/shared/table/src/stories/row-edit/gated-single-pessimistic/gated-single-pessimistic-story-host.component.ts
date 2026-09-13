@@ -1,7 +1,6 @@
 import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { catchError, map, of, tap, type Observable } from 'rxjs';
-import { createTable } from '../../../api/create-table';
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
 import { patchRow } from '../../../mutations/row-mutations';
 import {
@@ -13,7 +12,9 @@ import {
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import type { RowId } from '../../../api/types';
 import { DEPT_OPTIONS, EDIT_ROWS_MOCK } from '../fixtures/mock';
-import { editRowsSchema, gatedTableSchema } from '../fixtures/schema';
+import { createTable } from '../../../api/create-table';
+import { withRowEdit } from '../../../api/features/with-row-edit';
+import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { injectRowEditApi } from '../fixtures/http';
 import { containFocusTab } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
@@ -22,7 +23,7 @@ import type { EditRow } from '../fixtures/types';
  * S2/S5 — the gated table (`withRowEdit()`), fixed to single-row + pessimistic save: the row
  * stays open for the whole round trip, and `endEdit` only runs once the real MSW-intercepted
  * `fetch` resolves — a failure leaves the row open with its draft intact, no rollback needed
- * since nothing closed early. `multiple` is left unconfigured — `gatedTableSchema()` defaults to
+ * since nothing closed early. `multiple` is left unconfigured — `withRowEdit()` defaults to
  * single-row (D14). See `../gated-single-optimistic/` for the same single-row surface with an
  * optimistic (close-then-reconcile) save, and `../gated-multiple-optimistic/` for several rows
  * open at once.
@@ -49,7 +50,7 @@ export class GatedSinglePessimisticStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, gatedTableSchema());
+  protected readonly table = createTable(this.data, editTableConfig, withRowEdit());
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or leak into the
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
