@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../../dist/out-tsc",
+    "incremental": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-table-spec.tsbuildinfo",
     "types": ["vitest/globals", "node"]
   },
   "include": [
