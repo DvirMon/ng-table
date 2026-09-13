@@ -1,0 +1,141 @@
+/* Layered after row-edit-story.css — every grouping host loads both, this one second. */
+
+/* Depth reads as one offset multiplier keyed off the row's own data-depth attribute. */
+.grouping-story__table {
+  --grouping-indent: 1.25rem;
+}
+
+.grouping-story__cell--label {
+  padding-inline-start: calc(0.6rem + var(--grouping-depth, 0) * var(--grouping-indent));
+}
+
+[data-depth='0'] { --grouping-depth: 0; }
+[data-depth='1'] { --grouping-depth: 1; }
+[data-depth='2'] { --grouping-depth: 2; }
+[data-depth='3'] { --grouping-depth: 3; }
+
+[data-row-kind='group'] > .row-edit-story__cell {
+  background: #111827;
+  font-weight: 600;
+}
+
+.grouping-story__group-label {
+  color: #e5e7eb;
+}
+
+/* A group whose key was null/undefined/'' has no label to render. */
+.grouping-story__group-label--blank {
+  color: #fbbf24;
+  font-style: italic;
+}
+
+.grouping-story__count {
+  margin-inline-start: 0.4rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid #374151;
+  border-radius: 999px;
+  background: #1f2937;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: #9ca3af;
+}
+
+.grouping-story__aggregate {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  color: #93c5fd;
+}
+
+.grouping-story__cell--numeric {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expand/collapse toggle — a real button, so Enter and Space both work. */
+.grouping-story__chevron {
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0 0.35rem 0 0;
+  font: inherit;
+  line-height: 1;
+}
+
+.grouping-story__chevron::before {
+  content: '▸';
+  display: inline-block;
+  transition: transform 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grouping-story__chevron::before {
+    transition: none;
+  }
+}
+
+.grouping-story__chevron[aria-expanded='true']::before {
+  transform: rotate(90deg);
+}
+
+/* The whole header row is an enlarged hit area delegating to the chevron. */
+[data-row-kind='group']:hover > .row-edit-story__cell {
+  background: #172033;
+  cursor: pointer;
+}
+
+/* Active grouping levels, in order, as removable/reorderable pills. */
+.grouping-story__pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin-block-end: 0.75rem;
+  min-height: 1.8rem;
+}
+
+.grouping-story__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.4rem;
+  border: 1px solid #374151;
+  border-radius: 999px;
+  background: #1f2937;
+  font-size: 0.75rem;
+  color: #e5e7eb;
+}
+
+.grouping-story__pill button {
+  border: 0;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+  padding: 0 0.1rem;
+}
+
+.grouping-story__pill button:hover {
+  color: #e5e7eb;
+}
+
+.grouping-story__pills:empty::after {
+  content: 'not grouped';
+  font-size: 0.75rem;
+  font-style: italic;
+  color: #6b7280;
+}
+
+/* Opt-in sticky group headers. */
+.grouping-story__table--sticky [data-row-kind='group'] > .row-edit-story__cell {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.grouping-story__notice {
+  margin-block-start: 0.5rem;
+  font-size: 0.8rem;
+  color: #fbbf24;
+}
