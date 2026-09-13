@@ -27,7 +27,7 @@
     "grill": true,
     "spec": true,
     "issues": true,
-    "tasks": false
+    "tasks": true
   },
   "designPath": "libs/shared/table/docs/1-state/work/computed-state-mechanism/2-research.md"
 }

@@ -1,9 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { describeFeature, SlotRegistry } from './slots';
+import {
+  CORE_MEMBER_KEYS,
+  describeFeature,
+  describeInternalFeature,
+  SlotRegistry,
+} from './slots';
 
 describe('describeFeature', () => {
-  it('names a feature by its position in the features array', () => {
-    expect(describeFeature(2)).toBe('features[2]');
+  it('names a consumer feature by its 1-based argument position', () => {
+    expect(describeFeature(2)).toBe('feature 2');
+  });
+});
+
+describe('describeInternalFeature', () => {
+  it('names an engine-internal feature by its 1-based position', () => {
+    expect(describeInternalFeature(1)).toBe('internal feature 1');
   });
 });
 
@@ -57,5 +68,44 @@ describe('SlotRegistry', () => {
     expect(() => registry.claimRenderStage('tree', 'features[1]')).toThrowError(
       /features\[0\] and features\[1\] both provide the "tree" render stage/
     );
+  });
+
+  describe('core member keys', () => {
+    it.each(CORE_MEMBER_KEYS)(
+      'throws naming core and the feature when a feature claims "%s"',
+      (key) => {
+        const registry = new SlotRegistry();
+        registry.claimCoreMembers();
+
+        expect(() => registry.claimMember(key, 'feature 1')).toThrowError(
+          new RegExp(`core and feature 1 both provide the "${key}" store member`)
+        );
+      }
+    );
+
+    it('leaves totalRowCount claimable (ADR-0005)', () => {
+      const registry = new SlotRegistry();
+      registry.claimCoreMembers();
+
+      expect(() =>
+        registry.claimMember('totalRowCount', 'feature 1')
+      ).not.toThrow();
+    });
+
+    it('throws when the core members are pre-claimed twice', () => {
+      const registry = new SlotRegistry();
+      registry.claimCoreMembers();
+
+      expect(() => registry.claimCoreMembers()).toThrowError(
+        /core and core both provide the "\w+" store member/
+      );
+    });
+
+    it('leaves a non-core member unaffected', () => {
+      const registry = new SlotRegistry();
+      registry.claimCoreMembers();
+
+      expect(() => registry.claimMember('editing', 'feature 1')).not.toThrow();
+    });
   });
 });

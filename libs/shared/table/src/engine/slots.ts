@@ -1,9 +1,43 @@
+import type { TableStore } from '../api/types';
 import type { PipelineStage } from './pipeline';
 import type { RenderStage } from './render-stages';
 
-/** Names a feature by its position in the `features` array, for collision messages. */
-export function describeFeature(index: number): string {
-  return `features[${index}]`;
+/** ADR-0005: the one core member a feature may override. */
+type OverridableCoreKey = 'totalRowCount';
+type ClaimedCoreKey = Exclude<keyof TableStore<unknown>, OverridableCoreKey>;
+
+/**
+ * Identity, but the parameter type collapses to `never` unless `keys` covers every claimed
+ * core member — the completeness check `satisfies` alone cannot express, since it only
+ * validates each entry rather than the list as a whole. Add a non-overridable member to
+ * `TableStore` without listing it below and this call stops compiling.
+ */
+function exhaustiveCoreMemberKeys<const Keys extends readonly ClaimedCoreKey[]>(
+  keys: Exclude<ClaimedCoreKey, Keys[number]> extends never ? Keys : never
+): Keys {
+  return keys;
+}
+
+/** Core store members the engine claims before any feature folds. */
+export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
+  'columns',
+  'rows',
+  'trackBy',
+  'value',
+  'renderRows',
+]);
+
+/** The owner name core members are registered under, for collision messages. */
+const CORE_CLAIMANT = 'core';
+
+/** Names a consumer feature by its 1-based argument position, for collision messages. */
+export function describeFeature(position: number): string {
+  return `feature ${position}`;
+}
+
+/** Names an engine-internal feature (e.g. column-schema wiring) that never has a consumer position. */
+export function describeInternalFeature(position: number): string {
+  return `internal feature ${position}`;
 }
 
 /**
@@ -68,5 +102,15 @@ export class SlotRegistry {
         `[createTable] ${currentOwner} and ${claimant} both provide the "${key}" ` +
         'store member. Only one feature may provide each member.'
     );
+  }
+
+  /**
+   * Claims every non-overridable core member, so a feature declaring one collides at
+   * construction like any other member clash rather than shadowing the engine's own.
+   */
+  claimCoreMembers(): void {
+    for (const key of CORE_MEMBER_KEYS) {
+      this.claimMember(key, CORE_CLAIMANT);
+    }
   }
 }

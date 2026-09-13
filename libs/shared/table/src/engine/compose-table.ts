@@ -4,8 +4,8 @@ import { createTableCore, type TableCoreHandle } from './core';
 import { PIPELINE_ORDER } from './pipeline';
 import { RENDER_ORDER } from './render-stages';
 import { diffRemovedIds } from './rows';
-import { describeFeature, SlotRegistry } from './slots';
-import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
+import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
+import type { TableEngineConfig, TableFeatureSpec } from './types';
 
 interface FeatureHooks {
   readonly setup: (() => void)[];
@@ -13,23 +13,65 @@ interface FeatureHooks {
   readonly onRowsRemoved: ((ids: readonly RowId[]) => void)[];
 }
 
+/** A feature paired with the claimant label its collision messages use. */
+interface LabeledFeature {
+  readonly feature: AnyTableFeature;
+  readonly label: string;
+}
+
+/**
+ * The store while it is still being folded onto: the core members are already concrete, and
+ * feature members arrive as unknown keys.
+ */
+type FoldingStore<TRow> = TableStore<TRow> & Record<string, unknown>;
+
+/** Pairs each feature with its 1-based positional label. */
+function labelFeatures(
+  features: readonly AnyTableFeature[],
+  describe: (position: number) => string
+): LabeledFeature[] {
+  return features.map((feature, index) => ({
+    feature,
+    label: describe(index + 1),
+  }));
+}
+
+/**
+ * Builds the core half of the store before any feature runs, so a feature factory already
+ * sees `renderRows` and `totalRowCount` on the store it is handed.
+ */
+function createBaseStore<TRow>(
+  handle: TableCoreHandle<TRow>
+): FoldingStore<TRow> {
+  // ADR-0005: default is the row count before any virtualization/pagination trims what's
+  // actually rendered — equals `renderRows().length` until a feature overrides it.
+  const totalRowCount = computed(() => handle.core.rows().length);
+
+  return {
+    columns: handle.core.columns,
+    rows: handle.core.rows,
+    trackBy: handle.core.trackBy,
+    value: handle.core.value,
+    renderRows: handle.renderRows,
+    totalRowCount,
+  };
+}
+
 /**
  * Calls every feature factory in array order, registering what each one declares. Members are
- * merged into `composed` as they arrive, which is what makes the feature-to-feature seam
+ * merged into `store` as they arrive, which is what makes the feature-to-feature seam
  * order-dependent at factory time and complete afterwards.
  */
 function foldFeatures<TRow>(
-  features: readonly AnyTableFeature[],
-  core: TableCore<TRow>,
-  composed: Record<string, unknown>,
-  handle: TableCoreHandle<TRow>
+  features: readonly LabeledFeature[],
+  store: FoldingStore<TRow>,
+  handle: TableCoreHandle<TRow>,
+  registry: SlotRegistry
 ): FeatureHooks {
-  const registry = new SlotRegistry();
   const hooks: FeatureHooks = { setup: [], onDestroy: [], onRowsRemoved: [] };
 
-  features.forEach((feature, index) => {
-    const spec: TableFeatureSpec<TRow> = feature(core, composed);
-    const label = describeFeature(index);
+  for (const { feature, label } of features) {
+    const spec: TableFeatureSpec<TRow> = feature(handle.core, store);
 
     if (spec.stages) {
       for (const stage of PIPELINE_ORDER) {
@@ -57,7 +99,7 @@ function foldFeatures<TRow>(
       for (const key of Object.keys(spec.members)) {
         registry.claimMember(key, label);
       }
-      Object.assign(composed, spec.members);
+      Object.assign(store, spec.members);
     }
 
     if (spec.columnRules) {
@@ -73,7 +115,7 @@ function foldFeatures<TRow>(
     if (spec.onRowsRemoved) {
       hooks.onRowsRemoved.push(spec.onRowsRemoved);
     }
-  });
+  }
 
   return hooks;
 }
@@ -84,34 +126,36 @@ function foldFeatures<TRow>(
  * contribute (`members`, `stages`, `renderStages`, hooks); this function is the only place
  * that wires those declarations together.
  *
+ * `internalFeatures` are engine-supplied (e.g. the column-schema wiring) and fold first, so a
+ * consumer feature's position in `features` is what its collision messages name (ADR-0010).
+ *
  * Must run inside an Angular injection context: `setup` hooks create `effect()` /
  * `resource()`, and `onDestroy` hooks register on the ambient `DestroyRef`.
  */
 export function composeTable<TRow>(
   config: TableEngineConfig<TRow>,
-  features: readonly AnyTableFeature[]
+  features: readonly AnyTableFeature[],
+  internalFeatures: readonly AnyTableFeature[] = []
 ): TableStore<TRow> {
   const handle = createTableCore<TRow>(config);
 
-  // Stable reference — features that read it at factory time see only earlier features,
-  // features that read it from a method or computed see everything.
-  const composed: Record<string, unknown> = {};
-  const hooks = foldFeatures(features, handle.core, composed, handle);
+  // The core members are owned by the engine, so a feature declaring one collides at
+  // construction like any other member clash (ADR-0007) instead of silently shadowing it.
+  const registry = new SlotRegistry();
+  registry.claimCoreMembers();
 
-  // ADR-0005: default is the row count before any virtualization/pagination trims what's
-  // actually rendered — equals `renderRows().length` until a future feature overrides it.
-  const totalRowCount = computed(() => handle.core.rows().length);
+  // Stable reference — features that read it at factory time see the core members plus only
+  // earlier features, features that read it from a method or computed see everything.
+  const store = createBaseStore(handle);
 
-  const store = Object.assign(
-    {
-      columns: handle.core.columns,
-      rows: handle.core.rows,
-      trackBy: handle.core.trackBy,
-      value: handle.core.value,
-      renderRows: handle.renderRows,
-      totalRowCount,
-    },
-    composed
+  const hooks = foldFeatures(
+    [
+      ...labelFeatures(internalFeatures, describeInternalFeature),
+      ...labelFeatures(features, describeFeature),
+    ],
+    store,
+    handle,
+    registry
   );
 
   // Hooks run only once every feature is composed, so a `setup` can read any other
@@ -146,8 +190,8 @@ export function composeTable<TRow>(
     });
   }
 
-  // The one seam where static typing gives way to dynamic composition: `composed` is
-  // built by folding a runtime-length feature array. `createTable()` reconstructs the
-  // full member type independently via `ComposedFeatureMembers<Features>`.
+  // The one seam where static typing gives way to dynamic composition: feature members are
+  // folded from a runtime-length array. `createTable()` reconstructs the full member type
+  // independently via `ComposedFeatureMembers<Features>` — see ADR-0003.
   return store;
 }

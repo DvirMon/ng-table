@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { composeTable } from './compose-table';
+import { CORE_MEMBER_KEYS } from './slots';
 import type { TableEngineConfig, TableFeature } from './types';
 import type { AnyTableFeature, ColumnDefInput, RowId } from '../api/types';
 
@@ -30,19 +31,25 @@ function makeRows(): Row[] {
 // rows at construction time — there is no post-construction write path anymore.
 function composeWithRows(
   rows: Row[],
-  features: readonly AnyTableFeature[]
+  features: readonly AnyTableFeature[],
+  internalFeatures: readonly AnyTableFeature[] = []
 ): Record<string, unknown> {
   const data = signal(rows);
   const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
   return TestBed.runInInjectionContext(
-    () => composeTable(config, features) as unknown as Record<string, unknown>
+    () =>
+      composeTable(config, features, internalFeatures) as unknown as Record<
+        string,
+        unknown
+      >
   );
 }
 
 function compose(
-  features: readonly AnyTableFeature[]
+  features: readonly AnyTableFeature[],
+  internalFeatures: readonly AnyTableFeature[] = []
 ): Record<string, unknown> {
-  return composeWithRows([], features);
+  return composeWithRows([], features, internalFeatures);
 }
 
 /** Records a stage transform that tags each row's name, so fold order is observable. */
@@ -129,7 +136,7 @@ describe('composeTable', () => {
   it('throws when two features claim the same pipeline stage', () => {
     expect(() =>
       compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])
-    ).toThrow(/features\[0\] and features\[1\] both provide the "sort" pipeline stage/);
+    ).toThrow(/feature 1 and feature 2 both provide the "sort" pipeline stage/);
   });
 
   it('throws when two features claim the same render stage', () => {
@@ -138,7 +145,7 @@ describe('composeTable', () => {
     });
 
     expect(() => compose([withTreeStage, withTreeStage])).toThrow(
-      /features\[0\] and features\[1\] both provide the "tree" render stage/
+      /feature 1 and feature 2 both provide the "tree" render stage/
     );
   });
 
@@ -192,7 +199,7 @@ describe('composeTable', () => {
     const withEditing: TableFeature<Row> = () => ({ members: { editing: signal(0) } });
 
     expect(() => compose([withEditing, withEditing])).toThrow(
-      /features\[0\] and features\[1\] both provide the "editing" store member/
+      /feature 1 and feature 2 both provide the "editing" store member/
     );
   });
 
@@ -252,6 +259,78 @@ describe('composeTable', () => {
 
     expect((first['rows'] as () => Row[])()).toHaveLength(2);
     expect((second['rows'] as () => Row[])()).toHaveLength(0);
+  });
+
+  describe('base store before the fold', () => {
+    it('exposes the core members to a feature at factory time', () => {
+      let renderRowIdsAtFactory: unknown;
+      let countAtFactory: unknown;
+      const withCoreReader: TableFeature<Row> = (_core, composed) => {
+        // Reading through the signals, not just checking they are functions — `trackBy` is a
+        // bare function too, so `typeof` alone would not prove these are live computeds.
+        renderRowIdsAtFactory = (
+          composed['renderRows'] as () => { id: string }[]
+        )().map((row) => row.id);
+        countAtFactory = (composed['totalRowCount'] as () => number)();
+        return {};
+      };
+
+      composeWithRows(makeRows(), [withCoreReader]);
+
+      expect(renderRowIdsAtFactory).toEqual(['r1', 'r2']);
+      expect(countAtFactory).toBe(2);
+    });
+
+    it.each(CORE_MEMBER_KEYS)(
+      'throws naming core and the feature position when a feature declares "%s"',
+      (key) => {
+        const withShadow: TableFeature<Row> = () => ({
+          members: { [key]: 'shadow' },
+        });
+
+        expect(() => compose([withShadow])).toThrow(
+          new RegExp(`core and feature 1 both provide the "${key}" store member`)
+        );
+      }
+    );
+
+    it('lets a feature override totalRowCount (ADR-0005)', () => {
+      const withVirtualCount: TableFeature<Row> = () => ({
+        members: { totalRowCount: signal(99) },
+      });
+
+      const store = composeWithRows(makeRows(), [withVirtualCount]);
+
+      expect((store['totalRowCount'] as () => number)()).toBe(99);
+    });
+
+    it('folds internal features before consumer features', () => {
+      const order: string[] = [];
+      const marking = (tag: string): TableFeature<Row> => () => {
+        order.push(tag);
+        return {};
+      };
+
+      compose([marking('consumer')], [marking('internal')]);
+
+      expect(order).toEqual(['internal', 'consumer']);
+    });
+
+    it('does not let an internal feature shift consumer positions', () => {
+      const inert: TableFeature<Row> = () => ({});
+
+      expect(() =>
+        compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')], [inert])
+      ).toThrow(/feature 1 and feature 2 both provide the "sort" pipeline stage/);
+    });
+
+    it('names an internal feature as internal in a collision', () => {
+      expect(() =>
+        compose([taggingStage('sort', '-b')], [taggingStage('sort', '-a')])
+      ).toThrow(
+        /internal feature 1 and feature 1 both provide the "sort" pipeline stage/
+      );
+    });
   });
 
   describe('onRowsRemoved (ADR-0006)', () => {

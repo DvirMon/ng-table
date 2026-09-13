@@ -64,10 +64,13 @@ export function createTable<
   // The composition runs under the owner's injection context so feature `setup` hooks
   // can create `effect()` / `resource()`, and `onDestroy` hooks reach its `DestroyRef`.
   const store = runInInjectionContext(injector, () =>
-    composeTable<TRow>({ columns, trackBy: config.trackBy, data }, [
-      wireColumnsSchemaAsync<TRow>(rules),
-      ...(config.features ?? []),
-    ])
+    composeTable<TRow>(
+      { columns, trackBy: config.trackBy, data },
+      config.features ?? [],
+      // The column-schema wiring is an internal composition step, not a consumer feature
+      // (ADR-0010) — passing it separately keeps it off the consumer's own numbering.
+      [wireColumnsSchemaAsync<TRow>(rules)]
+    )
   );
 
   // The composed member type is reconstructed statically by `ComposedFeatureMembers`,

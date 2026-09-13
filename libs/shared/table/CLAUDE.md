@@ -62,7 +62,7 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims pipeline stages, render stages, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
-| `engine/columns-schema/` | Always-spliced internal composition step (ADR-0010), not a consumer `with*()` plugin — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
+| `engine/columns-schema/` | Always-composed internal step (ADR-0010), not a consumer `with*()` plugin — `createTable()` passes it to `composeTable()`'s `internalFeatures` parameter, which folds before consumer features and labels collisions `internal feature N`, so it never shifts a consumer's own position — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 | `tools/generate-status.ts` | Regenerates `docs/status.md` from the specs' frontmatter. Run `npm run table:status` (add `-- --dry-run` to print instead of write). Deliberately outside `src/` — `tsconfig.lib.json` includes `src/**/*.ts`, so anything there ships in the published build |
@@ -207,8 +207,12 @@ Rules:
   Both editing features share one `onRowsRemoved` from `createEditingStore()`, which prunes `open`
   and `snapshots` together and keeps the `detached` exemption; `pending` is derived and never
   pruned.
-- The factory's second parameter (`composed`) is the feature-to-feature seam: earlier features'
-  members at factory time, all features' members when read later. **No feature uses it**, and the
+- The factory's second parameter (`composed`) is the store itself, and the feature-to-feature
+  seam: the core members plus earlier features' members at factory time, all features' members
+  when read later. Core members (`columns`, `rows`, `trackBy`, `value`, `renderRows`,
+  `totalRowCount`) are concrete before the fold starts, so a factory may read them. All but
+  `totalRowCount` are claimed by the engine — declaring one in `members` throws (ADR-0005 keeps
+  `totalRowCount` overridable for virtualization/pagination). **No feature uses it**, and the
   two editing features deliberately do not: they share state through `createEditingStore()`
   instead, so composition is never array-order dependent (D37/A2).
 - Export a named `*Members` interface — `ComposedFeatureMembers` reads it to type the store.
