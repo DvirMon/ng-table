@@ -5,7 +5,7 @@ import { PIPELINE_ORDER } from './pipeline';
 import { RENDER_ORDER } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
-import type { TableEngineConfig, TableFeatureSpec } from './types';
+import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
 
 interface FeatureHooks {
   readonly setup: (() => void)[];
@@ -13,9 +13,16 @@ interface FeatureHooks {
   readonly onRowsRemoved: ((ids: readonly RowId[]) => void)[];
 }
 
-/** A feature paired with the claimant label its collision messages use. */
-interface LabeledFeature {
-  readonly feature: AnyTableFeature;
+/** Engine-supplied features receive the core handle — never a consumer `Feature`. */
+export type InternalFeature<TRow> = (core: TableCore<TRow>) => TableFeatureSpec<TRow>;
+
+/**
+ * A feature paired with the claimant label its collision messages use, and a thunk that
+ * already knows which argument to call it with. Pre-binding here is what lets `foldFeatures`
+ * run one loop body for both consumer and internal features instead of branching on kind.
+ */
+interface LabeledFeature<TRow> {
+  readonly run: () => TableFeatureSpec<TRow>;
   readonly label: string;
 }
 
@@ -25,13 +32,18 @@ interface LabeledFeature {
  */
 type FoldingStore<TRow> = TableStore<TRow> & Record<string, unknown>;
 
-/** Pairs each feature with its 1-based positional label. */
-function labelFeatures(
-  features: readonly AnyTableFeature[],
-  describe: (position: number) => string
-): LabeledFeature[] {
+/**
+ * Pairs each feature with its 1-based positional label and pre-binds the argument it will be
+ * called with — `call` closes over the store for consumer features, the engine core for
+ * internal ones — so the fold loop never needs to know which kind it is running.
+ */
+function labelFeatures<TRow, TFeature>(
+  features: readonly TFeature[],
+  describe: (position: number) => string,
+  call: (feature: TFeature) => TableFeatureSpec<TRow>
+): LabeledFeature<TRow>[] {
   return features.map((feature, index) => ({
-    feature,
+    run: () => call(feature),
     label: describe(index + 1),
   }));
 }
@@ -54,24 +66,27 @@ function createBaseStore<TRow>(
     value: handle.core.value,
     renderRows: handle.renderRows,
     totalRowCount,
+    indexById: handle.core.indexById,
   };
 }
 
 /**
- * Calls every feature factory in array order, registering what each one declares. Members are
- * merged into `store` as they arrive, which is what makes the feature-to-feature seam
- * order-dependent at factory time and complete afterwards.
+ * Calls every feature's pre-bound thunk in array order, registering what each one declares.
+ * Members are merged into `store` as they arrive, which is what makes the feature-to-feature
+ * seam order-dependent at factory time and complete afterwards: `store` is one shared
+ * reference, so a feature that captures it and reads lazily (a method, a `computed()`, a
+ * stage) sees every later feature too, not just the ones folded so far.
  */
 function foldFeatures<TRow>(
-  features: readonly LabeledFeature[],
+  features: readonly LabeledFeature<TRow>[],
   store: FoldingStore<TRow>,
   handle: TableCoreHandle<TRow>,
   registry: SlotRegistry
 ): FeatureHooks {
   const hooks: FeatureHooks = { setup: [], onDestroy: [], onRowsRemoved: [] };
 
-  for (const { feature, label } of features) {
-    const spec: TableFeatureSpec<TRow> = feature(handle.core, store);
+  for (const { run, label } of features) {
+    const spec: TableFeatureSpec<TRow> = run();
 
     if (spec.stages) {
       for (const stage of PIPELINE_ORDER) {
@@ -135,7 +150,7 @@ function foldFeatures<TRow>(
 export function composeTable<TRow>(
   config: TableEngineConfig<TRow>,
   features: readonly AnyTableFeature[],
-  internalFeatures: readonly AnyTableFeature[] = []
+  internalFeatures: readonly InternalFeature<TRow>[] = []
 ): TableStore<TRow> {
   const handle = createTableCore<TRow>(config);
 
@@ -150,8 +165,19 @@ export function composeTable<TRow>(
 
   const hooks = foldFeatures(
     [
-      ...labelFeatures(internalFeatures, describeInternalFeature),
-      ...labelFeatures(features, describeFeature),
+      ...labelFeatures<TRow, InternalFeature<TRow>>(
+        internalFeatures,
+        describeInternalFeature,
+        (feature) => feature(handle.core)
+      ),
+      // `AnyTableFeature` erases `In`/`Out` to `any`, so calling it back statically resolves to
+      // `TableFeatureSpec<unknown>` — the same static/dynamic seam `create-table.ts` bridges
+      // with its own cast (ADR-0003), just met here instead of there.
+      ...labelFeatures<TRow, AnyTableFeature>(
+        features,
+        describeFeature,
+        (feature) => feature(store) as TableFeatureSpec<TRow>
+      ),
     ],
     store,
     handle,
@@ -191,7 +217,7 @@ export function composeTable<TRow>(
   }
 
   // The one seam where static typing gives way to dynamic composition: feature members are
-  // folded from a runtime-length array. `createTable()` reconstructs the full member type
-  // independently via `ComposedFeatureMembers<Features>` — see ADR-0003.
+  // folded from a runtime-length array. The cast in `create-table.ts` is the static/dynamic
+  // boundary (ADR-0003).
   return store;
 }

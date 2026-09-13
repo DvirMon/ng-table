@@ -5,9 +5,9 @@ import {
   signal,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { composeTable } from './compose-table';
+import { composeTable, type InternalFeature } from './compose-table';
 import { CORE_MEMBER_KEYS } from './slots';
-import type { TableEngineConfig, TableFeature } from './types';
+import type { TableEngineConfig } from './types';
 import type { AnyTableFeature, ColumnDefInput, RowId } from '../api/types';
 
 interface Row {
@@ -36,9 +36,13 @@ function composeWithRows(
 ): Record<string, unknown> {
   const data = signal(rows);
   const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+  // Test-only marker features (e.g. `marking()`) don't distinguish consumer vs. internal
+  // calling convention, so this cast bridges the same static/dynamic seam `composeTable()`
+  // itself crosses to call `AnyTableFeature`-typed values (ADR-0003).
+  const internal = internalFeatures as unknown as readonly InternalFeature<Row>[];
   return TestBed.runInInjectionContext(
     () =>
-      composeTable(config, features, internalFeatures) as unknown as Record<
+      composeTable(config, features, internal) as unknown as Record<
         string,
         unknown
       >
@@ -56,7 +60,7 @@ function compose(
 function taggingStage(
   stage: 'filter' | 'group' | 'sort' | 'expand',
   tag: string
-): TableFeature<Row> {
+): AnyTableFeature {
   return () => ({
     stages: {
       [stage]: (rows: Row[]) =>
@@ -86,8 +90,8 @@ describe('composeTable', () => {
   });
 
   it('merges every feature’s members onto the store', () => {
-    const withA: TableFeature<Row> = () => ({ members: { alpha: 1 } });
-    const withB: TableFeature<Row> = () => ({ members: { beta: 2 } });
+    const withA: AnyTableFeature = () => ({ members: { alpha: 1 } });
+    const withB: AnyTableFeature = () => ({ members: { beta: 2 } });
 
     const store = compose([withA, withB]);
 
@@ -121,7 +125,7 @@ describe('composeTable', () => {
   });
 
   it('lets a feature claim a render stage', () => {
-    const withDepthOne: TableFeature<Row> = () => ({
+    const withDepthOne: AnyTableFeature = () => ({
       renderStages: {
         tree: (rows) => rows.map((row) => ({ ...row, depth: 1 })),
       },
@@ -140,7 +144,7 @@ describe('composeTable', () => {
   });
 
   it('throws when two features claim the same render stage', () => {
-    const withTreeStage: TableFeature<Row> = () => ({
+    const withTreeStage: AnyTableFeature = () => ({
       renderStages: { tree: (rows) => rows },
     });
 
@@ -150,7 +154,7 @@ describe('composeTable', () => {
   });
 
   it('composes render stages in RENDER_ORDER regardless of features array order', () => {
-    const withGroupStage: TableFeature<Row> = () => ({
+    const withGroupStage: AnyTableFeature = () => ({
       renderStages: {
         group: (rows) => [
           { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
@@ -158,7 +162,7 @@ describe('composeTable', () => {
         ],
       },
     });
-    const withTreeStage: TableFeature<Row> = () => ({
+    const withTreeStage: AnyTableFeature = () => ({
       renderStages: {
         tree: (rows) => rows.map((row) => (row.data === null ? row : { ...row, depth: row.depth + 1 })),
       },
@@ -179,7 +183,7 @@ describe('composeTable', () => {
   });
 
   it('assigns a contiguous 0-based index after a chain that both inserts and drops rows', () => {
-    const withGroupAndDrop: TableFeature<Row> = () => ({
+    const withGroupAndDrop: AnyTableFeature = () => ({
       renderStages: {
         group: (rows) => [
           { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
@@ -196,7 +200,7 @@ describe('composeTable', () => {
   });
 
   it('throws when two features claim the same store member (ADR-0007)', () => {
-    const withEditing: TableFeature<Row> = () => ({ members: { editing: signal(0) } });
+    const withEditing: AnyTableFeature = () => ({ members: { editing: signal(0) } });
 
     expect(() => compose([withEditing, withEditing])).toThrow(
       /feature 1 and feature 2 both provide the "editing" store member/
@@ -205,12 +209,12 @@ describe('composeTable', () => {
 
   it('runs setup only after every feature is composed', () => {
     let seenAtInit: unknown;
-    const withLateReader: TableFeature<Row> = (_core, composed) => ({
+    const withLateReader: AnyTableFeature = (store) => ({
       setup: () => {
-        seenAtInit = composed['contributedLater'];
+        seenAtInit = store['contributedLater'];
       },
     });
-    const withLateMember: TableFeature<Row> = () => ({
+    const withLateMember: AnyTableFeature = () => ({
       members: { contributedLater: 'present' },
     });
 
@@ -221,21 +225,37 @@ describe('composeTable', () => {
 
   it('shows a feature only earlier features’ members at factory time', () => {
     let seenAtFactory: unknown = 'unset';
-    const withEarly: TableFeature<Row> = () => ({ members: { early: 'yes' } });
-    const withReader: TableFeature<Row> = (_core, composed) => {
-      seenAtFactory = { early: composed['early'], late: composed['late'] };
+    const withEarly: AnyTableFeature = () => ({ members: { early: 'yes' } });
+    const withReader: AnyTableFeature = (store) => {
+      seenAtFactory = { early: store['early'], late: store['late'] };
       return {};
     };
-    const withLate: TableFeature<Row> = () => ({ members: { late: 'yes' } });
+    const withLate: AnyTableFeature = () => ({ members: { late: 'yes' } });
 
     compose([withEarly, withReader, withLate]);
 
     expect(seenAtFactory).toEqual({ early: 'yes', late: undefined });
   });
 
+  it('lets a deferred read (inside a member function) see a later feature’s member (D25)', () => {
+    // Contrast with the factory-time case above: a *method* captures the shared store
+    // reference and is called after the whole fold completes, so it sees `late` even though
+    // `withEarlyReader` folds before `withLate` — runtime is less strict than the static type.
+    const withEarlyReader: AnyTableFeature = (store) => ({
+      members: {
+        readLateNow: () => (store as Record<string, unknown>)['late'],
+      },
+    });
+    const withLate: AnyTableFeature = () => ({ members: { late: 'yes' } });
+
+    const store = compose([withEarlyReader, withLate]);
+
+    expect((store['readLateNow'] as () => unknown)()).toBe('yes');
+  });
+
   it('runs onDestroy hooks when the owning injector is destroyed', () => {
     const destroyed: string[] = [];
-    const withTeardown: TableFeature<Row> = () => ({
+    const withTeardown: AnyTableFeature = () => ({
       onDestroy: () => destroyed.push('torn-down'),
     });
 
@@ -265,13 +285,13 @@ describe('composeTable', () => {
     it('exposes the core members to a feature at factory time', () => {
       let renderRowIdsAtFactory: unknown;
       let countAtFactory: unknown;
-      const withCoreReader: TableFeature<Row> = (_core, composed) => {
+      const withCoreReader: AnyTableFeature = (store) => {
         // Reading through the signals, not just checking they are functions — `trackBy` is a
         // bare function too, so `typeof` alone would not prove these are live computeds.
         renderRowIdsAtFactory = (
-          composed['renderRows'] as () => { id: string }[]
+          store['renderRows'] as () => { id: string }[]
         )().map((row) => row.id);
-        countAtFactory = (composed['totalRowCount'] as () => number)();
+        countAtFactory = (store['totalRowCount'] as () => number)();
         return {};
       };
 
@@ -281,10 +301,45 @@ describe('composeTable', () => {
       expect(countAtFactory).toBe(2);
     });
 
+    it('exposes indexById to a feature at factory time, mapping id to position', () => {
+      let indexAtFactory: ReadonlyMap<RowId, number> | undefined;
+      const withIndexReader: AnyTableFeature = (store) => {
+        indexAtFactory = (
+          store['indexById'] as () => ReadonlyMap<RowId, number>
+        )();
+        return {};
+      };
+
+      composeWithRows(makeRows(), [withIndexReader]);
+
+      expect(indexAtFactory).toEqual(
+        new Map([
+          ['r1', 0],
+          ['r2', 1],
+        ])
+      );
+    });
+
+    it('gives an internal feature the core handle, whose baseColumns is a live signal', () => {
+      let baseColumnsAtFactory: unknown;
+      const internalReadingCore: InternalFeature<Row> = (core) => {
+        baseColumnsAtFactory = core.baseColumns();
+        return {};
+      };
+
+      const data = signal(makeRows());
+      const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+      TestBed.runInInjectionContext(() =>
+        composeTable(config, [], [internalReadingCore])
+      );
+
+      expect(baseColumnsAtFactory).toHaveLength(2);
+    });
+
     it.each(CORE_MEMBER_KEYS)(
       'throws naming core and the feature position when a feature declares "%s"',
       (key) => {
-        const withShadow: TableFeature<Row> = () => ({
+        const withShadow: AnyTableFeature = () => ({
           members: { [key]: 'shadow' },
         });
 
@@ -295,7 +350,7 @@ describe('composeTable', () => {
     );
 
     it('lets a feature override totalRowCount (ADR-0005)', () => {
-      const withVirtualCount: TableFeature<Row> = () => ({
+      const withVirtualCount: AnyTableFeature = () => ({
         members: { totalRowCount: signal(99) },
       });
 
@@ -306,7 +361,7 @@ describe('composeTable', () => {
 
     it('folds internal features before consumer features', () => {
       const order: string[] = [];
-      const marking = (tag: string): TableFeature<Row> => () => {
+      const marking = (tag: string): AnyTableFeature => () => {
         order.push(tag);
         return {};
       };
@@ -317,7 +372,7 @@ describe('composeTable', () => {
     });
 
     it('does not let an internal feature shift consumer positions', () => {
-      const inert: TableFeature<Row> = () => ({});
+      const inert: AnyTableFeature = () => ({});
 
       expect(() =>
         compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')], [inert])
@@ -338,7 +393,7 @@ describe('composeTable', () => {
       data: ReturnType<typeof signal<Row[]>>,
       onRowsRemoved: (ids: readonly RowId[]) => void
     ): void {
-      const withReconciler: TableFeature<Row> = () => ({ onRowsRemoved });
+      const withReconciler: AnyTableFeature = () => ({ onRowsRemoved });
       const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
       TestBed.runInInjectionContext(() => composeTable(config, [withReconciler]));
     }

@@ -4,13 +4,8 @@ import {
   resolveColumnsConfig,
   wireColumnsSchemaAsync,
 } from '../engine/columns-schema';
-import type { TableFeature } from '../engine/types';
-import type {
-  ComposedFeatureMembers,
-  TableDataInput,
-  TableStore,
-  TableStoreConfig,
-} from './types';
+import type { CreateTableOverloads } from './create-table.overloads';
+import type { AnyTableFeature, TableConfig, TableDataInput, TableStore } from './types';
 
 /**
  * Creates the design system's table state layer and returns a live store **instance** —
@@ -19,39 +14,29 @@ import type {
  *
  * ```ts
  * protected readonly data  = signal(people);
- * protected readonly table = createTable(this.data, () => ({
- *   trackBy: 'id',
- *   columns,
- *   features: [withSorting<Person>()],
- * }));
+ * protected readonly table = createTable(this.data, { trackBy: 'id', columns }, withSorting());
  * ```
  *
  * Must run inside an Angular injection context (a component/directive field initializer or
- * `constructor`), unless an `injector` is passed in `options` — mirroring `form()`'s own
- * escape hatch for use outside a context (services, tests). The instance is owned by that
- * context: a component field ⇒ component-scoped, torn down with the component. There is no
- * DI token to provide or inject; consumers hold the returned instance directly.
+ * `constructor`), unless `config.injector` is passed — mirroring `form()`'s own escape hatch
+ * for use outside a context (services, tests). The instance is owned by that context: a
+ * component field ⇒ component-scoped, torn down with the component. There is no DI token to
+ * provide or inject; consumers hold the returned instance directly.
  *
- * `optsFn()` runs **once** at construction — `trackBy` / `columns` / `features` are
- * structural. Only `data` is reactive: the consumer's `WritableSignal<TRow[]>` is the single
- * source of truth, and the pipeline's `rows` `computed()` reads it directly — no internal
- * copy. Row writes go through the returned store's `value` member
- * (`table.value.update(insertRow(...))`) rather than a setter on `data` itself.
+ * `config` is structural — evaluated once, exactly like `form()`'s single `rootCompile`. Only
+ * `data` is reactive: the consumer's `WritableSignal<TRow[]>` is the single source of truth,
+ * and the pipeline's `rows` `computed()` reads it directly — no internal copy. Row writes go
+ * through the returned store's `value` member (`table.value.update(insertRow(...))`) rather
+ * than a setter on `data` itself.
  */
-export function createTable<
-  TRow,
-  const Features extends readonly TableFeature<NoInfer<TRow>, any>[]
->(
+export const createTable = (<TRow>(
   data: TableDataInput<TRow>,
-  optsFn: () => TableStoreConfig<TRow, Features>,
-  options?: { injector?: Injector }
-): TableStore<TRow> & ComposedFeatureMembers<Features> {
+  config: TableConfig<TRow>,
+  ...features: readonly AnyTableFeature[]
+): TableStore<TRow> => {
   // Resolve the context now: `inject(Injector)` requires an injection context, so this
   // asserts we're in one (or the caller supplied their own — the outside-context path).
-  const injector = options?.injector ?? inject(Injector);
-
-  // Config is structural — evaluated once, exactly like `form()`'s single `rootCompile`.
-  const config = optsFn();
+  const injector = config.injector ?? inject(Injector);
 
   // Resolves `columns` + optional `columnsSchema` (inline fn or a standalone
   // `columnSchema()` value) into the initial column list plus the flat reactive/async
@@ -66,15 +51,15 @@ export function createTable<
   const store = runInInjectionContext(injector, () =>
     composeTable<TRow>(
       { columns, trackBy: config.trackBy, data },
-      config.features ?? [],
+      features,
       // The column-schema wiring is an internal composition step, not a consumer feature
       // (ADR-0010) — passing it separately keeps it off the consumer's own numbering.
       [wireColumnsSchemaAsync<TRow>(rules)]
     )
   );
 
-  // The composed member type is reconstructed statically by `ComposedFeatureMembers`,
-  // because the engine folds a runtime-length feature array. This assertion is the
-  // boundary between the two — see ADR-0003.
-  return store as TableStore<TRow> & ComposedFeatureMembers<Features>;
-}
+  return store;
+  // The trailing assertion is the static/dynamic boundary (ADR-0003): the engine folds a
+  // runtime-length feature array, while `CreateTableOverloads`'s per-arity signatures
+  // reconstruct the composed member type statically.
+}) as CreateTableOverloads;

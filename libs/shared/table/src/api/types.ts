@@ -1,6 +1,6 @@
-import type { Signal, WritableSignal } from '@angular/core';
+import type { Injector, Signal, WritableSignal } from '@angular/core';
 import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from '../schema/column-schema.types';
-import type { TableFeature } from '../engine/types';
+import type { Feature } from '../engine/types';
 import type { WritableView } from '../engine/writable-view';
 
 export type RowId = string | number;
@@ -110,48 +110,26 @@ export interface GroupSummary<TRow> {
   readonly rows: readonly TRow[];
 }
 
-// Opaque handle for a `createTable()` feature (`withSorting()`, `withGrouping()`, etc.) —
-// consumers never construct this by hand, it's the return type of the feature functions
-// the design system exports.
-//
-// Consequence: consumers must repeat `<TRow>` on every feature call
-// (`withExpansion<Department>()`), since a feature is called before it receives the store,
-// so its call site has no argument to infer from. See ADR-0003 and
-// `docs/1-state/architecture.md`, "Rejected: inferring TRow into with-*() calls", for why an
-// alternative isn't used.
-export type AnyTableFeature = TableFeature<any, any>;
+export type DerivedDict = Record<string, Signal<unknown>>;
 
-export interface TableStoreConfig<
-  TRow,
-  Features extends readonly TableFeature<NoInfer<TRow>, any>[] = []
-> {
+/** D28: the derive block's parameter — every WritableView loses `.update`; everything else
+ * passes through. Mutating methods are statically indistinguishable from queries and stay.
+ * The `any` below is an `infer` slot, not a constraint slot — it does not widen the result. */
+export type ReadonlyStore<S> = {
+  readonly [K in keyof S]: S[K] extends WritableView<infer T, any> ? Signal<T> : S[K];
+};
+
+export interface TableConfig<TRow> {
   trackBy: TrackByConfig<TRow>;
   columns: ColumnDefInput<TRow>[];
   columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;
-  features?: Features;
+  injector?: Injector;
 }
 
-// Distributes a union of feature outputs into an intersection, so composing N features
-// surfaces the union of everything each one contributes as a single flat type. Computed
-// independently of the runtime fold, because `createTable()` folds a dynamic-length
-// `features` array rather than passing them positionally.
-type UnionToIntersection<Union> = (
-  Union extends unknown ? (member: Union) => void : never
-) extends (member: infer Intersection) => void
-  ? Intersection
-  : never;
-
-// `members` is optional on `TableFeatureSpec`, so it must be inferred through an optional
-// property and un-widened — a feature contributing none (e.g. one that only wires an
-// `setup`) yields `object`, which is inert inside the intersection below.
-type FeatureMembers<Feature> = Feature extends (...args: any[]) => infer Spec
-  ? Spec extends { members?: infer Members }
-    ? NonNullable<Members>
-    : object
-  : never;
-
-export type ComposedFeatureMembers<Features extends readonly AnyTableFeature[]> =
-  UnionToIntersection<FeatureMembers<Features[number]>>;
+// The erased element type the engine folds at runtime — a dynamic-length list, not a
+// per-position generic. Consumers never name this: `createTable()`'s per-arity overloads
+// (Step 2) type each feature argument's `In`/`Out` individually.
+export type AnyTableFeature = Feature<any, any>;
 
 /**
  * Public surface of a store returned by `createTable()`. This is the contract consumers
@@ -180,6 +158,10 @@ export interface TableStore<TRow> {
   readonly rows: Signal<TRow[]>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly trackBy: TrackByFn<TRow>;
+
+  /** Maps a row's trackBy id to its position in `data()`; read-only. Feeds `RowUpdater` ctx
+   * and editing features (D25). */
+  readonly indexById: Signal<ReadonlyMap<RowId, number>>;
 
   // Total row count feeding `aria-rowcount` on `ngpTable` (ADR-0005) — distinct from
   // `renderRows().length` once virtualization/pagination renders fewer rows than exist.

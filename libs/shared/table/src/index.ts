@@ -3,7 +3,6 @@
 // here is internal (mirrors Angular Signal Forms' `public_api.ts`).
 export * from './api/create-table';
 export * from './api/types';
-export * from './api/table-schema';
 export * from './directives/table.tokens';
 export * from './directives/ngp-table.directive';
 export * from './directives/ngp-table-row.directive';

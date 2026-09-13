@@ -23,9 +23,9 @@ export interface TableEngineConfig<TRow> {
 }
 
 /**
- * The slice of the store every feature can read, handed to feature factories as their
- * first argument. Fixed and feature-independent — a feature that needs *another
- * feature's* members reads the second argument instead.
+ * The engine handle internal features receive — no longer handed to consumer feature
+ * factories, which instead receive the accumulating store typed as `Feature<In, Out>`'s
+ * `In`. Currently held only by the internally-spliced column-schema wiring (D25, ADR-0010).
  *
  * `rows` is the pipeline output, safe to close over during composition: it is a lazy
  * `computed` that reads the stage registry at evaluation time, and the registry is
@@ -48,9 +48,9 @@ export interface TableCore<TRow> {
    * `computed()` sees the complete stage registry. */
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly trackBy: TrackByFn<TRow>;
-  /** Maps a row's trackBy id to its position in `data()`. Engine-internal only: not exposed on
-   * `TableStore`. Feeds the removal-reconciliation effect (ADR-0006) so it can diff ids without
-   * recomputing them a second time. */
+  /** Maps a row's trackBy id to its position in `data()`. Also exposed publicly on
+   * `TableStore` (D25). Feeds the removal-reconciliation effect (ADR-0006) so it can diff
+   * ids without recomputing them a second time. */
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
   /** Read: the consumer's own row data — the table never copies it. Write:
    * `.update(updater)` writes through to that same signal, resolving `trackBy` internally
@@ -63,7 +63,7 @@ export interface TableCore<TRow> {
  * return type is the whole contract, so a stage or render-row override can't be injected
  * by convention alone.
  */
-export interface TableFeatureSpec<TRow, Members extends object = object> {
+export interface TableFeatureSpec<TRow, Members extends object = {}> {
   /** Signals and methods merged onto the public store. */
   members?: Members;
 
@@ -99,13 +99,12 @@ export interface TableFeatureSpec<TRow, Members extends object = object> {
   onRowsRemoved?: (ids: readonly RowId[]) => void;
 }
 
-/**
- * A composed feature. `composed` is the feature-to-feature seam: a stable reference to
- * the accumulating member object. Read at factory time it holds only earlier features
- * (so `features` array order matters); read later — inside a method or computed — it
- * holds everything. Untyped by design; a feature author narrows it themselves.
- */
-export type TableFeature<TRow, Members extends object = object> = (
-  core: TableCore<TRow>,
-  composed: Record<string, unknown>
-) => TableFeatureSpec<TRow, Members>;
+// `unknown`, not `any`: Signal<TRow[]> is assignable to Signal<readonly unknown[]> and RowOf
+// still infers through it (review finding 9).
+export type Shape = { rows: Signal<readonly unknown[]> };
+export type RowOf<S> = S extends { rows: Signal<readonly (infer R)[]> } ? R : never;
+
+/** A composable feature: a function of the store built so far. Row type recovered as `RowOf<In>`. */
+export interface Feature<In extends Shape, Out extends object> {
+  (input: In): TableFeatureSpec<RowOf<In>, Out>;
+}

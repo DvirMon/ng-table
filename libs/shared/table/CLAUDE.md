@@ -42,7 +42,7 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
-| `api/table-schema.ts` | `createTableSchema()` — the config builder |
+| `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 per-arity call signatures typing `createTable()`. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
 | `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withOptimistic()`, `withRowEdit()`. One file each |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `detached`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, so neither reads the other's signal and composition never depends on `features` order (D37/A2) |
 | `schema/column-schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
@@ -60,11 +60,12 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `engine/columns.ts` | Pure `ColumnDef[] → ColumnDef[]` transforms. No signals, no Angular |
 | `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` — the always-run `RenderRow[]` seed a render stage chain starts from (ADR-0011) |
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims pipeline stages, render stages, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
-| `engine/types.ts` | `TableCore`, `TableFeatureSpec`, `TableFeature`, `TableEngineConfig` — the feature contract |
+| `engine/types.ts` | `Feature<In, Out>`, `Shape`, `RowOf`, `TableCore`, `TableFeatureSpec`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
 | `engine/columns-schema/` | Always-composed internal step (ADR-0010), not a consumer `with*()` plugin — `createTable()` passes it to `composeTable()`'s `internalFeatures` parameter, which folds before consumer features and labels collisions `internal feature N`, so it never shifts a consumer's own position — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
+| `tools/generate-overloads.ts` | Regenerates the two `*.overloads.ts` files (arity 15). `npm run table:overloads`; `npm run table:overloads:check` fails on drift |
 | `tools/generate-status.ts` | Regenerates `docs/status.md` from the specs' frontmatter. Run `npm run table:status` (add `-- --dry-run` to print instead of write). Deliberately outside `src/` — `tsconfig.lib.json` includes `src/**/*.ts`, so anything there ships in the published build |
 
 Naming: the folder supplies the domain, so files inside drop the `table.` prefix
@@ -161,11 +162,13 @@ Reading a spec that mentions these does NOT mean they work; check `api/types.ts`
 ## Feature plugin pattern (`api/features/with-*.ts`)
 
 All feature plugins follow the same shape: a config-taking outer function returning a factory
-that receives the core store and **declares** what it contributes.
+that receives the accumulating store and **declares** what it contributes. The factory's own
+parameter type is what fixes `In`; the row type is recovered from it as `RowOf<In>`, never
+written at the call site.
 
 ```ts
-export function withFeature<TRow = unknown>(config: FeatureConfig = {}) {
-  return createTableFeature<TRow, FeatureMembers>((core) => {
+export function withFeature<In extends Shape>(config: FeatureConfig = {}) {
+  return createTableFeature((store: In) => {
     // The feature owns its own signals — no engine-managed state, no patchState.
     const someState = signal(initial);
 
@@ -179,12 +182,19 @@ export function withFeature<TRow = unknown>(config: FeatureConfig = {}) {
 }
 ```
 
-`createTableFeature` (exported from `index.ts`) is the public authoring entry point — a pure
-identity function that infers `core: TableCore<TRow>` and the return type from `Members`, so a
-consumer authoring a custom feature never needs to name `TableCore`/`TableFeatureSpec`
-directly. Internal `with-*()` files may still annotate with `TableCore`/`TableFeatureSpec`
-from `engine/types.ts` directly (as `withExpansion` does) since engine/ is already in scope —
-`createTableFeature` exists for code outside this package.
+`createTableFeature` (exported from `index.ts`) is the public authoring entry point. Two call
+forms: `createTableFeature(factory)` is the identity, inferring `In`/`Out` from `factory`'s own
+signature; `createTableFeature(factory, derive)` additionally plumbs a trailing derive block —
+the block is called with `In & Out` and its members merge into the returned `Feature<In, Out &
+D>`. A block declaring `stages`/`renderStages`/`columnRules`, or a member key the feature
+already declared, throws at construction.
+
+**Migration in flight (#69 landed, #72–#74 pending):** a consumer feature is now
+`Feature<In, Out>` — one argument, the accumulating store, with the row type recovered as
+`RowOf<In>`. The shipped `with-*()` files still name `TableCore`/`TableFeatureSpec` and the
+retired two-argument `(core, composed)` convention; they are converted in #72–#74. Until then
+`src/stories/**`, `table.mock.ts` and the feature specs do not compile — that window is
+expected, green is promised at the integrate issue.
 
 Rules:
 - Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
@@ -207,27 +217,31 @@ Rules:
   Both editing features share one `onRowsRemoved` from `createEditingStore()`, which prunes `open`
   and `snapshots` together and keeps the `detached` exemption; `pending` is derived and never
   pruned.
-- The factory's second parameter (`composed`) is the store itself, and the feature-to-feature
-  seam: the core members plus earlier features' members at factory time, all features' members
-  when read later. Core members (`columns`, `rows`, `trackBy`, `value`, `renderRows`,
-  `totalRowCount`) are concrete before the fold starts, so a factory may read them. All but
-  `totalRowCount` are claimed by the engine — declaring one in `members` throws (ADR-0005 keeps
-  `totalRowCount` overridable for virtualization/pagination). **No feature uses it**, and the
-  two editing features deliberately do not: they share state through `createEditingStore()`
-  instead, so composition is never array-order dependent (D37/A2).
-- Export a named `*Members` interface — `ComposedFeatureMembers` reads it to type the store.
+- The factory's single parameter is the store itself, and the feature-to-feature seam: the core
+  members plus earlier features' members at factory time, all features' members when read later
+  (the store is one shared reference, so a deferred read sees every later feature). Core members
+  (`columns`, `rows`, `trackBy`, `value`, `renderRows`, `indexById`, `totalRowCount`) are
+  concrete before the fold starts, so a factory may read them. All but `totalRowCount` are
+  claimed by the engine — declaring one in `members` throws (ADR-0005 keeps `totalRowCount`
+  overridable for virtualization/pagination). The two editing features deliberately share state
+  through `createEditingStore()` instead of reading each other, so composition is never
+  argument-order dependent (D37/A2).
+- Argument order governs *type-level* visibility: slot N is typed against the base store plus
+  every preceding slot's contribution, so reading a later feature's member is a compile error
+  even though the runtime store would have it (D25 — types are stricter than runtime).
+- Internal features (the column-schema wiring) are not consumer `Feature`s: they keep receiving
+  the engine handle `TableCore<TRow>`, which is the only way to reach `baseColumns` (ADR-0010).
 
-Plugins compose via the `features` array in `createTable()`'s config, not chained calls:
+Plugins compose as trailing positional arguments to `createTable()`, not chained calls and not
+a `features` array. No feature call needs an explicit row type — it is inferred from `data`:
 
 ```ts
-createTable(data, () => ({
-  trackBy: 'id',
-  columns,
-  features: [withSorting<Person>(), withExpansion<Person>()],
-}));
+createTable(data, { trackBy: 'id', columns }, withSorting(), withExpansion());
 ```
 
-Array order does NOT set execution order — pipeline order is fixed (filter → group → sort → expand) regardless of `features` order. Do NOT use `.pipe()` chaining or a builder pattern.
+Argument order does NOT set execution order — pipeline order is fixed (filter → group → sort →
+expand) regardless of it. Do NOT use `.pipe()` chaining or a builder pattern. The type-level cap
+is 15 features (a 16th argument matches no overload); the runtime accepts any number.
 
 ## Testing
 

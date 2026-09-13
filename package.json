@@ -13,6 +13,8 @@
     "table:sb": "npx nx run shared-table:storybook",
     "table:build-storybook": "npx nx run shared-table:build-storybook",
     "table:status": "node --experimental-strip-types libs/shared/table/tools/generate-status.ts",
+    "table:overloads": "node --experimental-strip-types libs/shared/table/tools/generate-overloads.ts",
+    "table:overloads:check": "node --experimental-strip-types libs/shared/table/tools/generate-overloads.ts --check",
     "test:design-system": "npx nx test shared-design-system",
     "proto:value-sync": "node --experimental-strip-types libs/shared/design-system/src/ui/autocomplete/prototype-value-sync/tui.ts"
   },

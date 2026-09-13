@@ -25,6 +25,7 @@ export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
   'trackBy',
   'value',
   'renderRows',
+  'indexById',
 ]);
 
 /** The owner name core members are registered under, for collision messages. */
