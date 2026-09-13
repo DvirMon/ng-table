@@ -1,4 +1,4 @@
-import { signal, type WritableSignal } from '@angular/core';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
 import { createFilters } from '../create-filters';
@@ -7,7 +7,7 @@ import { equals } from '../filters/rules';
 import { selectAllIds } from './selection.utils';
 import { withFiltering } from './with-filtering';
 import { withSelection } from './with-selection';
-import type { AnyTableFeature, ColumnDef, TableStore } from '../types';
+import type { ColumnDef, TableStore } from '../types';
 import type { Filters, FiltersPath } from '../filters.types';
 
 function makeColumns(): ColumnDef<MockRow>[] {
@@ -24,32 +24,12 @@ function buildFilters(schema: (path: FiltersPath<MockRow>) => void): Filters<Moc
   return TestBed.runInInjectionContext(() => createFilters<MockRow>(schema));
 }
 
-/**
- * `withFiltering()` (#72 pending) still takes the internal `TableCore<TRow>` engine handle
- * rather than the `Feature<In, Out>` shape `createTable`'s per-arity overloads expect — unlike
- * `withSorting()`, it doesn't structurally satisfy a slot (it needs `baseColumns`, which
- * `TableStore` doesn't have). This variadic view is the same static/dynamic seam
- * `compose-features.spec.ts` bridges for the same reason: cast once at the call boundary
- * instead of casting every feature value.
- */
-type CreateTableVariadic = (
-  data: WritableSignal<MockRow[]>,
-  config: { trackBy: typeof mockTrackBy; columns: ColumnDef<MockRow>[] },
-  ...features: AnyTableFeature[]
-) => TableStore<MockRow>;
-
 function makeFilteredStore(filters: Filters<MockRow>): TableStore<MockRow> {
-  // The cast to `AnyTableFeature` (not just the call's own return type) is required: compared
-  // structurally against `Feature<any, any>`, `withFiltering`'s `TableCore`-shaped stages make
-  // `RowOf<any>` resolve to `unknown` rather than `any`, which then rejects the concrete
-  // `MockRow` in `RowTransform<MockRow>` — an artifact of #72 not having landed, not something
-  // this test can fix.
-  const filtering = withFiltering<MockRow>({ filters }) as unknown as AnyTableFeature; // #72 strips the type argument
-  return TestBed.runInInjectionContext(() =>
-    (createTable as unknown as CreateTableVariadic)(
+  return inContext(() =>
+    createTable(
       signal<MockRow[]>(mockRows),
       { trackBy: mockTrackBy, columns: makeColumns() },
-      filtering
+      withFiltering({ filters })
     )
   );
 }

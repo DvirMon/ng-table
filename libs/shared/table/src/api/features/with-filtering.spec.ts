@@ -1,10 +1,12 @@
-import { signal } from '@angular/core';
+import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { expectTypeOf } from 'vitest';
 import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
 import { anyOf, contains, equals, filter } from '../filters/rules';
+import { withComputed } from './with-computed';
 import { withFiltering } from './with-filtering';
-import type { AnyTableFeature, ColumnDef, TableStoreConfig } from '../types';
+import type { ColumnDef, TableStore } from '../types';
 import type { Filters, FiltersPath } from '../filters.types';
 
 interface Row {
@@ -12,6 +14,11 @@ interface Row {
   name: string;
   status: string;
   category: string;
+}
+
+interface OtherRow {
+  id: string;
+  label: string;
 }
 
 function makeColumns(): ColumnDef<Row>[] {
@@ -38,25 +45,24 @@ function buildFilters(schema: (path: FiltersPath<Row>) => void): Filters<Row> {
   return TestBed.runInInjectionContext(() => createFilters<Row>(schema));
 }
 
-// Mirrors with-sorting.spec.ts's makeStore: rows are seeded at construction via the `data`
-// signal — pass `rows` for tests that need them, omit for state-only tests.
-function makeStore<const F extends readonly AnyTableFeature[]>(
-  cfg: () => TableStoreConfig<Row, F>,
-  rows: Row[] = []
-) {
-  return TestBed.runInInjectionContext(() => createTable(signal<Row[]>(rows), cfg));
+function buildOtherFilters(schema: (path: FiltersPath<OtherRow>) => void): Filters<OtherRow> {
+  return TestBed.runInInjectionContext(() => createFilters<OtherRow>(schema));
+}
+
+/** Runs a `createTable()` build inside an Angular injection context. */
+function inContext<T>(build: () => T): T {
+  return TestBed.runInInjectionContext(build);
 }
 
 describe('withFiltering', () => {
-  it('composes into createTable(), TRow inferred from the enclosing config', () => {
+  it('composes into createTable(), Row inferred from the data slot', () => {
     const filters = buildFilters((path) => equals(path.status));
-    const store = makeStore(
-      () => ({
-        trackBy: 'id',
-        columns: makeColumns(),
-        features: [withFiltering({ filters })],
-      }),
-      makeRows()
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ filters })
+      )
     );
 
     expect(store.rows()).toHaveLength(3);
@@ -64,13 +70,12 @@ describe('withFiltering', () => {
 
   it('narrows rows() to those matching an active filter', () => {
     const filters = buildFilters((path) => equals(path.status));
-    const store = makeStore(
-      () => ({
-        trackBy: 'id',
-        columns: makeColumns(),
-        features: [withFiltering({ filters })],
-      }),
-      makeRows()
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ filters })
+      )
     );
 
     filters['status']().value.set('open');
@@ -83,13 +88,12 @@ describe('withFiltering', () => {
       equals(path.status);
       equals(path.category);
     });
-    const store = makeStore(
-      () => ({
-        trackBy: 'id',
-        columns: makeColumns(),
-        features: [withFiltering({ filters })],
-      }),
-      makeRows()
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ filters })
+      )
     );
 
     filters['status']().value.set('open');
@@ -105,13 +109,12 @@ describe('withFiltering', () => {
         contains(p.category);
       });
     });
-    const store = makeStore(
-      () => ({
-        trackBy: 'id',
-        columns: makeColumns(),
-        features: [withFiltering({ filters })],
-      }),
-      makeRows()
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ filters })
+      )
     );
 
     filters['search']().value.set('b');
@@ -124,13 +127,12 @@ describe('withFiltering', () => {
       equals(path.status);
       equals(path.category);
     });
-    const store = makeStore(
-      () => ({
-        trackBy: 'id',
-        columns: makeColumns(),
-        features: [withFiltering({ filters })],
-      }),
-      makeRows()
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ filters })
+      )
     );
 
     expect(store.rows()).toHaveLength(3);
@@ -138,11 +140,13 @@ describe('withFiltering', () => {
 
   it('contributes no members beyond the core store surface', () => {
     const filters = buildFilters((path) => equals(path.status));
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withFiltering({ filters })],
-    }));
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>([]),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ filters })
+      )
+    );
 
     expect('filters' in store).toBe(false);
     expect('setColumnFilter' in store).toBe(false);
@@ -152,13 +156,12 @@ describe('withFiltering', () => {
     it('skips the client-side filter stage while filters() state keeps updating', () => {
       const filters = buildFilters((path) => equals(path.status));
       const rawRows = makeRows();
-      const store = makeStore(
-        () => ({
-          trackBy: 'id',
-          columns: makeColumns(),
-          features: [withFiltering({ filters, manual: true })],
-        }),
-        rawRows
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(rawRows),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ filters, manual: true })
+        )
       );
 
       filters['status']().value.set('open');
@@ -184,13 +187,12 @@ describe('withFiltering', () => {
           equals(path.category);
         });
 
-        const store = makeStore(
-          () => ({
-            trackBy: 'id',
-            columns: makeColumns(),
-            features: [withFiltering({ filters })],
-          }),
-          makeRows()
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            { trackBy: 'id', columns: makeColumns() },
+            withFiltering({ filters })
+          )
         );
 
         filters['status']().value.set('open'); // activates the throwing filter
@@ -203,6 +205,82 @@ describe('withFiltering', () => {
       } finally {
         reportSpy.mockRestore();
       }
+    });
+  });
+
+  it('the trailing block sees post-filter rows: visibleCount reflects the narrowed set', () => {
+    const filters = buildFilters((path) => equals(path.status));
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering(
+          { filters },
+          withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
+        )
+      )
+    );
+
+    filters['status']().value.set('open');
+    expect(store.visibleCount()).toBe(2);
+
+    filters['status']().reset();
+    expect(store.visibleCount()).toBe(3);
+  });
+
+  // -------------------------------------------------------------------------------------
+  // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf`/
+  // `@ts-expect-error` — they are inert at runtime. These are only enforced by
+  // `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`, which is the verification step
+  // for this describe block.
+  // -------------------------------------------------------------------------------------
+  describe('types', () => {
+    it('withFiltering({ filters }) alone contributes {} — recovered exactly as TableStore<Row>, never widened to any', () => {
+      const filters = buildFilters((path) => equals(path.status));
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ filters })
+        )
+      );
+
+      expectTypeOf(store).toEqualTypeOf<TableStore<Row>>();
+      expectTypeOf(store).not.toBeAny();
+    });
+
+    // `Filters<TRow, TState>` (filters.types.ts) never references `TRow` in its body, so
+    // `Filters<Row>` and `Filters<OtherRow>` are the same type once `TState` defaults match.
+    // `WithFilteringConfig.filters` therefore carries no compile-time row correlation.
+    it('filters: TRow is phantom — a Filters<OtherRow> is not rejected', () => {
+      const otherFilters = buildOtherFilters((path) => equals(path.label));
+
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ filters: otherFilters })
+        )
+      );
+
+      expectTypeOf(store).toEqualTypeOf<TableStore<Row>>();
+    });
+
+    it('trailing block: withComputed adds visibleCount, keyof store is TableStore<Row> | "visibleCount"', () => {
+      const filters = buildFilters((path) => equals(path.status));
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering(
+            { filters },
+            withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
+          )
+        )
+      );
+
+      expectTypeOf(store.visibleCount).toEqualTypeOf<Signal<number>>();
+      expectTypeOf<keyof typeof store>().toEqualTypeOf<keyof TableStore<Row> | 'visibleCount'>();
     });
   });
 });

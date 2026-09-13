@@ -1,14 +1,11 @@
-import { signal } from '@angular/core';
+import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { expectTypeOf } from 'vitest';
 import { applySortNulls } from '../../schema/column-rules';
 import { createTable } from '../create-table';
-import { withSorting } from './with-sorting';
-import type {
-  AnyTableFeature,
-  ColumnDef,
-  SortRule,
-  TableStoreConfig,
-} from '../types';
+import { withComputed } from './with-computed';
+import { withSorting, type SortingMembers } from './with-sorting';
+import type { ColumnDef, SortRule, TableStore } from '../types';
 
 interface Row {
   id: string;
@@ -65,33 +62,25 @@ function makeRows(): Row[] {
   ];
 }
 
-// Builds a live store instance inside an injection context, generic over the feature tuple
-// so `store.sorting()` / `toggleSort()` stay fully typed. Rows are seeded at construction via
-// the `data` signal — pass `rows` for tests that need them, omit for column/state-only tests.
-function makeStore<const F extends readonly AnyTableFeature[]>(
-  cfg: () => TableStoreConfig<Row, F>,
-  rows: Row[] = []
-) {
-  return TestBed.runInInjectionContext(() => createTable(signal<Row[]>(rows), cfg));
+/** Runs `build` inside an Angular injection context — `createTable()` requires one unless
+ *  `config.injector` is passed. */
+function inContext<T>(build: () => T): T {
+  return TestBed.runInInjectionContext(build);
 }
 
 describe('withSorting', () => {
   it('exposes an empty sorting array by default', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }));
+    const store = inContext(() =>
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+    );
 
     expect(store.sorting()).toEqual([]);
   });
 
   it('toggleSort() cycles a column ascending -> descending -> unsorted', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }));
+    const store = inContext(() =>
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+    );
 
     store.toggleSort('name');
     expect(store.sorting()).toEqual([{ columnId: 'name', direction: 'asc' }]);
@@ -104,11 +93,9 @@ describe('withSorting', () => {
   });
 
   it('toggleSort() replaces the sort when a different column is clicked (default: single-column)', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }));
+    const store = inContext(() =>
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+    );
 
     store.toggleSort('status');
     expect(store.sorting()).toEqual([{ columnId: 'status', direction: 'asc' }]);
@@ -125,11 +112,13 @@ describe('withSorting', () => {
   });
 
   it('is additive across columns with multi: true, preserving click-order priority', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>({ multi: true })],
-    }));
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>([]),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting({ multi: true })
+      )
+    );
 
     store.toggleSort('status');
     store.toggleSort('name');
@@ -149,11 +138,13 @@ describe('withSorting', () => {
   });
 
   it('enableSorting: false makes toggleSort() a no-op for that column', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns({ status: { enableSorting: false } }),
-      features: [withSorting<Row>()],
-    }));
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>([]),
+        { trackBy: 'id', columns: makeColumns({ status: { enableSorting: false } }) },
+        withSorting()
+      )
+    );
 
     store.toggleSort('status');
 
@@ -161,11 +152,13 @@ describe('withSorting', () => {
   });
 
   it('sortDirections() derives a columnId -> direction lookup from sorting()', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>({ multi: true })],
-    }));
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>([]),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting({ multi: true })
+      )
+    );
 
     expect(store.sortDirections()).toEqual(new Map());
 
@@ -184,11 +177,9 @@ describe('withSorting', () => {
   });
 
   it('setSorting() and clearSorting() drive state programmatically', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }));
+    const store = inContext(() =>
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+    );
 
     const rules: SortRule[] = [{ columnId: 'age', direction: 'desc' }];
     store.setSorting(rules);
@@ -199,13 +190,18 @@ describe('withSorting', () => {
   });
 
   it('sorts rendered rows using a custom sortFn when supplied', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns({
-        name: { sortFn: (a, b) => b.name.localeCompare(a.name) }, // reversed
-      }),
-      features: [withSorting<Row>()],
-    }), makeRows());
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        {
+          trackBy: 'id',
+          columns: makeColumns({
+            name: { sortFn: (a, b) => b.name.localeCompare(a.name) }, // reversed
+          }),
+        },
+        withSorting()
+      )
+    );
 
     store.toggleSort('name');
 
@@ -217,11 +213,13 @@ describe('withSorting', () => {
   });
 
   it('falls back to numeric comparison for number columns', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }), makeRows());
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting()
+      )
+    );
 
     store.toggleSort('age');
 
@@ -229,11 +227,13 @@ describe('withSorting', () => {
   });
 
   it('falls back to Date comparison for Date columns', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }), makeRows());
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting()
+      )
+    );
 
     store.toggleSort('joined');
 
@@ -241,11 +241,13 @@ describe('withSorting', () => {
   });
 
   it('falls back to locale string comparison for string columns', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }), makeRows());
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting()
+      )
+    );
 
     store.toggleSort('name');
 
@@ -257,11 +259,13 @@ describe('withSorting', () => {
   });
 
   it('applies multi-column priority order to rendered rows with multi: true', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>({ multi: true })],
-    }), makeRows());
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting({ multi: true })
+      )
+    );
 
     // status asc (active, active, inactive) then name asc within status
     store.toggleSort('status');
@@ -271,11 +275,13 @@ describe('withSorting', () => {
   });
 
   it('replaces the rendered sort with the default single-column behavior', () => {
-    const store = makeStore(() => ({
-      trackBy: 'id',
-      columns: makeColumns(),
-      features: [withSorting<Row>()],
-    }), makeRows());
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting()
+      )
+    );
 
     // status asc would be (active, active, inactive), but clicking name
     // afterward replaces the sort entirely rather than adding a tie-break.
@@ -292,11 +298,13 @@ describe('withSorting', () => {
   describe('manual mode', () => {
     it('updates sorting and fires sortChanged but skips client-side sort processing', () => {
       const rawRows = makeRows();
-      const store = makeStore(() => ({
-        trackBy: 'id',
-        columns: makeColumns(),
-        features: [withSorting<Row>({ manual: true })],
-      }), rawRows);
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(rawRows),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting({ manual: true })
+        )
+      );
 
       const emitted: SortRule[][] = [];
       store.sortChanged.subscribe((rules) => emitted.push(rules));
@@ -326,24 +334,18 @@ describe('withSorting', () => {
       ];
     }
 
-    function makeNullableStore<const F extends readonly AnyTableFeature[]>(
-      cfg: () => TableStoreConfig<NullableRow, F>,
-      rows: NullableRow[]
-    ) {
-      return TestBed.runInInjectionContext(() =>
-        createTable(signal<NullableRow[]>(rows), cfg)
-      );
-    }
-
     it('sorts a nullable Date column without throwing', () => {
       const rows: NullableRow[] = [
         { id: 'r1', age: 1, joined: new Date('2024-01-01'), note: 'a' },
         { id: 'r2', age: 2, joined: null, note: 'b' },
         { id: 'r3', age: 3, joined: new Date('2022-01-01'), note: 'c' },
       ];
-      const store = makeNullableStore(
-        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
-        rows
+      const store = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          { trackBy: 'id', columns: makeNullableColumns() },
+          withSorting()
+        )
       );
 
       expect(() => store.toggleSort('joined')).not.toThrow();
@@ -356,9 +358,12 @@ describe('withSorting', () => {
         { id: 'r2', age: undefined, joined: null, note: 'b' },
         { id: 'r3', age: 3, joined: null, note: 'c' },
       ];
-      const store = makeNullableStore(
-        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
-        rows
+      const store = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          { trackBy: 'id', columns: makeNullableColumns() },
+          withSorting()
+        )
       );
 
       store.toggleSort('age'); // asc
@@ -374,9 +379,12 @@ describe('withSorting', () => {
         { id: 'r2', age: undefined, joined: null, note: 'b' },
         { id: 'r3', age: 1, joined: null, note: 'c' },
       ];
-      const store = makeNullableStore(
-        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
-        rows
+      const store = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          { trackBy: 'id', columns: makeNullableColumns() },
+          withSorting()
+        )
       );
 
       store.toggleSort('age');
@@ -389,9 +397,12 @@ describe('withSorting', () => {
         { id: 'r2', age: 2, joined: null, note: null },
         { id: 'r3', age: 3, joined: null, note: 'apple' },
       ];
-      const store = makeNullableStore(
-        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
-        rows
+      const store = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          { trackBy: 'id', columns: makeNullableColumns() },
+          withSorting()
+        )
       );
 
       store.toggleSort('note');
@@ -405,24 +416,29 @@ describe('withSorting', () => {
         { id: 'r3', age: 3, joined: null, note: 'apple' },
       ];
 
-      const defaultStore = makeNullableStore(
-        () => ({ trackBy: 'id', columns: makeNullableColumns(), features: [withSorting<NullableRow>()] }),
-        rows
+      const defaultStore = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          { trackBy: 'id', columns: makeNullableColumns() },
+          withSorting()
+        )
       );
       defaultStore.toggleSort('note');
       // '' sorts before 'apple' and 'banana' as a normal string.
       expect(defaultStore.rows().map((row) => row.id)).toEqual(['r2', 'r3', 'r1']);
 
-      const optedInStore = makeNullableStore(
-        () => ({
-          trackBy: 'id',
-          columns: makeNullableColumns(),
-          columnsSchema: (path) => {
-            applySortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
+      const optedInStore = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          {
+            trackBy: 'id',
+            columns: makeNullableColumns(),
+            columnsSchema: (path) => {
+              applySortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
+            },
           },
-          features: [withSorting<NullableRow>()],
-        }),
-        rows
+          withSorting()
+        )
       );
       TestBed.tick();
       optedInStore.toggleSort('note');
@@ -435,23 +451,25 @@ describe('withSorting', () => {
         { id: 'r2', age: undefined, joined: null, note: 'b' },
         { id: 'r3', age: 1, joined: null, note: 'c' },
       ];
-      const store = makeNullableStore(
-        () => ({
-          trackBy: 'id',
-          columns: [
-            {
-              id: 'age',
-              accessor: (row) => row.age,
-              visible: true,
-              order: 0,
-              label: 'age',
-              sortFn: (a, b) => (a.age as number) - (b.age as number),
-            },
-            ...makeNullableColumns().slice(1),
-          ],
-          features: [withSorting<NullableRow>()],
-        }),
-        rows
+      const store = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          {
+            trackBy: 'id',
+            columns: [
+              {
+                id: 'age',
+                accessor: (row) => row.age,
+                visible: true,
+                order: 0,
+                label: 'age',
+                sortFn: (a, b) => (a.age as number) - (b.age as number),
+              },
+              ...makeNullableColumns().slice(1),
+            ],
+          },
+          withSorting()
+        )
       );
 
       expect(() => store.toggleSort('age')).not.toThrow();
@@ -460,15 +478,15 @@ describe('withSorting', () => {
 
     it('throws at resolve time when applySortNulls is registered twice on one column', () => {
       expect(() =>
-        TestBed.runInInjectionContext(() =>
-          createTable(signal<NullableRow[]>([]), () => ({
+        inContext(() =>
+          createTable(signal<NullableRow[]>([]), {
             trackBy: 'id',
             columns: makeNullableColumns(),
             columnsSchema: (path) => {
               applySortNulls(path.note, { order: 'first' });
               applySortNulls(path.note, { order: 'last' });
             },
-          }))
+          })
         )
       ).toThrow(/Duplicate metadata\(\) registration/);
     });
@@ -479,13 +497,12 @@ describe('withSorting', () => {
         { id: 'r2', age: 1, joined: null, note: null },
         { id: 'r3', age: 2, joined: null, note: null },
       ];
-      const store = makeNullableStore(
-        () => ({
-          trackBy: 'id',
-          columns: makeNullableColumns(),
-          features: [withSorting<NullableRow>({ multi: true })],
-        }),
-        rows
+      const store = inContext(() =>
+        createTable(
+          signal<NullableRow[]>(rows),
+          { trackBy: 'id', columns: makeNullableColumns() },
+          withSorting({ multi: true })
+        )
       );
 
       store.setSorting([
@@ -494,6 +511,64 @@ describe('withSorting', () => {
       ]);
 
       expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r3', 'r1']);
+    });
+  });
+
+  // -------------------------------------------------------------------------------------
+  // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — inert at
+  // runtime, only enforced by `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`.
+  // -------------------------------------------------------------------------------------
+  describe('types', () => {
+    it('withSorting() alone contributes exactly SortingMembers, never widened to any', () => {
+      const store = inContext(() =>
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+      );
+
+      expectTypeOf(store.sorting).toEqualTypeOf<Signal<SortRule[]>>();
+      expectTypeOf<keyof typeof store>().toEqualTypeOf<
+        keyof TableStore<Row> | keyof SortingMembers
+      >();
+      expectTypeOf(store).not.toBeAny();
+    });
+
+    it('withComputed() as a trailing derive block adds a typed member that recomputes off sorting()', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>([]),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting(
+            { multi: true },
+            withComputed((s) => {
+              expectTypeOf(s.sorting).toEqualTypeOf<Signal<SortRule[]>>();
+              expectTypeOf(s.columns).toEqualTypeOf<Signal<ColumnDef<Row>[]>>();
+              return { ruleCount: computed(() => s.sorting().length) };
+            })
+          )
+        )
+      );
+
+      expectTypeOf(store.ruleCount).toEqualTypeOf<Signal<number>>();
+
+      expect(store.ruleCount()).toBe(0);
+
+      store.toggleSort('name');
+      expect(store.ruleCount()).toBe(1);
+
+      store.clearSorting();
+      expect(store.ruleCount()).toBe(0);
+    });
+
+    it('the derive-first form compiles: withSorting(withComputed(...))', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>([]),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting(withComputed((s) => ({ ruleCount: computed(() => s.sorting().length) })))
+        )
+      );
+
+      expectTypeOf(store.ruleCount).toEqualTypeOf<Signal<number>>();
+      expect(store.ruleCount()).toBe(0);
     });
   });
 });

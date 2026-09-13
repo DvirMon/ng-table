@@ -1,6 +1,8 @@
+import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { createFilterEvaluator } from '../create-filters';
-import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import { createTableFeature } from '../create-table-feature';
 import type { Filters } from '../filters.types';
+import type { DerivedDict } from '../types';
 
 export interface WithFilteringConfig<TRow> {
   filters: Filters<TRow>;
@@ -12,23 +14,31 @@ export interface WithFilteringConfig<TRow> {
  * object to the pipeline's `filter` stage. See `docs/1-state/features/filtering.md`. Owns no
  * filter state — the consumer already holds `config.filters`.
  */
-export function withFiltering<TRow = unknown>(
-  config: WithFilteringConfig<TRow>
-): (core: TableCore<TRow>) => TableFeatureSpec<TRow> {
+export function withFiltering<In extends Shape>(
+  config: WithFilteringConfig<RowOf<In>>
+): Feature<In, {}>;
+export function withFiltering<In extends Shape, D extends DerivedDict>(
+  config: WithFilteringConfig<RowOf<In>>,
+  derive: Feature<NoInfer<In>, D>
+): Feature<In, D>;
+export function withFiltering(
+  config: WithFilteringConfig<any>,
+  derive?: Feature<any, any>
+): Feature<any, any> {
   const manual = config.manual ?? false;
-
-  // `core` is unused — this feature has zero compile-time dependency on the columns config
-  // (`filtering.md`'s "Compile-Time Dependencies: None") — but every feature factory takes it,
-  // per CLAUDE.md's feature plugin pattern, so composition stays uniform across features.
-  return (_core: TableCore<TRow>): TableFeatureSpec<TRow> => ({
+  const factory = <In extends Shape>(_input: In): TableFeatureSpec<RowOf<In>, {}> => ({
     stages: {
       filter: (rows) => {
         if (manual) {
           return rows;
         }
-        const evaluator = createFilterEvaluator<TRow, Record<string, unknown>>(config.filters);
+        const evaluator = createFilterEvaluator<RowOf<In>, Record<string, unknown>>(config.filters);
         return rows.filter((row) => evaluator.matchesRow(row));
       },
     },
   });
+  const feature: Feature<any, any> = derive
+    ? createTableFeature(factory, derive)
+    : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withFiltering' });
 }

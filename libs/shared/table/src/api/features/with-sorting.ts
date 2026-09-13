@@ -1,18 +1,21 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { SORT_NULLS } from '../../engine/columns';
-import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { readColumnMeta } from '../../schema/column-metadata';
 import type { SortNullsOpts } from '../../schema/column-rules';
-import type { ColumnDef, SortDirection, SortRule } from '../types';
+import { createTableFeature } from '../create-table-feature';
+import type { ColumnDef, DerivedDict, SortDirection, SortRule, TableStore } from '../types';
 
 export interface WithSortingConfig {
   manual?: boolean;
   multi?: boolean;
 }
 
-/** The slice of the core store this feature reads. */
-type SortingInput<TRow> = Pick<TableCore<TRow>, 'columns'>;
+/** The store slice this feature reads, row-typed. F-bounded: `In extends SortingInput<In>`
+ * gives the factory `input.columns(): ColumnDef<RowOf<In>>[]` with no cast. `& Shape` is the
+ * bootstrap `RowOf<In>` needs, not a read: this feature touches only `columns`. */
+type SortingInput<In> = Pick<TableStore<RowOf<In>>, 'columns'> & Shape;
 
 export interface SortingMembers {
   readonly sorting: Signal<SortRule[]>;
@@ -133,57 +136,81 @@ function sortRows<TRow>(
   });
 }
 
+function buildSortingSpec<TRow>(
+  input: Pick<TableStore<TRow>, 'columns'>,
+  config: WithSortingConfig
+): TableFeatureSpec<TRow, SortingMembers> {
+  const manual = config.manual ?? false;
+  const multi = config.multi ?? false;
+
+  const sorting = signal<SortRule[]>([]);
+  const sortDirections = computed(() => toSortDirectionsMap(sorting()));
+  const sortChangedSource = new Subject<SortRule[]>();
+
+  function applySorting(rules: SortRule[]): void {
+    sorting.set(rules);
+    sortChangedSource.next(rules);
+  }
+
+  function toggleSort(columnId: string): void {
+    const column = input.columns().find((c) => c.id === columnId);
+    const isSortable = !!column && column.enableSorting !== false;
+    if (!isSortable) {
+      return;
+    }
+    applySorting(
+      multi
+        ? cycleSortRule(sorting(), columnId)
+        : replaceSortRule(sorting(), columnId)
+    );
+  }
+
+  return {
+    members: {
+      sorting: sorting.asReadonly(),
+      sortDirections,
+      sortChanged: sortChangedSource.asObservable(),
+      toggleSort,
+      setSorting: applySorting,
+      clearSorting: () => applySorting([]),
+    },
+    stages: {
+      sort: (rows) =>
+        manual ? rows : sortRows(rows, sorting(), input.columns()),
+    },
+  };
+}
+
 /**
- * Adds three-state (ascending -> descending -> unsorted) sorting to a
- * `createTable()`. Reads `sortFn` / `enableSorting` directly off the core
- * `columns` config — no compile-time feature dependency (see with-sorting.md).
+ * Adds three-state (ascending -> descending -> unsorted) sorting to a `createTable()`. Reads
+ * `sortFn` / `enableSorting` directly off `columns` — the row type comes from the store handed
+ * in, never a call-site type argument.
  *
  * By default (`multi: false`), clicking a column replaces the sort with that
  * column alone. Pass `{ multi: true }` to accumulate a click-ordered,
  * multi-column priority sort instead.
  */
-export function withSorting<TRow = unknown>(
-  config: WithSortingConfig = {}
-): (core: SortingInput<TRow>) => TableFeatureSpec<TRow, SortingMembers> {
-  const manual = config.manual ?? false;
-  const multi = config.multi ?? false;
-
-  return (core: SortingInput<TRow>): TableFeatureSpec<TRow, SortingMembers> => {
-    const sorting = signal<SortRule[]>([]);
-    const sortDirections = computed(() => toSortDirectionsMap(sorting()));
-    const sortChangedSource = new Subject<SortRule[]>();
-
-    function applySorting(rules: SortRule[]): void {
-      sorting.set(rules);
-      sortChangedSource.next(rules);
-    }
-
-    function toggleSort(columnId: string): void {
-      const column = core.columns().find((c) => c.id === columnId);
-      const isSortable = !!column && column.enableSorting !== false;
-      if (!isSortable) {
-        return;
-      }
-      applySorting(
-        multi
-          ? cycleSortRule(sorting(), columnId)
-          : replaceSortRule(sorting(), columnId)
-      );
-    }
-
-    return {
-      members: {
-        sorting: sorting.asReadonly(),
-        sortDirections,
-        sortChanged: sortChangedSource.asObservable(),
-        toggleSort,
-        setSorting: applySorting,
-        clearSorting: () => applySorting([]),
-      },
-      stages: {
-        sort: (rows) =>
-          manual ? rows : sortRows(rows, sorting(), core.columns()),
-      },
-    };
-  };
+export function withSorting<In extends SortingInput<In>, D extends DerivedDict>(
+  derive: Feature<NoInfer<In> & SortingMembers, D>
+): Feature<In, SortingMembers & D>;
+export function withSorting<In extends SortingInput<In>>(
+  config?: WithSortingConfig
+): Feature<In, SortingMembers>;
+export function withSorting<In extends SortingInput<In>, D extends DerivedDict>(
+  config: WithSortingConfig | undefined,
+  derive: Feature<NoInfer<In> & SortingMembers, D>
+): Feature<In, SortingMembers & D>;
+export function withSorting(
+  a: WithSortingConfig | Feature<any, any> = {},
+  b?: Feature<any, any>
+): Feature<any, any> {
+  const isDeriveFirst = typeof a === 'function';
+  const config: WithSortingConfig = isDeriveFirst ? {} : a;
+  const derive = isDeriveFirst ? a : b;
+  const factory = <In extends SortingInput<In>>(input: In): TableFeatureSpec<RowOf<In>, SortingMembers> =>
+    buildSortingSpec(input, config);
+  const feature: Feature<any, any> = derive
+    ? createTableFeature(factory, derive)
+    : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withSorting' });
 }

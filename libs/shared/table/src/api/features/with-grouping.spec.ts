@@ -1,24 +1,27 @@
-import { computed, signal, type Resource, type ResourceStatus } from '@angular/core';
+import { computed, signal, type Resource, type ResourceStatus, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { expectTypeOf } from 'vitest';
 import { mockGroupingRows, mockGroupingTrackBy, type GroupingMockRow } from '../../table.mock';
 import { setGroupLevels } from '../../mutations/update-grouping';
 import { applyGrouping } from '../../schema/grouping-rules';
-import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
+import type { GroupingAsyncRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
+import type { WritableView } from '../../engine/writable-view';
 import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
 import { filter } from '../filters/rules';
+import { withComputed } from './with-computed';
 import { withExpansion } from './with-expansion';
 import { withFiltering } from './with-filtering';
-import { withGrouping } from './with-grouping';
+import { withGrouping, type WithGroupingConfig } from './with-grouping';
 import { withSelection } from './with-selection';
 import { withSorting } from './with-sorting';
 import type {
-  AnyTableFeature,
   ColumnDef,
-  ComposedFeatureMembers,
+  ColumnId,
+  GroupingUpdater,
   RenderRow,
+  RowId,
   TableStore,
-  TableStoreConfig,
 } from '../types';
 
 function makeColumns(): ColumnDef<GroupingMockRow>[] {
@@ -44,24 +47,19 @@ function toShape(
   return rows.map((row) => [row.kind, row.depth, row.data?.id]);
 }
 
-// Mirrors `with-selection.spec.ts`: rows are seeded at construction via the `data` signal —
-// pass `rows` for tests that need them, omit for state-only tests.
-function makeStore<const F extends readonly AnyTableFeature[]>(
-  cfg: () => TableStoreConfig<GroupingMockRow, F>,
-  rows: GroupingMockRow[] = []
-): TableStore<GroupingMockRow> & ComposedFeatureMembers<F> {
-  return TestBed.runInInjectionContext(() => createTable(signal<GroupingMockRow[]>(rows), cfg));
+/** Runs a `createTable()` build inside an Angular injection context. */
+function inContext<T>(build: () => T): T {
+  return TestBed.runInInjectionContext(build);
 }
 
 describe('withGrouping', () => {
   it('grouping() starts empty; setGroupLevels updates it and re-clusters renderRows()', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>()],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping()
+      )
     );
 
     expect(store.grouping()).toEqual([]);
@@ -73,14 +71,32 @@ describe('withGrouping', () => {
     expect(store.renderRows().filter((row) => row.kind === 'group')).toHaveLength(2); // US, EU
   });
 
+  it('a trailing withComputed() block reads grouping().length; setGroupLevels updates it', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping(
+          { initialGrouping: ['region'] },
+          withComputed((s) => ({ levels: computed(() => s.grouping().length) }))
+        )
+      )
+    );
+
+    expect(store.levels()).toBe(1);
+
+    store.grouping.update(setGroupLevels(['region', 'category']));
+
+    expect(store.levels()).toBe(2);
+  });
+
   it('two-level grouping produces nested group headers at correct depths, leaves contiguous', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     const rows = store.renderRows();
@@ -110,13 +126,12 @@ describe('withGrouping', () => {
   });
 
   it('depth-correctness: a parent header aggregates its true leaves, not an average of its children\'s averages', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     // Depth-0 headers are emitted US-then-EU — US is the first region encountered while
@@ -132,13 +147,12 @@ describe('withGrouping', () => {
   });
 
   it('composed alone (no expansion feature), renders every cluster fully expanded', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     const rows = store.renderRows();
@@ -147,16 +161,13 @@ describe('withGrouping', () => {
   });
 
   it('composes with withSorting(): sort reorders rows within each cluster, cluster boundaries stay intact', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-          withSorting<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withSorting()
+      )
     );
 
     store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
@@ -190,16 +201,13 @@ describe('withGrouping', () => {
       })
     );
 
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withFiltering<GroupingMockRow>({ filters }),
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withFiltering({ filters }),
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     filters['amount']().value.set(300); // drops id 2 (US > Electronics, amount 300)
@@ -216,24 +224,23 @@ describe('withGrouping', () => {
 
   it('initialGrouping naming an unknown column throws synchronously when composed', () => {
     expect(() =>
-      TestBed.runInInjectionContext(() =>
-        createTable(signal<GroupingMockRow[]>(mockGroupingRows), () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [withGrouping<GroupingMockRow>({ initialGrouping: ['not-a-column'] })],
-        }))
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initialGrouping: ['not-a-column'] })
+        )
       )
     ).toThrow();
   });
 
   it('an unknown level passed to setGroupLevels does not throw — it is dropped, not the whole grouping', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>()],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping()
+      )
     );
 
     expect(() =>
@@ -250,13 +257,12 @@ describe('withGrouping', () => {
   });
 
   it('groupOrder omitted preserves first-occurrence cluster order (regression, unchanged from issue #6)', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] })
+      )
     );
 
     const groupIds = store
@@ -268,18 +274,15 @@ describe('withGrouping', () => {
   });
 
   it('groupOrder reorders group headers by their contents without disturbing row order within a cluster', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({
-            initialGrouping: ['region', 'category'],
-            groupOrder: (a, b) => b.rows.length - a.rows.length,
-          }),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initialGrouping: ['region', 'category'],
+          groupOrder: (a, b) => b.rows.length - a.rows.length,
+        })
+      )
     );
 
     const rows = store.renderRows();
@@ -305,20 +308,17 @@ describe('withGrouping', () => {
   });
 
   it('a groupOrder that reorders one depth never reorders sub-clusters at a different depth, or mixes them across parents', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({
-            initialGrouping: ['region', 'category'],
-            // Ascending alphabetical by key — reorders the region level (EU < US) but is a
-            // no-op on category order within either region (Electronics < Furniture already).
-            groupOrder: (a, b) => String(a.key).localeCompare(String(b.key)),
-          }),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initialGrouping: ['region', 'category'],
+          // Ascending alphabetical by key — reorders the region level (EU < US) but is a
+          // no-op on category order within either region (Electronics < Furniture already).
+          groupOrder: (a, b) => String(a.key).localeCompare(String(b.key)),
+        })
+      )
     );
 
     const rows = store.renderRows();
@@ -340,16 +340,13 @@ describe('withGrouping', () => {
   });
 
   it('sorting the grouped column is a no-op on cluster order when groupOrder is not supplied (D5)', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-          withSorting<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withSorting()
+      )
     );
 
     const unsortedClusterOrder = store
@@ -370,20 +367,17 @@ describe('withGrouping', () => {
   it('a throwing groupOrder falls back to stable order instead of throwing through renderRows()', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              initialGrouping: ['region'],
-              groupOrder: () => {
-                throw new Error('boom');
-              },
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initialGrouping: ['region'],
+            groupOrder: () => {
+              throw new Error('boom');
+            },
+          })
+        )
       );
 
       expect(() => store.renderRows()).not.toThrow();
@@ -401,12 +395,12 @@ describe('withGrouping', () => {
 
   it("removing a cluster's sole members removes that cluster from renderRows() with no residual", () => {
     const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
-      }))
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     expect(store.renderRows()).toHaveLength(12);
@@ -436,13 +430,12 @@ const EU_ELECTRONICS_HEADER_ID = 'group:>region:string:EU>category:string:Electr
 
 describe('rowsOf', () => {
   it('depth: the outer header returns every leaf under both inner clusters; an inner header returns only its own', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     const rows = store.renderRows();
@@ -455,15 +448,13 @@ describe('rowsOf', () => {
 
   it('stale header: a header captured before a new render pass still resolves the same leaves by id', () => {
     const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-          withSorting<GroupingMockRow>(),
-        ],
-      }))
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withSorting()
+      )
     );
 
     const staleHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
@@ -491,15 +482,13 @@ describe('rowsOf', () => {
         );
       })
     );
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withFiltering<GroupingMockRow>({ filters }),
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-        ],
-      }))
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withFiltering({ filters }),
+        withGrouping({ initialGrouping: ['region'] })
+      )
     );
 
     const usLeafIds = computed(() => {
@@ -539,16 +528,13 @@ describe('rowsOf', () => {
         );
       })
     );
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withFiltering<GroupingMockRow>({ filters }),
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withFiltering({ filters }),
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     filters['amount']().value.set(300); // excludes id 2 (US > Electronics)
@@ -559,12 +545,12 @@ describe('rowsOf', () => {
 
   it('missing group: holding a header after every row in its cluster is removed returns [], no throw', () => {
     const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
-    const store = TestBed.runInInjectionContext(() =>
-      createTable(data, () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] })],
-      }))
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
     );
 
     const euElectronicsHeader = findHeader(store.renderRows(), EU_ELECTRONICS_HEADER_ID)!;
@@ -578,16 +564,13 @@ describe('rowsOf', () => {
   });
 
   it('cascade recipe: rowsOf -> trackBy -> selectionStateOf -> select/deselect selects exactly the leaf ids, no group: id', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-          withSelection<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withSelection()
+      )
     );
 
     const usHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
@@ -616,13 +599,12 @@ const US_FURNITURE_HEADER_ID = 'group:>region:string:US>category:string:Furnitur
 
 describe('collapse/expand (#59)', () => {
   it('no withExpansion() composed: every cluster renders flat and fully expanded (regression, unchanged from #6)', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] })
+      )
     );
 
     const rows = store.renderRows();
@@ -631,16 +613,13 @@ describe('collapse/expand (#59)', () => {
   });
 
   it('withExpansion() composed, nothing toggled: every group renders collapsed by default — descendants omitted', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
-          withExpansion<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] }),
+        withExpansion()
+      )
     );
 
     const rows = store.renderRows();
@@ -650,16 +629,13 @@ describe('collapse/expand (#59)', () => {
   });
 
   it('toggleExpanded(headerId) reveals that header\'s descendants; sibling headers stay collapsed', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-          withExpansion<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withExpansion()
+      )
     );
 
     store.toggleExpanded(US_HEADER_ID);
@@ -676,16 +652,13 @@ describe('collapse/expand (#59)', () => {
   });
 
   it('two-level grouping, expand outer only: the outer header\'s own child headers appear, but their leaves stay hidden until individually toggled', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region', 'category'] }),
-          withExpansion<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] }),
+        withExpansion()
+      )
     );
 
     store.toggleExpanded(US_HEADER_ID);
@@ -702,44 +675,46 @@ describe('collapse/expand (#59)', () => {
     );
   });
 
-  it('feature array order does not affect collapse behavior', () => {
-    function buildRows(features: readonly AnyTableFeature[]): readonly [string, number][] {
-      const store = TestBed.runInInjectionContext(() =>
-        createTable(signal<GroupingMockRow[]>(mockGroupingRows), () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features,
-        }))
-      );
-      store.toggleExpanded(US_HEADER_ID);
-      return store
-        .renderRows()
-        .map((row: RenderRow<GroupingMockRow>) => [String(row.id), row.depth]);
-    }
+  it('argument order does not affect collapse behaviour', () => {
+    const groupingFirst = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withExpansion()
+      )
+    );
+    groupingFirst.toggleExpanded(US_HEADER_ID);
+    const groupingFirstShape = groupingFirst
+      .renderRows()
+      .map((row) => [String(row.id), row.depth]);
 
-    const groupingFirst = buildRows([
-      withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-      withExpansion<GroupingMockRow>(),
-    ]);
-    const expansionFirst = buildRows([
-      withExpansion<GroupingMockRow>(),
-      withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-    ]);
+    const expansionFirst = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withExpansion(),
+        withGrouping({ initialGrouping: ['region'] })
+      )
+    );
+    expansionFirst.toggleExpanded(US_HEADER_ID);
+    const expansionFirstShape = expansionFirst
+      .renderRows()
+      .map((row) => [String(row.id), row.depth]);
 
-    expect(expansionFirst).toEqual(groupingFirst);
+    expect(expansionFirstShape).toEqual(groupingFirstShape);
   });
 
   it('composing withGrouping() without withExpansion() never throws or warns, at construction or on renderRows()', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initialGrouping: ['region'] })
+        )
       );
 
       expect(() => store.renderRows()).not.toThrow();
@@ -752,16 +727,13 @@ describe('collapse/expand (#59)', () => {
   });
 
   it('rowsOf() on a collapsed group still returns the full leaf set, not [] (D17 regression)', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [
-          withGrouping<GroupingMockRow>({ initialGrouping: ['region'] }),
-          withExpansion<GroupingMockRow>(),
-        ],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] }),
+        withExpansion()
+      )
     );
 
     // Header captured while collapsed (default: nothing toggled).
@@ -773,6 +745,155 @@ describe('collapse/expand (#59)', () => {
     store.toggleExpanded(US_HEADER_ID);
     const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
     expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
+
+  describe('either order (D25)', () => {
+    it('expansion composed first: nothing toggled shows two depth-0 headers; toggling US reveals its leaves, EU stays collapsed', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withExpansion(),
+          withGrouping({ initialGrouping: ['region'] })
+        )
+      );
+
+      const collapsed = store.renderRows();
+      expect(collapsed).toHaveLength(2);
+      expect(collapsed.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
+
+      store.toggleExpanded(US_HEADER_ID);
+
+      expect(toShape(store.renderRows())).toEqual([
+        ['group', 0, undefined], // US
+        ['row', 1, 1],
+        ['row', 1, 2],
+        ['row', 1, 3],
+        ['group', 0, undefined], // EU, never toggled
+      ]);
+    });
+
+    it('grouping composed first: identical shape to expansion-first, both before and after toggling US', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initialGrouping: ['region'] }),
+          withExpansion()
+        )
+      );
+
+      const collapsed = store.renderRows();
+      expect(collapsed).toHaveLength(2);
+      expect(collapsed.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
+
+      store.toggleExpanded(US_HEADER_ID);
+
+      expect(toShape(store.renderRows())).toEqual([
+        ['group', 0, undefined], // US
+        ['row', 1, 1],
+        ['row', 1, 2],
+        ['row', 1, 3],
+        ['group', 0, undefined], // EU, never toggled
+      ]);
+    });
+
+    // -----------------------------------------------------------------------------------
+    // Type-level half. The vitest executor does NOT typecheck `expectTypeOf`/
+    // `@ts-expect-error` — inert at runtime, only enforced by
+    // `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`.
+    // -----------------------------------------------------------------------------------
+    it('a trailing derive on grouping sees expandedRows only when expansion is composed first (D25 — types stricter than runtime)', () => {
+      // Expansion first: grouping's trailing block sees expandedRows off the accumulated `In`.
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withExpansion(),
+          withGrouping(
+            { initialGrouping: ['region'] },
+            withComputed((s) => {
+              expectTypeOf(s.expandedRows).toEqualTypeOf<Signal<Set<RowId>>>();
+              return {};
+            })
+          )
+        )
+      );
+
+      // Grouping first: the same read is a compile error — this slot's `In` doesn't carry
+      // ExpansionMembers yet. The runtime store does have `expandedRows` once expansion
+      // composes after (readExpandedRows() reads it lazily off the shared object at render
+      // time) — this restriction is type-level only.
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping(
+            { initialGrouping: ['region'] },
+            withComputed((s) => {
+              // @ts-expect-error — expandedRows is declared by withExpansion(), composed after
+              // grouping in this order (D25).
+              expectTypeOf(s.expandedRows).toEqualTypeOf<Signal<Set<RowId>>>();
+              return {};
+            })
+          ),
+          withExpansion()
+        )
+      );
+    });
+  });
+});
+
+describe('pipeline order (story 22)', () => {
+  it('filter -> group -> sort executes in the same fixed order regardless of feature argument order', () => {
+    const filters = TestBed.runInInjectionContext(() =>
+      createFilters<GroupingMockRow>((path) => {
+        filter<GroupingMockRow, 'amount', number | null>(
+          path.amount,
+          (cell, criterion) => cell !== criterion,
+          { isEmpty: (v) => v == null, emptyValue: null }
+        );
+      })
+    );
+
+    const filterGroupSort = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withFiltering({ filters }),
+        withGrouping({ initialGrouping: ['region'] }),
+        withSorting()
+      )
+    );
+
+    const sortGroupFilter = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withSorting(),
+        withGrouping({ initialGrouping: ['region'] }),
+        withFiltering({ filters })
+      )
+    );
+
+    filters['amount']().value.set(300); // drops id 2 from both, regardless of argument order
+    filterGroupSort.toggleSort('amount');
+    sortGroupFilter.toggleSort('amount');
+
+    expect(filterGroupSort.rows().map((row) => row.id)).toEqual(
+      sortGroupFilter.rows().map((row) => row.id)
+    );
+    expect(toShape(filterGroupSort.renderRows())).toEqual(toShape(sortGroupFilter.renderRows()));
+
+    // The filtered-out row is absent from every group, and leaves inside a group are sorted —
+    // pipeline order (filter -> group -> sort) is observable, not just an argument-order
+    // invariant between the two stores above.
+    const leafIds = filterGroupSort
+      .renderRows()
+      .filter((row) => row.kind === 'row')
+      .map((row) => (row.data as GroupingMockRow).id);
+    expect(leafIds).not.toContain(2);
+    expect(leafIds.length).toBeGreaterThan(0);
   });
 });
 
@@ -827,18 +948,15 @@ describe('groupingRule declarative sugar (#60)', () => {
 
   describe('groupingRule lambda: override / fallback / actively-empty', () => {
     it('returning a value overrides baseGrouping', () => {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              initialGrouping: ['region'],
-              groupingRule: () => ['category'],
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initialGrouping: ['region'],
+            groupingRule: () => ['category'],
+          })
+        )
       );
 
       expect(store.grouping()).toEqual(['category']);
@@ -846,36 +964,30 @@ describe('groupingRule declarative sugar (#60)', () => {
 
     it('returning undefined (abstain) falls back to baseGrouping', () => {
       const active = signal(false);
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              initialGrouping: ['region'],
-              groupingRule: () => (active() ? ['category'] : undefined),
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initialGrouping: ['region'],
+            groupingRule: () => (active() ? ['category'] : undefined),
+          })
+        )
       );
 
       expect(store.grouping()).toEqual(['region']);
     });
 
     it('returning [] groups by nothing — distinct from abstain, not baseGrouping', () => {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              initialGrouping: ['region'],
-              groupingRule: () => [],
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initialGrouping: ['region'],
+            groupingRule: () => [],
+          })
+        )
       );
 
       expect(store.grouping()).toEqual([]);
@@ -888,52 +1000,43 @@ describe('groupingRule declarative sugar (#60)', () => {
       const regionActive = signal(true);
       const categoryActive = signal(true);
 
-      const schemaFnStore = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>((path) => {
-              applyGrouping(path.region, { when: () => regionActive() });
-              applyGrouping(path.category, { when: () => categoryActive() });
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const schemaFnStore = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping((path) => {
+            applyGrouping(path.region, { when: () => regionActive() });
+            applyGrouping(path.category, { when: () => categoryActive() });
+          })
+        )
       );
 
-      const rulesArrayStore = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              rules: [
-                { kind: 'grouping', columnId: 'region', when: () => regionActive() },
-                { kind: 'grouping', columnId: 'category', when: () => categoryActive() },
-              ],
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const rulesArrayStore = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            rules: [
+              { kind: 'grouping', columnId: 'region', when: () => regionActive() },
+              { kind: 'grouping', columnId: 'category', when: () => categoryActive() },
+            ],
+          })
+        )
       );
 
-      const lambdaStore = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              groupingRule: () => {
-                const levels: string[] = [];
-                if (regionActive()) levels.push('region');
-                if (categoryActive()) levels.push('category');
-                return levels;
-              },
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const lambdaStore = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            groupingRule: () => {
+              const levels: string[] = [];
+              if (regionActive()) levels.push('region');
+              if (categoryActive()) levels.push('category');
+              return levels;
+            },
+          })
+        )
       );
 
       expect(schemaFnStore.grouping()).toEqual(['region', 'category']);
@@ -942,18 +1045,15 @@ describe('groupingRule declarative sugar (#60)', () => {
     });
 
     it('call order in the schema fn determines level order', () => {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>((path) => {
-              applyGrouping(path.category, { when: () => true });
-              applyGrouping(path.region, { when: () => true });
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping((path) => {
+            applyGrouping(path.category, { when: () => true });
+            applyGrouping(path.region, { when: () => true });
+          })
+        )
       );
 
       expect(store.grouping()).toEqual(['category', 'region']);
@@ -962,38 +1062,32 @@ describe('groupingRule declarative sugar (#60)', () => {
 
   describe('pending / resolved / errored rule contributions', () => {
     it('a pending rule (when returns undefined) makes the whole rule set abstain', () => {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              initialGrouping: ['region'],
-              rules: [{ kind: 'grouping', columnId: 'category', when: () => undefined }],
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initialGrouping: ['region'],
+            rules: [{ kind: 'grouping', columnId: 'category', when: () => undefined }],
+          })
+        )
       );
 
       expect(store.grouping()).toEqual(['region']); // abstain -> falls back to baseGrouping
     });
 
     it('a resolved rule contributes its boolean to the fold', () => {
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              rules: [
-                { kind: 'grouping', columnId: 'region', when: () => true },
-                { kind: 'grouping', columnId: 'category', when: () => false },
-              ],
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            rules: [
+              { kind: 'grouping', columnId: 'region', when: () => true },
+              { kind: 'grouping', columnId: 'category', when: () => false },
+            ],
+          })
+        )
       );
 
       expect(store.grouping()).toEqual(['region']);
@@ -1001,17 +1095,14 @@ describe('groupingRule declarative sugar (#60)', () => {
 
     it("an errored async rule's onError result is never treated as abstention", () => {
       const control = makeControllableResource<boolean>();
-      const store = makeStore(
-        () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              rules: [makeAsyncGroupingRule(control, 'region', () => true)],
-            }),
-          ],
-        }),
-        mockGroupingRows
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            rules: [makeAsyncGroupingRule(control, 'region', () => true)],
+          })
+        )
       );
 
       // Before settle: the entry is pending -> the whole set abstains -> baseGrouping ([]).
@@ -1029,26 +1120,23 @@ describe('groupingRule declarative sugar (#60)', () => {
     it('excludes that level and reports once per evaluation, not once per row', () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
-        const store = makeStore(
-          () => ({
-            trackBy: mockGroupingTrackBy,
-            columns: makeColumns(),
-            features: [
-              withGrouping<GroupingMockRow>({
-                rules: [
-                  { kind: 'grouping', columnId: 'region', when: () => true },
-                  {
-                    kind: 'grouping',
-                    columnId: 'category',
-                    when: () => {
-                      throw new Error('boom');
-                    },
+        const store = inContext(() =>
+          createTable(
+            signal<GroupingMockRow[]>(mockGroupingRows),
+            { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+            withGrouping({
+              rules: [
+                { kind: 'grouping', columnId: 'region', when: () => true },
+                {
+                  kind: 'grouping',
+                  columnId: 'category',
+                  when: () => {
+                    throw new Error('boom');
                   },
-                ],
-              }),
-            ],
-          }),
-          mockGroupingRows
+                },
+              ],
+            })
+          )
         );
 
         expect(() => store.renderRows()).not.toThrow();
@@ -1065,13 +1153,12 @@ describe('groupingRule declarative sugar (#60)', () => {
   });
 
   it('an updater write to grouping is shadowed while an active rule keeps returning a value (D7)', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ groupingRule: () => ['region'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ groupingRule: () => ['region'] })
+      )
     );
 
     expect(store.grouping()).toEqual(['region']);
@@ -1089,28 +1176,25 @@ describe('groupingRule declarative sugar (#60)', () => {
     // (`withGrouping()`'s `typeof configOrSchemaFn === 'function'` branch), so this one check
     // covers both input shapes — not duplicated for the schema-fn overload.
     expect(() =>
-      TestBed.runInInjectionContext(() =>
-        createTable(signal<GroupingMockRow[]>(mockGroupingRows), () => ({
-          trackBy: mockGroupingTrackBy,
-          columns: makeColumns(),
-          features: [
-            withGrouping<GroupingMockRow>({
-              rules: [{ kind: 'grouping', columnId: 'not-a-column', when: () => true }],
-            }),
-          ],
-        }))
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            rules: [{ kind: 'grouping', columnId: 'not-a-column', when: () => true }],
+          })
+        )
       )
     ).toThrow();
   });
 
   it('no groupingRule/rules configured: renderRows() is unaffected by the fold — regression for initialGrouping + updater writes', () => {
-    const store = makeStore(
-      () => ({
-        trackBy: mockGroupingTrackBy,
-        columns: makeColumns(),
-        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
-      }),
-      mockGroupingRows
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] })
+      )
     );
 
     expect(store.grouping()).toEqual(['region']);
@@ -1122,5 +1206,43 @@ describe('groupingRule declarative sugar (#60)', () => {
     // Same 12-row shape as the "two-level grouping" case in the `withGrouping` describe above —
     // the base/overlay fold is a pure pass-through when no groupingRule/rules are configured.
     expect(store.renderRows()).toHaveLength(12);
+  });
+});
+
+// -------------------------------------------------------------------------------------
+// Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf`/
+// `@ts-expect-error` — they are inert at runtime. These are only enforced by
+// `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`, which is the verification step
+// for this describe block.
+// -------------------------------------------------------------------------------------
+describe('types', () => {
+  it('withGrouping({ initialGrouping }) compiles with a known column id; store.grouping/rowsOf keep their exact declared shape', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] })
+      )
+    );
+
+    expectTypeOf(store.grouping).toEqualTypeOf<
+      WritableView<string[], GroupingUpdater<GroupingMockRow>>
+    >();
+    expectTypeOf(store.rowsOf).toEqualTypeOf<
+      (group: RenderRow<GroupingMockRow>) => readonly GroupingMockRow[]
+    >();
+    expectTypeOf(store).not.toBeAny();
+  });
+
+  // `ColumnId<TRow>` is `Extract<keyof TRow, string> | (string & {})` (`api/types.ts`, D14):
+  // the `string & {}` arm keeps editor autocomplete while leaving any string assignable, so an
+  // unknown id is a runtime throw, not a compile error — see the two "throws" cases above.
+  // What is checkable, and what story 6 actually promises, is that the config's row type is
+  // recovered from the slot rather than written at the call site.
+  it('recovers the row type from the slot — config is row-typed with no explicit type argument', () => {
+    expectTypeOf<Parameters<typeof withGrouping<TableStore<GroupingMockRow>>>[0]>().toEqualTypeOf<
+      WithGroupingConfig<GroupingMockRow> | GroupingSchemaFn<GroupingMockRow> | undefined
+    >();
+    expectTypeOf<keyof GroupingMockRow & string>().toMatchTypeOf<ColumnId<GroupingMockRow>>();
   });
 });

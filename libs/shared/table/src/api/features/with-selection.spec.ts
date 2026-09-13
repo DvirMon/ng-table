@@ -424,7 +424,7 @@ describe('withSelection', () => {
         data,
         { trackBy: mockTrackBy, columns: makeColumns() },
         withSelection(),
-        withSorting<MockRow>() // #72 strips the type argument
+        withSorting()
       )
     );
 

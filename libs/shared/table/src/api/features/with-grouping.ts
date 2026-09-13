@@ -7,20 +7,41 @@ import {
   isGroupingAsyncRule,
   isGroupingRule,
 } from '../../engine/grouping-rules';
-import type { TableCore, TableFeatureSpec } from '../../engine/types';
+import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
 import { runColumnsSchemaFn } from '../../schema/column-schema';
 import type { AnyGroupingRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
-import type { ColumnId, GroupingUpdater, GroupSummary, RenderRow, RowId } from '../types';
+import { createTableFeature } from '../create-table-feature';
+import type {
+  ColumnId,
+  DerivedDict,
+  GroupingUpdater,
+  GroupSummary,
+  RenderRow,
+  RowId,
+  TableStore,
+} from '../types';
 
-type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns' | 'rows'>;
+/** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. */
+type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
 
 /** A shallow duck-type check (callable, not a full `Signal<Set<RowId>>` shape check) — safe only
- * because `SlotRegistry` (ADR-0007) guarantees `composed['expandedRows']` can be nothing but
- * `withExpansion()`'s signal or `undefined`; a second feature claiming that member key throws
- * at construction before this ever runs. */
+ * because `SlotRegistry` (ADR-0007) guarantees a store's `expandedRows` member can be nothing
+ * but `withExpansion()`'s signal; a second feature claiming that member key throws at
+ * construction before this ever runs. */
 function isExpandedRowsSignal(value: unknown): value is Signal<ReadonlySet<RowId>> {
   return typeof value === 'function';
+}
+
+/** Reads `withExpansion()`'s `expandedRows` off the shared store at render time — present in
+ * either argument order, typed on `In` only when expansion is declared first. */
+function readExpandedRows(store: object): ReadonlySet<RowId> | undefined {
+  const hasExpansion = 'expandedRows' in store;
+  if (!hasExpansion) {
+    return undefined;
+  }
+  const member: unknown = store.expandedRows;
+  return isExpandedRowsSignal(member) ? member() : undefined;
 }
 
 export interface WithGroupingConfig<TRow> {
@@ -48,89 +69,95 @@ export interface GroupingMembers<TRow> {
   /** Leaf rows beneath a group header, at any depth — post-filter by construction, since
    * `filter` precedes `group` in `PIPELINE_ORDER`. Resolved by `group.id`, so a header from an
    * earlier render pass still works; a group that no longer exists returns `[]`. Reads
-   * `core.rows()` (pipeline output), independent of collapse/expand state. */
+   * `input.rows()` (pipeline output), independent of collapse/expand state. */
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
 }
 
 /**
- * Adds column-based row grouping to a `createTable()`. Standalone — reads only `core.columns`,
- * no dependency on any other feature. Claims the `'group'` pipeline and render stages
- * (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds
- * `groupingRule`/`rules`/a schema fn over `baseGrouping` (D6/D7/D8) — see decisions doc D6-D8.
- * `groupOrder` orders cluster siblings (D4).
+ * The factory body: builds the feature spec from the store slice it reads plus its resolved
+ * config. Shared by both `withGrouping()` overloads via the generic `factory` below.
  */
-export function withGrouping<TRow = unknown>(
-  configOrSchemaFn: WithGroupingConfig<TRow> | GroupingSchemaFn<TRow> = {}
-): (
-  core: GroupingInput<TRow>,
-  composed: Record<string, unknown>
-) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
-  const config: WithGroupingConfig<TRow> =
-    typeof configOrSchemaFn === 'function'
-      ? { rules: [...runColumnsSchemaFn<TRow, AnyGroupingRule<TRow>>(configOrSchemaFn)] }
-      : configOrSchemaFn;
-
-  return (
-    core: GroupingInput<TRow>,
-    composed: Record<string, unknown>
-  ): TableFeatureSpec<TRow, GroupingMembers<TRow>> => {
-    const initial: string[] = config.initialGrouping ?? [];
-    const knownIds = new Set(core.columns().map((c) => c.id));
-    const unknownIds = initial.filter((id) => !knownIds.has(id));
-    if (unknownIds.length > 0) {
-      throw new Error(
-        `[withGrouping] initialGrouping names unknown column id(s): ${unknownIds.join(', ')}.`
-      );
-    }
-    const rules = config.rules ?? [];
-    const unknownRuleIds = rules
-      .map((rule) => rule.columnId)
-      .filter((id) => !knownIds.has(id));
-    if (unknownRuleIds.length > 0) {
-      throw new Error(
-        `[withGrouping] rules name unknown column id(s): ${unknownRuleIds.join(', ')}.`
-      );
-    }
-
-    const baseGrouping = signal<string[]>(initial);
-
-    const ruleEntries = [
-      ...buildGroupingRuleEntries(rules.filter(isGroupingRule)),
-      ...rules.filter(isGroupingAsyncRule).map(buildAsyncGroupingRuleEntry),
-    ];
-    const rulesGroupingRule =
-      ruleEntries.length > 0 ? (): string[] | undefined => foldGroupingRules(ruleEntries) : undefined;
-    const effectiveGroupingRule = config.groupingRule ?? rulesGroupingRule;
-    const grouping = computed(() => effectiveGroupingRule?.() ?? baseGrouping());
-
-    const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
-      () => grouping(),
-      (updater) => baseGrouping.update(updater)
+function buildGroupingSpec<TRow>(
+  input: Pick<TableStore<TRow>, 'columns' | 'rows'>,
+  config: WithGroupingConfig<TRow>
+): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
+  const initial: string[] = config.initialGrouping ?? [];
+  const knownIds = new Set(input.columns().map((c) => c.id));
+  const unknownIds = initial.filter((id) => !knownIds.has(id));
+  if (unknownIds.length > 0) {
+    throw new Error(
+      `[withGrouping] initialGrouping names unknown column id(s): ${unknownIds.join(', ')}.`
     );
+  }
+  const rules = config.rules ?? [];
+  const unknownRuleIds = rules.map((rule) => rule.columnId).filter((id) => !knownIds.has(id));
+  if (unknownRuleIds.length > 0) {
+    throw new Error(
+      `[withGrouping] rules name unknown column id(s): ${unknownRuleIds.join(', ')}.`
+    );
+  }
 
-    const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
-      rowsBeneathGroup(core.rows(), grouping(), core.columns(), group.id);
+  const baseGrouping = signal<string[]>(initial);
 
-    return {
-      members: { grouping: groupingView, rowsOf },
-      stages: {
-        group: (rows) => clusterRows(rows, grouping(), core.columns(), config.groupOrder),
+  const ruleEntries = [
+    ...buildGroupingRuleEntries(rules.filter(isGroupingRule)),
+    ...rules.filter(isGroupingAsyncRule).map(buildAsyncGroupingRuleEntry),
+  ];
+  const rulesGroupingRule =
+    ruleEntries.length > 0 ? (): string[] | undefined => foldGroupingRules(ruleEntries) : undefined;
+  const effectiveGroupingRule = config.groupingRule ?? rulesGroupingRule;
+  const grouping = computed(() => effectiveGroupingRule?.() ?? baseGrouping());
+
+  const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
+    () => grouping(),
+    (updater) => baseGrouping.update(updater)
+  );
+
+  const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
+    rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id);
+
+  return {
+    members: { grouping: groupingView, rowsOf },
+    stages: {
+      group: (rows) => clusterRows(rows, grouping(), input.columns(), config.groupOrder),
+    },
+    renderStages: {
+      group: (rows) => {
+        const expandedRows = readExpandedRows(input);
+        return buildGroupRenderRows(rows, grouping(), input.columns(), config.groupOrder, expandedRows);
       },
-      renderStages: {
-        group: (rows) => {
-          const expandedRowsMember = composed['expandedRows'];
-          const expandedRows = isExpandedRowsSignal(expandedRowsMember)
-            ? expandedRowsMember()
-            : undefined;
-          return buildGroupRenderRows(
-            rows,
-            grouping(),
-            core.columns(),
-            config.groupOrder,
-            expandedRows
-          );
-        },
-      },
-    };
+    },
   };
+}
+
+/**
+ * Adds column-based row grouping to a `createTable()`. Reads `columns`/`rows` off the store
+ * handed in; picks up `expandedRows` lazily when `withExpansion()` is composed, in either
+ * order. Claims the `'group'` pipeline and render stages (`engine/grouping.ts`'s
+ * `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds `groupingRule`/`rules`/a schema
+ * fn over `baseGrouping` (D6/D7/D8) — see decisions doc D6-D8. `groupOrder` orders cluster
+ * siblings (D4).
+ */
+export function withGrouping<In extends GroupingInput<In>>(
+  configOrSchemaFn?: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>>
+): Feature<In, GroupingMembers<RowOf<In>>>;
+export function withGrouping<In extends GroupingInput<In>, D extends DerivedDict>(
+  configOrSchemaFn: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>> | undefined,
+  derive: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>
+): Feature<In, GroupingMembers<RowOf<In>> & D>;
+export function withGrouping(
+  configOrSchemaFn: WithGroupingConfig<any> | GroupingSchemaFn<any> = {},
+  derive?: Feature<any, any>
+): Feature<any, any> {
+  const config: WithGroupingConfig<any> =
+    typeof configOrSchemaFn === 'function'
+      ? { rules: [...runColumnsSchemaFn<any, AnyGroupingRule<any>>(configOrSchemaFn)] }
+      : configOrSchemaFn;
+  const factory = <In extends GroupingInput<In>>(
+    input: In
+  ): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> => buildGroupingSpec(input, config);
+  const feature: Feature<any, any> = derive
+    ? createTableFeature(factory, derive)
+    : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withGrouping' });
 }
