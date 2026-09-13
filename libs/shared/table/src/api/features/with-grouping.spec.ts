@@ -1,7 +1,9 @@
-import { computed, signal } from '@angular/core';
+import { computed, signal, type Resource, type ResourceStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockGroupingRows, mockGroupingTrackBy, type GroupingMockRow } from '../../table.mock';
 import { setGroupLevels } from '../../mutations/update-grouping';
+import { applyGrouping } from '../../schema/grouping-rules';
+import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
 import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
 import { filter } from '../filters/rules';
@@ -771,5 +773,354 @@ describe('collapse/expand (#59)', () => {
     store.toggleExpanded(US_HEADER_ID);
     const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
     expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
+});
+
+/**
+ * Minimal controllable `Resource` test double — mirrors `engine/grouping-rules.spec.ts`'s
+ * `makeControllableResource`/`makeAsyncRule` (Step 3), reused here for public-surface
+ * (`rules`-array `GroupingAsyncRule`) coverage rather than inventing a second harness. Only the
+ * subset `buildAsyncGroupingRuleEntry` actually reads (`status`, `value`, `error`).
+ */
+function makeControllableResource<TResult>(): {
+  resource: Resource<TResult | undefined>;
+  resolve(value: TResult): void;
+  reject(error: unknown): void;
+} {
+  const value = signal<TResult | undefined>(undefined);
+  const status = signal<ResourceStatus>('idle');
+  const error = signal<unknown>(undefined);
+  const resource = { value, status, error } as unknown as Resource<TResult | undefined>;
+
+  return {
+    resource,
+    resolve(next: TResult): void {
+      value.set(next);
+      status.set('resolved');
+    },
+    reject(nextError: unknown): void {
+      error.set(nextError);
+      status.set('error');
+    },
+  };
+}
+
+function makeAsyncGroupingRule(
+  control: { resource: Resource<unknown> },
+  columnId: string,
+  onError: (error: unknown) => boolean = () => false
+): GroupingAsyncRule<GroupingMockRow> {
+  return {
+    kind: 'grouping-async',
+    columnId,
+    params: () => 'p',
+    factory: () => control.resource,
+    onSuccess: (result) => Boolean(result),
+    onError,
+  };
+}
+
+describe('groupingRule declarative sugar (#60)', () => {
+  // `applyGroupingAsync` without `onError` is a `@ts-expect-error` compile-time case, already
+  // covered by `schema/grouping-rules.spec.ts` (Step 3, "applyGroupingAsync without onError is a
+  // compile error") — not duplicated here.
+
+  describe('groupingRule lambda: override / fallback / actively-empty', () => {
+    it('returning a value overrides baseGrouping', () => {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              initialGrouping: ['region'],
+              groupingRule: () => ['category'],
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(store.grouping()).toEqual(['category']);
+    });
+
+    it('returning undefined (abstain) falls back to baseGrouping', () => {
+      const active = signal(false);
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              initialGrouping: ['region'],
+              groupingRule: () => (active() ? ['category'] : undefined),
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(store.grouping()).toEqual(['region']);
+    });
+
+    it('returning [] groups by nothing — distinct from abstain, not baseGrouping', () => {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              initialGrouping: ['region'],
+              groupingRule: () => [],
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(store.grouping()).toEqual([]);
+      expect(store.renderRows().every((row) => row.kind === 'row')).toBe(true);
+    });
+  });
+
+  describe('config layers fold identically', () => {
+    it('schema-fn, rules-array, and lambda layers produce the same fold for equivalent rules', () => {
+      const regionActive = signal(true);
+      const categoryActive = signal(true);
+
+      const schemaFnStore = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>((path) => {
+              applyGrouping(path.region, { when: () => regionActive() });
+              applyGrouping(path.category, { when: () => categoryActive() });
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      const rulesArrayStore = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              rules: [
+                { kind: 'grouping', columnId: 'region', when: () => regionActive() },
+                { kind: 'grouping', columnId: 'category', when: () => categoryActive() },
+              ],
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      const lambdaStore = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              groupingRule: () => {
+                const levels: string[] = [];
+                if (regionActive()) levels.push('region');
+                if (categoryActive()) levels.push('category');
+                return levels;
+              },
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(schemaFnStore.grouping()).toEqual(['region', 'category']);
+      expect(rulesArrayStore.grouping()).toEqual(schemaFnStore.grouping());
+      expect(lambdaStore.grouping()).toEqual(schemaFnStore.grouping());
+    });
+
+    it('call order in the schema fn determines level order', () => {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>((path) => {
+              applyGrouping(path.category, { when: () => true });
+              applyGrouping(path.region, { when: () => true });
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(store.grouping()).toEqual(['category', 'region']);
+    });
+  });
+
+  describe('pending / resolved / errored rule contributions', () => {
+    it('a pending rule (when returns undefined) makes the whole rule set abstain', () => {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              initialGrouping: ['region'],
+              rules: [{ kind: 'grouping', columnId: 'category', when: () => undefined }],
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(store.grouping()).toEqual(['region']); // abstain -> falls back to baseGrouping
+    });
+
+    it('a resolved rule contributes its boolean to the fold', () => {
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              rules: [
+                { kind: 'grouping', columnId: 'region', when: () => true },
+                { kind: 'grouping', columnId: 'category', when: () => false },
+              ],
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      expect(store.grouping()).toEqual(['region']);
+    });
+
+    it("an errored async rule's onError result is never treated as abstention", () => {
+      const control = makeControllableResource<boolean>();
+      const store = makeStore(
+        () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              rules: [makeAsyncGroupingRule(control, 'region', () => true)],
+            }),
+          ],
+        }),
+        mockGroupingRows
+      );
+
+      // Before settle: the entry is pending -> the whole set abstains -> baseGrouping ([]).
+      expect(store.grouping()).toEqual([]);
+
+      control.reject(new Error('boom'));
+      TestBed.tick();
+
+      // onError resolved to a real `true` contribution — never re-treated as still-pending.
+      expect(store.grouping()).toEqual(['region']);
+    });
+  });
+
+  describe('a throwing when predicate (ADR-0014)', () => {
+    it('excludes that level and reports once per evaluation, not once per row', () => {
+      const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = makeStore(
+          () => ({
+            trackBy: mockGroupingTrackBy,
+            columns: makeColumns(),
+            features: [
+              withGrouping<GroupingMockRow>({
+                rules: [
+                  { kind: 'grouping', columnId: 'region', when: () => true },
+                  {
+                    kind: 'grouping',
+                    columnId: 'category',
+                    when: () => {
+                      throw new Error('boom');
+                    },
+                  },
+                ],
+              }),
+            ],
+          }),
+          mockGroupingRows
+        );
+
+        expect(() => store.renderRows()).not.toThrow();
+        // The throwing level is excluded from the fold — the whole rule set does not abstain.
+        expect(store.grouping()).toEqual(['region']);
+
+        store.renderRows();
+        store.renderRows();
+        expect(reportSpy).toHaveBeenCalledTimes(1); // once per evaluation, not once per row
+      } finally {
+        reportSpy.mockRestore();
+      }
+    });
+  });
+
+  it('an updater write to grouping is shadowed while an active rule keeps returning a value (D7)', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [withGrouping<GroupingMockRow>({ groupingRule: () => ['region'] })],
+      }),
+      mockGroupingRows
+    );
+
+    expect(store.grouping()).toEqual(['region']);
+
+    store.grouping.update(setGroupLevels(['category']));
+
+    // Documented behavior (D7's accepted consequence), not a bug: the write lands on
+    // `baseGrouping`, but while `groupingRule` keeps actively returning a value, `grouping()`
+    // continues to reflect the rule's output, never the shadowed write.
+    expect(store.grouping()).toEqual(['region']);
+  });
+
+  it('an unknown column id in rules throws at construction (mirrors the initialGrouping check above)', () => {
+    // The schema-fn config layer compiles to this same `rules` array before this validation runs
+    // (`withGrouping()`'s `typeof configOrSchemaFn === 'function'` branch), so this one check
+    // covers both input shapes — not duplicated for the schema-fn overload.
+    expect(() =>
+      TestBed.runInInjectionContext(() =>
+        createTable(signal<GroupingMockRow[]>(mockGroupingRows), () => ({
+          trackBy: mockGroupingTrackBy,
+          columns: makeColumns(),
+          features: [
+            withGrouping<GroupingMockRow>({
+              rules: [{ kind: 'grouping', columnId: 'not-a-column', when: () => true }],
+            }),
+          ],
+        }))
+      )
+    ).toThrow();
+  });
+
+  it('no groupingRule/rules configured: renderRows() is unaffected by the fold — regression for initialGrouping + updater writes', () => {
+    const store = makeStore(
+      () => ({
+        trackBy: mockGroupingTrackBy,
+        columns: makeColumns(),
+        features: [withGrouping<GroupingMockRow>({ initialGrouping: ['region'] })],
+      }),
+      mockGroupingRows
+    );
+
+    expect(store.grouping()).toEqual(['region']);
+    expect(store.renderRows().filter((row) => row.kind === 'group')).toHaveLength(2); // US, EU
+
+    store.grouping.update(setGroupLevels(['region', 'category']));
+
+    expect(store.grouping()).toEqual(['region', 'category']);
+    // Same 12-row shape as the "two-level grouping" case in the `withGrouping` describe above —
+    // the base/overlay fold is a pure pass-through when no groupingRule/rules are configured.
+    expect(store.renderRows()).toHaveLength(12);
   });
 });

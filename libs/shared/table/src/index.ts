@@ -41,6 +41,14 @@ export { columnSchema } from './schema/column-schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column-rules';
 export type { SortNullsOpts } from './schema/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './schema/column-metadata';
+export { applyGrouping, applyGroupingAsync } from './schema/grouping-rules';
+export type { GroupingAsyncOpts } from './schema/grouping-rules';
+export type {
+  AnyGroupingRule,
+  GroupingAsyncRule,
+  GroupingRule,
+  GroupingSchemaFn,
+} from './schema/grouping-schema.types';
 export { insertRow, removeRow, patchRow } from './mutations/row-mutations';
 export { beginEdit, clearEdit, createRow, endEdit } from './mutations/row-edit-mutations';
 export type { BeginEditOptions } from './mutations/row-edit-mutations';

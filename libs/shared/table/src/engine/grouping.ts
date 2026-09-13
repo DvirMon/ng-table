@@ -198,6 +198,7 @@ function emitGroupRows<TRow>(
       depth,
       kind: 'group',
       data: null,
+      groupKey: { columnId: node.columnId, value: node.value },
       hasChildren: node.items.length > 0,
       aggregates: computeAggregates(
         node.items.map((item) => item.data).filter(isRowData),

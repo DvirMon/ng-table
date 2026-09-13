@@ -1,7 +1,16 @@
-import { signal, type Signal } from '@angular/core';
+import { computed, signal, type Signal } from '@angular/core';
 import { buildGroupRenderRows, clusterRows, rowsBeneathGroup } from '../../engine/grouping';
+import {
+  buildAsyncGroupingRuleEntry,
+  buildGroupingRuleEntries,
+  foldGroupingRules,
+  isGroupingAsyncRule,
+  isGroupingRule,
+} from '../../engine/grouping-rules';
 import type { TableCore, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
+import { runColumnsSchemaFn } from '../../schema/column-schema';
+import type { AnyGroupingRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
 import type { ColumnId, GroupingUpdater, GroupSummary, RenderRow, RowId } from '../types';
 
 type GroupingInput<TRow> = Pick<TableCore<TRow>, 'columns' | 'rows'>;
@@ -23,6 +32,15 @@ export interface WithGroupingConfig<TRow> {
    * reports once per evaluation. Decoupled from `sorting`. See `withGrouping()`'s decisions
    * doc, D4/D5/D9/D15. */
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
+  /** Base+overlay fold (D6/D7). Returning `string[]` overrides `baseGrouping`; `undefined`
+   * abstains and holds it; `[]` is actively grouped by nothing — distinct from abstain. Mutually
+   * exclusive with `rules` in practice (both compile to this same slot) — the rules-array layer
+   * (below) is sugar that produces exactly this shape. */
+  groupingRule?: () => string[] | undefined;
+  /** Rules-array layer (D8): compiles to `groupingRule` via `foldGroupingRules`. Call order (array
+   * order here, schema-fn call order when using the function-argument overload) determines level
+   * order. */
+  rules?: AnyGroupingRule<TRow>[];
 }
 
 export interface GroupingMembers<TRow> {
@@ -37,16 +55,21 @@ export interface GroupingMembers<TRow> {
 /**
  * Adds column-based row grouping to a `createTable()`. Standalone — reads only `core.columns`,
  * no dependency on any other feature. Claims the `'group'` pipeline and render stages
- * (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` reads
- * `baseGrouping` directly — the D6 base+overlay fold (`groupingRule`) is issue #60, out of
- * scope here (see the step's scope note). `groupOrder` orders cluster siblings (D4).
+ * (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds
+ * `groupingRule`/`rules`/a schema fn over `baseGrouping` (D6/D7/D8) — see decisions doc D6-D8.
+ * `groupOrder` orders cluster siblings (D4).
  */
 export function withGrouping<TRow = unknown>(
-  config: WithGroupingConfig<TRow> = {}
+  configOrSchemaFn: WithGroupingConfig<TRow> | GroupingSchemaFn<TRow> = {}
 ): (
   core: GroupingInput<TRow>,
   composed: Record<string, unknown>
 ) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
+  const config: WithGroupingConfig<TRow> =
+    typeof configOrSchemaFn === 'function'
+      ? { rules: [...runColumnsSchemaFn<TRow, AnyGroupingRule<TRow>>(configOrSchemaFn)] }
+      : configOrSchemaFn;
+
   return (
     core: GroupingInput<TRow>,
     composed: Record<string, unknown>
@@ -59,20 +82,39 @@ export function withGrouping<TRow = unknown>(
         `[withGrouping] initialGrouping names unknown column id(s): ${unknownIds.join(', ')}.`
       );
     }
+    const rules = config.rules ?? [];
+    const unknownRuleIds = rules
+      .map((rule) => rule.columnId)
+      .filter((id) => !knownIds.has(id));
+    if (unknownRuleIds.length > 0) {
+      throw new Error(
+        `[withGrouping] rules name unknown column id(s): ${unknownRuleIds.join(', ')}.`
+      );
+    }
 
     const baseGrouping = signal<string[]>(initial);
-    const grouping = createWritableView<string[], GroupingUpdater<TRow>>(
-      () => baseGrouping(),
+
+    const ruleEntries = [
+      ...buildGroupingRuleEntries(rules.filter(isGroupingRule)),
+      ...rules.filter(isGroupingAsyncRule).map(buildAsyncGroupingRuleEntry),
+    ];
+    const rulesGroupingRule =
+      ruleEntries.length > 0 ? (): string[] | undefined => foldGroupingRules(ruleEntries) : undefined;
+    const effectiveGroupingRule = config.groupingRule ?? rulesGroupingRule;
+    const grouping = computed(() => effectiveGroupingRule?.() ?? baseGrouping());
+
+    const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
+      () => grouping(),
       (updater) => baseGrouping.update(updater)
     );
 
     const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
-      rowsBeneathGroup(core.rows(), baseGrouping(), core.columns(), group.id);
+      rowsBeneathGroup(core.rows(), grouping(), core.columns(), group.id);
 
     return {
-      members: { grouping, rowsOf },
+      members: { grouping: groupingView, rowsOf },
       stages: {
-        group: (rows) => clusterRows(rows, baseGrouping(), core.columns(), config.groupOrder),
+        group: (rows) => clusterRows(rows, grouping(), core.columns(), config.groupOrder),
       },
       renderStages: {
         group: (rows) => {
@@ -82,7 +124,7 @@ export function withGrouping<TRow = unknown>(
             : undefined;
           return buildGroupRenderRows(
             rows,
-            baseGrouping(),
+            grouping(),
             core.columns(),
             config.groupOrder,
             expandedRows

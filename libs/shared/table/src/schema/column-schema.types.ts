@@ -21,37 +21,55 @@ export const COLUMN_RECORDER: unique symbol = Symbol('COLUMN_RECORDER');
  * Internal recorder every `apply*` call writes into. One instance per
  * `columnSchema()` / inline-fn execution — collects rules for later
  * resolution by `resolveColumnsConfig()`.
+ *
+ * Generic on `TRule`, defaulting to `ColumnRule<TRow>` so every existing caller (which names
+ * zero type arguments) keeps resolving to exactly the same type. A session is homogeneous — one
+ * rule family per session — instantiated differently at different call sites (e.g. a future
+ * grouping session at `TRule = AnyGroupingRule<TRow>`), never widened to `unknown` here.
  * @internal
  */
-export interface ColumnSchemaRecorder<TRow> {
+export interface ColumnSchemaRecorder<TRow, TRule = ColumnRule<TRow>> {
   /**
    * Generic on `TParams`/`TResult`/`T` (not just `ColumnRule<TRow>`'s default-`unknown` shape)
    * so a caller building a `MetadataRule<TRow, T>`/`MetadataAsyncRule<TRow, TParams, TResult,
    * T>` at its own instantiated types can pass the literal straight through — contextual typing
-   * checks it directly, no erasing cast needed at the call site. The implementation still
-   * erases to `ColumnRule<TRow>` once, internally, to store the rule (see `column-schema.ts`).
+   * checks it directly, no erasing cast needed at the call site. A structurally-typed `rule:
+   * TRule` parameter can't accept this: `MetadataAsyncRule`'s `factory`/`onSuccess` occupy
+   * contravariant positions, so `MetadataAsyncRule<TRow, TParams, TResult, T>` is not assignable
+   * to `MetadataAsyncRule<TRow, unknown, unknown, unknown>` by ordinary assignability — only a
+   * cast (see `column-schema.ts`) bridges it, same as before this type gained `TRule`.
+   */
+  /**
+   * `| TRule` covers a session instantiated at a non-default `TRule` (e.g. a grouping session at
+   * `TRule = AnyGroupingRule<TRow>`) — those rule families don't need the
+   * `MetadataRule`/`MetadataAsyncRule` contextual-typing shape the rest of this union exists for,
+   * so they record straight through as `TRule`. Kept as one signature (not a second overload) so
+   * `createRecorderSession`'s single generic implementation satisfies it directly — no
+   * `TRule`-shaped default (`ColumnRule<TRow>`) call site changes behavior, since
+   * `ColumnRule<TRow>` is already covered by the `Metadata*` arm.
    */
   record<TParams = unknown, TResult = unknown, T = unknown>(
-    rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T>
+    rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T> | TRule
   ): void;
 }
 
 /**
  * Structural proxy mirroring Signal Forms' `FieldPathNode` — the `get` trap
- * fabricates a `ColumnHandle<TRow, K>` for any string property accessed. It
+ * fabricates a `ColumnHandle<TRow, K, TRule>` for any string property accessed. It
  * does not read actual column data; typing is 100% compile-time.
  */
-export type ColumnsPath<TRow> = {
-  readonly [K in Extract<keyof TRow, string>]: ColumnHandle<TRow, K>;
+export type ColumnsPath<TRow, TRule = ColumnRule<TRow>> = {
+  readonly [K in Extract<keyof TRow, string>]: ColumnHandle<TRow, K, TRule>;
 };
 
 export interface ColumnHandle<
   TRow,
-  K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>
+  K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>,
+  TRule = ColumnRule<TRow>
 > {
   readonly id: K;
   /** @internal */
-  readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow>;
+  readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow, TRule>;
 }
 
 export type ColumnsSchemaFn<TRow> = (path: ColumnsPath<TRow>) => void;
