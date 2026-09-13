@@ -10,6 +10,10 @@ describe('describeFeature', () => {
   it('names a consumer feature by its 1-based argument position', () => {
     expect(describeFeature(2)).toBe('feature 2');
   });
+
+  it('appends the display name when given one', () => {
+    expect(describeFeature(3, 'withComputed')).toBe('feature 3 (withComputed)');
+  });
 });
 
 describe('describeInternalFeature', () => {

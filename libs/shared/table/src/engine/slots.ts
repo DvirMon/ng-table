@@ -32,8 +32,9 @@ export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
 const CORE_CLAIMANT = 'core';
 
 /** Names a consumer feature by its 1-based argument position, for collision messages. */
-export function describeFeature(position: number): string {
-  return `feature ${position}`;
+export function describeFeature(position: number, displayName?: string): string {
+  const base = `feature ${position}`;
+  return displayName ? `${base} (${displayName})` : base;
 }
 
 /** Names an engine-internal feature (e.g. column-schema wiring) that never has a consumer position. */

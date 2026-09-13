@@ -37,6 +37,7 @@ export type {
   SnapshotMap,
 } from './api/features/editing-state';
 export { createTableFeature } from './api/create-table-feature';
+export { withComputed } from './api/features/with-computed';
 export { columnSchema } from './schema/column-schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column-rules';
 export type { SortNullsOpts } from './schema/column-rules';

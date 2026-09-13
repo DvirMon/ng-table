@@ -39,12 +39,13 @@ type FoldingStore<TRow> = TableStore<TRow> & Record<string, unknown>;
  */
 function labelFeatures<TRow, TFeature>(
   features: readonly TFeature[],
-  describe: (position: number) => string,
-  call: (feature: TFeature) => TableFeatureSpec<TRow>
+  describe: (position: number, displayName?: string) => string,
+  call: (feature: TFeature) => TableFeatureSpec<TRow>,
+  displayNameOf?: (feature: TFeature) => string | undefined
 ): LabeledFeature<TRow>[] {
   return features.map((feature, index) => ({
     run: () => call(feature),
-    label: describe(index + 1),
+    label: describe(index + 1, displayNameOf?.(feature)),
   }));
 }
 
@@ -176,7 +177,8 @@ export function composeTable<TRow>(
       ...labelFeatures<TRow, AnyTableFeature>(
         features,
         describeFeature,
-        (feature) => feature(store) as TableFeatureSpec<TRow>
+        (feature) => feature(store) as TableFeatureSpec<TRow>,
+        (feature) => feature.displayName
       ),
     ],
     store,

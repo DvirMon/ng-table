@@ -3,10 +3,11 @@ import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
+import { withComputed } from './features/with-computed';
 import { columnSchema } from '../schema/column-schema';
 import { applyVisible } from '../schema/column-rules';
 import type { Feature, RowOf, Shape } from '../engine/types';
-import type { ColumnDef, ReadonlyStore, RowId, TableStore } from './types';
+import type { ColumnDef, ReadonlyStore, RenderRow, RowId, TableStore } from './types';
 
 interface Row {
   id: string;
@@ -516,6 +517,158 @@ describe('createTable', () => {
       expectTypeOf<ReadonlyStore<TableStore<Invoice>>['value']>().toEqualTypeOf<
         Signal<Invoice[]>
       >();
+    });
+
+    // -------------------------------------------------------------------------------------
+    // withComputed() (#70) — both placements, not-any, trap 3. Reuses this describe block's
+    // own fixtures (`Invoice`, `invoiceColumns`, `withA`/`withB`) rather than duplicating them.
+    // -------------------------------------------------------------------------------------
+
+    it('case 26 — a top-level withComputed() block adds a typed signal member, not widened to any', () => {
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withA(),
+          withComputed((s) => ({ n: computed(() => s.a()) }))
+        )
+      );
+
+      expectTypeOf(table.n).toEqualTypeOf<Signal<number>>();
+      expectTypeOf(table).not.toBeAny();
+      expectTypeOf<keyof typeof table>().toEqualTypeOf<'a' | 'n' | keyof TableStore<Invoice>>();
+    });
+
+    it('case 27 — the block parameter is a ReadonlyStore: .update is stripped, reads pass through', () => {
+      const readonlyCheck = withComputed<TableStore<Invoice>, { n: Signal<number> }>((s) => {
+        expectTypeOf(s.value).toEqualTypeOf<Signal<Invoice[]>>();
+        // @ts-expect-error — ReadonlyStore strips `.update` from the `value` WritableView (D28).
+        s.value.update((rows) => rows);
+        expectTypeOf(s.rows).toEqualTypeOf<Signal<Invoice[]>>();
+        return { n: computed(() => s.value().length) };
+      });
+
+      void readonlyCheck;
+    });
+
+    it('case 28 — a block placed before a later feature does not see that feature’s member yet (D25)', () => {
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withA(),
+          withComputed((s) => {
+            // @ts-expect-error — `b` is contributed by `withB()`, composed after this block.
+            void s.b;
+            return { n: computed(() => s.a()) };
+          }),
+          withB()
+        )
+      );
+
+      expectTypeOf(table.n).toEqualTypeOf<Signal<number>>();
+    });
+
+    it('case 29 — a feature composed after a withComputed() block sees its contributed member', () => {
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withA(),
+          withComputed((s) => ({ n: computed(() => s.a()) })),
+          createTableFeature((input) => {
+            expectTypeOf(input.n).toEqualTypeOf<Signal<number>>();
+            return {};
+          })
+        )
+      );
+
+      void table;
+    });
+
+    it('case 30 — withComputed() used as a trailing derive block sees its own feature’s member', () => {
+      // Explicit type args: not consumed inline by a `createTable()` call, so there is no
+      // contextual type for `createTableFeature` to infer `In` from.
+      const withComputedDerived = createTableFeature<
+        TableStore<Invoice>,
+        { a: Signal<number> },
+        { twice: Signal<number> }
+      >(
+        () => ({ members: { a: signal(1).asReadonly() } }),
+        withComputed<TableStore<Invoice> & { a: Signal<number> }, { twice: Signal<number> }>(
+          (s) => {
+            expectTypeOf(s.a).toEqualTypeOf<Signal<number>>();
+            return { twice: computed(() => s.a() * 2) };
+          }
+        )
+      );
+
+      expectTypeOf(withComputedDerived).toMatchTypeOf<
+        Feature<TableStore<Invoice>, { a: Signal<number> } & { twice: Signal<number> }>
+      >();
+
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withComputedDerived
+        )
+      );
+
+      expectTypeOf(table.twice).toEqualTypeOf<Signal<number>>();
+    });
+
+    // Trap 3 at withComputed's own declaration site: the return type is a single
+    // `Feature<In, D>`, not an intersection. Case 19 asserts the same of the derive helper.
+    it('case 31 — trap 3: withComputed() returns one Feature, not an intersection', () => {
+      const fn = (s: ReadonlyStore<TableStore<Invoice>>): { n: Signal<number> } => ({
+        n: computed(() => s.totalRowCount()),
+      });
+
+      const feature = withComputed<TableStore<Invoice>, { n: Signal<number> }>(fn);
+
+      expectTypeOf(feature).toEqualTypeOf<Feature<TableStore<Invoice>, { n: Signal<number> }>>();
+      expectTypeOf(feature).not.toBeAny();
+    });
+
+    it('case 32 — a second withComputed() block reads the first block’s member, typed', () => {
+      const table = TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Invoice[]>([]),
+          { trackBy: 'id', columns: invoiceColumns },
+          withA(),
+          withComputed((s) => ({ n: computed(() => s.a()) })),
+          withComputed((s) => {
+            expectTypeOf(s.n).toEqualTypeOf<Signal<number>>();
+            return { doubled: computed(() => s.n() * 2) };
+          })
+        )
+      );
+
+      expectTypeOf(table.doubled).toEqualTypeOf<Signal<number>>();
+    });
+
+    it('case 33 — an earlier withComputed() block reading a later block’s member is a compile error (D25)', () => {
+      const earlyBlock = withComputed<
+        TableStore<Invoice> & { a: Signal<number> },
+        { n: Signal<number> }
+      >((s) => {
+        // @ts-expect-error — `later` is contributed by a withComputed() block composed after this one.
+        void s.later;
+        return { n: computed(() => s.a()) };
+      });
+
+      void earlyBlock;
+    });
+
+    it('case 34 — the block parameter sees core renderRows and totalRowCount signals', () => {
+      const sees = withComputed<TableStore<Invoice>, { n: Signal<number> }>((s) => {
+        expectTypeOf(s.renderRows).toEqualTypeOf<Signal<RenderRow<Invoice>[]>>();
+        expectTypeOf(s.totalRowCount).toEqualTypeOf<Signal<number>>();
+        return { n: computed(() => s.totalRowCount()) };
+      });
+
+      void sees;
     });
   });
 });
