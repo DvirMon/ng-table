@@ -1,10 +1,10 @@
 ---
 title: State Layer Reference — withGrouping()
 type: architecture
-version: 1.1
-date: 2026-09-10
+version: 1.2
+date: 2026-09-13
 capability: grouping
-spec: drafted
+spec: drilled
 code: partial
 audience: developers
 parent: ../architecture.md
@@ -12,54 +12,50 @@ parent: ../architecture.md
 
 # withGrouping()
 
-> **⚠️ Two sections superseded — D1/D3/D4/D9/D11/D16/D17 shipped (issues #6, #58, #59, #65); D6–D8
-> still unbuilt, read the decisions first for those.**
+> **⚠️ Two sections superseded — D1–D17 all settled and shipped (issues #6, #58, #59, #60, #65),
+> except the two items `2-decisions.md`'s Open section leaves deliberately unbuilt.**
 > [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D17) settles the
 > API surface, and [work/with-grouping/3-spec.md](../work/with-grouping/3-spec.md) (`status: ready`)
 > writes it up as a contract. Superseded here:
 > - **Methods** — `setGrouping()`/`clearGrouping()` never shipped. The real write surface is
 >   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
->   (D1, shipped) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. A
->   `groupingRule` overlay and declarative `applyGrouping()` sugar (D6–D8) are still unbuilt (#60).
->   Cluster order is `groupOrder` on `withGrouping()`'s config (D4, shipped, issue #58) — omitted,
->   stable first-occurrence order; supplied, orders siblings within a parent by their contents,
->   fully decoupled from `sorting` (D5).
-> - **Single-level only** — wrong, and no longer just "reopened": `withGrouping()` ships
->   multi-level clustering today. `grouping` is `string[]`, ordered, index 0 = outermost level
->   (D3), with aggregation computed at every depth from that cluster's own leaves, never a
->   descendant's already-computed aggregate (D9). Grand totals and pivoting stay out of scope
->   (D9).
-> - **Group selection has no cascade** — `rowsOf(group)` (D16, shipped, issue #65) returns every
->   leaf row beneath a header, at any depth; the consumer owns any selection cascade. A group's
->   row count is `rowsOf(group).length` — there is no separate count field on `RenderRow`.
+>   (D1) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. On top of that,
+>   `table.grouping` folds an optional `groupingRule`/`rules`-array/schema-fn overlay over that base
+>   value — `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #60). Cluster
+>   order is `groupOrder` on `withGrouping()`'s config (D4, issue #58) — omitted, stable
+>   first-occurrence order; supplied, orders siblings within a parent by their contents, fully
+>   decoupled from `sorting` (D5). Full contract: 3-spec.md's own Methods section — not restated
+>   here.
+> - **Single-level only** — wrong. `withGrouping()` ships multi-level clustering. `grouping` is
+>   `string[]`, ordered, index 0 = outermost level (D3), with aggregation computed at every depth
+>   from that cluster's own leaves, never a descendant's already-computed aggregate (D9). Grand
+>   totals and pivoting stay out of scope (D9).
+> - **Group selection has no cascade** — `rowsOf(group)` (D16, issue #65) returns every leaf row
+>   beneath a header, at any depth; the consumer owns any selection cascade. A group's row count is
+>   `rowsOf(group).length` — there is no separate count field on `RenderRow`.
 >
 > - **Collapse/expand shipped** — `withGrouping()` reads `withExpansion()`'s `expandedRows` set
->   optionally, via the `composed` feature-to-feature seam (D11, shipped, issue #59). Collapsing a
->   group id omits its descendants from `renderRows()`; the header itself always still renders.
->   `rowsOf(group)` stays correct under collapse (D17, shipped, issue #59) — it re-derives the
->   cluster tree from `rows()` (pipeline output) rather than scanning `renderRows()`.
+>   optionally, via the `composed` feature-to-feature seam (D11, issue #59). Collapsing a group id
+>   omits its descendants from `renderRows()`; the header itself always still renders. `rowsOf(group)`
+>   stays correct under collapse (D17, issue #59) — it re-derives the cluster tree from `rows()`
+>   (pipeline output) rather than scanning `renderRows()`.
 >
-> Still current, unshipped: the `groupingRule` base+overlay fold and
-> `applyGrouping()`/`applyGroupingAsync()` sugar (D6–D8, #60). Read the decisions doc before
-> building this.
+> Still open, deliberately unbuilt: `manual: true` and routing a header click to `groupOrder` — see
+> `2-decisions.md`'s Open section. Neither blocks the rest of this contract.
 
 ## Executive Summary
 
-Single-level grouping (one active group-by column at a time) with per-column aggregate computation. Group collapse/expand state is deliberately delegated to `withExpansion()` rather than duplicated — but `withExpansion()` is an optional composition, not a hard requirement (see Compile-Time Dependencies, decided 2026-07-31).
+Multi-level grouping (`table.grouping: string[]`, D3) with per-column aggregate computation, resolved from a base value optionally overlaid by a declarative `groupingRule`/rules-array/schema-fn (D6–D8, issue #60). Group collapse/expand state is deliberately delegated to `withExpansion()` rather than duplicated — but `withExpansion()` is an optional composition, not a hard requirement (see Compile-Time Dependencies, decided 2026-07-31).
 
 ## State Shape
 
-```ts
-interface GroupingState {
-  grouping: string | null;   // single column id, or null = no grouping active
-}
-```
-
-> Note: this diverges from the `string[]` shape originally sketched in `overview.md` (which anticipated possible multi-level nesting). This session confirmed **single-level only** — the shape is corrected here to `string | null`.
+See [3-spec.md](../work/with-grouping/3-spec.md) for the current contract —
+`table.grouping: WritableView<string[], GroupingUpdater<TRow>>`, folding a base value with an
+optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
 
 ## Behavior
 
-- **Single-level only** — one group-by column active at a time. No nested/hierarchical multi-level grouping.
+- **Multi-level, ordered.** `grouping: string[]` — index 0 is the outermost level; aggregation runs at every depth from that cluster's own leaves, never a descendant's already-computed aggregate (D9). See 3-spec.md.
 - **Collapse/expand:** group rows are treated as rows with an id; when `withExpansion()` is also composed, its `expandedRows: Set<id>` tracks whether a given group is expanded or collapsed. `withGrouping()` does not maintain its own collapse state.
 - **Static grouping (no `withExpansion()`):** valid standalone use. All group rows render flat/always-expanded — no collapse affordance exists without `withExpansion()` in the feature list.
 - **UI-layer split:** the store-level optionality above is only half the story — the template layer needs its own opt-in. Group row rendering is wrapped with an expand directive/template outlet only when the consumer chooses to (e.g. an `*ngpExpandableRow`-style directive reading/toggling `expandedRows`). Store never dictates template structure; it only exposes `expandedRows` for that directive to consume when present. This split (store composition + template composition, independently opt-in) is the actual mechanism behind "expansion is optional" — not a single switch.
@@ -68,10 +64,10 @@ interface GroupingState {
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `setGrouping(columnId: string \| null)` | Set (or clear, via `null`) the active group-by column |
-| `clearGrouping()` | Convenience method equivalent to `setGrouping(null)` |
+`setGrouping()`/`clearGrouping()` never shipped. See [3-spec.md](../work/with-grouping/3-spec.md)'s
+Methods section for the real write surface — `table.grouping.update(updater)`, the
+`mutations/update-grouping.ts` updater factories, and the `groupingRule`/`applyGrouping()`/
+`applyGroupingAsync()` declarative overlay (D6–D8, issue #60). Not restated here.
 
 ## `manual` Contract
 
@@ -169,8 +165,8 @@ Researched against three popular table libraries before locking this shape:
 
 ## Competitive position
 
-**Verdict: missing** — spec drafted, zero code: no `withGrouping()`, no `aggregateFn` consumption,
-no `'group'` pipeline/render stage claimed though both slots are reserved.
+**Verdict: shipped** — see the banner above for what's built (D1–D17) vs. deliberately deferred
+(`manual: true`, header-click routing to `groupOrder`).
 
 > **Scope sentence corrected 2026-09-10.** This paragraph previously read "the single-level scope
 > **deliberately** sidesteps TanStack's unresolved depth-0 aggregation-correctness bug by not
