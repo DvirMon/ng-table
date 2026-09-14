@@ -33,7 +33,7 @@
   <div class="filtering-story__filters">
     <div
       class="filtering-story__field"
-      [class.filtering-story__field--active]="isStatusActive()"
+      [class.filtering-story__field--active]="filters.status().isActive()"
     >
       <span class="filtering-story__label">Status (equals)</span>
       <select [formField]="filterForm.status">
@@ -46,7 +46,7 @@
 
     <div
       class="filtering-story__field"
-      [class.filtering-story__field--active]="isCustomerActive()"
+      [class.filtering-story__field--active]="filters.customer().isActive()"
     >
       <span class="filtering-story__label">Customer (contains)</span>
       <input type="text" [formField]="filterForm.customer" />
@@ -54,7 +54,7 @@
 
     <div
       class="filtering-story__field"
-      [class.filtering-story__field--active]="isTagsActive()"
+      [class.filtering-story__field--active]="filters.tags().isActive()"
     >
       <span class="filtering-story__label">Tags (hasAny)</span>
       <div class="filtering-story__checks">
@@ -77,7 +77,7 @@
     <span class="story-host__counter">selected ids: {{ selectedIdsLabel() || 'none' }}</span>
   </div>
 
-  @if (hasActiveCriteria()) {
+  @if (filters().isActive()) {
     <p class="filtering-story__notice" role="status">{{ hiddenSelectionNotice }}</p>
   }
 

@@ -101,10 +101,14 @@ error at the wiring expression.
 **Structural compatibility is preserved.** An identically shaped row type still works, and so does a
 wider one carrying extra fields. Only genuinely unrelated row types are rejected.
 
-**If you hit this error:** annotate the filter set with the row type the table actually holds —
-`createFilters<InvoiceRow>(…)`, not an inferred or unrelated one. The error is reporting a real
-mismatch that previously ran silently; widening the annotation to make it compile reintroduces the
-bug.
+**If you hit this error:** give the filter set the row type the table actually holds, through its
+first argument — the table's own row data, or `rowOf<InvoiceRow>()` where no data exists yet. The
+error is reporting a real mismatch that previously ran silently; widening the carrier to make it
+compile reintroduces the bug.
+
+> **Corrected after #110.** This paragraph previously said to annotate with
+> `createFilters<InvoiceRow>(…)`. That no longer compiles: the row type comes from the carrier
+> argument, and naming `TRow` explicitly forces the schema's own type parameter to be named too.
 
 ## Consequences
 

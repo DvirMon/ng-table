@@ -159,13 +159,13 @@ describe('createFilters — state semantics', () => {
     expect(filters().value()).toEqual({ status: null, search: '' });
   });
 
-  it('active() omits empty entries', () => {
+  it('criteria() omits empty entries', () => {
     const filters = build((path) => [
       equals(path.status),
       contains(path.customer, { as: 'search' }),
     ]);
     filters.status().value.set('open');
-    expect(filters().active()).toEqual({ status: 'open' });
+    expect(filters().criteria()).toEqual({ status: 'open' });
   });
 
   it('reset() with no arg reverts to source, or empty when no source', () => {
@@ -205,11 +205,11 @@ describe('createFilters — emptyValue override', () => {
   it("treats the declared empty value as empty — a native <select>'s '' deactivates the filter", () => {
     const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
     filters.status().value.set('open');
-    expect(filters().active()).toEqual({ status: 'open' });
+    expect(filters().criteria()).toEqual({ status: 'open' });
 
     filters.status().value.set('');
-    expect(filters().active()).toEqual({});
-    expect(filters.status().active()).toBeUndefined();
+    expect(filters().criteria()).toEqual({});
+    expect(filters.status().criterion()).toBeUndefined();
   });
 
   it("no longer treats the rule's own empty value as empty once overridden", () => {
@@ -219,7 +219,7 @@ describe('createFilters — emptyValue override', () => {
     // typed caller cannot reach this. The runtime still honours it, which is what this guards.
     filters.status().value.set(null);
 
-    expect(filters().active()).toEqual({ status: null });
+    expect(filters().criteria()).toEqual({ status: null });
   });
 
   it('reset(null) returns to the declared empty value', () => {
@@ -231,9 +231,9 @@ describe('createFilters — emptyValue override', () => {
 
   it('compares structurally, so an object empty value works on any rule', () => {
     const filters = build((path) => [inRange(path.amount, { emptyValue: { min: 0, max: null } })]);
-    expect(filters().active()).toEqual({});
+    expect(filters().criteria()).toEqual({});
     filters.amount().value.set({ min: 100, max: null });
-    expect(filters().active()).toEqual({ amount: { min: 100, max: null } });
+    expect(filters().criteria()).toEqual({ amount: { min: 100, max: null } });
   });
 
   it('an explicit isEmpty still wins over emptyValue on filter()', () => {
@@ -244,32 +244,32 @@ describe('createFilters — emptyValue override', () => {
       }),
     ]);
     expect(filters.tags().value()).toEqual(['none']);
-    expect(filters().active()).toEqual({ tags: ['none'] });
+    expect(filters().criteria()).toEqual({ tags: ['none'] });
     filters.tags().value.set([]);
-    expect(filters().active()).toEqual({});
+    expect(filters().criteria()).toEqual({});
   });
 });
 
 describe('createFilters — sources', () => {
-  it('untouched with no source: not dirty, not in active()', () => {
+  it('untouched with no source: not dirty, not in criteria()', () => {
     const filters = build((path) => [equals(path.status)]);
     expect(filters.status().dirty()).toBe(false);
-    expect(filters().active()).toEqual({});
+    expect(filters().criteria()).toEqual({});
   });
 
-  it('untouched with a source present: not dirty, is in active()', () => {
+  it('untouched with a source present: not dirty, is in criteria()', () => {
     const bounds = signal({ min: 0, max: 10000 });
     const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     expect(filters.amount().dirty()).toBe(false);
-    expect(filters().active()).toEqual({ amount: { min: 0, max: 10000 } });
+    expect(filters().criteria()).toEqual({ amount: { min: 0, max: 10000 } });
   });
 
-  it('a user write makes it dirty and keeps it in active()', () => {
+  it('a user write makes it dirty and keeps it in criteria()', () => {
     const bounds = signal({ min: 0, max: 10000 });
     const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().value.set({ min: 100, max: 500 });
     expect(filters.amount().dirty()).toBe(true);
-    expect(filters().active()).toEqual({ amount: { min: 100, max: 500 } });
+    expect(filters().criteria()).toEqual({ amount: { min: 100, max: 500 } });
   });
 
   it('writing exactly the source value is dirty=false but still active', () => {
@@ -277,15 +277,15 @@ describe('createFilters — sources', () => {
     const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().value.set({ min: 0, max: 10000 });
     expect(filters.amount().dirty()).toBe(false);
-    expect(filters().active()).toEqual({ amount: { min: 0, max: 10000 } });
+    expect(filters().criteria()).toEqual({ amount: { min: 0, max: 10000 } });
   });
 
-  it('reset(null) is dirty and removed from active()', () => {
+  it('reset(null) is dirty and removed from criteria()', () => {
     const bounds = signal({ min: 0, max: 10000 });
     const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().reset(null);
     expect(filters.amount().dirty()).toBe(true);
-    expect(filters().active()).toEqual({});
+    expect(filters().criteria()).toEqual({});
   });
 
   it('a later source change does not stomp a dirty filter value', () => {
@@ -382,7 +382,7 @@ describe('createFilters — errors (ADR-0014)', () => {
     }
   });
 
-  it('a failed filter still appears in active()', () => {
+  it('a failed filter still appears in criteria()', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const filters = build((path) => [
@@ -394,7 +394,7 @@ describe('createFilters — errors (ADR-0014)', () => {
           { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
         ),
       ]);
-      expect(filters().active()).toEqual({ broken: 'x' });
+      expect(filters().criteria()).toEqual({ broken: 'x' });
     } finally {
       reportSpy.mockRestore();
     }
@@ -423,7 +423,7 @@ describe('createFilters — errors (ADR-0014)', () => {
 });
 
 describe('createFilters — applyWhen', () => {
-  it('excludes the gated rule from active() while the condition is false', () => {
+  it('excludes the gated rule from criteria() while the condition is false', () => {
     const filters = build((path) => [
       equals(path.category),
       applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
@@ -431,7 +431,7 @@ describe('createFilters — applyWhen', () => {
       ]),
     ]);
     filters.subCategory().value.set('widgets');
-    expect(filters().active()).toEqual({});
+    expect(filters().criteria()).toEqual({});
   });
 
   it('includes the gated rule once the condition becomes true, without redeclaring the schema', () => {
@@ -442,10 +442,10 @@ describe('createFilters — applyWhen', () => {
       ]),
     ]);
     filters.subCategory().value.set('widgets');
-    expect(filters().active()).toEqual({});
+    expect(filters().criteria()).toEqual({});
 
     filters.category().value.set('electronics');
-    expect(filters().active()).toEqual({ category: 'electronics', subCategory: 'widgets' });
+    expect(filters().criteria()).toEqual({ category: 'electronics', subCategory: 'widgets' });
   });
 });
 
@@ -638,7 +638,7 @@ describe('createFilters — matcher()', () => {
         status: string | null;
         category: string | null;
       }>();
-      expectTypeOf(filters().active()).toEqualTypeOf<
+      expectTypeOf(filters().criteria()).toEqualTypeOf<
         Partial<{ status: string | null; category: string | null }>
       >();
     });

@@ -100,16 +100,6 @@ export class SelectionFilteringStoryHostComponent {
   protected readonly selectedIdsLabel = computed(() =>
     [...this.table.selectedRows()].join(', '),
   );
-  protected readonly isStatusActive = computed(
-    () => this.filters.status().active() !== undefined,
-  );
-  protected readonly isCustomerActive = computed(
-    () => this.filters.customer().active() !== undefined,
-  );
-  protected readonly isTagsActive = computed(() => this.filters.tags().active() !== undefined);
-  protected readonly hasActiveCriteria = computed(
-    () => Object.keys(this.filters().active()).length > 0,
-  );
 
   protected isSelected(id: RowId): boolean {
     return this.table.selectedRows().has(id);

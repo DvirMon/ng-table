@@ -106,7 +106,7 @@ export function createFilterEvaluatorFrom<TRow>(
       if (record.condition && !record.condition(buildValueOfContext<TRow>(internal))) {
         continue;
       }
-      const criterion = node.active();
+      const criterion = node.criterion();
       if (criterion === undefined) {
         continue; // empty criterion — skip, never a candidate for a throw
       }

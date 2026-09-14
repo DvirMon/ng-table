@@ -37,7 +37,7 @@ interface ActiveCriterion {
 }
 
 /** Declared once so the summary row and its × buttons stay typed — `Object.entries()` over
- * `active()` would hand back a bare `string` key that cannot index the filter set. */
+ * `criteria()` would hand back a bare `string` key that cannot index the filter set. */
 const CLIENT_FILTER_KEYS = [
   'status',
   'customer',
@@ -195,32 +195,20 @@ export class ClientFilteringStoryHostComponent {
   protected readonly filterReports = signal<readonly string[]>([]);
   protected readonly savedFilterNotice = signal<string | null>(null);
 
-  protected readonly isStatusActive = computed(
-    () => this.filters.status().active() !== undefined,
-  );
-  protected readonly isCustomerActive = computed(
-    () => this.filters.customer().active() !== undefined,
-  );
-  protected readonly isAmountActive = computed(
-    () => this.filters.amount().active() !== undefined,
-  );
-  protected readonly isIssuedAtActive = computed(
-    () => this.filters.issuedAt().active() !== undefined,
-  );
-  protected readonly isTagsActive = computed(() => this.filters.tags().active() !== undefined);
-
+  /** Labels only — the per-key and root booleans are shipped members, read straight from the
+   *  template (`filters.status().isActive()`, `filters().isActive()`). */
   protected readonly activeCriteria = computed<ActiveCriterion[]>(() =>
-    CLIENT_FILTER_KEYS.filter((key) => this.filters[key]().active() !== undefined).map(
-      (key) => ({ key, label: formatCriterion(this.filters[key]().value()) }),
-    ),
+    CLIENT_FILTER_KEYS.filter((key) => this.filters[key]().isActive()).map((key) => ({
+      key,
+      label: formatCriterion(this.filters[key]().value()),
+    })),
   );
-  protected readonly hasActiveCriteria = computed(() => this.activeCriteria().length > 0);
   /** The shipped member, never story-local arithmetic. */
   protected readonly matchCount = computed(() => this.table.totalRowCount());
   protected readonly rowCount = computed(() => this.table.value().length);
   protected readonly hasNoData = computed(() => this.rowCount() === 0);
   protected readonly isFilteredToNothing = computed(
-    () => this.hasActiveCriteria() && this.matchCount() === 0 && !this.hasNoData(),
+    () => this.filters().isActive() && this.matchCount() === 0 && !this.hasNoData(),
   );
 
   private readonly destroyRef = inject(DestroyRef);

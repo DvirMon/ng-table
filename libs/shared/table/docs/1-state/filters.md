@@ -28,9 +28,8 @@ readonly filters = createFilters(this.data, (path) => [
 ]);
 ```
 
-> **One member set is documented ahead of its code.** `criterion()` / `criteria()` / `isActive()`
-> replace `active()` throughout this document (R49, decided in `#96`). `src/filters/` still spells
-> both halves `active()` as of this revision; everything else described here is shipped.
+> **`criterion()` / `criteria()` / `isActive()` replace `active()`** (R49, decided in `#96`).
+> Shipped — `src/filters/` spells all three as documented.
 
 > **The domain lives in `src/filters/`** — a top-level sibling of `api/`, `engine/` and
 > `directives/`, with its own barrel (`#106`, [ADR-0004](../adr/0004-table-source-layout.md)'s
@@ -266,6 +265,15 @@ A filter node carries the same split: `criterion()` returns its criterion or `un
 empty, `isActive()` answers the boolean (R49). There is no `active()` on either — a name that
 read as a predicate while returning data was the reason for the split, and asking "is this
 narrowing?" no longer means testing a returned object for emptiness.
+
+**Every derived member is a `computed`** — `criterion`, `isActive` and `dirty` on a node,
+`criteria`, `isActive` and `dirty` on the root. Reading one in a template per row, per chip or per
+field costs a cache hit, not a recomputation, which is what makes `isActive()` affordable at the
+binding site where the old `active() !== undefined` was hoisted into a host `computed` by hand.
+
+`matcher()` is the one derived member that is **not** memoized, and deliberately: each call builds
+its own evaluator so ADR-0014's reporting is scoped to one evaluation. See
+[One `matcher()` call is one evaluation](#one-matcher-call-is-one-evaluation).
 
 
 **Why `matcher()` is on the root rather than a top-level member.** `Filters` is an intersection

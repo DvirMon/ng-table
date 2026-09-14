@@ -143,24 +143,12 @@ export class ServerFilteringStoryHostComponent {
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly tagOptions = TAG_OPTIONS;
 
-  protected readonly isStatusActive = computed(
-    () => this.filters.status().active() !== undefined,
-  );
-  protected readonly isAmountActive = computed(
-    () => this.filters.amount().active() !== undefined,
-  );
   /** The late-default race, made visible: dirty means the typed value is no longer following
    * the declared `source`, so an arriving server default loses. */
   protected readonly isAmountDirty = computed(() => this.filters.amount().dirty());
-  protected readonly isExcludedTagsActive = computed(
-    () => this.filters.excludedTags().active() !== undefined,
-  );
-  protected readonly hasActiveCriteria = computed(
-    () => Object.keys(this.filters().active()).length > 0,
-  );
   protected readonly hasNoMatches = computed(
     () =>
-      this.hasActiveCriteria() &&
+      this.filters().isActive() &&
       this.serverTotal() === 0 &&
       !this.isLoading() &&
       this.loadError() === null,
@@ -194,7 +182,7 @@ export class ServerFilteringStoryHostComponent {
 
   private currentRequest(): InvoiceRequest {
     return {
-      params: toQueryParams(this.filters().active()),
+      params: toQueryParams(this.filters().criteria()),
       options: { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() },
     };
   }

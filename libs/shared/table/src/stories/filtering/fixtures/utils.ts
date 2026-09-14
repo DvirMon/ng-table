@@ -89,7 +89,7 @@ function formatDateBound(date: Date | null): string {
 }
 
 /** One-line label for a summary-row entry. Reads a criterion whose shape the row does not know
- * statically — `filters().active()` is keyed by name, not by rule kind. */
+ * statically — `filters().criteria()` is keyed by name, not by rule kind. */
 export function formatCriterion(value: unknown): string {
   if (isRangeCriterion(value)) {
     return `${value.min ?? '∗'} – ${value.max ?? '∗'}`;

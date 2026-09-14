@@ -27,12 +27,15 @@ export interface FilterOptions<TSource = unknown, TAs extends string = string> {
 }
 
 /**
- * One filter's reactive state. `active()` returns `undefined` when the criterion is empty —
- * the primitive `Filters<TRow>.active()` (root) composes into "empties omitted".
+ * One filter's reactive state. `criterion()` returns `undefined` when the criterion is empty —
+ * the root's `criteria()` composes those into "empties omitted" (R49).
  */
 export interface FilterNode<TCriterion> {
   value: WritableSignal<TCriterion>;
-  active(): TCriterion | undefined;
+  /** The effective criterion — what the engine applies, or `undefined` when this filter is inert. */
+  criterion(): TCriterion | undefined;
+  /** Whether this filter currently narrows. The same gate `criterion()` reads, as a boolean. */
+  isActive(): boolean;
   reset(value?: TCriterion | null): void;
   dirty(): boolean;
 }
@@ -51,7 +54,10 @@ export interface FiltersRoot<TRow, TState extends Record<string, unknown>> {
    * with no adapter and no sync effect (R18).
    */
   value: WritableSignal<TState>;
-  active(): Partial<TState>;
+  /** Every active filter's effective criterion, empties omitted — the request-param shape. */
+  criteria(): Partial<TState>;
+  /** Whether any filter currently narrows. */
+  isActive(): boolean;
   /**
    * `Partial<TState>`, not `TState`: a key the object omits is reset to its declared source,
    * which is what makes restoring a partial snapshot a complete state. Matches what the

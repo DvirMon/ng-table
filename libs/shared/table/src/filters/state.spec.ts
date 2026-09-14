@@ -193,7 +193,7 @@ describe('filters root — a Signal Form binds to it directly', () => {
     filterForm.customer().value.set('Acme');
 
     expect(filters.customer().value()).toBe('Acme');
-    expect(filters().active()).toEqual({ customer: 'Acme' });
+    expect(filters().criteria()).toEqual({ customer: 'Acme' });
   });
 
   it('shows a node write in the form field, with no sync effect between them', () => {

@@ -42,7 +42,7 @@ function matchesExcludedTags(row: InvoiceRow, excluded: string | null): boolean 
 
 /**
  * Stand-in server for the filtering stories — deliberately dumb. It narrows by exactly the
- * params the host serializes from `filters().active()` and counts `total` over the **filtered**
+ * params the host serializes from `filters().criteria()` and counts `total` over the **filtered**
  * set, so the server story can render the server's own number rather than an approximation
  * from one page. A query that matches nothing returns `total: 0`.
  */

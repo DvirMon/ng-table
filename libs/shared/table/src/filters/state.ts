@@ -86,23 +86,29 @@ export function buildFilterState<TCriterion>(
     }
   };
 
-  const active = (): TCriterion | undefined => (record.isEmpty(value()) ? undefined : value());
+  const criterion = computed(() => (record.isEmpty(value()) ? undefined : value()));
+  const isActive = computed(() => criterion() !== undefined);
 
-  return { node: { value, active, reset, dirty }, sourceValue };
+  return { node: { value, criterion, isActive, reset, dirty }, sourceValue };
 }
 
-/** Wraps a base node so `active()` also depends on `applyWhen`'s condition — the criterion,
- *  `reset`, and `dirty` are unaffected by the gate. */
+/** Wraps a base node so the gate applies to `criterion()`, and to `isActive()` through it — the
+ *  criterion value, `reset`, and `dirty` are unaffected by the gate. */
 export function gateByCondition<TRow, TCriterion>(
   base: FilterNode<TCriterion>,
   condition: (ctx: FilterValueOfContext<TRow>) => boolean,
   ctx: FilterValueOfContext<TRow>
 ): FilterNode<TCriterion> {
+  const criterion = computed(() => (condition(ctx) ? base.criterion() : undefined));
+
   return {
     value: base.value,
     reset: base.reset,
     dirty: base.dirty,
-    active: (): TCriterion | undefined => (condition(ctx) ? base.active() : undefined),
+    criterion,
+    // Derived from this node's own gated `criterion`, never `base.isActive()` — a gated-off
+    // filter is not active even when its criterion is non-empty.
+    isActive: computed(() => criterion() !== undefined),
   };
 }
 
@@ -157,18 +163,43 @@ export function buildFiltersRoot<TRow, TState extends Record<string, unknown>>(
   internal: FiltersInternal<TRow>
 ): FiltersRoot<TRow, TState> {
   const { nodesByKey } = internal;
+
+  const criteria = computed(() => {
+    const result: Record<string, unknown> = {};
+    for (const [key, node] of nodesByKey) {
+      const criterion = node.criterion();
+      if (criterion !== undefined) {
+        result[key] = criterion;
+      }
+    }
+    return result as Partial<TState>;
+  });
+
+  // Short-circuits on the first active node rather than composing `criteria()` and measuring it
+  // — the common template read is "does anything narrow", not "what narrows". Sound under
+  // `computed`: the early exit leaves later nodes untracked, but they cannot change a `true`.
+  const isActive = computed(() => {
+    for (const node of nodesByKey.values()) {
+      if (node.isActive()) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  const dirty = computed(() => {
+    for (const node of nodesByKey.values()) {
+      if (node.dirty()) {
+        return true;
+      }
+    }
+    return false;
+  });
+
   return {
     value: createRootValueSignal<TState>(nodesByKey),
-    active: (): Partial<TState> => {
-      const result: Record<string, unknown> = {};
-      for (const [key, node] of nodesByKey) {
-        const criterion = node.active();
-        if (criterion !== undefined) {
-          result[key] = criterion;
-        }
-      }
-      return result as Partial<TState>;
-    },
+    criteria,
+    isActive,
     reset: (next?: Partial<TState> | null): void => {
       for (const [key, node] of nodesByKey) {
         if (next === undefined) {
@@ -182,15 +213,10 @@ export function buildFiltersRoot<TRow, TState extends Record<string, unknown>>(
         }
       }
     },
-    dirty: (): boolean => {
-      for (const node of nodesByKey.values()) {
-        if (node.dirty()) {
-          return true;
-        }
-      }
-      return false;
-    },
+    dirty,
     // A fresh evaluator per call — one call is one evaluation, with its own error-dedup scope.
+    // Deliberately NOT a `computed` — memoizing it would share one error-dedup scope across
+    // every caller, which is the opposite of ADR-0014's once-per-filter-per-evaluation rule.
     matcher: (): ((row: TRow) => boolean) => createFilterEvaluatorFrom(internal).matchesRow,
   };
 }
