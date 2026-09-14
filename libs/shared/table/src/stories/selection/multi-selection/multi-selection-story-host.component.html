@@ -1,0 +1,85 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Tick rows to accumulate a selection; Space toggles the focused checkbox. The header checkbox
+    selects every selectable row and, ticked again, clears. Locked rows stay in the tab order and
+    are skipped by select-all — lock a selected row and its mark survives, but an explicit clear
+    still removes it.
+  </p>
+
+  <div
+    class="selection-story__banner"
+    [class.selection-story__banner--empty]="selectedCount() === 0"
+    role="status"
+  >
+    <span>{{ selectedCount() }} selected</span>
+  </div>
+
+  <div class="story-host__toolbar">
+    <button type="button" (click)="lockSelectedRow()">Lock this row</button>
+    <button type="button" (click)="restoreSavedSelection()">Restore a saved selection</button>
+    <button type="button" (click)="deleteSelectedRowExternally()">
+      Someone else deleted this row
+    </button>
+  </div>
+
+  <table class="story-host__table">
+    <thead>
+      <tr>
+        <th class="story-host__cell selection-story__cell--control">
+          <input
+            class="selection-story__control"
+            type="checkbox"
+            aria-label="Select all selectable rows"
+            [checked]="isEverySelectableRowSelected()"
+            [indeterminate]="isSomeSelectableRowSelected()"
+            (change)="toggleAllRowSelection()"
+          />
+        </th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+      </tr>
+    </thead>
+    <tbody>
+      @let selectedRowIds = table.selectedRows();
+
+      @for (row of table.renderRows(); track row.id) {
+        @let isSelected = selectedRowIds.has(row.id);
+        @let isLocked = lockedRowIds().has(row.id);
+
+        <tr
+          [class.selection-story__row--selected]="isSelected"
+          [class.selection-story__row--locked]="isLocked"
+          [attr.aria-selected]="isSelected"
+        >
+          <td class="story-host__cell selection-story__cell--control">
+            <input
+              class="selection-story__control"
+              type="checkbox"
+              [checked]="isSelected"
+              [attr.aria-disabled]="isLocked ? true : null"
+              [attr.aria-label]="'Select ' + (row.data?.name ?? row.id)"
+              (change)="toggleRowSelection(row.id)"
+            />
+          </td>
+          <td class="story-host__cell">
+            {{ row.data?.name }}
+            @if (isLocked) {
+              <span class="selection-story__lock-badge">locked</span>
+            }
+          </td>
+          <td class="story-host__cell">{{ row.data?.dept }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (notice(); as noticeText) {
+    <p class="selection-story__notice" role="status">{{ noticeText }}</p>
+  }
+
+  <div class="selection-story__event-log" role="log" aria-label="selectionChanged deltas">
+    @for (entry of eventLog.entries(); track $index) {
+      <span class="selection-story__event">{{ entry }}</span>
+    }
+  </div>
+</div>
