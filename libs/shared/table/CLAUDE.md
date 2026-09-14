@@ -259,6 +259,18 @@ is 15 features (a 16th argument matches no overload); the runtime accepts any nu
 - No content/structural tests (rendering, DOM projection). Structural tests belong in directive specs (`docs/3-ui/directives/*.spec.ts`), not store tests.
 - Mock row data in `table.mock.ts` (exported, reusable); don't inline fixtures.
 
+## Typechecking
+
+```bash
+nx run shared-table:typecheck     # ngc -p tsconfig.lib.json --noEmit
+```
+
+Not bare `tsc` — it never opens a `.html`, so a template-only error passes clean and surfaces
+only in Storybook. Highest risk: `src/stories/**/*-story-host.component.html`. `ngc` aborts at
+the first `.ts` error before reaching the template phase, so a run with source errors checked no
+templates — fix, re-run, confirm the second run is clean. Rationale:
+`.claude/rules/typecheck-angular-templates.md`.
+
 ## Conventions NOT documented here
 
 Stack-wide patterns (TypeScript, Angular, monorepo build) are in the root repo's `CLAUDE.md` and the library's parent `CONTEXT.md`. This file is table-specific only.
