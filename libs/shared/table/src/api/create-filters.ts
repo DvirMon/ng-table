@@ -1,11 +1,10 @@
 import { Injector, inject, runInInjectionContext } from '@angular/core';
-import { attachFiltersInternal, buildValueOfContext, type FiltersInternal } from './filters/evaluator';
+import { buildValueOfContext, type FiltersInternal } from './filters/evaluator';
 import { buildFiltersPath, createFilterRecorderSession, withActiveFilterRecorder } from './filters/recorder';
 import { buildFilterState, buildFiltersObject, gateByCondition } from './filters/state';
 import { pathsOf, validateRecords } from './filters/validate';
 import type { FilterNode, FilterValueOfContext, Filters, FiltersPath } from './filters.types';
 
-export { createFilterEvaluator } from './filters/evaluator';
 export {
   assertFilterPathIsCurrent,
   buildFiltersPath,
@@ -68,9 +67,6 @@ export function createFilters<TRow, TState extends Record<string, unknown> = Rec
       }
     }
 
-    const filters = buildFiltersObject<TRow, TState>(internal);
-    attachFiltersInternal(filters, internal);
-
-    return filters;
+    return buildFiltersObject<TRow, TState>(internal);
   });
 }

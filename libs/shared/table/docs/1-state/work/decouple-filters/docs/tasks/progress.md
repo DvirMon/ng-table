@@ -1,44 +1,75 @@
-# Implementation Progress — Table: migrate every filtering call site to the predicate list, split specs by ownership
+# Implementation Progress — decouple-filters (`#101`)
 
-**Issue:** [#104](https://github.com/DvirMon/acme/issues/104)
-**Epic:** [#101](https://github.com/DvirMon/acme/issues/101) · **Blocks:** #105
-**Status:** 5 / 5 complete
+**Epic:** [#101](https://github.com/DvirMon/acme/issues/101)
+**Status:** 8 / 13 complete
+
+Three issues remain, one PR each, strictly sequential. Steps 1–5 were `#104` and have landed.
+
+## `#104` — migrate every call site, split specs by ownership · ✅ merged (`6627b0c`)
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 1 | [Migrate the five story hosts to the predicate list](step-1-migrate-story-hosts.plan.md) | `code` | ✅ done | — |
-| 2 | [Move the criterion-map typing assertions into the filter model's own spec](step-2-move-criterion-map-typing.plan.md) | `test` | ✅ done | — |
-| 3 | [Split `with-filtering.spec.ts` by ownership](step-3-split-feature-spec.plan.md) | `test` | ✅ done | — |
-| 4 | [Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md) | `test` | ✅ done | — |
-| 5 | [Update the prose that describes the old config shape](step-5-update-prose.plan.md) | `docs` | ✅ done | — |
+| 1 | [Migrate the five story hosts to the predicate list](step-1-migrate-story-hosts.plan.md) | `code` | ✅ done | `6627b0c` |
+| 2 | [Move the criterion-map typing assertions into the filter model's own spec](step-2-move-criterion-map-typing.plan.md) | `test` | ✅ done | `6627b0c` |
+| 3 | [Split `with-filtering.spec.ts` by ownership](step-3-split-feature-spec.plan.md) | `test` | ✅ done | `6627b0c` |
+| 4 | [Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md) | `test` | ✅ done | `6627b0c` |
+| 5 | [Update the prose that describes the old config shape](step-5-update-prose.plan.md) | `docs` | ✅ done | `6627b0c` |
+
+## `#105` — delete the coupled surface + ADR-0016 · PR 1 of 3
+
+| Step | Title | Type | Status | PR |
+|---|---|---|---|---|
+| 6 | [Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) | `test` | ✅ done | — |
+| 7 | [Delete the coupled filtering surface and the filters side channel](step-7-delete-coupled-surface.plan.md) | `code` | ✅ done | — |
+| 8 | [ADR-0016: the filter model is the consumer's, the table takes a predicate list](step-8-adr-0016.plan.md) | `docs` | ✅ done | — |
+
+## `#106` — relocate the filters domain · PR 2 of 3
+
+| Step | Title | Type | Status | PR |
+|---|---|---|---|---|
+| 9 | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md) | `code` | ⬚ pending | — |
+| 10 | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ⬚ pending | — |
+
+## `#107` — split the filtering docs by domain · PR 3 of 3
+
+| Step | Title | Type | Status | PR |
+|---|---|---|---|---|
+| 11 | [Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md) | `docs` | ⬚ pending | — |
+| 12 | [Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md) | `docs` | ⬚ pending | — |
+| 13 | [Split the older workspace's pointers and regenerate the roll-up](step-13-split-pointers-regenerate.plan.md) | `chore` | ⬚ pending | — |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 
 ## Dependency graph
 
 ```
-Step 1 (story hosts) ──────────────────────> Step 5 (prose)
-
-Step 2 (criterion-map typing) ─────────────> Step 3 (feature spec split)
-
-Step 4 (cross-feature specs) ── no edges
+6 ──> 7 ──> 8
+      │
+      └──> 9 ──> 10 ──┬──> 11 ──┐
+                      └──> 12 ──┴──> 13
 ```
 
-- **Parallel-safe:** `[1, 2, 4]` — three independent entry points, no shared file between them.
-- **Dependency:** `2 → 3` (the assertions must exist in `create-filters.spec.ts` before they are
-  deleted from `with-filtering.spec.ts`, so no revision of the branch is missing them);
-  `1 → 5` (prose is rewritten against the migrated hosts, not against the intention).
-- **Frontier at start:** `[1, 2, 4]`.
+- **Parallel-safe:** `[11, 12]` — two documents, two domains, no shared line.
+- **Dependency:** `6 → 7` (the spec must stop calling `createFilterEvaluator(filters)` before that
+  overload is deleted, so no revision of the branch fails to compile); `7 → 8` (the ADR records what
+  shipped); `7 → 9` (independence in code precedes rearranging the layout to say so); `9 → 10` (the
+  files must be in place before a barrel can define them); `10 → {11, 12}` (every doc path must be
+  post-move, or it is written twice); `{11, 12} → 13` (the roll-up is generated from frontmatter the
+  two doc steps own).
+- **Frontier at start:** `[6]`.
 
 ## Notes carried from planning
 
-- `#102` and `#103` have both landed. `predicates` already sits alongside `filters` in
-  `WithFilteringConfig`, and `matcher()` already exists on the filters root.
-- The plain-predicate story host (`stories/filtering/predicate-filtering/`) shipped with `#103`.
-  This issue owns only the five pre-existing hosts.
-- Two cases the issue describes as *moves* are already present in `create-filters.spec.ts` —
-  OR-within-a-group (`:587`), empty-criterion skipping (`:575`), and row-type accept/reject
-  (`:699`, `:709`). For those, Step 3 is a delete, not a copy. Only the criterion-map typing block
-  is a genuine move (Step 2).
-- The `filters` config field stays through this issue and is deleted by `#105` — the build is green
-  at every step.
+- Steps 8 and 9 have no edge between them, but sit in different PRs and are listed in PR order.
+  `#106` cannot open until `#105` merges.
+- The architecture doc's own sequencing labels (`S1`–`S6`) do not line up with these step numbers.
+  `S1`–`S3` shipped as `#102`–`#104`; this plan starts at its `S4`/`S5`/`S6`.
+- **Step 6 is not mechanical.** `matcher()` returns a fresh evaluator per call, so the two
+  per-filter error-dedup tests must hoist one `matcher()` result rather than inline it. A blind
+  find-and-replace passes for the wrong reason.
+- **Step 7 makes `predicates` required.** With `filters` gone it is the feature's only input. Every
+  caller already passes it (verified in `#104`); a `tsc` error here means a caller was missed, and
+  the fix is the caller, not re-widening the field.
+- **Step 9 conflicts with anything in flight inside the domain.** Land it alone and rebase.
+- `libs/shared/table/docs/status.md` and root `llms.txt` are generated. Never hand-edit; Step 13
+  runs `npm run table:status` and `npm run llms`.

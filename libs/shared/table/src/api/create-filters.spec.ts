@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { createFilterEvaluator, createFilters } from './create-filters';
+import { createFilters } from './create-filters';
 import {
   anyOf,
   applyWhen,
@@ -355,11 +355,11 @@ describe('createFilters — combination semantics (via the safe-evaluate guard)'
       });
     });
     filters.search().value.set('acme');
-    const evaluator = createFilterEvaluator(filters);
+    const matches = filters().matcher();
 
-    expect(evaluator.matchesRow(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
-    expect(evaluator.matchesRow(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
-    expect(evaluator.matchesRow(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
+    expect(matches(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
+    expect(matches(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
+    expect(matches(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
   });
 
   it('ANDs separate filters across the root', () => {
@@ -369,11 +369,11 @@ describe('createFilters — combination semantics (via the safe-evaluate guard)'
     });
     filters.status().value.set('open');
     filters.search().value.set('acme');
-    const evaluator = createFilterEvaluator(filters);
+    const matches = filters().matcher();
 
-    expect(evaluator.matchesRow(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
-    expect(evaluator.matchesRow(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
-    expect(evaluator.matchesRow(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
+    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
   });
 });
 
@@ -383,9 +383,9 @@ describe('createFilters — null/undefined cells', () => {
       equals(path.subCategory);
     });
     filters.subCategory().value.set('widgets');
-    const evaluator = createFilterEvaluator(filters);
+    const matches = filters().matcher();
     expect(
-      evaluator.matchesRow(invoice({ subCategory: undefined as unknown as string }))
+      matches(invoice({ subCategory: undefined as unknown as string }))
     ).toBe(false);
   });
 
@@ -394,8 +394,8 @@ describe('createFilters — null/undefined cells', () => {
       hasNone(path.tags);
     });
     filters.tags().value.set(['urgent']);
-    const evaluator = createFilterEvaluator(filters);
-    expect(evaluator.matchesRow(invoice({ tags: undefined as unknown as string[] }))).toBe(true);
+    const matches = filters().matcher();
+    expect(matches(invoice({ tags: undefined as unknown as string[] }))).toBe(true);
   });
 
   it('a custom filter() predicate receives the cell unguarded and can match nulls', () => {
@@ -405,9 +405,9 @@ describe('createFilters — null/undefined cells', () => {
       });
     });
     filters.notes().value.set(true);
-    const evaluator = createFilterEvaluator(filters);
-    expect(evaluator.matchesRow(invoice({ notes: undefined as unknown as string }))).toBe(true);
-    expect(evaluator.matchesRow(invoice({ notes: 'has content' }))).toBe(false);
+    const matches = filters().matcher();
+    expect(matches(invoice({ notes: undefined as unknown as string }))).toBe(true);
+    expect(matches(invoice({ notes: 'has content' }))).toBe(false);
   });
 });
 
@@ -426,12 +426,12 @@ describe('createFilters — errors (ADR-0014)', () => {
         );
       });
       filters.status().value.set('open');
-      const evaluator = createFilterEvaluator(filters);
+      const matches = filters().matcher();
 
       const row = invoice({ status: 'open' });
-      expect(evaluator.matchesRow(row)).toBe(true);
-      expect(evaluator.matchesRow(row)).toBe(true);
-      expect(evaluator.matchesRow(row)).toBe(true);
+      expect(matches(row)).toBe(true);
+      expect(matches(row)).toBe(true);
+      expect(matches(row)).toBe(true);
 
       expect(reportSpy).toHaveBeenCalledTimes(1);
     } finally {
@@ -471,8 +471,8 @@ describe('createFilters — errors (ADR-0014)', () => {
         );
       });
       filters.status().value.set('closed');
-      const evaluator = createFilterEvaluator(filters);
-      expect(evaluator.matchesRow(invoice({ status: 'open' }))).toBe(false);
+      const matches = filters().matcher();
+      expect(matches(invoice({ status: 'open' }))).toBe(false);
     } finally {
       reportSpy.mockRestore();
     }

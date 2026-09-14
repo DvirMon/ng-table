@@ -69,10 +69,11 @@ function toQueryParams(active: Partial<Record<string, unknown>>): Record<string,
 /**
  * Server-side filtering: the filters produce the data instead of narrowing it afterwards.
  *
- * **No filtering feature is composed.** `withFiltering({ manual: true })` exists for symmetry
- * with `withSorting()`, but in server mode it is an identity pass-through that still claims the
- * `filter` stage — composing it would occupy a slot to do nothing. `createFilters()` feeds the
- * request builder directly, never a predicate; the rows come back already narrowed.
+ * **No filtering feature is composed.** `withFiltering({ predicates: () => [], manual: true })`
+ * exists for symmetry with `withSorting()`, but in server mode it is an identity pass-through
+ * that still claims the `filter` stage — composing it would occupy a slot to do nothing.
+ * `createFilters()` feeds the request builder directly, never a predicate; the rows come back
+ * already narrowed.
  *
  * Three things only exist here. The **debounce** (`debounce(path.search, 300)`, in
  * `fixtures/schema.ts`) has a consequence only where a keystroke costs a request — the request

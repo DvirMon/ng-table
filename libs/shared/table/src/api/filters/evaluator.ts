@@ -1,29 +1,10 @@
-import type { FilterHandle, FilterNode, FilterRuleRecord, FilterValueOfContext, Filters } from '../filters.types';
+import type { FilterHandle, FilterNode, FilterRuleRecord, FilterValueOfContext } from '../filters.types';
 import { pathsOf } from './validate';
-
-/** @internal Side channel from a built `Filters` object back to its compiled records + node
- *  map, read only by `createFilterEvaluator` (issue #62's `withFiltering()` is the consumer). */
-const FILTERS_INTERNAL: unique symbol = Symbol('FILTERS_INTERNAL');
 
 export interface FiltersInternal<TRow> {
   readonly records: readonly FilterRuleRecord<TRow>[];
   readonly nodesByKey: ReadonlyMap<string, FilterNode<unknown>>;
   readonly pathToKey: ReadonlyMap<string, string>;
-}
-
-/** Stamps the compiled internal state onto a built `Filters` object — called once, by
- *  `createFilters()` itself, right after assembly. */
-export function attachFiltersInternal<TRow>(
-  filters: object,
-  internal: FiltersInternal<TRow>
-): void {
-  (filters as { [FILTERS_INTERNAL]: FiltersInternal<TRow> })[FILTERS_INTERNAL] = internal;
-}
-
-function getFiltersInternal<TRow, TState extends Record<string, unknown>>(
-  filters: Filters<TRow, TState>
-): FiltersInternal<TRow> {
-  return (filters as unknown as { [FILTERS_INTERNAL]: FiltersInternal<TRow> })[FILTERS_INTERNAL];
 }
 
 export function buildValueOfContext<TRow>(internal: FiltersInternal<TRow>): FilterValueOfContext<TRow> {
@@ -84,36 +65,17 @@ function evaluateRecord<TRow>(
 
 /**
  * One evaluator instance is one **evaluation** — the once-per-filter reporting and degradation
- * of ADR-0014 are scoped to its lifetime. Two ways to spend it:
- *
- * - `filterRows` narrows a whole row set, wrapping per filter per evaluation as ADR-0014's
- *   granularity clause requires: a throwing filter narrows no row at all.
- * - `matchesRow` answers for one row, for callers holding a row predicate rather than a set
- *   (`FiltersRoot.matcher()`). A throwing filter stops narrowing from that row on; rows it
- *   already answered for keep its narrowing, which a per-row signature cannot avoid.
- *
- * Prefer `filterRows` wherever the rows are in hand.
+ * of ADR-0014 are scoped to its lifetime. `matchesRow` answers for one row, for callers holding
+ * a row predicate (`FiltersRoot.matcher()`). A throwing filter stops narrowing from that row on;
+ * rows it already answered for keep its narrowing, which a per-row signature cannot avoid.
  */
 interface FilterEvaluator<TRow> {
-  filterRows(rows: TRow[]): TRow[];
   matchesRow(row: TRow): boolean;
 }
 
 /**
- * Builds an evaluator for one `Filters` instance — create it once per filtering pass.
- *
- * @internal exported for `api/features/with-filtering.ts` (issue #62) only — not part of the
- * `index.ts` public barrel.
- */
-export function createFilterEvaluator<TRow, TState extends Record<string, unknown>>(
-  filters: Filters<TRow, TState>
-): FilterEvaluator<TRow> {
-  return createFilterEvaluatorFrom(getFiltersInternal(filters));
-}
-
-/**
- * Same evaluator, entered from the compiled state directly rather than through a built `Filters`
- * object — the path `FiltersRoot.matcher()` takes, which runs before the object exists.
+ * Builds an evaluator from a filter set's compiled internal state — the domain's only evaluator
+ * entry point. Not exported past the domain.
  *
  * @internal
  */
@@ -159,30 +121,6 @@ export function createFilterEvaluatorFrom<TRow>(
   }
 
   return {
-    filterRows(rows: TRow[]): TRow[] {
-      let narrowed = rows;
-      for (const { record, criterion } of narrowingRecords()) {
-        const kept: TRow[] = [];
-        let failedRow: TRow | undefined;
-        for (const row of narrowed) {
-          const result = evaluateRecord(record, criterion, row);
-          if (result === 'error') {
-            failedRow = row;
-            break; // stop here: the record is discarded whole, not applied to the rows it reached
-          }
-          if (result) {
-            kept.push(row);
-          }
-        }
-        if (failedRow !== undefined) {
-          reportOnce(record, failedRow);
-          continue; // degrade: this filter does not narrow for this evaluation, for any row
-        }
-        narrowed = kept;
-      }
-      return narrowed;
-    },
-
     matchesRow(row: TRow): boolean {
       for (const { record, criterion } of narrowingRecords()) {
         if (droppedKeys.has(record.key)) {
