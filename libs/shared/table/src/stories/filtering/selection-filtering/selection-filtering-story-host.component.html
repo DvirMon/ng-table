@@ -1,0 +1,137 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Selection under an active filter. Select a few rows, then filter them out of view: they stay
+    selected, and clearing the filter brings the selection back exactly as it was. The two
+    select-all buttons are separate on purpose — one scopes to what you can see, the other to the
+    whole dataset. Sorting never changes the selection; deleting a row does, even one that is
+    filtered out.
+  </p>
+
+  <div class="story-host__toolbar">
+    <button type="button" (click)="selectAllVisibleRows()">Select all (visible)</button>
+    <button type="button" (click)="selectAllRowsIncludingHidden()">
+      Select all (including hidden)
+    </button>
+    <button type="button" (click)="clearSelection()">Clear selection</button>
+    <button type="button" (click)="sortByAmount()">Sort by amount</button>
+    <button type="button" (click)="clearAllFilters()">Clear filters</button>
+  </div>
+
+  <div class="story-host__toolbar">
+    <label>
+      Delete row
+      <select #deleteSelect (change)="pickRowToDelete(deleteSelect.value)">
+        <option value="" [selected]="rowToDelete() === null">pick an invoice…</option>
+        @for (invoice of table.value(); track invoice.id) {
+          <option [value]="invoice.id">{{ invoice.id }} — {{ invoice.customer }}</option>
+        }
+      </select>
+    </label>
+    <button type="button" (click)="deletePickedRow()">Delete</button>
+  </div>
+
+  <div class="filtering-story__filters">
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isStatusActive()"
+    >
+      <span class="filtering-story__label">Status (equals)</span>
+      <select #statusSelect (change)="selectStatus(statusSelect.value)">
+        <option value="" [selected]="filters.status().value() === null">any</option>
+        @for (status of statusOptions; track status) {
+          <option [value]="status" [selected]="filters.status().value() === status">
+            {{ status }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isCustomerActive()"
+    >
+      <span class="filtering-story__label">Customer (contains)</span>
+      <input type="text" [formField]="filterForm.customer" />
+    </div>
+
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isTagsActive()"
+    >
+      <span class="filtering-story__label">Tags (hasAny)</span>
+      <div class="filtering-story__checks">
+        @for (tag of tagOptions; track tag) {
+          <label>
+            <input type="checkbox" [checked]="isTagSelected(tag)" (change)="toggleTag(tag)" />
+            {{ tag }}
+          </label>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="filtering-story__summary">
+    <span>
+      <strong>{{ selectedCount() }}</strong> selected across every scope ·
+      <strong>{{ table.totalRowCount() }}</strong> of
+      <strong>{{ table.value().length }}</strong> visible
+    </span>
+    <span class="story-host__counter">selected ids: {{ selectedIdsLabel() || 'none' }}</span>
+  </div>
+
+  @if (hasActiveCriteria()) {
+    <p class="filtering-story__notice" role="status">{{ hiddenSelectionNotice }}</p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        <th class="story-host__cell">
+          <input
+            type="checkbox"
+            aria-label="Select all visible rows"
+            [checked]="isEveryVisibleRowSelected()"
+            [indeterminate]="isSomeVisibleRowSelected()"
+            (change)="toggleAllVisibleRows()"
+          />
+        </th>
+        @for (column of table.columns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as invoice) {
+          @let isRowSelected = isSelected(row.id);
+
+          <tr
+            [ngpTableRow]="row"
+            [class.is-selected]="isRowSelected"
+            [attr.aria-selected]="isRowSelected"
+          >
+            <td class="story-host__cell">
+              <input
+                type="checkbox"
+                [attr.aria-label]="'Select invoice ' + invoice.id"
+                [checked]="isRowSelected"
+                (change)="toggleRow(row.id)"
+              />
+            </td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.id }}</td>
+            <td class="story-host__cell">{{ invoice.customer }}</td>
+            <td class="story-host__cell">{{ invoice.status }}</td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
+            <td class="story-host__cell">
+              @for (tag of invoice.tags; track tag) {
+                <span class="filtering-story__tag">{{ tag }}</span>
+              } @empty {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

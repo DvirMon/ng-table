@@ -1,0 +1,201 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Client filtering. The amount filter starts at its declared default (min 1000), which is what
+    makes <em>Reset to defaults</em> and <em>Clear all</em> two different buttons. Empty a box and
+    it stops narrowing on its own — there is no story-local "is it empty" guard anywhere here.
+    Date bounds compare real instants: set Issued from and to both to 2026-08-14 and only the
+    midnight invoice matches, because the 16:45 one is past the upper bound. The time part is not
+    silently dropped.
+  </p>
+
+  <div class="story-host__toolbar">
+    <label>
+      Search
+      <input type="search" placeholder="note or invoice number" [formField]="filterForm.search" />
+    </label>
+    <button type="button" (click)="resetToDefaults()">Reset to defaults</button>
+    <button type="button" (click)="clearAllFilters()">Clear all</button>
+    <button type="button" (click)="toggleTagsPredicate()">
+      {{ tagsPredicateIsBroken() ? 'Repair the tags filter' : 'Break the tags filter' }}
+    </button>
+    <button type="button" (click)="loadSavedFilterRaw()">Load saved filter (raw)</button>
+    <button type="button" (click)="loadSavedFilterGuarded()">Load saved filter (guarded)</button>
+    @if (hasNoData()) {
+      <button type="button" (click)="restoreTheData()">Restore the data</button>
+    } @else {
+      <button type="button" (click)="emptyTheData()">Empty the data</button>
+    }
+  </div>
+
+  <div class="filtering-story__filters">
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isStatusActive()"
+    >
+      <span class="filtering-story__label">Status (equals)</span>
+      <select #statusSelect (change)="selectStatus(statusSelect.value)">
+        <option value="" [selected]="filters.status().value() === null">any</option>
+        @for (status of statusOptions; track status) {
+          <option [value]="status" [selected]="filters.status().value() === status">
+            {{ status }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isCustomerActive()"
+    >
+      <span class="filtering-story__label">Customer (contains)</span>
+      <input type="text" [formField]="filterForm.customer" />
+    </div>
+
+    <div
+      class="filtering-story__field filtering-story__field--range"
+      [class.filtering-story__field--active]="isAmountActive()"
+    >
+      <span class="filtering-story__label">Amount (inRange)</span>
+      <input type="number" aria-label="Minimum amount" [formField]="filterForm.amount.min" />
+      <input type="number" aria-label="Maximum amount" [formField]="filterForm.amount.max" />
+    </div>
+
+    <div
+      class="filtering-story__field filtering-story__field--range"
+      [class.filtering-story__field--active]="isIssuedAtActive()"
+    >
+      <span class="filtering-story__label">Issued (inDateRange)</span>
+      <input type="date" aria-label="Issued from" [formField]="filterForm.issuedAt.from" />
+      <input type="date" aria-label="Issued to" [formField]="filterForm.issuedAt.to" />
+    </div>
+
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isTagsActive()"
+    >
+      <span class="filtering-story__label">Tags — include (hasAnyOf)</span>
+      <div class="filtering-story__checks">
+        <label>
+          <input
+            type="checkbox"
+            [checked]="isEveryTagIncluded()"
+            (change)="toggleAllIncludedTags()"
+          />
+          Select all
+        </label>
+        @for (tag of tagOptions; track tag) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="isIncludedTag(tag)"
+              (change)="toggleIncludedTag(tag)"
+            />
+            {{ tag }}
+          </label>
+        }
+      </div>
+    </div>
+
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isTagsActive()"
+    >
+      <span class="filtering-story__label">Tags — exclude (hasNoneOf)</span>
+      <div class="filtering-story__checks">
+        @for (tag of tagOptions; track tag) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="isExcludedTag(tag)"
+              (change)="toggleExcludedTag(tag)"
+            />
+            {{ tag }}
+          </label>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="filtering-story__summary" [class.filtering-story__summary--empty]="matchCount() === 0">
+    <span><strong>{{ matchCount() }}</strong> of <strong>{{ rowCount() }}</strong> match</span>
+    <span class="filtering-story__chips">
+      @for (criterion of activeCriteria(); track criterion.key) {
+        <span class="filtering-story__chip">
+          {{ criterion.key }}: {{ criterion.label }}
+          <button
+            type="button"
+            [attr.aria-label]="'Clear ' + criterion.key"
+            (click)="clearCriterion(criterion.key)"
+          >
+            ×
+          </button>
+        </span>
+      } @empty {
+        <span>no active criteria — nothing is narrowing</span>
+      }
+    </span>
+  </div>
+
+  @if (savedFilterNotice(); as notice) {
+    <p class="filtering-story__notice" role="status">{{ notice }}</p>
+  }
+
+  @if (tagsPredicateIsBroken()) {
+    <p class="filtering-story__notice" role="status">
+      The compound tags predicate throws. Pick at least one tag — an empty criterion is skipped
+      before any predicate runs — and the tag filter stops narrowing: the result set gets
+      <strong>wider</strong>, every other filter keeps narrowing, and the table never goes down.
+    </p>
+    @for (report of filterReports(); track $index) {
+      <p class="filtering-story__notice filtering-story__notice--report">{{ report }}</p>
+    }
+  }
+
+  @if (hasNoData()) {
+    <p class="filtering-story__empty" role="status">
+      No invoices exist. This is not the same state as "your filters matched nothing" — clearing
+      the filters here would not bring a single row back.
+    </p>
+  } @else if (isFilteredToNothing()) {
+    <p class="filtering-story__empty" role="status">
+      No invoice matches the active filters. The data is still there — clear a criterion above.
+    </p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.columns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as invoice) {
+          <tr [ngpTableRow]="row">
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.id }}</td>
+            <td class="story-host__cell">{{ invoice.customer }}</td>
+            <td class="story-host__cell">{{ invoice.status }}</td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
+            <td class="story-host__cell">{{ issuedLabel(invoice) }}</td>
+            <td class="story-host__cell">
+              @for (tag of invoice.tags; track tag) {
+                <span class="filtering-story__tag">{{ tag }}</span>
+              } @empty {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+            <td class="story-host__cell">
+              @if (invoice.note; as note) {
+                {{ note }}
+              } @else {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

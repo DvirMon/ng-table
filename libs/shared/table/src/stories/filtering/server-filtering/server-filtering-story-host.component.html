@@ -1,0 +1,126 @@
+<div class="story-host">
+  @if (forceFailure()) {
+    <p class="story-host__hint">
+      Every request fails. The rows loaded before the failure stay on screen behind the error
+      marker — the table does not blank, and the filter inputs keep their values so Retry sends
+      the same query rather than a reset one.
+    </p>
+  } @else {
+    <p class="story-host__hint">
+      Server filtering — no filtering feature is composed; <code>createFilters()</code> feeds the request and
+      the rows arrive already narrowed. Type in the search box with latency on and watch the
+      request counter: one request per typing pause, not per keystroke. Type an amount, then press
+      <em>Deliver server default now</em> — the default loses to what you typed.
+    </p>
+  }
+
+  <div class="story-host__toolbar">
+    <label>
+      Search (debounced 300ms)
+      <input type="search" placeholder="customer or invoice number" [formField]="searchForm.search" />
+    </label>
+    <button type="button" (click)="deliverServerDefault()">Deliver server default now</button>
+    @if (loadError(); as message) {
+      <span class="story-host__error" role="status">{{ message }}</span>
+      <button type="button" (click)="retry()">Retry</button>
+    }
+  </div>
+
+  <div class="filtering-story__filters">
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isStatusActive()"
+    >
+      <span class="filtering-story__label">Status (equals)</span>
+      <select #statusSelect (change)="selectStatus(statusSelect.value)">
+        <option value="" [selected]="filters.status().value() === null">any</option>
+        @for (status of statusOptions; track status) {
+          <option [value]="status" [selected]="filters.status().value() === status">
+            {{ status }}
+          </option>
+        }
+      </select>
+    </div>
+
+    <div
+      class="filtering-story__field filtering-story__field--range"
+      [class.filtering-story__field--active]="isAmountActive()"
+    >
+      <span class="filtering-story__label">
+        Amount (inRange){{ isAmountDirty() ? ' — dirty' : '' }}
+      </span>
+      <input type="number" aria-label="Minimum amount" [formField]="searchForm.amount.min" />
+      <input type="number" aria-label="Maximum amount" [formField]="searchForm.amount.max" />
+    </div>
+
+    <div
+      class="filtering-story__field"
+      [class.filtering-story__field--active]="isExcludedTagsActive()"
+    >
+      <span class="filtering-story__label">Tags — exclude (hasNone)</span>
+      <div class="filtering-story__checks">
+        @for (tag of tagOptions; track tag) {
+          <label>
+            <input
+              type="checkbox"
+              [checked]="isExcludedTag(tag)"
+              (change)="toggleExcludedTag(tag)"
+            />
+            {{ tag }}
+          </label>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="filtering-story__summary">
+    <span>
+      server total <strong>{{ table.totalRowCount() }}</strong> · rows on this page
+      <strong>{{ table.renderRows().length }}</strong>
+    </span>
+    <span class="story-host__counter">requests issued: {{ requestCount() }}</span>
+  </div>
+
+  @if (isLoading()) {
+    <p class="filtering-story__empty" role="status">Loading invoices…</p>
+  } @else if (loadError(); as message) {
+    <p class="filtering-story__empty" role="status">
+      The request failed: {{ message }}. The rows below are the last ones that loaded, kept on
+      screen on purpose.
+    </p>
+  } @else if (hasNoMatches()) {
+    <p class="filtering-story__empty" role="status">
+      The server matched no invoice for these filters. Its own <code>total</code> says 0 — this is
+      not an empty page of a larger result.
+    </p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.columns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as invoice) {
+          <tr [ngpTableRow]="row">
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.id }}</td>
+            <td class="story-host__cell">{{ invoice.customer }}</td>
+            <td class="story-host__cell">{{ invoice.status }}</td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
+            <td class="story-host__cell">
+              @for (tag of invoice.tags; track tag) {
+                <span class="filtering-story__tag">{{ tag }}</span>
+              } @empty {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

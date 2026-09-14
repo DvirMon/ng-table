@@ -3,15 +3,15 @@ title: Product — Filtering User Stories
 type: product
 capability: filtering
 status: >
-  First pass, 2026-09-10. Written after `filters.md` and `features/filtering.md` (both
-  `spec: drilled`, R1–R31 settled), not before — so this doc's job is to find what the design
-  does not cover, and it does. §8 splits the gaps by owning layer: 6 state, 6 UI, 2 needing both.
-  §9 lists 4 capabilities with no owner, one of them the `filters` capability itself, which is
-  missing from the generated registry entirely. Coverage is ❌ across the board — **the stated reason is
-  superseded 2026-09-13**: `createFilters()` and the `api/filters/` engine ship with spec coverage.
-  Re-derived per story in `3-ui/work/filtering-stories/1-gap-analysis.md`.
-  OQ-1…OQ-7 all open, none silently picked.
-date: 2026-09-10
+  Coverage re-derived 2026-09-14 from the three shipped stories (`client-filtering/`,
+  `server-filtering/`, `selection-filtering/`), read as host components rather than `.mdx`
+  wrappers. 14 of 16 stories are ✅; 1.4 stays ❌ by design (R1, no runtime operator picker) and
+  F-S1 stays 🟡 (the selected-but-hidden count has no shipped signal). F-P1 is ❌ because
+  pagination does not exist. The 2026-09-10 first pass found the gaps; §8 still splits them by
+  owning layer, and OQ-1 is now resolved by the core `totalRowCount` member. Written after
+  `filters.md` and `features/filtering.md` (both `spec: drilled`, R1–R31 settled), so this doc's
+  job was to find what the design does not cover.
+date: 2026-09-14
 audience: product, design, engineering
 ---
 
@@ -72,26 +72,21 @@ differently.
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
 
-> **Correction, 2026-09-13.** Two premises below are now false: `createFilters()` does **not** have
-> zero code (the full `api/filters/` engine ships, spec-covered), and `withFiltering()` no longer
-> implements the superseded shape — it is a v2.0 adapter, currently an identity pass-through that
-> still claims the `filter` stage. The ❌ marks survive as *story* coverage (nothing is on screen),
-> but several stories are **🟡** under this table's legend. Re-derived in
-> [`3-ui/work/filtering-stories/1-gap-analysis.md`](../3-ui/work/filtering-stories/1-gap-analysis.md),
-> which also closes §8.1's S3/S4 and settles the server-mode composition question.
+**Marks re-derived 2026-09-14 from the shipped stories, not from a sibling doc.** Three stories
+now exist, all read as host components rather than `.mdx` wrappers:
 
-**Every story in this document is ❌, and that is not a judgement call.** Verified 2026-09-10
-(`1-state/work/with-filtering/research-filter-internal-coverage.md` §4): no Storybook story
-composes `withFiltering()`, calls `setColumnFilter`/`setGlobalFilter`/`clearFilters`, or reads
-`columnFilters`/`globalFilter` — confirmed by reading every `*-story-host.component.ts`, not just
-names or `.mdx` wrappers. `createFilters()` itself has zero implementation (`filters.md`
-frontmatter: `code: none`). The code that does exist, `src/api/features/with-filtering.ts`, is the
-imperative shape the new spec replaces (`features/filtering.md`'s own banner: "the shipped code
-does not match this spec").
+| Story | Composes | What it demonstrates |
+|---|---|---|
+| [`client-filtering/`](../../src/stories/filtering/client-filtering/) | `withFiltering({ filters })`, client, synchronous | Five filter kinds plus a declared `anyOf` quick filter; active markers and a chip summary with per-chip ×; `Reset to defaults` vs. `Clear all` as two visibly different buttons; a broken-predicate toggle that widens the result set and mirrors the library's report onto the canvas; raw vs. guarded load of a stale saved filter; no-data and no-matches as two separate states |
+| [`server-filtering/`](../../src/stories/filtering/server-filtering/) | `createFilters()` alone — no filtering feature | Criteria feed the request; a 300ms debounce made visible by a request counter; the server's own `total` overriding core `totalRowCount` per ADR-0005; the late-default race gated by `dirty()`; loading / no-matches / request-failed as three distinct blocks, with the last-loaded page kept on screen |
+| [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) | `withFiltering()` + `withSelection()` + `withSorting()` | Two separately named select-all scopes; retention of a selection across a filter, restored exactly; sorting changing nothing and deleting pruning; the missing selected-but-hidden count stated on canvas rather than faked |
 
-So the marks carry no information yet. What carries information is the **Design status** line on
-each story: whether R1–R31 already answers it, whether nothing does, or whether the settled design
-points the other way. That line is the actual output of this pass.
+Two marks are not ✅, and both stay explicit rather than being rounded up: **1.4** (no runtime
+operator picker — R1, deliberate) and **F-S1** (the "N selected, M hidden" count has no shipped
+signal). **F-P1** is ❌ only because pagination does not exist yet.
+
+The **Design status** line on each story is unchanged — it records whether R1–R31 answers the
+story. The new **Covered by** line records which shipped story proves it.
 
 **The stories name no layers; §8 does.** A person cannot perceive the difference between a value
 nothing computes and a control nothing renders, so the stories do not draw one. §8 sorts every
@@ -111,7 +106,7 @@ restated here beyond what a story needs.
 
 Ordered by how badly the person is hurt if it is missing.
 
-## 1.1 — Filter a column to just the values I want — ❌ not covered
+## 1.1 — Filter a column to just the values I want — ✅ covered
 
 > As someone looking at four hundred invoices, I want to see only the ones that are still open, so
 > I don't have to scan past the ones I've already dealt with.
@@ -132,10 +127,12 @@ Ordered by how badly the person is hurt if it is missing.
   range" filter, and included by a "does it lack these" filter — never a `NaN`/blank comparison
   that behaves unpredictably.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — `equals(status)`, `contains(customer)`, `inRange(amount)`, `inDateRange(issuedAt)` and a compound `filter(tags)` all narrow at once, and each unwinds from its own chip ×. Emptying a number box stops that bound narrowing with no story-local guard. The same-day pair (1005 at midnight, 1006 at 16:45) is on canvas so a date bound is visibly an instant, not a day.
+
 **Design status:** covered by R1–R9 and R27 (`filters.md` §Rules, §Semantics — null cells fail
 every positive matcher, pass every negative one). Spec is `drilled`; code is `none`.
 
-## 1.2 — Search across several columns at once — ❌ not covered
+## 1.2 — Search across several columns at once — ✅ covered
 
 > As someone who doesn't remember which column a customer's name is in, I want to type into one
 > box and have it check everywhere sensible, so I don't have to know the schema to find something.
@@ -151,6 +148,8 @@ every positive matcher, pass every negative one). Spec is `drilled`; code is `no
 - Clearing the search box returns exactly the rows the per-column filters alone would show —
   never an empty table and never everything.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — the toolbar search runs `anyOf('search', …)` over `note` and `id`. Both legs are typed: the nullable `note` and the numeric `id` return `false` where a stringify-and-substring quick filter would throw. Clearing the box leaves the per-column filters exactly as they were.
+
 **Design status:** covered by R8/R9's `anyOf(key, schema)` — one criterion, several paths, OR'd.
 **One trade to name plainly:** every UI-bearing competitor's "quick filter" auto-scans *every*
 column with no developer wiring (AG Grid, MUI X, PrimeNG, MRT all ship this;
@@ -159,7 +158,7 @@ column with no developer wiring (AG Grid, MUI X, PrimeNG, MRT all ship this;
 to search — but it means "search everything" is not a capability a consumer gets by turning on a
 flag; they write the list once.
 
-## 1.3 — Not have an empty filter narrow anything — ❌ not covered
+## 1.3 — Not have an empty filter narrow anything — ✅ covered
 
 > As someone who cleared a filter's input back to nothing, I want the rows that were hidden to come
 > back, the same as if I'd never touched it.
@@ -171,10 +170,12 @@ flag; they write the list once.
   a range, `[]` for a multi-select — not one universal falsy check that also empties a valid `0`
   or `false`.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — all three empty shapes are reachable on canvas: `''` (customer), `{min: null, max: null}` (amount), `[]` (tags). Invoice 1008's amount of `0` stays matchable, which is what a universal falsy check would break.
+
 **Design status:** covered by R14 — empty criteria are skipped before evaluation, per-predicate,
 declared beside the predicate.
 
-## 1.4 — Choose how strict the match is — ❌ not covered
+## 1.4 — Choose how strict the match is — ❌ not covered *(deliberate — R1, OQ-3)*
 
 > As someone filtering a status column, I sometimes want "is exactly open" and sometimes want
 > "contains the word open" — I want to pick which, not have a developer decide for me once and
@@ -184,6 +185,8 @@ declared beside the predicate.
 
 - A person can change the comparison a filter uses (contains vs. equals vs. starts-with, before/
   after/between) without a code change.
+
+**Covered by:** nothing, on purpose. No story renders an operator control, because none exists to render — the operator is fixed at declaration (R1). This is the one story in §1–§4 left deliberately uncovered, not an omission.
 
 **Design status — gap, and a deliberate one.** R1 fixes the operator at declaration; there is no
 runtime picker. This is the sharpest deviation from the market in the whole survey: **every
@@ -202,7 +205,7 @@ surface years after the baseline filter shipped. Raised as **OQ-3**.
 
 # 2. Know what's filtered, and control it
 
-## 2.1 — See at a glance that a filter is active, and which one — ❌ not covered
+## 2.1 — See at a glance that a filter is active, and which one — ✅ covered
 
 > As someone who filtered a table five minutes ago and got pulled into something else, I want to
 > look at the table and immediately know it's been narrowed, without opening a menu to check.
@@ -214,6 +217,8 @@ surface years after the baseline filter shipped. Raised as **OQ-3**.
 - A filter with a value that has no visible effect (because nothing in the current data would ever
   fail it) is not indistinguishable from no filter at all — I can still tell it's set.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — an active field carries a marker, and the summary row lists one chip per active criterion with its value and its own ×. With nothing set it reads "no active criteria — nothing is narrowing". The third criterion holds too: ticking *Select all* under Tags excludes no row, and still reads as active. [`server-filtering/`](../../src/stories/filtering/server-filtering/) marks its active fields the same way. This is U1's recipe demonstrated — the library still ships no chip component.
+
 **Design status — gap.** No decision covers this at all — `filters.md` gives `active()` (empties
 omitted) as exactly the data this needs, but nothing renders it. Only one library in the survey
 documents a granular affordance here: MUI X ships a delete (×) icon per active filter constraint
@@ -222,7 +227,7 @@ confirms the *absence* of this hurts — PrimeNG **[#16576](https://github.com/p
 (open, 👍 11, opened 2024-10-17) is a regression report specifically about a missing "this column
 is filtered" indicator. Raised as **OQ-4**.
 
-## 2.2 — Clear a filter, or all of them, in one action — ❌ not covered
+## 2.2 — Clear a filter, or all of them, in one action — ✅ covered
 
 > As someone done comparing two date ranges, I want to get back to the full list in one click, not
 > by clearing three separate boxes.
@@ -237,6 +242,8 @@ is filtered" indicator. Raised as **OQ-4**.
 - Clearing never throws or leaves a filter in a state where its own value and its own "active"
   reading disagree.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — three separate actions, and the trap OQ-5 names is the point of two of them: the amount filter starts at its declared `source` (min 1000), so *Reset to defaults* (`reset()`) and *Clear all* (`reset(null)`) land on visibly different tables. A chip's × empties that one criterion and leaves the rest narrowing.
+
 **Design status — covered, with a naming trap worth flagging.** `reset(value?)` exists (R17) and
 covers all three shapes: no-arg resets to the *declared source* (not necessarily empty), `null`
 resets to that filter's empty value, and a value resets to something arbitrary. **`reset()` with
@@ -246,7 +253,7 @@ gap in the design (it is R17, deliberate, and gives a "clear" that would otherwi
 unrepresentable — reset-to-server-default), but a documentation-and-example obligation, not an API
 change. See **OQ-5**.
 
-## 2.3 — See how many rows currently match — ❌ not covered
+## 2.3 — See how many rows currently match — ✅ covered *(both modes)*
 
 > As someone who just narrowed a big table down, I want a number that tells me how many rows are
 > left, so I know whether I'm looking at 3 invoices or 300 before I start scrolling.
@@ -257,6 +264,8 @@ change. See **OQ-5**.
   from what's rendered.
 - In client mode, the count reflects the same rows the table renders. In server mode, it reflects
   what the server says matched, not an approximation from one page.
+
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) for client mode — "N of M match", where N is the shipped `totalRowCount()` and not story-local arithmetic. And [`server-filtering/`](../../src/stories/filtering/server-filtering/) for server mode — the server's own `total`, overriding core `totalRowCount` through the one member ADR-0005 leaves overridable, rendered beside the page length so the two are never confused. Both halves of the acceptance criteria are on canvas. See OQ-1, now resolved.
 
 **Design status — gap.** No decision exposes this. It is a repeatedly-requested, still-open ask in
 two of the four surveyed libraries: MUI X **[#7583](https://github.com/mui/mui-x/issues/7583)**
@@ -269,7 +278,7 @@ table already computes the filtered row set — and worth naming explicitly rath
 consumers to derive it themselves, since three separate libraries' trackers show people reaching
 for exactly this and not finding it. Raised as **OQ-1**.
 
-## 2.4 — Not have my typed value overwritten by a late default — ❌ not covered
+## 2.4 — Not have my typed value overwritten by a late default — ✅ covered *(server story only)*
 
 > As someone who typed "500" into a minimum-amount filter before the page's default range finished
 > loading, I don't want my number silently replaced once that default arrives.
@@ -281,6 +290,8 @@ for exactly this and not finding it. Raised as **OQ-1**.
 - A default that arrives *before* I've touched anything is exactly what I see, and narrows the
   table accordingly.
 
+**Covered by:** [`server-filtering/`](../../src/stories/filtering/server-filtering/) **only** — the client story is synchronous and has no late arrival to race. *Deliver server default now* supplies the default after the fact: type into the amount box first and the field reads "dirty" and keeps what you typed; leave it alone and the arriving default is what you see.
+
 **Design status:** covered. `dirty` (R19) is the reconciliation gate — a written value blocks a
 late source from overwriting it, and this is directly the "my typed value must not get clobbered"
 behavior a person would notice if it were missing.
@@ -289,7 +300,7 @@ behavior a person would notice if it were missing.
 
 # 3. Combine filters
 
-## 3.1 — Narrow by more than one column at once — ❌ not covered
+## 3.1 — Narrow by more than one column at once — ✅ covered
 
 > As someone filtering by both status and date range, I want rows that satisfy both, not either.
 
@@ -298,12 +309,16 @@ behavior a person would notice if it were missing.
 - Every active filter must pass for a row to show. Adding a second filter never widens the result.
 - Removing one filter widens the result back toward what the remaining ones alone would show.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — six filters narrow simultaneously and the chip row names each one. Removing one widens back to what the rest alone show.
+
 **Design status:** covered — across filters, AND (R8).
 
-## 3.2 — Match if any one of several things is true — ❌ not covered
+## 3.2 — Match if any one of several things is true — ✅ covered
 
 > As someone typing into a single search box that's meant to check name, notes, and account
 > number, I want a match on any of those to count, not require all three.
+
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — the same `anyOf('search', …)` group as 1.2, matching on `note` **or** invoice number.
 
 **Design status:** covered by `anyOf` (R8/R9), with the same trade named in 1.2 — this is a group
 the *developer* wires, not a toggle the end user flips. **Where this differs from the market:**
@@ -312,7 +327,7 @@ UI at all (Pro-gated); every other library, ours included, treats OR as somethin
 declares once (`research-filter-ux-capabilities.md` §6). Consistent with the majority position,
 not an outlier.
 
-## 3.3 — Combine more than one condition on the same column — ❌ not covered
+## 3.3 — Combine more than one condition on the same column — ✅ covered *(via the compound-criterion workaround)*
 
 > As someone who wants tags that include "urgent" but exclude "resolved," I want to say both at
 > once for one column, not pick one condition and lose the other.
@@ -321,6 +336,8 @@ not an outlier.
 
 - Two conditions on the same underlying value (an include list and an exclude list; a range with
   an additional exclusion) can be expressed as one filter.
+
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — the Tags filter is one `filter()` call over a `{ include, exclude }` criterion, rendered as two checkbox groups a person ticks independently. That is the workaround the design doc calls "the strongest case found" for the rejected escape hatch, built and on screen. **It is a data point against R6, not for it** — the first story written for this feature reached for the compound criterion immediately. R6's revisit trigger is "reached for repeatedly"; this is one.
 
 **Design status — gap, by explicit design choice.** R5/R6/R31: one filter per path, full stop —
 `as` renames a key, it never licenses a second filter on the same path. The workaround is a single
@@ -336,7 +353,7 @@ exists, and was consciously not matched.
 
 # 4. When filtering does not cooperate
 
-## 4.1 — A blank cell under an active filter — ❌ not covered
+## 4.1 — A blank cell under an active filter — ✅ covered
 
 > As someone filtering invoices to "has a customer note," I want invoices with no note excluded —
 > and if I filter to "has no note," I want exactly those blank ones, not a mix I can't explain.
@@ -348,10 +365,12 @@ exists, and was consciously not matched.
 - This behavior does not vary column to column unless a consumer deliberately writes a custom
   predicate that says otherwise.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — five of the twelve invoices have a blank `note` and two have no tags at all, both rendered as a visible blank rather than an empty cell. The quick filter excludes the blank-note rows; Tags — exclude (`hasNoneOf`) includes the no-tag rows.
+
 **Design status:** covered — R27, guarded per-matcher, not in the runner, so a custom `filter()`
 predicate can still choose to treat nulls specially if it needs to.
 
-## 4.2 — A filter that breaks does not break my table — ❌ not covered
+## 4.2 — A filter that breaks does not break my table — ✅ covered
 
 > As someone whose saved filter refers to a shape the app no longer produces, I want the table to
 > keep working — even if that one filter stops narrowing anything — not a blank screen.
@@ -368,12 +387,16 @@ predicate can still choose to treat nulls specially if it needs to.
   narrowing), never the table going blank or crashing. A wrong, silently-narrower result would be
   worse — a person would trust a result they can't see is incomplete.
 
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — *Break the tags filter* makes the compound tags predicate throw. The result set gets **wider**, every other filter keeps narrowing, the table stays up, and the library's own report is mirrored onto the canvas so "once per evaluation, not once per row" is checkable rather than asserted. An empty tags criterion is skipped before the predicate runs, so a tag has to be picked for the throw to be reachable — 1.3 and 4.2 agreeing on screen.
+
 **Design status:** covered — R29, per [ADR-0014](../adr/0014-runtime-error-policy.md).
 
-## 4.3 — A saved filter that no longer makes sense — ❌ not covered
+## 4.3 — A saved filter that no longer makes sense — ✅ covered *(as a story recipe; no shipped guard)*
 
 > As someone reopening a view I saved weeks ago, I want the app to cope if the saved filter's shape
 > is now stale, not throw an error at me on load.
+
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — *Load saved filter (raw)* and *(guarded)* apply the same stale snapshot two ways. Raw, a `status` value that no longer exists is applied verbatim and the table looks broken rather than empty-because-you-asked, and pre-rename `amount` keys read as an empty range and narrow nothing, silently. Guarded, the unusable halves fail their shape check and drop back to their declared defaults while `customer` survives. The story is OQ-6's worked defensive pattern; the library still ships no migration or guard helper, and the raw button has to step outside the type to exist at all — which is the finding.
 
 **Design status — gap, acknowledged but unaddressed.** `filters.md`'s own Errors section names
 this as the likeliest real-world trigger for 4.2 ("persistence is consumer-owned `JSON.parse`... a
@@ -381,7 +404,7 @@ snapshot written by an older schema revives with a shape the predicate never exp
 no migration, versioning, or shape-guard help — persistence is out of scope entirely (R21). Not a
 missing decision so much as a named, accepted risk with no recipe yet. Raised as **OQ-6**.
 
-## 4.4 — Filtering down to nothing — ❌ not covered
+## 4.4 — Filtering down to nothing — ✅ covered *(both modes)*
 
 > As someone whose filter combination turned out to match no rows, I want to be told that plainly,
 > not shown an empty table that looks the same as "still loading" or "no data at all."
@@ -391,6 +414,8 @@ missing decision so much as a named, accepted risk with no recipe yet. Raised as
 - An all-filtered-out state is visibly distinct from "no data exists" and from "still loading."
 - It's obvious from that state alone how to get back to seeing rows (nothing hidden, no menu-diving
   required).
+
+**Covered by:** [`client-filtering/`](../../src/stories/filtering/client-filtering/) — *Empty the data* and *Restore the data* make no-data and no-matches two reachable states with two different messages, the second of which says how to get rows back. [`server-filtering/`](../../src/stories/filtering/server-filtering/) splits it three ways — loading, no-matches (the server's own `total` of 0, "not an empty page of a larger result"), and request-failed, which keeps the last loaded page on screen instead of blanking. This is U2's recipe demonstrated; no overlay component ships, per the attribute-only invariant.
 
 **Design status — gap.** No decision anywhere addresses this. Two of the four surveyed libraries
 ship a dedicated no-matches overlay, distinct from their no-data overlay (AG Grid
@@ -441,7 +466,7 @@ selection story below, decided in one place rather than two.
 
 ## Owned by selection *(built)*
 
-### F-S1 — Selecting everything I can currently see stays true to what I see — 🟡 partly covered *(updated 2026-09-12)*
+### F-S1 — Selecting everything I can currently see stays true to what I see — 🟡 partly covered *(re-derived 2026-09-14)*
 
 > As someone who filtered a list down to "unpaid" and ticked "select all," I expect to have
 > selected the unpaid invoices — not every invoice in the table, and not nothing.
@@ -460,6 +485,10 @@ selection story below, decided in one place rather than two.
 
 - If the count of selected-but-hidden rows can't be computed for some reason, the selection state
   itself is never guessed at or reset as a side effect — only the count display degrades.
+
+**Covered by:** [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) — two of the three bullets render. *Select all (visible)* and *Select all (including hidden)* are separate, separately named buttons, so bullet 1 is checkable rather than asserted. Filtering a selected row out keeps it selected and clearing the filter restores the selection exactly — the story prints the selected ids, so "nothing added, nothing lost" is read off the screen, not trusted. Sorting changes no selection; deleting a selected row drops it even while it is filtered out, which is what separates "the row moved" from "the row left".
+
+**Why it is still 🟡:** the **"N selected, M not currently visible" count does not render**, because no shipped signal reports it. The story states that on canvas instead of computing it in the host — which is also this story's failure behavior holding: the count display is the only thing that degrades, and the selection itself is never guessed at or reset. It stops rendering that notice once the read-side count lands. Tracked at [`selection.md`](selection.md) §2.5 and `work/computed-state-mechanism/1-intake.md`.
 
 **Design status — half-shipped since D59 (2026-09-11).** `selectAllIds(table)` now gives bullet 1
 a real, shipped answer: its default scope is `rows()` (post-filter/post-sort), so "select all"
@@ -490,7 +519,7 @@ hidden) is what most of the bug reports above are actually asking for when they 
 
 ## Owned by pagination *(unbuilt)*
 
-### F-P1 — A page total reflects what's actually shown — ❌ not covered *(forward-looking)*
+### F-P1 — A page total reflects what's actually shown — ❌ not covered *(pagination does not exist)*
 
 > As someone paging through a filtered list of 340 matching invoices, I want the page count to be
 > based on those 340, not the full unfiltered table.
@@ -536,16 +565,21 @@ own "strongest case" framing suggests it might be. See **OQ-3**.
 
 Each carries a recommendation and what would settle it. None silently picked.
 
-**OQ-1 — Should `createFilters()` expose a first-class match count? — open.**
-*Recommendation:* yes, in client mode — a derived member alongside `active()`, computed over the
-same filtered row set the table already produces, at no extra cost. In server mode this cannot be
-manufactured client-side (the server already narrowed the rows before they arrive) and must
-instead be whatever the response reports, which is a consumer concern, not this primitive's.
-*To decide:* whether it lives on `createFilters()` itself (available with no table, but then only
-meaningful once something has actually run the predicates against real rows) or on `withFiltering()`
-member surface instead — `createFilters()` has no data to count without a table.
-*Sequencing:* independent of everything else; cheap, and asked for repeatedly and still-open in two
-of four surveyed trackers.
+**OQ-1 — Should `createFilters()` expose a first-class match count? — resolved 2026-09-14, and
+not where this question expected.**
+*Resolved:* the count is neither a `createFilters()` member nor a `withFiltering()` one. It is the
+**core** `totalRowCount` member, `rows().length` — post-pipeline, so post-filter — which every
+table has whether or not it filters at all. The placement question dissolves: `createFilters()` has
+no data to count, and it never needed any.
+*Server mode is answered by the same member from the other side.* `totalRowCount` is the one core
+key ADR-0005 leaves overridable, so a consumer whose server reports its own `total` overrides it
+with a one-line `createTableFeature()` — which is exactly what `server-filtering/` does. The
+response's number and the client's derived one land in the same place, so a person reading the
+table never has to know which mode produced it.
+*Both are on canvas:* "N of M match" in `client-filtering/`, "server total N · rows on this page M"
+in `server-filtering/`.
+*Left over:* S1/S6 in §8.1 and §9.2 all describe this as missing. They are stale as written; the
+capability shipped before this doc was re-derived.
 
 **OQ-2 — What does "select all" mean under an active filter, and what happens to a hidden
 selection? — half-resolved 2026-09-11 (D59).**
@@ -635,8 +669,8 @@ Owned by `1-state/work/with-filtering/` and `filters.md` itself.
 |---|---|---|---|
 | S1 | No first-class filtered-row match count | 2.3 | Cheap in client mode — the filtered row set already exists. Meaningless to manufacture in server mode. OQ-1 |
 | S2 | Selection-under-filter semantics unowned by either feature | F-S1 | `selection.md:17-22`'s non-dependency is deliberate but leaves this fully unresolved. OQ-2 |
-| S3 | `createFilters()` has zero implementation | all of §1–§4 | `filters.md` frontmatter: `code: none`. The entire spec, however drilled, is unbuilt |
-| S4 | Shipped `withFiltering()` implements the superseded imperative shape | all of §1–§4 | `src/api/features/with-filtering.ts` predates `createFilters()`; removal is a planned breaking change (R26), not yet executed |
+| ~~S3~~ | ~~`createFilters()` has zero implementation~~ — **resolved** | — | `src/api/create-filters.ts` plus the whole `api/filters/` engine (`evaluator`, `matchers`, `recorder`, `rules`, `state`, `validate`) ship, with `create-filters.spec.ts`, `matchers.spec.ts` and `state.spec.ts` covering them. `filters.md`'s `code: none` frontmatter is the last stale trace and is filtering Step 7's to fix |
+| ~~S4~~ | ~~Shipped `withFiltering()` implements the superseded imperative shape~~ — **resolved** | — | `with-filtering.ts` is now the v2.0 adapter over `createFilterEvaluator`, with a `manual` pass-through for server mode. R26's breaking change landed; `setColumnFilter`/`setGlobalFilter` are gone. `3-ui/architecture.md` still names them (U5) |
 | S5 | No stated behavior for a persisted criterion that no longer fits the schema | 4.3 | `filters.md`'s Errors section names the risk, ships no guard. OQ-6 |
 | S6 | No per-filter or `active()`-derived count of currently-matching rows exposed anywhere | 2.3, F-P1 | Same root as S1; listed separately because F-P1's "page total reflects filtered rows" depends on the same number pagination would need |
 
@@ -687,14 +721,11 @@ Distinct from the gaps above: these are not missing paragraphs in an existing sp
 **features with no doc at all**. Checked against `docs/status.md` (the generated capability
 registry) rather than against memory.
 
-**One of these is not a missing paragraph — it is the entire `filters` capability itself.**
-`docs/status.md` has no row for `capability: filters` at all, even though `filters.md` declares
-that capability and `tools/generate-status.ts` is already wired to read it (`CROSS_FEATURE_FILES`
-already lists `docs/1-state/filters.md`). It is not a missing-config problem — the generator
-simply has not been rerun since `filters.md` was created. Anyone reading `status.md` alone today
-would see only the stale `filtering | drafted | partial` row and reasonably conclude that's the
-whole capability. Fix is `npm run table:status`, not a doc edit, and not done here per this pass's
-read-only scope for the registry.
+**The `filters` capability is now in the registry — with a stale code column.** The 2026-09-10
+claim that `docs/status.md` had no row for `capability: filters` at all is false as of this pass:
+the row exists (`filters | drilled | none`). What is wrong now is narrower and different — `code:
+none` contradicts the shipped, spec-covered `api/filters/` engine (§8.1 S3). The fix is still
+`npm run table:status` after `filters.md`'s own frontmatter moves, not a doc edit here.
 
 ### 9.1 Active-filter chips / clear-all toolbar — **UI**
 

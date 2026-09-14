@@ -1,0 +1,19 @@
+{
+  "slug": "filtering-stories",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/3-ui/work/filtering-stories",
+  "decisionsPath": null,
+  "specPath": "libs/shared/table/docs/3-ui/work/filtering-stories/1-gap-analysis.md",
+  "architecturePath": "libs/shared/table/docs/3-ui/architecture.md",
+  "githubIssues": [],
+  "checklist": {
+    "ticket": false,
+    "grill": false,
+    "spec": true,
+    "issues": false,
+    "tasks": true
+  }
+}
