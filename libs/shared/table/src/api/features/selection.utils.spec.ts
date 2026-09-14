@@ -1,14 +1,11 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
-import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
-import { equals } from '../filters/rules';
 import { selectAllIds } from './selection.utils';
 import { withFiltering } from './with-filtering';
 import { withSelection } from './with-selection';
 import type { ColumnDef, TableStore } from '../types';
-import type { Filters, FiltersPath } from '../filters.types';
 
 function makeColumns(): ColumnDef<MockRow>[] {
   return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];
@@ -19,29 +16,19 @@ function inContext<T>(build: () => T): T {
   return TestBed.runInInjectionContext(build);
 }
 
-// Mirrors with-filtering.spec.ts's buildFilters — one type argument, `TState` defaulted.
-function buildFilters(schema: (path: FiltersPath<MockRow>) => void): Filters<MockRow> {
-  return TestBed.runInInjectionContext(() => createFilters<MockRow>(schema));
-}
-
-function makeFilteredStore(filters: Filters<MockRow>): TableStore<MockRow> {
+function makeFilteredStore(): TableStore<MockRow> {
   return inContext(() =>
     createTable(
       signal<MockRow[]>(mockRows),
       { trackBy: mockTrackBy, columns: makeColumns() },
-      withFiltering({ filters })
+      withFiltering({ predicates: () => [(row: MockRow) => row.id === 1] })
     )
   );
 }
 
 describe('selectAllIds', () => {
   it("default scope selects exactly rows()'s ids, a strict subset of value()", () => {
-    // Filters on `id`, not `name` — `filters` is itself callable, so `filters['name']` would
-    // collide with the built-in `Function.prototype.name` property instead of the filter handle.
-    const filters = buildFilters((path) => equals(path.id));
-    const store = makeFilteredStore(filters);
-
-    filters['id']().value.set(1);
+    const store = makeFilteredStore();
 
     // Sanity: the filter genuinely narrows rows() below value() before asserting on it.
     expect(store.rows().map((row) => row.id)).toEqual([1]);
@@ -51,10 +38,7 @@ describe('selectAllIds', () => {
   });
 
   it("includeHidden: true selects exactly value()'s ids", () => {
-    const filters = buildFilters((path) => equals(path.id));
-    const store = makeFilteredStore(filters);
-
-    filters['id']().value.set(1);
+    const store = makeFilteredStore();
 
     expect(selectAllIds(store, { includeHidden: true })).toEqual([1, 2, 3]);
   });

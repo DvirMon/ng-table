@@ -104,8 +104,9 @@ function keepValidCriteria(
 }
 
 /**
- * The filtering baseline — `withFiltering({ filters })` over a standalone `createFilters()`
- * object, client side, synchronous, no MSW.
+ * The filtering baseline — a standalone `createFilters()` object reaching the table as one
+ * predicate term, `withFiltering({ predicates: () => [filters().matcher()] })`, client side,
+ * synchronous, no MSW.
  *
  * **The declaration is in the host, not a fixture.** `createFilters()` reads like
  * `createTable()` directly above it, because the schema callback is the thing a consumer
@@ -185,7 +186,7 @@ export class ClientFilteringStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     clientInvoiceConfig,
-    withFiltering({ filters: this.filters }),
+    withFiltering({ predicates: () => [this.filters().matcher()] }),
   );
 
   protected readonly statusOptions = STATUS_OPTIONS;

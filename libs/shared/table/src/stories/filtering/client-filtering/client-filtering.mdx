@@ -10,9 +10,11 @@ import '../../styles/code-tabs.css';
 
 # Client Filtering
 
-`withFiltering({ filters })` applies a standalone `createFilters()` object to the pipeline's
-`filter` stage. The filters are the consumer's — the feature owns no filter state — which is why
-the same declarations feed a server request unchanged in `Table / Filtering / Server`.
+`withFiltering({ predicates: () => [filters().matcher()] })` feeds a standalone `createFilters()`
+object into the pipeline's `filter` stage as one predicate term. The feature takes row
+predicates, not a filter model; the host composes the two. The filters are the consumer's — the
+feature owns no filter state — which is why the same declarations feed a server request unchanged
+in `Table / Filtering / Server`.
 
 One filter may target one path, so the `tags` column's include and exclude halves are a single
 compound `filter()` criterion fed by two multi-selects, and the quick filter spans `note` and

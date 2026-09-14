@@ -174,7 +174,7 @@ export class GroupingStaticStoryHostComponent {
       groupOrder: this.compareGroups,
       rules: [this.repGroupingRule],
     }),
-    withFiltering({ filters: this.filters })
+    withFiltering({ predicates: () => [this.filters().matcher()] })
   );
 
   /** `columns()` is the folded list, not a render order — it carries `visible`/`order` and leaves

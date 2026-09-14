@@ -72,7 +72,7 @@ export class SelectionFilteringStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     selectionInvoiceConfig,
-    withFiltering({ filters: this.filters }),
+    withFiltering({ predicates: () => [this.filters().matcher()] }),
     withSelection(),
     withSorting(),
   );

@@ -14,8 +14,8 @@ import '../../styles/code-tabs.css';
 No filtering feature is composed here. `withFiltering({ manual: true })` exists for symmetry with
 `withSorting()`, but in server mode it is an identity pass-through that still claims the `filter`
 stage — composing it would occupy a slot to do nothing. The same `createFilters()` object the
-client story hands to `withFiltering()` is serialized into `GET /api/invoices` instead, and the
-rows arrive already narrowed.
+client story turns into a predicate via `matcher()` is serialized into `GET /api/invoices`
+instead, and the rows arrive already narrowed.
 
 The query mapping is hand-written in the host on purpose: no library can know a given backend's
 parameter names, so that code is what a consumer actually writes.

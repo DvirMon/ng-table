@@ -690,8 +690,12 @@ describe('createFilters — matcher()', () => {
       auditedBy: string;
     }
 
-    function buildTypedFilters(): Filters<Invoice, { category: string | null }> {
-      return build<{ category: string | null }>((path) => {
+    /** A concrete `TState`, so criteria stay typed instead of widening back to `unknown`. */
+    type TypedInvoiceFilterState = { status: string | null; category: string | null };
+
+    function buildTypedFilters(): Filters<Invoice, TypedInvoiceFilterState> {
+      return build<TypedInvoiceFilterState>((path) => {
+        equals(path.status);
         equals(path.category);
       });
     }
@@ -710,6 +714,30 @@ describe('createFilters — matcher()', () => {
       const matches = buildTypedFilters()().matcher();
       // @ts-expect-error — `matcher()` is `(row: Invoice) => boolean`; TRow is no longer phantom.
       matches({ label: 'nope' });
+    });
+
+    it('keeps a concretely-keyed criterion map typed and reachable by property access', () => {
+      const filters = buildTypedFilters();
+
+      expectTypeOf(filters.status().value()).toEqualTypeOf<string | null>();
+      expectTypeOf(filters().value()).toEqualTypeOf<TypedInvoiceFilterState>();
+      expectTypeOf(filters().active()).toEqualTypeOf<Partial<TypedInvoiceFilterState>>();
+    });
+
+    it('narrows a plain array via matcher() once a criterion is set through property access', () => {
+      const filters = buildTypedFilters();
+      filters.status().value.set('open');
+
+      const rows = [
+        invoice({ status: 'open', customer: 'Acme' }),
+        invoice({ status: 'closed', customer: 'Globex' }),
+        invoice({ status: 'open', customer: 'Initech' }),
+      ];
+
+      expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual([
+        'Acme',
+        'Initech',
+      ]);
     });
   });
 });

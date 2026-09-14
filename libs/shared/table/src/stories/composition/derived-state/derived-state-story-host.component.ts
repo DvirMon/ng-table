@@ -34,7 +34,7 @@ export class DerivedStateStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     derivedStateConfig,
-    withFiltering({ filters: this.filters }),
+    withFiltering({ predicates: () => [this.filters().matcher()] }),
     withSelection(
       {},
       withComputed((store) => ({

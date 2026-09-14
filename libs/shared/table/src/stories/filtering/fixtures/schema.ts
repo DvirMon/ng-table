@@ -22,7 +22,7 @@ const narrowColumns: ColumnDefInput<InvoiceRow>[] = [
   { id: 'tags', label: 'Tags' },
 ];
 
-/** Consumed by `client-filtering/`, which composes `withFiltering({ filters })`. */
+/** Consumed by `client-filtering/`, which composes `withFiltering({ predicates: () => [filters().matcher()] })`. */
 export const clientInvoiceConfig: TableConfig<InvoiceRow> = {
   trackBy: 'id',
   columns: clientColumns,

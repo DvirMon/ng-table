@@ -69,7 +69,7 @@ export class GroupingSelectionStoryHostComponent {
     groupedSelectionConfig,
     withGrouping({ initialGrouping: SELECTION_GROUPING_LEVELS }),
     withSelection(),
-    withFiltering({ filters: this.filters })
+    withFiltering({ predicates: () => [this.filters().matcher()] })
   );
 
   protected readonly visibleColumns = computed(() =>

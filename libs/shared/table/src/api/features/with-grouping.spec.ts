@@ -6,9 +6,7 @@ import { setGroupLevels } from '../../mutations/update-grouping';
 import { applyGrouping } from '../../schema/grouping-rules';
 import type { GroupingAsyncRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
 import type { WritableView } from '../../engine/writable-view';
-import { createFilters } from '../create-filters';
 import { createTable } from '../create-table';
-import { filter } from '../filters/rules';
 import { withComputed } from './with-computed';
 import { withExpansion } from './with-expansion';
 import { withFiltering } from './with-filtering';
@@ -191,26 +189,14 @@ describe('withGrouping', () => {
   });
 
   it('filter -> group pipeline order: group aggregates reflect only post-filter rows', () => {
-    const filters = TestBed.runInInjectionContext(() =>
-      createFilters<GroupingMockRow>((path) => {
-        filter<GroupingMockRow, 'amount', number | null>(
-          path.amount,
-          (cell, criterion) => cell !== criterion,
-          { isEmpty: (v) => v == null, emptyValue: null }
-        );
-      })
-    );
-
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ filters }),
+        withFiltering({ predicates: () => [(row: GroupingMockRow) => row.amount !== 300] }), // drops id 2 (US > Electronics, amount 300)
         withGrouping({ initialGrouping: ['region', 'category'] })
       )
     );
-
-    filters['amount']().value.set(300); // drops id 2 (US > Electronics, amount 300)
 
     const usHeader = store
       .renderRows()
@@ -473,20 +459,21 @@ describe('rowsOf', () => {
 
   it('reactivity: a computed() reading rowsOf recomputes after a data write, a filter change, and a grouping change', () => {
     const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
-    const filters = TestBed.runInInjectionContext(() =>
-      createFilters<GroupingMockRow>((path) => {
-        filter<GroupingMockRow, 'amount', number | null>(
-          path.amount,
-          (cell, criterion) => cell !== criterion,
-          { isEmpty: (v) => v == null, emptyValue: null }
-        );
-      })
-    );
+    // A signal read inside the predicates thunk, rather than a fixed value at composition, so
+    // this case can still exercise "a filter change" as one of its three reactivity triggers.
+    const amountToExclude = signal<number | null>(null);
     const store = inContext(() =>
       createTable(
         data,
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ filters }),
+        withFiltering({
+          predicates: () => {
+            const excluded = amountToExclude();
+            return excluded == null
+              ? []
+              : [(row: GroupingMockRow) => row.amount !== excluded];
+          },
+        }),
         withGrouping({ initialGrouping: ['region'] })
       )
     );
@@ -507,7 +494,7 @@ describe('rowsOf', () => {
     expect(usLeafIds()).toEqual([1, 2, 3, 7]);
 
     // Filter change: excludes the row just added.
-    filters['amount']().value.set(40);
+    amountToExclude.set(40);
     TestBed.tick();
     expect(usLeafIds()).toEqual([1, 2, 3]);
 
@@ -519,25 +506,14 @@ describe('rowsOf', () => {
   });
 
   it('post-filter: a row excluded by a predicate never appears in rowsOf() for its group', () => {
-    const filters = TestBed.runInInjectionContext(() =>
-      createFilters<GroupingMockRow>((path) => {
-        filter<GroupingMockRow, 'amount', number | null>(
-          path.amount,
-          (cell, criterion) => cell !== criterion,
-          { isEmpty: (v) => v == null, emptyValue: null }
-        );
-      })
-    );
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ filters }),
+        withFiltering({ predicates: () => [(row: GroupingMockRow) => row.amount !== 300] }), // excludes id 2 (US > Electronics)
         withGrouping({ initialGrouping: ['region', 'category'] })
       )
     );
-
-    filters['amount']().value.set(300); // excludes id 2 (US > Electronics)
 
     const usElectronicsHeader = findHeader(store.renderRows(), US_ELECTRONICS_HEADER_ID)!;
     expect(store.rowsOf(usElectronicsHeader).map((row) => row.id)).toEqual([1]);
@@ -846,21 +822,14 @@ describe('collapse/expand (#59)', () => {
 
 describe('pipeline order (story 22)', () => {
   it('filter -> group -> sort executes in the same fixed order regardless of feature argument order', () => {
-    const filters = TestBed.runInInjectionContext(() =>
-      createFilters<GroupingMockRow>((path) => {
-        filter<GroupingMockRow, 'amount', number | null>(
-          path.amount,
-          (cell, criterion) => cell !== criterion,
-          { isEmpty: (v) => v == null, emptyValue: null }
-        );
-      })
-    );
+    // Shared predicate rather than one per store — keeps the two stores provably identical.
+    const isNotExcludedAmount = (row: GroupingMockRow): boolean => row.amount !== 300; // drops id 2 from both, regardless of argument order
 
     const filterGroupSort = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ filters }),
+        withFiltering({ predicates: () => [isNotExcludedAmount] }),
         withGrouping({ initialGrouping: ['region'] }),
         withSorting()
       )
@@ -872,11 +841,10 @@ describe('pipeline order (story 22)', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withSorting(),
         withGrouping({ initialGrouping: ['region'] }),
-        withFiltering({ filters })
+        withFiltering({ predicates: () => [isNotExcludedAmount] })
       )
     );
 
-    filters['amount']().value.set(300); // drops id 2 from both, regardless of argument order
     filterGroupSort.toggleSort('amount');
     sortGroupFilter.toggleSort('amount');
 
