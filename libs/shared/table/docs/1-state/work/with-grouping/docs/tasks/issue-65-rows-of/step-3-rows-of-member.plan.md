@@ -66,7 +66,7 @@ Imports: `rowsBeneathGroup` from `../../engine/grouping`, `RenderRow` added to t
 
 ## Implementation Notes
 
-- **Flat `table.rowsOf(g)`, not `table.grouping.rowsOf(g)`.** [ADR-0015](../../../../../adr/0015-feature-member-namespacing.md)
+- **Flat `table.rowsOf(g)`, not `table.grouping.rowsOf(g)`.** [ADR-0015](../../../../../../adr/0015-feature-member-namespacing.md)
   is `proposed` and explicitly **not blocking** (issue #65): it decides where every feature's
   behavior members hang, and if namespacing wins, all features move together. Ship flat now.
 - `SlotRegistry.claimMember` picks up the new key automatically — no registry edit, and a second

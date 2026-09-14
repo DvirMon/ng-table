@@ -205,8 +205,8 @@ refactor, not after it.
 ## D9 — `applyVisibleAsync.factory` widens from `ResourceRef<T>` to `Resource<T>` (2026-08-17)
 
 `VisibleAsyncOpts.factory` is currently typed `(params) => ResourceRef<TResult | undefined>`
-([column-rules.ts:36](../../../api/column-rules.ts)). Checked `wiring.ts`'s actual usage
-([wireAsyncVisibleRule](../../../api/features/with-columns-schema/wiring.ts)): it only ever
+([column-rules.ts:36](../../../../src/schema/column-rules.ts)). Checked `wiring.ts`'s actual usage
+([wireAsyncVisibleRule](../../../../src/engine/columns-schema/wiring.ts)): it only ever
 calls `.status()`, `.value()`, `.error()` — never `.set()`, `.reload()`, `.destroy()`. The
 `ResourceRef<T>` type is stricter than what the code needs; it was an accidental constraint
 from importing the concrete type instead of its interface, not an intentional one.

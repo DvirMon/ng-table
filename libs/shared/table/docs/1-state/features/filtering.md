@@ -137,8 +137,11 @@ Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filt
   mode: filters feed the request that produces the data, so a table-owned filter object cannot be
   constructed at all.
 - **R23** — `manual` is kept for cross-feature consistency.
-- **R26** — the superseded implementation stays on disk until `createFilters()` lands; its
-  removal is a planned breaking change, not a cleanup.
+- **R26** — **executed 2026-09-14.** The superseded imperative implementation is gone:
+  `setColumnFilter()`, `setGlobalFilter()`, `clearFilters()`, `columnFilters` and `globalFilter`
+  no longer exist, and `with-filtering.ts` is the adapter over `createFilterEvaluator` with a
+  `manual` pass-through for server mode. It was a planned breaking change, not a cleanup, and it
+  is done — anything still naming those five members is stale.
 
 Superseded behavioral decisions from v1.1 of this file, kept here so the change is traceable:
 

@@ -10,7 +10,7 @@ Data table engine for Angular 19+. Three-layer stack: state management (`createT
 
 These are architectural constraints agreed in drilling sessions. Changing them requires cross-team decision and a new ADR.
 
-- **Native `<table>` or `<div>` grid, one directive set.** Superseded 2026-08-17 by [ADR-0005](docs/adr/0005-generic-table-host.md) — selectors are dual-tag (`table[ngpTable], div[ngpTable]`, etc.), ARIA roles injected unconditionally regardless of host tag (matches Angular CDK Table precedent). Still no shadow DOM. Status `proposed`; div-grid path not yet implemented — see ADR open questions before building it.
+- **Native `<table>` or `<div>` grid, one directive set.** Superseded 2026-08-17 by [ADR-0005](docs/adr/0005-generic-table-host.md) — selectors are dual-tag (`table[ngpTable], div[ngpTable]`, etc.), ARIA roles injected unconditionally regardless of host tag (matches Angular CDK Table precedent). Still no shadow DOM. Read the ADR — including its status and open questions — before building the div-grid path.
 - **Attribute-only directives** — never insert/remove/reorder DOM. Structural logic lives in the template (consumer's responsibility).
 - **`createTable()` returns an instance, not a class.** Consumers call `const table = createTable(…)`, not `new Table(…)`.
 - **`rows()` never returns wrapper objects.** Store yields `RenderRow<TRow>[]` directly; consumers get raw row data with layout/state fields colocated.
@@ -92,15 +92,16 @@ stay `import type`; making either a value import breaks the build.
 
 - **Type narrowing:** Use `as const` on discriminators (`data-row-kind: 'header' | 'body' as const`); never use bare `as` assertions. Type guards preferred over assertions.
 
-- **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md), `proposed`).
+- **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md)).
   Wiring errors — slot/member collisions, duplicate registration, a `trackBy` naming no field —
   throw, and every existing throw site is one of these. A **consumer callback** (`accessor`,
   `sortFn`, `aggregateFn`, a filter predicate) must never take the table down: it falls back to a
   defined value, chosen so the failure is visible rather than silent, and reports once per
   callback per evaluation in production as well as dev. Wrap per callback, never per row.
   A new feature taking a consumer callback names its own fallback in the ADR's table.
-  **Not enforced by types** — and `sortFn`/`accessor`/`aggregateFn` are still unguarded pending
-  the retrofit, so absence of a wrap in existing code is not precedent.
+  **Not enforced by types.** Some call sites predate this policy, so the absence of a wrap in
+  existing code is never precedent for leaving the next one unwrapped — check the ADR, not the
+  neighbouring code.
 
 ## Docs structure — three streams, permanent vs. episodic
 
@@ -143,14 +144,11 @@ fields on a new feature spec and it silently vanishes from the roll-up.
 Vocabulary, per-file assigned values, and the competitive-verdict block format:
 [`docs/1-state/work/state-feature-competitive-audit/decisions.md`](docs/1-state/work/state-feature-competitive-audit/decisions.md).
 
-## The `ColumnDef` footprint — incomplete
+## Specs describe intent, not necessarily shipped code
 
-**WARNING:** Several fields appear in docs but have no implementation yet:
-
-- `ColumnDef.width` — typed, sketched in `docs/2-columns/reference/`, not used by code. Blocked on presentation-fields ADR.
-- `statusMessage` — drafted in specs, not wired. Accessibility message channel TBD.
-
-Reading a spec that mentions these does NOT mean they work; check `api/types.ts` for what's actually exported.
+A field named in a spec or reference doc is not proof it is wired — several are typed or drafted
+ahead of implementation. `api/types.ts` is what is actually exported, and `docs/status.md`
+(generated) is what is actually built. Check those, never this file, for the state of anything.
 
 ## Before implementing a feature
 
@@ -189,13 +187,6 @@ the block is called with `In & Out` and its members merge into the returned `Fea
 D>`. A block declaring `stages`/`renderStages`/`columnRules`, or a member key the feature
 already declared, throws at construction.
 
-**Migration in flight (#69 landed, #72–#74 pending):** a consumer feature is now
-`Feature<In, Out>` — one argument, the accumulating store, with the row type recovered as
-`RowOf<In>`. The shipped `with-*()` files still name `TableCore`/`TableFeatureSpec` and the
-retired two-argument `(core, composed)` convention; they are converted in #72–#74. Until then
-`src/stories/**`, `table.mock.ts` and the feature specs do not compile — that window is
-expected, green is promised at the integrate issue.
-
 Rules:
 - Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
   `PipelineStages` derives from it, so there is no second list to keep in sync.
@@ -203,11 +194,11 @@ Rules:
   `RenderStages` derives from it, same invariant as `PipelineStages`.
 - A second feature claiming the same `stages` key, the same `renderStages` key, or the same
   **member key** (ADR-0007), **throws at construction**. Render stages are per-named-stage
-  collision, not whole-layer (ADR-0011, accepted) — `withExpansion()` claims `'tree'`, leaving
+  collision, not whole-layer (ADR-0011) — `withExpansion()` claims `'tree'`, leaving
   `'group'`/`'paginate'` free for `withGrouping()`/`withPagination()` once built.
-  **Pending change:** [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md)
-  (`proposed`) splits `withExpansion()` into a detail-panel feature (no render stage) plus a new
-  `withTree()` claiming `'tree'`. Read it before touching `renderStages` or `withExpansion()`.
+  [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) covers splitting
+  `withExpansion()` into a detail-panel feature plus a `withTree()` claiming `'tree'` — read it,
+  and its current status, before touching `renderStages` or `withExpansion()`.
 - **If your feature stores `RowId`s, declare `onRowsRemoved`** ([ADR-0006](docs/adr/0006-row-id-state-reconciliation.md)).
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and

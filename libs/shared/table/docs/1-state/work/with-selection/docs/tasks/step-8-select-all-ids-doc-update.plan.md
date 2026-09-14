@@ -32,7 +32,7 @@ way `filtering.md` was synced after #62.
    > `createFilters()`. Not yet coded; see D59 for the proposed file placement and what it
    > deliberately does not solve (page-scoped select-all; the read-side "are all visible rows
    > selected" signal, routed to
-   > [`work/computed-state-mechanism/1-intake.md`](../work/computed-state-mechanism/1-intake.md)).
+   > [`work/computed-state-mechanism/1-intake.md`](../../../computed-state-mechanism/1-intake.md)).
 
    with wording stating it ships at `api/features/selection.utils.ts` (Step 6), citing D59, and
    keeping the "what it deliberately does not solve" pointer (page-scoped select-all; the

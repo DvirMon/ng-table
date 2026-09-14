@@ -849,11 +849,26 @@ readonly filterForm = form(this.filters().value, (path) => {
 });
 ```
 ```html
-<input [control]="filterForm.search" />
+<input [formField]="filterForm.search" />
 ```
 
 No adapter, no sync effect, no duplicated state. The model is plain data (R2), which is exactly
 what `form()` accepts.
+
+> **Implementation note, 2026-09-14.** R18 was *specified* here but not *delivered*: the shipped
+> `buildFiltersRoot()` made root `value` a plain getter, so `form(filters().value, …)` could not
+> be constructed, and the first consumer (the filtering stories) reintroduced exactly the
+> duplicated model and sync effect this decision exists to remove. Now closed —
+> `createRootValueSignal()` in `api/filters/state.ts` makes root `value` a writable view over
+> the child nodes.
+>
+> One sub-claim below is also wrong and worth correcting, because it drove the storage layout:
+> per-filter handles are **not** views onto keys of one root signal. Each node owns its signal
+> and the root is the view over them. `form()` does not care which direction the view points —
+> it needs a callable carrying a reactive node plus `set`/`update`/`asReadonly`, which is
+> exactly what Angular's own `deepSignal` synthesizes. Node-first keeps each node's
+> `source`/`dirty` reconciliation local to the node that owns it instead of making it a per-key
+> merge the root has to arbitrate.
 
 No separate `filters.model` is needed: `filters().value` **is** the `WritableSignal`, verified as
 *"A writable signal containing the value for this field. Updating this signal will update the
@@ -1169,7 +1184,7 @@ All four are **purely additive to a rule's opts object or to the exported-matche
 shipping any of them later is non-breaking — the same reversibility test R6 used to defer
 `{ as: }`. The forced part of this decision is only that shipped matchers must not crash on real
 data (`null.includes()` throws); everything past that sentence is configurability, and
-[`general-mechanism-over-enumerated-cases`](../../../../../../.claude/rules/general-mechanism-over-enumerated-cases.md)
+`general-mechanism-over-enumerated-cases`
 cuts against shipping a mechanism nobody has extended yet.
 
 Revisit when a real screen needs blank filtering. That day it is a custom `filter()` predicate;
@@ -1323,6 +1338,76 @@ need `anyOf<Invoice>('search', (path) => { … })`. `applyWhen` doesn't have thi
 rather than reopened as a design question: fixing it would mean changing `anyOf`'s parameter
 order or count, which is out of scope for the primitive as specified.
 
+## Re-grill — inferred `TState` (2026-09-14)
+
+Grounded in
+[research-typescript-inference-probes.md](../filters-inferred-state/research-typescript-inference-probes.md)
+— every claim there is a compiled assertion under the repo's own TypeScript 6.0.3, `--strict`,
+exact-match `Equal<X, Y>`. R32 ("`TState` cannot be inferred") was correct about the *then*
+signature and wrong as a limit of TypeScript: the channel is missing only because rules record
+by side effect.
+
+**Dependency ranking** (`decompose-by-dependency-graph`):
+
+```
+[1 rules return records] ──┬─> [3 array vs object] ─┬─> [4 anyOf flattening]
+                           │                        ├─> [5 applyWhen spread]
+                           │                        └─> [9 `as` literal enforcement]
+                           └─> [8 bare-statement lint]
+[2 TRow carrier arg] ──────────> [7 TRow=never guard]
+[6 key-uniqueness validate] (independent)
+                           all ─> [10 migration + supersede R10/R11/R31/R32/R33]
+```
+
+Core: 1, 2. Independent: 6. Everything else sequenced behind them.
+
+**R34 — Rules return their record; the side-effect recorder is deleted.** Hard cutover, no
+dual-mode overload. `equals`/`contains`/`inRange`/`inDateRange`/`hasAny`/`hasNone`/`filter`
+return a `FilterRule<TKey, TCriterion>` instead of `void`, and the schema function returns the
+collection of them — that return *is* the inference channel R32 found missing. At a call site it
+is a concise arrow, so no `return` keyword is visible.
+
+Deleted outright: `filters/recorder.ts` (ambient stack, session,
+`withActiveFilterRecorder`, `assertFilterPathIsCurrent`), the `FILTER_RECORDER` symbol,
+`FilterHandle`'s recorder field, `FilterSchemaRecorder`. **R33 does not get superseded — it
+ceases to exist**, along with its non-reentrancy caveat and its `anyOf`-can't-infer-`TRow` gap.
+
+Dual-mode (rules return *and* record, with a `void`-schema overload so nothing migrates) was
+rejected on a correctness argument, not on migration cost: a braces-bodied schema that returns
+some rules while calling others bare would run the bare one and omit it from `TState` — the type
+lying about runtime, silently. Under the cutover the same bare statement is merely inert, which
+is a lint problem, not a divergence. Migration cost is not a factor either way: 13 call sites, all
+inside `libs/shared/table`, no external consumers.
+
+**R35 — `createFilters(rows, schema)` takes a wide first slot: data *or* a `rowOf<TRow>()` token.**
+One argument serves both modes, with no named carrier/evidence type:
+
+```ts
+declare function createFilters<TRow, S extends readonly unknown[]>(
+  rows: readonly TRow[] | (() => readonly TRow[] | undefined) | RowToken<TRow>,
+  schema: (path: FiltersPath<TRow>) => S,
+): Filters<TRow, StateOf<S>>;
+```
+
+All seven carriers infer `TRow` exactly (§3): arrays and readonly arrays, `Signal`/
+`WritableSignal`, a signal of `T[] | undefined` (a resource's value pre-load), a bare
+`() => TRow[]` store method, and `rowOf<TRow>()`. Non-row values (`42`, `{ foo: 1 }`) are
+rejected. The middle union member — *any callable returning rows* — covers the four
+signal-shaped cases on its own; an earlier recursive `RowOf<E>` conditional plus a named
+`RowEvidence` constraint was discarded as machinery re-deriving what one union member states
+directly, for identical coverage.
+
+**`rows` is an inference anchor and is never read at runtime.** Under R10 `createFilters` is
+standalone; data reaches the engine through `withFiltering(table, filters)`. The wide slot was
+chosen over a token-only slot for ergonomics — passing data already to hand beats constructing a
+token — accepting that `createFilters(this.invoices, …)` reads as if it binds. That must be
+stated at the top of the signature's docs, not left to be discovered.
+
+This supersedes R11's "no `data` argument": data is accepted when it exists, and `rowOf()` is the
+server-mode escape hatch rather than a separate API. It also corrects R11's closing claim that
+TypeScript cannot recover `TRow` from a callback parameter — it can (§2); it is merely fragile,
+which is why the carrier, not the annotation, is the mechanism.
+
 ## Open questions for the grill
 
 1. ~~**`clear()` semantics.**~~ — resolved, see R17. One `reset(value?)`; `reset(null)` → empty.
@@ -1396,7 +1481,7 @@ timezone? null handling? A product whose semantics differ then fights the abstra
 writing three lines. TanStack's `value: unknown` + `filterFn` is deliberately unopinionated for
 exactly this reason.
 
-Note this is [`general-mechanism-over-enumerated-cases`](../../../../../../.claude/rules/general-mechanism-over-enumerated-cases.md)
+Note this is `general-mechanism-over-enumerated-cases`
 cutting *against* parts of E, having been cited *for* it earlier. Both readings are available,
 which is the tell that it needs deciding rather than assuming.
 
@@ -1431,7 +1516,7 @@ Split the halves and defer the novel one:
 
 Extraction later is mechanical. Un-shipping a public standalone primitive is not — so this
 ordering keeps the expensive decision reversible. Consistent with promote-on-evidence in
-[file-organization](../../../../../../.claude/rules/file-organization.md): give something its own
+[file-organization](../../../../../../../.claude/rules/file-organization.md): give something its own
 scope because it already outgrew the smaller one, not because it might.
 
 ## Prerequisite research — done

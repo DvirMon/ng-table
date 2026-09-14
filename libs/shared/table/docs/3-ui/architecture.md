@@ -1,9 +1,14 @@
 ---
 title: Architecture — UI Layer Directive Specs
 type: architecture
-version: 0.4
-date: 2026-08-07
-status: draft — core + 1 feature drilled; full feature surface now enumerated (5 stubs, 1 no-UI, 2 deferred)
+version: 0.5
+date: 2026-09-14
+status: >
+  draft — core + 1 feature drilled; full feature surface enumerated (5 stubs, 1 no-UI, 2 deferred).
+  Re-checked 2026-09-14 against the 18 shipped stories: filtering's no-UI verdict holds but its
+  API names were stale (R26 removed them), grouping and selection are no longer blocked on the
+  state layer, and `3-ui/directives/selection.md` is now itself the blocker on three ❌ product
+  stories.
 audience: developers
 ---
 
@@ -18,9 +23,9 @@ This document indexes the directive-by-directive design of the NGP Table UI laye
 The full UI-layer surface is now enumerated (2026-08-07) — every state-layer feature has an explicit UI-layer verdict, so "what's left" is countable rather than estimated:
 
 - **Drilled:** sort.
-- **Stubbed, ready to drill:** expansion (unblocked by [#39](https://github.com/DvirMon/acme/issues/39)), grouping (drillable on paper; `withGrouping()` unimplemented).
-- **Stubbed, blocked on a state-layer answer:** selection, drag & drop, resizing.
-- **Decided to have no UI layer:** filtering.
+- **Stubbed, ready to drill:** expansion (unblocked by [#39](https://github.com/DvirMon/acme/issues/39)), grouping (**unblocked 2026-09-14** — `withGrouping()` ships and three stories render group rows), selection (**unblocked 2026-09-14** — D59 answered the scope question, and this stub is now what blocks range select, the keyboard focus model and SR announcements).
+- **Stubbed, blocked on a state-layer answer:** drag & drop, resizing.
+- **Decided to have no UI layer:** filtering — re-confirmed 2026-09-14 against three shipped stories.
 - **Deferred:** pagination, infinite scroll — their state-layer files are themselves undrilled.
 
 ---
@@ -29,30 +34,30 @@ The full UI-layer surface is now enumerated (2026-08-07) — every state-layer f
 
 | Reference | Status |
 |---|---|
-| [`3-ui/directives/core.md`](3-ui/directives/core.md) — `ngpTable`, `ngpTableRow`, `ngpTableCell`, store connection pattern. **Revised 2026-07-31:** `createTable()` now returns a live store *instance*, not a class, so `provideTableStore()` is gone — the instance enters via a required `[ngpTable]` input and `NgpTableDirective` self-provides under `NGP_TABLE_STORE`. | ✅ Drilled |
-| [`3-ui/directives/columns.md`](3-ui/directives/columns.md) — `ngpTableColumn`, column identity, store-vs-directive override boundary. **Revised 2026-07-31:** synced to the real `ColumnDefInput`/`ColumnDef` shape and the opt-in `columnsSchema` layer. | ✅ Drilled |
+| [`3-ui/directives/core.md`](directives/core.md) — `ngpTable`, `ngpTableRow`, `ngpTableCell`, store connection pattern. **Revised 2026-07-31:** `createTable()` now returns a live store *instance*, not a class, so `provideTableStore()` is gone — the instance enters via a required `[ngpTable]` input and `NgpTableDirective` self-provides under `NGP_TABLE_STORE`. | ✅ Drilled |
+| [`3-ui/directives/columns.md`](directives/columns.md) — `ngpTableColumn`, column identity, store-vs-directive override boundary. **Revised 2026-07-31:** synced to the real `ColumnDefInput`/`ColumnDef` shape and the opt-in `columnsSchema` layer. | ✅ Drilled |
 
 ## Features — Drilled
 
 | Feature | Reference | Summary |
 |---|---|---|
-| Sort | [`3-ui/directives/sort.md`](3-ui/directives/sort.md) | `ngpTableSort` on `<th>`, button-inside-header pattern (matches `MatSortHeader`). **Revised 2026-07-21:** directive now owns click/keydown activation handling to read a configurable modifier key (default Shift) and call `store.toggleSort(columnId, { accumulate })` — reverses prior "display-only, consumer wires click" decision; see file for rationale. |
+| Sort | [`3-ui/directives/sort.md`](directives/sort.md) | `ngpTableSort` on `<th>`, button-inside-header pattern (matches `MatSortHeader`). **Revised 2026-07-21:** directive now owns click/keydown activation handling to read a configurable modifier key (default Shift) and call `store.toggleSort(columnId, { accumulate })` — reverses prior "display-only, consumer wires click" decision; see file for rationale. |
 
 ## Features — Not Yet Drilled
 
 | Feature | Reference | Blocked on |
 |---|---|---|
-| Selection | [`3-ui/directives/selection.md`](3-ui/directives/selection.md) | State layer: `withSelection()` "select all" scope (visible vs. entire dataset) |
-| Resizing | [`3-ui/directives/resizing.md`](3-ui/directives/resizing.md) | No state-layer feature yet; interaction with `columns.md`'s existing width-override input undecided |
-| Drag & Drop | [`3-ui/directives/drag-drop.md`](3-ui/directives/drag-drop.md) | State layer: does drag-reorder require clearing active sort, or no-op silently? |
-| Expansion | [`3-ui/directives/expansion.md`](3-ui/directives/expansion.md) | Nothing — unblocked by [#39](https://github.com/DvirMon/acme/issues/39) landing 2026-08-07. **Scope decided 2026-08-07:** own file, one directive (`ngpTableExpandToggle`). Ready to drill. |
-| Grouping | [`3-ui/directives/grouping.md`](3-ui/directives/grouping.md) | `withGrouping()` is unimplemented, so nothing emits `RenderRow.kind: 'group'` yet — drillable on paper, not verifiable. **Scope decided 2026-08-07:** own file, **no new directive** — covers group-row rendering + aggregate placement only. |
+| Selection | [`3-ui/directives/selection.md`](directives/selection.md) | **The stated blocker is answered; a different one replaces it.** D59 settled "select all" scope — `selectAllIds(table)` is post-filter/post-sort, `{ includeHidden: true }` is the whole dataset, both first-class and separately named — and `selection-filtering/` renders them side by side. What this file is now the blocker *for*: shift-click range select (4 of 5 peers ship it), the roving-focus / Tab-containment model, and screen-reader announcements. All three are ❌ in [`0-product/selection.md`](../0-product/selection.md) §1.3/§4.1/§4.2/§4.3 **because this file is a stub**, which is the strongest current argument for drilling it. |
+| Resizing | [`3-ui/directives/resizing.md`](directives/resizing.md) | No state-layer feature yet; interaction with `columns.md`'s existing width-override input undecided |
+| Drag & Drop | [`3-ui/directives/drag-drop.md`](directives/drag-drop.md) | State layer: does drag-reorder require clearing active sort, or no-op silently? |
+| Expansion | [`3-ui/directives/expansion.md`](directives/expansion.md) | Nothing — unblocked by [#39](https://github.com/DvirMon/acme/issues/39) landing 2026-08-07. **Scope decided 2026-08-07:** own file, one directive (`ngpTableExpandToggle`). Ready to drill. |
+| Grouping | [`3-ui/directives/grouping.md`](directives/grouping.md) | **Unblocked 2026-09-14.** `withGrouping()` ships and three stories render `RenderRow.kind: 'group'`, so this is now verifiable rather than drillable-on-paper. **Scope decided 2026-08-07:** own file, **no new directive** — covers group-row rendering + aggregate placement only. What the stories add to the drilling input: U1's group-header cell structure (one spanning `<td>` vs. one per column) is still open and now has a worked instance to argue against, and 2.4's sticky headers ship as one CSS class that sticks every depth to the same offset, so nested paths overlap. |
 
 ## Features — No UI Layer (decided)
 
 | Feature | Decision |
 |---|---|
-| Filtering | **2026-08-07 — no `ui-layer/` file, no directive.** Filter controls are ordinary form inputs calling `setColumnFilter()` / `setGlobalFilter()`; nothing about them is table-structural, and Angular forms already own their accessibility. Rejected an `ngpTableFilterInput` convenience directive as duplicating form bindings. |
+| Filtering | **2026-08-07 — no `ui-layer/` file, no directive. Verdict re-confirmed 2026-09-14; the API names were corrected.** Filter controls are ordinary form inputs bound to `createFilters()`' criterion model — `filters().value` is a `WritableSignal`, so a Signal Form wraps it with no adapter and no sync effect (R18/R25). The pre-`createFilters()` names this row used to give, `setColumnFilter()` / `setGlobalFilter()`, were removed by R26 and no longer exist. Nothing about a filter input is table-structural and Angular forms already own its accessibility, so an `ngpTableFilterInput` convenience directive stays rejected as duplicating form bindings. The three shipped stories are the evidence: they bind `[formField]` straight to criterion nodes, and the two controls that cannot be bound that way — a `<select>` whose empty value is `''` where `equals` wants `null`, and a tag multi-select that is a set rather than a control value — are hand-wired in the host, which is exactly the work a directive would have had to own. |
 
 ## Features — UI Layer Decision Deferred
 
@@ -65,9 +70,9 @@ The full UI-layer surface is now enumerated (2026-08-07) — every state-layer f
 
 | Concern | Reference | Summary |
 |---|---|---|
-| Styling & tokens | [`3-ui/cross-cutting/styling-tokens.md`](3-ui/cross-cutting/styling-tokens.md) | `data-*` attributes for state, CSS custom properties for values; Tailwind-native |
-| Accessibility | [`3-ui/cross-cutting/accessibility.md`](3-ui/cross-cutting/accessibility.md) | Conditional `aria-label` only; single table-level `aria-live`, no per-cell |
-| Virtual scroll | [`3-ui/cross-cutting/virtual-scroll.md`](3-ui/cross-cutting/virtual-scroll.md) | Native single `<table>`, CDK viewport wraps `<tbody>` only, sticky `<thead>` via CSS |
+| Styling & tokens | [`3-ui/cross-cutting/styling-tokens.md`](cross-cutting/styling-tokens.md) | `data-*` attributes for state, CSS custom properties for values; Tailwind-native |
+| Accessibility | [`3-ui/cross-cutting/accessibility.md`](cross-cutting/accessibility.md) | Conditional `aria-label` only; single table-level `aria-live`, no per-cell |
+| Virtual scroll | [`3-ui/cross-cutting/virtual-scroll.md`](cross-cutting/virtual-scroll.md) | Native single `<table>`, CDK viewport wraps `<tbody>` only, sticky `<thead>` via CSS |
 
 ---
 

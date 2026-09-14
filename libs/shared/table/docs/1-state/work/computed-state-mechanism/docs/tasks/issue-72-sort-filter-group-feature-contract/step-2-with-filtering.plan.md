@@ -33,6 +33,14 @@ acceptance: "A feature contributing no members contributes `{}`, not `object`."
 1. **Config is row-typed through `RowOf<In>`.** `WithFilteringConfig<TRow>` stays as declared
    (`filters: Filters<TRow>`, `manual?`); the public signature applies it to `RowOf<In>`.
 
+   > **Superseded 2026-09-14** (after this issue closed). The config now carries a second
+   > parameter — `WithFilteringConfig<TRow, TState extends Record<string, unknown> =
+   > Record<string, unknown>>` holding `filters: Filters<TRow, TState>` — and both overloads
+   > thread `TState`. Pinning it to the default made a concretely-keyed filter set unassignable
+   > (`FilterNode<T>` holds an invariant `WritableSignal<T>`). The `Feature<In, Out>` shape this
+   > step delivered is unchanged. Current contract:
+   > `docs/1-state/features/filtering.md` §Config.
+
 2. **Input constraint.** Filtering reads nothing off the store — `In extends Shape` is enough.
    Import `Feature`, `RowOf`, `Shape`, `TableFeatureSpec` from `../../engine/types`; drop `TableCore`.
 

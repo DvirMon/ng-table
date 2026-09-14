@@ -1,11 +1,11 @@
 ---
 title: State Layer Reference — createFilters()
 type: architecture
-version: 1.0
-date: 2026-09-10
+version: 1.1
+date: 2026-09-14
 capability: filters
 spec: drilled
-code: none
+code: shipped
 audience: developers
 parent: ./architecture.md
 ---
@@ -27,6 +27,16 @@ readonly filters = createFilters<Invoice>((path) => {
   contains(path.customer);
 });
 ```
+
+> **`code: shipped` since 2026-09-14** (was `none`, stale from 2026-09-10). `api/create-filters.ts`
+> plus the whole `api/filters/` engine — `evaluator`, `matchers`, `recorder`, `rules`, `state`,
+> `validate` — are on disk, with `create-filters.spec.ts`, `matchers.spec.ts` and `state.spec.ts`
+> covering them. All eight rule kinds, `anyOf`, `applyWhen` and the matchers are exported from
+> `src/index.ts`. Three Storybook stories exercise the surface end to end
+> (`filtering/client-filtering/`, `server-filtering/`, `selection-filtering/`); coverage per
+> product story is in [`0-product/filtering.md`](../0-product/filtering.md).
+>
+> `docs/status.md` still shows the old value — it is generated, so run `npm run table:status`.
 
 Declared like `createTable()` and Signal Forms' `form()`, and deliberately shaped after the
 latter: named rules called on a typed path, one general rule underneath, property access for

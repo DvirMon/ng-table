@@ -165,6 +165,14 @@ has no path-proxy concern of its own.
 - No `Forms`/Signal Forms integration code — `filters().value` being a real `WritableSignal` is
   what makes that free (filters.md §Forms); nothing extra to build for it here.
 
+  > **Corrected 2026-09-14.** This premise was wrong, and the gap shipped because of it. As
+  > built, `buildFiltersRoot()` made root `value` a plain getter (`value(): TState`), not a
+  > `WritableSignal` — so `form(filters().value, …)` could not be constructed at all, and R18
+  > was never actually delivered. The filtering stories worked around it with a duplicate model
+  > plus a sync effect. Closed by `createRootValueSignal()` in `api/filters/state.ts`: root
+  > `value` is now a writable view over the child nodes. The lesson for a future plan — "free,
+  > nothing to build" deserves one line of verification before it becomes a Non-Goal.
+
 ## Acceptance Checks
 
 - [ ] `createFilters<TRow>(schema, opts?)` constructs without a `data` argument

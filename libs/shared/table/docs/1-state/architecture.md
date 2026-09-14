@@ -33,7 +33,7 @@ something to avoid. The thing being minimized is the *enumerated surface area*, 
 ### The reference case — `updateRows`
 
 The row-mutation cluster is the worked example (see
-[`work/with-mutations/2-decisions.md`](1-state/work/with-mutations/2-decisions.md), D5–D8). The
+[`work/with-mutations/2-decisions.md`](work/with-mutations/2-decisions.md), D5–D8). The
 scenarios were add, remove, update, duplicate, bulk delete, import, and an open-ended tail. Rather
 than shipping a method per scenario, the API is:
 
@@ -60,7 +60,7 @@ Whether this shape transfers to a given cluster is an open question each time, a
 attempting it, not assumed.
 
 The live test is the null/empty-row ordering cluster (S1–S9 in
-[sorting.md](1-state/features/sorting.md)). Those scenarios span several definitions of "empty",
+[sorting.md](features/sorting.md)). Those scenarios span several definitions of "empty",
 a cell-level vs row-level split, and three candidate owners — exactly the shape that tempts a flag
 per case. The question to try first is whether one general ordering mechanism accepts all of them
 as composable rules, with a default or two shipped.
@@ -79,31 +79,31 @@ that general mechanisms can be layered on them.
 
 | Reference | Status |
 |---|---|
-| [`columns`](1-state/columns.md) — column definitions, runtime-mutable order/visibility | ✅ Drilled |
-| [`columnsSchema`](2-columns/architecture.md) — declarative column schema DX (`apply*` rules) layered on `columns` core config; detail in [`2-columns/reference/`](2-columns/reference/) | 📝 Spec only |
+| [`columns`](columns.md) — column definitions, runtime-mutable order/visibility | ✅ Drilled |
+| [`columnsSchema`](../2-columns/architecture.md) — declarative column schema DX (`apply*` rules) layered on `columns` core config; detail in [`2-columns/reference/`](../2-columns/reference/) | 📝 Spec only |
 
-`columnsSchema` can seed the initial state of the two not-yet-drilled `withColumnPinning()` / `withColumnSizing()` features below (via `applyPinned` / `applyWidth`+`applyFlex`) — see [2-columns/reference/tier-2-layout.md](2-columns/reference/tier-2-layout.md).
+`columnsSchema` can seed the initial state of the two not-yet-drilled `withColumnPinning()` / `withColumnSizing()` features below (via `applyPinned` / `applyWidth`+`applyFlex`) — see [2-columns/reference/tier-2-layout.md](../2-columns/reference/tier-2-layout.md).
 
 ## Features — Drilled
 
 | Feature | Reference | Summary |
 |---|---|---|
-| `withSorting()` | [with-sorting.md](1-state/features/sorting.md) | Multi-column, three-state toggle, additive by click order |
-| `withGrouping()` | [with-grouping.md](1-state/features/grouping.md) | Single-level, per-column `aggregateFn`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
-| `withExpansion()` | [with-expansion.md](1-state/features/expansion.md) | Multi-expand, hierarchical/tree-capable, standalone (no dependencies) |
-| `withFiltering()` | [with-filtering.md](1-state/features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](1-state/work/with-filtering/design-options-hybrid-api.md) |
-| `withSelection()` | [with-selection.md](1-state/features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
+| `withSorting()` | [with-sorting.md](features/sorting.md) | Multi-column, three-state toggle, additive by click order |
+| `withGrouping()` | [with-grouping.md](features/grouping.md) | Single-level, per-column `aggregateFn`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
+| `withExpansion()` | [with-expansion.md](features/expansion.md) | Multi-expand, hierarchical/tree-capable, standalone (no dependencies) |
+| `withFiltering()` | [with-filtering.md](features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](work/with-filtering/design-options-hybrid-api.md) |
+| `withSelection()` | [with-selection.md](features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
 
 ## Features — Not Yet Drilled
 
 | Feature | Reference | Known from Overview |
 |---|---|---|
-| `withPagination()` | [with-pagination.md](1-state/features/pagination.md) | `{ pageIndex, pageSize, totalRows }` |
-| `withInfiniteScroll()` | [with-infinite-scroll.md](1-state/features/infinite-scroll.md) | `{ hasMore, isLoading }` |
-| `withDragDrop()` | [with-drag-drop.md](1-state/features/drag-drop.md) | `{ dragState }` |
+| `withPagination()` | [with-pagination.md](features/pagination.md) | `{ pageIndex, pageSize, totalRows }` |
+| `withInfiniteScroll()` | [with-infinite-scroll.md](features/infinite-scroll.md) | `{ hasMore, isLoading }` |
+| `withDragDrop()` | [with-drag-drop.md](features/drag-drop.md) | `{ dragState }` |
 | `withColumnPinning()` | not yet started | `{ columnPinning: { left: string[]; right: string[] } }` — TanStack-modeled, plus start/center/end region derivation. Seedable via `columnsSchema`'s `applyPinned`. |
 | `withColumnSizing()` | not yet started | Per-column resizable width/flex state, only when sizing is runtime-resizable (static width stays column-owned CSS). Seedable via `columnsSchema`'s `applyWidth`/`applyFlex`. |
-| `withVirtualScroll()` | [with-virtual-scroll.md](1-state/features/virtual-scroll.md) | Windowed rendering over `renderRows()`; no dependency on grouping/expansion — added 2026-07-31 alongside the `renderRows` render-layer design |
+| `withVirtualScroll()` | [with-virtual-scroll.md](features/virtual-scroll.md) | Windowed rendering over `renderRows()`; no dependency on grouping/expansion — added 2026-07-31 alongside the `renderRows` render-layer design |
 
 ---
 
@@ -151,7 +151,7 @@ The tempting fix is to declare `Department` once and have it flow into each feat
 Features extends readonly ((store: TableStore<NoInfer<TRow>>) => any)[]
 ```
 
-The idea: a type parameter's constraint acts as the contextual type for the argument expression, so each `withExpansion()` would infer its own `TRow` from the expected return type — while `Features` still infers from the literal array, keeping each element's precise return type intact for [`ComposedFeatureMembers`](../../api/types.ts).
+The idea: a type parameter's constraint acts as the contextual type for the argument expression, so each `withExpansion()` would infer its own `TRow` from the expected return type — while `Features` still infers from the literal array, keeping each element's precise return type intact for [`ComposedFeatureMembers`](../../src/api/types.ts).
 
 **This half is sound.** Verified against simplified stand-in types with exact-type assertions (`Equals<Department, Parameters<typeof table.toggleExpanded>[0]>`) plus negative cases that must error. Constraints do contextually type elements, and they do not widen them. So the "would it destroy the reconstructed method types?" fear is unfounded — that is *not* what blocks this.
 

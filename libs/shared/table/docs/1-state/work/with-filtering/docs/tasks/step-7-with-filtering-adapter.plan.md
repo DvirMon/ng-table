@@ -42,6 +42,14 @@ state worth shipping alone.
 
 **`api/features/with-filtering.ts` — replace entirely:**
 
+> **Superseded 2026-09-14.** `WithFilteringConfig` now carries a second parameter,
+> `TState extends Record<string, unknown> = Record<string, unknown>`, and holds
+> `filters: Filters<TRow, TState>`. The shape below pinned `TState` to its default, which made a
+> concretely-keyed filter set unassignable (`FilterNode<T>` holds an invariant
+> `WritableSignal<T>`) and forced consumers back to `unknown` criteria. See
+> `docs/1-state/features/filtering.md` §Config for the current contract. The signature below is
+> also pre-#69 in its feature shape (`(core: …)`), superseded separately.
+
 ```ts
 export interface WithFilteringConfig<TRow> {
   filters: Filters<TRow>;

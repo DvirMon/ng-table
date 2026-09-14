@@ -1,7 +1,7 @@
 ---
 title: State ↔ UI seam — what "hybrid" actually means here
 type: architecture
-status: working note (grill support, with-selection)
+status: working note (grill support, with-selection) — item 3 superseded by D5, corrected 2026-09-14
 date: 2026-09-06
 audience: developers
 ---
@@ -80,8 +80,15 @@ config (and D1 removed it). A checkbox click is a verb.
 
 1. Selection state lives on the feature. `ngpTableSelectionCheckbox` stores nothing.
 2. The directive's write path is `store().<verb>(rowId)`, mirroring `ngpTableExpandToggle`.
-3. The directive's read path is a `RenderRow` field (`isSelected?`) plus store signals — per
-   `CLAUDE.md`, a feature-contributed optional `RenderRow` field may only be bound by a *feature*
-   directive, never by `ngpTableRow`, because it is `undefined` when the feature is absent.
+3. ~~The directive's read path is a `RenderRow` field (`isSelected?`) plus store signals.~~
+   **Superseded by D5 (2026-09-06), same day this note was written.** There is no `isSelected?`
+   field and no render-stage claim: the read path is `table.selectedRows().has(row.id)`, in the
+   template at tier 0 and via DI in the directive at tier 1. Stamping would rebuild the whole
+   `RenderRow[]` on every checkbox click; a signal read costs one `Set.has()` per row against
+   attribute bindings only. The divergence from `withExpansion()`'s `isExpanded` stamp is
+   deliberate — expansion changes which rows exist, selection does not. The general rule this
+   item cited still holds for features that *do* contribute a `RenderRow` field; selection is not
+   one of them. Both shipped selection stories read the signal directly, which is the recipe
+   [`0-product/selection.md`](../../../0-product/selection.md) §2.1 is now marked ✅ against.
 4. `docs/3-ui/directives/selection.md`'s "Known Blocker" (select-all scope) is **removed by D1** —
    that file is now unblocked for drilling.

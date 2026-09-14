@@ -73,7 +73,6 @@ In-progress work is tracked in `work/` folders at each layer. Each effort has st
 - **[1-state/work/](1-state/work/)** — State layer efforts
   - [drop-ngrx-engine](1-state/work/drop-ngrx-engine/) — Replaced `@ngrx/signals` with the in-house `composeTable()` engine (✅ landed, ADR-0003)
   - [state-feature-competitive-audit](1-state/work/state-feature-competitive-audit/) — State-layer feature comparison against TanStack Table, AG Grid, Material React Table and PrimeNG, the resulting [gap analysis](1-state/work/state-feature-competitive-audit/gap-analysis.md), and the build priority it ranked (✅ audit landed; the features it identifies are not built)
-- **[2-columns/work/](2-columns/work/)** — Columns schema efforts
 - **[3-ui/work/](3-ui/work/)** — UI layer efforts
   - [core-directives](3-ui/work/core-directives/) — Core directive implementation (🔄 in progress)
 
