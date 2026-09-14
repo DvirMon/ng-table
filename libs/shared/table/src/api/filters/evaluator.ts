@@ -83,17 +83,31 @@ function evaluateRecord<TRow>(
 }
 
 /**
- * Builds a per-row matcher for one `Filters` instance. **One evaluator instance is one
- * "evaluation"**: create it once per filtering pass (e.g. once per recompute in
- * `withFiltering()`, issue #62) and call `matchesRow` per row — the "reported once per filter
- * per evaluation, not per row" contract (ADR-0014) is scoped to this instance's lifetime.
+ * One evaluator instance is one **evaluation** — the once-per-filter reporting and degradation
+ * of ADR-0014 are scoped to its lifetime. Two ways to spend it:
+ *
+ * - `filterRows` narrows a whole row set, wrapping per filter per evaluation as ADR-0014's
+ *   granularity clause requires: a throwing filter narrows no row at all.
+ * - `matchesRow` answers for one row, for callers holding a row predicate rather than a set
+ *   (`FiltersRoot.matcher()`). A throwing filter stops narrowing from that row on; rows it
+ *   already answered for keep its narrowing, which a per-row signature cannot avoid.
+ *
+ * Prefer `filterRows` wherever the rows are in hand.
+ */
+interface FilterEvaluator<TRow> {
+  filterRows(rows: TRow[]): TRow[];
+  matchesRow(row: TRow): boolean;
+}
+
+/**
+ * Builds an evaluator for one `Filters` instance — create it once per filtering pass.
  *
  * @internal exported for `api/features/with-filtering.ts` (issue #62) only — not part of the
  * `index.ts` public barrel.
  */
 export function createFilterEvaluator<TRow, TState extends Record<string, unknown>>(
   filters: Filters<TRow, TState>
-): { matchesRow(row: TRow): boolean } {
+): FilterEvaluator<TRow> {
   return createFilterEvaluatorFrom(getFiltersInternal(filters));
 }
 
@@ -105,33 +119,80 @@ export function createFilterEvaluator<TRow, TState extends Record<string, unknow
  */
 export function createFilterEvaluatorFrom<TRow>(
   internal: FiltersInternal<TRow>
-): { matchesRow(row: TRow): boolean } {
+): FilterEvaluator<TRow> {
   const reportedKeys = new Set<string>();
+  const droppedKeys = new Set<string>();
+
+  let narrowingRecordsMemo: { record: FilterRuleRecord<TRow>; criterion: unknown }[] | undefined;
+
+  /** The records that narrow this pass: node present, condition met, criterion non-empty. Gating
+   *  and emptiness read criterion state, which is constant across one evaluation, so this
+   *  resolves once per instance rather than once per row. */
+  function narrowingRecords(): { record: FilterRuleRecord<TRow>; criterion: unknown }[] {
+    if (narrowingRecordsMemo !== undefined) {
+      return narrowingRecordsMemo;
+    }
+    const narrowing: { record: FilterRuleRecord<TRow>; criterion: unknown }[] = [];
+    for (const record of internal.records) {
+      const node = internal.nodesByKey.get(record.key);
+      if (!node) {
+        continue;
+      }
+      if (record.condition && !record.condition(buildValueOfContext<TRow>(internal))) {
+        continue;
+      }
+      const criterion = node.active();
+      if (criterion === undefined) {
+        continue; // empty criterion — skip, never a candidate for a throw
+      }
+      narrowing.push({ record, criterion });
+    }
+    narrowingRecordsMemo = narrowing;
+    return narrowing;
+  }
+
+  function reportOnce(record: FilterRuleRecord<TRow>, row: TRow): void {
+    if (!reportedKeys.has(record.key)) {
+      reportedKeys.add(record.key);
+      reportFilterError(record, row);
+    }
+  }
 
   return {
-    matchesRow(row: TRow): boolean {
-      for (const record of internal.records) {
-        const node = internal.nodesByKey.get(record.key);
-        if (!node) {
-          continue;
-        }
-        if (record.condition) {
-          const ctx = buildValueOfContext<TRow>(internal);
-          if (!record.condition(ctx)) {
-            continue;
+    filterRows(rows: TRow[]): TRow[] {
+      let narrowed = rows;
+      for (const { record, criterion } of narrowingRecords()) {
+        const kept: TRow[] = [];
+        let failedRow: TRow | undefined;
+        for (const row of narrowed) {
+          const result = evaluateRecord(record, criterion, row);
+          if (result === 'error') {
+            failedRow = row;
+            break; // stop here: the record is discarded whole, not applied to the rows it reached
+          }
+          if (result) {
+            kept.push(row);
           }
         }
-        const criterion = node.active();
-        if (criterion === undefined) {
-          continue; // empty criterion — skip, never a candidate for a throw
+        if (failedRow !== undefined) {
+          reportOnce(record, failedRow);
+          continue; // degrade: this filter does not narrow for this evaluation, for any row
+        }
+        narrowed = kept;
+      }
+      return narrowed;
+    },
+
+    matchesRow(row: TRow): boolean {
+      for (const { record, criterion } of narrowingRecords()) {
+        if (droppedKeys.has(record.key)) {
+          continue;
         }
         const result = evaluateRecord(record, criterion, row);
         if (result === 'error') {
-          if (!reportedKeys.has(record.key)) {
-            reportedKeys.add(record.key);
-            reportFilterError(record, row);
-          }
-          continue; // degrade: this filter does not narrow for this evaluation
+          droppedKeys.add(record.key);
+          reportOnce(record, row);
+          continue; // degrade: this filter stops narrowing for the rest of this evaluation
         }
         if (!result) {
           return false;

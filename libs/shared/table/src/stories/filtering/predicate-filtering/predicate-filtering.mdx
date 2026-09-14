@@ -1,0 +1,64 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as PredicateFilteringStories from './predicate-filtering.stories';
+import hostClass from './predicate-filtering-story-host.component.ts?raw';
+import hostTemplate from './predicate-filtering-story-host.component.html?raw';
+import filteringStyles from '../filtering-story.css?raw';
+import hostStyles from '../../styles/story-host.css?raw';
+import tableSchema from './predicate-filtering.schema.ts?raw';
+import '../../styles/code-tabs.css';
+
+<Meta of={PredicateFilteringStories} />
+
+# Predicate Filtering
+
+This table filters with plain handwritten predicates and composes **no filter model at all** —
+`withFiltering({ predicates })` takes a thunk returning `(row) => boolean` terms, and the host
+imports nothing from the filters domain: no `createFilters()`, no `Filters` type, no rules, no
+matchers. That absence is the point; the sibling stories cover what a filter model adds.
+
+The thunk is called once per filter pass, so terms built from ordinary signals re-narrow when
+those signals change. Terms are AND'd, and a control with nothing in it contributes no term.
+
+<Canvas of={PredicateFilteringStories.Default} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="predicate-filtering-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="predicate-filtering-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="predicate-filtering-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="predicate-filtering-source" />
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="predicate-filtering-source" />
+      predicate-filtering.schema.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={tableSchema} language="ts" />
+    </div>
+  </div>
+</div>

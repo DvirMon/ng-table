@@ -229,6 +229,202 @@ describe('withFiltering', () => {
     expect(store.visibleCount()).toBe(3);
   });
 
+  describe('a predicate list', () => {
+    it('narrows rows() with a plain predicate and no filter model at all', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ predicates: () => [(row: Row) => row.status === 'open'] })
+        )
+      );
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
+    });
+
+    it('combines separate predicate terms with AND', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            predicates: () => [
+              (row: Row) => row.status === 'open',
+              (row: Row) => row.category === 'b',
+            ],
+          })
+        )
+      );
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r3']);
+    });
+
+    it('recomputes the list when a signal read inside the thunk changes', () => {
+      const wantedStatus = signal('open');
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            predicates: () => {
+              const status = wantedStatus();
+              return [(row: Row) => row.status === status];
+            },
+          })
+        )
+      );
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
+
+      wantedStatus.set('closed');
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r2']);
+    });
+
+    it('calls the thunk once per pass, not once per row', () => {
+      const listTerms = vi.fn(() => [(row: Row) => row.status === 'open']);
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()), // 3 rows: a per-row call would be 3
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ predicates: listTerms })
+        )
+      );
+
+      expect(store.rows()).toHaveLength(2);
+      expect(listTerms).toHaveBeenCalledTimes(1);
+    });
+
+    it('contributes no members beyond the core store surface', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>([]),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ predicates: () => [] })
+        )
+      );
+
+      expect('predicates' in store).toBe(false);
+      expect('filters' in store).toBe(false);
+    });
+
+    it('the trailing block sees post-predicate rows: visibleCount reflects the narrowed set', () => {
+      const wantedStatus = signal('open');
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering(
+            {
+              predicates: () => {
+                const status = wantedStatus();
+                return [(row: Row) => row.status === status];
+              },
+            },
+            withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
+          )
+        )
+      );
+
+      expect(store.visibleCount()).toBe(2);
+
+      wantedStatus.set('closed');
+      expect(store.visibleCount()).toBe(1);
+    });
+
+    it('ANDs the filter model with the predicate terms when both are supplied', () => {
+      const filters = buildFilters((path) => equals(path.status));
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ filters, predicates: () => [(row: Row) => row.category === 'b'] })
+        )
+      );
+
+      filters['status']().value.set('open');
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r3']);
+    });
+
+    describe('manual mode', () => {
+      it('skips the stage without ever calling the predicate thunk', () => {
+        const listTerms = vi.fn(() => [(row: Row) => row.status === 'open']);
+        const rawRows = makeRows();
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(rawRows),
+            { trackBy: 'id', columns: makeColumns() },
+            withFiltering({ predicates: listTerms, manual: true })
+          )
+        );
+
+        expect(store.rows()).toEqual(rawRows);
+        expect(listTerms).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('errors', () => {
+      it('drops a throwing term for the pass while its sibling keeps narrowing', () => {
+        const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        try {
+          const store = inContext(() =>
+            createTable(
+              signal<Row[]>(makeRows()),
+              { trackBy: 'id', columns: makeColumns() },
+              withFiltering({
+                predicates: () => [
+                  () => {
+                    throw new Error('boom');
+                  },
+                  (row: Row) => row.category === 'b',
+                ],
+              })
+            )
+          );
+
+          // Not a widening to all 3 rows — the surviving term still narrows.
+          expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r3']);
+          expect(reportSpy).toHaveBeenCalledTimes(1);
+          expect(reportSpy.mock.calls[0][0]).toContain('index 0');
+        } finally {
+          reportSpy.mockRestore();
+        }
+      });
+
+      // ADR-0014 wraps per term, not per row: a term that throws part-way must apply to no row
+      // at all, rather than keeping the narrowing it managed before the throw.
+      it('drops a term throwing on a later row from the whole pass, not just the rows after it', () => {
+        const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        try {
+          const store = inContext(() =>
+            createTable(
+              signal<Row[]>(makeRows()),
+              { trackBy: 'id', columns: makeColumns() },
+              withFiltering({
+                predicates: () => [
+                  (row: Row) => {
+                    if (row.id === 'r3') {
+                      throw new Error('boom');
+                    }
+                    return row.status === 'open';
+                  },
+                ],
+              })
+            )
+          );
+
+          // A per-row catch would keep r1 (tested before the throw) and r3 (skipped after it),
+          // excluding only r2 — an order-dependent result set.
+          expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r2', 'r3']);
+          expect(reportSpy).toHaveBeenCalledTimes(1);
+        } finally {
+          reportSpy.mockRestore();
+        }
+      });
+    });
+  });
+
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf`/
   // `@ts-expect-error` — they are inert at runtime. These are only enforced by
@@ -265,6 +461,28 @@ describe('withFiltering', () => {
       );
 
       expectTypeOf(store).toEqualTypeOf<TableStore<Row>>();
+    });
+
+    it('either input alone is accepted', () => {
+      const filters = buildFilters((path) => equals(path.status));
+
+      const byFilters = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ filters })
+        )
+      );
+      const byPredicates = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ predicates: () => [(row: Row) => row.status === 'open'] })
+        )
+      );
+
+      expectTypeOf(byFilters).toEqualTypeOf<TableStore<Row>>();
+      expectTypeOf(byPredicates).toEqualTypeOf<TableStore<Row>>();
     });
 
     it('trailing block: withComputed adds visibleCount, keyof store is TableStore<Row> | "visibleCount"', () => {

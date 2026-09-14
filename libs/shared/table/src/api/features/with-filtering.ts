@@ -9,19 +9,65 @@ import type { DerivedDict } from '../types';
  * `Filters<TRow, TState>` is **not** assignable to `Filters<TRow>` — `FilterNode<T>` holds a
  * `WritableSignal<T>`, which is invariant — so pinning this to the default would force every
  * consumer declaring `createFilters<TRow, TState>()` to widen back to `unknown` criteria.
+ *
+ * Either input alone is enough; supplying both ANDs the filter model with the predicate terms.
  */
 export interface WithFilteringConfig<
   TRow,
   TState extends Record<string, unknown> = Record<string, unknown>
 > {
-  filters: Filters<TRow, TState>;
+  filters?: Filters<TRow, TState>;
+  /** One call = one evaluation. Terms AND'd; a term that throws is dropped for that pass. */
+  predicates?: () => readonly ((row: TRow) => boolean)[];
   manual?: boolean;
 }
 
+/** One evaluator per pass — its per-filter reporting and degradation are scoped to that instance. */
+function applyFilterModel<TRow>(
+  rows: TRow[],
+  filters: Filters<TRow, Record<string, unknown>>
+): TRow[] {
+  return createFilterEvaluator<TRow, Record<string, unknown>>(filters).filterRows(rows);
+}
+
 /**
- * Adds client-side filtering to a `createTable()` by applying a standalone `createFilters()`
- * object to the pipeline's `filter` stage. See `docs/1-state/features/filtering.md`. Owns no
- * filter state — the consumer already holds `config.filters`.
+ * Narrows by each term in turn, AND'd. One `try` per term rather than per row (ADR-0014): a
+ * throwing term aborts its own pass before its result is kept, so it applies to no row at all
+ * instead of to the rows it reached first. Sibling terms keep narrowing.
+ */
+function applyPredicateTerms<TRow>(
+  rows: TRow[],
+  terms: readonly ((row: TRow) => boolean)[]
+): TRow[] {
+  let narrowed = rows;
+  for (let index = 0; index < terms.length; index++) {
+    try {
+      narrowed = narrowed.filter(terms[index]);
+    } catch (error) {
+      reportPredicateError(terms[index], index, error);
+    }
+  }
+  return narrowed;
+}
+
+function reportPredicateError<TRow>(
+  predicate: (row: TRow) => boolean,
+  index: number,
+  error: unknown
+): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[withFiltering] The predicate at index ${index} threw while evaluating a row. ` +
+      'This predicate does not narrow for this pass; other predicates are unaffected.',
+    { index, predicate, error }
+  );
+}
+
+/**
+ * Adds client-side filtering to a `createTable()` — a standalone `createFilters()` object, a
+ * thunk of plain row predicates, or both — applied to the pipeline's `filter` stage. See
+ * `docs/1-state/features/filtering.md`. Owns no filter state; the consumer holds both inputs.
  */
 export function withFiltering<
   In extends Shape,
@@ -46,8 +92,12 @@ export function withFiltering(
         if (manual) {
           return rows;
         }
-        const evaluator = createFilterEvaluator<RowOf<In>, Record<string, unknown>>(config.filters);
-        return rows.filter((row) => evaluator.matchesRow(row));
+        const terms = config.predicates?.() ?? [];
+        const filtersModel = config.filters;
+        const matched = filtersModel
+          ? applyFilterModel<RowOf<In>>(rows, filtersModel)
+          : rows;
+        return applyPredicateTerms<RowOf<In>>(matched, terms);
       },
     },
   });
