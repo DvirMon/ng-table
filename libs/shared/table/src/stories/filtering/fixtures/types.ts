@@ -40,38 +40,6 @@ export interface TagCriterion {
   exclude: readonly string[];
 }
 
-/**
- * The `TState` each story hands `createFilters<InvoiceRow, …>()` — one entry per declared filter,
- * keyed exactly as the schema declares it. Supplying it is what makes every node read back
- * typed (`filters.amount().value()` is a `RangeCriterion`, not `unknown`), so no story needs a
- * narrowing layer over the library's own state.
- *
- * `type`, never `interface`: an interface has no implicit index signature, so it fails
- * `createFilters`' `TState extends Record<string, unknown>` constraint outright.
- */
-export type ClientInvoiceFilterState = {
-  status: InvoiceStatus | '';
-  customer: string;
-  amount: RangeCriterion;
-  issuedAt: DateRangeCriterion;
-  tags: TagCriterion;
-  search: string;
-};
-
-/** `customer` is declared `{ as: 'search' }`, so the key is `search`, not `customer`. */
-export type ServerInvoiceFilterState = {
-  status: InvoiceStatus | '';
-  search: string;
-  amount: RangeCriterion;
-  excludedTags: readonly string[];
-};
-
-export type SelectionInvoiceFilterState = {
-  status: InvoiceStatus | '';
-  customer: string;
-  tags: readonly string[];
-};
-
 /** `GET /api/invoices` over the wire — `issuedAt` arrives as an ISO string and is revived in
  * `http.ts`, so a host never holds a `Date`-typed field that is really a string. */
 export type InvoiceRowPayload = Omit<InvoiceRow, 'issuedAt'> & { issuedAt: string };

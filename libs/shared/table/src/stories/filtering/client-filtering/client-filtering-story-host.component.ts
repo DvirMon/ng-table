@@ -15,12 +15,7 @@ import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { clientInvoiceConfig } from '../fixtures/schema';
-import type {
-  ClientInvoiceFilterState,
-  InvoiceRow,
-  RangeCriterion,
-  TagCriterion,
-} from '../fixtures/types';
+import type { InvoiceRow, RangeCriterion, TagCriterion } from '../fixtures/types';
 import {
   EMPTY_TAG_CRITERION,
   formatCriterion,
@@ -78,10 +73,14 @@ const STALE_SAVED_FILTER: Record<string, unknown> = {
  * The guards are what let this return a typed value at all: each one narrows a single
  * `unknown` off the snapshot. That is the whole difference between the two load buttons.
  */
-function keepValidCriteria(
-  saved: Record<string, unknown>,
-): Partial<ClientInvoiceFilterState> {
-  const guarded: Partial<ClientInvoiceFilterState> = {};
+/** The criterion map the schema below infers. Derived, never restated — a renamed filter key
+ *  breaks this function rather than silently passing an unknown key to `reset()`. */
+type ClientCriteria = ReturnType<
+  ReturnType<ClientFilteringStoryHostComponent['filters']>['value']
+>;
+
+function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriteria> {
+  const guarded: Partial<ClientCriteria> = {};
   if (isInvoiceStatus(saved['status'])) {
     guarded.status = saved['status'];
   }
@@ -135,9 +134,10 @@ function keepValidCriteria(
  * reset-to-source concept — and a throwing filter predicate **widens** the result set with one
  * report per evaluation instead of taking the table down (ADR-0014).
  *
- * Option lists come from `TAG_OPTIONS`/`STATUS_OPTIONS`, hand-supplied: `createFilters()` takes
- * no `data` argument, so distinct values are never derived from the rows. A person cannot tell
- * a derived dropdown from a hardcoded one by looking, so this says which it is.
+ * Option lists come from `TAG_OPTIONS`/`STATUS_OPTIONS`, hand-supplied: `this.data` passed to
+ * `createFilters()` is an inference anchor the library never reads, so distinct values are still
+ * never derived from the rows. A person cannot tell a derived dropdown from a hardcoded one by
+ * looking, so this says which it is.
  *
  * "No matches" and "no data" are two states, not one. AG Grid and MUI X both ship two separate
  * overlays for exactly this reason, and both warn about the stale-rows trap behind conflating
@@ -153,11 +153,14 @@ export class ClientFilteringStoryHostComponent {
   /** Flipped by the "Break the tags filter" toggle; read by the compound `tags` predicate. */
   protected readonly tagsPredicateIsBroken = signal(false);
 
-  protected readonly filters = createFilters<InvoiceRow, ClientInvoiceFilterState>((path) => {
-    equals(path.status, { emptyValue: '' });
-    contains(path.customer);
-    inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE });
-    inDateRange(path.issuedAt);
+  protected readonly data = signal<InvoiceRow[]>(INVOICE_ROWS_MOCK);
+
+  /** Public, not protected, only so `ClientCriteria` above can derive the criterion map from it. */
+  readonly filters = createFilters(this.data, (path) => [
+    equals(path.status, { emptyValue: '' }),
+    contains(path.customer),
+    inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE }),
+    inDateRange(path.issuedAt),
     filter(
       path.tags,
       (cell: string[], criterion: TagCriterion): boolean => {
@@ -167,22 +170,18 @@ export class ClientFilteringStoryHostComponent {
         return matchesTagCriterion(cell, criterion);
       },
       { isEmpty: isEmptyTagCriterion, emptyValue: EMPTY_TAG_CRITERION },
-    );
+    ),
     // Declared paths (PrimeNG's shape), never scanned (AG Grid's). `note` is nullable and `id`
     // is numeric, so the typed matchers return `false` where a stringify-and-substring quick
     // filter throws. `customer` cannot join the group — it already owns a `contains` filter,
     // and one path carries one filter.
-    anyOf<InvoiceRow>('search', (searchPath) => {
-      contains(searchPath.note);
-      filter(searchPath.id, matchesInvoiceNumber);
-    });
-  });
+    anyOf('search', [contains(path.note), filter(path.id, matchesInvoiceNumber)]),
+  ]);
 
   /** Signal Forms directly over the criterion model — `filters().value` is a `WritableSignal`,
    * so the form writes through to the nodes and there is nothing to keep in sync. */
   protected readonly filterForm = form(this.filters().value);
 
-  protected readonly data = signal<InvoiceRow[]>(INVOICE_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
     clientInvoiceConfig,
@@ -303,15 +302,16 @@ export class ClientFilteringStoryHostComponent {
   }
 
   /**
-   * The anti-pattern, on purpose. `reset()` takes `Partial<ClientInvoiceFilterState>`, and this
-   * snapshot satisfies none of it — `status: 'archived'` is not an `InvoiceStatus`, `amount`
-   * carries pre-rename keys, `retiredFilter` names nothing. **Not being able to write this
-   * without stepping outside the type is the finding**, so the escape is left visible rather
-   * than hidden behind a helper: an unvalidated snapshot is not filter state, and the typed
-   * signature is what says so. The guarded button below is the supported route.
+   * The anti-pattern, on purpose. `reset()` takes a `Partial<…>` of the criterion map
+   * `createFilters` inferred from the schema above, and this snapshot satisfies none of it —
+   * `status: 'archived'` is not an `InvoiceStatus`, `amount` carries pre-rename keys,
+   * `retiredFilter` names nothing. **Not being able to write this without stepping outside the
+   * type is the finding**, so the escape is left visible rather than hidden behind a helper: an
+   * unvalidated snapshot is not filter state, and the typed signature is what says so. The
+   * guarded button below is the supported route.
    */
   protected loadSavedFilterRaw(): void {
-    this.filters().reset(STALE_SAVED_FILTER as Partial<ClientInvoiceFilterState>);
+    this.filters().reset(STALE_SAVED_FILTER as Partial<ClientCriteria>);
     this.savedFilterNotice.set(
       'Raw load: the saved `status: "archived"` was applied verbatim and matches no row, so the ' +
         'table looks broken rather than empty-because-you-asked. The renamed `amount` keys read ' +

@@ -14,7 +14,8 @@ import {
   inRange,
 } from './rules';
 import { hasAnyOf, hasNoneOf } from './matchers';
-import type { Filters, FiltersPath } from './types';
+import { rowOf } from './row-of';
+import type { FiltersPath } from './types';
 
 interface Invoice {
   status: string;
@@ -27,19 +28,6 @@ interface Invoice {
   category: string | null;
   subCategory: string;
 }
-
-// A type alias (not an `interface`) so it stays a fresh object-type literal for TypeScript's
-// purposes — an `interface` used as an explicit `TState` type argument fails the
-// `Record<string, unknown>` constraint check with "index signature is missing", even though an
-// equivalent inline literal passes.
-type InvoiceFilterState = {
-  status: string | null;
-  amount: { min: number | null; max: number | null };
-  dueDate: { from: Date | null; to: Date | null };
-  search: string;
-  tags: readonly string[];
-  subCategory: string;
-};
 
 function invoice(overrides: Partial<Invoice> = {}): Invoice {
   return {
@@ -56,24 +44,19 @@ function invoice(overrides: Partial<Invoice> = {}): Invoice {
   };
 }
 
-function build<TState extends Record<string, unknown>>(
-  schema: (path: FiltersPath<Invoice>) => void
-) {
-  return TestBed.runInInjectionContext(() => createFilters<Invoice, TState>(schema));
+function build<S extends readonly unknown[]>(schema: (path: FiltersPath<Invoice>) => S) {
+  return TestBed.runInInjectionContext(() => createFilters(rowOf<Invoice>(), schema));
 }
 
 describe('createFilters — schema declaration', () => {
   it('produces a correctly-keyed node per declared rule', () => {
-    const filters = build<InvoiceFilterState>((path) => {
-      equals(path.status);
-      inRange(path.amount);
-      inDateRange(path.dueDate);
-      anyOf<Invoice>('search', (p) => {
-        contains(p.customer);
-        contains(p.notes);
-      });
-      hasAny(path.tags);
-    });
+    const filters = build((path) => [
+      equals(path.status),
+      inRange(path.amount),
+      inDateRange(path.dueDate),
+      anyOf('search', [contains(path.customer), contains(path.notes)]),
+      hasAny(path.tags),
+    ]);
 
     expect(filters.status().value()).toBe(null);
     expect(filters.amount().value()).toEqual({ min: null, max: null });
@@ -85,33 +68,27 @@ describe('createFilters — schema declaration', () => {
 
 describe('createFilters — keys', () => {
   it('borrows the key from a single path', () => {
-    const filters = build<InvoiceFilterState>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
     expect(filters.status().value()).toBe(null);
   });
 
   it('as overrides the borrowed key', () => {
-    const filters = build<{ due: { from: Date | null; to: Date | null } }>((path) => {
-      inDateRange(path.dueDate, { as: 'due' });
-    });
+    const filters = build((path) => [inDateRange(path.dueDate, { as: 'due' })]);
     expect(filters.due().value()).toEqual({ from: null, to: null });
   });
 
   it('rejects a widened `string` variable for `as` at compile time (filters.md: "must be a string literal")', () => {
-    build<InvoiceFilterState>((path) => {
+    build((path) => {
       const dynamicName = String('status'); // widened to `string`, not a literal
-      // @ts-expect-error — `as` must be a string literal, not a `string`-typed variable (R32 fix).
-      equals(path.status, { as: dynamicName });
+      return [
+        // @ts-expect-error — `as` must be a string literal, not a `string`-typed variable (R32 fix).
+        equals(path.status, { as: dynamicName }),
+      ];
     });
   });
 
   it('anyOf takes its key positionally, never borrowed from a path', () => {
-    const filters = build<{ search: string }>((path) => {
-      anyOf<Invoice>('search', (p) => {
-        contains(p.customer);
-      });
-    });
+    const filters = build((path) => [anyOf('search', [contains(path.customer)])]);
     expect(filters.search().value()).toBe('');
   });
 });
@@ -119,23 +96,26 @@ describe('createFilters — keys', () => {
 describe('createFilters — one filter per path', () => {
   it('throws when two rules target the same path, even with different `as` names', () => {
     expect(() =>
-      build((path) => {
-        hasAny(path.tags, { as: 'included' });
-        hasNone(path.tags, { as: 'excluded' });
-      })
+      build((path) => [
+        hasAny(path.tags, { as: 'included' }),
+        hasNone(path.tags, { as: 'excluded' }),
+      ])
     ).toThrow();
   });
 
   it('does not throw for a compound filter() over one path', () => {
     expect(() =>
-      build((path) => {
+      build((path) => [
         filter(
           path.tags,
           (cell: string[], c: { include: string[]; exclude: string[] }) =>
             hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude),
-          { emptyValue: { include: [], exclude: [] }, isEmpty: (c) => c.include.length === 0 && c.exclude.length === 0 }
-        );
-      })
+          {
+            emptyValue: { include: [], exclude: [] },
+            isEmpty: (c) => c.include.length === 0 && c.exclude.length === 0,
+          }
+        ),
+      ])
     ).not.toThrow();
   });
 });
@@ -143,19 +123,16 @@ describe('createFilters — one filter per path', () => {
 describe('createFilters — duplicate keys', () => {
   it('throws when two `as` values collide', () => {
     expect(() =>
-      build((path) => {
-        equals(path.status, { as: 'shared' });
-        contains(path.customer, { as: 'shared' });
-      })
+      build((path) => [
+        equals(path.status, { as: 'shared' }),
+        contains(path.customer, { as: 'shared' }),
+      ])
     ).toThrow();
   });
 
   it('throws when an `as` collides with a borrowed key', () => {
     expect(() =>
-      build((path) => {
-        equals(path.status);
-        contains(path.customer, { as: 'status' });
-      })
+      build((path) => [equals(path.status), contains(path.customer, { as: 'status' })])
     ).toThrow();
   });
 });
@@ -163,63 +140,56 @@ describe('createFilters — duplicate keys', () => {
 describe('createFilters — anyOf without rules', () => {
   it('throws when anyOf declares no rules', () => {
     expect(() =>
-      build((_path) => {
-        anyOf('search', () => {
-          // intentionally empty
-        });
-      })
+      build((_path) => [
+        // @ts-expect-error — anyOf's non-empty-tuple constraint rejects an empty group at the
+        // type level (#110); the runtime throw is the backstop for an untyped caller, asserted
+        // here. The type-level rejection itself is asserted in #112's types spec.
+        anyOf('search', []),
+      ])
     ).toThrow();
   });
 });
 
 describe('createFilters — state semantics', () => {
   it('value() returns the complete shape', () => {
-    const filters = build<InvoiceFilterState>((path) => {
-      equals(path.status);
-      contains(path.customer, { as: 'search' });
-    });
+    const filters = build((path) => [
+      equals(path.status),
+      contains(path.customer, { as: 'search' }),
+    ]);
     expect(filters().value()).toEqual({ status: null, search: '' });
   });
 
   it('active() omits empty entries', () => {
-    const filters = build<{ status: string | null; search: string }>((path) => {
-      equals(path.status);
-      contains(path.customer, { as: 'search' });
-    });
+    const filters = build((path) => [
+      equals(path.status),
+      contains(path.customer, { as: 'search' }),
+    ]);
     filters.status().value.set('open');
     expect(filters().active()).toEqual({ status: 'open' });
   });
 
   it('reset() with no arg reverts to source, or empty when no source', () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
     filters.status().value.set('closed');
     filters.status().reset();
     expect(filters.status().value()).toBe(null);
   });
 
   it('reset(null) sets the empty value', () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
     filters.status().value.set('closed');
     filters.status().reset(null);
     expect(filters.status().value()).toBe(null);
   });
 
   it('reset(value) sets an arbitrary value', () => {
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount);
-    });
+    const filters = build((path) => [inRange(path.amount)]);
     filters.amount().reset({ min: 0, max: 500 });
     expect(filters.amount().value()).toEqual({ min: 0, max: 500 });
   });
 
   it('dirty() is false untouched and true once written', () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
     expect(filters.status().dirty()).toBe(false);
     filters.status().value.set('open');
     expect(filters.status().dirty()).toBe(true);
@@ -228,16 +198,12 @@ describe('createFilters — state semantics', () => {
 
 describe('createFilters — emptyValue override', () => {
   it("seeds the node with the declared empty value instead of the rule's own", () => {
-    const filters = build<{ status: string }>((path) => {
-      equals(path.status, { emptyValue: '' });
-    });
+    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
     expect(filters.status().value()).toBe('');
   });
 
   it("treats the declared empty value as empty — a native <select>'s '' deactivates the filter", () => {
-    const filters = build<{ status: string }>((path) => {
-      equals(path.status, { emptyValue: '' });
-    });
+    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
     filters.status().value.set('open');
     expect(filters().active()).toEqual({ status: 'open' });
 
@@ -247,38 +213,36 @@ describe('createFilters — emptyValue override', () => {
   });
 
   it("no longer treats the rule's own empty value as empty once overridden", () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status, { emptyValue: '' });
-    });
+    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
+
+    // @ts-expect-error — overriding emptyValue to '' drops null from the criterion domain, so a
+    // typed caller cannot reach this. The runtime still honours it, which is what this guards.
     filters.status().value.set(null);
+
     expect(filters().active()).toEqual({ status: null });
   });
 
   it('reset(null) returns to the declared empty value', () => {
-    const filters = build<{ status: string }>((path) => {
-      equals(path.status, { emptyValue: '' });
-    });
+    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
     filters.status().value.set('open');
     filters.status().reset(null);
     expect(filters.status().value()).toBe('');
   });
 
   it('compares structurally, so an object empty value works on any rule', () => {
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount, { emptyValue: { min: 0, max: null } });
-    });
+    const filters = build((path) => [inRange(path.amount, { emptyValue: { min: 0, max: null } })]);
     expect(filters().active()).toEqual({});
     filters.amount().value.set({ min: 100, max: null });
     expect(filters().active()).toEqual({ amount: { min: 100, max: null } });
   });
 
   it('an explicit isEmpty still wins over emptyValue on filter()', () => {
-    const filters = build<{ tags: readonly string[] }>((path) => {
+    const filters = build((path) => [
       filter(path.tags, (cell, criterion: readonly string[]) => hasAnyOf(cell, criterion), {
         emptyValue: ['none'],
         isEmpty: (criterion) => criterion.length === 0,
-      });
-    });
+      }),
+    ]);
     expect(filters.tags().value()).toEqual(['none']);
     expect(filters().active()).toEqual({ tags: ['none'] });
     filters.tags().value.set([]);
@@ -288,27 +252,21 @@ describe('createFilters — emptyValue override', () => {
 
 describe('createFilters — sources', () => {
   it('untouched with no source: not dirty, not in active()', () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
     expect(filters.status().dirty()).toBe(false);
     expect(filters().active()).toEqual({});
   });
 
   it('untouched with a source present: not dirty, is in active()', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount, { source: () => bounds() });
-    });
+    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     expect(filters.amount().dirty()).toBe(false);
     expect(filters().active()).toEqual({ amount: { min: 0, max: 10000 } });
   });
 
   it('a user write makes it dirty and keeps it in active()', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount, { source: () => bounds() });
-    });
+    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().value.set({ min: 100, max: 500 });
     expect(filters.amount().dirty()).toBe(true);
     expect(filters().active()).toEqual({ amount: { min: 100, max: 500 } });
@@ -316,9 +274,7 @@ describe('createFilters — sources', () => {
 
   it('writing exactly the source value is dirty=false but still active', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount, { source: () => bounds() });
-    });
+    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().value.set({ min: 0, max: 10000 });
     expect(filters.amount().dirty()).toBe(false);
     expect(filters().active()).toEqual({ amount: { min: 0, max: 10000 } });
@@ -326,9 +282,7 @@ describe('createFilters — sources', () => {
 
   it('reset(null) is dirty and removed from active()', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount, { source: () => bounds() });
-    });
+    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().reset(null);
     expect(filters.amount().dirty()).toBe(true);
     expect(filters().active()).toEqual({});
@@ -336,9 +290,7 @@ describe('createFilters — sources', () => {
 
   it('a later source change does not stomp a dirty filter value', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
-      inRange(path.amount, { source: () => bounds() });
-    });
+    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
     filters.amount().value.set({ min: 100, max: 500 });
     bounds.set({ min: 0, max: 20000 });
     TestBed.flushEffects();
@@ -348,12 +300,9 @@ describe('createFilters — sources', () => {
 
 describe('createFilters — combination semantics (via the safe-evaluate guard)', () => {
   it('ORs an anyOf group across its children', () => {
-    const filters = build<{ search: string }>((path) => {
-      anyOf<Invoice>('search', (p) => {
-        contains(p.customer);
-        contains(p.notes);
-      });
-    });
+    const filters = build((path) => [
+      anyOf('search', [contains(path.customer), contains(path.notes)]),
+    ]);
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
@@ -363,10 +312,10 @@ describe('createFilters — combination semantics (via the safe-evaluate guard)'
   });
 
   it('ANDs separate filters across the root', () => {
-    const filters = build<{ status: string | null; search: string }>((path) => {
-      equals(path.status);
-      contains(path.customer, { as: 'search' });
-    });
+    const filters = build((path) => [
+      equals(path.status),
+      contains(path.customer, { as: 'search' }),
+    ]);
     filters.status().value.set('open');
     filters.search().value.set('acme');
     const matches = filters().matcher();
@@ -379,31 +328,25 @@ describe('createFilters — combination semantics (via the safe-evaluate guard)'
 
 describe('createFilters — null/undefined cells', () => {
   it('a positive matcher fails a nullable cell', () => {
-    const filters = build<{ subCategory: string }>((path) => {
-      equals(path.subCategory);
-    });
+    const filters = build((path) => [equals(path.subCategory)]);
     filters.subCategory().value.set('widgets');
     const matches = filters().matcher();
-    expect(
-      matches(invoice({ subCategory: undefined as unknown as string }))
-    ).toBe(false);
+    expect(matches(invoice({ subCategory: undefined as unknown as string }))).toBe(false);
   });
 
   it('hasNone passes a nullable/empty array cell', () => {
-    const filters = build<{ tags: readonly string[] }>((path) => {
-      hasNone(path.tags);
-    });
+    const filters = build((path) => [hasNone(path.tags)]);
     filters.tags().value.set(['urgent']);
     const matches = filters().matcher();
     expect(matches(invoice({ tags: undefined as unknown as string[] }))).toBe(true);
   });
 
   it('a custom filter() predicate receives the cell unguarded and can match nulls', () => {
-    const filters = build<{ notes: boolean }>((path) => {
+    const filters = build((path) => [
       filter(path.notes, (cell: string, want: boolean) => want === (cell == null || cell === ''), {
         emptyValue: false,
-      });
-    });
+      }),
+    ]);
     filters.notes().value.set(true);
     const matches = filters().matcher();
     expect(matches(invoice({ notes: undefined as unknown as string }))).toBe(true);
@@ -415,16 +358,16 @@ describe('createFilters — errors (ADR-0014)', () => {
   it('a throwing predicate deactivates only its own filter and is reported once per evaluator, not per row', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const filters = build<{ status: string | null; broken: string }>((path) => {
-        equals(path.status);
+      const filters = build((path) => [
+        equals(path.status),
         filter(
           path.customer,
           () => {
             throw new Error('boom');
           },
           { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
-        );
-      });
+        ),
+      ]);
       filters.status().value.set('open');
       const matches = filters().matcher();
 
@@ -442,15 +385,15 @@ describe('createFilters — errors (ADR-0014)', () => {
   it('a failed filter still appears in active()', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const filters = build<{ broken: string }>((path) => {
+      const filters = build((path) => [
         filter(
           path.customer,
           () => {
             throw new Error('boom');
           },
           { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
-        );
-      });
+        ),
+      ]);
       expect(filters().active()).toEqual({ broken: 'x' });
     } finally {
       reportSpy.mockRestore();
@@ -460,16 +403,16 @@ describe('createFilters — errors (ADR-0014)', () => {
   it('other filters keep narrowing when one throws', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const filters = build<{ status: string | null; broken: string }>((path) => {
-        equals(path.status);
+      const filters = build((path) => [
+        equals(path.status),
         filter(
           path.customer,
           () => {
             throw new Error('boom');
           },
           { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
-        );
-      });
+        ),
+      ]);
       filters.status().value.set('closed');
       const matches = filters().matcher();
       expect(matches(invoice({ status: 'open' }))).toBe(false);
@@ -481,31 +424,23 @@ describe('createFilters — errors (ADR-0014)', () => {
 
 describe('createFilters — applyWhen', () => {
   it('excludes the gated rule from active() while the condition is false', () => {
-    const filters = build<{ category: string | null; subCategory: string }>((path) => {
-      equals(path.category);
-      applyWhen(
-        path,
-        ({ valueOf }) => valueOf(path.category) !== null,
-        (p) => {
-          equals(p.subCategory);
-        }
-      );
-    });
+    const filters = build((path) => [
+      equals(path.category),
+      applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
+        equals(path.subCategory),
+      ]),
+    ]);
     filters.subCategory().value.set('widgets');
     expect(filters().active()).toEqual({});
   });
 
   it('includes the gated rule once the condition becomes true, without redeclaring the schema', () => {
-    const filters = build<{ category: string | null; subCategory: string }>((path) => {
-      equals(path.category);
-      applyWhen(
-        path,
-        ({ valueOf }) => valueOf(path.category) !== null,
-        (p) => {
-          equals(p.subCategory);
-        }
-      );
-    });
+    const filters = build((path) => [
+      equals(path.category),
+      applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
+        equals(path.subCategory),
+      ]),
+    ]);
     filters.subCategory().value.set('widgets');
     expect(filters().active()).toEqual({});
 
@@ -515,19 +450,17 @@ describe('createFilters — applyWhen', () => {
 });
 
 describe('createFilters — matcher()', () => {
-  type BrokenFilterState = { status: string | null; broken: string };
-
-  function buildBrokenFilters(): Filters<Invoice, BrokenFilterState> {
-    return build<BrokenFilterState>((path) => {
-      equals(path.status);
+  function buildBrokenFilters() {
+    return build((path) => [
+      equals(path.status),
       filter(
         path.customer,
         () => {
           throw new Error('boom');
         },
         { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
-      );
-    });
+      ),
+    ]);
   }
 
   function brokenRows(): Invoice[] {
@@ -539,9 +472,7 @@ describe('createFilters — matcher()', () => {
   }
 
   it('filters a plain array with no table composed at all', () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
     filters.status().value.set('open');
 
     const rows = [
@@ -557,9 +488,7 @@ describe('createFilters — matcher()', () => {
   });
 
   it('reflects the criteria current at the moment it was requested', () => {
-    const filters = build<{ status: string | null }>((path) => {
-      equals(path.status);
-    });
+    const filters = build((path) => [equals(path.status)]);
 
     filters.status().value.set('open');
     const matchesOpen = filters().matcher();
@@ -573,10 +502,10 @@ describe('createFilters — matcher()', () => {
   });
 
   it('skips an empty criterion rather than narrowing to nothing', () => {
-    const filters = build<{ status: string | null; search: string }>((path) => {
-      equals(path.status);
-      contains(path.customer, { as: 'search' });
-    });
+    const filters = build((path) => [
+      equals(path.status),
+      contains(path.customer, { as: 'search' }),
+    ]);
     filters.status().value.set('open');
 
     const rows = [invoice({ status: 'open' }), invoice({ status: 'closed' })];
@@ -585,12 +514,9 @@ describe('createFilters — matcher()', () => {
   });
 
   it('ORs an anyOf group across its children', () => {
-    const filters = build<{ search: string }>(() => {
-      anyOf<Invoice>('search', (p) => {
-        contains(p.customer);
-        contains(p.notes);
-      });
-    });
+    const filters = build((path) => [
+      anyOf('search', [contains(path.customer), contains(path.notes)]),
+    ]);
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
@@ -600,10 +526,10 @@ describe('createFilters — matcher()', () => {
   });
 
   it('ANDs separate filters across the root', () => {
-    const filters = build<{ status: string | null; search: string }>((path) => {
-      equals(path.status);
-      contains(path.customer, { as: 'search' });
-    });
+    const filters = build((path) => [
+      equals(path.status),
+      contains(path.customer, { as: 'search' }),
+    ]);
     filters.status().value.set('open');
     filters.search().value.set('acme');
     const matches = filters().matcher();
@@ -614,16 +540,12 @@ describe('createFilters — matcher()', () => {
   });
 
   it('does not narrow through a filter applyWhen has gated off', () => {
-    const filters = build<{ category: string | null; subCategory: string }>((path) => {
-      equals(path.category);
-      applyWhen(
-        path,
-        ({ valueOf }) => valueOf(path.category) !== null,
-        (p) => {
-          equals(p.subCategory);
-        }
-      );
-    });
+    const filters = build((path) => [
+      equals(path.category),
+      applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
+        equals(path.subCategory),
+      ]),
+    ]);
     filters.subCategory().value.set('widgets');
 
     const gatedOff = filters().matcher();
@@ -635,9 +557,7 @@ describe('createFilters — matcher()', () => {
   });
 
   it('fails a positive matcher on a null cell', () => {
-    const filters = build<{ category: string | null }>((path) => {
-      equals(path.category);
-    });
+    const filters = build((path) => [equals(path.category)]);
     filters.category().value.set('electronics');
     const matches = filters().matcher();
 
@@ -690,14 +610,8 @@ describe('createFilters — matcher()', () => {
       auditedBy: string;
     }
 
-    /** A concrete `TState`, so criteria stay typed instead of widening back to `unknown`. */
-    type TypedInvoiceFilterState = { status: string | null; category: string | null };
-
-    function buildTypedFilters(): Filters<Invoice, TypedInvoiceFilterState> {
-      return build<TypedInvoiceFilterState>((path) => {
-        equals(path.status);
-        equals(path.category);
-      });
+    function buildTypedFilters() {
+      return build((path) => [equals(path.status), equals(path.category)]);
     }
 
     it('accepts a structurally identical row type and a wider one carrying extra fields', () => {
@@ -720,8 +634,13 @@ describe('createFilters — matcher()', () => {
       const filters = buildTypedFilters();
 
       expectTypeOf(filters.status().value()).toEqualTypeOf<string | null>();
-      expectTypeOf(filters().value()).toEqualTypeOf<TypedInvoiceFilterState>();
-      expectTypeOf(filters().active()).toEqualTypeOf<Partial<TypedInvoiceFilterState>>();
+      expectTypeOf(filters().value()).toEqualTypeOf<{
+        status: string | null;
+        category: string | null;
+      }>();
+      expectTypeOf(filters().active()).toEqualTypeOf<
+        Partial<{ status: string | null; category: string | null }>
+      >();
     });
 
     it('narrows a plain array via matcher() once a criterion is set through property access', () => {

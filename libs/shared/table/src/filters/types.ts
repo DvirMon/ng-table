@@ -120,7 +120,10 @@ export interface FilterGroupChild<TCell = unknown, TCriterion = unknown> {
  * @internal
  */
 export interface FilterValueOfContext<TRow> {
-  valueOf(path: FilterHandle<TRow, Extract<keyof TRow, string>>): unknown;
+  /** Generic in the handle: `TRow` is the default only, and a handle from any row is accepted. */
+  valueOf<R = TRow, K extends Extract<keyof R, string> = Extract<keyof R, string>>(
+    path: FilterHandle<R, K>
+  ): unknown;
 }
 
 /**
@@ -193,6 +196,14 @@ export type AnyRule = FilterRule<string, unknown> | GroupRule<string, unknown>;
 
 /** The criterion type carried by a rule's phantom `__criterion` member. */
 export type CriterionOf<R> = R extends FilterRule<string, infer C> ? C : never;
+
+/**
+ * Element type of an array-valued cell, `unknown` for anything else. Lets `hasAny`/`hasNone`
+ * default their criterion to the cell's own element type instead of discarding it — without it a
+ * `string[]` column yields `readonly unknown[]`, which no consumer can write back through.
+ * @internal
+ */
+export type ItemOf<TCell> = TCell extends readonly (infer E)[] ? E : unknown;
 
 /**
  * Resolves a schema's returned array down to its leaf rules, recursing through nested arrays and

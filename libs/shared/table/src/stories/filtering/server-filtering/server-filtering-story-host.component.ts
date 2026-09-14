@@ -1,7 +1,8 @@
 import { Component, computed, effect, input, signal, untracked } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
+import { debounce, form, FormField } from '@angular/forms/signals';
 import { createFilters } from '../../../filters/create-filters';
 import { contains, equals, hasNone, inRange } from '../../../filters/rules';
+import { rowOf } from '../../../filters/row-of';
 import { createTable } from '../../../api/create-table';
 import { createTableFeature } from '../../../api/create-table-feature';
 import type { TableStore } from '../../../api/types';
@@ -9,12 +10,8 @@ import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { injectInvoiceApi, type InvoiceRequestOptions } from '../fixtures/http';
 import { STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
-import { serverFilterFormSchema, serverInvoiceConfig } from '../fixtures/schema';
-import type {
-  InvoiceRow,
-  RangeCriterion,
-  ServerInvoiceFilterState,
-} from '../fixtures/types';
+import { serverInvoiceConfig } from '../fixtures/schema';
+import type { InvoiceRow, RangeCriterion } from '../fixtures/types';
 import {
   EMPTY_RANGE,
   isRangeCriterion,
@@ -75,9 +72,9 @@ function toQueryParams(active: Partial<Record<string, unknown>>): Record<string,
  * `createFilters()` feeds the request builder directly, never a predicate; the rows come back
  * already narrowed.
  *
- * Three things only exist here. The **debounce** (`debounce(path.search, 300)`, in
- * `fixtures/schema.ts`) has a consequence only where a keystroke costs a request — the request
- * counter on canvas is the proof. It applies to the criterion itself: the form is built over
+ * Three things only exist here. The **debounce** (`debounce(path.search, 300)`) has a
+ * consequence only where a keystroke costs a request — the request counter on canvas is the
+ * proof. It applies to the criterion itself: the form is built over
  * `filters().value`, so there is no second search model and no effect copying one into the
  * other — the typing pause *is* the criterion write, and the request follows from it. The **server's own total** overrides the core
  * `totalRowCount` through a tiny `createTableFeature()`, the one core key ADR-0005 leaves
@@ -104,16 +101,27 @@ export class ServerFilteringStoryHostComponent {
   /** Empty until "Deliver server default now" is pressed — the race needs a late arrival. */
   protected readonly serverDefaultAmount = signal<RangeCriterion>(EMPTY_RANGE);
 
-  protected readonly filters = createFilters<InvoiceRow, ServerInvoiceFilterState>((path) => {
-    equals(path.status, { emptyValue: '' });
-    contains(path.customer, { as: 'search' });
-    inRange(path.amount, { source: () => this.serverDefaultAmount() });
-    hasNone(path.tags, { as: 'excludedTags' });
-  });
+  /**
+   * Filters are declared here before any row has ever been fetched — `rows` below starts as an
+   * empty array, so there is no data to anchor `InvoiceRow` to. `rowOf<InvoiceRow>()` supplies
+   * the row type in the slot real row data would otherwise occupy; it is never read.
+   */
+  protected readonly filters = createFilters(rowOf<InvoiceRow>(), (path) => [
+    equals(path.status, { emptyValue: '' }),
+    contains(path.customer, { as: 'search' }),
+    inRange(path.amount, { source: () => this.serverDefaultAmount() }),
+    hasNone(path.tags, { as: 'excludedTags' }),
+  ]);
 
-  /** One form, over the criterion model itself — the debounced search field writes straight
-   * into `filters.search()`. */
-  protected readonly searchForm = form(this.filters().value, serverFilterFormSchema);
+  /**
+   * One form, over the criterion model itself — the debounced search field writes straight into
+   * `filters.search()`. `debounce(path.search, 300)` turns a keystroke into one request per
+   * typing pause instead of one per keystroke; it has no visible consequence in the synchronous
+   * client story, which is why only this one carries it.
+   */
+  protected readonly searchForm = form(this.filters().value, (path) => {
+    debounce(path.search, 300);
+  });
 
   protected readonly rows = signal<InvoiceRow[]>([]);
   protected readonly serverTotal = signal(0);

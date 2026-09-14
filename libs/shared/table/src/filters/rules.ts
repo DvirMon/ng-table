@@ -8,6 +8,7 @@ import type {
   FilterValueOfContext,
   FiltersPath,
   GroupRule,
+  ItemOf,
 } from './types';
 import { equalsCriterion } from './state';
 import {
@@ -169,14 +170,15 @@ export function inDateRange<
 export function hasAny<
   TRow,
   K extends Extract<keyof TRow, string>,
-  const TAs extends string = never
+  const TAs extends string = never,
+  TItem = ItemOf<TRow[K]>
 >(
   path: FilterHandle<TRow, K>,
-  options?: FilterOptions<readonly unknown[], TAs>
-): FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow> {
+  options?: FilterOptions<readonly TItem[], TAs>
+): FilterRule<RuleKey<K, TAs>, readonly TItem[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
-    emptyValue: [] as readonly unknown[],
+    emptyValue: [] as readonly TItem[],
   });
   return {
     kind: 'single',
@@ -186,20 +188,21 @@ export function hasAny<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow>;
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly TItem[], TRow>;
 }
 
 export function hasNone<
   TRow,
   K extends Extract<keyof TRow, string>,
-  const TAs extends string = never
+  const TAs extends string = never,
+  TItem = ItemOf<TRow[K]>
 >(
   path: FilterHandle<TRow, K>,
-  options?: FilterOptions<readonly unknown[], TAs>
-): FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow> {
+  options?: FilterOptions<readonly TItem[], TAs>
+): FilterRule<RuleKey<K, TAs>, readonly TItem[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
-    emptyValue: [] as readonly unknown[],
+    emptyValue: [] as readonly TItem[],
   });
   return {
     kind: 'single',
@@ -209,7 +212,7 @@ export function hasNone<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow>;
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly TItem[], TRow>;
 }
 
 /**
@@ -321,9 +324,8 @@ export function anyOf<TKey extends string, C extends readonly [unknown, ...unkno
  * `ConditionalRule`, and re-tag each leaf record it finds inside with `kind: 'conditional'` plus
  * that `condition` — the re-tagging itself happens in the flattener, not here.
  *
- * `path` isn't read internally — `condition` already closes over whichever path(s) it
- * references — but the parameter mirrors Signal Forms' `applyWhen(path, …)` and anchors `TRow`
- * for inference at the call site. Retained for signature parity, not for inference.
+ * `path` is neither read nor an inference anchor — `TRow` resolves to `unknown` here. Retained
+ * only to mirror Signal Forms' `applyWhen(path, …)`.
  */
 export function applyWhen<TRow, S extends readonly [unknown, ...unknown[]]>(
   path: FiltersPath<TRow>,

@@ -1,5 +1,5 @@
-import type { FilterNode, Filters } from '../../../filters/types';
-import type { DealFilterState, DealRow } from './types';
+import type { FilterNode } from '../../../filters/types';
+import type { createDealFilters } from './schema';
 
 /**
  * Display helpers shared by all three grouping story hosts — a group header, a level pill and a
@@ -38,13 +38,13 @@ export function formatAmount(value: unknown): string {
 }
 
 /** Current criterion of the "rep" filter, for rendering an input's value. */
-export function readRepCriterion(filters: Filters<DealRow, DealFilterState>): string {
+export function readRepCriterion(filters: ReturnType<typeof createDealFilters>): string {
   return filters.rep().value();
 }
 
 /** The "rep" filter's node, for writing a new criterion via `.value.set(...)`. */
 export function repFilterNode(
-  filters: Filters<DealRow, DealFilterState>
+  filters: ReturnType<typeof createDealFilters>
 ): FilterNode<string> {
   return filters.rep();
 }

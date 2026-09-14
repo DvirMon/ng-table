@@ -27,10 +27,3 @@ export interface DealPage {
   rows: DealRow[];
   total: number;
 }
-
-/** The `TState` `grouping-static/` hands `createFilters<DealRow, …>()` — one entry per declared
- * filter. Supplying it is what keeps `filters.rep().value()` typed `string` and reachable by
- * property access, instead of `unknown` behind a bracket. */
-export type DealFilterState = {
-  rep: string;
-};

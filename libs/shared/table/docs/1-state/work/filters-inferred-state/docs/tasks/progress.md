@@ -9,18 +9,18 @@ every call site, and the build is green only at the end of `#111`.
 External edge: the decoupling ticket (`#101`, steps 1–13) is complete and merged. Nothing blocks
 `#110`.
 
-## `#110` — the library mechanism · PR 1 of 2
+## `#110` — the library mechanism · PR 1 of 2 · ✅ committed (`ffd9649`)
 
 **Status:** 6 / 6 complete
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 1 | [Add the rule types and the `StateOf` fold](step-1-rule-types-and-stateof.plan.md) | `code` | ✅ done | — |
-| 2 | [Add the row-type token](step-2-row-of-token.plan.md) | `code` | ✅ done | — |
-| 3 | [Rules return their records](step-3-rules-return-records.plan.md) | `code` | ✅ done | — |
-| 4 | [The row carrier and the array schema](step-4-carrier-and-array-schema.plan.md) | `code` | ✅ done | — |
-| 5 | [Delete the ambient recorder](step-5-delete-recorder.plan.md) | `code` | ✅ done | — |
-| 6 | [Export the token from the domain barrel](step-6-barrel-export.plan.md) | `code` | ✅ done | — |
+| 1 | [Add the rule types and the `StateOf` fold](step-1-rule-types-and-stateof.plan.md) | `code` | ✅ done | `ffd9649` |
+| 2 | [Add the row-type token](step-2-row-of-token.plan.md) | `code` | ✅ done | `ffd9649` |
+| 3 | [Rules return their records](step-3-rules-return-records.plan.md) | `code` | ✅ done | `ffd9649` |
+| 4 | [The row carrier and the array schema](step-4-carrier-and-array-schema.plan.md) | `code` | ✅ done | `ffd9649` |
+| 5 | [Delete the ambient recorder](step-5-delete-recorder.plan.md) | `code` | ✅ done | `ffd9649` |
+| 6 | [Export the token from the domain barrel](step-6-barrel-export.plan.md) | `code` | ✅ done | `ffd9649` |
 
 ### Execution graph
 
@@ -97,11 +97,18 @@ cannot pass until `#111` lands** — the filters spec does not compile against t
 `{ ...child, kind: 'conditional', condition }` overwrites the inner `condition` with the outer one.
 The deleted recorder did exactly the same, so behaviour is unchanged, which is what the spec required.
 
+## `#111` — every call site · PR 2 of 2 · planned
+
+**Status:** 0 / 9 complete — [`issue-111-call-sites/progress.md`](issue-111-call-sites/progress.md)
+
+Five story/fixture sites and three specs, all parallel-safe, plus a green gate that depends on all
+eight. That folder also records four corrections to this issue's own body and to
+`architecture.md`'s file-layout table.
+
 ## Not planned here
 
 | Issue | Scope | Run `/to-tasks` when |
 |---|---|---|
-| [#111](https://github.com/DvirMon/acme/issues/111) | every call site — specs, stories, fixtures; the seven criterion-map types delete | `#110` is done |
 | [#112](https://github.com/DvirMon/acme/issues/112) | `create-filters.types.spec.ts`, the compiled type seam | `#111` is done |
 | [#113](https://github.com/DvirMon/acme/issues/113) | docs, ADRs, `CLAUDE.md`, the design record | any time — merge after `#111` |
 

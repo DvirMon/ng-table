@@ -1,8 +1,8 @@
 import { createFilters } from '../../../filters/create-filters';
 import { contains } from '../../../filters/rules';
-import type { Filters } from '../../../filters/types';
+import { rowOf } from '../../../filters/row-of';
 import type { ColumnDefInput, ColumnId, TableConfig } from '../../../api/types';
-import type { DealFilterState, DealRow } from './types';
+import type { DealRow } from './types';
 
 /**
  * Sum of `amount` over a cluster's own leaves, at every depth (D9) — so a parent total is the
@@ -88,13 +88,11 @@ export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'Nor
  * `PIPELINE_ORDER`, so what a filter proves here is that counts and summaries are of *visible*
  * rows and that an emptied group disappears — not anything about filtering itself.
  *
- * Typed with `DealFilterState`, because the host reads the criterion back to render the input's
- * value — the default `TState` would hand it `unknown` behind a bracket access.
- *
  * Must be called from an injection context (a component field initializer).
+ *
+ * Return type is deliberately inferred, not annotated — `utils.ts`'s helpers key off
+ * `ReturnType<typeof createDealFilters>` so they follow this schema rather than restate it.
  */
-export function createDealFilters(): Filters<DealRow, DealFilterState> {
-  return createFilters<DealRow, DealFilterState>((path) => {
-    contains(path.rep);
-  });
+export function createDealFilters() {
+  return createFilters(rowOf<DealRow>(), (path) => [contains(path.rep)]);
 }

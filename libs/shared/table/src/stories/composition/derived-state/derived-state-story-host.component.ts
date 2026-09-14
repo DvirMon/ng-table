@@ -8,7 +8,7 @@ import { equals } from '../../../filters/rules';
 import type { RowId } from '../../../api/types';
 import { COMPOSITION_DEPT_OPTIONS, COMPOSITION_ROWS_MOCK } from '../fixtures/mock';
 import { derivedStateConfig } from '../fixtures/schema';
-import type { CompositionFilterState, CompositionRow } from '../fixtures/types';
+import type { CompositionRow } from '../fixtures/types';
 
 /**
  * The spec's headline `withComputed()` example: one derive block nested inside
@@ -24,12 +24,10 @@ import type { CompositionFilterState, CompositionRow } from '../fixtures/types';
   styleUrls: ['../../styles/story-host.css'],
 })
 export class DerivedStateStoryHostComponent {
-  protected readonly filters = createFilters<CompositionRow, CompositionFilterState>((path) => {
-    equals(path.dept);
-  });
-
   protected readonly data = signal<CompositionRow[]>(COMPOSITION_ROWS_MOCK);
   protected readonly deptOptions = COMPOSITION_DEPT_OPTIONS;
+
+  protected readonly filters = createFilters(this.data, (path) => [equals(path.dept)]);
 
   protected readonly table = createTable(
     this.data,

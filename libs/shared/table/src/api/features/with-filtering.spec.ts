@@ -4,10 +4,11 @@ import { expectTypeOf } from 'vitest';
 import { createFilters } from '../../filters/create-filters';
 import { createTable } from '../create-table';
 import { equals } from '../../filters/rules';
+import { rowOf } from '../../filters/row-of';
 import { withComputed } from './with-computed';
 import { withFiltering } from './with-filtering';
 import type { ColumnDef, TableStore } from '../types';
-import type { Filters, FiltersPath } from '../../filters/types';
+import type { FiltersPath } from '../../filters/types';
 
 interface Row {
   id: string;
@@ -32,12 +33,10 @@ function makeRows(): Row[] {
   ];
 }
 
-// No explicit `TState`, exercising the default-`TState` path: criteria come back as
-// `FilterNode<unknown>` and are reached by bracket access. Kept only to build the filter model
-// for the one integration case below — the filter model's own behavior and typing live in
-// `create-filters.spec.ts`.
-function buildFilters(schema: (path: FiltersPath<Row>) => void): Filters<Row> {
-  return TestBed.runInInjectionContext(() => createFilters<Row>(schema));
+// Kept only to build the filter model for the one integration case below — the filter model's own
+// behavior and typing live in `create-filters.spec.ts`.
+function buildFilters<S extends readonly unknown[]>(schema: (path: FiltersPath<Row>) => S) {
+  return TestBed.runInInjectionContext(() => createFilters(rowOf<Row>(), schema));
 }
 
 /** Runs a `createTable()` build inside an Angular injection context. */
@@ -250,7 +249,7 @@ describe('withFiltering', () => {
   });
 
   it('composes with a filter model through matcher()', () => {
-    const filters = buildFilters((path) => equals(path.status));
+    const filters = buildFilters((path) => [equals(path.status)]);
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
@@ -259,7 +258,7 @@ describe('withFiltering', () => {
       )
     );
 
-    filters['status']().value.set('open');
+    filters.status().value.set('open');
 
     expect(store.rows().map((row) => row.id)).toEqual(['r3']);
   });

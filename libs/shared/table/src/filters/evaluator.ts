@@ -8,13 +8,16 @@ export interface FiltersInternal<TRow> {
 }
 
 export function buildValueOfContext<TRow>(internal: FiltersInternal<TRow>): FilterValueOfContext<TRow> {
-  return {
-    valueOf(handle: FilterHandle<TRow, Extract<keyof TRow, string>>): unknown {
+  // Annotated so `valueOf` takes its generic signature contextually. The lookup is by
+  // `handle.id` alone, so the handle's row type is irrelevant here.
+  const context: FilterValueOfContext<TRow> = {
+    valueOf(handle) {
       const key = internal.pathToKey.get(handle.id);
       const node = key !== undefined ? internal.nodesByKey.get(key) : undefined;
       return node?.value();
     },
   };
+  return context;
 }
 
 function reportFilterError<TRow>(record: FilterRuleRecord<TRow>, row: TRow): void {

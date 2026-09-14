@@ -13,7 +13,7 @@ import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { selectionInvoiceConfig } from '../fixtures/schema';
-import type { InvoiceRow, SelectionInvoiceFilterState } from '../fixtures/types';
+import type { InvoiceRow } from '../fixtures/types';
 import { toggleOption } from '../fixtures/utils';
 
 /**
@@ -61,11 +61,11 @@ export class SelectionFilteringStoryHostComponent {
 
   /** The subset this story filters by — enough to move rows in and out of view while a
    * selection is held, without rebuilding the client story's whole filter row. */
-  protected readonly filters = createFilters<InvoiceRow, SelectionInvoiceFilterState>((path) => {
-    equals(path.status, { emptyValue: '' });
-    contains(path.customer);
-    hasAny(path.tags);
-  });
+  protected readonly filters = createFilters(this.data, (path) => [
+    equals(path.status, { emptyValue: '' }),
+    contains(path.customer),
+    hasAny(path.tags),
+  ]);
 
   protected readonly filterForm = form(this.filters().value);
 

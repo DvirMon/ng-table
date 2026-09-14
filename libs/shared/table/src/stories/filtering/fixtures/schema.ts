@@ -1,6 +1,5 @@
-import { debounce, schema } from '@angular/forms/signals';
 import type { ColumnDefInput, TableConfig } from '../../../api/types';
-import type { InvoiceRow, ServerInvoiceFilterState } from './types';
+import type { InvoiceRow } from './types';
 
 /** Every column the client story renders — `note` is the nullable one, `tags` the array one. */
 const clientColumns: ColumnDefInput<InvoiceRow>[] = [
@@ -41,13 +40,3 @@ export const selectionInvoiceConfig: TableConfig<InvoiceRow> = {
   trackBy: 'id',
   columns: narrowColumns,
 };
-
-/**
- * The server story's form schema — applied to the **filter model itself**, not to a separate
- * search model. `debounce(path.search, 300)` is what makes one request per typing pause instead
- * of one per keystroke; it has no visible consequence in the synchronous client story, which is
- * why only this one carries it.
- */
-export const serverFilterFormSchema = schema<ServerInvoiceFilterState>((path) => {
-  debounce(path.search, 300);
-});

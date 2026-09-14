@@ -1,7 +1,7 @@
 import type { InvoiceRow, InvoiceStatus } from './types';
 
-/** Hand-supplied, not derived from the rows — `createFilters()` takes no data argument, so a
- * select's options are the consumer's to provide. */
+/** Hand-supplied, not derived from the rows — the row data passed to `createFilters()` is an
+ * inference anchor the library never reads, so a select's options are the consumer's to provide. */
 export const STATUS_OPTIONS: readonly InvoiceStatus[] = [
   'draft',
   'sent',

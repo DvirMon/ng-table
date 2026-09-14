@@ -1,8 +1,9 @@
-import { computed, isSignal, signal, type Signal } from '@angular/core';
+import { computed, isSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { form, schema } from '@angular/forms/signals';
+import { form } from '@angular/forms/signals';
 import { describe, expect, it } from 'vitest';
 import { createFilters } from './create-filters';
+import { rowOf } from './row-of';
 import { contains, equals, inRange } from './rules';
 import { equalsCriterion } from './state';
 import type { FiltersPath } from './types';
@@ -13,30 +14,22 @@ interface Invoice {
   customer: string;
 }
 
-/** `inRange`'s criterion shape is not exported, so a consumer typing `TState` restates it — as
- * the filtering stories do in their own fixtures. */
+/** `inRange`'s criterion shape is not exported; a consumer no longer types `TState`, but the
+ * shape is still unexported and a *test* still restates it to build a source value. */
 type RangeCriterion = { min: number | null; max: number | null };
-
-type InvoiceFilterState = {
-  status: string | null;
-  amount: RangeCriterion;
-  customer: string;
-};
 
 const EMPTY_RANGE: RangeCriterion = { min: null, max: null };
 
-function build(schema: (path: FiltersPath<Invoice>) => void) {
-  return TestBed.runInInjectionContext(() =>
-    createFilters<Invoice, InvoiceFilterState>(schema)
-  );
+function build<S extends readonly unknown[]>(schema: (path: FiltersPath<Invoice>) => S) {
+  return TestBed.runInInjectionContext(() => createFilters(rowOf<Invoice>(), schema));
 }
 
 function buildInvoiceFilters(source?: () => RangeCriterion) {
-  return build((path) => {
-    equals(path.status);
-    inRange(path.amount, source ? { source } : undefined);
-    contains(path.customer);
-  });
+  return build((path) => [
+    equals(path.status),
+    inRange(path.amount, source ? { source } : undefined),
+    contains(path.customer),
+  ]);
 }
 
 /**
@@ -107,7 +100,7 @@ describe('filters root — the criterion model is a writable view over the nodes
 
   it('asReadonly() tracks the same state without exposing a write', () => {
     const filters = buildInvoiceFilters();
-    const readonlyRoot: Signal<InvoiceFilterState> = filters().value.asReadonly();
+    const readonlyRoot = filters().value.asReadonly();
 
     filters.customer().value.set('Acme');
 
@@ -223,11 +216,12 @@ describe('filters root — a Signal Form binds to it directly', () => {
 
   it('carries a schema, which is where debounce and validation live (R25)', () => {
     const filters = buildInvoiceFilters();
-    const filterSchema = schema<InvoiceFilterState>(() => {
-      // Intentionally empty: the assertion is that the model is schema-compatible at all.
-    });
 
-    const filterForm = TestBed.runInInjectionContext(() => form(filters().value, filterSchema));
+    const filterForm = TestBed.runInInjectionContext(() =>
+      form(filters().value, () => {
+        // Intentionally empty: the assertion is that the model is schema-compatible at all.
+      })
+    );
 
     filterForm.customer().value.set('Acme');
 
