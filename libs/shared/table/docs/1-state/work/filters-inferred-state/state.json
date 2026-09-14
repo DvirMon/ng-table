@@ -1,0 +1,25 @@
+{
+  "slug": "filters-inferred-state",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/filters-inferred-state",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/with-filtering/design-options-hybrid-api.md",
+  "specPath": "libs/shared/table/docs/1-state/work/filters-inferred-state/spec.md",
+  "architecturePath": "libs/shared/table/docs/1-state/work/filters-inferred-state/architecture.md",
+  "githubIssues": [
+    109,
+    110,
+    111,
+    112,
+    113
+  ],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": true
+  }
+}

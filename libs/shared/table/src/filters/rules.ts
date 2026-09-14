@@ -1,16 +1,13 @@
-import {
-  assertFilterPathIsCurrent,
-  buildFiltersPath,
-  createFilterRecorderSession,
-  currentFilterRecorder,
-  withActiveFilterRecorder,
-} from './recorder';
 import type {
+  ConditionalRule,
+  CriterionOf,
   FilterHandle,
   FilterOptions,
+  FilterRule,
   FilterRuleRecord,
   FilterValueOfContext,
   FiltersPath,
+  GroupRule,
 } from './types';
 import { equalsCriterion } from './state';
 import {
@@ -23,17 +20,25 @@ import {
 } from './matchers';
 
 /**
- * The declaration rules a consumer calls inside a `createFilters()` schema body. Bare verbs
- * (`equals`, `contains`, …) — they *do* something (register a filter) — as opposed to the
- * boolean-guard-prefixed matchers (`isEqual`, `isContaining`, …) they default to, which
- * *return* something (R30).
+ * The declaration rules a consumer calls inside a `createFilters()` schema body. Each rule
+ * builds and *returns* its own `FilterRule` — the schema's return value is the inference
+ * channel `StateOf` folds into the criterion map. Bare verbs (`equals`, `contains`, …), as
+ * opposed to the boolean-guard-prefixed matchers (`isEqual`, `isContaining`, …) they default
+ * to, which *return* a boolean.
  *
  * Every rule erases its matcher/criterion generics to `FilterRuleRecord<TRow>`'s `unknown`
- * storage shape via `as` — the same generic-erasure boundary `schema/column-schema.ts`'s
- * `createRecorderSession` documents: the erased type only ever round-trips through the record's
- * own `key`/`paths` at read time (`create-filters.ts`), never re-derived structurally, so
- * collapsing to `unknown` here is sound even though TS can't prove it at this storage step.
+ * storage shape via `as` — the same generic-erasure boundary documented on `FilterRuleRecord`:
+ * the erased type only ever round-trips through the record's own `key`/`paths` at read time
+ * (`create-filters.ts`), never re-derived structurally, so collapsing to `unknown` here is
+ * sound even though TS can't prove it at this storage step.
  */
+
+/**
+ * The static key a rule reports, mirroring the runtime `options?.as ?? path.id`: the `as`
+ * literal when one is given, the path key otherwise. `TAs` defaults to `never` — the one type
+ * for which no `as` was passed — so this resolves to `K` exactly when the default held.
+ */
+type RuleKey<K extends string, TAs extends string> = [TAs] extends [never] ? K : TAs;
 
 type RangeCriterion = { min: number | null; max: number | null };
 type DateRangeCriterion = { from: Date | null; to: Date | null };
@@ -71,18 +76,17 @@ function resolveEmptiness(
 export function equals<
   TRow,
   K extends Extract<keyof TRow, string>,
-  TAs extends string = string,
+  const TAs extends string = never,
   const TEmpty = null
 >(
   path: FilterHandle<TRow, K>,
   options?: FilterOptions<TRow[K] | TEmpty, TAs> & { readonly emptyValue?: TEmpty }
-): void {
-  const recorder = assertFilterPathIsCurrent(path);
+): FilterRule<RuleKey<K, TAs>, TRow[K] | TEmpty, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => v == null,
     emptyValue: null,
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -90,20 +94,22 @@ export function equals<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, TRow[K] | TEmpty, TRow>;
 }
 
 export function contains<
   TRow,
   K extends Extract<keyof TRow, string>,
-  TAs extends string = string
->(path: FilterHandle<TRow, K>, options?: FilterOptions<string, TAs>): void {
-  const recorder = assertFilterPathIsCurrent(path);
+  const TAs extends string = never
+>(
+  path: FilterHandle<TRow, K>,
+  options?: FilterOptions<string, TAs>
+): FilterRule<RuleKey<K, TAs>, string, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => v === '',
     emptyValue: '',
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -111,20 +117,22 @@ export function contains<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, string, TRow>;
 }
 
 export function inRange<
   TRow,
   K extends Extract<keyof TRow, string>,
-  TAs extends string = string
->(path: FilterHandle<TRow, K>, options?: FilterOptions<RangeCriterion, TAs>): void {
-  const recorder = assertFilterPathIsCurrent(path);
+  const TAs extends string = never
+>(
+  path: FilterHandle<TRow, K>,
+  options?: FilterOptions<RangeCriterion, TAs>
+): FilterRule<RuleKey<K, TAs>, RangeCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => isEmptyRange(v as RangeCriterion),
     emptyValue: { min: null, max: null } as RangeCriterion,
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -132,20 +140,22 @@ export function inRange<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, RangeCriterion, TRow>;
 }
 
 export function inDateRange<
   TRow,
   K extends Extract<keyof TRow, string>,
-  TAs extends string = string
->(path: FilterHandle<TRow, K>, options?: FilterOptions<DateRangeCriterion, TAs>): void {
-  const recorder = assertFilterPathIsCurrent(path);
+  const TAs extends string = never
+>(
+  path: FilterHandle<TRow, K>,
+  options?: FilterOptions<DateRangeCriterion, TAs>
+): FilterRule<RuleKey<K, TAs>, DateRangeCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => isEmptyDateRange(v as DateRangeCriterion),
     emptyValue: { from: null, to: null } as DateRangeCriterion,
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -153,20 +163,22 @@ export function inDateRange<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, DateRangeCriterion, TRow>;
 }
 
 export function hasAny<
   TRow,
   K extends Extract<keyof TRow, string>,
-  TAs extends string = string
->(path: FilterHandle<TRow, K>, options?: FilterOptions<readonly unknown[], TAs>): void {
-  const recorder = assertFilterPathIsCurrent(path);
+  const TAs extends string = never
+>(
+  path: FilterHandle<TRow, K>,
+  options?: FilterOptions<readonly unknown[], TAs>
+): FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
     emptyValue: [] as readonly unknown[],
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -174,20 +186,22 @@ export function hasAny<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow>;
 }
 
 export function hasNone<
   TRow,
   K extends Extract<keyof TRow, string>,
-  TAs extends string = string
->(path: FilterHandle<TRow, K>, options?: FilterOptions<readonly unknown[], TAs>): void {
-  const recorder = assertFilterPathIsCurrent(path);
+  const TAs extends string = never
+>(
+  path: FilterHandle<TRow, K>,
+  options?: FilterOptions<readonly unknown[], TAs>
+): FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
     emptyValue: [] as readonly unknown[],
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -195,7 +209,7 @@ export function hasNone<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly unknown[], TRow>;
 }
 
 /**
@@ -203,6 +217,12 @@ export function hasNone<
  * predicate directly; `filter()`'s cell arrives **unguarded** (R27) — no automatic null-check
  * is applied, unlike the named rules' shipped matchers, so a custom predicate can itself choose
  * to match nulls.
+ *
+ * `TCriterion` has two inference sites — the predicate's second parameter and
+ * `options.isEmpty`. Verified (compiled probe, 2026-09-14): a mismatch between the two is a
+ * hard `TS2322` at the `options` argument, not a silent widening to a union or to `unknown` —
+ * the predicate site is inferred first and wins, so `isEmpty` needs no extra constraint to keep
+ * it from winning instead.
  *
  * Emptiness can't be inferred for an arbitrary criterion shape, so `options.isEmpty` /
  * `options.emptyValue` opt a `filter()` rule into the same skip-when-empty behavior the named
@@ -215,21 +235,20 @@ export function filter<
   TRow,
   K extends Extract<keyof TRow, string>,
   TCriterion,
-  TAs extends string = string
+  const TAs extends string = never
 >(
   path: FilterHandle<TRow, K>,
   predicate: (cell: TRow[K], criterion: TCriterion) => boolean,
   options?: FilterOptions<TCriterion, TAs> & {
     isEmpty?: (criterion: TCriterion) => boolean;
   }
-): void {
-  const recorder = assertFilterPathIsCurrent(path);
+): FilterRule<RuleKey<K, TAs>, TCriterion, TRow> {
   const explicitIsEmpty = options?.isEmpty as ((v: unknown) => boolean) | undefined;
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: () => false,
     emptyValue: undefined,
   });
-  recorder.record({
+  return {
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
@@ -237,75 +256,86 @@ export function filter<
     isEmpty: explicitIsEmpty ?? isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow>);
+  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, TCriterion, TRow>;
 }
 
 /**
- * Groups sibling predicates under one shared key and one shared criterion, OR'd (R8, R9). The
- * key is positional — a group has no single path to borrow one from. Runs `schema` through its
- * own nested recorder session (mirroring `createFilters()`'s own top-level session) so its
- * rule calls land as private children rather than independent top-level filters, then folds
- * them into one `kind: 'group'` record pushed to the *outer* schema's recorder (recovered via
- * `currentFilterRecorder()` — `anyOf` itself carries no path/handle to get it from directly).
+ * Groups sibling rules under one shared key and one shared criterion, OR'd (R8, R9). The key is
+ * positional — a group has no single path to borrow one from. `children` arrive already built
+ * (each its own `equals(...)`/`contains(...)`/… call) rather than through a nested schema
+ * callback: the non-empty tuple constraint makes an empty group a compile error, and the
+ * homogeneity check on `children` makes a mixed-criterion group one. The runtime throw stays as
+ * a backstop for a caller that reaches this from untyped JS.
  *
- * The group's own `isEmpty`/`emptyValue` are borrowed from its first declared child — anyOf
- * groups are expected to share one criterion type (e.g. every child a string search box), so
- * the first child's definition serves the whole group.
+ * The group's own `isEmpty`/`emptyValue` are borrowed from its first child, and so is its
+ * criterion type — every later child is checked against `CriterionOf<C[0]>`. The borrow is what
+ * makes the check necessary rather than decorative: the group owns one criterion signal, so a
+ * child whose predicate expects a different shape would silently receive the first child's and
+ * match every row. Do not "improve" the borrow into a merge.
+ *
+ * `C` is inferred from a bare `unknown` tuple and the homogeneity check is applied as an
+ * intersection, never as the inference constraint — constraining `C` to a rule type would
+ * contextually type the elements and widen every child's key.
  */
-export function anyOf<TRow>(key: string, schema: (path: FiltersPath<TRow>) => void): void {
-  const outerRecorder = currentFilterRecorder<TRow>();
-
-  const session = createFilterRecorderSession<TRow>();
-  const nestedPath = buildFiltersPath(session.recorder);
-  withActiveFilterRecorder(session.recorder, () => schema(nestedPath));
-  session.close();
-
-  const children = session.records;
-  if (children.length === 0) {
+export function anyOf<TKey extends string, C extends readonly [unknown, ...unknown[]]>(
+  key: TKey,
+  children: C & { readonly [I in keyof C]: FilterRule<string, CriterionOf<C[0]>> }
+): GroupRule<TKey, CriterionOf<C[0]>> {
+  const records = children as readonly FilterRuleRecord<unknown>[];
+  if (records.length === 0) {
     throw new Error(`[createFilters] anyOf("${key}", …) declared no rules.`);
   }
-  const [first] = children;
+  const [first] = records;
 
-  outerRecorder.record({
+  return {
     kind: 'group',
     key,
-    paths: children.map((child) => child.paths[0]),
+    paths: records.map((child) => child.paths[0]),
     predicate: first.predicate,
     isEmpty: first.isEmpty,
     emptyValue: first.emptyValue,
-    children: children.map((child) => ({ path: child.paths[0], predicate: child.predicate })),
-  } satisfies FilterRuleRecord<TRow>);
+    children: records.map((child) => ({ path: child.paths[0], predicate: child.predicate })),
+  } satisfies FilterRuleRecord<unknown> as GroupRule<TKey, CriterionOf<C[0]>>;
 }
 
 /**
  * Conditional activation (R15, taken from Signal Forms directly). `condition` reads other
- * filters' *current criterion values* through `valueOf` — never row data. The inner `schema`
- * may declare any number of rules; each becomes its own top-level record, re-tagged
- * `kind: 'conditional'` with the same shared `condition` attached, rather than one record
- * wrapping several — every gated rule shares the gate, none references the others.
+ * filters' *current criterion values* through `valueOf` — never row data. Returns **one node**,
+ * not an array — `Flatten` (and the runtime flattener in `create-filters.ts`) recurse into
+ * `children`, so the node folds to its children's top-level keys when placed directly in a
+ * schema array. Place it directly; it is not spreadable, and a plain object has no
+ * `[Symbol.iterator]`, so `...applyWhen(…)` is a compile error rather than a silent drop. That
+ * is the point of returning a node instead of an array: with an array, a *forgotten* spread
+ * left a nested array the fold skipped and the gated filters vanished from both the type and
+ * the runtime with no error at either level.
+ *
+ * Gating semantics are unchanged: each child keeps its own top-level key and its own record. But
+ * `ConditionalRule<S>`'s *type* is a pure `{ kind, children }` carrier — it does not extend
+ * `FilterRuleRecord` and has no `condition` field — so the re-tagging of each child's record to
+ * `kind: 'conditional'` with the shared `condition` cannot happen here without either mutating
+ * the child (which `anyOf`/other combinators may also hold a reference to) or widening this
+ * return type. **Decision:** the returned node carries `condition` as a runtime-only field
+ * alongside `kind`/`children` (present at runtime, absent from the static `ConditionalRule<S>`
+ * type — the same erasure boundary the rest of this file uses). `create-filters.ts`'s flattener
+ * reads it off the raw node (e.g. `(node as { condition }).condition`) when it recurses into a
+ * `ConditionalRule`, and re-tag each leaf record it finds inside with `kind: 'conditional'` plus
+ * that `condition` — the re-tagging itself happens in the flattener, not here.
  *
  * `path` isn't read internally — `condition` already closes over whichever path(s) it
- * references — but the parameter mirrors `filters.md`'s documented signature and anchors
- * `TRow` for inference at the call site.
+ * references — but the parameter mirrors Signal Forms' `applyWhen(path, …)` and anchors `TRow`
+ * for inference at the call site. Retained for signature parity, not for inference.
  */
-export function applyWhen<TRow>(
+export function applyWhen<TRow, S extends readonly [unknown, ...unknown[]]>(
   path: FiltersPath<TRow>,
   condition: (ctx: FilterValueOfContext<TRow>) => boolean,
-  schema: (path: FiltersPath<TRow>) => void
-): void {
+  children: S
+): ConditionalRule<S> {
   void path;
-  const outerRecorder = currentFilterRecorder<TRow>();
-
-  const session = createFilterRecorderSession<TRow>();
-  const nestedPath = buildFiltersPath(session.recorder);
-  withActiveFilterRecorder(session.recorder, () => schema(nestedPath));
-  session.close();
-
-  if (session.records.length === 0) {
-    throw new Error('[createFilters] applyWhen(...) declared no rules inside its schema.');
+  if (children.length === 0) {
+    throw new Error('[createFilters] applyWhen(...) declared no rules.');
   }
-
-  for (const inner of session.records) {
-    outerRecorder.record({ ...inner, kind: 'conditional', condition });
-  }
+  // Assigned before returning: an inline return would trip excess-property checking on
+  // `condition`, which `ConditionalRule<S>` deliberately does not declare.
+  const node = { kind: 'conditional' as const, children, condition };
+  return node;
 }
