@@ -13,6 +13,9 @@ status: >
   unexpectedly — the multi story's lock control is exactly its scenario, though OQ-6's question of
   whether retain-and-tell is the *right* answer is untouched. Every drift item listed under "Report
   the deltas" was verified already fixed; the §6 notes that still said otherwise are corrected.
+  **§8 reconciled in the same pass:** U5/U6's recipes shipped, U7 was not blocked on S1 as its note
+  claimed, S5 has a demonstrated position but still no decision, and U1 no longer blocks §1.1–§1.7
+  — it blocks §1.3 and §4.1–§4.3.
 date: 2026-09-14
 audience: product, design, engineering
 ---
@@ -141,7 +144,8 @@ missing, not a shipped affordance.
 **nothing to click**. No checkbox directive exists (`3-ui/directives/selection.md` is an undrilled
 stub); "click-anywhere-on-the-row" isn't even sketched. Every UI-bearing competitor ships at least
 a checkbox column by default (`research-selection-ux-capabilities.md` §2); this library ships the
-verb and no affordance at all yet.
+verb and, as of 2026-09-12, no affordance at all. Still no directive; what the stories added is the
+binding recipe, not a shipped control.
 
 ## 1.2 — Select several rows one at a time *(multi)* — ✅ covered
 
@@ -157,10 +161,10 @@ verb and no affordance at all yet.
 to what is already marked, in any order, with no limit. The count banner and the event log both move
 per gesture, so "the second click did not replace the first" is read off the screen.
 
-**Design status:** covered by `select(ids)`'s additive bulk write and D14's truncation rule
-(a *conflicting* request under single-select keeps only the last id, never silently drops the
-whole set) — but again, nothing renders. This story and 1.1 differ only in whether the state layer
-composes correctly under repeated calls, which it does; the person-facing gap is identical.
+**Design status:** covered by `select(ids)`'s additive bulk write and D14's truncation rule (a
+*conflicting* request under single-select keeps only the last id, never silently drops the whole
+set) — and, as of 2026-09-12, nothing rendered. This story and 1.1 differ only in whether the state
+layer composes correctly under repeated calls, which it does; the person-facing gap is identical.
 
 ## 1.3 — Select a range in one gesture (shift-click) *(multi)* — ❌ not covered *(blocked on node H)*
 
@@ -517,17 +521,16 @@ defined Tab/focus order across a whole table, no roving-focus containment, and n
 survive replacing the checkbox with a click-to-select row (U3/U4). That is node H again, with 1.3
 and 4.2.
 
-**Design status — gap, and evidence says this needs to be designed in from the start, not
-bolted on later.** No directive exists yet at all, so nothing is built either way — but across
+**Design status — gap, and evidence says this needs to be designed in from the start, not bolted on
+later.** No directive exists even now, so the keyboard model is unbuilt either way — but across
 every competitor researched, keyboard interaction for selection is consistently the **last**
-capability shipped, or never shipped as a first-class row-level primitive:
-Angular Material's `mat-table` has had a "no keyboard row navigation" issue open **six years**
-(#14861, 👍19, still active); PrimeNG needed two separate multi-year efforts for two different
-table variants (#713, #5762) to add any keyboard support at all; AG Grid has an **open WCAG
-"no keyboard trap" violation** filed as recently as 2025-11
-(`research-selection-community-pain.md` Theme 4). This is a strong argument for the eventual
-`ngpTableSelectionCheckbox` directive treating Space-to-toggle and a defined Tab/focus order as
-in-scope from its first drilling pass.
+capability shipped, or never shipped as a first-class row-level primitive: Angular Material's
+`mat-table` has had a "no keyboard row navigation" issue open **six years** (#14861, 👍19, still
+active); PrimeNG needed two separate multi-year efforts for two different table variants (#713,
+#5762) to add any keyboard support at all; AG Grid has an **open WCAG "no keyboard trap" violation**
+filed as recently as 2025-11 (`research-selection-community-pain.md` Theme 4). This is a strong
+argument for the eventual `ngpTableSelectionCheckbox` directive treating Space-to-toggle and a
+defined Tab/focus order as in-scope from its first drilling pass.
 
 ## 4.2 — Select a range from the keyboard *(multi)* — ❌ not covered *(blocked on node H, with 1.3)*
 
@@ -787,7 +790,7 @@ Owned by `1-state/work/with-selection/` and `selection.md` itself.
 | S2 | Reconciliation prune (row removal) emits nothing on `selectionChanged` | 5.1 | Deliberate per D11, but leaves no observability hook. OQ-4 |
 | S3 | No "every row that exists, even unfetched" select-all scope | 1.5 | Deliberately unsolved — only AG Grid's Enterprise SSRM reaches this rung anywhere in the survey |
 | S4 | Bulk `removeRow(id[])`/`patchRow(id[], partial)` don't exist | X-1 | D12 — out of this effort's scope by design, blocks bulk delete/edit downstream |
-| S5 | No answer for a row edited out of its own selectability | 5.2 | OQ-6 — no competitor precedent either |
+| S5 | No **decided** answer for a row edited out of its own selectability | 5.2 | **There is now a demonstrated one.** `multi-selection/`'s *Lock this row* patches `locked: true` onto an already-selected row — this story's scenario exactly — and what falls out of D58/D60 is: the mark survives, select-all stops including it, an explicit clear still removes it. That is a position, not a decision; OQ-6 asked which behavior is *right*, and no competitor precedent exists either way. Worth deciding on purpose now that there is something to look at |
 
 ## 8.2 UI-layer gaps
 
@@ -795,19 +798,19 @@ Owned by `3-ui/directives/selection.md` (currently `spec: stub, code: none`).
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| U1 | No selection checkbox/row directive of any kind | 1.1–1.7 | Confirmed: zero directive files reference any selection member |
+| U1 | No selection checkbox/row directive of any kind | 1.1–1.7 | Still true — zero directive files reference any selection member. **What changed is that it no longer blocks the stories:** §1.1–§1.7 and §2.1 are ✅ on host bindings a consumer copies (`[class]` + `[attr.aria-selected]` read off `selectedRows()`, per D5's deliberate non-stamping). A directive would package that, not enable it. The stories it *does* block are §1.3/§4.1–§4.3, via U2/U3/U4 below |
 | U2 | No shift-click range-select mechanism or anchor-tracking recipe | 1.3 | OQ-5. Every competitor either got this late (TanStack: 4.5yr) or wrong-then-fixed (PrimeNG: 4.5yr) |
 | U3 | No keyboard model — Space to toggle, Tab containment, Shift+Arrow/Shift+Space/Ctrl+A range | 4.1, 4.2 | Competitors ship this last or never; strong argument to design in from the start |
 | U4 | No screen-reader announcement convention for selection changes | 4.3 | Even AG Grid, the most candid competitor here, admits an unresolved limitation |
-| U5 | No selection-count/bulk-action-toolbar recipe | 2.2 | OQ-3. Cheap — `selectedRows().size` already exists |
-| U6 | No visual convention for a disabled-not-hidden locked row | 3.2 | Industry-unanimous convention (disable, never hide) not yet documented here |
-| U7 | No indeterminate-checkbox wiring recipe | 2.3 | Blocked on S1 landing first |
+| ~~U5~~ | ~~No selection-count/bulk-action-toolbar recipe~~ — **recipe shipped 2026-09-14** | 2.2 | `multi-selection/` renders a `role="status"` count banner off `selectedRows().size`, with an explicit empty state so "0 selected" is a state rather than a missing element. No toolbar component ships — §9.1 still has no owner — but the recipe half of OQ-3 is answered, and it was as cheap as this row predicted |
+| ~~U6~~ | ~~No visual convention for a disabled-not-hidden locked row~~ — **documented by example 2026-09-14** | 3.2 | `multi-selection/` renders it, and the choice that matters is visible: `aria-disabled`, **not** `[disabled]`, so the control keeps its place in the tab order — which is also why the host has to refuse the write itself, since `aria-disabled` does not stop a click and `toggle()`'s deselect branch is ungated (D58). Plus a `locked` badge, so the row reads as excluded rather than broken |
+| U7 | ~~No indeterminate-checkbox wiring recipe~~ — **the recipe ships; it is the denominator that is hand-computed** | 2.3 | **Not blocked on S1, contrary to this row's 2026-09-12 note.** `multi-selection/` and `selection-filtering/` both render a correct three-way header checkbox today, via `selectionStateOf(ids)` plus an `[indeterminate]` binding — including the case peers get wrong, since the denominator is pre-filtered through `isSelectable()` so a locked row cannot pin the header indeterminate (D61). S1 would replace that hand-computed `selectableRowIds`, not unblock it. Which is why 2.3 is 🟡 rather than ✅ |
 
 ## 8.3 Gaps needing both layers
 
 | Gap | State owes | UI owes |
 |---|---|---|
-| Indeterminate header checkbox (2.3) | S1's derived "all visible selected" signal | rendering the indeterminate state + wiring the click handler to `selectAllIds()` |
+| Indeterminate header checkbox (2.3) | S1's derived "all visible selected" signal — **still owed**, and it is the whole reason 2.3 is 🟡 | ~~rendering the indeterminate state + wiring the click handler~~ — **done**; `multi-selection/` and `selection-filtering/` both render it, the second state of the header checkbox being the clear |
 | Range select (1.3, 4.2) | Nothing new — deliberately flat per D13 | The entire anchor-tracking mechanism; the "does the range span hidden rows" question loops back into needing `rows()`, already available |
 | Selection-shrink observability (5.1) | S2's second, explicitly-labeled emission channel (OQ-4) | Whatever UI hooks that channel into a visible "your selection changed" message |
 

@@ -11,7 +11,10 @@ status: >
   arithmetic. 2.3 (initial depth), 4.1 (blank keys) and 4.2 (object keys) are ❌ — two of them
   rendered deliberately as bug reports. Cross-feature: X-G1, S-G1 and E-G1 ✅; S-G2 and F-G1 🟡
   for one shared reason — no story composes `groupOrder` with `withSorting()`, or expansion with
-  filtering. OQ-1/OQ-2 resolved 2026-09-12 by D16; OQ-3…OQ-8 still open.
+  filtering. OQ-1/OQ-2 resolved 2026-09-12 by D16; OQ-3…OQ-8 still open. **§8 reconciled in the
+  same pass:** S3 confirmed, U3/U6/U10 closed, and three rows had their premise corrected rather
+  than closed — S8 (`RenderRow.groupKey` ships; the label path is what is missing), U5 (sticky
+  works, nested headers overlap) and U9 (the dead header does not occur without a `groupOrder`).
 date: 2026-09-14
 audience: product, design, engineering
 ---
@@ -494,13 +497,15 @@ completely untouched, because no group header id was ever in it. Failure: groupi
 Closed produces near-one-group-per-row, and the table renders it.
 
 **Design status:** the state side is covered by D1's four updater factories — set, add, remove,
-reorder a level — which name exactly four product affordances. **The gap is that no affordance is
+reorder a level — which name exactly four product affordances. **As of 2026-09-10 no affordance was
 specified anywhere.** AG Grid has three routes (drag a column into a group panel, a column-menu
-item, a tool panel); MUI X has a column menu; TanStack has none and is headless. Ours has none and
-is not headless. `3-ui/directives/grouping.md:29` explicitly **rejected** an `ngpTableGroupBy`
-header directive. That rejection was made when grouping was single-level and imperative; it
-deserves re-examination now that D3 makes grouping an ordered multi-level array a person is
-expected to manipulate.
+item, a tool panel); MUI X has a column menu; TanStack has none and is headless. Ours still ships
+none and is not headless — `grouping-static/` renders all four as ordinary buttons, which is a
+recipe, not a shipped control. `3-ui/directives/grouping.md:29` explicitly **rejected** an
+`ngpTableGroupBy` header directive. That rejection was made when grouping was single-level and
+imperative; it deserves re-examination now that D3 makes grouping an ordered multi-level array a
+person is expected to manipulate — and the story is what that re-examination now has to argue
+against.
 
 ## 3.2 — Group by more than one thing, and change what nests inside what — ✅ covered
 
@@ -1205,12 +1210,12 @@ Owned by `1-state/work/with-grouping/` and the feature docs it supersedes.
 |---|---|---|---|
 | ~~S1~~ | ~~Group row count is not derived and has nowhere to live~~ | 1.2 | **Closed by D16** — the count is `rowsOf(group).length`; no new field needed |
 | S2 | Per-group aggregation failure has no named fallback | 1.3 | D15 names fallbacks for `groupOrder` and `when`; `aggregateFn` throwing on one group's rows is unaddressed |
-| S3 | Expansion survival across refresh/sort/regroup is unstated | 2.5 | May already work — `expandedRows` keeps synthetic group ids, ADR-0006 never prunes them. Unconfirmed, untested, so not a guarantee. OQ-4 |
+| ~~S3~~ | ~~Expansion survival across refresh/sort/regroup is unstated~~ — **confirmed 2026-09-14** | 2.5 | It does work, and it is no longer untested by observation: `grouping-collapsible/` attacks it three ways — Refetch replaces every row with a freshly-constructed object, the sort toggles race a reordered pipeline, and Regroup changes every group id at once so the state is discarded wholesale rather than half-applied. The `forceFailure` arg adds the failure path. What OQ-4 called undecided (stable across a refetch, not across a regrouping) is now demonstrated both ways. Still worth a unit test, not a decision |
 | S4 | No "is everything expanded" signal | 2.2 | Without it an Expand All control cannot label itself — ag-grid #8621 is exactly this |
 | S5 | No group-level expand/collapse verb | 2.2, 2.3 | `withExpansion().expandAll()` walks `childrenAccessor` over real rows (`with-expansion.ts:119-135`) and cannot discover a group at all |
 | S6 | No initial expansion depth | 2.3 | AG Grid and MUI X both model this as a depth; TanStack has no depth concept and it shows |
 | S7 | Missing / null group values are undefined behavior | 4.1 | D14 covers an unknown column *id*, not a missing *value*. `sorting.md:167-169` already flags the same hole from its side. OQ-5 |
-| S8 | Non-primitive group values have no key contract | 4.2 | `RenderRow` has **no `groupKey` field** though `features/grouping.md:108` specifies one — a group header cannot say what it is a group of. OQ-5 |
+| S8 | Non-primitive group values have no **label** contract | 4.2 | **Half of this row is now false.** `RenderRow.groupKey` ships (C1), so a header *can* say what it is a group of. What is still missing is the path from that identity to text: `grouping-static/` groups by `closedAt` (a `Date`, labels correctly) next to `owner` (an object, no label path at all), one click apart. Pairs with U8. OQ-5 |
 | S9 | Single-row group behavior unstated | 4.3 | OQ-6 |
 | ~~S10~~ | ~~Group-header selection semantics undecided~~ | X-G1 | **Closed by D16** — the library ships no semantics; `rowsOf(group)` plus consumer cascade. Discharges the instruction in `with-selection/2-decisions.md:168-173` |
 | ~~S11~~ | ~~"Is a group header a row or a view" is unrecorded~~ | §6 | **Closed by D16** — a view, with `expandedRows` the one named exception, because that set holds toggles rather than records |
@@ -1234,14 +1239,14 @@ revisited, not inherited.
 |---|---|---|---|
 | U1 | Group header cell structure undecided | 1.3, 1.4 | `3-ui/directives/grouping.md:41` — one spanning `<td>` vs one per column, called "mutually exclusive layouts". Product-facing because AG Grid's full-width group rows **lose inline aggregates**; choosing that layout trades away §1.3 |
 | U2 | What happens to the grouped column on screen | 1.4 | Four libraries, four answers — hidden, moved to front, shown twice, or cells merged vertically |
-| U3 | Collapse click target is the chevron, not the row | 2.1 | Telerik has carried this request since 2021, unplanned |
+| ~~U3~~ | ~~Collapse click target is the chevron, not the row~~ — **closed 2026-09-14** | 2.1 | `grouping-collapsible/` makes the whole header row the target: the chevron carries no click handler of its own and its activation bubbles to the row's one listener, so there is no double-fire to suppress. Telerik has carried this request since 2021, unplanned — it is one line here |
 | U4 | No expand-all / collapse-all control | 2.2 | `3-spec.md:371-391` scopes out the UI. Defensible — but it must not also scope out S4/S5 |
-| U5 | No sticky group headers | 2.4 | The loudest end-user complaint in the corpus (mui-x #10671, 16 👍). AG Grid is the only library shipping it. May be pure CSS from `data-row-kind`/`data-depth` — worth checking before treating it as a feature |
-| U6 | No affordance to change the grouping | 3.1, 3.2 | D1's four updaters name four product actions; nothing renders any of them |
+| U5 | Sticky group headers stick, but do not **stack** | 2.4 | **The "is it pure CSS?" question is answered: yes.** `grouping-static/` ships `stickyHeaders` as one opt-in class keyed off `data-row-kind`, no feature required. The residual is narrower and real — every depth uses `top: 0`, so a nested header lands on its parent instead of beneath it, and 2.4's full-path and clean-hand-off criteria stay unmet. Needs a per-depth offset, and it collides with virtual scroll. mui-x #10671 (16 👍); AG Grid is still the only library shipping the stacked version |
+| ~~U6~~ | ~~No affordance to change the grouping~~ — **all four render 2026-09-14** | 3.1, 3.2 | `grouping-static/` renders every one of D1's four updaters: *Group by this column* / *Ungroup* on each header (`addGroupLevel`, which no-ops on a duplicate, and `removeGroupLevel`), ◀ ▶ on each level pill (`reorderGroupLevels`), and *Reset levels* (`setGroupLevels`). Still no directive and no column menu — §9.2's column menu is where a shipped version would live — but the recipe is copy-paste |
 | U7 | No affordance to order the groups | 3.3 | The differentiator story, and the one with no prior art to copy |
 | U8 | Group-label formatting for an unknown value | 4.2 | Already open at `3-ui/directives/grouping.md:41-45`; pairs with S8 |
-| U9 | Sorting the grouped column reads as a dead header | S-G1 | D5's accepted cost. The deferral can stand; a header that shows a sort indicator while nothing moves cannot |
-| U10 | Group collapse vs row detail-panel collapse share an affordance | E-G1 | PrimeNG #18171 is what happens without a decision here |
+| U9 | Sorting the grouped column reads as a dead header — **it does not, in the shipped composition** | S-G1 | **Premise corrected 2026-09-14.** With no `groupOrder` supplied, group order is first-occurrence over the *sorted* rows, so clicking a grouped column reorders the rows, the first occurrences, and therefore the group headers: the click does something visible and no indicator sits over an unchanged table. `grouping-collapsible/` labels D5's narrower true statement — sorting a grouped column cannot reorder rows *within* a group, since they all hold the same value. The dead header returns only once a `groupOrder` comparator decouples the two, which is S-G2's gap, not this one |
+| ~~U10~~ | ~~Group collapse vs row detail-panel collapse share an affordance~~ — **closed 2026-09-14** | E-G1 | They do not share one. `grouping-collapsible/` puts both on screen: a chevron on the group header keyed by its synthetic group id, and a second on the deal carrying `children`, keyed by the row's own id. Opening one never opens the other, and collapsing a group leaves the row's own entry in `expandedRows` untouched. PrimeNG #18171 is what happens without that separation |
 
 ## 8.3 Gaps needing both layers
 
@@ -1250,9 +1255,9 @@ Each is a case where the UI half is easy and wrong without the state half.
 | Gap | State owes | UI owes |
 |---|---|---|
 | Expand-all control (2.2) | S4's signal + S5's verb | the button, and its label reflecting the signal |
-| Sticky group headers (2.4) | nothing, if CSS suffices — confirm first | U5 |
-| Changing the grouping (3.1) | nothing; D1 settled it | U6, and the column-menu or panel it lives in (§9) |
-| Group selection (X-G1) | S10's semantics + S11's row-or-view answer | tri-state checkbox rendering |
+| Sticky group headers (2.4) | **confirmed: nothing.** CSS suffices — one class on `data-row-kind` | U5, narrowed to the per-depth offset that makes nested headers stack instead of overlap |
+| ~~Changing the grouping (3.1)~~ — **both halves landed** | ~~nothing; D1 settled it~~ | ~~U6~~ — all four updaters render in `grouping-static/`. The column-menu or panel a shipped version would live in is still §9.2's, unowned |
+| ~~Group selection (X-G1)~~ — **both halves landed** | ~~S10 + S11~~ — closed by D16: no library semantics, a group is a view | ~~tri-state checkbox rendering~~ — `grouping-selection/` renders it, derived from `selectionStateOf(rowsOf(group))` rather than stored |
 | Telling a person a saved level was dropped (4.4) | expose that it happened | show it |
 
 ## 8.4 Confirmed right — do not re-litigate
@@ -1278,7 +1283,8 @@ Each is a case where the UI half is easy and wrong without the state half.
 
 Distinct from the gaps above: these are not missing paragraphs in an existing spec, they are
 **features with no doc at all**. Checked against `docs/status.md` (the generated capability
-registry, 16 capabilities) rather than against memory — none of the five appears there.
+registry — 16 capabilities when this was written, 17 since `filters` was added) rather than
+against memory — none of the five appears there, and re-checked 2026-09-14 after the regen.
 
 A gap analysis that reads every existing spec is structurally blind to these, which is why they
 surfaced from the competitor inventory and the community corpus rather than from the internal

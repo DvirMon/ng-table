@@ -10,7 +10,9 @@ status: >
   pagination does not exist. The 2026-09-10 first pass found the gaps; §8 still splits them by
   owning layer, and OQ-1 is now resolved by the core `totalRowCount` member. Written after
   `filters.md` and `features/filtering.md` (both `spec: drilled`, R1–R31 settled), so this doc's
-  job was to find what the design does not cover.
+  job was to find what the design does not cover. **§8/§9 reconciled in the same pass** — S1, S6,
+  §8.3's match-count row and §9.2 all asserted a gap the marks above now contradict; U2's recipe
+  shipped and U1's is a copy-paste away.
 date: 2026-09-14
 audience: product, design, engineering
 ---
@@ -237,10 +239,10 @@ criterion holds too: ticking *Select all* under Tags excludes no row, and still 
 same way. This is U1's recipe demonstrated — the library still ships no chip component.
 
 **Design status — gap.** No decision covers this at all — `filters.md` gives `active()` (empties
-omitted) as exactly the data this needs, but nothing renders it. Only one library in the survey
-documents a granular affordance here: MUI X ships a delete (×) icon per active filter constraint and
-a "Remove all" button (`research-filter-ux-capabilities.md` §5); the community independently
-confirms the *absence* of this hurts — PrimeNG
+omitted) as exactly the data this needs, and as of 2026-09-10 nothing rendered it. Only one library
+in the survey documents a granular affordance here: MUI X ships a delete (×) icon per active filter
+constraint and a "Remove all" button (`research-filter-ux-capabilities.md` §5); the community
+independently confirms the *absence* of this hurts — PrimeNG
 **[#16576](https://github.com/primefaces/primeng/issues/16576)** (open, 👍 11, opened 2024-10-17) is
 a regression report specifically about a missing "this column is filtered" indicator. Raised as
 **OQ-4**.
@@ -736,12 +738,12 @@ Owned by `1-state/work/with-filtering/` and `filters.md` itself.
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| S1 | No first-class filtered-row match count | 2.3 | Cheap in client mode — the filtered row set already exists. Meaningless to manufacture in server mode. OQ-1 |
-| S2 | Selection-under-filter semantics unowned by either feature | F-S1 | `selection.md:17-22`'s non-dependency is deliberate but leaves this fully unresolved. OQ-2 |
+| ~~S1~~ | ~~No first-class filtered-row match count~~ — **resolved 2026-09-14** | 2.3 | It is the **core** `totalRowCount` member (`rows().length`, so post-filter), not a `createFilters()` or `withFiltering()` member — which is why looking for it on the filtering surface found nothing. Server mode is the same member from the other side: ADR-0005 leaves exactly this key overridable. Both render — see OQ-1 |
+| S2 | Selection-under-filter semantics — **half resolved** | F-S1 | No longer "fully unresolved": D59's `selectAllIds()` settled the scope half without reversing `selection.md:17-22`'s deliberate non-dependency — the consumer supplies the id array, `withSelection()` never reads `active()`. What is left is the hidden-count half, which is S1 in [`selection.md`](selection.md) §8.1, not this doc's. OQ-2 |
 | ~~S3~~ | ~~`createFilters()` has zero implementation~~ — **resolved** | — | `src/api/create-filters.ts` plus the whole `api/filters/` engine (`evaluator`, `matchers`, `recorder`, `rules`, `state`, `validate`) ship, with `create-filters.spec.ts`, `matchers.spec.ts` and `state.spec.ts` covering them. `filters.md`'s `code: none` frontmatter is the last stale trace and is filtering Step 7's to fix |
 | ~~S4~~ | ~~Shipped `withFiltering()` implements the superseded imperative shape~~ — **resolved** | — | `with-filtering.ts` is now the v2.0 adapter over `createFilterEvaluator`, with a `manual` pass-through for server mode. R26's breaking change landed; `setColumnFilter`/`setGlobalFilter` are gone. `3-ui/architecture.md` still names them (U5) |
-| S5 | No stated behavior for a persisted criterion that no longer fits the schema | 4.3 | `filters.md`'s Errors section names the risk, ships no guard. OQ-6 |
-| S6 | No per-filter or `active()`-derived count of currently-matching rows exposed anywhere | 2.3, F-P1 | Same root as S1; listed separately because F-P1's "page total reflects filtered rows" depends on the same number pagination would need |
+| S5 | No **shipped** guard for a persisted criterion that no longer fits the schema | 4.3 | Unchanged as a library gap — `filters.md`'s Errors section names the risk and ships nothing. The worked defensive pattern OQ-6 asks for now exists as code: `client-filtering/`'s raw-vs-guarded load buttons, where the guarded path narrows each `unknown` off the snapshot and the raw path has to step outside the type to exist at all. Recipe, not API. OQ-6 |
+| ~~S6~~ | ~~No per-filter or `active()`-derived count of currently-matching rows exposed anywhere~~ — **resolved with S1** | 2.3, F-P1 | The premise was wrong rather than the gap unfilled: the count was never going to be `active()`-derived. F-P1 will read the same core `totalRowCount` once pagination exists, which is what this row was really tracking |
 
 ## 8.2 UI-layer gaps
 
@@ -750,8 +752,8 @@ see §8.4) and whatever directive doc, if any, is written once `createFilters()`
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| U1 | No active-filter visibility convention (chip list, count, per-filter clear) | 2.1 | Only MUI X documents anything here among the survey. OQ-4 |
-| U2 | No documented empty-state-when-filtered-to-nothing recipe | 4.4 | AG Grid and MUI X both ship a dedicated no-matches overlay and both warn about the same stale-rows trap. OQ-7 |
+| U1 | No active-filter visibility convention (chip list, count, per-filter clear) | 2.1 | **Recipe now exists, component still does not.** [`client-filtering/`](../../src/stories/filtering/client-filtering/) renders the whole thing off `active()` — per-field marker, one chip per active criterion with its own ×, and an explicit "no active criteria" state. Still a gap because nothing ships; it is now a copy-paste away rather than an open design question. Only MUI X documents anything here among the survey. OQ-4 |
+| U2 | ~~No documented empty-state-when-filtered-to-nothing recipe~~ — **the recipe shipped 2026-09-14** | 4.4 | [`client-filtering/`](../../src/stories/filtering/client-filtering/) separates no-data from no-matches with two reachable states and two messages; [`server-filtering/`](../../src/stories/filtering/server-filtering/) splits it three ways (loading / no-matches / request-failed, the last keeping the previous page on screen). No overlay component ships, per the attribute-only invariant — that was never the ask here. AG Grid and MUI X both warn about the same stale-rows trap, which the *Empty the data* control makes reachable. OQ-7 |
 | U3 | No runtime operator-picker recipe, even as an opt-in "if you want one, here's how" | 1.4, §6 | Every UI-bearing competitor ships this free; ours ships nothing, by design (R1). OQ-3 |
 | U4 | Filter-state changes are not announced to screen readers | all of §1–§4 | Accepted cost already recorded at `3-ui/work/core-directives/2-decisions.md:91` ("sort/filter/page state changes are not announced... revisit before any user-facing ship") — filtering inherits this gap, it does not create a new one |
 | U5 | `3-ui/architecture.md`'s filtering section names the pre-`createFilters()` API | none directly — a documentation contradiction | `setColumnFilter()`/`setGlobalFilter()` will not exist once R26 lands. The underlying UI verdict (ordinary form inputs, Angular owns a11y) likely still holds under R18, but the doc should be re-checked when next touched — not fixed here |
@@ -761,8 +763,8 @@ see §8.4) and whatever directive doc, if any, is written once `createFilters()`
 
 | Gap | State owes | UI owes |
 |---|---|---|
-| Match count (2.3) | S1's derived count | rendering it somewhere visible — a badge, a sentence, whatever U1 settles on |
-| Selection under a filter (F-S1) | S2's semantics — what "select all" scopes to, whether hidden selections survive | showing the "N selected, M hidden" distinction so the state decision is legible, not just correct |
+| ~~Match count (2.3)~~ — **both halves landed** | ~~S1's derived count~~ — core `totalRowCount`, already there | ~~rendering it~~ — "N of M match" in `client-filtering/`, "server total N · rows on this page M" in `server-filtering/` |
+| Selection under a filter (F-S1) | ~~what "select all" scopes to~~ — D59. **Still owed:** the hidden-count signal (`selection.md` S1) | ~~showing that hidden selections survive~~ — `selection-filtering/` renders retention and prints the ids. **Still owed:** the "N selected, M hidden" split, which nothing can compute yet |
 
 ## 8.4 Confirmed right — do not re-litigate
 
@@ -803,11 +805,17 @@ competitor uses for "tell me what's filtered and let me clear it" (§2.1, OQ-4).
 *why* 2.1 has no affordance at all, the same relationship `grouping.md` §9.2 describes for its
 missing column menu.
 
-### 9.2 Filtered-row match count — **state**
+### 9.2 ~~Filtered-row match count~~ — **it had an owner all along**
 
-`ColumnDef`/`createFilters()` has nothing that answers "how many rows currently match" (§2.3,
-OQ-1). Distinct from pagination's eventual page-count concern (F-P1) even though the two would
-likely share a number once pagination exists.
+**Withdrawn 2026-09-14.** This was listed as a capability with no owner because `createFilters()`
+answers nothing about row counts — which is true, and irrelevant. The count is `core`'s, not
+filtering's: `totalRowCount` is `rows().length` after the pipeline has run, so it *is* the
+match count whenever a filter is active, and it is one of the members ADR-0005 lets a feature
+override when the server supplies its own total. Filtering never needed to own it.
+
+The genuine residual is the one F-P1 names: pagination will want `totalRowCount` to keep meaning
+"rows that matched", not "rows on this page" — which is exactly what the ADR-0005 override is for,
+and worth a test when pagination ships rather than a capability entry now.
 
 ### 9.3 Data-derived filter options (set-filter / distinct values) — **state**, deliberately declined
 

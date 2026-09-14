@@ -20,7 +20,7 @@
 | `drag-drop` | stub | none | stub | none | — | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
 | `expansion` | drilled | partial | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
 | `filtering` | drilled | shipped | — | — | [✅](0-product/filtering.md) | [state](1-state/features/filtering.md) · [product](0-product/filtering.md) |
-| `filters` | drilled | none | — | — | — | [state](1-state/filters.md) |
+| `filters` | drilled | shipped | — | — | — | [state](1-state/filters.md) |
 | `grouping` | drilled | partial | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
 | `infinite-scroll` | stub | none | — | — | — | [state](1-state/features/infinite-scroll.md) |
 | `pagination` | stub | none | — | — | — | [state](1-state/features/pagination.md) |
