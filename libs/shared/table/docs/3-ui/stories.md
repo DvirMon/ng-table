@@ -64,6 +64,7 @@ src/stories/
 │       ├── <story-name>-story-host.component.html   ← template — NEVER inline
 │       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
 │       └── <story-name>.mdx                         ← thin wrapper: Meta/Canvas/Source only
+├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
 └── filtering/  grouping/  selection/        ← fixtures/ only; hosts land when those stories ship
 ```
 
@@ -88,6 +89,9 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `row-edit/fixtures/http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
 | `row-edit/fixtures/handlers.ts` | MSW request handlers |
 | `row-edit/ui/*` | Demo-only instrumentation (`CommitCounterComponent`, `focusNewRow`, `localUndoSlot`) — never table API |
+| `composition/fixtures/types.ts` | The shared row shape (`CompositionRow`) and the criterion model (`CompositionFilterState`) |
+| `composition/fixtures/mock.ts` | Fixture rows and the dept option list (`COMPOSITION_ROWS_MOCK`, `COMPOSITION_DEPT_OPTIONS`) |
+| `composition/fixtures/schema.ts` | `compositionColumns` and `derivedStateConfig` (`TableConfig<CompositionRow>`, `trackBy: 'id'` + `columns`) |
 | `styles/story-host.css` | Shared story styling; every feature's own stylesheet layers after it |
 | `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by every story's mdx |
 
