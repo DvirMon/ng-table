@@ -1,15 +1,15 @@
 # Implementation Progress — Table: integrate and verify positional composition — green promised here
 
 **Issue:** #77
-**Status:** 3 / 5 complete, Step 4 run with pre-existing failures
+**Status:** 5 / 5 complete — issue closed
 
 | Step | Title | Status | PR |
 |---|---|---|---|
-| 1 | `stories/composition/`: fixtures + `derived-state` story host with both derive-block placements | ✅ done | — |
-| 2 | `derived-state.stories.ts` + `derived-state.mdx` — `Table / Composition / Derived State` | ✅ done | — |
-| 3 | `docs/3-ui/stories.md`: `composition/` in the layout tree and fixtures table | ✅ done | — |
+| 1 | `stories/composition/`: fixtures + `derived-state` story host with both derive-block placements | ✅ done | 80c991d |
+| 2 | `derived-state.stories.ts` + `derived-state.mdx` — `Table / Composition / Derived State` | ✅ done | 80c991d |
+| 3 | `docs/3-ui/stories.md`: `composition/` in the layout tree and fixtures table | ✅ done | 80c991d |
 | 4 | Agent-run static gates: type-check + lint across the library and both apps | ⚠ run — 2 pre-existing failures, not from #77 (see results below) | — |
-| 5 | User-run gates (unit suites, Storybook build, walkthrough) and #77 close-out | ⬚ pending | — |
+| 5 | User-run gates (unit suites, Storybook build, walkthrough) and #77 close-out | ✅ done | — |
 
 Graph: `1 → {2, 3} → 4 → 5`.
 Parallel-safe: `[2, 3]` after 1. Dependency: `1 → 2`, `1 → 3`, `{2, 3} → 4`, `4 → 5`.
@@ -70,3 +70,26 @@ nested block reads only core + `SelectionMembers`, the trailing block reads `hid
 
 Re-ran after the fixes: `tsconfig.lib.json` exit 0; `.storybook/tsconfig.json` unchanged (the
 same two pre-existing `preview.ts` implicit-`any` errors).
+
+## Step 5 — user-run gates (2026-09-14)
+
+All three commands run by the user, all reported green:
+
+| Command | Result |
+|---|---|
+| `npx nx run-many -t test -p shared-table demo ng-table` | pass (user-reported) |
+| `npx nx run shared-table:build-storybook` | pass (user-reported) |
+| `npx nx run shared-table:storybook` | served; sidebar scanned, every table story renders |
+
+`Table / Composition / Derived State` walkthrough: every row of the Step 5 table green — banner
+counts track selection and filtering together, a filtered-out row keeps its mark, neither number
+goes negative, and no `[createTable] derived member … threw` line appeared in the console.
+
+Sibling walkthroughs confirmed in the same session: #75 Step 4 (nine row-edit stories) and #76
+Step 3 (seven demos + ng-table home) both green.
+
+ACs 1 and 5 are satisfied by construction: no integration branch was ever cut — #68–#76 landed on
+`feat/table` directly, so there was nothing to merge.
+
+Steps 1–3 shipped in `80c991d` (composition host, story, MDX, fixtures, `stories.md` rows).
+Step 4's two static-gate failures stay as recorded above: both pre-existing, neither from #77.

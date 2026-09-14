@@ -1,13 +1,13 @@
 # Implementation Progress — Table: migrate apps/demo and apps/ng-table to positional createTable
 
 **Issue:** #76
-**Status:** 2 / 3 complete
+**Status:** 3 / 3 complete — issue closed
 
 | Step | Title | Status | PR |
 |---|---|---|---|
 | 1 | `apps/demo`: seven demos on positional `createTable()` | ✅ done | — |
 | 2 | `apps/ng-table` home copy + `apps/demo/CLAUDE.md` off the deleted builder | ✅ done | — |
-| 3 | Demo behaviour verification (user-run) and #76 close-out | ▶ in progress (awaiting user demo walkthrough) | — |
+| 3 | Demo behaviour verification and #76 close-out | ✅ done | — |
 
 Graph: `{1, 2} → 3`.
 Parallel-safe: `[1, 2]`. Dependency: `1 → 3`, `2 → 3`.
