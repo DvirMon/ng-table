@@ -1,3 +1,9 @@
+---
+title: ng-table
+summary: "Dark-only documentation and marketing site for NGP Table (`@acme/table`); does not implement the table itself."
+depends-on: [Table]
+---
+
 # ng-table — context
 
 ## What this is

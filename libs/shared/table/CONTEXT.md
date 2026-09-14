@@ -1,3 +1,9 @@
+---
+title: Table
+summary: "Standalone `@acme/table` headless table primitive, extracted from Design System (ADR-0009)."
+depends-on: []
+---
+
 # Table — context
 
 Glossary and cross-domain vocabulary for `@acme/table`.

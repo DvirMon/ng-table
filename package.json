@@ -1,6 +1,7 @@
 {
   "name": "@acme/source",
   "version": "0.0.0",
+  "description": "Nx monorepo, mixed Angular + React. Multi-context: each app/lib owns its own CONTEXT.md glossary and docs/adr/.",
   "license": "MIT",
   "scripts": {
     "demo": "npx nx serve demo",
@@ -15,6 +16,8 @@
     "table:status": "node --experimental-strip-types libs/shared/table/tools/generate-status.ts",
     "table:overloads": "node --experimental-strip-types libs/shared/table/tools/generate-overloads.ts",
     "table:overloads:check": "node --experimental-strip-types libs/shared/table/tools/generate-overloads.ts --check",
+    "llms": "node --experimental-strip-types tools/generate-llms-txt.ts",
+    "llms:check": "node --experimental-strip-types tools/generate-llms-txt.ts --check",
     "test:design-system": "npx nx test shared-design-system",
     "proto:value-sync": "node --experimental-strip-types libs/shared/design-system/src/ui/autocomplete/prototype-value-sync/tui.ts"
   },
