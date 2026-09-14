@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createFilters } from '../../../api/create-filters';
-import { contains, equals, hasNone, inRange } from '../../../api/filters/rules';
+import { createFilters } from '../../../filters/create-filters';
+import { contains, equals, hasNone, inRange } from '../../../filters/rules';
 import { createTable } from '../../../api/create-table';
 import { createTableFeature } from '../../../api/create-table-feature';
 import type { TableStore } from '../../../api/types';

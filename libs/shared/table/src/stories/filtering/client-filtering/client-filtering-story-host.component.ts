@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createFilters } from '../../../api/create-filters';
+import { createFilters } from '../../../filters/create-filters';
 import {
   anyOf,
   contains,
@@ -8,7 +8,7 @@ import {
   filter,
   inDateRange,
   inRange,
-} from '../../../api/filters/rules';
+} from '../../../filters/rules';
 import { createTable } from '../../../api/create-table';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';

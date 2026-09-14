@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
-import { createFilters } from '../../../api/create-filters';
-import { contains, equals, hasAny } from '../../../api/filters/rules';
+import { createFilters } from '../../../filters/create-filters';
+import { contains, equals, hasAny } from '../../../filters/rules';
 import { createTable } from '../../../api/create-table';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';

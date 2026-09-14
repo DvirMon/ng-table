@@ -4,7 +4,7 @@ import {
   type FilterRuleRecord,
   type FilterSchemaRecorder,
   type FiltersPath,
-} from '../filters.types';
+} from './types';
 
 /** One schema-fn execution. Mirrors `schema/column-schema.ts`'s `createRecorderSession` —
  *  the fn runs once, synchronously; a `FilterHandle` used after it returns must throw. */

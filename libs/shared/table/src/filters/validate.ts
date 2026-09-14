@@ -1,4 +1,4 @@
-import type { FilterRuleRecord } from '../filters.types';
+import type { FilterRuleRecord } from './types';
 
 /** A 'group' record's own paths come from its children; every other kind carries them directly. */
 export function pathsOf<TRow>(record: FilterRuleRecord<TRow>): readonly string[] {

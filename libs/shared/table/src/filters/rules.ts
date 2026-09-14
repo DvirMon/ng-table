@@ -11,7 +11,7 @@ import type {
   FilterRuleRecord,
   FilterValueOfContext,
   FiltersPath,
-} from '../filters.types';
+} from './types';
 import { equalsCriterion } from './state';
 import {
   hasAnyOf,

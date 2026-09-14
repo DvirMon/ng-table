@@ -26,10 +26,11 @@ as top-level siblings rather than subfolders. See ADR-0008.
 
 ```
 src/
-  index.ts      ← the ONLY definition of the public surface. No other barrels.
+  index.ts      ← the table's own public surface; re-exports filters/index.ts wholesale
   api/          ← factory + declaration surface a consumer touches
   schema/       ← column schema DSL: columnSchema(), metadata, visibility/sort rules
   mutations/    ← row and column mutation verbs
+  filters/      ← the standalone createFilters() domain. Owns its own barrel (ADR-0016)
   engine/       ← the runtime; nothing here is exported
   directives/   ← UI layer
   table.mock.ts ← shared test fixtures
@@ -39,7 +40,8 @@ docs/           ← this library's own docs (see "Docs structure" below)
 
 | File | Purpose |
 |---|---|
-| `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal |
+| `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. **One barrel per domain, not one per repo:** `filters/` is its own domain (usable with no table at all) and defines its own surface, which this file re-exports wholesale |
+| `filters/index.ts` | The filters domain's public surface — `createFilters`, its three types, the nine rules, the six matchers. Lists them explicitly; `export *`-ing the source files here would leak `createFilterEvaluatorFrom` and the recorder internals. `evaluator.ts`, `recorder.ts`, `state.ts`, `validate.ts` are internal because they are not listed here |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
@@ -71,8 +73,10 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `tools/generate-status.ts` | Regenerates `docs/status.md` from the specs' frontmatter. Run `npm run table:status` (add `-- --dry-run` to print instead of write). Deliberately outside `src/` — `tsconfig.lib.json` includes `src/**/*.ts`, so anything there ships in the published build |
 
 Naming: the folder supplies the domain, so files inside drop the `table.` prefix
-(`engine/pipeline.ts`, not `engine/table.pipeline.ts`). Kebab-case, not Angular's internal
-snake_case — `.claude/rules/file-organization.md` governs.
+(`engine/pipeline.ts`, not `engine/table.pipeline.ts`; `filters/types.ts`, not
+`filters/filters.types.ts`). A factory verb is not the domain, so `filters/create-filters.ts`
+keeps its name — it is named for the symbol it exports, like `api/create-table.ts`. Kebab-case,
+not Angular's internal snake_case — `.claude/rules/file-organization.md` governs.
 
 **`api/types.ts` ↔ `engine/types.ts` is a deliberate type-only import cycle.** Both sides must
 stay `import type`; making either a value import breaks the build.

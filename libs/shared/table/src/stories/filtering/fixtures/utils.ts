@@ -1,4 +1,4 @@
-import { hasAnyOf, hasNoneOf, isContaining } from '../../../api/filters/matchers';
+import { hasAnyOf, hasNoneOf, isContaining } from '../../../filters/matchers';
 import { STATUS_OPTIONS } from './mock';
 import type {
   DateRangeCriterion,

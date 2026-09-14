@@ -1,13 +1,13 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { createFilters } from '../create-filters';
+import { createFilters } from '../../filters/create-filters';
 import { createTable } from '../create-table';
-import { equals } from '../filters/rules';
+import { equals } from '../../filters/rules';
 import { withComputed } from './with-computed';
 import { withFiltering } from './with-filtering';
 import type { ColumnDef, TableStore } from '../types';
-import type { Filters, FiltersPath } from '../filters.types';
+import type { Filters, FiltersPath } from '../../filters/types';
 
 interface Row {
   id: string;

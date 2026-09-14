@@ -1,10 +1,10 @@
 import { Component, computed, signal } from '@angular/core';
 import { createTable } from '../../../api/create-table';
-import { createFilters } from '../../../api/create-filters';
+import { createFilters } from '../../../filters/create-filters';
 import { withComputed } from '../../../api/features/with-computed';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';
-import { equals } from '../../../api/filters/rules';
+import { equals } from '../../../filters/rules';
 import type { RowId } from '../../../api/types';
 import { COMPOSITION_DEPT_OPTIONS, COMPOSITION_ROWS_MOCK } from '../fixtures/mock';
 import { derivedStateConfig } from '../fixtures/schema';

@@ -73,7 +73,8 @@ remove it.
   empty folder; revisit when something is actually shared.
 - **Per-folder barrels** — `api/`, `engine/` and `directives/` have none. `index.ts` is the single
   explicit public surface (Angular's `public_api.ts` role). Unused barrels are dead code, and two
-  places defining the surface is how it drifts.
+  places defining the surface is how it drifts. See the 2026-09 amendment below: the rule is one
+  barrel per *domain*, and a folder is not a domain.
 
 ## Consequences
 
@@ -98,3 +99,28 @@ remove it.
   only** — no assertion edits, the same acceptance gate ADR-0003 used.
 - `git diff main -- apps/demo` empty. The public export list in `index.ts` is unchanged name for
   name; only paths moved.
+
+## Amendment (2026-09, #106): one barrel per domain, and `filters/` is a domain
+
+`filters/` is now a top-level sibling of `api/`, `engine/` and `directives/`, and it has its own
+`index.ts`. That is not a per-folder barrel, and it is not a retraction of the rule above.
+
+The rejection stands on "two places defining the surface is how it drifts". That argument bites
+when two files define *the same* surface. `filters/index.ts` defines a different one: the
+`createFilters()` domain is usable with no table at all, has no import edge to the table in either
+direction ([ADR-0016](0016-filtering-takes-a-predicate-list.md)), and in server mode ships to
+consumers who compose no filtering feature. Its surface is its own, so it is defined once, in the
+domain that owns it. `src/index.ts` re-exports it wholesale with `export * from './filters'` — one
+hand-maintained list, not two.
+
+Restated, the invariant is: **one barrel per domain, not one per folder, and not one per repo.**
+`api/`, `schema/`, `mutations/`, `engine/` and `directives/` are phases of the table's own domain,
+so they keep having none — anything under them not listed in `src/index.ts` is internal.
+`filters/` is a second domain, so it has exactly one of its own — anything under it not listed in
+`src/filters/index.ts` is internal, which is what makes `evaluator.ts`, `recorder.ts`, `state.ts`
+and `validate.ts` enforceably private.
+
+The test for a future folder is therefore not size but independence: could it be consumed without
+the table, and does it import nothing from it? If not, it is a phase and gets no barrel. Extracting
+`filters/` to its own package is now a move rather than a rewrite; do that when a second consumer
+exists, not before.

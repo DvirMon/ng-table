@@ -12,9 +12,9 @@ import {
   hasNone,
   inDateRange,
   inRange,
-} from './filters/rules';
-import { hasAnyOf, hasNoneOf } from './filters/matchers';
-import type { Filters, FiltersPath } from './filters.types';
+} from './rules';
+import { hasAnyOf, hasNoneOf } from './matchers';
+import type { Filters, FiltersPath } from './types';
 
 interface Invoice {
   status: string;

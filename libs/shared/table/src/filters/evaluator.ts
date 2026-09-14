@@ -1,4 +1,4 @@
-import type { FilterHandle, FilterNode, FilterRuleRecord, FilterValueOfContext } from '../filters.types';
+import type { FilterHandle, FilterNode, FilterRuleRecord, FilterValueOfContext } from './types';
 import { pathsOf } from './validate';
 
 export interface FiltersInternal<TRow> {

@@ -1,6 +1,8 @@
-// Public API of the table. This file is the only definition of the consumer surface —
-// `api/`, `engine/` and `directives/` have no barrels of their own, so anything not listed
-// here is internal (mirrors Angular Signal Forms' `public_api.ts`).
+// Public API of the table. This file defines the table's own consumer surface and re-exports
+// the filters domain's barrel (`./filters`) wholesale — one barrel per domain, not one per repo
+// (ADR-0004's 2026-09 amendment). `api/`, `schema/`, `mutations/`, `engine/` and `directives/`
+// are phases of this domain and still have no barrels of their own, so anything under them not
+// listed here is internal (mirrors Angular Signal Forms' `public_api.ts`).
 export * from './api/create-table';
 export * from './api/types';
 export * from './directives/table.tokens';
@@ -84,24 +86,4 @@ export type {
   ColumnsPath,
   ColumnsSchemaFn,
 } from './schema/column-schema.types';
-export { createFilters } from './api/create-filters';
-export type { Filters, FilterNode, FilterOptions } from './api/filters.types';
-export {
-  anyOf,
-  applyWhen,
-  contains,
-  equals,
-  filter,
-  hasAny,
-  hasNone,
-  inDateRange,
-  inRange,
-} from './api/filters/rules';
-export {
-  hasAnyOf,
-  hasNoneOf,
-  isContaining,
-  isEqual,
-  isInDateRange,
-  isInRange,
-} from './api/filters/matchers';
+export * from './filters';

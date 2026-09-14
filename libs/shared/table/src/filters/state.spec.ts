@@ -2,10 +2,10 @@ import { computed, isSignal, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { form, schema } from '@angular/forms/signals';
 import { describe, expect, it } from 'vitest';
-import { createFilters } from '../create-filters';
+import { createFilters } from './create-filters';
 import { contains, equals, inRange } from './rules';
 import { equalsCriterion } from './state';
-import type { FiltersPath } from '../filters.types';
+import type { FiltersPath } from './types';
 
 interface Invoice {
   status: string | null;

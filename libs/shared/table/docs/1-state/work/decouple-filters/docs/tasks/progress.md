@@ -1,4 +1,4 @@
-# Implementation Progress — decouple-filters (`#101`)
+﻿# Implementation Progress — decouple-filters (`#101`)
 
 **Epic:** [#101](https://github.com/DvirMon/acme/issues/101)
 **Status:** 8 / 13 complete
@@ -19,16 +19,16 @@ Three issues remain, one PR each, strictly sequential. Steps 1–5 were `#104` a
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 6 | [Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) | `test` | ✅ done | — |
-| 7 | [Delete the coupled filtering surface and the filters side channel](step-7-delete-coupled-surface.plan.md) | `code` | ✅ done | — |
-| 8 | [ADR-0016: the filter model is the consumer's, the table takes a predicate list](step-8-adr-0016.plan.md) | `docs` | ✅ done | — |
+| 6 | [Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) | `test` | ✅ done | `d59ab3e` |
+| 7 | [Delete the coupled filtering surface and the filters side channel](step-7-delete-coupled-surface.plan.md) | `code` | ✅ done | `d59ab3e` |
+| 8 | [ADR-0016: the filter model is the consumer's, the table takes a predicate list](step-8-adr-0016.plan.md) | `docs` | ✅ done | `d59ab3e` |
 
 ## `#106` — relocate the filters domain · PR 2 of 3
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 9 | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md) | `code` | ⬚ pending | — |
-| 10 | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ⬚ pending | — |
+| 9 | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md) | `code` | ✅ done | — |
+| 10 | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ✅ done | — |
 
 ## `#107` — split the filtering docs by domain · PR 3 of 3
 

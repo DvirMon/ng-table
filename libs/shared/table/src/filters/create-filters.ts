@@ -1,17 +1,9 @@
 import { Injector, inject, runInInjectionContext } from '@angular/core';
-import { buildValueOfContext, type FiltersInternal } from './filters/evaluator';
-import { buildFiltersPath, createFilterRecorderSession, withActiveFilterRecorder } from './filters/recorder';
-import { buildFilterState, buildFiltersObject, gateByCondition } from './filters/state';
-import { pathsOf, validateRecords } from './filters/validate';
-import type { FilterNode, FilterValueOfContext, Filters, FiltersPath } from './filters.types';
-
-export {
-  assertFilterPathIsCurrent,
-  buildFiltersPath,
-  createFilterRecorderSession,
-  currentFilterRecorder,
-  withActiveFilterRecorder,
-} from './filters/recorder';
+import { buildValueOfContext, type FiltersInternal } from './evaluator';
+import { buildFiltersPath, createFilterRecorderSession, withActiveFilterRecorder } from './recorder';
+import { buildFilterState, buildFiltersObject, gateByCondition } from './state';
+import { pathsOf, validateRecords } from './validate';
+import type { FilterNode, FilterValueOfContext, Filters, FiltersPath } from './types';
 
 /**
  * Constructs filter criteria as a standalone, consumer-held object. See

@@ -1,6 +1,6 @@
-import { createFilters } from '../../../api/create-filters';
-import { contains } from '../../../api/filters/rules';
-import type { Filters } from '../../../api/filters.types';
+import { createFilters } from '../../../filters/create-filters';
+import { contains } from '../../../filters/rules';
+import type { Filters } from '../../../filters/types';
 import type { ColumnDefInput, ColumnId, TableConfig } from '../../../api/types';
 import type { DealFilterState, DealRow } from './types';
 

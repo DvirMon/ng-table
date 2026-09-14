@@ -12,7 +12,7 @@ import type {
   FilterValueOfContext,
   Filters,
   FiltersRoot,
-} from '../filters.types';
+} from './types';
 import { createFilterEvaluatorFrom, type FiltersInternal } from './evaluator';
 
 /** Structural equality for the criterion shapes this library ships: primitives, plain range
