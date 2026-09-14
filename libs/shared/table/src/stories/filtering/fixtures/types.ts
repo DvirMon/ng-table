@@ -50,7 +50,7 @@ export interface TagCriterion {
  * `createFilters`' `TState extends Record<string, unknown>` constraint outright.
  */
 export type ClientInvoiceFilterState = {
-  status: InvoiceStatus | null;
+  status: InvoiceStatus | '';
   customer: string;
   amount: RangeCriterion;
   issuedAt: DateRangeCriterion;
@@ -60,14 +60,14 @@ export type ClientInvoiceFilterState = {
 
 /** `customer` is declared `{ as: 'search' }`, so the key is `search`, not `customer`. */
 export type ServerInvoiceFilterState = {
-  status: InvoiceStatus | null;
+  status: InvoiceStatus | '';
   search: string;
   amount: RangeCriterion;
   excludedTags: readonly string[];
 };
 
 export type SelectionInvoiceFilterState = {
-  status: InvoiceStatus | null;
+  status: InvoiceStatus | '';
   customer: string;
   tags: readonly string[];
 };

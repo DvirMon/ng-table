@@ -14,7 +14,7 @@ import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directiv
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { selectionInvoiceConfig } from '../fixtures/schema';
 import type { InvoiceRow, SelectionInvoiceFilterState } from '../fixtures/types';
-import { isInvoiceStatus, toggleOption } from '../fixtures/utils';
+import { toggleOption } from '../fixtures/utils';
 
 /**
  * Stated, not computed. `withSelection()` retains a row that a filter moved out of view, but no
@@ -62,7 +62,7 @@ export class SelectionFilteringStoryHostComponent {
   /** The subset this story filters by — enough to move rows in and out of view while a
    * selection is held, without rebuilding the client story's whole filter row. */
   protected readonly filters = createFilters<InvoiceRow, SelectionInvoiceFilterState>((path) => {
-    equals(path.status);
+    equals(path.status, { emptyValue: '' });
     contains(path.customer);
     hasAny(path.tags);
   });
@@ -159,11 +159,6 @@ export class SelectionFilteringStoryHostComponent {
     }
     this.table.value.update(removeRow<InvoiceRow>(id));
     this.rowToDelete.set(null);
-  }
-
-  /** Hand-wired: a bound `<select>` writes `''`, and `equals`' empty criterion is `null`. */
-  protected selectStatus(raw: string): void {
-    this.filters.status().value.set(isInvoiceStatus(raw) ? raw : null);
   }
 
   /** Hand-wired: a tag multi-select is a set, not a single control value. */

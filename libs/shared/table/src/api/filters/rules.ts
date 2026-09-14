@@ -12,6 +12,7 @@ import type {
   FilterValueOfContext,
   FiltersPath,
 } from '../filters.types';
+import { equalsCriterion } from './state';
 import {
   hasAnyOf,
   hasNoneOf,
@@ -45,18 +46,49 @@ function isEmptyDateRange(criterion: DateRangeCriterion): boolean {
   return criterion.from == null && criterion.to == null;
 }
 
-export function equals<TRow, K extends Extract<keyof TRow, string>, TAs extends string = string>(
+interface Emptiness {
+  readonly isEmpty: (criterion: unknown) => boolean;
+  readonly emptyValue: unknown;
+}
+
+/**
+ * Resolves what "empty" means for one filter: `options.emptyValue` overrides the rule's own,
+ * and an overridden value carries its own check (structural equality, `equalsCriterion`) rather
+ * than the rule's — `equals` declaring `v == null` cannot speak for a caller who chose `''`.
+ * An explicit `isEmpty` (`filter()` only) wins over both.
+ */
+function resolveEmptiness(
+  options: { readonly emptyValue?: unknown; readonly isEmpty?: unknown } | undefined,
+  fallback: Emptiness
+): Emptiness {
+  const override = options?.emptyValue;
+  if (override === undefined) {
+    return fallback;
+  }
+  return { emptyValue: override, isEmpty: (v: unknown) => equalsCriterion(v, override) };
+}
+
+export function equals<
+  TRow,
+  K extends Extract<keyof TRow, string>,
+  TAs extends string = string,
+  const TEmpty = null
+>(
   path: FilterHandle<TRow, K>,
-  options?: FilterOptions<TRow[K], TAs>
+  options?: FilterOptions<TRow[K] | TEmpty, TAs> & { readonly emptyValue?: TEmpty }
 ): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: (v: unknown) => v == null,
+    emptyValue: null,
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: isEqual as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (v: unknown) => v == null,
-    emptyValue: null,
+    isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }
@@ -67,13 +99,17 @@ export function contains<
   TAs extends string = string
 >(path: FilterHandle<TRow, K>, options?: FilterOptions<string, TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: (v: unknown) => v === '',
+    emptyValue: '',
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: isContaining as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (v: unknown) => v === '',
-    emptyValue: '',
+    isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }
@@ -84,13 +120,17 @@ export function inRange<
   TAs extends string = string
 >(path: FilterHandle<TRow, K>, options?: FilterOptions<RangeCriterion, TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: (v: unknown) => isEmptyRange(v as RangeCriterion),
+    emptyValue: { min: null, max: null } as RangeCriterion,
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: isInRange as unknown as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (v: unknown) => isEmptyRange(v as RangeCriterion),
-    emptyValue: { min: null, max: null } as RangeCriterion,
+    isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }
@@ -101,13 +141,17 @@ export function inDateRange<
   TAs extends string = string
 >(path: FilterHandle<TRow, K>, options?: FilterOptions<DateRangeCriterion, TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: (v: unknown) => isEmptyDateRange(v as DateRangeCriterion),
+    emptyValue: { from: null, to: null } as DateRangeCriterion,
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: isInDateRange as unknown as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (v: unknown) => isEmptyDateRange(v as DateRangeCriterion),
-    emptyValue: { from: null, to: null } as DateRangeCriterion,
+    isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }
@@ -118,13 +162,17 @@ export function hasAny<
   TAs extends string = string
 >(path: FilterHandle<TRow, K>, options?: FilterOptions<readonly unknown[], TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
+    emptyValue: [] as readonly unknown[],
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: hasAnyOf as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
-    emptyValue: [] as readonly unknown[],
+    isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }
@@ -135,13 +183,17 @@ export function hasNone<
   TAs extends string = string
 >(path: FilterHandle<TRow, K>, options?: FilterOptions<readonly unknown[], TAs>): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
+    emptyValue: [] as readonly unknown[],
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: hasNoneOf as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
-    emptyValue: [] as readonly unknown[],
+    isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }
@@ -154,10 +206,10 @@ export function hasNone<
  *
  * Emptiness can't be inferred for an arbitrary criterion shape, so `options.isEmpty` /
  * `options.emptyValue` opt a `filter()` rule into the same skip-when-empty behavior the named
- * rules get for free. Omitting both means this filter is **never empty** — it always
- * participates once its `value` diverges from `undefined`... in practice meaning the
- * consumer's own default `value` (via `options.source`, or `undefined` with no source) is
- * evaluated on every pass. Documented here since `filters.md` leaves this choice unspecified.
+ * rules get for free — `isEmpty` wins where both are given, `emptyValue` alone compares
+ * structurally. Omitting both means this filter is **never empty** — it always participates
+ * once its `value` diverges from `undefined`... in practice meaning the consumer's own default
+ * `value` (via `options.source`, or `undefined` with no source) is evaluated on every pass.
  */
 export function filter<
   TRow,
@@ -169,17 +221,21 @@ export function filter<
   predicate: (cell: TRow[K], criterion: TCriterion) => boolean,
   options?: FilterOptions<TCriterion, TAs> & {
     isEmpty?: (criterion: TCriterion) => boolean;
-    emptyValue?: TCriterion;
   }
 ): void {
   const recorder = assertFilterPathIsCurrent(path);
+  const explicitIsEmpty = options?.isEmpty as ((v: unknown) => boolean) | undefined;
+  const { isEmpty, emptyValue } = resolveEmptiness(options, {
+    isEmpty: () => false,
+    emptyValue: undefined,
+  });
   recorder.record({
     kind: 'single',
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: predicate as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: (options?.isEmpty as ((v: unknown) => boolean) | undefined) ?? (() => false),
-    emptyValue: options?.emptyValue as unknown,
+    isEmpty: explicitIsEmpty ?? isEmpty,
+    emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow>);
 }

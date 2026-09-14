@@ -168,15 +168,18 @@ L2 (library) withFiltering TState param ───┘        typed nodes, form() 
   its sync `effect` are gone — `serverFilterFormSchema` debounces `path.search` on the filter
   model itself, so the typing pause *is* the criterion write.
 
-### Two controls stay hand-wired, deliberately
+### One control stays hand-wired
 
-Signal Forms drives a `<select>` through `element.value` — a string — while `equals`' empty
-criterion is `null`. A bound select would write `''`, which `isEmpty` (`v == null`) does not
-treat as empty: the filter would sit permanently active while matching nothing. Tag
-multi-selects are sets, not single control values. Both write through `filters.<key>().value`.
+Originally two. The status select was the other, and #97 closed it: the mismatch was that
+`equals` declares `null` as its empty criterion while a native `<select>` can only express empty
+as `''`, so a bound select wrote a value `isEmpty` did not treat as empty and the filter sat
+permanently active while matching nothing. `FilterOptions.emptyValue` now lets a filter declare
+what empty means — `equals(path.status, { emptyValue: '' })` — and all three hosts bind status
+through plain `[formField]` with an `<option value="">`. No accessor, no adapter.
 
-This is a real gap, not a story shortcut: a nullable-select binding would need either a
-Signal Forms accessor or a library-side adapter. Worth its own ticket if more consumers hit it.
+The tag multi-select stays hand-wired, and that is a property of the control, not a library gap:
+a checkbox group is several elements rather than one control value, so no criterion-side choice
+makes `[formField]` bind it. It writes through `filters.tags().value`.
 
 ## Follow-on found while fixing: `reset()` typed too narrowly
 
@@ -192,6 +195,18 @@ The client story's **raw** stale-snapshot button still needs one assertion, and 
 visible on purpose: an unvalidated snapshot is not filter state, and being unable to write it
 type-safely is exactly what that button demonstrates. The guarded button beside it is the
 supported route and needs no assertion.
+
+## Tracked follow-ups
+
+| Issue | What |
+|---|---|
+| [#97](https://github.com/DvirMon/acme/issues/97) | **Closed** by `FilterOptions.emptyValue` — the status select binds through `[formField]`; the tag multi-select stays hand-wired by the control's own shape |
+| [#98](https://github.com/DvirMon/acme/issues/98) | No runtime coverage for the writable root or `form()` over the criterion model |
+| [#99](https://github.com/DvirMon/acme/issues/99) | Restoring a persisted snapshot has no typed entry point |
+| [#100](https://github.com/DvirMon/acme/issues/100) | `.storybook/preview.ts` implicit-any errors |
+| [#90](https://github.com/DvirMon/acme/issues/90) | **Closed** by L2 — typed `createFilters()` state now reaches `withFiltering()` |
+| [#91](https://github.com/DvirMon/acme/issues/91) | Partially addressed — typed `TState` fixes property access; the `composition/derived-state` story has not adopted it |
+| [#94](https://github.com/DvirMon/acme/issues/94) | Plain `tsc` misses template errors — hit twice in this review |
 
 ## Not verified
 

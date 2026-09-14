@@ -88,9 +88,9 @@ The schema body runs once, at construction. Each call registers one filter.
 | `anyOf(key, schema)` | shared across the group | one criterion, several paths, each with its own predicate; OR'd (R8) |
 | `applyWhen(path, condition, schema)` | — | conditional activation, taken from Signal Forms directly (R15) |
 
-Every single-path rule takes an optional trailing `{ source, as }` — see [Sources](#sources)
-and [Keys](#keys). `anyOf` takes its key positionally instead, because a group has no path to
-borrow one from.
+Every single-path rule takes an optional trailing `{ source, as, emptyValue }` — see
+[Sources](#sources), [Keys](#keys) and [Empty criteria](#empty-criteria). `anyOf` takes its key
+positionally instead, because a group has no path to borrow one from.
 
 ```ts
 readonly filters = createFilters<Invoice>((path) => {
@@ -298,6 +298,41 @@ edited this control since the last form reset" — a UI concern. Ours means "thi
 longer following its source" — the reconciliation gate. Values cannot desync between the two
 (they share one storage location per [Forms](#forms)); only the flags are separately owned.
 
+### Empty criteria
+
+Every rule declares what counts as *no filter*: `''` for `contains`, `null` for `equals`,
+`{min:null,max:null}` for `inRange`, `[]` for `hasAny`/`hasNone`. An empty criterion is skipped
+before evaluation and omitted from `active()`.
+
+`{ emptyValue }` replaces that default for one filter. The declared value is what `reset(null)`
+writes and what the skip-when-empty check compares against — structurally (`equalsCriterion`),
+so an object or array empty value works as well as a scalar.
+
+```ts
+equals(path.status, { emptyValue: '' });
+```
+
+**Why a rule's default is not always right: the control has a say.** A criterion's empty value
+is a binding contract as much as a matching one. A native `<select>` can express empty only as
+`''` — Signal Forms drives it through `element.value`, a string — so a `<select>` bound to an
+`equals` filter with its default `null` empty would write `''` on the "any" option, which is not
+empty: the filter stays permanently active while matching no row. Declaring `emptyValue: ''`
+lines the criterion up with the control, and `<option value="">` deactivates the filter through
+plain `[formField]`, with no accessor and no story-local handler (#97).
+
+`number`/`date` inputs need nothing here — Signal Forms already maps an empty box to `null`,
+which is exactly what `inRange`/`inDateRange` call empty.
+
+`filter()` also takes `isEmpty`, since emptiness cannot be inferred for an arbitrary criterion
+shape. An explicit `isEmpty` wins over `emptyValue`; with neither, a `filter()` rule is never
+empty.
+
+**Set-valued controls stay hand-wired, and that is not a gap in this mechanism.** A checkbox
+group is several elements, not one control value, so nothing about the criterion's empty value
+would make `[formField]` bind it. A consumer wanting one writes a component implementing
+Signal Forms' `FormValueControl<T>` (a `value` model of the criterion's own shape), or writes
+through `filters.<key>().value` directly.
+
 ## Wiring — three modes
 
 ### Client
@@ -305,7 +340,7 @@ longer following its source" — the reconciliation gate. Values cannot desync b
 The feature filters the rows. See [features/filtering.md](features/filtering.md).
 
 ```ts
-features: [withFiltering({ filters: this.filters })]
+createTable(data, { trackBy: 'id', columns }, withFiltering({ filters: this.filters }));
 ```
 
 ### Server
@@ -318,7 +353,7 @@ readonly invoices = resource({
   params: () => this.filters().active(),           // active(), not value()
   loader: ({ params }) => fetchInvoices(toQuery(params)),
 });
-readonly table    = createTable(this.invoices.value, () => ({ trackBy: 'id', columns: [...] }));
+readonly table    = createTable(this.invoices.value, { trackBy: 'id', columns: [...] });
 ```
 
 Filters → request → data → table. The store is not involved.
@@ -347,7 +382,14 @@ readonly filterForm = form(this.filters().value, (path) => {
 ```
 ```html
 <input [formField]="filterForm.search" />
+<select [formField]="filterForm.status">
+  <option value="">any</option>
+  ...
+</select>
 ```
+
+A `<select>` binds only when its filter's empty criterion is `''` — see
+[Empty criteria](#empty-criteria).
 
 Signal Forms never copies state — the developer's `WritableSignal` is the source of truth — and
 `filters().value` is one.
@@ -383,7 +425,8 @@ composition already provides.
 - **Empty criteria skip their predicate.** What counts as empty is per-predicate — `''`, `null`,
   `{min:null,max:null}`, `[]` — declared beside the predicate (`autoRemove`-shaped) and applied
   before evaluation, so an empty filter never reaches persisted state or a query string (R14).
-  `filter()` must let a custom predicate declare one too.
+  `filter()` must let a custom predicate declare one too, and any rule may override its own with
+  `{ emptyValue }` — see [Empty criteria](#empty-criteria).
 - **Null/undefined cell values** (R27): a null or undefined cell **fails every positive matcher**
   (`isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`) and **passes every
   negative one** (`hasNoneOf`) — a row with no tags has none of them. Guarded inside each shipped matcher, never

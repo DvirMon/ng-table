@@ -17,7 +17,6 @@ import type {
 } from '../fixtures/types';
 import {
   EMPTY_RANGE,
-  isInvoiceStatus,
   isRangeCriterion,
   isStringArray,
   toggleOption,
@@ -105,7 +104,7 @@ export class ServerFilteringStoryHostComponent {
   protected readonly serverDefaultAmount = signal<RangeCriterion>(EMPTY_RANGE);
 
   protected readonly filters = createFilters<InvoiceRow, ServerInvoiceFilterState>((path) => {
-    equals(path.status);
+    equals(path.status, { emptyValue: '' });
     contains(path.customer, { as: 'search' });
     inRange(path.amount, { source: () => this.serverDefaultAmount() });
     hasNone(path.tags, { as: 'excludedTags' });
@@ -162,11 +161,6 @@ export class ServerFilteringStoryHostComponent {
 
   constructor() {
     this.reloadWhenRequestChanges();
-  }
-
-  /** Hand-wired: a bound `<select>` writes `''`, and `equals`' empty criterion is `null`. */
-  protected selectStatus(raw: string): void {
-    this.filters.status().value.set(isInvoiceStatus(raw) ? raw : null);
   }
 
   /** Hand-wired: a tag multi-select is a set, not a single control value. */

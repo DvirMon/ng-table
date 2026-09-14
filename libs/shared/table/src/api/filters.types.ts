@@ -10,12 +10,19 @@ import type { WritableSignal } from '@angular/core';
 type EnforceLiteralKey<T extends string> = string extends T ? never : T;
 
 /**
- * Per-filter override — a default the user can subsequently edit (`source`), and a rename for
- * the borrowed path key (`as`). See `docs/1-state/filters.md`'s "Sources" and "Keys".
+ * Per-filter override — a default the user can subsequently edit (`source`), a rename for the
+ * borrowed path key (`as`), and the criterion that counts as *no filter* (`emptyValue`). See
+ * `docs/1-state/filters.md`'s "Sources", "Keys" and "Empty criteria".
  */
 export interface FilterOptions<TSource = unknown, TAs extends string = string> {
   readonly source?: () => TSource;
   readonly as?: EnforceLiteralKey<TAs>;
+  /**
+   * The criterion that counts as *no filter*, replacing the rule's own — used by `reset(null)`
+   * and by the skip-when-empty check, which becomes structural equality with this value.
+   * A native `<select>` can only express empty as `''`.
+   */
+  readonly emptyValue?: TSource;
 }
 
 /**

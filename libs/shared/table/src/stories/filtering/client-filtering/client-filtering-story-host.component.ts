@@ -118,11 +118,11 @@ function keepValidCriteria(
  * bounds: Signal Forms maps an empty number box to `null` and back, which is exactly
  * `inRange`'s empty value, so emptying a box stops it narrowing with no story-local guard.
  *
- * **Two controls stay hand-wired, for a reason worth seeing.** Signal Forms drives a `<select>`
- * through `element.value`, a string — but `equals`' empty criterion is `null`, so a bound
- * select would write `''` and leave a filter permanently active while matching nothing. And a
- * tag multi-select is a set, not a control. Both write through `filters.<key>().value`
- * directly.
+ * **The status select binds too, because its empty criterion is declared.** `equals(path.status,
+ * { emptyValue: '' })` makes `''` the empty value, which is the only empty a native `<select>`
+ * can express — so `<option value="">any</option>` deactivates the filter rather than leaving it
+ * permanently active. Only the tag multi-select stays hand-wired: a checkbox group is several
+ * elements, not one control value, so it writes through `filters.tags().value`.
  *
  * Shape follows what peer libraries converged on rather than an invented layout: per-column
  * inputs in an always-visible filter row, the quick filter in a toolbar above the table. The
@@ -153,7 +153,7 @@ export class ClientFilteringStoryHostComponent {
   protected readonly tagsPredicateIsBroken = signal(false);
 
   protected readonly filters = createFilters<InvoiceRow, ClientInvoiceFilterState>((path) => {
-    equals(path.status);
+    equals(path.status, { emptyValue: '' });
     contains(path.customer);
     inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE });
     inDateRange(path.issuedAt);
@@ -227,11 +227,6 @@ export class ClientFilteringStoryHostComponent {
 
   constructor() {
     this.captureFilterReports();
-  }
-
-  /** Hand-wired: a bound `<select>` would write `''`, and `equals`' empty criterion is `null`. */
-  protected selectStatus(raw: string): void {
-    this.filters.status().value.set(isInvoiceStatus(raw) ? raw : null);
   }
 
   /** Hand-wired: a tag multi-select is a set, not a single control value. */

@@ -226,6 +226,66 @@ describe('createFilters — state semantics', () => {
   });
 });
 
+describe('createFilters — emptyValue override', () => {
+  it("seeds the node with the declared empty value instead of the rule's own", () => {
+    const filters = build<{ status: string }>((path) => {
+      equals(path.status, { emptyValue: '' });
+    });
+    expect(filters.status().value()).toBe('');
+  });
+
+  it("treats the declared empty value as empty — a native <select>'s '' deactivates the filter", () => {
+    const filters = build<{ status: string }>((path) => {
+      equals(path.status, { emptyValue: '' });
+    });
+    filters.status().value.set('open');
+    expect(filters().active()).toEqual({ status: 'open' });
+
+    filters.status().value.set('');
+    expect(filters().active()).toEqual({});
+    expect(filters.status().active()).toBeUndefined();
+  });
+
+  it("no longer treats the rule's own empty value as empty once overridden", () => {
+    const filters = build<{ status: string | null }>((path) => {
+      equals(path.status, { emptyValue: '' });
+    });
+    filters.status().value.set(null);
+    expect(filters().active()).toEqual({ status: null });
+  });
+
+  it('reset(null) returns to the declared empty value', () => {
+    const filters = build<{ status: string }>((path) => {
+      equals(path.status, { emptyValue: '' });
+    });
+    filters.status().value.set('open');
+    filters.status().reset(null);
+    expect(filters.status().value()).toBe('');
+  });
+
+  it('compares structurally, so an object empty value works on any rule', () => {
+    const filters = build<{ amount: { min: number | null; max: number | null } }>((path) => {
+      inRange(path.amount, { emptyValue: { min: 0, max: null } });
+    });
+    expect(filters().active()).toEqual({});
+    filters.amount().value.set({ min: 100, max: null });
+    expect(filters().active()).toEqual({ amount: { min: 100, max: null } });
+  });
+
+  it('an explicit isEmpty still wins over emptyValue on filter()', () => {
+    const filters = build<{ tags: readonly string[] }>((path) => {
+      filter(path.tags, (cell, criterion: readonly string[]) => hasAnyOf(cell, criterion), {
+        emptyValue: ['none'],
+        isEmpty: (criterion) => criterion.length === 0,
+      });
+    });
+    expect(filters.tags().value()).toEqual(['none']);
+    expect(filters().active()).toEqual({ tags: ['none'] });
+    filters.tags().value.set([]);
+    expect(filters().active()).toEqual({});
+  });
+});
+
 describe('createFilters — sources', () => {
   it('untouched with no source: not dirty, not in active()', () => {
     const filters = build<{ status: string | null }>((path) => {

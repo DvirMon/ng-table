@@ -36,12 +36,10 @@
       [class.filtering-story__field--active]="isStatusActive()"
     >
       <span class="filtering-story__label">Status (equals)</span>
-      <select #statusSelect (change)="selectStatus(statusSelect.value)">
-        <option value="" [selected]="filters.status().value() === null">any</option>
+      <select [formField]="filterForm.status">
+        <option value="">any</option>
         @for (status of statusOptions; track status) {
-          <option [value]="status" [selected]="filters.status().value() === status">
-            {{ status }}
-          </option>
+          <option [value]="status">{{ status }}</option>
         }
       </select>
     </div>
