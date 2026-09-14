@@ -45,11 +45,6 @@ export interface SelectionMembers {
 /** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. */
 type SelectionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
 
-const devModeIsActive = (): boolean =>
-  typeof ngDevMode === 'undefined' || ngDevMode;
-
-declare const ngDevMode: boolean | undefined;
-
 /** Normalizes an `enable*` config field into a per-row predicate, permissive by default. */
 function toRowPredicate<TRow>(
   config: boolean | ((row: TRow) => boolean) | undefined
@@ -89,31 +84,40 @@ function buildSelectionSpec<TRow>(
     return ids.filter(isSelectable);
   }
 
-  // Multi-select is a rule on the write verbs, never stored state (D2/D14) — it never holds
-  // two ids whose predicate is false. Applies to every id-adding write (toggle/select/the
-  // initialSelection seed), checked against the full candidate set (existing + requested),
-  // never to deselect/clear, which can't violate single-select. An id with no resolvable row
-  // defaults permissive (D8).
-  function applyMultiSelectRule(ids: readonly RowId[]): readonly RowId[] {
-    const uniqueIds = [...new Set(ids)];
-    if (uniqueIds.length <= 1) {
-      return uniqueIds;
-    }
-    const forbidsCoSelection = uniqueIds.some((id) => {
+  function anyRowForbidsMultiSelect(ids: readonly RowId[]): boolean {
+    return ids.some((id) => {
       const row = resolveRow(id);
       return row !== undefined && !canMultiSelect(row);
     });
-    if (!forbidsCoSelection) {
-      return uniqueIds;
-    }
-    const kept = [uniqueIds[uniqueIds.length - 1]];
-    if (devModeIsActive()) {
-      const discarded = uniqueIds.slice(0, -1);
+  }
+
+  /** A call's own id list co-selecting ≥2 rows that forbid multi-select is construction/misuse
+   *  (deterministic, reachable on first call) — always throws, per ADR-0014. */
+  const callArgumentCoSelects = (ownIds: readonly RowId[]): boolean =>
+    ownIds.length > 1 && anyRowForbidsMultiSelect(ownIds);
+
+  // Multi-select is a rule on the write verbs, never stored state (D2/D14) — it never holds
+  // two ids whose predicate is false. Applies to every id-adding write (toggle/select/the
+  // initialSelection seed). A conflict from `ownIds` alone throws (above); a conflict that only
+  // arises once `previousIds` joins is runtime input — a fresh selection replacing an old one —
+  // so it truncates silently, keeping the most recently requested id. Never applied to
+  // deselect/clear, which can't violate single-select. An id with no resolvable row defaults
+  // permissive (D8).
+  function applyMultiSelectRule(
+    ownIds: readonly RowId[],
+    previousIds: readonly RowId[] = []
+  ): readonly RowId[] {
+    const uniqueOwnIds = [...new Set(ownIds)];
+    if (callArgumentCoSelects(uniqueOwnIds)) {
       throw new Error(
-        `withSelection(): enableMultiRowSelection forbids co-selecting these rows — discarded ids: ${discarded.join(', ')}`
+        `withSelection(): enableMultiRowSelection forbids co-selecting these rows — ids: ${uniqueOwnIds.join(', ')}`
       );
     }
-    return kept;
+    const combinedIds = [...new Set([...previousIds, ...uniqueOwnIds])];
+    if (combinedIds.length <= 1 || !anyRowForbidsMultiSelect(combinedIds)) {
+      return combinedIds;
+    }
+    return [combinedIds[combinedIds.length - 1]];
   }
 
   function applyNextSelection(next: Set<RowId>, opts?: SelectionWriteOptions): void {
@@ -138,13 +142,13 @@ function buildSelectionSpec<TRow>(
       applyNextSelection(next, opts);
       return;
     }
-    const kept = applyMultiSelectRule([...previous, ...applyRowSelectionGate([id])]);
+    const kept = applyMultiSelectRule(applyRowSelectionGate([id]), [...previous]);
     applyNextSelection(new Set(kept), opts);
   }
 
   function select(ids: RowId[], opts?: SelectionWriteOptions): void {
     const previous = selectedIds();
-    const kept = applyMultiSelectRule([...previous, ...applyRowSelectionGate(ids)]);
+    const kept = applyMultiSelectRule(applyRowSelectionGate(ids), [...previous]);
     applyNextSelection(new Set(kept), opts);
   }
 

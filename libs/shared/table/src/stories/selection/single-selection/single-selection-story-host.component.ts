@@ -12,14 +12,15 @@ import type { SelectionRow } from '../fixtures/types';
  * unused branch sitting in the host's source.
  *
  * The control is a radio group, not a checkbox: the group's own semantics are the replace rule
- * D14 enforces, so ticking a second row visibly unticks the first with no host code saying so.
- * That is also why the Clear button exists here and nowhere else — a radio cannot be unticked by
- * clicking it, and there is no header checkbox in a single-select table to carry the gesture.
- * Arrow-key roving focus and Space come from the group for free (§4.1), which is the closest
- * thing to keyboard navigation reachable before the selection directive is drilled.
+ * D14 enforces, so ticking a second row visibly unticks the first with no host code saying so —
+ * `toggle(id)` is called directly, with no host-side replace logic. That is also why the Clear
+ * button exists here and nowhere else — a radio cannot be unticked by clicking it, and there is
+ * no header checkbox in a single-select table to carry the gesture. Arrow-key roving focus and
+ * Space come from the group for free (§4.1), which is the closest thing to keyboard navigation
+ * reachable before the selection directive is drilled.
  *
- * `restoreConflictingSelection()` shows D14's other half: a multi-id write throws under
- * `ngDevMode` naming what it discarded, and truncates to the last id in production.
+ * `restoreConflictingSelection()` shows D14's other half: a single call's own argument list
+ * co-selecting two ids always throws, naming what it rejected.
  */
 @Component({
   selector: 'ngp-single-selection-story-host',
@@ -35,19 +36,14 @@ export class SingleSelectionStoryHostComponent {
     withSelection({ enableMultiRowSelection: false })
   );
 
-  /** The `ngDevMode` error text from the last conflicting write, rendered on canvas so the
-   * throw-in-dev half of D14 is visible rather than described. */
+  /** The error text from the last rejected write, rendered on canvas so the throw half of D14
+   * is visible rather than described. */
   protected readonly conflictMessage = signal<string | null>(null);
 
-  /**
-   * Moves the single mark to `id`. The previous mark is cleared first, and suppressed (D18), so
-   * the stream still sees one gesture: `toggle()`/`select()` evaluate the multi-select rule
-   * against existing **plus** requested ids, which under `ngDevMode` throws instead of replacing
-   * — the replace-not-throw path is only reachable in production today.
-   */
-  protected selectOnlyRow(id: RowId): void {
+  /** Clears any stale error banner before a fresh gesture. `table.toggle(id)` itself carries the
+   * replace semantics — a second row's toggle silently replaces the first (D14). */
+  protected toggleRow(id: RowId): void {
     this.conflictMessage.set(null);
-    this.table.clearSelection({ emitEvent: false });
     this.table.toggle(id);
   }
 
@@ -57,9 +53,8 @@ export class SingleSelectionStoryHostComponent {
     this.table.clearSelection();
   }
 
-  /** Restores a two-id saved selection into a single-select table. Both ids exist, so there is
-   * nothing to skip — the table has to resolve the conflict, and under `ngDevMode` it throws
-   * naming the ids it discarded. In production the same call keeps the last id and writes. */
+  /** Restores a two-id saved selection into a single-select table. The call's own argument list
+   * co-selects both ids, so the table always rejects it, naming the ids in the error. */
   protected restoreConflictingSelection(): void {
     this.conflictMessage.set(null);
     try {

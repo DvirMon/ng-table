@@ -40,7 +40,7 @@
               name="row-selection"
               [checked]="isSelected"
               [attr.aria-label]="'Select ' + (row.data?.name ?? row.id)"
-              (change)="selectOnlyRow(row.id)"
+              (change)="toggleRow(row.id)"
             />
           </td>
           <td class="story-host__cell">{{ row.data?.name }}</td>

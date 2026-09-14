@@ -9,11 +9,6 @@ import { withSelection, type SelectionChange, type SelectionMembers } from './wi
 import { withSorting } from './with-sorting';
 import type { ColumnDef, RowId, TableStore } from '../types';
 
-// `globalThis`'s static type has no `ngDevMode` — this is the one place the flag is poked,
-// so the shape is named once here rather than casting inline at every read/write.
-type NgDevModeGlobal = typeof globalThis & { ngDevMode?: boolean };
-const ngDevModeGlobal: NgDevModeGlobal = globalThis;
-
 function makeColumns(): ColumnDef<MockRow>[] {
   return [
     { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
@@ -23,17 +18,6 @@ function makeColumns(): ColumnDef<MockRow>[] {
 /** Runs a `createTable()` build inside an Angular injection context. */
 function inContext<T>(build: () => T): T {
   return TestBed.runInInjectionContext(build);
-}
-
-/** Sets the global `ngDevMode` flag for the duration of one test, restoring it afterward. */
-function withNgDevMode<T>(value: boolean, run: () => T): T {
-  const previous = ngDevModeGlobal.ngDevMode;
-  ngDevModeGlobal.ngDevMode = value;
-  try {
-    return run();
-  } finally {
-    ngDevModeGlobal.ngDevMode = previous;
-  }
 }
 
 describe('withSelection', () => {
@@ -89,70 +73,65 @@ describe('withSelection', () => {
     expect(store.selectedRows().size).toBe(0);
   });
 
-  it('with enableMultiRowSelection: false, toggle() on a second row replaces rather than adds', () => {
-    withNgDevMode(false, () => {
-      const store = inContext(() =>
-        createTable(
-          signal<MockRow[]>(mockRows),
-          { trackBy: mockTrackBy, columns: makeColumns() },
-          withSelection({ enableMultiRowSelection: false })
-        )
-      );
+  it('with enableMultiRowSelection: false, toggling a second row replaces the first without throwing', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableMultiRowSelection: false })
+      )
+    );
 
-      store.toggle(1);
-      expect([...store.selectedRows()]).toEqual([1]);
+    store.toggle(1);
+    expect([...store.selectedRows()]).toEqual([1]);
 
-      store.toggle(2);
-      expect([...store.selectedRows()]).toEqual([2]);
-    });
+    store.toggle(2);
+    expect([...store.selectedRows()]).toEqual([2]);
   });
 
-  it('with enableMultiRowSelection: false, select([a, b]) keeps only the last id (production, no throw)', () => {
-    withNgDevMode(false, () => {
-      const store = inContext(() =>
-        createTable(
-          signal<MockRow[]>(mockRows),
-          { trackBy: mockTrackBy, columns: makeColumns() },
-          withSelection({ enableMultiRowSelection: false })
-        )
-      );
+  it('with enableMultiRowSelection: false, select([id]) replaces a differing previous selection without throwing', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableMultiRowSelection: false })
+      )
+    );
 
-      store.select([1, 2]);
-      expect([...store.selectedRows()]).toEqual([2]);
-    });
+    store.select([1]);
+    expect([...store.selectedRows()]).toEqual([1]);
+
+    store.select([2]);
+    expect([...store.selectedRows()]).toEqual([2]);
   });
 
-  it('under ngDevMode, a multi-id write that violates enableMultiRowSelection throws', () => {
-    withNgDevMode(true, () => {
-      const store = inContext(() =>
-        createTable(
-          signal<MockRow[]>(mockRows),
-          { trackBy: mockTrackBy, columns: makeColumns() },
-          withSelection({ enableMultiRowSelection: false })
-        )
-      );
+  it('with enableMultiRowSelection: false, select([a, b]) still throws — the call co-selects two ids itself', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        withSelection({ enableMultiRowSelection: false })
+      )
+    );
 
-      expect(() => store.select([1, 2])).toThrow();
-    });
+    expect(() => store.select([1, 2])).toThrow();
   });
 
   it('with a per-row predicate, co-selection is forbidden only for the rows it names', () => {
-    withNgDevMode(false, () => {
-      const store = inContext(() =>
-        createTable(
-          signal<MockRow[]>(mockRows),
-          { trackBy: mockTrackBy, columns: makeColumns() },
-          // Row 1 forbids co-selection; rows 2 and 3 allow it.
-          withSelection({ enableMultiRowSelection: (row) => row.id !== 1 })
-        )
-      );
+    const store = inContext(() =>
+      createTable(
+        signal<MockRow[]>(mockRows),
+        { trackBy: mockTrackBy, columns: makeColumns() },
+        // Row 1 forbids co-selection; rows 2 and 3 allow it.
+        withSelection({ enableMultiRowSelection: (row) => row.id !== 1 })
+      )
+    );
 
-      store.select([2, 3]);
-      expect([...store.selectedRows()].sort()).toEqual([2, 3]);
+    store.select([2, 3]);
+    expect([...store.selectedRows()].sort()).toEqual([2, 3]);
 
-      store.toggle(1);
-      expect([...store.selectedRows()]).toEqual([1]);
-    });
+    store.toggle(1);
+    expect([...store.selectedRows()]).toEqual([1]);
   });
 
   it('enableRowSelection blocks toggle() from adding a non-selectable row', () => {
