@@ -102,6 +102,13 @@ Don't inline mock data, column definitions, or the table config inside a story-h
 the host composes features on `createTable(...)`, the fixtures file owns the config and the
 Signal Forms schema — same rule as any other component in this repo (`file-organization.md`).
 
+**`createFilters()` is the exception, and belongs in the host** (2026-09-14). A filters schema is
+a declaration a consumer writes, not data a story is handed — the same category as the
+`createTable()` call it sits next to, and unreadable one file away. Fixtures keep the rows, the
+option lists, the table config and the form schema; the `createFilters<TRow, TState>(…)` call
+goes in the host's field initializer. Pass `TState` there too: without it every node reads back
+`unknown` and the host grows a narrowing layer over state the library already types.
+
 **Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
 via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack
 Query. No shared/cached server-state exists across these demo-only stories to justify TanStack's
@@ -250,6 +257,11 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
      the `gated-*` stories). Only when a host has **two** stylesheets (its own local one plus the
      shared one, e.g. `sorting-editing/`) does the local file take the `CSS` slot and the shared
      one drop to cluster 2, filename-labeled — one generic `CSS` tab per story, never two.
+     **This rule wins over a task plan's enumerated tab list** (settled 2026-09-14): the filtering
+     and grouping hosts shipped with `story-host.css` dropped entirely because their step files
+     counted the tabs, while the selection hosts shipped the shared file as its own tab per this
+     rule. The selection hosts are correct — a step file enumerating tabs is a convenience, not a
+     second source of truth.
   2. **Extra files**, one tab each, labeled with the file's **literal filename** (not a made-up
      name like "Schema") — e.g. `row-edit/fixtures/schema.ts`, `styles/story-host.css`. A file shared out of
      the story-cluster root is still just its own filename; there's no separate `Row ` prefix
