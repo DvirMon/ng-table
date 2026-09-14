@@ -162,6 +162,13 @@ Researched against three popular table libraries before locking this shape:
 
 - [x] ~~Precise data shape for "group node" objects~~ — resolved above via `RenderRow<TRow>` + `renderRows`.
 - [x] ~~Whether/how grouping interacts with active filters~~ — resolved: `aggregateFn` receives post-filter rows, since `group` clustering runs after the `filter` stage.
+- [x] ~~Whether a row sort disturbs group order~~ — **it does, answered on screen 2026-09-14.**
+  `PIPELINE_ORDER` is `filter → group → sort → expand`, and the `'group'` render stage re-clusters
+  the **sorted** rows, so with no `groupOrder` supplied, first-occurrence group order follows the
+  sort. Rows *within* a group stay contiguous and undisturbed; the headers reorder. So D5's
+  decoupling of grouping from sorting is **`groupOrder`-only** — supply one to pin group order
+  across sort changes. `grouping-collapsible/` carries an on-canvas notice stating this; pipeline
+  verification is tracked in issue #7.
 
 ## Competitive position
 

@@ -1,0 +1,72 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as GroupingCollapsibleStories from './grouping-collapsible.stories';
+import hostClass from './grouping-collapsible-story-host.component.ts?raw';
+import hostTemplate from './grouping-collapsible-story-host.component.html?raw';
+import groupingStyles from '../grouping-story.css?raw';
+import sharedStyles from '../../styles/story-host.css?raw';
+import groupingSchema from '../fixtures/schema.ts?raw';
+import groupingHttp from '../fixtures/http.ts?raw';
+import '../../styles/code-tabs.css';
+
+<Meta of={GroupingCollapsibleStories} />
+
+# Grouping — Collapsible
+
+<Canvas of={GroupingCollapsibleStories.Default} />
+
+## Forced failure
+
+Refetch fails every time instead of returning a fresh page. Nothing is replaced, an error line
+appears, and the collapse state is untouched — a failed refresh must leave an outline exactly as it
+was, which is the half of product story 2.5 that `Default`'s DOM never reaches.
+
+<Canvas of={GroupingCollapsibleStories.ForcedFailure} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      grouping/fixtures/schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      grouping/fixtures/http.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={hostTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={hostClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingHttp} language="ts" />
+    </div>
+  </div>
+</div>

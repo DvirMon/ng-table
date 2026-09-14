@@ -1,0 +1,119 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Tick a group's checkbox and watch what it does to the rows beneath it. The
+    <code>cascade</code> control switches between the three defaults the major libraries disagree
+    on — the library itself ships none of them, which is why all three are ordinary code here.
+    Filter by rep first: a group's checkbox and its count are the same set of rows, always.
+  </p>
+
+  <div class="story-host__toolbar">
+    <label>
+      rep contains:
+      <input type="text" [value]="repFilter()" (input)="onFilterRep($event)" />
+    </label>
+    <button type="button" (click)="toggleGrouping()">
+      {{ isGrouped() ? 'Ungroup' : 'Group by Region → Category' }}
+    </button>
+    <button type="button" (click)="clearSelection()">Clear selection</button>
+    <span class="story-host__counter">{{ selectionReadout() }}</span>
+    <span class="story-host__counter">
+      group headers in the selection: {{ selectedGroupHeaderCount() }}
+    </span>
+  </div>
+
+  @if (cascade() === 'self') {
+    <p class="grouping-story__notice">
+      <code>self</code> is AG Grid's default: ticking a group selects the group <em>node</em>. There
+      is no group node here — a group is a view, not a record — so the checkbox writes nothing and
+      stays a read-only tri-state readout. Switch to <code>descendants</code> to give it an effect.
+    </p>
+  } @else if (cascade() === 'descendants+parents') {
+    <p class="grouping-story__notice">
+      <code>descendants+parents</code> is MUI X's default. The downward half is the same
+      <code>select(rowsOf(group))</code> write as <code>descendants</code>. The upward half costs no
+      code at all: a Region's box is derived from its own <code>rowsOf()</code> every render, so it
+      turns from indeterminate to checked the moment its last Category does.
+    </p>
+  } @else {
+    <p class="grouping-story__notice">
+      <code>descendants</code> is TanStack's default: every leaf beneath the group, at any depth,
+      through one <code>select(rowsOf(group).map(trackBy))</code> call.
+    </p>
+  }
+
+  <p class="grouping-story__notice">
+    <code>rowsOf()</code> is re-derived from the pipeline's rows, not scanned out of
+    <code>renderRows()</code> — so it is post-filter by construction and independent of collapse.
+    Ticking a group under an active filter selects exactly the rows its header counts, which is
+    ag-grid #11209 not happening. Ungroup, and the selection survives untouched: no header id was
+    ever in it to dangle.
+  </p>
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        <th class="story-host__cell"><span class="sr-only">select</span></th>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            <td class="story-host__cell">
+              <input
+                type="checkbox"
+                [checked]="isGroupFullySelected(row)"
+                [indeterminate]="isGroupPartlySelected(row)"
+                [attr.aria-label]="groupCheckboxLabel(row)"
+                (change)="onToggleGroupSelection(row)"
+              />
+            </td>
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__aggregate]="!isFirst"
+              >
+                @if (isFirst) {
+                  @if (isBlankGroup(row)) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">{{ groupLabel(row) }}</span>
+                  }
+                  <span class="grouping-story__count">{{ groupRowCount(row) }}</span>
+                } @else {
+                  {{ groupAggregate(row, column.id) }}
+                }
+              </td>
+            }
+          } @else {
+            @if (row.data; as rowData) {
+              <td class="story-host__cell">
+                <input
+                  type="checkbox"
+                  [checked]="isRowSelected(row.id)"
+                  [attr.aria-label]="rowCheckboxLabel(rowData)"
+                  (change)="onToggleRowSelection(row.id)"
+                />
+              </td>
+              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+                <td
+                  class="story-host__cell"
+                  [class.grouping-story__cell--label]="isFirst"
+                  [class.grouping-story__cell--numeric]="column.id === 'amount'"
+                >
+                  {{ cellValue(column, rowData) }}
+                </td>
+              }
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

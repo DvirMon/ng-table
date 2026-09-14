@@ -1,0 +1,190 @@
+<div class="story-host">
+  @if (asyncGroupingRule()) {
+    <p class="story-host__hint">
+      A grouping level is being decided by the server. While the rule is unresolved the table holds
+      the grouping you last chose — Region → Category — rather than flashing ungrouped and back
+      (D13). Watch the pills: they do not move until the answer lands, and then the whole level set
+      becomes the rule's, because a resolved rule overrides the base choice rather than merging with
+      it (D6/D7).
+    </p>
+  } @else if (groupOrder() === 'throwing') {
+    <p class="story-host__hint">
+      The <code>groupOrder</code> comparator throws on every sibling pair. The table stays up:
+      <code>sortClusters</code> catches it, falls back to stable first-occurrence order for the
+      affected levels, and reports once per evaluation (D15). The reported fallback goes to
+      <code>console.error</code>, which is not an affordance — the amber notice below is this
+      story standing in for one.
+    </p>
+  } @else {
+    <p class="story-host__hint">
+      A grouped table that is always fully shown — no chevrons, because nothing here expands.
+      Every group header carries its value, its row count and its <code>amount</code> total, at
+      every depth. Filter by rep and watch counts and totals follow the visible rows; a group
+      whose rows all filter out disappears entirely.
+    </p>
+  }
+
+  <div class="story-host__toolbar">
+    <label>
+      rep contains:
+      <input type="text" [value]="repFilter()" (input)="onFilterRep($event)" />
+    </label>
+    <button type="button" (click)="resetLevels()">Reset levels</button>
+    <button type="button" (click)="groupByMissingColumn()">Group by a column that isn't there</button>
+    <button type="button" (click)="toggleBrokenSummary()">
+      {{ isSummaryBroken() ? "Restore that group's summary" : "Break one group's summary" }}
+    </button>
+  </div>
+
+  <div class="grouping-story__pills">
+    @for (level of table.grouping(); track level; let index = $index) {
+      <span class="grouping-story__pill">
+        {{ levelLabel(level) }}
+        <button
+          type="button"
+          [disabled]="index === 0"
+          [attr.aria-label]="'Move ' + levelLabel(level) + ' one level earlier'"
+          (click)="moveLevel(index, index - 1)"
+        >
+          ◀
+        </button>
+        <button
+          type="button"
+          [disabled]="index === table.grouping().length - 1"
+          [attr.aria-label]="'Move ' + levelLabel(level) + ' one level later'"
+          (click)="moveLevel(index, index + 1)"
+        >
+          ▶
+        </button>
+        <button
+          type="button"
+          [attr.aria-label]="'Remove ' + levelLabel(level) + ' as a grouping level'"
+          (click)="ungroupColumn(level)"
+        >
+          ×
+        </button>
+      </span>
+    }
+  </div>
+
+  @if (asyncGroupingRule()) {
+    @if (isGroupingRulePending()) {
+      <p class="grouping-story__notice" role="status">
+        Grouping rule pending — holding the last explicit grouping. Nothing below has changed yet.
+      </p>
+    } @else if (asyncRuleStatus() === 'error') {
+      <p class="grouping-story__notice" role="status">
+        The grouping rule failed. <code>onError</code> is required to return an explicit boolean, and
+        this one returns <code>false</code>: the rule set resolves to <code>[]</code> — actively
+        grouped by nothing, which is a different state from abstaining. Every row is still here, flat
+        and unfiltered by the failure; nothing blanked.
+      </p>
+    } @else {
+      <p class="grouping-story__notice" role="status">
+        The grouping rule resolved. The level set is now the rule's, not the pills' — a resolved
+        rule overrides <code>baseGrouping</code> rather than merging with it.
+      </p>
+    }
+  }
+
+  @if (droppedLevels().length > 0) {
+    <p class="grouping-story__notice">
+      {{ droppedLevels().join(', ') }} names no column, so the table grouped by the remaining
+      levels and said nothing (D14). This line is the story's own arithmetic — the library has no
+      channel to report a dropped level, which is 4.4's third criterion, unmet.
+    </p>
+  }
+
+  @if (isSummaryBroken()) {
+    <p class="grouping-story__notice">
+      One row's <code>amount</code> is now a value the <code>aggregateFn</code> refuses. The
+      whole table is down rather than that one group's summary blanking — <code>engine/grouping.ts</code>
+      calls <code>aggregateFn</code> unwrapped (S2, #79). Restore it with the same button.
+    </p>
+  }
+
+  @if (groupOrder() === 'throwing') {
+    <p class="grouping-story__notice">
+      <code>groupOrder</code> threw. Groups below are in stable first-occurrence order — the D15
+      fallback — and the library reported it once for this evaluation, to the console.
+    </p>
+  }
+
+  <p class="grouping-story__notice">
+    Group by <strong>Region</strong> to see the three blank keys — <code>null</code>,
+    <code>undefined</code> and <code>''</code> cluster as three separate unlabelled groups (S7).
+    Group by <strong>Closed</strong> and it labels correctly; group by <strong>Owner</strong> and
+    it does not — an object-valued column has no label path at all (S8).
+  </p>
+
+  <table
+    class="story-host__table grouping-story__table"
+    [class.grouping-story__table--sticky]="stickyHeaders()"
+  >
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">
+            {{ column.label }}
+            <button
+              type="button"
+              [title]="
+                isGroupedBy(column.id)
+                  ? 'Already a level — addGroupLevel() no-ops rather than adding it twice'
+                  : 'Add this column as the last grouping level'
+              "
+              (click)="groupByColumn(column.id)"
+            >
+              Group by this column
+            </button>
+            @if (isGroupedBy(column.id)) {
+              <button type="button" (click)="ungroupColumn(column.id)">Ungroup</button>
+            }
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__aggregate]="!isFirst"
+              >
+                @if (isFirst) {
+                  @if (isBlankGroup(row)) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">{{ groupLabel(row) }}</span>
+                  }
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ groupRowCount(row) }}</span>
+                  }
+                } @else {
+                  {{ groupAggregate(row, column.id) }}
+                }
+              </td>
+            }
+          } @else {
+            @if (row.data; as rowData) {
+              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+                <td
+                  class="story-host__cell"
+                  [class.grouping-story__cell--label]="isFirst"
+                  [class.grouping-story__cell--numeric]="column.id === 'amount'"
+                >
+                  {{ cellValue(column, rowData) }}
+                </td>
+              }
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

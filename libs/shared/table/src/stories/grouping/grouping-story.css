@@ -13,6 +13,10 @@
 [data-depth='1'] { --grouping-depth: 1; }
 [data-depth='2'] { --grouping-depth: 2; }
 [data-depth='3'] { --grouping-depth: 3; }
+/* Three grouping levels put leaf rows at depth 3, and a leaf carrying `children` puts its
+   tree rows deeper still — same mechanism, two more rungs. */
+[data-depth='4'] { --grouping-depth: 4; }
+[data-depth='5'] { --grouping-depth: 5; }
 
 [data-row-kind='group'] > .story-host__cell {
   background: #111827;

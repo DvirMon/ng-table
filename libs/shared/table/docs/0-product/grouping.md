@@ -3,15 +3,16 @@ title: Product — Grouping User Stories
 type: product
 capability: grouping
 status: >
-  First pass, 2026-09-10. Written after D1–D15 and `3-spec.md` (`status: ready`), not before — so
-  this doc's job is to find what the design does not cover, and it does. §8 splits the gaps by
-  owning layer: 11 state, 10 UI, 5 needing both, plus 2 direct contradictions with shipped docs.
-  §9 lists 5 capabilities with no doc at all, checked against the generated registry. Coverage is
-  ❌ across the board — **superseded 2026-09-13**: #58/#59/#65 and issue #60 all landed, so most
-  marks are now 🟡 (mechanism ships, no affordance). Re-derived per story in
-  `3-ui/work/grouping-stories/1-gap-analysis.md`. OQ-1 and OQ-2 resolved 2026-09-12 by D16 (group selection); OQ-3…OQ-8
-  still open, none silently picked.
-date: 2026-09-10
+  Coverage re-derived 2026-09-14 from the three shipped stories (`grouping-static/`,
+  `grouping-collapsible/`, `grouping-selection/`), read as host components. §1–§4: 9 ✅, 5 🟡,
+  3 ❌. Five marks stay short of ✅ for stated, code-level reasons — 1.3 and 2.2 ship as honest
+  regressions (S2/#79 and S4/S5), 2.4's sticky headers all stick to the same offset so nested
+  paths overlap, 4.3 is consistent but unstated, and 4.4 is announced only by story-local
+  arithmetic. 2.3 (initial depth), 4.1 (blank keys) and 4.2 (object keys) are ❌ — two of them
+  rendered deliberately as bug reports. Cross-feature: X-G1, S-G1 and E-G1 ✅; S-G2 and F-G1 🟡
+  for one shared reason — no story composes `groupOrder` with `withSorting()`, or expansion with
+  filtering. OQ-1/OQ-2 resolved 2026-09-12 by D16; OQ-3…OQ-8 still open.
+date: 2026-09-14
 audience: product, design, engineering
 ---
 
@@ -66,25 +67,23 @@ and §7 records the finance case where auto-expanded is what users actually want
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
 
-> **Correction, 2026-09-13.** The blanket ❌ below is superseded. Its stated justification — "there
-> is no `with-grouping.ts`", no clustering function, nothing registering the `'group'` stage — was
-> true on 2026-09-10 and is false now: #58/#59/#65 shipped and issue #60 completed, so `applyGrouping`
-> is live and `withGrouping()` composes it. Under this table's own legend most stories are therefore
-> **🟡, not ❌** — the mechanism ships, the affordance does not. Per-story marks are re-derived in
-> [`3-ui/work/grouping-stories/1-gap-analysis.md`](../3-ui/work/grouping-stories/1-gap-analysis.md);
-> the headings below are left at their 2026-09-10 values rather than hand-edited one by one.
+**Marks re-derived 2026-09-14 from the shipped stories, not from a sibling doc.** Three stories
+now exist, all read as host components rather than `.mdx` wrappers:
 
-**Every story in this document is ❌, and that is not a judgement call.** Verified 2026-09-10
-(`1-state/work/with-grouping/research-grouping-internal-coverage.md` §4–§5): there is no
-`with-grouping.ts`, no `mutations/update-grouping.ts`, no clustering function, nothing registers
-the free `'group'` render stage outside test doubles, `ColumnDef.aggregateFn` is a typed field
-with zero readers, and none of the nine story folders branches on `row.kind` or binds
-`aggregates`. Grouping appears in `src/` only as a type union, doc comments, mock fixtures, and
-stage-order test doubles.
+| Story | Composes | What it demonstrates |
+|---|---|---|
+| [`grouping-static/`]([`grouping-static/`](../../src/stories/grouping/grouping-static/)) | `withGrouping()` + `withFiltering()`, deliberately **no** `withExpansion()` | Headers carrying value, count and `amount` total at every depth, all post-filter; level pills that reorder and remove; `groupOrder` across five modes including an external list and a throwing comparator; `groupedColumnMode` rendering all three peer dispositions; an async grouping rule with pending/resolved/failed states. Three controls are deliberate regressions — a broken summary, a dropped level, and blank/object group keys |
+| [`grouping-collapsible/`]([`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/)) | `withGrouping()` + `withExpansion()` + `withSorting()` | A real `<button>` chevron with `aria-expanded`, the whole header row as hit area, subtree collapse, and three attacks on the collapse state — Refetch with freshly-constructed rows, sort toggles, and a Regroup that changes every id at once. A deal carrying `children` renders a second, separately-keyed chevron from the `'tree'` stage |
+| [`grouping-selection/`]([`grouping-selection/`](../../src/stories/grouping/grouping-selection/)) | `withGrouping()` + `withSelection()` + `withFiltering()` | All three peer cascade defaults off one `rowsOf()` call; tri-state group checkboxes derived, never stored; a readout that counts rows and a second one proving no group header is ever in the selection; Ungroup leaving the selection untouched |
 
-So the marks carry no information yet. What carries information is the **Design status** line on
-each story: whether a settled decision already answers it, whether nothing does, or whether the
-settled design points the other way. That line is the actual output of this pass.
+**What the marks are, and are not.** ✅ means a person can see the behavior *and* its failure path
+on canvas today. 🟡 means the mechanism ships and the person's experience of it is incomplete —
+which here is usually a stated, deliberate regression rather than an oversight. ❌ means nothing
+renders, including the two stories (4.1, 4.2) whose rendering *is* the bug report.
+
+The **Design status** line on each story is unchanged — it records whether a settled decision
+answers the story. The new **Covered by** line records which shipped story proves it, and where it
+stops.
 
 **The stories name no layers; §8 does.** A person cannot perceive the difference between a value
 nothing computes and a control nothing renders, so the stories do not draw one. §8 sorts every
@@ -104,7 +103,7 @@ beyond what a story needs.
 
 Ordered by how badly the person is hurt if it is missing.
 
-## 1.1 — See my rows gathered into groups, with a visible boundary — ❌ not covered
+## 1.1 — See my rows gathered into groups, with a visible boundary — ✅ covered
 
 > As someone looking at four hundred orders across a dozen regions, I want the orders for one
 > region together under a heading that names it, so I can read the list a region at a time instead
@@ -128,9 +127,11 @@ Ordered by how badly the person is hurt if it is missing.
 **Mode note.** Identical in both modes. This is the story that makes grouping worth composing at
 all.
 
+**Covered by:** all three stories. Headers carry the value plainly ("North East", not the field name), rows beneath them are contiguous, and `data-row-kind` / `data-depth` mark the boundary at every level. [`grouping-selection/`](../../src/stories/grouping/grouping-selection/)'s Ungroup returns the table to a plain list with nothing else changed, which is the removal half. Both failure paths are reachable in the fixture: the South region holds one row and still renders as a group, and grouping by Owner or Closed — near-unique columns — renders rather than hanging.
+
 **Design status:** covered by D3/D9 and the `'group'` render stage design. No gap.
 
-## 1.2 — See how many rows are in each group — ❌ not covered
+## 1.2 — See how many rows are in each group — ✅ covered
 
 > As someone scanning a grouped list of open tickets, I want each group heading to tell me how
 > many tickets are in it, so I can tell at a glance where the volume is without expanding
@@ -150,13 +151,15 @@ all.
 - If the count cannot be computed for some reason, the header renders without it rather than
   showing `NaN`, `undefined`, or a stale number from a previous render.
 
+**Covered by:** all three stories — the count is `rowsOf(row).length`, which is derived from the pipeline's rows and so is post-filter and collapse-independent by construction. Type in "rep contains" in [`grouping-static/`](../../src/stories/grouping/grouping-static/) or [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) and every count follows the visible rows; a nested count is the whole subtree's leaves, not the child-group count. [`grouping-static/`](../../src/stories/grouping/grouping-static/) carries the hide-the-count switch every peer that renders a count also ships (P6), default on. The "cannot be computed" failure is unreachable rather than undemonstrated — `rowsOf()` returns an array or nothing at all.
+
 **Design status — gap.** **No decision covers this, and not rendering one would be the
 surprising choice.** AG Grid, MUI X and Material React Table all render a child count by default
 and all ship a switch to hide it; TanStack renders nothing, and it is also the only one of the
 four with no UI layer at all. `RenderRow` has `hasChildren?: boolean` but no count field, and
 `aggregates` is untyped as to whether a count lives there. Raised as **OQ-2**.
 
-## 1.3 — See a summary for each group — ❌ not covered
+## 1.3 — See a summary for each group — 🟡 partly covered *(the failure path is a live regression)*
 
 > As someone reviewing sales by region, I want each region's heading to carry that region's total,
 > so the number I actually came for is on screen without expanding the group and adding it up
@@ -178,6 +181,10 @@ four with no UI layer at all. `RenderRow` has `hasChildren?: boolean` but no cou
 - A summary that cannot be computed is visibly absent, not shown as `0` — a wrong number is worse
   than a missing one, because a wrong number gets used.
 
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) for the happy path — `amount` carries an `aggregateFn` and its total renders on the header row at every depth, so a region's total is the sum of its subtree; the totals follow the filter; every column without an `aggregateFn` renders an empty cell rather than a zero.
+
+**Why it is 🟡:** the failure path renders, and it fails. *Break one group's summary* patches one row's `amount` to a value the fixture's `sumAmount` refuses, and **the whole table goes down** instead of that one group's summary blanking — `engine/grouping.ts` calls `aggregateFn` unwrapped (S2, [#79](https://github.com/DvirMon/acme/issues/79)). That is precisely this story's stated failure behavior inverted, and it is a data-dependent runtime failure, which is the class ADR-0014 says must degrade. The control is on canvas so the regression is visible rather than latent; it starts passing when ADR-0014's wrap reaches `engine/grouping.ts`.
+
 **Design status:** mostly covered. D9 fixes aggregates to leaf rows at every depth (which is
 precisely the bug TanStack has carried since 2021 — [#3323](https://github.com/TanStack/table/issues/3323),
 [#6228](https://github.com/TanStack/table/issues/6228): aggregation blank at the top level of a
@@ -188,7 +195,7 @@ gaps:** the per-group failure fallback above is not among D15's named callback f
 see other columns' values for the same rows. Ours can, because it receives whole rows. Worth
 keeping deliberately.
 
-## 1.4 — Know what the table is grouped by — ❌ not covered
+## 1.4 — Know what the table is grouped by — ✅ covered
 
 > As someone who opened a report someone else configured, I want to see what it is grouped by,
 > in what order, without reading the code or guessing from the shape of the data.
@@ -206,6 +213,8 @@ keeping deliberately.
   be applied, not an error and not a blank table (D14 handles the state; this story is about
   whether I am told).
 
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) — the active levels render as pills, in order, each with ◀ ▶ to re-rank it and × to drop it, so nesting order is visible rather than inferred from the headers. The third criterion is the one the four libraries answer four ways, and the story renders all three dispositions as a control rather than picking one: `groupedColumnMode` of `keep` / `hide` / `move-to-front` (U2, P12). The failure half — a saved level naming a column that no longer exists — is *Group by a column that isn't there*, which degrades to the remaining levels and says so on canvas. **The library ships no default for any of this**; the story is the recipe, and 4.4 owns the fact that the telling is story-local.
+
 **Design status — gap.** The state exists and is readable (`grouping: string[]`), but **what
 happens to the grouped column on screen is undecided**, and the four libraries give four different
 answers: AG Grid hides the source column and synthesises a group column; TanStack moves it to the
@@ -218,7 +227,7 @@ calls them "mutually exclusive layouts". That is this story, unresolved, at the 
 
 # 2. Move around a grouped table
 
-## 2.1 — Fold away a group I do not care about — ❌ not covered *(collapsible mode)*
+## 2.1 — Fold away a group I do not care about — ✅ covered *(collapsible mode)*
 
 > As someone working through a grouped list, I want to collapse the groups I have finished with,
 > so the ones I have not finished with fit on one screen.
@@ -242,6 +251,8 @@ calls them "mutually exclusive layouts". That is this story, unresolved, at the 
 **Mode note.** Static mode has no equivalent and needs none. What it must not do is render a
 control that does nothing.
 
+**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) — and the one gap the 2026-09-10 Design status named is closed. The chevron is a real `<button>` carrying `aria-expanded`, so Enter and Space both work without picking a side in AG Grid's Enter / MUI X's Space split (P11), and **the whole header row is the hit area** (U3, Telerik 1525732 — asked for since 2021, shipped nowhere). The chevron carries no click handler of its own; its activation bubbles to the row's one listener, which is why there is no double-fire to suppress. Collapsing a parent takes its whole subtree, three levels deep. *Not demonstrated:* that collapsing changes nothing selected — no story composes `withExpansion()` with `withSelection()`. Collapse leaving the underlying data alone is demonstrated, through Refetch.
+
 **Design status:** covered by D11 (grouping does its own subtree walk, since `'group'` runs before
 `'tree'`) and the optional `expandedRows` read. **One gap:** the click-target size above.
 Telerik has carried that request since 2021, unplanned
@@ -250,7 +261,7 @@ with a commenter noting it "makes it consistent with most websites that offer th
 functionality." It is a UI-layer decision and belongs in `3-ui/directives/grouping.md`, which
 currently plans no new directive at all.
 
-## 2.2 — Collapse or expand everything in one action — ❌ not covered *(collapsible mode)*
+## 2.2 — Collapse or expand everything in one action — 🟡 partly covered *(collapsible mode; honest regression)*
 
 > As someone opening a report grouped three levels deep, I want one control that folds the whole
 > thing to its top level, so I can choose where to go instead of scrolling past everything.
@@ -268,6 +279,10 @@ currently plans no new directive at all.
 - Expand All on a table large enough to hurt either stays responsive or refuses with a reason. It
   does not freeze the tab. (See §6, P-G2 and `0-product/performance.md`.)
 
+**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) — both buttons exist, and the story labels them an honest regression rather than dressing them up. `collapseAll()` is the library's and is correct: emptying `expandedRows` needs no knowledge of what a group is. **`expandAll()` cannot be used here at all** — it walks `childrenAccessor` over real rows and a group header is not a row (S5), so the story ships a consumer loop, one pass per grouping level, because a collapsed group's descendants are not in `renderRows()` until its parent opens.
+
+**Why it is 🟡:** this story's second criterion — the control reflects the current state and knows which to offer — is unmet and unmeetable. There is no "is everything expanded" signal (S4, tracked as C3), which is exactly AG Grid [#8621](https://github.com/ag-grid/ag-grid/issues/8621). Neither button can render its own label. OQ-3.
+
 **Design status — gap, and an explicitly scoped-out one.** `3-spec.md:371-391` lists "auto-wiring
 a header collapse-all/expand-all UI" as out of scope. The evidence says that is the single most
 requested missing affordance in this space: MUI X
@@ -280,7 +295,7 @@ library in the survey shipping the button by default. **Scoping out the UI is de
 out the state that makes the UI possible is not, and those are different decisions.** Raised as
 **OQ-3**.
 
-## 2.3 — Open the table already at the depth I want — ❌ not covered *(collapsible mode)*
+## 2.3 — Open the table already at the depth I want — ❌ not covered *(collapsible mode; blocked on S6)*
 
 > As someone who always works region-by-region, I want the report to open showing regions
 > collapsed, not two thousand rows I then have to fold up myself.
@@ -293,6 +308,8 @@ out the state that makes the UI possible is not, and those are different decisio
 - The initial state applies on first paint. The table does not render fully expanded and then
   visibly collapse.
 
+**Covered by:** nothing. [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) opens fully collapsed, but that is `withExpansion()`'s default rather than a configured depth — there is no `groupDefaultExpanded` equivalent to render a control for, and `expandAll()` cannot discover a group to expand to a depth with (S5/S6). Of the three acceptance criteria only "all collapsed" happens to hold, by accident of the default. Blocked on S6.
+
 **Design status — gap.** No decision covers initial expansion state at all. AG Grid
 (`groupDefaultExpanded`) and MUI X (`defaultGroupingExpansionDepth`) both model this as a depth
 with `-1` meaning all; TanStack has no depth concept whatsoever — `ExpandedState` is `true` or a
@@ -301,7 +318,7 @@ hand-built set of row ids — so "expand the first two levels" is arithmetic the
 `childrenAccessor` over real rows, so it cannot discover a group at all
 (`with-expansion.ts:119-135`).
 
-## 2.4 — Keep my place while scrolling a long group — ❌ not covered
+## 2.4 — Keep my place while scrolling a long group — 🟡 partly covered *(sticks, but nested paths overlap)*
 
 > As someone scrolling through two hundred rows inside one region, I want to still be able to see
 > which region I am in, because by row sixty the heading is long gone and every row looks the
@@ -314,6 +331,10 @@ hand-built set of row ids — so "expand the first two levels" is arithmetic the
   the innermost one.
 - The stuck header hands off to the next group's header as I scroll past the boundary, without
   overlapping it or flickering.
+
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) — `stickyHeaders` is an opt-in arg, and it is one CSS class keyed off `data-row-kind`, which settles OQ-3's "is this just CSS?" on screen rather than in argument. Turn it on and a group header stays visible while its rows are.
+
+**Why it is 🟡:** every depth sticks to `top: 0`. With nested groups the inner header lands on the outer one instead of stacking beneath it, so the second and third criteria — the visible headers describing the **full path**, and a clean hand-off at the boundary without overlapping — are not met. Making them work needs a per-depth offset the story does not attempt, and it collides with virtual scroll, which is why this stays a UI-layer open question rather than a bug.
 
 **Design status — gap.** This is the purest end-user complaint found in the entire corpus, and
 it is quoted rather than paraphrased for that reason — MUI X
@@ -330,7 +351,7 @@ concern, it collides with virtual scroll, and it is named nowhere in our docs. R
 alongside 2.2, because both are "the affordance is missing, and the state layer decides whether it
 *can* exist."
 
-## 2.5 — Not have my expand/collapse thrown away — ❌ not covered *(collapsible mode)*
+## 2.5 — Not have my expand/collapse thrown away — ✅ covered *(collapsible mode)*
 
 > As someone who has folded a report down to the three groups I care about, I do not want a
 > background refresh, a sort, or my own edit to fling the whole thing open again.
@@ -349,6 +370,8 @@ alongside 2.2, because both are "the affordance is missing, and the state layer 
 - If state cannot be preserved across a change, everything collapses consistently. A mixed result
   — some groups restored, some not, with no way to tell which — is the worst outcome and the one
   libraries actually ship.
+
+**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) — and it is attacked from three directions rather than asserted once. **Refetch** replaces every row with a freshly-constructed object and reports how many, so "the collapse state did not move" is read against rows that are provably not the same objects. The **sort toggles** race it against a reordered pipeline. **Regroup** re-nests Region → Category → Rep as Category → Region → Rep, so every `group:>col:type:value` id changes at once and the state is discarded wholesale — which is this story's third criterion and the opposite of mui-x [#16495](https://github.com/mui/mui-x/issues/16495)'s half-restored chevron. The `forceFailure` arg is the failure path: the request errors, nothing is replaced, and the outline is still exactly where it was — a failed refresh must not reset an outline any more than a successful one does. What OQ-4 called undecided — whether the id is stable across a refetch but not across a regrouping — is now demonstrated both ways.
 
 **Design status — gap, and the highest-value cheap win in this document.** This complaint is
 **eleven years old and unresolved across four libraries**: ag-grid
@@ -377,7 +400,7 @@ grouping. No decision states this, and nothing tests it. Raised as **OQ-4**.
 
 # 3. Control the grouping myself
 
-## 3.1 — Change what the table is grouped by — ❌ not covered
+## 3.1 — Change what the table is grouped by — ✅ covered
 
 > As someone looking at a list grouped by region, I want to switch it to group by status instead,
 > from the table, without someone shipping me a new report.
@@ -395,6 +418,8 @@ grouping. No decision states this, and nothing tests it. Raised as **OQ-4**.
 - If the new grouping produces one group per row (a near-unique column), I get that result rather
   than a hang — and ideally I can see that is what happened and undo it.
 
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) for the affordance the 2026-09-10 status says is specified nowhere: every column header carries *Group by this column*, and an *Ungroup* appears beside it once that column is a level. *Reset levels* returns to the declared set. [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) gives the whole-grouping toggle and is where the third criterion is checkable — Ungroup leaves the selection completely untouched, because no group header id was ever in it. Failure: grouping by Owner or Closed produces near-one-group-per-row, and the table renders it.
+
 **Design status:** the state side is covered by D1's four updater factories — set, add, remove,
 reorder a level — which name exactly four product affordances. **The gap is that no affordance is
 specified anywhere.** AG Grid has three routes (drag a column into a group panel, a column-menu
@@ -404,7 +429,7 @@ header directive. That rejection was made when grouping was single-level and imp
 deserves re-examination now that D3 makes grouping an ordered multi-level array a person is
 expected to manipulate.
 
-## 3.2 — Group by more than one thing, and change what nests inside what — ❌ not covered
+## 3.2 — Group by more than one thing, and change what nests inside what — ✅ covered
 
 > As someone reading a sales report, I want region at the top level and category inside it — and
 > when that is the wrong way round for the question I am asking, I want to flip it without
@@ -424,13 +449,15 @@ expected to manipulate.
 - Grouping by the same column twice is either prevented or harmless. It never produces a level
   containing exactly one child group repeated forever.
 
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) — the level pills are the visible order, ◀ ▶ re-nest through `reorderGroupLevels` and the data re-nests rather than resetting, and × removes a level including a middle one with the levels either side left correctly nested. [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) runs three levels deep and its Regroup swaps the outer two. Summaries stay correct across a re-nesting because `sumAmount` is over the cluster's own leaves at every depth (D9). Failure: *Group by this column* on a column that is already a level is a no-op — `addGroupLevel` refuses the duplicate, and the button's own title says so.
+
 **Design status:** covered by D3, D9, and `reorderGroupLevels`. AG Grid's most recent open grouping
 bug is precisely the failure of this story — [#14635](https://github.com/ag-grid/ag-grid/issues/14635)
 (open, 2026): "the last groping column shifted to index 0 every time", against the expectation
 that "Grouping should follow the same order in which the columns are grouped." Our ordered array
 makes that class of bug hard to write. Worth a test rather than a decision.
 
-## 3.3 — Decide the order the groups themselves appear in — ❌ not covered
+## 3.3 — Decide the order the groups themselves appear in — ✅ covered
 
 > As someone whose product categories have a meaningful order that is not alphabetical, I want the
 > groups to appear in *my* order — the one I arranged in the settings dialog — not sorted by
@@ -449,6 +476,10 @@ makes that class of bug hard to write. Worth a test rather than a decision.
 - If the ordering logic fails, groups appear in a stable, predictable order — the order they
   occur in the data — rather than randomly or not at all.
 
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) — `groupOrder` renders as five modes through **one** comparator closure reading a signal, never a comparator per mode: `first-occurrence` (the default, and a constant `0` that a stable sort leaves alone), `by-label`, `by-count`, and `external-list` — a caller-supplied ranking, which is the third criterion's "order a person arranged elsewhere", with values absent from the list sorting last rather than vanishing. Failure: the `throwing` mode makes the comparator throw on every sibling pair; the table stays up, `sortClusters` falls back to stable first-occurrence order and reports once per evaluation (D15). The report goes to `console.error`, which is not an affordance — the story's amber notice stands in for one and says so.
+
+`groupOrder` is labelled **developer config, not an end-user control**, because P9c found no library anywhere that lets a person place group instances by hand; inventing that UX in a story would ship an unowned capability. The one criterion not rendered — group order and row sort not disturbing each other — needs `groupOrder` and `withSorting()` in one story, and **S-G2 owns that gap** rather than it being counted twice.
+
 **Design status:** covered, and it is a genuine differentiator. D4's `groupOrder` compares
 `GroupSummary` objects that carry their rows; D5 decouples group order from row sort; D15 names
 the first-occurrence fallback. **No library in the survey lets an end user place groups in an
@@ -457,7 +488,7 @@ list with, and even that is Enterprise-only. This is the story that started the 
 is the one place we would be ahead rather than level. Treat it as design work, not as a feature to
 port, because there is no UX to copy.
 
-## 3.4 — Order groups by how big they are — ❌ not covered
+## 3.4 — Order groups by how big they are — ✅ covered
 
 > As someone triaging tickets grouped by assignee, I want the biggest queues at the top, because
 > that is the whole reason I grouped them.
@@ -469,6 +500,8 @@ port, because there is no UX to copy.
 - The ordering reflects the filtered rows, consistently with the counts in 1.2 and the summaries
   in 1.3.
 - The ordering updates when the data does.
+
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/)'s `by-count` mode, which is exactly the ordering AG Grid's `initialGroupOrderComparator` cannot express — it runs before filtering and aggregation, and this one runs after. Type in "rep contains" with `by-count` selected and the group order re-ranks against the surviving rows, so the second criterion (consistent with 1.2's counts and 1.3's summaries) is checkable on screen rather than argued. `GroupSummary` carrying its own `rows` is what makes both count-based and aggregate-based ordering fall out.
 
 **Design status:** covered, and this is the specific thing the market leader cannot do. AG Grid's
 `initialGroupOrderComparator` "executes before filtering and aggregation" and so "cannot use
@@ -485,7 +518,7 @@ the property is not lost in implementation by someone optimising the stage order
 The group *key* is where grouping actually fails in production. Every library assumes the grouped
 value is a primitive that stringifies usefully; real data is not.
 
-## 4.1 — Rows with nothing in the grouped column — ❌ not covered
+## 4.1 — Rows with nothing in the grouped column — ❌ not covered *(rendered as a regression demo — S7)*
 
 > As someone grouping by department in a table where three people have not been assigned one, I
 > want those three in a group I can see and collapse like any other, not scattered loose or
@@ -503,6 +536,8 @@ value is a primitive that stringifies usefully; real data is not.
 - `null`, `undefined`, and `""` are either the same group or clearly different groups. They are
   never three groups that all render with an empty label and cannot be told apart.
 
+**Covered by:** nothing — and [`grouping-static/`](../../src/stories/grouping/grouping-static/) renders that failure on purpose, which is not the same as covering it. The fixture holds all three blank keys: a `null` region, a row with no `region` at all, and an `''` region. Group by Region and they cluster as **three separate unlabelled groups** a person cannot tell apart, which is this story's stated failure behavior happening. The story's standing notice points at it. No row is lost and each group counts, collapses and summarises like any other, so the mechanism is sound; what is missing is the decision — one group or three, and where it sorts. S7, OQ-5.
+
 **Design status — gap, and the most likely source of a first bug report.** No decision addresses
 it. D14 covers an unknown *column id*; this is a missing *value*, a different thing entirely. MUI X
 carries three open issues here: [#9094](https://github.com/mui/mui-x/issues/9094) (null is
@@ -514,7 +549,7 @@ to an empty key array on the wire, so the server cannot distinguish "top level" 
 group". Adjacent and already flagged internally: `sorting.md:167-169` (S9) says an empty row "has
 no group to belong to" and where it renders "is undefined". Raised as **OQ-5**.
 
-## 4.2 — A grouped column whose values are not text — ❌ not covered
+## 4.2 — A grouped column whose values are not text — ❌ not covered *(rendered as a regression demo — S8)*
 
 > As someone grouping by assignee where each assignee is an object with a name and an id, I want
 > to see the names.
@@ -531,6 +566,8 @@ no group to belong to" and where it renders "is undefined". Raised as **OQ-5**.
 
 - A value with no sensible text form produces a stated fallback label, never `[object Object]`.
 
+**Covered by:** nothing — and [`grouping-static/`](../../src/stories/grouping/grouping-static/) renders the contrast deliberately. Group by **Closed**, a `Date` column, and the key labels correctly. Group by **Owner**, whose values are `{ name, email }` objects, and it does not: there is no label path at all, which is mui-x [#10729](https://github.com/mui/mui-x/issues/10729) in our own table. `RenderRow` now carries `groupKey` (C1), so a header knows its own identity; what it still lacks is a way to turn that identity into text. The two columns sit next to each other so the gap is one click apart from the case that works. S8, OQ-5 with 4.1.
+
 **Design status — gap.** MUI X [#10729](https://github.com/mui/mui-x/issues/10729), open since
 2023 with ten comments: "If you have a value that is an object the group key is
 `autogenerategroupORwhatever-[Object Object]`", and the reporter's framing is the one that
@@ -541,7 +578,7 @@ different angles: `3-ui/directives/grouping.md:41-45` asks about "group-label fo
 specifies one, `src/api/types.ts` does not have it, so what a group header knows about its own
 identity is currently unspecified in code. Raised as **OQ-5** with 4.1; they are one decision.
 
-## 4.3 — A group with exactly one row in it — ❌ not covered
+## 4.3 — A group with exactly one row in it — 🟡 partly covered *(consistent, but nowhere stated)*
 
 > As someone with a list where half the categories have a single item, I do not want to click
 > twice to see one row.
@@ -552,13 +589,17 @@ identity is currently unspecified in code. Raised as **OQ-5** with 4.1; they are
   group, or always collapse into their row.
 - If they render as groups, they do not cost more interaction than the row is worth.
 
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) and [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/), for the *consistent* half only. The South region holds exactly one deal and renders as an ordinary group at every level — it counts, it summarises, it orders, and in [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) it costs the extra click the MUI X reporter objects to.
+
+**Why it is 🟡:** this story's criterion is "consistent **and stated**". It is consistent by construction — `buildClusters` has no size threshold — but nothing in the docs or on canvas says "always a group" is the deliberate answer, so a reader cannot tell the behavior from an accident. Closing this is a sentence in a doc, not code. OQ-6.
+
 **Design status — gap.** No decision. MUI X [#9032](https://github.com/mui/mui-x/issues/9032)
 (open) states the trade exactly: "If the group size is 1 this creates an unnecessary extra click
 when navigating the data. It is possible to auto-expand the group based on the group size, but then
 it feels like the group row is wasting vertical space." Raised as **OQ-6** — it is genuinely a
 product choice, and the honest answer may be "always a group", stated deliberately.
 
-## 4.4 — A saved grouping that no longer fits the table — ❌ not covered
+## 4.4 — A saved grouping that no longer fits the table — 🟡 partly covered *(the drop is announced by the story, not the library)*
 
 > As someone returning to a saved view after the report changed, I want to see the data, grouped by
 > as much of my saved arrangement as still applies — not an error, and not a blank page.
@@ -569,6 +610,10 @@ product choice, and the honest answer may be "always a group", stated deliberate
 - The table renders. Losing a grouping level is never a reason to show nothing.
 - I can tell that something was dropped, rather than quietly getting a different report than the
   one I saved.
+
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/)'s *Group by a column that isn't there*, which adds a level naming no column. `resolveGroupingLevels` drops it, the table groups by the rest and renders — the first two criteria, on canvas.
+
+**Why it is 🟡:** the third criterion — being **told** something was dropped — is met only by the story computing it itself, diffing `grouping()` against the known column ids. **The library has no channel to report a dropped level**, so a consumer who does not write that arithmetic gets a silently different report than the one they saved. That is the missing half of D14, unchanged by this pass. The `state-persistence.md` contradiction the Design status names below is also unchanged — `TableSnapshot.grouping?: string | null` still cannot represent a multi-level grouping at all.
 
 **Design status:** the degradation half is covered by D14 — construction config throws, runtime
 data skips that level and groups by the rest. **Two gaps.** Telling the person is not specified,
@@ -607,7 +652,7 @@ correct group instantly". Our own state side already flagged the insertion half
 
 ## Owned by selection *(built)*
 
-### X-G1 — Ticking a group's checkbox — ❌ not covered, resolved as consumer-owned (D16, 2026-09-12)
+### X-G1 — Ticking a group's checkbox — ✅ covered *(as the consumer recipe D16 calls for)*
 
 > As someone selecting everything in a region so I can act on it in bulk, I want to tick the
 > region's checkbox once, and I want to know exactly what I just selected.
@@ -624,6 +669,17 @@ correct group instantly". Our own state side already flagged the insertion half
 
 - Ungrouping, or regrouping by something else, never leaves phantom entries in my selection that
   correspond to groups that no longer exist.
+
+**Covered by:** [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) — the reference wiring D16 said the directive layer should eventually ship as its default, standing in until that layer exists. All four criteria render:
+
+- **Stated and consistent.** The `cascade` arg renders all three peer defaults off **one** `rowsOf()` call, each with its own on-canvas explanation: `self` (AG Grid) writes nothing, because there is no group node to write — a group is a view, not a record (§6) — so the box stays a read-only tri-state readout; `descendants` (TanStack) is one `select(rowsOf(group).map(trackBy))`; `descendants+parents` (MUI X) is the same write, because the upward half costs no code at all when ancestor state is derived rather than stored.
+- **Filtered and collapsed groups select what their count says.** `rowsOf()` is re-derived from `table.rows()`, not scanned out of `renderRows()`, so it is post-filter by construction and collapse-independent. Filter by rep, tick a group, and the selection matches the header's own number — **ag-grid [#11209](https://github.com/ag-grid/ag-grid/issues/11209) not happening**.
+- **Partly selected is visibly partly selected,** derived from `selectionStateOf(rowsOf(group))` every render (P10b).
+- **The count counts rows.** A second readout renders the number of group headers in the selection, which is always `0` — TanStack [#5700](https://github.com/TanStack/table/issues/5700) is only observable by looking, so the story looks.
+
+Failure: Ungroup, and the selection survives untouched. Nothing prunes because no header id was ever there to dangle (TanStack [#5822](https://github.com/TanStack/table/issues/5822)).
+
+**What this mark does not claim.** The cascade is consumer-owned by D16, so the story proves a **recipe**, not a library guarantee. A consumer who writes their own cascade gets none of the above for free.
 
 **Design status — gap, and the highest-stakes single choice in this document.** The three majors
 ship three different defaults, so "what people expect" is unavailable as a tiebreaker: AG Grid
@@ -655,7 +711,7 @@ question is updated to match.
 
 ## Owned by sorting *(built)*
 
-### S-G1 — Sorting by the column I grouped by — ❌ not covered *(forward-looking)*
+### S-G1 — Sorting by the column I grouped by — ✅ covered *(and the dead header does not occur)*
 
 > As someone who grouped by region and then clicked the region header expecting the regions to
 > reorder, I want to understand why nothing moved.
@@ -664,6 +720,8 @@ question is updated to match.
 
 - Either the click reorders the groups, or it visibly does nothing and the header shows why.
 - What does not happen: the header shows a sort indicator while the table does not change.
+
+**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) — and the dead header this story warns about does **not** occur in this composition, for a reason worth stating. No `groupOrder` is supplied, so group order is first-occurrence over the *sorted* rows: clicking Region reorders the rows, which reorders the first occurrences, which reorders the group headers. The click does something visible, so the first branch of criterion 1 holds and the anti-pattern in criterion 2 — a sort indicator over a table that did not change — never appears. D5's no-op is the narrower statement the story labels correctly: sorting a grouped column cannot reorder rows *within* a group, because they all hold the same value, and the header's own title says exactly that. Supplying a `groupOrder` comparator is what would decouple the two and bring the dead header back — see S-G2.
 
 **Design status — this is D5's accepted cost, and it is a real one.** D5 decouples group order from
 row sort, which makes sorting by the grouped column a **visible no-op**
@@ -675,10 +733,14 @@ the column header", with the reporter calling it "an inconsistent user experienc
 dedicated flag (`groupMaintainOrder`) to make the two coexist. **The deferral is defensible; leaving
 the person with a dead header is not.** At minimum the no-op must be legible.
 
-### S-G2 — Sorting rows inside a group — ❌ not covered *(forward-looking)*
+### S-G2 — Sorting rows inside a group — 🟡 partly covered *(rows yes, groups staying put no)*
 
 > As someone reading orders grouped by region, I want to sort by date within each region and have
 > the regions stay where they are.
+
+**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/), for the rows half only. Sorting **Amount** orders rows inside each group and leaves them contiguous, because the `'group'` render stage re-clusters after the pipeline's sort — the thing TanStack cannot express at all.
+
+**Why it is 🟡:** "and have the regions stay where they are" is not demonstrated anywhere. With no `groupOrder` supplied the group headers follow the sort, by design (see S-G1). The composition that would prove the decoupling — `withGrouping({ groupOrder })` **plus** `withSorting()` in one story — does not exist: [`grouping-static/`](../../src/stories/grouping/grouping-static/) has the comparator and no sorting, [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) has sorting and no comparator. This is 3.3's fourth criterion too, counted here once rather than in both places. Closing it is one story-level composition, not a design change.
 
 **Design status:** covered by construction — D5 plus a stable sort plus the fixed
 `filter → group → sort → expand` order. Recorded here because it is the half of S-G1 that works,
@@ -687,7 +749,7 @@ reorders the groups too).
 
 ## Owned by filtering *(built, uncommitted)*
 
-### F-G1 — Filtering a grouped table — ❌ not covered *(forward-looking)*
+### F-G1 — Filtering a grouped table — 🟡 partly covered *(counts and emptied groups yes; collapse restoration not composed)*
 
 > As someone filtering a grouped report down to open items, I want the groups to reflect what is
 > left — and I do not want a heading claiming forty rows sitting above six.
@@ -697,6 +759,10 @@ reorders the groups too).
 - Counts and summaries are computed over the rows that survived the filter.
 - A group with no surviving rows disappears rather than rendering empty.
 - Clearing the filter restores the groups, and my expand/collapse state with them (§2.5).
+
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) and [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) for the first two criteria: "rep contains" narrows the rows, every count and every `amount` total follows the surviving rows, and a group whose rows all filter out **disappears entirely** rather than rendering hollow — an empty group is unrepresentable because `filter` precedes `group` in `PIPELINE_ORDER`.
+
+**Why it is 🟡:** the third criterion — clearing the filter restores the groups **and the expand/collapse state with them** — is not demonstrated, because no story composes `withExpansion()` with `withFiltering()`. [`grouping-static/`](../../src/stories/grouping/grouping-static/) filters and does not expand (on purpose: a chevron with nothing to expand is a control that does nothing); [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) expands and does not filter. Same shape as S-G2's gap, and the same fix: one more composition, no design change.
 
 **Design status:** structurally covered — `filter` precedes `group` in `PIPELINE_ORDER`, so an
 empty group is unrepresentable, the same guarantee TanStack gets from its row-model order.
@@ -779,7 +845,7 @@ design does not answer the question early: it does not get answered at all.
 
 ## Owned by expansion *(built)*
 
-### E-G1 — A table with both collapsible groups and expandable rows — ❌ not covered *(forward-looking)*
+### E-G1 — A table with both collapsible groups and expandable rows — ✅ covered
 
 > As someone using a grouped table where individual rows also open to show detail, I want the two
 > controls to do different things.
@@ -790,6 +856,8 @@ design does not answer the question early: it does not get answered at all.
   trigger each other.
 - Collapsing a group hides its rows' open detail panels; reopening the group restores them, or
   clearly does not.
+
+**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) — the fixture's Services deal carries `children`, so the `'group'` and `'tree'` render stages both run over the same table and put **two visibly different chevrons** on screen: one on a group header, keyed by its synthetic group id, and one on a data row, keyed by the row's own id. Opening the deal never opens a group and opening a group never opens the deal — the unresolved half the Design status names is what the story resolves, and it is primeng [#18171](https://github.com/primefaces/primeng/issues/18171) not happening, where both features wanted the same toggle and the same row-level state slot. Collapsing a group hides the deal along with its subtree and reopening brings it back in the state it was left in, because group collapse never writes to the row's own entry in `expandedRows`.
 
 **Design status:** partly covered by D11 (grouping does its own subtree walk; `'group'` precedes
 `'tree'`) and by ADR-0011's ordered render chain, which is what makes this composable at all —
