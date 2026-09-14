@@ -1,14 +1,14 @@
 ---
 title: Storybook story conventions
 type: reference
-status: reflects current practice as of the 8 stories in src/stories/
-date: 2026-09-03
+status: reflects current practice as of the 18 stories in src/stories/
+date: 2026-09-14
 ---
 
 # Storybook story conventions — `libs/shared/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
-existing 8 stories already follow, so a new one doesn't drift from it. Not previously written
+existing 18 stories already follow, so a new one doesn't drift from it. Not previously written
 down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
 moves on.
 
@@ -65,8 +65,19 @@ src/stories/
 │       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
 │       └── <story-name>.mdx                         ← thin wrapper: Meta/Canvas/Source only
 ├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
-└── filtering/  grouping/  selection/        ← fixtures/ only; hosts land when those stories ship
+├── filtering/                               ← fixtures/ + filtering-story.css + 3 hosts
+│   └── client-filtering/  server-filtering/  selection-filtering/
+├── grouping/                                ← fixtures/ + grouping-story.css + 3 hosts
+│   └── grouping-static/  grouping-collapsible/  grouping-selection/
+└── selection/                               ← fixtures/ + selection-story.css + 2 hosts
+    └── multi-selection/  single-selection/
 ```
+
+**A feature's own stylesheet sits beside its `fixtures/`, not inside it.** `filtering-story.css`,
+`grouping-story.css` and `selection-story.css` are each imported by every host in their feature
+and by nothing else — a second importer within the feature, which is the `fixtures/` bar, but
+they are not fixtures. They layer after `styles/story-host.css`, which every host also lists
+first in `styleUrls`.
 
 The folder supplies the domain, so files inside drop the redundant prefix —
 `row-edit/fixtures/mock.ts`, not `row-edit/fixtures/row-edit.mock.ts`.
@@ -92,8 +103,33 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `composition/fixtures/types.ts` | The shared row shape (`CompositionRow`) and the criterion model (`CompositionFilterState`) |
 | `composition/fixtures/mock.ts` | Fixture rows and the dept option list (`COMPOSITION_ROWS_MOCK`, `COMPOSITION_DEPT_OPTIONS`) |
 | `composition/fixtures/schema.ts` | `compositionColumns` and `derivedStateConfig` (`TableConfig<CompositionRow>`, `trackBy: 'id'` + `columns`) |
+| `filtering/fixtures/types.ts` | `InvoiceRow` (one field per shipped rule kind, `note` nullable for the blank-cell case), `InvoiceStatus`, the criterion shapes, and the three per-story `…FilterState` models |
+| `filtering/fixtures/mock.ts` | `INVOICE_ROWS_MOCK` plus the hand-supplied `STATUS_OPTIONS`/`TAG_OPTIONS` — `createFilters()` takes no `data` argument, so option lists are never derived from rows |
+| `filtering/fixtures/schema.ts` | `clientInvoiceConfig`, `serverInvoiceConfig`, `selectionInvoiceConfig` (one per story over one column list), and `serverFilterFormSchema` — the `debounce(path.search, 300)` that only the server story needs |
+| `filtering/fixtures/utils.ts` | Type guards and pure helpers (`isInvoiceStatus`, `isRangeCriterion`, `toggleOption`, `formatCriterion`) |
+| `filtering/fixtures/http.ts` | `injectInvoiceApi()` — `GET /api/invoices`; the host builds `params`, because the query mapping is the shipped DX |
+| `filtering/fixtures/handlers.ts` | MSW handlers for the server story |
+| `filtering/filtering-story.css` | Filtering-specific styling — filter row, active markers, chip summary, notices |
+| `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
+| `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
+| `grouping/fixtures/schema.ts` | Three table configs over one column list, the level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
+| `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — one formatter behind every rendered value, group labels included, so S8's `[object Object]` shows rather than being papered over |
+| `grouping/fixtures/http.ts` | `injectGroupedRowsApi()` — `fetchRows` plus `fetchGroupingPreference`, the async grouping rule's source |
+| `grouping/fixtures/handlers.ts` | MSW handlers for the refetch and async-rule round trips |
+| `grouping/grouping-story.css` | Grouping-specific styling — group rows by `data-row-kind`/`data-depth`, level pills, chevrons, opt-in sticky headers |
+| `selection/fixtures/types.ts` | `SelectionRow` — `locked` drives `enableRowSelection`; wider than `EditRow` so select-all and a count are meaningful |
+| `selection/fixtures/mock.ts` | `SELECTION_ROWS_MOCK`, `SAVED_SELECTION_IDS` (carries an id no row has), `SAVED_CONFLICTING_SELECTION_IDS` (two ids that both exist) |
+| `selection/fixtures/schema.ts` | `multiSelectionConfig` and `singleSelectionConfig` — identical shape, because `enableMultiRowSelection: false` is a `withSelection()` argument, not a config field |
+| `selection/selection-story.css` | Selection-specific styling — count banner, control column, `aria-disabled` and locked-row treatment |
 | `styles/story-host.css` | Shared story styling; every feature's own stylesheet layers after it |
 | `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by every story's mdx |
+
+**No `ui/` folder outside `row-edit/`.** Demo-only instrumentation that belongs to exactly one
+story stays in that story's folder — `selection/multi-selection/selection-event-log.ts` is the
+only instance, and it is there rather than in `selection/fixtures/` because one story imports it.
+Story-local **arg types** follow the same rule: `grouping-static/grouping-static.types.ts` and
+`grouping-selection/grouping-selection.types.ts` name that host's own Storybook controls and
+nothing else.
 
 No barrel. Stories are not public API and `.storybook/main.ts` globs `../src/stories/**`, so
 depth is free.
@@ -303,6 +339,37 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   persistent per-row errors with Retry, one manual undo slot); `live-optimistic/` isolates just
   the `withOptimistic()` rollback verbs (capture on focus, revert-after-failure on blur), plus a
   timed Undo affordance for delete.
+- **`filtering/` — three hosts, and the composition differs between them on purpose.**
+  `client-filtering/` composes `withFiltering({ filters })` and is the baseline: five rule kinds
+  plus a declared `anyOf` quick filter, a chip summary, `Reset to defaults` vs. `Clear all` as two
+  visibly different buttons, and a broken-predicate toggle that widens the result set.
+  `server-filtering/` composes **no filtering feature at all** — `createFilters()` feeds the
+  request and the rows arrive narrowed, so a client `filter` stage would have nothing to do; it
+  also carries the only `debounce` in the set and overrides core `totalRowCount` with the server's
+  own via `createTableFeature()` (ADR-0005). `selection-filtering/` adds `withSelection()` +
+  `withSorting()` and is where selection-under-filter is measured — see `0-product/filtering.md`
+  §5 F-S1. All three put their `createFilters()` call in the host, not `fixtures/`.
+- **`grouping/` — three hosts, split by what the table *is*, not by feature flags.**
+  `grouping-static/` is the grouped table as its own product: `withGrouping()` + `withFiltering()`
+  and deliberately **no** `withExpansion()`, because a chevron with nothing to expand is a control
+  that does nothing. It carries the widest arg surface in the repo (`groupOrder` across five modes
+  including a throwing one, `groupedColumnMode` across all three peer dispositions, `showCount`,
+  `stickyHeaders`, and an async grouping rule with its own pending/resolved/failed states).
+  `grouping-collapsible/` is the navigable outline — `withExpansion()` + `withSorting()`, a real
+  `<button>` chevron carrying `aria-expanded`, and three separate attacks on the collapse state.
+  `grouping-selection/` renders all three peer cascade defaults off one `rowsOf()` call.
+  **Three of its controls are honest regressions, annotated as live gaps rather than dressed up**
+  — a broken summary takes the whole table down (#79), a dropped grouping level is unannounced,
+  and blank/object group keys have no label. A story that ships a known-wrong behavior says so on
+  canvas and links the issue; it does not quietly avoid the case.
+- **`selection/` — two hosts, because the mode is a construction-time argument.**
+  `multi-selection/` puts the whole read/write surface of `withSelection()` on one screen,
+  including a `selectionChanged` event log that is the only place D9's single-delta clear and
+  D11's silent reconciliation prune are distinguishable. `single-selection/` is a sibling rather
+  than a toggle, per the fixed-mode rule above: `enableMultiRowSelection: false` is passed at
+  construction, so a toggle would leave a dead branch in the host. Its control is a **radio
+  group**, which makes the replace rule the control's own semantics and supplies arrow-key roving
+  focus for free.
 - `external-write/` — demonstrates an effect from *outside* the story's own button clicks
   (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
   an open row, quiet patch on a closed one) — a worked example of the scope discipline above:

@@ -1,8 +1,16 @@
 ---
 title: Gap analysis — Storybook stories vs. product grouping stories
 type: plan
-status: open — proposal, nothing here built yet
-date: 2026-09-13
+status: >
+  built 2026-09-14. All three story folders shipped — `grouping-static/`, `grouping-collapsible/`,
+  `grouping-selection/` — plus the four group-level updaters exported from `index.ts` and the
+  async grouping rule. Coverage re-derived into `0-product/grouping.md`: §1–§4 is 9 ✅, 5 🟡, 3 ❌;
+  cross-feature is 3 ✅, 2 🟡, 4 ❌. Still tracked, shipped as honest regressions rather than hidden:
+  C3 (S4's "is everything expanded" signal, so neither Expand-all button can label itself), C5
+  (blank/object group keys, S7/S8), S2/#79 (an `aggregateFn` that throws takes the whole table
+  down instead of blanking one summary), and D14's missing half (a dropped level is announced by
+  the story's own arithmetic, not by the library). C4 is issue #60 steps 5–6.
+date: 2026-09-14
 parent: ../../architecture.md
 ---
 

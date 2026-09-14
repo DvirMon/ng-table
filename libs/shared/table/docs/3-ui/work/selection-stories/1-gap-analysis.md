@@ -1,8 +1,16 @@
 ---
 title: Gap analysis — Storybook stories vs. product selection stories
 type: plan
-status: open — proposal, nothing here built yet
-date: 2026-09-13
+status: >
+  built 2026-09-14. Both story folders shipped — `multi-selection/`, `single-selection/`. Coverage
+  re-derived into `0-product/selection.md`: 12 ✅, 5 🟡, 4 ❌, with X-1 still blocked on D12's bulk
+  write verbs. §5.2 flipped to ✅ unexpectedly — the multi story's lock control is exactly its
+  scenario, though OQ-6's question of whether retain-and-tell is the *right* answer is untouched.
+  **Node H remains the blocker** and is now the named reason three stories are ❌ or 🟡:
+  `3-ui/directives/selection.md` is still `spec: stub, code: none`, which gates shift-click range
+  select (§1.3, 4 of 5 peers ship it), Shift+Arrow (§4.2), the roving-focus / Tab-containment
+  model (§4.1) and screen-reader announcements (§4.3). It is spec work for `/grill-with-docs`.
+date: 2026-09-14
 parent: ../../architecture.md
 ---
 

@@ -1,8 +1,16 @@
 ---
 title: Gap analysis — Storybook stories vs. product filtering stories
 type: plan
-status: open — proposal, nothing here built yet. Revision 2 (research corpus folded in)
-date: 2026-09-13
+status: >
+  built 2026-09-14. All three story folders shipped — `client-filtering/`, `server-filtering/`,
+  `selection-filtering/` — then were reworked in review (see `2-review-criterion-control.md`):
+  `fixtures/filters.ts` deleted, each host declares its own `createFilters<TRow, TState>()`, and
+  Signal Forms binds straight to the criterion model. Three library gaps were fixed to allow that
+  — root `value` is a `WritableSignal`, `withFiltering()` carries `TState`, `reset()` takes a
+  `Partial<TState>`. Coverage re-derived into `0-product/filtering.md`: 14 ✅, 1 🟡 (F-S1's hidden
+  count), 2 ❌ (1.4 by design, F-P1 needs pagination). Deferred: node H (the hidden-selection count
+  signal), owned by `work/computed-state-mechanism/`. Revision 2 (research corpus folded in).
+date: 2026-09-14
 parent: ../../architecture.md
 ---
 
