@@ -141,9 +141,9 @@ Signal Forms schema — same rule as any other component in this repo (`file-org
 **`createFilters()` is the exception, and belongs in the host** (2026-09-14). A filters schema is
 a declaration a consumer writes, not data a story is handed — the same category as the
 `createTable()` call it sits next to, and unreadable one file away. Fixtures keep the rows, the
-option lists, the table config and the form schema; the `createFilters<TRow, TState>(…)` call
-goes in the host's field initializer. Pass `TState` there too: without it every node reads back
-`unknown` and the host grows a narrowing layer over state the library already types.
+option lists, the table config and the form schema; the `createFilters(rows, (path) => [ … ])`
+call goes in the host's field initializer. Nothing to annotate: the row type comes from the
+carrier and every node's criterion type is inferred from the returned rules.
 
 **Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
 via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack

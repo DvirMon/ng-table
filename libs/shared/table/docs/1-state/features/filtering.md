@@ -1,7 +1,7 @@
 ---
 title: State Layer Reference — withFiltering()
 type: architecture
-version: 3.0
+version: 3.1
 date: 2026-09-14
 capability: filtering
 spec: drilled
@@ -18,10 +18,10 @@ The client-side half of filtering, and **only** that half. It applies a list of 
 to the rows in the pipeline's `filter` stage.
 
 ```ts
-readonly filters = createFilters<Invoice>((path) => {
-  equals(path.status);
-  inRange(path.amount);
-});
+readonly filters = createFilters(this.data, (path) => [
+  equals(path.status),
+  inRange(path.amount),
+]);
 
 readonly table = createTable(
   this.data,
@@ -29,6 +29,9 @@ readonly table = createTable(
   withFiltering({ predicates: () => [this.filters().matcher()] }),
 );
 ```
+
+`this.data` appears in both calls and is not shared state: the table reads the rows,
+`createFilters` only takes the row type from them.
 
 It owns no filter state, and it does not know what a filter is. A predicate is the whole
 contract: the feature imports nothing from the filters domain and names no filter type
@@ -83,7 +86,7 @@ withFiltering({ predicates: () => [], manual: true })
 ```
 
 - The pipeline **skips the client-side filter stage** entirely; the terms are not evaluated.
-- Whatever produced the terms is untouched — a filter model's `value()`, `active()` and `dirty()`
+- Whatever produced the terms is untouched — a filter model's `value()`, `criteria()` and `dirty()`
   behave identically.
 
 **Retained for symmetry, not necessity** (R23), and the argument is one step weaker than it was.
@@ -129,7 +132,7 @@ table does not own.
 
 **None.** The old `filterChanged` observable is gone. Criteria live wherever the consumer put
 them — with `createFilters()` that is a signal, so a consumer who wants to react reads it and a
-resource depending on `active()` re-runs on its own.
+resource depending on `criteria()` re-runs on its own.
 
 ## Decisions
 
@@ -141,6 +144,9 @@ Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filt
   constructed at all.
 - **R23** — `manual` is kept for cross-feature consistency. Still holds, with the weaker rationale
   recorded under [`manual`](#manual) above.
+- **R49** — `criteria()` is the filter model's set-criteria member, named `active()` in `src/`
+  until `#96` lands. This file mentions it only in passing; the member set belongs to
+  [filters.md](../filters.md#state).
 - **R26** — **executed 2026-09-14.** The superseded imperative implementation is gone:
   `setColumnFilter()`, `setGlobalFilter()`, `clearFilters()`, `columnFilters` and `globalFilter`
   no longer exist. It was a planned breaking change, not a cleanup, and it is done — anything
@@ -150,8 +156,8 @@ Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filt
 options doc discusses this feature as an *adapter over a filter model*, with `filters` as its
 config field and a criterion-map type parameter carried through. Both are gone; the feature takes
 a predicate list and the wiring is composition the consumer writes. Any R-number describing the
-`filters` field, `createFilterEvaluator`, or the `TState` call-site rules describes a shape that
-no longer exists — read the ADR for what replaced it, not the options doc.
+`filters` config field, `createFilterEvaluator`, or a caller-supplied criterion map describes a
+shape that no longer exists — read the ADR for what replaced it, not the options doc.
 
 Superseded behavioral decisions from v1.1 of this file, kept here so the change is traceable:
 

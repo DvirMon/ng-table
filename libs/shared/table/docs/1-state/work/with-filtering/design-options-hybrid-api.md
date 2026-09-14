@@ -1,8 +1,10 @@
 ---
 title: Filtering API — design decisions (createFilters)
 type: design
-status: grill complete — 31 decisions recorded, ready to spec
-date: 2026-09-09
+status: re-grilled 2026-09-14 — 49 decisions recorded (R11 superseded by R35; R32 by R34/R36;
+  R33 ceases to exist; R43 and R46 superseded by R47 after the decoupling landed; R48 finishes S2;
+  R49 records issue 96's active() split), ready to spec
+date: 2026-09-14
 audience: developers
 ---
 
@@ -609,6 +611,10 @@ entry per criterion:
 `filters.search` is an ordinary handle at the binding site. The predicates behind it are
 invisible, exactly as `filters.amount` hides `{min, max}` behind one pair of controls.
 
+> **✅ Stands (2026-09-14, re-grill).** `createFilters` is still standalone, and R35's row carrier
+> involves no table — the rows are an inference anchor and are never read. The snippet below
+> predates the carrier; the shipped call form is in [`docs/1-state/filters.md`](../../filters.md).
+
 **R10 — `createFilters()` is standalone, not a `withFiltering()` config field** (resolves Q7).
 Forced by server mode, not chosen on taste: there, the filters feed the request that *produces*
 the data.
@@ -630,6 +636,16 @@ working alternative to defer to.
 
 Corrected on the way here: an `effect()` watching `filters.value()` and writing a data signal.
 `resource({ params })` is the reactive shape; an effect writing a signal is not.
+
+> **⚠️ Superseded by R35 (2026-09-14, re-grill).** Data is accepted when it exists —
+> `createFilters(rows, schema)` takes a row carrier, and `rowOf<Row>()` is the server-mode escape
+> hatch rather than a separate API, so "takes no `data` argument" is no longer the shape.
+> **Its closing claim is factually wrong.** Recovery through the *callback* was never the
+> mechanism: R35 anchors `TRow` on a value in argument position, exactly as `createTable(data, …)`
+> and `form(model, …)` do — the two APIs R11 itself names as better off. Compiled evidence:
+> [research-typescript-inference-probes.md](../filters-inferred-state/research-typescript-inference-probes.md).
+> The accepted-cost block below is what R35 removed, and it stays on the page. Shipped shape:
+> [`docs/1-state/filters.md`](../../filters.md).
 
 **R11 — `createFilters` takes no `data` argument; it is parameterised by `TRow` only**
 (resolves Q2).
@@ -1268,6 +1284,10 @@ export whose meaning flips on argument count is the kind of API a reader has to 
 Note `hasAny`/`hasNone` were already boolean-shaped names in the rule position; `hasAnyOf` /
 `hasNoneOf` moves the guard reading to the matcher and leaves the rule reading as a declaration.
 
+> **✅ Stands, and is finally enforceable (2026-09-14, re-grill).** R45 gave the literal-key guard
+> a real inference site, so the string-literal requirement below is now rejected at compile time
+> instead of being advice.
+
 **R31 — `as` overrides a borrowed key; it does not license a second filter on the path.**
 
 R9 borrows the key from the path when there is one, and `anyOf` takes a key positionally because
@@ -1300,6 +1320,12 @@ dropping to `filter()` with a compound criterion. Removing the path check later 
 granting R6's escape hatch — remains additive and non-breaking, which is the same reversibility
 argument R6 itself was decided on.
 
+> **⚠️ Superseded by R34/R36 (2026-09-14, re-grill).** The criterion map is inferred from the
+> schema's returned array; the caller-supplied type parameter is gone. The argument below rests on
+> `schema: (path) => void` having no return channel to observe — sound on its own premise, and the
+> premise is what moved: R34 made every rule return its record, R36 made the schema return them.
+> Shipped shape: [`docs/1-state/filters.md`](../../filters.md).
+
 **R32 — `Filters<TRow, TState>` takes a second, caller-supplied type parameter.**
 
 `createFilters<TRow>(schema)`'s single-param signature (R11) assumed `TState` — the flat
@@ -1315,6 +1341,13 @@ existing `TRow` cost). A consequence, not separately decided: enforcing `as` as 
 nothing currently rejects a `string`-typed `as` value at compile time. Revisit if TypeScript
 gains a way to invert an imperative builder into an inferred return type; until then this is
 accepted the same way R11 accepted `TRow`'s cost.
+
+> **⚠️ Ceases to exist (2026-09-14, re-grill).** Nothing took this decision's job over — the job
+> stopped existing. The ambient recorder stack is deleted with the recorder itself (R34): every
+> rule builds and returns its own record, so there is no enclosing session to recover. Both riders
+> go with it — the non-reentrancy caveat, and the "Known gap" that forced
+> `anyOf<Invoice>('search', …)`, since `anyOf(key, children)` takes already-built rules and has no
+> inner callback to infer `TRow` for. Shipped shape: [`docs/1-state/filters.md`](../../filters.md).
 
 **R33 — `anyOf`/`applyWhen` recover their enclosing recorder from an ambient stack, not a parameter.**
 
@@ -1407,6 +1440,444 @@ This supersedes R11's "no `data` argument": data is accepted when it exists, and
 server-mode escape hatch rather than a separate API. It also corrects R11's closing claim that
 TypeScript cannot recover `TRow` from a callback parameter — it can (§2); it is merely fragile,
 which is why the carrier, not the annotation, is the mechanism.
+
+**R36 — The schema returns an **array** of rules; keys stay implicit, borrowed from paths.**
+Channel 1 of the three TypeScript offers. `StateOf<S>` folds the returned tuple into the
+criterion map:
+
+```ts
+type StateOf<T extends readonly unknown[]> =
+  { [R in Extract<T[number], AnyRule> as R['key']]: CriterionOf<R> };
+```
+
+```ts
+createFilters(this.invoices, (path) => [
+  equals(path.status),
+  inRange(path.amount),
+  contains(path.customer, { as: 'client' }),
+  anyOf('search', [contains(path.note), filter(path.id, matchesInvoiceNumber)]),
+]);
+// → Filters<Invoice, { status: …; amount: {min;max}; client: string; search: string }>
+```
+
+Criteria infer exactly, including `filter()`'s, taken from the predicate's own annotation — so a
+hand-written `tags: TagCriterion` entry disappears. The array keeps today's ergonomics: one key
+space, keys borrowed from paths, `as` renaming (R31 survives), `anyOf`'s key positional (R9
+survives).
+
+The object form (`(path) => ({ status: equals(path.status) })`) infers equally exactly and was
+rejected on cost, not capability: it would make every key a property name, deleting `as` and
+`anyOf`'s positional key and turning duplicate keys into ts1117 — at the price of writing
+`status:` beside every `path.status`, i.e. restating in the key what the path already says.
+
+**Rejected: a third `model` argument (Signal Forms' own mechanism).** `form(model, schema)` needs
+no return channel because `model` already *is* the form's type and `path` walks that same model.
+Filters have two key spaces — rules read row paths and write criterion keys, and the row does not
+determine the criterion (`amount: number` → `{min,max}`; `note` + `id` → one `search`). So a model
+would be a *third* argument beside the carrier, stating every key a second time with nothing
+cross-checking the two. Channel 1 states each key once.
+
+> **Implementation constraint, non-negotiable (§5).** Never name the key type in the schema's
+> constraint. `S extends readonly FilterRule<string, unknown>[]` contextually types the array
+> elements and pushes `string` down onto every rule's key parameter, widening all of them; the
+> tuple survives, so it reads like tuple widening and sends you after the wrong cause. Use
+> `S extends readonly unknown[]` and `Extract` inside `StateOf`. `as const`, the `const` type
+> parameter modifier, and a variadic `[...T[]]` constraint all fail to fix it — none addresses
+> contextual typing. This bit `createFilters` and `applyWhen` identically; every future rule
+> combinator takes the same constraint.
+
+> **⚠️ Corrected in implementation (2026-09-14).** The closing claim below — that `applyWhen(…)`
+> and `...applyWhen(…)` "both work and neither can be got wrong" — is not what shipped. The node
+> deliberately has no `[Symbol.iterator]`, so a spread is a `TS2488` compile error rather than a
+> second working form (`rules.ts`'s `applyWhen`, `types.ts`'s `ConditionalRule`). The decision
+> itself stands: the node is what removes the silent-drop failure, and failing loudly on the
+> spread is how. Shipped shape: [`docs/1-state/filters.md`](../../filters.md).
+
+**R37 — `applyWhen` returns one nestable node; `StateOf` recurses into nested rule collections.**
+The research doc's shape — `applyWhen` returns an array the caller spreads — introduces a silent
+failure the current void API cannot have: a forgotten `...` leaves a nested array in the tuple,
+`Extract<T[number], AnyRule>` skips it, and those filters disappear from `TState` *and* from the
+runtime with no error at either level. Instead `applyWhen` returns a single value carrying its
+children and `StateOf` flattens nested collections, so `applyWhen(…)` and `...applyWhen(…)` both
+work and neither can be got wrong. Cost: one recursive conditional in `StateOf`, paid once in the
+library, against a silent data-loss failure paid at every call site.
+
+Each gated rule still keeps its own key and still lands as a top-level entry in `TState` — the
+nesting is syntax, not structure. R15's semantics are unchanged: every rule inside shares the one
+gate, none references the others.
+
+> **Correction to [research-typescript-inference-probes.md](../filters-inferred-state/research-typescript-inference-probes.md)'s
+> "Known holes" #1.** Key collision is *not* an open hole. `filters/validate.ts` already throws at
+> construction on a duplicate key ("Two filters both resolve to the key …"), alongside the
+> path-uniqueness check — both shipped with R5/R31. The type-level merge the research doc
+> describes is real but unobservable: construction throws before anyone reads `TState`. Node 6 of
+> the ranking needs no work.
+
+**R38 — `path` stays a callback parameter; no standalone `pathOf<TRow>()`, no `filtersSchema()`
+value.** R36's callback is upheld against two alternatives raised during the re-grill.
+
+*Rest arguments instead of an array* — `filtersSchema(equals(invoice.status), inRange(invoice.amount))`
+— is newly possible only because of R34: once rules stop recording, a `FilterHandle` is purely
+structural (an `id` and a phantom `TRow`), so a free-standing `pathOf<TRow>()` is sound where
+today `assertFilterPathIsCurrent` forbids it. Rest params infer as a tuple, so `StateOf` and the
+§5 constraint work identically. Rejected anyway: rules are evaluated eagerly as arguments, so the
+path must be bound to a name before any rule is written. That buys a module-scope, reusable,
+independently unit-testable schema value at the cost of a binding line and a path that can be
+paired with the wrong carrier. The callback scopes the path to exactly the schema that uses it and
+costs nothing.
+
+*String keys* — `equals('status')`, needing no path value at all — is rejected outright: it drops
+`path.` autocomplete, drops `keyof TRow` checking where the rule is written, and leaves
+`filter(path.id, (cell, c) => …)` without `cell`'s type until the `createFilters` call.
+
+A shared schema therefore stays a plain exported function, `(path: FiltersPath<Invoice>) => [...]`.
+It carries no inferred `S` of its own until applied — accepted; `createFilters` is where `TState`
+materialises, and there is no second shape to document or keep in sync.
+
+**R39 — `FiltersPath<never>` resolves to an error-shaped type.** R35's wide carrier slot has one
+degenerate case: an empty untyped carrier (`createFilters([], …)`, `createFilters(signal([]), …)`)
+infers `TRow = never`, and because `keyof never` is `PropertyKey`, `FiltersPath<never>` collapses
+to an index signature — `path.anythingAtAll` compiles, every criterion degrades, nothing errors.
+Realistic wherever a spec or story starts from an empty list.
+
+```ts
+type FiltersPath<TRow> = [TRow] extends [never]
+  ? { readonly __rowTypeCouldNotBeInferred_useRowOf:
+        'createFilters: the first argument is empty, so the row type is unknown. Pass rowOf<Row>() instead.' }
+  : { readonly [K in Extract<keyof TRow, string>]: FilterHandle<TRow, K> };
+```
+
+The error lands on the first `path.x` and its text names the fix. Guarding the schema parameter
+instead (`schema: [TRow] extends [never] ? never : …`) fails earlier but blames the schema
+argument rather than the empty carrier that caused it, so the path branding wins. No correct call
+is affected.
+
+**R40 — A schema that doesn't return its rules throws at construction.** Under R34 a bare
+`equals(path.status);` statement is inert — the returned record is discarded and nothing is
+declared. `createFilters` therefore rejects a schema whose result isn't a rule collection:
+
+```ts
+'[createFilters] The schema function must return its rules. A body that calls rules as
+ statements declares nothing — return an array: (path) => [equals(path.status)]'
+```
+
+Construction-time, deterministic, fires on first run before data flows — the throw class of
+ADR-0014, same as the duplicate-key and duplicate-path checks. It catches the whole-body mistake,
+which is the one a reader migrating from the old void shape will actually make. It does not catch
+a mixed body that returns some rules and bare-calls others; that residue is accepted rather than
+paid for with a custom lint rule.
+
+> **Correction to the research doc's "Known holes" #3.** Its proposed fix — the
+> `no-unused-expressions` lint rule — does not fire here. That rule deliberately permits bare call
+> expressions, on the assumption a call has side effects. After R34 these calls have none, so the
+> rule sees nothing to report. A runtime guard, or a purpose-written lint rule, are the only two
+> options; the guard was taken.
+
+**R41 — `TState` loses its `Record<string, unknown>` default.** `Filters<TRow, TState>` and
+`WithFilteringConfig<TRow, TState>` both require the second argument once it is always inferred.
+The default existed only because `TState` was optional to supply; kept, it is a silent-widening
+trap — `filters.types.ts` already documents that `Filters<TRow, TState>` is *not* assignable to
+`Filters<TRow>`, because `FilterNode<T>` holds an invariant `WritableSignal<T>`, so a helper
+annotated `Filters<MockRow>` receives `unknown` criteria and cannot read them.
+
+No consumer ever writes `TState`: `readonly filters = createFilters(this.invoices, (path) => […])`
+infers it, and `withFiltering({ filters: this.filters })` infers it again from the object. The
+default only reaches code that spells `Filters<…>` by hand.
+
+> **Site list corrected 2026-09-14, after the decoupling.** Both original entries have moved:
+>
+> - `api/features/selection.utils.spec.ts:23,27` — `buildFilters`/`makeFilteredStore` do **not**
+>   become generic in `S`. Under the decoupling that spec stops building a `createFilters` schema
+>   at all and narrows with a bare predicate, so the site deletes rather than widens. Same for
+>   `with-grouping.spec.ts`'s four schemas — cross-feature specs were never testing filtering.
+> - `stories/grouping/fixtures/schema.ts:96` — stands: `createDealFilters(): Filters<DealRow,
+>   DealFilterState>` drops its return annotation, along with `DealFilterState`.
+>
+> **And the count was wrong: five exported `*FilterState` types delete, not three** —
+> `CompositionFilterState` (`stories/composition/fixtures/types.ts:17`),
+> `ClientInvoiceFilterState` / `ServerInvoiceFilterState` / `SelectionInvoiceFilterState`
+> (`stories/filtering/fixtures/types.ts:52,62,69`) and `DealFilterState`
+> (`stories/grouping/fixtures/types.ts:34`). Two more are spec-local and go the same way
+> (`create-filters.spec.ts:35`, `with-filtering.spec.ts:516`).
+>
+> **Open conflict with `WithFilteringConfig` — see R47's open question.** Removing the default
+> from `WithFilteringConfig<TRow, TState>` breaks a `predicates`-only call, which supplies no
+> `filters` for `TState` to infer from. The two are no longer one decision.
+
+**R42 — The server-mode token is `rowOf<TRow>()`, exported publicly.** A phantom value carrying
+only a row type, for the case R11 was built around: filters declared before any data exists.
+
+```ts
+import { createFilters, rowOf } from '@acme/table';
+createFilters(rowOf<Invoice>(), (path) => [equals(path.status)]);
+```
+
+The near-collision with `RowOf<S>` (`engine/types.ts:105`), which runs the opposite direction —
+extracting a row type *out of* a store shape — is accepted: casing separates them, and `rowOf` is
+the name the research doc established. `rowType<TRow>()` was the alternative considered.
+
+Not viable, and closed out here: dropping the token and writing `createFilters<Invoice>([], schema)`.
+Per §1 partial type-argument inference does not exist, so naming `TRow` forces `TState` to be named
+too — which is the cost this whole change removes.
+
+> **⚠️ R43 is obsolete — the gap closed itself on 2026-09-14, before this was implemented.**
+> `matcher(): (row: TRow) => boolean` on `FiltersRoot<TRow, TState>` (#102, `fded966` — S1 of
+> [migration-decouple-filters-from-table.md](migration-decouple-filters-from-table.md)) puts
+> `TRow` in the type body for a reason that isn't a brand: the root compiles a real row
+> predicate, so it genuinely consumes the row type. **Build no phantom member.** The spec below
+> is retained because its reasoning is what the migration then acted on, and because its closing
+> claim about the spec site is now a description of shipped code, not of work.
+>
+> Everything R43 wanted is already true and already asserted:
+> `create-filters.spec.ts:711` (`@ts-expect-error` — "TRow is no longer phantom") and
+> `with-filtering.spec.ts:458` (a matcher over `OtherRow` cannot stand in for one over `Row`).
+> The line numbered `:256` below moved; the assertion it was to be inverted into exists at `:458`.
+
+**R43 — `Filters` brands `TRow`.** `TRow` is declared on `Filters<TRow, TState>` today but never
+appears in the type body, so it is phantom: `with-filtering.spec.ts:256` asserts outright that a
+`Filters<OtherRow>` is *not* rejected. A `Deal` table can be wired to invoice filters and every
+predicate silently reads fields that aren't there. Masked until now because a defaulted `TState`
+made most filter sets the same widened type; after R41 they are distinct per call site, leaving
+this as the last structural gap in the pair.
+
+One internal phantom member puts `TRow` in the body. It enforces only what `FiltersPath<TRow>`
+already requires — that **paths** come from the row. **Keys** stay free-form: `as` invents one,
+`anyOf` names one positionally, and neither has to exist on `TRow`. The brand constrains `TRow`,
+never `TState`.
+
+Structural typing is preserved, which keeps this from being over-tight: an identically shaped
+`InvoiceDto`, or a wider `InvoiceRow` carrying extra fields, still accepts the same filter set.
+Only a genuinely unrelated row type is rejected. R10 is untouched — the brand records which row
+type the paths were read from; no table is involved, and `createFilters` still constructs
+standalone.
+
+`with-filtering.spec.ts:256` inverts as part of this: from documenting the gap to asserting the
+rejection.
+
+**R44 — `anyOf` takes a non-empty tuple of children, and its shared criterion is now checked.**
+
+```ts
+export function anyOf<TKey extends string, C extends readonly [unknown, ...unknown[]]>(
+  key: TKey,
+  children: C,
+): GroupRule<TKey, CriterionOf<C[number]>>;
+```
+
+Two things follow, neither of which the void API could express:
+
+- **Empty groups are a compile error**, not just a construction throw. The constraint names no key
+  type, so §5's contextual-typing trap does not apply. The runtime throw stays as a backstop for
+  untyped callers.
+- **A mixed-criterion group stops compiling.** `rules.ts:213` borrows `isEmpty`/`emptyValue` from
+  the group's first child while every child keeps its own predicate, so a group pairing a `string`
+  child with a `{ min: number }` child compiles today and misbehaves at runtime — the first
+  child's emptiness test applied to the other's criterion. With one inferred shared `TCriterion`
+  the pair is rejected: `Type '{ min: number; }' is not assignable to type 'string'`. Borrowing
+  from the first child becomes sound rather than merely conventional, so it stays.
+
+R33's known gap disappears with R33 itself: `anyOf`'s nested callback is gone, so there is no
+inner schema function left to fail to infer `TRow`, and `anyOf<Invoice>('search', …)` no longer
+needs its explicit type argument.
+
+**R45 — `as` becomes genuinely enforceable, closing R31's residue.** `EnforceLiteralKey`
+(`filters.types.ts:10`) already rejects a widened `string`, but R32 recorded that nothing made it
+bite: `TAs` had no real inference site, so `{ as: someStringVar }` produced an untyped key
+silently. With rules returning their record, `TAs` is inferred per rule call from `FilterOptions.as`
+itself and the guard finally fires. No API change — a consequence of R34, recorded so the R31/R32
+residue is closed rather than left dangling.
+
+> **⚠️ Superseded by R47.** R46 was written the same day as, but independently of,
+> [migration-decouple-filters-from-table.md](migration-decouple-filters-from-table.md), and the
+> two plans rewrite the same call sites — every story host and cross-feature spec would be edited
+> twice, once for `predicates` and once for the array schema. R47 merges them into one ranking.
+> The three-way split by reviewable unit below survives inside it; the sequencing does not.
+
+**R46 — Three issues, with the first two sequenced on one branch.** Split by reviewable unit:
+
+1. **Library** — `rules.ts` returns records; `create-filters.ts` takes `(rows, schema)` and gains
+   the return guard; `filters.types.ts` gains `StateOf`, the `FiltersPath<never>` branding, the
+   `TRow` brand, and loses the `TState` default; `anyOf`'s non-empty tuple; `applyWhen`'s nestable
+   node; `rowOf()` added and exported; `filters/recorder.ts` deleted.
+2. **Call sites** — 3 story hosts, 2 story fixtures, 8 spec sites; three `*FilterState` types
+   deleted; `selection.utils.spec.ts:27` made generic in `S`; `with-filtering.spec.ts:256`
+   inverted.
+3. **Docs** — `docs/1-state/filters.md` and `docs/1-state/features/filtering.md` rewritten;
+   R10/R11/R31/R32/R33 marked superseded where they stand.
+
+Issues 1 and 2 are tracked separately for review size but are **not independently shippable** —
+the library change breaks every call site until 2 lands, so they share one branch (or stack) and
+the build is green only at the end of 2. Issue 3 is genuinely parallel-safe once 1's signature is
+settled.
+
+`Depends on: 1` for 2. `Parallel-safe with: 1, 2` for 3, once the signature is fixed.
+
+### What the re-grill supersedes
+
+| | |
+|---|---|
+| R10 | stands — `createFilters` is still standalone, and the carrier involves no table |
+| R11 | superseded by R35 — data is accepted when it exists; `rowOf()` is the server-mode escape hatch, not a separate API. Its closing claim (TypeScript cannot recover `TRow` from a callback parameter) is factually wrong; see §2 |
+| R31 | stands, and R45 finally makes `as` enforceable as a string literal |
+| R32 | **superseded by R34/R36** — `TState` is inferred; the caller-supplied type parameter goes |
+| R33 | **ceases to exist** — deleted with the recorder (R34), taking its non-reentrancy caveat and its `anyOf` `TRow` gap with it |
+| R5, R8, R9, R15, R18, R24 | stand unchanged — the mechanism moved, the semantics did not |
+
+## Sync with the decoupling migration (2026-09-14)
+
+R34–R46 were written against the pre-decoupling shape, in which `withFiltering({ filters })` held
+a `Filters` object and imported the filters closure. That shape is already gone in `src/`:
+[migration-decouple-filters-from-table.md](migration-decouple-filters-from-table.md)'s S1 and S2
+shipped as **#102** (`fded966`) and **#103** (`8184df5`) while this section was being written.
+This is the reconciliation.
+
+**R47 — One merged plan, re-ranked; R46's sequencing and R43 both go.** The two plans were
+decomposed independently and collide on their middle layer: R46's issue 2 ("3 story hosts, 2 story
+fixtures, 8 spec sites") and the migration's S3a/S3b are *the same files*. Rewriting them for
+`predicates` and then again for the array schema is the rework
+[decompose-by-dependency-graph](../../../../../../../.claude/rules/decompose-by-dependency-graph.md)
+exists to catch — an edge that was real and unmapped, because neither ranking knew about the
+other.
+
+```
+[R34 rules return records] ──┬─> [R36 array schema + StateOf] ─┬─> [R44 anyOf tuple]
+                             │                                 ├─> [R37 applyWhen nestable]
+                             │                                 ├─> [R45 `as` literal]
+                             │                                 └─> [R41 TState default]
+                             └─> [R40 schema-return guard]
+[R35 carrier arg] ───────────┴─> [R39 TRow=never guard]
+                             └─> [R42 rowOf() export]
+                                                              all ─> [call sites: specs + stories]
+                                                                            └─> [S4 move to src/filters/]
+                                                                                      └─> [S6 barrel split]
+[S5 docs + ADR-0016] — parallel-safe once the signature is settled
+```
+
+Core: R34, R35. Parallel-safe: `[S5]` once the signature is fixed. Chain:
+`R34,R35 → … → call sites → S4 → S6`.
+
+Three consequences for the implementation order:
+
+- **The call-site layer is one pass, not two.** Every site that gets `{ filters }` →
+  `{ predicates: () => [filters().matcher()] }` also gets its void schema → array schema, in the
+  same edit. Both halves are mechanical; doing them together halves the diff and the review.
+- **S4 stays last among the code steps.** It is pure churn that conflicts with every other diff —
+  unchanged from the migration doc's own reasoning, and now load-bearing for two plans instead of
+  one.
+- **R46's three-way split by reviewable unit survives** — library, call sites, docs. It is the
+  *sequencing* that was wrong, not the cut.
+
+### What the decoupling supersedes
+
+| | |
+|---|---|
+| R43 | **obsolete — do not build.** `matcher()` (#102) consumes `TRow` for a real reason; the phantom brand is unnecessary. Its spec-site claim now describes shipped code (`with-filtering.spec.ts:458`, `create-filters.spec.ts:711`) |
+| #103's dual input | superseded by **R48** — `filters` leaves `WithFilteringConfig`; `predicates` is the only way in, and AND-ing both is the consumer's own array |
+| R46 | superseded by R47 — the split stands, the sequencing merges with S3a–S6 |
+| R41 | **site list and count corrected** in place; its `WithFilteringConfig` half is now an open question, below |
+| R42 | `rowOf()` is exported from `index.ts` today, but S6 splits the barrel — it lands in the filters barrel, not the table's |
+| R34 | its migration-cost note ("13 call sites, all inside `libs/shared/table`") still holds in shape. Actual `createFilters()` calls: 5 story hosts/fixtures, 9 spec sites — of which the 5 cross-feature ones (`selection.utils.spec.ts`, `with-grouping.spec.ts` ×4) **delete** rather than migrate, per S3a |
+| R35, R36, R37, R39, R40, R44, R45 | stand unchanged — the decoupling moved what the *table* takes, not how a filter set is declared |
+| S3b's "worth adding one story with no `createFilters` at all" | **already shipped** — `stories/filtering/predicate-filtering/` |
+
+### `WithFilteringConfig`'s `TState` — resolved by R48
+
+> **✅ Resolved 2026-09-14 — option 1, finish S2.** See [R48](#r48) below. The framing is kept
+> because it is what the decision was made against.
+
+The two plans answered it differently and only one could hold.
+
+R41 removes the `Record<string, unknown>` default from **both** `Filters<TRow, TState>` and
+`WithFilteringConfig<TRow, TState>`, on the grounds that `TState` is always inferred. That was
+true when `filters` was the config's only field. It no longer is: S2 shipped `predicates` as a
+peer, and `filters` became optional —
+
+```ts
+export interface WithFilteringConfig<TRow, TState extends Record<string, unknown> = …> {
+  filters?: Filters<TRow, TState>;
+  predicates?: () => readonly ((row: TRow) => boolean)[];
+  manual?: boolean;
+}
+```
+
+— so `withFiltering({ predicates: () => [...] })` offers `TState` no inference site at all.
+Drop the default and that call has nothing to infer from.
+
+S2's own answer was to delete `filters` from the config outright, which deletes `TState` with it
+and makes the question disappear: a filter model would reach the table only as
+`predicates: () => [this.filters().matcher()]`. The implementation kept `filters`, documenting
+"either input alone is enough; supplying both ANDs the filter model with the predicate terms" —
+a deliberate divergence from the plan, not an oversight.
+
+The three live options, in the order they should be considered:
+
+1. **Finish S2 — delete `filters` from the config.** One way in (`predicates`), `TState` and its
+   two documented call-site landmines go, R41 applies cleanly to `Filters` alone, and
+   [#90](https://github.com/DvirMon/acme/issues/90) closes as fixed-by-design. Costs the
+   convenience form at every story host.
+2. **Keep `filters`, keep the default on `WithFilteringConfig` only.** R41 applies to `Filters`
+   where the widening trap actually bites, and the config keeps a default nothing infers.
+   Asymmetric, and the asymmetry needs a comment saying why.
+3. **Keep both, require `TState`.** Rejected on inspection: it makes `predicates`-only calls
+   annotate a type parameter they have no filter set for.
+
+<a id="r48"></a>
+
+**R48 — S2 is finished: `filters` leaves `WithFilteringConfig`, and `predicates` becomes
+required.** Option 1. The table takes a predicate list and nothing else; a filter model reaches it
+only as `predicates: () => [this.filters().matcher()]`.
+
+```ts
+export interface WithFilteringConfig<TRow> {
+  /** One call = one evaluation. Terms AND'd; a term that throws is dropped for that pass. */
+  predicates: () => readonly ((row: TRow) => boolean)[];
+  manual?: boolean;
+}
+```
+
+What this settles, beyond the config itself:
+
+- **R41 applies to `Filters<TRow, TState>` alone**, which is where the widening trap actually
+  bites (`FilterNode<T>` holds an invariant `WritableSignal<T>`). No asymmetric default to explain,
+  and no type parameter left on the table side to infer.
+- **Both documented call-site landmines delete** — "`TState` must be a `type`, not an `interface`"
+  and "never pass `In` explicitly as a type argument". Neither has anything left to constrain.
+  [#90](https://github.com/DvirMon/acme/issues/90) closes as **fixed-by-design**, not as work.
+- **`with-filtering.ts` imports nothing from the filters closure** — `createFilterEvaluator` and
+  `type Filters` both go, which was S2's stated requirement and the actual test of the decoupling.
+  `applyFilterModel()` goes with them; `applyPredicateTerms()` becomes the whole stage.
+- **The convenience form is the cost, and it is accepted.** Five story hosts and the surviving
+  spec sites each write `predicates: () => [this.filters().matcher()]` instead of
+  `{ filters: this.filters }` — one line, visible at the seam, and it is the line that makes the
+  two objects' independence legible rather than merely structural.
+
+Superseding #103's "either input alone is enough; supplying both ANDs the filter model with the
+predicate terms": AND-ing was never the point of keeping `filters` — a consumer wanting both
+writes `predicates: () => [this.filters().matcher(), ...myTerms]`, which is the same AND, stated
+once, in the consumer's own array. The general mechanism absorbs the enumerated case
+([general-mechanism-over-enumerated-cases](../../../../../../../.claude/rules/general-mechanism-over-enumerated-cases.md)).
+
+Lands in R47's **library** unit, and hard-blocks the call-site pass — every `withFiltering` site
+changes shape, so it must settle before the story hosts and specs are rewritten.
+
+**R49 — `active()` splits into a value member and a boolean: `criterion()` / `criteria()` /
+`isActive()`.** Decided in [#96](https://github.com/DvirMon/acme/issues/96), recorded here because
+it changes the public member set this document specifies. `active()` read as a predicate and
+returned data — on a node, the criterion or `undefined`; on the root, a `Partial<TState>` — so
+every consumer asking "is this filter narrowing?" tested a returned object for emptiness at the
+call site.
+
+| | before | after |
+|---|---|---|
+| `FilterNode` | `active(): TCriterion \| undefined` | `criterion(): TCriterion \| undefined` + `isActive(): boolean` |
+| `FiltersRoot` | `active(): Partial<TState>` | `criteria(): Partial<TState>` + `isActive(): boolean` |
+
+`value()` is untouched: the model stays complete, and R14's "why both" reasoning survives the
+rename intact — only the derived half is renamed and split.
+
+**Documented ahead of its code.** #96 is code-only (`filters/types.ts`, `state.ts`,
+`evaluator.ts`, the three story hosts); [`docs/1-state/filters.md`](../../filters.md) already
+describes this shape, because the doc half was absorbed into #113 to stop the two issues rewriting
+the same sections twice.
 
 ## Open questions for the grill
 

@@ -11,6 +11,13 @@ epic `#101` / issue `#105`,
 [spec](../1-state/work/decouple-filters/spec.md),
 [decision record](../1-state/work/with-filtering/migration-decouple-filters-from-table.md)
 
+> **Amendment note — 2026-09-14.** `#109` inferred the criterion map from the schema, so the
+> `createFilters` calls quoted below now take a row carrier (`createFilters(rows, …)`, or
+> `rowOf<Row>()` in server mode) and return their rules as an array. The decision this ADR records
+> is unaffected — the table still takes a predicate list and names no filter type. The shipped
+> filter surface is [`../1-state/filters.md`](../1-state/filters.md); the body below is left as
+> the record of what was true when this was accepted.
+
 ## Context
 
 `withFiltering()` used to accept a whole `Filters<TRow, TState>` object and read its compiled state

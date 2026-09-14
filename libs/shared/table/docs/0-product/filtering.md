@@ -30,7 +30,7 @@ derives API from this document, not the reverse.
 > **This doc was written after the spec, not before it.** [`filters.md`](../1-state/filters.md)
 > and [`features/filtering.md`](../1-state/features/filtering.md) are both `status: drilled`,
 > carrying R1–R31 — a large, careful decision log. That log is written in the developer's voice
-> (`createFilters<Invoice>((path) => { equals(path.status); })`), because it is a spec for an API.
+> (`createFilters(rows, (path) => [equals(path.status)])`), because it is a spec for an API.
 > It does not answer what a person filtering a table sees, clicks, or is told when nothing
 > matches. That is this document. Where the two disagree — and in one place they do — §8 says so
 > explicitly rather than leaving it to be discovered at implementation time.
@@ -238,7 +238,7 @@ criterion holds too: ticking *Select all* under Tags excludes no row, and still 
 [`server-filtering/`](../../src/stories/filtering/server-filtering/) marks its active fields the
 same way. This is U1's recipe demonstrated — the library still ships no chip component.
 
-**Design status — gap.** No decision covers this at all — `filters.md` gives `active()` (empties
+**Design status — gap.** No decision covers this at all — `filters.md` gives `criteria()` (empties
 omitted) as exactly the data this needs, and as of 2026-09-10 nothing rendered it. Only one library
 in the survey documents a granular affordance here: MUI X ships a delete (×) icon per active filter
 constraint and a "Remove all" button (`research-filter-ux-capabilities.md` §5); the community

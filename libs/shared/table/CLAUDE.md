@@ -41,7 +41,7 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | File | Purpose |
 |---|---|
 | `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. **One barrel per domain, not one per repo:** `filters/` is its own domain (usable with no table at all) and defines its own surface, which this file re-exports wholesale |
-| `filters/index.ts` | The filters domain's public surface — `createFilters`, its three types, the nine rules, the six matchers. Lists them explicitly; `export *`-ing the source files here would leak `createFilterEvaluatorFrom` and the recorder internals. `evaluator.ts`, `recorder.ts`, `state.ts`, `validate.ts` are internal because they are not listed here |
+| `filters/index.ts` | The filters domain's public surface — `createFilters` and `rowOf`, four types (`Filters`, `FilterNode`, `FilterOptions`, `RowToken`), the nine rules, the six matchers. Lists them explicitly; `export *`-ing the source files here would leak `createFilterEvaluatorFrom` and the evaluator internals. `evaluator.ts`, `state.ts`, `validate.ts` are internal because they are not listed here |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
