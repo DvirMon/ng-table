@@ -14,17 +14,13 @@ component field level with the data already in hand — data always arrived afte
 
 ## Decision
 
-`createTable(data, optsFn, options?)` now returns a live store **instance**, created at the
+`createTable(data, config, ...features)` now returns a live store **instance**, created at the
 call site inside an Angular injection context. Modeled on Angular Signal Forms'
 `form(model, schemaFn)` and TanStack Table's `injectTable(() => options)`:
 
 ```ts
 protected readonly data  = signal(people);
-protected readonly table = createTable(this.data, () => ({
-  trackBy: 'id',
-  columns,
-  features: [withSorting<Person>()],
-}));
+protected readonly table = createTable(this.data, { trackBy: 'id', columns }, withSorting());
 ```
 
 - **Single API.** The class-returning factory is removed, not kept alongside — no dual surface
@@ -35,17 +31,19 @@ protected readonly table = createTable(this.data, () => ({
   [ADR-0003](0003-in-house-table-store-engine.md): the engine is now the in-house
   `composeTable()` and `buildStoreClass()` is gone. The swappability claim held — the swap
   landed with zero consumer diff. The instance-factory decision this ADR records still stands.)*
-- **`optsFn()` runs once** at construction — `trackBy` / `columns` / `features` are structural,
-  mirroring `form()`'s single `rootCompile`. Only `data` is reactive: an internal `effect()`
-  re-runs `setData()` whenever the source emits.
-- **`setData()` stays public** as an imperative escape hatch (server-driven pushes, tests).
+- **`config` is structural, read once** at construction — `trackBy` / `columns` /
+  `columnsSchema`, mirroring `form()`'s single `rootCompile`. Features are trailing positional
+  arguments, folded once. Only `data` is reactive. *(Amended 2026-09 by #67: the config was a
+  thunk `optsFn` until then; it is now a plain object, and there is no `features` key.)*
+- **Writes go through `table.value.update(updater)`** — the per-slice `WritableView` (D30). The
+  consumer's own signal is the row set; the engine holds no copy and runs no data effect.
 - **DI wiring is internal.** A child `Injector.create({ providers: [StoreClass], parent })`
   gives the signal store the context its constructor needs, so the consumer never touches
-  `providers: []`. An optional `options.injector` supports use outside an injection context
+  `providers: []`. An optional `config.injector` supports use outside an injection context
   (services, tests), the same escape hatch `form()` exposes. *(Superseded 2026-08-11 by
   ADR-0003: there is no store class, so the child injector is gone —
-  `runInInjectionContext(injector, …)` supplies the context instead. `options.injector` is
-  unchanged.)*
+  `runInInjectionContext(injector, …)` supplies the context instead. The injector moved onto
+  the config object with #67's positional surface.)*
 
 ## Consequences
 
@@ -57,5 +55,5 @@ protected readonly table = createTable(this.data, () => ({
 - **UI/directive-to-store connection** (how UI-layer directives reach the instance) is left to
   the separate UI-directive spec — an instance has no DI token, so directives will receive it
   by input/host-directive rather than injecting it.
-- Consumers construct via `createTable(data, optsFn)` in a field initializer / constructor;
+- Consumers construct via `createTable(data, config, ...features)` in a field initializer / constructor;
   tests via `TestBed.runInInjectionContext(() => createTable(...))`.

@@ -23,11 +23,11 @@ readonly filters = createFilters<Invoice>((path) => {
   inRange(path.amount);
 });
 
-readonly table = createTable(this.data, () => ({
-  trackBy: 'id',
-  columns: [...],
-  features: [withFiltering({ filters: this.filters })],
-}));
+readonly table = createTable(
+  this.data,
+  { trackBy: 'id', columns: [...] },
+  withFiltering({ filters: this.filters }),
+);
 ```
 
 It owns no filter state. Criteria, predicates, keys, `value()`, `active()`, `reset()` and
@@ -66,9 +66,9 @@ to `unknown` criteria at the binding site. Two call-site constraints follow:
 
 - **`TState` must be a `type`, not an `interface`** — an interface has no implicit index
   signature and fails the `Record<string, unknown>` constraint outright.
-- **Never pass `In` explicitly** (`withFiltering<Store>({…})`) — that fixes `TState` to its
-  default and the assignment fails again. `In` is meant to come contextually from
-  `createTable()`.
+- **Never pass `In` explicitly as a type argument on the call** — that fixes `TState` to its
+  default and the assignment fails again. `In` is meant to come contextually from the argument
+  position in `createTable()`.
 
 ## Behavior
 

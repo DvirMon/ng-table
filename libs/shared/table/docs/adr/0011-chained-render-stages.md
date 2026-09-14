@@ -150,10 +150,10 @@ otherwise have implied is not: `'paginate'` is last in both modes.
 
 | Option | Why not |
 |---|---|
-| Merge the builders into one declared builder (`grouping.md`'s proposal) | An enumerated fix — every new reshaping feature edits one shared function, and that function must then know about grouping *and* tree *and* pagination. Reintroduces exactly the coupling `features: []` exists to avoid, and the merged function has no owner |
+| Merge the builders into one declared builder (`grouping.md`'s proposal) | An enumerated fix — every new reshaping feature edits one shared function, and that function must then know about grouping *and* tree *and* pagination. Reintroduces exactly the coupling per-feature composition exists to avoid, and the merged function has no owner |
 | Keep single-occupancy; make grouping+tree one mega-feature | Same coupling, plus it forces consumers who want only grouping to ship the tree walk. Also just relocates the collision to the next reshaping feature (`withPagination()`) |
-| Keep the slot; let `features` array order decide | This is the pre-ADR-0003 `@ngrx/signals` behavior that single-occupancy was introduced to kill. Silent wrong rows |
-| Let features append to an unordered transform list | Execution order would depend on `features` order — the exact property `PIPELINE_ORDER` was designed to remove. A named, engine-fixed order is the point |
+| Keep the slot; let composition order decide | This is the pre-ADR-0003 `@ngrx/signals` behavior that single-occupancy was introduced to kill. Silent wrong rows |
+| Let features append to an unordered transform list | Execution order would depend on composition order — the exact property `PIPELINE_ORDER` was designed to remove. A named, engine-fixed order is the point |
 | Make `RENDER_ORDER` consumer-configurable, so tree-vs-paginate can be reordered per table | Considered specifically for the "do expanded children count toward page size" case, and rejected: neither TanStack nor AG Grid reorders for it — both keep pagination last and put the choice in a flag the pagination step reads (see §6). A configurable order would make every stage's input shape unpredictable to every other stage, to buy one behavior a boolean already buys |
 | Generalize `renderRows` to `RenderRow[] → RenderRow[]` but keep it single-claim | Solves nothing; the slot is the constraint, not its signature |
 

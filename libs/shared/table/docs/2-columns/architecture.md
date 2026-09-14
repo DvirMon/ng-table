@@ -63,19 +63,22 @@ doc is the result of that design conversation.
   `columnsSchema` config field. No union on `columns`, no `Array.isArray()` discriminant — a
   cleaner split than an overloaded `columns` field.
 - **Schema at the `createTable()` level, mirroring `form(model, schemaFn)`.** The `columns` array is
-  the "model"; `columnsSchema` is the `schemaFn` — both live on the config object returned by the
-  `optsFn` (second arg of `createTable(data, optsFn)`):
+  the "model"; `columnsSchema` is the `schemaFn` — both live on the config object (second arg of
+  `createTable(data, config, ...features)`):
 
   ```ts
-  createTable<Product>(data, () => ({
-    trackBy: 'id',
-    columns: [{ id: 'name' }, { id: 'status' }, { id: 'price' }],   // base — plain array, unchanged
-    columnsSchema: (path) => {                                       // inline schema fn
-      applyVisible(path.status, { when: () => role() === 'admin' });
-      applyOrder(path.price, 0);
+  createTable(
+    data,
+    {
+      trackBy: 'id',
+      columns: [{ id: 'name' }, { id: 'status' }, { id: 'price' }],  // base — plain array, unchanged
+      columnsSchema: (path) => {                                      // inline schema fn
+        applyVisible(path.status, { when: () => role() === 'admin' });
+        applyOrder(path.price, 0);
+      },
     },
-    features: [withSorting()],
-  }));
+    withSorting(),
+  );
   ```
 
   `columnsSchema` receives a typed `path` proxy (one property per `keyof TRow`) used only to layer
@@ -87,7 +90,7 @@ doc is the result of that design conversation.
 
   ```ts
   const adminCols = columnSchema<Product>((path) => { applyVisible(path.price, { when: () => isAdmin() }); });
-  createTable<Product>(data, () => ({ trackBy: 'id', columns, columnsSchema: adminCols, features: [...] }));
+  createTable(data, { trackBy: 'id', columns, columnsSchema: adminCols }, withSorting());
   ```
 - **Store owns the async resource lifecycle for `apply*Async`-configured columns.** A deliberate,
   scoped reversal of "reactivity lives in the consumer" (recorded in `1-state/columns.md`) — but
@@ -146,10 +149,11 @@ doc is the result of that design conversation.
 
 ## Grounding (confirmed against actual source, not assumed)
 
-- `api/features/with-sorting.ts` is the reference feature-factory shape: a single
-  `(core: SortingInput<TRow>) => TableFeatureSpec<TRow, SortingMembers>` factory that owns its own
-  signals and returns `{ members, stages }`, reading `core.columns()` — same posture the schema
-  resolution internals take. (Superseded 2026-08-11: the old
+- `api/features/with-sorting.ts` is the reference feature-factory shape: a
+  `createTableFeature(<In extends SortingInput<In>>(input: In) => TableFeatureSpec<RowOf<In>, SortingMembers>)`
+  factory that owns its own signals and returns `{ members, stages }`, reading `input.columns()` —
+  F-bounded on the store slice it needs, row type recovered as `RowOf<In>`, never written at the
+  call site (#67). Same posture the schema resolution internals take. (Superseded 2026-08-11: the old
   `signalStoreFeature({state, props}, withState(...), ...)` chain and the `store._pipeline`
   mutation it relied on are gone — see ADR-0003.)
 - `TableFeatureSpec` carries `setup` / `onDestroy` — the right primitive for the async wiring.
@@ -188,7 +192,7 @@ export type ColumnDefInput<TRow = unknown> = Pick<ColumnDef<TRow>, 'id'> &
 
 Only `id` is required; every other `ColumnDef` field is optional. `resolveColumnDefs()`
 (`api/create-table.ts`) defaults the three that used to be required: `accessor ?? (row) =>
-row[id]`, `visible ?? true`, `order ?? index` (array position). `TableStoreConfig.columns` and
+row[id]`, `visible ?? true`, `order ?? index` (array position). `TableConfig.columns` and
 `TableStore.setColumns()` both take `ColumnDefInput<TRow>[]`; the resolved store state
 (`store.columns()`) is always a full `ColumnDef<TRow>[]`. No requirement that every `keyof TRow`
 have an entry; no support for columns outside `keyof TRow` (derived columns) in this first
@@ -228,12 +232,14 @@ export interface ColumnSchema<TRow> {
   readonly rules: readonly ColumnRule<TRow>[];
 }
 
-export interface TableStoreConfig<TRow, Features extends readonly AnyTableFeature[] = []> {
+export interface TableConfig<TRow> {
   trackBy: TrackByConfig<TRow>;
   columns: ColumnDefInput<TRow>[];                              // shipped 2026-07-25 — was ColumnDef<TRow>[]
-  columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;   // new, optional sibling
-  features?: Features;
+  columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;   // optional sibling
+  injector?: Injector;                                          // outside an injection context
 }
+// Features are trailing positional arguments, not a config key (#67):
+//   createTable(data, config, withSorting(), withGrouping())
 ```
 
 `columns` keeps its own type — no union with `columnsSchema`, no `Array.isArray()` discriminant.
@@ -284,8 +290,8 @@ snapshot-diff patcher) applies uniformly across all three tiers.
 
 ## Wiring into `createTable()`
 
-`createTable(data, optsFn)` evaluates `optsFn()` once at construction; `columns` / `columnsSchema`
-are read off that resolved config (see ADR-0002). `buildStoreClass()` gains one resolution step ahead
+`createTable(data, config, ...features)` reads `config` once at construction; `columns` /
+`columnsSchema` are read off it (see ADR-0002). `buildStoreClass()` gains one resolution step ahead
 of `withState`, and one new composed feature (`wireColumnsSchemaAsync`) always spliced into
 `coreFeature` right after the existing `withMethods` block:
 
@@ -300,9 +306,9 @@ of `withState`, and one new composed feature (`wireColumnsSchemaAsync`) always s
   no reactive/async rules (the legacy path), the loop body never runs — zero new signals/effects for
   existing consumers.
 
-`wireColumnsSchemaAsync` returns `EmptyFeatureResult` (contributes no state/props/methods), so it's
-invisible to `ComposedFeatureMembers<Features>` and the public `TableStore<TRow>` contract — same
-invisibility as `_pipeline` / `_sortChangedSource` today.
+`wireColumnsSchemaAsync` contributes no members, so it adds nothing to the accumulating
+`Feature<In, Out>` fold and nothing to the public `TableStore<TRow>` contract — it is an internal
+feature holding the engine handle, never a consumer slot (ADR-0010).
 
 ---
 
@@ -310,7 +316,7 @@ invisibility as `_pipeline` / `_sortChangedSource` today.
 
 | File | Concern |
 |---|---|
-| `api/types.ts` (edit) | Add optional `columnsSchema?: ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>` to `TableStoreConfig`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25. |
+| `api/types.ts` (edit) | Add optional `columnsSchema?: ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>` to `TableConfig`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25. |
 | `schema/column-schema.types.ts` (new) | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.) |
 | `schema/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all `apply*` functions (Tier 1 first). Landing spot for every future tier. |
 | `schema/column-schema.ts` (new) | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |

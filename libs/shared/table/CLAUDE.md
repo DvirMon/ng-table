@@ -42,9 +42,11 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
-| `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 per-arity call signatures typing `createTable()`. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
-| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withOptimistic()`, `withRowEdit()`. One file each |
-| `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `detached`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, so neither reads the other's signal and composition never depends on `features` order (D37/A2) |
+| `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
+| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withSelection()`, `withGrouping()`, `withFiltering()`, `withOptimistic()`, `withRowEdit()`, `withComputed()`. One file each |
+| `api/features/with-computed.ts` | `withComputed(block)` — library-declared derived state as a feature. The block is validated at construction (it must return signals; a throw while declaring throws) and every returned signal is rewrapped to report its member key and rethrow at evaluation (ADR-0014). Both checks live here, never in the fold |
+| `api/features/compose-features.ts` | `composeFeatures(...features)` — collapses N features into one `createTable()` slot, the arity escape hatch. Inner features fold against a per-composite `SlotRegistry` and merge into one spec; collisions are labelled `composeFeatures inner feature N` |
+| `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `op`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, each building its own instance. Composing both explicitly is a duplicate `editing` member claim and throws (ADR-0007), in either argument order |
 | `schema/column-schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
 | `schema/column-rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
 | `schema/column-metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `column-rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
@@ -203,10 +205,10 @@ Rules:
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and
   the feature retains dead ids until someone deletes a row and notices. Exemptions are per slice
-  and belong to the feature: `everExpanded` (additive ledger) and `detached` restore points
+  and belong to the feature: `everExpanded` (additive ledger) and `op: 'delete'` restore points
   (D45's delete rollback — captured by a verb that then removed the row) are the two that exist.
   Both editing features share one `onRowsRemoved` from `createEditingStore()`, which prunes `open`
-  and `snapshots` together and keeps the `detached` exemption; `pending` is derived and never
+  and `snapshots` together and keeps the `op: 'delete'` exemption; `pending` is derived and never
   pruned.
 - The factory's single parameter is the store itself, and the feature-to-feature seam: the core
   members plus earlier features' members at factory time, all features' members when read later
@@ -214,12 +216,16 @@ Rules:
   (`columns`, `rows`, `trackBy`, `value`, `renderRows`, `indexById`, `totalRowCount`) are
   concrete before the fold starts, so a factory may read them. All but `totalRowCount` are
   claimed by the engine — declaring one in `members` throws (ADR-0005 keeps `totalRowCount`
-  overridable for virtualization/pagination). The two editing features deliberately share state
-  through `createEditingStore()` instead of reading each other, so composition is never
-  argument-order dependent (D37/A2).
+  overridable for virtualization/pagination). The two editing features are each built on their own
+  `createEditingStore()` instance so a rollback finds the snapshot its capture wrote; composing
+  both explicitly throws on the duplicate `editing` claim (ADR-0007), in either order.
 - Argument order governs *type-level* visibility: slot N is typed against the base store plus
   every preceding slot's contribution, so reading a later feature's member is a compile error
-  even though the runtime store would have it (D25 — types are stricter than runtime).
+  even though the runtime store would have it (D25 — types are stricter than runtime). Pipeline
+  execution order is fixed and does not follow argument order. `withGrouping()` is the live
+  example: it reads `composed['expandedRows']` as a lazy guarded read inside its group render
+  stage, so it works in either order at runtime but is typed only when `withExpansion()` precedes
+  it. Features do read `composed` — write the compile-time-legal order.
 - Internal features (the column-schema wiring) are not consumer `Feature`s: they keep receiving
   the engine handle `TableCore<TRow>`, which is the only way to reach `baseColumns` (ADR-0010).
 
@@ -229,6 +235,13 @@ a `features` array. No feature call needs an explicit row type — it is inferre
 ```ts
 createTable(data, { trackBy: 'id', columns }, withSorting(), withExpansion());
 ```
+
+Two composition primitives sit alongside the `with-*()` plugins:
+
+- `withComputed(block)` — derived state as a feature. Composes at the top level or as a feature's
+  trailing derive block; at the top level it sees every earlier slot.
+- `composeFeatures(...features)` — collapses N features into one slot, the escape hatch for the
+  arity cap.
 
 Argument order does NOT set execution order — pipeline order is fixed (filter → group → sort →
 expand) regardless of it. Do NOT use `.pipe()` chaining or a builder pattern. The type-level cap

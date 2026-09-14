@@ -38,7 +38,7 @@ interface VirtualScrollState {
 
 ## Compile-Time Dependencies
 
-None. Reads only `renderRows()`, which is always present on the core store (see `with-grouping.md`) — composes with or without `withGrouping()`/`withExpansion()` in `features: []`.
+None. Reads only `renderRows()`, which is always present on the core store (see `with-grouping.md`) — composes with or without `withGrouping()`/`withExpansion()` in the same `createTable()` call.
 
 ## Open Questions
 

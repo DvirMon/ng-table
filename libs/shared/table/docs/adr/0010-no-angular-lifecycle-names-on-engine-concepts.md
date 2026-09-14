@@ -17,15 +17,15 @@ outlived the rewrite underneath them.
 ### 1. `withColumnsSchemaAsync`
 
 Sits in `api/features/with-columns-schema/` alongside the four real opt-in plugins
-(`withSorting`, `withExpansion`, `withOptimistic`, `withRowEdit`) that consumers place in
-`createTable()`'s `features: [...]` array and that `index.ts` exports. It is neither:
+(`withSorting`, `withExpansion`, `withOptimistic`, `withRowEdit`) that consumers pass as
+trailing arguments to `createTable()` and that `index.ts` exports. It is neither:
 
 - **Not exported from `index.ts`** — only its supporting types are public.
 - **Not consumer-invoked** — `api/create-table.ts` always splices it into the fold
   (`docs/2-columns/architecture.md`: *"one new composed feature always spliced into
   `coreFeature`"*).
-- **Contributes nothing to the public contract** — returns `EmptyFeatureResult`, invisible to
-  `ComposedFeatureMembers<Features>`, same invisibility class as internal engine state.
+- **Contributes nothing to the public contract** — it declares no members, so it adds nothing
+  to the accumulating `Feature<In, Out>` fold; same invisibility class as internal engine state.
 - **Flagged in its own docstring** before this ADR: *"Auto-composed by `createTable()`, unlike
   every other `with-*()` feature."* The design doc already knew; the naming never caught up.
 
@@ -81,8 +81,8 @@ primitive that does exactly what the name says.
 ## Consequences
 
 **Gained**
-- `api/features/` contains exactly the four consumer-facing plugins — `with*` is trustworthy
-  again as "safe to pass into `features: [...]`."
+- `api/features/` contains exactly the consumer-facing plugins — `with*` is trustworthy
+  again as "safe to pass as a `createTable()` feature argument."
 - `engine/` correctly owns every always-on, non-exported composition step.
 - `TableFeatureSpec`'s hook names no longer imply Angular component-lifecycle timing that
   `createTable()` — a plain factory, not a class Angular instantiates — cannot actually provide.

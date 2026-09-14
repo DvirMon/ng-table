@@ -80,7 +80,9 @@ with CDK's practice of always setting it.
 - `RenderRow.index` (`api/types.ts`) — needed for `aria-rowindex`, since div-grid loses the
   free DOM-order inference native `<table>` gives.
 - `totalRowCount` on `TableStore` (`engine/types.ts`) — needed for `aria-rowcount` when
-  virtualized/paginated (rendered count ≠ total count).
+  virtualized/paginated (rendered count ≠ total count). A feature claims it legitimately because
+  the engine deliberately leaves it out of its core pre-claim ([ADR-0007](0007-feature-member-claims.md)'s
+  2026-09 amendment, #67), so a server-paged table reports the true total without an engine change.
 
 **Gained**
 - Single directive/selector set serves both native-table and div-grid consumers — no forked API.

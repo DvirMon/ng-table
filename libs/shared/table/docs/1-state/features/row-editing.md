@@ -54,7 +54,7 @@ bridging layer, no editing feature:
 
 ```ts
 readonly data  = signal<Person[]>(people);
-readonly table = createTable(this.data, () => ({ trackBy: 'id', columns }));
+readonly table = createTable(this.data, { trackBy: 'id', columns });
 readonly rows  = form(this.data, (path) =>
   applyEach(path, (row) => {
     debounce(row.name, 'blur');   // text: commits when the user leaves the cell
@@ -151,11 +151,7 @@ Composed when writes go to a server that can reject them, and the table must be 
 row back the way it was. Requires no notion of a row being "open", so a live table can use it.
 
 ```ts
-createTable(data, () => ({
-  trackBy: 'id',
-  columns,
-  features: [withOptimistic<Person>()],
-}));
+createTable(data, { trackBy: 'id', columns }, withOptimistic());
 ```
 
 No config.
@@ -232,22 +228,35 @@ open. `pending()` is the read a live table uses.
 ## 3. `withRowEdit()` — the gated table (D37)
 
 Composed when the consumer needs a **Cancel affordance** or a **button-triggered mode** where
-rows render inputs conditionally. It composes `withOptimistic()` **internally** — not through
-the `features` array — and adds the open set on top.
+rows render inputs conditionally. It builds the same `createEditingStore()`
+`withOptimistic()` builds and adds the open set on top — it does not compose the other feature.
 
 ```ts
-createTable(data, () => ({
-  trackBy: 'id',
-  columns,
-  features: [withRowEdit<Person>({ multiple: () => isWide() })],
-}));
+createTable(data, { trackBy: 'id', columns }, withRowEdit({ multiple: () => isWide() }));
 ```
 
-Composing both explicitly **throws at construction** (ADR-0007):
+Composing both explicitly **throws at construction**
+([ADR-0007](../../adr/0007-feature-member-claims.md), and its 2026-09 amendment on claimant
+labels) — in either argument order, since a duplicate member claim is not order-sensitive:
 
 ```ts
-features: [withOptimistic<Person>(), withRowEdit<Person>()]   // Error: member 'editing' already claimed
+createTable(data, config, withOptimistic(), withRowEdit());
+// [createTable] feature 1 (withOptimistic) and feature 2 (withRowEdit) both provide the
+// "editing" store member. Only one feature may provide each member.
 ```
+
+### Why the two features are built on one editing store
+
+Each editing feature builds its own instance of `createEditingStore()`; `withRowEdit()` adds the
+open set on top, `withOptimistic()` stops at the restore points. The justification is **one set of
+restore points per table**, so a rollback finds the snapshot the capture wrote. Two independent
+snapshot signals is exactly ADR-0007's motivating failure — `table.editing.update(captureEdit(id))`
+writes one, `table.pending()` reads the other, and rollback silently does nothing.
+
+Order-independence is **not** the justification, and has not been since the member claim landed:
+composing both is a collision, not a sharing arrangement. The finding is recorded on
+[#74](https://github.com/DvirMon/acme/issues/74) — that issue's AC 2 text ("works in either
+order") was stale at close, and the observable contract is the throw above.
 
 ### Config
 

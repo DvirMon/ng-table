@@ -25,7 +25,7 @@ Always-present, one-per-element directives (`ngpTable`, `ngpTableRow`, `ngpTable
 
 **Decision (revised 2026-07-31):** the store instance enters the template through a **single required input on `ngpTable`**. `NgpTableDirective` self-provides under the `NGP_TABLE_STORE` token via `useExisting`, so every descendant directive injects the token and reads `.store()`.
 
-**Why:** `createTable(data, optsFn)` returns a **live store instance**, not a class — it is a component field, owned by the component's injection context and torn down with it (see `../1-state/architecture.md` and `createTable()`'s own JSDoc: "There is no DI token to provide or inject; consumers hold the returned instance directly"). An instance created at field level cannot appear in that same component's `providers: []`, so the class-provider approach is structurally impossible. Handing the instance to `ngpTable` as an input, and letting the *directive* be the DI anchor, gets the instance into DI without asking the consumer to write any provider wiring at all.
+**Why:** `createTable(data, config, ...features)` returns a **live store instance**, not a class — it is a component field, owned by the component's injection context and torn down with it (see `../1-state/architecture.md` and `createTable()`'s own JSDoc: "There is no DI token to provide or inject; consumers hold the returned instance directly"). An instance created at field level cannot appear in that same component's `providers: []`, so the class-provider approach is structurally impossible. Handing the instance to `ngpTable` as an input, and letting the *directive* be the DI anchor, gets the instance into DI without asking the consumer to write any provider wiring at all.
 
 ```ts
 export const NGP_TABLE_STORE = new InjectionToken<NgpTableDirective>('NGP_TABLE_STORE');
@@ -47,11 +47,11 @@ export class NgpTableDirective {
 @Component({ /* ... */ })
 export class ProductsComponent {
   protected readonly data = signal(products);
-  protected readonly table = createTable(this.data, () => ({
-    trackBy: 'id',
-    columns: [{ id: 'name' }, { id: 'status' }],
-    features: [withSorting<Product>()],
-  }));
+  protected readonly table = createTable(
+    this.data,
+    { trackBy: 'id', columns: [{ id: 'name' }, { id: 'status' }] },
+    withSorting(),
+  );
 }
 ```
 

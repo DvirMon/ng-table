@@ -102,7 +102,7 @@ three rails; asking a template to partition the column list itself would put the
 ## Feature Plugin Shape
 
 ```ts
-withColumnPinning<TRow>({ initial?: { left?: string[]; right?: string[] } })
+withColumnPinning({ initial?: { left?: string[]; right?: string[] } })
 ```
 
 Contributes `members` only — no `stages`, no `renderStages`, no `setup`. `applyPinned`

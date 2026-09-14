@@ -30,15 +30,18 @@ audience: developers
 Authored as `ColumnDefInput<TRow>[]` — only `id` is required; `accessor` / `visible` / `order` are resolved at store construction (`accessor` defaults to `(row) => row[id]`, `visible` to `true`, `order` to array index). `store.columns()` is always a fully resolved `ColumnDef<TRow>[]`.
 
 ```ts
-createTable(data, () => ({
-  trackBy: 'id',
-  columns: [
-    { id: 'name' },                                    // accessor/visible/order defaulted
-    { id: 'status', enableSorting: true },
-    { id: 'fullName', accessor: (row) => `${row.first} ${row.last}` },
-  ],
-  features: [withSorting<Person>()],
-}));
+createTable(
+  data,
+  {
+    trackBy: 'id',
+    columns: [
+      { id: 'name' },                                  // accessor/visible/order defaulted
+      { id: 'status', enableSorting: true },
+      { id: 'fullName', accessor: (row) => `${row.first} ${row.last}` },
+    ],
+  },
+  withSorting(),
+);
 ```
 
 An opt-in declarative layer, `columnsSchema`, can drive `visible`/`order` reactively on top of this config (`applyVisible(path.status, { when: … })`) — see `../2-columns/architecture.md`. It writes through the store's own `updateColumns()`, so from the UI layer's point of view nothing changes: schema-driven columns arrive through `store.columns()` exactly like statically-configured ones.

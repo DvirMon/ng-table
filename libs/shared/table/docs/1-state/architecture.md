@@ -11,7 +11,7 @@ audience: developers
 
 ## Executive Summary
 
-This document indexes the feature-by-feature design of the NGP Table state layer (`createTable()`), continuing from the top-level decisions locked in `overview.md`. Each feature has its own reference file with full detail: state shape, methods, events, `manual` contract, compile-time dependencies, and open questions. **This is an architecture/spec document, not an implementation** — it defines the contract a developer builds against, not the working `signalStoreFeature()` code itself.
+This document indexes the feature-by-feature design of the NGP Table state layer (`createTable()`), continuing from the top-level decisions locked in `overview.md`. Each feature has its own reference file with full detail: state shape, methods, events, `manual` contract, compile-time dependencies, and open questions. **This is an architecture/spec document, not an implementation** — it defines the contract a developer builds against, not the working `composeTable()` / `TableFeatureSpec` code itself.
 
 **Status: 5 of 8 state layer features fully drilled**, plus the core `columns` config. The remaining 3 features are present as stub files awaiting a future drilling session.
 
@@ -122,83 +122,73 @@ withExpansion()     ──requires──▶                   (none — standalo
 
 > **Revision 2026-07-31:** `withGrouping()`'s dependency on `withExpansion()` was downgraded from a compile-time `type<>` requirement to an optional runtime composition — `withGrouping()` now works standalone (static, non-collapsible groups). See `with-grouping.md`, "Compile-Time Dependencies" and "Render Layer," and `with-expansion.md`, "Dual Use." This was driven by introducing the `renderRows`/`RenderRow<TRow>` render-layer signal, researched against TanStack Table / MUI X DataGrid / AG Grid's row-model designs (see `with-grouping.md`, "Prior art").
 
-## Rejected: inferring `TRow` into `with-*()` calls (tested 2026-08-09)
+## Composition: argument order sets member visibility, not execution order
 
-**Known DX cost, investigated and not fixable within the current composition shape.**
-
-Today every feature call repeats the row type, even though `createTable()` / `createTableSchema()` already know it:
-
-```ts
-createTableSchema(columns, {
-  features: [withExpansion<Department>(), withSorting<Department>()],
-});
-```
-
-The tempting fix is to declare `Department` once and have it flow into each feature call. Two approaches were tested against the real code; both fail, for a reason that rules out the whole family.
-
-> **Status update (2026-08-11):** `@ngrx/signals` has been removed (ADR-0003), so the root cause
-> described below is gone and the surviving direction at the end of this section is now
-> *implementable* — `composeTable()` builds core before folding features, so a real
-> `TableCore<TRow>` exists to pass and no phantom placeholder is needed. It remains deliberately
-> deferred; see ADR-0003, "Deferred: `features: (ctx) => [...]`". Approaches 1 and 2 below are kept
-> as the record of why the contextual-typing family was abandoned — do not re-run them.
-
-### What was tried
-
-**1. Tighten the `Features` constraint so it contextually types each array element.**
+Features are trailing positional arguments to `createTable()`. No feature call carries a row
+type — it is inferred from `data` and recovered inside the feature as `RowOf<In>`:
 
 ```ts
-Features extends readonly ((store: TableStore<NoInfer<TRow>>) => any)[]
+createTable(
+  this.departments,
+  { trackBy: 'id', columns },
+  withExpansion(),
+  withSorting(),
+);
 ```
 
-The idea: a type parameter's constraint acts as the contextual type for the argument expression, so each `withExpansion()` would infer its own `TRow` from the expected return type — while `Features` still infers from the literal array, keeping each element's precise return type intact for [`ComposedFeatureMembers`](../../src/api/types.ts).
+Three rules govern what a feature can see, and they are easy to conflate:
 
-**This half is sound.** Verified against simplified stand-in types with exact-type assertions (`Equals<Department, Parameters<typeof table.toggleExpanded>[0]>`) plus negative cases that must error. Constraints do contextually type elements, and they do not widen them. So the "would it destroy the reconstructed method types?" fear is unfounded — that is *not* what blocks this.
+**1. The base store is built before the fold.** `composeTable()` builds core first, then folds
+features left to right, handing each one the store *as accumulated so far*. A feature sees the
+core members plus every feature to its **left**, and none to its right.
 
-**2. Reshape the carrier to match what features actually accept.**
+**2. Member visibility follows argument order. Pipeline execution order does not.** The pipeline
+runs in `PIPELINE_ORDER` (`filter → group → sort → expand`) regardless of how the consumer
+ordered the arguments. Reordering arguments changes what each feature can *read*; it never
+changes what runs when.
 
-Attempt 1 failed on assignability:
+**3. Types are stricter than runtime.** The store is one shared object reference, so a read
+deferred into a computed or a method sees every feature, including ones declared later. The type
+of slot N, however, is the base store plus only the preceding slots. `withGrouping()` is the
+worked example: it reads `composed['expandedRows']` as a lazy guarded read inside its group
+render stage, so it *works* in either order at runtime, but is only *typed* when `withExpansion()`
+precedes it. Writing the compile-time-legal order is the convention; the guard exists because the
+runtime cannot enforce it.
 
-```
-Type 'TableStore<NoInfer<Person>>' is not assignable to type
-'InnerSignalStore<{ columns: ColumnDef<Person>[]; }, { _pipeline: PipelineStages<Person>; }, {}>'
-```
+The type-level arity cap is 15 features; nest a `composeFeatures(...)` composite into one slot to
+go past it.
 
-Features take `@ngrx/signals`' `InnerSignalStore`, not our `TableStore`. Parameter types are contravariant, so the carrier must satisfy everything each feature demands — the tightened constraint rejected even the annotated `withSorting<Person>()` that compiles today.
+### History: inferring `TRow` into `with-*()` calls (tested 2026-08-09, shipped 2026-09)
 
-Rebuilding the carrier in `InnerSignalStore`'s shape then failed on:
+This section previously recorded row-type inference as rejected, then as deferred. It shipped on
+#67, by positional composition rather than by the `features: (ctx) => [...]` shape explored here.
+[ADR-0003](../adr/0003-in-house-table-store-engine.md)'s 2026-09 amendment owns the reasoning —
+what shipped, by which mechanism, and why the functional surface made it typable. Not restated
+here.
 
-```
-Property '[STATE_SOURCE]' is missing in type 'TableFeatureInput<Person>'
-```
+What survives is the blocker that sent the engine in-house, because
+[ADR-0003](../adr/0003-in-house-table-store-engine.md)'s context depends on it:
 
-`@ngrx/signals` brands its store with a unique symbol. Satisfying it means reconstructing ngrx internals in our own types — the exact coupling the `AnyTableFeature` comment exists to avoid.
+**`TRow` could not reach a feature call through an expected type under `@ngrx/signals`.** Two
+approaches were tested against the real code in 2026-08 and both failed. Tightening the `Features`
+constraint so it contextually types each array element is sound in isolation — constraints do
+contextually type elements and do not widen them — but features took ngrx's `InnerSignalStore`,
+not our `TableStore`. Parameter types are contravariant, so the carrier had to satisfy everything
+every feature demanded, and the tightened constraint rejected even the explicitly annotated
+sorting call that compiled at the time. Rebuilding the carrier in `InnerSignalStore`'s
+shape then failed on ngrx's `[STATE_SOURCE]` brand — reconstructing ngrx internals in our own
+types, the exact coupling `AnyTableFeature` exists to avoid.
 
-### Why the whole family is ruled out
+Independent of assignability: an unannotated `withExpansion()` still resolved to
+`Signal<unknown[]>` with the carrier in place. `SignalStoreFeature<Input, Output>`'s parameter is
+a conditional/mapped type, and TypeScript does not infer through those, so there was no inference
+site for `TRow` to land in. No carrier shape fixes that — the problem was not the carrier.
 
-Independent of assignability: in attempt 2 the unannotated `withExpansion()` still resolved to `Signal<unknown[]>`. The carrier was in place and `TRow` was **still not pushed down**.
-
-`withExpansion` returns `SignalStoreFeature<Input, Output>`, whose parameter is `InnerSignalStore<…>` — a conditional/mapped type. TypeScript does not infer through those, so there is no inference site for `TRow` to land in. No carrier shape fixes this, because the problem isn't the carrier.
-
-**Conclusion: `TRow` cannot reach a feature call through an expected type. It can only arrive as an actual argument.**
-
-### What remains open
-
-The one surviving direction is Signal Forms' schema shape — features receive a value carrying `TRow`, so inference happens from an argument rather than a contextual type:
-
-```ts
-features: (ctx) => [withExpansion(ctx), withSorting(ctx)]
-```
-
-`ctx` is typed `TableStore<Department>`, so each call infers from its argument — the most reliable inference path in the language — and features stay top-level imports, so tree-shaking survives (unlike a `f.expansion()` registry object, which bundles every feature into every consumer).
-
-~~Unresolved: features compose at store-class build time, so no store instance exists to pass. This needs a phantom typed placeholder, the way Signal Forms' `schemaPath` is a proxy that exists only to carry types.~~ **Resolved 2026-08-11** — `composeTable()` builds `TableCore<TRow>` before folding features, so `ctx` can be the real core object. No placeholder needed.
-
-Until it lands, repeating `<TRow>` per feature stands as an accepted cost. Do not re-run approach 1 or 2 — they are settled.
-
-**Superseding direction (2026-08-09), landed 2026-08-11:** the root cause was `@ngrx/signals`' feature types, so removing that dependency dissolved this problem outright — and that move had independent justification (Angular upgrades gated on ngrx releases; a peer dependency is an adoption tax if this ships as a standalone primitive library). Delivered as [ADR-0003](../adr/0003-in-house-table-store-engine.md); intake ticket in [`work/drop-ngrx-engine/1-ticket.md`](work/drop-ngrx-engine/1-ticket.md).
-
-**Why the `TRow` fix still hasn't shipped.** It is now possible but was deferred with the migration, for reasons independent of ngrx: `features: (t) => [...]` builds every spec inside one expression, so the feature-to-feature seam (`composed`) is always empty at factory time — a capability the new engine deliberately kept. Its gains are DX plus one real correctness win (a mismatched `withExpansion<Person>()` on a `Department` table currently compiles; under `ctx` it could not be expressed). Tree-shaking is unaffected either way — both shapes import features top-level. Revisit when a second feature actually wants another feature's state.
+Removing `@ngrx/signals` (ADR-0003) dissolved the root cause, and that move had independent
+justification: Angular upgrades gated on ngrx releases, and a peer dependency is an adoption tax
+if this ships as a standalone primitive library. Intake ticket in
+[`work/drop-ngrx-engine/1-ticket.md`](work/drop-ngrx-engine/1-ticket.md). Do not re-run the two
+approaches above — they are settled, and the ngrx types they failed against are gone.
 
 ## Cross-Cutting Open Questions (span multiple features)
 
@@ -207,7 +197,7 @@ These were flagged during drilling as needing resolution before the remaining 4 
 - [x] ~~**PRIORITY — `renderRows` single-occupancy blocks feature combination.**~~ — resolved 2026-09-03 by [ADR-0011](../adr/0011-chained-render-stages.md) (accepted): `renderRows` single-claim is replaced by an ordered, multi-claim `RENDER_ORDER` stage chain over `RenderRow[]`, mirroring `PIPELINE_ORDER`. `SlotRegistry.claimRenderRows()` is deleted; collision moves to per-named-stage. Unblocks `withGrouping()`, `withPagination()` and `withSelection()` drilling. `withVirtualScroll()` was never blocked — it reads `renderRows()` and declares nothing. The competing "merge the two builders into one" sketch in `features/grouping.md` was considered and rejected in that ADR. `withExpansion()` migrated to claim the `'tree'` stage.
 - [ ] **`withPagination()` vs `withInfiniteScroll()`** — mutually exclusive in practice. Hard compile-time conflict, or documented convention only?
 - [x] ~~**`withSelection()` "select all" scope**~~ — resolved 2026-09-06 by D1 (`work/with-selection/2-decisions.md`): **there is no scope concept.** `withSelection()` stores `RowId`s only; no `scope: 'page' | 'filtered' | 'all'` config and no per-call scope argument. "Select all" is the call site passing the id set it means (`table.rows().map(r => r.id)`, a server-supplied list, whatever), so the feature has **no runtime or compile-time dependency on `withPagination()` / `withFiltering()`**. The audit's #1 sentiment finding is that no competitor resolved this cleanly — AG Grid encodes it after the fact in a 16-value event `source` enum, MRT leaks it as a `forceAll` handler flag — so refusing the denominator is how we lead rather than inherit it. The generalized rule: reject config whose meaning depends on state the feature does not own; accept config that parameterizes a verb it does own.
-- **Convention for any id-keyed feature — declare `onRowsRemoved`** ([ADR-0006](../adr/0006-row-id-state-reconciliation.md)). Not an open question; recorded here because this is the list a new feature's drilling session reads. A feature storing `RowId`s must declare the hook and prune with `pruneByIds()` (`engine/rows.ts`), or it silently retains dead ids until someone deletes a row and notices. Not enforced by the type system. Exemptions are per slice and belong to the feature — `everExpanded` (additive ledger) and `detached` restore points are the two that exist. `withSelection()` declares it with no exemption (D11), and its pruning is deliberately **silent**: reconciliation is not a write verb, so it emits no `selectionChanged`.
+- **Convention for any id-keyed feature — declare `onRowsRemoved`** ([ADR-0006](../adr/0006-row-id-state-reconciliation.md)). Not an open question; recorded here because this is the list a new feature's drilling session reads. A feature storing `RowId`s must declare the hook and prune with `pruneByIds()` (`engine/rows.ts`), or it silently retains dead ids until someone deletes a row and notices. Not enforced by the type system. Exemptions are per slice and belong to the feature — `everExpanded` (additive ledger) and `op: 'delete'` restore points are the two that exist. `withSelection()` declares it with no exemption (D11), and its pruning is deliberately **silent**: reconciliation is not a write verb, so it emits no `selectionChanged`.
 - [ ] **`withDragDrop()` vs active sort** — does drag-reorder require sort to be cleared, or does it no-op silently while a sort is active?
 - [x] ~~**`withGrouping()` aggregation vs `withFiltering()`**~~ — resolved 2026-07-31: `aggregateFn` runs over filtered rows. The `group` pipeline stage clusters after `filter` (fixed order `filter → group → sort → expand`), so `aggregateFn` never sees unfiltered rows. See `with-grouping.md`, "Render Layer."
 

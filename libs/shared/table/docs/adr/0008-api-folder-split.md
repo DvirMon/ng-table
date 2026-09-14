@@ -13,7 +13,7 @@ files (15 top-level + `features/` with 9, one further split as `with-columns-sch
 
 `api/` conflates four distinct concerns:
 
-1. **Factory/entry** — `create-table.ts`, `table-schema.ts`, `create-table-feature.ts`, `types.ts`
+1. **Factory/entry** — `create-table.ts`, `create-table.overloads.ts`, `create-table-feature.ts`, `types.ts`
 2. **Feature declarations** — `features/with-*.ts` (already correctly scoped, unaffected)
 3. **Column schema DSL** — `column-schema.ts`, `column-schema.types.ts`, `column-metadata.ts`,
    `column-rules.ts`
@@ -44,7 +44,7 @@ level deeper:
 
 ```
 index.ts
-api/            factory + declaration surface: create-table.ts, table-schema.ts,
+api/            factory + declaration surface: create-table.ts, create-table.overloads.ts,
                 create-table-feature.ts, types.ts
   features/     with-*.ts plugins — unchanged
 schema/         column-schema.ts, column-schema.types.ts, column-metadata.ts, column-rules.ts

@@ -11,7 +11,7 @@ audience: developers
 
 ## Executive Summary
 
-The NGP Table is a composable architecture documented as **three streams**, numbered by dependency order: state layer (1) → columns schema layer (2) → UI layer (3). The UI layer is directive-based — consumers write directives directly on native HTML elements — and the state layer is an abstracted signal-based layer built on the in-house `composeTable()` engine over Angular signals, with zero runtime dependencies outside `@angular/*` and `rxjs` (see ADR-0003). Consumers own the markup and create the store **instance** at the component field level via `createTable(data, optsFn)` — no DI provider registration, no `inject()`. The engine is an internal implementation detail; the public API is `createTable()`, which returns a live store instance (see ADR-0002).
+The NGP Table is a composable architecture documented as **three streams**, numbered by dependency order: state layer (1) → columns schema layer (2) → UI layer (3). The UI layer is directive-based — consumers write directives directly on native HTML elements — and the state layer is an abstracted signal-based layer built on the in-house `composeTable()` engine over Angular signals, with zero runtime dependencies outside `@angular/*` and `rxjs` (see ADR-0003). Consumers own the markup and create the store **instance** at the component field level via `createTable(data, config, ...features)` — no DI provider registration, no `inject()`. The engine is an internal implementation detail; the public API is `createTable()`, which returns a live store instance (see ADR-0002).
 
 ---
 
@@ -90,16 +90,14 @@ export class ProductsComponent {
   // Data source — the single source of truth; the pipeline reads it directly.
   private readonly products = signal<Product[]>([]);
 
-  // Field-level instance; `optsFn` runs once, `data` stays reactive.
-  readonly store = createTable(this.products, () => ({
-    trackBy: 'id',
-    columns,
-    features: [
-      withSorting(),
-      withSelection(),
-      withPagination({ manual: true }),
-    ],
-  }));
+  // Field-level instance; config is read once, `data` stays reactive.
+  readonly store = createTable(
+    this.products,
+    { trackBy: 'id', columns },
+    withSorting(),
+    withSelection(),
+    withPagination({ manual: true }),
+  );
 
   constructor() {
     // `data` is the single source of truth — the pipeline reads it directly.
@@ -147,17 +145,19 @@ Each feature supports a `manual` flag (inspired by TanStack Table v8). When `man
 
 ```ts
 // All client-side (default)
-createTable(data, () => ({ trackBy: 'id', columns, features: [withSorting(), withPagination()] }))
+createTable(data, { trackBy: 'id', columns }, withSorting(), withPagination())
 
 // Server-side pagination, client-side sort
-createTable(data, () => ({ trackBy: 'id', columns, features: [withSorting(), withPagination({ manual: true })] }))
+createTable(data, { trackBy: 'id', columns }, withSorting(), withPagination({ manual: true }))
 
 // All server-side
-createTable(data, () => ({ trackBy: 'id', columns, features: [
+createTable(
+  data,
+  { trackBy: 'id', columns },
   withSorting({ manual: true }),
   withPagination({ manual: true }),
   withFiltering({ manual: true }),
-]}))
+)
 ```
 
 **Server-side handler pattern:** The store emits state signals. The consumer reacts to state changes — via their own `effect()` / `httpResource()` — and delivers fresh data by writing into the `data` signal passed to `createTable()`; the pipeline reads it directly. No loader abstraction exists in the store.
@@ -183,12 +183,12 @@ data (WritableSignal, single source of truth)
 ## State Layer: Row Identity
 
 ```ts
-createTable(data, () => ({
+createTable(data, {
   columns,
   trackBy: 'id',                    // string shorthand
   // or
   trackBy: (row) => row.org + row.userId,  // function for composite keys
-}))
+})
 ```
 
 Internally, string shorthand is normalized to a function **once at store initialization**: `(row) => row['id']`. Zero branching at runtime.
@@ -197,7 +197,7 @@ Internally, string shorthand is normalized to a function **once at store initial
 
 ## State Layer: Feature Dependencies
 
-Each feature annotates its own factory parameter (a `Pick<TableCore<TRow>, …>`), which types the `core` it reads. Cross-feature composition-time validation — TypeScript rejecting a feature composed without its dependency — is **not implemented**; the old `@ngrx/signals` `type<>` markers never actually provided it either, and it is deferred until a feature genuinely depends on another (see ADR-0003, "Not rebuilt").
+Each feature annotates its own factory parameter (a `Pick<TableStore<RowOf<In>>, …> & Shape`), which types the store slice it reads. Cross-feature composition-time validation — TypeScript rejecting a feature composed without its dependency — is **not implemented**; the old `@ngrx/signals` `type<>` markers never actually provided it either, and it is deferred until a feature genuinely depends on another (see ADR-0003, "Not rebuilt").
 
 Example: `withGrouping()` is specified to depend on `withExpansion()` (it delegates collapse state there) — a documented contract, not a compile-time one. `columns`, by contrast, is **core config** — required on every `createTable()` call, like `trackBy` — so column-reading features (`withSorting()`, `withGrouping()`, `withFiltering()`) simply read the always-present `columns` config rather than declaring a feature dependency on it. See `1-state/architecture.md` (Dependency Graph) and `1-state/columns.md`.
 
@@ -205,17 +205,17 @@ Example: `withGrouping()` is specified to depend on `withExpansion()` (it delega
 
 ## Store Lifecycle & Scope
 
-`createTable(data, optsFn)` returns a live store **instance**, owned by the injection context it is called in. Called in a component field initializer ⇒ **component-scoped**: the instance (and its internal data effect) tear down with the component via that context's `DestroyRef`. This is the only built-in scope — see ADR-0002.
+`createTable(data, config, ...features)` returns a live store **instance**, owned by the injection context it is called in. Called in a component field initializer ⇒ **component-scoped**: the instance (and its internal data effect) tear down with the component via that context's `DestroyRef`. This is the only built-in scope — see ADR-0002.
 
 ```ts
 // Component-scoped (the store dies with the component) — no providers, no inject()
 @Component({ /* ... */ })
 export class ProductsComponent {
-  readonly store = createTable(this.data, () => ({ trackBy: 'id', columns, features: [...] }));
+  readonly store = createTable(this.data, { trackBy: 'id', columns }, withSorting());
 }
 
-// Outside an injection context (a service, a test): pass an injector explicitly.
-createTable(data, optsFn, { injector });
+// Outside an injection context (a service, a test): pass an injector in the config.
+createTable(data, { trackBy: 'id', columns, injector }, withSorting());
 ```
 
 **Trade:** there is no DI token, so route-scoped or `root`-scoped *shared* table state is not offered — the instance belongs to its owner. Multiple tables on one page = multiple independent instances (the default anyway). No shared global state.

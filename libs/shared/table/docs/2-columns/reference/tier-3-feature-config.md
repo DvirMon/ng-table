@@ -10,7 +10,7 @@ parent: ../architecture.md
 
 # Tier 3 — Feature Config (store-owned, column-seeded)
 
-**Each seeds an opt-in store feature; dead unless that feature is in `features`.** The runtime
+**Each seeds an opt-in store feature; dead unless that feature is composed.** The runtime
 *state* (active sort direction, active filter value) stays store-owned. Ship last. Read
 [Ownership model](ownership-model.md) first — as of 2026-07-25, this tier splits along the same
 line as Tier 1/2: functions duplicating an existing `ColumnDef` field (`sortFn`, `enableSorting`,
@@ -19,8 +19,8 @@ literal instead; functions with no `ColumnDef` equivalent (`applyDefaultSort`, `
 seeded state lives entirely in `withSorting()`/`withGrouping()`, not on the column) **keep their
 static seed input**, same as `applyPinned` in Tier 2.
 
-> **Dead without the feature.** `applySortFn(path, {when})` does nothing unless `withSorting()` is in
-> `features`. Whether that mismatch is a compile error or a silent no-op is an open decision below.
+> **Dead without the feature.** `applySortFn(path, {when})` does nothing unless `withSorting()` is
+> composed as a positional argument to `createTable()`. Whether that mismatch is a compile error or a silent no-op is an open decision below.
 
 ## Sorting — feeds [`withSorting()`](../../1-state/features/sorting.md)
 
@@ -78,8 +78,9 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
 ## Open questions (Tier 3)
 
 - [x] **Feature-absent handling** — RESOLVED 2026-07-31: compile error. `applyGroup` on a column
-  rejects at type-check time when `withGrouping()` is absent from `features` — matches the store's
-  `type<>` dependency posture. Requires threading feature presence into the `columnsSchema` /
+  rejects at type-check time when `withGrouping()` is not composed — matching how the store now
+  expresses a dependency, as an F-bounded `Feature<In, Out>` input slice typed by argument order
+  (#67), not the removed ngrx `type<>` marker. Requires threading feature presence into the `columnsSchema` /
   `columnSchema()` generic. Same resolution should apply to the analogous case in
   [`1-state/architecture.md`](../../1-state/architecture.md).
 - [x] **Reusable archetypes** — RESOLVED 2026-07-31: deferred. No confirmed repeated-bundle use

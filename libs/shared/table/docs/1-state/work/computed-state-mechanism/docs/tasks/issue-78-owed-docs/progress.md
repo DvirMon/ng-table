@@ -1,18 +1,18 @@
 # Implementation Progress — Table: owed docs for positional composition and derived state
 
 **Issue:** #78
-**Status:** 0 / 8 complete
+**Status:** 8 / 8 complete
 
 | Step | Title | Status | PR |
 |---|---|---|---|
-| 1 | ADR-0003: the deferred row-type inference shipped; record the reversal | ⬚ pending | — |
-| 2 | ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed `totalRowCount`, derive-block labels | ⬚ pending | — |
-| 3 | ADR-0014: the derived-signal row in the runtime-error policy | ⬚ pending | — |
-| 4 | State-layer architecture: argument-order visibility, fixed pipeline order | ⬚ pending | — |
-| 5 | Row-editing: the shared-store rationale no longer holds | ⬚ pending | — |
-| 6 | `CLAUDE.md`: kill the false `composed` claim, add `withComputed()`/`composeFeatures()` | ⬚ pending | — |
-| 7 | Call-shape sweep across the remaining docs, plus the persistence exclusion | ⬚ pending | — |
-| 8 | `/audit-docs` gate, decisions-log check, close-out of #78 and #67 | ⬚ pending | — |
+| 1 | ADR-0003: the deferred row-type inference shipped; record the reversal | ✅ done | — |
+| 2 | ADR-0007 + ADR-0005: core-key pre-claims, the unclaimed `totalRowCount`, derive-block labels | ✅ done | — |
+| 3 | ADR-0014: the derived-signal row in the runtime-error policy | ✅ done | — |
+| 4 | State-layer architecture: argument-order visibility, fixed pipeline order | ✅ done | — |
+| 5 | Row-editing: the shared-store rationale no longer holds | ✅ done | — |
+| 6 | `CLAUDE.md`: kill the false `composed` claim, add `withComputed()`/`composeFeatures()` | ✅ done | — |
+| 7 | Call-shape sweep across the remaining docs, plus the persistence exclusion | ✅ done | — |
+| 8 | `/audit-docs` gate, decisions-log check, close-out of #78 and #67 | ✅ done | — |
 
 Graph: `1 → 4`; `2 → 5`; `{1…7} → 8`.
 Parallel-safe: `[1, 2, 3, 6, 7]` from the start; `[4, 5]` once their blockers land.
@@ -44,3 +44,14 @@ and are parallel-safe with everything.
 - **Two follow-ups belong to neither #78 nor #67**, recorded in Step 8 for the close-out comment:
   the duplicated overload-dispatch prologue absorbable by one `defineFeature()` (found by the #74
   review), and the pre-existing `.storybook/preview.ts` + story-host lint failures (recorded on #77).
+
+## Step 8 outcome (2026-09-14)
+
+- **AC 5 verified, no edit needed.** `3-decisions.md` D25 records `indexById` as a public
+  read-only `TableStore` member and `baseColumns` as engine-only, each with its reasoning.
+- **`/audit-docs` run** over 61 permanent docs by five parallel agents:
+  [`audit-results.md`](audit-results.md). 240 STALE findings, 31 in #78's scope and fixed here,
+  209 pre-existing drift from other tickets and listed for triage.
+- **Every Step 7 grep clean** library-wide with `work/` excluded. `docs/status.md` audited clean —
+  no regeneration needed.
+- The workspace `state.json` already carries `checklist.tasks = true`; unchanged.

@@ -111,6 +111,13 @@ Feature slices are **optional keys, present only when that feature is composed**
 key is not `null` and is not a default — it is "this table had no such state", so restoring
 into a differently-composed table has an unambiguous answer (skip it) rather than a guess.
 
+**Derived members are excluded from the snapshot.** A member declared by `withComputed()` — or by
+a feature's trailing derive block — is recomputed from its inputs on every read, so it holds no
+fact the snapshot does not already carry. Persisting one would restore a stale value that the
+next evaluation immediately overwrites, and a snapshot revived after the derivation changed would
+carry a value no longer reachable from the inputs. The snapshot persists the inputs; the derived
+members follow.
+
 ## Design rules
 
 Each rule closes a specific, confirmed failure in a shipped competitor.

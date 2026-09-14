@@ -72,7 +72,8 @@ Specific choices:
   `runInInjectionContext(injector, …)`, which supplies the context `onInit` hooks need for
   `effect()` / `resource()` and the `DestroyRef` that `onDestroy` hooks register on.
 - **Compile-time feature-input checking stays at its existing level**: each feature annotates
-  its own factory parameter (`Pick<TableCore<TRow>, 'rows' | 'trackBy'>`). No typed fold over
+  its own factory parameter (`Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'> & Shape` since
+  #67 — `TableCore<TRow>` now reaches internal features only, ADR-0010). No typed fold over
   the `Features` tuple — see "Not rebuilt" below.
 
 ## Consequences
@@ -124,9 +125,9 @@ feature, which none do today.
 - Consumer call sites and demo apps are byte-identical, and all five existing spec files pass
   unmodified. That was the migration's acceptance gate.
 
-## Deferred: `features: (ctx) => [...]`
+## Deferred: `features: (ctx) => [...]` — superseded, see the 2026-09 amendment below
 
-Consumers still repeat `<TRow>` per feature (`withExpansion<Department>()`) because a feature is
+Consumers still repeat `<TRow>` per feature because a feature is
 called before it receives the core, leaving its call site nothing to infer from. The fix
 `docs/1-state/architecture.md` records as "the one surviving direction" —
 
@@ -139,11 +140,42 @@ store-*class* build time. **This ADR dissolves that blocker**: `composeTable()` 
 before folding features, so a real `TableCore<TRow>` exists to pass.
 
 It is still deferred, because its gains are DX plus a modest correctness win (a mismatched
-`withExpansion<Person>()` on a `Department` table currently compiles; under `ctx` it could not
+`withExpansion<Person>()` on a `Department` table used to compile; under `ctx` it could not
 be expressed), while its cost is real: every spec would be built inside one expression, so
 `composed` would always be empty at factory time — half-closing the feature-to-feature seam this
 ADR deliberately kept. Tree-shaking is identical either way; both shapes import features
 top-level. Revisit when a second feature actually wants another feature's state.
+
+## Amendment (2026-09, #67): row-type inference shipped — by positional composition, not `ctx`
+
+The section above is superseded. A feature call no longer takes a row type: `withExpansion()`, not
+`withExpansion<Department>()`.
+
+**It shipped by a different mechanism than the one deferred.** Not `features: (t) => [...]`. A
+feature became a function of the store built so far — `Feature<In extends Shape, Out extends
+object>`, where `In` is F-bounded on the members it reads (`Pick<TableStore<RowOf<In>>, …>`) and the
+row type is recovered as `RowOf<In>` (`engine/types.ts`). Features are passed as trailing
+positional arguments to `createTable(data, config, ...features)`, so the row type flows from the
+contextual type of the argument position — from `data`, through the accumulating store — rather
+than from a `ctx` handle the consumer threads by hand.
+
+**Why the functional surface made it typable.** The deferral's blocker was that building every spec
+inside one expression leaves `composed` empty at factory time. The positional fold does not have
+that problem. The base store is built before the fold, and each feature is handed the store *as
+accumulated so far*, so a later argument sees the members of every earlier argument. Argument
+order, not a `ctx` closure, is what makes the seam typable — and the seam stays open rather than
+half-closing.
+
+**The correctness win the deferral called "modest" is now in force.** A mismatched
+`withExpansion<Person>()` on a `Department` table no longer compiles, because there is no type
+argument left to mismatch.
+
+**What did not change.** `TableStore<TRow>` is still the public contract. Tree-shaking is
+unaffected — both shapes import features top-level, as the superseded section already said.
+
+The composition model itself — argument-order member visibility against fixed pipeline execution
+order — is described in `docs/1-state/architecture.md`, not here. This ADR owns the engine
+decision.
 
 ## Amendment (2026-08-17): `TableFeatureSpec.columnRules` is now read
 

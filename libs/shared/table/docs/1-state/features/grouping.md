@@ -57,7 +57,7 @@ optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
 
 - **Multi-level, ordered.** `grouping: string[]` — index 0 is the outermost level; aggregation runs at every depth from that cluster's own leaves, never a descendant's already-computed aggregate (D9). See 3-spec.md.
 - **Collapse/expand:** group rows are treated as rows with an id; when `withExpansion()` is also composed, its `expandedRows: Set<id>` tracks whether a given group is expanded or collapsed. `withGrouping()` does not maintain its own collapse state.
-- **Static grouping (no `withExpansion()`):** valid standalone use. All group rows render flat/always-expanded — no collapse affordance exists without `withExpansion()` in the feature list.
+- **Static grouping (no `withExpansion()`):** valid standalone use. All group rows render flat/always-expanded — no collapse affordance exists without `withExpansion()` composed.
 - **UI-layer split:** the store-level optionality above is only half the story — the template layer needs its own opt-in. Group row rendering is wrapped with an expand directive/template outlet only when the consumer chooses to (e.g. an `*ngpExpandableRow`-style directive reading/toggling `expandedRows`). Store never dictates template structure; it only exposes `expandedRows` for that directive to consume when present. This split (store composition + template composition, independently opt-in) is the actual mechanism behind "expansion is optional" — not a single switch.
 - **Aggregation:** per-column `aggregateFn(rows)` computes a summary value per group per column. The store recomputes this reactively whenever group membership changes (data, grouping, or filters change). This is purely a computed value — it defines *what* the aggregate is, not how/where it's rendered (that's UI-layer/template concern).
 - **No per-column opt-out** — every column can be grouped by; there is no `enableGrouping` flag (explicitly decided against, unlike `enableSorting`/`enableFiltering`).
@@ -93,7 +93,7 @@ interface ColumnDef {
 
 ## Compile-Time Dependencies
 
-- **`withExpansion()`** — **optional, not required** (revised 2026-07-31; supersedes the original "must fail to compile without it" framing). `withGrouping()` composes standalone for static grouping. When `withExpansion()` is also in `features: []`, group rows gain collapse/expand via its `expandedRows` set — detected at runtime (e.g. an optional prop/method check), not enforced via a `type<>` compile-time contract.
+- **`withExpansion()`** — **optional, not required** (revised 2026-07-31; supersedes the original "must fail to compile without it" framing). `withGrouping()` composes standalone for static grouping. When `withExpansion()` is also composed, group rows gain collapse/expand via its `expandedRows` set — a lazy guarded read, so it works in either argument order at runtime and is typed only when `withExpansion()` precedes `withGrouping()`.
 - Reads `aggregateFn` from core `columns` config directly (no feature dependency — see `columns.md`; retroactively corrected from an earlier "depends on `withColumns()`" framing).
 
 ## Pipeline Stage: Clustering, Not Tree-Building

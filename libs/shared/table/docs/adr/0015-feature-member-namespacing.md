@@ -264,7 +264,7 @@ claims one key from two features, and consumer `withComputed` blocks still colli
 
 ## Not in scope
 
-The generic-parameter drift found alongside this (`withSorting<Person>()` in 20+ doc call sites,
-and `ADR-0003:129`'s "Consumers still repeat `<TRow>` per feature", both now false — `NoInfer<TRow>`
-on `TableSchema.features` makes bare calls infer) is a documentation sweep, unrelated to this
-decision.
+The generic-parameter drift found alongside this was a documentation sweep, unrelated to this
+decision. What was found: an explicit row type written on feature calls across 20+ doc call sites,
+and ADR-0003's "Consumers still repeat `<TRow>` per feature". Both were false by then, and #67 and
+#78 closed the gap — feature calls carry no row type, and no doc shows one.

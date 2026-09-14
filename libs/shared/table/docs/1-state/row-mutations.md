@@ -31,7 +31,7 @@ Decision log: [`work/with-mutations/2-decisions.md`](./work/with-mutations/2-dec
 
 ```ts
 const data  = signal<Person[]>(people);          // WritableSignal — required (D4)
-const table = createTable(data, () => ({ trackBy: 'id', columns }));
+const table = createTable(data, { trackBy: 'id', columns });
 ```
 
 `data` is the **single source of truth** (D3/D11). The engine keeps no internal row copy, so
@@ -216,8 +216,12 @@ with optimistic save is explicitly undesigned.
 
 - [ ] **O6** — does a `rowsChanged` event fire, or is the signal the only notification? Decide
       together with O11 (editing).
-- [ ] **O8** — compile-time feature dependencies have no mechanism post-migration (`composed` is
-      untyped `Record<string, unknown>`). Engine-wide, not specific to mutations.
+- [x] ~~**O8** — compile-time feature dependencies have no mechanism post-migration~~ —
+      **closed by #67.** A feature's input is `Feature<In extends Shape, Out>`, so a dependency is
+      expressed as an F-bounded input slice (`Pick<TableStore<RowOf<In>>, 'columns'> & Shape`) and
+      is typed by argument order. `Record<string, unknown>` survives only as the engine-internal
+      folding store, which no feature signature sees. There is still no *runtime* dependency
+      assertion. Engine-wide, not specific to mutations.
 - [ ] **O20** — on an id swap, does the table enforce the end-edit-first order, detect an
       orphaned key and migrate it, or just document the sequence? See G3 in the gap register.
 

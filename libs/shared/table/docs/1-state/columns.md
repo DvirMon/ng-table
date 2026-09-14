@@ -20,29 +20,35 @@ parent: ../1-state/architecture.md
 optional and resolved at store construction (see State Shape below):
 
 ```ts
-createTable(data, () => ({
-  trackBy: 'id',
-  columns: [{ id: 'name' }, { id: 'status' }],   // accessor/visible/order all defaulted
-  features: [ /* withSorting(), withGrouping(), etc. */ ],
-}));
+createTable(
+  data,
+  { trackBy: 'id', columns: [{ id: 'name' }, { id: 'status' }] },  // accessor/visible/order all defaulted
+  /* withSorting(), withGrouping(), etc. */
+);
 
 // Override only what needs it — e.g. a computed accessor or a non-default initial order.
-createTable(data, () => ({
-  trackBy: 'id',
-  columns: [
-    { id: 'fullName', accessor: (row) => `${row.first} ${row.last}` },
-    { id: 'status', visible: false },
-  ],
-  features: [ /* ... */ ],
-}));
+createTable(
+  data,
+  {
+    trackBy: 'id',
+    columns: [
+      { id: 'fullName', accessor: (row) => `${row.first} ${row.last}` },
+      { id: 'status', visible: false },
+    ],
+  },
+  /* ...features */
+);
 
 // Or, with the declarative schema layered on top (opt-in) — see ../2-columns/architecture.md
-createTable(data, () => ({
-  trackBy: 'id',
-  columns: [{ id: 'name' }, { id: 'status' }],
-  columnsSchema: (path) => { applyVisible(path.status, { when: () => role() === 'admin' }); },
-  features: [ /* ... */ ],
-}));
+createTable(
+  data,
+  {
+    trackBy: 'id',
+    columns: [{ id: 'name' }, { id: 'status' }],
+    columnsSchema: (path) => { applyVisible(path.status, { when: () => role() === 'admin' }); },
+  },
+  /* ...features */
+);
 ```
 
 Not registered via a `withColumns()` feature — always present as core config, fully known at store creation.

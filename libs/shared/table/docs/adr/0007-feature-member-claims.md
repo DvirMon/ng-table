@@ -24,7 +24,7 @@ composes `withOptimistic()` internally, and both declare `editing` and `pending`
 writing the reasonable-looking:
 
 ```ts
-features: [withOptimistic<Person>(), withRowEdit<Person>()]
+createTable(data, config, withOptimistic(), withRowEdit())
 ```
 
 gets two independent snapshot signals. `table.editing.update(captureEdit(id))` writes one;
@@ -42,7 +42,7 @@ work until the exact moment its state is needed.
 construction with the same named-feature message shape the existing claims use:
 
 ```
-Error: feature #1 already claims member 'editing' (claimed by feature #0)
+[createTable] feature 1 (withOptimistic) and feature 2 (withRowEdit) both provide the "editing" store member. Only one feature may provide each member.
 ```
 
 This is a change to the **feature contract**, not to one feature — which is why it is an ADR and
@@ -61,8 +61,8 @@ wanting it now needs an explicit mechanism rather than merge order.
 
 **Feature-to-feature composition must be explicit about who declares what.** Under D37,
 `withRowEdit()` composes `withOptimistic()` by calling its factory directly and re-exposing the
-resulting members as its own — one claim, not two. The alternative shape (both features in the
-`features` array, the second detecting and reusing the first's state through the `composed` seam)
+resulting members as its own — one claim, not two. The alternative shape (both features passed as
+positional arguments, the second detecting and reusing the first's state through the `composed` seam)
 becomes impossible, which is intended: it was order-dependent, and its failure mode when the
 order was wrong was the same silent one this ADR closes.
 
@@ -84,3 +84,51 @@ the registry claim.
 making them impossible, but at the cost of the flat store surface every existing feature and
 directive reads, and it would make D37's "one door — `table.editing` regardless of composition"
 unexpressible.
+
+## Amendment (2026-09, #67): core-key pre-claims, the unclaimed `totalRowCount`, derive-block claimants
+
+Positional composition (`createTable(data, config, ...features)`, ADR-0003's 2026-09 amendment)
+extended the claim mechanism in three ways a feature author hits directly.
+
+**The engine pre-claims its own core members.** `composeTable()` builds the base store before the
+fold and calls `registry.claimCoreMembers()` first, so `columns`, `rows`, `trackBy`, `value`,
+`renderRows` and `indexById` (`CORE_MEMBER_KEYS`, `engine/slots.ts`) are already claimed under the
+owner name `core` when the first feature runs. A feature declaring one collides at construction
+like any other member clash instead of silently shadowing the engine's own:
+
+```
+[createTable] core and feature 2 (withSelection) both provide the "rows" store member. Only one feature may provide each member.
+```
+
+A feature-vs-feature collision reads the same way, with both sides named by argument position:
+
+```
+[createTable] feature 1 (withRowEdit) and feature 2 (withOptimistic) both provide the "editing" store member. Only one feature may provide each member.
+```
+
+Positions are 1-based and are the consumer's own argument positions — the pre-claim does not shift
+them. Engine-spliced features (the column-schema wiring) fold first but are labelled
+`internal feature N` on a separate count, and a feature nested inside a `composeFeatures()`
+composite is labelled `composeFeatures inner feature N (displayName)`, since the composite's own
+argument position is not knowable from inside a `Feature`.
+
+**`totalRowCount` is deliberately not pre-claimed.** It is the one core-adjacent key a feature is
+allowed to provide, typed as `OverridableCoreKey` and excluded from `CORE_MEMBER_KEYS` by
+construction — `exhaustiveCoreMemberKeys()` stops compiling if any *other* core member is left off
+the list. The reason is ADR-0005: `totalRowCount` is the documented override point for
+`aria-rowcount`, so a server-paged table must be able to report a total larger than the rows it
+holds. This is the one place a feature wins over the engine by design rather than by collision.
+Do not "fix" it by pre-claiming it.
+
+**A derive block is a claimant too.** A trailing derive block contributes members through its host
+feature, so its keys reach the fold already merged — invisible to `claimMember`. `mergeMembers()`
+(`api/create-table-feature.ts`) therefore throws first, with the same wording, naming the block
+rather than a position:
+
+```
+[createTable] the feature and its derive block both provide the "selectedCount" store member. Only one feature may provide each member.
+```
+
+A top-level `withComputed()` is an ordinary positional feature and carries `displayName:
+'withComputed'`, so its collisions read `feature 3 (withComputed)`. The registry stays the single
+collision authority in both cases; only the label differs.

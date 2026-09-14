@@ -110,7 +110,7 @@ The sparseness is load-bearing, not an optimisation:
 ## Feature Plugin Shape
 
 ```ts
-withColumnSizing<TRow>({ /* config TBD — see open questions */ })
+withColumnSizing({ /* config TBD — see open questions */ })
 ```
 
 Contributes `members` only: no `stages`, no `renderStages`, no `setup`. It stores **column

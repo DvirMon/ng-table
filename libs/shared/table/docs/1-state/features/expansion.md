@@ -123,7 +123,7 @@ gap; see [expansion-state-audit.md](../work/with-expansion/expansion-state-audit
 ### `initialExpanded` — a construction-time seed
 
 ```ts
-withExpansion<Dept>({ initialExpanded: savedIds() })
+withExpansion({ initialExpanded: savedIds() })
 ```
 
 A **plain array, read once** when the feature factory runs. It seeds `expandedRows` and

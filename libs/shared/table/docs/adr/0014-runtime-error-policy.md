@@ -81,6 +81,7 @@ Per-callback fallback, chosen so the failure is *visible* rather than *silent*:
 | `sortFn` | that column's sort does not apply; row order falls back to input order | same reasoning — visibly unsorted beats silently mis-sorted |
 | `accessor` | the cell reads `undefined` | one cell degrades, not the row and not the table |
 | `aggregateFn` | that aggregate reads `undefined` | the group still renders |
+| a derived signal (`withComputed()`) | **none — reported, then rethrown** | no fallback is distinguishable from a working derivation; see the 2026-09 amendment |
 
 Two properties of the reporting, both load-bearing:
 
@@ -115,6 +116,12 @@ blanks a screen — disproportionate to the fault, and undiagnosable from the sy
 which is the unrecoverable direction of failure, and it puts a `try`/`catch` in the per-row loop
 for every filter on every evaluation.
 
+**A per-member fallback for a throwing derived signal.** Rejected (#67). A fallback value —
+`undefined`, the previous value, a zero — makes a broken derivation indistinguishable from a
+working one, and the member's consumers (template bindings, other features' reads) carry the wrong
+value silently. Unlike the four degrading callbacks above, there is no reading the library can pick
+that is *visibly* wrong. Reported-then-rethrown instead; see the 2026-09 amendment.
+
 **Throw in dev, degrade in production.** Rejected — dev and production would take different code
 paths through the pipeline, so the behavior under test is not the behavior shipped. Reporting
 loudly in both, and degrading in both, gets the same visibility without the divergence.
@@ -137,3 +144,48 @@ setting library-wide policy it does not own.
   callback.
 - Not enforced by the type system, in the same way as ADR-0006's `onRowsRemoved` contract: adding
   a new consumer callback without a wrap site compiles fine and reintroduces the exposure.
+
+## Amendment (2026-09, #67): derived signals
+
+`withComputed()` introduced a consumer callback that splits across both classes of this ADR, and
+one half of it is the policy's only exception. Both halves live inside `withComputed()`
+(`api/features/with-computed.ts`), never in the fold — a fold-level check would reject the method
+members features legitimately contribute.
+
+**Construction: a derive block that throws while declaring, throws.** The block runs once, at
+composition, before any data. A block that never produced its members has no correct degraded
+reading — the "Sane degraded behavior exists: **no**" column of the two-classes table — and it
+fires on the first run, so it cannot ship accidentally:
+
+```
+[createTable] withComputed block threw while declaring its members
+```
+
+The original error is attached as `cause`. The same class covers a block returning a non-signal,
+which the `DerivedDict` constraint cannot enforce against a JavaScript consumer:
+
+```
+[createTable] withComputed: member "total" is not a signal — a derive block returns signals only
+```
+
+**Runtime: a derived signal that throws at evaluation is reported, then rethrown.** Each declared
+signal is rebuilt wrapped, so the failure names the member that produced it:
+
+```ts
+console.error(`[createTable] derived member "${key}" threw`, error);
+```
+
+Reported always, not dev-only, consistent with the rest of this ADR. Reporting is once per
+evaluation with no dedupe logic needed: the outer `computed` caches the error and rethrows it on
+every read until a dependency changes.
+
+**Why rethrow rather than degrade.** The four degrading callbacks each have a fallback that is
+*visibly* wrong and recoverable — unfiltered rows, unsorted order, an `undefined` cell. A derived
+member has none. The library cannot know whether `undefined`, the previous value or a zero is a
+safe reading of a consumer's own derivation, and every choice is silently wrong at the exact moment
+the value matters. `classify-errors-construction-vs-runtime` puts it as "hiding data is the
+unrecoverable direction"; here the *fallback* is what hides, so the same reasoning lands on the
+opposite conclusion. Reporting and rethrowing keeps the failure loud.
+
+This is the one runtime-class callback in the library that does not degrade. The rule above stands
+as written — it is not softened to "usually"; this is its single, justified exception.
