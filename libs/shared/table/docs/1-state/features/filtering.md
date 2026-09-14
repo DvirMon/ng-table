@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withFiltering()
 type: architecture
-version: 2.0
-date: 2026-09-10
+version: 3.0
+date: 2026-09-14
 capability: filtering
 spec: drilled
 code: shipped
@@ -14,8 +14,8 @@ parent: ../architecture.md
 
 ## Executive Summary
 
-The client-side half of filtering, and **only** that half. It applies a
-[`createFilters()`](../filters.md) object to the rows in the pipeline's `filter` stage.
+The client-side half of filtering, and **only** that half. It applies a list of row predicates
+to the rows in the pipeline's `filter` stage.
 
 ```ts
 readonly filters = createFilters<Invoice>((path) => {
@@ -26,14 +26,15 @@ readonly filters = createFilters<Invoice>((path) => {
 readonly table = createTable(
   this.data,
   { trackBy: 'id', columns: [...] },
-  withFiltering({ filters: this.filters }),
+  withFiltering({ predicates: () => [this.filters().matcher()] }),
 );
 ```
 
-It owns no filter state. Criteria, predicates, keys, `value()`, `active()`, `reset()` and
-`dirty()` all belong to the filters object, which the consumer holds and which works with no
-table at all — see [filters.md](../filters.md) for the whole contract. This feature is the
-adapter that makes a table honour one.
+It owns no filter state, and it does not know what a filter is. A predicate is the whole
+contract: the feature imports nothing from the filters domain and names no filter type
+([ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md)). The snippet above is ordinary
+composition the consumer writes — [`createFilters()`](../filters.md) is one way to produce a
+term, a hand-written `(row) => boolean` is another, and the model works with no table at all.
 
 **In server mode this feature is not composed at all.** The filters feed the request that
 produces the data; the table renders rows that arrive already filtered (R10).
@@ -41,74 +42,76 @@ produces the data; the table renders rows that arrive already filtered (R10).
 ## Config
 
 ```ts
-interface WithFilteringConfig<
-  TRow,
-  TState extends Record<string, unknown> = Record<string, unknown>
-> {
-  filters: Filters<TRow, TState>;
+interface WithFilteringConfig<TRow> {
+  predicates: () => readonly ((row: TRow) => boolean)[];
   manual?: boolean;
 }
 ```
 
 `TRow` infers from the enclosing `createTable()` config — no per-call generic (`5a3a09d`).
-`TState` infers from `filters`, and defaults to the untyped map when the consumer declared no
-`TState` of their own.
 
 | Field | Purpose |
 |---|---|
-| `filters` | the object returned by `createFilters<TRow, TState>()`. Required — the feature has nothing to do without one |
-| `manual` | skip the client-side filter stage; state still updates normally |
+| `predicates` | a thunk returning the row predicates to apply. Required — the feature's only input |
+| `manual` | skip the client-side filter stage |
 
-**`TState` is carried, not pinned to the default.** `Filters<TRow, TState>` is *not* assignable
-to `Filters<TRow>` — `FilterNode<T>` holds a `WritableSignal<T>`, which is invariant — so a
-config fixed at the default would force every consumer who typed their filter set to widen back
-to `unknown` criteria at the binding site. Two call-site constraints follow:
+Two facts the thunk shape carries:
 
-- **`TState` must be a `type`, not an `interface`** — an interface has no implicit index
-  signature and fails the `Record<string, unknown>` constraint outright.
-- **Never pass `In` explicitly as a type argument on the call** — that fixes `TState` to its
-  default and the assignment fails again. `In` is meant to come contextually from the argument
-  position in `createTable()`.
+- **One call is one evaluation.** The thunk is invoked once per pass, not once per row, so every
+  row in a pass sees the same term list.
+- **It is read reactively.** Filtering recomputes when a signal the thunk reads changes — which is
+  what makes the `matcher()` term in the snippet above track the criteria with no wiring of its
+  own. A filter model is one way to produce a term, not a config option.
 
 ## Behavior
 
 - Claims the `filter` pipeline stage. Filtering runs **first**, before group/sort/expand
   (unchanged), so `aggregateFn` never sees unfiltered rows.
-- Reads `filters().active()` and applies each active filter's predicate to each row.
-- **Combination:** within an `anyOf` group, **OR**; across filters, **AND**.
-- **Empty criteria** are skipped before evaluation and never reach the stage.
-- **Null/undefined cells** follow the matcher policy in [filters.md](../filters.md#semantics)
-  (R27) — the feature adds no policy of its own.
+- Applies the terms in order, **AND**'d — each narrows the survivors further. An empty list never
+  narrows.
+- **AND is the only combinator the table assumes.** OR lives inside a term, because the table has
+  no vocabulary for expressing which terms group with which (ADR-0016).
+- Criterion-level semantics — OR within an `anyOf` group, empty criteria skipped before
+  evaluation, the null/undefined cell policy (R27) — belong to whatever term the consumer
+  supplies, and for a `matcher()` term they are the filter model's:
+  [filters.md](../filters.md#semantics). The feature adds no policy of its own.
 
 ## `manual`
 
 ```ts
-withFiltering({ filters: this.filters, manual: true })
+withFiltering({ predicates: () => [], manual: true })
 ```
 
-- Criteria update normally; `value()`, `active()` and `dirty()` behave identically.
-- The pipeline **skips the client-side filter stage** entirely.
+- The pipeline **skips the client-side filter stage** entirely; the terms are not evaluated.
+- Whatever produced the terms is untouched — a filter model's `value()`, `active()` and `dirty()`
+  behave identically.
 
-**Retained for symmetry, not necessity** (R23). Under R10 the ordinary server-side path does not
-compose this feature at all, which makes `manual` redundant for the common case. It is kept
-because `withSorting` carries the same flag, and a table filtering server-side while sorting
-client-side composes two features whose `manual` settings differ — dropping it from one would
-make the contract irregular for no gain.
+**Retained for symmetry, not necessity** (R23), and the argument is one step weaker than it was.
+`predicates` is now required and consumer-supplied, so "skip the stage" is very close to "do not
+compose the feature" — which is what the ordinary server-side path already does under R10. It is
+kept because `withSorting` carries the same flag, and a table filtering server-side while sorting
+client-side composes two features whose `manual` settings differ.
 
 Precision on the precedent: `manual` is a **two-feature** convention, not a universal one. Only
-`withSorting` and the superseded `withFiltering` accept it; `withExpansion`'s config has just
+`withSorting` and `withFiltering` accept it; `withExpansion`'s config has just
 `childrenAccessor` / `isExpandable`, and `withGrouping` does not exist (it appears only as a
 doc-comment in `api/types.ts`).
 
 ## Errors
 
-Per [ADR-0014](../../adr/0014-runtime-error-policy.md). A predicate that throws deactivates that
-filter for the evaluation and is reported once per filter per evaluation; it never takes the
-table down. Full statement in [filters.md](../filters.md#errors).
+Per [ADR-0014](../../adr/0014-runtime-error-policy.md) and
+[ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md). **The catch unit is one term.** A
+term that throws is dropped for that pass and reported once, by its index; its siblings keep
+narrowing, and it never takes the table down.
+
+The index is the floor, for anonymous terms. A term produced by `matcher()` already reports under
+its own filter key from inside the evaluator — full statement in
+[filters.md](../filters.md#errors).
 
 ## Compile-Time Dependencies
 
-None. The feature reads nothing from other features and contributes no members.
+None. `with-filtering.ts` imports nothing from the filters domain and names no filter type (`#105`).
+It reads nothing from other features and contributes no members.
 
 It no longer reads anything from the columns config either: `ColumnDef.filterFn` and
 `ColumnDef.enableFiltering` are removed (R12). `filterFn` has no criterion to pair with once
@@ -118,15 +121,15 @@ instead.
 
 ## Members Owned
 
-**None.** Deliberate: there is no `table.filters`, no `table.setColumnFilter()`. The consumer
-already holds the filters object, and adding a table-side mirror would create a second path to one
-piece of state.
+**None.** Deliberate: there is no `table.filters`, no `table.setColumnFilter()`. Whatever produces
+the predicates is the consumer's, and a table-side mirror would create a second path to state the
+table does not own.
 
 ## Events Owned
 
-**None.** The old `filterChanged` observable is gone — `filters().value` is a signal, so a
-consumer who wants to react reads it, and a resource that depends on `active()` re-runs on its
-own.
+**None.** The old `filterChanged` observable is gone. Criteria live wherever the consumer put
+them — with `createFilters()` that is a signal, so a consumer who wants to react reads it and a
+resource depending on `active()` re-runs on its own.
 
 ## Decisions
 
@@ -136,12 +139,19 @@ Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filt
 - **R10** — `createFilters()` is standalone, not a config field of this feature. Forced by server
   mode: filters feed the request that produces the data, so a table-owned filter object cannot be
   constructed at all.
-- **R23** — `manual` is kept for cross-feature consistency.
+- **R23** — `manual` is kept for cross-feature consistency. Still holds, with the weaker rationale
+  recorded under [`manual`](#manual) above.
 - **R26** — **executed 2026-09-14.** The superseded imperative implementation is gone:
   `setColumnFilter()`, `setGlobalFilter()`, `clearFilters()`, `columnFilters` and `globalFilter`
-  no longer exist, and `with-filtering.ts` is the adapter over `createFilterEvaluator` with a
-  `manual` pass-through for server mode. It was a planned breaking change, not a cleanup, and it
-  is done — anything still naming those five members is stale.
+  no longer exist. It was a planned breaking change, not a cleanup, and it is done — anything
+  still naming those five members is stale.
+
+**Superseded by [ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md) (`#105`).** The
+options doc discusses this feature as an *adapter over a filter model*, with `filters` as its
+config field and a criterion-map type parameter carried through. Both are gone; the feature takes
+a predicate list and the wiring is composition the consumer writes. Any R-number describing the
+`filters` field, `createFilterEvaluator`, or the `TState` call-site rules describes a shape that
+no longer exists — read the ADR for what replaced it, not the options doc.
 
 Superseded behavioral decisions from v1.1 of this file, kept here so the change is traceable:
 
@@ -162,8 +172,9 @@ Superseded behavioral decisions from v1.1 of this file, kept here so the change 
 
 ## Competitive position
 
-**Verdict: closed.** `api/features/with-filtering.ts` now implements this adapter over
-`createFilters()` (#62), replacing the superseded imperative shape.
+**Verdict: closed.** `api/features/with-filtering.ts` implements the client-side filter stage over
+a consumer-supplied predicate list (#62, reshaped by #105), replacing the superseded imperative
+shape.
 
 Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table and PrimeNG —
 column + global filtering is baseline in all four competitors' free tier. Full reasoning:

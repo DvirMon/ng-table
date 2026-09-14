@@ -1,7 +1,7 @@
 ---
 title: State Layer Reference — createFilters()
 type: architecture
-version: 1.1
+version: 1.2
 date: 2026-09-14
 capability: filters
 spec: drilled
@@ -28,15 +28,14 @@ readonly filters = createFilters<Invoice>((path) => {
 });
 ```
 
-> **`code: shipped` since 2026-09-14** (was `none`, stale from 2026-09-10). `api/create-filters.ts`
-> plus the whole `api/filters/` engine — `evaluator`, `matchers`, `recorder`, `rules`, `state`,
-> `validate` — are on disk, with `create-filters.spec.ts`, `matchers.spec.ts` and `state.spec.ts`
-> covering them. All eight rule kinds, `anyOf`, `applyWhen` and the matchers are exported from
-> `src/index.ts`. Three Storybook stories exercise the surface end to end
-> (`filtering/client-filtering/`, `server-filtering/`, `selection-filtering/`); coverage per
-> product story is in [`0-product/filtering.md`](../0-product/filtering.md).
->
-> `docs/status.md` still shows the old value — it is generated, so run `npm run table:status`.
+> **The domain lives in `src/filters/`** — a top-level sibling of `api/`, `engine/` and
+> `directives/`, with its own barrel (`#106`, [ADR-0004](../adr/0004-table-source-layout.md)'s
+> 2026-09 amendment). `create-filters.ts` plus `evaluator`, `matchers`, `recorder`, `rules`,
+> `state` and `validate` are on disk, with `create-filters.spec.ts`, `matchers.spec.ts` and
+> `state.spec.ts` covering them. Four Storybook stories exercise the surface end to end
+> (`filtering/client-filtering/`, `server-filtering/`, `selection-filtering/`,
+> `predicate-filtering/`); coverage per product story is in
+> [`0-product/filtering.md`](../0-product/filtering.md).
 
 Declared like `createTable()` and Signal Forms' `form()`, and deliberately shaped after the
 latter: named rules called on a typed path, one general rule underneath, property access for
@@ -211,6 +210,7 @@ filters().value.set(next)       // writable — fans out per key to the child no
 filters().active()              // { search: 'acme' } — empties omitted
 filters().reset(v?)             // no arg → source; null → empty; partial → those keys
 filters().dirty()               // derived: value differs from source
+filters().matcher()             // (row: TRow) => boolean, compiled from the current criteria
 
 filters.status                  // a filter node
 filters.status().value()        // its criterion
@@ -225,6 +225,18 @@ filters.status().dirty()
 | `active()` | derived, empties omitted — request params, "N filters applied", `hasFilters` (R14) |
 | `reset(value?)` | one verb, three behaviors (R17); takes a `Partial<TState>`. `clear()` does not exist — it is `reset(null)` |
 | `dirty()` | **derived, never stored** — gates whether a source may overwrite (R19) |
+| `matcher()` | a row predicate compiled from the model's current criteria — the model's answer to "does this row match?", usable with or without a table |
+
+**Why `matcher()` is on the root rather than a top-level member.** `Filters` is an intersection
+whose second half is a mapped type over the criterion keys, so a top-level `matcher` would collide
+with a filter literally keyed `matcher`. The root is a plain interface with no such hazard — the
+same reasoning that put `value`, `active`, `reset` and `dirty` there.
+
+**It also puts `TRow` in the type body.** `matcher(): (row: TRow) => boolean` means `TRow` is no
+longer phantom, so a filter set built for an unrelated row type is now a compile error instead of
+a silently empty table. A public type-behavior change, with its compatibility carve-out and the
+fix for the error it produces:
+[ADR-0016](../adr/0016-filtering-takes-a-predicate-list.md) §4.
 
 Why both `value()` and `active()`: a criterion is user-editable input two-way bound to a control
 — that is the Signal Forms *model*, always complete. "Which filters are currently narrowing" is
@@ -337,11 +349,17 @@ through `filters.<key>().value` directly.
 
 ### Client
 
-The feature filters the rows. See [features/filtering.md](features/filtering.md).
+The feature filters the rows, over a predicate the model supplies. See
+[features/filtering.md](features/filtering.md).
 
 ```ts
-createTable(data, { trackBy: 'id', columns }, withFiltering({ filters: this.filters }));
+createTable(data, { trackBy: 'id', columns },
+  withFiltering({ predicates: () => [this.filters().matcher()] }));
 ```
+
+**Neither side imports the other.** The table never learns what a criterion is, the filter model
+never learns what a pipeline stage is, and the line above is the whole of the wiring — ordinary
+composition the consumer writes ([ADR-0016](../adr/0016-filtering-takes-a-predicate-list.md)).
 
 ### Server
 
@@ -403,7 +421,7 @@ handles as views onto its keys), and the premise behind that — "`form()` canno
 synthesized object" — is false. `form()` needs a callable carrying a reactive node plus
 `set`/`update`/`asReadonly`; it does not care whether storage sits above or below. Angular's own
 Signal Forms builds precisely such an object in `deepSignal` (`Object.assign` onto a
-`computed()`), which is the shape `createRootValueSignal()` (`api/filters/state.ts`) mirrors —
+`computed()`), which is the shape `createRootValueSignal()` (`filters/state.ts`) mirrors —
 the same shape the repo already uses for `WritableView` (`engine/writable-view.ts`).
 
 Node-first is what keeps per-filter `source`/`dirty` reconciliation local to the node that owns
@@ -442,6 +460,27 @@ composition already provides.
 - **Order of evaluation:** empty-criterion check (skip the filter entirely) → read the cell →
   matcher, which owns its own null branch. A null cell is only ever reached by an *active* filter.
 
+### One `matcher()` call is one evaluation
+
+The returned predicate compiles the narrowing records once — gating and emptiness resolve per
+call, not per row — and per-filter error reporting is deduped within that one instance. Calling
+`matcher()` again produces a fresh predicate with fresh dedup state.
+
+Two consequences worth holding:
+
+- A consumer who holds one predicate across several passes gets **one pass's** semantics, dedup
+  included. Call `matcher()` per pass to get per-pass reporting.
+- The table calls it once per pass, so each pass reports independently — see
+  [Errors](#errors) for what "dropped for the rest of the evaluation" means row by row.
+
+Because the predicate is a plain function, the model narrows things that are not tables at all:
+
+```ts
+const visible = rows.filter(filters().matcher());
+```
+
+That is the point of the model being standalone, not a shorthand for the table case.
+
 ## Errors
 
 Per [ADR-0014](../adr/0014-runtime-error-policy.md).
@@ -449,11 +488,17 @@ Per [ADR-0014](../adr/0014-runtime-error-policy.md).
 **Construction throws** — a duplicate filter on one path (R5), an unknown path, an `anyOf`
 without a key. Deterministic, fires before data flows, no sane degraded reading.
 
-**Runtime never throws.** A predicate that throws deactivates *that filter* for the evaluation;
-other filters still narrow and the table still renders. Reported once per filter per evaluation
-— not per row — with the filter key, the predicate and the offending cell, in production as well
-as dev. Wrapped per filter, never per row: per-row catching yields an inconsistent row set (some
-rows tested, some skipped) and puts a `try` in the hot loop.
+**Runtime never throws.** A predicate that throws drops *that filter* for the rest of the
+evaluation; other filters still narrow and the table still renders. Reported once per filter per
+evaluation — not per row — with the filter key, the predicate and the offending cell, in
+production as well as dev. Wrapped per filter, never per row: per-row catching yields an
+inconsistent row set (some rows tested, some skipped) and puts a `try` in the hot loop.
+
+**"For the rest of the evaluation" is literal.** The predicate answers row by row, so rows it
+already answered for keep that filter's narrowing; only rows from the throwing one onward skip it.
+A row-set entry point could discard the filter whole, and the one that did was deleted with the
+coupling — see [ADR-0016](../adr/0016-filtering-takes-a-predicate-list.md) §2, which records the
+trade and why it is accepted.
 
 Custom predicates are the likeliest thing here to throw, because R27 hands them an unguarded
 cell by design. The likeliest *reason* is a stale criterion — persistence is consumer-owned
@@ -505,18 +550,23 @@ Each is additive if revisited — none of them is foreclosed by shipping without
 
 ## Public API
 
-Everything below is exported from `src/index.ts` — the library's only barrel. Files are new
-unless marked.
+Everything below is exported from `src/filters/index.ts` — the domain's own barrel, which the
+library's `src/index.ts` re-exports wholesale. Anything under `src/filters/` **not** listed here
+is internal, which is what makes `evaluator.ts`, `recorder.ts`, `state.ts` and `validate.ts`
+private to the domain.
 
 | Symbol | From | Kind |
 |---|---|---|
-| `createFilters` | `api/create-filters.ts` | factory |
-| `Filters`, `FilterNode`, `FilterOptions` | `api/filters.types.ts` | types |
-| `equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone` | `api/filters/rules.ts` | declaration rules |
-| `filter` | `api/filters/rules.ts` | the general rule |
-| `anyOf`, `applyWhen` | `api/filters/rules.ts` | grouping / conditional rules |
-| `isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`, `hasNoneOf` | `api/filters/matchers.ts` | matchers (R30) |
-| `withFiltering`, `WithFilteringConfig` | `api/features/with-filtering.ts` (**replaces** the current file) | feature plugin |
+| `createFilters` | `filters/create-filters.ts` | factory |
+| `Filters`, `FilterNode`, `FilterOptions` | `filters/types.ts` | types |
+| `equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone` | `filters/rules.ts` | declaration rules |
+| `filter` | `filters/rules.ts` | the general rule |
+| `anyOf`, `applyWhen` | `filters/rules.ts` | grouping / conditional rules |
+| `isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`, `hasNoneOf` | `filters/matchers.ts` | matchers (R30) |
+
+`withFiltering` and `WithFilteringConfig` are deliberately **not** here — they are the table's
+surface, documented in [features/filtering.md](features/filtering.md). Listing them in this file
+was the doc-level version of the coupling `#105` removed.
 
 Rules and matchers are split across two files rather than one because they are consumed at
 different times — rules only inside a schema body, matchers only inside a custom predicate — and

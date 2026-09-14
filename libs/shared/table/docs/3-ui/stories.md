@@ -339,16 +339,19 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   persistent per-row errors with Retry, one manual undo slot); `live-optimistic/` isolates just
   the `withOptimistic()` rollback verbs (capture on focus, revert-after-failure on blur), plus a
   timed Undo affordance for delete.
-- **`filtering/` — three hosts, and the composition differs between them on purpose.**
-  `client-filtering/` composes `withFiltering({ filters })` and is the baseline: five rule kinds
-  plus a declared `anyOf` quick filter, a chip summary, `Reset to defaults` vs. `Clear all` as two
-  visibly different buttons, and a broken-predicate toggle that widens the result set.
+- **`filtering/` — four hosts, and the composition differs between them on purpose.**
+  `client-filtering/` composes `withFiltering({ predicates: () => [filters().matcher()] })` and is
+  the baseline: five rule kinds plus a declared `anyOf` quick filter, a chip summary,
+  `Reset to defaults` vs. `Clear all` as two visibly different buttons, and a broken-predicate
+  toggle that widens the result set.
   `server-filtering/` composes **no filtering feature at all** — `createFilters()` feeds the
   request and the rows arrive narrowed, so a client `filter` stage would have nothing to do; it
   also carries the only `debounce` in the set and overrides core `totalRowCount` with the server's
   own via `createTableFeature()` (ADR-0005). `selection-filtering/` adds `withSelection()` +
   `withSorting()` and is where selection-under-filter is measured — see `0-product/filtering.md`
-  §5 F-S1. All three put their `createFilters()` call in the host, not `fixtures/`.
+  §5 F-S1. `predicate-filtering/` composes a hand-written `(row) => boolean` with no filter model
+  at all, which is what makes the predicate list the contract rather than a convenience. All four
+  put any `createFilters()` call in the host, not `fixtures/`.
 - **`grouping/` — three hosts, split by what the table *is*, not by feature flags.**
   `grouping-static/` is the grouped table as its own product: `withGrouping()` + `withFiltering()`
   and deliberately **no** `withExpansion()`, because a chevron with nothing to expand is a control

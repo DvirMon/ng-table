@@ -79,7 +79,7 @@ now exist, all read as host components rather than `.mdx` wrappers:
 
 | Story | Composes | What it demonstrates |
 |---|---|---|
-| [`client-filtering/`](../../src/stories/filtering/client-filtering/) | `withFiltering({ filters })`, client, synchronous | Five filter kinds plus a declared `anyOf` quick filter; active markers and a chip summary with per-chip ×; `Reset to defaults` vs. `Clear all` as two visibly different buttons; a broken-predicate toggle that widens the result set and mirrors the library's report onto the canvas; raw vs. guarded load of a stale saved filter; no-data and no-matches as two separate states |
+| [`client-filtering/`](../../src/stories/filtering/client-filtering/) | `withFiltering({ predicates })`, client, synchronous | Five filter kinds plus a declared `anyOf` quick filter; active markers and a chip summary with per-chip ×; `Reset to defaults` vs. `Clear all` as two visibly different buttons; a broken-predicate toggle that widens the result set and mirrors the library's report onto the canvas; raw vs. guarded load of a stale saved filter; no-data and no-matches as two separate states |
 | [`server-filtering/`](../../src/stories/filtering/server-filtering/) | `createFilters()` alone — no filtering feature | Criteria feed the request; a 300ms debounce made visible by a request counter; the server's own `total` overriding core `totalRowCount` per ADR-0005; the late-default race gated by `dirty()`; loading / no-matches / request-failed as three distinct blocks, with the last-loaded page kept on screen |
 | [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) | `withFiltering()` + `withSelection()` + `withSorting()` | Two separately named select-all scopes; retention of a selection across a filter, restored exactly; sorting changing nothing and deleting pruning; the missing selected-but-hidden count stated on canvas rather than faked |
 
@@ -740,8 +740,8 @@ Owned by `1-state/work/with-filtering/` and `filters.md` itself.
 |---|---|---|---|
 | ~~S1~~ | ~~No first-class filtered-row match count~~ — **resolved 2026-09-14** | 2.3 | It is the **core** `totalRowCount` member (`rows().length`, so post-filter), not a `createFilters()` or `withFiltering()` member — which is why looking for it on the filtering surface found nothing. Server mode is the same member from the other side: ADR-0005 leaves exactly this key overridable. Both render — see OQ-1 |
 | S2 | Selection-under-filter semantics — **half resolved** | F-S1 | No longer "fully unresolved": D59's `selectAllIds()` settled the scope half without reversing `selection.md:17-22`'s deliberate non-dependency — the consumer supplies the id array, `withSelection()` never reads `active()`. What is left is the hidden-count half, which is S1 in [`selection.md`](selection.md) §8.1, not this doc's. OQ-2 |
-| ~~S3~~ | ~~`createFilters()` has zero implementation~~ — **resolved** | — | `src/api/create-filters.ts` plus the whole `api/filters/` engine (`evaluator`, `matchers`, `recorder`, `rules`, `state`, `validate`) ship, with `create-filters.spec.ts`, `matchers.spec.ts` and `state.spec.ts` covering them. `filters.md`'s `code: none` frontmatter is the last stale trace and is filtering Step 7's to fix |
-| ~~S4~~ | ~~Shipped `withFiltering()` implements the superseded imperative shape~~ — **resolved** | — | `with-filtering.ts` is now the v2.0 adapter over `createFilterEvaluator`, with a `manual` pass-through for server mode. R26's breaking change landed; `setColumnFilter`/`setGlobalFilter` are gone. `3-ui/architecture.md` still names them (U5) |
+| ~~S3~~ | ~~`createFilters()` has zero implementation~~ — **resolved** | — | The whole `src/filters/` domain ships (`create-filters`, `evaluator`, `matchers`, `recorder`, `rules`, `state`, `validate`), with `create-filters.spec.ts`, `matchers.spec.ts` and `state.spec.ts` covering it. `filters.md` now reads `code: shipped`, and `#106` moved the domain out of `api/` into its own top-level folder and barrel |
+| ~~S4~~ | ~~Shipped `withFiltering()` implements the superseded imperative shape~~ — **resolved** | — | `with-filtering.ts` applies a consumer-supplied predicate list, with a `manual` pass-through for server mode (ADR-0016, `#105`). R26's breaking change landed; `setColumnFilter`/`setGlobalFilter` are gone. `3-ui/architecture.md` still names them (U5) |
 | S5 | No **shipped** guard for a persisted criterion that no longer fits the schema | 4.3 | Unchanged as a library gap — `filters.md`'s Errors section names the risk and ships nothing. The worked defensive pattern OQ-6 asks for now exists as code: `client-filtering/`'s raw-vs-guarded load buttons, where the guarded path narrows each `unknown` off the snapshot and the raw path has to step outside the type to exist at all. Recipe, not API. OQ-6 |
 | ~~S6~~ | ~~No per-filter or `active()`-derived count of currently-matching rows exposed anywhere~~ — **resolved with S1** | 2.3, F-P1 | The premise was wrong rather than the gap unfilled: the count was never going to be `active()`-derived. F-P1 will read the same core `totalRowCount` once pagination exists, which is what this row was really tracking |
 
@@ -794,9 +794,9 @@ registry) rather than against memory.
 
 **The `filters` capability is now in the registry — with a stale code column.** The 2026-09-10
 claim that `docs/status.md` had no row for `capability: filters` at all is false as of this pass:
-the row exists (`filters | drilled | none`). What is wrong now is narrower and different — `code:
-none` contradicts the shipped, spec-covered `api/filters/` engine (§8.1 S3). The fix is still
-`npm run table:status` after `filters.md`'s own frontmatter moves, not a doc edit here.
+the row exists (`filters | drilled | none`). That is resolved: `filters.md` now carries
+`code: shipped` for the `src/filters/` domain (§8.1 S3), and the roll-up is regenerated with
+`npm run table:status`, never edited by hand.
 
 ### 9.1 Active-filter chips / clear-all toolbar — **UI**
 
@@ -854,7 +854,7 @@ it). Both are real integrator work, correctly left alone.
 Real problems, but the integrating developer's, not the person using the table. Listed so they are
 not mistaken for missing stories.
 
-- **Whether rules and matchers live in one file or two** (R30, `api/filters/rules.ts` vs.
+- **Whether rules and matchers live in one file or two** (R30, `filters/rules.ts` vs.
   `matchers.ts`) — pure code organization, invisible to anyone using the table.
 - **Whether `createFilters()` requires an injection context, with `{ injector }` as an escape
   hatch** (R24) — developer ergonomics, mirrors `createTable()`/`form()` exactly.

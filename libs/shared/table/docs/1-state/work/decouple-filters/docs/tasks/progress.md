@@ -1,7 +1,7 @@
 ﻿# Implementation Progress — decouple-filters (`#101`)
 
 **Epic:** [#101](https://github.com/DvirMon/acme/issues/101)
-**Status:** 8 / 13 complete
+**Status:** 13 / 13 complete
 
 Three issues remain, one PR each, strictly sequential. Steps 1–5 were `#104` and have landed.
 
@@ -27,16 +27,16 @@ Three issues remain, one PR each, strictly sequential. Steps 1–5 were `#104` a
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 9 | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md) | `code` | ✅ done | — |
-| 10 | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ✅ done | — |
+| 9 | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md) | `code` | ✅ done | `6b8e251` |
+| 10 | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ✅ done | `6b8e251` |
 
 ## `#107` — split the filtering docs by domain · PR 3 of 3
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 11 | [Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md) | `docs` | ⬚ pending | — |
-| 12 | [Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md) | `docs` | ⬚ pending | — |
-| 13 | [Split the older workspace's pointers and regenerate the roll-up](step-13-split-pointers-regenerate.plan.md) | `chore` | ⬚ pending | — |
+| 11 | [Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md) | `docs` | ✅ done | — |
+| 12 | [Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md) | `docs` | ✅ done | — |
+| 13 | [Split the older workspace's pointers and regenerate the roll-up](step-13-split-pointers-regenerate.plan.md) | `chore` | ✅ done | — |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 
