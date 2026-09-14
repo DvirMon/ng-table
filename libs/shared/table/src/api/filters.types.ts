@@ -38,9 +38,20 @@ export interface FilterNode<TCriterion> {
  * parameter rather than something inferred from the schema function.
  */
 export interface FiltersRoot<TState extends Record<string, unknown> = Record<string, unknown>> {
-  value(): TState;
+  /**
+   * The complete criterion model, and a real `WritableSignal` — a view over the child nodes,
+   * which remain the single storage location. Reading is `filters().value()` as before; a
+   * write fans out per key. Being writable is what makes `form(filters().value, schema)` work
+   * with no adapter and no sync effect (R18).
+   */
+  value: WritableSignal<TState>;
   active(): Partial<TState>;
-  reset(value?: TState | null): void;
+  /**
+   * `Partial<TState>`, not `TState`: a key the object omits is reset to its declared source,
+   * which is what makes restoring a partial snapshot a complete state. Matches what the
+   * runtime has always done per key.
+   */
+  reset(value?: Partial<TState> | null): void;
   dirty(): boolean;
 }
 

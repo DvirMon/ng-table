@@ -197,8 +197,9 @@ included (R20).
 ```ts
 filters()                       // root state
 filters().value()               // { status: null, amount: {min,max}, search: 'acme' } — complete
+filters().value.set(next)       // writable — fans out per key to the child nodes
 filters().active()              // { search: 'acme' } — empties omitted
-filters().reset(v?)             // no arg → source; null → empty; value → that value
+filters().reset(v?)             // no arg → source; null → empty; partial → those keys
 filters().dirty()               // derived: value differs from source
 
 filters.status                  // a filter node
@@ -210,27 +211,40 @@ filters.status().dirty()
 
 | Member | Purpose |
 |---|---|
-| `value()` | stable shape, one entry per declared filter — binds to controls, persists, restores. Typed as the full model, no optional-key handling (R14) |
+| `value` | a `WritableSignal<TState>` — one entry per declared filter, read with `value()`, written with `value.set`/`.update`. The complete model, no optional-key handling (R14), and the model a Signal Form binds to directly |
 | `active()` | derived, empties omitted — request params, "N filters applied", `hasFilters` (R14) |
-| `reset(value?)` | one verb, three behaviors (R17). `clear()` does not exist — it is `reset(null)` |
+| `reset(value?)` | one verb, three behaviors (R17); takes a `Partial<TState>`. `clear()` does not exist — it is `reset(null)` |
 | `dirty()` | **derived, never stored** — gates whether a source may overwrite (R19) |
 
 Why both `value()` and `active()`: a criterion is user-editable input two-way bound to a control
 — that is the Signal Forms *model*, always complete. "Which filters are currently narrowing" is
 derived output — that is `errors()`, only what is active. Different things, both needed.
 
-`filters().value` is a real `WritableSignal`, which is what makes [Forms](#forms) free.
+`filters().value` is a real `WritableSignal` — a writable view over the child nodes, which stay
+the single storage location. That is what makes [Forms](#forms) free.
 
 ### `reset(value?)`
 
 ```ts
 filters().reset();                             // → source (or empty when no source is declared)
 filters().reset(null);                         // → empty
+filters().reset({ status: 'open' });           // → that key; every other key back to its source
 filters.amount().reset({ min: 0, max: 500 });  // → an arbitrary value
 ```
 
 `null` is a **sentinel meaning "this filter's empty value"**, not a literal — `''` for text,
 `{ min: null, max: null }` for a range, `[]` for a multi-select.
+
+**The value form takes a `Partial<TState>`.** A key the object omits is reset to its declared
+source, which is what makes restoring a partial snapshot a complete state. Restoring *untrusted*
+persisted JSON is therefore a two-step job — validate it into a `Partial<TState>`, then reset —
+and the type is what says so: an unvalidated snapshot is not filter state.
+
+**`reset` and `value.set` treat an omitted key oppositely, and deliberately.** `reset` is a
+*restore*: what you leave out goes back to its source. `value.set` is a *model write*: it takes a
+complete `TState`, because that is what a Signal Form hands it on every edit. One is "put this
+back how it was", the other is "this is the model now" — they sit one property apart, so read the
+verb, not the shape of the argument.
 
 **Diverges from Signal Forms deliberately.** `FieldState.reset(value?)` resets *touched and
 dirty flags* and, with no argument, does not change the value. Ours changes the **value**. Same
@@ -322,14 +336,31 @@ readonly filterForm = form(this.filters().value, (path) => {
 });
 ```
 ```html
-<input [control]="filterForm.search" />
+<input [formField]="filterForm.search" />
 ```
 
 Signal Forms never copies state — the developer's `WritableSignal` is the source of truth — and
-`filters().value` is one. Structural consequence, accepted: per-filter handles are views onto
-keys of a single signal, not N independent signals with a computed aggregate, because `form()`
-cannot take a synthesized object. The repo already has this shape in `WritableView`
-(`engine/writable-view.ts`).
+`filters().value` is one.
+
+**Which way the view points.** Each filter node owns its own signal; the root is a writable view
+composed over them — a read gathers every node, a write fans back out per key. Storage is still
+one location per criterion, so nothing is copied and the two cannot desync.
+
+This is the inverse of what this section originally specified (one root signal, per-filter
+handles as views onto its keys), and the premise behind that — "`form()` cannot take a
+synthesized object" — is false. `form()` needs a callable carrying a reactive node plus
+`set`/`update`/`asReadonly`; it does not care whether storage sits above or below. Angular's own
+Signal Forms builds precisely such an object in `deepSignal` (`Object.assign` onto a
+`computed()`), which is the shape `createRootValueSignal()` (`api/filters/state.ts`) mirrors —
+the same shape the repo already uses for `WritableView` (`engine/writable-view.ts`).
+
+Node-first is what keeps per-filter `source`/`dirty` reconciliation local to the node that owns
+it: a node with a declared `source` is a `linkedSignal` whose late-arrival rule is its own
+business, not a merge the root has to arbitrate across keys.
+
+One consequence worth knowing: `WritableSignal` is branded with a type-only `ɵWRITABLE_SIGNAL`
+symbol that has no runtime counterpart, so the root view claims the type by assertion. Angular
+does the same and is simply untyped at that spot.
 
 **Debounce lives here** (R25). No debounce in `createFilters` — the form is built over the filter
 model, so Signal Forms' `debounce()` applies to the criteria directly. A consumer not using

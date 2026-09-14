@@ -37,10 +37,11 @@ function makeRows(): Row[] {
   ];
 }
 
-// No explicit `TState` — `WithFilteringConfig<TRow>.filters` is typed `Filters<TRow>` with
-// `TState` defaulted, matching `filtering.md`'s own consumer example (`createFilters<Invoice>`,
-// one type argument). A `Filters<Row, TState>` built with an explicit literal `TState` isn't
-// assignable to that default-`TState` parameter type (its mapped type has no index signature).
+// No explicit `TState`, exercising the default-`TState` path: criteria come back as
+// `FilterNode<unknown>` and are reached by bracket access, because a mapped type over
+// `Record<string, unknown>` is an index signature. The typed path — `createFilters<Row, TState>()`
+// composed into `withFiltering()`, property access, criteria typed — is covered in
+// "withFiltering — a concretely-typed Filters" below.
 function buildFilters(schema: (path: FiltersPath<Row>) => void): Filters<Row> {
   return TestBed.runInInjectionContext(() => createFilters<Row>(schema));
 }
@@ -281,6 +282,54 @@ describe('withFiltering', () => {
 
       expectTypeOf(store.visibleCount).toEqualTypeOf<Signal<number>>();
       expectTypeOf<keyof typeof store>().toEqualTypeOf<keyof TableStore<Row> | 'visibleCount'>();
+    });
+  });
+
+  /**
+   * `WithFilteringConfig<TRow, TState>` carries `TState` so a concretely-keyed filter set stays
+   * typed at the call site. Pinning the config to the default would force a consumer who declared
+   * `createFilters<Row, TState>()` back to `unknown` criteria — `Filters<Row, TState>` is not
+   * assignable to `Filters<Row>`, because `FilterNode<T>` holds an invariant `WritableSignal<T>`.
+   *
+   * That widening is what the first pass at the filtering stories actually did, inventing a
+   * criterion façade to recover the types the declaration already had.
+   */
+  describe('a concretely-typed Filters', () => {
+    type RowFilterState = {
+      status: string | null;
+      category: string | null;
+    };
+
+    function buildTypedFilters(): Filters<Row, RowFilterState> {
+      return TestBed.runInInjectionContext(() =>
+        createFilters<Row, RowFilterState>((path) => {
+          equals(path.status);
+          equals(path.category);
+        })
+      );
+    }
+
+    it('composes into withFiltering() without widening back to the default TState', () => {
+      const filters = buildTypedFilters();
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ filters })
+        )
+      );
+
+      filters.status().value.set('open');
+
+      expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
+    });
+
+    it('keeps criteria typed, reached by property access rather than a bracket', () => {
+      const filters = buildTypedFilters();
+
+      expectTypeOf(filters.status().value()).toEqualTypeOf<string | null>();
+      expectTypeOf(filters().value()).toEqualTypeOf<RowFilterState>();
+      expectTypeOf(filters().active()).toEqualTypeOf<Partial<RowFilterState>>();
     });
   });
 });

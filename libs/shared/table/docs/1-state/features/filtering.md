@@ -41,18 +41,34 @@ produces the data; the table renders rows that arrive already filtered (R10).
 ## Config
 
 ```ts
-interface WithFilteringConfig<TRow> {
-  filters: Filters<TRow>;
+interface WithFilteringConfig<
+  TRow,
+  TState extends Record<string, unknown> = Record<string, unknown>
+> {
+  filters: Filters<TRow, TState>;
   manual?: boolean;
 }
 ```
 
 `TRow` infers from the enclosing `createTable()` config — no per-call generic (`5a3a09d`).
+`TState` infers from `filters`, and defaults to the untyped map when the consumer declared no
+`TState` of their own.
 
 | Field | Purpose |
 |---|---|
-| `filters` | the object returned by `createFilters<TRow>()`. Required — the feature has nothing to do without one |
+| `filters` | the object returned by `createFilters<TRow, TState>()`. Required — the feature has nothing to do without one |
 | `manual` | skip the client-side filter stage; state still updates normally |
+
+**`TState` is carried, not pinned to the default.** `Filters<TRow, TState>` is *not* assignable
+to `Filters<TRow>` — `FilterNode<T>` holds a `WritableSignal<T>`, which is invariant — so a
+config fixed at the default would force every consumer who typed their filter set to widen back
+to `unknown` criteria at the binding site. Two call-site constraints follow:
+
+- **`TState` must be a `type`, not an `interface`** — an interface has no implicit index
+  signature and fails the `Record<string, unknown>` constraint outright.
+- **Never pass `In` explicitly** (`withFiltering<Store>({…})`) — that fixes `TState` to its
+  default and the assignment fails again. `In` is meant to come contextually from
+  `createTable()`.
 
 ## Behavior
 

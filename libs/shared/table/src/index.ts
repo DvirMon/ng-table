@@ -69,6 +69,12 @@ export {
   reorderColumns,
   toggleColumnVisibility,
 } from './mutations/update-columns';
+export {
+  setGroupLevels,
+  addGroupLevel,
+  removeGroupLevel,
+  reorderGroupLevels,
+} from './mutations/update-grouping';
 export type {
   ColumnHandle,
   ColumnMetaKey,

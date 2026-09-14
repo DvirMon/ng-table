@@ -1,4 +1,11 @@
-import { computed, linkedSignal, signal, type Signal, type WritableSignal } from '@angular/core';
+import {
+  computed,
+  linkedSignal,
+  signal,
+  untracked,
+  type Signal,
+  type WritableSignal,
+} from '@angular/core';
 import type {
   FilterNode,
   FilterRuleRecord,
@@ -18,24 +25,25 @@ export function equalsCriterion(a: unknown, b: unknown): boolean {
   if (Array.isArray(a) && Array.isArray(b)) {
     return a.length === b.length && a.every((value, index) => equalsCriterion(value, b[index]));
   }
-  if (
-    typeof a === 'object' &&
-    a !== null &&
-    typeof b === 'object' &&
-    b !== null &&
-    !Array.isArray(a) &&
-    !Array.isArray(b)
-  ) {
-    const aRecord = a as Record<string, unknown>;
-    const bRecord = b as Record<string, unknown>;
-    const aKeys = Object.keys(aRecord);
-    const bKeys = Object.keys(bRecord);
+  if (isPlainObject(a) && isPlainObject(b)) {
+    const aKeys = Object.keys(a);
+    const bKeys = Object.keys(b);
     if (aKeys.length !== bKeys.length) {
       return false;
     }
-    return aKeys.every((key) => equalsCriterion(aRecord[key], bRecord[key]));
+    return aKeys.every((key) => equalsCriterion(a[key], b[key]));
   }
   return false;
+}
+
+/** A `{}`-literal object, not a `Date`/`Map`/class instance — those carry their state outside
+ *  own enumerable keys, so key-walking them would read as equal when they are not. */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 interface FilterState<TCriterion> {
@@ -97,17 +105,58 @@ export function gateByCondition<TRow, TCriterion>(
   };
 }
 
+/**
+ * The root criterion model as a real `WritableSignal<TState>`: a read composes every child
+ * node, a write fans back out to them. The nodes stay the single storage location — this is a
+ * view over them, never a copy — which is what lets a Signal Form sit directly on the filter
+ * model with no adapter and no sync effect (`filters.md` §Forms, R18).
+ *
+ * Built the way Angular's own Signal Forms builds `deepSignal` — `Object.assign` onto a
+ * `computed()` — so the result carries a reactive node and is a valid `form()` model.
+ *
+ * The assertion is unavoidable, not a shortcut: `WritableSignal` is branded with
+ * `ɵWRITABLE_SIGNAL`, a type-only `unique symbol` with no runtime counterpart, so no value can
+ * satisfy the interface structurally. Angular hits the same wall and is simply untyped there.
+ */
+function createRootValueSignal<TState extends Record<string, unknown>>(
+  nodesByKey: ReadonlyMap<string, FilterNode<unknown>>
+): WritableSignal<TState> {
+  const read = computed(() => {
+    const result: Record<string, unknown> = {};
+    for (const [key, node] of nodesByKey) {
+      result[key] = node.value();
+    }
+    return result as TState;
+  });
+
+  // Keys the model omits are left alone rather than written as `undefined` — a partial object
+  // is not a legal `TState`, but a criterion overwritten with `undefined` is unrecoverable.
+  const write = (next: TState): void => {
+    for (const [key, node] of nodesByKey) {
+      if (key in next) {
+        node.value.set(next[key]);
+      }
+    }
+  };
+
+  // A distinct node, not `read` itself: `read` carries the write members assigned below, so
+  // handing it back would leak `set`/`update` past a `Signal<TState>` annotation at runtime.
+  let readonlyView: Signal<TState> | undefined;
+
+  const rootValue = Object.assign(read, {
+    set: write,
+    update: (updateFn: (value: TState) => TState): void => write(updateFn(untracked(read))),
+    asReadonly: (): Signal<TState> => (readonlyView ??= computed(() => read())),
+  });
+
+  return rootValue as unknown as WritableSignal<TState>;
+}
+
 export function buildFiltersRoot<TState extends Record<string, unknown>>(
   nodesByKey: ReadonlyMap<string, FilterNode<unknown>>
 ): FiltersRoot<TState> {
   return {
-    value: (): TState => {
-      const result: Record<string, unknown> = {};
-      for (const [key, node] of nodesByKey) {
-        result[key] = node.value();
-      }
-      return result as TState;
-    },
+    value: createRootValueSignal<TState>(nodesByKey),
     active: (): Partial<TState> => {
       const result: Record<string, unknown> = {};
       for (const [key, node] of nodesByKey) {
@@ -118,14 +167,16 @@ export function buildFiltersRoot<TState extends Record<string, unknown>>(
       }
       return result as Partial<TState>;
     },
-    reset: (next?: TState | null): void => {
+    reset: (next?: Partial<TState> | null): void => {
       for (const [key, node] of nodesByKey) {
         if (next === undefined) {
           node.reset();
         } else if (next === null) {
           node.reset(null);
         } else {
-          node.reset((next as Record<string, unknown>)[key]);
+          // A key the snapshot omits arrives as `undefined`, which is `reset()` — back to
+          // source. That is what makes a partial restore a complete state.
+          node.reset(next[key]);
         }
       }
     },
