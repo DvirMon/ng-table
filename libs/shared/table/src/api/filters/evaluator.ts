@@ -94,7 +94,18 @@ function evaluateRecord<TRow>(
 export function createFilterEvaluator<TRow, TState extends Record<string, unknown>>(
   filters: Filters<TRow, TState>
 ): { matchesRow(row: TRow): boolean } {
-  const internal = getFiltersInternal(filters);
+  return createFilterEvaluatorFrom(getFiltersInternal(filters));
+}
+
+/**
+ * Same evaluator, entered from the compiled state directly rather than through a built `Filters`
+ * object — the path `FiltersRoot.matcher()` takes, which runs before the object exists.
+ *
+ * @internal
+ */
+export function createFilterEvaluatorFrom<TRow>(
+  internal: FiltersInternal<TRow>
+): { matchesRow(row: TRow): boolean } {
   const reportedKeys = new Set<string>();
 
   return {

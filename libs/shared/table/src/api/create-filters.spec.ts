@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { createFilterEvaluator, createFilters } from './create-filters';
 import {
   anyOf,
@@ -14,7 +14,7 @@ import {
   inRange,
 } from './filters/rules';
 import { hasAnyOf, hasNoneOf } from './filters/matchers';
-import type { FiltersPath } from './filters.types';
+import type { Filters, FiltersPath } from './filters.types';
 
 interface Invoice {
   status: string;
@@ -451,5 +451,205 @@ describe('createFilters — applyWhen', () => {
 
     filters.category().value.set('electronics');
     expect(filters().active()).toEqual({ category: 'electronics', subCategory: 'widgets' });
+  });
+});
+
+describe('createFilters — matcher()', () => {
+  type BrokenFilterState = { status: string | null; broken: string };
+
+  function buildBrokenFilters(): Filters<Invoice, BrokenFilterState> {
+    return build<BrokenFilterState>((path) => {
+      equals(path.status);
+      filter(
+        path.customer,
+        () => {
+          throw new Error('boom');
+        },
+        { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
+      );
+    });
+  }
+
+  function brokenRows(): Invoice[] {
+    return [
+      invoice({ status: 'open', customer: 'Acme' }),
+      invoice({ status: 'closed', customer: 'Globex' }),
+      invoice({ status: 'open', customer: 'Initech' }),
+    ];
+  }
+
+  it('filters a plain array with no table composed at all', () => {
+    const filters = build<{ status: string | null }>((path) => {
+      equals(path.status);
+    });
+    filters.status().value.set('open');
+
+    const rows = [
+      invoice({ status: 'open', customer: 'Acme' }),
+      invoice({ status: 'closed', customer: 'Globex' }),
+      invoice({ status: 'open', customer: 'Initech' }),
+    ];
+
+    expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual([
+      'Acme',
+      'Initech',
+    ]);
+  });
+
+  it('reflects the criteria current at the moment it was requested', () => {
+    const filters = build<{ status: string | null }>((path) => {
+      equals(path.status);
+    });
+
+    filters.status().value.set('open');
+    const matchesOpen = filters().matcher();
+    expect(matchesOpen(invoice({ status: 'open' }))).toBe(true);
+    expect(matchesOpen(invoice({ status: 'closed' }))).toBe(false);
+
+    filters.status().value.set('closed');
+    const matchesClosed = filters().matcher();
+    expect(matchesClosed(invoice({ status: 'closed' }))).toBe(true);
+    expect(matchesClosed(invoice({ status: 'open' }))).toBe(false);
+  });
+
+  it('skips an empty criterion rather than narrowing to nothing', () => {
+    const filters = build<{ status: string | null; search: string }>((path) => {
+      equals(path.status);
+      contains(path.customer, { as: 'search' });
+    });
+    filters.status().value.set('open');
+
+    const rows = [invoice({ status: 'open' }), invoice({ status: 'closed' })];
+
+    expect(rows.filter(filters().matcher())).toHaveLength(1);
+  });
+
+  it('ORs an anyOf group across its children', () => {
+    const filters = build<{ search: string }>(() => {
+      anyOf<Invoice>('search', (p) => {
+        contains(p.customer);
+        contains(p.notes);
+      });
+    });
+    filters.search().value.set('acme');
+    const matches = filters().matcher();
+
+    expect(matches(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
+    expect(matches(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
+    expect(matches(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
+  });
+
+  it('ANDs separate filters across the root', () => {
+    const filters = build<{ status: string | null; search: string }>((path) => {
+      equals(path.status);
+      contains(path.customer, { as: 'search' });
+    });
+    filters.status().value.set('open');
+    filters.search().value.set('acme');
+    const matches = filters().matcher();
+
+    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
+    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
+  });
+
+  it('does not narrow through a filter applyWhen has gated off', () => {
+    const filters = build<{ category: string | null; subCategory: string }>((path) => {
+      equals(path.category);
+      applyWhen(
+        path,
+        ({ valueOf }) => valueOf(path.category) !== null,
+        (p) => {
+          equals(p.subCategory);
+        }
+      );
+    });
+    filters.subCategory().value.set('widgets');
+
+    const gatedOff = filters().matcher();
+    expect(gatedOff(invoice({ category: null, subCategory: 'gadgets' }))).toBe(true);
+
+    filters.category().value.set('electronics');
+    const gatedOn = filters().matcher();
+    expect(gatedOn(invoice({ category: 'electronics', subCategory: 'gadgets' }))).toBe(false);
+  });
+
+  it('fails a positive matcher on a null cell', () => {
+    const filters = build<{ category: string | null }>((path) => {
+      equals(path.category);
+    });
+    filters.category().value.set('electronics');
+    const matches = filters().matcher();
+
+    expect(matches(invoice({ category: null }))).toBe(false);
+    expect(matches(invoice({ category: 'electronics' }))).toBe(true);
+  });
+
+  describe('errors (ADR-0014)', () => {
+    it('reports a throwing predicate once per matcher, under its own key, while siblings keep narrowing', () => {
+      const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const filters = buildBrokenFilters();
+        filters.status().value.set('open');
+
+        // A propagating throw would take the whole `filter()` pass down.
+        const matched = brokenRows().filter(filters().matcher());
+
+        expect(matched.map((row) => row.customer)).toEqual(['Acme', 'Initech']);
+        expect(reportSpy).toHaveBeenCalledTimes(1);
+        expect(String(reportSpy.mock.calls[0]?.[0])).toContain('filter "broken"');
+      } finally {
+        reportSpy.mockRestore();
+      }
+    });
+
+    it('gives each matcher() call its own dedup scope', () => {
+      const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const filters = buildBrokenFilters();
+        const rows = brokenRows();
+
+        rows.filter(filters().matcher());
+        expect(reportSpy).toHaveBeenCalledTimes(1);
+
+        rows.filter(filters().matcher());
+        expect(reportSpy).toHaveBeenCalledTimes(2);
+      } finally {
+        reportSpy.mockRestore();
+      }
+    });
+  });
+
+  // Type-level assertions. Vitest does not typecheck `expectTypeOf`/`@ts-expect-error` at
+  // runtime — `tsc -p libs/shared/table/tsconfig.spec.json --noEmit` is what enforces these.
+  describe('types', () => {
+    /** Separately declared, same shape — the predicate correlates structurally, not nominally. */
+    type InvoiceShape = { [K in keyof Invoice]: Invoice[K] };
+
+    interface AuditedInvoice extends Invoice {
+      auditedBy: string;
+    }
+
+    function buildTypedFilters(): Filters<Invoice, { category: string | null }> {
+      return build<{ category: string | null }>((path) => {
+        equals(path.category);
+      });
+    }
+
+    it('accepts a structurally identical row type and a wider one carrying extra fields', () => {
+      const matches = buildTypedFilters()().matcher();
+      const identical: InvoiceShape = invoice();
+      const wider: AuditedInvoice = { ...invoice(), auditedBy: 'ann' };
+
+      expectTypeOf(matches).toEqualTypeOf<(row: Invoice) => boolean>();
+      expect(matches(identical)).toBe(true);
+      expect(matches(wider)).toBe(true);
+    });
+
+    it('rejects an unrelated row type', () => {
+      const matches = buildTypedFilters()().matcher();
+      // @ts-expect-error — `matcher()` is `(row: Invoice) => boolean`; TRow is no longer phantom.
+      matches({ label: 'nope' });
+    });
   });
 });

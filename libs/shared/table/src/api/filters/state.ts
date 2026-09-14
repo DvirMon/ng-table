@@ -13,6 +13,7 @@ import type {
   Filters,
   FiltersRoot,
 } from '../filters.types';
+import { createFilterEvaluatorFrom, type FiltersInternal } from './evaluator';
 
 /** Structural equality for the criterion shapes this library ships: primitives, plain range
  *  objects (`{min,max}`/`{from,to}`), and arrays. Not a general deep-equal — custom `filter()`
@@ -152,9 +153,10 @@ function createRootValueSignal<TState extends Record<string, unknown>>(
   return rootValue as unknown as WritableSignal<TState>;
 }
 
-export function buildFiltersRoot<TState extends Record<string, unknown>>(
-  nodesByKey: ReadonlyMap<string, FilterNode<unknown>>
-): FiltersRoot<TState> {
+export function buildFiltersRoot<TRow, TState extends Record<string, unknown>>(
+  internal: FiltersInternal<TRow>
+): FiltersRoot<TRow, TState> {
+  const { nodesByKey } = internal;
   return {
     value: createRootValueSignal<TState>(nodesByKey),
     active: (): Partial<TState> => {
@@ -188,6 +190,8 @@ export function buildFiltersRoot<TState extends Record<string, unknown>>(
       }
       return false;
     },
+    // A fresh evaluator per call — one call is one evaluation, with its own error-dedup scope.
+    matcher: (): ((row: TRow) => boolean) => createFilterEvaluatorFrom(internal).matchesRow,
   };
 }
 
@@ -195,12 +199,12 @@ export function buildFiltersRoot<TState extends Record<string, unknown>>(
  *  a child, a call is state. Each indexed property returns a *function* yielding the node
  *  (`filters.status()` → node), per `Filters<TRow, TState>`'s mapped-type shape. */
 export function buildFiltersObject<TRow, TState extends Record<string, unknown>>(
-  nodesByKey: ReadonlyMap<string, FilterNode<unknown>>
+  internal: FiltersInternal<TRow>
 ): Filters<TRow, TState> {
-  const root = buildFiltersRoot<TState>(nodesByKey);
-  const callable = ((): FiltersRoot<TState> => root) as Filters<TRow, TState>;
+  const root = buildFiltersRoot<TRow, TState>(internal);
+  const callable = ((): FiltersRoot<TRow, TState> => root) as Filters<TRow, TState>;
   const childGetters = new Map<string, () => FilterNode<unknown>>();
-  for (const [key, node] of nodesByKey) {
+  for (const [key, node] of internal.nodesByKey) {
     childGetters.set(key, () => node);
   }
 

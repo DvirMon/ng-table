@@ -52,11 +52,14 @@ export function createFilters<TRow, TState extends Record<string, unknown> = Rec
       }
     }
 
+    // Holds the same `nodesByKey` reference the gating pass mutates below, so it exposes the
+    // gated nodes either way.
+    const internal: FiltersInternal<TRow> = { records, nodesByKey, pathToKey };
+
     // Second pass: applyWhen's condition may read any filter's value, including one declared
     // after it — gate only once every node exists.
     if (pendingGates.length > 0) {
-      const internalForCtx: FiltersInternal<TRow> = { records, nodesByKey, pathToKey };
-      const ctx = buildValueOfContext<TRow>(internalForCtx);
+      const ctx = buildValueOfContext<TRow>(internal);
       for (const { key, condition } of pendingGates) {
         const base = nodesByKey.get(key);
         if (base) {
@@ -65,8 +68,7 @@ export function createFilters<TRow, TState extends Record<string, unknown> = Rec
       }
     }
 
-    const filters = buildFiltersObject<TRow, TState>(nodesByKey);
-    const internal: FiltersInternal<TRow> = { records, nodesByKey, pathToKey };
+    const filters = buildFiltersObject<TRow, TState>(internal);
     attachFiltersInternal(filters, internal);
 
     return filters;

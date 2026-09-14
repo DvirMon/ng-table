@@ -37,7 +37,10 @@ export interface FilterNode<TCriterion> {
  * See the "Typing the root" note on `Filters` below for why `TState` is a caller-supplied type
  * parameter rather than something inferred from the schema function.
  */
-export interface FiltersRoot<TState extends Record<string, unknown> = Record<string, unknown>> {
+export interface FiltersRoot<
+  TRow,
+  TState extends Record<string, unknown> = Record<string, unknown>
+> {
   /**
    * The complete criterion model, and a real `WritableSignal` — a view over the child nodes,
    * which remain the single storage location. Reading is `filters().value()` as before; a
@@ -53,6 +56,12 @@ export interface FiltersRoot<TState extends Record<string, unknown> = Record<str
    */
   reset(value?: Partial<TState> | null): void;
   dirty(): boolean;
+  /**
+   * A row predicate compiled from the criteria current at the moment it was requested — usable
+   * with no table. **One call = one evaluation**: ADR-0014's once-per-filter reporting is scoped
+   * to the returned predicate, so request one per pass, never one per row.
+   */
+  matcher(): (row: TRow) => boolean;
 }
 
 /**
@@ -63,7 +72,7 @@ export interface FiltersRoot<TState extends Record<string, unknown> = Record<str
 export type Filters<
   TRow,
   TState extends Record<string, unknown> = Record<string, unknown>
-> = (() => FiltersRoot<TState>) & {
+> = (() => FiltersRoot<TRow, TState>) & {
   readonly [K in keyof TState]: () => FilterNode<TState[K]>;
 };
 

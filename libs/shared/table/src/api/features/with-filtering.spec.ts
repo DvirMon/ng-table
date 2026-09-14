@@ -250,16 +250,16 @@ describe('withFiltering', () => {
       expectTypeOf(store).not.toBeAny();
     });
 
-    // `Filters<TRow, TState>` (filters.types.ts) never references `TRow` in its body, so
-    // `Filters<Row>` and `Filters<OtherRow>` are the same type once `TState` defaults match.
-    // `WithFilteringConfig.filters` therefore carries no compile-time row correlation.
-    it('filters: TRow is phantom — a Filters<OtherRow> is not rejected', () => {
+    // `FiltersRoot<TRow, TState>.matcher()` returns `(row: TRow) => boolean`, so `TRow` now sits
+    // in a real position — `Filters<OtherRow>` no longer satisfies `WithFilteringConfig<Row>`.
+    it('filters: TRow is consumed — a Filters<OtherRow> is rejected', () => {
       const otherFilters = buildOtherFilters((path) => equals(path.label));
 
       const store = inContext(() =>
         createTable(
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
+          // @ts-expect-error — a matcher over OtherRow cannot stand in for one over Row.
           withFiltering({ filters: otherFilters })
         )
       );
