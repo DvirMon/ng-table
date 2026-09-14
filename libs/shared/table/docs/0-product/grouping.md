@@ -4,9 +4,9 @@ type: product
 capability: grouping
 status: >
   Coverage re-derived 2026-09-14 from the three shipped stories (`grouping-static/`,
-  `grouping-collapsible/`, `grouping-selection/`), read as host components. §1–§4: 9 ✅, 5 🟡,
-  3 ❌. Five marks stay short of ✅ for stated, code-level reasons — 1.3 and 2.2 ship as honest
-  regressions (S2/#79 and S4/S5), 2.4's sticky headers all stick to the same offset so nested
+  `grouping-collapsible/`, `grouping-selection/`), read as host components. §1–§4: 10 ✅, 4 🟡,
+  3 ❌. Four marks stay short of ✅ for stated, code-level reasons — 2.2 ships an honest
+  regression (S4/S5), 2.4's sticky headers all stick to the same offset so nested
   paths overlap, 4.3 is consistent but unstated, and 4.4 is announced only by story-local
   arithmetic. 2.3 (initial depth), 4.1 (blank keys) and 4.2 (object keys) are ❌ — two of them
   rendered deliberately as bug reports. Cross-feature: X-G1, S-G1 and E-G1 ✅; S-G2 and F-G1 🟡
@@ -15,6 +15,7 @@ status: >
   same pass:** S3 confirmed, U3/U6/U10 closed, and three rows had their premise corrected rather
   than closed — S8 (`RenderRow.groupKey` ships; the label path is what is missing), U5 (sticky
   works, nested headers overlap) and U9 (the dead header does not occur without a `groupOrder`).
+  1.3 closed 2026-09-14 by #79 — `aggregateFn` now wraps per ADR-0014.
 date: 2026-09-14
 audience: product, design, engineering
 ---
@@ -174,7 +175,7 @@ and all ship a switch to hide it; TanStack renders nothing, and it is also the o
 four with no UI layer at all. `RenderRow` has `hasChildren?: boolean` but no count field, and
 `aggregates` is untyped as to whether a count lives there. Raised as **OQ-2**.
 
-## 1.3 — See a summary for each group — 🟡 partly covered *(the failure path is a live regression)*
+## 1.3 — See a summary for each group — ✅ covered
 
 > As someone reviewing sales by region, I want each region's heading to carry that region's total,
 > so the number I actually came for is on screen without expanding the group and adding it up
@@ -201,24 +202,24 @@ four with no UI layer at all. `RenderRow` has `hasChildren?: boolean` but no cou
 region's total is the sum of its subtree; the totals follow the filter; every column without an
 `aggregateFn` renders an empty cell rather than a zero.
 
-**Why it is 🟡:** the failure path renders, and it fails. *Break one group's summary* patches one
-row's `amount` to a value the fixture's `sumAmount` refuses, and **the whole table goes down**
-instead of that one group's summary blanking — `engine/grouping.ts` calls `aggregateFn` unwrapped
-(S2, [#79](https://github.com/DvirMon/acme/issues/79)). That is precisely this story's stated
-failure behavior inverted, and it is a data-dependent runtime failure, which is the class ADR-0014
-says must degrade. The control is on canvas so the regression is visible rather than latent; it
-starts passing when ADR-0014's wrap reaches `engine/grouping.ts`.
+**Closed 2026-09-14 by [#79](https://github.com/DvirMon/acme/issues/79):** ~~the failure path
+renders, and it fails~~. `engine/grouping.ts`'s `computeAggregates` now wraps each column's
+`aggregateFn` call per ADR-0014: a throw leaves that column's aggregate `undefined` for the
+affected group only, every other group's summary (and the table itself) renders unaffected, and
+the failure is reported via `console.error` — deduped to once per column per
+`buildGroupRenderRows` evaluation, not once per group. *Break one group's summary* now
+demonstrates the story's stated failure behavior instead of inverting it.
 
-**Design status:** mostly covered. D9 fixes aggregates to leaf rows at every depth (which is
+**Design status:** covered. D9 fixes aggregates to leaf rows at every depth (which is
 precisely the bug TanStack has carried since 2021 —
 [#3323](https://github.com/TanStack/table/issues/3323),
 [#6228](https://github.com/TanStack/table/issues/6228): aggregation blank at the top level of a
-two-level grouping). Filtering-before-grouping is already resolved (`filtering.md:66-67`). **Two
-gaps:** the per-group failure fallback above is not among D15's named callback fallbacks, and
-`aggregateFn` receives only rows — MUI X's longest-running aggregation complaint
-([#11491](https://github.com/mui/mui-x/issues/11491), open since 2023) is that the callback cannot
-see other columns' values for the same rows. Ours can, because it receives whole rows. Worth keeping
-deliberately.
+two-level grouping). Filtering-before-grouping is already resolved (`filtering.md:66-67`). The
+per-group failure fallback is now named and implemented per ADR-0014 (closed S2, #79 above).
+One remaining note, not a gap: `aggregateFn` receives only rows — MUI X's longest-running
+aggregation complaint ([#11491](https://github.com/mui/mui-x/issues/11491), open since 2023) is
+that the callback cannot see other columns' values for the same rows. Ours can, because it
+receives whole rows. Worth keeping deliberately.
 
 ## 1.4 — Know what the table is grouped by — ✅ covered
 
@@ -1209,7 +1210,7 @@ Owned by `1-state/work/with-grouping/` and the feature docs it supersedes.
 | # | Gap | Story | Note |
 |---|---|---|---|
 | ~~S1~~ | ~~Group row count is not derived and has nowhere to live~~ | 1.2 | **Closed by D16** — the count is `rowsOf(group).length`; no new field needed |
-| S2 | Per-group aggregation failure has no named fallback | 1.3 | D15 names fallbacks for `groupOrder` and `when`; `aggregateFn` throwing on one group's rows is unaddressed |
+| ~~S2~~ | ~~Per-group aggregation failure has no named fallback~~ — **closed 2026-09-14** | 1.3 | Closed by [#79](https://github.com/DvirMon/acme/issues/79): ADR-0014 names the fallback (`undefined`, per group) and `engine/grouping.ts` implements the wrap, reported once per column per evaluation |
 | ~~S3~~ | ~~Expansion survival across refresh/sort/regroup is unstated~~ — **confirmed 2026-09-14** | 2.5 | It does work, and it is no longer untested by observation: `grouping-collapsible/` attacks it three ways — Refetch replaces every row with a freshly-constructed object, the sort toggles race a reordered pipeline, and Regroup changes every group id at once so the state is discarded wholesale rather than half-applied. The `forceFailure` arg adds the failure path. What OQ-4 called undecided (stable across a refetch, not across a regrouping) is now demonstrated both ways. Still worth a unit test, not a decision |
 | S4 | No "is everything expanded" signal | 2.2 | Without it an Expand All control cannot label itself — ag-grid #8621 is exactly this |
 | S5 | No group-level expand/collapse verb | 2.2, 2.3 | `withExpansion().expandAll()` walks `childrenAccessor` over real rows (`with-expansion.ts:119-135`) and cannot discover a group at all |

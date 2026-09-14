@@ -163,15 +163,37 @@ export function clusterRows<TRow>(
   return flattenLeaves(ordered);
 }
 
-/** Per-cluster aggregate row: `rows` is always a cluster's own leaves — see D9. */
+function reportAggregateError(columnId: string): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[withGrouping] aggregateFn threw for column "${columnId}". Falling back to an undefined ` +
+      'aggregate value for the affected group(s) in this evaluation.'
+  );
+}
+
+/** Per-cluster aggregate row: `rows` is always a cluster's own leaves — see D9. A throwing
+ * `aggregateFn` falls back to `undefined` for that column only; `reportedColumns` is shared
+ * across one `buildGroupRenderRows` call so the console.error dedupes to once per column across
+ * every group visited, not once per group. */
 function computeAggregates<TRow>(
   rows: TRow[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
+  reportedColumns: Set<string>
 ): Record<string, unknown> {
   const aggregates: Record<string, unknown> = {};
   for (const column of columns) {
-    if (column.aggregateFn) {
+    if (!column.aggregateFn) {
+      continue;
+    }
+    try {
       aggregates[column.id] = column.aggregateFn(rows);
+    } catch {
+      aggregates[column.id] = undefined;
+      if (!reportedColumns.has(column.id)) {
+        reportedColumns.add(column.id);
+        reportAggregateError(column.id);
+      }
     }
   }
   return aggregates;
@@ -188,7 +210,8 @@ function emitGroupRows<TRow>(
   depth: number,
   parentPath: string,
   columns: ColumnDef<TRow>[],
-  expandedRows: ReadonlySet<RowId> | undefined
+  expandedRows: ReadonlySet<RowId> | undefined,
+  reportedColumns: Set<string>
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
     const path = buildGroupPath(parentPath, node.columnId, node.value);
@@ -202,14 +225,15 @@ function emitGroupRows<TRow>(
       hasChildren: node.items.length > 0,
       aggregates: computeAggregates(
         node.items.map((item) => item.data).filter(isRowData),
-        columns
+        columns,
+        reportedColumns
       ),
     };
     const isExpanded = expandedRows === undefined || expandedRows.has(id);
     const nested = !isExpanded
       ? []
       : node.children.length > 0
-        ? emitGroupRows(node.children, depth + 1, path, columns, expandedRows)
+        ? emitGroupRows(node.children, depth + 1, path, columns, expandedRows, reportedColumns)
         : node.items.map((item) => ({ ...item, depth: depth + 1 }));
     return [header, ...nested];
   });
@@ -248,7 +272,7 @@ export function buildGroupRenderRows<TRow>(
     (items) => items.map((item) => item.data).filter(isRowData),
     { done: false }
   );
-  return emitGroupRows(ordered, 0, '', columns, expandedRows);
+  return emitGroupRows(ordered, 0, '', columns, expandedRows, new Set());
 }
 
 function findClusterByPath<T>(

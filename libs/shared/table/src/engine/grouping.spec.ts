@@ -366,6 +366,95 @@ describe('buildGroupRenderRows', () => {
     expect(result).toHaveLength(2);
     expect(result.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
   });
+
+  describe('a throwing aggregateFn (ADR-0014)', () => {
+    function throwingAggregateColumn(id: string): ColumnDef<OrderWithAmount> {
+      return {
+        ...orderWithAmountColumn(id),
+        aggregateFn: (): number => {
+          throw new Error('boom');
+        },
+      };
+    }
+
+    it('leaves the failed group\'s aggregate undefined while the table state still computes for every group', () => {
+      const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const rows: OrderWithAmount[] = [
+          { id: 1, region: 'US', category: 'Electronics', amount: 10 },
+          { id: 2, region: 'EU', category: 'Electronics', amount: 20 },
+        ];
+        const amountColumns: ColumnDef<OrderWithAmount>[] = [
+          orderWithAmountColumn('id'),
+          orderWithAmountColumn('region'),
+          orderWithAmountColumn('category'),
+          throwingAggregateColumn('amount'),
+        ];
+        const seed = toSeedRenderRows(rows);
+
+        const result = buildGroupRenderRows(seed, ['region'], amountColumns);
+
+        const headers = result.filter((row) => row.kind === 'group');
+        expect(headers).toHaveLength(2);
+        expect(headers.every((header) => header.aggregates?.['amount'] === undefined)).toBe(true);
+      } finally {
+        reportSpy.mockRestore();
+      }
+    });
+
+    it('reports exactly once per callback per evaluation, even across multiple groups and nested depths', () => {
+      const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const rows: OrderWithAmount[] = [
+          { id: 1, region: 'US', category: 'Electronics', amount: 10 },
+          { id: 2, region: 'US', category: 'Books', amount: 20 },
+          { id: 3, region: 'EU', category: 'Electronics', amount: 30 },
+        ];
+        const amountColumns: ColumnDef<OrderWithAmount>[] = [
+          orderWithAmountColumn('id'),
+          orderWithAmountColumn('region'),
+          orderWithAmountColumn('category'),
+          throwingAggregateColumn('amount'),
+        ];
+        const seed = toSeedRenderRows(rows);
+
+        // Two levels of grouping produce five headers (2 region + 3 region>category) — every
+        // one of them hits the throwing aggregateFn independently.
+        const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns);
+
+        expect(result.filter((row) => row.kind === 'group')).toHaveLength(5);
+        expect(reportSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        reportSpy.mockRestore();
+      }
+    });
+
+    it('a throwing aggregate on one column does not affect a sibling column\'s aggregate in the same group', () => {
+      const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const rows: OrderWithAmount[] = [
+          { id: 1, region: 'US', category: 'Electronics', amount: 10 },
+          { id: 2, region: 'US', category: 'Electronics', amount: 20 },
+        ];
+        const amountColumns: ColumnDef<OrderWithAmount>[] = [
+          orderWithAmountColumn('id'),
+          orderWithAmountColumn('region'),
+          orderWithAmountColumn('category'),
+          throwingAggregateColumn('amount'),
+          averageAggregateColumn('avgAmount'),
+        ];
+        const seed = toSeedRenderRows(rows);
+
+        const result = buildGroupRenderRows(seed, ['region'], amountColumns);
+
+        const header = result.find((row) => row.kind === 'group')!;
+        expect(header.aggregates?.['amount']).toBeUndefined();
+        expect(header.aggregates?.['avgAmount']).toBeCloseTo(15);
+      } finally {
+        reportSpy.mockRestore();
+      }
+    });
+  });
 });
 
 describe('rowsBeneathGroup', () => {
