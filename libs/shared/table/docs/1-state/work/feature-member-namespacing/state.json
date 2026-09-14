@@ -1,0 +1,14 @@
+{
+  "slug": "feature-member-namespacing",
+  "ticketRef": "DvirMon/acme#82",
+  "ticketUrl": "https://github.com/DvirMon/acme/issues/82",
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/feature-member-namespacing",
+  "decisionsPath": "libs/shared/table/docs/adr/0015-feature-member-namespacing.md",
+  "specPath": "libs/shared/table/docs/1-state/work/feature-member-namespacing/spec.md",
+  "architecturePath": "libs/shared/table/docs/1-state/work/feature-member-namespacing/architecture.md",
+  "githubIssues": [82, 83, 84, 85, 86, 87, 88, 89],
+  "checklist": { "intake": false, "grill": true, "spec": true, "issues": true, "tasks": false },
+  "designPath": "libs/shared/table/docs/1-state/work/feature-member-namespacing/research-callable-slice-shape.md"
+}
