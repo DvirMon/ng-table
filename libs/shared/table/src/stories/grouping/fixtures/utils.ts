@@ -14,9 +14,9 @@ export function isBlankGroupValue(value: unknown): boolean {
 }
 
 /**
- * The one formatter behind every rendered value, group label included. A `Date` formats
- * correctly; an **object has no label path at all** and falls through to `[object Object]` (S8),
- * which is the point of grouping by `owner` in these stories, not an oversight to paper over.
+ * Value to text, for the places that need a string in TypeScript rather than in a template — the
+ * `groupOrder` comparator and its external-rank lookup. Templates format through the pipes in
+ * `grouping-story.pipes.ts` instead, so a cell's formatting is memoised per value.
  */
 export function formatValue(value: unknown): string {
   if (value instanceof Date) {

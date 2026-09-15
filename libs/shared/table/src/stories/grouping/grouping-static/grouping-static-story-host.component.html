@@ -41,9 +41,9 @@
       <button
         type="button"
         class="grouping-story__tab"
-        [attr.aria-pressed]="isGroupedBy(column.id)"
+        [attr.aria-pressed]="isGroupedById()[column.id] ?? false"
         [title]="
-          isGroupedBy(column.id)
+          isGroupedById()[column.id]
             ? 'A grouping level — toggling it off calls removeGroupLevel()'
             : 'Add this column as the last grouping level'
         "
@@ -55,28 +55,32 @@
   </div>
 
   <div class="grouping-story__pills">
-    @for (level of table.grouping(); track level; let index = $index) {
+    @for (
+      level of table.grouping();
+      track level;
+      let index = $index, isFirst = $first, isLast = $last
+    ) {
       <span class="grouping-story__pill">
-        {{ levelLabel(level) }}
+        {{ columnLabelById()[level] }}
         <button
           type="button"
-          [disabled]="index === 0"
-          [attr.aria-label]="'Move ' + levelLabel(level) + ' one level earlier'"
+          [disabled]="isFirst"
+          [attr.aria-label]="'Move ' + columnLabelById()[level] + ' one level earlier'"
           (click)="moveLevel(index, index - 1)"
         >
           ◀
         </button>
         <button
           type="button"
-          [disabled]="index === table.grouping().length - 1"
-          [attr.aria-label]="'Move ' + levelLabel(level) + ' one level later'"
+          [disabled]="isLast"
+          [attr.aria-label]="'Move ' + columnLabelById()[level] + ' one level later'"
           (click)="moveLevel(index, index + 1)"
         >
           ▶
         </button>
         <button
           type="button"
-          [attr.aria-label]="'Remove ' + levelLabel(level) + ' as a grouping level'"
+          [attr.aria-label]="'Remove ' + columnLabelById()[level] + ' as a grouping level'"
           (click)="ungroupColumn(level)"
         >
           ×
@@ -107,7 +111,7 @@
 
   @if (droppedLevels().length > 0) {
     <p class="grouping-story__notice">
-      {{ droppedLevels().join(', ') }} names no column, so the table grouped by the remaining
+      {{ droppedLevelsText() }} names no column, so the table grouped by the remaining
       levels and said nothing (D14). This line is the story's own arithmetic — the library has no
       channel to report a dropped level, which is 4.4's third criterion, unmet.
     </p>
@@ -131,8 +135,9 @@
   <p class="grouping-story__notice">
     Group by <strong>Region</strong> to see the three blank keys — <code>null</code>,
     <code>undefined</code> and <code>''</code> cluster as three separate unlabelled groups (S7).
-    Group by <strong>Closed</strong> and it labels correctly; group by <strong>Owner</strong> and
-    it does not — an object-valued column has no label path at all (S8).
+    <strong>Owner</strong> is an object on the row and groups correctly anyway, because its column
+    declares an <code>accessor</code>: the engine keys on what the accessor returns, so the
+    accessor is the label contract for a non-primitive field.
   </p>
 
   <table
@@ -157,18 +162,30 @@
                 [class.grouping-story__aggregate]="!isFirst"
               >
                 @if (isFirst) {
-                  @if (isBlankGroup(row)) {
+                  @if (row.groupKey?.value | isBlankGroup) {
                     <span class="grouping-story__group-label grouping-story__group-label--blank">
                       no value
                     </span>
                   } @else {
-                    <span class="grouping-story__group-label">{{ groupLabel(row) }}</span>
+                    <span class="grouping-story__group-label">
+                      @switch (row.groupKey?.columnId) {
+                        @case ('amount') {
+                          {{ row.groupKey?.value | dealAmount }}
+                        }
+                        @case ('closedAt') {
+                          {{ row.groupKey?.value | dealDate }}
+                        }
+                        @default {
+                          {{ row.groupKey?.value }}
+                        }
+                      }
+                    </span>
                   }
                   @if (showCount()) {
-                    <span class="grouping-story__count">{{ groupRowCount(row) }}</span>
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
                   }
                 } @else {
-                  {{ groupAggregate(row, column.id) }}
+                  {{ row.aggregates?.[column.id] | dealAmount }}
                 }
               </td>
             }
@@ -180,7 +197,17 @@
                   [class.grouping-story__cell--label]="isFirst"
                   [class.grouping-story__cell--numeric]="column.id === 'amount'"
                 >
-                  {{ cellValue(column, rowData) }}
+                  @switch (column.id) {
+                    @case ('amount') {
+                      {{ column.accessor(rowData) | dealAmount }}
+                    }
+                    @case ('closedAt') {
+                      {{ column.accessor(rowData) | dealDate }}
+                    }
+                    @default {
+                      {{ column.accessor(rowData) }}
+                    }
+                  }
                 </td>
               }
             }

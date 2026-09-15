@@ -1,7 +1,7 @@
 import type { RowId } from '../../../api/types';
 
-/** Owner of a deal — an object-valued column, kept as a field rather than flattened so a
- * grouping level can be pointed at it. */
+/** Owner of a deal — an object on the row rather than a flattened field, so the `owner` column
+ * has to declare an `accessor` to say which part of it a cell and a group key read. */
 export interface DealOwner {
   name: string;
   email: string;
@@ -9,8 +9,8 @@ export interface DealOwner {
 
 /** Fixture row for the grouping stories. `region` → `category` → `rep` are the three grouping
  * levels; `region` is nullable *and* optional so the blank-key cases (`null`, `undefined`, `''`)
- * all exist in the data. `amount` is the aggregated column, `closedAt` a `Date` level, `owner`
- * an object level, and `children` makes a row expandable alongside grouping. */
+ * all exist in the data. `amount` is the aggregated column, `closedAt` a `Date` level, `owner` an
+ * object read through an `accessor`, and `children` makes a row expandable alongside grouping. */
 export interface DealRow {
   id: RowId;
   region?: string | null;

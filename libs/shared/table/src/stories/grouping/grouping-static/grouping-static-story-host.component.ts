@@ -12,10 +12,8 @@ import {
   toggleColumnVisibility,
   withFiltering,
   withGrouping,
-  type ColumnDef,
   type GroupingAsyncRule,
   type GroupSummary,
-  type RenderRow,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import {
@@ -32,11 +30,8 @@ import {
   STATIC_GROUPING_LEVELS,
 } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
-import {
-  formatAmount,
-  formatValue,
-  isBlankGroupValue,
-} from '../fixtures/utils';
+import { formatValue } from '../fixtures/utils';
+import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import type { GroupedColumnMode, GroupOrderMode } from './grouping-static.types';
 
 /** The row "Break one group's summary" poisons, and the figure that restores it. Read off the
@@ -70,9 +65,10 @@ function externalRank(key: unknown): number {
  *   wrap lands.
  * - *Group by a column that isn't there* degrades to the remaining levels (D14) and **nothing in
  *   the library says so** — the on-canvas notice is this story's own arithmetic (4.4).
- * - The fixture's `null` / `undefined` / `''` regions render as three unlabelled groups (S7), and
- *   the object-valued `owner` column has no label path at all (S8) while the `Date` column next
- *   to it groups correctly.
+ * - The fixture's `null` / `undefined` / `''` regions render as three unlabelled groups (S7).
+ *   `owner` is no longer one of these: the column declares an `accessor`, and since the engine
+ *   keys a group on what the accessor returns, that is the label contract for a non-primitive
+ *   field. S8 is still open for a consumer who declares no accessor — see [#114](https://github.com/DvirMon/acme/issues/114).
  *
  * `groupOrder` is threaded through **one** comparator closure reading a signal, never a
  * comparator per mode, and is labelled developer config: P9c found no library anywhere that lets
@@ -83,6 +79,7 @@ function externalRank(key: unknown): number {
   selector: 'ngp-grouping-static-story-host',
   templateUrl: './grouping-static-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
+  imports: [...GROUPING_STORY_PIPES],
 })
 export class GroupingStaticStoryHostComponent {
   /** P6 — every peer that renders a count also ships a switch to hide it, default on. */
@@ -197,6 +194,22 @@ export class GroupingStaticStoryHostComponent {
     return this.table.grouping().filter((level) => !knownIds.has(level));
   });
 
+  protected readonly droppedLevelsText = computed(() => this.droppedLevels().join(', '));
+
+  /**
+   * The two facts a group-by UI needs and `grouping()` does not carry: whether a column is a
+   * level, and what a level is called. Both are joins between `grouping()` (bare column ids) and
+   * `columns()`, and both would come off the column itself if it had a `groupIndex` — see #115.
+   * Records rather than `Map`s so a template reads them by index instead of calling `.get()`.
+   */
+  protected readonly isGroupedById = computed<Record<string, boolean>>(() =>
+    Object.fromEntries(this.table.grouping().map((level) => [level, true]))
+  );
+
+  protected readonly columnLabelById = computed<Record<string, string>>(() =>
+    Object.fromEntries(this.table.columns().map((column) => [column.id, column.label]))
+  );
+
   /** Read off the data, not a flag: the failure is data-dependent, which is exactly why
    * ADR-0014 classes it runtime rather than construction. */
   protected readonly isSummaryBroken = computed(() =>
@@ -223,43 +236,17 @@ export class GroupingStaticStoryHostComponent {
     this.filters.rep().value.set(target.value);
   }
 
-  protected isGroupedBy(columnId: string): boolean {
-    return this.table.grouping().includes(columnId);
-  }
-
-  protected levelLabel(columnId: string): string {
-    return this.table.columns().find((column) => column.id === columnId)?.label ?? columnId;
-  }
-
-  protected groupLabel(row: RenderRow<DealRow>): string {
-    return formatValue(row.groupKey?.value);
-  }
-
-  protected isBlankGroup(row: RenderRow<DealRow>): boolean {
-    return isBlankGroupValue(row.groupKey?.value);
-  }
-
-  protected groupRowCount(row: RenderRow<DealRow>): number {
-    return this.table.rowsOf(row).length;
-  }
-
-  /** P7 — the summary goes on the header row, at every depth, so a parent total is the sum of its
-   * subtree. Only `amount` carries an `aggregateFn`; every other column's cell stays empty. */
-  protected groupAggregate(row: RenderRow<DealRow>, columnId: string): string {
-    return formatAmount(row.aggregates?.[columnId]);
-  }
-
-  protected cellValue(column: ColumnDef<DealRow>, row: DealRow): string {
-    const value = column.accessor(row);
-    return column.id === 'amount' ? formatAmount(value) : formatValue(value);
-  }
-
   protected groupByColumn(columnId: string): void {
     this.table.grouping.update(addGroupLevel<DealRow>(columnId));
   }
 
   protected ungroupColumn(columnId: string): void {
     this.table.grouping.update(removeGroupLevel<DealRow>(columnId));
+  }
+
+  /** Click-time only — the tab strip reads `columnTabs()`, which resolves this once per change. */
+  private isGroupedBy(columnId: string): boolean {
+    return this.table.grouping().includes(columnId);
   }
 
   /** One control per column, one boolean state: grouped or not. The two writes stay separate

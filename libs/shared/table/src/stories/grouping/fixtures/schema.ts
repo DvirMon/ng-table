@@ -25,15 +25,16 @@ function sumAmount(rows: DealRow[]): number {
 }
 
 /** Shared by all three configs — the grouping stories differ in which features they compose, not
- * in what the table holds. `owner` is object-valued and `closedAt` a `Date` on purpose: grouping
- * by each is how S8's `object:[object Object]` sits next to a key that formats correctly. */
+ * in what the table holds. `owner` is the one column whose row field is an object, so it carries
+ * the `accessor` that turns it into the value a cell renders and a group keys on; every other
+ * column falls back to the default `row[id]`. */
 const dealColumns: ColumnDefInput<DealRow>[] = [
   { id: 'region', label: 'Region' },
   { id: 'category', label: 'Category' },
   { id: 'rep', label: 'Rep' },
   { id: 'amount', label: 'Amount', aggregateFn: sumAmount },
   { id: 'closedAt', label: 'Closed' },
-  { id: 'owner', label: 'Owner' },
+  { id: 'owner', label: 'Owner', accessor: (row) => row.owner.name },
 ];
 
 /** Base column order, in declaration order — what `groupedColumnMode: 'keep'` restores and what
