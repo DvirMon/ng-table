@@ -1,9 +1,17 @@
 # Research — can `createFilters` infer `TState`?
 
-**Date:** 2026-09-14 · **Status:** evidence only, no decision taken · **Feeds:** a grill, then an ADR
+**Date:** 2026-09-14 · **Status:** grilled — decisions taken as R34–R46 in
+[with-filtering/design-options-hybrid-api.md](../with-filtering/design-options-hybrid-api.md) ·
+**Feeds:** the filtering spec
 
-Every claim below is a compiled assertion, not a recollection. Probes live in the session
-scratchpad (`probe2.ts`–`probe13.ts`), checked with the repo's own TypeScript (6.0.3) under
+> **Two "Known holes" below are wrong and are corrected in the decisions.** #1 (key collision)
+> is already closed — `filters/validate.ts` throws on a duplicate key at construction, so the
+> type-level merge is never observed. #3's proposed fix, the `no-unused-expressions` lint rule,
+> does not fire: it deliberately permits bare call expressions. A construction-time throw (R40)
+> was taken instead.
+
+Every claim below is a compiled assertion, not a recollection. This doc replaces the 12 scratch
+probe files that produced it — each compiled with the repo's own TypeScript (6.0.3) under
 `--strict`. Assertions use an exact-match `Equal<X, Y>` helper — a pass means the inferred type
 is structurally identical to the expected one, not merely assignable.
 
