@@ -262,6 +262,16 @@ export class GroupingStaticStoryHostComponent {
     this.table.grouping.update(removeGroupLevel<DealRow>(columnId));
   }
 
+  /** One control per column, one boolean state: grouped or not. The two writes stay separate
+   * updaters — the toggle only picks which one this click is. */
+  protected toggleGroupByColumn(columnId: string): void {
+    if (this.isGroupedBy(columnId)) {
+      this.ungroupColumn(columnId);
+      return;
+    }
+    this.groupByColumn(columnId);
+  }
+
   protected moveLevel(from: number, to: number): void {
     this.table.grouping.update(reorderGroupLevels<DealRow>(from, to));
   }

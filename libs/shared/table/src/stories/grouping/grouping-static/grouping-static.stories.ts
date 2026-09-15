@@ -46,8 +46,9 @@ type Story = StoryObj<GroupingStaticStoryHostComponent>;
  *   parent's total is the sum of its subtree.
  * - "rep contains" filters the rows: counts and totals follow the visible rows, and a group whose
  *   rows all filter out disappears entirely.
- * - "Group by this column" on a column header adds a level; the pills above the table reorder and
- *   remove them. Offering it on a column that is already a level is a no-op, not a second copy.
+ * - The tab strip above the table is one toggle per column — pressed means "a grouping level" —
+ *   and the pills below it reorder and remove those levels. One control per column, one boolean
+ *   state, so adding a duplicate level is unreachable from the UI rather than a no-op to explain.
  * - `groupedColumnMode` shows the three dispositions the major libraries disagree on; `groupOrder`
  *   is developer config, not an end-user control.
  * - Three controls are deliberate regressions: breaking a summary takes the table down, grouping

@@ -36,6 +36,24 @@
     </button>
   </div>
 
+  <div class="grouping-story__tabs" role="group" aria-label="Group by column">
+    @for (column of visibleColumns(); track column.id) {
+      <button
+        type="button"
+        class="grouping-story__tab"
+        [attr.aria-pressed]="isGroupedBy(column.id)"
+        [title]="
+          isGroupedBy(column.id)
+            ? 'A grouping level — toggling it off calls removeGroupLevel()'
+            : 'Add this column as the last grouping level'
+        "
+        (click)="toggleGroupByColumn(column.id)"
+      >
+        {{ column.label }}
+      </button>
+    }
+  </div>
+
   <div class="grouping-story__pills">
     @for (level of table.grouping(); track level; let index = $index) {
       <span class="grouping-story__pill">
@@ -124,23 +142,7 @@
     <thead>
       <tr>
         @for (column of visibleColumns(); track column.id) {
-          <th class="story-host__cell">
-            {{ column.label }}
-            <button
-              type="button"
-              [title]="
-                isGroupedBy(column.id)
-                  ? 'Already a level — addGroupLevel() no-ops rather than adding it twice'
-                  : 'Add this column as the last grouping level'
-              "
-              (click)="groupByColumn(column.id)"
-            >
-              Group by this column
-            </button>
-            @if (isGroupedBy(column.id)) {
-              <button type="button" (click)="ungroupColumn(column.id)">Ungroup</button>
-            }
-          </th>
+          <th class="story-host__cell">{{ column.label }}</th>
         }
       </tr>
     </thead>
