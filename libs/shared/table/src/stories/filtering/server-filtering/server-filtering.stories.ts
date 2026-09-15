@@ -3,7 +3,7 @@ import { filteringHandlers } from '../fixtures/handlers';
 import { ServerFilteringStoryHostComponent } from './server-filtering-story-host.component';
 
 const meta: Meta<ServerFilteringStoryHostComponent> = {
-  title: 'Table / Filtering / Server',
+  title: 'Table / Filtering',
   component: ServerFilteringStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -30,7 +30,7 @@ type Story = StoryObj<ServerFilteringStoryHostComponent>;
  * - `totalRowCount()` is the server's `total`, rendered beside the page length.
  * - Type an amount, then deliver the server default: `dirty()` keeps what you typed.
  */
-export const Default: Story = {};
+export const Server: Story = {};
 
 /**
  * Every request fails.
@@ -38,6 +38,7 @@ export const Default: Story = {};
  * - The rows already on screen stay there behind the error marker — the table never blanks.
  * - Retry re-sends the current filter set rather than resetting it.
  */
-export const ForcedFailure: Story = {
+export const ServerRequestFailure: Story = {
+  name: 'Server — Request Failure',
   args: { forceFailure: true },
 };

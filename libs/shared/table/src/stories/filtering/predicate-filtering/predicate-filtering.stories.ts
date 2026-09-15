@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { PredicateFilteringStoryHostComponent } from './predicate-filtering-story-host.component';
 
 const meta: Meta<PredicateFilteringStoryHostComponent> = {
-  title: 'Table / Filtering / Predicates',
+  title: 'Table / Filtering',
   component: PredicateFilteringStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -20,4 +20,4 @@ type Story = StoryObj<PredicateFilteringStoryHostComponent>;
  * - Emptying a control removes its term from the next pass, with no `isEmpty` contract involved.
  * - The host composes no filter model: `createFilters()` and the criterion types are absent.
  */
-export const Default: Story = {};
+export const Predicates: Story = {};

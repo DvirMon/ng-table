@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { MultiSelectionStoryHostComponent } from './multi-selection-story-host.component';
 
 const meta: Meta<MultiSelectionStoryHostComponent> = {
-  title: 'Table / Selection / Multi',
+  title: 'Table / Selection',
   component: MultiSelectionStoryHostComponent,
   parameters: { layout: 'padded' },
 };
@@ -21,4 +21,4 @@ type Story = StoryObj<MultiSelectionStoryHostComponent>;
  *
  * Every verb is synchronous and local, so there is no failure path to pin as a second story.
  */
-export const Default: Story = {};
+export const Multi: Story = {};

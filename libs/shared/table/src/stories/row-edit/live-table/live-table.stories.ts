@@ -3,7 +3,7 @@ import { LiveTableStoryHostComponent } from './live-table-story-host.component';
 import { rowEditHandlers } from '../fixtures/handlers';
 
 const meta: Meta<LiveTableStoryHostComponent> = {
-  title: 'Table / Row Editing / Live / Base',
+  title: 'Table / Row Editing',
   component: LiveTableStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -35,10 +35,11 @@ type Story = StoryObj<LiveTableStoryHostComponent>;
  * - One undo slot covers both: it restores whichever happened last, a field commit or a
  *   confirmed discard.
  */
-export const Default: Story = {};
+export const LiveBase: Story = {};
 
 /** Every request fails: an edit reverts to its pre-commit value, a create leaves the typed
  * values in place for Retry, and a discard comes back instead of disappearing. */
-export const ForcedFailure: Story = {
+export const LiveBaseFailure: Story = {
+  name: 'Live Base — Failure',
   args: { forceFailure: true },
 };

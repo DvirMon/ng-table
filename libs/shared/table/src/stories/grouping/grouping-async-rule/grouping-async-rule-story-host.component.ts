@@ -1,0 +1,90 @@
+import { Component, computed, input, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import type { ResourceRef } from '@angular/core';
+import {
+  createTable,
+  withGrouping,
+  type GroupingAsyncRule,
+} from '../../../index';
+import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
+import {
+  injectGroupedRowsApi,
+  type GroupedRowsRequestOptions,
+  type GroupingPreference,
+} from '../fixtures/http';
+import { asyncRuleGroupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
+import type { DealRow } from '../fixtures/types';
+import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
+
+/**
+ * A grouping level decided by the server, through an `applyGroupingAsync()`-shaped column rule.
+ * While the rule is unresolved the whole rule set abstains and the table holds the last explicit
+ * grouping; a resolved rule replaces the level set outright. `onError` must return an explicit
+ * boolean, so a failure resolves to "grouped by nothing" rather than to "no answer yet".
+ */
+@Component({
+  selector: 'ngp-grouping-async-rule-story-host',
+  templateUrl: './grouping-async-rule-story-host.component.html',
+  styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
+  imports: [...GROUPING_STORY_PIPES],
+})
+export class GroupingAsyncRuleStoryHostComponent {
+  readonly forceFailure = input(false);
+  readonly latencyMs = input(2500);
+  readonly showCount = input(true);
+
+  private readonly groupedRowsApi = injectGroupedRowsApi();
+
+  /** Captured out of the rule's own `factory` so the pending window is legible on canvas. The
+   * table's public surface exposes the folded `grouping()`, never the rule's resource. */
+  private asyncRuleResource: ResourceRef<GroupingPreference | undefined> | undefined;
+
+  private readonly repGroupingRule: GroupingAsyncRule<
+    DealRow,
+    GroupedRowsRequestOptions,
+    GroupingPreference
+  > = {
+    kind: 'grouping-async',
+    columnId: 'rep',
+    params: () => ({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }),
+    factory: (params) => {
+      const ref = rxResource({
+        params: () => params(),
+        stream: ({ params: requestOptions }) =>
+          this.groupedRowsApi.fetchGroupingPreference(requestOptions),
+      });
+      this.asyncRuleResource = ref;
+      return ref;
+    },
+    onSuccess: (preference) => preference.groupByRep,
+    onError: () => false,
+  };
+
+  protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
+  protected readonly table = createTable(
+    this.data,
+    asyncRuleGroupingConfig,
+    withGrouping({
+      initialGrouping: STATIC_GROUPING_LEVELS,
+      rules: [this.repGroupingRule],
+    })
+  );
+
+  protected readonly visibleColumns = computed(() =>
+    this.table
+      .columns()
+      .filter((column) => column.visible)
+      .sort((a, b) => a.order - b.order)
+  );
+
+  /** Label per level id — see #115, which would put this on the column itself. */
+  protected readonly columnLabelById = computed<Record<string, string>>(() =>
+    Object.fromEntries(this.table.columns().map((column) => [column.id, column.label]))
+  );
+
+  protected readonly asyncRuleStatus = computed(() => this.asyncRuleResource?.status() ?? 'idle');
+
+  protected readonly isGroupingRulePending = computed(
+    () => this.asyncRuleResource?.isLoading() ?? false
+  );
+}

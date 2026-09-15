@@ -5,7 +5,7 @@ import { rowEditHandlers } from '../fixtures/handlers';
 type Host = InstanceType<typeof GatedSinglePessimisticStoryHostComponent>;
 
 const meta: Meta<Host> = {
-  title: 'Table / Row Editing / Gated / Single / Pessimistic',
+  title: 'Table / Row Editing',
   component: GatedSinglePessimisticStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -30,10 +30,11 @@ type Story = StoryObj<Host>;
  * rollback needed since nothing closed early. Starting a new edit while one is already open
  * cancels whatever was in progress.
  */
-export const Default: Story = {};
+export const GatedSinglePessimistic: Story = {};
 
 /** A save that fails: the row stays open (pessimistic never closes early), the error shows
  * inline, and Retry re-runs the same request. */
-export const ForcedFailure: Story = {
+export const GatedSinglePessimisticFailure: Story = {
+  name: 'Gated Single Pessimistic — Failure',
   args: { forceFailure: true },
 };

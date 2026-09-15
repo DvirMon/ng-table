@@ -2,7 +2,12 @@
 title: Gap analysis — Storybook stories vs. product grouping stories
 type: plan
 status: >
-  built 2026-09-14. All three story folders shipped — `grouping-static/`, `grouping-collapsible/`,
+  built 2026-09-14; **restructured 2026-09-15** — `grouping-static/` was carrying three lessons in
+  one host, so the async rule split into `grouping-async-rule/` and the deliberate-misuse controls
+  into `grouping-regressions/`. Nothing on canvas changed; `0-product/grouping.md` now names the
+  story that renders each mark. 4.2 also moved ❌ → 🟡, because the `owner` column declares an
+  `accessor` and the engine keys the group on it — see #114. All story folders shipped —
+  `grouping-static/`, `grouping-async-rule/`, `grouping-regressions/`, `grouping-collapsible/`,
   `grouping-selection/` — plus the four group-level updaters exported from `index.ts` and the
   async grouping rule. Coverage re-derived into `0-product/grouping.md`: §1–§4 is 9 ✅, 5 🟡, 3 ❌;
   cross-feature is 3 ✅, 2 🟡, 4 ❌. Still tracked, shipped as honest regressions rather than hidden:

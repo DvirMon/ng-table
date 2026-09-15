@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { SingleSelectionStoryHostComponent } from './single-selection-story-host.component';
 
 const meta: Meta<SingleSelectionStoryHostComponent> = {
-  title: 'Table / Selection / Single',
+  title: 'Table / Selection',
   component: SingleSelectionStoryHostComponent,
   parameters: { layout: 'padded' },
 };
@@ -17,4 +17,4 @@ type Story = StoryObj<SingleSelectionStoryHostComponent>;
  * - Clear is a button, because a radio cannot be unticked by clicking it.
  * - A two-id restore is refused, and the discarded id is named on canvas.
  */
-export const Default: Story = {};
+export const Single: Story = {};

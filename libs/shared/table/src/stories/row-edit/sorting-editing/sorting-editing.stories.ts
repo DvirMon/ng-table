@@ -4,7 +4,7 @@ import { SortingEditingStoryHostComponent } from './sorting-editing-story-host.c
 type Host = InstanceType<typeof SortingEditingStoryHostComponent>;
 
 const meta: Meta<Host> = {
-  title: 'Table / Row Editing / Sorting × Editing',
+  title: 'Table / Row Editing',
   component: SortingEditingStoryHostComponent,
   parameters: { layout: 'padded' },
 };
@@ -19,4 +19,5 @@ type Story = StoryObj<Host>;
  * - Keeping an open row in place while the table re-sorts around it does not work yet — a known
  *   limitation, see the story's host component for detail.
  */
-export const Default: Story = {};
+export const SortingAndEditing: Story = {
+  name: 'Sorting × Editing',};

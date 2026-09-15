@@ -3,7 +3,7 @@ import { LiveOptimisticStoryHostComponent } from './live-optimistic-story-host.c
 import { rowEditHandlers } from '../fixtures/handlers';
 
 const meta: Meta<LiveOptimisticStoryHostComponent> = {
-  title: 'Table / Row Editing / Live / Optimistic',
+  title: 'Table / Row Editing',
   component: LiveOptimisticStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -31,7 +31,7 @@ type Story = StoryObj<LiveOptimisticStoryHostComponent>;
  *   (`POST`, id assigned by the server) instead of updating (`PUT`) — `swapRowId` keeps the row
  *   addressable under its new id.
  */
-export const Default: Story = {};
+export const LiveOptimistic: Story = {};
 
 /**
  * A save that fails.
@@ -40,6 +40,7 @@ export const Default: Story = {};
  * - When the save fails, the value reverts to what it was before the edit.
  * - The row was never in an "open for editing" state, so nothing closes — it just reverts.
  */
-export const ForcedFailure: Story = {
+export const LiveOptimisticFailure: Story = {
+  name: 'Live Optimistic — Failure',
   args: { forceFailure: true },
 };

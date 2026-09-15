@@ -3,7 +3,7 @@ import { GroupingCollapsibleStoryHostComponent } from './grouping-collapsible-st
 import { groupingHandlers } from '../fixtures/handlers';
 
 const meta: Meta<GroupingCollapsibleStoryHostComponent> = {
-  title: 'Table / Grouping / Collapsible',
+  title: 'Table / Grouping',
   component: GroupingCollapsibleStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -35,12 +35,13 @@ type Story = StoryObj<GroupingCollapsibleStoryHostComponent>;
  *   button can label itself correctly without an "is everything expanded" signal (S4).
  * - The deal with line items carries a second, separate chevron from the `'tree'` render stage.
  */
-export const Default: Story = {};
+export const Collapsible: Story = {};
 
 /**
  * Refetch fails every time. The error path is the half of 2.5 that `Default`'s DOM never reaches:
  * collapse state has to survive a *failed* refresh too, and nothing may be left half-applied.
  */
-export const ForcedFailure: Story = {
+export const CollapsibleRefreshFailure: Story = {
+  name: 'Collapsible — Refresh Failure',
   args: { forceFailure: true },
 };

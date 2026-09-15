@@ -42,11 +42,21 @@ const dealColumns: ColumnDefInput<DealRow>[] = [
 export const DEAL_COLUMN_IDS: string[] = dealColumns.map((column) => column.id);
 
 /**
- * One config per story, over one column list. Three names rather than one shared value so a
- * story can diverge later without turning this file into a write-edge between the three story
- * folders that import it.
+ * One config per story, over one column list. A name per story rather than one shared value so a
+ * story can diverge later without turning this file into a write-edge between the story folders
+ * that import it.
  */
 export const staticGroupingConfig: TableConfig<DealRow> = {
+  trackBy: 'id',
+  columns: dealColumns,
+};
+
+export const asyncRuleGroupingConfig: TableConfig<DealRow> = {
+  trackBy: 'id',
+  columns: dealColumns,
+};
+
+export const groupingRegressionsConfig: TableConfig<DealRow> = {
   trackBy: 'id',
   columns: dealColumns,
 };
@@ -76,12 +86,12 @@ export const RENESTED_GROUPING_LEVELS: ColumnId<DealRow>[] = ['category', 'regio
  * only reaches descendants from one that is also said to reach parents. */
 export const SELECTION_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
 
-/** The level `grouping-static/`'s "Group by a column that isn't there" control adds — no column
- * carries this id, so `resolveGroupingLevels` drops it and the table groups by the rest (D14). */
+/** The level `grouping-regressions/`'s "Group by a column that isn't there" control adds — no
+ * column carries this id, so `resolveGroupingLevels` drops it and the table groups by the rest. */
 export const MISSING_GROUPING_LEVEL = 'territory';
 
-/** Backs `grouping-static/`'s `external-list` group order — a caller-supplied ranking, the shape
- * a saved report or a pinned-priority list would take. Values absent from it sort last. */
+/** Backs `grouping-regressions/`'s `external-list` group order — a caller-supplied ranking, the
+ * shape a saved report or a pinned-priority list would take. Values absent from it sort last. */
 export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'North East'];
 
 /**

@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { GroupingSelectionStoryHostComponent } from './grouping-selection-story-host.component';
 
 const meta: Meta<GroupingSelectionStoryHostComponent> = {
-  title: 'Table / Grouping / Group selection',
+  title: 'Table / Grouping',
   component: GroupingSelectionStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -35,4 +35,4 @@ type Story = StoryObj<GroupingSelectionStoryHostComponent>;
  * Every verb here is synchronous and local, so there is no rollback state that only renders on an
  * unhappy path, and no `ForcedFailure` export is earned.
  */
-export const Default: Story = {};
+export const GroupSelection: Story = {};

@@ -3,13 +3,19 @@ title: Product — Grouping User Stories
 type: product
 capability: grouping
 status: >
-  Coverage re-derived 2026-09-14 from the three shipped stories (`grouping-static/`,
-  `grouping-collapsible/`, `grouping-selection/`), read as host components. §1–§4: 10 ✅, 4 🟡,
+  Coverage re-derived 2026-09-14 from the shipped stories, read as host components. **Split
+  2026-09-15:** `grouping-static/` was three lessons in one host, so the async grouping rule moved
+  to `grouping-async-rule/` and the deliberate-misuse controls to `grouping-regressions/`, leaving
+  the static host as copyable API usage. Nothing on canvas changed; the marks below name the story
+  that renders each behaviour now. Five stories: `grouping-static/`, `grouping-async-rule/`,
+  `grouping-regressions/`, `grouping-collapsible/`, `grouping-selection/`. §1–§4: 10 ✅, 4 🟡,
   3 ❌. Four marks stay short of ✅ for stated, code-level reasons — 2.2 ships an honest
   regression (S4/S5), 2.4's sticky headers all stick to the same offset so nested
   paths overlap, 4.3 is consistent but unstated, and 4.4 is announced only by story-local
-  arithmetic. 2.3 (initial depth), 4.1 (blank keys) and 4.2 (object keys) are ❌ — two of them
-  rendered deliberately as bug reports. Cross-feature: X-G1, S-G1 and E-G1 ✅; S-G2 and F-G1 🟡
+  arithmetic. 2.3 (initial depth) and 4.1 (blank keys) are ❌, the latter rendered deliberately as
+  a bug report. 4.2 (object keys) moved ❌ → 🟡 on 2026-09-15: the `owner` column declares an
+  `accessor`, which the engine keys the group on, so the label and the bucketing both work — what
+  is still missing is a stated fallback for a column that declares none ([#114]). Cross-feature: X-G1, S-G1 and E-G1 ✅; S-G2 and F-G1 🟡
   for one shared reason — no story composes `groupOrder` with `withSorting()`, or expansion with
   filtering. OQ-1/OQ-2 resolved 2026-09-12 by D16; OQ-3…OQ-8 still open. **§8 reconciled in the
   same pass:** S3 confirmed, U3/U6/U10 closed, and three rows had their premise corrected rather
@@ -71,12 +77,16 @@ and §7 records the finance case where auto-expanded is what users actually want
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
 
-**Marks re-derived 2026-09-14 from the shipped stories, not from a sibling doc.** Three stories
-now exist, all read as host components rather than `.mdx` wrappers:
+**Marks re-derived 2026-09-14 from the shipped stories, not from a sibling doc.** Five stories
+now exist, all read as host components rather than `.mdx` wrappers. `grouping-static/` is the one
+to copy — the async rule and the deliberate regressions were split out of it 2026-09-15 so its own
+source is grouping API usage and nothing else:
 
 | Story | Composes | What it demonstrates |
 |---|---|---|
-| [`grouping-static/`]([`grouping-static/`](../../src/stories/grouping/grouping-static/)) | `withGrouping()` + `withFiltering()`, deliberately **no** `withExpansion()` | Headers carrying value, count and `amount` total at every depth, all post-filter; level pills that reorder and remove; `groupOrder` across five modes including an external list and a throwing comparator; `groupedColumnMode` rendering all three peer dispositions; an async grouping rule with pending/resolved/failed states. Three controls are deliberate regressions — a broken summary, a dropped level, and blank/object group keys |
+| [`grouping-static/`](../../src/stories/grouping/grouping-static/) | `withGrouping()` + `withFiltering()`, deliberately **no** `withExpansion()` | Headers carrying value, count and `amount` total at every depth, all post-filter; a tab strip that toggles a column as a level and pills that reorder and remove them; `groupedColumnMode` rendering all three peer dispositions; `stickyHeaders`; blank group keys clustering unlabelled, while an object-valued field groups correctly through its column's `accessor` |
+| [`grouping-async-rule/`](../../src/stories/grouping/grouping-async-rule/) | `withGrouping()` with an `applyGroupingAsync()`-shaped rule | A grouping level decided by the server over a real intercepted request: the pending window holding the last explicit grouping, the resolved set replacing it outright, and `onError` resolving to `[]` — grouped by nothing, distinct from abstaining |
+| [`grouping-regressions/`](../../src/stories/grouping/grouping-regressions/) | `withGrouping()` with a `groupOrder` comparator | Deliberate misuse, not example code: `groupOrder` across five modes including a throwing comparator, a level naming no column, and an `aggregateFn` handed a value it refuses |
 | [`grouping-collapsible/`]([`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/)) | `withGrouping()` + `withExpansion()` + `withSorting()` | A real `<button>` chevron with `aria-expanded`, the whole header row as hit area, subtree collapse, and three attacks on the collapse state — Refetch with freshly-constructed rows, sort toggles, and a Regroup that changes every id at once. A deal carrying `children` renders a second, separately-keyed chevron from the `'tree'` stage |
 | [`grouping-selection/`]([`grouping-selection/`](../../src/stories/grouping/grouping-selection/)) | `withGrouping()` + `withSelection()` + `withFiltering()` | All three peer cascade defaults off one `rowsOf()` call; tri-state group checkboxes derived, never stored; a readout that counts rows and a second one proving no group header is ever in the selection; Ungroup leaving the selection untouched |
 
@@ -563,7 +573,7 @@ test rather than a decision.
 - If the ordering logic fails, groups appear in a stable, predictable order — the order they
   occur in the data — rather than randomly or not at all.
 
-**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) — `groupOrder`
+**Covered by:** [`grouping-regressions/`](../../src/stories/grouping/grouping-regressions/) — `groupOrder`
 renders as five modes through **one** comparator closure reading a signal, never a comparator per
 mode: `first-occurrence` (the default, and a constant `0` that a stable sort leaves alone),
 `by-label`, `by-count`, and `external-list` — a caller-supplied ranking, which is the third
@@ -600,7 +610,7 @@ port, because there is no UX to copy.
   in 1.3.
 - The ordering updates when the data does.
 
-**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/)'s `by-count` mode,
+**Covered by:** [`grouping-regressions/`](../../src/stories/grouping/grouping-regressions/)'s `by-count` mode,
 which is exactly the ordering AG Grid's `initialGroupOrderComparator` cannot express — it runs
 before filtering and aggregation, and this one runs after. Type in "rep contains" with `by-count`
 selected and the group order re-ranks against the surviving rows, so the second criterion
@@ -660,7 +670,7 @@ to an empty key array on the wire, so the server cannot distinguish "top level" 
 group". Adjacent and already flagged internally: `sorting.md:167-169` (S9) says an empty row "has
 no group to belong to" and where it renders "is undefined". Raised as **OQ-5**.
 
-## 4.2 — A grouped column whose values are not text — ❌ not covered *(rendered as a regression demo — S8)*
+## 4.2 — A grouped column whose values are not text — 🟡 partly covered *(works through `accessor`; no fallback for a column without one)*
 
 > As someone grouping by assignee where each assignee is an object with a name and an id, I want
 > to see the names.
@@ -677,13 +687,20 @@ no group to belong to" and where it renders "is undefined". Raised as **OQ-5**.
 
 - A value with no sensible text form produces a stated fallback label, never `[object Object]`.
 
-**Covered by:** nothing — and [`grouping-static/`](../../src/stories/grouping/grouping-static/)
-renders the contrast deliberately. Group by **Closed**, a `Date` column, and the key labels
-correctly. Group by **Owner**, whose values are `{ name, email }` objects, and it does not: there is
-no label path at all, which is mui-x [#10729](https://github.com/mui/mui-x/issues/10729) in our own
-table. `RenderRow` now carries `groupKey` (C1), so a header knows its own identity; what it still
-lacks is a way to turn that identity into text. The two columns sit next to each other so the gap is
-one click apart from the case that works. S8, OQ-5 with 4.1.
+**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/), as of 2026-09-15 —
+but by the column's own `accessor`, not by a label contract. `owner` holds `{ name, email }`
+objects and its column declares `accessor: (row) => row.owner.name`; because `engine/grouping.ts`
+keys a group on what the accessor returns, that one line fixes the label *and* the bucketing, which
+previously collapsed all three owners into a single `object:[object Object]` group. Group by
+**Owner** and three correctly-labelled groups appear next to **Closed**, a `Date` column that
+already worked.
+
+**Why it is 🟡 rather than ✅:** the criterion says a value with no sensible text form produces a
+*stated fallback*, and there is none. A consumer who declares no accessor for an object-valued
+field still gets `[object Object]` and one silently merged bucket, with no report — mui-x
+[#10729](https://github.com/mui/mui-x/issues/10729) in our own table. The accessor is the contract
+today and is undocumented as such; [#114](https://github.com/DvirMon/acme/issues/114) carries both
+halves. S8, OQ-5 with 4.1.
 
 **Design status — gap.** MUI X [#10729](https://github.com/mui/mui-x/issues/10729), open since
 2023 with ten comments: "If you have a value that is an object the group key is
@@ -691,9 +708,8 @@ one click apart from the case that works. S8, OQ-5 with 4.1.
 matters — "it feels like there is a contradiction occuring when trying to use all the grids
 capabilities when it comes to object values." Two of our own open items are the same question from
 different angles: `3-ui/directives/grouping.md:41-45` asks about "group-label formatting for an
-`unknown` value", and `RenderRow` has **no `groupKey` field at all** — `features/grouping.md:108`
-specifies one, `src/api/types.ts` does not have it, so what a group header knows about its own
-identity is currently unspecified in code. Raised as **OQ-5** with 4.1; they are one decision.
+`unknown` value", and the identity half is now settled — `RenderRow.groupKey` ships, and a column's
+`accessor` decides what it holds. Raised as **OQ-5** with 4.1; they are one decision.
 
 ## 4.3 — A group with exactly one row in it — 🟡 partly covered *(consistent, but nowhere stated)*
 
@@ -736,7 +752,7 @@ product choice, and the honest answer may be "always a group", stated deliberate
 - I can tell that something was dropped, rather than quietly getting a different report than the
   one I saved.
 
-**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/)'s *Group by a
+**Covered by:** [`grouping-regressions/`](../../src/stories/grouping/grouping-regressions/)'s *Group by a
 column that isn't there*, which adds a level naming no column. `resolveGroupingLevels` drops it, the
 table groups by the rest and renders — the first two criteria, on canvas.
 
@@ -903,9 +919,11 @@ at all.
 **Why it is 🟡:** "and have the regions stay where they are" is not demonstrated anywhere. With no
 `groupOrder` supplied the group headers follow the sort, by design (see S-G1). The composition that
 would prove the decoupling — `withGrouping({ groupOrder })` **plus** `withSorting()` in one story —
-does not exist: [`grouping-static/`](../../src/stories/grouping/grouping-static/) has the comparator
-and no sorting, [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) has
-sorting and no comparator. This is 3.3's fourth criterion too, counted here once rather than in both
+does not exist: [`grouping-regressions/`](../../src/stories/grouping/grouping-regressions/) has the
+comparator and no sorting, [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/)
+has sorting and no comparator — and the comparator now lives in a story explicitly marked "do not
+copy", so closing this wants the composition in a story of its own rather than a control added
+there. This is 3.3's fourth criterion too, counted here once rather than in both
 places. Closing it is one story-level composition, not a design change.
 
 **Design status:** covered by construction — D5 plus a stable sort plus the fixed
@@ -1216,7 +1234,7 @@ Owned by `1-state/work/with-grouping/` and the feature docs it supersedes.
 | S5 | No group-level expand/collapse verb | 2.2, 2.3 | `withExpansion().expandAll()` walks `childrenAccessor` over real rows (`with-expansion.ts:119-135`) and cannot discover a group at all |
 | S6 | No initial expansion depth | 2.3 | AG Grid and MUI X both model this as a depth; TanStack has no depth concept and it shows |
 | S7 | Missing / null group values are undefined behavior | 4.1 | D14 covers an unknown column *id*, not a missing *value*. `sorting.md:167-169` already flags the same hole from its side. OQ-5 |
-| S8 | Non-primitive group values have no **label** contract | 4.2 | **Half of this row is now false.** `RenderRow.groupKey` ships (C1), so a header *can* say what it is a group of. What is still missing is the path from that identity to text: `grouping-static/` groups by `closedAt` (a `Date`, labels correctly) next to `owner` (an object, no label path at all), one click apart. Pairs with U8. OQ-5 |
+| S8 | Non-primitive group values have no **label** contract | 4.2 | **Narrowed again 2026-09-15.** `RenderRow.groupKey` ships (C1), and the label path turns out to be `ColumnDef.accessor`: `engine/grouping.ts:143` keys a group on `accessor(row)`, so a column that narrows an object to a primitive labels and buckets correctly — `grouping-static/`'s `owner` now does. What is left is narrower and still real: a column declaring **no** accessor falls through `toGroupKey`'s `` `${typeof value}:${String(value)}` `` and merges every distinct object into one bucket, silently, with no report under ADR-0014. The accessor is the contract and is undocumented as such. Pairs with U8. [#114](https://github.com/DvirMon/acme/issues/114), OQ-5 |
 | S9 | Single-row group behavior unstated | 4.3 | OQ-6 |
 | ~~S10~~ | ~~Group-header selection semantics undecided~~ | X-G1 | **Closed by D16** — the library ships no semantics; `rowsOf(group)` plus consumer cascade. Discharges the instruction in `with-selection/2-decisions.md:168-173` |
 | ~~S11~~ | ~~"Is a group header a row or a view" is unrecorded~~ | §6 | **Closed by D16** — a view, with `expandedRows` the one named exception, because that set holds toggles rather than records |

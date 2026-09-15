@@ -5,7 +5,7 @@ import { rowEditHandlers } from '../fixtures/handlers';
 type Host = InstanceType<typeof GatedMultipleOptimisticStoryHostComponent>;
 
 const meta: Meta<Host> = {
-  title: 'Table / Row Editing / Gated / Multiple / Optimistic',
+  title: 'Table / Row Editing',
   component: GatedMultipleOptimisticStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -31,7 +31,7 @@ type Story = StoryObj<Host>;
  * - Every open row closes immediately (optimistic) and shows as saving; each settles
  *   independently as its own request resolves.
  */
-export const Default: Story = {};
+export const GatedMultipleOptimistic: Story = {};
 
 /**
  * A batched save where every in-flight request fails.
@@ -39,6 +39,7 @@ export const Default: Story = {};
  * - Rows still close immediately on Save All — closing never waits on the round trip.
  * - Each failed row reverts to its pre-edit value and shows a Retry/Dismiss control.
  */
-export const ForcedFailure: Story = {
+export const GatedMultipleOptimisticFailure: Story = {
+  name: 'Gated Multiple Optimistic — Failure',
   args: { forceFailure: true },
 };

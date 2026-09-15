@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { SelectionFilteringStoryHostComponent } from './selection-filtering-story-host.component';
 
 const meta: Meta<SelectionFilteringStoryHostComponent> = {
-  title: 'Table / Filtering / Selection × Filtering',
+  title: 'Table / Filtering',
   component: SelectionFilteringStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -21,4 +21,5 @@ type Story = StoryObj<SelectionFilteringStoryHostComponent>;
  * - Filtering a selected row out retains it; clearing the filter restores the selection exactly.
  * - Sorting leaves the selection alone; deleting a filtered-out selected row drops the count.
  */
-export const Default: Story = {};
+export const SelectionAndFiltering: Story = {
+  name: 'Selection × Filtering',};

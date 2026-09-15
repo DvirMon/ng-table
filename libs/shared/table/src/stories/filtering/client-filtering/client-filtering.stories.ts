@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { ClientFilteringStoryHostComponent } from './client-filtering-story-host.component';
 
 const meta: Meta<ClientFilteringStoryHostComponent> = {
-  title: 'Table / Filtering / Client',
+  title: 'Table / Filtering',
   component: ClientFilteringStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -21,4 +21,4 @@ type Story = StoryObj<ClientFilteringStoryHostComponent>;
  * - `Reset to defaults` restores the declared `source` default; `Clear all` empties.
  * - Breaking the tags predicate widens the result set and reports once per evaluation.
  */
-export const Default: Story = {};
+export const Client: Story = {};

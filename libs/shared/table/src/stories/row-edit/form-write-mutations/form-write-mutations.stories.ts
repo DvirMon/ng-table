@@ -4,7 +4,7 @@ import { FormWriteMutationsStoryHostComponent } from './form-write-mutations-sto
 type Host = InstanceType<typeof FormWriteMutationsStoryHostComponent>;
 
 const meta: Meta<Host> = {
-  title: 'Table / Row Editing / Form-Driven Mutations',
+  title: 'Table / Row Editing',
   component: FormWriteMutationsStoryHostComponent,
   parameters: { layout: 'padded' },
 };
@@ -18,4 +18,4 @@ type Story = StoryObj<Host>;
  *
  * - Compare against the normal add/delete flow to see what guarantees are lost this way.
  */
-export const Default: Story = {};
+export const FormDrivenMutations: Story = {};

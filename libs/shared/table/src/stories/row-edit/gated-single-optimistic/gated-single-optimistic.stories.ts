@@ -5,7 +5,7 @@ import { rowEditHandlers } from '../fixtures/handlers';
 type Host = InstanceType<typeof GatedSingleOptimisticStoryHostComponent>;
 
 const meta: Meta<Host> = {
-  title: 'Table / Row Editing / Gated / Single / Optimistic',
+  title: 'Table / Row Editing',
   component: GatedSingleOptimisticStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -28,12 +28,13 @@ type Story = StoryObj<Host>;
  * The happy path: edits one row at a time, save closes it immediately and confirms over the
  * network. Starting a new edit while one is already open cancels whatever was in progress.
  */
-export const Default: Story = {};
+export const GatedSingleOptimistic: Story = {};
 
 /**
  * A save that fails: the row still closes immediately, then reverts to its pre-edit snapshot
  * and reopens once Retry is clicked (`retrySave`).
  */
-export const ForcedFailure: Story = {
+export const GatedSingleOptimisticFailure: Story = {
+  name: 'Gated Single Optimistic — Failure',
   args: { forceFailure: true },
 };

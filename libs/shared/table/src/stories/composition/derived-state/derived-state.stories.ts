@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { DerivedStateStoryHostComponent } from './derived-state-story-host.component';
 
 const meta: Meta<DerivedStateStoryHostComponent> = {
-  title: 'Table / Composition / Derived State',
+  title: 'Table / Composition',
   component: DerivedStateStoryHostComponent,
   parameters: { layout: 'padded' },
 };
@@ -19,4 +19,4 @@ type Story = StoryObj<DerivedStateStoryHostComponent>;
  *   hidden-by-filter.
  * - A hidden row keeps its mark; clearing the filter restores the count.
  */
-export const Default: Story = {};
+export const DerivedState: Story = {};

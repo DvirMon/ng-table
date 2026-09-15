@@ -5,7 +5,7 @@ import { rowEditHandlers } from '../fixtures/handlers';
 type Host = InstanceType<typeof GatedBulkOptimisticStoryHostComponent>;
 
 const meta: Meta<Host> = {
-  title: 'Table / Row Editing / Bulk',
+  title: 'Table / Row Editing',
   component: GatedBulkOptimisticStoryHostComponent,
   parameters: {
     layout: 'padded',
@@ -31,7 +31,7 @@ type Story = StoryObj<Host>;
  * - Fill them in, click "Save batch" — one request carries all of them.
  * - On success every row gets its server id in the same pass.
  */
-export const Default: Story = {};
+export const GatedBulk: Story = {};
 
 /**
  * A batch where the single request fails.
@@ -40,6 +40,7 @@ export const Default: Story = {};
  *   others fail, which is exactly the contrast with `../gated-multiple-optimistic/`'s Save All
  *   (N independent requests, N independent outcomes).
  */
-export const ForcedFailure: Story = {
+export const GatedBulkFailure: Story = {
+  name: 'Gated Bulk — Failure',
   args: { forceFailure: true },
 };

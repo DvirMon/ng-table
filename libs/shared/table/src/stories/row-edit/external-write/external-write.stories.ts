@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/angular-vite';
 import { ExternalWriteStoryHostComponent } from './external-write-story-host.component';
 
 const meta: Meta<ExternalWriteStoryHostComponent> = {
-  title: 'Table / Row Editing / External Write & Reconciliation',
+  title: 'Table / Row Editing',
   component: ExternalWriteStoryHostComponent,
   parameters: { layout: 'padded' },
 };
@@ -17,4 +17,5 @@ type Story = StoryObj<ExternalWriteStoryHostComponent>;
  *   merge field-by-field.
  * - A row that isn't open just gets patched quietly, no banner.
  */
-export const Default: Story = {};
+export const ExternalWrite: Story = {
+  name: 'External Write & Reconciliation',};

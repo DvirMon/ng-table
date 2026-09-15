@@ -63,12 +63,13 @@ src/stories/
 │       ├── <story-name>-story-host.component.ts     ← the demo component
 │       ├── <story-name>-story-host.component.html   ← template — NEVER inline
 │       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
-│       └── <story-name>.mdx                         ← thin wrapper: Meta/Canvas/Source only
+│       └── (no per-story mdx — one <feature>.mdx per feature, at the feature root)
 ├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
 ├── filtering/                               ← fixtures/ + filtering-story.css + 3 hosts
 │   └── client-filtering/  server-filtering/  selection-filtering/
-├── grouping/                                ← fixtures/ + grouping-story.css + 3 hosts
-│   └── grouping-static/  grouping-collapsible/  grouping-selection/
+├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 5 hosts
+│   └── grouping-static/  grouping-async-rule/  grouping-regressions/
+│       grouping-collapsible/  grouping-selection/
 └── selection/                               ← fixtures/ + selection-story.css + 2 hosts
     └── multi-selection/  single-selection/
 ```
@@ -113,7 +114,8 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
 | `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
 | `grouping/fixtures/schema.ts` | Three table configs over one column list, the level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
-| `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — one formatter behind every rendered value, group labels included, so S8's `[object Object]` shows rather than being papered over |
+| `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
+| `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
 | `grouping/fixtures/http.ts` | `injectGroupedRowsApi()` — `fetchRows` plus `fetchGroupingPreference`, the async grouping rule's source |
 | `grouping/fixtures/handlers.ts` | MSW handlers for the refetch and async-rule round trips |
 | `grouping/grouping-story.css` | Grouping-specific styling — group rows by `data-row-kind`/`data-depth`, level pills, chevrons, opt-in sticky headers |
@@ -122,12 +124,13 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `selection/fixtures/schema.ts` | `multiSelectionConfig` and `singleSelectionConfig` — identical shape, because `enableMultiRowSelection: false` is a `withSelection()` argument, not a config field |
 | `selection/selection-story.css` | Selection-specific styling — count banner, control column, `aria-disabled` and locked-row treatment |
 | `styles/story-host.css` | Shared story styling; every feature's own stylesheet layers after it |
-| `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by every story's mdx |
+| `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by the five feature docs pages |
 
 **No `ui/` folder outside `row-edit/`.** Demo-only instrumentation that belongs to exactly one
 story stays in that story's folder — `selection/multi-selection/selection-event-log.ts` is the
 only instance, and it is there rather than in `selection/fixtures/` because one story imports it.
-Story-local **arg types** follow the same rule: `grouping-static/grouping-static.types.ts` and
+Story-local **arg types** follow the same rule: `grouping-static/grouping-static.types.ts`,
+`grouping-regressions/grouping-regressions.types.ts` and
 `grouping-selection/grouping-selection.types.ts` name that host's own Storybook controls and
 nothing else.
 
@@ -223,6 +226,33 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`,
   `gated-bulk-optimistic/`, `live-table/`, and `live-optimistic/` all do this.
 
+## One docs page per feature, not per story
+
+**Consolidated 2026-09-15: 21 per-story `.mdx` files became five.** Each feature owns one
+`<feature>.mdx` at its root — `grouping/grouping.mdx`, `filtering/filtering.mdx`,
+`row-edit/row-edit.mdx`, `selection/selection.mdx`, `composition/composition.mdx` — carrying every
+story in that feature as a `## ` section on one scrolling page, in the order worth reading them.
+
+- **The page is standalone, not attached.** `<Meta title="Table / Grouping" name="Docs" />` with no
+  `of=`, so the docs entry lands as a sibling leaf (`table-grouping--docs`) beside the stories
+  rather than nesting under one of them. Canvases come from any imported CSF:
+  `<Canvas of={StaticStories.Static} />`.
+- **No `autodocs`.** `.storybook/main.ts` configures none, so deleting a per-story mdx removes its
+  docs entry outright — no `tags: ['!autodocs']` needed anywhere.
+- **Stories are flat.** Every CSF in a feature shares one `title` (`'Table / Grouping'`) and names
+  its export for the lesson (`Static`, `AsyncRule`, `SilentDegradation`), so the sidebar is one
+  level: a feature node holding its stories plus `Docs`. Storybook accepts a shared title across
+  files and keeps each CSF's own `component`. Where the display name needs a character an
+  identifier cannot carry, set it explicitly: `name: 'Selection × Filtering'`.
+- **Code tabs sit per story section**, holding that story's HTML and TS. Files shared across the
+  feature — `fixtures/schema.ts`, `fixtures/http.ts`, the feature stylesheet — go in one
+  `## Shared across the …` group at the bottom, once, instead of being repeated in every section.
+  A file belonging to exactly one host (`sorting-editing.schema.ts`, `external-write.css`) stays in
+  that story's own group.
+- **Why one page:** the code-tabs block is hand-written markup, and per-story mdx meant a fresh
+  copy of it for every story. It also makes the reading order explicit — "`Static` is the one to
+  copy, `Regressions` is not" is a sequence, which three sibling pages cannot express.
+
 ## `.stories.ts` and `.mdx`
 
 - `.stories.ts` defines `Meta` + one exported story object per distinct **Storybook-arg**
@@ -253,12 +283,10 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   `docs/1-state/work/with-multiple-edit/1-design.md`, which closes G4 — so that combination is
   intentionally unsupported, not merely undemoed. `gated-bulk-optimistic/` is optimistic-only for
   the same reason.)
-- `.mdx` stays a thin wrapper: `Meta`/`Canvas`/`Source`, plus a code-tabs block. It is not the
-  place to describe what the story proves — that's the host component's doc-comment (previous
-  section). An exception: `live-optimistic.mdx` carries a short prose paragraph explaining *why*
-  no `withRowEdit()` is composed here, because that's a non-obvious composition choice a reader
-  needs before looking at the code. Add prose to an mdx only for that kind of "why," not a
-  restatement of what's visible in the canvas.
+- The feature mdx carries prose only where a reader needs a *why* before the code — a non-obvious
+  composition choice, or what separates a story from its sibling. It is not the place to restate
+  what the canvas already shows, and it is not where a host's mechanism is documented: that stays
+  in the host component's doc-comment (previous section).
 - **Why `ForcedFailure` earns its own story instead of staying a control you flip on `Default`:**
   the rollback/error-recovery UI — a reverted value, a locked/error row, a Retry affordance — never
   renders on the happy path. `Default`'s DOM literally never reaches that state. A control alone
@@ -267,18 +295,16 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   save) permanently visible in the sidebar. This only applies where a save/close strategy actually
   has a rollback or reopen-for-retry step to reveal — a story with nothing to roll back (see
   `gated-multiple-pessimistic`'s non-existence, above) has no `ForcedFailure` to add.
-- **Every story that exports a `ForcedFailure` variant gets its own `## Forced failure` section
-  in the `.mdx`, with a `<Canvas of={Stories.ForcedFailure} />` and a one-paragraph summary of
-  what's different from `Default`.** Angular's Storybook docgen does not surface a CSF export's
-  own JSDoc comment into the UI — only the `.mdx` is an actual visible description surface — so
-  the doc-comment above `export const ForcedFailure` in `.stories.ts` is source-only context for
-  a code reader; without a matching `.mdx` section, `Default` and `ForcedFailure` render with the
-  same (or no) description in Storybook, indistinguishable to a viewer. Keep the two in sync when
-  either changes.
+- **Every failure variant gets a paragraph and a second `<Canvas>` inside its story's section on
+  the feature page**, summarising what differs from the happy path. Angular's Storybook docgen does
+  not surface a CSF export's own JSDoc into the UI — only the mdx is a visible description surface
+  — so the doc-comment above the export is source-only context for a code reader. Without that
+  paragraph the two canvases render with the same (or no) description, indistinguishable to a
+  viewer. Keep the two in sync when either changes.
 - **The host's own on-canvas hint paragraph (`story-host__hint`) must itself branch on
-  `forceFailure()`.** The `.mdx` "Forced failure" section (above) only shows up on that story's
-  separate Docs page — a person just clicking through `Default`/`ForcedFailure` in the sidebar and
-  looking at the rendered canvas never sees it, and would otherwise see the exact same static hint
+  `forceFailure()`.** The failure paragraph (above) only shows up on the feature's Docs page — a
+  person clicking through the stories in the sidebar and looking at the rendered canvas never sees
+  it, and would otherwise see the exact same static hint
   text on both, with nothing on screen saying what's different. Every story with a `ForcedFailure`
   export wraps its hint in `@if (forceFailure()) { ... } @else { ... }` so the one piece of text
   actually visible while interacting with the story describes the state that story is in.
@@ -352,19 +378,28 @@ of after. Reserve a plain `await`/`Promise` stub for a story that isn't about sa
   §5 F-S1. `predicate-filtering/` composes a hand-written `(row) => boolean` with no filter model
   at all, which is what makes the predicate list the contract rather than a convenience. All four
   put any `createFilters()` call in the host, not `fixtures/`.
-- **`grouping/` — three hosts, split by what the table *is*, not by feature flags.**
+- **`grouping/` — five hosts, split by what the table *is*, not by feature flags.**
   `grouping-static/` is the grouped table as its own product: `withGrouping()` + `withFiltering()`
   and deliberately **no** `withExpansion()`, because a chevron with nothing to expand is a control
-  that does nothing. It carries the widest arg surface in the repo (`groupOrder` across five modes
-  including a throwing one, `groupedColumnMode` across all three peer dispositions, `showCount`,
-  `stickyHeaders`, and an async grouping rule with its own pending/resolved/failed states).
-  `grouping-collapsible/` is the navigable outline — `withExpansion()` + `withSorting()`, a real
-  `<button>` chevron carrying `aria-expanded`, and three separate attacks on the collapse state.
-  `grouping-selection/` renders all three peer cascade defaults off one `rowsOf()` call.
-  **Three of its controls are honest regressions, annotated as live gaps rather than dressed up**
-  — a broken summary takes the whole table down (#79), a dropped grouping level is unannounced,
-  and blank/object group keys have no label. A story that ships a known-wrong behavior says so on
-  canvas and links the issue; it does not quietly avoid the case.
+  that does nothing. `grouping-collapsible/` is the navigable outline — `withExpansion()` +
+  `withSorting()`, a real `<button>` chevron carrying `aria-expanded`, and three separate attacks
+  on the collapse state. `grouping-selection/` renders all three peer cascade defaults off one
+  `rowsOf()` call.
+
+  `grouping-async-rule/` and `grouping-regressions/` were **split out of `grouping-static/`
+  2026-09-15**, because that host had grown to carry three lessons and its source is what the
+  mdx's TS tab shows verbatim. A reader copying it got a comparator built to throw, a transport
+  knob and two regression controls along with the grouping. The async rule owns the
+  pending/resolved/failed states over a real intercepted request; the regressions host owns
+  `groupOrder`'s five modes including the throwing one, the level naming no column, and the
+  `aggregateFn` handed a value it refuses.
+
+  **A regression demo is now its own story, and says so.** The rule: a host that ships a
+  known-wrong behavior links the issue on canvas and is marked "do not copy" — it does not sit
+  inside the story a reader is meant to copy. A broken summary takes the whole table down (#79)
+  and a dropped grouping level is unannounced; blank group keys still cluster unlabelled in
+  `grouping-static/`, which is the one regression left in it, because a blank key is ordinary data
+  rather than misuse.
 - **`selection/` — two hosts, because the mode is a construction-time argument.**
   `multi-selection/` puts the whole read/write surface of `withSelection()` on one screen,
   including a `selectionChanged` event log that is the only place D9's single-delta clear and

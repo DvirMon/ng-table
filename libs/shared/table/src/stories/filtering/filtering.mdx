@@ -1,0 +1,225 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as ClientStories from './client-filtering/client-filtering.stories';
+import * as PredicateStories from './predicate-filtering/predicate-filtering.stories';
+import * as SelectionStories from './selection-filtering/selection-filtering.stories';
+import * as ServerStories from './server-filtering/server-filtering.stories';
+import clientClass from './client-filtering/client-filtering-story-host.component.ts?raw';
+import clientTemplate from './client-filtering/client-filtering-story-host.component.html?raw';
+import predicateClass from './predicate-filtering/predicate-filtering-story-host.component.ts?raw';
+import predicateTemplate from './predicate-filtering/predicate-filtering-story-host.component.html?raw';
+import predicateSchema from './predicate-filtering/predicate-filtering.schema.ts?raw';
+import selectionClass from './selection-filtering/selection-filtering-story-host.component.ts?raw';
+import selectionTemplate from './selection-filtering/selection-filtering-story-host.component.html?raw';
+import serverClass from './server-filtering/server-filtering-story-host.component.ts?raw';
+import serverTemplate from './server-filtering/server-filtering-story-host.component.html?raw';
+import filteringStyles from './filtering-story.css?raw';
+import filteringSchema from './fixtures/schema.ts?raw';
+import filteringHttp from './fixtures/http.ts?raw';
+import sharedStyles from '../styles/story-host.css?raw';
+import '../styles/code-tabs.css';
+
+<Meta title="Table / Filtering" name="Docs" />
+
+# Filtering
+
+Four stories over one question: where the filtering happens. `Client` feeds a filter model into
+the pipeline, `Server` serializes the same model into a request, `Predicates` composes no model at
+all, and `Selection × Filtering` is where filtering meets another feature.
+
+Shared: `fixtures/schema.ts`, `fixtures/http.ts` and `filtering-story.css`, at the bottom of this
+page. `Predicates` brings its own schema, shown in its own tab.
+
+---
+
+## Client
+
+`withFiltering({ predicates: () => [filters().matcher()] })` feeds a standalone `createFilters()`
+object into the pipeline's `filter` stage as one predicate term. The feature takes row predicates,
+not a filter model; the host composes the two. The filters are the consumer's — the feature owns no
+filter state — which is why the same declarations feed a server request unchanged in `Server`.
+
+One filter may target one path, so the `tags` column's include and exclude halves are a single
+compound `filter()` criterion fed by two multi-selects, and the quick filter spans `note` and `id`
+rather than borrowing `customer`, which already carries its own `contains`.
+
+<Canvas of={ClientStories.Client} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      TS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={clientTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={clientClass} language="tsx" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Server
+
+No filtering feature is composed here. `withFiltering({ predicates: () => [], manual: true })`
+exists for symmetry with `withSorting()`, but in server mode it is an identity pass-through that
+still claims the `filter` stage — composing it would occupy a slot to do nothing. The same
+`createFilters()` object the client story turns into a predicate via `matcher()` is serialized into
+`GET /api/invoices` instead, and the rows arrive already narrowed.
+
+The query mapping is hand-written in the host on purpose: no library can know a given backend's
+parameter names, so that code is what a consumer actually writes.
+
+<Canvas of={ServerStories.Server} />
+
+Under failure, every request fails. Unlike the happy path, the canvas keeps whatever rows loaded
+last — they stay on screen behind an error marker instead of the table blanking — and a Retry
+button re-sends the current filter set rather than resetting it. The filter inputs are untouched by
+the failure, so the retried query is the one that failed, not a fresh one.
+
+<Canvas of={ServerStories.ServerRequestFailure} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      TS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={serverTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={serverClass} language="tsx" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Predicates
+
+This table filters with plain handwritten predicates and composes **no filter model at all** —
+`withFiltering({ predicates })` takes a thunk returning `(row) => boolean` terms, and the host
+imports nothing from the filters domain: no `createFilters()`, no `Filters` type, no rules, no
+matchers. That absence is the point; the sibling stories cover what a filter model adds.
+
+The thunk is called once per filter pass, so terms built from ordinary signals re-narrow when those
+signals change. Terms are AND'd, and a control with nothing in it contributes no term.
+
+<Canvas of={PredicateStories.Predicates} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-predicates-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-predicates-source" />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-predicates-source" />
+      predicate-filtering.schema.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={predicateTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={predicateClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={predicateSchema} language="ts" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Selection × Filtering
+
+Two features composed, and the place their edges meet. A selected row that a filter moves out of
+view stays selected — the opposite of MUI X's documented behaviour, which deselects it — and
+clearing the filter brings the selection back unchanged.
+
+One gap is rendered rather than papered over: nothing shipped reports how many selected rows are
+currently hidden, so the canvas says so instead of computing a stand-in count in the story host.
+The notice disappears on its own when that signal lands.
+
+<Canvas of={SelectionStories.SelectionAndFiltering} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-selection-source" defaultChecked />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-selection-source" />
+      TS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={selectionTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionClass} language="tsx" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Shared across the four
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" defaultChecked />
+      fixtures/schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" />
+      fixtures/http.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" />
+      filtering-story.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" />
+      story-host.css
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={filteringSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringHttp} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+  </div>
+</div>
