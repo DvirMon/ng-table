@@ -262,8 +262,14 @@ is 15 features (a 16th argument matches no overload); the runtime accepts any nu
 ## Typechecking
 
 ```bash
-nx run shared-table:typecheck     # ngc -p tsconfig.lib.json --noEmit
+nx run shared-table:typecheck        # ngc -p tsconfig.lib.json  --noEmit
+nx run shared-table:typecheck-spec   # ngc -p tsconfig.spec.json --noEmit
 ```
+
+Two targets, because `tsconfig.lib.json`'s include excludes `*.spec.ts` — the lib target cannot
+see a spec file at all. A `*.types.spec.ts` file holds compile-time assertions only
+(`expectTypeOf`, `@ts-expect-error`); the runner executes those without checking them, so
+`typecheck-spec` is the only thing that enforces one. A green `nx test` proves nothing about it.
 
 Not bare `tsc` — it never opens a `.html`, so a template-only error passes clean and surfaces
 only in Storybook. Highest risk: `src/stories/**/*-story-host.component.html`. `ngc` aborts at

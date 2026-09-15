@@ -9,6 +9,7 @@ import type {
   FiltersPath,
   GroupRule,
   ItemOf,
+  RowOfRule,
 } from './types';
 import { equalsCriterion } from './state';
 import {
@@ -41,8 +42,8 @@ import {
  */
 type RuleKey<K extends string, TAs extends string> = [TAs] extends [never] ? K : TAs;
 
-type RangeCriterion = { min: number | null; max: number | null };
-type DateRangeCriterion = { from: Date | null; to: Date | null };
+export type RangeCriterion = { min: number | null; max: number | null };
+export type DateRangeCriterion = { from: Date | null; to: Date | null };
 
 function isEmptyRange(criterion: RangeCriterion): boolean {
   return criterion.min == null && criterion.max == null;
@@ -270,11 +271,12 @@ export function filter<
  * homogeneity check on `children` makes a mixed-criterion group one. The runtime throw stays as
  * a backstop for a caller that reaches this from untyped JS.
  *
- * The group's own `isEmpty`/`emptyValue` are borrowed from its first child, and so is its
- * criterion type — every later child is checked against `CriterionOf<C[0]>`. The borrow is what
- * makes the check necessary rather than decorative: the group owns one criterion signal, so a
- * child whose predicate expects a different shape would silently receive the first child's and
- * match every row. Do not "improve" the borrow into a merge.
+ * The group's own `isEmpty`/`emptyValue` are borrowed from its first child, and so are its
+ * criterion and row types — every later child is checked against `CriterionOf<C[0]>` and
+ * `RowOfRule<C[0]>`. The borrow is what makes the check necessary rather than decorative: the
+ * group owns one criterion signal, so a child whose predicate expects a different shape would
+ * silently receive the first child's and match every row. Do not "improve" the borrow into a
+ * merge.
  *
  * `C` is inferred from a bare `unknown` tuple and the homogeneity check is applied as an
  * intersection, never as the inference constraint — constraining `C` to a rule type would
@@ -282,7 +284,9 @@ export function filter<
  */
 export function anyOf<TKey extends string, C extends readonly [unknown, ...unknown[]]>(
   key: TKey,
-  children: C & { readonly [I in keyof C]: FilterRule<string, CriterionOf<C[0]>> }
+  children: C & {
+    readonly [I in keyof C]: FilterRule<string, CriterionOf<C[0]>, RowOfRule<C[0]>>;
+  }
 ): GroupRule<TKey, CriterionOf<C[0]>> {
   const records = children as readonly FilterRuleRecord<unknown>[];
   if (records.length === 0) {

@@ -97,19 +97,118 @@ cannot pass until `#111` lands** — the filters spec does not compile against t
 `{ ...child, kind: 'conditional', condition }` overwrites the inner `condition` with the outer one.
 The deleted recorder did exactly the same, so behaviour is unchanged, which is what the spec required.
 
-## `#111` — every call site · PR 2 of 2 · planned
+## `#111` — every call site · PR 2 of 2 · ✅ complete
 
-**Status:** 0 / 9 complete — [`issue-111-call-sites/progress.md`](issue-111-call-sites/progress.md)
+**Status:** 9 / 9 complete — [`issue-111-call-sites/progress.md`](issue-111-call-sites/progress.md)
 
 Five story/fixture sites and three specs, all parallel-safe, plus a green gate that depends on all
 eight. That folder also records four corrections to this issue's own body and to
 `architecture.md`'s file-layout table.
 
+## `#112` — the compiled type seam · ✅ complete
+
+**Status:** 1 / 1 complete. Implemented directly from the issue body — `/to-tasks` was never run
+for it, and the scope is one new file plus one Nx target, which does not decompose into steps.
+
+| Artifact | Action |
+|---|---|
+| `src/filters/create-filters.types.spec.ts` | **created** — 13 cases across 7 suites |
+| `project.json` | `typecheck-spec` target — `ngc -p tsconfig.spec.json --noEmit`, same `nx:run-commands`/`cache`/`inputs` shape as `typecheck` |
+| `src/filters/create-filters.spec.ts` | the `rejects an unrelated row type` case moved out; its block header now points at the new file |
+| `src/filters/rules.ts` | `RangeCriterion`/`DateRangeCriterion` exported (internal only — `filters/index.ts` does not list them) so the seam asserts the canonical shape rather than a copy of it; `anyOf`'s homogeneity intersection gains `RowOfRule<C[0]>` |
+| `src/filters/types.ts` | `FilterRule` gains a phantom `__row`; new `RowOfRule<R>` reads it; `FlattenItem` discards `any` before the array branch |
+| `libs/shared/table/CLAUDE.md` | the Typechecking section names both targets and why there are two |
+
+### Scope taken beyond the issue body, on the user's call
+
+Two library changes in `types.ts`/`rules.ts` that `#112` does not ask for. Both came out of
+`/code-review` and both were decided explicitly rather than absorbed quietly. Neither changes a
+public export — `filters/index.ts` is untouched.
+
+| Change | Why it is here and not in a follow-up |
+|---|---|
+| phantom `__row` + `RowOfRule`, used by `anyOf` | The erasure was on `#111`'s list as owed to `#110`/`#112`. Asserting it without fixing it would have meant writing a test for behaviour the library does not have |
+| `FlattenItem` discards `any` | Found while investigating why the spread case could not be asserted where a consumer writes it. Without it, the criterion is only satisfiable at a synthetic position |
+
+### Three decisions taken during implementation
+
+**Every body is inert, not just the type-only ones.** A shared `typecheckOnly(assertions)` helper
+takes the closure and never calls it. Half the cases declare an empty group, a mismatched row or
+an empty carrier — all of which `createFilters` throws on at construction — so running them was
+never an option, and one uniform idiom beats a per-case split between "safe to run" and "not".
+It also removes the `TestBed` dependency the runtime spec's `build<S>` helper needs.
+
+**Cost, recorded rather than glossed:** `architecture.md`'s prior art
+(`create-filters.spec.ts`'s `describe('types')` block) has bodies that *do* execute — only its
+`expectTypeOf` calls are inert. Here nothing executes, so 13 `it()`s report green while asserting
+nothing at runtime. That satisfies the issue's wording ("runs as a passing suite whose bodies are
+inert") but "inert" means something stronger than it did in the doc that word came from.
+
+**The row-type rejection was rewritten, not moved.** The issue says *"moved here rather than
+being rewritten"*, and only the `@ts-expect-error` line survived verbatim. Its subject was rebuilt
+inline because the original read `buildTypedFilters()`, which routes through the runtime spec's
+`TestBed`-based `build<S>` helper — a dependency this file exists to not have. The fact asserted
+is unchanged.
+
+**`Flatten` recursed forever on `any`, and it was burying real errors.** Written inline as
+`...applyWhen(…)`, the spread reported **`TS2589` (excessively deep)** at the whole
+`createFilters(…)` call rather than `TS2488` at the spread. The first read blamed the spread and
+moved the assertion to a `const` inside the schema body. That was wrong, and a compiled probe
+said so: **`StateOf<[any]>` alone reproduces `TS2589`** with no spread anywhere.
+
+Cause: a failed spread degrades its element type to `any`; `any` satisfies `readonly unknown[]`,
+so `FlattenItem<any>` takes the array branch to `Flatten<any>`, which is `FlattenItem<any>` again.
+The depth error is the fold eating itself, and it *replaces* the real diagnostic — so any future
+mistake that produces an `any` in a schema array would have been reported as an unreadable
+instantiation-depth error at the call site instead of at the mistake.
+
+Fixed in `types.ts`: `FlattenItem` discards `any` first (`IsAny<T> = 0 extends 1 & T`), yielding
+`never` — no key, which is the right degraded reading for an element that is already an error.
+The spread case now sits inline where a consumer would write it, and reports
+`TS2488: Type 'ConditionalRule<[FilterRule<"subCategory", string | null, Invoice>]>' must have a
+'[Symbol.iterator]()' method` **on the spread expression itself**. The issue's criterion is met as
+written, not at a synthetic position.
+
+### `anyOf`'s row-type erasure — closed here, on the user's call
+
+`issue-111-call-sites/progress.md` left this open and assigned it to `#110`/`#112`: the
+homogeneity intersection's right half was `FilterRule<string, CriterionOf<C[0]>, unknown>`, so a
+child built from an unrelated row's handle passed silently. Fixed rather than recorded as a hole.
+
+The proposed fix — *"`RowOfRule<C[0]>` in the intersection alongside `CriterionOf<C[0]>`"* — did
+not exist as written: **`TRow` was unrecoverable from a `FilterRule`.** `FilterRuleRecord<TRow>`
+mentions it only in the optional `condition`, whose `valueOf` is generic in its own handle, so
+nothing distinguished two rules built from different rows. `CriterionOf` works because
+`__criterion` is a phantom member; `RowOfRule` needed the same, so `FilterRule` gained a phantom
+`__row`. That is the whole reason the erasure existed.
+
+Second open item from that list — *"blame lands on the innocent siblings"* (`C[0]` is the
+reference, so an odd child in first position yields N−1 errors) — is **unchanged and still open**.
+It applies to the row check exactly as it did to the criterion check.
+
+### Verified
+
+- `ngc -p libs/shared/table/tsconfig.spec.json --noEmit` — clean, source-clean on the first run,
+  so the template phase was reached.
+- Both failure modes probed, since the file has two and they fail differently. Breaking an
+  `expectTypeOf` (`toEqualTypeOf<string>` → `<number>` on the `anyOf` group criterion) gives
+  `TS2344`. Making a `@ts-expect-error` case compile (the `42` carrier → `rowOf<Invoice>()`)
+  gives `TS2578: Unused '@ts-expect-error' directive`. Both reverted.
+- The `anyOf` row check probed the same way: with the directive removed, the group of an `Invoice`
+  child and a `Ticket` child gives `TS2322 … Type 'Ticket' is missing the following properties
+  from type 'Invoice'` at the offending child.
+- `nx run shared-table:typecheck` (lib) — no errors; the two `NG8107` warnings in
+  `grouping-static-story-host.component.html` are pre-existing.
+- `npx eslint` on the changed files — clean.
+
+**Method note, worth carrying forward:** `ngc` colorizes its output, so the error line contains
+`…[91merror[0m[90m TS2322…` and **`grep "error TS"` never matches it**. Three probe runs here
+read as clean when they were not. Filter on `error` alone, or read the output unfiltered.
+
 ## Not planned here
 
 | Issue | Scope | Run `/to-tasks` when |
 |---|---|---|
-| [#112](https://github.com/DvirMon/acme/issues/112) | `create-filters.types.spec.ts`, the compiled type seam | `#111` is done |
 | [#113](https://github.com/DvirMon/acme/issues/113) | docs, ADRs, `CLAUDE.md`, the design record | any time — merge after `#111` |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.

@@ -159,15 +159,21 @@ export interface FilterRuleRecord<TRow, TCell = unknown, TCriterion = unknown> {
 }
 
 /**
- * A rule's static inference channel — carries its key and criterion type statically, on top of
- * the runtime `FilterRuleRecord` shape it extends. `__key`/`__criterion` are phantom (optional,
- * never assigned at runtime): `Flatten`/`StateOf` below read them off a schema's returned array.
+ * A rule's static inference channel — carries its key, criterion and row type statically, on top
+ * of the runtime `FilterRuleRecord` shape it extends. All three `__`-members are phantom
+ * (optional, never assigned at runtime): `Flatten`/`StateOf` below read them off a schema's
+ * returned array.
+ *
+ * `__row` exists because `TRow` is otherwise unrecoverable — `FilterRuleRecord<TRow>` mentions it
+ * only in the optional `condition`, whose `valueOf` is generic in its own handle, so nothing
+ * distinguishes two rules built from different rows.
  * @internal
  */
 export interface FilterRule<TKey extends string, TCriterion, TRow = unknown>
   extends FilterRuleRecord<TRow> {
   readonly __key?: TKey;
   readonly __criterion?: TCriterion;
+  readonly __row?: TRow;
 }
 
 /**
@@ -203,6 +209,9 @@ export type AnyRule = FilterRule<string, unknown> | GroupRule<string, unknown>;
 /** The criterion type carried by a rule's phantom `__criterion` member. */
 export type CriterionOf<R> = R extends FilterRule<string, infer C> ? C : never;
 
+/** The row type carried by a rule's phantom `__row` member. */
+export type RowOfRule<R> = R extends FilterRule<string, unknown, infer TRow> ? TRow : never;
+
 /**
  * Element type of an array-valued cell, `unknown` for anything else. Lets `hasAny`/`hasNone`
  * default their criterion to the cell's own element type instead of discarding it — without it a
@@ -211,16 +220,25 @@ export type CriterionOf<R> = R extends FilterRule<string, infer C> ? C : never;
  */
 export type ItemOf<TCell> = TCell extends readonly (infer E)[] ? E : unknown;
 
+/** `true` for `any` alone — the only type assignable to both `0` and `1 & T`. @internal */
+type IsAny<T> = 0 extends 1 & T ? true : false;
+
 /**
  * Resolves a schema's returned array down to its leaf rules, recursing through nested arrays and
  * through a `ConditionalRule`'s `children`. Terminates on any item that is neither.
+ *
+ * `any` is discarded first, and must stay first. `any` satisfies `readonly unknown[]`, and
+ * `Flatten<any>` is `FlattenItem<any>` again — an infinite recursion the compiler reports as
+ * `TS2589` at the whole `createFilters()` call, burying the real error that produced the `any`.
  * @internal
  */
-type FlattenItem<Item> = Item extends ConditionalRule<infer C>
-  ? Flatten<C>
-  : Item extends readonly unknown[]
-    ? Flatten<Item>
-    : Item;
+type FlattenItem<Item> = IsAny<Item> extends true
+  ? never
+  : Item extends ConditionalRule<infer C>
+    ? Flatten<C>
+    : Item extends readonly unknown[]
+      ? Flatten<Item>
+      : Item;
 
 /** @internal */
 export type Flatten<T extends readonly unknown[]> = FlattenItem<T[number]>;

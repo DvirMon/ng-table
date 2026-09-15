@@ -17,6 +17,14 @@
         "command": "ngc -p libs/shared/table/tsconfig.lib.json --noEmit"
       }
     },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "command": "ngc -p libs/shared/table/tsconfig.spec.json --noEmit"
+      }
+    },
     "build": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],

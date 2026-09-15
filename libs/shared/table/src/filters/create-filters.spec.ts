@@ -600,8 +600,9 @@ describe('createFilters — matcher()', () => {
     });
   });
 
-  // Type-level assertions. Vitest does not typecheck `expectTypeOf`/`@ts-expect-error` at
-  // runtime — `tsc -p libs/shared/table/tsconfig.spec.json --noEmit` is what enforces these.
+  // Type-level assertions that also assert runtime behaviour. Vitest does not typecheck
+  // `expectTypeOf` at runtime — `nx run shared-table:typecheck-spec` is what enforces those.
+  // Inference facts with no runtime half live in `create-filters.types.spec.ts` instead.
   describe('types', () => {
     /** Separately declared, same shape — the predicate correlates structurally, not nominally. */
     type InvoiceShape = { [K in keyof Invoice]: Invoice[K] };
@@ -622,12 +623,6 @@ describe('createFilters — matcher()', () => {
       expectTypeOf(matches).toEqualTypeOf<(row: Invoice) => boolean>();
       expect(matches(identical)).toBe(true);
       expect(matches(wider)).toBe(true);
-    });
-
-    it('rejects an unrelated row type', () => {
-      const matches = buildTypedFilters()().matcher();
-      // @ts-expect-error — `matcher()` is `(row: Invoice) => boolean`; TRow is no longer phantom.
-      matches({ label: 'nope' });
     });
 
     it('keeps a concretely-keyed criterion map typed and reachable by property access', () => {
