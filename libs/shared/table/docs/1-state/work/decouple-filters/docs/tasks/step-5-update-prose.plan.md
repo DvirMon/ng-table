@@ -86,4 +86,4 @@ Site-specific:
 - [ ] No `.ts` behavior changed by this step
 
 ---
-← [Step 4: Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md)
+← [Step 4: Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md) | [Step 6: Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) →
