@@ -65,9 +65,16 @@
             <td class="story-host__cell">
               <input
                 type="checkbox"
-                [checked]="isGroupFullySelected(row)"
-                [indeterminate]="isGroupPartlySelected(row)"
-                [attr.aria-label]="groupCheckboxLabel(row)"
+                [checked]="groupSelectionStateById()[row.id] === 'all'"
+                [indeterminate]="groupSelectionStateById()[row.id] === 'some'"
+                [attr.aria-label]="
+                  'Select the ' +
+                  (row | groupRowCount: table) +
+                  ' rows in ' +
+                  ((row.groupKey?.value | isBlankGroup)
+                    ? 'the unlabelled group'
+                    : row.groupKey?.value)
+                "
                 (change)="onToggleGroupSelection(row)"
               />
             </td>
@@ -78,16 +85,16 @@
                 [class.grouping-story__aggregate]="!isFirst"
               >
                 @if (isFirst) {
-                  @if (isBlankGroup(row)) {
+                  @if (row.groupKey?.value | isBlankGroup) {
                     <span class="grouping-story__group-label grouping-story__group-label--blank">
                       no value
                     </span>
                   } @else {
-                    <span class="grouping-story__group-label">{{ groupLabel(row) }}</span>
+                    <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
                   }
-                  <span class="grouping-story__count">{{ groupRowCount(row) }}</span>
+                  <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
                 } @else {
-                  {{ groupAggregate(row, column.id) }}
+                  {{ row.aggregates?.[column.id] | dealAmount }}
                 }
               </td>
             }
@@ -96,8 +103,13 @@
               <td class="story-host__cell">
                 <input
                   type="checkbox"
-                  [checked]="isRowSelected(row.id)"
-                  [attr.aria-label]="rowCheckboxLabel(rowData)"
+                  [checked]="table.selectedRows().has(row.id)"
+                  [attr.aria-label]="
+                    'Select the ' +
+                    (rowData.amount | dealAmount) +
+                    ' deal for ' +
+                    rowData.rep
+                  "
                   (change)="onToggleRowSelection(row.id)"
                 />
               </td>
@@ -107,7 +119,17 @@
                   [class.grouping-story__cell--label]="isFirst"
                   [class.grouping-story__cell--numeric]="column.id === 'amount'"
                 >
-                  {{ cellValue(column, rowData) }}
+                  @switch (column.id) {
+                    @case ('amount') {
+                      {{ column.accessor(rowData) | dealAmount }}
+                    }
+                    @case ('closedAt') {
+                      {{ column.accessor(rowData) | dealDate }}
+                    }
+                    @default {
+                      {{ column.accessor(rowData) }}
+                    }
+                  }
                 </td>
               }
             }

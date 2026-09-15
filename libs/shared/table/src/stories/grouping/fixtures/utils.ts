@@ -2,8 +2,9 @@ import type { FilterNode } from '../../../filters/types';
 import type { createDealFilters } from './schema';
 
 /**
- * Display helpers shared by all three grouping story hosts — a group header, a level pill and a
- * data cell all render the same values, so they format them the same way.
+ * What the grouping pipes are built on, plus the two filter accessors a host needs in TypeScript.
+ * Templates format through `grouping-story.pipes.ts`, never through these directly — so a cell's
+ * formatting is memoised per value.
  */
 
 /** A group key with nothing to render. `null`, `undefined` and `''` cluster as three separate
@@ -14,9 +15,8 @@ export function isBlankGroupValue(value: unknown): boolean {
 }
 
 /**
- * Value to text, for the places that need a string in TypeScript rather than in a template — the
- * `groupOrder` comparator and its external-rank lookup. Templates format through the pipes in
- * `grouping-story.pipes.ts` instead, so a cell's formatting is memoised per value.
+ * Value to text, for the one place that needs a string in TypeScript rather than in a template:
+ * `grouping-regressions/`'s `groupOrder` comparator and its external-rank lookup.
  */
 export function formatValue(value: unknown): string {
   if (value instanceof Date) {
@@ -25,7 +25,7 @@ export function formatValue(value: unknown): string {
   return String(value);
 }
 
-/** `amount`, in the one place a group header's total and a row's own figure agree. */
+/** `amount`. Backs the `dealAmount` pipe, which is how every template reaches it. */
 export function formatAmount(value: unknown): string {
   if (typeof value !== 'number') {
     return '';
