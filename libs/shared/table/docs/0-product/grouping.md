@@ -84,7 +84,7 @@ source is grouping API usage and nothing else:
 
 | Story | Composes | What it demonstrates |
 |---|---|---|
-| [`grouping-static/`](../../src/stories/grouping/grouping-static/) | `withGrouping()` + `withFiltering()`, deliberately **no** `withExpansion()` | Headers carrying value, count and `amount` total at every depth, all post-filter; a tab strip that toggles a column as a level and pills that reorder and remove them; `groupedColumnMode` rendering all three peer dispositions; `stickyHeaders`; blank group keys clustering unlabelled, while an object-valued field groups correctly through its column's `accessor` |
+| [`grouping-static/`](../../src/stories/grouping/grouping-static/) | `withGrouping()` alone — no second feature, deliberately **no** `withExpansion()` | Headers carrying value, count and `amount` total at every depth; a tab strip that toggles a column as a level and pills that reorder and remove them; `groupedColumnMode` rendering all three peer dispositions; `stickyHeaders`; blank group keys clustering unlabelled, while an object-valued field groups correctly through its column's `accessor` |
 | [`grouping-async-rule/`](../../src/stories/grouping/grouping-async-rule/) | `withGrouping()` with an `applyGroupingAsync()`-shaped rule | A grouping level decided by the server over a real intercepted request: the pending window holding the last explicit grouping, the resolved set replacing it outright, and `onError` resolving to `[]` — grouped by nothing, distinct from abstaining |
 | [`grouping-regressions/`](../../src/stories/grouping/grouping-regressions/) | `withGrouping()` with a `groupOrder` comparator | Deliberate misuse, not example code: `groupOrder` across five modes including a throwing comparator, a level naming no column, and an `aggregateFn` handed a value it refuses |
 | [`grouping-collapsible/`]([`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/)) | `withGrouping()` + `withExpansion()` + `withSorting()` | A real `<button>` chevron with `aria-expanded`, the whole header row as hit area, subtree collapse, and three attacks on the collapse state — Refetch with freshly-constructed rows, sort toggles, and a Regroup that changes every id at once. A deal carrying `children` renders a second, separately-keyed chevron from the `'tree'` stage |
@@ -172,9 +172,10 @@ grouping by Owner or Closed — near-unique columns — renders rather than hang
 
 **Covered by:** all three stories — the count is `rowsOf(row).length`, which is derived from the
 pipeline's rows and so is post-filter and collapse-independent by construction. Type in "rep
-contains" in [`grouping-static/`](../../src/stories/grouping/grouping-static/) or
-[`grouping-selection/`](../../src/stories/grouping/grouping-selection/) and every count follows the
-visible rows; a nested count is the whole subtree's leaves, not the child-group count.
+contains" in [`grouping-selection/`](../../src/stories/grouping/grouping-selection/), the one story
+that composes `withFiltering()`, and every count follows the visible rows;
+[`grouping-static/`](../../src/stories/grouping/grouping-static/) shows the nested count itself —
+the whole subtree's leaves, not the child-group count.
 [`grouping-static/`](../../src/stories/grouping/grouping-static/) carries the hide-the-count switch
 every peer that renders a count also ships (P6), default on. The "cannot be computed" failure is
 unreachable rather than undemonstrated — `rowsOf()` returns an array or nothing at all.
@@ -944,16 +945,19 @@ reorders the groups too).
 - A group with no surviving rows disappears rather than rendering empty.
 - Clearing the filter restores the groups, and my expand/collapse state with them (§2.5).
 
-**Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) and
-[`grouping-selection/`](../../src/stories/grouping/grouping-selection/) for the first two criteria:
-"rep contains" narrows the rows, every count and every `amount` total follows the surviving rows,
-and a group whose rows all filter out **disappears entirely** rather than rendering hollow — an
-empty group is unrepresentable because `filter` precedes `group` in `PIPELINE_ORDER`.
+**Covered by:** [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) for the
+first two criteria: "rep contains" narrows the rows, every count and every `amount` total follows
+the surviving rows, and a group whose rows all filter out **disappears entirely** rather than
+rendering hollow — an empty group is unrepresentable because `filter` precedes `group` in
+`PIPELINE_ORDER`. It is the only grouping story that composes `withFiltering()`:
+[`grouping-static/`](../../src/stories/grouping/grouping-static/) had a rep filter until
+2026-09-15 and lost it, because it is the host a consumer copies and a second feature's wiring
+does not belong in it.
 
 **Why it is 🟡:** the third criterion — clearing the filter restores the groups **and the
 expand/collapse state with them** — is not demonstrated, because no story composes `withExpansion()`
-with `withFiltering()`. [`grouping-static/`](../../src/stories/grouping/grouping-static/) filters
-and does not expand (on purpose: a chevron with nothing to expand is a control that does nothing);
+with `withFiltering()`. [`grouping-selection/`](../../src/stories/grouping/grouping-selection/)
+filters and does not expand;
 [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) expands and does not
 filter. Same shape as S-G2's gap, and the same fix: one more composition, no design change.
 

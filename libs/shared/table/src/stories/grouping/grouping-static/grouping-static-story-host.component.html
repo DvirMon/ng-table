@@ -1,16 +1,11 @@
 <div class="story-host">
   <p class="story-host__hint">
-    A grouped table that is always fully shown — no chevrons, because nothing here expands. Every
-    group header carries its value, its row count and its <code>amount</code> total, at every
-    depth. Filter by rep and watch counts and totals follow the visible rows; a group whose rows
-    all filter out disappears entirely.
+    A grouped table that is always fully shown — no chevrons, because nothing here expands.
+    <code>withGrouping()</code> and nothing else, so this host is the one to copy. Every group
+    header carries its value, its row count and its <code>amount</code> total, at every depth.
   </p>
 
   <div class="story-host__toolbar">
-    <label>
-      rep contains:
-      <input type="text" [value]="repFilter()" (input)="onFilterRep($event)" />
-    </label>
     <button type="button" (click)="resetLevels()">Reset levels</button>
   </div>
 

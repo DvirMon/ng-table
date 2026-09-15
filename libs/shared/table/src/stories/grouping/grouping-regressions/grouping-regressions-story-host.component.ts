@@ -10,7 +10,7 @@ import {
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import {
   EXTERNAL_GROUP_ORDER,
-  groupingRegressionsConfig,
+  groupingConfig,
   MISSING_GROUPING_LEVEL,
   STATIC_GROUPING_LEVELS,
 } from '../fixtures/schema';
@@ -80,7 +80,7 @@ export class GroupingRegressionsStoryHostComponent {
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
-    groupingRegressionsConfig,
+    groupingConfig,
     withGrouping({
       initialGrouping: STATIC_GROUPING_LEVELS,
       groupOrder: this.compareGroups,

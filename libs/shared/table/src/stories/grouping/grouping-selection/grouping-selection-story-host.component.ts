@@ -12,7 +12,7 @@ import {
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import {
   createDealFilters,
-  groupedSelectionConfig,
+  groupingConfig,
   SELECTION_GROUPING_LEVELS,
 } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -66,7 +66,7 @@ export class GroupingSelectionStoryHostComponent {
   protected readonly filters = createDealFilters();
   protected readonly table = createTable(
     this.data,
-    groupedSelectionConfig,
+    groupingConfig,
     withGrouping({ initialGrouping: SELECTION_GROUPING_LEVELS }),
     withSelection(),
     withFiltering({ predicates: () => [this.filters().matcher()] })

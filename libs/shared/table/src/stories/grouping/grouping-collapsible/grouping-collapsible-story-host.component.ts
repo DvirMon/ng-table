@@ -11,8 +11,8 @@ import {
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { injectGroupedRowsApi } from '../fixtures/http';
 import {
-  collapsibleGroupingConfig,
   COLLAPSIBLE_GROUPING_LEVELS,
+  groupingConfig,
   RENESTED_GROUPING_LEVELS,
 } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -63,7 +63,7 @@ export class GroupingCollapsibleStoryHostComponent {
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
-    collapsibleGroupingConfig,
+    groupingConfig,
     withGrouping({ initialGrouping: COLLAPSIBLE_GROUPING_LEVELS }),
     withExpansion(),
     withSorting()

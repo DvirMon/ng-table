@@ -10,7 +10,7 @@ import type { DealRow } from './types';
  *
  * Rejects a negative amount rather than summing it. `engine/grouping.ts` calls this **unwrapped**,
  * so one bad record takes the whole table down instead of blanking that group's summary — the
- * runtime-class failure ADR-0014's retrofit has not reached yet (#79). `grouping-static/`'s
+ * runtime-class failure ADR-0014's retrofit has not reached yet (#79). `grouping-regressions/`'s
  * "Break one group's summary" control injects exactly such a record on demand.
  */
 function sumAmount(rows: DealRow[]): number {
@@ -24,10 +24,10 @@ function sumAmount(rows: DealRow[]): number {
   }, 0);
 }
 
-/** Shared by all three configs — the grouping stories differ in which features they compose, not
- * in what the table holds. `owner` is the one column whose row field is an object, so it carries
- * the `accessor` that turns it into the value a cell renders and a group keys on; every other
- * column falls back to the default `row[id]`. */
+/** One column list for every grouping story — they differ in which features they compose, not in
+ * what the table holds. `owner` is the one column whose row field is an object, so it carries the
+ * `accessor` that turns it into the value a cell renders and a group keys on; every other column
+ * falls back to the default `row[id]`. */
 const dealColumns: ColumnDefInput<DealRow>[] = [
   { id: 'region', label: 'Region' },
   { id: 'category', label: 'Category' },
@@ -41,32 +41,8 @@ const dealColumns: ColumnDefInput<DealRow>[] = [
  * `'move-to-front'` re-ranks against. */
 export const DEAL_COLUMN_IDS: string[] = dealColumns.map((column) => column.id);
 
-/**
- * One config per story, over one column list. A name per story rather than one shared value so a
- * story can diverge later without turning this file into a write-edge between the story folders
- * that import it.
- */
-export const staticGroupingConfig: TableConfig<DealRow> = {
-  trackBy: 'id',
-  columns: dealColumns,
-};
-
-export const asyncRuleGroupingConfig: TableConfig<DealRow> = {
-  trackBy: 'id',
-  columns: dealColumns,
-};
-
-export const groupingRegressionsConfig: TableConfig<DealRow> = {
-  trackBy: 'id',
-  columns: dealColumns,
-};
-
-export const collapsibleGroupingConfig: TableConfig<DealRow> = {
-  trackBy: 'id',
-  columns: dealColumns,
-};
-
-export const groupedSelectionConfig: TableConfig<DealRow> = {
+/** The one config every grouping story passes to `createTable()`. */
+export const groupingConfig: TableConfig<DealRow> = {
   trackBy: 'id',
   columns: dealColumns,
 };
@@ -95,9 +71,8 @@ export const MISSING_GROUPING_LEVEL = 'territory';
 export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'North East'];
 
 /**
- * One text criterion over `rep`. Deliberately minimal: `filter` precedes `group` in
- * `PIPELINE_ORDER`, so what a filter proves here is that counts and summaries are of *visible*
- * rows and that an emptied group disappears — not anything about filtering itself.
+ * One text criterion over `rep`, used only by `grouping-selection/` — enough to move a selected
+ * row out of view, and to show counts and summaries following the visible rows.
  *
  * Must be called from an injection context (a component field initializer).
  *

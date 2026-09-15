@@ -113,7 +113,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `filtering/filtering-story.css` | Filtering-specific styling — filter row, active markers, chip summary, notices |
 | `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
 | `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
-| `grouping/fixtures/schema.ts` | Three table configs over one column list, the level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
+| `grouping/fixtures/schema.ts` | One table config over one column list, the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
 | `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
 | `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
 | `grouping/fixtures/http.ts` | `injectGroupedRowsApi()` — `fetchRows` plus `fetchGroupingPreference`, the async grouping rule's source |
@@ -379,9 +379,13 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   at all, which is what makes the predicate list the contract rather than a convenience. All four
   put any `createFilters()` call in the host, not `fixtures/`.
 - **`grouping/` — five hosts, split by what the table *is*, not by feature flags.**
-  `grouping-static/` is the grouped table as its own product: `withGrouping()` + `withFiltering()`
-  and deliberately **no** `withExpansion()`, because a chevron with nothing to expand is a control
-  that does nothing. `grouping-collapsible/` is the navigable outline — `withExpansion()` +
+  `grouping-static/` is the grouped table as its own product: `withGrouping()` and **no second
+  feature at all**, deliberately including no `withExpansion()`, because a chevron with nothing to
+  expand is a control that does nothing. It had a rep filter until 2026-09-15 — the lesson was
+  real (aggregates are post-filter) but it belonged to a story that owns filtering, not to the one
+  host advertised as copyable. `fixtures/schema.ts` lost four config exports the same day: five
+  per-story names held one identical `TableConfig`, and that file is a published code tab, so five
+  names read as five setups. Per-story `*_GROUPING_LEVELS` stay — those do differ. `grouping-collapsible/` is the navigable outline — `withExpansion()` +
   `withSorting()`, a real `<button>` chevron carrying `aria-expanded`, and three separate attacks
   on the collapse state. `grouping-selection/` renders all three peer cascade defaults off one
   `rowsOf()` call.

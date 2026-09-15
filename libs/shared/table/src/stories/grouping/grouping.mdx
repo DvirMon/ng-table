@@ -26,22 +26,26 @@ import '../styles/code-tabs.css';
 # Grouping
 
 Five stories, in the order worth reading them. **`Static` is the one to copy** — its host composes
-grouping API usage and nothing else. `Regressions` is deliberate misuse and is marked so. The
-other three each compose grouping with one more feature.
+`withGrouping()` alone, so nothing in its source is another feature's setup. `Regressions` is
+deliberate misuse and is marked so. The other three each compose grouping with one more feature.
 
-Shared across all five: `fixtures/schema.ts` (one config per story over one column list),
-`fixtures/http.ts` (the intercepted round trips), `grouping-story.pipes.ts` (one pure pipe per
-formatting concern, so no host formats in a method) and `grouping-story.css`. Those are at the
-bottom of this page, once.
+Shared across all five: `fixtures/schema.ts` (one column list, one config, and the grouping levels
+that do differ per story), `fixtures/http.ts` (the intercepted round trips),
+`grouping-story.pipes.ts` (one pure pipe per formatting concern, so no host formats in a method)
+and `grouping-story.css`. Those are at the bottom of this page, once.
 
 ---
 
 ## Static — the grouped table as its own product
 
-`withGrouping()` + `withFiltering()`, and deliberately **no** `withExpansion()`: a chevron with
-nothing to expand is a control that does nothing. Group headers carry value, count and `amount`
-total at every depth, all post-filter — type in "rep contains" and counts, totals and whole groups
-follow the surviving rows.
+`withGrouping()` and nothing else. Every other story on this page composes grouping with one more
+feature; this one composes none, so its source is copyable as-is — including deliberately **no**
+`withExpansion()`, because a chevron with nothing to expand is a control that does nothing. Group
+headers carry value, count and `amount` total at every depth.
+
+Aggregates are post-filter by construction (`filter` precedes `group` in the pipeline), but the
+control that proves it lives in `Group selection` below, which composes `withFiltering()` for its
+own reasons — not here.
 
 The tab strip toggles a column as a level; the pills below reorder and remove them. One control per
 column, one boolean state, so adding a duplicate level is unreachable from the UI rather than a

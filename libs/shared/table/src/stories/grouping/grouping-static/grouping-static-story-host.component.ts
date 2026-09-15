@@ -7,24 +7,18 @@ import {
   reorderGroupLevels,
   setGroupLevels,
   toggleColumnVisibility,
-  withFiltering,
   withGrouping,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import {
-  createDealFilters,
-  DEAL_COLUMN_IDS,
-  staticGroupingConfig,
-  STATIC_GROUPING_LEVELS,
-} from '../fixtures/schema';
+import { DEAL_COLUMN_IDS, groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import type { GroupedColumnMode } from './grouping-static.types';
 
 /**
- * A grouped table with no collapse control — `withGrouping()` composed with `withFiltering()`,
- * levels editable from the UI. The async rule and the regression demos live in sibling stories so
- * this one reads as copyable usage; scope in `docs/0-product/grouping.md`.
+ * A grouped table with no collapse control — `withGrouping()` alone, levels editable from the UI.
+ * Every sibling story composes grouping with one more feature; this one composes nothing else so
+ * its source is copyable as-is. Scope in `docs/0-product/grouping.md`.
  */
 @Component({
   selector: 'ngp-grouping-static-story-host',
@@ -38,15 +32,11 @@ export class GroupingStaticStoryHostComponent {
   readonly stickyHeaders = input(false);
 
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
-  protected readonly filters = createDealFilters();
   protected readonly table = createTable(
     this.data,
-    staticGroupingConfig,
-    withGrouping({ initialGrouping: STATIC_GROUPING_LEVELS }),
-    withFiltering({ predicates: () => [this.filters().matcher()] })
+    groupingConfig,
+    withGrouping({ initialGrouping: STATIC_GROUPING_LEVELS })
   );
-
-  protected readonly repFilter = computed(() => this.filters.rep().value());
 
   /** `columns()` is the folded list, not a render order — it carries `visible`/`order` and leaves
    * the reading to whoever renders it. */
@@ -73,14 +63,6 @@ export class GroupingStaticStoryHostComponent {
 
   constructor() {
     effect(() => this.syncGroupedColumnMode());
-  }
-
-  protected onFilterRep(event: Event): void {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) {
-      return;
-    }
-    this.filters.rep().value.set(target.value);
   }
 
   protected groupByColumn(columnId: string): void {

@@ -12,7 +12,7 @@ import {
   type GroupedRowsRequestOptions,
   type GroupingPreference,
 } from '../fixtures/http';
-import { asyncRuleGroupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
+import { groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 
@@ -63,7 +63,7 @@ export class GroupingAsyncRuleStoryHostComponent {
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
-    asyncRuleGroupingConfig,
+    groupingConfig,
     withGrouping({
       initialGrouping: STATIC_GROUPING_LEVELS,
       rules: [this.repGroupingRule],
