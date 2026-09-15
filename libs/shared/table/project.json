@@ -65,12 +65,6 @@
         "command": "storybook build -o ../../../dist/storybook/shared-table",
         "cwd": "libs/shared/table"
       }
-    },
-    "test-storybook": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "test-storybook -c libs/shared/table/.storybook --url=http://localhost:4403"
-      }
     }
   }
 }
