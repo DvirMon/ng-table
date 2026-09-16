@@ -381,3 +381,22 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   design against it.
 - **Header click on the grouped column.** D5 makes it a no-op. Routing it to `groupOrder` instead
   is a directive-level convenience — UI layer, not store.
+- **Group admission (`groupWhen`) — shape settled 2026-09-15, not yet built.** Whether a built
+  cluster earns a header at all: missing values and small clusters stay flat instead of grouping.
+  One predicate, two scopes — `config.groupWhen` table-wide, `applyGrouping(path.x, { groupWhen })`
+  per column, AND-combined. Dissolved clusters stay ordering participants (`GroupSummary.admitted`)
+  so the comparator places the flat region; default is a stable partition with the flat rows last.
+  Closes the mechanism half of `0-product/grouping.md`'s OQ-5 and OQ-6. Carries two amendments:
+  **D4's `groupOrder` moves from the config to `applyGroupOrder(path.x, cmp)`** (siblings always
+  share a `columnId`, so the slot was already per-level), and `initialGrouping` is renamed
+  `initial` under a `withGrouping(config, withComputed(...))` shape where `config.schema` holds the
+  rules fn. Q1 resolved 2026-09-16 (below); Q2 and Q3 remain open, neither blocking:
+  [design-group-admission.md](design-group-admission.md).
+- **A dissolved cluster exits the grouping tree entirely — decided 2026-09-16 (Q1).** Rows whose
+  cluster was rejected at level N do not re-enter at level N+1; they render flat at depth 0.
+  "Stays flat" is the promise as stated, and re-entry would make a row's depth depend on which
+  level rejected it. Note the question is only observable where `groupWhen` is non-monotone in
+  size — a value predicate (`region != null`) or a per-column threshold looser at a deeper level —
+  since a size threshold that rejects a cluster necessarily rejects every sub-cluster of it. A
+  consumer wanting the other behaviour admits the cluster and styles its header, the same escape
+  hatch Q2 relies on.
