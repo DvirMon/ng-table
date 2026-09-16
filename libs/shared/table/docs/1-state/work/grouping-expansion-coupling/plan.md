@@ -145,6 +145,42 @@ construction (D17) — unaffected, and its spec is the regression guard.
 
 ---
 
+---
+
+## Issue slicing (user-approved)
+
+This plan is documentation, not the issue set. Publish via `/to-issues` as one epic + three
+subs, with native sub-issue and blocked-by edges plus `issue-graph.md` in the workspace.
+
+**Epic — Decouple `withGrouping()` from `withExpansion()`** (`kind:epic`, `area:grouping`,
+`area:expansion`, `area:engine`). Workspace:
+`libs/shared/table/docs/1-state/work/grouping-expansion-coupling/`. `state.json` created here,
+`specPath` = `plan.md`.
+
+| # | Slice | Blocked by | Readiness |
+|---|---|---|---|
+| S1 | `expandAll()` takes explicit ids; `withGrouping()` publishes `groupIds` (Part A) | none | `needs:tasks` |
+| S2 | `RenderRow.parentId` + engine-owned prune stage; grouping still prunes (B0-B2) | none | `needs:spec` — ADR is its first task |
+| S3 | Grouping stops pruning; delete `readExpandedRows` (B3) | S2 | `needs:tasks` |
+
+- S1 is in the epic, not standalone: it is the symptom that surfaced the coupling. It survives
+  S2/S3 unchanged — **B does not subsume A.** `parentId` fixes the read side (who gets hidden);
+  `expandAll`'s gap is the write side (discovery walks `rows()`, where headers never appear).
+  Discovering from `renderRows()` post-B does not work either: a collapsed group's descendants
+  are absent from it, so nested headers stay invisible and the walk would need repeated passes.
+  `groupIds()` derives from the cluster tree and is collapse-independent.
+- S2/S3 stay separate — expand-then-contract. Pruning twice is idempotent, so S2 lands green
+  while grouping still prunes; S3 deletes the coupling only once the replacement carries the
+  behavior. S3's acceptance is that S1's story is unchanged and still passes.
+- The ADR is S2's first step, not its own issue — no issue whose sole deliverable is a document;
+  decision and implementation review together. Hence S2's `needs:spec`.
+
+**Close #128** (https://github.com/DvirMon/acme/issues/128) as superseded by S1 — created by
+hand, outside the pipeline, Part A only.
+
+Both docs stay in the repo: `prior-art.md` (verified discovery output) and `plan.md` (the record
+every slice points at).
+
 ## Verification
 
 - `nx run shared-table:typecheck` clean — template-aware; the story host renders `.html`. Re-run
