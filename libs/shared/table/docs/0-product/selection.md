@@ -224,9 +224,13 @@ job is exactly this question and are still fixing it years later** (AG Grid's
 `selectAll: 'currentPage'`/`'filtered'` re-broken across issues #9327, #10688, #12072, #12559 over
 2024–2025; MRT's own select-all-vs-pagination bug still open as of 2025-06;
 `research-selection-community-pain.md` Theme 1). `withSelection()`'s refusal to bake in a `scope`
-concept and instead take an explicit id array sidesteps the entire bug class. What it does not yet
-answer: whether "everything currently visible is selected" is knowable *without* the consumer
-re-deriving it — see 2.3.
+concept and instead take an explicit id array sidesteps the entire bug class. Of the five
+researched, only TanStack Table exposes the page-scoped and dataset-scoped variants as two
+separately named calls rather than one flag defaulting to a choice
+(`research-selection-ux-capabilities.md` §1/§10) — `selectAllIds(table)` /
+`selectAllIds(table, { includeHidden: true })` follow that shape, not an invented one. What it
+does not yet answer: whether "everything currently visible is selected" is knowable *without* the
+consumer re-deriving it — see 2.3.
 
 ## 1.5 — Select literally every row that exists, even ones I haven't loaded — ❌ not covered, deliberately out of scope for now
 
