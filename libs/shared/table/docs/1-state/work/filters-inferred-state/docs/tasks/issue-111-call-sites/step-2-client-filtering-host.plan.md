@@ -56,6 +56,12 @@ the sentence a reader consults when asking why the option lists are hand-supplie
    ]);
    ```
 
+   > **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116):** the
+   > status line is now `filter(path.status, matchesStatus, { emptyValue: '' })`. `emptyValue`
+   > became additive, so an `equals` criterion always carries the rule's own `null` — and a
+   > native `<select>` control value is a `string`. `filter()` with an explicit `string`
+   > criterion is what keeps `[formField]` binding with no accessor.
+
 2. **`anyOf` loses both its type argument and its callback.** The children come from the same
    `path`, not a second `searchPath` handle. Keep the comment above it about declared-not-scanned
    paths; it is still true and still the reason the group exists.

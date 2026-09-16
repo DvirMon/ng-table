@@ -4,7 +4,6 @@ import { createFilters } from '../../../filters/create-filters';
 import {
   anyOf,
   contains,
-  equals,
   filter,
   inDateRange,
   inRange,
@@ -25,6 +24,7 @@ import {
   isRangeCriterion,
   isTagCriterion,
   matchesInvoiceNumber,
+  matchesStatus,
   matchesTagCriterion,
   toDateInputValue,
   toggleOption,
@@ -118,11 +118,13 @@ function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriter
  * bounds: Signal Forms maps an empty number box to `null` and back, which is exactly
  * `inRange`'s empty value, so emptying a box stops it narrowing with no story-local guard.
  *
- * **The status select binds too, because its empty criterion is declared.** `equals(path.status,
- * { emptyValue: '' })` makes `''` the empty value, which is the only empty a native `<select>`
- * can express — so `<option value="">any</option>` deactivates the filter rather than leaving it
- * permanently active. Only the tag multi-select stays hand-wired: a checkbox group is several
- * elements, not one control value, so it writes through `filters.tags().value`.
+ * **The status select binds too, because its empty criterion is declared.**
+ * `filter(path.status, matchesStatus, { emptyValue: '' })` makes `''` an empty value, which is
+ * the only empty a native `<select>` can express — so `<option value="">any</option>` deactivates
+ * the filter rather than leaving it permanently active. `filter()` rather than `equals()`: an
+ * `equals` criterion always carries the rule's own `null` alongside any declared empty, and a
+ * `<select>` control value is a `string`. Only the tag multi-select stays hand-wired: a checkbox
+ * group is several elements, not one control value, so it writes through `filters.tags().value`.
  *
  * Shape follows what peer libraries converged on rather than an invented layout: per-column
  * inputs in an always-visible filter row, the quick filter in a toolbar above the table. The
@@ -157,7 +159,7 @@ export class ClientFilteringStoryHostComponent {
 
   /** Public, not protected, only so `ClientCriteria` above can derive the criterion map from it. */
   readonly filters = createFilters(this.data, (path) => [
-    equals(path.status, { emptyValue: '' }),
+    filter(path.status, matchesStatus, { emptyValue: '' }),
     contains(path.customer),
     inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE }),
     inDateRange(path.issuedAt),

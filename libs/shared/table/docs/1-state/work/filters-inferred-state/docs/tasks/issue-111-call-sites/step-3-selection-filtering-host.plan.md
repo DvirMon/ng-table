@@ -35,6 +35,12 @@ move rows in and out of view. It still declares the previous signature, so it do
    ]);
    ```
 
+   > **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116):** the
+   > status line is now `filter(path.status, matchesStatus, { emptyValue: '' })`. `emptyValue`
+   > became additive, so an `equals` criterion always carries the rule's own `null` — and a
+   > native `<select>` control value is a `string`. `filter()` with an explicit `string`
+   > criterion is what keeps `[formField]` binding with no accessor.
+
 2. Drop the `SelectionInvoiceFilterState` import; keep `InvoiceRow`.
 3. Delete `SelectionInvoiceFilterState` from `filtering/fixtures/types.ts`.
 4. The comment above the declaration ("The subset this story filters by …") describes *why* the set

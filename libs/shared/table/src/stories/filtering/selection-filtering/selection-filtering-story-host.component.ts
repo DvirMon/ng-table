@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createFilters } from '../../../filters/create-filters';
-import { contains, equals, hasAny } from '../../../filters/rules';
+import { contains, filter, hasAny } from '../../../filters/rules';
 import { createTable } from '../../../api/create-table';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';
@@ -14,7 +14,7 @@ import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directiv
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { selectionInvoiceConfig } from '../fixtures/schema';
 import type { InvoiceRow } from '../fixtures/types';
-import { toggleOption } from '../fixtures/utils';
+import { matchesStatus, toggleOption } from '../fixtures/utils';
 
 /**
  * Stated, not computed. `withSelection()` retains a row that a filter moved out of view, but no
@@ -62,7 +62,7 @@ export class SelectionFilteringStoryHostComponent {
   /** The subset this story filters by — enough to move rows in and out of view while a
    * selection is held, without rebuilding the client story's whole filter row. */
   protected readonly filters = createFilters(this.data, (path) => [
-    equals(path.status, { emptyValue: '' }),
+    filter(path.status, matchesStatus, { emptyValue: '' }),
     contains(path.customer),
     hasAny(path.tags),
   ]);

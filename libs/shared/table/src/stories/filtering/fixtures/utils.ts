@@ -1,4 +1,4 @@
-import { hasAnyOf, hasNoneOf, isContaining } from '../../../filters/matchers';
+import { hasAnyOf, hasNoneOf, isContaining, isEqual } from '../../../filters/matchers';
 import { STATUS_OPTIONS } from './mock';
 import type {
   DateRangeCriterion,
@@ -20,6 +20,16 @@ export function matchesTagCriterion(cell: string[], criterion: TagCriterion): bo
 
 export function isEmptyTagCriterion(criterion: TagCriterion): boolean {
   return criterion.include.length === 0 && criterion.exclude.length === 0;
+}
+
+/**
+ * The status select's predicate. `equals()` is not used here: its criterion always carries the
+ * rule's own `null` empty, and a native `<select>` writes `''` — so `filter()` with an explicit
+ * `string` criterion is what lets `[formField]` bind straight to the control with no accessor.
+ * `{ emptyValue: '' }` is still what makes `<option value="">` deactivate the filter.
+ */
+export function matchesStatus(cell: InvoiceStatus, criterion: string): boolean {
+  return isEqual<string>(cell, criterion);
 }
 
 /** The quick filter's numeric leg. The library never stringifies a cell for you — the

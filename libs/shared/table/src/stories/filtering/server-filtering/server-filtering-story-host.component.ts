@@ -1,7 +1,7 @@
 import { Component, computed, effect, input, signal, untracked } from '@angular/core';
 import { debounce, form, FormField } from '@angular/forms/signals';
 import { createFilters } from '../../../filters/create-filters';
-import { contains, equals, hasNone, inRange } from '../../../filters/rules';
+import { contains, filter, hasNone, inRange } from '../../../filters/rules';
 import { rowOf } from '../../../filters/row-of';
 import { createTable } from '../../../api/create-table';
 import { createTableFeature } from '../../../api/create-table-feature';
@@ -16,6 +16,7 @@ import {
   EMPTY_RANGE,
   isRangeCriterion,
   isStringArray,
+  matchesStatus,
   toggleOption,
 } from '../fixtures/utils';
 
@@ -107,7 +108,7 @@ export class ServerFilteringStoryHostComponent {
    * the row type in the slot real row data would otherwise occupy; it is never read.
    */
   protected readonly filters = createFilters(rowOf<InvoiceRow>(), (path) => [
-    equals(path.status, { emptyValue: '' }),
+    filter(path.status, matchesStatus, { emptyValue: '' }),
     contains(path.customer, { as: 'search' }),
     inRange(path.amount, { source: () => this.serverDefaultAmount() }),
     hasNone(path.tags, { as: 'excludedTags' }),

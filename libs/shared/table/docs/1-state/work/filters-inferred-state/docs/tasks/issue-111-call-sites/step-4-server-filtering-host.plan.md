@@ -48,6 +48,12 @@ becomes concrete at the `form(this.filters().value, …)` call inside the host.
    ]);
    ```
 
+   > **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116):** the
+   > status line is now `filter(path.status, matchesStatus, { emptyValue: '' })`. `emptyValue`
+   > became additive, so an `equals` criterion always carries the rule's own `null` — and a
+   > native `<select>` control value is a `string`. `filter()` with an explicit `string`
+   > criterion is what keeps `[formField]` binding with no accessor.
+
 2. **Import `rowOf` from `../../../filters/row-of`**, matching how the neighbouring imports reach
    `create-filters` and `rules` directly rather than through the barrel.
 3. **Write the comment this site exists to carry.** One or two lines, terse: the filters are

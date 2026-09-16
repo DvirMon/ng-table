@@ -177,6 +177,14 @@ permanently active while matching nothing. `FilterOptions.emptyValue` now lets a
 what empty means — `equals(path.status, { emptyValue: '' })` — and all three hosts bind status
 through plain `[formField]` with an `<option value="">`. No accessor, no adapter.
 
+> **Mechanism changed 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116); the
+> outcome did not.** `emptyValue` became *additive*, so an `equals` criterion always carries the
+> rule's own `null` alongside any declared empty — which a `<select>`'s `string` control value
+> cannot hold. All three hosts now declare the status filter as
+> `filter(path.status, matchesStatus, { emptyValue: '' })` (`matchesStatus` in
+> `stories/filtering/fixtures/utils.ts`): an explicit `string` criterion, with `emptyValue: ''`
+> still doing the deactivating. Plain `[formField]`, still no accessor and no adapter.
+
 The tag multi-select stays hand-wired, and that is a property of the control, not a library gap:
 a checkbox group is several elements rather than one control value, so no criterion-side choice
 makes `[formField]` bind it. It writes through `filters.tags().value`.
@@ -200,7 +208,7 @@ supported route and needs no assertion.
 
 | Issue | What |
 |---|---|
-| [#97](https://github.com/DvirMon/acme/issues/97) | **Closed** by `FilterOptions.emptyValue` — the status select binds through `[formField]`; the tag multi-select stays hand-wired by the control's own shape |
+| [#97](https://github.com/DvirMon/acme/issues/97) | **Closed** by `FilterOptions.emptyValue` — the status select binds through `[formField]`; the tag multi-select stays hand-wired by the control's own shape. Still closed after [#116](https://github.com/DvirMon/acme/issues/116), which moved the mechanism to `filter(path.status, matchesStatus, { emptyValue: '' })` — see "One control stays hand-wired" |
 | [#98](https://github.com/DvirMon/acme/issues/98) | No runtime coverage for the writable root or `form()` over the criterion model |
 | [#99](https://github.com/DvirMon/acme/issues/99) | Restoring a persisted snapshot has no typed entry point |
 | [#100](https://github.com/DvirMon/acme/issues/100) | `.storybook/preview.ts` implicit-any errors |
