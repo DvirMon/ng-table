@@ -1,10 +1,12 @@
 ---
-title: Filtering API — design decisions (createFilters)
+title: Filtering API — design decisions (withFiltering)
 type: design
-status: re-grilled 2026-09-14 — 49 decisions recorded (R11 superseded by R35; R32 by R34/R36;
-  R33 ceases to exist; R43 and R46 superseded by R47 after the decoupling landed; R48 finishes S2;
-  R49 records issue 96's active() split), ready to spec
-date: 2026-09-14
+status: re-grilled 2026-09-16 — 56 decisions recorded. Filtering is table-owned (R50): the model
+  moves into withFiltering(), createFilters/rowOf leave the public surface, the schema returns an
+  object literal (R51), `when` replaces applyWhen (R53), the predicate escape hatch is deleted
+  (R54) and the member surface is eight (R56). Supersedes R10, R11, R15, R24, R35, R36, R47, R48.
+  Ready to spec.
+date: 2026-09-16
 audience: developers
 ---
 
@@ -1969,6 +1971,12 @@ dozens of options, is what that failure mode looks like at maturity.
 
 ## Suggested resolution
 
+> **♻️ Overridden by R10 (same day), reinstated by R50 (2026-09-16).** R10's premise turned out
+> to be false — a table-owned filter object *can* be constructed in server mode, because the
+> pipeline reads rows through a thunk. Nothing ever proved filters were needed without a table,
+> which is the exact condition this resolution set for extraction. See
+> [Re-grill — table-owned filtering](#re-grill--table-owned-filtering-2026-09-16).
+>
 > **⚠️ Overridden by R10 (same day).** The resolution below — build the typed kinds inside
 > `withFiltering()` and extract `createFilters()` standalone only once something proves it needs
 > filters without a table — rests on extraction being cheap and deferral being free. It is not:
@@ -2007,3 +2015,247 @@ The question to answer is not "what do they ship" but "what did they find is the
 core of the filtering problem" — the smallest general mechanism that supports overriding, with
 sugar layered on for the common cases. That is what should drive the API, not the four table
 libraries' historical shapes.
+
+---
+
+## Re-grill — table-owned filtering (2026-09-16)
+
+The question that opened it: **is `createFilters` over-engineered?** It is not — but it is
+*mis-placed*. The audit below moves ownership, and the machinery that existed only to work around
+the standalone shape falls out with it.
+
+**What moved.** R10 rests on one claim: in server mode the filters feed the request that produces
+the data, so a table-owned filter object "cannot be constructed at all". That claim is false, and
+`create-table.ts:28` is why — the pipeline reads rows through a thunk inside a `computed()`, so a
+`resource()` whose `params` read `table.filters().criteria()` wires with no construction cycle and
+no eager read. Verified against the shipped server story, which builds its table on
+`signal<InvoiceRow[]>([])` *before* the first fetch
+(`server-filtering-story-host.component.ts:126-128`).
+
+With that gone, the survey in [research-filter-state-ownership.md](research-filter-state-ownership.md)
+decides it. Its rule — ownership tracks **who originates the value** — plus the constraint stated
+during this re-grill: *filters are always born with a table*. No filter set is provided by DI,
+seeded by a route resolver before a table exists, or shared between two tables. That puts
+filtering with the 4-of-7 majority (AG Grid, PrimeNG, NgRx, `MatTableDataSource`).
+
+This vindicates [Suggested resolution](#suggested-resolution) above, written 2026-09-09 and
+overridden by R10 the same day: *build the typed kinds inside `withFiltering`, extract a
+standalone primitive only once something proves it needs filters without a table*. Nothing ever
+proved it.
+
+**Dependency ranking** ([decompose-by-dependency-graph](../../../../../../../.claude/rules/decompose-by-dependency-graph.md)):
+
+```
+[R50 ownership] ──┬─> [R52 carrier deleted] ──> [R55 standalone schema]
+                  ├─> [R56 member audit]
+                  └─> [R51 object schema] ──┬─> [R53 `when` in options]
+                                            └─> [R54 no predicate hatch]
+```
+
+Core: R50. Everything else is downstream of it. R51 is independently arguable but migrates the
+same call sites, so it lands in the same epic rather than twice.
+
+### R50 — The filter model moves into `withFiltering`; `createFilters` leaves the public surface
+
+`withFiltering(config, schema)` builds the model and exposes it as a feature member. The engine —
+`rules.ts`, `matchers.ts`, `state.ts`, `evaluator.ts` — survives unchanged and becomes internal.
+
+```ts
+readonly table = createTable(
+  () => this.invoices.value() ?? [],
+  config,
+  withFiltering({ manual: true }, invoiceFilters),
+);
+
+readonly invoices = resource({
+  params: () => this.table.filters().criteria(),
+  loader: ({ params }) => this.api.fetchInvoices(params),
+});
+```
+
+No cycle: `criteria()` never reads rows, so the graph stays
+`filters → criteria → params → resource → rows → pipeline`. Filters sit upstream of rows while
+living inside the table. Declaration order is free — both references are thunks.
+
+This is *more* declarative than the shipped server story, which needs
+`signal([]) + effect + untracked + load()` to break a cycle that turns out not to exist.
+
+**Cost, accepted:** `withFiltering` regains the `TState` generic apparatus the decoupling deleted,
+including its two documented landmines — `TState` must be a `type` not an `interface`, and `In` is
+never passed explicitly ([review-filters-table-coupling.md](review-filters-table-coupling.md) §B.3).
+The standalone-filters-lib trajectory that review asked about is closed: the answer is no.
+
+### R51 — The schema returns an **object literal**; keys are written, never derived
+
+Supersedes R36's array. `StateOf` collapses to a plain mapped type:
+
+```ts
+type StateOf<S> = { [K in keyof S]: CriterionOf<S[K]> };
+```
+
+Verified exact by compiled probe before this re-grill —
+[research-typescript-inference-probes.md](../filters-inferred-state/research-typescript-inference-probes.md)
+§4 asserts both the array and object forms infer criteria exactly, `filter()`'s included.
+
+Deleted with the key-derivation layer: `FilterOptions.as`, `RuleKey<K, TAs>`,
+`EnforceLiteralKey`, `FilterRule`'s `TKey`, the `__key` phantom, `Flatten`/`FlattenItem`,
+`flattenRules`, and the runtime duplicate-**key** throw — an object literal cannot repeat a key,
+so the compiler catches it. The duplicate-**path** throw stays: two keys over `path.status` is
+legal to write and still wrong.
+
+`anyOf` loses its positional key (`search: anyOf([...])`); its non-empty and
+homogeneous-criterion compile checks (R44) are unaffected.
+
+### R52 — `TRow` comes from the table; the carrier and `rowOf()` are deleted
+
+R35's wide first slot existed only because a standalone `createFilters` had nothing else to infer
+`TRow` from, and it shipped with a documented lie — *"the call reads as if it binds data; it does
+not."* Under R50 `TRow` is `RowOf<In>`, already known. `rowOf()`, `RowToken`, and
+`FiltersPath`'s `[TRow] extends [never]` brand all go.
+
+### R53 — `when` moves into the rule options; `applyWhen` is deleted
+
+`gateByCondition` (`state.ts:97`) already wraps **one** node — `applyWhen`'s grouping was
+declaration-site sugar that the flattener fanned back out per child. Moving the gate into the
+options matches what the runtime already did.
+
+```ts
+readonly when?: (ctx: FilterValueOfContext<TRow>) => boolean;
+```
+
+Returns `boolean`, **not** grouping's `boolean | undefined`. The tri-state exists there because
+`applyGroupingAsync` produces a pending state (D13); filtering has no async rule and therefore no
+producer for it. Adopting it would mean speccing and testing an abstain semantic with no caller —
+add it the day an async filter gate lands.
+
+A shared condition is a hoisted `const`, restated per rule. Same trade `applyGrouping(path, { when })`
+already accepted, and it makes the two features spell the concept identically.
+
+Gate semantics are unchanged: `criterion()` and `isActive()` go dark; `value`, `reset` and the
+internal dirty tracking do not. The two-pass build stays — a `when` may read a filter declared
+after it, so gating runs once every node exists, reading `record.options.when` instead of a
+re-tagged `record.condition`. Deleted with it: `ConditionalRule`, `ConditionalNode`,
+`isConditionalNode`, the `kind: 'conditional'` re-tag, and the "returns one node, never spread it"
+rule.
+
+### R54 — No raw-predicate escape hatch. A scope is not a filter
+
+`predicates: () => ((row) => boolean)[]` is deleted and no `where()` replaces it. Both were
+considered; the test that killed them is **does it put a key in `TState`?**
+
+`filter(path.x, fn)` is custom *matching logic* for a **declared** filter — its criterion is
+library-managed state that resets, tracks emptiness and serializes into a request. A predicate
+with no criterion declares no filter at all. It is a **scope**, and a scope is already
+expressible:
+
+```ts
+createTable(() => this.invoices.value().filter((r) => r.ownerId === me()), …)
+```
+
+`filter` precedes `group`/`sort`/`expand` in `PIPELINE_ORDER` (`engine/pipeline.ts:6`), so
+narrowing the input signal and narrowing in the stage produce identical pipeline output —
+`rowsOf(group)` sees the same rows either way. It is arguably more correct: under `manual: true`
+the stage is skipped entirely, so an in-stage scope term would silently stop applying, while a
+pre-narrowed signal keeps working.
+
+**Accepted loss:** the stage-level `try/catch` around consumer predicates. A throwing pre-filter
+takes down the rows `computed()` rather than degrading to unnarrowed rows. ADR-0014's
+per-filter/per-evaluation reporting is unaffected — it lives in the evaluator, which only ever saw
+declared rules.
+
+### R55 — A standalone schema is a hoisted arrow, not a new primitive
+
+```ts
+export const invoiceFilters = (path: FiltersPath<Invoice>) => ({
+  status: equals(path.status),
+  amount: inRange(path.amount, { source: () => bounds() }),
+});
+
+withFiltering({}, invoiceFilters)
+```
+
+**R50 is what makes this safe.** The probe doc's §2 marks the param-annotation form ⚠️ — it
+degrades silently to `TRow = unknown` when the annotation is an alias. That hazard is about
+*inferring* `TRow` from the annotation. Here `TRow` is fixed by the table, so the annotation is
+only checked for assignability and `type P = FiltersPath<Invoice>` passes. `S` still infers from
+the const's return type.
+
+Composition is object spread — no `apply()`/`applyEach()` equivalent needed, because these schemas
+are plain objects where Signal Forms' are opaque:
+
+```ts
+export const auditFilters = (path: FiltersPath<Invoice>) => ({
+  ...invoiceFilters(path),
+  reviewedBy: equals(path.reviewer),
+});
+```
+
+**Cost: one type export.** `FiltersPath<TRow>` stops being `@internal`.
+
+Rejected: a `filterSchema()` helper. Beating the annotation requires currying
+(`filterSchema<Invoice>()(fn)`) because partial type-argument inference does not exist (probe §1)
+— a new export and `()()` to avoid one annotation.
+
+### R56 — Eight members. The test is derivability without rule internals
+
+A member earns its place when a consumer **cannot** reconstruct it without knowing `isEmpty`,
+`emptyValue` or `source` — all rule-internal.
+
+| | Root | Per key |
+|---|---|---|
+| Writable criterion | `value: WritableSignal<TState>` | `value: WritableSignal<TCriterion>` |
+| Effective criterion, empties omitted | `criteria(): Partial<TState>` | `criterion(): TCriterion \| undefined` |
+| Narrowing right now | `isActive()` | `isActive()` |
+| Back to the declared source | `reset(value?)` | `reset()` |
+
+**Made internal:**
+
+- `matcher()` — R47 promoted it to public only to bridge a decoupled feature. R50 deletes the
+  bridge; `withFiltering` consumes the evaluator directly.
+- `dirty()` — non-derivable, and kept internally because `source` needs it to decide whether an
+  arriving default overwrites a typed value. Public exposure had one consumer: the server story,
+  which exists to *demonstrate* the late-default race. Re-expose the day a filter bar wants a
+  "you've overridden the default — reset?" affordance.
+
+`isActive()` is the one piece of sugar retained deliberately (`Object.keys(criteria()).length > 0`
+at the root). Every library in the survey ships it — AG Grid `isAnyFilterPresent()`, TanStack
+`getIsFiltered()` — because "clear filters" is the most common filter-bar affordance there is.
+
+Root `value` stays a real `WritableSignal` view over the nodes (R18): it is what lets
+`form(this.table.filters().value, schema)` bind with no adapter and no sync effect.
+
+### What this re-grill supersedes
+
+| | |
+|---|---|
+| R10 | **superseded by R50** — its premise (a table-owned filter object cannot be constructed in server mode) is false; rows are read through a thunk |
+| R11 | already superseded by R35; **now moot** — there is no first argument to debate |
+| R15 | **superseded by R53** — `applyWhen` becomes `when` in options |
+| R24 | **moot** — no standalone construction, so no `{ injector }` escape of its own; `createTable`'s context governs |
+| R35 | **superseded by R52** — the carrier existed only to feed a standalone primitive |
+| R36 | **superseded by R51** — array becomes object literal |
+| R40 | **stands, message changes** — a schema that returns nothing still throws; the message names the object form |
+| R44 | **amended by R51** — `anyOf` keeps its checks, loses its positional key |
+| R47 | **superseded by R50** — the public `matcher()` bridge has no consumer once the feature owns the model |
+| R48 | **moot** — it resolved `WithFilteringConfig`'s `TState` for a decoupled feature |
+| R7, R8, R18, R49, ADR-0014 | **stand unchanged** — rule semantics, OR groups, the writable view, the `active()` split, and degradation are untouched |
+
+### Migration surface
+
+One epic. The ownership move forces the carrier deletion, and the object-literal rework touches
+the same call sites, so splitting them migrates every consumer twice.
+
+- `src/filters/` — `create-filters.ts` folds into the feature; `row-of.ts` deleted; `types.ts`
+  loses ~90 LOC of key machinery; `rules.ts` loses `TKey` and `as`; `validate.ts` loses the
+  duplicate-key throw.
+- `src/api/features/with-filtering.ts` — gains the schema parameter, the model, the member and
+  the `TState` apparatus; loses `predicates`.
+- `index.ts` — drops `createFilters`, `rowOf`, `RowToken`, `applyWhen`; adds `FiltersPath`.
+- Specs — `create-filters.types.spec.ts` (253 LOC) is the inference contract and is rewritten, not
+  deleted; `create-filters.spec.ts` (657 LOC) mostly survives with a new construction preamble;
+  `with-filtering.spec.ts` gains the member cases.
+- Stories — 5 hosts plus `filtering/fixtures/` and `grouping/fixtures/schema.ts`. The server host
+  loses its `effect`/`untracked` loop for a `resource()`.
+- Docs — `filters.md` stops being a primitive spec and folds into `features/filtering.md`;
+  `0-product/filtering.md` and `3-ui/stories.md` reference the moved surface; ADR-0016 gets a
+  successor note.
