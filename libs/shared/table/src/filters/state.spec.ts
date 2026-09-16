@@ -1,7 +1,7 @@
 import { computed, isSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { form } from '@angular/forms/signals';
-import { describe, expect, it } from 'vitest';
+import { debounce, form } from '@angular/forms/signals';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createFilters } from './create-filters';
 import { rowOf } from './row-of';
 import { contains, equals, inRange } from './rules';
@@ -247,6 +247,68 @@ describe('filters root — a Signal Form binds to it directly', () => {
     // — no assertion comparing values can fail on it.
     expect(downstreamOfAmount()).toBe(amountBefore);
     expect(amountEvaluations).toBe(1);
+  });
+});
+
+/**
+ * R25 keeps debouncing in the Signal Form rather than in `createFilters`, so `debounce()` over
+ * the criterion model is the only thing standing between a keystroke and a request
+ * (`server-filtering-story-host.component.ts:123`). `controlValue` is the buffered half — a write
+ * there schedules a sync, and only the elapsed timer writes through to the criterion.
+ *
+ * Timers advance with the **async** variants throughout: the debouncer resolves a promise, so the
+ * write lands in a microtask that the synchronous `advanceTimersByTime` never flushes.
+ */
+describe('filters root — debounce on the form delays the criterion write (R25)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function buildDebouncedForm() {
+    const filters = buildInvoiceFilters();
+    const filterForm = TestBed.runInInjectionContext(() =>
+      form(filters().value, (path) => {
+        debounce(path.customer, 300);
+      })
+    );
+
+    return { filters, filterForm };
+  }
+
+  it('holds a control write for the debounce duration, then writes it through', async () => {
+    const { filters, filterForm } = buildDebouncedForm();
+
+    filterForm.customer().controlValue.set('Acme');
+
+    await vi.advanceTimersByTimeAsync(299);
+    expect(filters.customer().value()).toBe('');
+
+    await vi.advanceTimersByTimeAsync(1);
+    expect(filters.customer().value()).toBe('Acme');
+  });
+
+  it('collapses two control writes inside one window into a single criterion write', async () => {
+    const { filters, filterForm } = buildDebouncedForm();
+
+    let criterionWrites = 0;
+    const observedCriterion = computed(() => {
+      criterionWrites += 1;
+      return filters.customer().value();
+    });
+    observedCriterion();
+
+    filterForm.customer().controlValue.set('Ac');
+    await vi.advanceTimersByTimeAsync(200);
+    filterForm.customer().controlValue.set('Acme');
+    await vi.advanceTimersByTimeAsync(300);
+
+    // One write, not one per keystroke — the interim sync is aborted by the second control write.
+    expect(observedCriterion()).toBe('Acme');
+    expect(criterionWrites).toBe(2);
   });
 });
 
