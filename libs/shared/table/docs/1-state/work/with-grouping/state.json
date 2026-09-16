@@ -26,6 +26,6 @@
     "grill": true,
     "spec": true,
     "issues": true,
-    "tasks": false
+    "tasks": true
   }
 }
