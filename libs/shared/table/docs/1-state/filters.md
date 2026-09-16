@@ -616,11 +616,25 @@ Consumer-owned. `createFilters` ships no storage adapter (R21).
 
 ```ts
 localStorage.setItem('f', JSON.stringify(this.filters().value()));
-this.filters().reset(JSON.parse(localStorage.getItem('f') ?? 'null'));
+
+const saved: unknown = JSON.parse(localStorage.getItem('f') ?? 'null');
+this.filters().reset(keepValidCriteria(saved));
 ```
 
 `value()` and `reset(value)` are both halves already; swapping `sessionStorage`, a URL, or a
 server-side profile is a one-word change.
+
+**Validating the snapshot is consumer-owned too.** `reset()` takes `Partial<TState>`; a parsed
+snapshot is `unknown` — a key from a schema revision ago, or a criterion whose rule has since
+changed shape, arrives as a value that rule's predicate never expected. It reaches `reset()` only
+because `JSON.parse` returns `any`, and what follows is silent: the predicate either throws per
+row and degrades that filter ([Errors](#errors)), or compares the wrong shape and narrows to the
+wrong rows. Guard first, as `keepValidCriteria()` does in `stories/filtering/client-filtering/`.
+
+`createFilters` ships no validating entry point — no `restore(unknown)`, no per-rule shape guard.
+Validation follows ownership, and the round-trip is the consumer's (R21). If a shared persistence
+feature ever owns save/restore, the guard belongs there, beside the version stamp and the drift
+rule (R22).
 
 What a shipped mechanism would buy is the fiddly part — debounced writes, a version stamp plus
 migration, revival for non-JSON criteria (the `Date` problem), and the drift rule (unknown key →
@@ -644,7 +658,7 @@ either.
 | `ColumnDef.filterFn` / `enableFiltering` | predicates live in the schema | R12 |
 | Per-filter `encode` for server params | consumer maps `criteria()` | R16 |
 | Debounce | Signal Forms' `debounce()` over the model | R25 |
-| Persistence / storage adapter | consumer's `JSON.stringify` + `reset(value)` | R21 |
+| Persistence / storage adapter, and any validating `restore(unknown)` | consumer's `JSON.stringify` + a guard + `reset(value)` | R21 |
 | Data-derived filter options (set filters) | consumer computes them | R11 |
 | Any null/empty-cell option (`matchEmpty`, `cell:`, `isBlank`, `orEmpty`) | one internal policy; `filter()` for anything else | R27 |
 
