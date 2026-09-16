@@ -7,20 +7,11 @@ import { singleSelectionConfig } from '../fixtures/schema';
 import type { SelectionRow } from '../fixtures/types';
 
 /**
- * The single-select path. `enableMultiRowSelection: false` is a construction-time argument, so
- * this is a sibling of `multi-selection/` rather than a toggle on it — a toggle would leave the
- * unused branch sitting in the host's source.
- *
- * The control is a radio group, not a checkbox: the group's own semantics are the replace rule
- * D14 enforces, so ticking a second row visibly unticks the first with no host code saying so —
- * `toggle(id)` is called directly, with no host-side replace logic. That is also why the Clear
- * button exists here and nowhere else — a radio cannot be unticked by clicking it, and there is
- * no header checkbox in a single-select table to carry the gesture. Arrow-key roving focus and
- * Space come from the group for free (§4.1), which is the closest thing to keyboard navigation
- * reachable before the selection directive is drilled.
- *
- * `restoreConflictingSelection()` shows D14's other half: a single call's own argument list
- * co-selecting two ids always throws, naming what it rejected.
+ * The single-select path — `enableMultiRowSelection: false` (construction-time), so a sibling
+ * host rather than a toggle on `multi-selection/`. The radio group supplies the replace rule
+ * (D14) and roving focus for free; `restoreConflictingSelection()` demonstrates D14's other
+ * half — a single call co-selecting two ids always throws, naming what it rejected.
+ * See `docs/0-product/selection.md` for the full decision trail.
  */
 @Component({
   selector: 'ngp-single-selection-story-host',

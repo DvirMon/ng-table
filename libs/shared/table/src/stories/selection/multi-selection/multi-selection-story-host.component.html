@@ -73,8 +73,29 @@
     </tbody>
   </table>
 
-  @if (notice(); as noticeText) {
-    <p class="selection-story__notice" role="status">{{ noticeText }}</p>
+  @if (notice(); as n) {
+    <p class="selection-story__notice" role="status">
+      @switch (n.kind) {
+        @case ('need-unlocked') {
+          Select an unlocked row first.
+        }
+        @case ('locked') {
+          {{ n.id }} is locked now — select-all skips it, and its mark stayed. Untick the header
+          checkbox and the mark goes: clearSelection() is ungated.
+        }
+        @case ('restored') {
+          Restored {{ n.ids.join(', ') }} — s99 matches no row and is simply not rendered.
+          Nothing was logged.
+        }
+        @case ('need-any') {
+          Select a row first.
+        }
+        @case ('deleted') {
+          {{ n.id }} left the data. The count dropped and the event log did not move — a prune is
+          reconciliation, not a write.
+        }
+      }
+    </p>
   }
 
   <div class="selection-story__event-log" role="log" aria-label="selectionChanged deltas">
