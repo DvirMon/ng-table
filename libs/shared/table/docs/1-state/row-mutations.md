@@ -234,5 +234,4 @@ at all (mutation is consumer-owned there), and while the updater verbs plus ADR-
 reconciliation are comparable in intent to AG Grid's `applyTransaction`, they are narrower in scope
 — no batch or async variant yet.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).

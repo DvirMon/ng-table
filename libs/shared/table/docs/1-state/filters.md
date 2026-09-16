@@ -29,7 +29,6 @@ readonly filters = createFilters(this.data, (path) => [
 ```
 
 > **`criterion()` / `criteria()` / `isActive()` replace `active()`** (R49, decided in `#96`).
-> Shipped — `src/filters/` spells all three as documented.
 
 > **The domain lives in `src/filters/`** — a top-level sibling of `api/`, `engine/` and
 > `directives/`, with its own barrel (`#106`, [ADR-0004](../adr/0004-table-source-layout.md)'s
@@ -283,9 +282,14 @@ same reasoning that put `value`, `criteria`, `isActive`, `reset` and `dirty` the
 
 **It also puts `TRow` in the type body.** `matcher(): (row: TRow) => boolean` means `TRow` is no
 longer phantom, so a filter set built for an unrelated row type is now a compile error instead of
-a silently empty table. A public type-behavior change, with its compatibility carve-out and the
-fix for the error it produces:
-[ADR-0016](../adr/0016-filtering-takes-a-predicate-list.md) §4.
+a silently empty table — structurally compatible and wider row types still work; only genuinely
+unrelated ones are rejected. See [ADR-0016](../adr/0016-filtering-takes-a-predicate-list.md) for
+why this is a deliberate public type-behavior change.
+
+**If you hit this error:** give the filter set the row type the table actually holds, through its
+first argument — the table's own row data, or `rowOf<InvoiceRow>()` where no data exists yet. The
+error reports a real mismatch that previously ran silently; widening the carrier to make it
+compile reintroduces the bug.
 
 Why both `value()` and `criteria()`: a criterion is user-editable input two-way bound to a control
 — that is the Signal Forms *model*, always complete. "Which filters are currently narrowing" is

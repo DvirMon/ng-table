@@ -35,8 +35,7 @@ table has both. A live table has only the first — its edit session is delimite
 a button, so there is nothing to open. Optimistic rollback is therefore not an editing feature
 that a live table has to fake its way into; it is its own feature that editing composes (D37).
 
-**Shipped.** The two-feature split (D37–D44) landed 2026-08-26; optimistic CRUD (D45–D49) landed
-2026-08-27.
+The two-feature split (D37–D44) landed 2026-08-26; optimistic CRUD (D45–D49) landed 2026-08-27.
 
 Prior decision logs: [`work/with-row-editing/`](../work/with-row-editing/2-decisions.md) (D10–D36),
 [`work/with-mutations/`](../work/with-mutations/2-decisions.md). Gap registers, split by owning
@@ -668,5 +667,4 @@ table needs nothing. The live-optimistic path gets its own story (D39).
 captured index), is a more considered answer to dirty tracking, rollback and undo than anything in
 the four libraries, none of which has shipped one.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

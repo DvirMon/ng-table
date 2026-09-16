@@ -172,5 +172,4 @@ contract this feature owes persistence:
 **Verdict: missing** — no sizing state of any kind in `src/`, while all four competitors
 ship column sizing and resizing in their free/core tier.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

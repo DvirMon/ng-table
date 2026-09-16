@@ -86,8 +86,7 @@ interface ColumnDef {
 
 ## Null / Empty Value Ordering — shipped
 
-**Status:** implemented 2026-08-27, closing the gap identified 2026-08-12. Mechanical fix only —
-see `docs/1-state/work/sorting-null-ordering/1-handoff.md` for the full decision record.
+Full decision record: `docs/1-state/work/sorting-null-ordering/1-handoff.md`.
 
 ### Shipped behavior
 
@@ -208,5 +207,4 @@ comparator, `manual`) matches all four; null ordering is **ahead** of them, sinc
 default and per-column `applySortNulls` are a deliberate contract where all four leave the behavior
 silent or undefined.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

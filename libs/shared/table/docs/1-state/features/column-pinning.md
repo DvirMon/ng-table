@@ -161,5 +161,4 @@ order-restore bug). Ids absent from the current `columns()` are dropped on resto
 **Verdict: missing** — no pinning state in `src/`; all four competitors ship column pinning
 (PrimeNG as "frozen columns") in their free/core tier.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

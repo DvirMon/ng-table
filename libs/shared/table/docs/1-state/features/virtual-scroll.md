@@ -14,7 +14,7 @@ parent: ../architecture.md
 
 ## Executive Summary
 
-Windowed rendering over `renderRows()`. Decoupled from `withGrouping()`/`withExpansion()` by design — it operates purely on the already-flattened, collapse-resolved `renderRows: Signal<RenderRow<TRow>[]>` (see `with-grouping.md`, "Render Layer"), the same way AG Grid's DOM virtualization and MUI X's `renderContext` slice a pre-flattened row list without any awareness of tree/grouping state.
+Windowed rendering over `renderRows()`. Decoupled from `withGrouping()`/`withExpansion()` by design — it operates purely on the already-flattened, collapse-resolved `renderRows: Signal<RenderRow<TRow>[]>` (see `with-grouping.md`, "Render Layer").
 
 ## State Shape (sketch — not locked)
 
@@ -51,5 +51,4 @@ None. Reads only `renderRows()`, which is always present on the core store (see 
 
 **Verdict: not assessed** — the audit was deliberately scoped to the state layer, and the competitors' virtualization is a rendering concern, so it produced no findings here; the silence is that scoping decision, not an oversight.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

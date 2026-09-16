@@ -182,6 +182,5 @@ Superseded behavioral decisions from v1.1 of this file, kept here so the change 
 a consumer-supplied predicate list (#62, reshaped by #105), replacing the superseded imperative
 shape.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table and PrimeNG —
-column + global filtering is baseline in all four competitors' free tier. Full reasoning:
+Column + global filtering is baseline in all four competitors' free tier. Full reasoning:
 [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

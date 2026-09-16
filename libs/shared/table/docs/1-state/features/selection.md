@@ -229,7 +229,6 @@ concept entirely (D1) where AG Grid and Material React Table leak the ambiguity 
 enum / `forceAll` flag after the fact — this was the audit's #1-ranked gap and is now resolved,
 not just narrowed.
 
-Assessed 2026-09-05/06 against Angular CDK, TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning:
+Full reasoning:
 [research-selection-change-events.md](../work/with-selection/research-selection-change-events.md),
 [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).

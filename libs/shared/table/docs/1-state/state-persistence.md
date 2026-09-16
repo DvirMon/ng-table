@@ -275,5 +275,4 @@ speculative one. These are the acceptance tests, not a wishlist.
 the only competitor with a named API here, and its confirmed bug list is what this spec's
 test list is built from.
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).

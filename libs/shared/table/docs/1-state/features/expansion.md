@@ -299,5 +299,4 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
 panel-vs-tree split that would make that explicit is still pending in
 [ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md).
 
-Assessed 2026-09-05 against TanStack Table v8, AG Grid, Material React Table,
-and PrimeNG. Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
