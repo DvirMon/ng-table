@@ -30,7 +30,7 @@
     </thead>
     <tbody>
       @for (row of table.renderRows(); track row.id) {
-        @let isSelected = isRowSelected(row.id);
+        @let isSelected = table.selectedRows().has(row.id);
 
         <tr [attr.aria-selected]="isSelected">
           <td class="story-host__cell">

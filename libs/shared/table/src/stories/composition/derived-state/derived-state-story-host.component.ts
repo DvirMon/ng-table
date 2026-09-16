@@ -53,10 +53,6 @@ export class DerivedStateStoryHostComponent {
     this.table.toggle(id);
   }
 
-  protected isRowSelected(id: RowId): boolean {
-    return this.table.selectedRows().has(id);
-  }
-
   /** The select's empty option is "All" — `reset(null)` returns `dept` to its declared source
    * rather than writing an empty string the `equals` criterion would then match on. */
   protected setDeptFilter(value: string): void {
