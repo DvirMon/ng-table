@@ -227,6 +227,27 @@ describe('filters root — a Signal Form binds to it directly', () => {
 
     expect(filters.customer().value()).toBe('Acme');
   });
+
+  it('leaves an untouched sibling alone by reference, not just by value', () => {
+    const filters = buildInvoiceFilters();
+    const filterForm = TestBed.runInInjectionContext(() => form(filters().value));
+
+    let amountEvaluations = 0;
+    const downstreamOfAmount = computed(() => {
+      amountEvaluations += 1;
+      return filters.amount().value();
+    });
+    const amountBefore = downstreamOfAmount();
+
+    filterForm.customer().value.set('Acme');
+
+    // `toBe`, not `toEqual`, is the whole assertion: the form spreads the model on every edit, so
+    // every sibling key is re-`set` with a structurally equal value. A churning reference
+    // invalidates every computed downstream of a criterion nobody touched, and degrades silently
+    // — no assertion comparing values can fail on it.
+    expect(downstreamOfAmount()).toBe(amountBefore);
+    expect(amountEvaluations).toBe(1);
+  });
 });
 
 describe('equalsCriterion', () => {
