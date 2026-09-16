@@ -153,6 +153,53 @@ describe('composeTable', () => {
     );
   });
 
+  describe('expandedRows contributions (ADR-0017)', () => {
+    it('composes two features that both contribute an expandedRows set without throwing', () => {
+      const withA: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['a'])),
+      });
+      const withB: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['b'])),
+      });
+
+      // Contrast with 'throws when two features claim the same render stage' above:
+      // expandedRows is the one slot that ACCUMULATES rather than single-claims (decision 7)
+      // — this is the ADR-0012 verification case a single-claim slot would fail.
+      expect(() => compose([withA, withB])).not.toThrow();
+    });
+
+    it('collects contributions from every feature in the fold, and both reach the prune', () => {
+      // Synthesize 'r2' as a child of 'r1' via a claimed 'tree' render stage — the only way to
+      // get a parentId onto a row without a real tree/grouping feature composed.
+      const withTreeChild: AnyTableFeature = () => ({
+        renderStages: {
+          tree: (rows) =>
+            rows.map((row) => (row.id === 'r2' ? { ...row, parentId: 'r1' } : row)),
+        },
+      });
+      // 'r1' lives on the FIRST-folded contributor, an unrelated id on the second. If the fold
+      // regressed into keeping only the most-recently-folded contributor (the exact "fixed it
+      // into a SlotRegistry claim" mistake the ADR warns about), 'r1' would be lost and 'r2'
+      // would stay hidden — this ordering is chosen so that regression fails loudly.
+      const withFirstContributor: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['r1'])),
+      });
+      const withSecondContributor: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['unrelated'])),
+      });
+
+      const store = composeWithRows(makeRows(), [
+        withTreeChild,
+        withFirstContributor,
+        withSecondContributor,
+      ]);
+
+      const ids = (store['renderRows'] as () => { id: string }[])().map((row) => row.id);
+
+      expect(ids).toEqual(['r1', 'r2']);
+    });
+  });
+
   it('composes render stages in RENDER_ORDER regardless of features array order', () => {
     const withGroupStage: AnyTableFeature = () => ({
       renderStages: {

@@ -211,7 +211,8 @@ function emitGroupRows<TRow>(
   parentPath: string,
   columns: ColumnDef<TRow>[],
   expandedRows: ReadonlySet<RowId> | undefined,
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
+  parentId?: RowId
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
     const path = buildGroupPath(parentPath, node.columnId, node.value);
@@ -228,13 +229,14 @@ function emitGroupRows<TRow>(
         columns,
         reportedColumns
       ),
+      parentId,
     };
     const isExpanded = expandedRows === undefined || expandedRows.has(id);
     const nested = !isExpanded
       ? []
       : node.children.length > 0
-        ? emitGroupRows(node.children, depth + 1, path, columns, expandedRows, reportedColumns)
-        : node.items.map((item) => ({ ...item, depth: depth + 1 }));
+        ? emitGroupRows(node.children, depth + 1, path, columns, expandedRows, reportedColumns, id)
+        : node.items.map((item) => ({ ...item, depth: depth + 1, parentId: id }));
     return [header, ...nested];
   });
 }

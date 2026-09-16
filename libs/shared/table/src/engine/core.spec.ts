@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { createTableCore } from './core';
-import type { RenderRow } from '../api/types';
+import type { RenderRow, RowId } from '../api/types';
 import type { RenderRowTransform } from './render-stages';
 
 interface Row {
@@ -65,5 +65,33 @@ describe('createTableCore — sourceIndex', () => {
     data.set([{ id: 'r0', name: 'Zed' }, ...makeRows()]);
 
     expect(renderRows().map((row) => row.sourceIndex)).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe('createTableCore — expandedRows union (ADR-0017)', () => {
+  it('unions two contributed expandedRows sets — a row shows if either set contains its parent', () => {
+    // `core.ts` is the boundary that unions every feature's contributed `expandedRows`
+    // (`expandedSources`) before handing the result to the terminal 'prune' stage. Push two
+    // disjoint sets directly onto the handle, the same way `compose-table.ts`'s fold does one
+    // at a time — neither set alone covers both children, only the union does.
+    interface TreeRow {
+      id: string;
+    }
+    const rows: TreeRow[] = [{ id: 'p1' }, { id: 'c1' }, { id: 'p2' }, { id: 'c2' }];
+    const { renderRows, renderStages, expandedSources } = createTableCore<TreeRow>({
+      columns: [{ id: 'id' }],
+      trackBy: 'id',
+      data: signal(rows),
+    });
+    renderStages.tree = (rs) =>
+      rs.map((row) => {
+        if (row.id === 'c1') return { ...row, parentId: 'p1' };
+        if (row.id === 'c2') return { ...row, parentId: 'p2' };
+        return row;
+      });
+    expandedSources.push(signal(new Set<RowId>(['p1'])));
+    expandedSources.push(signal(new Set<RowId>(['p2'])));
+
+    expect(renderRows().map((row) => row.id)).toEqual(['p1', 'c1', 'p2', 'c2']);
   });
 });

@@ -59,7 +59,7 @@ export function createTableFeature(
 }
 
 /** The spec keys a derive block may not declare — pipeline behaviour belongs to the feature. */
-const PIPELINE_BEHAVIOR_KEYS = ['stages', 'renderStages', 'columnRules'] as const;
+const PIPELINE_BEHAVIOR_KEYS = ['stages', 'renderStages', 'columnRules', 'expandedRows'] as const;
 
 /**
  * Combines a feature's spec with its trailing derive block's spec. The block may only
@@ -87,6 +87,7 @@ function mergeDerivedSpec<TRow, Out extends object, D extends DerivedDict>(
     stages: spec.stages,
     renderStages: spec.renderStages,
     columnRules: spec.columnRules,
+    expandedRows: spec.expandedRows,
     setup: chainCallbacks(spec.setup, derivedSpec.setup),
     onDestroy: chainCallbacks(spec.onDestroy, derivedSpec.onDestroy),
     onRowsRemoved: chainCallbacks(spec.onRowsRemoved, derivedSpec.onRowsRemoved),

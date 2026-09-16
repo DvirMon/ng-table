@@ -285,6 +285,37 @@ describe('withExpansion', () => {
     expect(r2?.isExpanded).toBe(false);
   });
 
+  it("a tree child's parentId is its parent row's id, at depth 1 and depth 2", () => {
+    const store = inContext(() =>
+      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+    );
+
+    store.toggleExpanded('r1');
+    store.toggleExpanded('c1');
+
+    const renderRows = store.renderRows();
+    const c1 = renderRows.find((row) => row.id === 'c1');
+    const c2 = renderRows.find((row) => row.id === 'c2');
+    const g1 = renderRows.find((row) => row.id === 'g1');
+
+    expect(c1?.parentId).toBe('r1'); // depth 1
+    expect(c2?.parentId).toBe('r1'); // depth 1
+    expect(g1?.parentId).toBe('c1'); // depth 2
+  });
+
+  it('a top-level row has parentId === undefined', () => {
+    const store = inContext(() =>
+      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+    );
+
+    const renderRows = store.renderRows();
+    const r1 = renderRows.find((row) => row.id === 'r1');
+    const r2 = renderRows.find((row) => row.id === 'r2');
+
+    expect(r1?.parentId).toBeUndefined();
+    expect(r2?.parentId).toBeUndefined();
+  });
+
   it('custom childrenAccessor is honored (row shape where children live under a different key)', () => {
     const rows: CustomChildrenRow[] = [
       {

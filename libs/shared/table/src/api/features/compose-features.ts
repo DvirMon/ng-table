@@ -1,6 +1,7 @@
+import { computed, type Signal } from '@angular/core';
 import type { ColumnRuleEntry } from '../../engine/columns';
 import { PIPELINE_ORDER, type PipelineStages } from '../../engine/pipeline';
-import { RENDER_ORDER, type RenderStages } from '../../engine/render-stages';
+import { CLAIMABLE_RENDER_STAGES, type RenderStages } from '../../engine/render-stages';
 import { describeInnerFeature, SlotRegistry } from '../../engine/slots';
 import type { TableFeatureSpec } from '../../engine/types';
 import type { AnyTableFeature, RowId } from '../types';
@@ -47,7 +48,7 @@ function claimInnerRenderStages<TRow>(
   if (!spec.renderStages) {
     return;
   }
-  for (const stage of RENDER_ORDER) {
+  for (const stage of CLAIMABLE_RENDER_STAGES) {
     const transform = spec.renderStages[stage];
     if (!transform) {
       continue;
@@ -78,6 +79,7 @@ function foldInnerFeatures(
   const stages: PipelineStages<unknown> = {};
   const renderStages: RenderStages<unknown> = {};
   const columnRules: ColumnRuleEntry<unknown>[] = [];
+  const expandedRowsSignals: Signal<ReadonlySet<RowId>>[] = [];
   const setups: (() => void)[] = [];
   const onDestroys: (() => void)[] = [];
   const onRowsRemoveds: ((ids: readonly RowId[]) => void)[] = [];
@@ -100,6 +102,11 @@ function foldInnerFeatures(
     if (spec.columnRules) {
       columnRules.push(...spec.columnRules);
     }
+    // Accumulates rather than single-claims, same as the outer fold — see
+    // `TableFeatureSpec.expandedRows` (ADR-0017).
+    if (spec.expandedRows) {
+      expandedRowsSignals.push(spec.expandedRows);
+    }
     if (spec.setup) {
       setups.push(spec.setup);
     }
@@ -117,6 +124,7 @@ function foldInnerFeatures(
   const hasStages = Object.keys(stages).length > 0;
   const hasRenderStages = Object.keys(renderStages).length > 0;
   const hasColumnRules = columnRules.length > 0;
+  const hasExpandedRows = expandedRowsSignals.length > 0;
   const hasSetup = setups.length > 0;
   const hasOnDestroy = onDestroys.length > 0;
   const hasOnRowsRemoved = onRowsRemoveds.length > 0;
@@ -126,6 +134,21 @@ function foldInnerFeatures(
     ...(hasStages ? { stages } : {}),
     ...(hasRenderStages ? { renderStages } : {}),
     ...(hasColumnRules ? { columnRules } : {}),
+    // The outer contract holds one `expandedRows` signal per feature, so N inner contributors
+    // union into one composite signal here — the outer fold only ever sees a single slot to push.
+    ...(hasExpandedRows
+      ? {
+          expandedRows: computed(() => {
+            const union = new Set<RowId>();
+            for (const source of expandedRowsSignals) {
+              for (const id of source()) {
+                union.add(id);
+              }
+            }
+            return union;
+          }),
+        }
+      : {}),
     ...(hasSetup ? { setup: runInOrder(setups) } : {}),
     ...(hasOnDestroy ? { onDestroy: runInOrder(onDestroys) } : {}),
     ...(hasOnRowsRemoved ? { onRowsRemoved: runInOrder(onRowsRemoveds) } : {}),

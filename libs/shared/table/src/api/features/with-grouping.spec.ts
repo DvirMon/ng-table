@@ -400,6 +400,76 @@ describe('withGrouping', () => {
     // aggregates.amount === 20 was unique to the removed EU > Electronics header.
     expect(rows.some((row) => row.aggregates?.['amount'] === 20)).toBe(false);
   });
+
+  it("a cluster member's parentId is its header's id", () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] })
+      )
+    );
+
+    const rows = store.renderRows();
+    const usHeader = rows.find((row) => row.kind === 'group' && row.groupKey?.value === 'US')!;
+    const usLeaves = rows.filter(
+      (row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'US'
+    );
+
+    expect(usLeaves.length).toBeGreaterThan(0);
+    expect(usLeaves.every((row) => row.parentId === usHeader.id)).toBe(true);
+  });
+
+  it("a nested header's parentId is its parent header's id, at two levels of grouping", () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
+    );
+
+    const rows = store.renderRows();
+    const usHeader = rows.find(
+      (row) => row.kind === 'group' && row.depth === 0 && row.groupKey?.value === 'US'
+    )!;
+    const usChildHeaders = rows.filter((row) => row.kind === 'group' && row.depth === 1);
+
+    expect(usChildHeaders).toHaveLength(4); // 2 under US, 2 under EU
+    const usOwnChildHeaders = usChildHeaders.filter((row) => row.parentId === usHeader.id);
+    expect(usOwnChildHeaders).toHaveLength(2); // Electronics, Furniture
+  });
+
+  it('a top-level header has parentId === undefined', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
+    );
+
+    const topLevelHeaders = store
+      .renderRows()
+      .filter((row) => row.kind === 'group' && row.depth === 0);
+
+    expect(topLevelHeaders).toHaveLength(2); // US, EU
+    expect(topLevelHeaders.every((row) => row.parentId === undefined)).toBe(true);
+  });
+
+  it("an ungrouped table's rows all have parentId === undefined", () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping()
+      )
+    );
+
+    const rows = store.renderRows();
+    expect(rows.every((row) => row.kind === 'row')).toBe(true);
+    expect(rows.every((row) => row.parentId === undefined)).toBe(true);
+  });
 });
 
 /** Finds a `kind: 'group'` render row by id — the recipe every `rowsOf` test below shares. */
@@ -817,6 +887,37 @@ describe('collapse/expand (#59)', () => {
     store.toggleExpanded(US_HEADER_ID);
     const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
     expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
+
+  it('a collapsed group nested inside a collapsed group stays hidden when only the outer one opens', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] }),
+        withExpansion()
+      )
+    );
+
+    const outerHeader = store
+      .renderRows()
+      .find((row) => row.kind === 'group' && row.depth === 0 && row.groupKey?.value === 'US')!;
+
+    store.toggleExpanded(outerHeader.id);
+
+    const rows = store.renderRows();
+    const innerHeaders = rows.filter((row) => row.kind === 'group' && row.parentId === outerHeader.id);
+
+    // The outer header's own children (the category headers) are revealed once it opens...
+    expect(innerHeaders).toHaveLength(2); // Electronics, Furniture
+
+    // ...but neither inner header was itself toggled, so anything nested beneath either of them
+    // stays hidden — the transitive hidden-accumulator case (ADR-0017 decision 8).
+    const innerHeaderIds = innerHeaders.map((row) => row.id);
+    const revealedUnderInner = rows.filter(
+      (row) => row.parentId !== undefined && innerHeaderIds.includes(row.parentId)
+    );
+    expect(revealedUnderInner).toHaveLength(0);
   });
 
   describe('either order (D25)', () => {

@@ -234,6 +234,32 @@ function fHidesColumn(columnId: string, displayName: string): Feature<Store, NoM
   );
 }
 
+/** Stamps `parentId: 1` on row id 2 via the `'tree'` render stage — mimics a synthesizing
+ * feature nesting one row beneath another, without a real tree feature. */
+function fParentsSecondRow(displayName: string): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        renderStages: {
+          tree: (rows) => rows.map((row) => (row.id === 2 ? { ...row, parentId: 1 } : row)),
+        },
+      })
+    )
+  );
+}
+
+function fExpandedRows(ids: readonly RowId[], displayName: string): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        expandedRows: signal(new Set<RowId>(ids)).asReadonly(),
+      })
+    )
+  );
+}
+
 // --- hook fixtures -----------------------------------------------------------------------
 
 function fSetup(label: string, order: string[]): Feature<Store, NoMembers> {
@@ -433,6 +459,34 @@ describe('composeFeatures', () => {
       expect(store.a()).toBe(30);
       expect(store.twice()).toBe(60);
       expect(store.thrice()).toBe(90);
+    });
+  });
+
+  describe('expandedRows (ADR-0017)', () => {
+    it('case 18 — an inner expandedRows contribution reaches the outer engine\'s prune', () => {
+      const data = signal([...mockRows]);
+
+      // Row 2 is parented under row 1, but nothing is contributed as expanded — the outer
+      // engine's terminal prune should hide it. If `foldInnerFeatures` dropped the inner
+      // `expandedRows` contribution (the ADR-0017 regression this guards), the composite would
+      // register no contributor at all and the prune would be a no-op, wrongly keeping row 2.
+      const store = makeStore(
+        data,
+        composeFeatures(fParentsSecondRow('fParentsSecondRow'), fExpandedRows([99], 'fExpandedRows'))
+      );
+
+      expect(store.renderRows().map((row) => row.id)).toEqual([1, 3]);
+    });
+
+    it('case 19 — the composite\'s union includes the parent id, so the child survives', () => {
+      const data = signal([...mockRows]);
+
+      const store = makeStore(
+        data,
+        composeFeatures(fParentsSecondRow('fParentsSecondRow'), fExpandedRows([1], 'fExpandedRows'))
+      );
+
+      expect(store.renderRows().map((row) => row.id)).toEqual([1, 2, 3]);
     });
   });
 

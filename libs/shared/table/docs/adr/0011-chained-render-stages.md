@@ -5,7 +5,16 @@
 **Related:** [ADR-0003](0003-in-house-table-store-engine.md) (introduced the single-claim slot),
 [ADR-0005](0005-generic-table-host.md) (central `index` assignment),
 [ADR-0007](0007-feature-member-claims.md) (member claims),
-[ADR-0012](0012-split-expansion-into-panel-and-tree.md) (consumes this mechanism)
+[ADR-0012](0012-split-expansion-into-panel-and-tree.md) (consumes this mechanism),
+[ADR-0017](0017-engine-owned-descendant-prune.md) (partially supersedes — see note below)
+
+**Partially superseded by [ADR-0017](0017-engine-owned-descendant-prune.md) (2026-09-16).** This
+ADR's chained-stage model stands unchanged — stages still compose through `RENDER_ORDER`, still
+resolve as an ordered fold. What's amended is decision 4's allocation of stage responsibilities:
+it assumed every render stage is feature-claimable through `SlotRegistry`. ADR-0017 adds
+`'prune'`, an engine-owned terminal stage no feature can claim (enforced by excluding it from the
+`RenderStages` key union rather than through `SlotRegistry`). The chaining mechanism this ADR
+introduced is exactly what makes that addition possible — see ADR-0017 for the stage itself.
 
 `renderRows` (`TRow[] → RenderRow<TRow>[]`) was single-claim: only one feature could ever reshape
 render rows, so `withGrouping()` (inserts group headers), `withPagination()` (slices a window),

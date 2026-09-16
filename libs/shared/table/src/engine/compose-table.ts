@@ -2,7 +2,7 @@ import { computed, DestroyRef, effect, inject } from '@angular/core';
 import type { AnyTableFeature, RowId, TableStore } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
 import { PIPELINE_ORDER } from './pipeline';
-import { RENDER_ORDER } from './render-stages';
+import { CLAIMABLE_RENDER_STAGES } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
@@ -101,7 +101,7 @@ function foldFeatures<TRow>(
     }
 
     if (spec.renderStages) {
-      for (const stage of RENDER_ORDER) {
+      for (const stage of CLAIMABLE_RENDER_STAGES) {
         const transform = spec.renderStages[stage];
         if (!transform) {
           continue;
@@ -120,6 +120,11 @@ function foldFeatures<TRow>(
 
     if (spec.columnRules) {
       handle.columnRules.push(...spec.columnRules);
+    }
+
+    // Accumulates rather than single-claims — see `TableFeatureSpec.expandedRows` (ADR-0017).
+    if (spec.expandedRows) {
+      handle.expandedSources.push(spec.expandedRows);
     }
 
     if (spec.setup) {

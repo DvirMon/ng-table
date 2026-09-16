@@ -71,13 +71,15 @@ function isRowIdArray(value: unknown): value is readonly RowId[] {
   return Array.isArray(value);
 }
 
-/** Wraps a raw `TRow` child as an unstamped render row, at its parent's `depth + 1`. */
+// Wraps a raw `TRow` child as an unstamped render row at its parent's `depth + 1`, carrying the
+// parent's id so a child always knows its parent.
 function toChildRenderRow<TRow>(
   row: TRow,
   depth: number,
-  trackBy: TrackByFn<TRow>
+  trackBy: TrackByFn<TRow>,
+  parentId: RowId
 ): Omit<RenderRow<TRow>, 'index'> {
-  return { id: trackBy(row), depth, kind: 'row', data: row };
+  return { id: trackBy(row), depth, kind: 'row', data: row, parentId };
 }
 
 /**
@@ -114,7 +116,7 @@ function buildTreeStage<TRow>(
       return [self];
     }
     const nested = children.flatMap((child) =>
-      expandRow(toChildRenderRow(child, row.depth + 1, trackBy), expanded)
+      expandRow(toChildRenderRow(child, row.depth + 1, trackBy, row.id), expanded)
     );
     return [self, ...nested];
   }
@@ -239,6 +241,9 @@ function buildExpansionSpec<TRow>(
     renderStages: {
       tree: buildTreeStage(input.trackBy, expandedRows, childrenAccessor, isExpandable),
     },
+    // Read-only hand-off of the feature's own set to the engine's terminal `'prune'` render
+    // stage (ADR-0017) — unioned with every other contributor in `engine/core.ts`.
+    expandedRows: expandedRows.asReadonly(),
     onDestroy: () => rowExpandedSource.complete(),
     onRowsRemoved,
   };

@@ -61,6 +61,12 @@ export interface RenderRow<TRow> {
   // id (`engine/core.ts`). `undefined` for synthesized rows (`kind: 'group'`, or any row a
   // render stage fabricates) — there is no `data()` entry to point to.
   readonly sourceIndex?: number;
+
+  // The id of the render row this one was synthesized beneath — the group header for a cluster
+  // member, the parent row for a tree child. Set by the synthesizing stage at emit time;
+  // `undefined` on a top-level row and whenever nothing nests. Opaque: never parsed back apart,
+  // since a group id's separators differ from a tree id's.
+  readonly parentId?: RowId;
 }
 
 export interface ColumnDef<TRow = unknown> {

@@ -68,6 +68,13 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
   renderStages?: RenderStages<TRow>;
 
   /**
+   * Ids this feature currently considers expanded, exposed read-only for the engine's
+   * terminal prune stage. Unlike every other slot, contributions from multiple features
+   * accumulate rather than single-claim. See ADR-0012, ADR-0017.
+   */
+  expandedRows?: Signal<ReadonlySet<RowId>>;
+
+  /**
    * Rule entries this feature contributes to the `columns` fold. Additive only — not claimed
    * via `SlotRegistry`, so two features touching the same column both apply.
    */
