@@ -17,38 +17,12 @@ import type { InvoiceRow } from '../fixtures/types';
 import { matchesStatus, toggleOption } from '../fixtures/utils';
 
 /**
- * Stated, not computed. `withSelection()` retains a row that a filter moved out of view, but no
- * shipped signal reports how many selected rows are currently hidden — so the story says the
- * signal is missing instead of faking one in the host. It stops rendering on its own once the
- * read-side count lands.
- */
-const HIDDEN_SELECTION_NOTICE =
-  'A filter is active. Rows selected before it was applied are still selected — but no shipped ' +
-  'signal reports how many of them are currently out of view, so this story cannot show that ' +
-  'count. Tracked in 1-state/work/computed-state-mechanism/1-intake.md and 0-product/selection.md §2.5.';
-
-/**
  * Selection under an active filter — `withFiltering()` + `withSelection()` + `withSorting()`.
- *
- * **Two select-all buttons, co-equal and separately named.** `selectAllIds(table)` scopes to
- * `rows()` — post-filter, post-sort — and `selectAllIds(table, { includeHidden: true })` scopes
- * to the whole dataset. Deliberately TanStack's shape: it is the only library exposing both
- * scopes as first-class named calls rather than one flag with a chosen default, and there is no
- * convergent default to inherit. Every peer has shipped the wrong one at least once.
- *
- * **The header checkbox's denominator is an open question.** Its tri-state reads `all` while
- * selected-but-hidden rows exist, because `selectionStateOf(selectAllIds(table))` counts against
- * the visible set. That is rendered on purpose: no library researched has answered which
- * denominator is right, and the one open PR on the subject is still unmerged.
- *
- * **Retention is a rejected convention, not an unconsidered default.** MUI X documents the
- * opposite behaviour — "selected rows that do not pass the filtering criteria are automatically
- * deselected". Here the selection survives the filter and comes back exactly as it was when the
- * filter clears: nothing added, nothing lost.
- *
- * Two things separate "the row moved" from "the row left": sorting reorders rows and changes no
- * selection at all, while **deleting** a selected row drops it from the count even when it was
- * filtered out at the time. Retention and pruning are the same mechanism from two sides.
+ * Two select-all buttons: `selectAllIds(table)` scopes to `rows()` (post-filter/sort);
+ * `{ includeHidden: true }` scopes to the whole dataset. Selection survives the filter and
+ * restores exactly as it was when cleared; sorting never touches it, only deleting a row prunes
+ * it. Peer-library comparisons and open questions:
+ * `docs/0-product/selection.md` §1.4, §2.3, §2.4, §2.5.
  */
 @Component({
   selector: 'ngp-selection-filtering-story-host',
@@ -79,7 +53,6 @@ export class SelectionFilteringStoryHostComponent {
 
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly tagOptions = TAG_OPTIONS;
-  protected readonly hiddenSelectionNotice = HIDDEN_SELECTION_NOTICE;
 
   /** The row the delete control acts on — picked from the whole dataset, so a row currently
    * filtered out is reachable. */
@@ -100,10 +73,7 @@ export class SelectionFilteringStoryHostComponent {
   protected readonly selectedIdsLabel = computed(() =>
     [...this.table.selectedRows()].join(', '),
   );
-
-  protected isSelected(id: RowId): boolean {
-    return this.table.selectedRows().has(id);
-  }
+  protected readonly selectedTagSet = computed(() => new Set(this.filters.tags().value()));
 
   protected toggleRow(id: RowId): void {
     this.table.toggle(id);
@@ -156,10 +126,6 @@ export class SelectionFilteringStoryHostComponent {
     this.filters
       .tags()
       .value.update((selected) => toggleOption(selected, tag, this.tagOptions));
-  }
-
-  protected isTagSelected(tag: string): boolean {
-    return this.filters.tags().value().includes(tag);
   }
 
   protected clearAllFilters(): void {

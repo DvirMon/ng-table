@@ -61,7 +61,7 @@
           <label>
             <input
               type="checkbox"
-              [checked]="isExcludedTag(tag)"
+              [checked]="excludedTagSet().has(tag)"
               (change)="toggleExcludedTag(tag)"
             />
             {{ tag }}
@@ -79,7 +79,7 @@
     <span class="story-host__counter">requests issued: {{ requestCount() }}</span>
   </div>
 
-  @if (isLoading()) {
+  @if (invoices.isLoading()) {
     <p class="filtering-story__empty" role="status">Loading invoices…</p>
   } @else if (loadError(); as message) {
     <p class="filtering-story__empty" role="status">

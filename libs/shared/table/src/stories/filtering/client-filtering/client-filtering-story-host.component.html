@@ -85,7 +85,7 @@
           <label>
             <input
               type="checkbox"
-              [checked]="isIncludedTag(tag)"
+              [checked]="includedTagSet().has(tag)"
               (change)="toggleIncludedTag(tag)"
             />
             {{ tag }}
@@ -104,7 +104,7 @@
           <label>
             <input
               type="checkbox"
-              [checked]="isExcludedTag(tag)"
+              [checked]="excludedTagSet().has(tag)"
               (change)="toggleExcludedTag(tag)"
             />
             {{ tag }}
@@ -134,8 +134,20 @@
     </span>
   </div>
 
-  @if (savedFilterNotice(); as notice) {
-    <p class="filtering-story__notice" role="status">{{ notice }}</p>
+  @switch (savedFilterLoad()) {
+    @case ('raw') {
+      <p class="filtering-story__notice" role="status">
+        Raw load: the saved `status: "archived"` was applied verbatim and matches no row, so the
+        table looks broken rather than empty-because-you-asked. The renamed `amount` keys read as
+        an empty range and narrow nothing at all — silently.
+      </p>
+    }
+    @case ('guarded') {
+      <p class="filtering-story__notice" role="status">
+        Guarded load: `status: "archived"` and the renamed `amount` keys failed their shape check
+        and were dropped back to their declared defaults; `customer` survived.
+      </p>
+    }
   }
 
   @if (tagsPredicateIsBroken()) {
@@ -144,7 +156,7 @@
       before any predicate runs — and the tag filter stops narrowing: the result set gets
       <strong>wider</strong>, every other filter keeps narrowing, and the table never goes down.
     </p>
-    @for (report of filterReports(); track $index) {
+    @for (report of filterReports.entries(); track $index) {
       <p class="filtering-story__notice filtering-story__notice--report">{{ report }}</p>
     }
   }
@@ -176,7 +188,7 @@
             <td class="story-host__cell">{{ invoice.customer }}</td>
             <td class="story-host__cell">{{ invoice.status }}</td>
             <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
-            <td class="story-host__cell">{{ issuedLabel(invoice) }}</td>
+            <td class="story-host__cell">{{ invoice.issuedAt | invoiceIssuedAt }}</td>
             <td class="story-host__cell">
               @for (tag of invoice.tags; track tag) {
                 <span class="filtering-story__tag">{{ tag }}</span>

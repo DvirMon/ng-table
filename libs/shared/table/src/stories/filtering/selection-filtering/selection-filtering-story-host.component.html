@@ -60,7 +60,11 @@
       <div class="filtering-story__checks">
         @for (tag of tagOptions; track tag) {
           <label>
-            <input type="checkbox" [checked]="isTagSelected(tag)" (change)="toggleTag(tag)" />
+            <input
+              type="checkbox"
+              [checked]="selectedTagSet().has(tag)"
+              (change)="toggleTag(tag)"
+            />
             {{ tag }}
           </label>
         }
@@ -78,7 +82,12 @@
   </div>
 
   @if (filters().isActive()) {
-    <p class="filtering-story__notice" role="status">{{ hiddenSelectionNotice }}</p>
+    <p class="filtering-story__notice" role="status">
+      A filter is active. Rows selected before it was applied are still selected — but no shipped
+      signal reports how many of them are currently out of view, so this story cannot show that
+      count. Tracked in 1-state/work/computed-state-mechanism/1-intake.md and
+      0-product/selection.md §2.5.
+    </p>
   }
 
   <table class="story-host__table" [ngpTable]="table">
@@ -101,7 +110,7 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @if (row.data; as invoice) {
-          @let isRowSelected = isSelected(row.id);
+          @let isRowSelected = table.selectedRows().has(row.id);
 
           <tr
             [ngpTableRow]="row"

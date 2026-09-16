@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { createFilters } from '../../../filters/create-filters';
 import {
@@ -26,28 +26,12 @@ import {
   matchesInvoiceNumber,
   matchesStatus,
   matchesTagCriterion,
-  toDateInputValue,
   toggleOption,
 } from '../fixtures/utils';
-
-/** One entry of the summary row, read from the filter nodes rather than a host copy. */
-interface ActiveCriterion {
-  readonly key: ClientFilterKey;
-  readonly label: string;
-}
-
-/** Declared once so the summary row and its × buttons stay typed — `Object.entries()` over
- * `criteria()` would hand back a bare `string` key that cannot index the filter set. */
-const CLIENT_FILTER_KEYS = [
-  'status',
-  'customer',
-  'amount',
-  'issuedAt',
-  'tags',
-  'search',
-] as const;
-
-type ClientFilterKey = (typeof CLIENT_FILTER_KEYS)[number];
+import { FILTERING_STORY_PIPES } from '../filtering-story.pipes';
+import { createFilterReportLog } from './filter-report-log';
+import { CLIENT_FILTER_KEYS } from './client-filtering.types';
+import type { ActiveCriterion, ClientFilterKey, SavedFilterLoad } from './client-filtering.types';
 
 /** The `amount` default the story's `Reset to defaults` restores and `Clear all` does not.
  * Without a declared `source` the two buttons would be indistinguishable. */
@@ -107,47 +91,17 @@ function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriter
  * predicate term, `withFiltering({ predicates: () => [filters().matcher()] })`, client side,
  * synchronous, no MSW.
  *
- * **The declaration is in the host, not a fixture.** `createFilters()` reads like
- * `createTable()` directly above it, because the schema callback is the thing a consumer
- * actually writes. Only the row data, the option lists and the table config come from
- * `fixtures/`.
+ * `form(this.filters().value)` puts Signal Forms directly over the criterion model — no adapter,
+ * no second model, no sync effect. The status select uses `filter()` with `{ emptyValue: '' }`
+ * rather than `equals()`, since a native `<select>`'s only expressible empty is `''`. The tag
+ * multi-select is hand-wired because a checkbox group is several elements, not one control value.
  *
- * **The criterion model is the form model.** `form(this.filters().value)` puts Signal Forms
- * over the filter state itself — no adapter, no second model, no sync effect. Text, number and
- * date inputs bind straight to a criterion through `[formField]`, including the nullable range
- * bounds: Signal Forms maps an empty number box to `null` and back, which is exactly
- * `inRange`'s empty value, so emptying a box stops it narrowing with no story-local guard.
- *
- * **The status select binds too, because its empty criterion is declared.**
- * `filter(path.status, matchesStatus, { emptyValue: '' })` makes `''` an empty value, which is
- * the only empty a native `<select>` can express — so `<option value="">any</option>` deactivates
- * the filter rather than leaving it permanently active. `filter()` rather than `equals()`: an
- * `equals` criterion always carries the rule's own `null` alongside any declared empty, and a
- * `<select>` control value is a `string`. Only the tag multi-select stays hand-wired: a checkbox
- * group is several elements, not one control value, so it writes through `filters.tags().value`.
- *
- * Shape follows what peer libraries converged on rather than an invented layout: per-column
- * inputs in an always-visible filter row, the quick filter in a toolbar above the table. The
- * quick filter's paths are **declared** (PrimeNG's shape), not scanned (AG Grid's), so its
- * nullable and numeric legs return `false` instead of throwing on a non-string cell.
- *
- * Two deliberate deviations from every peer researched, both visible on canvas: `Reset to
- * defaults` (`reset()`) and `Clear all` (`reset(null)`) are different buttons — no peer has a
- * reset-to-source concept — and a throwing filter predicate **widens** the result set with one
- * report per evaluation instead of taking the table down (ADR-0014).
- *
- * Option lists come from `TAG_OPTIONS`/`STATUS_OPTIONS`, hand-supplied: `this.data` passed to
- * `createFilters()` is an inference anchor the library never reads, so distinct values are still
- * never derived from the rows. A person cannot tell a derived dropdown from a hardcoded one by
- * looking, so this says which it is.
- *
- * "No matches" and "no data" are two states, not one. AG Grid and MUI X both ship two separate
- * overlays for exactly this reason, and both warn about the stale-rows trap behind conflating
- * them (ag-grid#3716).
+ * Peer-library comparisons and ADR-0014 (broken-predicate behavior) live in
+ * `docs/0-product/filtering.md`, not here.
  */
 @Component({
   selector: 'ngp-client-filtering-story-host',
-  imports: [FormField, NgpTableDirective, NgpTableRowDirective],
+  imports: [FormField, NgpTableDirective, NgpTableRowDirective, ...FILTERING_STORY_PIPES],
   templateUrl: './client-filtering-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
 })
@@ -194,8 +148,20 @@ export class ClientFilteringStoryHostComponent {
   protected readonly tagOptions = TAG_OPTIONS;
 
   /** The library's own degradation reports, mirrored onto the canvas. */
-  protected readonly filterReports = signal<readonly string[]>([]);
-  protected readonly savedFilterNotice = signal<string | null>(null);
+  protected readonly filterReports = createFilterReportLog();
+
+  protected readonly savedFilterLoad = signal<SavedFilterLoad>(null);
+
+  protected readonly includedTagSet = computed(
+    () => new Set(this.filters.tags().value().include),
+  );
+  protected readonly excludedTagSet = computed(
+    () => new Set(this.filters.tags().value().exclude),
+  );
+
+  protected readonly isEveryTagIncluded = computed(
+    () => this.includedTagSet().size === this.tagOptions.length,
+  );
 
   /** Labels only — the per-key and root booleans are shipped members, read straight from the
    *  template (`filters.status().isActive()`, `filters().isActive()`). */
@@ -212,12 +178,6 @@ export class ClientFilteringStoryHostComponent {
   protected readonly isFilteredToNothing = computed(
     () => this.filters().isActive() && this.matchCount() === 0 && !this.hasNoData(),
   );
-
-  private readonly destroyRef = inject(DestroyRef);
-
-  constructor() {
-    this.captureFilterReports();
-  }
 
   /** Hand-wired: a tag multi-select is a set, not a single control value. */
   protected toggleIncludedTag(tag: string): void {
@@ -242,32 +202,6 @@ export class ClientFilteringStoryHostComponent {
     }));
   }
 
-  protected isEveryTagIncluded(): boolean {
-    return this.filters.tags().value().include.length === this.tagOptions.length;
-  }
-
-  protected isIncludedTag(tag: string): boolean {
-    return this.filters.tags().value().include.includes(tag);
-  }
-
-  protected isExcludedTag(tag: string): boolean {
-    return this.filters.tags().value().exclude.includes(tag);
-  }
-
-  /** Renders the time of day when a row carries one — the 16:45 invoice is why a same-day `to`
-   * bound excludes it, and a cell showing only the date would hide the reason. */
-  protected issuedLabel(invoice: InvoiceRow): string {
-    const issuedAt = invoice.issuedAt;
-    const day = toDateInputValue(issuedAt);
-    const hasTimeOfDay = issuedAt.getHours() !== 0 || issuedAt.getMinutes() !== 0;
-    if (!hasTimeOfDay) {
-      return day;
-    }
-    const hours = String(issuedAt.getHours()).padStart(2, '0');
-    const minutes = String(issuedAt.getMinutes()).padStart(2, '0');
-    return `${day} ${hours}:${minutes}`;
-  }
-
   /** One summary entry's ×. Empties that criterion alone; the rest keep narrowing. */
   protected clearCriterion(key: ClientFilterKey): void {
     this.filters[key]().reset(null);
@@ -276,18 +210,18 @@ export class ClientFilteringStoryHostComponent {
   /** `reset()` — back to every declared `source`. The amount filter has one, so this is not
    * the same as emptying. */
   protected resetToDefaults(): void {
-    this.savedFilterNotice.set(null);
+    this.savedFilterLoad.set(null);
     this.filters().reset();
   }
 
   /** `reset(null)` — empty. Every peer's "Clear" means this one. */
   protected clearAllFilters(): void {
-    this.savedFilterNotice.set(null);
+    this.savedFilterLoad.set(null);
     this.filters().reset(null);
   }
 
   protected toggleTagsPredicate(): void {
-    this.filterReports.set([]);
+    this.filterReports.clear();
     this.tagsPredicateIsBroken.update((isBroken) => !isBroken);
   }
 
@@ -302,19 +236,12 @@ export class ClientFilteringStoryHostComponent {
    */
   protected loadSavedFilterRaw(): void {
     this.filters().reset(STALE_SAVED_FILTER as Partial<ClientCriteria>);
-    this.savedFilterNotice.set(
-      'Raw load: the saved `status: "archived"` was applied verbatim and matches no row, so the ' +
-        'table looks broken rather than empty-because-you-asked. The renamed `amount` keys read ' +
-        'as an empty range and narrow nothing at all — silently.',
-    );
+    this.savedFilterLoad.set('raw');
   }
 
   protected loadSavedFilterGuarded(): void {
     this.filters().reset(keepValidCriteria(STALE_SAVED_FILTER));
-    this.savedFilterNotice.set(
-      'Guarded load: `status: "archived"` and the renamed `amount` keys failed their shape ' +
-        'check and were dropped back to their declared defaults; `customer` survived.',
-    );
+    this.savedFilterLoad.set('guarded');
   }
 
   protected emptyTheData(): void {
@@ -323,26 +250,5 @@ export class ClientFilteringStoryHostComponent {
 
   protected restoreTheData(): void {
     this.data.set(INVOICE_ROWS_MOCK);
-  }
-
-  /**
-   * Mirrors the library's `[createFilters]` degradation reports onto the canvas. The evaluator
-   * reports through `console.error` and offers no observable channel, so proving "once per
-   * evaluation, not once per row" means reading them from there. Deferred a tick because the
-   * report fires inside the pipeline's own `computed()`, where a signal write is illegal.
-   * Restored on destroy.
-   */
-  private captureFilterReports(): void {
-    const originalError = console.error;
-    console.error = (...args: unknown[]): void => {
-      originalError(...args);
-      const [message] = args;
-      if (typeof message === 'string' && message.startsWith('[createFilters]')) {
-        setTimeout(() => this.filterReports.update((reports) => [...reports, message]));
-      }
-    };
-    this.destroyRef.onDestroy(() => {
-      console.error = originalError;
-    });
   }
 }
