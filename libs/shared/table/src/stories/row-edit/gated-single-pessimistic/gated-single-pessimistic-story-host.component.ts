@@ -19,6 +19,7 @@ import { injectRowEditApi } from '../fixtures/http';
 import { containFocusTab } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
 import { createRowFlags } from '../ui/row-flags';
+import { InsertRowToolbarComponent } from '../ui/insert-row-toolbar.component';
 
 /**
  * Single-row gated editing, pessimistic
@@ -32,7 +33,7 @@ import { createRowFlags } from '../ui/row-flags';
  */
 @Component({
   selector: 'ngp-gated-single-pessimistic-story-host',
-  imports: [FormField, NgpTableRowFieldDirective],
+  imports: [FormField, NgpTableRowFieldDirective, InsertRowToolbarComponent],
   templateUrl: './gated-single-pessimistic-story-host.component.html',
   styleUrl: '../../styles/story-host.css',
 })
@@ -49,19 +50,18 @@ export class GatedSinglePessimisticStoryHostComponent {
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
   protected readonly rows = form(this.table.draft, editRowsWithUniqueNameSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
-  protected readonly insertAt = signal(0);
 
   protected readonly flags = createRowFlags();
 
   /** One add path (D36/D42): `beginEdit({ insert })` opens the row with a real-value snapshot,
    * same as `beginEdit` on an existing row. Discard-vs-reset is no longer chosen here — it's a
    * Cancel choice available on any open row, not something tied to how the row was added. */
-  protected addBlankRow(): void {
+  protected addBlankRow(insertAt = 0): void {
     const id = crypto.randomUUID();
     this.table.editing.update(
       beginEdit(id, {
         insert: { id, name: '', dept: DEPT_OPTIONS[0] },
-        at: this.insertAt(),
+        at: insertAt,
       }),
     );
     this.flags.markPendingCreate(id);

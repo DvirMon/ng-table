@@ -19,6 +19,7 @@ import type { EditRow } from '../fixtures/types';
 import { createRowFlags } from '../ui/row-flags';
 import { createUndoWindow } from './undo-window';
 import { createPendingAnnouncer } from './pending-announcer';
+import { LiveOptimisticToolbarComponent } from './live-optimistic-toolbar.component';
 
 /** How long a delete's Undo affordance stays live before its restore point is released. */
 const UNDO_WINDOW_MS = 6000;
@@ -36,7 +37,7 @@ const UNDO_WINDOW_MS = 6000;
  */
 @Component({
   selector: 'ngp-live-optimistic-story-host',
-  imports: [FormField, FocusNewRowDirective],
+  imports: [FormField, FocusNewRowDirective, LiveOptimisticToolbarComponent],
   templateUrl: './live-optimistic-story-host.component.html',
   styleUrl: '../../styles/story-host.css',
   host: {
@@ -55,7 +56,6 @@ export class LiveOptimisticStoryHostComponent {
   protected readonly saveError = signal<string | null>(null);
   protected readonly leavePagePendingCount = signal<number | null>(null);
   protected readonly announcement = createPendingAnnouncer(this.liveTable.pending);
-  protected readonly insertAt = signal(0);
   /** Demo-only per-row UI flags; only `pendingCreateIds` is used here — `save` reads it to
    * decide `POST` vs `PUT`. */
   protected readonly flags = createRowFlags();
@@ -70,12 +70,12 @@ export class LiveOptimisticStoryHostComponent {
 
   /** Inserts a blank row under a temp client id — nothing is saved yet; the row's first blur
    * (`save()`) is what actually creates it. */
-  protected addRow(): void {
+  protected addRow(insertAt = 0): void {
     const id = crypto.randomUUID();
     this.newRowId.set(id);
     this.flags.markPendingCreate(id);
     this.liveTable.value.update(
-      insertRow<EditRow>({ id, name: '', dept: DEPT_OPTIONS[0] }, { at: this.insertAt() }),
+      insertRow<EditRow>({ id, name: '', dept: DEPT_OPTIONS[0] }, { at: insertAt }),
     );
   }
 

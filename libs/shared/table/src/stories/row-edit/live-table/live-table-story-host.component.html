@@ -14,56 +14,48 @@
 
   <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
 
-  <div class="story-host__toolbar">
-    <label>
-      at:
-      <input
-        type="number"
-        [value]="insertAt()"
-        (input)="insertAt.set($any($event.target).valueAsNumber)"
-      />
-    </label>
-    <button type="button" (click)="insertRow()">Add row</button>
-    <button type="button" (click)="table.toggleSort('name')">
-      Sort name
-      @switch (table.sortDirections().get('name')) {
-        @case ('asc') {
-          ▲
-        }
-        @case ('desc') {
-          ▼
-        }
-        @default {
-          ↕
-        }
-      }
-    </button>
-    <button type="button" (click)="table.toggleSort('dept')">
-      Sort dept
-      @switch (table.sortDirections().get('dept')) {
-        @case ('asc') {
-          ▲
-        }
-        @case ('desc') {
-          ▼
-        }
-        @default {
-          ↕
-        }
-      }
-    </button>
-    @if (undoLabel(); as label) {
-      <button type="button" [attr.aria-label]="label" (click)="undoLastAction()">Undo</button>
-    }
-    <ngp-commit-counter [data]="data()" />
-    <span class="story-host__shortcut-hint">⌘Z / Ctrl+Z — undo last change</span>
-  </div>
+  <ngp-live-table-toolbar
+    [undoLabel]="undoLabel()"
+    (insertRow)="insertRow($event)"
+    (undoLastAction)="undoLastAction()"
+  />
+  <ngp-commit-counter [data]="data()" />
 
   <table class="story-host__table" [ngpFocusNewRow]="newRowId()">
     <thead>
       <tr>
-        <th class="story-host__cell">name</th>
-        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell" [attr.aria-sort]="nameSortAria()">
+          <button type="button" class="story-host__sort-button" (click)="table.toggleSort('name')">
+            name
+            @switch (table.sortDirections().get('name')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
+        <th class="story-host__cell" [attr.aria-sort]="deptSortAria()">
+          <button type="button" class="story-host__sort-button" (click)="table.toggleSort('dept')">
+            dept
+            @switch (table.sortDirections().get('dept')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
         <th class="story-host__cell story-host__cell--actions">
           <span class="sr-only">actions</span>
         </th>

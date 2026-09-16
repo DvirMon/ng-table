@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { discardEdit, releaseEdit, revertEdit } from '../../../mutations/optimistic-mutations';
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
@@ -11,7 +11,8 @@ import { createRowHoldProbe } from './row-hold-probe';
 import { SORT_EDIT_ROWS_MOCK } from './sorting-editing.mock';
 import { sortEditTableConfig, sortEditRowsSchema } from './sorting-editing.schema';
 import type { SortEditRow } from './sorting-editing.types';
-import { saveSortEditRow } from './sorting-editing.utils';
+import { saveSortEditRow, sortAriaValue } from './sorting-editing.utils';
+import { SortingEditingToolbarComponent } from './sorting-editing-toolbar.component';
 import { createTable } from '../../../api/create-table';
 import { withSorting } from '../../../api/features/with-sorting';
 import { withRowEdit } from '../../../api/features/with-row-edit';
@@ -34,6 +35,7 @@ import { withRowEdit } from '../../../api/features/with-row-edit';
     NgpTableRowDirective,
     NgpTableRowFieldDirective,
     NullableTextFieldDirective,
+    SortingEditingToolbarComponent,
   ],
   templateUrl: './sorting-editing-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', './sorting-editing-flip.css'],
@@ -46,6 +48,13 @@ export class SortingEditingStoryHostComponent {
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
   protected readonly rows = form(this.table.draft, sortEditRowsSchema);
   protected readonly saveError = signal<string | null>(null);
+
+  /** Header `[attr.aria-sort]` values for the two sortable columns — derived so the `<th>` glyph
+   * and screen-reader state agree with `table.sortDirections()`. */
+  protected readonly nameSortAria = computed(() => sortAriaValue(this.table.sortDirections().get('name')));
+  protected readonly dueDateSortAria = computed(() =>
+    sortAriaValue(this.table.sortDirections().get('dueDate')),
+  );
 
   /** S-1 regression demo (OQ-3, not implemented): observes whether a currently-open row moves
    * from the render position it held when opened — expected to fire today the moment a sorted

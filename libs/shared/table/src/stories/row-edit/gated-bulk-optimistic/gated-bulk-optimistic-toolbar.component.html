@@ -1,0 +1,13 @@
+<div class="story-host__toolbar">
+  <label>
+    count:
+    <input type="number" min="1" [value]="count()" (input)="setCount($event)" />
+  </label>
+  <label>
+    at:
+    <input type="number" [value]="insertAt()" (input)="setInsertAt($event)" />
+  </label>
+  <button type="button" (click)="emitAddBulkRows()">Add N rows</button>
+  <button type="button" (click)="saveBatch.emit()">Save batch</button>
+  <button type="button" (click)="discardAllPending.emit()">Discard all pending</button>
+</div>

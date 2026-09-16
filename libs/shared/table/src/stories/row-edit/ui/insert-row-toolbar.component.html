@@ -1,0 +1,7 @@
+<div class="story-host__toolbar">
+  <label>
+    at:
+    <input type="number" [value]="insertAt()" (input)="setInsertAt($event)" />
+  </label>
+  <button type="button" (click)="emitAddRow()">Add row</button>
+</div>

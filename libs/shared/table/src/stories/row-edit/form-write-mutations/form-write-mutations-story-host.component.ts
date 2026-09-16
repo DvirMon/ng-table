@@ -1,4 +1,3 @@
-import { JsonPipe } from '@angular/common';
 import { Component, computed, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
@@ -11,6 +10,7 @@ import { withRowEdit } from '../../../api/features/with-row-edit';
 import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { saveRowPessimistic } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
+import { FormWriteMutationsToolbarComponent } from './form-write-mutations-toolbar.component';
 
 /**
  * Row mutations via raw form writes
@@ -24,7 +24,7 @@ import type { EditRow } from '../fixtures/types';
  */
 @Component({
   selector: 'ngp-form-write-mutations-story-host',
-  imports: [FormField, JsonPipe, NgpTableRowFieldDirective],
+  imports: [FormField, NgpTableRowFieldDirective, FormWriteMutationsToolbarComponent],
   templateUrl: './form-write-mutations-story-host.component.html',
   styleUrl: '../../styles/story-host.css',
 })

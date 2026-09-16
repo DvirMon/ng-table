@@ -19,6 +19,7 @@ import { injectRowEditApi } from '../fixtures/http';
 import { containFocusTab } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
 import { createRowFlags } from '../ui/row-flags';
+import { GatedMultipleOptimisticToolbarComponent } from './gated-multiple-optimistic-toolbar.component';
 import type { SaveAllOutcome } from './gated-multiple-optimistic.types';
 
 /**
@@ -33,7 +34,7 @@ import type { SaveAllOutcome } from './gated-multiple-optimistic.types';
  */
 @Component({
   selector: 'ngp-gated-multiple-optimistic-story-host',
-  imports: [FormField, NgpTableRowFieldDirective],
+  imports: [FormField, NgpTableRowFieldDirective, GatedMultipleOptimisticToolbarComponent],
   templateUrl: './gated-multiple-optimistic-story-host.component.html',
   styleUrl: '../../styles/story-host.css',
 })
@@ -50,7 +51,6 @@ export class GatedMultipleOptimisticStoryHostComponent {
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
   protected readonly rows = form(this.table.draft, editRowsWithUniqueNameSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
-  protected readonly insertAt = signal(0);
   protected readonly saveAllOutcome = signal<SaveAllOutcome | null>(null);
 
   /** Demo-only per-row UI bookkeeping — pending-create ids, duplicate-name flags, forced-invalid
@@ -60,12 +60,12 @@ export class GatedMultipleOptimisticStoryHostComponent {
   /** One add path (D36/D42): `beginEdit({ insert })` opens the row with a real-value snapshot,
    * same as `beginEdit` on an existing row. Discard-vs-reset is no longer chosen here — it's a
    * Cancel choice available on any open row, not something tied to how the row was added. */
-  protected addBlankRow(): void {
+  protected addBlankRow(insertAt = 0): void {
     const id = crypto.randomUUID();
     this.table.editing.update(
       beginEdit(id, {
         insert: { id, name: '', dept: DEPT_OPTIONS[0] },
-        at: this.insertAt(),
+        at: insertAt,
       }),
     );
     this.flags.markPendingCreate(id);

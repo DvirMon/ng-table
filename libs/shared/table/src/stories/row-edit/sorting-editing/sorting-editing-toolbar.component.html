@@ -1,0 +1,8 @@
+<div class="story-host__toolbar">
+  <button type="button" (click)="clearSort.emit()">Clear sort</button>
+  <button type="button" (click)="addRowWhileSorted.emit()">Add row while sorted</button>
+  <button type="button" (click)="addRowWithBlankDueDate.emit()">Add row with blank due date</button>
+  @if (saveError(); as message) {
+    <span class="story-host__error" role="status">{{ message }}</span>
+  }
+</div>

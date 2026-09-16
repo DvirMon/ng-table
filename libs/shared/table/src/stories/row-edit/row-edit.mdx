@@ -11,25 +11,41 @@ import * as SortingEditingStories from './sorting-editing/sorting-editing.storie
 import liveBaseClass from './live-table/live-table-story-host.component.ts?raw';
 import liveBaseTemplate from './live-table/live-table-story-host.component.html?raw';
 import liveBaseStyles from './live-table/live-table-story-host.component.css?raw';
+import liveBaseToolbarClass from './live-table/live-table-toolbar.component.ts?raw';
+import liveBaseToolbarTemplate from './live-table/live-table-toolbar.component.html?raw';
 import liveOptimisticClass from './live-optimistic/live-optimistic-story-host.component.ts?raw';
 import liveOptimisticTemplate from './live-optimistic/live-optimistic-story-host.component.html?raw';
+import liveOptimisticToolbarClass from './live-optimistic/live-optimistic-toolbar.component.ts?raw';
+import liveOptimisticToolbarTemplate from './live-optimistic/live-optimistic-toolbar.component.html?raw';
 import gatedSingleOptimisticClass from './gated-single-optimistic/gated-single-optimistic-story-host.component.ts?raw';
 import gatedSingleOptimisticTemplate from './gated-single-optimistic/gated-single-optimistic-story-host.component.html?raw';
 import gatedSinglePessimisticClass from './gated-single-pessimistic/gated-single-pessimistic-story-host.component.ts?raw';
 import gatedSinglePessimisticTemplate from './gated-single-pessimistic/gated-single-pessimistic-story-host.component.html?raw';
+import insertRowToolbarClass from './ui/insert-row-toolbar.component.ts?raw';
+import insertRowToolbarTemplate from './ui/insert-row-toolbar.component.html?raw';
 import gatedMultipleClass from './gated-multiple-optimistic/gated-multiple-optimistic-story-host.component.ts?raw';
 import gatedMultipleTemplate from './gated-multiple-optimistic/gated-multiple-optimistic-story-host.component.html?raw';
+import gatedMultipleToolbarClass from './gated-multiple-optimistic/gated-multiple-optimistic-toolbar.component.ts?raw';
+import gatedMultipleToolbarTemplate from './gated-multiple-optimistic/gated-multiple-optimistic-toolbar.component.html?raw';
 import gatedBulkClass from './gated-bulk-optimistic/gated-bulk-optimistic-story-host.component.ts?raw';
 import gatedBulkTemplate from './gated-bulk-optimistic/gated-bulk-optimistic-story-host.component.html?raw';
+import gatedBulkToolbarClass from './gated-bulk-optimistic/gated-bulk-optimistic-toolbar.component.ts?raw';
+import gatedBulkToolbarTemplate from './gated-bulk-optimistic/gated-bulk-optimistic-toolbar.component.html?raw';
 import formWriteClass from './form-write-mutations/form-write-mutations-story-host.component.ts?raw';
 import formWriteTemplate from './form-write-mutations/form-write-mutations-story-host.component.html?raw';
+import formWriteToolbarClass from './form-write-mutations/form-write-mutations-toolbar.component.ts?raw';
+import formWriteToolbarTemplate from './form-write-mutations/form-write-mutations-toolbar.component.html?raw';
 import externalWriteClass from './external-write/external-write-story-host.component.ts?raw';
 import externalWriteTemplate from './external-write/external-write-story-host.component.html?raw';
 import externalWriteStyles from './external-write/external-write.css?raw';
+import externalWriteToolbarClass from './external-write/external-write-toolbar.component.ts?raw';
+import externalWriteToolbarTemplate from './external-write/external-write-toolbar.component.html?raw';
 import sortingEditingClass from './sorting-editing/sorting-editing-story-host.component.ts?raw';
 import sortingEditingTemplate from './sorting-editing/sorting-editing-story-host.component.html?raw';
 import sortingEditingSchema from './sorting-editing/sorting-editing.schema.ts?raw';
 import sortingEditingStyles from './sorting-editing/sorting-editing-flip.css?raw';
+import sortingEditingToolbarClass from './sorting-editing/sorting-editing-toolbar.component.ts?raw';
+import sortingEditingToolbarTemplate from './sorting-editing/sorting-editing-toolbar.component.html?raw';
 import rowSchema from './fixtures/schema.ts?raw';
 import rowHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
@@ -61,26 +77,40 @@ disappearing. One boolean away from the happy path, so it is a control rather th
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-live-base-source" defaultChecked />
-      HTML
+      TS
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-live-base-source" />
-      TS
+      HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-live-base-source" />
       live-table-story-host.component.css
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" />
+      live-table-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" />
+      live-table-toolbar.component.html
+    </label>
   </div>
   <div className="code-tabs-panels">
-    <div className="code-tabs-panel">
-      <Source code={liveBaseTemplate} language="html" />
-    </div>
     <div className="code-tabs-panel">
       <Source code={liveBaseClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
+      <Source code={liveBaseTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={liveBaseStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveBaseToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveBaseToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -110,19 +140,40 @@ control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-live-optimistic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-live-optimistic-source" />
-      TS
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
+      live-optimistic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
+      live-optimistic-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={liveOptimisticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={liveOptimisticTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={liveOptimisticClass} language="tsx" />
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveOptimisticToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveOptimisticToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -141,19 +192,40 @@ a control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-single-optimistic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-single-optimistic-source" />
-      TS
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
+      insert-row-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
+      insert-row-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={gatedSingleOptimisticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={gatedSingleOptimisticTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={gatedSingleOptimisticClass} language="tsx" />
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -172,19 +244,40 @@ is a control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-single-pessimistic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-single-pessimistic-source" />
-      TS
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
+      insert-row-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
+      insert-row-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={gatedSinglePessimisticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={gatedSinglePessimisticTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={gatedSinglePessimisticClass} language="tsx" />
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -208,19 +301,40 @@ control. One boolean away from the happy path, so it is a control rather than a 
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-multiple-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-multiple-source" />
-      TS
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
+      gated-multiple-optimistic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
+      gated-multiple-optimistic-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={gatedMultipleClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={gatedMultipleTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={gatedMultipleClass} language="tsx" />
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedMultipleToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedMultipleToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -244,19 +358,40 @@ the happy path, so it is a control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-bulk-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-gated-bulk-source" />
-      TS
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
+      gated-bulk-optimistic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
+      gated-bulk-optimistic-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={gatedBulkClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={gatedBulkTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={gatedBulkClass} language="tsx" />
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedBulkToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedBulkToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -271,19 +406,40 @@ the happy path, so it is a control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-form-write-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-form-write-source" />
-      TS
+      story-host.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
+      form-write-mutations-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
+      form-write-mutations-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={formWriteClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={formWriteTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={formWriteClass} language="tsx" />
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={formWriteToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={formWriteToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -298,26 +454,40 @@ the happy path, so it is a control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-external-write-source" defaultChecked />
-      HTML
+      TS
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-external-write-source" />
-      TS
+      HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-external-write-source" />
       external-write.css
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" />
+      external-write-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" />
+      external-write-toolbar.component.html
+    </label>
   </div>
   <div className="code-tabs-panels">
-    <div className="code-tabs-panel">
-      <Source code={externalWriteTemplate} language="html" />
-    </div>
     <div className="code-tabs-panel">
       <Source code={externalWriteClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
+      <Source code={externalWriteTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={externalWriteStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={externalWriteToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={externalWriteToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -332,33 +502,47 @@ the happy path, so it is a control rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-sorting-editing-source" defaultChecked />
-      HTML
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="row-edit-sorting-editing-source" />
       TS
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-sorting-editing-source" />
-      sorting-editing.schema.ts
+      HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="row-edit-sorting-editing-source" />
       sorting-editing-flip.css
     </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      sorting-editing-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      sorting-editing-toolbar.component.html
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      sorting-editing.schema.ts
+    </label>
   </div>
   <div className="code-tabs-panels">
-    <div className="code-tabs-panel">
-      <Source code={sortingEditingTemplate} language="html" />
-    </div>
     <div className="code-tabs-panel">
       <Source code={sortingEditingClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={sortingEditingSchema} language="ts" />
+      <Source code={sortingEditingTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
       <Source code={sortingEditingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingToolbarTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingSchema} language="ts" />
     </div>
   </div>
 </div>

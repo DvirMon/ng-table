@@ -14,31 +14,14 @@
     </p>
   }
 
-  <div class="story-host__toolbar">
-    <label>
-      count:
-      <input
-        type="number"
-        min="1"
-        [value]="ui.count()"
-        (input)="ui.count.set($any($event.target).valueAsNumber)"
-      />
-    </label>
-    <label>
-      at:
-      <input
-        type="number"
-        [value]="ui.insertAt()"
-        (input)="ui.insertAt.set($any($event.target).valueAsNumber)"
-      />
-    </label>
-    <button type="button" (click)="addBulkRows()">Add N rows</button>
-    <button type="button" (click)="saveBatch()">Save batch</button>
-    <button type="button" (click)="discardAllPending()">Discard all pending</button>
-    @if (ui.summary(); as summary) {
-      <span class="story-host__counter" role="status">{{ summary }}</span>
-    }
-  </div>
+  <ngp-gated-bulk-optimistic-toolbar
+    (addBulkRows)="addBulkRows($event)"
+    (saveBatch)="saveBatch()"
+    (discardAllPending)="discardAllPending()"
+  />
+  @if (ui.summary(); as summary) {
+    <span class="story-host__counter" role="status">{{ summary }}</span>
+  }
 
   <table class="story-host__table">
     <thead>

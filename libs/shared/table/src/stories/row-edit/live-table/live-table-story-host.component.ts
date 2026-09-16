@@ -8,9 +8,10 @@ import {
   revertEdit,
   swapRowId,
 } from '../../../mutations/optimistic-mutations';
-import type { RowId } from '../../../api/types';
-import { CommitCounterComponent } from '../ui/commit-counter.component';
+import type { RowId, SortDirection } from '../../../api/types';
 import { FocusNewRowDirective } from '../ui/focus-new-row.directive';
+import { CommitCounterComponent } from '../ui/commit-counter.component';
+import { LiveTableToolbarComponent } from './live-table-toolbar.component';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../fixtures/mock';
 import { rowLabel } from '../fixtures/utils';
 import { injectRowEditApi, type RowEditRequestOptions } from '../fixtures/http';
@@ -27,6 +28,21 @@ import type { EditableField, FieldCommit } from './live-table.types';
 
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
 
+type AriaSort = 'ascending' | 'descending' | 'none';
+
+/** Maps a column's sort direction to `[attr.aria-sort]` — `undefined` (never sorted by this
+ * column) reads the same as an explicit `'none'`. */
+function toAriaSort(direction: SortDirection | undefined): AriaSort {
+  switch (direction) {
+    case 'asc':
+      return 'ascending';
+    case 'desc':
+      return 'descending';
+    default:
+      return 'none';
+  }
+}
+
 /**
  * Live table, no edit session
  *
@@ -38,7 +54,13 @@ const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
  */
 @Component({
   selector: 'ngp-live-table-story-host',
-  imports: [FormField, FocusNewRowDirective, CommitCounterComponent, ...ROW_EDIT_STORY_PIPES],
+  imports: [
+    FormField,
+    FocusNewRowDirective,
+    CommitCounterComponent,
+    LiveTableToolbarComponent,
+    ...ROW_EDIT_STORY_PIPES,
+  ],
   templateUrl: './live-table-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', './live-table-story-host.component.css'],
   host: {
@@ -55,7 +77,6 @@ export class LiveTableStoryHostComponent {
   protected readonly table = createTable(this.data, editTableConfig, withSorting(), withOptimistic());
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
-  protected readonly insertAt = signal(0);
 
   /** Row from `insertRow()` still awaiting its first field commit — marks the row `new` (§2.1)
    * for focus + styling until its first commit clears it. */
@@ -76,6 +97,9 @@ export class LiveTableStoryHostComponent {
 
   protected readonly undoLabel = computed(() => this.undo.label());
 
+  protected readonly nameSortAria = computed(() => toAriaSort(this.table.sortDirections().get('name')));
+  protected readonly deptSortAria = computed(() => toAriaSort(this.table.sortDirections().get('dept')));
+
   protected readonly requestOptions = computed<RowEditRequestOptions>(() => ({
     forceFailure: this.forceFailure(),
     latencyMs: this.latencyMs(),
@@ -85,14 +109,14 @@ export class LiveTableStoryHostComponent {
     watchFieldCommits(this.data, EDITABLE_FIELDS, (commit) => this.onFieldCommit(commit));
   }
 
-  protected insertRow(): void {
+  protected insertRow(insertAt = 0): void {
     const id = crypto.randomUUID();
     this.newRowId.set(id);
     this.flags.markPendingCreate(id);
     this.table.value.update(
       insertRow(
         { id, name: '', dept: DEPT_OPTIONS[0] },
-        { at: this.insertAt() },
+        { at: insertAt },
       ),
     );
   }

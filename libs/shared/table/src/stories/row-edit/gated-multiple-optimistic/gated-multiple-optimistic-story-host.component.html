@@ -15,34 +15,12 @@
     </p>
   }
 
-  <div class="story-host__toolbar">
-    <span class="story-host__counter">
-      (force failure / latency are Storybook controls on this story)
-    </span>
-    <label>
-      at:
-      <input
-        type="number"
-        [value]="insertAt()"
-        (input)="insertAt.set($any($event.target).valueAsNumber)"
-      />
-    </label>
-    <button type="button" (click)="addBlankRow()">Add row</button>
-    <button type="button" (click)="clearAll()">Clear all</button>
-    <button type="button" (click)="saveAll()">Save All</button>
-    @if (saveAllOutcome(); as outcome) {
-      <span class="story-host__counter" role="status">
-        @if (outcome.total === 0) {
-          No open rows to save.
-        } @else if (outcome.failed === 0) {
-          Saved all {{ outcome.total }} row(s).
-        } @else {
-          Saved {{ outcome.total - outcome.failed }} of {{ outcome.total }} row(s);
-          {{ outcome.failed }} failed.
-        }
-      </span>
-    }
-  </div>
+  <ngp-gated-multiple-optimistic-toolbar
+    [saveAllOutcome]="saveAllOutcome()"
+    (addRow)="addBlankRow($event)"
+    (clearAll)="clearAll()"
+    (saveAll)="saveAll()"
+  />
 
   <table class="story-host__table">
     <thead>

@@ -1,0 +1,14 @@
+<div class="story-host__toolbar">
+  <label>
+    at:
+    <input type="number" [value]="insertAt()" (input)="onInsertAtInput($event)" />
+  </label>
+  <button type="button" (click)="onAddRow()">Add row</button>
+  <button type="button" (click)="simulateLeavePage.emit()">Simulate leave page</button>
+  @if (undoRowId(); as id) {
+    <button type="button" (click)="undoDelete.emit()">Undo delete (Ctrl/Cmd+Z)</button>
+  }
+  @if (saveError(); as message) {
+    <span class="story-host__error" role="status">{{ message }}</span>
+  }
+</div>

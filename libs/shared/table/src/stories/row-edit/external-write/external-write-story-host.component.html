@@ -5,9 +5,7 @@
     field by field. "Push to row I'm not editing" quietly patches a closed row, no interruption.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="pushToUnopenedRow()">Push to row I'm not editing</button>
-  </div>
+  <ngp-external-write-toolbar (pushToUnopenedRow)="pushToUnopenedRow()" />
 
   <p class="story-host__counter" role="status">editing map: {{ editingIds() | json }}</p>
 

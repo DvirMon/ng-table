@@ -6,13 +6,11 @@
     still go through the normal edit flow, so only adding and deleting rows is affected.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="addRowViaForm()">Add via form</button>
-    <span class="story-host__counter" role="status">editing map: {{ editingIds() | json }}</span>
-    @if (saveError(); as message) {
-      <span class="story-host__error" role="status">{{ message }}</span>
-    }
-  </div>
+  <ngp-form-write-mutations-toolbar
+    [editingIds]="editingIds()"
+    [saveError]="saveError()"
+    (addRowViaForm)="addRowViaForm()"
+  />
 
   <table class="story-host__table">
     <thead>

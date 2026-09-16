@@ -1,0 +1,11 @@
+<div class="story-host__toolbar">
+  <label>
+    at:
+    <input type="number" [value]="insertAt()" (input)="setInsertAt($event)" />
+  </label>
+  <button type="button" (click)="emitInsertRow()">Add row</button>
+  @if (undoLabel(); as label) {
+    <button type="button" [attr.aria-label]="label" (click)="undoLastAction.emit()">Undo</button>
+  }
+  <span class="story-host__shortcut-hint">⌘Z / Ctrl+Z — undo last change</span>
+</div>

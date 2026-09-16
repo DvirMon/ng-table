@@ -14,17 +14,7 @@
     </p>
   }
 
-  <div class="story-host__toolbar">
-    <label>
-      at:
-      <input
-        type="number"
-        [value]="insertAt()"
-        (input)="insertAt.set($any($event.target).valueAsNumber)"
-      />
-    </label>
-    <button type="button" (click)="addBlankRow()">Add row</button>
-  </div>
+  <ngp-insert-row-toolbar (addRow)="addBlankRow($event)" />
 
   <table class="story-host__table">
     <thead>

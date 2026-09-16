@@ -14,6 +14,7 @@ import type { EditRow } from '../fixtures/types';
 import { diffEditableFields, nextDept, toPatch } from './external-write.utils';
 import { createConflictStore } from './external-write.state';
 import type { EditableField } from './external-write.types';
+import { ExternalWriteToolbarComponent } from './external-write-toolbar.component';
 
 /**
  * External write conflicts
@@ -25,7 +26,7 @@ import type { EditableField } from './external-write.types';
  */
 @Component({
   selector: 'ngp-external-write-story-host',
-  imports: [FormField, JsonPipe, NgpTableRowFieldDirective],
+  imports: [FormField, JsonPipe, NgpTableRowFieldDirective, ExternalWriteToolbarComponent],
   templateUrl: './external-write-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', './external-write.css'],
 })

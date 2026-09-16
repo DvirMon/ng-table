@@ -6,42 +6,12 @@
     regardless of sort direction.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="table.toggleSort('name')">
-      Sort Name
-      @switch (table.sortDirections().get('name')) {
-        @case ('asc') {
-          ▲
-        }
-        @case ('desc') {
-          ▼
-        }
-        @default {
-          ↕
-        }
-      }
-    </button>
-    <button type="button" (click)="table.toggleSort('dueDate')">
-      Sort Due Date
-      @switch (table.sortDirections().get('dueDate')) {
-        @case ('asc') {
-          ▲
-        }
-        @case ('desc') {
-          ▼
-        }
-        @default {
-          ↕
-        }
-      }
-    </button>
-    <button type="button" (click)="clearSort()">Clear sort</button>
-    <button type="button" (click)="addRowWhileSorted()">Add row while sorted</button>
-    <button type="button" (click)="addRowWithBlankDueDate()">Add row with blank due date</button>
-    @if (saveError(); as message) {
-      <span class="story-host__error" role="status">{{ message }}</span>
-    }
-  </div>
+  <ngp-sorting-editing-toolbar
+    [saveError]="saveError()"
+    (clearSort)="clearSort()"
+    (addRowWhileSorted)="addRowWhileSorted()"
+    (addRowWithBlankDueDate)="addRowWithBlankDueDate()"
+  />
 
   @if (movedRow(); as violation) {
     <p class="story-host__error" role="status">
@@ -54,8 +24,38 @@
   <table class="story-host__table" [ngpTable]="table">
     <thead>
       <tr>
-        <th class="story-host__cell">name</th>
-        <th class="story-host__cell">dueDate</th>
+        <th class="story-host__cell" [attr.aria-sort]="nameSortAria()">
+          <button type="button" (click)="table.toggleSort('name')">
+            name
+            @switch (table.sortDirections().get('name')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
+        <th class="story-host__cell" [attr.aria-sort]="dueDateSortAria()">
+          <button type="button" (click)="table.toggleSort('dueDate')">
+            dueDate
+            @switch (table.sortDirections().get('dueDate')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
         <th class="story-host__cell">actions</th>
       </tr>
     </thead>

@@ -12,6 +12,8 @@ import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { injectRowEditApi, type RowEditRequestOptions } from '../fixtures/http';
 import type { EditRow } from '../fixtures/types';
 import { createBulkAddUi } from './gated-bulk-optimistic.state';
+import { GatedBulkOptimisticToolbarComponent } from './gated-bulk-optimistic-toolbar.component';
+import type { AddBulkRowsPayload } from './gated-bulk-optimistic.types';
 
 /**
  * Bulk row creation, gated save
@@ -25,7 +27,7 @@ import { createBulkAddUi } from './gated-bulk-optimistic.state';
  */
 @Component({
   selector: 'ngp-gated-bulk-optimistic-story-host',
-  imports: [FormField, NgpTableRowFieldDirective],
+  imports: [FormField, NgpTableRowFieldDirective, GatedBulkOptimisticToolbarComponent],
   templateUrl: './gated-bulk-optimistic-story-host.component.html',
   styleUrl: '../../styles/story-host.css',
 })
@@ -43,10 +45,10 @@ export class GatedBulkOptimisticStoryHostComponent {
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly ui = createBulkAddUi();
 
-  /** Opens `ui.count()` blank rows in one call — `createRow`'s array overload, not a loop of
+  /** Opens `payload.count` blank rows in one call — `createRow`'s array overload, not a loop of
    * single-row `createRow` calls. */
-  protected addBulkRows(): void {
-    const count = Math.max(0, Math.trunc(this.ui.count()));
+  protected addBulkRows(payload: AddBulkRowsPayload): void {
+    const count = Math.max(0, Math.trunc(payload.count));
     const entries = Array.from({ length: count }, () => {
       const id = crypto.randomUUID();
       const row: EditRow = { id, name: '', dept: DEPT_OPTIONS[0] };
@@ -54,7 +56,7 @@ export class GatedBulkOptimisticStoryHostComponent {
     });
     if (entries.length === 0) return;
 
-    this.table.editing.update(createRow<EditRow>(entries, { at: this.ui.insertAt() }));
+    this.table.editing.update(createRow<EditRow>(entries, { at: payload.insertAt }));
     this.ui.addPending(entries.map((entry) => entry.id));
   }
 
