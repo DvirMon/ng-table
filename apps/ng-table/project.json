@@ -65,6 +65,22 @@
     "lint": {
       "executor": "@nx/eslint:lint"
     },
+    "typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "command": "ngc -p apps/ng-table/tsconfig.app.json --noEmit"
+      }
+    },
+    "typecheck-spec": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "inputs": ["default", "^default"],
+      "options": {
+        "command": "ngc -p apps/ng-table/tsconfig.spec.json --noEmit"
+      }
+    },
     "test": {
       "executor": "@angular/build:unit-test",
       "options": {
