@@ -11,12 +11,11 @@ import { derivedStateConfig } from '../fixtures/schema';
 import type { CompositionRow } from '../fixtures/types';
 
 /**
- * The spec's headline `withComputed()` example: one derive block nested inside
- * `withSelection()`'s own slot, one as a trailing top-level argument. The nested block sees
- * core plus `withSelection()`'s own members only — `hiddenSelected` is derivable from
- * `renderRows()` (post-filter) and `selectedRows()` alone, with no visibility into
- * `withFiltering()` itself. The trailing block reads `hiddenSelected` back, a member an
- * *earlier* argument declared — the cross-slot read this story exists to prove.
+ * `withComputed()` — nested vs. trailing
+ *
+ * One derive block nested inside `withSelection()`'s own slot, another as a trailing
+ * top-level argument. The nested block sees only core + `withSelection()`'s members; the
+ * trailing block reads back `hiddenSelected` — a member an earlier argument declared.
  */
 @Component({
   selector: 'ngp-derived-state-story-host',

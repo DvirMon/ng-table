@@ -34,13 +34,15 @@ function externalRank(key: unknown): number {
 }
 
 /**
- * The three grouping gaps that are still open, rendered rather than described. Not example code:
- * a comparator that throws, a level naming no column, and an `aggregateFn` handed a value it
- * refuses are all deliberate misuse. `grouping-static/` is the story to copy.
+ * Grouping edge cases — deliberate misuse
  *
- * Tracked as: the aggregate that takes the table down instead of blanking one summary
- * ([#79](https://github.com/DvirMon/acme/issues/79)), and the dropped level the library reports
- * through no channel — the on-canvas notice is this story's own arithmetic.
+ * Renders three open grouping gaps rather than describing them: a comparator that throws, a
+ * level naming no column, and an `aggregateFn` refusing its value. Copy `grouping-static/` for
+ * normal usage, not this file.
+ *
+ * The throwing aggregate takes the whole table down instead of blanking one summary
+ * ([#79](https://github.com/DvirMon/acme/issues/79)); the dropped level is reported nowhere
+ * but this story's own on-canvas notice.
  */
 @Component({
   selector: 'ngp-grouping-regressions-story-host',

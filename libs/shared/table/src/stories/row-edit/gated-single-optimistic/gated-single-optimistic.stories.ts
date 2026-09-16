@@ -25,11 +25,12 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * The happy path: edits one row at a time, save closes it immediately and confirms over the
- * network. Starting a new edit while one is already open cancels whatever was in progress.
+ * Single-row gated editing, optimistic
  *
- * Turn on `forceFailure` in Controls for the unhappy path: the row still closes immediately, then
- * reverts to its pre-edit snapshot and reopens once Retry is clicked (`retrySave`). One boolean
- * away from the happy path, so it is a control rather than a second canvas.
+ * Edits one row at a time; save closes it immediately and confirms over the network. Starting
+ * a new edit while one is already open cancels whatever was in progress.
+ *
+ * Toggle `forceFailure` in Controls: the row still closes immediately, then reverts to its
+ * pre-edit snapshot and reopens once Retry is clicked.
  */
 export const GatedSingleOptimistic: Story = {};

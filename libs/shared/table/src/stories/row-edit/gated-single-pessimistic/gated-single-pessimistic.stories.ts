@@ -25,14 +25,12 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * Edits one row at a time, saving pessimistically: the row stays open until a real
- * MSW-intercepted `fetch` resolves. A failure leaves the row open with its draft intact — no
- * rollback needed since nothing closed early. Starting a new edit while one is already open
- * cancels whatever was in progress.
+ * Single-row gated editing, pessimistic
  *
- * Turn on `forceFailure` in Controls for the unhappy path: the row stays open (pessimistic never
- * closes early), the error shows inline, and Retry re-runs the same request — the contrast with
- * `../gated-single-optimistic/`, which closed early and so has a snapshot to roll back to. One
- * boolean away from the happy path, so it is a control rather than a second canvas.
+ * Edits one row at a time, saving pessimistically: the row stays open until a real fetch
+ * resolves. Starting a new edit while one is already open cancels whatever was in progress.
+ *
+ * Toggle `forceFailure` in Controls: the row stays open, the error shows inline, and Retry
+ * re-runs the same request — no rollback needed since nothing closed early.
  */
 export const GatedSinglePessimistic: Story = {};

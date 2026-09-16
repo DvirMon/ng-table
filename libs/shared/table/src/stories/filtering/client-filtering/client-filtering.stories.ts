@@ -13,12 +13,11 @@ export default meta;
 type Story = StoryObj<ClientFilteringStoryHostComponent>;
 
 /**
- * Client-side filtering end to end. Nothing here is async, so there is no `forceFailure` or
- * `latencyMs` to vary — every control is on the canvas instead.
+ * Table with client-side filtering
  *
- * - Each filter row input narrows on its own and AND's with the others; the count only shrinks.
- * - Emptying an input stops it narrowing, driven by the shipped per-kind `isEmpty`.
- * - `Reset to defaults` restores the declared `source` default; `Clear all` empties.
- * - Breaking the tags predicate widens the result set and reports once per evaluation.
+ * Per-column inputs and a quick filter, all driven by `createFilters()` feeding
+ * `withFiltering()`. Type in the customer box and watch the row count follow.
+ *
+ * Reset restores the declared defaults; Clear all empties every criterion.
  */
 export const Client: Story = {};

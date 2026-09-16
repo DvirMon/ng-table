@@ -17,10 +17,14 @@ import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 
 /**
- * A grouping level decided by the server, through an `applyGroupingAsync()`-shaped column rule.
- * While the rule is unresolved the whole rule set abstains and the table holds the last explicit
- * grouping; a resolved rule replaces the level set outright. `onError` must return an explicit
- * boolean, so a failure resolves to "grouped by nothing" rather than to "no answer yet".
+ * Server-decided grouping level
+ *
+ * An `applyGroupingAsync()`-shaped column rule lets the server choose the grouping level.
+ * While unresolved, the table holds the last explicit grouping; once resolved, it replaces
+ * the level set outright.
+ *
+ * `onError` must return an explicit boolean — a failure resolves to grouped by nothing, not
+ * to no answer yet.
  */
 @Component({
   selector: 'ngp-grouping-async-rule-story-host',

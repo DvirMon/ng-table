@@ -11,11 +11,14 @@ import { createSelectionEventLog } from './selection-event-log';
 import type { SelectionNotice } from './multi-selection.types';
 
 /**
- * The multi-selection baseline — every read/write surface `withSelection()` has, on one screen:
- * accumulating checkboxes, a tri-state header checkbox, locked rows that keep an existing mark
- * (D58/D60), and external mutations reconciling the selection. `selectedRows()` is never stamped
- * onto `RenderRow` (D5), so the `[class]`/`[attr.aria-selected]` binding below is the recipe.
- * See `docs/0-product/selection.md` for the full decision trail.
+ * Multi-selection, full surface
+ *
+ * Every read/write surface `withSelection()` has, on one screen: accumulating checkboxes, a
+ * tri-state header checkbox, locked rows that keep an existing mark, and external mutations
+ * reconciling the selection.
+ *
+ * `selectedRows()` is never stamped onto `RenderRow` — the `[class]`/`[attr.aria-selected]`
+ * binding below is the recipe for deriving it.
  */
 @Component({
   selector: 'ngp-multi-selection-story-host',

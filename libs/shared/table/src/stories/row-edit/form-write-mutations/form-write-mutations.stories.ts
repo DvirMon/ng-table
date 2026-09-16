@@ -13,9 +13,9 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * Adds and deletes rows by writing straight through the form, bypassing the table's own
- * add/delete actions.
+ * Row mutations via raw form writes
  *
- * - Compare against the normal add/delete flow to see what guarantees are lost this way.
+ * Adds and deletes rows by writing straight through the form, bypassing the table's own
+ * add/delete actions. Compare against the normal flow to see what guarantees are lost.
  */
 export const FormDrivenMutations: Story = {};

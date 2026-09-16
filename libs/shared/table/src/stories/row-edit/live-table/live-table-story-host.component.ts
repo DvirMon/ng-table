@@ -28,11 +28,13 @@ import type { EditableField, FieldCommit } from './live-table.types';
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
 
 /**
- * S1 — live table (D29): no `withRowEdit()` composed, so there is no edit session — every field
- * is always an input, and a field commit is what saves. `withOptimistic()` is composed only for
- * its rollback verbs; every commit is a real MSW-backed round trip (create/update/delete). The
- * local undo slot stays local-only. Full Add/Edit/Delete semantics: `docs/0-product/row-editing.md`
- * §§1.1, 1.3, 2.1, 3.1, 3.2.
+ * Live table, no edit session
+ *
+ * No `withRowEdit()` composed — every field is always an input, and a field commit is what
+ * saves. `withOptimistic()` is composed only for its rollback verbs; every commit is a real
+ * round trip (create/update/delete).
+ *
+ * The local undo slot stays local-only.
  */
 @Component({
   selector: 'ngp-live-table-story-host',

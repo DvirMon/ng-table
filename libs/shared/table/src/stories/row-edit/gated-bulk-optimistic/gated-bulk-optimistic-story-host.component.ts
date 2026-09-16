@@ -14,22 +14,14 @@ import type { EditRow } from '../fixtures/types';
 import { createBulkAddUi } from './gated-bulk-optimistic.state';
 
 /**
- * §1.8/OQ-7's D32, bulk-add half resolved 2026-09-05: `createRow`'s array overload
- * (`mutations/row-edit-mutations.ts`) opens `ui.count()` blank rows in **one** call — no per-row
- * loop, one `data` write and one `{ snapshots, open }` transition regardless of count.
+ * Bulk row creation, gated save
  *
- * "Save batch" is the other half: `rowEditApi.saveBulk()` sends every pending row in one request,
- * and the outcome applies to the whole set together — either every row gets its server id
- * (`patchRow` + `swapRowId`, one pair per row off the single response) or every row reverts and
- * reopens. Contrast with `../gated-multiple-optimistic/`'s Save All, which is N independent
- * requests with N independent rollback units — both answers to the same open question, not a
- * replacement of one by the other.
+ * `createRow()`'s array overload opens N blank rows in one call. Save batch sends every
+ * pending row in one request — either every row gets its server id, or the whole set reverts
+ * and reopens together.
  *
- * Story-only bookkeeping (row count, insert position, pending ids, the outcome message) lives in
- * `./gated-bulk-optimistic.state.ts` — none of it is the feature being demonstrated.
- *
- * Scoped to only the bulk-create path — editing or deleting a pre-existing row is already covered
- * by every other gated story and isn't shown here.
+ * Scoped to the bulk-create path only. Contrast with `../gated-multiple-optimistic/`'s Save
+ * All, which is N independent requests with N independent rollback units.
  */
 @Component({
   selector: 'ngp-gated-bulk-optimistic-story-host',

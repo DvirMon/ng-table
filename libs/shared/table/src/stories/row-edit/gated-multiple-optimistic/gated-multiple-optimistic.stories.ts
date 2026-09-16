@@ -25,14 +25,12 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * Several rows open and saved at once, the happy path.
+ * Multi-row gated editing, optimistic
  *
- * - Open two or more rows via Edit, edit them, click "Save All".
- * - Every open row closes immediately (optimistic) and shows as saving; each settles
- *   independently as its own request resolves.
- * - Turn on `forceFailure` in Controls and every in-flight request fails: rows still close
- *   immediately — closing never waits on the round trip — and each reverts to its pre-edit value
- *   and shows its own Retry/Dismiss control. One boolean away from the happy path, so it is a
- *   control rather than a second canvas.
+ * Open two or more rows via Edit, edit them, click "Save All". Every row closes immediately
+ * and shows as saving, then each settles independently as its own request resolves.
+ *
+ * Toggle `forceFailure` in Controls: rows still close immediately, but each one reverts to
+ * its pre-edit value and shows its own Retry/Dismiss control.
  */
 export const GatedMultipleOptimistic: Story = {};

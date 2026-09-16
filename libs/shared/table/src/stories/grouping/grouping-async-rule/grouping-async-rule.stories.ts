@@ -25,16 +25,12 @@ export default meta;
 type Story = StoryObj<GroupingAsyncRuleStoryHostComponent>;
 
 /**
- * A grouping level decided by the server, through an `applyGroupingAsync()`-shaped column rule —
- * grouping's one genuinely async surface.
+ * Server-decided grouping — async rule
  *
- * The latency is set high enough that the pending window is visible without opening Controls.
- * While the rule is unresolved the whole rule set abstains and the table **holds the last explicit
- * grouping** rather than flashing ungrouped; when it resolves, the level set becomes the rule's.
- */
-/**
- * Turn on `forceFailure` and the rule's required `onError` resolves the set to `[]` — actively
- * grouped by nothing, which is not the same state as abstaining, and not a blank table either.
- * A control rather than a second story: it differs from this one by a single boolean.
+ * Latency is set high enough that the pending window is visible without opening Controls.
+ * While unresolved, the table holds the last explicit grouping rather than flashing ungrouped.
+ *
+ * Toggle `forceFailure` in Controls — the rule's `onError` resolves to actively grouped by
+ * nothing, a different state from abstaining or a blank table.
  */
 export const AsyncRule: Story = {};

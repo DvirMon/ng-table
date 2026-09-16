@@ -64,13 +64,14 @@ function toQueryParams(active: Partial<Record<string, unknown>>): Record<string,
 }
 
 /**
- * Server-side filtering: the filters produce the data instead of narrowing it afterwards, via
- * `rxResource` + `linkedSignal` (no filtering feature composed — `createFilters()` feeds the
- * request builder directly). Debounced search writes straight into `filters().value`, so the
- * typing pause is the request. The server's own total overrides `totalRowCount` through a tiny
- * `createTableFeature()`. The amount filter's late-default race is demoed via
- * `source: () => serverDefaultAmount()`. Loading / no-matches / request-failed render as three
- * distinct blocks; a failed request keeps the last page on screen.
+ * Server-side filtering
+ *
+ * Filters produce the data instead of narrowing it afterwards, via `rxResource` +
+ * `linkedSignal` — `createFilters()` feeds the request builder directly, no filtering feature
+ * composed. Debounced search writes into `filters().value`, so the typing pause is the request.
+ *
+ * The server's own total overrides `totalRowCount` via a tiny `createTableFeature()`; a failed
+ * request keeps the last page on screen instead of blanking it.
  */
 @Component({
   selector: 'ngp-server-filtering-story-host',

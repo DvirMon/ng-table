@@ -13,11 +13,10 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * Sorting combined with row editing.
+ * Sorting × Editing
  *
- * - Sorting a column with an edited-to-empty value places it predictably (this works today).
- * - Keeping an open row in place while the table re-sorts around it does not work yet — a known
- *   limitation, see the story's host component for detail.
+ * Sorting a column with an edited-to-empty value places it predictably. Keeping an open row
+ * in place while the table re-sorts around it does not work yet — a known limitation.
  */
 export const SortingAndEditing: Story = {
   name: 'Sorting × Editing',};

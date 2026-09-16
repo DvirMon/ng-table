@@ -17,12 +17,13 @@ import type { InvoiceRow } from '../fixtures/types';
 import { matchesStatus, toggleOption } from '../fixtures/utils';
 
 /**
- * Selection under an active filter — `withFiltering()` + `withSelection()` + `withSorting()`.
- * Two select-all buttons: `selectAllIds(table)` scopes to `rows()` (post-filter/sort);
- * `{ includeHidden: true }` scopes to the whole dataset. Selection survives the filter and
- * restores exactly as it was when cleared; sorting never touches it, only deleting a row prunes
- * it. Peer-library comparisons and open questions:
- * `docs/0-product/selection.md` §1.4, §2.3, §2.4, §2.5.
+ * Selection under an active filter
+ *
+ * `withFiltering()` + `withSelection()` + `withSorting()` combine so selection survives both.
+ * Two select-all buttons: `selectAllIds(table)` scopes to visible `rows()`; `{ includeHidden:
+ * true }` scopes to the whole dataset.
+ *
+ * Selection restores exactly as it was once the filter clears; only deleting a row prunes it.
  */
 @Component({
   selector: 'ngp-selection-filtering-story-host',

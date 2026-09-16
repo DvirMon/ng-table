@@ -7,11 +7,14 @@ import { singleSelectionConfig } from '../fixtures/schema';
 import type { SelectionRow } from '../fixtures/types';
 
 /**
- * The single-select path — `enableMultiRowSelection: false` (construction-time), so a sibling
- * host rather than a toggle on `multi-selection/`. The radio group supplies the replace rule
- * (D14) and roving focus for free; `restoreConflictingSelection()` demonstrates D14's other
- * half — a single call co-selecting two ids always throws, naming what it rejected.
- * See `docs/0-product/selection.md` for the full decision trail.
+ * Single-row selection
+ *
+ * `enableMultiRowSelection: false` (construction-time), so a sibling host rather than a
+ * toggle on `multi-selection/`. The radio group supplies replace semantics and roving focus
+ * for free.
+ *
+ * `restoreConflictingSelection()` co-selects two ids in one call — it always throws, naming
+ * what it rejected.
  */
 @Component({
   selector: 'ngp-single-selection-story-host',

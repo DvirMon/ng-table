@@ -11,12 +11,13 @@ export default meta;
 type Story = StoryObj<DerivedStateStoryHostComponent>;
 
 /**
- * Two `withComputed()` placements over one table: `hiddenSelected` is declared inside
- * `withSelection()`'s own derive slot, `visibleSelected` as a trailing top-level argument that
- * reads `hiddenSelected` back across slots.
+ * `withComputed()` — cross-slot derived state
  *
- * - Tick rows, then filter by department — the banner splits the selection into visible and
- *   hidden-by-filter.
- * - A hidden row keeps its mark; clearing the filter restores the count.
+ * Two `withComputed()` placements over one table: `hiddenSelected` declared inside
+ * `withSelection()`'s derive slot, `visibleSelected` as a trailing argument reading it back
+ * across slots. Tick rows, then filter by department to split the selection into visible and
+ * hidden-by-filter.
+ *
+ * A hidden row keeps its mark; clearing the filter restores the count.
  */
 export const DerivedState: Story = {};

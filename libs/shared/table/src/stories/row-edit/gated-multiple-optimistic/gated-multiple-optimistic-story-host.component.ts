@@ -22,12 +22,14 @@ import { createRowFlags } from '../ui/row-flags';
 import type { SaveAllOutcome } from './gated-multiple-optimistic.types';
 
 /**
- * S4/S8 — the gated table (`withRowEdit({ multiple: () => true })`), several rows open at once.
- * Bulk edit is optimistic-only by design (`docs/1-state/work/with-multiple-edit/1-design.md`):
- * `saveAll()` closes every open row before firing any write, so `clearEdit()` never discards a
- * live restore point (D41). Pessimistic multi-row editing has no story of its own — see
- * `../gated-single-optimistic/` and `../gated-single-pessimistic/`. Each `pendingCreateIds` row
- * re-keys independently via `swapRowId` — same shape as those, D49/G3.
+ * Multi-row gated editing, optimistic
+ *
+ * `withRowEdit({ multiple: () => true })` keeps several rows open at once. Save All closes
+ * every open row before firing any write, so an in-flight save always has a live restore
+ * point to fall back to.
+ *
+ * Bulk edit is optimistic-only — there's no pessimistic multi-row story; see
+ * `../gated-single-optimistic/` and `../gated-single-pessimistic/` for that.
  */
 @Component({
   selector: 'ngp-gated-multiple-optimistic-story-host',

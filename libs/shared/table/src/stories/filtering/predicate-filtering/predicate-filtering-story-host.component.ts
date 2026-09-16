@@ -14,12 +14,11 @@ function isInvoiceStatus(value: string): value is InvoiceStatus {
 }
 
 /**
- * Filtering with plain row predicates and no filter model at all — the point of the story is what
- * the import list above does not contain.
+ * Table filtering with plain predicates
  *
- * `predicates` is a thunk, and that is the reactivity boundary: the filter stage calls it once per
- * pass, so terms closing over these signals re-narrow on their own. Terms are AND'd, and an empty
- * control contributes no term rather than a predicate that always returns `true`.
+ * Filters with plain row predicates and no filter model at all. `predicates` is a thunk the
+ * filter stage calls once per pass, so terms closing over these signals re-narrow on their
+ * own; terms AND together, and an empty control contributes no term.
  */
 @Component({
   selector: 'ngp-predicate-filtering-story-host',

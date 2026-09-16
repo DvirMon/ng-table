@@ -11,10 +11,12 @@ export default meta;
 type Story = StoryObj<SingleSelectionStoryHostComponent>;
 
 /**
- * `withSelection({ enableMultiRowSelection: false })` behind a radio group.
+ * Single-row selection
  *
- * - Picking a second row unticks the first; arrow keys and Space come from the group.
- * - Clear is a button, because a radio cannot be unticked by clicking it.
- * - A two-id restore is refused, and the discarded id is named on canvas.
+ * `withSelection({ enableMultiRowSelection: false })` behind a radio group. Picking a second
+ * row unticks the first; arrow keys and Space come from the group. Clear is a button, since a
+ * radio cannot be unticked by clicking it.
+ *
+ * A two-id restore is refused, and the discarded id is named on canvas.
  */
 export const Single: Story = {};

@@ -23,16 +23,14 @@ export default meta;
 type Story = StoryObj<LiveOptimisticStoryHostComponent>;
 
 /**
- * The happy path for optimistic saves.
+ * Focus-delimited optimistic editing
  *
- * - Focus a cell, type, tab away — the value commits right away and the row shows as in-flight.
- * - Once the save succeeds, the in-flight marker clears.
- * - Add row inserts a blank row under a temp id; its first blur creates it server-side
- *   (`POST`, id assigned by the server) instead of updating (`PUT`) — `swapRowId` keeps the row
- *   addressable under its new id.
- * - Turn on `forceFailure` in Controls and the save fails: the edited value still shows immediately,
- *   then reverts to what it was before the edit. The row was never in an "open for editing" state,
- *   so nothing closes — it just reverts. One boolean away from the happy path, so it is a control
- *   rather than a second canvas.
+ * Focus a cell, type, tab away — the value commits right away and the row shows as in-flight
+ * until the save succeeds. Add row inserts a blank row under a temp id; its first blur
+ * creates it server-side instead of updating it.
+ *
+ * Toggle `forceFailure` in Controls: the edited value still shows immediately, then reverts
+ * to what it was before the edit — the row was never "open," so nothing closes, it just
+ * reverts.
  */
 export const LiveOptimistic: Story = {};

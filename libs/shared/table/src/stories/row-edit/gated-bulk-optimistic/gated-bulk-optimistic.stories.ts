@@ -25,14 +25,12 @@ export default meta;
 type Story = StoryObj<Host>;
 
 /**
- * Adding several rows in one action, the happy path.
+ * Bulk row creation, gated save
  *
- * - "Add N rows" opens `count` blank rows at once — one `createRow` call, not a loop.
- * - Fill them in, click "Save batch" — one request carries all of them.
- * - On success every row gets its server id in the same pass.
- * - Turn on `forceFailure` in Controls and the single request fails: every row in the batch reverts
- *   to blank and reopens together — not some succeeding while others fail, which is exactly the
- *   contrast with `../gated-multiple-optimistic/`'s Save All (N independent requests, N independent
- *   outcomes). One boolean away from the happy path, so it is a control rather than a second canvas.
+ * "Add N rows" opens `count` blank rows at once, then "Save batch" sends one request for all
+ * of them — on success every row gets its server id in the same pass.
+ *
+ * Toggle `forceFailure` in Controls: the single request fails and every row in the batch
+ * reverts to blank and reopens together, not some succeeding while others fail.
  */
 export const GatedBulk: Story = {};

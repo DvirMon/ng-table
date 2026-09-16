@@ -13,11 +13,10 @@ export default meta;
 type Story = StoryObj<PredicateFilteringStoryHostComponent>;
 
 /**
- * Filtering with nothing but plain row predicates. Synchronous, so there is no arg to vary —
- * both controls are on the canvas.
+ * Table filtering with plain predicates
  *
- * - Each control contributes one term; the terms AND, so the count only shrinks.
- * - Emptying a control removes its term from the next pass, with no `isEmpty` contract involved.
- * - The host composes no filter model: `createFilters()` and the criterion types are absent.
+ * Filtering with nothing but plain row predicates — no `createFilters()`, no criterion types.
+ * Each control contributes one term and the terms AND together; emptying a control just
+ * removes its term from the next pass.
  */
 export const Predicates: Story = {};

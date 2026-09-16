@@ -13,14 +13,14 @@ import { saveRowPessimistic } from '../fixtures/utils';
 import type { EditRow } from '../fixtures/types';
 
 /**
- * Add/remove go straight through the form's own root value signal (`rows().value.update(...)`)
- * instead of `beginEdit({ insert })`/`removeRow` + `table.editing.update`. That's a valid way to mutate
- * rows on its own — the schema/data binding doesn't care where a write comes from. What it
- * skips is table's optimistic-update support: `beginEdit({ insert })`/`removeRow` compose with
- * `table.editing`'s snapshot/pending machinery (D31/D41, `endEdit`/`releaseEdit`), so a save
- * can roll back cleanly on failure. A raw form write has no snapshot to roll back to. Field-level
- * edits (name/dept) still go through the normal `beginEdit`/`formField` flow — only the
- * row-structural mutations skip the table utilities, to isolate the effect.
+ * Row mutations via raw form writes
+ *
+ * Add/remove go straight through the form's own root value signal instead of
+ * `beginEdit({ insert })`/`removeRow` — a valid way to mutate rows that skips the table's
+ * optimistic-rollback support. Field-level edits still go through the normal
+ * `beginEdit`/`formField` flow.
+ *
+ * A raw form write has no snapshot to roll back to on failure.
  */
 @Component({
   selector: 'ngp-form-write-mutations-story-host',

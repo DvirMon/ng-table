@@ -17,12 +17,14 @@ import { withSorting } from '../../../api/features/with-sorting';
 import { withRowEdit } from '../../../api/features/with-row-edit';
 
 /**
- * S-1 / S-2 (`0-product/row-editing.md` §5) — `withSorting()` + `withRowEdit()` composed
- * together, the one interaction no other story exercises. S-2 (null/empty placement,
- * `applySortNulls()`'s shipped `'last'` default) is expected to pass. S-1 (row must not move
- * while open) is expected to **fail** today — OQ-3's row-hold is designed, not implemented —
- * so `rowHoldProbe` below is an honest regression demo, not a workaround: it observes the
- * gap live rather than papering over it, and starts passing on its own once the row-hold ships.
+ * Sorting + row editing composed
+ *
+ * `withSorting()` + `withRowEdit()` composed together — sort while a row is open. Null/empty
+ * values sort last by the shipped default, and that ordering holds correctly.
+ *
+ * The open row is expected to move under a live sort today — row-hold isn't implemented yet,
+ * so `rowHoldProbe` demonstrates the gap live rather than hiding it, and starts passing once
+ * row-hold ships.
  */
 @Component({
   selector: 'ngp-sorting-editing-story-host',

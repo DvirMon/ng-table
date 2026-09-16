@@ -23,20 +23,19 @@ export default meta;
 type Story = StoryObj<ServerFilteringStoryHostComponent>;
 
 /**
- * The happy path.
+ * Server-side filtering, happy path
  *
- * - Every filter change issues one `GET /api/invoices`; the search box waits out its 300ms
- *   debounce first, so the request counter rises per typing pause, not per keystroke.
- * - `totalRowCount()` is the server's `total`, rendered beside the page length.
- * - Type an amount, then deliver the server default: `dirty()` keeps what you typed.
+ * Every filter change issues one `GET /api/invoices`; the search box waits out its debounce
+ * first, so the request counter rises per typing pause, not per keystroke. `totalRowCount()`
+ * is the server's `total`, rendered beside the page length.
  */
 export const Server: Story = {};
 
 /**
- * Every request fails.
+ * Server-side filtering — request failure
  *
- * - The rows already on screen stay there behind the error marker — the table never blanks.
- * - Retry re-sends the current filter set rather than resetting it.
+ * Every request fails. The rows already on screen stay there behind the error marker — the
+ * table never blanks — and Retry re-sends the current filter set rather than resetting it.
  */
 export const ServerRequestFailure: Story = {
   name: 'Server — Request Failure',

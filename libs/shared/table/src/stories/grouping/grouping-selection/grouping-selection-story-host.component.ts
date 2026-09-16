@@ -20,11 +20,11 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import type { CascadeMode } from './grouping-selection.types';
 
 /**
- * What ticking a group's checkbox does. The cascade is consumer-owned, so the `cascade` arg
- * renders all three peer defaults as ordinary code over one `rowsOf()` call, and a group's
- * tri-state is derived every render rather than stored — which is what makes the upward half of
- * `descendants+parents` cost no code. Peer comparison and rationale in
- * `docs/0-product/grouping.md` §6 / D16.
+ * Group selection, cascading checkboxes
+ *
+ * Ticking a group's checkbox cascades via a consumer-owned `cascade` function over
+ * `rowsOf()` — all three peer defaults are ordinary code, not library options. A group's
+ * tri-state derives fresh on every render rather than being stored.
  */
 @Component({
   selector: 'ngp-grouping-selection-story-host',

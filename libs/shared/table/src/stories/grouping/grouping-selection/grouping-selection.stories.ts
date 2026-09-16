@@ -22,17 +22,12 @@ export default meta;
 type Story = StoryObj<GroupingSelectionStoryHostComponent>;
 
 /**
- * The reference wiring for a group checkbox, which the library deliberately does not ship (D16).
+ * Group selection, reference wiring
  *
- * - `cascade` switches between the three defaults AG Grid, TanStack and MUI X disagree on — all
- *   three written as ordinary consumer code off one `rowsOf()` call.
- * - A partly-selected group renders indeterminate; the state is derived every render, never stored,
- *   which is why the "parents" direction needs no code.
- * - Filter by rep, then tick a group: the checkbox and the header's count are the same set.
- * - The readout counts rows and never headers, and Ungroup leaves the selection intact — no group
- *   id was ever in it to dangle.
+ * The reference wiring for a group checkbox — the library ships no built-in cascade. Switch
+ * `cascade` to compare the three defaults, all plain consumer code over one `rowsOf()` call.
  *
- * Every verb here is synchronous and local, so there is no rollback state that only renders on an
- * unhappy path, and no `ForcedFailure` export is earned.
+ * A partly-selected group renders indeterminate, derived fresh on every render; Ungroup leaves
+ * the selection intact since no group id was ever a member.
  */
 export const GroupSelection: Story = {};

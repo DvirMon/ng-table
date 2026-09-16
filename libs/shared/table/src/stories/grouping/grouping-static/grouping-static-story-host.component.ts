@@ -16,9 +16,10 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import type { GroupedColumnMode } from './grouping-static.types';
 
 /**
- * A grouped table with no collapse control — `withGrouping()` alone, levels editable from the UI.
- * Every sibling story composes grouping with one more feature; this one composes nothing else so
- * its source is copyable as-is. Scope in `docs/0-product/grouping.md`.
+ * Static grouping, no collapse
+ *
+ * `withGrouping()` alone, with levels editable from the UI. Every sibling grouping story
+ * composes one more feature; this one composes nothing else, so its source is copyable as-is.
  */
 @Component({
   selector: 'ngp-grouping-static-story-host',

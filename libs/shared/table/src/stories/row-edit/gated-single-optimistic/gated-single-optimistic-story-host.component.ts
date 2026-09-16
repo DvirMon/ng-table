@@ -21,15 +21,14 @@ import type { EditRow } from '../fixtures/types';
 import { createRowFlags } from '../ui/row-flags';
 
 /**
- * S4 — the gated table (`withRowEdit()`), fixed to single-row + optimistic save: `endEdit`
- * merges the draft and closes the row immediately, then a real MSW-intercepted `fetch`
- * reconciles it (`releaseEdit` on success, `revertEdit` on failure). Compare
- * `../gated-single-pessimistic/` (pessimistic save) and `../gated-multiple-optimistic/` (several
- * rows open at once).
+ * Single-row gated editing, optimistic
  *
- * A `pendingCreateIds` row saves via `POST` instead of `PUT`; `swapRowId` re-keys its restore
- * point under the server's id once the response lands. `discardRow` deletes through the server
- * too, unless the row was never saved.
+ * `withRowEdit()` fixed to single-row optimistic save: `endEdit` merges the draft and closes
+ * the row immediately, then a real intercepted `fetch` reconciles it — `releaseEdit` on
+ * success, `revertEdit` on failure.
+ *
+ * A never-saved row `POST`s instead of `PUT`s and re-keys via `swapRowId` once the response
+ * lands; `discardRow` deletes through the server unless the row was never saved.
  */
 @Component({
   selector: 'ngp-gated-single-optimistic-story-host',

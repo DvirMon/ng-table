@@ -21,12 +21,14 @@ import type { EditRow } from '../fixtures/types';
 import { createRowFlags } from '../ui/row-flags';
 
 /**
- * S2/S5 — `withRowEdit()` single-row + pessimistic save: the row stays open for the whole round
- * trip; `endEdit` runs only once the real MSW-intercepted `fetch` resolves, so a failure just
- * leaves the row open with its draft intact (D14). See `../gated-single-optimistic/` for the
- * optimistic sibling and `../gated-multiple-optimistic/` for several rows open at once.
- * Create's success path re-keys `open` while the row is still open (`swapRowId`, D49/G3).
- * Known limitation: `@for` still recreates the `<tr>` on an id change (G9).
+ * Single-row gated editing, pessimistic
+ *
+ * `withRowEdit()` single-row pessimistic save: the row stays open for the whole round trip,
+ * and `endEdit` runs only once the real intercepted `fetch` resolves — a failure leaves the
+ * row open with its draft intact.
+ *
+ * `@for` still recreates the `<tr>` on an id change, so a successful create re-keys `open`
+ * while the row stays open.
  */
 @Component({
   selector: 'ngp-gated-single-pessimistic-story-host',

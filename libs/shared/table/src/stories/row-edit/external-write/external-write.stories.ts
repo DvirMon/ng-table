@@ -11,11 +11,11 @@ export default meta;
 type Story = StoryObj<ExternalWriteStoryHostComponent>;
 
 /**
- * What happens when data changes from outside the table while a row is being edited.
+ * External write & reconciliation
  *
- * - Editing a row that's changed elsewhere shows a conflict banner: Keep mine, Take theirs, or
- *   merge field-by-field.
- * - A row that isn't open just gets patched quietly, no banner.
+ * Data changes from outside the table while a row is being edited. An open row shows a
+ * conflict banner — Keep mine, Take theirs, or merge field-by-field; a closed row is just
+ * patched quietly, no banner.
  */
 export const ExternalWrite: Story = {
   name: 'External Write & Reconciliation',};

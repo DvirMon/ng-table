@@ -16,14 +16,12 @@ import { createConflictStore } from './external-write.state';
 import type { EditableField } from './external-write.types';
 
 /**
- * S5 — external write while a row is open, closing the product doc's §1.5 gap: the plumbing
- * (`captureEdit` moving the restore point forward) was already covered, but nothing on screen told
- * the person a conflicting write had arrived. "Simulate server push" now stages a `RowConflict`
- * instead of writing straight into `data` — the person's typed value stays put until they pick
- * Keep mine / Take theirs / merge field-by-field, so doing nothing is never a silent overwrite.
- * "Push to row I'm not editing" patches a closed row the same way, but skips `captureEdit` (no
- * session to move forward) and any focus/scroll code, per §1.5's fourth criterion: an external
- * change to a row you're not editing applies quietly.
+ * External write conflicts
+ *
+ * "Simulate server push" stages a `RowConflict` on an open row instead of overwriting it
+ * silently — the typed value stays put until you pick Keep mine, Take theirs, or merge
+ * field-by-field. "Push to row I'm not editing" applies the same write quietly, since there's
+ * no open session to move forward.
  */
 @Component({
   selector: 'ngp-external-write-story-host',

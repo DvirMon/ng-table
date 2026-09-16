@@ -87,17 +87,11 @@ function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriter
 }
 
 /**
- * The filtering baseline — a standalone `createFilters()` object reaching the table as one
- * predicate term, `withFiltering({ predicates: () => [filters().matcher()] })`, client side,
- * synchronous, no MSW.
+ * Table with client-side filtering
  *
- * `form(this.filters().value)` puts Signal Forms directly over the criterion model — no adapter,
- * no second model, no sync effect. The status select uses `filter()` with `{ emptyValue: '' }`
- * rather than `equals()`, since a native `<select>`'s only expressible empty is `''`. The tag
- * multi-select is hand-wired because a checkbox group is several elements, not one control value.
- *
- * Peer-library comparisons and ADR-0014 (broken-predicate behavior) live in
- * `docs/0-product/filtering.md`, not here.
+ * Per-column and compound predicates via `createFilters()` feed `withFiltering()` as one
+ * matcher term, with Signal Forms driving the criteria directly. Load a stale saved filter
+ * raw or through validation to compare the two paths.
  */
 @Component({
   selector: 'ngp-client-filtering-story-host',

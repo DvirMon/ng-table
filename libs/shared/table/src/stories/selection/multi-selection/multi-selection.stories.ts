@@ -11,14 +11,13 @@ export default meta;
 type Story = StoryObj<MultiSelectionStoryHostComponent>;
 
 /**
- * The whole read/write surface of `withSelection()` in multi mode.
+ * Multi-selection, full surface
  *
- * - Row checkboxes accumulate; the header checkbox selects all selectable rows and clears.
- * - Locked rows stay focusable, are skipped by select-all, keep a mark they already had, and
- *   lose it on an explicit clear.
- * - Restoring a saved selection writes silently and ignores an id no row has.
- * - Deleting a selected row from outside drops the count without emitting anything.
+ * Row checkboxes accumulate; the header checkbox selects all selectable rows and clears.
+ * Locked rows stay focusable, are skipped by select-all, and keep a mark they already had
+ * until an explicit clear.
  *
- * Every verb is synchronous and local, so there is no failure path to pin as a second story.
+ * Restoring a saved selection writes silently and ignores an id no row has; deleting a
+ * selected row from outside drops the count without emitting anything.
  */
 export const Multi: Story = {};

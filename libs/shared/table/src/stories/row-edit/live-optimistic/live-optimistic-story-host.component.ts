@@ -24,17 +24,15 @@ import { createPendingAnnouncer } from './pending-announcer';
 const UNDO_WINDOW_MS = 6000;
 
 /**
- * S6 — optimistic updates & rollback (`2-gap-analysis.md` §3). The edit session is
- * focus-delimited (D39): there is no button to open a row, so `withOptimistic()` alone supplies
- * the three rollback verbs (`captureEdit`/`releaseEdit`/`revertEdit`) — `table.editing()` stays
- * empty for the whole story, and `table.pending()` is exactly the in-flight save set.
+ * Focus-delimited optimistic editing
  *
- * `addRow()` inserts a blank row under a temp id (`pendingCreateIds`); focusing it captures the
- * blank snapshot same as any row, and its first blur `POST`s (create) instead of `PUT`s
- * (update) — success re-keys via `patchRow` + `swapRowId(tempId, saved.id)` before `releaseEdit`,
- * failure `revertEdit`s to blank, same as this story's existing revert-after-failure character
- * (a deliberate difference from `../live-table/`'s create failure, which keeps typed values for
- * retry — different stories are allowed different, self-consistent answers here).
+ * There's no button to open a row — focusing a cell is the edit session, and
+ * `withOptimistic()` alone supplies capture/release/revert. `addRow()` inserts a blank row
+ * under a temp id; its first blur `POST`s instead of `PUT`s, re-keying to the server id on
+ * success.
+ *
+ * A failed create reverts to blank here, a deliberate difference from `../live-table/`, which
+ * keeps typed values for retry.
  */
 @Component({
   selector: 'ngp-live-optimistic-story-host',

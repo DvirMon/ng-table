@@ -18,10 +18,13 @@ import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 
 /**
- * The grouped table as a navigable outline — `withGrouping()` + `withExpansion()` +
- * `withSorting()`. Expand all is the story's own loop, not `expandAll()`, which walks
- * `childrenAccessor` over real rows and cannot reach a group header. Scope, peer comparison and
- * the open gaps in `docs/0-product/grouping.md` §2.5.
+ * Collapsible grouping, navigable outline
+ *
+ * `withGrouping()` + `withExpansion()` + `withSorting()` compose into a collapsible, sortable
+ * outline — collapse or expand any group header to explore the hierarchy.
+ *
+ * Expand All here is the story's own loop, not `expandAll()` — that helper walks
+ * `childrenAccessor` over real rows and cannot reach a group header.
  */
 @Component({
   selector: 'ngp-grouping-collapsible-story-host',

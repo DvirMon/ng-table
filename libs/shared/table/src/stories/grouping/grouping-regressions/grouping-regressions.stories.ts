@@ -24,21 +24,21 @@ export default meta;
 type Story = StoryObj<GroupingRegressionsStoryHostComponent>;
 
 /**
- * Two degradations the library performs **silently** — both reached from the buttons on canvas,
- * neither reported by any library channel. Deliberate misuse, not example code;
- * `Table / Grouping / Static` is the story to copy.
+ * Grouping — silent degradations
  *
- * - *Group by a column that isn't there* adds a level naming no column. The table groups by the
- *   rest and says nothing — the notice is the story's own arithmetic, not a library report.
- * - *Break one group's summary* poisons one row's `amount`. The whole table goes down instead of
- *   that one summary blanking ([#79](https://github.com/DvirMon/acme/issues/79)).
+ * Two degradations the library performs silently, both reached from the canvas buttons:
+ * grouping by a missing column, and one poisoned row's amount blanking a summary.
+ *
+ * The poisoned-row case takes the whole table down instead of blanking that one summary
+ * ([#79](https://github.com/DvirMon/acme/issues/79)).
  */
 export const SilentDegradation: Story = {};
 
 /**
- * The `groupOrder` comparator throws on every sibling pair. The table stays up on the fallback —
- * stable first-occurrence order, reported once per evaluation — which is a state `Default`'s DOM
- * never reaches.
+ * Grouping — throwing comparator
+ *
+ * The `groupOrder` comparator throws on every sibling pair. The table stays up on the
+ * fallback — stable first-occurrence order — reported once per evaluation.
  */
 export const ThrowingGroupOrder: Story = {
   args: { groupOrder: 'throwing' },
