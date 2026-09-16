@@ -1,6 +1,5 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import type { ResourceRef } from '@angular/core';
+import type { HttpResourceRef } from '@angular/common/http';
 import {
   createTable,
   withGrouping,
@@ -8,7 +7,7 @@ import {
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import {
-  injectGroupedRowsApi,
+  createGroupingPreferenceResource,
   type GroupedRowsRequestOptions,
   type GroupingPreference,
 } from '../fixtures/http';
@@ -37,11 +36,9 @@ export class GroupingAsyncRuleStoryHostComponent {
   readonly latencyMs = input(2500);
   readonly showCount = input(true);
 
-  private readonly groupedRowsApi = injectGroupedRowsApi();
-
   /** Captured out of the rule's own `factory` so the pending window is legible on canvas. The
    * table's public surface exposes the folded `grouping()`, never the rule's resource. */
-  private asyncRuleResource: ResourceRef<GroupingPreference | undefined> | undefined;
+  private asyncRuleResource: HttpResourceRef<GroupingPreference | undefined> | undefined;
 
   private readonly repGroupingRule: GroupingAsyncRule<
     DealRow,
@@ -52,11 +49,7 @@ export class GroupingAsyncRuleStoryHostComponent {
     columnId: 'rep',
     params: () => ({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }),
     factory: (params) => {
-      const ref = rxResource({
-        params: () => params(),
-        stream: ({ params: requestOptions }) =>
-          this.groupedRowsApi.fetchGroupingPreference(requestOptions),
-      });
+      const ref = createGroupingPreferenceResource(params);
       this.asyncRuleResource = ref;
       return ref;
     },

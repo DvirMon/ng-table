@@ -1,6 +1,5 @@
-import { inject } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { catchError, map, throwError, type Observable } from 'rxjs';
+import type { Signal } from '@angular/core';
+import { httpResource, HttpErrorResponse, HttpHeaders, type HttpResourceRef } from '@angular/common/http';
 import type { DealPage, DealRow } from './types';
 
 export interface GroupedRowsRequestOptions {
@@ -12,13 +11,6 @@ export interface GroupedRowsRequestOptions {
  * `applyGroupingAsync()` rule in `grouping-static/`. */
 export interface GroupingPreference {
   readonly groupByRep: boolean;
-}
-
-export interface GroupedRowsApi {
-  readonly fetchRows: (options: GroupedRowsRequestOptions) => Observable<DealPage>;
-  readonly fetchGroupingPreference: (
-    options: GroupedRowsRequestOptions
-  ) => Observable<GroupingPreference>;
 }
 
 /** `closedAt` crosses the wire as an ISO string. It has to come back a `Date` before the table
@@ -45,52 +37,66 @@ function toDealRow(payload: DealRowPayload): DealRow {
   };
 }
 
-/**
- * `HttpClient` wrapper for the grouping stories' read-only round trips — headers carry the
- * Storybook `forceFailure`/`latencyMs` controls `handlers.ts` (MSW) reads. Non-2xx and network
- * errors normalize to one `Error(message)` shape, as `row-edit/fixtures/http.ts` does.
- */
-export function injectGroupedRowsApi(): GroupedRowsApi {
-  const http = inject(HttpClient);
-
-  function headersFor(options: GroupedRowsRequestOptions): HttpHeaders {
-    return new HttpHeaders({
-      'X-Force-Failure': String(options.forceFailure),
-      'X-Latency-Ms': String(options.latencyMs),
-    });
-  }
-
-  function fetchRows(options: GroupedRowsRequestOptions): Observable<DealPage> {
-    return http
-      .get<DealPagePayload>('/api/grouped-rows', { headers: headersFor(options) })
-      .pipe(
-        map((page) => ({ rows: page.rows.map(toDealRow), total: page.total })),
-        catchError((error: unknown) => throwError(() => normalizeError(error, 'Refresh failed.')))
-      );
-  }
-
-  function fetchGroupingPreference(
-    options: GroupedRowsRequestOptions
-  ): Observable<GroupingPreference> {
-    return http
-      .get<GroupingPreference>('/api/grouping-preference', { headers: headersFor(options) })
-      .pipe(
-        catchError((error: unknown) =>
-          throwError(() => normalizeError(error, 'Grouping preference lookup failed.'))
-        )
-      );
-  }
-
-  return { fetchRows, fetchGroupingPreference };
+function isDealPagePayload(value: unknown): value is DealPagePayload {
+  return typeof value === 'object' && value !== null && 'rows' in value && 'total' in value;
 }
 
-function normalizeError(error: unknown, fallback: string): Error {
+/** `httpResource`'s `parse` always hands back `unknown` — MSW owns the response shape, so a
+ * mismatch here means the fixture drifted from `handlers.ts` and surfaces via the resource's own
+ * error channel rather than a silent bad read. */
+function toDealPage(payload: unknown): DealPage {
+  if (!isDealPagePayload(payload)) {
+    throw new Error('Unexpected grouped-rows response shape.');
+  }
+  return { rows: payload.rows.map(toDealRow), total: payload.total };
+}
+
+function headersFor(options: GroupedRowsRequestOptions): HttpHeaders {
+  return new HttpHeaders({
+    'X-Force-Failure': String(options.forceFailure),
+    'X-Latency-Ms': String(options.latencyMs),
+  });
+}
+
+/**
+ * `httpResource()` read for the grouping rows page — headers carry the Storybook
+ * `forceFailure`/`latencyMs` controls `handlers.ts` (MSW) reads. `options` returning `undefined`
+ * keeps the resource idle (no request).
+ */
+export function createGroupedRowsResource(
+  options: () => GroupedRowsRequestOptions | undefined
+): HttpResourceRef<DealPage | undefined> {
+  return httpResource(
+    () => {
+      const requestOptions = options();
+      return requestOptions && { url: '/api/grouped-rows', headers: headersFor(requestOptions) };
+    },
+    { parse: toDealPage }
+  );
+}
+
+/**
+ * `httpResource()` read for the async grouping-rule lookup, driven by `params` rather than an
+ * inline closure — `GroupingAsyncRule.factory` hands us the rule's own params signal.
+ */
+export function createGroupingPreferenceResource(
+  params: Signal<GroupedRowsRequestOptions | undefined>
+): HttpResourceRef<GroupingPreference | undefined> {
+  return httpResource<GroupingPreference>(() => {
+    const requestOptions = params();
+    return requestOptions && { url: '/api/grouping-preference', headers: headersFor(requestOptions) };
+  });
+}
+
+/** Normalizes an `httpResource` error into display text — the MSW `message` body when present,
+ * `fallback` otherwise. */
+export function toErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof HttpErrorResponse) {
     const body: unknown = error.error;
     const message = isMessageBody(body) ? body.message : undefined;
-    return new Error(message ?? fallback);
+    return message ?? fallback;
   }
-  return error instanceof Error ? error : new Error(fallback);
+  return error instanceof Error ? error.message : fallback;
 }
 
 function isMessageBody(body: unknown): body is { message: string } {

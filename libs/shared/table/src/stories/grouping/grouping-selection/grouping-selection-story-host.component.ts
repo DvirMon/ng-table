@@ -17,6 +17,7 @@ import {
 import type { DealRow } from '../fixtures/types';
 import { readRepCriterion, repFilterNode } from '../fixtures/utils';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
+import { GroupingSelectionToolbarComponent } from './grouping-selection-toolbar.component';
 import type { CascadeMode } from './grouping-selection.types';
 
 /**
@@ -30,7 +31,7 @@ import type { CascadeMode } from './grouping-selection.types';
   selector: 'ngp-grouping-selection-story-host',
   templateUrl: './grouping-selection-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [...GROUPING_STORY_PIPES, GroupingSelectionToolbarComponent],
 })
 export class GroupingSelectionStoryHostComponent {
   readonly cascade = input<CascadeMode>('descendants');
@@ -74,12 +75,8 @@ export class GroupingSelectionStoryHostComponent {
     return [...this.table.selectedRows()].filter((id) => groupIds.has(id)).length;
   });
 
-  protected onFilterRep(event: Event): void {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) {
-      return;
-    }
-    repFilterNode(this.filters).value.set(target.value);
+  protected onFilterRep(value: string): void {
+    repFilterNode(this.filters).value.set(value);
   }
 
   /**

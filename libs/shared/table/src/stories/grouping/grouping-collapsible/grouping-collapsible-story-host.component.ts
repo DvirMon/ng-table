@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, computed, input, linkedSignal, signal } from '@angular/core';
 import {
   createTable,
   setGroupLevels,
@@ -8,14 +8,15 @@ import {
   type RenderRow,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import { injectGroupedRowsApi } from '../fixtures/http';
+import { createGroupedRowsResource, toErrorMessage } from '../fixtures/http';
 import {
   COLLAPSIBLE_GROUPING_LEVELS,
   groupingConfig,
   RENESTED_GROUPING_LEVELS,
 } from '../fixtures/schema';
-import type { DealRow } from '../fixtures/types';
+import type { DealPage, DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
+import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-toolbar.component';
 
 /**
  * Collapsible grouping, navigable outline
@@ -30,15 +31,29 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
   selector: 'ngp-grouping-collapsible-story-host',
   templateUrl: './grouping-collapsible-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [...GROUPING_STORY_PIPES, GroupingCollapsibleToolbarComponent],
 })
 export class GroupingCollapsibleStoryHostComponent {
   readonly forceFailure = input(false);
   readonly latencyMs = input(600);
 
-  private readonly groupedRowsApi = injectGroupedRowsApi();
+  /** Request counter, not a boolean — the story wants the idle mock to render before the first
+   * click and every click after that to be a new request (no `reload()` needed). */
+  private readonly refetchRequests = signal(0);
 
-  protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
+  protected readonly rowsPage = createGroupedRowsResource(() =>
+    this.refetchRequests() === 0
+      ? undefined
+      : { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }
+  );
+
+  /** Bridges the resource's read-only page into the `WritableSignal` `createTable()` needs —
+   * `linkedSignal`, never an `effect`, per the writable/derived split. */
+  protected readonly data = linkedSignal<DealPage | undefined, DealRow[]>({
+    source: () => (this.rowsPage.hasValue() ? this.rowsPage.value() : undefined),
+    computation: (page, previous) => page?.rows ?? previous?.value ?? GROUPING_ROWS_MOCK,
+  });
+
   protected readonly table = createTable(
     this.data,
     groupingConfig,
@@ -54,9 +69,14 @@ export class GroupingCollapsibleStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
-  protected readonly isRefetching = signal(false);
-  protected readonly replacedRowCount = signal(0);
-  protected readonly refetchError = signal('');
+  protected readonly isRefetching = computed(() => this.rowsPage.isLoading());
+  protected readonly refetchError = computed(() => {
+    const error = this.rowsPage.error();
+    return error ? toErrorMessage(error, 'Refresh failed.') : '';
+  });
+  protected readonly replacedRowCount = computed(() =>
+    this.rowsPage.hasValue() ? this.rowsPage.value().total : 0
+  );
 
   protected readonly isRenested = computed(
     () => this.table.grouping()[0] === RENESTED_GROUPING_LEVELS[0]
@@ -90,21 +110,7 @@ export class GroupingCollapsibleStoryHostComponent {
   }
 
   protected refetchRows(): void {
-    this.isRefetching.set(true);
-    this.refetchError.set('');
-    this.groupedRowsApi
-      .fetchRows({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() })
-      .subscribe({
-        next: (page) => {
-          this.table.value.update(() => page.rows);
-          this.isRefetching.set(false);
-          this.replacedRowCount.set(page.total);
-        },
-        error: (error: unknown) => {
-          this.isRefetching.set(false);
-          this.refetchError.set(error instanceof Error ? error.message : 'Refresh failed.');
-        },
-      });
+    this.refetchRequests.update((count) => count + 1);
   }
 
   protected regroup(): void {

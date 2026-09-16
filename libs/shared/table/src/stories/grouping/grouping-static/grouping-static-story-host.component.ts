@@ -13,6 +13,7 @@ import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { DEAL_COLUMN_IDS, groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
+import { GroupingStaticToolbarComponent } from './grouping-static-toolbar.component';
 import type { GroupedColumnMode } from './grouping-static.types';
 
 /**
@@ -25,7 +26,7 @@ import type { GroupedColumnMode } from './grouping-static.types';
   selector: 'ngp-grouping-static-story-host',
   templateUrl: './grouping-static-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [...GROUPING_STORY_PIPES, GroupingStaticToolbarComponent],
 })
 export class GroupingStaticStoryHostComponent {
   readonly showCount = input(true);

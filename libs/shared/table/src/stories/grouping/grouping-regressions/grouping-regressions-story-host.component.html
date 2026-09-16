@@ -4,13 +4,12 @@
     — <code>grouping-static/</code> is. Each control below drives one gap that is still open.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="resetLevels()">Reset levels</button>
-    <button type="button" (click)="groupByMissingColumn()">Group by a column that isn't there</button>
-    <button type="button" (click)="toggleBrokenSummary()">
-      {{ isSummaryBroken() ? "Restore that group's summary" : "Break one group's summary" }}
-    </button>
-  </div>
+  <ngp-grouping-regressions-toolbar
+    [isSummaryBroken]="isSummaryBroken()"
+    (resetLevels)="resetLevels()"
+    (groupByMissingColumn)="groupByMissingColumn()"
+    (toggleBrokenSummary)="toggleBrokenSummary()"
+  />
 
   @if (droppedLevels().length > 0) {
     <p class="grouping-story__notice">

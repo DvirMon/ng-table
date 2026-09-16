@@ -5,16 +5,14 @@
     header carries its value, its row count and its <code>amount</code> total, at every depth.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="resetLevels()">Reset levels</button>
-  </div>
+  <ngp-grouping-static-toolbar (resetLevels)="resetLevels()" />
 
   <div class="grouping-story__tabs" role="group" aria-label="Group by column">
     @for (column of visibleColumns(); track column.id) {
       <button
         type="button"
         class="grouping-story__tab"
-        [attr.aria-pressed]="isGroupedById()[column.id] ?? false"
+        [attr.aria-pressed]="isGroupedById()[column.id]"
         [title]="
           isGroupedById()[column.id]
             ? 'A grouping level — toggling it off calls removeGroupLevel()'
@@ -100,10 +98,10 @@
                     <span class="grouping-story__group-label">
                       @switch (row.groupKey?.columnId) {
                         @case ('amount') {
-                          {{ row.groupKey?.value | dealAmount }}
+                          {{ row.groupKey.value | dealAmount }}
                         }
                         @case ('closedAt') {
-                          {{ row.groupKey?.value | dealDate }}
+                          {{ row.groupKey.value | dealDate }}
                         }
                         @default {
                           {{ row.groupKey?.value }}

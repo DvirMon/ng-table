@@ -19,6 +19,14 @@ import groupingPipes from './grouping-story.pipes.ts?raw';
 import groupingSchema from './fixtures/schema.ts?raw';
 import groupingHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
+import staticToolbarClass from './grouping-static/grouping-static-toolbar.component.ts?raw';
+import staticToolbarTemplate from './grouping-static/grouping-static-toolbar.component.html?raw';
+import regressionsToolbarClass from './grouping-regressions/grouping-regressions-toolbar.component.ts?raw';
+import regressionsToolbarTemplate from './grouping-regressions/grouping-regressions-toolbar.component.html?raw';
+import collapsibleToolbarClass from './grouping-collapsible/grouping-collapsible-toolbar.component.ts?raw';
+import collapsibleToolbarTemplate from './grouping-collapsible/grouping-collapsible-toolbar.component.html?raw';
+import selectionToolbarClass from './grouping-selection/grouping-selection-toolbar.component.ts?raw';
+import selectionToolbarTemplate from './grouping-selection/grouping-selection-toolbar.component.html?raw';
 import '../styles/code-tabs.css';
 
 <Meta title="Table / Grouping" name="Docs" />
@@ -57,19 +65,40 @@ no-op to explain.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-static-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-static-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-static-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-static-source" />
+      grouping-static-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-static-source" />
+      grouping-static-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={staticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={staticTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={staticClass} language="tsx" />
+      <Source code={groupingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={staticToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={staticToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -95,19 +124,26 @@ rather than a second canvas.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-async-rule-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-async-rule-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-async-rule-source" />
-      TS
+      CSS
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={asyncRuleClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={asyncRuleTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={asyncRuleClass} language="tsx" />
+      <Source code={groupingStyles} language="css" />
     </div>
   </div>
 </div>
@@ -138,19 +174,40 @@ first-occurrence order for the affected levels, and reports once per evaluation.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-regressions-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-regressions-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-regressions-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-regressions-source" />
+      grouping-regressions-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-regressions-source" />
+      grouping-regressions-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={regressionsClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={regressionsTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={regressionsClass} language="tsx" />
+      <Source code={groupingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={regressionsToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={regressionsToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -177,19 +234,40 @@ which is the half of product story 2.5 that `Default`'s DOM never reaches.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-collapsible-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-collapsible-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      grouping-collapsible-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-collapsible-source" />
+      grouping-collapsible-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={collapsibleClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={collapsibleTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={collapsibleClass} language="tsx" />
+      <Source code={groupingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={collapsibleToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={collapsibleToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -211,19 +289,40 @@ no group header is ever in the selection.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-group-selection-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-group-selection-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="grouping-group-selection-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-group-selection-source" />
+      grouping-selection-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-group-selection-source" />
+      grouping-selection-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={selectionClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={selectionTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={selectionClass} language="tsx" />
+      <Source code={groupingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionToolbarTemplate} language="html" />
     </div>
   </div>
 </div>

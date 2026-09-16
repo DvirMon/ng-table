@@ -14,14 +14,14 @@
     </p>
   }
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="expandAllGroups()">Expand all</button>
-    <button type="button" (click)="collapseAllGroups()">Collapse all</button>
-    <button type="button" [disabled]="isRefetching()" (click)="refetchRows()">Refetch</button>
-    <button type="button" (click)="regroup()">
-      {{ isRenested() ? 'Regroup: Region → Category → Rep' : 'Regroup: Category → Region → Rep' }}
-    </button>
-  </div>
+  <ngp-grouping-collapsible-toolbar
+    [isRefetching]="isRefetching()"
+    [isRenested]="isRenested()"
+    (expandAll)="expandAllGroups()"
+    (collapseAll)="collapseAllGroups()"
+    (refetchRows)="refetchRows()"
+    (regroup)="regroup()"
+  />
 
   <p class="grouping-story__notice">
     <strong>Expand all is this story's own loop, not the library's.</strong>

@@ -6,20 +6,15 @@
     Filter by rep first: a group's checkbox and its count are the same set of rows, always.
   </p>
 
-  <div class="story-host__toolbar">
-    <label>
-      rep contains:
-      <input type="text" [value]="repFilter()" (input)="onFilterRep($event)" />
-    </label>
-    <button type="button" (click)="toggleGrouping()">
-      {{ isGrouped() ? 'Ungroup' : 'Group by Region → Category' }}
-    </button>
-    <button type="button" (click)="clearSelection()">Clear selection</button>
-    <span class="story-host__counter">{{ selectionReadout() }}</span>
-    <span class="story-host__counter">
-      group headers in the selection: {{ selectedGroupHeaderCount() }}
-    </span>
-  </div>
+  <ngp-grouping-selection-toolbar
+    [repFilter]="repFilter()"
+    [isGrouped]="isGrouped()"
+    [selectionReadout]="selectionReadout()"
+    [selectedGroupHeaderCount]="selectedGroupHeaderCount()"
+    (filterRep)="onFilterRep($event)"
+    (toggleGrouping)="toggleGrouping()"
+    (clearSelection)="clearSelection()"
+  />
 
   @if (cascade() === 'self') {
     <p class="grouping-story__notice">

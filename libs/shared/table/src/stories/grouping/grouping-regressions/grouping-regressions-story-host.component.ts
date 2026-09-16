@@ -17,6 +17,7 @@ import {
 import type { DealRow } from '../fixtures/types';
 import { formatValue } from '../fixtures/utils';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
+import { GroupingRegressionsToolbarComponent } from './grouping-regressions-toolbar.component';
 import type { GroupOrderMode } from './grouping-regressions.types';
 
 /** The row "Break one group's summary" poisons, and the figure that restores it. Read off the
@@ -48,7 +49,7 @@ function externalRank(key: unknown): number {
   selector: 'ngp-grouping-regressions-story-host',
   templateUrl: './grouping-regressions-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES],
+  imports: [...GROUPING_STORY_PIPES, GroupingRegressionsToolbarComponent],
 })
 export class GroupingRegressionsStoryHostComponent {
   readonly groupOrder = input<GroupOrderMode>('first-occurrence');
