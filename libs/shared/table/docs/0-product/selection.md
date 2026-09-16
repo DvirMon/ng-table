@@ -2,20 +2,6 @@
 title: Product — Selection User Stories
 type: product
 capability: selection
-status: >
-  Coverage re-derived 2026-09-14 from four shipped stories — `multi-selection/` and
-  `single-selection/` here, plus `selection-filtering/` and `grouping-selection/`, which are built
-  under the filtering and grouping plans and measured there. 12 ✅, 5 🟡, 4 ❌ across §1–§5; X-1
-  stays blocked on D12's bulk write verbs. The four ❌ are all stated boundaries, not omissions:
-  §1.3 and §4.2 (shift-click and Shift+Arrow ranges) are blocked on node H, the undrilled
-  selection directive, and 4 of 5 peers ship shift-click, so H's priority rises; §1.5 is
-  deliberately out of scope; §5.3 has no library position anywhere to inherit. §5.2 flipped to ✅
-  unexpectedly — the multi story's lock control is exactly its scenario, though OQ-6's question of
-  whether retain-and-tell is the *right* answer is untouched. Every drift item listed under "Report
-  the deltas" was verified already fixed; the §6 notes that still said otherwise are corrected.
-  **§8 reconciled in the same pass:** U5/U6's recipes shipped, U7 was not blocked on S1 as its note
-  claimed, S5 has a demonstrated position but still no decision, and U1 no longer blocks §1.1–§1.7
-  — it blocks §1.3 and §4.1–§4.3.
 date: 2026-09-14
 audience: product, design, engineering
 ---
@@ -75,10 +61,9 @@ never loaded at all.
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
 
-**Marks re-derived 2026-09-14 from the shipped stories, not from a sibling doc.** Four stories
-measure this feature, and only two of them live under `selection/` — the other two are built by
-the features that had to compose with selection, and are measured in those plans rather than
-recounted here:
+Four stories measure this feature, and only two of them live under `selection/` — the other two
+are built by the features that had to compose with selection, and are measured in those plans
+rather than recounted here:
 
 | Story | Composes | What it demonstrates |
 |---|---|---|
@@ -140,12 +125,9 @@ renders nothing, the other two mark, and the story's notice says so (D8). **Ther
 checkbox directive**; what these hosts ship is the binding recipe the 2026-09-12 status says is
 missing, not a shipped affordance.
 
-**Design status:** the write path is covered — `toggle(id)`/`select(ids)` (D2) — but there is
-**nothing to click**. No checkbox directive exists (`3-ui/directives/selection.md` is an undrilled
-stub); "click-anywhere-on-the-row" isn't even sketched. Every UI-bearing competitor ships at least
-a checkbox column by default (`research-selection-ux-capabilities.md` §2); this library ships the
-verb and, as of 2026-09-12, no affordance at all. Still no directive; what the stories added is the
-binding recipe, not a shipped control.
+**Design status:** write path covered — `toggle(id)`/`select(ids)` (D2); no checkbox directive
+exists yet (`3-ui/directives/selection.md` stub). See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §2.
 
 ## 1.2 — Select several rows one at a time *(multi)* — ✅ covered
 
@@ -162,9 +144,7 @@ to what is already marked, in any order, with no limit. The count banner and the
 per gesture, so "the second click did not replace the first" is read off the screen.
 
 **Design status:** covered by `select(ids)`'s additive bulk write and D14's truncation rule (a
-*conflicting* request under single-select keeps only the last id, never silently drops the whole
-set) — and, as of 2026-09-12, nothing rendered. This story and 1.1 differ only in whether the state
-layer composes correctly under repeated calls, which it does; the person-facing gap is identical.
+conflicting request under single-select keeps only the last id, never drops the whole set).
 
 ## 1.3 — Select a range in one gesture (shift-click) *(multi)* — ❌ not covered *(blocked on node H)*
 
@@ -184,16 +164,10 @@ which is UI-layer work by D13's flat-ids design, and the UI layer for selection 
 shift-click**, so this is the single strongest argument for raising H's priority; it also gates 4.2
 and the roving-focus half of 4.1. OQ-5, §9.2.
 
-**Design status — gap, and a genuinely hard one industry-wide.** No anchor-tracking mechanism
-exists anywhere in this codebase, and per D13's flat-ids design it deliberately wouldn't live in
-the state feature — this is UI-layer work. The community evidence is unusually strong here: CDK's
-`SelectionModel` has never shipped a range primitive at all (issue closed by the *reporter*
-building their own StackBlitz); TanStack Table went **4.5 years** on community-only
-shift-click implementations before merging a built-in default in mid-2026; PrimeNG shipped a
-broken shift-click and took 4.5 years to fix it
-(`research-selection-community-pain.md` Theme 3 — CDK #17402, TanStack #3636 → PR #6409, PrimeNG
-#5496 → PR #11845). AG Grid is the only library with it solid for years, and even it had a
-deselect-direction bug (ag-grid#6619). Raised as **OQ-5**.
+**Design status — gap.** No anchor-tracking mechanism exists; per D13's flat-ids design it belongs
+to the UI layer, not the state feature. See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md)
+Theme 3. Raised as **OQ-5**.
 
 ## 1.4 — Select everything I can currently see *(multi)* — ✅ covered *(measured under filtering)*
 
@@ -217,20 +191,12 @@ unfiltered, as the header checkbox, pre-filtered by `isSelectable()` so a locked
 in. The open half — whether "everything visible is selected" is knowable without the consumer
 re-deriving it — is 2.3, still 🟡.
 
-**Design status:** covered — `selectAllIds(table)` (D59), default scope is `rows()` (post-
-filter/sort). This is the direct, shipped answer to the single most-repeated bug in the entire
-competitive category: **three separate libraries have shipped a purpose-built config option whose
-job is exactly this question and are still fixing it years later** (AG Grid's
-`selectAll: 'currentPage'`/`'filtered'` re-broken across issues #9327, #10688, #12072, #12559 over
-2024–2025; MRT's own select-all-vs-pagination bug still open as of 2025-06;
-`research-selection-community-pain.md` Theme 1). `withSelection()`'s refusal to bake in a `scope`
-concept and instead take an explicit id array sidesteps the entire bug class. Of the five
-researched, only TanStack Table exposes the page-scoped and dataset-scoped variants as two
-separately named calls rather than one flag defaulting to a choice
-(`research-selection-ux-capabilities.md` §1/§10) — `selectAllIds(table)` /
-`selectAllIds(table, { includeHidden: true })` follow that shape, not an invented one. What it
-does not yet answer: whether "everything currently visible is selected" is knowable *without* the
-consumer re-deriving it — see 2.3.
+**Design status:** covered — `selectAllIds(table)` (D59), default scope `rows()`
+(post-filter/sort); no `scope` concept, an explicit id array instead. Doesn't answer whether
+"everything visible is selected" is knowable without re-deriving — 2.3. See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md)
+Theme 1,
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §1/§10.
 
 ## 1.5 — Select literally every row that exists, even ones I haven't loaded — ❌ not covered, deliberately out of scope for now
 
@@ -243,13 +209,10 @@ consumer re-deriving it — see 2.3.
 `value()`; rows never fetched are out of scope by decision (S3, §9.3), not by omission. Only AG Grid
 Enterprise reaches this rung at all.
 
-**Design status — a real boundary, not an oversight.** `selectAllIds(table, { includeHidden: true
-})` covers "every row currently in `value()`" — it cannot cover rows the consumer has never
-fetched. Only one competitor reaches this rung at all: AG Grid's Server-Side Row Model, and only
-in its **Enterprise** tier, via `getServerSideSelectionState()`/`setServerSideSelectionState()`
-(`research-selection-ux-capabilities.md` §1, §10). No other library in the set offers it. Named
-here so it's an explicit, considered absence rather than something discovered later as "selection
-doesn't scale to server mode" — see §9.3.
+**Design status — deliberate boundary.** `selectAllIds(table, { includeHidden: true })` covers
+every row in `value()`; it cannot cover rows never fetched. See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §1, §10,
+and §9.3.
 
 ## 1.6 — Unmark one row without touching the rest *(multi)* — ✅ covered
 
@@ -259,9 +222,8 @@ doesn't scale to server mode" — see §9.3.
 row's checkbox leaves every other mark alone, and the event log shows the single-id delta. The same
 click works on a locked row that already carried a mark, because removal is ungated by design (D58).
 
-**Design status:** covered — `deselect(ids)` is explicitly exempt from both the multi-select and
-`enableRowSelection` rules (removal can't violate either), so it always succeeds regardless of a
-row's current lock/mode state.
+**Design status:** covered — `deselect(ids)` is exempt from both the multi-select and
+`enableRowSelection` rules, so it always succeeds regardless of a row's lock/mode state.
 
 ## 1.7 — Clear my whole selection in one action *(both)* — ✅ covered
 
@@ -299,14 +261,11 @@ off `selectedRows()` in the template, persistently rather than at click time. Be
 never stamped onto `RenderRow` (D5), this binding **is** the contract; a consumer copies these four
 lines. No directive ships, and the marks in this section do not assume one.
 
-**Design status — gap, and a deliberate design trade underneath it.** `selectedRows()` is a signal
-a consumer must read and bind themselves — selection is explicitly never stamped onto `RenderRow`
-(D5), unlike `withExpansion()`'s `isExpanded` field. That's a real, considered choice (avoids
-coupling selection to render-row identity, which is part of why this design sidesteps the
-re-render-storm bug class three competitors have shipped — `research-selection-community-pain.md`
-Theme 7), but it means there is currently no documented recipe for "how do I bind
-`row.id | selected` in my template," only the raw signal. Worth a cookbook entry even before any
-directive ships.
+**Design status — deliberate trade.** `selectedRows()` is a signal a consumer must read and bind
+themselves — never stamped onto `RenderRow` (D5), unlike `withExpansion()`'s `isExpanded`. Avoids
+the render-storm bug class; see
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md)
+Theme 7. No documented binding recipe yet.
 
 ## 2.2 — See a count of how many rows I've selected *(multi)* — ✅ covered
 
@@ -325,14 +284,10 @@ it is a `computed()` over the same signal. It renders an empty state as well as 
 selected" is a state rather than a missing element. The banner is the convention OQ-3 says is
 missing; it is story-local until §9.1 has an owner.
 
-**Design status — gap, and cheap.** `selectedRows().size` already answers this at zero engine cost
-— the gap is entirely a missing convention for *displaying* it, not a missing primitive. Only one
-of five competitors ships this as a real, zero-config built-in: Material React Table's
-`positionToolbarAlertBanner` "displays selected row count automatically"
-(`research-selection-ux-capabilities.md` §7). AG Grid has the equivalent component but paywalls the
-entire Status Bar it lives in; TanStack, CDK, and PrimeNG give the integrator nothing, not even a
-documented recipe. MRT proves this is cheap enough that gating it is a bundling choice, not
-evidence of real cost. Raised as **OQ-3**.
+**Design status — cheap gap.** `selectedRows().size` already answers this at zero engine cost — a
+missing display convention, not a missing primitive. See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §7.
+Raised as **OQ-3**.
 
 ## 2.3 — Know when everything currently visible is already selected *(multi)* — 🟡 partly covered *(the denominator is hand-computed)*
 
@@ -358,15 +313,13 @@ caller already knows the id set. Routed to
 [`work/computed-state-mechanism/1-intake.md`](../1-state/work/computed-state-mechanism/1-intake.md).
 OQ-1, S1.
 
-**Design status — gap, explicitly named by the spec itself.** `selectionStateOf(ids)` (D7) answers
-"none/some/all" but only if the caller already knows and supplies the exact id set to check against
-— it does not derive "is everything currently visible selected" on its own. This is routed to
+**Design status — gap.** `selectionStateOf(ids)` (D7) answers "none/some/all" only if the caller
+already supplies the exact id set — it does not derive "is everything visible selected" on its
+own. Routed to
 [`work/computed-state-mechanism/1-intake.md`](../1-state/work/computed-state-mechanism/1-intake.md),
-which exists only as an early intake folder, not a resolved design. Tri-state/indeterminate
-checkboxes are real and native in two of five competitors (AG Grid, and PrimeNG's simpler
-`aria-selected` version) but both name real correctness bugs in the space
-(`research-selection-ux-capabilities.md` §1 cites AG Grid's own historical indeterminate-checkbox
-bug surface). Raised as **OQ-1**.
+an early intake folder, not a resolved design. See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §1.
+Raised as **OQ-1**.
 
 ## 2.4 — Not lose my selection when the view changes underneath it *(both)* — ✅ covered *(measured under filtering)*
 
@@ -389,16 +342,12 @@ filtered-out selected row there, and *Someone else deleted this row* in
 [`multi-selection/`](../../src/stories/selection/multi-selection/). The denominator question this
 status leaves open is 2.3/2.5, both still 🟡.
 
-**Design status:** covered, structurally, by D1 (no scope dependency on `withFiltering()`/
-pagination — selection is a plain `Set<RowId>` untouched by either) plus D11 (reconciliation prunes
-only ids that leave `data()` entirely, nothing else). This matches the confident, stated position
-of the two most architecturally rigorous competitors — AG Grid and TanStack both guarantee
-"a selection is a fact about a row, not about the current view," and both explain why
-(`research-selection-community-pain.md` Theme 2; `research-selection-ux-capabilities.md` §5).
-PrimeNG has no such policy, and the community's own coping pattern
-(`(onFilter)="selectedItems = []"` hand-written resets) is the visible cost of that gap. What's
-still open — here and in every competitor researched — is the denominator question in 2.3/2.5: a
-hidden-but-selected row is *kept*, correctly, but nothing yet tells the person it's hidden.
+**Design status:** covered structurally by D1 (no scope dependency on `withFiltering()`/pagination
+— selection is a plain `Set<RowId>` untouched by either) plus D11 (reconciliation prunes only ids
+that leave `data()` entirely). Still open: the denominator question in 2.3/2.5 — a
+hidden-but-selected row is kept, but nothing yet tells the person it's hidden. See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 2,
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §5.
 
 ## 2.5 — Know when part of my selection is currently hidden *(both)* — 🟡 partly covered *(the absence is stated, the count is not)*
 
@@ -471,19 +420,12 @@ in this section. All three criteria are on screen:
 dropping them silently rather than throwing. The host pre-filters, so D58's own gating never fires
 on canvas. It is unit-tested, not rendered.
 
-**Design status:** the write-path half is covered — `enableRowSelection` (D58) gates every
-id-**adding** write (`toggle`, `select`, `initialSelection`) but never `deselect`/`clearSelection`,
-so an already-selected row that later becomes locked keeps its mark until the person (or code)
-explicitly clears it (D58/D60). This matches the majority industry position — only AG Grid
-auto-deselects a newly-locked row, and pays for that with a dedicated `'selectableChanged'` cause
-value in its selection-source enum just to explain the library-initiated change
-(`research-selection-ux-capabilities.md` §6). What's genuinely missing is the **visual** half: no
-directive renders a disabled-not-hidden control yet, and PrimeNG's own history shows this is easy
-to get half-right — one filed bug for "select-all shouldn't select disabled rows" (👍34, open 3+
-years) and a second, separate bug two years later for "select-all shouldn't touch already-selected
-disabled rows either" (`research-selection-community-pain.md` Theme 6, PrimeNG #6736/#15780). Worth
-an explicit test for the second half given how easily it's missed even by libraries that fixed the
-first half.
+**Design status:** write-path half covered — `enableRowSelection` (D58) gates every id-adding
+write but never `deselect`/`clearSelection`, so an already-selected row that later becomes locked
+keeps its mark until explicitly cleared (D58/D60). Missing: the visual half (no directive renders
+disabled-not-hidden yet). See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §6,
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 6.
 
 ## 3.3 — Not accidentally end up with two rows selected in a single-select table — ✅ covered
 
@@ -499,11 +441,10 @@ renders the message in a `role="alert"`. The production behavior (truncate to th
 is the branch the story cannot reach, and says so.
 
 **Design status:** covered — `enableMultiRowSelection: false` (or a per-row predicate) is checked
-against the whole candidate set for a write, not just the id named in the call (D14): a conflicting
-bulk request keeps only the last id. Under `ngDevMode` this throws, naming the discarded ids; in
-production it truncates silently, deliberately, because `select(ids)` is often fed by runtime data
-(a restored selection, a server response) where a hard throw would turn a data mismatch into a
-startup crash.
+against the whole candidate set for a write, not just the id named in the call (D14): a
+conflicting bulk request keeps only the last id. `ngDevMode` throws, naming the discarded ids;
+production truncates silently — `select(ids)` is often fed by runtime data where a hard throw
+would turn a data mismatch into a startup crash.
 
 ---
 
@@ -525,16 +466,9 @@ defined Tab/focus order across a whole table, no roving-focus containment, and n
 survive replacing the checkbox with a click-to-select row (U3/U4). That is node H again, with 1.3
 and 4.2.
 
-**Design status — gap, and evidence says this needs to be designed in from the start, not bolted on
-later.** No directive exists even now, so the keyboard model is unbuilt either way — but across
-every competitor researched, keyboard interaction for selection is consistently the **last**
-capability shipped, or never shipped as a first-class row-level primitive: Angular Material's
-`mat-table` has had a "no keyboard row navigation" issue open **six years** (#14861, 👍19, still
-active); PrimeNG needed two separate multi-year efforts for two different table variants (#713,
-#5762) to add any keyboard support at all; AG Grid has an **open WCAG "no keyboard trap" violation**
-filed as recently as 2025-11 (`research-selection-community-pain.md` Theme 4). This is a strong
-argument for the eventual `ngpTableSelectionCheckbox` directive treating Space-to-toggle and a
-defined Tab/focus order as in-scope from its first drilling pass.
+**Design status — gap.** No directive exists yet. Keyboard interaction should be in-scope from
+the eventual `ngpTableSelectionCheckbox` directive's first drilling pass, not bolted on later. See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 4.
 
 ## 4.2 — Select a range from the keyboard *(multi)* — ❌ not covered *(blocked on node H, with 1.3)*
 
@@ -544,13 +478,8 @@ defined Tab/focus order as in-scope from its first drilling pass.
 **Covered by:** nothing, and blocked on node H with 1.3 — the same anchor-tracking mechanism serves
 both gestures, so they are one piece of work and should be drilled together rather than sequenced.
 
-**Design status — gap.** No primitive exists. PrimeNG has the fullest keyboard vocabulary in the
-competitive set — Shift+Arrow extends a range, Shift+Space selects between anchor and focus,
-Ctrl+A selects all — worth using as the reference shape when this is eventually drilled, **with
-the explicit caution** that PrimeNG's own `Ctrl+A` implementation has a filed, live bug when
-combined with `dataKey`-based row identity (`research-selection-ux-capabilities.md` §3,
-primeng#15903) — the naive "recompute all ids against the wrong identity source" trap is easy to
-fall into even for the library that got the rest of this right.
+**Design status — gap.** No primitive exists. See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §3.
 
 ## 4.3 — Have a selection change announced to a screen reader *(both)* — 🟡 partly covered *(the count is announced; the row is not)*
 
@@ -568,14 +497,8 @@ region at all, and AG Grid's documented limitation applies here unchanged — a 
 that already has focus may go unannounced. No announcement convention ships. U-layer work, tied to
 node H.
 
-**Design status — gap, unaddressed anywhere in this codebase yet.** No `aria-selected` wiring, no
-announcement convention exists. Worth naming plainly rather than assuming "it'll be fine": even
-AG Grid, which states the most about selection accessibility of any competitor, admits a real,
-unresolved limitation — "some screen readers will not recognise changes that happen to an element
-that is currently focused," so a keyboard-driven selection on the focused row may go unannounced,
-with only a documented workaround (move focus away and back)
-(`research-selection-ux-capabilities.md` §8). Material React Table's guide says nothing about
-selection accessibility at all — a gap worth not accidentally copying.
+**Design status — gap.** No announcement convention exists. See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §8.
 
 ---
 
@@ -607,12 +530,11 @@ prune is reconciliation rather than a write. A person sees the count change and 
 because the story hardcodes the sentence — there is no signal a consumer could hook a "you had 5,
 now you have 4" message off. That is the second, different mechanism OQ-4 asks for, unchanged.
 
-**Design status — half solved, half a real gap.** The state-correctness half is genuinely ahead of
-the field: Material React Table has a live, open bug where a deleted-then-refetched row *stays*
-reported as selected and "Clear selection" doesn't clear it
-(`research-selection-community-pain.md` Theme 2/8, MRT #1362) — `withSelection()`'s D11
-reconciliation already prevents exactly that. What's missing is **observability**: no signal exists
-for a consumer to build a "you had 5, now you have 4, here's why" message from. Raised as **OQ-4**.
+**Design status — half solved.** State-correctness is covered — D11 reconciliation prunes cleanly.
+Missing: observability — no signal exists for a consumer's "you had 5, now you have 4" message.
+See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 2/8.
+Raised as **OQ-4**.
 
 ## 5.2 — A row edited so it no longer qualifies for selection — ✅ covered *(unexpectedly — see below)*
 
@@ -632,14 +554,10 @@ exists either way. The story shows what **falls out of D58/D60** — retain, and
 demonstrated position, not a decided one. Worth deciding on purpose now that there is something to
 look at.
 
-**Design status — open, with no evidence to lean on from any direction.** This is the selection
-analogue of filtering's "an edit makes a row no longer match the active filter" story
-(`row-editing.md` F-1) — but unlike that one, **no well-reasoned, verifiable issue was found in any
-of the five competitor trackers** specifically about this
-(`research-selection-community-pain.md` Theme 8). That silence is itself informative: this class of
-problem (a mutation invalidating a previously-valid state held *elsewhere*) appears to be
-under-tracked industry-wide, not solved-and-forgotten. No recommendation is offered here because
-there is no precedent to weigh — raised as a genuinely open question, **OQ-6**.
+**Design status — open, no precedent.** The selection analogue of filtering's "an edit makes a row
+no longer match" story (`row-editing.md` F-1). No recommendation offered. See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 8.
+Raised as **OQ-6**.
 
 ## 5.3 — A misclick on "select all" doesn't wipe a large selection with no way back *(multi)* — ❌ not covered *(no library position to inherit)*
 
@@ -652,12 +570,9 @@ whole selection in one click, with no confirmation, no undo, and nothing to get 
 is the convergent gesture every peer ships, so the story is right to ship it — the missing guard is
 a product decision no library in the researched set has taken. OQ-2.
 
-**Design status — gap, no library position exists to inherit.** No confirmation step, no undo, and
-no library anywhere in the researched set treats a destructive select-all/deselect-all as needing
-either — the one corroborating complaint found (an end user asking a *different* product not to
-silently wipe a selection on misclick) is adjacent evidence of the same underlying frustration
-that surfaces as AG Grid's own "external state update silently clears selection with no opt-out"
-bug (`research-selection-community-pain.md` Theme 2/9, AG Grid #6635; Theme 9). Raised as **OQ-2**.
+**Design status — gap, no library position to inherit.** No confirmation step, no undo. See
+[`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 2/9.
+Raised as **OQ-2**.
 
 ---
 
@@ -673,39 +588,27 @@ is **linked, not restated**, and that file keeps owning its coverage mark.
 **F-S1 already exists** at [`filtering.md`](filtering.md) §5 "Owned by selection *(built)*" —
 "selecting everything I can currently see stays true to what I see," plus the "N selected, M not
 currently visible" retention story (§2.5/§5.1 above). It is **linked, not restated**;
-`filtering.md` owns its coverage mark, and it now reads 🟡 with the split named: bullet 1 answered
-by D59's `selectAllIds()` and demonstrated by `selection-filtering/`, bullet 2 (the "N hidden"
-count) still genuinely unbuilt, with no shipped signal to compute it from. **Verified 2026-09-14** —
-the drift this section used to flag is fixed, in that file.
+`filtering.md` owns its coverage mark: 🟡, bullet 1 answered by D59's `selectAllIds()` and
+demonstrated by `selection-filtering/`, bullet 2 (the "N hidden" count) still unbuilt, no shipped
+signal to compute it from.
 
 ## Owned by grouping *(built, uncommitted)*
 
 **X-G1 already exists** at [`grouping.md`](grouping.md) §5 "Owned by selection *(built)*" —
-ticking a group header's checkbox. Its own §1 changelog and §9 gap table record this as **"Closed
-by D16"**: the library ships no cascade semantics — `table.rowsOf(group)` (issue #65) plus a
-consumer-owned cascade is the answer, matching the deliberate flat-ids stance (D13). It is
-**linked, not restated**. **Verified 2026-09-14:** the X-G1 story block's own body now states D16's
-resolution, matching what its changelog and gap table already said — the drift this section used to
-flag is fixed, and X-G1 is marked ✅ as the consumer recipe D16 calls for, demonstrated by
-`grouping-selection/`. D16's resolution is the right one to cite going forward: PrimeNG's
-rowGroup/selection features actively conflict in production, unresolved
-for years (`research-selection-ux-capabilities.md` §4, primeng#5831/#4310) — a concrete cautionary
-case for keeping cascade semantics out of this library until there's real evidence a general
-policy (à la AG Grid's `groupSelects`) is worth the maintenance cost.
+ticking a group header's checkbox. **Linked, not restated.** Resolved by D16: the library ships no
+cascade semantics — `table.rowsOf(group)` (issue #65) plus a consumer-owned cascade, matching the
+flat-ids stance (D13). X-G1 is marked ✅ as the consumer recipe D16 calls for, demonstrated by
+`grouping-selection/`. See
+[`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §4.
 
 ## Owned by selection *(built, blocked on bulk write verbs)*
 
 ### X-1 — Bulk delete and bulk edit need a selection source
 
-Story lives at [`row-editing.md`](row-editing.md) §5, filed under "Owned by selection
-*(unbuilt)*." **That header is now stale** — `withSelection()` has shipped, tested code
-(`spec: drilled, code: partial`). The story itself is still correctly ❌: D12 explicitly keeps
-bulk `removeRow(id[])`/`patchRow(id[], partial)` out of this effort's scope, and bulk edit
-additionally needs row-editing's own G4 (multiple-open semantics) resolved. **What changed is the
-blocker**, not the story: it used to be "no selection source exists," it is now "a selection source
-exists; the bulk write verbs it would feed don't." **Verified 2026-09-14:** that header and body
-are updated in `row-editing.md`; the story itself is still correctly ❌, and this is the one story
-in the set no shipped demonstration can move.
+Story lives at [`row-editing.md`](row-editing.md) §5, "Owned by selection *(built, blocked on bulk
+write verbs)*." `withSelection()` has shipped (`spec: drilled, code: partial`); the story is still
+❌ — D12 keeps bulk `removeRow(id[])`/`patchRow(id[], partial)` out of scope, and bulk edit
+additionally needs row-editing's own G4 (multiple-open semantics) resolved.
 
 ---
 
@@ -891,52 +794,9 @@ not mistaken for missing stories.
   "in progress" while its tests are actually complete and passing) — a maintainer tracking problem,
   not something a person using the table would ever perceive.
 - **Whether `2-decisions.md`/`selection.md`'s open-questions sections still describe the
-  group-header question as "undecided" after grouping's D16 answered it** — the same category as
-  the previous item: stale internal bookkeeping, not a product gap. Flagged in "Report the deltas"
-  below since it's this document's job to catch cross-doc drift, but the fix is a documentation
-  edit, not new design work.
+  group-header question as "undecided" after grouping's D16 answered it** — stale internal
+  bookkeeping, not a product gap; the fix is a documentation edit, not new design work.
 - **`0-architecture-seam.md`'s superseded pre-grill note about a `RenderRow.isSelected?` field**
   (contradicted by D5 the same day it was written) — a stale working note nobody using the table
   would ever read.
 
----
-
-# Report the deltas
-
-Per this pass's own method, here is what it found that the settled design did not have, named
-plainly:
-
-- **Stories with no corresponding decision:** §1.3/1.5 (range select, unfetched-row scope), all of
-  §4 (keyboard/a11y), §2.2/2.3 (count, indeterminate state), §5.1's observability half, and §5.3
-  (destructive select-all guard). None of these have a state or UI decision behind them today.
-- **A story the settled design cannot fully satisfy as decided:** §5.1 — D11's silent-prune
-  reasoning is sound for *why* it doesn't emit on `selectionChanged`, but leaves the person with no
-  path to ever find out their selection shrank. Not a design mistake, an intentionally narrow
-  decision that needs a second, different mechanism to complete the story (OQ-4).
-- **Capabilities with no owner at all**, checked against `docs/status.md` and every sibling feature
-  doc: §9.1 (selection-count toolbar) and §9.2 (range-select mechanism) — both absent from every
-  doc in the registry, not merely unbuilt within an existing one.
-- **Stale cross-references found in sibling docs — fixed 2026-09-12:**
-  - `filtering.md`'s F-S1 marked 🟡 (was ❌); bullet 1 credited to D59, bullet 2 (hidden-count)
-    left open and pointed at this doc's §2.5/§8.1 S1. OQ-2 marked half-resolved accordingly.
-  - `grouping.md`'s X-G1 story body updated to state D16's resolution (consumer-owned cascade via
-    `rowsOf(group)`), matching what its own changelog/gap table already said.
-  - `row-editing.md`'s X-1 section header changed to "Owned by selection *(built, blocked on bulk
-    write verbs)*," body updated to name D12 as the actual current blocker.
-  - `2-decisions.md` and `features/selection.md`'s open-questions sections both updated to record
-    D16 as resolving the group-header question, rather than describing it as blocked on
-    `withGrouping()` being unbuilt.
-  - `state-persistence.md`'s selection open question updated to point at D19 rather than saying
-    `withSelection()` doesn't exist yet; left open only as a scheduling question.
-
-**Done 2026-09-14:** `story-plan` consumed this document and re-derived every mark above against
-the four shipped story hosts. Of the deltas named here, two are now answered by code rather than by
-decision — §2.3's indeterminate state renders (though the denominator is still hand-computed, so it
-stays 🟡) and §5.2 turned out to be demonstrated by `multi-selection/`'s lock control, which is its
-scenario exactly. The rest stand: §1.3/§4.2 are blocked on node H rather than undecided, §5.1's
-observability half still needs OQ-4's second mechanism, §5.3 still has no position to inherit, and
-§9.1/§9.2 still have no owner.
-
-**Still pending from this pass** (held back deliberately, not missed): `3-ui/stories.md` does not
-yet register the new story folders, the three `1-gap-analysis.md` files still say "nothing here
-built yet", and `docs/status.md` needs regenerating — `npm run table:status`, to be run by hand.
