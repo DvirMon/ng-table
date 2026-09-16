@@ -42,7 +42,11 @@ export interface ExpansionMembers {
   readonly rowExpanded: Observable<RowId>;
 
   toggleExpanded(rowId: RowId, options?: ExpansionWriteOptions): void;
+  /** Omitted `ids`: auto-discovers expandable rows via `childrenAccessor`, as before. Explicit
+   * `ids` (e.g. `table.groupIds()` from `withGrouping()`): used verbatim — no `isExpandable`
+   * filter, no recursion — and unioned with whatever was auto-discovered. */
   expandAll(options?: ExpansionWriteOptions): void;
+  expandAll(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
   collapseAll(options?: ExpansionWriteOptions): void;
 }
 
@@ -58,6 +62,13 @@ function defaultChildrenAccessor<TRow>(row: TRow): TRow[] | undefined {
 
 function hasNonEmptyChildren<TRow>(children: TRow[] | undefined): children is TRow[] {
   return !!children && children.length > 0;
+}
+
+/** `Array.isArray`'s own predicate narrows to a mutable `any[]`, which doesn't exclude a
+ * `readonly RowId[]` union member on the false branch — this local guard is typed to the exact
+ * member so `expandAll`'s overload distinguishes its two call shapes correctly. */
+function isRowIdArray(value: unknown): value is readonly RowId[] {
+  return Array.isArray(value);
 }
 
 /** Wraps a raw `TRow` child as an unstamped render row, at its parent's `depth + 1`. */
@@ -172,13 +183,23 @@ function buildExpansionSpec<TRow>(
     emitChanged([rowId], options);
   }
 
-  function expandAll(options?: ExpansionWriteOptions): void {
-    const ids = collectExpandableRowIds(
+  function expandAll(options?: ExpansionWriteOptions): void;
+  function expandAll(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
+  function expandAll(
+    idsOrOptions?: readonly RowId[] | ExpansionWriteOptions,
+    maybeOptions?: ExpansionWriteOptions
+  ): void {
+    const explicitIds = isRowIdArray(idsOrOptions) ? idsOrOptions : undefined;
+    const options = isRowIdArray(idsOrOptions) ? maybeOptions : idsOrOptions;
+
+    const discovered = collectExpandableRowIds(
       input.rows(),
       input.trackBy,
       childrenAccessor,
       isExpandable
     );
+    const ids = [...new Set([...discovered, ...(explicitIds ?? [])])];
+
     const previous = expandedRows();
     const newlyExpanded = ids.filter((id) => !previous.has(id));
     everExpanded.update((seen) => {

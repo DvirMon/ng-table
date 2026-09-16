@@ -1,5 +1,10 @@
 import { computed, signal, type Signal } from '@angular/core';
-import { buildGroupRenderRows, clusterRows, rowsBeneathGroup } from '../../engine/grouping';
+import {
+  buildGroupRenderRows,
+  clusterRows,
+  collectGroupIds,
+  rowsBeneathGroup,
+} from '../../engine/grouping';
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
@@ -71,6 +76,10 @@ export interface GroupingMembers<TRow> {
    * earlier render pass still works; a group that no longer exists returns `[]`. Reads
    * `input.rows()` (pipeline output), independent of collapse/expand state. */
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
+  /** Every group header id that exists in the data, at every level, collapse-independent —
+   * derives from the cluster tree, not `renderRows()`. `[]` when ungrouped. Feeds
+   * `expandAll(table.groupIds())` (issue #131). */
+  readonly groupIds: Signal<RowId[]>;
 }
 
 /**
@@ -116,8 +125,12 @@ function buildGroupingSpec<TRow>(
   const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
     rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id);
 
+  const groupIds = computed(() =>
+    collectGroupIds(input.rows(), grouping(), input.columns(), config.groupOrder)
+  );
+
   return {
-    members: { grouping: groupingView, rowsOf },
+    members: { grouping: groupingView, rowsOf, groupIds },
     stages: {
       group: (rows) => clusterRows(rows, grouping(), input.columns(), config.groupOrder),
     },

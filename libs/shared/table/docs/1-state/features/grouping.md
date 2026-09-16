@@ -33,6 +33,10 @@ parent: ../architecture.md
 > - **Group selection has no cascade** — `rowsOf(group)` (D16, issue #65) returns every leaf row
 >   beneath a header, at any depth; the consumer owns any selection cascade. A group's row count is
 >   `rowsOf(group).length` — there is no separate count field on `RenderRow`.
+> - **`groupIds` publishes every header id (issue #131)** — `table.groupIds(): Signal<RowId[]>`
+>   returns every group header's id, at every level, collapse-independent (derives from the
+>   cluster tree, not `renderRows()`). `[]` when ungrouped. It's what `expandAll(table.groupIds())`
+>   uses to open every level in one call, since expansion's own discovery only walks real data rows.
 >
 > - **Collapse/expand shipped** — `withGrouping()` reads `withExpansion()`'s `expandedRows` set
 >   optionally, via the `composed` feature-to-feature seam (D11, issue #59). Collapsing a group id

@@ -314,3 +314,32 @@ export function rowsBeneathGroup<TRow>(
   const node = findClusterByPath(nodes, '', groupId);
   return node ? flattenLeaves([node]) : [];
 }
+
+/** Every node's id, depth-first, regardless of `expandedRows` — unlike `emitGroupRows`, which
+ * only descends into an expanded node's children. Reuses `buildGroupPath`/`toGroupId` so the id
+ * format can never drift from what a header actually renders. */
+function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string): RowId[] {
+  return nodes.flatMap((node) => {
+    const path = buildGroupPath(parentPath, node.columnId, node.value);
+    return [toGroupId(path), ...collectClusterGroupIds(node.children, path)];
+  });
+}
+
+/**
+ * Every group header id that exists in the data, at every level — collapse-independent, so it
+ * can seed "expand everything" (issue #131). `[]` when ungrouped.
+ */
+export function collectGroupIds<TRow>(
+  rows: TRow[],
+  grouping: readonly string[],
+  columns: ColumnDef<TRow>[],
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+): RowId[] {
+  const levels = resolveGroupingLevels(grouping, columns);
+  if (levels.length === 0) {
+    return [];
+  }
+  const nodes = buildClusterNodes(rows, levels, columns);
+  const ordered = sortClusters(nodes, groupOrder, (items) => items, { done: false });
+  return collectClusterGroupIds(ordered, '');
+}

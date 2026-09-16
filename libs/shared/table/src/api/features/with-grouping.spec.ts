@@ -572,6 +572,102 @@ describe('rowsOf', () => {
 
 const EU_HEADER_ID = 'group:>region:string:EU';
 const US_FURNITURE_HEADER_ID = 'group:>region:string:US>category:string:Furniture';
+const EU_FURNITURE_HEADER_ID = 'group:>region:string:EU>category:string:Furniture';
+
+describe('groupIds', () => {
+  it('single-level grouping: returns exactly the ids of every kind: "group" render row', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region'] })
+      )
+    );
+
+    const headerIds = store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => row.id);
+
+    expect([...store.groupIds()].sort()).toEqual([...headerIds].sort());
+    expect(store.groupIds().sort()).toEqual([EU_HEADER_ID, US_HEADER_ID].sort());
+  });
+
+  it('multi-level grouping: includes every header at every depth, matching findHeader for each', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] })
+      )
+    );
+
+    const rows = store.renderRows();
+    const expectedIds = [
+      US_HEADER_ID,
+      US_ELECTRONICS_HEADER_ID,
+      US_FURNITURE_HEADER_ID,
+      EU_HEADER_ID,
+      EU_ELECTRONICS_HEADER_ID,
+      EU_FURNITURE_HEADER_ID,
+    ];
+
+    for (const id of expectedIds) {
+      expect(findHeader(rows, id)).toBeDefined();
+    }
+    expect(store.groupIds().sort()).toEqual([...expectedIds].sort());
+  });
+
+  it('ungrouped table: returns []', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping()
+      )
+    );
+
+    expect(store.groupIds()).toEqual([]);
+  });
+
+  it('collapse-independent: collapsing a group via toggleExpanded does not remove its id', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initialGrouping: ['region', 'category'] }),
+        withExpansion()
+      )
+    );
+
+    // withExpansion() starts every group collapsed by default — groupIds() must already see
+    // every header before anything is toggled, and must keep seeing them after collapseAll().
+    expect(store.groupIds().sort()).toEqual(
+      [
+        US_HEADER_ID,
+        US_ELECTRONICS_HEADER_ID,
+        US_FURNITURE_HEADER_ID,
+        EU_HEADER_ID,
+        EU_ELECTRONICS_HEADER_ID,
+        EU_FURNITURE_HEADER_ID,
+      ].sort()
+    );
+
+    store.toggleExpanded(US_HEADER_ID);
+    store.collapseAll();
+
+    expect(store.groupIds().sort()).toEqual(
+      [
+        US_HEADER_ID,
+        US_ELECTRONICS_HEADER_ID,
+        US_FURNITURE_HEADER_ID,
+        EU_HEADER_ID,
+        EU_ELECTRONICS_HEADER_ID,
+        EU_FURNITURE_HEADER_ID,
+      ].sort()
+    );
+  });
+});
 
 describe('collapse/expand (#59)', () => {
   it('no withExpansion() composed: every cluster renders flat and fully expanded (regression, unchanged from #6)', () => {
@@ -1199,6 +1295,7 @@ describe('types', () => {
     expectTypeOf(store.rowsOf).toEqualTypeOf<
       (group: RenderRow<GroupingMockRow>) => readonly GroupingMockRow[]
     >();
+    expectTypeOf(store.groupIds).toEqualTypeOf<Signal<RowId[]>>();
     expectTypeOf(store).not.toBeAny();
   });
 

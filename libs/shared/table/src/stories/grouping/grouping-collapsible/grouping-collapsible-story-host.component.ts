@@ -5,7 +5,6 @@ import {
   withExpansion,
   withGrouping,
   withSorting,
-  type RenderRow,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupedRowsResource, toErrorMessage } from '../fixtures/http';
@@ -24,8 +23,8 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
  * `withGrouping()` + `withExpansion()` + `withSorting()` compose into a collapsible, sortable
  * outline — collapse or expand any group header to explore the hierarchy.
  *
- * Expand All here is the story's own loop, not `expandAll()` — that helper walks
- * `childrenAccessor` over real rows and cannot reach a group header.
+ * Expand All passes `table.groupIds()` explicitly — `expandAll()` alone only discovers real
+ * data rows via `childrenAccessor` and cannot reach a group header.
  */
 @Component({
   selector: 'ngp-grouping-collapsible-story-host',
@@ -88,21 +87,8 @@ export class GroupingCollapsibleStoryHostComponent {
     Object.fromEntries(this.table.grouping().map((level) => [level, true]))
   );
 
-  /**
-   * One pass per grouping level, because a collapsed group's descendants are not in `renderRows()`
-   * until its parent opens — there is no tree to walk ahead of time.
-   */
   protected expandAllGroups(): void {
-    const maxPasses = this.table.grouping().length + 1;
-    for (let pass = 0; pass < maxPasses; pass += 1) {
-      const collapsed = this.collapsedGroupRows();
-      if (collapsed.length === 0) {
-        return;
-      }
-      for (const row of collapsed) {
-        this.table.toggleExpanded(row.id);
-      }
-    }
+    this.table.expandAll(this.table.groupIds());
   }
 
   protected collapseAllGroups(): void {
@@ -116,13 +102,5 @@ export class GroupingCollapsibleStoryHostComponent {
   protected regroup(): void {
     const nextLevels = this.isRenested() ? COLLAPSIBLE_GROUPING_LEVELS : RENESTED_GROUPING_LEVELS;
     this.table.grouping.update(setGroupLevels<DealRow>(nextLevels));
-  }
-
-  private collapsedGroupRows(): RenderRow<DealRow>[] {
-    const expanded = this.table.expandedRows();
-    return this.table.renderRows().filter((row) => {
-      const isGroupHeader = row.kind === 'group';
-      return isGroupHeader && !expanded.has(row.id);
-    });
   }
 }

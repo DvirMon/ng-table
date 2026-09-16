@@ -176,6 +176,7 @@ withGrouping<TRow>((path: ColumnsPath<TRow>) => {
 interface GroupingMembers<TRow> {
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;  // D1, D6
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];      // D16, D16.1
+  readonly groupIds: Signal<RowId[]>;  // issue #131
 }
 
 type GroupingUpdater<TRow> = (grouping: string[]) => string[];

@@ -23,14 +23,6 @@
     (regroup)="regroup()"
   />
 
-  <p class="grouping-story__notice">
-    <strong>Expand all is this story's own loop, not the library's.</strong>
-    <code>expandAll()</code> walks <code>childrenAccessor</code> over real rows and a group header
-    is not a row, so it can never find one (S5). <code>collapseAll()</code> is the library's and
-    works, because emptying the set needs no knowledge of what a group is. Neither button can say
-    whether everything is already expanded — there is no signal for that yet (S4).
-  </p>
-
   @if (isRefetching()) {
     <p class="grouping-story__notice" role="status">Refreshing…</p>
   } @else if (refetchError()) {

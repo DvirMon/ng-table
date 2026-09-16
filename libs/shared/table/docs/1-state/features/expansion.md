@@ -80,7 +80,7 @@ children are loaded — for lazy-loaded children, where `childrenAccessor` legit
 | Method | Description |
 |---|---|
 | `toggleExpanded(rowId: RowId, options?)` | Toggle a single row/group's expanded state. Emits `rowExpanded` once. |
-| `expandAll(options?)` | Expand every expandable row/group. Emits `rowExpanded` once per newly expanded id. |
+| `expandAll(ids?, options?)` | Expand every expandable row (auto-discovered via `childrenAccessor`, data rows only) unioned with any `ids` passed explicitly — e.g. `table.groupIds()` from `withGrouping()` (#131), used verbatim, no `isExpandable` filter, no recursion. Emits `rowExpanded` once per newly expanded id over the union. |
 | `collapseAll(options?)` | Collapse every row/group. Emits `rowExpanded` once per previously expanded id. Does **not** clear `everExpanded`. |
 
 Every write verb takes `options?: { emitEvent?: boolean }` — see

@@ -92,6 +92,37 @@ describe('withExpansion', () => {
     expect(expanded.has('g1')).toBe(false);
   });
 
+  it('expandAll(explicitIds) expands exactly those ids verbatim — no isExpandable filter, no recursion', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>([{ id: 'leaf', name: 'Leaf, no children' }]),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion()
+      )
+    );
+
+    // A synthetic id with no corresponding row — `isExpandable` would reject 'leaf' too, and
+    // 'group:region:US' has no TRow to test against it or recurse into at all.
+    store.expandAll(['group:region:US', 'leaf']);
+
+    const expanded = store.expandedRows();
+    expect(expanded.has('group:region:US')).toBe(true);
+    expect(expanded.has('leaf')).toBe(true);
+  });
+
+  it('expandAll(explicitIds) unions the explicit ids with auto-discovered expandable rows', () => {
+    const store = inContext(() =>
+      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+    );
+
+    store.expandAll(['group:region:US']);
+
+    const expanded = store.expandedRows();
+    expect(expanded.has('group:region:US')).toBe(true);
+    expect(expanded.has('r1')).toBe(true);
+    expect(expanded.has('c1')).toBe(true);
+  });
+
   it('collapseAll() clears all expansion regardless of prior state', () => {
     const store = inContext(() =>
       createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
