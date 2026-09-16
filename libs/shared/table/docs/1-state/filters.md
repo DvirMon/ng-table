@@ -106,7 +106,7 @@ is inferred from. A body that calls rules as statements declares nothing and thr
 | `anyOf(key, children)` | shared across the group | one criterion, several paths, each with its own predicate; OR'd (R8). `children` is a non-empty tuple of already-built rules, not a nested schema callback |
 | `applyWhen(path, condition, children)` | — | conditional activation, taken from Signal Forms directly (R15). Returns **one node**: place it directly, never spread it |
 
-Every single-path rule takes an optional trailing `{ source, as, emptyValue }` — see
+Every single-path rule takes an optional trailing `{ source, as, emptyValue, isEmpty }` — see
 [Sources](#sources), [Keys](#keys) and [Empty criteria](#empty-criteria). `anyOf` takes its key
 positionally instead, because a group has no path to borrow one from.
 
@@ -365,13 +365,29 @@ Every rule declares what counts as *no filter*: `''` for `contains`, `null` for 
 `{min:null,max:null}` for `inRange`, `[]` for `hasAny`/`hasNone`. An empty criterion is skipped
 before evaluation and omitted from `criteria()`.
 
-`{ emptyValue }` replaces that default for one filter. The declared value is what `reset(null)`
-writes and what the skip-when-empty check compares against — structurally (`equalsCriterion`),
-so an object or array empty value works as well as a scalar.
+`{ emptyValue }` **adds** to that default for one filter — it does not replace it. The declared
+value is what `reset(null)` writes, and it joins the rule's own empty set: the skip-when-empty
+check becomes `the rule's own check || structural equality (equalsCriterion) with this value`, so
+an object or array empty value works as well as a scalar.
 
 ```ts
-equals(path.status, { emptyValue: '' });
+equals(path.status, { emptyValue: '' });   // both '' and null deactivate the filter
 ```
+
+The criterion type widens to match: `equals(path.status, { emptyValue: '' })` is
+`string | null`, not `string`. The union widens by the rule's own empty only — a criterion of the
+wrong type is still rejected.
+
+`{ isEmpty }` is the total override, accepted by every rule. It *replaces* the check outright and
+is the only way to **subtract** — to make `null` a meaningful, non-empty criterion again:
+
+```ts
+equals(path.status, { emptyValue: '', isEmpty: (c) => c === '' });   // null now filters
+```
+
+Precedence, one line: **`isEmpty` replaces; `emptyValue` extends and seeds; with neither, the
+rule's own holds.** Given both, `isEmpty` decides emptiness and `emptyValue` still seeds
+`reset(null)`.
 
 **Why a rule's default is not always right: the control has a say.** A criterion's empty value
 is a binding contract as much as a matching one. A native `<select>` can express empty only as
@@ -384,9 +400,15 @@ plain `[formField]`, with no accessor and no story-local handler (#97).
 `number`/`date` inputs need nothing here — Signal Forms already maps an empty box to `null`,
 which is exactly what `inRange`/`inDateRange` call empty.
 
-`filter()` also takes `isEmpty`, since emptiness cannot be inferred for an arbitrary criterion
-shape. An explicit `isEmpty` wins over `emptyValue`; with neither, a `filter()` rule is never
-empty.
+`filter()` is the one rule with no declared empty of its own, since emptiness cannot be inferred
+for an arbitrary criterion shape — with neither `isEmpty` nor `emptyValue`, a `filter()` rule is
+never empty. The same precedence otherwise applies.
+
+**`reset(null)` is a sentinel, not a value.** It means *back to the empty value*, on both
+`FilterNode.reset` and `Filters.reset`. Once a criterion includes `null`, `TCriterion | null`
+collapses and the type can no longer separate the two readings — under additive `emptyValue` both
+deactivate the filter, differing only in what `value()` holds afterwards and therefore in
+`dirty()`. To write a literal `null` criterion, use `filters.<key>().value.set(null)`.
 
 **Set-valued controls stay hand-wired, and that is not a gap in this mechanism.** A checkbox
 group is several elements, not one control value, so nothing about the criterion's empty value
@@ -505,8 +527,9 @@ composition already provides.
 - **Empty criteria skip their predicate.** What counts as empty is per-predicate — `''`, `null`,
   `{min:null,max:null}`, `[]` — declared beside the predicate (`autoRemove`-shaped) and applied
   before evaluation, so an empty filter never reaches persisted state or a query string (R14).
-  `filter()` must let a custom predicate declare one too, and any rule may override its own with
-  `{ emptyValue }` — see [Empty criteria](#empty-criteria).
+  `filter()` must let a custom predicate declare one too; any rule may *extend* its own with
+  `{ emptyValue }` or *replace* it outright with `{ isEmpty }` — see
+  [Empty criteria](#empty-criteria).
 - **Null/undefined cell values** (R27): a null or undefined cell **fails every positive matcher**
   (`isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`) and **passes every
   negative one** (`hasNoneOf`) — a row with no tags has none of them. Guarded inside each shipped matcher, never
