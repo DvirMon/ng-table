@@ -30,17 +30,9 @@ type Story = StoryObj<LiveOptimisticStoryHostComponent>;
  * - Add row inserts a blank row under a temp id; its first blur creates it server-side
  *   (`POST`, id assigned by the server) instead of updating (`PUT`) — `swapRowId` keeps the row
  *   addressable under its new id.
+ * - Turn on `forceFailure` in Controls and the save fails: the edited value still shows immediately,
+ *   then reverts to what it was before the edit. The row was never in an "open for editing" state,
+ *   so nothing closes — it just reverts. One boolean away from the happy path, so it is a control
+ *   rather than a second canvas.
  */
 export const LiveOptimistic: Story = {};
-
-/**
- * A save that fails.
- *
- * - The edited value shows on screen immediately, same as the happy path.
- * - When the save fails, the value reverts to what it was before the edit.
- * - The row was never in an "open for editing" state, so nothing closes — it just reverts.
- */
-export const LiveOptimisticFailure: Story = {
-  name: 'Live Optimistic — Failure',
-  args: { forceFailure: true },
-};

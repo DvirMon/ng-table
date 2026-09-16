@@ -29,12 +29,10 @@ type Story = StoryObj<Host>;
  * MSW-intercepted `fetch` resolves. A failure leaves the row open with its draft intact — no
  * rollback needed since nothing closed early. Starting a new edit while one is already open
  * cancels whatever was in progress.
+ *
+ * Turn on `forceFailure` in Controls for the unhappy path: the row stays open (pessimistic never
+ * closes early), the error shows inline, and Retry re-runs the same request — the contrast with
+ * `../gated-single-optimistic/`, which closed early and so has a snapshot to roll back to. One
+ * boolean away from the happy path, so it is a control rather than a second canvas.
  */
 export const GatedSinglePessimistic: Story = {};
-
-/** A save that fails: the row stays open (pessimistic never closes early), the error shows
- * inline, and Retry re-runs the same request. */
-export const GatedSinglePessimisticFailure: Story = {
-  name: 'Gated Single Pessimistic — Failure',
-  args: { forceFailure: true },
-};

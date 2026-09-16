@@ -53,10 +53,9 @@ their own stylesheet or schema, shown in their own tabs.
 
 <Canvas of={LiveBaseStories.LiveBase} />
 
-Under failure every request fails: an edit reverts to its pre-commit value, a create leaves the
-typed values in place for Retry, and a discard comes back instead of disappearing.
-
-<Canvas of={LiveBaseStories.LiveBaseFailure} />
+Turn on `forceFailure` in Controls and every request fails: an edit reverts to its pre-commit value,
+a create leaves the typed values in place for Retry, and a discard comes back instead of
+disappearing. One boolean away from the happy path, so it is a control rather than a second canvas.
 
 <div className="code-tabs">
   <div className="code-tabs-list">
@@ -102,11 +101,10 @@ for a few seconds after a delete settles, before its restore point is released.
 
 <Canvas of={LiveOptimisticStories.LiveOptimistic} />
 
-Under failure the edited value shows on screen immediately, same as the happy path. When the save
-fails, the value reverts to what it was before the edit — the row was never in an "open for
-editing" state, so nothing closes, it just reverts.
-
-<Canvas of={LiveOptimisticStories.LiveOptimisticFailure} />
+Turn on `forceFailure` in Controls and the edited value still shows on screen immediately, same as
+the happy path, then reverts to what it was before the edit — the row was never in an "open for
+editing" state, so nothing closes, it just reverts. One boolean away from the happy path, so it is a
+control rather than a second canvas.
 
 <div className="code-tabs">
   <div className="code-tabs-list">
@@ -135,10 +133,9 @@ editing" state, so nothing closes, it just reverts.
 
 <Canvas of={GatedSingleOptimisticStories.GatedSingleOptimistic} />
 
-Under failure the row still closes immediately, then reverts to its pre-edit snapshot and reopens
-once Retry is clicked.
-
-<Canvas of={GatedSingleOptimisticStories.GatedSingleOptimisticFailure} />
+Turn on `forceFailure` in Controls and the row still closes immediately, then reverts to its
+pre-edit snapshot and reopens once Retry is clicked. One boolean away from the happy path, so it is
+a control rather than a second canvas.
 
 <div className="code-tabs">
   <div className="code-tabs-list">
@@ -167,10 +164,9 @@ once Retry is clicked.
 
 <Canvas of={GatedSinglePessimisticStories.GatedSinglePessimistic} />
 
-Under failure the row stays open — pessimistic never closes early — the error shows inline, and
-Retry re-runs the same request.
-
-<Canvas of={GatedSinglePessimisticStories.GatedSinglePessimisticFailure} />
+Turn on `forceFailure` in Controls and the row stays open — pessimistic never closes early — the
+error shows inline, and Retry re-runs the same request. One boolean away from the happy path, so it
+is a control rather than a second canvas.
 
 <div className="code-tabs">
   <div className="code-tabs-list">
@@ -204,10 +200,9 @@ same reason.
 
 <Canvas of={GatedMultipleStories.GatedMultipleOptimistic} />
 
-Under failure rows still close immediately on Save All — closing never waits on the round trip.
-Each failed row reverts to its pre-edit value and shows a Retry/Dismiss control.
-
-<Canvas of={GatedMultipleStories.GatedMultipleOptimisticFailure} />
+Turn on `forceFailure` in Controls and rows still close immediately on Save All — closing never
+waits on the round trip. Each failed row reverts to its pre-edit value and shows a Retry/Dismiss
+control. One boolean away from the happy path, so it is a control rather than a second canvas.
 
 <div className="code-tabs">
   <div className="code-tabs-list">
@@ -241,10 +236,9 @@ older answer to the same open question: N independent requests, N independent ou
 
 <Canvas of={GatedBulkStories.GatedBulk} />
 
-Under failure every row in the batch reverts to blank and reopens together — not some succeeding
-while others fail, which is the contrast with Save All.
-
-<Canvas of={GatedBulkStories.GatedBulkFailure} />
+Turn on `forceFailure` in Controls and every row in the batch reverts to blank and reopens together
+— not some succeeding while others fail, which is the contrast with Save All. One boolean away from
+the happy path, so it is a control rather than a second canvas.
 
 <div className="code-tabs">
   <div className="code-tabs-list">

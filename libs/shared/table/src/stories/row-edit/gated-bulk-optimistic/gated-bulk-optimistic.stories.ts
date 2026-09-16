@@ -30,17 +30,9 @@ type Story = StoryObj<Host>;
  * - "Add N rows" opens `count` blank rows at once — one `createRow` call, not a loop.
  * - Fill them in, click "Save batch" — one request carries all of them.
  * - On success every row gets its server id in the same pass.
+ * - Turn on `forceFailure` in Controls and the single request fails: every row in the batch reverts
+ *   to blank and reopens together — not some succeeding while others fail, which is exactly the
+ *   contrast with `../gated-multiple-optimistic/`'s Save All (N independent requests, N independent
+ *   outcomes). One boolean away from the happy path, so it is a control rather than a second canvas.
  */
 export const GatedBulk: Story = {};
-
-/**
- * A batch where the single request fails.
- *
- * - Every row in the batch reverts to blank and reopens together — not some succeeding while
- *   others fail, which is exactly the contrast with `../gated-multiple-optimistic/`'s Save All
- *   (N independent requests, N independent outcomes).
- */
-export const GatedBulkFailure: Story = {
-  name: 'Gated Bulk — Failure',
-  args: { forceFailure: true },
-};

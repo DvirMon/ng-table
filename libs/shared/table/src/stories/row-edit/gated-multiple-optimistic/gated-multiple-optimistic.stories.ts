@@ -30,16 +30,9 @@ type Story = StoryObj<Host>;
  * - Open two or more rows via Edit, edit them, click "Save All".
  * - Every open row closes immediately (optimistic) and shows as saving; each settles
  *   independently as its own request resolves.
+ * - Turn on `forceFailure` in Controls and every in-flight request fails: rows still close
+ *   immediately — closing never waits on the round trip — and each reverts to its pre-edit value
+ *   and shows its own Retry/Dismiss control. One boolean away from the happy path, so it is a
+ *   control rather than a second canvas.
  */
 export const GatedMultipleOptimistic: Story = {};
-
-/**
- * A batched save where every in-flight request fails.
- *
- * - Rows still close immediately on Save All — closing never waits on the round trip.
- * - Each failed row reverts to its pre-edit value and shows a Retry/Dismiss control.
- */
-export const GatedMultipleOptimisticFailure: Story = {
-  name: 'Gated Multiple Optimistic — Failure',
-  args: { forceFailure: true },
-};

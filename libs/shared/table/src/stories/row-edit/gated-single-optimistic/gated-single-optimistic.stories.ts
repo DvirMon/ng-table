@@ -27,14 +27,9 @@ type Story = StoryObj<Host>;
 /**
  * The happy path: edits one row at a time, save closes it immediately and confirms over the
  * network. Starting a new edit while one is already open cancels whatever was in progress.
+ *
+ * Turn on `forceFailure` in Controls for the unhappy path: the row still closes immediately, then
+ * reverts to its pre-edit snapshot and reopens once Retry is clicked (`retrySave`). One boolean
+ * away from the happy path, so it is a control rather than a second canvas.
  */
 export const GatedSingleOptimistic: Story = {};
-
-/**
- * A save that fails: the row still closes immediately, then reverts to its pre-edit snapshot
- * and reopens once Retry is clicked (`retrySave`).
- */
-export const GatedSingleOptimisticFailure: Story = {
-  name: 'Gated Single Optimistic — Failure',
-  args: { forceFailure: true },
-};

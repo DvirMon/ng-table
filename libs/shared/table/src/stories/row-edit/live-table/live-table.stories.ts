@@ -34,12 +34,9 @@ type Story = StoryObj<LiveTableStoryHostComponent>;
  *   it back at the index it was removed from.
  * - One undo slot covers both: it restores whichever happened last, a field commit or a
  *   confirmed discard.
+ * - Turn on `forceFailure` in Controls and every request fails: an edit reverts to its pre-commit
+ *   value, a create leaves the typed values in place for Retry, and a discard comes back instead of
+ *   disappearing. One boolean away from the happy path, so it is a control rather than a second
+ *   canvas.
  */
 export const LiveBase: Story = {};
-
-/** Every request fails: an edit reverts to its pre-commit value, a create leaves the typed
- * values in place for Retry, and a discard comes back instead of disappearing. */
-export const LiveBaseFailure: Story = {
-  name: 'Live Base — Failure',
-  args: { forceFailure: true },
-};
