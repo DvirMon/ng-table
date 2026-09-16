@@ -307,10 +307,12 @@ Land those first — they touch `src/filters/index.ts` and the same spec files.
    gated call site on top of the array rewrite, and R37 did not decide it. The signature also
    matches Signal Forms' `applyWhen(path, …)`, which is where R15 took the rule from. Keep the
    parameter and keep a comment saying it is retained for signature parity, not inference.
-2. **Does `filter()`'s `options.isEmpty` need to participate in `StateOf`?** It types the criterion
-   a second time (`(criterion: TCriterion) => boolean`), which is now a second inference site for
-   the same parameter. Harmless if they agree; needs a check that a mismatch is an error rather
-   than a silent widening.
+2. ~~**Does `filter()`'s `options.isEmpty` need to participate in `StateOf`?**~~ — **resolved
+   2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116): no.** A mismatch between the
+   two sites was verified to be a hard `TS2322` at the `options` argument, not a silent widening.
+   `isEmpty` then moved from `filter()`'s own options onto `FilterOptions` itself — available to
+   every rule — and its parameter is wrapped in `NoInfer`, so it is contextually typed from the
+   criterion and contributes nothing back to it. There is no second inference site any more.
 3. **How much of `create-filters.spec.ts`'s 743 lines survives the schema rewrite mechanically?**
    Every schema changes shape, so the diff is large and the review is by inspection. If a case
    needs its *assertion* changed rather than its schema, that is a semantic regression — stop and

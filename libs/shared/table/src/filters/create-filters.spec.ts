@@ -196,7 +196,7 @@ describe('createFilters — state semantics', () => {
   });
 });
 
-describe('createFilters — emptyValue override', () => {
+describe('createFilters — emptyValue extends, isEmpty replaces', () => {
   it("seeds the node with the declared empty value instead of the rule's own", () => {
     const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
     expect(filters.status().value()).toBe('');
@@ -212,14 +212,21 @@ describe('createFilters — emptyValue override', () => {
     expect(filters.status().criterion()).toBeUndefined();
   });
 
-  it("no longer treats the rule's own empty value as empty once overridden", () => {
+  it("still treats the rule's own empty value as empty alongside the override", () => {
     const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
-
-    // @ts-expect-error — overriding emptyValue to '' drops null from the criterion domain, so a
-    // typed caller cannot reach this. The runtime still honours it, which is what this guards.
     filters.status().value.set(null);
+    expect(filters().criteria()).toEqual({});
+    expect(filters.status().criterion()).toBeUndefined();
+  });
 
+  it('isEmpty subtracts the rule empty — null is a meaningful criterion again', () => {
+    const filters = build((path) => [
+      equals(path.status, { emptyValue: '', isEmpty: (criterion) => criterion === '' }),
+    ]);
+    filters.status().value.set(null);
     expect(filters().criteria()).toEqual({ status: null });
+    filters.status().value.set('');
+    expect(filters().criteria()).toEqual({});
   });
 
   it('reset(null) returns to the declared empty value', () => {
@@ -234,6 +241,21 @@ describe('createFilters — emptyValue override', () => {
     expect(filters().criteria()).toEqual({});
     filters.amount().value.set({ min: 100, max: null });
     expect(filters().criteria()).toEqual({ amount: { min: 100, max: null } });
+    filters.amount().value.set({ min: null, max: null });
+    expect(filters().criteria()).toEqual({});
+  });
+
+  it('isEmpty is promoted to the named rules, not just filter()', () => {
+    const filters = build((path) => [
+      contains(path.customer, { isEmpty: (criterion) => criterion === '—' }),
+    ]);
+
+    // The rule's own `''` empty is replaced outright, so it now narrows.
+    filters.customer().value.set('');
+    expect(filters().criteria()).toEqual({ customer: '' });
+
+    filters.customer().value.set('—');
+    expect(filters().criteria()).toEqual({});
   });
 
   it('an explicit isEmpty still wins over emptyValue on filter()', () => {

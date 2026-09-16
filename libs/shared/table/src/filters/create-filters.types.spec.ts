@@ -2,7 +2,7 @@ import type { Signal, WritableSignal } from '@angular/core';
 import { describe, expectTypeOf, it } from 'vitest';
 import { createFilters } from './create-filters';
 import type { RangeCriterion } from './rules';
-import { anyOf, applyWhen, contains, equals, filter, inRange } from './rules';
+import { anyOf, applyWhen, contains, equals, filter, hasAny, inRange } from './rules';
 import { rowOf } from './row-of';
 import type { Filters, FiltersPath } from './types';
 
@@ -222,6 +222,75 @@ describe('createFilters — applyWhen', () => {
         // no `[Symbol.iterator]`. Place it directly; the spread is loud rather than silent.
         ...applyWhen(path, () => true, [equals(path.subCategory)]),
       ]);
+    });
+  });
+});
+
+describe('createFilters — emptyValue is additive', () => {
+  it('keeps null in the criterion union under an emptyValue override', () => {
+    typecheckOnly(() => {
+      const filters = createFilters(rowOf<Invoice>(), (path) => [
+        equals(path.status, { emptyValue: '' }),
+      ]);
+      expectTypeOf(filters.status().value()).toEqualTypeOf<string | null>();
+      filters.status().value.set(null);
+      // @ts-expect-error — widens by the rule's own empty only, not toward unknown
+      filters.status().value.set(42);
+    });
+  });
+
+  it('a non-null declared empty on a number column yields number | null', () => {
+    typecheckOnly(() => {
+      const filters = createFilters(rowOf<Invoice>(), (path) => [
+        equals(path.amount, { emptyValue: -1 }),
+      ]);
+      expectTypeOf(filters.amount().value()).toEqualTypeOf<number | null>();
+    });
+  });
+
+  it('isEmpty is contextually typed and does not contribute inference', () => {
+    typecheckOnly(() => {
+      const filters = createFilters(rowOf<Invoice>(), (path) => [
+        equals(path.status, {
+          emptyValue: '',
+          isEmpty: (v) => {
+            expectTypeOf(v).toEqualTypeOf<string | null>();
+            return v === '';
+          },
+        }),
+      ]);
+      expectTypeOf(filters.status().value()).toEqualTypeOf<string | null>();
+    });
+  });
+
+  it('every rule accepts isEmpty, contextually typed from its own criterion', () => {
+    typecheckOnly(() => {
+      const filters = createFilters(rowOf<Invoice>(), (path) => [
+        contains(path.customer, {
+          isEmpty: (v) => {
+            expectTypeOf(v).toEqualTypeOf<string>();
+            return v === '';
+          },
+        }),
+        inRange(path.amount, {
+          as: 'amountRange',
+          isEmpty: (v) => {
+            expectTypeOf(v).toEqualTypeOf<RangeCriterion>();
+            return v.min === null;
+          },
+        }),
+        hasAny(path.tags, {
+          isEmpty: (v) => {
+            expectTypeOf(v).toEqualTypeOf<readonly string[]>();
+            return v.length === 0;
+          },
+        }),
+      ]);
+
+      // Contextual only — the callback contributes no inference back to the criterion.
+      expectTypeOf(filters.customer().value()).toEqualTypeOf<string>();
+      expectTypeOf(filters.amountRange().value()).toEqualTypeOf<RangeCriterion>();
+      expectTypeOf(filters.tags().value()).toEqualTypeOf<readonly string[]>();
     });
   });
 });

@@ -59,31 +59,40 @@ interface Emptiness {
 }
 
 /**
- * Resolves what "empty" means for one filter: `options.emptyValue` overrides the rule's own,
- * and an overridden value carries its own check (structural equality, `equalsCriterion`) rather
- * than the rule's — `equals` declaring `v == null` cannot speak for a caller who chose `''`.
- * An explicit `isEmpty` (`filter()` only) wins over both.
+ * Resolves what "empty" means for one filter. Precedence: `isEmpty` replaces; `emptyValue`
+ * extends the rule's check (`fallback.isEmpty(v) || equalsCriterion(v, override)`) and seeds
+ * the empty value; with neither, the rule's own holds.
  */
 function resolveEmptiness(
   options: { readonly emptyValue?: unknown; readonly isEmpty?: unknown } | undefined,
   fallback: Emptiness
 ): Emptiness {
+  const explicit = options?.isEmpty as ((v: unknown) => boolean) | undefined;
   const override = options?.emptyValue;
+  if (explicit) {
+    return {
+      emptyValue: override === undefined ? fallback.emptyValue : override,
+      isEmpty: explicit,
+    };
+  }
   if (override === undefined) {
     return fallback;
   }
-  return { emptyValue: override, isEmpty: (v: unknown) => equalsCriterion(v, override) };
+  return {
+    emptyValue: override,
+    isEmpty: (v: unknown): boolean => fallback.isEmpty(v) || equalsCriterion(v, override),
+  };
 }
 
 export function equals<
   TRow,
   K extends Extract<keyof TRow, string>,
   const TAs extends string = never,
-  const TEmpty = null
+  const TEmpty = never
 >(
   path: FilterHandle<TRow, K>,
-  options?: FilterOptions<TRow[K] | TEmpty, TAs> & { readonly emptyValue?: TEmpty }
-): FilterRule<RuleKey<K, TAs>, TRow[K] | TEmpty, TRow> {
+  options?: FilterOptions<TRow[K] | null | TEmpty, TAs> & { readonly emptyValue?: TEmpty }
+): FilterRule<RuleKey<K, TAs>, TRow[K] | null | TEmpty, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => v == null,
     emptyValue: null,
@@ -96,7 +105,11 @@ export function equals<
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, TRow[K] | TEmpty, TRow>;
+  } satisfies FilterRuleRecord<TRow> as FilterRule<
+    RuleKey<K, TAs>,
+    TRow[K] | null | TEmpty,
+    TRow
+  >;
 }
 
 export function contains<
@@ -225,15 +238,15 @@ export function hasNone<
  * `TCriterion` has two inference sites — the predicate's second parameter and
  * `options.isEmpty`. Verified (compiled probe, 2026-09-14): a mismatch between the two is a
  * hard `TS2322` at the `options` argument, not a silent widening to a union or to `unknown` —
- * the predicate site is inferred first and wins, so `isEmpty` needs no extra constraint to keep
- * it from winning instead.
+ * the predicate site is inferred first and wins; `NoInfer` on `FilterOptions.isEmpty` keeps
+ * the callback from contributing back.
  *
  * Emptiness can't be inferred for an arbitrary criterion shape, so `options.isEmpty` /
  * `options.emptyValue` opt a `filter()` rule into the same skip-when-empty behavior the named
- * rules get for free — `isEmpty` wins where both are given, `emptyValue` alone compares
- * structurally. Omitting both means this filter is **never empty** — it always participates
- * once its `value` diverges from `undefined`... in practice meaning the consumer's own default
- * `value` (via `options.source`, or `undefined` with no source) is evaluated on every pass.
+ * rules get for free. Precedence: `isEmpty` replaces; `emptyValue` extends and seeds; with
+ * neither, this filter is **never empty** — it always participates once its `value` diverges
+ * from `undefined`... in practice meaning the consumer's own default `value` (via
+ * `options.source`, or `undefined` with no source) is evaluated on every pass.
  */
 export function filter<
   TRow,
@@ -243,11 +256,8 @@ export function filter<
 >(
   path: FilterHandle<TRow, K>,
   predicate: (cell: TRow[K], criterion: TCriterion) => boolean,
-  options?: FilterOptions<TCriterion, TAs> & {
-    isEmpty?: (criterion: TCriterion) => boolean;
-  }
+  options?: FilterOptions<TCriterion, TAs>
 ): FilterRule<RuleKey<K, TAs>, TCriterion, TRow> {
-  const explicitIsEmpty = options?.isEmpty as ((v: unknown) => boolean) | undefined;
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: () => false,
     emptyValue: undefined,
@@ -257,7 +267,7 @@ export function filter<
     paths: [path.id],
     key: options?.as ?? path.id,
     predicate: predicate as (cell: unknown, criterion: unknown) => boolean,
-    isEmpty: explicitIsEmpty ?? isEmpty,
+    isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
   } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, TCriterion, TRow>;

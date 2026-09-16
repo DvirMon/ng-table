@@ -96,7 +96,7 @@ its own spec uncompilable.
 |---|---|---|
 | `hasAny`/`hasNone` discard the cell's element type | criterion inferred `readonly unknown[]`; `toggleOption(selected: readonly string[], …)` rejected it at the selection and server hosts | `TItem = ItemOf<TRow[K]>` type parameter on both rules; new internal `ItemOf` in `types.ts`. Call sites unchanged |
 | `applyWhen` never infers `TRow` | `FiltersPath<TRow>` is a conditional type, which is not an inference site, so `TRow` collapsed to `unknown` and `valueOf` rejected every real handle — 3 errors | `valueOf` made generic in its own handle (`valueOf<R = TRow, K …>`). `rules.ts`'s doc comment claimed the opposite — that `path` "anchors `TRow` for inference" — and is corrected |
-| `equals(path.status, { emptyValue: '' })` admits no `null` | one spec case wrote `null` into a criterion inferred as `string` | Case **kept**, behind `@ts-expect-error`. The old hand-written map said `status: string \| null`, wider than the rule permits — it described `equals`' default empty while the same call overrode that empty away. First deleted, then restored at review: see below |
+| `equals(path.status, { emptyValue: '' })` admits no `null` | one spec case wrote `null` into a criterion inferred as `string` | Case **kept**, behind `@ts-expect-error`. The old hand-written map said `status: string \| null`, wider than the rule permits — it described `equals`' default empty while the same call overrode that empty away. First deleted, then restored at review: see below. **Superseded by [#116](https://github.com/DvirMon/acme/issues/116)** — see the note under the `/code-review` table |
 
 **Cost of the `valueOf` fix, recorded rather than glossed:** it now accepts a handle from *any*
 row type. That check never worked in this position — the fixed signature rejected correct handles
@@ -120,6 +120,16 @@ two places, and both were fixed before commit.
 | `reset(STALE_SAVED_FILTER as never)` — `never` is assignable to everything, strictly weaker than what it replaced, and it made the JSDoc's "the typed signature is what says so" false | Both | Now `as Partial<ClientCriteria>`, which is the original assertion recovered from the inferred map |
 | `TItem` inserted as the **third** type parameter, ahead of `TAs`, on exported `hasAny`/`hasNone` — silently breaks positional type arguments | Standards | Reordered to last; the default does the work either way |
 | JSDoc narrating decisions: the same conditional-type essay in `types.ts` and `rules.ts`, plus a decision note in `evaluator.ts` | Standards | All three trimmed to one terse line. Rationale belongs in `#113`'s docs pass |
+
+> **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116)** — the first
+> row of each table above. The restored-behind-`@ts-expect-error` case was the right call for the
+> semantics as they stood; #116 changed the semantics. `emptyValue` is now **additive**: it joins
+> the rule's own empty set instead of displacing it, so `resolveEmptiness` combines
+> (`fallback.isEmpty(v) || equalsCriterion(v, override)`), `equals(path.status, { emptyValue: '' })`
+> infers `string | null`, and the suppression is gone. The case survives inverted — it now asserts
+> the rule's own empty holds *alongside* the override, still covering the half of
+> `resolveEmptiness` nothing else reaches. A new `isEmpty`, promoted from `filter()` to every rule,
+> is the only way to subtract `null` back out.
 
 **Left open, deliberately:** the `build<S>` TestBed helper is now triplicated across the three
 specs; `hasAny`/`hasNone` bodies are byte-identical apart from the matcher;

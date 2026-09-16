@@ -12,18 +12,24 @@ type EnforceLiteralKey<T extends string> = string extends T ? never : T;
 
 /**
  * Per-filter override — a default the user can subsequently edit (`source`), a rename for the
- * borrowed path key (`as`), and the criterion that counts as *no filter* (`emptyValue`). See
- * `docs/1-state/filters.md`'s "Sources", "Keys" and "Empty criteria".
+ * borrowed path key (`as`), an extra empty criterion (`emptyValue`), and a total emptiness
+ * check (`isEmpty`). See `docs/1-state/filters.md`'s "Sources", "Keys" and "Empty criteria".
  */
 export interface FilterOptions<TSource = unknown, TAs extends string = string> {
   readonly source?: () => TSource;
   readonly as?: EnforceLiteralKey<TAs>;
   /**
-   * The criterion that counts as *no filter*, replacing the rule's own — used by `reset(null)`
-   * and by the skip-when-empty check, which becomes structural equality with this value.
-   * A native `<select>` can only express empty as `''`.
+   * Extra empty criterion: joins the rule's own empty set and seeds `reset(null)` / the
+   * initial value. Does not drop the rule's empty. `isEmpty` replaces; `emptyValue` extends
+   * and seeds; with neither, the rule's own holds. A native `<select>` can only express empty
+   * as `''`.
    */
   readonly emptyValue?: TSource;
+  /**
+   * Total emptiness override — the only way to subtract from the rule's empty set (e.g. make
+   * `null` a meaningful criterion). Wins over the rule's check and over `emptyValue`.
+   */
+  readonly isEmpty?: (criterion: NoInfer<TSource>) => boolean;
 }
 
 /**
@@ -36,6 +42,11 @@ export interface FilterNode<TCriterion> {
   criterion(): TCriterion | undefined;
   /** Whether this filter currently narrows. The same gate `criterion()` reads, as a boolean. */
   isActive(): boolean;
+  /**
+   * `reset()` reverts to `source` (or the empty value with no source). `reset(null)` is a
+   * sentinel for that empty value, not the literal `null` — `TCriterion | null` collapses once
+   * the criterion includes `null`. Write the literal with `value.set(null)`.
+   */
   reset(value?: TCriterion | null): void;
   dirty(): boolean;
 }
@@ -61,7 +72,9 @@ export interface FiltersRoot<TRow, TState extends Record<string, unknown>> {
   /**
    * `Partial<TState>`, not `TState`: a key the object omits is reset to its declared source,
    * which is what makes restoring a partial snapshot a complete state. Matches what the
-   * runtime has always done per key.
+   * runtime has always done per key. `reset(null)` is a sentinel — every filter goes to its
+   * empty value, not the literal `null`. Write a literal `null` criterion with
+   * `filters.<key>().value.set(null)`.
    */
   reset(value?: Partial<TState> | null): void;
   dirty(): boolean;

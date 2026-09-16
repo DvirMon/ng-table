@@ -100,6 +100,15 @@ kept with `@ts-expect-error` as an untyped-caller backstop. Same shape, same tre
 **Cost:** a test that needs a suppression to compile is guarding a path typed consumers cannot
 reach. That is exactly what a backstop is, but it is a fair thing to challenge.
 
+> **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116).** The challenge
+> above was taken up: the suppression was the bug report, not the backstop. `emptyValue` is now
+> **additive** — it joins the rule's own empty set rather than displacing it — so
+> `equals(path.status, { emptyValue: '' })` infers `string | null`, `null` is still empty at
+> runtime, and the `@ts-expect-error` is deleted. The case survives, inverted: it now asserts that
+> the rule's own empty holds *alongside* the override. Subtracting `null` back out is what the new
+> `isEmpty` option is for. Precedence: `isEmpty` replaces; `emptyValue` extends and seeds; with
+> neither, the rule's own holds.
+
 ---
 
 ## D5 — `keepValidCriteria` lost its drift check

@@ -78,6 +78,10 @@ until the rules produce them.
   through the record's own `key`/`paths`, which is why collapsing the matcher generics to `unknown`
   in the runtime shape is sound even though the compiler cannot prove it.
 - `equals`' `const TEmpty = null` parameter and the `emptyValue` override behaviour are unchanged.
+  **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116):** `TEmpty` now
+  defaults to `never` and the criterion is `TRow[K] | null | TEmpty` — `emptyValue` *extends* the
+  rule's empty set rather than displacing it, and `isEmpty` (promoted from `filter()` to every rule
+  via `FilterOptions`) is the total override.
 - The file header comment describes rules as "bare verbs that *do* something (register a filter)".
   They no longer register anything — they return a declaration. Correct it, and drop the
   decision-number citations rather than updating them.
@@ -89,7 +93,10 @@ until the rules produce them.
   deliberately that a mismatch between them is an **error** and not a silent widening to a union or
   to `unknown`; if it widens, constrain the `isEmpty` site so the predicate wins. This is an open
   question in the architecture doc — resolve it here and record the answer in the step's PR
-  description.
+  description. **Resolved, then moved 2026-09-16 by
+  [#116](https://github.com/DvirMon/acme/issues/116):** the mismatch is a hard `TS2322` at the
+  `options` argument, and `isEmpty` now lives on `FilterOptions` itself — wrapped in `NoInfer`, so
+  it contributes no inference back to the criterion at all.
 - **`anyOf` borrows `isEmpty`/`emptyValue` from its first child.** That borrow was conventional and
   is now sound, because the shared criterion type is checked. Do not "improve" it into a merge.
 - Every rule's return type is now part of the public contract. An accidental widening to

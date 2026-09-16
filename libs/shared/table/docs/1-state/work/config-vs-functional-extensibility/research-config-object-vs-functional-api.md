@@ -1,6 +1,7 @@
 # Research — config object vs. functional extension for consumer-facing options
 
-**Date:** 2026-09-15 · **Status:** research, not yet grilled ·
+**Date:** 2026-09-15 · **Status:** §6's recommendation (D + C) **shipped 2026-09-16** via
+[#116](https://github.com/DvirMon/acme/issues/116); the rest is research, not yet grilled ·
 **Trigger:** [D4](../filters-inferred-state/docs/tasks/issue-111-call-sites/decisions.md) ·
 **Feeds:** `filters/types.ts` `FilterOptions`, `filters/rules.ts` `resolveEmptiness`
 
@@ -619,6 +620,21 @@ half-shipped on `filter()`, already precedented by TanStack's `autoRemove`. No c
 `emptyValue` slot. Scope: `rules.ts` (`resolveEmptiness` + the six rule signatures), `types.ts`
 (`FilterOptions.emptyValue` JSDoc), the spec block at `create-filters.spec.ts:197`, and the "Empty
 criteria" section of `docs/1-state/filters.md`.
+
+> **Shipped 2026-09-16 — [#116](https://github.com/DvirMon/acme/issues/116).** Two deltas against
+> the scope above, both found at implementation:
+>
+> - **C landed on `FilterOptions`, not on six rule signatures.** `isEmpty?: (criterion:
+>   NoInfer<TSource>) => boolean` on the shared interface reaches every rule at once, and `NoInfer`
+>   is what stops the callback typing the criterion a second time. `filter()`'s own local
+>   declaration was deleted as redundant. That also closes open question 2 in
+>   [`filters-inferred-state/architecture.md`](../filters-inferred-state/architecture.md).
+> - **One in-repo consumer paid D's stated cost.** All three filtering story hosts bound a native
+>   `<select>` to `equals(path.status, { emptyValue: '' })` and relied on the *narrowing* D
+>   removes. They now declare `filter(path.status, matchesStatus, { emptyValue: '' })` — an
+>   explicit `string` criterion — which keeps `[formField]` binding with no accessor. #97 stays
+>   closed; only the mechanism moved. Worth noting for §7: a shape that widens a public type
+>   relocates work to call sites that were relying on the narrow one.
 
 ### 6.1 `reset(null)` — folded in, decided: keep the sentinel
 
