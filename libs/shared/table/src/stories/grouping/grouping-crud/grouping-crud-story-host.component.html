@@ -1,0 +1,185 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    A group header does not have to be a row of cells. Here it is one banner
+    spanning the whole table — no column separation — carrying its label, a
+    centred count, and its own
+    <strong>Add row to group</strong> button. The engine only emits
+    <code>kind: 'group'</code> plus <code>groupKey</code> and
+    <code>aggregates</code>; the markup is entirely this host's.
+  </p>
+  <p class="story-host__hint">
+    Every write is <code>table.value.update()</code> over the shipped row
+    updaters, and none of them names a group: <code>insertRow()</code> appends,
+    and the <code>'group'</code> stage re-clusters the result. The new row only
+    lands under the header it was added from because it carries that group's key
+    on every level — copied off a leaf already in the group, since a header's id
+    stringifies its values and its <code>groupKey</code> holds only its own
+    level.
+  </p>
+  <p class="story-host__hint">
+    So the button belongs to the <strong>deepest</strong> level only. An
+    ancestor header — a <em>Region</em> banner with <em>Category</em> groups
+    beneath it — pins one level and leaves the rest undecided, so there is no
+    such thing as "the" row to add there; a button on it could only guess a
+    category. Add from a {{ columnLabelById()[deepestLevel()] }} banner instead.
+  </p>
+
+  <ngp-grouping-crud-toolbar
+    [rowCount]="table.value().length"
+    (resetData)="resetData()"
+  />
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+        <th class="story-host__cell grouping-crud__actions">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @if (bannerGroupRows()) {
+              <td
+                class="story-host__cell grouping-crud__banner"
+                [attr.colspan]="bannerColspan()"
+              >
+                <div class="grouping-crud__banner-inner">
+                  <span class="grouping-crud__banner-label">
+                    @if (row.groupKey?.value | isBlankGroup) {
+                      <span
+                        class="grouping-story__group-label grouping-story__group-label--blank"
+                      >
+                        no value
+                      </span>
+                    } @else {
+                      <span class="grouping-story__group-label">
+                        @switch (row.groupKey?.columnId) {
+                          @case ('amount') {
+                            {{ row.groupKey.value | dealAmount }}
+                          }
+                          @case ('closedAt') {
+                            {{ row.groupKey.value | dealDate }}
+                          }
+                          @default {
+                            {{ row.groupKey?.value }}
+                          }
+                        }
+                      </span>
+                    }
+                  </span>
+
+                  @if (showCount()) {
+                    <span class="grouping-crud__banner-text">
+                      {{ row | groupRowCount: table }} deals ·
+                      {{ row.aggregates?.['amount'] | dealAmount }}
+                    </span>
+                  }
+
+                  @if (row.depth === leafGroupDepth()) {
+                    <button
+                      type="button"
+                      class="grouping-crud__add"
+                      [attr.aria-label]="
+                        'Add row to ' +
+                        ((row.groupKey?.value | isBlankGroup)
+                          ? 'the unlabelled group'
+                          : row.groupKey?.value)
+                      "
+                      (click)="addRowToGroup(row)"
+                    >
+                      + Add row to group
+                    </button>
+                  } @else {
+                    <span class="grouping-crud__no-add">
+                      add from a {{ columnLabelById()[deepestLevel()] }} group
+                    </span>
+                  }
+                </div>
+              </td>
+            } @else {
+              @for (
+                column of visibleColumns();
+                track column.id;
+                let isFirst = $first
+              ) {
+                <td
+                  class="story-host__cell"
+                  [class.grouping-story__cell--label]="isFirst"
+                  [class.grouping-story__aggregate]="!isFirst"
+                >
+                  @if (isFirst) {
+                    <span class="grouping-story__group-label">{{
+                      row.groupKey?.value
+                    }}</span>
+                    @if (showCount()) {
+                      <span class="grouping-story__count">{{
+                        row | groupRowCount: table
+                      }}</span>
+                    }
+                  } @else {
+                    {{ row.aggregates?.[column.id] | dealAmount }}
+                  }
+                </td>
+              }
+              <td class="story-host__cell grouping-crud__actions">
+                @if (row.depth === leafGroupDepth()) {
+                  <button
+                    type="button"
+                    class="grouping-crud__add"
+                    (click)="addRowToGroup(row)"
+                  >
+                    + Add row to group
+                  </button>
+                }
+              </td>
+            }
+          } @else if (row.data; as rowData) {
+            @for (
+              column of visibleColumns();
+              track column.id;
+              let isFirst = $first
+            ) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ column.accessor(rowData) | dealAmount }}
+                  }
+                  @case ('closedAt') {
+                    {{ column.accessor(rowData) | dealDate }}
+                  }
+                  @default {
+                    {{ column.accessor(rowData) }}
+                  }
+                }
+              </td>
+            }
+            <td class="story-host__cell grouping-crud__actions">
+              <button
+                type="button"
+                [attr.aria-label]="'Raise ' + rowData.id + ' by 1,000'"
+                (click)="bumpAmount(rowData)"
+              >
+                +1k
+              </button>
+              <button
+                type="button"
+                [attr.aria-label]="'Remove ' + rowData.id"
+                (click)="removeDeal(rowData)"
+              >
+                ×
+              </button>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

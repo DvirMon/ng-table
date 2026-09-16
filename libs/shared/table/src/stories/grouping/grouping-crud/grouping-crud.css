@@ -1,0 +1,89 @@
+/* Layered after grouping-story.css — the banner replaces that file's per-column header cell. */
+
+/* One cell, whole width: label start, count centred, action end. Depth still reads off the
+   row's own data-depth, so a nested banner keeps its indent. */
+.grouping-crud__banner {
+  padding-inline-start: calc(
+    0.6rem + var(--grouping-depth, 0) * var(--grouping-indent)
+  );
+}
+
+.grouping-crud__banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.grouping-crud__banner-label {
+  font-weight: 600;
+}
+
+.grouping-crud__banner-text {
+  flex: 1;
+  text-align: center;
+  font-size: 0.8rem;
+  color: #9ca3af;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stands in for the button on an ancestor banner, so the banner keeps its three-part shape
+   instead of the count sliding to the end. */
+.grouping-crud__no-add {
+  margin-inline-start: auto;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: #6b7280;
+  white-space: nowrap;
+}
+
+/* Without the count in the middle the button still sits at the end. */
+.grouping-crud__banner-inner > .grouping-crud__add {
+  margin-inline-start: auto;
+}
+
+.grouping-crud__add {
+  border: 1px solid #374151;
+  border-radius: 0.35rem;
+  background: #1f2937;
+  color: #93c5fd;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  white-space: nowrap;
+}
+
+.grouping-crud__add:hover {
+  border-color: #93c5fd;
+  color: #bfdbfe;
+}
+
+.grouping-crud__actions {
+  width: 1%;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.grouping-crud__actions button {
+  border: 1px solid #374151;
+  border-radius: 0.3rem;
+  background: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.1rem 0.4rem;
+  margin-inline-start: 0.25rem;
+}
+
+.grouping-crud__actions button:hover {
+  color: #e5e7eb;
+  border-color: #6b7280;
+}
+
+/* The banner is the row's only cell, so the shared group-row hover (a click target for
+   collapse) must not suggest the whole row is clickable here — nothing here expands. */
+[data-row-kind='group']:hover > .grouping-crud__banner {
+  background: #111827;
+  cursor: default;
+}
