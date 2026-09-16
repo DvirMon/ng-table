@@ -6,15 +6,11 @@
     back.
   </p>
 
-  <label class="story-host__toolbar">
-    dept
-    <select #deptSelect (change)="setDeptFilter(deptSelect.value)">
-      <option value="" [selected]="activeDept() === null">All</option>
-      @for (dept of deptOptions; track dept) {
-        <option [value]="dept" [selected]="activeDept() === dept">{{ dept }}</option>
-      }
-    </select>
-  </label>
+  <ngp-derived-state-toolbar
+    [activeDept]="activeDept()"
+    [deptOptions]="deptOptions"
+    (selectDept)="setDeptFilter($event)"
+  />
 
   <div class="story-host__counter" role="status">
     {{ table.visibleSelected() }} visible · {{ table.hiddenSelected() }} hidden by filter

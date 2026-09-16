@@ -9,6 +9,7 @@ import type { RowId } from '../../../api/types';
 import { COMPOSITION_DEPT_OPTIONS, COMPOSITION_ROWS_MOCK } from '../fixtures/mock';
 import { derivedStateConfig } from '../fixtures/schema';
 import type { CompositionRow } from '../fixtures/types';
+import { DerivedStateToolbarComponent } from './derived-state-toolbar.component';
 
 /**
  * `withComputed()` — nested vs. trailing
@@ -21,6 +22,7 @@ import type { CompositionRow } from '../fixtures/types';
   selector: 'ngp-derived-state-story-host',
   templateUrl: './derived-state-story-host.component.html',
   styleUrls: ['../../styles/story-host.css'],
+  imports: [DerivedStateToolbarComponent],
 })
 export class DerivedStateStoryHostComponent {
   protected readonly data = signal<CompositionRow[]>(COMPOSITION_ROWS_MOCK);

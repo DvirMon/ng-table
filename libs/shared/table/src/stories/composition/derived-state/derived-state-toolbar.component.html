@@ -1,0 +1,9 @@
+<label class="story-host__toolbar">
+  dept
+  <select #deptSelect (change)="selectDept.emit(deptSelect.value)">
+    <option value="" [selected]="activeDept() === null">All</option>
+    @for (dept of deptOptions(); track dept) {
+      <option [value]="dept" [selected]="activeDept() === dept">{{ dept }}</option>
+    }
+  </select>
+</label>
