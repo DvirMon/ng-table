@@ -2,6 +2,8 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
+    "incremental": true,
+    "tsBuildInfoFile": "../../dist/out-tsc/ng-table-spec.tsbuildinfo",
     "types": ["vitest/globals"]
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"]
