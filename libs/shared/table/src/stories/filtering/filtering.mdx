@@ -1,7 +1,6 @@
 import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as ClientStories from './client-filtering/client-filtering.stories';
 import * as PredicateStories from './predicate-filtering/predicate-filtering.stories';
-import * as SelectionStories from './selection-filtering/selection-filtering.stories';
 import * as ServerStories from './server-filtering/server-filtering.stories';
 import clientClass from './client-filtering/client-filtering-story-host.component.ts?raw';
 import clientTemplate from './client-filtering/client-filtering-story-host.component.html?raw';
@@ -12,10 +11,6 @@ import predicateTemplate from './predicate-filtering/predicate-filtering-story-h
 import predicateToolbarClass from './predicate-filtering/predicate-filtering-toolbar.component.ts?raw';
 import predicateToolbarTemplate from './predicate-filtering/predicate-filtering-toolbar.component.html?raw';
 import predicateSchema from './predicate-filtering/predicate-filtering.schema.ts?raw';
-import selectionClass from './selection-filtering/selection-filtering-story-host.component.ts?raw';
-import selectionTemplate from './selection-filtering/selection-filtering-story-host.component.html?raw';
-import selectionToolbarClass from './selection-filtering/selection-filtering-toolbar.component.ts?raw';
-import selectionToolbarTemplate from './selection-filtering/selection-filtering-toolbar.component.html?raw';
 import serverClass from './server-filtering/server-filtering-story-host.component.ts?raw';
 import serverTemplate from './server-filtering/server-filtering-story-host.component.html?raw';
 import serverToolbarClass from './server-filtering/server-filtering-toolbar.component.ts?raw';
@@ -30,9 +25,10 @@ import '../styles/code-tabs.css';
 
 # Filtering
 
-Four stories over one question: where the filtering happens. `Client` feeds a filter model into
-the pipeline, `Server` serializes the same model into a request, `Predicates` composes no model at
-all, and `Selection × Filtering` is where filtering meets another feature.
+Three stories over one question: where the filtering happens. `Client` feeds a filter model into
+the pipeline, `Server` serializes the same model into a request, and `Predicates` composes no
+model at all. `Selection × Filtering` moved to [`Table / Selection`](?path=/docs/table-selection--docs)
+— its focus is selection surviving another feature's row churn, not filtering itself.
 
 Shared: `fixtures/schema.ts`, `fixtures/http.ts` and `filtering-story.css`, at the bottom of this
 page. `Predicates` brings its own schema, shown in its own tab.
@@ -223,64 +219,7 @@ signals change. Terms are AND'd, and a control with nothing in it contributes no
 
 ---
 
-## Selection × Filtering
-
-Two features composed, and the place their edges meet. A selected row that a filter moves out of
-view stays selected — the opposite of MUI X's documented behaviour, which deselects it — and
-clearing the filter brings the selection back unchanged. Column headers sort; the header
-checkbox is the only select-all/clear gesture; each row has its own delete action.
-
-One gap is rendered rather than papered over: nothing shipped reports how many selected rows are
-currently hidden, so the canvas says so instead of computing a stand-in count in the story host.
-The notice disappears on its own when that signal lands.
-
-<Canvas of={SelectionStories.SelectionAndFiltering} />
-
-<div className="code-tabs">
-  <div className="code-tabs-list">
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-selection-source" defaultChecked />
-      TS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-selection-source" />
-      HTML
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-selection-source" />
-      CSS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-selection-source" />
-      selection-filtering-toolbar.component.ts
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-selection-source" />
-      selection-filtering-toolbar.component.html
-    </label>
-  </div>
-  <div className="code-tabs-panels">
-    <div className="code-tabs-panel">
-      <Source code={selectionClass} language="tsx" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={selectionTemplate} language="html" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={filteringStyles} language="css" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={selectionToolbarClass} language="tsx" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={selectionToolbarTemplate} language="html" />
-    </div>
-  </div>
-</div>
-
----
-
-## Shared across the four
+## Shared across the three
 
 <div className="code-tabs">
   <div className="code-tabs-list">

@@ -34,7 +34,7 @@ export const serverInvoiceConfig: TableConfig<InvoiceRow> = {
   columns: narrowColumns,
 };
 
-/** Consumed by `selection-filtering/`: `withFiltering()` + `withSelection()` + `withSorting()`.
+/** Consumed by `selection/filtering-selection/`: `withFiltering()` + `withSelection()` + `withSorting()`.
  * The checkbox column is template-only — selection never becomes a `ColumnDef`. */
 export const selectionInvoiceConfig: TableConfig<InvoiceRow> = {
   trackBy: 'id',

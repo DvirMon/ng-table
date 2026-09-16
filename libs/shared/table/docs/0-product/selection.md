@@ -69,7 +69,7 @@ rather than recounted here:
 |---|---|---|
 | [`multi-selection/`](../../src/stories/selection/multi-selection/) | `withSelection({ enableRowSelection })` | The whole read/write surface on one screen: accumulating row checkboxes, a header checkbox whose second state is the clear, locked rows that stay in the tab order and keep a mark they already had, a saved selection carrying an id no row has, and an external delete that drops the count without emitting. A `selectionChanged` event log makes D9's single-delta clear and D11's silent prune distinguishable |
 | [`single-selection/`](../../src/stories/selection/single-selection/) | `withSelection({ enableMultiRowSelection: false })` | A radio group, so the replace rule is the control's own semantics and arrow-key roving focus comes free; a Clear button, because a radio has no untick gesture; and a two-id restore that makes D14 throw under `ngDevMode`, naming what it discarded, rendered on canvas |
-| [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) | `+ withFiltering()` `+ withSorting()` | Retention across a filter, restored exactly; two separately named select-all scopes; sorting changing nothing and deleting pruning. **Measured under the filtering plan** — see [`filtering.md`](filtering.md) §5 F-S1 |
+| [`filtering-selection/`](../../src/stories/selection/filtering-selection/) | `+ withFiltering()` `+ withSorting()` | Retention across a filter, restored exactly; two separately named select-all scopes; sorting changing nothing and deleting pruning. **Measured under the filtering plan** — see [`filtering.md`](filtering.md) §5 F-S1 |
 | [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) | `+ withGrouping()` `+ withFiltering()` | All three peer cascade defaults off one `rowsOf()` call; no group header ever in the selection. **Measured under the grouping plan** — see [`grouping.md`](grouping.md) §5 X-G1 |
 
 **No selection directive ships, and that does not hold a mark down on its own.** Every ✅ below is
@@ -181,7 +181,7 @@ Theme 3. Raised as **OQ-5**.
 - Doing it again after narrowing further only ever narrows what gets selected, consistent with
   whatever's currently visible.
 
-**Covered by:** [`selection-filtering/`](../../src/stories/filtering/selection-filtering/),
+**Covered by:** [`filtering-selection/`](../../src/stories/selection/filtering-selection/),
 **measured under the filtering plan** — see [`filtering.md`](filtering.md) §5 F-S1, which owns the
 numbers rather than this doc recounting them. Both acceptance criteria render there: *Select all
 (visible)* scopes to `rows()` (post-filter, post-sort) and *Select all (including hidden)* to the
@@ -205,7 +205,7 @@ Theme 1,
 > the table trying to materialize them.
 
 **Covered by:** nothing, deliberately. `selectAllIds(table, { includeHidden: true })` renders in
-[`selection-filtering/`](../../src/stories/filtering/selection-filtering/) and reaches every row in
+[`filtering-selection/`](../../src/stories/selection/filtering-selection/) and reaches every row in
 `value()`; rows never fetched are out of scope by decision (S3, §9.3), not by omission. Only AG Grid
 Enterprise reaches this rung at all.
 
@@ -300,7 +300,7 @@ Raised as **OQ-3**.
   consumer hand-computing a set intersection every render.
 
 **Covered by:** [`multi-selection/`](../../src/stories/selection/multi-selection/) and
-[`selection-filtering/`](../../src/stories/filtering/selection-filtering/) — a header checkbox with
+[`filtering-selection/`](../../src/stories/selection/filtering-selection/) — a header checkbox with
 a real `[indeterminate]` binding, three-way and correct, including the case that breaks peers:
 [`multi-selection/`](../../src/stories/selection/multi-selection/) filters the denominator through
 `isSelectable()` first, so a locked row cannot hold the header permanently indeterminate (D61).
@@ -333,7 +333,7 @@ Raised as **OQ-1**.
   temporarily not rendered.
 - Only an actual data removal (the row no longer exists at all) changes the selection.
 
-**Covered by:** [`selection-filtering/`](../../src/stories/filtering/selection-filtering/),
+**Covered by:** [`filtering-selection/`](../../src/stories/selection/filtering-selection/),
 **measured under the filtering plan** — filter selected rows out of view and they stay selected;
 clear the filter and the selection comes back exactly as it was, checkable against the printed id
 list rather than asserted. Sorting reorders rows and changes no selection at all. The second
@@ -354,7 +354,7 @@ hidden-but-selected row is kept, but nothing yet tells the person it's hidden. S
 > As someone who selected six rows and then filtered the table, I want to be told "6 selected, 2
 > not currently visible" — not left to wonder why my count doesn't match what's on screen.
 
-**Covered by:** [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) renders
+**Covered by:** [`filtering-selection/`](../../src/stories/selection/filtering-selection/) renders
 the **absence**, which is the honest half. Whenever a filter is active the story states on canvas
 that rows selected beforehand are still selected and that **no shipped signal reports how many are
 currently out of view** — so it says the count is missing instead of computing a fake one in the
@@ -589,7 +589,7 @@ is **linked, not restated**, and that file keeps owning its coverage mark.
 "selecting everything I can currently see stays true to what I see," plus the "N selected, M not
 currently visible" retention story (§2.5/§5.1 above). It is **linked, not restated**;
 `filtering.md` owns its coverage mark: 🟡, bullet 1 answered by D59's `selectAllIds()` and
-demonstrated by `selection-filtering/`, bullet 2 (the "N hidden" count) still unbuilt, no shipped
+demonstrated by `filtering-selection/`, bullet 2 (the "N hidden" count) still unbuilt, no shipped
 signal to compute it from.
 
 ## Owned by grouping *(built, uncommitted)*
@@ -711,13 +711,13 @@ Owned by `3-ui/directives/selection.md` (currently `spec: stub, code: none`).
 | U4 | No screen-reader announcement convention for selection changes | 4.3 | Even AG Grid, the most candid competitor here, admits an unresolved limitation |
 | ~~U5~~ | ~~No selection-count/bulk-action-toolbar recipe~~ — **recipe shipped 2026-09-14** | 2.2 | `multi-selection/` renders a `role="status"` count banner off `selectedRows().size`, with an explicit empty state so "0 selected" is a state rather than a missing element. No toolbar component ships — §9.1 still has no owner — but the recipe half of OQ-3 is answered, and it was as cheap as this row predicted |
 | ~~U6~~ | ~~No visual convention for a disabled-not-hidden locked row~~ — **documented by example 2026-09-14** | 3.2 | `multi-selection/` renders it, and the choice that matters is visible: `aria-disabled`, **not** `[disabled]`, so the control keeps its place in the tab order — which is also why the host has to refuse the write itself, since `aria-disabled` does not stop a click and `toggle()`'s deselect branch is ungated (D58). Plus a `locked` badge, so the row reads as excluded rather than broken |
-| U7 | ~~No indeterminate-checkbox wiring recipe~~ — **the recipe ships; it is the denominator that is hand-computed** | 2.3 | **Not blocked on S1, contrary to this row's 2026-09-12 note.** `multi-selection/` and `selection-filtering/` both render a correct three-way header checkbox today, via `selectionStateOf(ids)` plus an `[indeterminate]` binding — including the case peers get wrong, since the denominator is pre-filtered through `isSelectable()` so a locked row cannot pin the header indeterminate (D61). S1 would replace that hand-computed `selectableRowIds`, not unblock it. Which is why 2.3 is 🟡 rather than ✅ |
+| U7 | ~~No indeterminate-checkbox wiring recipe~~ — **the recipe ships; it is the denominator that is hand-computed** | 2.3 | **Not blocked on S1, contrary to this row's 2026-09-12 note.** `multi-selection/` and `filtering-selection/` both render a correct three-way header checkbox today, via `selectionStateOf(ids)` plus an `[indeterminate]` binding — including the case peers get wrong, since the denominator is pre-filtered through `isSelectable()` so a locked row cannot pin the header indeterminate (D61). S1 would replace that hand-computed `selectableRowIds`, not unblock it. Which is why 2.3 is 🟡 rather than ✅ |
 
 ## 8.3 Gaps needing both layers
 
 | Gap | State owes | UI owes |
 |---|---|---|
-| Indeterminate header checkbox (2.3) | S1's derived "all visible selected" signal — **still owed**, and it is the whole reason 2.3 is 🟡 | ~~rendering the indeterminate state + wiring the click handler~~ — **done**; `multi-selection/` and `selection-filtering/` both render it, the second state of the header checkbox being the clear |
+| Indeterminate header checkbox (2.3) | S1's derived "all visible selected" signal — **still owed**, and it is the whole reason 2.3 is 🟡 | ~~rendering the indeterminate state + wiring the click handler~~ — **done**; `multi-selection/` and `filtering-selection/` both render it, the second state of the header checkbox being the clear |
 | Range select (1.3, 4.2) | Nothing new — deliberately flat per D13 | The entire anchor-tracking mechanism; the "does the range span hidden rows" question loops back into needing `rows()`, already available |
 | Selection-shrink observability (5.1) | S2's second, explicitly-labeled emission channel (OQ-4) | Whatever UI hooks that channel into a visible "your selection changed" message |
 

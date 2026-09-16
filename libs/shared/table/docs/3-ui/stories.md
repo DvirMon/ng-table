@@ -67,13 +67,13 @@ src/stories/
 │       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
 │       └── (no per-story mdx — one <feature>.mdx per feature, at the feature root)
 ├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
-├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 4 hosts
-│   └── client-filtering/  server-filtering/  selection-filtering/  predicate-filtering/
+├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 3 hosts
+│   └── client-filtering/  server-filtering/  predicate-filtering/
 ├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 5 hosts
 │   └── grouping-static/  grouping-async-rule/  grouping-regressions/
 │       grouping-collapsible/  grouping-selection/
-└── selection/                               ← fixtures/ + selection-story.css + 2 hosts
-    └── multi-selection/  single-selection/
+└── selection/                               ← fixtures/ + selection-story.css + 3 hosts
+    └── multi-selection/  single-selection/  filtering-selection/
 ```
 
 **A feature's own stylesheet sits beside its `fixtures/`, not inside it.** `filtering-story.css`,
@@ -479,7 +479,7 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   persistent per-row errors with Retry, one manual undo slot); `live-optimistic/` isolates just
   the `withOptimistic()` rollback verbs (capture on focus, revert-after-failure on blur), plus a
   timed Undo affordance for delete.
-- **`filtering/` — four hosts, and the composition differs between them on purpose.**
+- **`filtering/` — three hosts, and the composition differs between them on purpose.**
   `client-filtering/` composes `withFiltering({ predicates: () => [filters().matcher()] })` and is
   the baseline: five rule kinds plus a declared `anyOf` quick filter, a chip summary,
   `Reset to defaults` vs. `Clear all` as two visibly different buttons, and a broken-predicate
@@ -487,11 +487,13 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   `server-filtering/` composes **no filtering feature at all** — `createFilters()` feeds the
   request and the rows arrive narrowed, so a client `filter` stage would have nothing to do; it
   also carries the only `debounce` in the set and overrides core `totalRowCount` with the server's
-  own via `createTableFeature()` (ADR-0005). `selection-filtering/` adds `withSelection()` +
-  `withSorting()` and is where selection-under-filter is measured — see `0-product/filtering.md`
-  §5 F-S1. `predicate-filtering/` composes a hand-written `(row) => boolean` with no filter model
-  at all, which is what makes the predicate list the contract rather than a convenience. All four
-  put any `createFilters()` call in the host, not `fixtures/`.
+  own via `createTableFeature()` (ADR-0005). `predicate-filtering/` composes a hand-written
+  `(row) => boolean` with no filter model at all, which is what makes the predicate list the
+  contract rather than a convenience. All three put any `createFilters()` call in the host, not
+  `fixtures/`. `selection/filtering-selection/` (not here — see below) adds `withSelection()` +
+  `withSorting()` on top of `withFiltering()` and is where selection-under-filter is measured —
+  see `0-product/filtering.md` §5 F-S1; it lives under `selection/` because selection surviving
+  row churn, not the filtering itself, is what the story proves.
 - **`grouping/` — five hosts, split by what the table *is*, not by feature flags.**
   `grouping-static/` is the grouped table as its own product: `withGrouping()` and **no second
   feature at all**, deliberately including no `withExpansion()`, because a chevron with nothing to
@@ -518,14 +520,18 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   and a dropped grouping level is unannounced; blank group keys still cluster unlabelled in
   `grouping-static/`, which is the one regression left in it, because a blank key is ordinary data
   rather than misuse.
-- **`selection/` — two hosts, because the mode is a construction-time argument.**
+- **`selection/` — three hosts, because the mode is a construction-time argument.**
   `multi-selection/` puts the whole read/write surface of `withSelection()` on one screen,
   including a `selectionChanged` event log that is the only place D9's single-delta clear and
   D11's silent reconciliation prune are distinguishable. `single-selection/` is a sibling rather
   than a toggle, per the fixed-mode rule above: `enableMultiRowSelection: false` is passed at
   construction, so a toggle would leave a dead branch in the host. Its control is a **radio
   group**, which makes the replace rule the control's own semantics and supplies arrow-key roving
-  focus for free.
+  focus for free. `filtering-selection/` composes `withFiltering()` + `withSelection()` +
+  `withSorting()` and proves selection survives both a filter narrowing the row set and a sort
+  reordering it — see `0-product/filtering.md` §5 F-S1. It reaches into `filtering/fixtures/` and
+  `filtering/filtering-story.css` for its invoice data rather than duplicating them, since the
+  subject under test is selection, not a second filtering fixture set.
 - `external-write/` — demonstrates an effect from *outside* the story's own button clicks
   (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
   an open row, quiet patch on a closed one) — a worked example of the scope discipline above:

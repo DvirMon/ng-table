@@ -74,7 +74,7 @@ Three stories exist, read as host components rather than `.mdx` wrappers:
 |---|---|---|
 | [`client-filtering/`](../../src/stories/filtering/client-filtering/) | `withFiltering({ predicates })`, client, synchronous | Five filter kinds plus a declared `anyOf` quick filter; active markers and a chip summary with per-chip ×; `Reset to defaults` vs. `Clear all` as two visibly different buttons; a broken-predicate toggle that widens the result set and mirrors the library's report onto the canvas; raw vs. guarded load of a stale saved filter; no-data and no-matches as two separate states |
 | [`server-filtering/`](../../src/stories/filtering/server-filtering/) | `createFilters()` alone — no filtering feature | Criteria feed the request; a 300ms debounce made visible by a request counter; the server's own `total` overriding core `totalRowCount` per ADR-0005; the late-default race gated by `dirty()`; loading / no-matches / request-failed as three distinct blocks, with the last-loaded page kept on screen |
-| [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) | `withFiltering()` + `withSelection()` + `withSorting()` | Two separately named select-all scopes; retention of a selection across a filter, restored exactly; sorting changing nothing and deleting pruning; the missing selected-but-hidden count stated on canvas rather than faked |
+| [`filtering-selection/`](../../src/stories/selection/filtering-selection/) | `withFiltering()` + `withSelection()` + `withSorting()` | Two separately named select-all scopes; retention of a selection across a filter, restored exactly; sorting changing nothing and deleting pruning; the missing selected-but-hidden count stated on canvas rather than faked |
 
 Two marks are not ✅, and both stay explicit rather than being rounded up: **1.4** (no runtime
 operator picker — R1, deliberate) and **F-S1** (the "N selected, M hidden" count has no shipped
@@ -486,7 +486,7 @@ selection story below, decided in one place rather than two.
 - If the count of selected-but-hidden rows can't be computed for some reason, the selection state
   itself is never guessed at or reset as a side effect — only the count display degrades.
 
-**Covered by:** [`selection-filtering/`](../../src/stories/filtering/selection-filtering/) — two of
+**Covered by:** [`filtering-selection/`](../../src/stories/selection/filtering-selection/) — two of
 the three bullets render. *Select all (visible)* and *Select all (including hidden)* are separate,
 separately named buttons, so bullet 1 is checkable rather than asserted. Filtering a selected row
 out keeps it selected and clearing the filter restores the selection exactly — the story prints the
@@ -660,7 +660,7 @@ see §8.4) and whatever directive doc, if any, is written once `createFilters()`
 | Gap | State owes | UI owes |
 |---|---|---|
 | ~~Match count (2.3)~~ — **both halves landed** | ~~S1's derived count~~ — core `totalRowCount`, already there | ~~rendering it~~ — "N of M match" in `client-filtering/`, "server total N · rows on this page M" in `server-filtering/` |
-| Selection under a filter (F-S1) | ~~what "select all" scopes to~~ — D59. **Still owed:** the hidden-count signal (`selection.md` S1) | ~~showing that hidden selections survive~~ — `selection-filtering/` renders retention and prints the ids. **Still owed:** the "N selected, M hidden" split, which nothing can compute yet |
+| Selection under a filter (F-S1) | ~~what "select all" scopes to~~ — D59. **Still owed:** the hidden-count signal (`selection.md` S1) | ~~showing that hidden selections survive~~ — `filtering-selection/` renders retention and prints the ids. **Still owed:** the "N selected, M hidden" split, which nothing can compute yet |
 
 ## 8.4 Confirmed right — do not re-litigate
 

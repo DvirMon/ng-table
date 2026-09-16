@@ -9,12 +9,12 @@ import type { RowId } from '../../../api/types';
 import { removeRow } from '../../../mutations/row-mutations';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
-import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
-import { selectionInvoiceConfig } from '../fixtures/schema';
-import type { InvoiceRow } from '../fixtures/types';
-import { toggleOption } from '../fixtures/utils';
-import { createSelectionFilters } from './selection-filtering.filters';
-import { SelectionFilteringToolbarComponent } from './selection-filtering-toolbar.component';
+import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../../filtering/fixtures/mock';
+import { selectionInvoiceConfig } from '../../filtering/fixtures/schema';
+import type { InvoiceRow } from '../../filtering/fixtures/types';
+import { toggleOption } from '../../filtering/fixtures/utils';
+import { createFilteringSelectionFilters } from './filtering-selection.filters';
+import { FilteringSelectionToolbarComponent } from './filtering-selection-toolbar.component';
 
 /**
  * Selection under an active filter
@@ -24,17 +24,17 @@ import { SelectionFilteringToolbarComponent } from './selection-filtering-toolba
  * Selection restores exactly as it was once the filter clears; only deleting a row prunes it.
  */
 @Component({
-  selector: 'ngp-selection-filtering-story-host',
-  imports: [NgpTableDirective, NgpTableRowDirective, SelectionFilteringToolbarComponent],
-  templateUrl: './selection-filtering-story-host.component.html',
-  styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
+  selector: 'ngp-filtering-selection-story-host',
+  imports: [NgpTableDirective, NgpTableRowDirective, FilteringSelectionToolbarComponent],
+  templateUrl: './filtering-selection-story-host.component.html',
+  styleUrls: ['../../styles/story-host.css', '../../filtering/filtering-story.css'],
 })
-export class SelectionFilteringStoryHostComponent {
+export class FilteringSelectionStoryHostComponent {
   protected readonly data = signal<InvoiceRow[]>(INVOICE_ROWS_MOCK);
 
   /** The subset this story filters by — enough to move rows in and out of view while a
    * selection is held, without rebuilding the client story's whole filter row. */
-  protected readonly filters = createSelectionFilters(this.data);
+  protected readonly filters = createFilteringSelectionFilters(this.data);
 
   protected readonly filterForm = form(this.filters().value);
 

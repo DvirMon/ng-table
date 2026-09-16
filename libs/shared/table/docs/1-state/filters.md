@@ -35,7 +35,7 @@ readonly filters = createFilters(this.data, (path) => [
 > 2026-09 amendment). `create-filters.ts` plus `evaluator`, `matchers`, `row-of`, `rules`,
 > `state`, `types` and `validate` are on disk, with `create-filters.spec.ts`, `matchers.spec.ts` and
 > `state.spec.ts` covering them. Four Storybook stories exercise the surface end to end
-> (`filtering/client-filtering/`, `server-filtering/`, `selection-filtering/`,
+> (`filtering/client-filtering/`, `server-filtering/`, `selection/filtering-selection/`,
 > `predicate-filtering/`); coverage per product story is in
 > [`0-product/filtering.md`](../0-product/filtering.md).
 
