@@ -73,7 +73,7 @@ children are loaded — for lazy-loaded children, where `childrenAccessor` legit
 
   **Specced, not yet implemented.** The rest of `withExpansion()` is shipped; `everExpanded` has no code in `src/` yet, so this section is the contract to build against rather than a description of current behavior. This is why the spec's `code:` axis reads `partial`.
 
-- **Dual use:** this feature backs both (a) row detail/tree-child expansion, and (b) group row collapse/expand state for `withGrouping()` (see `with-grouping.md`) — group rows are treated as rows with an id, tracked in the same `expandedRows` set. A group row's id is synthesized by `withGrouping()`'s render layer (e.g. `` `group:${columnId}:${value}` ``), not a real `TRow` id — `expandedRows` doesn't care whether an id belongs to a real row or a synthetic group header, it's just a set of ids.
+- **Dual use:** this feature backs both (a) row detail/tree-child expansion, and (b) group row collapse/expand state for `withGrouping()` (see `with-grouping.md`) — group rows are treated as rows with an id, tracked in the same `expandedRows` set. A group row's id is synthesized by `withGrouping()`'s render layer (e.g. `` `group:${columnId}:${value}` ``), not a real `TRow` id — `expandedRows` doesn't care whether an id belongs to a real row or a synthetic group header, it's just a set of ids. Neither `withExpansion()`'s `'tree'` render stage nor `withGrouping()`'s `'group'` render stage reads this set themselves (#133) — both emit their full tree unconditionally, each row/header carrying its parent's id, and the engine-owned `'prune'` render stage (ADR-0017) is the single place that consults `expandedRows` to hide descendants of a collapsed id, dual use and all.
 
 ## Methods
 

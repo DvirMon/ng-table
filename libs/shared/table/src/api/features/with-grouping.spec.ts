@@ -995,8 +995,11 @@ describe('collapse/expand (#59)', () => {
 
       // Grouping first: the same read is a compile error — this slot's `In` doesn't carry
       // ExpansionMembers yet. The runtime store does have `expandedRows` once expansion
-      // composes after (readExpandedRows() reads it lazily off the shared object at render
-      // time) — this restriction is type-level only.
+      // composes after (any deferred read off the shared object, e.g. a trailing
+      // `withComputed()` block, would see it) — this restriction is type-level only.
+      // `withGrouping()` itself no longer performs such a read at all (#133) — grouping's own
+      // render stage has zero knowledge of expansion; the engine-owned `'prune'` stage governs
+      // collapse/expand visibility regardless of argument order (ADR-0017).
       inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),

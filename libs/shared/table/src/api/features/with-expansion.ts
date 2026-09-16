@@ -85,8 +85,10 @@ function toChildRenderRow<TRow>(
 /**
  * The `'tree'` render stage. Passes through any row a preceding stage already
  * produced (e.g. a `'group'` header, `data === null`) untouched, and for a data-backed row
- * stamps `hasChildren`/`isExpanded` onto it, then — once expanded — appends its children,
- * recursively, at `row.depth + 1`.
+ * stamps `hasChildren`/`isExpanded` onto it, then unconditionally appends its children,
+ * recursively, at `row.depth + 1`, each carrying `parentId`. Collapse/expand visibility is not
+ * this stage's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a row's
+ * descendants when its id is missing from the unioned `expandedRows` set.
  *
  * Takes `expandedRows` as a `Signal` and reads it inside the returned transform, not at
  * declaration time: `composeTable()` calls a feature's factory once during the fold and
@@ -112,7 +114,7 @@ function buildTreeStage<TRow>(
       isExpanded: expanded.has(row.id),
     };
     const children = childrenAccessor(row.data);
-    if (!hasNonEmptyChildren(children) || !self.isExpanded) {
+    if (!hasNonEmptyChildren(children)) {
       return [self];
     }
     const nested = children.flatMap((child) =>

@@ -38,11 +38,13 @@ parent: ../architecture.md
 >   cluster tree, not `renderRows()`). `[]` when ungrouped. It's what `expandAll(table.groupIds())`
 >   uses to open every level in one call, since expansion's own discovery only walks real data rows.
 >
-> - **Collapse/expand shipped** — `withGrouping()` reads `withExpansion()`'s `expandedRows` set
->   optionally, via the `composed` feature-to-feature seam (D11, issue #59). Collapsing a group id
->   omits its descendants from `renderRows()`; the header itself always still renders. `rowsOf(group)`
->   stays correct under collapse (D17, issue #59) — it re-derives the cluster tree from `rows()`
->   (pipeline output) rather than scanning `renderRows()`.
+> - **Collapse/expand shipped, `withGrouping()` has zero knowledge of it (#133, ADR-0017)** —
+>   `withGrouping()`'s render stage emits every cluster member unconditionally, each carrying its
+>   parent's id. Collapsing a group id omits its descendants from `renderRows()` via the
+>   engine-owned `'prune'` render stage, which unions every composed feature's `expandedRows`
+>   contribution; the header itself always still renders. `rowsOf(group)` stays correct under
+>   collapse (D17, issue #59) — it re-derives the cluster tree from `rows()` (pipeline output)
+>   rather than scanning `renderRows()`.
 >
 > Still open, deliberately unbuilt: `manual: true` and routing a header click to `groupOrder` — see
 > `2-decisions.md`'s Open section. Neither blocks the rest of this contract.
@@ -60,7 +62,7 @@ optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
 ## Behavior
 
 - **Multi-level, ordered.** `grouping: string[]` — index 0 is the outermost level; aggregation runs at every depth from that cluster's own leaves, never a descendant's already-computed aggregate (D9). See 3-spec.md.
-- **Collapse/expand:** group rows are treated as rows with an id; when `withExpansion()` is also composed, its `expandedRows: Set<id>` tracks whether a given group is expanded or collapsed. `withGrouping()` does not maintain its own collapse state.
+- **Collapse/expand:** group rows are treated as rows with an id; when `withExpansion()` is also composed, its `expandedRows: Set<id>` tracks whether a given group is expanded or collapsed, and the engine-owned `'prune'` render stage (ADR-0017) hides a group's descendants when its id is missing from that set. `withGrouping()` does not maintain its own collapse state, and its render stage does not read `expandedRows` at all (#133) — it emits every cluster member unconditionally and lets the prune stage decide.
 - **Static grouping (no `withExpansion()`):** valid standalone use. All group rows render flat/always-expanded — no collapse affordance exists without `withExpansion()` composed.
 - **UI-layer split:** the store-level optionality above is only half the story — the template layer needs its own opt-in. Group row rendering is wrapped with an expand directive/template outlet only when the consumer chooses to (e.g. an `*ngpExpandableRow`-style directive reading/toggling `expandedRows`). Store never dictates template structure; it only exposes `expandedRows` for that directive to consume when present. This split (store composition + template composition, independently opt-in) is the actual mechanism behind "expansion is optional" — not a single switch.
 - **Aggregation:** per-column `aggregateFn(rows)` computes a summary value per group per column. The store recomputes this reactively whenever group membership changes (data, grouping, or filters change). This is purely a computed value — it defines *what* the aggregate is, not how/where it's rendered (that's UI-layer/template concern).
@@ -97,7 +99,7 @@ interface ColumnDef {
 
 ## Compile-Time Dependencies
 
-- **`withExpansion()`** — **optional, not required** (revised 2026-07-31; supersedes the original "must fail to compile without it" framing). `withGrouping()` composes standalone for static grouping. When `withExpansion()` is also composed, group rows gain collapse/expand via its `expandedRows` set — a lazy guarded read, so it works in either argument order at runtime and is typed only when `withExpansion()` precedes `withGrouping()`.
+- **`withExpansion()`** — **optional, not required** (revised 2026-07-31; supersedes the original "must fail to compile without it" framing). `withGrouping()` composes standalone for static grouping, with zero knowledge of expansion (#133) — no lazy read, no guard, no argument-order dependency at runtime. When `withExpansion()` is also composed, group rows gain collapse/expand entirely through the engine-owned `'prune'` render stage (ADR-0017), which unions every feature's `expandedRows` contribution centrally.
 - Reads `aggregateFn` from core `columns` config directly (no feature dependency — see `columns.md`; retroactively corrected from an earlier "depends on `withColumns()`" framing).
 
 ## Pipeline Stage: Clustering, Not Tree-Building
@@ -135,7 +137,7 @@ interface RenderRow<TRow> {
 `withGrouping()` claims the `'group'` render stage (`withExpansion()` claims `'tree'`, leaving
 `'group'` free — [ADR-0011](../../adr/0011-chained-render-stages.md)).
 
-`withGrouping()` claims the `'group'` render stage to walk the clustered `rows()`, insert a `kind: 'group'` header at each cluster boundary — `id` synthesized as e.g. `` `group:${columnId}:${value}` ``, `aggregates` computed via each column's `aggregateFn` over that cluster's rows — and, when `withExpansion()` is also composed, check `store.expandedRows?.()` (optional read) to omit a cluster's member rows if its group id isn't in the set. This is why `withExpansion()`'s `expandedRows: Set<RowId>` transparently covers group ids alongside real row ids (see `with-expansion.md`, Dual Use).
+`withGrouping()` claims the `'group'` render stage to walk the clustered `rows()`, insert a `kind: 'group'` header at each cluster boundary — `id` synthesized as e.g. `` `group:${columnId}:${value}` ``, `aggregates` computed via each column's `aggregateFn` over that cluster's rows — and stamps every header and leaf with its parent's id, emitting the full tree unconditionally (#133). Omitting a cluster's member rows when its group id isn't expanded is no longer this stage's concern: the engine-owned `'prune'` render stage (ADR-0017) does that centrally, over the unioned `expandedRows` from every contributing feature. This is why `withExpansion()`'s `expandedRows: Set<RowId>` transparently covers group ids alongside real row ids (see `with-expansion.md`, Dual Use).
 
 **Consumer split:** logic-layer code (exports, `effect()`s, `aggregateFn` inputs, anything not rendering) reads `rows()` — pure `TRow[]`, unaffected by grouping/collapse. UI-layer/template/virtual-scroll code reads `renderRows()` — flattened, collapse-aware, ready to slice for virtualization. Neither `withVirtualScroll()` (future) nor template directives need to know grouping exists; they only ever consume `renderRows()`.
 

@@ -30,25 +30,6 @@ import type {
 /** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. */
 type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
 
-/** A shallow duck-type check (callable, not a full `Signal<Set<RowId>>` shape check) — safe only
- * because `SlotRegistry` guarantees a store's `expandedRows` member can be nothing but
- * `withExpansion()`'s signal; a second feature claiming that member key throws at
- * construction before this ever runs. */
-function isExpandedRowsSignal(value: unknown): value is Signal<ReadonlySet<RowId>> {
-  return typeof value === 'function';
-}
-
-/** Reads `withExpansion()`'s `expandedRows` off the shared store at render time — present in
- * either argument order, typed on `In` only when expansion is declared first. */
-function readExpandedRows(store: object): ReadonlySet<RowId> | undefined {
-  const hasExpansion = 'expandedRows' in store;
-  if (!hasExpansion) {
-    return undefined;
-  }
-  const member: unknown = store.expandedRows;
-  return isExpandedRowsSignal(member) ? member() : undefined;
-}
-
 export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
    * parallel to `engine/rows.ts`'s `trackBy` throw site. */
@@ -135,20 +116,17 @@ function buildGroupingSpec<TRow>(
       group: (rows) => clusterRows(rows, grouping(), input.columns(), config.groupOrder),
     },
     renderStages: {
-      group: (rows) => {
-        const expandedRows = readExpandedRows(input);
-        return buildGroupRenderRows(rows, grouping(), input.columns(), config.groupOrder, expandedRows);
-      },
+      group: (rows) => buildGroupRenderRows(rows, grouping(), input.columns(), config.groupOrder),
     },
   };
 }
 
 /**
- * Adds column-based row grouping to a `createTable()`. Reads `columns`/`rows` off the store
- * handed in; picks up `expandedRows` lazily when `withExpansion()` is composed, in either
- * order. Claims the `'group'` pipeline and render stages (`engine/grouping.ts`'s
- * `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds `groupingRule`/`rules`/a schema
- * fn over `baseGrouping` — see the decisions doc. `groupOrder` orders cluster siblings.
+ * Adds column-based row grouping to a `createTable()`. Reads only `columns`/`rows` off the
+ * store handed in, with zero knowledge of expansion. Claims the `'group'` pipeline and render
+ * stages (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds
+ * `groupingRule`/`rules`/a schema fn over `baseGrouping` — see the decisions doc. `groupOrder`
+ * orders cluster siblings.
  */
 export function withGrouping<In extends GroupingInput<In>>(
   configOrSchemaFn?: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>>

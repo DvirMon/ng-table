@@ -149,11 +149,15 @@ changes what runs when.
 
 **3. Types are stricter than runtime.** The store is one shared object reference, so a read
 deferred into a computed or a method sees every feature, including ones declared later. The type
-of slot N, however, is the base store plus only the preceding slots. `withGrouping()` is the
-worked example: it reads `composed['expandedRows']` as a lazy guarded read inside its group
-render stage, so it *works* in either order at runtime, but is only *typed* when `withExpansion()`
-precedes it. Writing the compile-time-legal order is the convention; the guard exists because the
-runtime cannot enforce it.
+of slot N, however, is the base store plus only the preceding slots — a trailing `withComputed()`
+block reading `s.expandedRows` off the accumulated `In` type is typed only when `withExpansion()`
+precedes it, even though the runtime store would have the member either way (D25). `withGrouping()`
+was the worked example for this rule before #133/ADR-0017: it used to read `composed['expandedRows']`
+as a lazy guarded read inside its group render stage. That read is gone — `withGrouping()` now
+composes with zero knowledge of expansion, in any argument order, and collapse/expand visibility
+is entirely the engine-owned `'prune'` render stage's job. Writing the compile-time-legal order
+is still the convention for any future feature that reads a later slot's member off the shared
+store reference; the guard exists because the runtime cannot enforce it.
 
 The type-level arity cap is 15 features; nest a `composeFeatures(...)` composite into one slot to
 go past it.

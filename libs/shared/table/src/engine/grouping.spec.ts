@@ -1,4 +1,4 @@
-import type { ColumnDef, GroupSummary, RenderRow, RowId } from '../api/types';
+import type { ColumnDef, GroupSummary, RenderRow } from '../api/types';
 import {
   buildClusters,
   buildGroupRenderRows,
@@ -305,66 +305,32 @@ describe('buildGroupRenderRows', () => {
     expect(headerIds).toContain('group:>region:string:EU>category:string:Electronics');
   });
 
-  it('expandedRows omitting a depth-0 header id omits every descendant beneath it, at every depth, while the header itself still renders', () => {
+  it('emits every cluster member unconditionally — no gating of its own, collapse/expand is the engine prune stage\'s job (ADR-0017)', () => {
     const seed = toSeedRenderRows(orders);
-    // Everything under EU is a member; nothing under US is — isolates the omitted subtree.
-    const expandedRows = new Set<RowId>([
-      'group:>region:string:EU',
-      'group:>region:string:EU>category:string:Electronics',
-      'group:>region:string:EU>category:string:Books',
-    ]);
 
-    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, expandedRows);
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
+
+    expect(result.filter((row) => row.kind === 'group')).toHaveLength(6); // 2 regions + 4 region>category headers
+    expect(result.filter((row) => row.kind === 'row')).toHaveLength(5);
+  });
+
+  it('stamps every header and leaf with its parent\'s id, at every depth', () => {
+    const seed = toSeedRenderRows(orders);
+
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
 
     const usHeader = result.find((row) => row.id === 'group:>region:string:US')!;
-    expect(usHeader.depth).toBe(0);
-    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Electronics')).toBe(false);
-    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Books')).toBe(false);
-    expect(result.filter((row) => row.kind === 'row' && row.data?.region === 'US')).toEqual([]);
-    // EU's subtree, whose id and both children's ids are all members, renders in full.
-    expect(result.some((row) => row.id === 'group:>region:string:EU>category:string:Electronics')).toBe(true);
-    expect(result.filter((row) => row.kind === 'row' && row.data?.region === 'EU')).toHaveLength(2);
-  });
+    expect(usHeader.parentId).toBeUndefined();
 
-  it('expandedRows including a header but omitting one of its children only omits that grandchild subtree — gating is per-node, not whole-subtree', () => {
-    const seed = toSeedRenderRows(orders);
-    // US is a member, and so is its Electronics child — but its Books child is not.
-    const expandedRows = new Set<RowId>([
-      'group:>region:string:US',
-      'group:>region:string:US>category:string:Electronics',
-    ]);
+    const usElectronicsHeader = result.find(
+      (row) => row.id === 'group:>region:string:US>category:string:Electronics'
+    )!;
+    expect(usElectronicsHeader.parentId).toBe(usHeader.id);
 
-    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, expandedRows);
-
-    // Both of US's own children (headers) render — US itself is expanded.
-    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Electronics')).toBe(true);
-    expect(result.some((row) => row.id === 'group:>region:string:US>category:string:Books')).toBe(true);
-    // Electronics is expanded, so its leaves render.
-    expect(result.filter((row) => row.kind === 'row' && row.data?.category === 'Electronics' && row.data?.region === 'US')).toHaveLength(2);
-    // Books is not expanded, so its own leaf is omitted even though its parent (US) is.
-    expect(result.some((row) => row.kind === 'row' && row.data?.category === 'Books' && row.data?.region === 'US')).toBe(false);
-  });
-
-  it('expandedRows omitted (undefined) behaves identically to unconditional expansion — the regression case for no withExpansion() composed', () => {
-    const seed = toSeedRenderRows(orders);
-
-    const withoutArg = buildGroupRenderRows(seed, ['region', 'category'], columns);
-    const withExplicitUndefined = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, undefined);
-
-    expect(withoutArg).toEqual(withExplicitUndefined);
-    // Every header and every leaf is present — nothing is gated.
-    expect(withoutArg.filter((row) => row.kind === 'group')).toHaveLength(6); // 2 regions + 4 region>category headers
-    expect(withoutArg.filter((row) => row.kind === 'row')).toHaveLength(5);
-  });
-
-  it('an empty expandedRows set renders every header but omits every descendant — distinct from undefined (no expansion feature at all)', () => {
-    const seed = toSeedRenderRows(orders);
-
-    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, undefined, new Set());
-
-    // Only the two depth-0 headers render; nothing beneath them (no nested headers, no leaves).
-    expect(result).toHaveLength(2);
-    expect(result.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
+    const usElectronicsLeaf = result.find(
+      (row) => row.kind === 'row' && row.data?.region === 'US' && row.data?.category === 'Electronics'
+    )!;
+    expect(usElectronicsLeaf.parentId).toBe(usElectronicsHeader.id);
   });
 
   describe('a throwing aggregateFn (ADR-0014)', () => {

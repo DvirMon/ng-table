@@ -201,16 +201,16 @@ function computeAggregates<TRow>(
 
 /**
  * Depth-first header + leaf walk over a `buildClusters` tree. Emits one `kind: 'group'` header
- * per node, immediately followed by its nested headers/leaves. `expandedRows === undefined`
- * means unconditionally expanded (no `withExpansion()` composed, #6 regression); otherwise a
- * header's descendants are omitted unless its own id is a member.
+ * per node, immediately followed by its nested headers/leaves — every cluster member,
+ * unconditionally, each carrying its parent's id. Collapse/expand visibility is not this
+ * function's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a header's
+ * descendants when its id is missing from the unioned `expandedRows` set.
  */
 function emitGroupRows<TRow>(
   nodes: ClusterNode<Omit<RenderRow<TRow>, 'index'>>[],
   depth: number,
   parentPath: string,
   columns: ColumnDef<TRow>[],
-  expandedRows: ReadonlySet<RowId> | undefined,
   reportedColumns: Set<string>,
   parentId?: RowId
 ): Omit<RenderRow<TRow>, 'index'>[] {
@@ -231,11 +231,9 @@ function emitGroupRows<TRow>(
       ),
       parentId,
     };
-    const isExpanded = expandedRows === undefined || expandedRows.has(id);
-    const nested = !isExpanded
-      ? []
-      : node.children.length > 0
-        ? emitGroupRows(node.children, depth + 1, path, columns, expandedRows, reportedColumns, id)
+    const nested =
+      node.children.length > 0
+        ? emitGroupRows(node.children, depth + 1, path, columns, reportedColumns, id)
         : node.items.map((item) => ({ ...item, depth: depth + 1, parentId: id }));
     return [header, ...nested];
   });
@@ -251,8 +249,7 @@ export function buildGroupRenderRows<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number,
-  expandedRows?: ReadonlySet<RowId>
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
 ): Omit<RenderRow<TRow>, 'index'>[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -274,7 +271,7 @@ export function buildGroupRenderRows<TRow>(
     (items) => items.map((item) => item.data).filter(isRowData),
     { done: false }
   );
-  return emitGroupRows(ordered, 0, '', columns, expandedRows, new Set());
+  return emitGroupRows(ordered, 0, '', columns, new Set());
 }
 
 function findClusterByPath<T>(

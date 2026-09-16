@@ -226,10 +226,13 @@ Rules:
 - Argument order governs *type-level* visibility: slot N is typed against the base store plus
   every preceding slot's contribution, so reading a later feature's member is a compile error
   even though the runtime store would have it (D25 — types are stricter than runtime). Pipeline
-  execution order is fixed and does not follow argument order. `withGrouping()` is the live
-  example: it reads `composed['expandedRows']` as a lazy guarded read inside its group render
-  stage, so it works in either order at runtime but is typed only when `withExpansion()` precedes
-  it. Features do read `composed` — write the compile-time-legal order.
+  execution order is fixed and does not follow argument order. A trailing `withComputed()` block
+  reading `s.expandedRows` off the accumulated `In` is typed only when `withExpansion()` precedes
+  it, though the runtime store would have the member either way — features that do read `composed`
+  should write the compile-time-legal order. `withGrouping()` is no longer such an example: it read
+  `composed['expandedRows']` as a lazy guarded read inside its group render stage until #133/
+  ADR-0017 moved collapse/expand visibility entirely into the engine-owned `'prune'` render stage —
+  `withGrouping()` now composes with zero knowledge of expansion, in any argument order.
 - Internal features (the column-schema wiring) are not consumer `Feature`s: they keep receiving
   the engine handle `TableCore<TRow>`, which is the only way to reach `baseColumns` (ADR-0010).
 
