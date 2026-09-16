@@ -25,10 +25,32 @@
     </label>
     <button type="button" (click)="insertRow()">Add row</button>
     <button type="button" (click)="table.toggleSort('name')">
-      Sort name {{ sortArrow('name') }}
+      Sort name
+      @switch (table.sortDirections().get('name')) {
+        @case ('asc') {
+          ▲
+        }
+        @case ('desc') {
+          ▼
+        }
+        @default {
+          ↕
+        }
+      }
     </button>
     <button type="button" (click)="table.toggleSort('dept')">
-      Sort dept {{ sortArrow('dept') }}
+      Sort dept
+      @switch (table.sortDirections().get('dept')) {
+        @case ('asc') {
+          ▲
+        }
+        @case ('desc') {
+          ▼
+        }
+        @default {
+          ↕
+        }
+      }
     </button>
     @if (undoLabel(); as label) {
       <button type="button" [attr.aria-label]="label" (click)="undoLastAction()">Undo</button>
@@ -51,7 +73,8 @@
       @for (row of table.renderRows(); track row.id) {
         @if (row.sourceIndex !== undefined) {
           @let isPending = table.pending().has(row.id);
-          @let rowError = rowErrors().get(row.id);
+          @let rowError = flags.rowErrors().get(row.id);
+          @let discardLabel = 'Discard ' + (data()[row.sourceIndex] | rowLabel);
 
           <tr
             [attr.data-row-new]="row.id === newRowId() ? row.id : null"
@@ -74,8 +97,8 @@
               <button
                 type="button"
                 class="story-host__icon-button"
-                [attr.aria-label]="discardLabel(data()[row.sourceIndex])"
-                [title]="discardLabel(data()[row.sourceIndex])"
+                [attr.aria-label]="discardLabel"
+                [title]="discardLabel"
                 (click)="discardRow(row.id)"
               >
                 <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">

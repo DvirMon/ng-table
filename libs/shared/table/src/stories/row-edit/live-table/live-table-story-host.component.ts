@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import {
@@ -12,50 +12,31 @@ import type { RowId } from '../../../api/types';
 import { CommitCounterComponent } from '../ui/commit-counter.component';
 import { FocusNewRowDirective } from '../ui/focus-new-row.directive';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../fixtures/mock';
+import { rowLabel } from '../fixtures/utils';
 import { injectRowEditApi, type RowEditRequestOptions } from '../fixtures/http';
 import { createLocalUndoSlot } from '../ui/local-undo-slot';
+import { createRowFlags } from '../ui/row-flags';
+import { ROW_EDIT_STORY_PIPES } from '../row-edit-story.pipes';
 import { createTable } from '../../../api/create-table';
 import { withOptimistic } from '../../../api/features/with-optimistic';
 import { withSorting } from '../../../api/features/with-sorting';
 import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import type { EditRow } from '../fixtures/types';
-import type { EditableField } from './live-table.types';
+import { watchFieldCommits } from './field-commit-watcher';
+import type { EditableField, FieldCommit } from './live-table.types';
 
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
 
-/** What a row is called in announcements and accessible labels — its name, or a stand-in when a
- * freshly-added row hasn't been named yet. */
-function rowLabel(row: EditRow): string {
-  return row.name.trim() === '' ? 'unnamed row' : `row ${row.name}`;
-}
-
 /**
- * S1 — the live table (D29): no `withRowEdit()` composed, inputs always render — there is still
- * no *session*, no Edit/Save/Cancel. The `ngp-commit-counter` in the template instruments
- * `data()` emissions to make the `debounce('blur')` commit boundary observable — typing does not
- * tick it, blur/select-change does. `withOptimistic()` is composed purely for its rollback verbs:
- * every commit is now a real MSW-intercepted round trip, not a local-only write.
- *
- * - **Edit**: on a field commit, `captureEdit(id, previousRow)` takes the pre-commit value, then
- *   a real `PUT` fires; failure calls `revertEdit(id)` (§1.1's failure behavior), success calls
- *   `releaseEdit(id)`.
- * - **Add**: `insertRow()` inserts a blank row under a temp client id (`pendingCreateIds`); its
- *   *first* field commit is what actually creates it (`POST`, not `PUT`) — a blank row is nothing
- *   to save yet. On success, `patchRow` lands the server's id and `swapRowId(tempId, saved.id)`
- *   re-keys the pending-create bookkeeping. On failure, the typed values are left alone (§2.1's
- *   failure behavior: "the blank row and my typed values are still there") — no revert, since
- *   there's nothing to revert *to*; the row just stays a `pendingCreateIds` retry target.
- * - **Delete**: `removeEdit(id)` captures + removes optimistically, a real `DELETE` follows;
- *   failure calls `revertEdit(id)` to bring the row back (§3.1's failure behavior).
- *
- * Live mode still has no Cancel (no session to cancel), so the single local undo slot (§1.3,
- * §3.2) is unchanged and **stays local-only** (no server-backed undo — that's §3.2's own,
- * separately-tracked, still-❌ story): Ctrl+Z/Cmd+Z or the toolbar Undo restores either the last
- * *committed* field value or the last *confirmed-discarded* row, whichever happened last.
+ * S1 — live table (D29): no `withRowEdit()` composed, so there is no edit session — every field
+ * is always an input, and a field commit is what saves. `withOptimistic()` is composed only for
+ * its rollback verbs; every commit is a real MSW-backed round trip (create/update/delete). The
+ * local undo slot stays local-only. Full Add/Edit/Delete semantics: `docs/0-product/row-editing.md`
+ * §§1.1, 1.3, 2.1, 3.1, 3.2.
  */
 @Component({
   selector: 'ngp-live-table-story-host',
-  imports: [FormField, FocusNewRowDirective, CommitCounterComponent],
+  imports: [FormField, FocusNewRowDirective, CommitCounterComponent, ...ROW_EDIT_STORY_PIPES],
   templateUrl: './live-table-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', './live-table-story-host.component.css'],
   host: {
@@ -66,11 +47,6 @@ export class LiveTableStoryHostComponent {
   readonly forceFailure = input(false);
   readonly latencyMs = input(600);
 
-  /** Plain (non-signal) snapshot of the previous `data()` emission — diffed on every emission to
-   * find which field just committed. Not itself reactive state; only ever read inside the effect
-   * that also produced it. */
-  private previousData: EditRow[] = EDIT_ROWS_MOCK;
-
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
@@ -80,7 +56,7 @@ export class LiveTableStoryHostComponent {
   protected readonly insertAt = signal(0);
 
   /** Row from `insertRow()` still awaiting its first field commit — marks the row `new` (§2.1)
-   * for focus + styling until `snapshotChanges` clears it. */
+   * for focus + styling until its first commit clears it. */
   protected readonly newRowId = signal<RowId | null>(null);
 
   /** The single local undo slot (§1.3, §3.2) — last field commit or last discarded row,
@@ -92,32 +68,25 @@ export class LiveTableStoryHostComponent {
    * change (§3.1). */
   protected readonly announcement = signal('');
 
-  /** Ids inserted this session that have never reached the server — their first field commit
-   * `POST`s (create) instead of `PUT`s (update). Cleared once that create succeeds. */
-  protected readonly pendingCreateIds = signal<ReadonlySet<RowId>>(new Set());
-
-  /** id -> a save/create/delete failure's message, persistent until dismissed or retried. */
-  protected readonly rowErrors = signal<ReadonlyMap<RowId, string>>(new Map());
+  /** Demo-only per-row UI bookkeeping (pending-create ids, persistent save/create/delete errors)
+   * — see `row-flags.ts`. */
+  protected readonly flags = createRowFlags();
 
   protected readonly undoLabel = computed(() => this.undo.label());
 
-  constructor() {
-    effect(() => {
-      this.snapshotChanges(this.data());
-    });
-  }
+  protected readonly requestOptions = computed<RowEditRequestOptions>(() => ({
+    forceFailure: this.forceFailure(),
+    latencyMs: this.latencyMs(),
+  }));
 
-  protected sortArrow(columnId: string): string {
-    const direction = this.table.sortDirections().get(columnId);
-    if (direction === 'asc') return '▲';
-    if (direction === 'desc') return '▼';
-    return '↕';
+  constructor() {
+    watchFieldCommits(this.data, EDITABLE_FIELDS, (commit) => this.onFieldCommit(commit));
   }
 
   protected insertRow(): void {
     const id = crypto.randomUUID();
     this.newRowId.set(id);
-    this.pendingCreateIds.update((ids) => new Set(ids).add(id));
+    this.flags.markPendingCreate(id);
     this.table.value.update(
       insertRow(
         { id, name: '', dept: DEPT_OPTIONS[0] },
@@ -132,7 +101,7 @@ export class LiveTableStoryHostComponent {
     const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
     if (row === undefined) return;
 
-    if (this.pendingCreateIds().has(id)) {
+    if (this.flags.pendingCreateIds().has(id)) {
       this.postCreate(id, row);
     } else {
       this.putUpdate(id, row);
@@ -140,13 +109,7 @@ export class LiveTableStoryHostComponent {
   }
 
   protected dismissError(id: RowId): void {
-    this.clearRowError(id);
-  }
-
-  /** Names the row a discard button removes, for its accessible label (§3.1) — the label carries
-   * the row's identity, not a bare "Delete". */
-  protected discardLabel(row: EditRow): string {
-    return `Discard ${rowLabel(row)}`;
+    this.flags.clearRowError(id);
   }
 
   /** The discard flow's forward half: removes the row immediately (optimistic — §3.1: "the row
@@ -158,11 +121,11 @@ export class LiveTableStoryHostComponent {
     const at = this.data().findIndex((row) => this.table.trackBy(row) === id);
     if (at === -1) return;
     const row = this.data()[at];
-    this.clearRowError(id);
+    this.flags.clearRowError(id);
 
-    if (this.pendingCreateIds().has(id)) {
+    if (this.flags.pendingCreateIds().has(id)) {
       this.table.value.update(removeRow<EditRow>(id));
-      this.removePendingCreate(id);
+      this.flags.removePendingCreate(id);
       this.undo.recordDiscard(row, at);
       this.announcement.set(`${rowLabel(row)} discarded. Undo available.`);
       if (this.newRowId() === id) this.newRowId.set(null);
@@ -188,7 +151,7 @@ export class LiveTableStoryHostComponent {
       error: (error: unknown) => {
         // Refused — revertEdit puts the row back where it was; no Undo needed, it never left.
         this.table.editing.update(revertEdit<EditRow>(id));
-        this.setRowError(id, error instanceof Error ? error.message : 'Delete failed.');
+        this.flags.setRowError(id, error instanceof Error ? error.message : 'Delete failed.');
         this.announcement.set(`${rowLabel(row)} could not be deleted.`);
       },
     });
@@ -221,35 +184,24 @@ export class LiveTableStoryHostComponent {
     this.undoLastAction();
   }
 
-  /** Diffs `current` against the previous emission: records the most recently changed field as
-   * the undo target, and clears `newRowId`'s marking the first time its row picks up a real edit
-   * — an insert alone never counts, since the inserted id is absent from `previousData`. A
-   * discard changes no surviving row, so it never overwrites the undo entry it just recorded. */
-  private snapshotChanges(current: EditRow[]): void {
-    const previousById = new Map(this.previousData.map((row) => [row.id, row]));
-
-    for (const row of current) {
-      const previousRow = previousById.get(row.id);
-      if (previousRow === undefined) continue;
-
-      const changedField = EDITABLE_FIELDS.find((field) => row[field] !== previousRow[field]);
-      if (changedField === undefined) continue;
-
-      this.undo.recordCommit(row.id, changedField, previousRow[changedField]);
-      if (this.newRowId() === row.id) {
-        this.newRowId.set(null);
-      }
-
-      // A commit is what actually saves in live mode (there's no separate Save button) — the
-      // first one on a `pendingCreateIds` row creates it, every other commit updates it.
-      if (this.pendingCreateIds().has(row.id)) {
-        this.postCreate(row.id, row);
-      } else {
-        this.putUpdate(row.id, previousRow);
-      }
+  /** `watchFieldCommits`'s callback: records the changed field as the undo target, clears
+   * `newRowId`'s marking the first time its row picks up a real edit — an insert alone never
+   * counts, since the inserted id is absent from the previous snapshot — then saves. A commit is
+   * what actually saves in live mode (there's no separate Save button): the first one on a
+   * `pendingCreateIds` row creates it, every other commit updates it. A discard changes no
+   * surviving row, so it never overwrites the undo entry it just recorded. */
+  private onFieldCommit(commit: FieldCommit): void {
+    const { row, previousRow, field } = commit;
+    this.undo.recordCommit(row.id, field, previousRow[field]);
+    if (this.newRowId() === row.id) {
+      this.newRowId.set(null);
     }
 
-    this.previousData = current;
+    if (this.flags.pendingCreateIds().has(row.id)) {
+      this.postCreate(row.id, row);
+    } else {
+      this.putUpdate(row.id, previousRow);
+    }
   }
 
   /** Create: fires only from a `pendingCreateIds` row's first commit — a blank row is nothing to
@@ -258,15 +210,15 @@ export class LiveTableStoryHostComponent {
    * `patchRow` lands the server's id and `swapRowId(id, saved.id)` re-keys `snapshots` so a
    * later commit's `captureEdit`/`releaseEdit` addresses the right row (D49). */
   private postCreate(id: RowId, row: EditRow): void {
-    this.clearRowError(id);
+    this.flags.clearRowError(id);
     this.rowEditApi.saveRow(id, row, true, this.requestOptions()).subscribe({
       next: (saved) => {
         this.table.value.update(patchRow<EditRow>(id, saved));
         this.table.editing.update(swapRowId<EditRow>(id, saved.id));
-        this.removePendingCreate(id);
+        this.flags.removePendingCreate(id);
       },
       error: (error: unknown) => {
-        this.setRowError(id, error instanceof Error ? error.message : 'Create failed.');
+        this.flags.setRowError(id, error instanceof Error ? error.message : 'Create failed.');
       },
     });
   }
@@ -275,7 +227,7 @@ export class LiveTableStoryHostComponent {
    * out, so `table.pending()` reflects the in-flight save immediately; `releaseEdit` on
    * confirmation, `revertEdit` (back to `previousRow`) on failure — §1.1's failure behavior. */
   private putUpdate(id: RowId, previousRow: EditRow): void {
-    this.clearRowError(id);
+    this.flags.clearRowError(id);
     this.table.editing.update(captureEdit<EditRow>(id, previousRow));
 
     const row = this.data().find((candidate) => this.table.trackBy(candidate) === id);
@@ -289,37 +241,9 @@ export class LiveTableStoryHostComponent {
         this.table.editing.update(releaseEdit<EditRow>(id));
       },
       error: (error: unknown) => {
-        this.setRowError(id, error instanceof Error ? error.message : 'Save failed.');
+        this.flags.setRowError(id, error instanceof Error ? error.message : 'Save failed.');
         this.table.editing.update(revertEdit<EditRow>(id));
       },
     });
-  }
-
-  private removePendingCreate(id: RowId): void {
-    if (!this.pendingCreateIds().has(id)) return;
-    this.pendingCreateIds.update((ids) => {
-      const next = new Set(ids);
-      next.delete(id);
-      return next;
-    });
-  }
-
-  private setRowError(id: RowId, message: string): void {
-    this.rowErrors.update((errors) => new Map(errors).set(id, message));
-  }
-
-  private clearRowError(id: RowId): void {
-    if (!this.rowErrors().has(id)) return;
-    this.rowErrors.update((errors) => {
-      const next = new Map(errors);
-      next.delete(id);
-      return next;
-    });
-  }
-
-  /** Storybook forceFailure/latencyMs controls, forwarded to `row-edit.handlers.ts` (MSW) on
-   * every request this story fires. */
-  private requestOptions(): RowEditRequestOptions {
-    return { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() };
   }
 }

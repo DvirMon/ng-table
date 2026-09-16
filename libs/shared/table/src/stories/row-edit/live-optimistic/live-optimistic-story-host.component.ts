@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, input, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import {
   captureEdit,
@@ -16,6 +16,9 @@ import { withOptimistic } from '../../../api/features/with-optimistic';
 import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import { injectRowEditApi } from '../fixtures/http';
 import type { EditRow } from '../fixtures/types';
+import { createRowFlags } from '../ui/row-flags';
+import { createUndoWindow } from './undo-window';
+import { createPendingAnnouncer } from './pending-announcer';
 
 /** How long a delete's Undo affordance stays live before its restore point is released. */
 const UNDO_WINDOW_MS = 6000;
@@ -52,32 +55,27 @@ export class LiveOptimisticStoryHostComponent {
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
   protected readonly saveError = signal<string | null>(null);
-  protected readonly leavePageMessage = signal<string | null>(null);
-  protected readonly announcement = signal('');
+  protected readonly leavePagePendingCount = signal<number | null>(null);
+  protected readonly announcement = createPendingAnnouncer(this.liveTable.pending);
   protected readonly insertAt = signal(0);
-  /** Ids added this session that have never reached the server — `save` uses this to decide
-   * `POST` vs `PUT`. */
-  protected readonly pendingCreateIds = signal<ReadonlySet<RowId>>(new Set());
+  /** Demo-only per-row UI flags; only `pendingCreateIds` is used here — `save` reads it to
+   * decide `POST` vs `PUT`. */
+  protected readonly flags = createRowFlags();
   /** The just-inserted row to focus once rendered — cleared the moment it's left (§2.1). */
   protected readonly newRowId = signal<RowId | null>(null);
   /** The one row currently offering Undo after a settled delete (demo scope — one at a time). */
-  protected readonly undoRowId = signal<RowId | null>(null);
+  protected readonly undo = createUndoWindow(UNDO_WINDOW_MS, (id) =>
+    this.liveTable.editing.update(releaseEdit<EditRow>(id)),
+  );
 
-  private readonly destroyRef = inject(DestroyRef);
   private readonly rowEditApi = injectRowEditApi();
-  private undoTimer: ReturnType<typeof setTimeout> | null = null;
-
-  constructor() {
-    this.announcePendingTransitions();
-    this.destroyRef.onDestroy(() => this.clearUndoTimer());
-  }
 
   /** Inserts a blank row under a temp client id — nothing is saved yet; the row's first blur
    * (`save()`) is what actually creates it. */
   protected addRow(): void {
     const id = crypto.randomUUID();
     this.newRowId.set(id);
-    this.pendingCreateIds.update((ids) => new Set(ids).add(id));
+    this.flags.markPendingCreate(id);
     this.liveTable.value.update(
       insertRow<EditRow>({ id, name: '', dept: DEPT_OPTIONS[0] }, { at: this.insertAt() }),
     );
@@ -105,34 +103,27 @@ export class LiveOptimisticStoryHostComponent {
   }
 
   /** Delete-with-rollback plus an Undo window: the restore point is deliberately held open past
-   * a successful delete (`armUndo`) instead of being released immediately, so `revertEdit` can
+   * a successful delete (`undo.arm`) instead of being released immediately, so `revertEdit` can
    * still bring the row back if the user clicks Undo/presses Ctrl+Z within the window. */
   protected deleteRow(id: RowId): void {
     this.saveError.set(null);
-    this.clearUndoTimer();
+    this.undo.disarm();
     this.liveTable.editing.update(removeEdit<EditRow>(id));
     this.remove(id);
   }
 
   protected undoDelete(): void {
-    const id = this.undoRowId();
+    const id = this.undo.disarm();
     if (id === null) {
       return;
     }
-    this.clearUndoTimer();
     this.liveTable.editing.update(revertEdit<EditRow>(id));
-    this.undoRowId.set(null);
   }
 
   /** A real `beforeunload` won't fire from a synthetic click in Storybook, so this simulates the
    * resulting UI state directly instead of relying on the click to trigger the guard below. */
   protected simulateLeavePage(): void {
-    const pendingCount = this.liveTable.pending().size;
-    this.leavePageMessage.set(
-      pendingCount > 0
-        ? `${pendingCount} unsaved change${pendingCount > 1 ? 's' : ''} in progress — leaving now would lose them.`
-        : 'No unsaved changes — safe to leave.',
-    );
+    this.leavePagePendingCount.set(this.liveTable.pending().size);
   }
 
   /** Real guard, for a real navigation (won't fire from the demo button above). */
@@ -145,7 +136,7 @@ export class LiveOptimisticStoryHostComponent {
 
   protected onWindowKeydown(event: KeyboardEvent): void {
     const isUndoCombo = (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z';
-    if (isUndoCombo && this.undoRowId() !== null) {
+    if (isUndoCombo && this.undo.rowId() !== null) {
       event.preventDefault();
       this.undoDelete();
     }
@@ -157,7 +148,7 @@ export class LiveOptimisticStoryHostComponent {
     if (row === undefined) {
       return;
     }
-    const isCreate = this.pendingCreateIds().has(id);
+    const isCreate = this.flags.pendingCreateIds().has(id);
 
     this.rowEditApi
       .saveRow(id, row, isCreate, { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() })
@@ -167,7 +158,7 @@ export class LiveOptimisticStoryHostComponent {
             this.liveTable.value.update(patchRow<EditRow>(id, saved));
             this.liveTable.editing.update(swapRowId<EditRow>(id, saved.id));
             this.liveTable.editing.update(releaseEdit<EditRow>(saved.id));
-            this.removePendingCreate(id);
+            this.flags.removePendingCreate(id);
           } else {
             // releaseEdit: confirmed — drop the restore point, the written value stands.
             this.liveTable.editing.update(releaseEdit<EditRow>(id));
@@ -181,21 +172,12 @@ export class LiveOptimisticStoryHostComponent {
       });
   }
 
-  private removePendingCreate(id: RowId): void {
-    if (!this.pendingCreateIds().has(id)) return;
-    this.pendingCreateIds.update((ids) => {
-      const next = new Set(ids);
-      next.delete(id);
-      return next;
-    });
-  }
-
   private remove(id: RowId): void {
     this.rowEditApi
       .deleteRow(id, { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() })
       .subscribe({
         next: () => {
-          this.armUndo(id);
+          this.undo.arm(id);
         },
         error: (error: unknown) => {
           this.saveError.set(error instanceof Error ? error.message : 'Delete failed.');
@@ -203,43 +185,4 @@ export class LiveOptimisticStoryHostComponent {
         },
       });
   }
-
-  /** Holds `id`'s restore point open for `UNDO_WINDOW_MS` instead of releasing it right away —
-   * the restore point is what `undoDelete()` reverts to. Releases on its own once the window
-   * closes with no undo click. */
-  private armUndo(id: RowId): void {
-    this.undoRowId.set(id);
-    this.undoTimer = setTimeout(() => {
-      this.liveTable.editing.update(releaseEdit<EditRow>(id));
-      this.undoRowId.set(null);
-      this.undoTimer = null;
-    }, UNDO_WINDOW_MS);
-  }
-
-  private clearUndoTimer(): void {
-    if (this.undoTimer !== null) {
-      clearTimeout(this.undoTimer);
-      this.undoTimer = null;
-    }
-  }
-
-  /** Announces once per pending-state transition (a row entering or leaving `pending()`), not
-   * per keystroke — `pending()` only changes at capture/settle points (focus/blur+fetch), never
-   * mid-typing. */
-  private announcePendingTransitions(): void {
-    let previousPending: ReadonlySet<RowId> = new Set();
-    effect(() => {
-      const currentPending = this.liveTable.pending();
-      const entered = [...currentPending].filter((id) => !previousPending.has(id));
-      const left = [...previousPending].filter((id) => !currentPending.has(id));
-
-      if (entered.length > 0) {
-        this.announcement.set(`Saving ${entered.length} row${entered.length > 1 ? 's' : ''}…`);
-      } else if (left.length > 0) {
-        this.announcement.set('Save complete.');
-      }
-      previousPending = currentPending;
-    });
-  }
-
 }

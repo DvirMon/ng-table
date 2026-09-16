@@ -134,7 +134,10 @@ Cancel" as acceptable without shipping undo leaves the live table with **no** re
 **Coverage:** ✅ for the mechanism (`gated-single-optimistic/`, `external-write/`). The stale-data
 half is now closer to ✅ than 🟡 — `external-write/` no longer just resolves silently; it stages a
 `RowConflict` and lets the person choose Keep mine / Take theirs / merge field by field (§1.5 was
-re-verified 2026-09-05: this is real, on-screen). Also new since D31.2's original text — a
+re-verified 2026-09-05: this is real, on-screen). Once every field of a conflict is resolved, the
+restore point moves forward to the accepted value (D40) — so a later Cancel closes the editor on
+what the person just chose, not the original pre-conflict snapshot; it never undoes an already-
+accepted resolution. Also new since D31.2's original text — a
 displaced row's unsaved draft can be silently discarded on a single-mode switch, not just an
 external write; tracked as **G13**, blocked on a product call (**O26**).
 
@@ -881,7 +884,7 @@ failure is three ordinary calls). What was real is one defect with two entry poi
 and the single-mode trim drop every open row's restore point**, which under `multiple: true` can
 discard rollbacks for saves still in flight — reachable through the config's own documented idiom
 `multiple: () => isWide()`, i.e. a window resize. Resolution: bulk edit is optimistic-only (a save
-closes its row before firing), which makes the hazard unreachable with no new state. One open
+closes its row before firing, D41), which makes the hazard unreachable with no new state. One open
 question remains there — whether a mode collapse should silently end N edit sessions.
 
 **Save-all's "N independent or one batched write" (D32), bulk-add half resolved 2026-09-05.**

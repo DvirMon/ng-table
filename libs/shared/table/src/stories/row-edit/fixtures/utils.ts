@@ -18,6 +18,12 @@ export function saveRowPessimistic(row: EditRow): Promise<EditRow> {
   });
 }
 
+/** What a row is called in announcements and accessible labels — its name, or a stand-in when a
+ * freshly-added row hasn't been named yet. */
+export function rowLabel(row: EditRow): string {
+  return row.name.trim() === '' ? 'unnamed row' : `row ${row.name}`;
+}
+
 /** Keeps Tab/Shift+Tab inside `container`'s focusable elements while an editing row's `<tr>` has
  * focus (§1.6) — wraps from the last element back to the first (and vice versa) instead of
  * fighting Angular's default tab order. Simplest-correct: it does not trap focus that enters via

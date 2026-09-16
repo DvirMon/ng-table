@@ -11,8 +11,9 @@ import { createTable } from '../../../api/create-table';
 import { withRowEdit } from '../../../api/features/with-row-edit';
 import { editTableConfig, editRowsSchema } from '../fixtures/schema';
 import type { EditRow } from '../fixtures/types';
-import { diffEditableFields, nextDept } from './external-write.utils';
-import type { EditableField, RowConflict } from './external-write.types';
+import { diffEditableFields, nextDept, toPatch } from './external-write.utils';
+import { createConflictStore } from './external-write.state';
+import type { EditableField } from './external-write.types';
 
 /**
  * S5 — external write while a row is open, closing the product doc's §1.5 gap: the plumbing
@@ -39,7 +40,7 @@ export class ExternalWriteStoryHostComponent {
   protected readonly editingIds = computed(() => Array.from(this.table.editing()));
 
   // Keyed by row id — at most one pending conflict per row, cleared once every field resolves.
-  protected readonly conflicts = signal<Map<RowId, RowConflict>>(new Map());
+  protected readonly conflicts = createConflictStore();
 
   protected openEdit(id: RowId): void {
     // beginEdit: opens the row and captures its current value as the restore point.
@@ -49,7 +50,7 @@ export class ExternalWriteStoryHostComponent {
   protected cancelEdit(id: RowId): void {
     // A pending conflict never touched `data` (see simulateServerPush) — drop it without moving
     // the restore point, then revertEdit as usual restores the snapshot and closes the row.
-    this.dropConflict(id);
+    this.conflicts.drop(id);
     this.table.editing.update(revertEdit(id));
   }
 
@@ -68,7 +69,7 @@ export class ExternalWriteStoryHostComponent {
     if (changedFields.length === 0) {
       return;
     }
-    this.conflicts.update((map) => new Map(map).set(id, { id, fields: changedFields, merging: false }));
+    this.conflicts.stage(id, changedFields);
   }
 
   /** Patches a row that is *not* currently open — no `captureEdit` (no session to move forward)
@@ -91,23 +92,17 @@ export class ExternalWriteStoryHostComponent {
 
   /** Take theirs: apply every conflicting field's pushed value, replacing what was typed. */
   protected takeTheirs(id: RowId): void {
-    const conflict = this.conflicts().get(id);
+    const conflict = this.conflicts.byId().get(id);
     if (conflict === undefined) {
       return;
     }
-    const patch = Object.fromEntries(
-      conflict.fields.map((fieldDiff) => [fieldDiff.field, fieldDiff.theirsValue])
-    ) as Partial<EditRow>;
-    this.table.value.update(patchRow(id, patch));
+    this.table.value.update(patchRow(id, toPatch(conflict.fields)));
     this.resolveConflict(id);
   }
 
   /** Switches the banner from the three-way choice into a per-field toggle list. */
   protected startMerge(id: RowId): void {
-    this.conflicts.update((map) => {
-      const conflict = map.get(id);
-      return conflict === undefined ? map : new Map(map).set(id, { ...conflict, merging: true });
-    });
+    this.conflicts.startMerge(id);
   }
 
   protected keepMineField(id: RowId, field: EditableField): void {
@@ -115,51 +110,28 @@ export class ExternalWriteStoryHostComponent {
   }
 
   protected takeTheirsField(id: RowId, field: EditableField): void {
-    const fieldDiff = this.conflicts()
+    const fieldDiff = this.conflicts
+      .byId()
       .get(id)
       ?.fields.find((candidate) => candidate.field === field);
     if (fieldDiff === undefined) {
       return;
     }
-    this.table.value.update(patchRow(id, { [fieldDiff.field]: fieldDiff.theirsValue } as Partial<EditRow>));
+    this.table.value.update(patchRow(id, toPatch([fieldDiff])));
     this.resolveMergeField(id, field);
   }
 
   private resolveMergeField(id: RowId, field: EditableField): void {
-    const conflict = this.conflicts().get(id);
-    if (conflict === undefined) {
-      return;
+    if (this.conflicts.settleField(id, field)) {
+      this.table.editing.update(captureEdit(id));
     }
-    const remaining = conflict.fields.filter((fieldDiff) => fieldDiff.field !== field);
-    if (remaining.length === 0) {
-      this.resolveConflict(id);
-      return;
-    }
-    this.conflicts.update((map) => new Map(map).set(id, { ...conflict, fields: remaining }));
   }
 
-  /** Clears an explicitly-resolved conflict (Keep mine / Take theirs / last merged field) and
-   * moves the restore point forward to whatever `data` now holds — the person's accepted answer
-   * — so Cancel doesn't later undo a choice they just made (D40). */
+  /** Clears an explicitly-resolved conflict and moves the restore point forward (D40). */
   private resolveConflict(id: RowId): void {
-    if (!this.dropConflict(id)) {
+    if (!this.conflicts.drop(id)) {
       return;
     }
     this.table.editing.update(captureEdit(id));
-  }
-
-  /** Removes a conflict entry without touching the restore point — used by Cancel, where the row
-   * session is ending rather than being reconciled. Returns whether a conflict was actually
-   * present. */
-  private dropConflict(id: RowId): boolean {
-    if (!this.conflicts().has(id)) {
-      return false;
-    }
-    this.conflicts.update((map) => {
-      const next = new Map(map);
-      next.delete(id);
-      return next;
-    });
-    return true;
   }
 }

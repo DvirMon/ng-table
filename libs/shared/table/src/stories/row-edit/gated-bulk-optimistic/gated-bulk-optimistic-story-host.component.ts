@@ -57,7 +57,8 @@ export class GatedBulkOptimisticStoryHostComponent {
     const count = Math.max(0, Math.trunc(this.ui.count()));
     const entries = Array.from({ length: count }, () => {
       const id = crypto.randomUUID();
-      return { id, row: { id, name: '', dept: DEPT_OPTIONS[0] } as EditRow };
+      const row: EditRow = { id, name: '', dept: DEPT_OPTIONS[0] };
+      return { id, row };
     });
     if (entries.length === 0) return;
 

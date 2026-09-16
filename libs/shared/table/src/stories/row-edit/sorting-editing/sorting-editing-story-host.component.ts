@@ -1,4 +1,4 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { form, FormField } from '@angular/forms/signals';
 import { discardEdit, releaseEdit, revertEdit } from '../../../mutations/optimistic-mutations';
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
@@ -7,6 +7,7 @@ import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import { NullableTextFieldDirective } from './nullable-text-field.directive';
+import { createRowHoldProbe } from './row-hold-probe';
 import { SORT_EDIT_ROWS_MOCK } from './sorting-editing.mock';
 import { sortEditTableConfig, sortEditRowsSchema } from './sorting-editing.schema';
 import type { SortEditRow } from './sorting-editing.types';
@@ -20,7 +21,7 @@ import { withRowEdit } from '../../../api/features/with-row-edit';
  * together, the one interaction no other story exercises. S-2 (null/empty placement,
  * `applySortNulls()`'s shipped `'last'` default) is expected to pass. S-1 (row must not move
  * while open) is expected to **fail** today — OQ-3's row-hold is designed, not implemented —
- * so `rowHoldNotice` below is an honest regression demo, not a workaround: it observes the
+ * so `rowHoldProbe` below is an honest regression demo, not a workaround: it observes the
  * gap live rather than papering over it, and starts passing on its own once the row-hold ships.
  */
 @Component({
@@ -44,37 +45,11 @@ export class SortingEditingStoryHostComponent {
   protected readonly rows = form(this.table.draft, sortEditRowsSchema);
   protected readonly saveError = signal<string | null>(null);
 
-  /** Row id -> render-row index captured at `beginEdit` time, for the S-1 row-hold check below.
-   * Cleared once the row leaves editing, whatever the exit path. */
-  private readonly openIndexById = signal<ReadonlyMap<RowId, number>>(new Map());
-
-  /** S-1 regression demo (OQ-3, not implemented): compares each currently-open row's render
-   * position against the position it held when it was opened. A mismatch means the row moved
-   * while still open — expected to fire today the moment a sorted column's value commits. */
-  protected readonly rowHoldNotice = computed<string | null>(() => {
-    const openedAt = this.openIndexById();
-    if (openedAt.size === 0) {
-      return null;
-    }
-    const currentRows = this.table.renderRows();
-    for (const [id, indexAtOpen] of openedAt) {
-      const currentIndex = currentRows.findIndex((row) => row.id === id);
-      if (currentIndex !== -1 && currentIndex !== indexAtOpen) {
-        return (
-          `Row "${id}" was at position ${indexAtOpen} when opened, now at ${currentIndex} ` +
-          `while still open — S-1's row-hold (OQ-3) isn't implemented yet, so this is expected.`
-        );
-      }
-    }
-    return null;
-  });
-
-  protected sortArrow(columnId: string): string {
-    const direction = this.table.sortDirections().get(columnId);
-    if (direction === 'asc') return '▲';
-    if (direction === 'desc') return '▼';
-    return '↕';
-  }
+  /** S-1 regression demo (OQ-3, not implemented): observes whether a currently-open row moves
+   * from the render position it held when opened — expected to fire today the moment a sorted
+   * column's value commits. */
+  private readonly rowHoldProbe = createRowHoldProbe(this.table.renderRows);
+  protected readonly movedRow = this.rowHoldProbe.movedRow;
 
   protected clearSort(): void {
     this.table.clearSorting();
@@ -101,15 +76,14 @@ export class SortingEditingStoryHostComponent {
 
   protected openEdit(id: RowId): void {
     this.table.editing.update(beginEdit(id));
-    const index = this.table.renderRows().findIndex((row) => row.id === id);
-    this.openIndexById.update((map) => new Map(map).set(id, index));
+    this.rowHoldProbe.record(id);
   }
 
   /** Resets the row to its snapshot and closes it. */
   protected cancelEdit(id: RowId): void {
     this.saveError.set(null);
     this.table.editing.update(revertEdit(id));
-    this.clearOpenIndex(id);
+    this.rowHoldProbe.clear(id);
   }
 
   /** Removes the row and closes it — available on any open row, whether it pre-existed or was
@@ -117,7 +91,7 @@ export class SortingEditingStoryHostComponent {
   protected discardRow(id: RowId): void {
     this.saveError.set(null);
     this.table.editing.update(discardEdit(id));
-    this.clearOpenIndex(id);
+    this.rowHoldProbe.clear(id);
   }
 
   /** Pessimistic save: the row stays open, unsorted, for the whole round trip — merging the
@@ -135,20 +109,9 @@ export class SortingEditingStoryHostComponent {
       await saveSortEditRow(row);
       this.table.editing.update(endEdit(id, row));
       this.table.editing.update(releaseEdit(id));
-      this.clearOpenIndex(id);
+      this.rowHoldProbe.clear(id);
     } catch (error) {
       this.saveError.set(error instanceof Error ? error.message : 'Save failed.');
     }
-  }
-
-  private clearOpenIndex(id: RowId): void {
-    if (!this.openIndexById().has(id)) {
-      return;
-    }
-    this.openIndexById.update((map) => {
-      const next = new Map(map);
-      next.delete(id);
-      return next;
-    });
   }
 }

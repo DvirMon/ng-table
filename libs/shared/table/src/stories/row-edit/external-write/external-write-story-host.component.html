@@ -22,7 +22,7 @@
     <tbody>
       @for (row of table.renderRows(); track row.id) {
         @let isEditing = table.editing().has(row.id);
-        @let conflict = conflicts().get(row.id);
+        @let conflict = conflicts.byId().get(row.id);
 
         <tr>
           <td class="story-host__cell">

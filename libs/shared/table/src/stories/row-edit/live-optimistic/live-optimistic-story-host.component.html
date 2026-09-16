@@ -26,7 +26,7 @@
     </label>
     <button type="button" (click)="addRow()">Add row</button>
     <button type="button" (click)="simulateLeavePage()">Simulate leave page</button>
-    @if (undoRowId(); as id) {
+    @if (undo.rowId(); as id) {
       <button type="button" (click)="undoDelete()">Undo delete (Ctrl/Cmd+Z)</button>
     }
     @if (saveError(); as message) {
@@ -34,8 +34,13 @@
     }
   </div>
 
-  @if (leavePageMessage(); as message) {
-    <p class="story-host__error" role="status">{{ message }}</p>
+  @if (leavePagePendingCount(); as count) {
+    <p class="story-host__error" role="status">
+      {{ count }} unsaved change{{ count > 1 ? 's' : '' }} in progress — leaving now would lose
+      them.
+    </p>
+  } @else if (leavePagePendingCount() === 0) {
+    <p class="story-host__error" role="status">No unsaved changes — safe to leave.</p>
   }
 
   <p class="story-host__counter">

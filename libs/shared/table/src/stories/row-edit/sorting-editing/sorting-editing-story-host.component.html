@@ -8,10 +8,32 @@
 
   <div class="story-host__toolbar">
     <button type="button" (click)="table.toggleSort('name')">
-      Sort Name {{ sortArrow('name') }}
+      Sort Name
+      @switch (table.sortDirections().get('name')) {
+        @case ('asc') {
+          ▲
+        }
+        @case ('desc') {
+          ▼
+        }
+        @default {
+          ↕
+        }
+      }
     </button>
     <button type="button" (click)="table.toggleSort('dueDate')">
-      Sort Due Date {{ sortArrow('dueDate') }}
+      Sort Due Date
+      @switch (table.sortDirections().get('dueDate')) {
+        @case ('asc') {
+          ▲
+        }
+        @case ('desc') {
+          ▼
+        }
+        @default {
+          ↕
+        }
+      }
     </button>
     <button type="button" (click)="clearSort()">Clear sort</button>
     <button type="button" (click)="addRowWhileSorted()">Add row while sorted</button>
@@ -21,8 +43,12 @@
     }
   </div>
 
-  @if (rowHoldNotice(); as notice) {
-    <!-- <p class="story-host__error" role="status">{{ notice }}</p> -->
+  @if (movedRow(); as violation) {
+    <p class="story-host__error" role="status">
+      Row "{{ violation.id }}" was at position {{ violation.indexAtOpen }} when opened, now at
+      {{ violation.currentIndex }} while still open — S-1's row-hold (OQ-3) isn't implemented
+      yet, so this is expected.
+    </p>
   }
 
   <table class="story-host__table" [ngpTable]="table">

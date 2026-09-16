@@ -30,8 +30,17 @@
     <button type="button" (click)="addBlankRow()">Add row</button>
     <button type="button" (click)="clearAll()">Clear all</button>
     <button type="button" (click)="saveAll()">Save All</button>
-    @if (saveAllSummary(); as summary) {
-      <span class="story-host__counter" role="status">{{ summary }}</span>
+    @if (saveAllOutcome(); as outcome) {
+      <span class="story-host__counter" role="status">
+        @if (outcome.total === 0) {
+          No open rows to save.
+        } @else if (outcome.failed === 0) {
+          Saved all {{ outcome.total }} row(s).
+        } @else {
+          Saved {{ outcome.total - outcome.failed }} of {{ outcome.total }} row(s);
+          {{ outcome.failed }} failed.
+        }
+      </span>
     }
   </div>
 
@@ -47,8 +56,8 @@
       @for (row of table.renderRows(); track row.id) {
         @let isEditing = table.editing().has(row.id);
         @let isPending = table.pending().has(row.id);
-        @let isForcedInvalid = forcedInvalid().has(row.id);
-        @let rowError = rowErrors().get(row.id);
+        @let isForcedInvalid = flags.forcedInvalid().has(row.id);
+        @let rowError = flags.rowErrors().get(row.id);
 
         <tr
           [class.story-host__row--saving]="isPending"
@@ -57,21 +66,20 @@
           <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
+                @let needsUniqueNameFlag = field.name().errors().some((error) => error.kind === 'duplicateName');
                 <input
                   type="text"
                   [formField]="field.name"
                   placeholder="name"
-                  [class.story-host__field--needs-change]="needsUniqueName().has(row.id)"
-                  [attr.aria-invalid]="
-                    needsUniqueName().has(row.id) || isForcedInvalid ? true : null
-                  "
+                  [class.story-host__field--needs-change]="needsUniqueNameFlag"
+                  [attr.aria-invalid]="needsUniqueNameFlag || isForcedInvalid ? true : null"
                   [attr.aria-describedby]="
-                    needsUniqueName().has(row.id) ? 'gated-multiple-optimistic-duplicate-hint-' + row.id : null
+                    needsUniqueNameFlag ? 'gated-multiple-optimistic-duplicate-hint-' + row.id : null
                   "
                 />
-                @if (needsUniqueName().has(row.id)) {
+                @if (needsUniqueNameFlag) {
                   <span class="story-host__field-hint" [id]="'gated-multiple-optimistic-duplicate-hint-' + row.id">
-                    copied — needs a unique name
+                    another row already uses this name
                   </span>
                 }
                 @if (isForcedInvalid) {
@@ -105,7 +113,7 @@
               </button>
               <button type="button" (click)="cancelEdit(row.id)">Cancel (reset)</button>
               <button type="button" (click)="discardRow(row.id)">Discard (remove)</button>
-              <button type="button" (click)="toggleForceInvalid(row.id)">
+              <button type="button" (click)="flags.toggleForceInvalid(row.id)">
                 Force invalid: {{ isForcedInvalid ? 'on' : 'off' }}
               </button>
             } @else {
