@@ -17,7 +17,7 @@ import type { ColumnDef } from '../api/types';
 
 /**
  * Mints a unique typed key. Object identity is the actual key — call once per logical key and
- * share the returned value, the same way Signal Forms' `createMetadataKey()` is used.
+ * share the returned value.
  */
 export function createColumnMetaKey<T>(): ColumnMetaKey<T> {
   return { kind: 'column-meta-key' };

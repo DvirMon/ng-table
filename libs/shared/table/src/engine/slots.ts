@@ -2,7 +2,7 @@ import type { TableStore } from '../api/types';
 import type { PipelineStage } from './pipeline';
 import type { RenderStage } from './render-stages';
 
-/** ADR-0005: the one core member a feature may override. */
+/** The one core member a feature may override. */
 type OverridableCoreKey = 'totalRowCount';
 type ClaimedCoreKey = Exclude<keyof TableStore<unknown>, OverridableCoreKey>;
 
@@ -53,7 +53,7 @@ export function describeInnerFeature(position: number, displayName?: string): st
 /**
  * Tracks which feature claimed each single-occupancy slot, so a collision can name both sides.
  * Under the previous `@ngrx/signals` engine features injected behavior by mutating a shared
- * slot, and a second claimant silently won by array order (ADR-0003).
+ * slot, and a second claimant silently won by array order.
  */
 export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
@@ -85,7 +85,7 @@ export class SlotRegistry {
     );
   }
 
-  /** ADR-0011: named-stage collision replaces the old whole-layer `claimRenderRows()`. */
+  /** Named-stage collision — replaces the old whole-layer `claimRenderRows()`. */
   claimRenderStage(stage: RenderStage, feature: string): void {
     this.claim(
       this.ownerByRenderStage,
@@ -98,10 +98,10 @@ export class SlotRegistry {
   }
 
   /**
-   * ADR-0007. Members are merged with `Object.assign`, so without this the later feature wins
-   * silently and the earlier one's state signal is orphaned — still written by its own closures,
-   * read by nobody. Quieter than a stage collision (which at least produces visibly wrong rows),
-   * so it throws for the same reason the other two do.
+   * Members are merged with `Object.assign`, so without this the later feature wins silently
+   * and the earlier one's state signal is orphaned — still written by its own closures, read
+   * by nobody. Quieter than a stage collision (which at least produces visibly wrong rows), so
+   * it throws for the same reason the other two do.
    */
   claimMember(key: string, feature: string): void {
     this.claim(

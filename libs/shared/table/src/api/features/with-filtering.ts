@@ -9,9 +9,9 @@ export interface WithFilteringConfig<TRow> {
 }
 
 /**
- * Narrows by each term in turn, AND'd. One `try` per term rather than per row (ADR-0014): a
- * throwing term aborts its own pass before its result is kept, so it applies to no row at all
- * instead of to the rows it reached first. Sibling terms keep narrowing.
+ * Narrows by each term in turn, AND'd. One `try` per term rather than per row: a throwing
+ * term aborts its own pass before its result is kept, so it applies to no row at all instead
+ * of to the rows it reached first. Sibling terms keep narrowing.
  */
 function applyPredicateTerms<TRow>(
   rows: TRow[],

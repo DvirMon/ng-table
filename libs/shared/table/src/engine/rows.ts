@@ -76,7 +76,7 @@ function isMapContainer(
  * Drops `removedIds` from a Map (except entries `keep` returns true for) or a Set. Returns the
  * same reference when nothing changed. One name, one mechanism: a Map and a Set here differ
  * only in whether they carry a payload, not in what "prune" means, so features reconciling
- * `RowId`-keyed state (ADR-0006) share this instead of each hand-rolling their own diff loop.
+ * `RowId`-keyed state share this instead of each hand-rolling their own diff loop.
  */
 export function pruneByIds<V>(
   container: ReadonlyMap<RowId, V>,

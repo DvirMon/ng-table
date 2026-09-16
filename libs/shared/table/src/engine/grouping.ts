@@ -27,8 +27,9 @@ function toGroupId(path: string): RowId {
   return `group:${path}`;
 }
 
-/** D14 runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
- * rest." Construction-time validation (a bad `initialGrouping` id) is Step 4's job, not this. */
+/** Runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
+ * rest." Construction-time validation (a bad `initialGrouping` id) is `withGrouping()`'s job,
+ * not this. */
 export function resolveGroupingLevels<TRow>(
   grouping: readonly string[],
   columns: ColumnDef<TRow>[]
@@ -97,8 +98,7 @@ function reportGroupOrderError(): void {
  * Recursively re-orders each node list's own siblings by `groupOrder`, never against a
  * different parent's children. `toRows` bridges `T` (raw `TRow` for the pipeline stage, a
  * render-row wrapper for the render stage) to `GroupSummary.rows`. `reported` is shared across
- * the whole recursive walk for one caller's evaluation. See `withGrouping()`'s decisions doc,
- * D4/D9/D15.
+ * the whole recursive walk for one caller's evaluation. See `withGrouping()`'s decisions doc.
  */
 export function sortClusters<T, TRow>(
   nodes: ClusterNode<T>[],
@@ -172,7 +172,7 @@ function reportAggregateError(columnId: string): void {
   );
 }
 
-/** Per-cluster aggregate row: `rows` is always a cluster's own leaves — see D9. A throwing
+/** Per-cluster aggregate row: `rows` is always a cluster's own leaves. A throwing
  * `aggregateFn` falls back to `undefined` for that column only; `reportedColumns` is shared
  * across one `buildGroupRenderRows` call so the console.error dedupes to once per column across
  * every group visited, not once per group. */
@@ -294,11 +294,11 @@ function findClusterByPath<T>(
 }
 
 /**
- * Every leaf row beneath a group id, at any depth — D16's "leaf rows, not immediate children".
+ * Every leaf row beneath a group id, at any depth — leaf rows, not immediate children.
  * Re-derives the cluster tree from the pipeline's `TRow[]` (post-filter, post-group-clustering,
  * never affected by collapse) rather than scanning `renderRows()`, so a collapsed group still
- * resolves its full leaf set (`0-product/grouping.md` X-G1). An id matching no cluster returns
- * `[]` (D14 runtime degrade).
+ * resolves its full leaf set. An id matching no cluster returns `[]` (runtime degrade, not a
+ * throw).
  */
 export function rowsBeneathGroup<TRow>(
   rows: TRow[],

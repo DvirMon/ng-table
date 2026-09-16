@@ -30,9 +30,9 @@ export function removeGroupLevel<TRow>(
   return (grouping) => grouping.filter((level) => level !== id);
 }
 
-/** Moves the level at `from` to `to`. Out-of-range indices are a no-op — never throws (this is
- * a runtime write path, not construction-time config; D14's throw/degrade split does not apply
- * to index bounds, only to column ids). */
+/** Moves the level at `from` to `to`. Out-of-range indices are a no-op — never throws: this is
+ * a runtime write path, not construction-time config, and the throw/degrade split applies only
+ * to column ids, not index bounds. */
 export function reorderGroupLevels<TRow>(
   from: number,
   to: number

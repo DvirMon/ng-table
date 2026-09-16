@@ -79,10 +79,10 @@ export function buildAsyncGroupingRuleEntry<TRow>(
 }
 
 /**
- * The D13 fold: a pending entry (`result() === undefined`) makes the whole set abstain — the
- * caller's `groupingRule()` returns `undefined` and the outer base/overlay fold (Step 4) falls
- * back to `baseGrouping`. Otherwise, collects `columnId`s whose entry resolved `true`, preserving
- * entry order (= call order in the schema fn / rules-array order, D8).
+ * A pending entry (`result() === undefined`) makes the whole set abstain — the caller's
+ * `groupingRule()` returns `undefined` and the outer base/overlay fold falls back to
+ * `baseGrouping`. Otherwise, collects `columnId`s whose entry resolved `true`, preserving
+ * entry order (= call order in the schema fn / rules-array order).
  *
  * Deliberately does NOT AND-combine same-column entries the way `engine/columns.ts`'s
  * `foldColumnRules` does for `VISIBLE` — grouping rules resolve into one ordered `string[]` of

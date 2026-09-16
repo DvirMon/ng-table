@@ -53,7 +53,7 @@ interface FilterState<TCriterion> {
 }
 
 /** Builds one filter's reactive state (`value`/`active`/`reset`/`dirty`) per `filters.md`'s
- *  "State" and "Sources" sections. `dirty` is a `computed()`, never a stored flag (R19). */
+ *  "State" and "Sources" sections. `dirty` is a `computed()`, never a stored flag. */
 export function buildFilterState<TCriterion>(
   record: FilterRuleRecord<unknown, unknown, TCriterion>
 ): FilterState<TCriterion> {
@@ -116,10 +116,10 @@ export function gateByCondition<TRow, TCriterion>(
  * The root criterion model as a real `WritableSignal<TState>`: a read composes every child
  * node, a write fans back out to them. The nodes stay the single storage location — this is a
  * view over them, never a copy — which is what lets a Signal Form sit directly on the filter
- * model with no adapter and no sync effect (`filters.md` §Forms, R18).
+ * model with no adapter and no sync effect (see `filters.md` §Forms).
  *
- * Built the way Angular's own Signal Forms builds `deepSignal` — `Object.assign` onto a
- * `computed()` — so the result carries a reactive node and is a valid `form()` model.
+ * `Object.assign` onto a `computed()` so the result carries a reactive node and is a valid
+ * `form()` model.
  *
  * The assertion is unavoidable, not a shortcut: `WritableSignal` is branded with
  * `ɵWRITABLE_SIGNAL`, a type-only `unique symbol` with no runtime counterpart, so no value can
@@ -216,14 +216,14 @@ export function buildFiltersRoot<TRow, TState extends Record<string, unknown>>(
     dirty,
     // A fresh evaluator per call — one call is one evaluation, with its own error-dedup scope.
     // Deliberately NOT a `computed` — memoizing it would share one error-dedup scope across
-    // every caller, which is the opposite of ADR-0014's once-per-filter-per-evaluation rule.
+    // every caller, which is the opposite of the once-per-filter-per-evaluation rule.
     matcher: (): ((row: TRow) => boolean) => createFilterEvaluatorFrom(internal).matchesRow,
   };
 }
 
-/** Callable (root state) + indexable (child nodes) — mirrors Signal Forms: property access is
- *  a child, a call is state. Each indexed property returns a *function* yielding the node
- *  (`filters.status()` → node), per `Filters<TRow, TState>`'s mapped-type shape. */
+/** Callable (root state) + indexable (child nodes): property access is a child, a call is
+ *  state. Each indexed property returns a *function* yielding the node (`filters.status()` →
+ *  node), per `Filters<TRow, TState>`'s mapped-type shape. */
 export function buildFiltersObject<TRow, TState extends Record<string, unknown>>(
   internal: FiltersInternal<TRow>
 ): Filters<TRow, TState> {

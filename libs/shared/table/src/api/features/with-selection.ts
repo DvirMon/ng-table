@@ -35,8 +35,8 @@ export interface SelectionMembers {
   deselect(ids: RowId[], opts?: SelectionWriteOptions): void;
   clearSelection(opts?: SelectionWriteOptions): void;
   selectionStateOf(ids: readonly RowId[]): 'none' | 'some' | 'all';
-  /** The D58 gate, read-side (D61) — `enableRowSelection` for one id, permissive for an
-   *  unresolvable id (D8). Lets a caller pre-filter its own denominator (e.g. before
+  /** The row-selectability gate, read-side — `enableRowSelection` for one id, permissive for
+   *  an unresolvable id. Lets a caller pre-filter its own denominator (e.g. before
    *  `selectionStateOf()`) against the same predicate `select()` enforces, instead of
    *  duplicating `enableRowSelection`'s logic at the call site. */
   isSelectable(id: RowId): boolean;
@@ -65,7 +65,7 @@ function buildSelectionSpec<TRow>(
   const canMultiSelect = toRowPredicate(config.enableMultiRowSelection);
 
   const selectedIds = signal(new Set<RowId>());
-  // Plain Subject, never Replay/BehaviorSubject (D16) — current state is read from
+  // Plain Subject, never Replay/BehaviorSubject — current state is read from
   // `selectedRows()`, never carried in the stream, so a replaying variant would wrongly
   // deliver construction/seed state to every late subscriber.
   const selectionChangedSource = new Subject<SelectionChange>();
@@ -74,7 +74,7 @@ function buildSelectionSpec<TRow>(
     return input.rows().find((row) => input.trackBy(row) === id);
   }
 
-  // Row-selectability gate (D58) — contract in docs/1-state/features/selection.md.
+  // Row-selectability gate — contract in docs/1-state/features/selection.md.
   function isSelectable(id: RowId): boolean {
     const row = resolveRow(id);
     return row === undefined || canSelect(row);
@@ -92,17 +92,17 @@ function buildSelectionSpec<TRow>(
   }
 
   /** A call's own id list co-selecting ≥2 rows that forbid multi-select is construction/misuse
-   *  (deterministic, reachable on first call) — always throws, per ADR-0014. */
+   *  (deterministic, reachable on first call) — always throws. */
   const callArgumentCoSelects = (ownIds: readonly RowId[]): boolean =>
     ownIds.length > 1 && anyRowForbidsMultiSelect(ownIds);
 
-  // Multi-select is a rule on the write verbs, never stored state (D2/D14) — it never holds
-  // two ids whose predicate is false. Applies to every id-adding write (toggle/select/the
+  // Multi-select is a rule on the write verbs, never stored state — it never holds two ids
+  // whose predicate is false. Applies to every id-adding write (toggle/select/the
   // initialSelection seed). A conflict from `ownIds` alone throws (above); a conflict that only
   // arises once `previousIds` joins is runtime input — a fresh selection replacing an old one —
   // so it truncates silently, keeping the most recently requested id. Never applied to
   // deselect/clear, which can't violate single-select. An id with no resolvable row defaults
-  // permissive (D8).
+  // permissive.
   function applyMultiSelectRule(
     ownIds: readonly RowId[],
     previousIds: readonly RowId[] = []
@@ -171,13 +171,13 @@ function buildSelectionSpec<TRow>(
     return selectedCount === ids.length ? 'all' : 'some';
   }
 
-  // D16: written directly into the signal, never routed through `select()` (which emits).
-  // Still subject to the row-selection gate and the multi-select truncation rule — a write in
+  // Written directly into the signal, never routed through `select()` (which emits). Still
+  // subject to the row-selection gate and the multi-select truncation rule — a write in
   // every sense but emission.
   const seedIds = applyMultiSelectRule(applyRowSelectionGate(config.initialSelection ?? []));
   selectedIds.set(new Set(seedIds));
 
-  // ADR-0006: reconciliation, not a write verb — prunes silently, no `selectionChanged`.
+  // Removal reconciliation, not a write verb — prunes silently, no `selectionChanged`.
   function onRowsRemoved(ids: readonly RowId[]): void {
     const next = pruneByIds(selectedIds(), ids);
     if (next !== selectedIds()) {
@@ -204,7 +204,7 @@ function buildSelectionSpec<TRow>(
 /**
  * Adds single/multi row selection to a `createTable()`. Standalone — reads `rows`/`trackBy`
  * off the store handed in, row type recovered from the data slot. Never stamps a `RenderRow`
- * field or claims a render stage (D5): selection is read from `selectedRows` only.
+ * field or claims a render stage: selection is read from `selectedRows` only.
  */
 export function withSelection<In extends SelectionInput<In>, D extends DerivedDict>(
   derive: Feature<NoInfer<In> & SelectionMembers, D>

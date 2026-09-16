@@ -5,8 +5,8 @@ export function pathsOf<TRow>(record: FilterRuleRecord<TRow>): readonly string[]
   return record.children ? record.children.map((child) => child.path) : record.paths;
 }
 
-/** Construction-time validation (ADR-0014): one filter per path, no colliding keys, no empty
- *  `anyOf` group. All deterministic, fire before data flows — throw. */
+/** Construction-time validation: one filter per path, no colliding keys, no empty `anyOf`
+ *  group. All deterministic, fire before data flows — throw. */
 export function validateRecords<TRow>(records: readonly FilterRuleRecord<TRow>[]): void {
   const keyOwnerByPath = new Map<string, string>();
   const seenKeys = new Set<string>();

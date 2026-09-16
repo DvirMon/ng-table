@@ -36,7 +36,7 @@ function reportFilterError<TRow>(record: FilterRuleRecord<TRow>, row: TRow): voi
  *  propagated further up. `'group'` (anyOf) ORs its children against the shared criterion.
  *  `row as Record<string, unknown>` is a generic-erasure read, not a validated cast — every
  *  path here was recorded from a real `keyof TRow` access, so the index always exists or reads
- *  `undefined`, which the R27 null policy already handles. */
+ *  `undefined`, which the matchers' own null policy already handles. */
 function evaluateRecord<TRow>(
   record: FilterRuleRecord<TRow>,
   criterion: unknown,
@@ -67,9 +67,9 @@ function evaluateRecord<TRow>(
 }
 
 /**
- * One evaluator instance is one **evaluation** — the once-per-filter reporting and degradation
- * of ADR-0014 are scoped to its lifetime. `matchesRow` answers for one row, for callers holding
- * a row predicate (`FiltersRoot.matcher()`). A throwing filter stops narrowing from that row on;
+ * One evaluator instance is one **evaluation** — once-per-filter reporting and degradation are
+ * scoped to its lifetime. `matchesRow` answers for one row, for callers holding a row
+ * predicate (`FiltersRoot.matcher()`). A throwing filter stops narrowing from that row on;
  * rows it already answered for keep its narrowing, which a per-row signature cannot avoid.
  */
 interface FilterEvaluator<TRow> {

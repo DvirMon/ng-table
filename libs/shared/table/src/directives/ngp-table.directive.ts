@@ -15,9 +15,9 @@ import {
 import { NGP_TABLE_STORE } from './table.tokens';
 import type { RowId, TableStore } from '../api/types';
 
-// ADR-0005: dual-tag selector, native `<table>` and `<div>` grid share one directive. `role`
-// is set unconditionally, even on native `<table>` — an explicit role matching the implicit
-// native one is a documented no-op, not a conflict (matches Angular CDK Table's own practice).
+// Dual-tag selector, native `<table>` and `<div>` grid share one directive. `role` is set
+// unconditionally, even on native `<table>` — an explicit role matching the implicit native
+// one is a documented no-op, not a conflict.
 @Directive({
   selector: 'table[ngpTable], div[ngpTable]',
   providers: [{ provide: NGP_TABLE_STORE, useExisting: NgpTableDirective }],

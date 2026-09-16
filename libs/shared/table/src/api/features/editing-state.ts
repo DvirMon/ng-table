@@ -3,20 +3,18 @@ import { pruneByIds, resolveIndex } from '../../engine/rows';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
 import type { RowId, TableStore, TrackByFn } from '../types';
 
-/**
- * The editing state model — the restore-point shape, the state shape, the updater contract, and
- * the store both editing features are built on. Types and factory live together the way
- * `engine/writable-view.ts` keeps `WritableView` beside `createWritableView()`: they are one
- * concern, and splitting them would create a cycle with the updater modules that consume both.
- *
- * Not a feature. Each editing feature builds its own instance of this store — `withRowEdit()`
- * adds the open set on top, `withOptimistic()` stops at the restore points. Composing both is a
- * collision, not a sharing arrangement (ADR-0007).
- */
+// The editing state model — restore-point shape, state shape, updater contract, and the store
+// both editing features are built on. Types and factory live together the way
+// `engine/writable-view.ts` keeps `WritableView` beside `createWritableView()`: one concern,
+// and splitting them would create a cycle with the updater modules that consume both.
+//
+// Not a feature. Each editing feature builds its own instance — `withRowEdit()` adds the open
+// set on top, `withOptimistic()` stops at the restore points. Composing both is a collision,
+// not a sharing arrangement.
 
 /**
  * Which CRUD operation armed this restore point. `'delete'` is what `detached` used to mean —
- * captured by a verb that then removed the row, so ADR-0006 pruning must not drop it (ADR-0013).
+ * captured by a verb that then removed the row, so removal-pruning must not drop it.
  */
 export type PendingOp = 'create' | 'update' | 'delete';
 
@@ -61,7 +59,7 @@ export interface EditingState<TRow> {
    * and `pending` (`snapshots` minus `open`) depends on it. */
   readonly open: ReadonlySet<RowId>;
   /** Client ids the server never acknowledged. Outlives a restore point: a failed create's
-   * `revertEdit` spends the snapshot, but the row must still POST on retry (ADR-0013). */
+   * `revertEdit` spends the snapshot, but the row must still POST on retry. */
   readonly unconfirmed: ReadonlySet<RowId>;
 }
 
@@ -108,7 +106,7 @@ export function pendingOps<TRow>(state: EditingState<TRow>): ReadonlyMap<RowId, 
 }
 
 /** Same in-flight set as `pendingOps`, without the operation — kept for the non-breaking
- * `pending` member shape (ADR-0013). */
+ * `pending` member shape. */
 export function pendingIds<TRow>(state: EditingState<TRow>): ReadonlySet<RowId> {
   const ops = pendingOps(state);
   return ops.size === 0 ? NO_IDS : new Set(ops.keys());
@@ -200,8 +198,8 @@ export interface EditingStore<TRow> {
   /** Writes state through `onWrite`. Exposed so a feature can re-apply the current state when
    * its own config changes, not just when an updater runs. */
   apply(next: EditingState<TRow>): void;
-  /** ADR-0006. Prunes `snapshots` (keeping `op: 'delete'` restore points), `open`, and
-   * `unconfirmed` (same exemption — a row mid-delete-rollback is still unconfirmed). */
+  /** Prunes `snapshots` (keeping `op: 'delete'` restore points), `open`, and `unconfirmed`
+   * (same exemption — a row mid-delete-rollback is still unconfirmed). */
   onRowsRemoved(ids: readonly RowId[]): void;
 }
 
@@ -234,15 +232,15 @@ export function createEditingStore<TRow>(
       )
   );
 
-  // ADR-0006: an id that leaves `data` must leave `open` (nothing left to show inputs for),
-  // `snapshots` (nothing left to restore), and `unconfirmed` (nothing left to retry) —
-  // `pending` needs no pruning of its own, since it is derived from the other two, not stored.
-  // `open` is pruned independently of `snapshots`: `pendingIds()` treats "has a snapshot but
-  // isn't open" as pending, so leaving a removed id in `open` would surface it as newly pending.
-  // A restore point whose `op` is `'delete'` is exempt — it was captured by a verb
-  // (`removeEdit`) that deliberately took the row out of `data`, so pruning it here would erase
-  // the rollback the verb exists to provide. `unconfirmed` shares that exemption: a row mid
-  // delete-rollback still needs its retry-on-revert identity (ADR-0013).
+  // An id that leaves `data` must leave `open` (nothing left to show inputs for), `snapshots`
+  // (nothing left to restore), and `unconfirmed` (nothing left to retry) — `pending` needs no
+  // pruning of its own, since it is derived from the other two, not stored. `open` is pruned
+  // independently of `snapshots`: `pendingIds()` treats "has a snapshot but isn't open" as
+  // pending, so leaving a removed id in `open` would surface it as newly pending. A restore
+  // point whose `op` is `'delete'` is exempt — it was captured by a verb (`removeEdit`) that
+  // deliberately took the row out of `data`, so pruning it here would erase the rollback the
+  // verb exists to provide. `unconfirmed` shares that exemption: a row mid delete-rollback
+  // still needs its retry-on-revert identity.
   function onRowsRemoved(ids: readonly RowId[]): void {
     const current = state();
     const nextOpen = pruneByIds(current.open, ids);

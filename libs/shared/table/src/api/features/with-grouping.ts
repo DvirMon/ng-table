@@ -26,8 +26,8 @@ import type {
 type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
 
 /** A shallow duck-type check (callable, not a full `Signal<Set<RowId>>` shape check) — safe only
- * because `SlotRegistry` (ADR-0007) guarantees a store's `expandedRows` member can be nothing
- * but `withExpansion()`'s signal; a second feature claiming that member key throws at
+ * because `SlotRegistry` guarantees a store's `expandedRows` member can be nothing but
+ * `withExpansion()`'s signal; a second feature claiming that member key throws at
  * construction before this ever runs. */
 function isExpandedRowsSignal(value: unknown): value is Signal<ReadonlySet<RowId>> {
   return typeof value === 'function';
@@ -46,19 +46,19 @@ function readExpandedRows(store: object): ReadonlySet<RowId> | undefined {
 
 export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
-   * parallel to `engine/rows.ts`'s `trackBy` throw site (D14). */
+   * parallel to `engine/rows.ts`'s `trackBy` throw site. */
   initialGrouping?: ColumnId<TRow>[];
   /** Orders clusters by their contents, siblings only, at every depth. Omitted: stable
    * first-occurrence order. Throws: falls back to stable order for the affected level and
    * reports once per evaluation. Decoupled from `sorting`. See `withGrouping()`'s decisions
-   * doc, D4/D5/D9/D15. */
+   * doc. */
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
-  /** Base+overlay fold (D6/D7). Returning `string[]` overrides `baseGrouping`; `undefined`
-   * abstains and holds it; `[]` is actively grouped by nothing — distinct from abstain. Mutually
+  /** Base+overlay fold. Returning `string[]` overrides `baseGrouping`; `undefined` abstains
+   * and holds it; `[]` is actively grouped by nothing — distinct from abstain. Mutually
    * exclusive with `rules` in practice (both compile to this same slot) — the rules-array layer
    * (below) is sugar that produces exactly this shape. */
   groupingRule?: () => string[] | undefined;
-  /** Rules-array layer (D8): compiles to `groupingRule` via `foldGroupingRules`. Call order (array
+  /** Rules-array layer: compiles to `groupingRule` via `foldGroupingRules`. Call order (array
    * order here, schema-fn call order when using the function-argument overload) determines level
    * order. */
   rules?: AnyGroupingRule<TRow>[];
@@ -135,8 +135,7 @@ function buildGroupingSpec<TRow>(
  * handed in; picks up `expandedRows` lazily when `withExpansion()` is composed, in either
  * order. Claims the `'group'` pipeline and render stages (`engine/grouping.ts`'s
  * `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds `groupingRule`/`rules`/a schema
- * fn over `baseGrouping` (D6/D7/D8) — see decisions doc D6-D8. `groupOrder` orders cluster
- * siblings (D4).
+ * fn over `baseGrouping` — see the decisions doc. `groupOrder` orders cluster siblings.
  */
 export function withGrouping<In extends GroupingInput<In>>(
   configOrSchemaFn?: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>>

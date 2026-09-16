@@ -1,9 +1,9 @@
 import type { RenderRow } from '../api/types';
 
 /**
- * Fixed execution order for the render layer, independent of `features` array order. Mirrors
- * `PIPELINE_ORDER`: this array is the single source of truth, `RenderStages` is derived from it,
- * and adding a stage is a one-line edit here (ADR-0011).
+ * Fixed execution order for the render layer, independent of `features` array order. This
+ * array is the single source of truth — `RenderStages` is derived from it, so adding a stage
+ * is a one-line edit here.
  */
 export const RENDER_ORDER = ['group', 'tree', 'paginate'] as const;
 

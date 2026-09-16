@@ -100,7 +100,7 @@ function buildFiltersPath<TRow>(): FiltersPath<TRow> {
  *
  * Accepts row data — an array, a readonly array, any callable returning rows (`Signal`,
  * `WritableSignal`, a signal of rows-or-undefined, a bare store accessor) — or `rowOf<TRow>()`
- * when no row data exists yet (server mode, R10/R11). See `docs/1-state/filters.md`.
+ * when no row data exists yet (server mode). See `docs/1-state/filters.md`.
  */
 export function createFilters<TRow, S extends readonly unknown[]>(
   rows: readonly TRow[] | (() => readonly TRow[] | undefined) | RowToken<TRow>,

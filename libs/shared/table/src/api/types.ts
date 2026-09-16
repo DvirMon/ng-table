@@ -25,8 +25,8 @@ export type TrackByConfig<TRow> = keyof TRow | TrackByFn<TRow>;
 
 /**
  * Render-layer row: `rows()`'s pipeline output flattened for template/virtual-scroll
- * consumption. `kind: 'group'` rows are synthetic — no `TRow` backs them, hence `data:
- * null` — introduced by `withGrouping()`'s `'group'` render stage (ADR-0011).
+ * consumption. `kind: 'group'` rows are synthetic — no `TRow` backs them, hence `data: null`
+ * — introduced by `withGrouping()`'s `'group'` render stage.
  */
 export type RowKind = 'row' | 'group';
 
@@ -39,9 +39,9 @@ export interface RenderRow<TRow> {
   readonly data: TRow | null;
 
   // Position in the final `renderRows()` array, assigned centrally after the whole
-  // `RENDER_ORDER` stage chain runs (`engine/core.ts`, ADR-0011) — never set by a stage
-  // itself. Feeds `aria-rowindex` on `ngpTableRow` (ADR-0005), since a `<div>`-hosted grid
-  // loses the free DOM-order inference native `<table>` gives for free.
+  // `RENDER_ORDER` stage chain runs (`engine/core.ts`) — never set by a stage itself. Feeds
+  // `aria-rowindex` on `ngpTableRow`, since a `<div>`-hosted grid loses the free DOM-order
+  // inference native `<table>` gives for free.
   readonly index: number;
 
   // The column and value a `group` row was clustered on, so a header can render its own
@@ -93,7 +93,7 @@ export type ColumnDefInput<TRow = unknown> = Pick<ColumnDef<TRow>, 'id'> &
   Partial<Omit<ColumnDef<TRow>, 'id'>>;
 
 /**
- * D14 — known row keys autocomplete; any other string still compiles, so derived columns
+ * Known row keys autocomplete; any other string still compiles, so derived columns
  * (`accessor`-only, no matching `keyof TRow`) and columns added later via `setColumns()` stay
  * expressible.
  */
@@ -101,8 +101,7 @@ export type ColumnId<TRow> = Extract<keyof TRow, string> | (string & {});
 
 export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
 
-/** A group's raw clustering value, opaque to consumers. See `withGrouping()`'s decisions doc,
- * D4. */
+/** A group's raw clustering value, opaque to consumers. See `withGrouping()`'s decisions doc. */
 export type GroupKey = unknown;
 
 export interface GroupSummary<TRow> {
@@ -112,7 +111,7 @@ export interface GroupSummary<TRow> {
 
 export type DerivedDict = Record<string, Signal<unknown>>;
 
-/** D28: the derive block's parameter — every WritableView loses `.update`; everything else
+/** The derive block's parameter — every `WritableView` loses `.update`; everything else
  * passes through. Mutating methods are statically indistinguishable from queries and stay.
  * The `any` below is an `infer` slot, not a constraint slot — it does not widen the result. */
 export type ReadonlyStore<S> = {
@@ -131,11 +130,6 @@ export interface TableConfig<TRow> {
 // (Step 2) type each feature argument's `In`/`Out` individually.
 export type AnyTableFeature = Feature<any, any>;
 
-/**
- * Public surface of a store returned by `createTable()`. This is the contract consumers
- * program against — it never references engine types, so swapping the internal
- * state-management implementation is not a breaking change (see ADR-0003).
- */
 export type ColumnsUpdater<TRow> = (
   columns: ColumnDef<TRow>[]
 ) => ColumnDef<TRow>[];
@@ -151,6 +145,11 @@ export type RowUpdater<TRow> = (
   ctx: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
 ) => TRow[];
 
+/**
+ * Public surface of a store returned by `createTable()`. This is the contract consumers
+ * program against — it never references engine types, so swapping the internal
+ * state-management implementation is not a breaking change.
+ */
 export interface TableStore<TRow> {
   /** Read: the folded, rule-applied column list. Write: `.update(updater)` — e.g.
    * `table.columns.update(reorderColumns(ids))`. */
@@ -160,10 +159,10 @@ export interface TableStore<TRow> {
   readonly trackBy: TrackByFn<TRow>;
 
   /** Maps a row's trackBy id to its position in `data()`; read-only. Feeds `RowUpdater` ctx
-   * and editing features (D25). */
+   * and editing features. */
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
 
-  // Total row count feeding `aria-rowcount` on `ngpTable` (ADR-0005) — distinct from
+  // Total row count feeding `aria-rowcount` on `ngpTable` — distinct from
   // `renderRows().length` once virtualization/pagination renders fewer rows than exist.
   // Equals `rows().length` until a virtualization feature overrides it.
   readonly totalRowCount: Signal<number>;

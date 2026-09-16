@@ -9,8 +9,7 @@ import type { AnyTableFeature, TableConfig, TableDataInput, TableStore } from '.
 
 /**
  * Creates the design system's table state layer and returns a live store **instance** —
- * call it at the component field level with the row data in hand. Modeled on Angular's
- * Signal Forms `form(model, schemaFn)` and TanStack's `injectTable(() => options)`:
+ * call it at the component field level with the row data in hand:
  *
  * ```ts
  * protected readonly data  = signal(people);
@@ -18,10 +17,10 @@ import type { AnyTableFeature, TableConfig, TableDataInput, TableStore } from '.
  * ```
  *
  * Must run inside an Angular injection context (a component/directive field initializer or
- * `constructor`), unless `config.injector` is passed — mirroring `form()`'s own escape hatch
- * for use outside a context (services, tests). The instance is owned by that context: a
- * component field ⇒ component-scoped, torn down with the component. There is no DI token to
- * provide or inject; consumers hold the returned instance directly.
+ * `constructor`), unless `config.injector` is passed as an escape hatch for use outside a
+ * context (services, tests). The instance is owned by that context: a component field ⇒
+ * component-scoped, torn down with the component. There is no DI token to provide or inject;
+ * consumers hold the returned instance directly.
  *
  * `config` is structural — evaluated once, exactly like `form()`'s single `rootCompile`. Only
  * `data` is reactive: the consumer's `WritableSignal<TRow[]>` is the single source of truth,
@@ -52,14 +51,14 @@ export const createTable = (<TRow>(
     composeTable<TRow>(
       { columns, trackBy: config.trackBy, data },
       features,
-      // The column-schema wiring is an internal composition step, not a consumer feature
-      // (ADR-0010) — passing it separately keeps it off the consumer's own numbering.
+      // The column-schema wiring is an internal composition step, not a consumer feature —
+      // passing it separately keeps it off the consumer's own numbering.
       [wireColumnsSchemaAsync<TRow>(rules)]
     )
   );
 
   return store;
-  // The trailing assertion is the static/dynamic boundary (ADR-0003): the engine folds a
-  // runtime-length feature array, while `CreateTableOverloads`'s per-arity signatures
-  // reconstruct the composed member type statically.
+  // The trailing assertion is the static/dynamic boundary: the engine folds a runtime-length
+  // feature array, while `CreateTableOverloads`'s per-arity signatures reconstruct the
+  // composed member type statically.
 }) as CreateTableOverloads;

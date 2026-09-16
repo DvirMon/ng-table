@@ -14,7 +14,7 @@ import {
  * Recorder session for one schema-fn execution. Tracks whether the fn's
  * synchronous run has finished, so `assertPathIsCurrent` can reject a
  * `ColumnHandle` stashed and reused after the fact (e.g. inside a later
- * async callback) — mirrors Signal Forms' guard against stale field paths.
+ * async callback).
  *
  * Generic on `TRule`, defaulting to `ColumnRule<TRow>` — see `ColumnSchemaRecorder`'s doc for
  * why the default keeps every existing call site source-compatible.
@@ -77,8 +77,7 @@ export function assertPathIsCurrent<TRow, TRule = ColumnRule<TRow>>(
 /**
  * Builds the structural `path` proxy handed to a schema fn. The `get` trap
  * fabricates a `ColumnHandle<TRow, K, TRule>` for any string property accessed —
- * it never reads real column data (same design as Signal Forms'
- * `FieldPathNode`).
+ * it never reads real column data.
  */
 export function buildColumnsPath<TRow, TRule = ColumnRule<TRow>>(
   recorder: ColumnSchemaRecorder<TRow, TRule>
@@ -121,10 +120,10 @@ export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
 }
 
 /**
- * Standalone reuse form of a column schema, mirroring Signal Forms'
- * `schema<T>(fn)`. Runs `fn` once, eagerly, at call time — no injection
- * context available here, so `apply*` calls only record rules; the store
- * wires the actual reactivity at construction (`wireColumnsSchemaAsync`).
+ * Standalone reuse form of a column schema. Runs `fn` once, eagerly, at call
+ * time — no injection context available here, so `apply*` calls only record
+ * rules; the store wires the actual reactivity at construction
+ * (`wireColumnsSchemaAsync`).
  *
  * Does NOT validate `columnId`s against a `columns` array — `columns` isn't
  * known at this call site. That check happens in `resolveColumnsConfig()`.

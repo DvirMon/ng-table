@@ -3,7 +3,7 @@ import type { ColumnsPath } from './column-schema.types';
 
 /**
  * One schema-fn/rules-array level: `when` contributes whether this column is an active grouping
- * level. `undefined` (pending) makes the whole rule set abstain (D13) — never "this level doesn't
+ * level. `undefined` (pending) makes the whole rule set abstain — never "this level doesn't
  * apply", that's `false`, and never "the value hasn't loaded", that's also `undefined` but
  * resolved to abstain at the fold, not at this rule.
  */
@@ -15,10 +15,9 @@ export interface GroupingRule<TRow = unknown> {
 
 /**
  * Resource-backed counterpart — the rule owns fetching (`params`/`factory`) and both outcomes
- * (`onSuccess`/`onError`, both required per D13/D15, mirroring `MetadataAsyncRule`'s
- * `onError`-required contract). `factory` returns `Resource<T>` (Angular's read-only structural
- * interface), not `ResourceRef<T>` — this rule only ever reads `.status()`/`.value()`/`.error()`,
- * never mutates, same reasoning as D9 of `effect-free-column-reactivity`.
+ * (`onSuccess`/`onError`, both required, same contract as `MetadataAsyncRule`'s `onError`).
+ * `factory` returns `Resource<T>` (Angular's read-only structural interface), not
+ * `ResourceRef<T>` — this rule only ever reads `.status()`/`.value()`/`.error()`, never mutates.
  */
 export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = unknown> {
   readonly kind: 'grouping-async';
@@ -36,5 +35,5 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
 
 export type AnyGroupingRule<TRow = unknown> = GroupingRule<TRow> | GroupingAsyncRule<TRow>;
 
-/** Schema fn passed to `withGrouping()`/Step 4's rules-array normalization (D8). */
+/** Schema fn passed to `withGrouping()`'s rules-array normalization. */
 export type GroupingSchemaFn<TRow> = (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void;

@@ -1,10 +1,10 @@
 /**
- * Plain binary predicates behind each declaration rule (filters.md's Matchers table, R30).
+ * Plain binary predicates behind each declaration rule (see `filters.md`'s Matchers table).
  * Exported so a custom `filter()` predicate composes from shipped parts instead of writing
  * matching logic from scratch. Pure functions only — no signals, no Angular imports.
  */
 
-/** R27: every positive matcher guards its own cell — never hoisted into a caller/runner. */
+/** Every positive matcher guards its own cell — never hoisted into a caller/runner. */
 function notNullish<T>(value: T | null | undefined): value is T {
   return value != null;
 }

@@ -73,7 +73,7 @@ export function toggleColumnVisible<TRow>(
  * to — never exported, so consumers can't read or collide with it via `readColumnMeta()`.
  * `foldColumnRules` special-cases it: unlike every other metadata key (single-writer, enforced
  * by `resolve.ts`), multiple entries targeting `VISIBLE` on the same column are allowed and
- * AND-combined. Same pattern as Signal Forms' `REQUIRED`/`MIN_LENGTH` keys.
+ * AND-combined.
  */
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 

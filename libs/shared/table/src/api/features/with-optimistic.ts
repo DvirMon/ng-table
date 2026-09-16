@@ -16,7 +16,7 @@ export interface OptimisticMembers<TRow> {
    * held restore point, which is exactly the in-flight set. */
   readonly pending: Signal<ReadonlySet<RowId>>;
   /** `pending`, paired with which operation armed each row — the fact a consumer cannot derive
-   * from `pending` alone (ADR-0013). */
+   * from `pending` alone. */
   readonly pendingOps: Signal<ReadonlyMap<RowId, PendingOp>>;
   /** Client ids the server never acknowledged — outlives a restore point, since a failed
    * create's `revertEdit` spends the snapshot but the row must still POST on retry. */
@@ -42,7 +42,7 @@ type OptimisticInput<In> = EditingStoreInput<RowOf<In>> & Shape;
  * ```
  *
  * `withRowEdit()` composes the same state for gated tables and adds the open set on top;
- * composing both throws at construction (ADR-0007).
+ * composing both throws at construction.
  *
  * **Scope — update, create, and delete; never move.** A restore point carries a position as well
  * as a value, so `revertEdit` can re-insert a row `removeEdit` took out of `data`. A moved row's

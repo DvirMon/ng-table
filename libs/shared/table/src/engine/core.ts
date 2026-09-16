@@ -11,8 +11,7 @@ import { createWritableView } from './writable-view';
  * What `composeTable()` gets back from core construction. `stages`, `renderStages`, and
  * `columnRules` are handed out as mutable registries rather than store members — the
  * `rows` / `renderRows` / `columns` computeds read them at *evaluation* time, so features
- * registering during the fold are visible by the time a consumer first reads any of them
- * (ADR-0003).
+ * registering during the fold are visible by the time a consumer first reads any of them.
  */
 export interface TableCoreHandle<TRow> {
   readonly core: TableCore<TRow>;
@@ -39,8 +38,8 @@ export function createTableCore<TRow>(
 
   const stages: PipelineStages<TRow> = {};
   const renderStages: RenderStages<TRow> = {};
-  // Always runs first, never replaced (ADR-0011) — the `RenderRow[]` seed every render stage
-  // chain starts from.
+  // Always runs first, never replaced — the `RenderRow[]` seed every render stage chain
+  // starts from.
   const seedRenderRows = buildDefaultRenderRows(trackBy);
 
   const rows = computed(() => runPipeline(config.data(), stages));
@@ -58,10 +57,10 @@ export function createTableCore<TRow>(
   // Downstream of `rows` (the pipeline output), not `data` directly — recomputes on every
   // filter/group/sort/expand change, not just when the consumer's `data` signal re-emits.
   // `index` and `sourceIndex` are assigned here, centrally, rather than by any render stage:
-  // `index` is purely the row's position in the final array (ADR-0005's `aria-rowindex`
-  // source), assigned once after the whole `RENDER_ORDER` chain runs (ADR-0011), and
-  // `sourceIndex` resolves via `indexById` — `undefined` for a synthesized row
-  // (`row.data === null`) since there is no `data()` entry to point to.
+  // `index` is purely the row's position in the final array (feeds `aria-rowindex`),
+  // assigned once after the whole render-stage chain runs, and `sourceIndex` resolves via
+  // `indexById` — `undefined` for a synthesized row (`row.data === null`) since there is no
+  // `data()` entry to point to.
   const renderRows = computed(() => {
     const byId = indexById();
     const shaped = runRenderStages(seedRenderRows(rows()), renderStages);

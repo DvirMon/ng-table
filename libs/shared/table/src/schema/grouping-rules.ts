@@ -4,10 +4,10 @@ import type { ColumnHandle } from './column-schema.types';
 import type { AnyGroupingRule, GroupingAsyncRule } from './grouping-schema.types';
 
 /**
- * Declares one grouping level, gated by `when`. `when` returning `undefined` (pending) makes the
- * *whole* rule set abstain (D13) — not just this level. Call order = level order (D8): the Nth
- * `applyGrouping`/`applyGroupingAsync` call in a schema fn becomes the Nth entry in the resulting
- * grouping array, when active.
+ * Declares one grouping level, gated by `when`. `when` returning `undefined` (pending) makes
+ * the *whole* rule set abstain — not just this level. Call order = level order: the Nth
+ * `applyGrouping`/`applyGroupingAsync` call in a schema fn becomes the Nth entry in the
+ * resulting grouping array, when active.
  */
 export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
@@ -17,8 +17,8 @@ export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
 }
 
 /**
- * Resource-backed counterpart — the rule owns fetching/re-querying. `onError` is required (D13,
- * D15): an errored resource must produce an explicit boolean, never silent abstention.
+ * Resource-backed counterpart — the rule owns fetching/re-querying. `onError` is required: an
+ * errored resource must produce an explicit boolean, never silent abstention.
  */
 export interface GroupingAsyncOpts<TParams, TResult> {
   params: () => TParams | undefined;

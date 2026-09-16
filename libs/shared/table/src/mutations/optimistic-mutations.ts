@@ -54,8 +54,8 @@ export function captureEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
  *
  * No-op for an id that's still open (closing it is `endEdit`'s job) or holds neither a restore
  * point nor unconfirmed identity. Clears both on release — `unconfirmed` outlives a spent
- * restore point (a failed create that reverted, then retried), so releasing must not require one
- * to still be held (ADR-0013).
+ * restore point (a failed create that reverted, then retried), so releasing must not require
+ * one to still be held.
  */
 export function releaseEdit<TRow>(id: RowId): EditingUpdater<TRow> {
   return (state) => {
@@ -145,7 +145,7 @@ export function removeEdit<TRow>(id: RowId): EditingUpdater<TRow> {
     }
 
     const held = state.snapshots.get(id);
-    // `op: 'delete'` marks the row as gone from `data` so ADR-0006's pruning doesn't wipe this
+    // `op: 'delete'` marks the row as gone from `data` so removal-pruning doesn't wipe this
     // snapshot the moment the row disappears.
     const snapshot: RowRestorePoint<TRow> = held
       ? { ...held, op: 'delete' }
@@ -192,7 +192,7 @@ export function patchEdit<TRow>(
  * nothing holds `from` (house rule).
  *
  * `unconfirmed` is dropped for `from`, never added for `to` — a swap **is** the server's
- * acknowledgement, so the new id is confirmed from the moment it exists (ADR-0013).
+ * acknowledgement, so the new id is confirmed from the moment it exists.
  */
 export function swapRowId<TRow>(from: RowId, to: RowId): EditingUpdater<TRow> {
   return (state) => {

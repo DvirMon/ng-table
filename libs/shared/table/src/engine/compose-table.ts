@@ -56,8 +56,8 @@ function labelFeatures<TRow, TFeature>(
 function createBaseStore<TRow>(
   handle: TableCoreHandle<TRow>
 ): FoldingStore<TRow> {
-  // ADR-0005: default is the row count before any virtualization/pagination trims what's
-  // actually rendered — equals `renderRows().length` until a feature overrides it.
+  // Default is the row count before any virtualization/pagination trims what's actually
+  // rendered — equals `renderRows().length` until a feature overrides it.
   const totalRowCount = computed(() => handle.core.rows().length);
 
   return {
@@ -143,7 +143,7 @@ function foldFeatures<TRow>(
  * that wires those declarations together.
  *
  * `internalFeatures` are engine-supplied (e.g. the column-schema wiring) and fold first, so a
- * consumer feature's position in `features` is what its collision messages name (ADR-0010).
+ * consumer feature's position in `features` is what its collision messages name.
  *
  * Must run inside an Angular injection context: `setup` hooks create `effect()` /
  * `resource()`, and `onDestroy` hooks register on the ambient `DestroyRef`.
@@ -156,7 +156,7 @@ export function composeTable<TRow>(
   const handle = createTableCore<TRow>(config);
 
   // The core members are owned by the engine, so a feature declaring one collides at
-  // construction like any other member clash (ADR-0007) instead of silently shadowing it.
+  // construction like any other member clash instead of silently shadowing it.
   const registry = new SlotRegistry();
   registry.claimCoreMembers();
 
@@ -173,7 +173,7 @@ export function composeTable<TRow>(
       ),
       // `AnyTableFeature` erases `In`/`Out` to `any`, so calling it back statically resolves to
       // `TableFeatureSpec<unknown>` — the same static/dynamic seam `create-table.ts` bridges
-      // with its own cast (ADR-0003), just met here instead of there.
+      // with its own cast, just met here instead of there.
       ...labelFeatures<TRow, AnyTableFeature>(
         features,
         describeFeature,
@@ -198,8 +198,8 @@ export function composeTable<TRow>(
     }
   }
 
-  // ADR-0006: reconciles feature state (expanded rows, open edits, ...) against `data`. An
-  // effect, not a hook inside `updateRows` — a full `data.set(...)` replacement (paging,
+  // Reconciles feature state (expanded rows, open edits, ...) against `data`. An effect, not
+  // a hook inside `updateRows` — a full `data.set(...)` replacement (paging,
   // refetch, a WebSocket snapshot) never passes through `core.value.update(...)`, so a
   // write-site hook would miss exactly the case where every id is orphaned at once. Seeding
   // `previousIds` before the effect exists means its first run diffs against itself instead of
@@ -220,6 +220,6 @@ export function composeTable<TRow>(
 
   // The one seam where static typing gives way to dynamic composition: feature members are
   // folded from a runtime-length array. The cast in `create-table.ts` is the static/dynamic
-  // boundary (ADR-0003).
+  // boundary.
   return store;
 }

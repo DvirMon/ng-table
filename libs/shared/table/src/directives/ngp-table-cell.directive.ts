@@ -1,8 +1,7 @@
 import { Directive, input, type InputSignal } from '@angular/core';
 
-// ADR-0005: dual-tag selector, role set unconditionally. See
-// `ngp-table-header-cell.directive.ts` for why this is a separate directive rather than one
-// shared directive with an `isHeader` flag.
+// Dual-tag selector, role set unconditionally. See `ngp-table-header-cell.directive.ts` for
+// why this is a separate directive rather than one shared directive with an `isHeader` flag.
 @Directive({
   selector: 'td[ngpTableCell], div[ngpTableCell]',
   host: {

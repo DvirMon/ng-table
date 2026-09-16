@@ -112,7 +112,7 @@ function buildRowEditSpec<TRow>(
  * `table.value` directly.
  *
  * Builds the same editing store `withOptimistic()` builds and adds the open set on top;
- * composing both throws at construction (ADR-0007).
+ * composing both throws at construction.
  *
  * An always-editable table does not compose this — its session is delimited by focus, which
  * opens nothing, so it composes `withOptimistic()` alone.

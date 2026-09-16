@@ -1,40 +1,33 @@
 import type { WritableSignal } from '@angular/core';
 
-/**
- * Rejects a widened `string` while passing any string literal (or literal union) through
- * unchanged — `string extends T` is only true once `T` has been widened to the base type,
- * which happens exactly when the caller passed a plain `string`-typed variable instead of a
- * literal. `TAs` is inferred per rule call from `FilterOptions.as` itself; `StateOf` (see
- * `FilterRule` below) is the separate mechanism that folds every rule's inferred key into the
- * schema-wide criterion map.
- */
+// Note: `string extends T` is only true once `T` has widened to the base type, which happens
+// when the caller passed a plain `string` instead of a literal. Rejects that, passes any
+// literal (or literal union) through unchanged.
 type EnforceLiteralKey<T extends string> = string extends T ? never : T;
 
 /**
- * Per-filter override — a default the user can subsequently edit (`source`), a rename for the
- * borrowed path key (`as`), an extra empty criterion (`emptyValue`), and a total emptiness
- * check (`isEmpty`). See `docs/1-state/filters.md`'s "Sources", "Keys" and "Empty criteria".
+ * Per-filter override: editable default (`source`), key rename (`as`), extra/total emptiness
+ * (`emptyValue`/`isEmpty`). See `docs/1-state/filters.md`.
  */
 export interface FilterOptions<TSource = unknown, TAs extends string = string> {
   readonly source?: () => TSource;
   readonly as?: EnforceLiteralKey<TAs>;
   /**
-   * Extra empty criterion: joins the rule's own empty set and seeds `reset(null)` / the
-   * initial value. Does not drop the rule's empty. `isEmpty` replaces; `emptyValue` extends
-   * and seeds; with neither, the rule's own holds. A native `<select>` can only express empty
-   * as `''`.
+   * Extra empty criterion: joins the rule's own empty set and seeds `reset(null)`/the initial
+   * value. `isEmpty` replaces the check instead of extending it; with neither, the rule's own
+   * empty check holds.
    */
   readonly emptyValue?: TSource;
   /**
-   * Total emptiness override — the only way to subtract from the rule's empty set (e.g. make
-   * `null` a meaningful criterion). Wins over the rule's check and over `emptyValue`.
+   * Total emptiness override — the only way to subtract from the rule's empty set. Wins over
+   * the rule's own check and over `emptyValue`.
    */
   readonly isEmpty?: (criterion: NoInfer<TSource>) => boolean;
 }
 
 /**
- * One filter's reactive state. `criterion()` returns `undefined` when the criterion is empty —
- * the root's `criteria()` composes those into "empties omitted" (R49).
+ * One filter's reactive state — `criterion()` returns `undefined` when empty; the root's
+ * `criteria()` composes active filters, empties omitted.
  */
 export interface FilterNode<TCriterion> {
   value: WritableSignal<TCriterion>;
@@ -43,26 +36,21 @@ export interface FilterNode<TCriterion> {
   /** Whether this filter currently narrows. The same gate `criterion()` reads, as a boolean. */
   isActive(): boolean;
   /**
-   * `reset()` reverts to `source` (or the empty value with no source). `reset(null)` is a
-   * sentinel for that empty value, not the literal `null` — `TCriterion | null` collapses once
-   * the criterion includes `null`. Write the literal with `value.set(null)`.
+   * `reset()` reverts to `source` (or empty with no source). `reset(null)` is a sentinel for
+   * the empty value, not the literal — write literal `null` via `value.set(null)`.
    */
   reset(value?: TCriterion | null): void;
   dirty(): boolean;
 }
 
 /**
- * Root filter-set state — read by calling `filters()`, not by property access. `TState` is the
- * flat criterion map compiled from a schema's rule calls: one entry per declared filter or
- * `anyOf` group, folded by `StateOf` (see `FilterRule` below) — `createFilters` infers it from
- * the schema's return value; the caller never supplies it.
+ * Root filter-set state, read by calling `filters()`. `TState` is the criterion map compiled
+ * from the schema's rule calls — inferred by `createFilters`, never caller-supplied.
  */
 export interface FiltersRoot<TRow, TState extends Record<string, unknown>> {
   /**
-   * The complete criterion model, and a real `WritableSignal` — a view over the child nodes,
-   * which remain the single storage location. Reading is `filters().value()` as before; a
-   * write fans out per key. Being writable is what makes `form(filters().value, schema)` work
-   * with no adapter and no sync effect (R18).
+   * The full criterion model as a writable view over the child nodes — reading is
+   * `filters().value()`, writing fans out per key.
    */
   value: WritableSignal<TState>;
   /** Every active filter's effective criterion, empties omitted — the request-param shape. */
@@ -70,26 +58,22 @@ export interface FiltersRoot<TRow, TState extends Record<string, unknown>> {
   /** Whether any filter currently narrows. */
   isActive(): boolean;
   /**
-   * `Partial<TState>`, not `TState`: a key the object omits is reset to its declared source,
-   * which is what makes restoring a partial snapshot a complete state. Matches what the
-   * runtime has always done per key. `reset(null)` is a sentinel — every filter goes to its
-   * empty value, not the literal `null`. Write a literal `null` criterion with
-   * `filters.<key>().value.set(null)`.
+   * `Partial<TState>` — an omitted key resets to its declared source. `reset(null)` is a
+   * sentinel: every filter goes to its empty value, not the literal — write a literal `null`
+   * per filter via `filters.<key>().value.set(null)`.
    */
   reset(value?: Partial<TState> | null): void;
   dirty(): boolean;
   /**
-   * A row predicate compiled from the criteria current at the moment it was requested — usable
-   * with no table. **One call = one evaluation**: ADR-0014's once-per-filter reporting is scoped
-   * to the returned predicate, so request one per pass, never one per row.
+   * A row predicate compiled from the current criteria, usable with no table. One call = one
+   * evaluation — request fresh per pass, not per row.
    */
   matcher(): (row: TRow) => boolean;
 }
 
 /**
- * Callable + indexable, mirroring Signal Forms: a call reads root state, a property access
- * reaches a child filter node. `TState` is `StateOf<S>` — inferred from the schema's returned
- * rule array, never caller-supplied. See `filters.md`'s Signature section.
+ * Callable + indexable: calling reads root state, property access reaches a child filter
+ * node. See `docs/1-state/filters.md`'s Signature section.
  */
 export type Filters<TRow, TState extends Record<string, unknown>> = (() => FiltersRoot<
   TRow,
@@ -110,10 +94,8 @@ export interface FilterHandle<
 }
 
 /**
- * Structural `path` proxy handed to a filters schema function — the `get` trap fabricates a
- * `FilterHandle<TRow, K>` per string property, same shape as `ColumnsPath<TRow>`. Branded on
- * `TRow` extends `never` (the empty carrier `createFilters([], …)` produces) so the error blames
- * the empty carrier that caused it, not the schema function that merely inherited it.
+ * Structural `path` proxy handed to a filters schema function — a property access fabricates
+ * a `FilterHandle` per key.
  * @internal
  */
 export type FiltersPath<TRow> = [TRow] extends [never]
@@ -123,8 +105,7 @@ export type FiltersPath<TRow> = [TRow] extends [never]
   : { readonly [K in Extract<keyof TRow, string>]: FilterHandle<TRow, K> };
 
 /**
- * One `anyOf` sibling: its own path + predicate, OR'd against the group's single shared
- * criterion (no key/emptyValue of its own — the group record carries those).
+ * One `anyOf` sibling — its own path + predicate, OR'd against the group's shared criterion.
  * @internal
  */
 export interface FilterGroupChild<TCell = unknown, TCriterion = unknown> {
@@ -133,28 +114,27 @@ export interface FilterGroupChild<TCell = unknown, TCriterion = unknown> {
 }
 
 /**
- * Context `applyWhen`'s `condition` reads other filters' *current criterion values* through —
- * not row data. Untyped per-path (`unknown`) because the criterion shape behind a path depends
- * on which rule registered it, which this context has no way to recover statically.
+ * Context `applyWhen`'s `condition` reads other filters' current criterion values through,
+ * not row data.
  * @internal
  */
 export interface FilterValueOfContext<TRow> {
+  // Untyped per-path (`unknown`): the criterion shape behind a path depends on which rule
+  // registered it, which this context has no way to recover statically.
   /** Generic in the handle: `TRow` is the default only, and a handle from any row is accepted. */
   valueOf<R = TRow, K extends Extract<keyof R, string> = Extract<keyof R, string>>(
     path: FilterHandle<R, K>
   ): unknown;
 }
 
+// `kind: 'group'` (anyOf) carries `children` instead of using `predicate`/`paths` directly —
+// `paths` is still populated (`children.map(c => c.path)`) so path-uniqueness validation
+// stays uniform across kinds. `kind: 'conditional'` (applyWhen) is structurally a 'single'
+// (or 'group') record with `condition` attached — the flattener in create-filters.ts re-tags
+// each gated rule's own record rather than nesting, so no separate unwrapping step is needed.
 /**
- * Compiled form of one declared filter — returned by every rule function and consumed by
- * `create-filters.ts` to build root/child state.
- *
- * `kind: 'group'` (anyOf) carries `children` instead of using `predicate`/`paths` directly —
- * `paths` is still populated (`children.map(c => c.path)`) so path-uniqueness validation stays
- * uniform across kinds. `kind: 'conditional'` (applyWhen) is structurally a 'single' (or,
- * unsupported today, 'group') record with `condition` attached — `create-filters.ts`'s flattener
- * re-tags each gated rule's own record rather than nesting an `inner` field, so no separate
- * unwrapping step is needed at evaluation time.
+ * Compiled form of one declared filter — returned by every rule function and consumed to
+ * build root/child state.
  * @internal
  */
 export interface FilterRuleRecord<TRow, TCell = unknown, TCriterion = unknown> {
@@ -171,15 +151,12 @@ export interface FilterRuleRecord<TRow, TCell = unknown, TCriterion = unknown> {
   readonly condition?: (ctx: FilterValueOfContext<TRow>) => boolean;
 }
 
+// `__row` exists because `TRow` is otherwise unrecoverable: `FilterRuleRecord<TRow>` mentions
+// it only in the optional `condition`, whose `valueOf` is generic in its own handle, so
+// nothing else distinguishes two rules built from different rows.
 /**
- * A rule's static inference channel — carries its key, criterion and row type statically, on top
- * of the runtime `FilterRuleRecord` shape it extends. All three `__`-members are phantom
- * (optional, never assigned at runtime): `Flatten`/`StateOf` below read them off a schema's
- * returned array.
- *
- * `__row` exists because `TRow` is otherwise unrecoverable — `FilterRuleRecord<TRow>` mentions it
- * only in the optional `condition`, whose `valueOf` is generic in its own handle, so nothing
- * distinguishes two rules built from different rows.
+ * A rule's static inference channel — phantom `__key`/`__criterion`/`__row` members read by
+ * `Flatten`/`StateOf`, never assigned at runtime.
  * @internal
  */
 export interface FilterRule<TKey extends string, TCriterion, TRow = unknown>
@@ -190,8 +167,8 @@ export interface FilterRule<TKey extends string, TCriterion, TRow = unknown>
 }
 
 /**
- * `anyOf`'s return type — a `FilterRule` narrowed to `kind: 'group'`. The key is positional
- * (passed to `anyOf(key, children)`, not borrowed from a path), matching the runtime record.
+ * `anyOf`'s return type — a `FilterRule` narrowed to `kind: 'group'`, with a positional key
+ * rather than one borrowed from a path.
  * @internal
  */
 export interface GroupRule<TKey extends string, TCriterion, TRow = unknown>
@@ -200,11 +177,9 @@ export interface GroupRule<TKey extends string, TCriterion, TRow = unknown>
 }
 
 /**
- * `applyWhen`'s return type — one nestable node, not an array. Carries its children in `S` so
- * `Flatten` (and the runtime flattener in `create-filters.ts`) can recurse into it, folding the
- * node to its children's keys when it sits directly in a schema array. Not spreadable — no
- * `[Symbol.iterator]` — so `...applyWhen(…)` fails to compile instead of silently dropping the
- * gated filters the way a forgotten spread on an array-returning `applyWhen` did.
+ * `applyWhen`'s return type — one nestable node, not an array. Not spreadable (no
+ * `[Symbol.iterator]`), so `...applyWhen(…)` fails to compile instead of silently dropping
+ * the gated filters, as a forgotten spread on an array-returning version once did.
  * @internal
  */
 export interface ConditionalRule<S extends readonly unknown[]> {
@@ -213,8 +188,7 @@ export interface ConditionalRule<S extends readonly unknown[]> {
 }
 
 /**
- * The union `StateOf` extracts against — whatever `Flatten` is allowed to resolve to a keyed
- * entry: a single rule or an `anyOf` group.
+ * The union `StateOf` extracts against — a single rule or an `anyOf` group.
  * @internal
  */
 export type AnyRule = FilterRule<string, unknown> | GroupRule<string, unknown>;
@@ -226,9 +200,8 @@ export type CriterionOf<R> = R extends FilterRule<string, infer C> ? C : never;
 export type RowOfRule<R> = R extends FilterRule<string, unknown, infer TRow> ? TRow : never;
 
 /**
- * Element type of an array-valued cell, `unknown` for anything else. Lets `hasAny`/`hasNone`
- * default their criterion to the cell's own element type instead of discarding it — without it a
- * `string[]` column yields `readonly unknown[]`, which no consumer can write back through.
+ * Element type of an array-valued cell, `unknown` otherwise — lets `hasAny`/`hasNone` default
+ * their criterion to the cell's element type instead of `unknown[]`.
  * @internal
  */
 export type ItemOf<TCell> = TCell extends readonly (infer E)[] ? E : unknown;
@@ -237,30 +210,30 @@ export type ItemOf<TCell> = TCell extends readonly (infer E)[] ? E : unknown;
 type IsAny<T> = 0 extends 1 & T ? true : false;
 
 /**
- * Resolves a schema's returned array down to its leaf rules, recursing through nested arrays and
- * through a `ConditionalRule`'s `children`. Terminates on any item that is neither.
- *
- * `any` is discarded first, and must stay first. `any` satisfies `readonly unknown[]`, and
- * `Flatten<any>` is `FlattenItem<any>` again — an infinite recursion the compiler reports as
- * `TS2589` at the whole `createFilters()` call, burying the real error that produced the `any`.
+ * Resolves a schema's returned array to its leaf rules, recursing through nested arrays and
+ * `ConditionalRule.children`.
  * @internal
  */
-type FlattenItem<Item> = IsAny<Item> extends true
-  ? never
-  : Item extends ConditionalRule<infer C>
-    ? Flatten<C>
-    : Item extends readonly unknown[]
-      ? Flatten<Item>
-      : Item;
+type FlattenItem<Item> =
+  // Note: `any` must be checked first. `any` satisfies `readonly unknown[]`, so `Flatten<any>`
+  // recurses into `FlattenItem<any>` again — the compiler reports this as TS2589 at the whole
+  // `createFilters()` call site, burying the real error that produced the `any`.
+  IsAny<Item> extends true
+    ? never
+    : Item extends ConditionalRule<infer C>
+      ? Flatten<C>
+      : Item extends readonly unknown[]
+        ? Flatten<Item>
+        : Item;
 
-/** @internal */
+/** Flattens a schema's rule array to its leaf entries. @internal */
 export type Flatten<T extends readonly unknown[]> = FlattenItem<T[number]>;
 
+// Constrained to `readonly unknown[]`, not a rule-typed array — naming the key type in the
+// constraint would contextually widen every rule's key to `string` before inference runs.
 /**
- * The schema-wide criterion map: one entry per declared filter or `anyOf` group, keyed by each
- * rule's statically carried key. Constrained to `readonly unknown[]`, never a rule-typed array —
- * naming the key type in the constraint would contextually widen every rule's key to `string`
- * before inference runs.
+ * The schema-wide criterion map — one entry per declared filter or `anyOf` group, keyed by
+ * each rule's statically carried key.
  */
 export type StateOf<T extends readonly unknown[]> = {
   [R in Extract<Flatten<T>, AnyRule> as NonNullable<R['__key']>]: CriterionOf<R>;

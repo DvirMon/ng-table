@@ -70,7 +70,7 @@ function toChildRenderRow<TRow>(
 }
 
 /**
- * The `'tree'` render stage (ADR-0011). Passes through any row a preceding stage already
+ * The `'tree'` render stage. Passes through any row a preceding stage already
  * produced (e.g. a `'group'` header, `data === null`) untouched, and for a data-backed row
  * stamps `hasChildren`/`isExpanded` onto it, then — once expanded — appends its children,
  * recursively, at `row.depth + 1`.
@@ -196,9 +196,9 @@ function buildExpansionSpec<TRow>(
     emitChanged(collapsed, options);
   }
 
-  // ADR-0006: `expandedRows` answers "is this row live and expanded" — an id that leaves
-  // `data` must leave here too. `everExpanded` answers "has this id ever been expanded" and
-  // is deliberately exempt (see its member doc).
+  // `expandedRows` answers "is this row live and expanded" — an id that leaves `data` must
+  // leave here too. `everExpanded` answers "has this id ever been expanded" and is
+  // deliberately exempt (see its member doc).
   function onRowsRemoved(ids: readonly RowId[]): void {
     const next = pruneByIds(expandedRows(), ids);
     if (next !== expandedRows()) {
@@ -226,9 +226,8 @@ function buildExpansionSpec<TRow>(
 /**
  * Adds multi-expand, tree-capable row expansion to a `createTable()`. Standalone — reads
  * only the store slice it needs, no dependency on any other feature. Claims the `'tree'`
- * render stage (ADR-0011) to flatten expanded children into `renderRows()` (see
- * with-expansion.md), so it cannot be composed alongside another feature also claiming
- * `'tree'`.
+ * render stage to flatten expanded children into `renderRows()`, so it cannot be composed
+ * alongside another feature also claiming `'tree'`.
  */
 export function withExpansion<In extends ExpansionInput<In>, D extends DerivedDict>(
   derive: Feature<NoInfer<In> & ExpansionMembers, D>

@@ -229,24 +229,21 @@ export function hasNone<
   } satisfies FilterRuleRecord<TRow> as FilterRule<RuleKey<K, TAs>, readonly TItem[], TRow>;
 }
 
+// `TCriterion` has two inference sites — the predicate's second parameter and
+// `options.isEmpty`. A mismatch between the two is a hard `TS2322` at the `options` argument,
+// not a silent widening to a union or to `unknown` — the predicate site is inferred first and
+// wins; `NoInfer` on `FilterOptions.isEmpty` keeps the callback from contributing back.
 /**
- * The general rule (R7) — a peer of the named ones, not a layer beneath them. Takes the
- * predicate directly; `filter()`'s cell arrives **unguarded** (R27) — no automatic null-check
- * is applied, unlike the named rules' shipped matchers, so a custom predicate can itself choose
- * to match nulls.
+ * A general, predicate-driven filter rule — a peer of the named rules (`equals`, `contains`,
+ * …), not a layer beneath them. `cell` arrives **unguarded**, unlike the named rules' shipped
+ * matchers, so a custom predicate can itself choose to match nulls.
  *
- * `TCriterion` has two inference sites — the predicate's second parameter and
- * `options.isEmpty`. Verified (compiled probe, 2026-09-14): a mismatch between the two is a
- * hard `TS2322` at the `options` argument, not a silent widening to a union or to `unknown` —
- * the predicate site is inferred first and wins; `NoInfer` on `FilterOptions.isEmpty` keeps
- * the callback from contributing back.
- *
+ * @remarks
  * Emptiness can't be inferred for an arbitrary criterion shape, so `options.isEmpty` /
- * `options.emptyValue` opt a `filter()` rule into the same skip-when-empty behavior the named
- * rules get for free. Precedence: `isEmpty` replaces; `emptyValue` extends and seeds; with
- * neither, this filter is **never empty** — it always participates once its `value` diverges
- * from `undefined`... in practice meaning the consumer's own default `value` (via
- * `options.source`, or `undefined` with no source) is evaluated on every pass.
+ * `options.emptyValue` opt this rule into the same skip-when-empty behavior the named rules
+ * get for free. Precedence: `isEmpty` replaces; `emptyValue` extends and seeds; with neither,
+ * this filter is never empty — it always participates once its value diverges from
+ * `undefined`.
  */
 export function filter<
   TRow,
@@ -274,7 +271,7 @@ export function filter<
 }
 
 /**
- * Groups sibling rules under one shared key and one shared criterion, OR'd (R8, R9). The key is
+ * Groups sibling rules under one shared key and one shared criterion, OR'd. The key is
  * positional — a group has no single path to borrow one from. `children` arrive already built
  * (each its own `equals(...)`/`contains(...)`/… call) rather than through a nested schema
  * callback: the non-empty tuple constraint makes an empty group a compile error, and the
@@ -315,31 +312,23 @@ export function anyOf<TKey extends string, C extends readonly [unknown, ...unkno
   } satisfies FilterRuleRecord<unknown> as GroupRule<TKey, CriterionOf<C[0]>>;
 }
 
+// `ConditionalRule<S>`'s *type* is a pure `{ kind, children }` carrier — it does not extend
+// `FilterRuleRecord` and has no `condition` field. The returned node carries `condition` as a
+// runtime-only field alongside `kind`/`children` (present at runtime, absent from the static
+// type — the same erasure boundary the rest of this file uses), since re-tagging each child's
+// record to `kind: 'conditional'` here would mean mutating a child `anyOf`/other combinators
+// may also hold a reference to. `create-filters.ts`'s flattener reads `condition` off the raw
+// node when it recurses into a `ConditionalRule` and re-tags each leaf record it finds inside.
+//
+// Not spreadable: a plain object has no `[Symbol.iterator]`, so `...applyWhen(…)` is a compile
+// error rather than the silent drop a forgotten spread on an array-returning version once was.
+//
+// `path` is neither read nor an inference anchor — `TRow` resolves to `unknown` here. Retained
+// for call-site symmetry with the rule functions.
 /**
- * Conditional activation (R15, taken from Signal Forms directly). `condition` reads other
- * filters' *current criterion values* through `valueOf` — never row data. Returns **one node**,
- * not an array — `Flatten` (and the runtime flattener in `create-filters.ts`) recurse into
- * `children`, so the node folds to its children's top-level keys when placed directly in a
- * schema array. Place it directly; it is not spreadable, and a plain object has no
- * `[Symbol.iterator]`, so `...applyWhen(…)` is a compile error rather than a silent drop. That
- * is the point of returning a node instead of an array: with an array, a *forgotten* spread
- * left a nested array the fold skipped and the gated filters vanished from both the type and
- * the runtime with no error at either level.
- *
- * Gating semantics are unchanged: each child keeps its own top-level key and its own record. But
- * `ConditionalRule<S>`'s *type* is a pure `{ kind, children }` carrier — it does not extend
- * `FilterRuleRecord` and has no `condition` field — so the re-tagging of each child's record to
- * `kind: 'conditional'` with the shared `condition` cannot happen here without either mutating
- * the child (which `anyOf`/other combinators may also hold a reference to) or widening this
- * return type. **Decision:** the returned node carries `condition` as a runtime-only field
- * alongside `kind`/`children` (present at runtime, absent from the static `ConditionalRule<S>`
- * type — the same erasure boundary the rest of this file uses). `create-filters.ts`'s flattener
- * reads it off the raw node (e.g. `(node as { condition }).condition`) when it recurses into a
- * `ConditionalRule`, and re-tag each leaf record it finds inside with `kind: 'conditional'` plus
- * that `condition` — the re-tagging itself happens in the flattener, not here.
- *
- * `path` is neither read nor an inference anchor — `TRow` resolves to `unknown` here. Retained
- * only to mirror Signal Forms' `applyWhen(path, …)`.
+ * Gates a group of filters on other filters' current criterion values. `condition` reads
+ * through `valueOf`, never row data. Returns one node, not an array — place it directly in
+ * the schema array; each gated child keeps its own top-level key.
  */
 export function applyWhen<TRow, S extends readonly [unknown, ...unknown[]]>(
   path: FiltersPath<TRow>,

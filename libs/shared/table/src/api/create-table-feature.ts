@@ -23,7 +23,7 @@ type NormalizeDerived<D> = IsAny<D> extends true ? {} : D;
  *
  * A member key repeated between the feature and its derive block throws here (see
  * `mergeMembers`). A key repeated across two different *features* is not this helper's
- * concern — the fold's `SlotRegistry` is the single collision authority (ADR-0007).
+ * concern — the fold's `SlotRegistry` is the single collision authority.
  */
 export function createTableFeature<In extends Shape, Out extends object>(
   factory: (input: In) => TableFeatureSpec<RowOf<In>, Out>
@@ -50,7 +50,7 @@ export function createTableFeature(
     // Own members become own properties (visible to the block immediately); `input` stays the
     // prototype so a later feature's member — added to the store after this factory runs — is
     // still visible through a lazy read. A plain spread would freeze the store at this moment
-    // and break "types are stricter than runtime" for reads deferred into a `computed()` (D25).
+    // and break "types are stricter than runtime" for reads deferred into a `computed()`.
     const blockInput = Object.assign(Object.create(input), spec.members ?? {});
 
     const derivedSpec = derive(blockInput);
@@ -97,7 +97,7 @@ function mergeDerivedSpec<TRow, Out extends object, D extends DerivedDict>(
  * Merges a feature's own members with its derive block's members. A duplicate key would
  * otherwise spread-overwrite silently here while reaching the fold's `SlotRegistry` as one
  * already-merged key — invisible to `claimMember` — so this throws with the same wording,
- * naming both sides, to keep the registry the single collision authority (ADR-0007).
+ * naming both sides, to keep the registry the single collision authority.
  */
 function mergeMembers<A extends object, B extends object>(a: A | undefined, b: B | undefined): A & B;
 function mergeMembers(a: object | undefined, b: object | undefined): object {
