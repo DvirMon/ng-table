@@ -5,6 +5,7 @@ import type { RowId } from '../../../api/types';
 import { SAVED_CONFLICTING_SELECTION_IDS, SELECTION_ROWS_MOCK } from '../fixtures/mock';
 import { singleSelectionConfig } from '../fixtures/schema';
 import type { SelectionRow } from '../fixtures/types';
+import { SingleSelectionToolbarComponent } from './single-selection-toolbar.component';
 
 /**
  * Single-row selection
@@ -18,6 +19,7 @@ import type { SelectionRow } from '../fixtures/types';
  */
 @Component({
   selector: 'ngp-single-selection-story-host',
+  imports: [SingleSelectionToolbarComponent],
   templateUrl: './single-selection-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../selection-story.css'],
 })

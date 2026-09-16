@@ -6,12 +6,10 @@
     rows at once, which a single-select table refuses.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="clearSelection()">Clear selection</button>
-    <button type="button" (click)="restoreConflictingSelection()">
-      Restore a 2-id saved selection
-    </button>
-  </div>
+  <ngp-single-selection-toolbar
+    (clearSelection)="clearSelection()"
+    (restoreConflictingSelection)="restoreConflictingSelection()"
+  />
 
   <table class="story-host__table">
     <thead>

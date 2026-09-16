@@ -3,8 +3,12 @@ import * as MultiStories from './multi-selection/multi-selection.stories';
 import * as SingleStories from './single-selection/single-selection.stories';
 import multiClass from './multi-selection/multi-selection-story-host.component.ts?raw';
 import multiTemplate from './multi-selection/multi-selection-story-host.component.html?raw';
+import multiToolbarClass from './multi-selection/multi-selection-toolbar.component.ts?raw';
+import multiToolbarTemplate from './multi-selection/multi-selection-toolbar.component.html?raw';
 import singleClass from './single-selection/single-selection-story-host.component.ts?raw';
 import singleTemplate from './single-selection/single-selection-story-host.component.html?raw';
+import singleToolbarClass from './single-selection/single-selection-toolbar.component.ts?raw';
+import singleToolbarTemplate from './single-selection/single-selection-toolbar.component.html?raw';
 import selectionStyles from './selection-story.css?raw';
 import selectionSchema from './fixtures/schema.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
@@ -35,19 +39,40 @@ distinguishable from each other.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="selection-multi-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="selection-multi-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
+      multi-selection-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
+      multi-selection-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={multiClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={multiTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={multiClass} language="tsx" />
+      <Source code={selectionStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={multiToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={multiToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -66,19 +91,40 @@ free.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="selection-single-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="selection-single-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
+      single-selection-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
+      single-selection-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={singleClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={singleTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={singleClass} language="tsx" />
+      <Source code={selectionStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={singleToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={singleToolbarTemplate} language="html" />
     </div>
   </div>
 </div>

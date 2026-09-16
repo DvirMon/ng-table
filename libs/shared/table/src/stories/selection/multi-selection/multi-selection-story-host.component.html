@@ -14,13 +14,11 @@
     <span>{{ selectedCount() }} selected</span>
   </div>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="lockSelectedRow()">Lock this row</button>
-    <button type="button" (click)="restoreSavedSelection()">Restore a saved selection</button>
-    <button type="button" (click)="deleteSelectedRowExternally()">
-      Someone else deleted this row
-    </button>
-  </div>
+  <ngp-multi-selection-toolbar
+    (lockSelectedRow)="lockSelectedRow()"
+    (restoreSavedSelection)="restoreSavedSelection()"
+    (deleteSelectedRowExternally)="deleteSelectedRowExternally()"
+  />
 
   <table class="story-host__table">
     <thead>

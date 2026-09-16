@@ -9,6 +9,7 @@ import { multiSelectionConfig } from '../fixtures/schema';
 import type { SelectionRow } from '../fixtures/types';
 import { createSelectionEventLog } from './selection-event-log';
 import type { SelectionNotice } from './multi-selection.types';
+import { MultiSelectionToolbarComponent } from './multi-selection-toolbar.component';
 
 /**
  * Multi-selection, full surface
@@ -22,6 +23,7 @@ import type { SelectionNotice } from './multi-selection.types';
  */
 @Component({
   selector: 'ngp-multi-selection-story-host',
+  imports: [MultiSelectionToolbarComponent],
   templateUrl: './multi-selection-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../selection-story.css'],
 })
