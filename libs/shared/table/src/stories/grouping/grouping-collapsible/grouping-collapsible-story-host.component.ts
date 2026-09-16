@@ -2,6 +2,7 @@ import { Component, computed, input, linkedSignal, signal } from '@angular/core'
 import {
   createTable,
   setGroupLevels,
+  withComputed,
   withExpansion,
   withGrouping,
   withSorting,
@@ -58,7 +59,20 @@ export class GroupingCollapsibleStoryHostComponent {
     groupingConfig,
     withGrouping({ initialGrouping: COLLAPSIBLE_GROUPING_LEVELS }),
     withExpansion(),
-    withSorting()
+    withSorting(),
+    // Optional. Default: read `table.expandedRows().has(row.id)` directly in the template for
+    // `kind: 'group'` rows (`row.isExpanded` already covers `kind: 'row'` — `renderRows()`
+    // stamps it there, just never on group headers, since the tree stage early-returns for
+    // `data === null`). This derive block trades that Set lookup for a second full-array map on
+    // every recompute, just to give the template one uniform field across both row kinds — reach
+    // for it only if a template touching the Set directly is the thing you want to avoid.
+    withComputed((store) => ({
+      displayRows: computed(() =>
+        store.renderRows().map((row) =>
+          row.kind === 'group' ? { ...row, isExpanded: store.expandedRows().has(row.id) } : row
+        )
+      ),
+    }))
   );
 
   protected readonly visibleColumns = computed(() =>
