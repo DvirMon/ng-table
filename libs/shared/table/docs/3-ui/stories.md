@@ -1,14 +1,14 @@
 ---
 title: Storybook story conventions
 type: reference
-status: reflects current practice as of the 18 stories in src/stories/
-date: 2026-09-14
+status: reflects current practice as of the 21 stories in src/stories/
+date: 2026-09-16
 ---
 
 # Storybook story conventions — `libs/shared/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
-existing 18 stories already follow, so a new one doesn't drift from it. Not previously written
+existing 21 stories already follow, so a new one doesn't drift from it. Not previously written
 down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
 moves on.
 
@@ -55,18 +55,20 @@ src/stories/
 │   ├── fixtures/                            ← shared by this feature's stories, nothing else
 │   │   ├── types.ts  mock.ts  schema.ts
 │   │   └── utils.ts  http.ts  handlers.ts
-│   ├── ui/                                  ← demo-only components/directives
+│   ├── ui/                                  ← demo-only components/directives/state, shared by 2+ hosts
 │   │   ├── commit-counter.component.ts
 │   │   ├── focus-new-row.directive.ts
-│   │   └── local-undo-slot.ts
+│   │   ├── local-undo-slot.ts
+│   │   └── row-flags.ts                     ← createRowFlags(), adopted by 5 gated/live hosts
+│   ├── row-edit-story.pipes.ts              ← ROW_EDIT_STORY_PIPES (RowLabelPipe)
 │   └── <story-name>/
 │       ├── <story-name>-story-host.component.ts     ← the demo component
 │       ├── <story-name>-story-host.component.html   ← template — NEVER inline
 │       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
 │       └── (no per-story mdx — one <feature>.mdx per feature, at the feature root)
 ├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
-├── filtering/                               ← fixtures/ + filtering-story.css + 3 hosts
-│   └── client-filtering/  server-filtering/  selection-filtering/
+├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 4 hosts
+│   └── client-filtering/  server-filtering/  selection-filtering/  predicate-filtering/
 ├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 5 hosts
 │   └── grouping-static/  grouping-async-rule/  grouping-regressions/
 │       grouping-collapsible/  grouping-selection/
@@ -97,10 +99,12 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `row-edit/fixtures/types.ts` | The shared row shape (`EditRow`) |
 | `row-edit/fixtures/mock.ts` | Fixture rows, option lists (`EDIT_ROWS_MOCK`, `DEPT_OPTIONS`) |
 | `row-edit/fixtures/schema.ts` | `editTableConfig` (`TableConfig<EditRow>`, `trackBy: 'id'` + `columns`) shared by all nine hosts, and the shared Signal Forms `editRowsSchema`. Each host composes its own features inline: `createTable(this.data, editTableConfig, ...features)` |
-| `row-edit/fixtures/utils.ts` | Pure helpers (`saveRowPessimistic`) |
+| `row-edit/fixtures/utils.ts` | Pure helpers (`saveRowPessimistic`, `rowLabel`) |
 | `row-edit/fixtures/http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
 | `row-edit/fixtures/handlers.ts` | MSW request handlers |
-| `row-edit/ui/*` | Demo-only instrumentation (`CommitCounterComponent`, `focusNewRow`, `localUndoSlot`) — never table API |
+| `row-edit/ui/*` | Demo-only instrumentation (`CommitCounterComponent`, `focusNewRow`, `localUndoSlot`, `createRowFlags`) — never table API |
+| `row-edit/row-edit-story.pipes.ts` | `ROW_EDIT_STORY_PIPES` — `RowLabelPipe` (`| rowLabel`), the one row-formatting concern shared across hosts |
+| `filtering/filtering-story.pipes.ts` | `FILTERING_STORY_PIPES` — `InvoiceIssuedAtPipe` (`| invoiceIssuedAt`), same-day time-of-day formatting |
 | `composition/fixtures/types.ts` | The shared row shape (`CompositionRow`) and the criterion model (`CompositionFilterState`) |
 | `composition/fixtures/mock.ts` | Fixture rows and the dept option list (`COMPOSITION_ROWS_MOCK`, `COMPOSITION_DEPT_OPTIONS`) |
 | `composition/fixtures/schema.ts` | `compositionColumns` and `derivedStateConfig` (`TableConfig<CompositionRow>`, `trackBy: 'id'` + `columns`) |
@@ -127,12 +131,23 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by the five feature docs pages |
 
 **No `ui/` folder outside `row-edit/`.** Demo-only instrumentation that belongs to exactly one
-story stays in that story's folder — `selection/multi-selection/selection-event-log.ts` is the
-only instance, and it is there rather than in `selection/fixtures/` because one story imports it.
-Story-local **arg types** follow the same rule: `grouping-static/grouping-static.types.ts`,
-`grouping-regressions/grouping-regressions.types.ts` and
-`grouping-selection/grouping-selection.types.ts` name that host's own Storybook controls and
-nothing else.
+story stays in that story's folder, not in `fixtures/` — promoted to `<feature>/ui/` (or
+`row-edit/ui/` across features) only on a second importer, same promotion-ladder bar as any other
+fixture. Every host-local extraction to date is one of three shapes (see "What a host may not
+contain" below for when to reach for one):
+
+| Shape | Instances |
+|---|---|
+| State factory (`create<Thing>()`, owns signals + mutators, no `DestroyRef`) | `gated-bulk-optimistic.state.ts` (`createBulkAddUi`), `external-write.state.ts` (`createConflictStore`), `row-edit/ui/row-flags.ts` (`createRowFlags`, shared by 5 hosts), `sorting-editing/row-hold-probe.ts` (`createRowHoldProbe`) |
+| Lifecycle owner (`create<Thing>()`/`watch<Thing>()`, owns a subscription/timer/effect + `DestroyRef`) | `selection-event-log.ts` (`createSelectionEventLog`), `client-filtering/filter-report-log.ts` (`createFilterReportLog`), `live-optimistic/undo-window.ts` (`createUndoWindow`), `live-optimistic/pending-announcer.ts` (`createPendingAnnouncer`), `live-table/field-commit-watcher.ts` (`watchFieldCommits`) |
+| Directive | `row-edit/ui/focus-new-row.directive.ts` |
+
+Story-local **arg types** follow the same one-story-stays-local rule:
+`grouping-static/grouping-static.types.ts`, `grouping-regressions/grouping-regressions.types.ts`,
+`grouping-selection/grouping-selection.types.ts`, `client-filtering/client-filtering.types.ts`,
+`sorting-editing.types.ts`, `gated-multiple-optimistic.types.ts` and
+`multi-selection/multi-selection.types.ts` each name that host's own Storybook controls or
+notice/outcome union and nothing else.
 
 No barrel. Stories are not public API and `.storybook/main.ts` globs `../src/stories/**`, so
 depth is free.
@@ -153,6 +168,14 @@ via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`
 Query. No shared/cached server-state exists across these demo-only stories to justify TanStack's
 caching model, and `HttpClient` matches the repo's only other transport precedent.
 
+**`server-filtering/` is the one read-only transport, and it's `rxResource`** (2026-09-16, per
+`docs/1-state/work/table-owned-filtering/spec.md` step 7). `rxResource({ params, stream })` over
+`injectInvoiceApi().fetchInvoices(...)` replaces a hand-rolled `effect()` + `untracked()` + `load()`
+loop; a `linkedSignal` (not a copy `effect()`) turns the resolved page into the `WritableSignal`
+`createTable()` needs, using the `{ source, computation(value, previous) }` overload so the
+previous page survives a load or an error instead of blanking the table. Save/delete stays
+Observable-via-`HttpClient` above; a pure read is the one place `rxResource` fits.
+
 ## The story-host component
 
 - **Standalone, separate template.** `templateUrl`/`styleUrl`, never an inline `template:`
@@ -170,8 +193,54 @@ caching model, and `HttpClient` matches the repo's only other transport preceden
   one, why a config is passed as a signal instead of a plain value) — not a restatement of the
   template.
 - **State lives in signals on the host**, following the schema/mock split above — `data`,
-  `saveError`, per-row flags like `needsUniqueName`. The host wires `createTable()` and
-  `form()` together; it does not reimplement table logic.
+  `saveError`, per-row flags like `forcedInvalid`. Not every per-row concern is a signal, though:
+  a collision like "two rows now share a name" is real Signal Forms validation
+  (`editRowsWithUniqueNameSchema`'s `validate()` rule), not host-tracked UI state — see "What a
+  host may not contain" below. The host wires `createTable()` and `form()` together; it does not
+  reimplement table logic.
+
+## What a host may not contain
+
+A story's whole point is that a consumer copies its class body. Four things do not survive that
+copy honestly (from the 2026-09-15/16 audit of every non-grouping host,
+`work/grouping-stories/2-host-audit.md`):
+
+1. **Demo-harness knobs** — transport toggles and latency dials that drive the demo rather than
+   demonstrate the API. Keep one only when the transport itself *is* the lesson (`forceFailure`/
+   `latencyMs` on `server-filtering/`, `grouping-collapsible/`'s refetch).
+2. **Display formatting in host methods** — a method that turns a value into a string. Belongs in
+   a pipe, or in a `computed()`/derived record if it's a per-row lookup rather than pure
+   formatting.
+3. **Regression-demo arithmetic** — code that injects or measures a known-wrong state. Legitimate
+   when it *is* the story's subject (`grouping-regressions/`), not when it's bolted onto a host
+   proving something else.
+4. **Decision-narration JSDoc** — D-numbers, P-numbers, S-numbers, §-ancestry, competitor issue
+   links, ADR rationale. Belongs in `docs/`, not source comments — no exception for being
+   demo-only. A bare one-token pointer to a requirement id (`D41`, `§1.6`) may stay; a sentence explaining
+   *why* that decision was made may not — verify the fact is already in the owning product doc
+   (`docs/0-product/<feature>.md`) or the feature's gap-tracking doc before deleting it from the
+   host, adding it there first if it's missing.
+
+**No method calls in templates.** A property binding, interpolation, `@if`/`@for`/`@let` may not
+call a host method. Three replacement shapes, by what the method actually did:
+
+| The method was… | Replace with | Example |
+|---|---|---|
+| pure formatting (no branch on row identity) | a pipe | `{{ invoice.issuedAt \| invoiceIssuedAt }}` (`c991407`/2026-09-16) |
+| a boolean predicate taking an id/row arg | a `computed()` `Set`/`Map`, or a derived record keyed by row id | `includedTagSet().has(tag)`; `groupSelectionStateById()[row.id]` (`c991407`) |
+| a glyph/branch over one of the table's own signals | a template `@switch` | `@switch (table.sortDirections().get('name'))` (`c991407`) |
+
+**Exceptions, not violations** — these are accepted directly in a template, no wrapper needed:
+signal/computed reads (`isLoading()`), event handlers (`(click)="save(row.id)"`), and reads of the
+library's own API (`table.selectedRows().has(id)`, `filters.status().isActive()`,
+`expandedRows().has(row.id)`) — the story exists to show that API, so calling it inline is the
+demonstration, not a violation.
+
+**The target is a host that reads as only the feature calls** — everything else (formatting,
+bookkeeping, timers, subscriptions) has its own name in its own file, per
+`.claude/rules/extract-encapsulated-logic.md`'s test: does this logic own a lifecycle, own state
+that isn't the host's, or need a comment to explain what it does? If yes, it gets a name of its
+own — see the table above for which of the three shapes to reach for.
 
 ## Story scope — copy-paste code, not a realistic app
 
@@ -346,8 +415,10 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
 ## Reference implementations
 
 - `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/` — the
-  fullest examples: multiple mutation verbs, per-row transient UI state (`needsUniqueName`) kept
-  separate from table state, and (for the two `-optimistic/` stories) `withRowEdit()`'s config
+  fullest examples: multiple mutation verbs, per-row transient UI state (`forcedInvalid`,
+  `rowErrors`) kept separate from table state, a real name-uniqueness rule
+  (`editRowsWithUniqueNameSchema`) instead of hand-tracked bookkeeping for the duplicate-row
+  demo, and (for the two `-optimistic/` stories) `withRowEdit()`'s config
   wired to a fixed `multiple` value. Three separate hosts, not one host with toggles — see
   "`.stories.ts` and `.mdx`" above for why. **`saveAll()`/`clearAll()` live only in
   `gated-multiple-optimistic/`** (removed 2026-09-05 from the two single-row stories) — single
