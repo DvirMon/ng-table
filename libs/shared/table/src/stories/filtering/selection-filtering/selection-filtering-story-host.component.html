@@ -1,76 +1,19 @@
 <div class="story-host">
   <p class="story-host__hint">
     Selection under an active filter. Select a few rows, then filter them out of view: they stay
-    selected, and clearing the filter brings the selection back exactly as it was. The two
-    select-all buttons are separate on purpose — one scopes to what you can see, the other to the
-    whole dataset. Sorting never changes the selection; deleting a row does, even one that is
-    filtered out.
+    selected, and clearing the filter brings the selection back exactly as it was. Sorting never
+    changes the selection; deleting a row does.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="selectAllVisibleRows()">Select all (visible)</button>
-    <button type="button" (click)="selectAllRowsIncludingHidden()">
-      Select all (including hidden)
-    </button>
-    <button type="button" (click)="clearSelection()">Clear selection</button>
-    <button type="button" (click)="sortByAmount()">Sort by amount</button>
-    <button type="button" (click)="clearAllFilters()">Clear filters</button>
-  </div>
-
-  <div class="story-host__toolbar">
-    <label>
-      Delete row
-      <select #deleteSelect (change)="pickRowToDelete(deleteSelect.value)">
-        <option value="" [selected]="rowToDelete() === null">pick an invoice…</option>
-        @for (invoice of table.value(); track invoice.id) {
-          <option [value]="invoice.id">{{ invoice.id }} — {{ invoice.customer }}</option>
-        }
-      </select>
-    </label>
-    <button type="button" (click)="deletePickedRow()">Delete</button>
-  </div>
-
-  <div class="filtering-story__filters">
-    <div
-      class="filtering-story__field"
-      [class.filtering-story__field--active]="filters.status().isActive()"
-    >
-      <span class="filtering-story__label">Status (equals)</span>
-      <select [formField]="filterForm.status">
-        <option value="">any</option>
-        @for (status of statusOptions; track status) {
-          <option [value]="status">{{ status }}</option>
-        }
-      </select>
-    </div>
-
-    <div
-      class="filtering-story__field"
-      [class.filtering-story__field--active]="filters.customer().isActive()"
-    >
-      <span class="filtering-story__label">Customer (contains)</span>
-      <input type="text" [formField]="filterForm.customer" />
-    </div>
-
-    <div
-      class="filtering-story__field"
-      [class.filtering-story__field--active]="filters.tags().isActive()"
-    >
-      <span class="filtering-story__label">Tags (hasAny)</span>
-      <div class="filtering-story__checks">
-        @for (tag of tagOptions; track tag) {
-          <label>
-            <input
-              type="checkbox"
-              [checked]="selectedTagSet().has(tag)"
-              (change)="toggleTag(tag)"
-            />
-            {{ tag }}
-          </label>
-        }
-      </div>
-    </div>
-  </div>
+  <ngp-selection-filtering-toolbar
+    [statusField]="filterForm.status"
+    [customerField]="filterForm.customer"
+    [filters]="filters"
+    [statusOptions]="statusOptions"
+    [tagOptions]="tagOptions"
+    (toggleTag)="toggleTag($event)"
+    (clearAllFilters)="clearAllFilters()"
+  />
 
   <div class="filtering-story__summary">
     <span>
@@ -103,8 +46,30 @@
           />
         </th>
         @for (column of table.columns(); track column.id) {
-          <th class="story-host__cell">{{ column.label }}</th>
+          @let direction = table.sortDirections().get(column.id);
+          <th
+            class="story-host__cell"
+            [attr.aria-sort]="
+              direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'
+            "
+          >
+            <button type="button" (click)="toggleSort(column.id)">
+              {{ column.label }}
+              @switch (direction) {
+                @case ('asc') {
+                  ▲
+                }
+                @case ('desc') {
+                  ▼
+                }
+                @default {
+                  ↕
+                }
+              }
+            </button>
+          </th>
         }
+        <th class="story-host__cell">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -135,6 +100,15 @@
               } @empty {
                 <span class="filtering-story__blank"></span>
               }
+            </td>
+            <td class="story-host__cell">
+              <button
+                type="button"
+                [attr.aria-label]="'Delete invoice ' + invoice.id"
+                (click)="deleteRow(row.id)"
+              >
+                Delete
+              </button>
             </td>
           </tr>
         }

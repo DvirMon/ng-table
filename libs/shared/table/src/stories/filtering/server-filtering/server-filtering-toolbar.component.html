@@ -1,0 +1,56 @@
+<div class="story-host__toolbar">
+  <label>
+    Search (debounced 300ms)
+    <input type="search" placeholder="customer or invoice number" [formField]="searchField()" />
+  </label>
+  <button type="button" (click)="deliverServerDefault.emit()">Deliver server default now</button>
+  @if (loadError(); as message) {
+    <span class="story-host__error" role="status">{{ message }}</span>
+    <button type="button" (click)="retry.emit()">Retry</button>
+  }
+</div>
+
+<div class="filtering-story__filters">
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().status().isActive()"
+  >
+    <span class="filtering-story__label">Status (equals)</span>
+    <select [formField]="statusField()">
+      <option value="">any</option>
+      @for (status of statusOptions(); track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+  </div>
+
+  <div
+    class="filtering-story__field filtering-story__field--range"
+    [class.filtering-story__field--active]="filters().amount().isActive()"
+  >
+    <span class="filtering-story__label">
+      Amount (inRange){{ isAmountDirty() ? ' — dirty' : '' }}
+    </span>
+    <input type="number" aria-label="Minimum amount" [formField]="amountField().min" />
+    <input type="number" aria-label="Maximum amount" [formField]="amountField().max" />
+  </div>
+
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().excludedTags().isActive()"
+  >
+    <span class="filtering-story__label">Tags — exclude (hasNone)</span>
+    <div class="filtering-story__checks">
+      @for (tag of tagOptions(); track tag) {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="excludedTagSet().has(tag)"
+            (change)="toggleExcludedTag(tag)"
+          />
+          {{ tag }}
+        </label>
+      }
+    </div>
+  </div>
+</div>

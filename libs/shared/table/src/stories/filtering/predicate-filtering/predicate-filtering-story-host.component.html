@@ -5,32 +5,14 @@
     Empty a control and its term is simply not in the list for the next pass.
   </p>
 
-  <div class="story-host__toolbar">
-    <button type="button" (click)="clearFilters()">Clear both</button>
-  </div>
-
-  <div class="filtering-story__filters">
-    <div class="filtering-story__field" [class.filtering-story__field--active]="isSearchActive()">
-      <span class="filtering-story__label">Customer contains</span>
-      <input
-        type="search"
-        #searchInput
-        placeholder="customer name"
-        [value]="search()"
-        (input)="setSearch(searchInput.value)"
-      />
-    </div>
-
-    <div class="filtering-story__field" [class.filtering-story__field--active]="isStatusActive()">
-      <span class="filtering-story__label">Status is</span>
-      <select #statusSelect (change)="selectStatus(statusSelect.value)">
-        <option value="" [selected]="status() === null">any</option>
-        @for (option of statusOptions; track option) {
-          <option [value]="option" [selected]="status() === option">{{ option }}</option>
-        }
-      </select>
-    </div>
-  </div>
+  <ngp-predicate-filtering-toolbar
+    [search]="search()"
+    [status]="status()"
+    [statusOptions]="statusOptions"
+    (setSearch)="setSearch($event)"
+    (selectStatus)="selectStatus($event)"
+    (clearFilters)="clearFilters()"
+  />
 
   <div
     class="filtering-story__summary"

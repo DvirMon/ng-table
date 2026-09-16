@@ -1,9 +1,6 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { debounce, form, FormField } from '@angular/forms/signals';
-import { createFilters } from '../../../filters/create-filters';
-import { contains, filter, hasNone, inRange } from '../../../filters/rules';
-import { rowOf } from '../../../filters/row-of';
+import { debounce, form } from '@angular/forms/signals';
 import { createTable } from '../../../api/create-table';
 import { createTableFeature } from '../../../api/create-table-feature';
 import type { TableStore } from '../../../api/types';
@@ -13,13 +10,9 @@ import { injectInvoiceApi } from '../fixtures/http';
 import { STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { serverInvoiceConfig } from '../fixtures/schema';
 import type { InvoicePage, InvoiceRow, RangeCriterion } from '../fixtures/types';
-import {
-  EMPTY_RANGE,
-  isRangeCriterion,
-  isStringArray,
-  matchesStatus,
-  toggleOption,
-} from '../fixtures/utils';
+import { EMPTY_RANGE, isRangeCriterion, isStringArray } from '../fixtures/utils';
+import { createServerFilters } from './server-filtering.filters';
+import { ServerFilteringToolbarComponent } from './server-filtering-toolbar.component';
 
 /** The range the "server" eventually supplies as the amount filter's default. */
 const SERVER_DEFAULT_AMOUNT: RangeCriterion = { min: 1000, max: 20000 };
@@ -75,7 +68,7 @@ function toQueryParams(active: Partial<Record<string, unknown>>): Record<string,
  */
 @Component({
   selector: 'ngp-server-filtering-story-host',
-  imports: [FormField, NgpTableDirective, NgpTableRowDirective],
+  imports: [NgpTableDirective, NgpTableRowDirective, ServerFilteringToolbarComponent],
   templateUrl: './server-filtering-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
 })
@@ -88,15 +81,9 @@ export class ServerFilteringStoryHostComponent {
 
   /**
    * Filters are declared here before any row has ever been fetched — `rows` below starts as an
-   * empty array, so there is no data to anchor `InvoiceRow` to. `rowOf<InvoiceRow>()` supplies
-   * the row type in the slot real row data would otherwise occupy; it is never read.
+   * empty array, so there is no data to anchor `InvoiceRow` to.
    */
-  protected readonly filters = createFilters(rowOf<InvoiceRow>(), (path) => [
-    filter(path.status, matchesStatus, { emptyValue: '' }),
-    contains(path.customer, { as: 'search' }),
-    inRange(path.amount, { source: () => this.serverDefaultAmount() }),
-    hasNone(path.tags, { as: 'excludedTags' }),
-  ]);
+  protected readonly filters = createServerFilters(this.serverDefaultAmount);
 
   /**
    * One form, over the criterion model itself — the debounced search field writes straight into
@@ -151,25 +138,12 @@ export class ServerFilteringStoryHostComponent {
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly tagOptions = TAG_OPTIONS;
 
-  /** The late-default race, made visible: dirty means the typed value is no longer following
-   * the declared `source`, so an arriving server default loses. */
-  protected readonly isAmountDirty = computed(() => this.filters.amount().dirty());
   protected readonly hasNoMatches = computed(
     () =>
       this.filters().isActive() &&
       this.invoices.status() === 'resolved' &&
       this.serverTotal() === 0,
   );
-  protected readonly excludedTagSet = computed(
-    () => new Set(this.filters.excludedTags().value()),
-  );
-
-  /** Hand-wired: a tag multi-select is a set, not a single control value. */
-  protected toggleExcludedTag(tag: string): void {
-    this.filters
-      .excludedTags()
-      .value.update((selected) => toggleOption(selected, tag, this.tagOptions));
-  }
 
   /** The late arrival. With a typed value already in the box, `dirty()` keeps it. */
   protected deliverServerDefault(): void {

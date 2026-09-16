@@ -1,41 +1,27 @@
 import { Component, computed, signal } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
-import { createFilters } from '../../../filters/create-filters';
-import {
-  anyOf,
-  contains,
-  filter,
-  inDateRange,
-  inRange,
-} from '../../../filters/rules';
+import { form } from '@angular/forms/signals';
 import { createTable } from '../../../api/create-table';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { clientInvoiceConfig } from '../fixtures/schema';
-import type { InvoiceRow, RangeCriterion, TagCriterion } from '../fixtures/types';
+import type { InvoiceRow } from '../fixtures/types';
 import {
-  EMPTY_TAG_CRITERION,
   formatCriterion,
   isDateRangeCriterion,
-  isEmptyTagCriterion,
   isInvoiceStatus,
   isRangeCriterion,
   isTagCriterion,
-  matchesInvoiceNumber,
-  matchesStatus,
-  matchesTagCriterion,
-  toggleOption,
 } from '../fixtures/utils';
 import { FILTERING_STORY_PIPES } from '../filtering-story.pipes';
 import { createFilterReportLog } from './filter-report-log';
 import { CLIENT_FILTER_KEYS } from './client-filtering.types';
 import type { ActiveCriterion, ClientFilterKey, SavedFilterLoad } from './client-filtering.types';
+import { createClientFilters } from './client-filtering.filters';
+import type { ClientCriteria } from './client-filtering.filters';
+import { ClientFilteringToolbarComponent } from './client-filtering-toolbar.component';
 
-/** The `amount` default the story's `Reset to defaults` restores and `Clear all` does not.
- * Without a declared `source` the two buttons would be indistinguishable. */
-const DEFAULT_AMOUNT_RANGE: RangeCriterion = { min: 1000, max: null };
 
 /**
  * A filter set persisted by an older build: `status` names a value that no longer exists, and
@@ -57,12 +43,6 @@ const STALE_SAVED_FILTER: Record<string, unknown> = {
  * The guards are what let this return a typed value at all: each one narrows a single
  * `unknown` off the snapshot. That is the whole difference between the two load buttons.
  */
-/** The criterion map the schema below infers. Derived, never restated — a renamed filter key
- *  breaks this function rather than silently passing an unknown key to `reset()`. */
-type ClientCriteria = ReturnType<
-  ReturnType<ClientFilteringStoryHostComponent['filters']>['value']
->;
-
 function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriteria> {
   const guarded: Partial<ClientCriteria> = {};
   if (isInvoiceStatus(saved['status'])) {
@@ -95,7 +75,12 @@ function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriter
  */
 @Component({
   selector: 'ngp-client-filtering-story-host',
-  imports: [FormField, NgpTableDirective, NgpTableRowDirective, ...FILTERING_STORY_PIPES],
+  imports: [
+    NgpTableDirective,
+    NgpTableRowDirective,
+    ClientFilteringToolbarComponent,
+    ...FILTERING_STORY_PIPES,
+  ],
   templateUrl: './client-filtering-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
 })
@@ -106,27 +91,7 @@ export class ClientFilteringStoryHostComponent {
   protected readonly data = signal<InvoiceRow[]>(INVOICE_ROWS_MOCK);
 
   /** Public, not protected, only so `ClientCriteria` above can derive the criterion map from it. */
-  readonly filters = createFilters(this.data, (path) => [
-    filter(path.status, matchesStatus, { emptyValue: '' }),
-    contains(path.customer),
-    inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE }),
-    inDateRange(path.issuedAt),
-    filter(
-      path.tags,
-      (cell: string[], criterion: TagCriterion): boolean => {
-        if (this.tagsPredicateIsBroken()) {
-          throw new Error('The tags predicate is broken (story control).');
-        }
-        return matchesTagCriterion(cell, criterion);
-      },
-      { isEmpty: isEmptyTagCriterion, emptyValue: EMPTY_TAG_CRITERION },
-    ),
-    // Declared paths (PrimeNG's shape), never scanned (AG Grid's). `note` is nullable and `id`
-    // is numeric, so the typed matchers return `false` where a stringify-and-substring quick
-    // filter throws. `customer` cannot join the group — it already owns a `contains` filter,
-    // and one path carries one filter.
-    anyOf('search', [contains(path.note), filter(path.id, matchesInvoiceNumber)]),
-  ]);
+  readonly filters = createClientFilters(this.data, this.tagsPredicateIsBroken);
 
   /** Signal Forms directly over the criterion model — `filters().value` is a `WritableSignal`,
    * so the form writes through to the nodes and there is nothing to keep in sync. */
@@ -146,17 +111,6 @@ export class ClientFilteringStoryHostComponent {
 
   protected readonly savedFilterLoad = signal<SavedFilterLoad>(null);
 
-  protected readonly includedTagSet = computed(
-    () => new Set(this.filters.tags().value().include),
-  );
-  protected readonly excludedTagSet = computed(
-    () => new Set(this.filters.tags().value().exclude),
-  );
-
-  protected readonly isEveryTagIncluded = computed(
-    () => this.includedTagSet().size === this.tagOptions.length,
-  );
-
   /** Labels only — the per-key and root booleans are shipped members, read straight from the
    *  template (`filters.status().isActive()`, `filters().isActive()`). */
   protected readonly activeCriteria = computed<ActiveCriterion[]>(() =>
@@ -172,29 +126,6 @@ export class ClientFilteringStoryHostComponent {
   protected readonly isFilteredToNothing = computed(
     () => this.filters().isActive() && this.matchCount() === 0 && !this.hasNoData(),
   );
-
-  /** Hand-wired: a tag multi-select is a set, not a single control value. */
-  protected toggleIncludedTag(tag: string): void {
-    this.filters.tags().value.update((criterion) => ({
-      ...criterion,
-      include: toggleOption(criterion.include, tag, this.tagOptions),
-    }));
-  }
-
-  protected toggleExcludedTag(tag: string): void {
-    this.filters.tags().value.update((criterion) => ({
-      ...criterion,
-      exclude: toggleOption(criterion.exclude, tag, this.tagOptions),
-    }));
-  }
-
-  /** The Select-All affordance every peer's multi-select ships. */
-  protected toggleAllIncludedTags(): void {
-    this.filters.tags().value.update((criterion) => ({
-      ...criterion,
-      include: this.isEveryTagIncluded() ? [] : [...this.tagOptions],
-    }));
-  }
 
   /** One summary entry's ×. Empties that criterion alone; the rest keep narrowing. */
   protected clearCriterion(key: ClientFilterKey): void {

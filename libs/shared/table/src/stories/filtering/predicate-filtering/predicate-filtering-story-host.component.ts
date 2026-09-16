@@ -6,6 +6,7 @@ import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directiv
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS } from '../fixtures/mock';
 import type { InvoiceRow, InvoiceStatus } from '../fixtures/types';
 import { predicateInvoiceConfig } from './predicate-filtering.schema';
+import { PredicateFilteringToolbarComponent } from './predicate-filtering-toolbar.component';
 
 /** Local, because `filtering/fixtures/utils.ts` reaches into the filters domain for its matchers
  * and this host imports nothing from there. */
@@ -22,7 +23,7 @@ function isInvoiceStatus(value: string): value is InvoiceStatus {
  */
 @Component({
   selector: 'ngp-predicate-filtering-story-host',
-  imports: [NgpTableDirective, NgpTableRowDirective],
+  imports: [NgpTableDirective, NgpTableRowDirective, PredicateFilteringToolbarComponent],
   templateUrl: './predicate-filtering-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
 })
@@ -40,8 +41,6 @@ export class PredicateFilteringStoryHostComponent {
 
   protected readonly statusOptions = STATUS_OPTIONS;
 
-  protected readonly isSearchActive = computed(() => this.search().trim().length > 0);
-  protected readonly isStatusActive = computed(() => this.status() !== null);
   protected readonly activeTermCount = computed(() => this.rowPredicates().length);
 
   /** The shipped member, never story-local arithmetic. */

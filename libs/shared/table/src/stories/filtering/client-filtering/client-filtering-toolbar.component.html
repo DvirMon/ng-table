@@ -1,0 +1,105 @@
+<div class="story-host__toolbar">
+  <label>
+    Search
+    <input type="search" placeholder="note or invoice number" [formField]="searchField()" />
+  </label>
+  <button type="button" (click)="resetToDefaults.emit()">Reset to defaults</button>
+  <button type="button" (click)="clearAllFilters.emit()">Clear all</button>
+  <button type="button" (click)="toggleTagsPredicate.emit()">
+    {{ tagsPredicateIsBroken() ? 'Repair the tags filter' : 'Break the tags filter' }}
+  </button>
+  <button type="button" (click)="loadSavedFilterRaw.emit()">Load saved filter (raw)</button>
+  <button type="button" (click)="loadSavedFilterGuarded.emit()">Load saved filter (guarded)</button>
+  @if (hasNoData()) {
+    <button type="button" (click)="restoreTheData.emit()">Restore the data</button>
+  } @else {
+    <button type="button" (click)="emptyTheData.emit()">Empty the data</button>
+  }
+</div>
+
+<div class="filtering-story__filters">
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().status().isActive()"
+  >
+    <span class="filtering-story__label">Status (equals)</span>
+    <select [formField]="statusField()">
+      <option value="">any</option>
+      @for (status of statusOptions(); track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+  </div>
+
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().customer().isActive()"
+  >
+    <span class="filtering-story__label">Customer (contains)</span>
+    <input type="text" [formField]="customerField()" />
+  </div>
+
+  <div
+    class="filtering-story__field filtering-story__field--range"
+    [class.filtering-story__field--active]="filters().amount().isActive()"
+  >
+    <span class="filtering-story__label">Amount (inRange)</span>
+    <input type="number" aria-label="Minimum amount" [formField]="amountField().min" />
+    <input type="number" aria-label="Maximum amount" [formField]="amountField().max" />
+  </div>
+
+  <div
+    class="filtering-story__field filtering-story__field--range"
+    [class.filtering-story__field--active]="filters().issuedAt().isActive()"
+  >
+    <span class="filtering-story__label">Issued (inDateRange)</span>
+    <input type="date" aria-label="Issued from" [formField]="issuedAtField().from" />
+    <input type="date" aria-label="Issued to" [formField]="issuedAtField().to" />
+  </div>
+
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().tags().isActive()"
+  >
+    <span class="filtering-story__label">Tags — include (hasAnyOf)</span>
+    <div class="filtering-story__checks">
+      <label>
+        <input
+          type="checkbox"
+          [checked]="isEveryTagIncluded()"
+          (change)="toggleAllIncludedTags()"
+        />
+        Select all
+      </label>
+      @for (tag of tagOptions(); track tag) {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="includedTagSet().has(tag)"
+            (change)="toggleIncludedTag(tag)"
+          />
+          {{ tag }}
+        </label>
+      }
+    </div>
+  </div>
+
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().tags().isActive()"
+  >
+    <span class="filtering-story__label">Tags — exclude (hasNoneOf)</span>
+    <div class="filtering-story__checks">
+      @for (tag of tagOptions(); track tag) {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="excludedTagSet().has(tag)"
+            (change)="toggleExcludedTag(tag)"
+          />
+          {{ tag }}
+        </label>
+      }
+    </div>
+  </div>
+</div>

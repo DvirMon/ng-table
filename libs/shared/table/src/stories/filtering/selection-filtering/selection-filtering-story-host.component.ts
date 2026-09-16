@@ -1,7 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
-import { form, FormField } from '@angular/forms/signals';
-import { createFilters } from '../../../filters/create-filters';
-import { contains, filter, hasAny } from '../../../filters/rules';
+import { form } from '@angular/forms/signals';
 import { createTable } from '../../../api/create-table';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';
@@ -14,20 +12,20 @@ import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directiv
 import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
 import { selectionInvoiceConfig } from '../fixtures/schema';
 import type { InvoiceRow } from '../fixtures/types';
-import { matchesStatus, toggleOption } from '../fixtures/utils';
+import { toggleOption } from '../fixtures/utils';
+import { createSelectionFilters } from './selection-filtering.filters';
+import { SelectionFilteringToolbarComponent } from './selection-filtering-toolbar.component';
 
 /**
  * Selection under an active filter
  *
  * `withFiltering()` + `withSelection()` + `withSorting()` combine so selection survives both.
- * Two select-all buttons: `selectAllIds(table)` scopes to visible `rows()`; `{ includeHidden:
- * true }` scopes to the whole dataset.
  *
  * Selection restores exactly as it was once the filter clears; only deleting a row prunes it.
  */
 @Component({
   selector: 'ngp-selection-filtering-story-host',
-  imports: [FormField, NgpTableDirective, NgpTableRowDirective],
+  imports: [NgpTableDirective, NgpTableRowDirective, SelectionFilteringToolbarComponent],
   templateUrl: './selection-filtering-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
 })
@@ -36,11 +34,7 @@ export class SelectionFilteringStoryHostComponent {
 
   /** The subset this story filters by — enough to move rows in and out of view while a
    * selection is held, without rebuilding the client story's whole filter row. */
-  protected readonly filters = createFilters(this.data, (path) => [
-    filter(path.status, matchesStatus, { emptyValue: '' }),
-    contains(path.customer),
-    hasAny(path.tags),
-  ]);
+  protected readonly filters = createSelectionFilters(this.data);
 
   protected readonly filterForm = form(this.filters().value);
 
@@ -54,10 +48,6 @@ export class SelectionFilteringStoryHostComponent {
 
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly tagOptions = TAG_OPTIONS;
-
-  /** The row the delete control acts on — picked from the whole dataset, so a row currently
-   * filtered out is reachable. */
-  protected readonly rowToDelete = signal<RowId | null>(null);
 
   protected readonly visibleIds = computed(() => selectAllIds(this.table));
   protected readonly visibleSelectionState = computed(() =>
@@ -74,20 +64,9 @@ export class SelectionFilteringStoryHostComponent {
   protected readonly selectedIdsLabel = computed(() =>
     [...this.table.selectedRows()].join(', '),
   );
-  protected readonly selectedTagSet = computed(() => new Set(this.filters.tags().value()));
 
   protected toggleRow(id: RowId): void {
     this.table.toggle(id);
-  }
-
-  /** Post-filter, post-sort — the default scope. */
-  protected selectAllVisibleRows(): void {
-    this.table.select(selectAllIds(this.table));
-  }
-
-  /** The whole dataset, filtered-out rows included. */
-  protected selectAllRowsIncludingHidden(): void {
-    this.table.select(selectAllIds(this.table, { includeHidden: true }));
   }
 
   protected toggleAllVisibleRows(): void {
@@ -99,27 +78,14 @@ export class SelectionFilteringStoryHostComponent {
     this.table.select(visibleIds);
   }
 
-  protected clearSelection(): void {
-    this.table.clearSelection();
-  }
-
-  protected sortByAmount(): void {
-    this.table.toggleSort('amount');
-  }
-
-  protected pickRowToDelete(raw: string): void {
-    this.rowToDelete.set(raw === '' ? null : Number(raw));
-  }
-
   /** A real removal, unlike filtering one out: the id leaves `data`, so the engine prunes it
    * and the selected count drops. */
-  protected deletePickedRow(): void {
-    const id = this.rowToDelete();
-    if (id === null) {
-      return;
-    }
+  protected deleteRow(id: RowId): void {
     this.table.value.update(removeRow<InvoiceRow>(id));
-    this.rowToDelete.set(null);
+  }
+
+  protected toggleSort(id: string): void {
+    this.table.toggleSort(id);
   }
 
   /** Hand-wired: a tag multi-select is a set, not a single control value. */

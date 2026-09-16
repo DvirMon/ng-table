@@ -5,13 +5,21 @@ import * as SelectionStories from './selection-filtering/selection-filtering.sto
 import * as ServerStories from './server-filtering/server-filtering.stories';
 import clientClass from './client-filtering/client-filtering-story-host.component.ts?raw';
 import clientTemplate from './client-filtering/client-filtering-story-host.component.html?raw';
+import clientToolbarClass from './client-filtering/client-filtering-toolbar.component.ts?raw';
+import clientToolbarTemplate from './client-filtering/client-filtering-toolbar.component.html?raw';
 import predicateClass from './predicate-filtering/predicate-filtering-story-host.component.ts?raw';
 import predicateTemplate from './predicate-filtering/predicate-filtering-story-host.component.html?raw';
+import predicateToolbarClass from './predicate-filtering/predicate-filtering-toolbar.component.ts?raw';
+import predicateToolbarTemplate from './predicate-filtering/predicate-filtering-toolbar.component.html?raw';
 import predicateSchema from './predicate-filtering/predicate-filtering.schema.ts?raw';
 import selectionClass from './selection-filtering/selection-filtering-story-host.component.ts?raw';
 import selectionTemplate from './selection-filtering/selection-filtering-story-host.component.html?raw';
+import selectionToolbarClass from './selection-filtering/selection-filtering-toolbar.component.ts?raw';
+import selectionToolbarTemplate from './selection-filtering/selection-filtering-toolbar.component.html?raw';
 import serverClass from './server-filtering/server-filtering-story-host.component.ts?raw';
 import serverTemplate from './server-filtering/server-filtering-story-host.component.html?raw';
+import serverToolbarClass from './server-filtering/server-filtering-toolbar.component.ts?raw';
+import serverToolbarTemplate from './server-filtering/server-filtering-toolbar.component.html?raw';
 import filteringStyles from './filtering-story.css?raw';
 import filteringSchema from './fixtures/schema.ts?raw';
 import filteringHttp from './fixtures/http.ts?raw';
@@ -48,19 +56,40 @@ rather than borrowing `customer`, which already carries its own `contains`.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-client-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-client-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      client-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      client-filtering-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={clientClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={clientTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={clientClass} language="tsx" />
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={clientToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={clientToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -91,19 +120,40 @@ the failure, so the retried query is the one that failed, not a fresh one.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-server-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-server-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      server-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      server-filtering-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={serverClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={serverTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={serverClass} language="tsx" />
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={serverToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={serverToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
@@ -126,11 +176,23 @@ signals change. Terms are AND'd, and a control with nothing in it contributes no
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-predicates-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-predicates-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-predicates-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-predicates-source" />
+      predicate-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-predicates-source" />
+      predicate-filtering-toolbar.component.html
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-predicates-source" />
@@ -139,10 +201,19 @@ signals change. Terms are AND'd, and a control with nothing in it contributes no
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={predicateClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={predicateTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={predicateClass} language="tsx" />
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={predicateToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={predicateToolbarTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
       <Source code={predicateSchema} language="ts" />
@@ -156,7 +227,8 @@ signals change. Terms are AND'd, and a control with nothing in it contributes no
 
 Two features composed, and the place their edges meet. A selected row that a filter moves out of
 view stays selected — the opposite of MUI X's documented behaviour, which deselects it — and
-clearing the filter brings the selection back unchanged.
+clearing the filter brings the selection back unchanged. Column headers sort; the header
+checkbox is the only select-all/clear gesture; each row has its own delete action.
 
 One gap is rendered rather than papered over: nothing shipped reports how many selected rows are
 currently hidden, so the canvas says so instead of computing a stand-in count in the story host.
@@ -168,19 +240,40 @@ The notice disappears on its own when that signal lands.
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-selection-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-selection-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
       <input type="radio" name="filtering-selection-source" />
-      TS
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-selection-source" />
+      selection-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-selection-source" />
+      selection-filtering-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
+      <Source code={selectionClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
       <Source code={selectionTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={selectionClass} language="tsx" />
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionToolbarTemplate} language="html" />
     </div>
   </div>
 </div>
