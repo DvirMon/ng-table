@@ -120,7 +120,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `grouping/fixtures/schema.ts` | One table config over one column list, the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
 | `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
 | `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
-| `grouping/fixtures/http.ts` | `injectGroupedRowsApi()` — `fetchRows` plus `fetchGroupingPreference`, the async grouping rule's source |
+| `grouping/fixtures/http.ts` | `createGroupedRowsResource()` and `createGroupingPreferenceResource()` (`httpResource`-based, 2026-09-16) — the refetch and async-grouping-rule sources; `toErrorMessage()` replaces the old `normalizeError`/`isMessageBody` pair |
 | `grouping/fixtures/handlers.ts` | MSW handlers for the refetch and async-rule round trips |
 | `grouping/grouping-story.css` | Grouping-specific styling — group rows by `data-row-kind`/`data-depth`, level pills, chevrons, opt-in sticky headers |
 | `selection/fixtures/types.ts` | `SelectionRow` — `locked` drives `enableRowSelection`; wider than `EditRow` so select-all and a count are meaningful |
@@ -168,13 +168,28 @@ via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`
 Query. No shared/cached server-state exists across these demo-only stories to justify TanStack's
 caching model, and `HttpClient` matches the repo's only other transport precedent.
 
-**`server-filtering/` is the one read-only transport, and it's `rxResource`** (2026-09-16, per
+**`server-filtering/` is the one read-only transport on `rxResource`** (2026-09-16, per
 `docs/1-state/work/table-owned-filtering/spec.md` step 7). `rxResource({ params, stream })` over
 `injectInvoiceApi().fetchInvoices(...)` replaces a hand-rolled `effect()` + `untracked()` + `load()`
 loop; a `linkedSignal` (not a copy `effect()`) turns the resolved page into the `WritableSignal`
 `createTable()` needs, using the `{ source, computation(value, previous) }` overload so the
 previous page survives a load or an error instead of blanking the table. Save/delete stays
 Observable-via-`HttpClient` above; a pure read is the one place `rxResource` fits.
+
+**`grouping/`'s two reads are `httpResource`, not `rxResource`** (2026-09-16). `createGroupedRowsResource()`
+and `createGroupingPreferenceResource()` in `grouping/fixtures/http.ts` replace the earlier
+`injectGroupedRowsApi()` `HttpClient` wrapper, both built on `httpResource` from
+`@angular/common/http`. `httpResource`'s `parse` option is typed to accept `unknown`, not the
+inferred raw shape, so a runtime type guard (`isDealPagePayload`) does the narrowing a directly
+typed parse function can't. Same `linkedSignal` bridge as `server-filtering/` (never a copy
+`effect()`) turns the resource into the `WritableSignal` `createTable()` needs. **The rule per
+transport, not per feature:** reads use the resource API (`httpResource` or `rxResource`,
+whichever a given feature already settled on), writes use `HttpClient`, and every feature owns
+its own fixture + MSW handlers — no shared HTTP service crosses a feature boundary.
+Row-edit's five save/delete hosts stay `HttpClient` above; `server-filtering/` stays `rxResource`
+above; this is `grouping/`'s own choice, not a repo-wide migration off `rxResource` (out of scope
+for now: `filtering/fixtures/http.ts` + `server-filtering/` migrating to `httpResource` for
+symmetry would be a later, separate pass).
 
 ## The story-host component
 
@@ -198,6 +213,20 @@ Observable-via-`HttpClient` above; a pure read is the one place `rxResource` fit
   (`editRowsWithUniqueNameSchema`'s `validate()` rule), not host-tracked UI state — see "What a
   host may not contain" below. The host wires `createTable()` and `form()` together; it does not
   reimplement table logic.
+- **Toolbar component (2026-09-16).** Every control strip above the table — buttons, filter
+  inputs, insert-position pickers — is its own `<story>-toolbar.component.{ts,html}` beside the
+  host (or promoted to `ui/` on a second importer within the feature, same promotion-ladder bar
+  as any other fixture — e.g. `row-edit/ui/insert-row-toolbar.component.ts`, shared by
+  `gated-single-optimistic/` and `gated-single-pessimistic/`, whose toolbars are identical). State
+  flows in via `input.required<…>()`, typed and named for what it is — a Signal Forms field is
+  passed as the field itself (`filterForm.search`), never the whole form. Actions flow out via
+  `output<T>()`, named for the domain action (`addRow`, `clearAllFilters`), never `onClick`. A
+  toolbar-local knob that only the toolbar reads or writes (an `insertAt` position, a bulk-add
+  count) moves into the toolbar rather than staying a host signal the host only forwards. The
+  host keeps summaries, notices, event logs, and any counter that reads table state — those
+  aren't controls, they're readouts, and stay where the table state they read already lives. This
+  mimics a production template: a consumer's own toolbar is never inlined in the table markup
+  either.
 
 ## What a host may not contain
 
@@ -220,6 +249,14 @@ copy honestly (from the 2026-09-15/16 audit of every non-grouping host,
    *why* that decision was made may not — verify the fact is already in the owning product doc
    (`docs/0-product/<feature>.md`) or the feature's gap-tracking doc before deleting it from the
    host, adding it there first if it's missing.
+5. **A toolbar button that duplicates a table gesture the table already exposes** (2026-09-16) —
+   a "Select all"/"Clear selection" button next to a header checkbox that already does both, a
+   sort button next to a header a reader can click, a delete-via-picker flow standing in for a
+   per-row action. The table's own affordance is the copy-paste answer; a second control for the
+   same verb teaches the wrong shape. Keep a toolbar button only where no header/row gesture
+   covers it — a radio group has no untick (`single-selection/`'s `Clear selection`), and a
+   grouped table has no header checkbox over group rows (`grouping-selection/`'s
+   `Clear selection`).
 
 **No method calls in templates.** A property binding, interpolation, `@if`/`@for`/`@let` may not
 call a host method. Three replacement shapes, by what the method actually did:
@@ -381,8 +418,11 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   not every file the host happens to import. Matches the pattern Angular Material's own example
   viewer uses (e.g. "Dialog Animations": `HTML | TS | CSS | dialog-animations-example-dialog.html`).
   Tabs are two clusters, in this fixed order:
-  1. **The host's own files, generically labeled: `HTML`, then `TS`, then `CSS` if it has a
-     stylesheet** — always first, always in that order, always together. `CSS` means whatever
+  1. **The host's own files, generically labeled: `TS`, then `HTML`, then `CSS` if it has a
+     stylesheet** — always first, always in that order, always together, `TS` selected by default
+     (`defaultChecked`/its radio-equivalent). (Reordered 2026-09-16 from the earlier `HTML, TS,
+     CSS` — `TS` first matches how a consumer actually reads a copy-paste example: the
+     composition call is the decision, the template is secondary.) `CSS` means whatever
      the host's `styleUrl`/`styleUrls` actually is, local or shared — `styles/story-host.css` fills
      this slot generically labeled `CSS` for a story with no local override (`live-optimistic/`,
      the `gated-*` stories). Only when a host has **two** stylesheets (its own local one plus the
@@ -399,7 +439,10 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
      scheme — the filename itself already says whether it's local or shared. A plain extra file
      (schema/config logic) gets exactly one tab. An extra file that is itself a sub-component
      (has its own `.ts` **and** `.html`) gets a tab per file, filename-labeled, the same way the
-     host's own two are — never collapsed into one.
+     host's own two are — never collapsed into one. **Every story's `<story>-toolbar.component.ts`
+     and `.component.html` (see "Toolbar component" under "The story-host component" below) are
+     cluster-2 tabs, placed first among the extras** — a reader copying the host also needs the
+     toolbar it renders.
   **Types, Mock, Utils, and Directive tabs are excluded entirely** — none of them are something
   a consumer copies: a row/data shape is inferred from the schema, not typed out by hand; mock
   data is fixture-only; a "utils" file is usually story-only glue (a fake save function, a
