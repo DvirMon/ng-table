@@ -1,5 +1,6 @@
-import type { ColumnDef, GroupSummary, RenderRow } from '../api/types';
+import type { ClusterSummary, ColumnDef, GroupSummary, RenderRow } from '../api/types';
 import {
+  admitClusters,
   buildClusters,
   buildGroupRenderRows,
   clusterRows,
@@ -125,31 +126,47 @@ describe('sortClusters', () => {
     // children are already in ascending-size order — proving a per-parent sort reorders A's
     // siblings without disturbing B's, which a global cross-parent sort (flattening both
     // parents' children into one list before sorting) would not preserve.
-    const a1: ClusterNode<string> = { columnId: 'sub', value: 'a1', items: ['w'], children: [] };
+    const a1: ClusterNode<string> = {
+      columnId: 'sub',
+      value: 'a1',
+      items: ['w'],
+      children: [],
+      admitted: true,
+    };
     const a2: ClusterNode<string> = {
       columnId: 'sub',
       value: 'a2',
       items: ['x', 'y', 'z'],
       children: [],
+      admitted: true,
     };
     const A: ClusterNode<string> = {
       columnId: 'top',
       value: 'A',
       items: [...a2.items, ...a1.items],
       children: [a2, a1],
+      admitted: true,
     };
-    const b1: ClusterNode<string> = { columnId: 'sub', value: 'b1', items: ['p'], children: [] };
+    const b1: ClusterNode<string> = {
+      columnId: 'sub',
+      value: 'b1',
+      items: ['p'],
+      children: [],
+      admitted: true,
+    };
     const b2: ClusterNode<string> = {
       columnId: 'sub',
       value: 'b2',
       items: ['q', 'r', 's'],
       children: [],
+      admitted: true,
     };
     const B: ClusterNode<string> = {
       columnId: 'top',
       value: 'B',
       items: [...b1.items, ...b2.items],
       children: [b1, b2],
+      admitted: true,
     };
     return { A, B, nodes: [A, B] };
   }
@@ -196,6 +213,137 @@ describe('sortClusters', () => {
     } finally {
       reportSpy.mockRestore();
     }
+  });
+});
+
+describe('admitClusters (#119 table-wide admission)', () => {
+  it('returns its input by reference at every level when no predicate is supplied — the no-op guarantee', () => {
+    const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
+      row[columnId as keyof Order]
+    );
+
+    const result = admitClusters(nodes, undefined, (items) => items, new Set());
+
+    expect(result).toBe(nodes);
+    expect(result[0].children).toBe(nodes[0].children);
+  });
+
+  it('marks a rejected node rather than removing it — columnId/value/items survive, the sibling array keeps its length', () => {
+    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
+      row[columnId as keyof Order]
+    );
+    const groupWhen = (c: ClusterSummary<Order>): boolean => c.key !== 'EU';
+
+    const result = admitClusters(nodes, groupWhen, (items) => items, new Set());
+
+    expect(result).toHaveLength(nodes.length);
+    const originalEu = nodes.find((node) => node.value === 'EU')!;
+    const eu = result.find((node) => node.value === 'EU')!;
+    expect(eu.admitted).toBe(false);
+    expect(eu.columnId).toBe('region');
+    expect(eu.value).toBe('EU');
+    expect(eu.items).toEqual(originalEu.items);
+  });
+
+  it('never judges descendants of a rejected node — a predicate rejecting every top-level cluster is never called for the deeper level', () => {
+    const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
+      row[columnId as keyof Order]
+    );
+    const seenColumnIds: string[] = [];
+    const rejectEverything = (c: ClusterSummary<Order>): boolean => {
+      seenColumnIds.push(c.columnId);
+      return false;
+    };
+
+    admitClusters(nodes, rejectEverything, (items) => items, new Set());
+
+    // US and EU are each judged once at 'region' — since both are rejected, 'category' (the
+    // deeper level nested under each) is never reached.
+    expect(seenColumnIds).toEqual(['region', 'region']);
+    expect(seenColumnIds).not.toContain('category');
+  });
+
+  it('a throwing groupWhen admits the cluster and reports once per column, not once per cluster', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
+        row[columnId as keyof Order]
+      );
+      const throwingGroupWhen = (): boolean => {
+        throw new Error('boom');
+      };
+
+      const result = admitClusters(nodes, throwingGroupWhen, (items) => items, new Set());
+
+      // Every node at every level (2 region clusters + 4 category clusters) hit the throw
+      // independently, yet all are admitted.
+      expect(result.every((node) => node.admitted)).toBe(true);
+      expect(result.flatMap((node) => node.children).every((node) => node.admitted)).toBe(true);
+
+      // One report per distinct column ('region', 'category'), not one per cluster.
+      expect(reportSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+});
+
+describe('admission-aware ordering (sortClusters with no groupOrder)', () => {
+  function admissionNode(value: string, admitted: boolean): ClusterNode<string> {
+    return { columnId: 'top', value, items: [value], children: [], admitted };
+  }
+
+  it('stable-partitions admitted siblings first, then dissolved siblings, each in first-occurrence order', () => {
+    const nodes = [
+      admissionNode('a', true),
+      admissionNode('b', false),
+      admissionNode('c', true),
+      admissionNode('d', false),
+    ];
+
+    const result = sortClusters(nodes, undefined, (items) => items, { done: false });
+
+    expect(result.map((node) => node.value)).toEqual(['a', 'c', 'b', 'd']);
+  });
+
+  it('returns the same array reference when no sibling is dissolved', () => {
+    const nodes = [admissionNode('a', true), admissionNode('b', true)];
+
+    const result = sortClusters(nodes, undefined, (items) => items, { done: false });
+
+    expect(result).toBe(nodes);
+  });
+
+  it('a comparator that sorts dissolved-first puts those nodes and their leaves first (dissolution is post-ordering)', () => {
+    const groupWhen = (c: ClusterSummary<Order>): boolean => c.key !== 'EU'; // dissolve EU
+    const dissolvedFirst = (a: GroupSummary<Order>, b: GroupSummary<Order>): number =>
+      Number(a.admitted) - Number(b.admitted);
+
+    const result = clusterRows(orders, ['region'], columns, {
+      groupWhen,
+      groupOrder: dissolvedFirst,
+    });
+
+    // EU (dissolved) leaves come first, then US (admitted) leaves — reversed from insertion
+    // order, proving the comparator runs after admission has already been decided.
+    expect(result.map((row) => row.region)).toEqual(['EU', 'EU', 'US', 'US', 'US']);
+  });
+
+  it('a dissolved node stops descending — its leaves stay in bucket order, never re-clustered by the deeper level (Q1)', () => {
+    const localOrders: Order[] = [
+      { id: 1, region: 'EU', category: 'Books' },
+      { id: 2, region: 'EU', category: 'Electronics' },
+      { id: 3, region: 'EU', category: 'Books' },
+    ];
+    const dissolveEverything = (): boolean => false;
+
+    const result = clusterRows(localOrders, ['region', 'category'], columns, {
+      groupWhen: dissolveEverything,
+    });
+
+    // Re-clustering by category would group the two Books rows together ([1, 3, 2]). Flat
+    // bucket order (no re-cluster once dissolved) keeps original insertion order instead.
+    expect(result.map((row) => row.id)).toEqual([1, 2, 3]);
   });
 });
 

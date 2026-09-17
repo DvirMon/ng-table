@@ -110,10 +110,20 @@ export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
 /** A group's raw clustering value, opaque to consumers. See `withGrouping()`'s decisions doc. */
 export type GroupKey = unknown;
 
-export interface GroupSummary<TRow> {
+/** What `groupWhen` judges: a built cluster's own contents, before admission is decided. */
+export interface ClusterSummary<TRow> {
+  readonly columnId: string;
   readonly key: GroupKey;
   readonly rows: readonly TRow[];
 }
+
+/** What `groupOrder` compares: the same cluster, after admission is decided. `admitted: false`
+ * ⇒ this cluster emits flat, no header. */
+export interface GroupSummary<TRow> extends ClusterSummary<TRow> {
+  readonly admitted: boolean;
+}
+
+export type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
 export type DerivedDict = Record<string, Signal<unknown>>;
 

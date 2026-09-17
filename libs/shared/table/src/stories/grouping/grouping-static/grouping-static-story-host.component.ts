@@ -8,6 +8,7 @@ import {
   setGroupLevels,
   toggleColumnVisibility,
   withGrouping,
+  type GroupKey,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { DEAL_COLUMN_IDS, groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
@@ -15,6 +16,12 @@ import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import { GroupingStaticToolbarComponent } from './grouping-static-toolbar.component';
 import type { GroupedColumnMode } from './grouping-static.types';
+
+/** Blank in the product sense, not the JS sense: `null`, `undefined` and `''` all read as "this
+ * deal has no region". */
+function isPresentKey(key: GroupKey): boolean {
+  return key !== null && key !== undefined && key !== '';
+}
 
 /**
  * Static grouping, no collapse
@@ -32,12 +39,16 @@ export class GroupingStaticStoryHostComponent {
   readonly showCount = input(true);
   readonly groupedColumnMode = input<GroupedColumnMode>('keep');
   readonly stickyHeaders = input(false);
+  readonly keepBlankRegionsFlat = input(false);
 
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initial: STATIC_GROUPING_LEVELS })
+    withGrouping({
+      initial: STATIC_GROUPING_LEVELS,
+      groupWhen: (cluster) => !this.keepBlankRegionsFlat() || isPresentKey(cluster.key),
+    })
   );
 
   /** `columns()` is the folded list, not a render order — it carries `visible`/`order` and leaves

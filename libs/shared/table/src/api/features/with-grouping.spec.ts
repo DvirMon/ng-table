@@ -1,7 +1,17 @@
 import { computed, signal, type Resource, type ResourceStatus, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { mockGroupingRows, mockGroupingTrackBy, type GroupingMockRow } from '../../table.mock';
+import {
+  mockGroupingRows,
+  mockGroupingTrackBy,
+  mockGroupWhenRows,
+  mockGroupWhenTrackBy,
+  mockRepRows,
+  mockRepTrackBy,
+  type GroupingMockRow,
+  type GroupWhenMockRow,
+  type RepMockRow,
+} from '../../table.mock';
 import { setGroupLevels } from '../../mutations/update-grouping';
 import { applyGrouping } from '../../schema/grouping-rules';
 import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
@@ -38,9 +48,10 @@ function makeColumns(): ColumnDef<GroupingMockRow>[] {
 }
 
 /** `[kind, depth, id-if-a-row]` per render row — the shape shared by the `groupOrder` ordering
- * assertions below. */
-function toShape(
-  rows: readonly { kind: string; depth: number; data: GroupingMockRow | null }[]
+ * assertions below and the `groupWhen` cases (#119). Generic over any row shape carrying a
+ * numeric `id`, so it also serves the local `groupWhen`-only fixtures below. */
+function toShape<TRow extends { id: number }>(
+  rows: readonly { kind: string; depth: number; data: TRow | null }[]
 ): [string, number, number | undefined][] {
   return rows.map((row) => [row.kind, row.depth, row.data?.id]);
 }
@@ -1468,6 +1479,269 @@ describe('groupingRule declarative sugar (#60)', () => {
     // Same 12-row shape as the "two-level grouping" case in the `withGrouping` describe above —
     // the base/overlay fold is a pure pass-through when no groupingRule/rules are configured.
     expect(store.renderRows()).toHaveLength(12);
+  });
+});
+
+function groupWhenColumns(
+  aggregateFn?: (rows: GroupWhenMockRow[]) => unknown
+): ColumnDef<GroupWhenMockRow>[] {
+  return [
+    { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'Region' },
+    {
+      id: 'amount',
+      accessor: (row) => row.amount,
+      visible: true,
+      order: 1,
+      label: 'Amount',
+      ...(aggregateFn ? { aggregateFn } : {}),
+    },
+  ];
+}
+
+const EU_GROUP_ID = 'group:>region:string:EU';
+
+describe('groupWhen (#119 table-wide admission)', () => {
+  it('rows with no region render flat at depth 0; regions with a value keep their header (headline scenario)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        withGrouping({ initial: ['region'], groupWhen: (c) => c.key != null })
+      )
+    );
+
+    const rows = store.renderRows();
+
+    expect(toShape(rows)).toEqual([
+      ['group', 0, undefined], // US
+      ['row', 1, 1],
+      ['row', 1, 2],
+      ['group', 0, undefined], // EU
+      ['row', 1, 3],
+      ['row', 0, 4], // null region — flat, no header
+      ['row', 0, 5], // undefined region — flat, no header
+    ]);
+  });
+
+  it('a size-threshold groupWhen dissolves single-row clusters and keeps the rest (OQ-6)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 })
+      )
+    );
+
+    const rows = store.renderRows();
+
+    expect(toShape(rows)).toEqual([
+      ['group', 0, undefined], // US (2 rows — admitted)
+      ['row', 1, 1],
+      ['row', 1, 2],
+      ['row', 0, 3], // EU (1 row — dissolved)
+      ['row', 0, 4], // null (1 row — dissolved)
+      ['row', 0, 5], // undefined (1 row — dissolved)
+    ]);
+  });
+
+  it('a dissolved cluster contributes no group id and no group: row in renderRows()', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 })
+      )
+    );
+
+    expect(store.groupIds()).not.toContain(EU_GROUP_ID);
+    expect(
+      store.renderRows().some((row) => row.kind === 'group' && row.id === EU_GROUP_ID)
+    ).toBe(false);
+  });
+
+  it('never calls aggregateFn for a dissolved cluster — proven by a throw that never fires', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const throwingAggregateFn = (rows: GroupWhenMockRow[]): number => {
+        if (rows.length < 2) {
+          throw new Error('aggregateFn must never be called for a dissolved (single-row) cluster');
+        }
+        return rows.reduce((sum, row) => sum + row.amount, 0) / rows.length;
+      };
+      const store = inContext(() =>
+        createTable(
+          signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+          { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns(throwingAggregateFn) },
+          withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 })
+        )
+      );
+
+      const usHeader = store.renderRows().find((row) => row.kind === 'group')!;
+      expect(usHeader.aggregates?.['amount']).toBe(200); // (100 + 300) / 2 — computed without error
+      expect(reportSpy).not.toHaveBeenCalled();
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('pipeline and render stages agree on row order once withSorting() is composed', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 }),
+        withSorting()
+      )
+    );
+
+    store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
+
+    const pipelineIds = store.rows().map((row) => row.id);
+    const renderLeafIds = store
+      .renderRows()
+      .filter((row) => row.kind === 'row')
+      .map((row) => (row.data as GroupWhenMockRow).id);
+
+    expect(renderLeafIds).toEqual(pipelineIds);
+  });
+
+  it('a groupOrder that places dissolved clusters first puts their flat rows first too', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        withGrouping({
+          initial: ['region'],
+          groupWhen: (c) => c.rows.length >= 2,
+          groupOrder: (a, b) => Number(a.admitted) - Number(b.admitted),
+        })
+      )
+    );
+
+    const rows = store.renderRows();
+
+    // EU, null, undefined (all dissolved, first-occurrence order among themselves) come first as
+    // flat rows; the admitted US cluster (header + its two leaves) comes last — the assertion
+    // that no separate `ungroupedPlacement` config is needed.
+    expect(toShape(rows)).toEqual([
+      ['row', 0, 3],
+      ['row', 0, 4],
+      ['row', 0, 5],
+      ['group', 0, undefined],
+      ['row', 1, 1],
+      ['row', 1, 2],
+    ]);
+  });
+
+  it('omitting groupWhen leaves renderRows() byte-identical to the pre-#119 shape (regression gate for the whole slice)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region', 'category'] })
+      )
+    );
+
+    const rows = store.renderRows();
+
+    expect(rows.map((row) => [row.kind, row.depth, row.id])).toEqual([
+      ['group', 0, 'group:>region:string:US'],
+      ['group', 1, 'group:>region:string:US>category:string:Electronics'],
+      ['row', 2, 1],
+      ['row', 2, 2],
+      ['group', 1, 'group:>region:string:US>category:string:Furniture'],
+      ['row', 2, 3],
+      ['group', 0, 'group:>region:string:EU'],
+      ['group', 1, 'group:>region:string:EU>category:string:Electronics'],
+      ['row', 2, 4],
+      ['group', 1, 'group:>region:string:EU>category:string:Furniture'],
+      ['row', 2, 5],
+      ['row', 2, 6],
+    ]);
+  });
+});
+
+function repColumns(): ColumnDef<RepMockRow>[] {
+  return [
+    { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'Region' },
+    { id: 'rep', accessor: (row) => row.rep, visible: true, order: 1, label: 'Rep' },
+  ];
+}
+
+describe('groupWhen Q1 through the public surface (#119)', () => {
+  it('a null-region row escapes flat at depth 0, never nested under a rep header', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<RepMockRow[]>(mockRepRows),
+        { trackBy: mockRepTrackBy, columns: repColumns() },
+        withGrouping({ initial: ['region', 'rep'], groupWhen: (c) => c.key != null })
+      )
+    );
+
+    const rows = store.renderRows();
+
+    expect(toShape(rows)).toEqual([
+      ['group', 0, undefined], // US
+      ['group', 1, undefined], // US > Alice
+      ['row', 2, 1],
+      ['group', 1, undefined], // US > Bob
+      ['row', 2, 2],
+      ['row', 0, 3], // null region — escapes flat, once
+    ]);
+
+    expect(rows.some((row) => row.kind === 'group' && row.groupKey?.value === 'Carol')).toBe(
+      false
+    );
+    expect(rows.filter((row) => row.data && (row.data as RepMockRow).id === 3)).toHaveLength(1);
+  });
+});
+
+describe('rowsOf and groupWhen (Q3, #119)', () => {
+  it("a parent's rowsOf still includes rows from a dissolved child cluster", () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region', 'category'],
+          groupWhen: (c) => c.columnId !== 'category' || c.rows.length >= 2,
+        })
+      )
+    );
+
+    const usHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    // US > Furniture (id 3 alone) dissolves under the size-2 threshold, yet the region header's
+    // rowsOf still returns every leaf beneath it, dissolved or not.
+    expect(store.rowsOf(usHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
+
+  // `rowsOf`/`rowsBeneathGroup` never receive `groupWhen` (no `ClusterOpts` is threaded through
+  // that path) — they rebuild the raw cluster tree and resolve purely by path, so a *dissolved*
+  // cluster's own id still resolves to its real leaves, same as before #119. Only an id matching
+  // no cluster at all returns `[]`; that guarantee already holds without groupWhen, and this case
+  // confirms composing groupWhen doesn't change it.
+  it('rowsOf on an id matching no cluster at all returns [], no throw — unaffected by a configured groupWhen', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region', 'category'],
+          groupWhen: (c) => c.columnId !== 'category' || c.rows.length >= 2,
+        })
+      )
+    );
+
+    const bogusHeader: RenderRow<GroupingMockRow> = {
+      id: 'group:nope',
+      depth: 0,
+      kind: 'group',
+      data: null,
+      index: 0,
+    };
+
+    expect(() => store.rowsOf(bogusHeader)).not.toThrow();
+    expect(store.rowsOf(bogusHeader)).toEqual([]);
   });
 });
 

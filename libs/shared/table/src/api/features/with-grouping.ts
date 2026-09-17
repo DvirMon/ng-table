@@ -4,6 +4,7 @@ import {
   clusterRows,
   collectGroupIds,
   rowsBeneathGroup,
+  type ClusterOpts,
 } from '../../engine/grouping';
 import {
   buildAsyncGroupingRuleEntry,
@@ -22,6 +23,7 @@ import type {
   DerivedDict,
   GroupingUpdater,
   GroupSummary,
+  GroupWhen,
   RenderRow,
   RowId,
   TableStore,
@@ -39,6 +41,10 @@ export interface WithGroupingConfig<TRow> {
    * reports once per evaluation. Decoupled from `sorting`. See `withGrouping()`'s decisions
    * doc. */
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
+  /** Table-wide admission — judged at every active level. A cluster returning `false` renders its
+   * rows flat at the parent's depth: no header, no group id, no aggregates. Throws: the cluster is
+   * admitted, reported once per column per evaluation. */
+  groupWhen?: GroupWhen<TRow>;
   /** Base+overlay fold. Returning `string[]` overrides `initial`; `undefined` abstains and holds
    * it; `[]` is actively grouped by nothing — distinct from abstain. Mutually exclusive with
    * `rules`/`schema` in practice (both compile to this same slot) — the rules-array layer (below)
@@ -111,17 +117,22 @@ function buildGroupingSpec<TRow>(
   const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
     rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id);
 
+  const clusterOpts: ClusterOpts<TRow> = {
+    groupOrder: config.groupOrder,
+    groupWhen: config.groupWhen,
+  };
+
   const groupIds = computed(() =>
-    collectGroupIds(input.rows(), grouping(), input.columns(), config.groupOrder)
+    collectGroupIds(input.rows(), grouping(), input.columns(), clusterOpts)
   );
 
   return {
     members: { grouping: groupingView, rowsOf, groupIds },
     stages: {
-      group: (rows) => clusterRows(rows, grouping(), input.columns(), config.groupOrder),
+      group: (rows) => clusterRows(rows, grouping(), input.columns(), clusterOpts),
     },
     renderStages: {
-      group: (rows) => buildGroupRenderRows(rows, grouping(), input.columns(), config.groupOrder),
+      group: (rows) => buildGroupRenderRows(rows, grouping(), input.columns(), clusterOpts),
     },
   };
 }

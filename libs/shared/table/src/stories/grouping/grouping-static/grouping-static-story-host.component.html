@@ -68,6 +68,13 @@
     accessor is the label contract for a non-primitive field.
   </p>
 
+  <p class="grouping-story__notice">
+    Flip <strong>keepBlankRegionsFlat</strong> in the Controls panel to see the opt-out:
+    <code>groupWhen</code> rejects the blank-region cluster, so those deals render flat at the
+    parent's depth instead of clustering — one flat run, not merged into <strong>Region</strong>,
+    and not grouped by <strong>Category</strong> either.
+  </p>
+
   <table
     class="story-host__table grouping-story__table"
     [class.grouping-story__table--sticky]="stickyHeaders()"

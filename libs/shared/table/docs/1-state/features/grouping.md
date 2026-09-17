@@ -14,8 +14,8 @@ parent: ../architecture.md
 
 > **⚠️ Two sections superseded — D1–D17 all settled and shipped (issues #6, #58, #59, #60, #65),
 > except the two items `2-decisions.md`'s Open section leaves deliberately unbuilt.**
-> [work/with-grouping/2-decisions.md](../work/with-grouping/2-decisions.md) (D1–D17) settles the
-> API surface, and [work/with-grouping/3-spec.md](../work/with-grouping/3-spec.md) (`status: ready`)
+> [work/with-grouping/2-decisions.md](../work/grouping/archive/with-grouping/2-decisions.md) (D1–D17) settles the
+> API surface, and [work/with-grouping/3-spec.md](../work/grouping/archive/with-grouping/3-spec.md) (`status: ready`)
 > writes it up as a contract. Superseded here:
 > - **Methods** — `setGrouping()`/`clearGrouping()` never shipped. The real write surface is
 >   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
@@ -47,6 +47,13 @@ parent: ../architecture.md
 >   collapse (D17, issue #59) — it re-derives the cluster tree from `rows()` (pipeline output)
 >   rather than scanning `renderRows()`.
 >
+> - **Clusters admit by default; `groupWhen` (#119) can leave one flat.** Every built cluster
+>   renders as a group unless `config.groupWhen` rejects it — a table-wide predicate over that
+>   cluster's own contents. A rejected cluster's rows exit the grouping tree entirely (no header,
+>   no group id, no aggregates, not sub-clustered by a deeper level) and render flat at the
+>   parent's depth. Full contract: 3-spec.md's Public surface; mechanism and rejected alternatives:
+>   [work/with-grouping/design-group-admission.md](../work/grouping/archive/with-grouping/design-group-admission.md).
+>
 > Still open, deliberately unbuilt: `manual: true` and routing a header click to `groupOrder` — see
 > `2-decisions.md`'s Open section. Neither blocks the rest of this contract.
 
@@ -56,7 +63,7 @@ Multi-level grouping (`table.grouping: string[]`, D3) with per-column aggregate 
 
 ## State Shape
 
-See [3-spec.md](../work/with-grouping/3-spec.md) for the current contract —
+See [3-spec.md](../work/grouping/archive/with-grouping/3-spec.md) for the current contract —
 `table.grouping: WritableView<string[], GroupingUpdater<TRow>>`, folding a base value with an
 optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
 
@@ -71,7 +78,7 @@ optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
 
 ## Methods
 
-`setGrouping()`/`clearGrouping()` never shipped. See [3-spec.md](../work/with-grouping/3-spec.md)'s
+`setGrouping()`/`clearGrouping()` never shipped. See [3-spec.md](../work/grouping/archive/with-grouping/3-spec.md)'s
 Methods section for the real write surface — `table.grouping.update(updater)`, the
 `mutations/update-grouping.ts` updater factories, and the `groupingRule`/`applyGrouping()`/
 `applyGroupingAsync()` declarative overlay (D6–D8, issue #60). Not restated here.
@@ -183,4 +190,4 @@ Researched against three popular table libraries before locking this shape:
 > already-computed aggregate, and `groupOrder` orders siblings within a parent — are what actually
 > close that bug class, and they hold at any depth. Grand totals and pivoting remain out of scope.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

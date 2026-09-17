@@ -82,6 +82,41 @@ export const mockGroupingRows: GroupingMockRow[] = [
 
 export const mockGroupingTrackBy: TrackByFn<GroupingMockRow> = (row) => row.id;
 
+export interface GroupWhenMockRow {
+  id: number;
+  region: string | null | undefined;
+  amount: number;
+}
+
+/** Two US rows, one EU, one `null` region, one `undefined` region — the two JS "blank"
+ * representations coexist so a `groupWhen` predicate can be exercised against both without two
+ * separate fixtures. See `withGrouping()`'s `groupWhen` (#119) tests. */
+export const mockGroupWhenRows: GroupWhenMockRow[] = [
+  { id: 1, region: 'US', amount: 100 },
+  { id: 2, region: 'US', amount: 300 },
+  { id: 3, region: 'EU', amount: 50 },
+  { id: 4, region: null, amount: 10 },
+  { id: 5, region: undefined, amount: 20 },
+];
+
+export const mockGroupWhenTrackBy: TrackByFn<GroupWhenMockRow> = (row) => row.id;
+
+export interface RepMockRow {
+  id: number;
+  region: string | null;
+  rep: string;
+}
+
+/** Two-level (region → rep) fixture for #119's Q1 test — a null-region row must escape the
+ * grouping tree entirely rather than re-clustering under a `rep` header. */
+export const mockRepRows: RepMockRow[] = [
+  { id: 1, region: 'US', rep: 'Alice' },
+  { id: 2, region: 'US', rep: 'Bob' },
+  { id: 3, region: null, rep: 'Carol' },
+];
+
+export const mockRepTrackBy: TrackByFn<RepMockRow> = (row) => row.id;
+
 /** Mirrors `engine/core.ts`'s `indexById` derivation, for the mock stores below — they don't
  * compose the real engine, so they build the map by hand off their own `data` signal. */
 function mockIndexById<TRow>(rows: TRow[], trackBy: TrackByFn<TRow>): ReadonlyMap<RowId, number> {

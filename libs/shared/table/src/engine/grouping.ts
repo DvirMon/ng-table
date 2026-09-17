@@ -1,10 +1,20 @@
-import type { ColumnDef, GroupSummary, RenderRow, RowId } from '../api/types';
+import type {
+  ClusterSummary,
+  ColumnDef,
+  GroupSummary,
+  GroupWhen,
+  RenderRow,
+  RowId,
+} from '../api/types';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
   readonly value: unknown;
   readonly items: T[]; // every leaf under this node, at any depth
   readonly children: ClusterNode<T>[]; // empty ⇒ this node is the deepest clustered level
+  /** Set by `admitClusters`. `buildClusters` leaves it `true` — an unjudged tree is fully
+   * admitted, which is what makes a table with no `groupWhen` byte-identical to today. */
+  readonly admitted: boolean;
 }
 
 /** Distinguishes `1` from `"1"` and normalizes `Date` — plain `String(value)` would collide the
@@ -25,6 +35,13 @@ function buildGroupPath(parentPath: string, columnId: string, value: unknown): s
 
 function toGroupId(path: string): RowId {
   return `group:${path}`;
+}
+
+/** Internal engine surface, not public API — collapses the two optional callbacks shared by
+ * `clusterRows`/`buildGroupRenderRows`/`collectGroupIds` into one trailing parameter. */
+export interface ClusterOpts<TRow> {
+  readonly groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
+  readonly groupWhen?: GroupWhen<TRow>;
 }
 
 /** Runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
@@ -69,7 +86,55 @@ export function buildClusters<T>(
     value,
     items: bucketItems,
     children: buildClusters(bucketItems, rest, accessor),
+    admitted: true,
   }));
+}
+
+function reportGroupWhenError(columnId: string): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[withGrouping] groupWhen threw for column "${columnId}". Admitting the cluster (rendering ` +
+      'it as a group) for the affected cluster(s) in this evaluation.'
+  );
+}
+
+/**
+ * Marking pass — decides `admitted` per node via `groupWhen`, before ordering or emission runs.
+ * A rejected node's descendants are never judged, since a dissolved cluster's rows never render
+ * as its own group. Reports a throwing predicate once per column per caller evaluation, matching
+ * `computeAggregates`.
+ */
+export function admitClusters<T, TRow>(
+  nodes: ClusterNode<T>[],
+  groupWhen: GroupWhen<TRow> | undefined,
+  toRows: (items: T[]) => TRow[],
+  reportedColumns: Set<string>
+): ClusterNode<T>[] {
+  if (!groupWhen) {
+    return nodes;
+  }
+  return nodes.map((node) => {
+    const summary: ClusterSummary<TRow> = {
+      columnId: node.columnId,
+      key: node.value,
+      rows: toRows(node.items),
+    };
+    let admitted: boolean;
+    try {
+      admitted = groupWhen(summary);
+    } catch {
+      admitted = true;
+      if (!reportedColumns.has(node.columnId)) {
+        reportedColumns.add(node.columnId);
+        reportGroupWhenError(node.columnId);
+      }
+    }
+    const children = admitted
+      ? admitClusters(node.children, groupWhen, toRows, reportedColumns)
+      : node.children;
+    return { ...node, admitted, children };
+  });
 }
 
 /** Narrows a render row's `data` from `TRow | null` to `TRow` — true for every item the `'group'`
@@ -81,7 +146,7 @@ function isRowData<TRow>(data: TRow | null): data is TRow {
 
 function flattenLeaves<T>(nodes: ClusterNode<T>[]): T[] {
   return nodes.flatMap((node) =>
-    node.children.length > 0 ? flattenLeaves(node.children) : node.items
+    node.admitted && node.children.length > 0 ? flattenLeaves(node.children) : node.items
   );
 }
 
@@ -107,13 +172,18 @@ export function sortClusters<T, TRow>(
   reported: { done: boolean }
 ): ClusterNode<T>[] {
   if (!groupOrder) {
-    return nodes;
+    return partitionAndRecurse(nodes);
   }
   let ordered = nodes;
   try {
     const summaries = nodes.map((node) => ({
       node,
-      summary: { key: node.value, rows: toRows(node.items) } satisfies GroupSummary<TRow>,
+      summary: {
+        columnId: node.columnId,
+        key: node.value,
+        rows: toRows(node.items),
+        admitted: node.admitted,
+      } satisfies GroupSummary<TRow>,
     }));
     ordered = [...summaries]
       .sort((a, b) => groupOrder(a.summary, b.summary))
@@ -129,6 +199,30 @@ export function sortClusters<T, TRow>(
     ...node,
     children: sortClusters(node.children, groupOrder, toRows, reported),
   }));
+}
+
+/** Stable partition — admitted siblings in first-occurrence order, then dissolved siblings in
+ * first-occurrence order — the default sibling order once nothing supplies `groupOrder`.
+ * Recurses so the same rule applies at every depth, but returns `nodes` itself, and each
+ * untouched node itself, when nothing in the subtree is dissolved: reference-preserving, which
+ * is load-bearing for "composing `withGrouping()` with no extra config changes nothing". */
+function partitionAndRecurse<T>(nodes: ClusterNode<T>[]): ClusterNode<T>[] {
+  const recursed = nodes.map((node) => {
+    const children = partitionAndRecurse(node.children);
+    return children === node.children ? node : { ...node, children };
+  });
+  const unchanged = recursed.every((node, index) => node === nodes[index]);
+  return partitionByAdmission(unchanged ? nodes : recursed);
+}
+
+function partitionByAdmission<T>(nodes: ClusterNode<T>[]): ClusterNode<T>[] {
+  const hasDissolved = nodes.some((node) => !node.admitted);
+  if (!hasDissolved) {
+    return nodes;
+  }
+  const admitted = nodes.filter((node) => node.admitted);
+  const dissolved = nodes.filter((node) => !node.admitted);
+  return [...admitted, ...dissolved];
 }
 
 /** Shared by `clusterRows` and `rowsBeneathGroup` — both cluster a raw `TRow[]` by the same
@@ -152,14 +246,15 @@ export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+  opts?: ClusterOpts<TRow>
 ): TRow[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
     return rows;
   }
   const nodes = buildClusterNodes(rows, levels, columns);
-  const ordered = sortClusters(nodes, groupOrder, (items) => items, { done: false });
+  const admitted = admitClusters(nodes, opts?.groupWhen, (items) => items, new Set());
+  const ordered = sortClusters(admitted, opts?.groupOrder, (items) => items, { done: false });
   return flattenLeaves(ordered);
 }
 
@@ -201,10 +296,11 @@ function computeAggregates<TRow>(
 
 /**
  * Depth-first header + leaf walk over a `buildClusters` tree. Emits one `kind: 'group'` header
- * per node, immediately followed by its nested headers/leaves — every cluster member,
- * unconditionally, each carrying its parent's id. Collapse/expand visibility is not this
- * function's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a header's
- * descendants when its id is missing from the unioned `expandedRows` set.
+ * per admitted node, immediately followed by its nested headers/leaves, each carrying its
+ * parent's id. A node with `admitted: false` emits its `items` flat at the parent's depth and
+ * `parentId` instead — no header, no recursion into `children`. Collapse/expand visibility is
+ * not this function's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a
+ * header's descendants when its id is missing from the unioned `expandedRows` set.
  */
 function emitGroupRows<TRow>(
   nodes: ClusterNode<Omit<RenderRow<TRow>, 'index'>>[],
@@ -215,6 +311,9 @@ function emitGroupRows<TRow>(
   parentId?: RowId
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
+    if (!node.admitted) {
+      return node.items.map((item) => ({ ...item, depth, parentId }));
+    }
     const path = buildGroupPath(parentPath, node.columnId, node.value);
     const id = toGroupId(path);
     const header: Omit<RenderRow<TRow>, 'index'> = {
@@ -242,14 +341,14 @@ function emitGroupRows<TRow>(
 /**
  * The `'group'` render stage (`RENDER_ORDER`, `engine/render-stages.ts`) — runs first, so its
  * input is always the plain 1:1 seed from `buildDefaultRenderRows`, every `item.data` a real
- * `TRow`. Reuses `buildClusters` (Step 1) for the same tree the pipeline `group` stage builds,
- * so header insertion and `computeAggregates` read from one tree, never two divergent walks.
+ * `TRow`. Reuses `buildClusters` for the same tree the pipeline `group` stage builds, so header
+ * insertion and `computeAggregates` read from one tree, never two divergent walks.
  */
 export function buildGroupRenderRows<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+  opts?: ClusterOpts<TRow>
 ): Omit<RenderRow<TRow>, 'index'>[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -265,12 +364,10 @@ export function buildGroupRenderRows<TRow>(
     }
     return columnById.get(columnId)!.accessor(item.data);
   });
-  const ordered = sortClusters(
-    nodes,
-    groupOrder,
-    (items) => items.map((item) => item.data).filter(isRowData),
-    { done: false }
-  );
+  const toRows = (items: Omit<RenderRow<TRow>, 'index'>[]): TRow[] =>
+    items.map((item) => item.data).filter(isRowData);
+  const admitted = admitClusters(nodes, opts?.groupWhen, toRows, new Set());
+  const ordered = sortClusters(admitted, opts?.groupOrder, toRows, { done: false });
   return emitGroupRows(ordered, 0, '', columns, new Set());
 }
 
@@ -319,6 +416,7 @@ export function rowsBeneathGroup<TRow>(
  * format can never drift from what a header actually renders. */
 function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string): RowId[] {
   return nodes.flatMap((node) => {
+    if (!node.admitted) return [];
     const path = buildGroupPath(parentPath, node.columnId, node.value);
     return [toGroupId(path), ...collectClusterGroupIds(node.children, path)];
   });
@@ -332,13 +430,14 @@ export function collectGroupIds<TRow>(
   rows: TRow[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number
+  opts?: ClusterOpts<TRow>
 ): RowId[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
     return [];
   }
   const nodes = buildClusterNodes(rows, levels, columns);
-  const ordered = sortClusters(nodes, groupOrder, (items) => items, { done: false });
+  const admitted = admitClusters(nodes, opts?.groupWhen, (items) => items, new Set());
+  const ordered = sortClusters(admitted, opts?.groupOrder, (items) => items, { done: false });
   return collectClusterGroupIds(ordered, '');
 }
