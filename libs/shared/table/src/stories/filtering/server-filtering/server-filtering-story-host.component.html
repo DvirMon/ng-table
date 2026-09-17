@@ -1,0 +1,81 @@
+<div class="story-host">
+  @if (forceFailure()) {
+    <p class="story-host__hint">
+      Every request fails. The rows loaded before the failure stay on screen behind the error
+      marker — the table does not blank, and the filter inputs keep their values so Retry sends
+      the same query rather than a reset one.
+    </p>
+  } @else {
+    <p class="story-host__hint">
+      Server filtering — the table owns the model; <code>manual: true</code> skips the local filter
+      stage and <code>criteria()</code> drives the request directly, already narrowed on arrival.
+      Type in the search box with latency on and watch the request counter: one request per typing
+      pause, not per keystroke. Type an amount, then press <em>Deliver server default now</em> —
+      the default loses to what you typed.
+    </p>
+  }
+
+  <ngp-server-filtering-toolbar
+    [searchField]="searchForm.search"
+    [statusField]="searchForm.status"
+    [amountField]="searchForm.amount"
+    [filters]="table.filters"
+    [loadError]="loadError()"
+    [statusOptions]="statusOptions"
+    [tagOptions]="tagOptions"
+    [amountIgnoresServerDefault]="amountIgnoresServerDefault()"
+    (deliverServerDefault)="deliverServerDefault()"
+    (retry)="retry()"
+  />
+
+  <div class="filtering-story__summary">
+    <span>
+      server total <strong>{{ table.totalRowCount() }}</strong> · rows on this page
+      <strong>{{ table.renderRows().length }}</strong>
+    </span>
+    <span class="story-host__counter">requests issued: {{ requestCount() }}</span>
+  </div>
+
+  @if (invoices.isLoading()) {
+    <p class="filtering-story__empty" role="status">Loading invoices…</p>
+  } @else if (loadError(); as message) {
+    <p class="filtering-story__empty" role="status">
+      The request failed: {{ message }}. The rows below are the last ones that loaded, kept on
+      screen on purpose.
+    </p>
+  } @else if (hasNoMatches()) {
+    <p class="filtering-story__empty" role="status">
+      The server matched no invoice for these filters. Its own <code>total</code> says 0 — this is
+      not an empty page of a larger result.
+    </p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.columns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as invoice) {
+          <tr [ngpTableRow]="row">
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.id }}</td>
+            <td class="story-host__cell">{{ invoice.customer }}</td>
+            <td class="story-host__cell">{{ invoice.status }}</td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
+            <td class="story-host__cell">
+              @for (tag of invoice.tags; track tag) {
+                <span class="filtering-story__tag">{{ tag }}</span>
+              } @empty {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

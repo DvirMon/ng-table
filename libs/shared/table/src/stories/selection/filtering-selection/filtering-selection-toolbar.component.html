@@ -1,0 +1,45 @@
+<div class="story-host__toolbar">
+  <button type="button" (click)="clearAllFilters.emit()">Clear filters</button>
+</div>
+
+<div class="filtering-story__filters">
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().status().isActive()"
+  >
+    <span class="filtering-story__label">Status (equals)</span>
+    <select [formField]="statusField()">
+      <option value="">any</option>
+      @for (status of statusOptions(); track status) {
+        <option [value]="status">{{ status }}</option>
+      }
+    </select>
+  </div>
+
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().customer().isActive()"
+  >
+    <span class="filtering-story__label">Customer (contains)</span>
+    <input type="text" [formField]="customerField()" />
+  </div>
+
+  <div
+    class="filtering-story__field"
+    [class.filtering-story__field--active]="filters().tags().isActive()"
+  >
+    <span class="filtering-story__label">Tags (hasAny)</span>
+    <div class="filtering-story__checks">
+      @for (tag of tagOptions(); track tag) {
+        <label>
+          <input
+            type="checkbox"
+            [checked]="selectedTagSet().has(tag)"
+            (change)="toggleTag.emit(tag)"
+          />
+          {{ tag }}
+        </label>
+      }
+    </div>
+  </div>
+</div>

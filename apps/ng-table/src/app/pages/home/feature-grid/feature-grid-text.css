@@ -1,0 +1,6 @@
+:host {
+  display: block;
+  font: var(--ngpt-sys-typescale-body-medium);
+  color: var(--ngpt-text-tertiary);
+  margin: 0;
+}

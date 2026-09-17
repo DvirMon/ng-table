@@ -1,0 +1,13 @@
+/* `padding-inline`, not a row `gap`: the link row's `<nav>` is consumer-authored and therefore out
+   of reach of any container stylesheet under emulated encapsulation. 12px per side puts adjacent
+   links 24px apart — the same `--ngpt-sys-space-600` step the row used before the inversion — and
+   the leading/trailing 12px is invisible on a centered row. It also enlarges the hit area. */
+:host {
+  color: inherit;
+  text-decoration: none;
+  padding-inline: var(--ngpt-sys-space-300);
+}
+
+:host(:hover) {
+  color: var(--ngpt-text-secondary);
+}

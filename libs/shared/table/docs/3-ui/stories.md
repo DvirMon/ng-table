@@ -1,0 +1,539 @@
+---
+title: Storybook story conventions
+type: reference
+status: reflects current practice as of the 21 stories in src/stories/
+date: 2026-09-16
+---
+
+# Storybook story conventions — `libs/shared/table`
+
+Read this before adding or extending a story in `src/stories/`. It records the pattern the
+existing 21 stories already follow, so a new one doesn't drift from it. Not previously written
+down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
+moves on.
+
+For which stories a feature *needs* (coverage against the product doc, merge/standalone
+decisions), that's a separate concern — see the `story-plan` skill.
+
+## Where a story's inputs live
+
+Planning a story for a feature means reading three doc classes, in three different places. The
+product doc is the *output* of the research, not the research — reading only `0-product/` and
+calling that the input set is how a plan ends up inventing affordances.
+
+| Input | Path | Answers |
+|---|---|---|
+| Product user stories | `docs/0-product/<feature>.md` | what a person needs to be able to do; the coverage marks a plan re-derives |
+| Research corpus | `docs/1-state/work/with-<feature>/research-*.md` | the evidence behind the product doc |
+| Story conventions | this file | the shape a story takes in this repo |
+
+Inside the research corpus, `research-<feature>-ux-capabilities.md` is the one that decides what
+a story's buttons look like — a version-pinned, URL-cited inventory of what a person can click,
+tap and press across AG Grid, TanStack Table v8, MUI X Data Grid, PrimeNG, Material React Table
+and (for selection) Angular CDK's `SelectionModel`. Its siblings carry community pain
+(`research-<feature>-community-pain.md`), what this library already ships
+(`research-<feature>-internal-coverage.md`), and per-feature design questions.
+
+Where that research shows peer libraries converging on one affordance, a story demonstrates that
+convention by default. Deviations are stated and justified, not silent.
+
+Worked examples of a plan built this way: `work/selection-stories/`, `work/filtering-stories/`,
+`work/grouping-stories/` — each carries a "Conventions from peer libraries" matrix ahead of its
+target story set.
+
+## File layout — feature folder first, one folder per story inside it
+
+`src/stories/` groups by **feature**, matching the Storybook sidebar: every story titled
+`Table / Row Editing / …` lives under `row-edit/`. No loose files at the root.
+
+```
+src/stories/
+├── styles/                                  ← the only genuinely cross-feature files
+│   ├── story-host.css                       ← shared host styling, BEM block `.story-host`
+│   └── code-tabs.css                        ← the mdx HTML/TS toggle
+├── row-edit/                                ← one folder per feature
+│   ├── fixtures/                            ← shared by this feature's stories, nothing else
+│   │   ├── types.ts  mock.ts  schema.ts
+│   │   └── utils.ts  http.ts  handlers.ts
+│   ├── ui/                                  ← demo-only components/directives/state, shared by 2+ hosts
+│   │   ├── commit-counter.component.ts
+│   │   ├── focus-new-row.directive.ts
+│   │   ├── local-undo-slot.ts
+│   │   └── row-flags.ts                     ← createRowFlags(), adopted by 5 gated/live hosts
+│   ├── row-edit-story.pipes.ts              ← ROW_EDIT_STORY_PIPES (RowLabelPipe)
+│   └── <story-name>/
+│       ├── <story-name>-story-host.component.ts     ← the demo component
+│       ├── <story-name>-story-host.component.html   ← template — NEVER inline
+│       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
+│       └── (no per-story mdx — one <feature>.mdx per feature, at the feature root)
+├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
+├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 3 hosts
+│   └── client-filtering/  server-filtering/  predicate-filtering/
+├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 5 hosts
+│   └── grouping-static/  grouping-async-rule/  grouping-regressions/
+│       grouping-collapsible/  grouping-selection/
+└── selection/                               ← fixtures/ + selection-story.css + 3 hosts
+    └── multi-selection/  single-selection/  filtering-selection/
+```
+
+**A feature's own stylesheet sits beside its `fixtures/`, not inside it.** `filtering-story.css`,
+`grouping-story.css` and `selection-story.css` are each imported by every host in their feature
+and by nothing else — a second importer within the feature, which is the `fixtures/` bar, but
+they are not fixtures. They layer after `styles/story-host.css`, which every host also lists
+first in `styleUrls`.
+
+The folder supplies the domain, so files inside drop the redundant prefix —
+`row-edit/fixtures/mock.ts`, not `row-edit/fixtures/row-edit.mock.ts`.
+
+**Promotion ladder.** A fixture starts inside its own story folder. It moves to
+`<feature>/fixtures/` on a second importer **within that feature**, and to `styles/` (or a
+sibling root folder) only on a **cross-feature** importer — that second bar is why the root
+holds two stylesheets and nothing else. Promote on evidence (`file-organization.md`), never in
+anticipation.
+
+Stories stay flat inside `row-edit/` rather than mirroring the title's `Gated / Single /
+Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it outgrows ~15.
+
+| Shared file | Contents |
+|---|---|
+| `row-edit/fixtures/types.ts` | The shared row shape (`EditRow`) |
+| `row-edit/fixtures/mock.ts` | Fixture rows, option lists (`EDIT_ROWS_MOCK`, `DEPT_OPTIONS`) |
+| `row-edit/fixtures/schema.ts` | `editTableConfig` (`TableConfig<EditRow>`, `trackBy: 'id'` + `columns`) shared by all nine hosts, and the shared Signal Forms `editRowsSchema`. Each host composes its own features inline: `createTable(this.data, editTableConfig, ...features)` |
+| `row-edit/fixtures/utils.ts` | Pure helpers (`saveRowPessimistic`, `rowLabel`) |
+| `row-edit/fixtures/http.ts` | `injectRowEditApi()` — `HttpClient` wrapper for the save/delete round trips, shared by the five fixed-mode save/delete story hosts |
+| `row-edit/fixtures/handlers.ts` | MSW request handlers |
+| `row-edit/ui/*` | Demo-only instrumentation (`CommitCounterComponent`, `focusNewRow`, `localUndoSlot`, `createRowFlags`) — never table API |
+| `row-edit/row-edit-story.pipes.ts` | `ROW_EDIT_STORY_PIPES` — `RowLabelPipe` (`| rowLabel`), the one row-formatting concern shared across hosts |
+| `filtering/filtering-story.pipes.ts` | `FILTERING_STORY_PIPES` — `InvoiceIssuedAtPipe` (`| invoiceIssuedAt`), same-day time-of-day formatting |
+| `composition/fixtures/types.ts` | The shared row shape (`CompositionRow`) and the criterion model (`CompositionFilterState`) |
+| `composition/fixtures/mock.ts` | Fixture rows and the dept option list (`COMPOSITION_ROWS_MOCK`, `COMPOSITION_DEPT_OPTIONS`) |
+| `composition/fixtures/schema.ts` | `compositionColumns` and `derivedStateConfig` (`TableConfig<CompositionRow>`, `trackBy: 'id'` + `columns`) |
+| `filtering/fixtures/types.ts` | `InvoiceRow` (one field per shipped rule kind, `note` nullable for the blank-cell case), `InvoiceStatus`, the criterion shapes, and the three per-story `…FilterState` models |
+| `filtering/fixtures/mock.ts` | `INVOICE_ROWS_MOCK` plus the hand-supplied `STATUS_OPTIONS`/`TAG_OPTIONS` — `createFilters()` takes no `data` argument, so option lists are never derived from rows |
+| `filtering/fixtures/schema.ts` | `clientInvoiceConfig`, `serverInvoiceConfig`, `selectionInvoiceConfig` (one per story over one column list), and `serverFilterFormSchema` — the `debounce(path.search, 300)` that only the server story needs |
+| `filtering/fixtures/utils.ts` | Type guards and pure helpers (`isInvoiceStatus`, `isRangeCriterion`, `toggleOption`, `formatCriterion`) |
+| `filtering/fixtures/http.ts` | `injectInvoiceApi()` — `GET /api/invoices`; the host builds `params`, because the query mapping is the shipped DX |
+| `filtering/fixtures/handlers.ts` | MSW handlers for the server story |
+| `filtering/filtering-story.css` | Filtering-specific styling — filter row, active markers, chip summary, notices |
+| `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
+| `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
+| `grouping/fixtures/schema.ts` | One table config over one column list, the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
+| `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
+| `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
+| `grouping/fixtures/http.ts` | `createGroupedRowsResource()` and `createGroupingPreferenceResource()` (`httpResource`-based, 2026-09-16) — the refetch and async-grouping-rule sources; `toErrorMessage()` replaces the old `normalizeError`/`isMessageBody` pair |
+| `grouping/fixtures/handlers.ts` | MSW handlers for the refetch and async-rule round trips |
+| `grouping/grouping-story.css` | Grouping-specific styling — group rows by `data-row-kind`/`data-depth`, level pills, chevrons, opt-in sticky headers |
+| `selection/fixtures/types.ts` | `SelectionRow` — `locked` drives `enableRowSelection`; wider than `EditRow` so select-all and a count are meaningful |
+| `selection/fixtures/mock.ts` | `SELECTION_ROWS_MOCK`, `SAVED_SELECTION_IDS` (carries an id no row has), `SAVED_CONFLICTING_SELECTION_IDS` (two ids that both exist) |
+| `selection/fixtures/schema.ts` | `multiSelectionConfig` and `singleSelectionConfig` — identical shape, because `enableMultiRowSelection: false` is a `withSelection()` argument, not a config field |
+| `selection/selection-story.css` | Selection-specific styling — count banner, control column, `aria-disabled` and locked-row treatment |
+| `styles/story-host.css` | Shared story styling; every feature's own stylesheet layers after it |
+| `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by the five feature docs pages |
+
+**No `ui/` folder outside `row-edit/`.** Demo-only instrumentation that belongs to exactly one
+story stays in that story's folder, not in `fixtures/` — promoted to `<feature>/ui/` (or
+`row-edit/ui/` across features) only on a second importer, same promotion-ladder bar as any other
+fixture. Every host-local extraction to date is one of three shapes (see "What a host may not
+contain" below for when to reach for one):
+
+| Shape | Instances |
+|---|---|
+| State factory (`create<Thing>()`, owns signals + mutators, no `DestroyRef`) | `gated-bulk-optimistic.state.ts` (`createBulkAddUi`), `external-write.state.ts` (`createConflictStore`), `row-edit/ui/row-flags.ts` (`createRowFlags`, shared by 5 hosts), `sorting-editing/row-hold-probe.ts` (`createRowHoldProbe`) |
+| Lifecycle owner (`create<Thing>()`/`watch<Thing>()`, owns a subscription/timer/effect + `DestroyRef`) | `selection-event-log.ts` (`createSelectionEventLog`), `client-filtering/filter-report-log.ts` (`createFilterReportLog`), `live-optimistic/undo-window.ts` (`createUndoWindow`), `live-optimistic/pending-announcer.ts` (`createPendingAnnouncer`), `live-table/field-commit-watcher.ts` (`watchFieldCommits`) |
+| Directive | `row-edit/ui/focus-new-row.directive.ts` |
+
+Story-local **arg types** follow the same one-story-stays-local rule:
+`grouping-static/grouping-static.types.ts`, `grouping-regressions/grouping-regressions.types.ts`,
+`grouping-selection/grouping-selection.types.ts`, `client-filtering/client-filtering.types.ts`,
+`sorting-editing.types.ts`, `gated-multiple-optimistic.types.ts` and
+`multi-selection/multi-selection.types.ts` each name that host's own Storybook controls or
+notice/outcome union and nothing else.
+
+No barrel. Stories are not public API and `.storybook/main.ts` globs `../src/stories/**`, so
+depth is free.
+
+Don't inline mock data, column definitions, or the table config inside a story-host component —
+the host composes features on `createTable(...)`, the fixtures file owns the config and the
+Signal Forms schema — same rule as any other component in this repo (`file-organization.md`).
+
+**`createFilters()` is the exception, and belongs in the host** (2026-09-14). A filters schema is
+a declaration a consumer writes, not data a story is handed — the same category as the
+`createTable()` call it sits next to, and unreadable one file away. Fixtures keep the rows, the
+option lists, the table config and the form schema; the `createFilters(rows, (path) => [ … ])`
+call goes in the host's field initializer. Nothing to annotate: the row type comes from the
+carrier and every node's criterion type is inferred from the returned rules.
+
+**Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
+via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack
+Query. No shared/cached server-state exists across these demo-only stories to justify TanStack's
+caching model, and `HttpClient` matches the repo's only other transport precedent.
+
+**`server-filtering/` is the one read-only transport on `rxResource`** (2026-09-16, per
+`docs/1-state/work/table-owned-filtering/spec.md` step 7). `rxResource({ params, stream })` over
+`injectInvoiceApi().fetchInvoices(...)` replaces a hand-rolled `effect()` + `untracked()` + `load()`
+loop; a `linkedSignal` (not a copy `effect()`) turns the resolved page into the `WritableSignal`
+`createTable()` needs, using the `{ source, computation(value, previous) }` overload so the
+previous page survives a load or an error instead of blanking the table. Save/delete stays
+Observable-via-`HttpClient` above; a pure read is the one place `rxResource` fits.
+
+**`grouping/`'s two reads are `httpResource`, not `rxResource`** (2026-09-16). `createGroupedRowsResource()`
+and `createGroupingPreferenceResource()` in `grouping/fixtures/http.ts` replace the earlier
+`injectGroupedRowsApi()` `HttpClient` wrapper, both built on `httpResource` from
+`@angular/common/http`. `httpResource`'s `parse` option is typed to accept `unknown`, not the
+inferred raw shape, so a runtime type guard (`isDealPagePayload`) does the narrowing a directly
+typed parse function can't. Same `linkedSignal` bridge as `server-filtering/` (never a copy
+`effect()`) turns the resource into the `WritableSignal` `createTable()` needs. **The rule per
+transport, not per feature:** reads use the resource API (`httpResource` or `rxResource`,
+whichever a given feature already settled on), writes use `HttpClient`, and every feature owns
+its own fixture + MSW handlers — no shared HTTP service crosses a feature boundary.
+Row-edit's five save/delete hosts stay `HttpClient` above; `server-filtering/` stays `rxResource`
+above; this is `grouping/`'s own choice, not a repo-wide migration off `rxResource` (out of scope
+for now: `filtering/fixtures/http.ts` + `server-filtering/` migrating to `httpResource` for
+symmetry would be a later, separate pass).
+
+## The story-host component
+
+- **Standalone, separate template.** `templateUrl`/`styleUrl`, never an inline `template:`
+  string — same rule as every other Angular component in this repo
+  (`.claude/rules/typescript-conventions.md`, restated for a sibling app in
+  `apps/ng-table/docs/CONVENTIONS.md`). A story is still a component; it doesn't get an
+  exception for being demo-only.
+- **Class name keeps the `Component` suffix** (`GatedEditStoryHostComponent`, not
+  `GatedEditStoryHost`) — this is the one place in the repo that suffix convention is kept,
+  because the file is explicitly a story harness, not a design-system domain component.
+- **A doc-comment naming which product/design decision the story proves**, not what it renders.
+  Every existing host opens with one (`/** S2 — the gated table (`withRowEdit()`)... */`,
+  `/** S6 — the live table with rollback (D39)... */`). Point at the ADR/decision-record id if
+  one exists, and say *why* the story is shaped the way it is (why this feature and not that
+  one, why a config is passed as a signal instead of a plain value) — not a restatement of the
+  template.
+- **State lives in signals on the host**, following the schema/mock split above — `data`,
+  `saveError`, per-row flags like `forcedInvalid`. Not every per-row concern is a signal, though:
+  a collision like "two rows now share a name" is real Signal Forms validation
+  (`editRowsWithUniqueNameSchema`'s `validate()` rule), not host-tracked UI state — see "What a
+  host may not contain" below. The host wires `createTable()` and `form()` together; it does not
+  reimplement table logic.
+- **Toolbar component (2026-09-16).** Every control strip above the table — buttons, filter
+  inputs, insert-position pickers — is its own `<story>-toolbar.component.{ts,html}` beside the
+  host (or promoted to `ui/` on a second importer within the feature, same promotion-ladder bar
+  as any other fixture — e.g. `row-edit/ui/insert-row-toolbar.component.ts`, shared by
+  `gated-single-optimistic/` and `gated-single-pessimistic/`, whose toolbars are identical). State
+  flows in via `input.required<…>()`, typed and named for what it is — a Signal Forms field is
+  passed as the field itself (`filterForm.search`), never the whole form. Actions flow out via
+  `output<T>()`, named for the domain action (`addRow`, `clearAllFilters`), never `onClick`. A
+  toolbar-local knob that only the toolbar reads or writes (an `insertAt` position, a bulk-add
+  count) moves into the toolbar rather than staying a host signal the host only forwards. The
+  host keeps summaries, notices, event logs, and any counter that reads table state — those
+  aren't controls, they're readouts, and stay where the table state they read already lives. This
+  mimics a production template: a consumer's own toolbar is never inlined in the table markup
+  either.
+
+## What a host may not contain
+
+A story's whole point is that a consumer copies its class body. Four things do not survive that
+copy honestly (from the 2026-09-15/16 audit of every non-grouping host,
+`work/grouping-stories/2-host-audit.md`):
+
+1. **Demo-harness knobs** — transport toggles and latency dials that drive the demo rather than
+   demonstrate the API. Keep one only when the transport itself *is* the lesson (`forceFailure`/
+   `latencyMs` on `server-filtering/`, `grouping-collapsible/`'s refetch).
+2. **Display formatting in host methods** — a method that turns a value into a string. Belongs in
+   a pipe, or in a `computed()`/derived record if it's a per-row lookup rather than pure
+   formatting.
+3. **Regression-demo arithmetic** — code that injects or measures a known-wrong state. Legitimate
+   when it *is* the story's subject (`grouping-regressions/`), not when it's bolted onto a host
+   proving something else.
+4. **Decision-narration JSDoc** — D-numbers, P-numbers, S-numbers, §-ancestry, competitor issue
+   links, ADR rationale. Belongs in `docs/`, not source comments — no exception for being
+   demo-only. A bare one-token pointer to a requirement id (`D41`, `§1.6`) may stay; a sentence explaining
+   *why* that decision was made may not — verify the fact is already in the owning product doc
+   (`docs/0-product/<feature>.md`) or the feature's gap-tracking doc before deleting it from the
+   host, adding it there first if it's missing.
+5. **A toolbar button that duplicates a table gesture the table already exposes** (2026-09-16) —
+   a "Select all"/"Clear selection" button next to a header checkbox that already does both, a
+   sort button next to a header a reader can click, a delete-via-picker flow standing in for a
+   per-row action. The table's own affordance is the copy-paste answer; a second control for the
+   same verb teaches the wrong shape. Keep a toolbar button only where no header/row gesture
+   covers it — a radio group has no untick (`single-selection/`'s `Clear selection`), and a
+   grouped table has no header checkbox over group rows (`grouping-selection/`'s
+   `Clear selection`).
+
+**No method calls in templates.** A property binding, interpolation, `@if`/`@for`/`@let` may not
+call a host method. Three replacement shapes, by what the method actually did:
+
+| The method was… | Replace with | Example |
+|---|---|---|
+| pure formatting (no branch on row identity) | a pipe | `{{ invoice.issuedAt \| invoiceIssuedAt }}` (`c991407`/2026-09-16) |
+| a boolean predicate taking an id/row arg | a `computed()` `Set`/`Map`, or a derived record keyed by row id | `includedTagSet().has(tag)`; `groupSelectionStateById()[row.id]` (`c991407`) |
+| a glyph/branch over one of the table's own signals | a template `@switch` | `@switch (table.sortDirections().get('name'))` (`c991407`) |
+
+**Exceptions, not violations** — these are accepted directly in a template, no wrapper needed:
+signal/computed reads (`isLoading()`), event handlers (`(click)="save(row.id)"`), and reads of the
+library's own API (`table.selectedRows().has(id)`, `filters.status().isActive()`,
+`expandedRows().has(row.id)`) — the story exists to show that API, so calling it inline is the
+demonstration, not a violation.
+
+**The target is a host that reads as only the feature calls** — everything else (formatting,
+bookkeeping, timers, subscriptions) has its own name in its own file, per
+`.claude/rules/extract-encapsulated-logic.md`'s test: does this logic own a lifecycle, own state
+that isn't the host's, or need a comment to explain what it does? If yes, it gets a name of its
+own — see the table above for which of the three shapes to reach for.
+
+## Story scope — copy-paste code, not a realistic app
+
+A story's code is what a consumer copies to implement the feature(s) it's proving — not a
+sketch of what a real app around that feature would also need. Two questions gate every line:
+
+- **Does this serve the feature this story proves?** If a real consumer would plausibly add it
+  regardless of which feature they're implementing (a confirm dialog before a destructive
+  action, a toast system, loading skeletons), it's app chrome, not the feature — leave it out
+  unless the story's whole point *is* that affordance.
+- **Is this feature inherent to the surface being shown, or merely adjacent?** A story may cover
+  several features at once only when they're inseparable from what that surface actually is —
+  `live-table/` shows sorting + editing + deletion together because a live table *is* that set of
+  capabilities, not because bundling them was convenient. A single-feature story (`external-write/`
+  proving §1.5 reconciliation) doesn't get a second feature bolted on just because it's plausible
+  a consumer would want it there too — that belongs to whichever story already proves it, or a
+  story of its own.
+
+**Exception — design stories.** When the story's subject is visual/interaction design itself
+(a component's states, a layout), the "copy-paste code" framing doesn't apply the same way —
+the story *is* the design surface being reviewed, not a feature implementation to lift. Scope
+still applies, just against the design surface being shown instead of a product feature.
+
+If review turns up a flow that doesn't answer "which feature does this line serve," cut it —
+even if it's realistic, even if it's already-written, even if removing it shrinks the demo.
+`external-write/` had exactly this: a deletion-notice UI attributed in its own doc-comment to
+the feature it was proving, but the acceptance criteria it actually cited belonged to a
+different, already-covered user story. Noise doesn't announce itself as noise — check the claim
+against the actual spec section, don't take the comment's word for it.
+
+## Mocking actions: buttons over the actions panel
+
+Every mutation a person can trigger needs an on-canvas button calling a real table/form
+updater — never a Storybook actions-panel-only trigger, and never a bare `console.log`. A
+person reading the story should be able to click through the whole flow and see the resulting
+table state change, not just see an event logged in a side panel.
+
+**Every CRUD op in every row-editing story is a real MSW-intercepted round trip** — add, edit,
+and delete alike, gated and live, optimistic and pessimistic. `forceFailure` and `latencyMs`
+Storybook controls thread into request headers `row-edit/fixtures/handlers.ts` reads, so the
+failure/latency path is a real intercepted request, never a fake `await`. (Revised 2026-09-04 —
+this used to carve out an exception for "a pessimistic, no-rollback story doesn't need MSW, a
+plain `await` is enough." That's no longer the policy: pessimistic stories now hit the same mock
+server as their optimistic siblings, just with the request awaited before the row closes instead
+of after. Reserve a plain `await`/`Promise` stub for a story that isn't about save/delete at all.)
+
+- **Synchronous, local mutation** — call the verb directly off the button
+  (`this.table.editing.update(beginEdit(id))`, `this.table.editing.update(revertEdit(id))`).
+  This is the default for everything that isn't itself a CRUD write; most buttons in the
+  existing stories are this shape.
+- **Real server round-trip** — every add/edit/delete button, per the rule above.
+  `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`,
+  `gated-bulk-optimistic/`, `live-table/`, and `live-optimistic/` all do this.
+
+## One docs page per feature, not per story
+
+**Consolidated 2026-09-15: 21 per-story `.mdx` files became five.** Each feature owns one
+`<feature>.mdx` at its root — `grouping/grouping.mdx`, `filtering/filtering.mdx`,
+`row-edit/row-edit.mdx`, `selection/selection.mdx`, `composition/composition.mdx` — carrying every
+story in that feature as a `## ` section on one scrolling page, in the order worth reading them.
+
+- **The page is standalone, not attached.** `<Meta title="Table / Grouping" name="Docs" />` with no
+  `of=`, so the docs entry lands as a sibling leaf (`table-grouping--docs`) beside the stories
+  rather than nesting under one of them. Canvases come from any imported CSF:
+  `<Canvas of={StaticStories.Static} />`.
+- **No `autodocs`.** `.storybook/main.ts` configures none, so deleting a per-story mdx removes its
+  docs entry outright — no `tags: ['!autodocs']` needed anywhere.
+- **Stories are flat.** Every CSF in a feature shares one `title` (`'Table / Grouping'`) and names
+  its export for the lesson (`Static`, `AsyncRule`, `SilentDegradation`), so the sidebar is one
+  level: a feature node holding its stories plus `Docs`. Storybook accepts a shared title across
+  files and keeps each CSF's own `component`. Where the display name needs a character an
+  identifier cannot carry, set it explicitly: `name: 'Selection × Filtering'`.
+- **Code tabs sit per story section**, holding that story's HTML and TS. Files shared across the
+  feature — `fixtures/schema.ts`, `fixtures/http.ts`, the feature stylesheet — go in one
+  `## Shared across the …` group at the bottom, once, instead of being repeated in every section.
+  A file belonging to exactly one host (`sorting-editing.schema.ts`, `external-write.css`) stays in
+  that story's own group.
+- **Why one page:** the code-tabs block is hand-written markup, and per-story mdx meant a fresh
+  copy of it for every story. It also makes the reading order explicit — "`Static` is the one to
+  copy, `Regressions` is not" is a sequence, which three sibling pages cannot express.
+
+## `.stories.ts` and `.mdx`
+
+- `.stories.ts` defines `Meta` + one exported story object per distinct **Storybook-arg**
+  variant the story demonstrates (e.g. `Default`/`ForcedFailure` for `live-optimistic/`,
+  `gated-multiple-optimistic/` — a `forceFailure` arg toggling a real MSW-intercepted `HttpClient`
+  request).
+  A single `Default` is enough when there's nothing to vary this way (`gated-single-pessimistic/`,
+  whose save path is a stubbed `Promise` with no `forceFailure`/`latencyMs` to control). Don't
+  add a second story object for something a control already covers — see the general
+  `story-plan` guidance on when a variant earns its own story vs. a control.
+- **An on-canvas toggle that switches between two incompatible code paths is not a control —
+  it earns separate story folders, one host each.** A Storybook arg control (`forceFailure`,
+  `latencyMs`) varies *input* to one fixed code path; a button that flips `saveMode` or
+  `multiple` mid-story varies the *path itself*, which means the host's source always carries
+  a dead branch for whichever mode isn't active — the opposite of "copy-paste code" (below).
+  The row-editing cluster used to bundle Save-mode (Pessimistic/Optimistic) and session-shape
+  (Live/Gated) behind exactly these toggles; it's now `live-optimistic/`,
+  `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/`,
+  `gated-bulk-optimistic/` — five fixed-mode siblings, each host hardcoded to one path,
+  cross-referencing the others in its doc-comment for contrast. Save-mode (Pessimistic/Optimistic)
+  is a **gated**-only axis — it means "does the row stay open until the server confirms, or close
+  right away" (`endEdit` after vs. before the fetch), which only makes sense where there's a
+  session to hold open in the first place. A live table has no session (D29), so `live-pessimistic/`
+  — added for verb symmetry with `live-optimistic/`, not from a product requirement — was removed;
+  live's only axis is rollback vs. no rollback (`live-optimistic/` vs. `live-table/`).
+  (`gated-multiple-pessimistic` has
+  no story: bulk edit under `multiple: true` is optimistic-only by design — see
+  `docs/1-state/work/with-multiple-edit/1-design.md`, which closes G4 — so that combination is
+  intentionally unsupported, not merely undemoed. `gated-bulk-optimistic/` is optimistic-only for
+  the same reason.)
+- The feature mdx carries prose only where a reader needs a *why* before the code — a non-obvious
+  composition choice, or what separates a story from its sibling. It is not the place to restate
+  what the canvas already shows, and it is not where a host's mechanism is documented: that stays
+  in the host component's doc-comment (previous section).
+- **Why `ForcedFailure` earns its own story instead of staying a control you flip on `Default`:**
+  the rollback/error-recovery UI — a reverted value, a locked/error row, a Retry affordance — never
+  renders on the happy path. `Default`'s DOM literally never reaches that state. A control alone
+  buries it behind "remember to open Controls and flip the boolean"; a pinned story makes the one
+  UI state the whole feature exists for (recovering from a failed optimistic/close-then-confirm
+  save) permanently visible in the sidebar. This only applies where a save/close strategy actually
+  has a rollback or reopen-for-retry step to reveal — a story with nothing to roll back (see
+  `gated-multiple-pessimistic`'s non-existence, above) has no `ForcedFailure` to add.
+- **Every failure variant gets a paragraph and a second `<Canvas>` inside its story's section on
+  the feature page**, summarising what differs from the happy path. Angular's Storybook docgen does
+  not surface a CSF export's own JSDoc into the UI — only the mdx is a visible description surface
+  — so the doc-comment above the export is source-only context for a code reader. Without that
+  paragraph the two canvases render with the same (or no) description, indistinguishable to a
+  viewer. Keep the two in sync when either changes.
+- **The host's own on-canvas hint paragraph (`story-host__hint`) must itself branch on
+  `forceFailure()`.** The failure paragraph (above) only shows up on the feature's Docs page — a
+  person clicking through the stories in the sidebar and looking at the rendered canvas never sees
+  it, and would otherwise see the exact same static hint
+  text on both, with nothing on screen saying what's different. Every story with a `ForcedFailure`
+  export wraps its hint in `@if (forceFailure()) { ... } @else { ... }` so the one piece of text
+  actually visible while interacting with the story describes the state that story is in.
+- **The code-tabs block covers only what a consumer needs to copy to reproduce the feature** —
+  not every file the host happens to import. Matches the pattern Angular Material's own example
+  viewer uses (e.g. "Dialog Animations": `HTML | TS | CSS | dialog-animations-example-dialog.html`).
+  Tabs are two clusters, in this fixed order:
+  1. **The host's own files, generically labeled: `TS`, then `HTML`, then `CSS` if it has a
+     stylesheet** — always first, always in that order, always together, `TS` selected by default
+     (`defaultChecked`/its radio-equivalent). (Reordered 2026-09-16 from the earlier `HTML, TS,
+     CSS` — `TS` first matches how a consumer actually reads a copy-paste example: the
+     composition call is the decision, the template is secondary.) `CSS` means whatever
+     the host's `styleUrl`/`styleUrls` actually is, local or shared — `styles/story-host.css` fills
+     this slot generically labeled `CSS` for a story with no local override (`live-optimistic/`,
+     the `gated-*` stories). Only when a host has **two** stylesheets (its own local one plus the
+     shared one, e.g. `sorting-editing/`) does the local file take the `CSS` slot and the shared
+     one drop to cluster 2, filename-labeled — one generic `CSS` tab per story, never two.
+     **This rule wins over a task plan's enumerated tab list** (settled 2026-09-14): the filtering
+     and grouping hosts shipped with `story-host.css` dropped entirely because their step files
+     counted the tabs, while the selection hosts shipped the shared file as its own tab per this
+     rule. The selection hosts are correct — a step file enumerating tabs is a convenience, not a
+     second source of truth.
+  2. **Extra files**, one tab each, labeled with the file's **literal filename** (not a made-up
+     name like "Schema") — e.g. `row-edit/fixtures/schema.ts`, `styles/story-host.css`. A file shared out of
+     the story-cluster root is still just its own filename; there's no separate `Row ` prefix
+     scheme — the filename itself already says whether it's local or shared. A plain extra file
+     (schema/config logic) gets exactly one tab. An extra file that is itself a sub-component
+     (has its own `.ts` **and** `.html`) gets a tab per file, filename-labeled, the same way the
+     host's own two are — never collapsed into one. **Every story's `<story>-toolbar.component.ts`
+     and `.component.html` (see "Toolbar component" under "The story-host component" below) are
+     cluster-2 tabs, placed first among the extras** — a reader copying the host also needs the
+     toolbar it renders.
+  **Types, Mock, Utils, and Directive tabs are excluded entirely** — none of them are something
+  a consumer copies: a row/data shape is inferred from the schema, not typed out by hand; mock
+  data is fixture-only; a "utils" file is usually story-only glue (a fake save function, a
+  demo-only diff/cycle helper) rather than reusable feature code; a directive is an import, not
+  something copied inline. `?raw`-import each included file. When a story has both a local and
+  a shared stylesheet (e.g. local `sorting-editing-flip.css` alongside shared
+  `styles/story-host.css`), the local one keeps the cluster-1 `CSS` slot and the shared one gets
+  its own filename-labeled tab in cluster 2. `code-tabs.css`'s positional `:nth-child` pairing
+  between tab and panel currently supports up to 10 tabs; extend it (add another
+  `:nth-child(11)` pair to both selector lists) before adding an 11th tab to any story —
+  unlikely to matter at this scope, since every story in this cluster tops out at 5.
+
+## Reference implementations
+
+- `gated-single-optimistic/`, `gated-single-pessimistic/`, `gated-multiple-optimistic/` — the
+  fullest examples: multiple mutation verbs, per-row transient UI state (`forcedInvalid`,
+  `rowErrors`) kept separate from table state, a real name-uniqueness rule
+  (`editRowsWithUniqueNameSchema`) instead of hand-tracked bookkeeping for the duplicate-row
+  demo, and (for the two `-optimistic/` stories) `withRowEdit()`'s config
+  wired to a fixed `multiple` value. Three separate hosts, not one host with toggles — see
+  "`.stories.ts` and `.mdx`" above for why. **`saveAll()`/`clearAll()` live only in
+  `gated-multiple-optimistic/`** (removed 2026-09-05 from the two single-row stories) — single
+  mode caps at one open row, so neither button could ever do more than the existing Save/Cancel
+  already do there; keeping them would have been dead surface, not an extra demonstrated
+  behavior. Every other verb (add, duplicate, discard, Force Invalid, keyboard nav, Save & Add
+  Next) stays copy-pasted across all three deliberately — each host is a self-sufficient
+  copy-paste reference for its own mode combination, not a diff against its siblings.
+- `gated-bulk-optimistic/` — D32's batched-write answer: `createRow`'s array overload opens N rows
+  in one call (no loop), `POST /api/rows/bulk` saves them in one request, one rollback unit.
+  Scoped to only the bulk-create path (no update/delete) — that's the point of a standalone story
+  here, not an oversight.
+- `live-table/` + `live-optimistic/` — grouped under one `Live` nav entry (both focus-triggered,
+  no session, per D29). `live-table/` is the no-rollback baseline (sorting + editing + deletion,
+  persistent per-row errors with Retry, one manual undo slot); `live-optimistic/` isolates just
+  the `withOptimistic()` rollback verbs (capture on focus, revert-after-failure on blur), plus a
+  timed Undo affordance for delete.
+- **`filtering/` — three hosts, and the composition differs between them on purpose.**
+  `client-filtering/` composes `withFiltering({ predicates: () => [filters().matcher()] })` and is
+  the baseline: five rule kinds plus a declared `anyOf` quick filter, a chip summary,
+  `Reset to defaults` vs. `Clear all` as two visibly different buttons, and a broken-predicate
+  toggle that widens the result set.
+  `server-filtering/` composes **no filtering feature at all** — `createFilters()` feeds the
+  request and the rows arrive narrowed, so a client `filter` stage would have nothing to do; it
+  also carries the only `debounce` in the set and overrides core `totalRowCount` with the server's
+  own via `createTableFeature()` (ADR-0005). `predicate-filtering/` composes a hand-written
+  `(row) => boolean` with no filter model at all, which is what makes the predicate list the
+  contract rather than a convenience. All three put any `createFilters()` call in the host, not
+  `fixtures/`. `selection/filtering-selection/` (not here — see below) adds `withSelection()` +
+  `withSorting()` on top of `withFiltering()` and is where selection-under-filter is measured —
+  see `0-product/filtering.md` §5 F-S1; it lives under `selection/` because selection surviving
+  row churn, not the filtering itself, is what the story proves.
+- **`grouping/` — five hosts, split by what the table *is*, not by feature flags.**
+  `grouping-static/` is the grouped table as its own product: `withGrouping()` and **no second
+  feature at all**, deliberately including no `withExpansion()`, because a chevron with nothing to
+  expand is a control that does nothing. It had a rep filter until 2026-09-15 — the lesson was
+  real (aggregates are post-filter) but it belonged to a story that owns filtering, not to the one
+  host advertised as copyable. `fixtures/schema.ts` lost four config exports the same day: five
+  per-story names held one identical `TableConfig`, and that file is a published code tab, so five
+  names read as five setups. Per-story `*_GROUPING_LEVELS` stay — those do differ. `grouping-collapsible/` is the navigable outline — `withExpansion()` +
+  `withSorting()`, a real `<button>` chevron carrying `aria-expanded`, and three separate attacks
+  on the collapse state. `grouping-selection/` renders all three peer cascade defaults off one
+  `rowsOf()` call.
+
+  `grouping-async-rule/` and `grouping-regressions/` were **split out of `grouping-static/`
+  2026-09-15**, because that host had grown to carry three lessons and its source is what the
+  mdx's TS tab shows verbatim. A reader copying it got a comparator built to throw, a transport
+  knob and two regression controls along with the grouping. The async rule owns the
+  pending/resolved/failed states over a real intercepted request; the regressions host owns
+  `groupOrder`'s five modes including the throwing one, the level naming no column, and the
+  `aggregateFn` handed a value it refuses.
+
+  **A regression demo is now its own story, and says so.** The rule: a host that ships a
+  known-wrong behavior links the issue on canvas and is marked "do not copy" — it does not sit
+  inside the story a reader is meant to copy. A broken summary takes the whole table down (#79)
+  and a dropped grouping level is unannounced; blank group keys still cluster unlabelled in
+  `grouping-static/`, which is the one regression left in it, because a blank key is ordinary data
+  rather than misuse.
+- **`selection/` — three hosts, because the mode is a construction-time argument.**
+  `multi-selection/` puts the whole read/write surface of `withSelection()` on one screen,
+  including a `selectionChanged` event log that is the only place D9's single-delta clear and
+  D11's silent reconciliation prune are distinguishable. `single-selection/` is a sibling rather
+  than a toggle, per the fixed-mode rule above: `enableMultiRowSelection: false` is passed at
+  construction, so a toggle would leave a dead branch in the host. Its control is a **radio
+  group**, which makes the replace rule the control's own semantics and supplies arrow-key roving
+  focus for free. `filtering-selection/` composes `withFiltering()` + `withSelection()` +
+  `withSorting()` and proves selection survives both a filter narrowing the row set and a sort
+  reordering it — see `0-product/filtering.md` §5 F-S1. It reaches into `filtering/fixtures/` and
+  `filtering/filtering-story.css` for its invoice data rather than duplicating them, since the
+  subject under test is selection, not a second filtering fixture set.
+- `external-write/` — demonstrates an effect from *outside* the story's own button clicks
+  (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
+  an open row, quiet patch on a closed one) — a worked example of the scope discipline above:
+  it originally also carried a deletion-notice flow that belonged to a different user story
+  (§1.2) and was cut for that reason.

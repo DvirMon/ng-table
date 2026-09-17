@@ -1,0 +1,6 @@
+{{ label() }}
+<ng-icon name="lucideChevronDown" size="var(--ngpt-sys-icon-size-md)" color="currentColor" aria-hidden="true" />
+
+<ng-template #menu>
+  <ngpt-dropdown-menu [items]="items()" (optionSelected)="onSelect($event)" />
+</ng-template>

@@ -1,0 +1,103 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Sorting combined with row editing. Sort by Name or Due Date, then edit a row and change the
+    sorted column's value — today the row jumps to its new sorted position right away (keeping
+    it in place while open isn't supported yet). A blank Due Date always sorts to the end,
+    regardless of sort direction.
+  </p>
+
+  <ngp-sorting-editing-toolbar
+    [saveError]="saveError()"
+    (clearSort)="clearSort()"
+    (addRowWhileSorted)="addRowWhileSorted()"
+    (addRowWithBlankDueDate)="addRowWithBlankDueDate()"
+  />
+
+  @if (movedRow(); as violation) {
+    <p class="story-host__error" role="status">
+      Row "{{ violation.id }}" was at position {{ violation.indexAtOpen }} when opened, now at
+      {{ violation.currentIndex }} while still open — S-1's row-hold (OQ-3) isn't implemented
+      yet, so this is expected.
+    </p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        <th class="story-host__cell" [attr.aria-sort]="nameSortAria()">
+          <button type="button" (click)="table.toggleSort('name')">
+            name
+            @switch (table.sortDirections().get('name')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
+        <th class="story-host__cell" [attr.aria-sort]="dueDateSortAria()">
+          <button type="button" (click)="table.toggleSort('dueDate')">
+            dueDate
+            @switch (table.sortDirections().get('dueDate')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
+        <th class="story-host__cell">actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @let isEditing = table.editing().has(row.id);
+
+        <tr [ngpTableRow]="row">
+          <td class="story-host__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <input type="text" [formField]="field.name" placeholder="name" />
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.name }}</span>
+            }
+          </td>
+          <td class="story-host__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <input
+                  type="text"
+                  ngpNullableTextField
+                  [formField]="field.dueDate"
+                  placeholder="YYYY-MM-DD"
+                />
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.dueDate ?? '—' }}</span>
+            }
+          </td>
+          <td class="story-host__cell">
+            @if (isEditing) {
+              <button type="button" (click)="saveEdit(row.id)">Save</button>
+              <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
+              <button type="button" (click)="discardRow(row.id)">Discard</button>
+            } @else {
+              <button type="button" (click)="openEdit(row.id)">Edit</button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

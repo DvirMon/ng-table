@@ -1,0 +1,229 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as MultiStories from './multi-selection/multi-selection.stories';
+import * as SingleStories from './single-selection/single-selection.stories';
+import * as FilteringStories from './filtering-selection/filtering-selection.stories';
+import multiClass from './multi-selection/multi-selection-story-host.component.ts?raw';
+import multiTemplate from './multi-selection/multi-selection-story-host.component.html?raw';
+import multiToolbarClass from './multi-selection/multi-selection-toolbar.component.ts?raw';
+import multiToolbarTemplate from './multi-selection/multi-selection-toolbar.component.html?raw';
+import singleClass from './single-selection/single-selection-story-host.component.ts?raw';
+import singleTemplate from './single-selection/single-selection-story-host.component.html?raw';
+import singleToolbarClass from './single-selection/single-selection-toolbar.component.ts?raw';
+import singleToolbarTemplate from './single-selection/single-selection-toolbar.component.html?raw';
+import filteringClass from './filtering-selection/filtering-selection-story-host.component.ts?raw';
+import filteringTemplate from './filtering-selection/filtering-selection-story-host.component.html?raw';
+import filteringToolbarClass from './filtering-selection/filtering-selection-toolbar.component.ts?raw';
+import filteringToolbarTemplate from './filtering-selection/filtering-selection-toolbar.component.html?raw';
+import filteringSelectionStyles from '../filtering/filtering-story.css?raw';
+import selectionStyles from './selection-story.css?raw';
+import selectionSchema from './fixtures/schema.ts?raw';
+import sharedStyles from '../styles/story-host.css?raw';
+import '../styles/code-tabs.css';
+
+<Meta title="Table / Selection" name="Docs" />
+
+# Selection
+
+Three stories: `Multi` and `Single` are siblings, because the mode is a construction-time
+argument rather than a toggle — `enableMultiRowSelection: false` is passed to `withSelection()`
+at construction, so a single host switching between them would carry a dead branch. `Filtering ×
+Selection` is where selection meets row churn from another feature.
+
+Shared across `Multi`/`Single`: `fixtures/schema.ts` and `selection-story.css`, at the bottom of
+this page. Both configs have the same shape — the mode is the `withSelection()` argument, not a
+config field. `Filtering × Selection` uses the filtering domain's own invoice fixtures and
+`filtering-story.css` instead — shown in its own tabs, not the shared section.
+
+---
+
+## Multi
+
+The whole read/write surface of `withSelection()` on one screen, including a `selectionChanged`
+event log — the only place a single-delta clear and a silent reconciliation prune are
+distinguishable from each other.
+
+<Canvas of={MultiStories.Multi} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
+      multi-selection-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-multi-source" />
+      multi-selection-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={multiClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={multiTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={multiToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={multiToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Single
+
+A sibling rather than a toggle, per the fixed-mode rule above. Its control is a **radio group**,
+which makes the replace rule the control's own semantics and supplies arrow-key roving focus for
+free.
+
+<Canvas of={SingleStories.Single} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
+      single-selection-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-single-source" />
+      single-selection-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={singleClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={singleTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={singleToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={singleToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Filtering × Selection
+
+Two features composed, and the place their edges meet. A selected row that a filter moves out of
+view stays selected — the opposite of MUI X's documented behaviour, which deselects it — and
+clearing the filter brings the selection back unchanged. Column headers sort, so selection is
+proven to survive both filtering and sort-driven row reordering, not filtering alone. The header
+checkbox is the only select-all/clear gesture; each row has its own delete action.
+
+One gap is rendered rather than papered over: nothing shipped reports how many selected rows are
+currently hidden, so the canvas says so instead of computing a stand-in count in the story host.
+The notice disappears on its own when that signal lands.
+
+<Canvas of={FilteringStories.FilteringAndSelection} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-filtering-selection-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-filtering-selection-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-filtering-selection-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-filtering-selection-source" />
+      filtering-selection-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-filtering-selection-source" />
+      filtering-selection-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={filteringClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringSelectionStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Shared across Multi / Single
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-shared-source" defaultChecked />
+      fixtures/schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-shared-source" />
+      selection-story.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="selection-shared-source" />
+      story-host.css
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={selectionSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={selectionStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+  </div>
+</div>

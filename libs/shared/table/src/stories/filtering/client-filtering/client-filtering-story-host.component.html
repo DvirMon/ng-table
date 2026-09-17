@@ -1,0 +1,125 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Client filtering. The amount filter starts at its declared default (min 1000), which is what
+    makes <em>Reset to defaults</em> and <em>Clear all</em> two different buttons. Empty a box and
+    it stops narrowing on its own — there is no story-local "is it empty" guard anywhere here.
+    Date bounds compare real instants: set Issued from and to both to 2026-08-14 and only the
+    midnight invoice matches, because the 16:45 one is past the upper bound. The time part is not
+    silently dropped.
+  </p>
+
+  <ngp-client-filtering-toolbar
+    [searchField]="filterForm.search"
+    [statusField]="filterForm.status"
+    [customerField]="filterForm.customer"
+    [amountField]="filterForm.amount"
+    [issuedAtField]="filterForm.issuedAt"
+    [filters]="filters"
+    [tagsPredicateIsBroken]="tagsPredicateIsBroken()"
+    [hasNoData]="hasNoData()"
+    [statusOptions]="statusOptions"
+    [tagOptions]="tagOptions"
+    (resetToDefaults)="resetToDefaults()"
+    (clearAllFilters)="clearAllFilters()"
+    (toggleTagsPredicate)="toggleTagsPredicate()"
+    (loadSavedFilterRaw)="loadSavedFilterRaw()"
+    (loadSavedFilterGuarded)="loadSavedFilterGuarded()"
+    (emptyTheData)="emptyTheData()"
+    (restoreTheData)="restoreTheData()"
+  />
+
+  <div class="filtering-story__summary" [class.filtering-story__summary--empty]="matchCount() === 0">
+    <span><strong>{{ matchCount() }}</strong> of <strong>{{ rowCount() }}</strong> match</span>
+    <span class="filtering-story__chips">
+      @for (criterion of activeCriteria(); track criterion.key) {
+        <span class="filtering-story__chip">
+          {{ criterion.key }}: {{ criterion.label }}
+          <button
+            type="button"
+            [attr.aria-label]="'Clear ' + criterion.key"
+            (click)="clearCriterion(criterion.key)"
+          >
+            ×
+          </button>
+        </span>
+      } @empty {
+        <span>no active criteria — nothing is narrowing</span>
+      }
+    </span>
+  </div>
+
+  @switch (savedFilterLoad()) {
+    @case ('raw') {
+      <p class="filtering-story__notice" role="status">
+        Raw load: the saved `status: "archived"` was applied verbatim and matches no row, so the
+        table looks broken rather than empty-because-you-asked. The renamed `amount` keys read as
+        an empty range and narrow nothing at all — silently.
+      </p>
+    }
+    @case ('guarded') {
+      <p class="filtering-story__notice" role="status">
+        Guarded load: `status: "archived"` and the renamed `amount` keys failed their shape check
+        and were dropped back to their declared defaults; `customer` survived.
+      </p>
+    }
+  }
+
+  @if (tagsPredicateIsBroken()) {
+    <p class="filtering-story__notice" role="status">
+      The compound tags predicate throws. Pick at least one tag — an empty criterion is skipped
+      before any predicate runs — and the tag filter stops narrowing: the result set gets
+      <strong>wider</strong>, every other filter keeps narrowing, and the table never goes down.
+    </p>
+    @for (report of filterReports.entries(); track $index) {
+      <p class="filtering-story__notice filtering-story__notice--report">{{ report }}</p>
+    }
+  }
+
+  @if (hasNoData()) {
+    <p class="filtering-story__empty" role="status">
+      No invoices exist. This is not the same state as "your filters matched nothing" — clearing
+      the filters here would not bring a single row back.
+    </p>
+  } @else if (isFilteredToNothing()) {
+    <p class="filtering-story__empty" role="status">
+      No invoice matches the active filters. The data is still there — clear a criterion above.
+    </p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.columns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as invoice) {
+          <tr [ngpTableRow]="row">
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.id }}</td>
+            <td class="story-host__cell">{{ invoice.customer }}</td>
+            <td class="story-host__cell">{{ invoice.status }}</td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
+            <td class="story-host__cell">{{ invoice.issuedAt | invoiceIssuedAt }}</td>
+            <td class="story-host__cell">
+              @for (tag of invoice.tags; track tag) {
+                <span class="filtering-story__tag">{{ tag }}</span>
+              } @empty {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+            <td class="story-host__cell">
+              @if (invoice.note; as note) {
+                {{ note }}
+              } @else {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

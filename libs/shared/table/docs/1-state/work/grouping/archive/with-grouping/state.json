@@ -1,0 +1,31 @@
+{
+  "slug": "with-grouping",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": false,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/grouping/archive/with-grouping",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/grouping/archive/with-grouping/2-decisions.md",
+  "specPath": "libs/shared/table/docs/1-state/work/grouping/archive/with-grouping/3-spec.md",
+  "architecturePath": "libs/shared/table/docs/1-state/architecture.md",
+  "githubIssues": [
+    6,
+    58,
+    59,
+    60,
+    65,
+    117,
+    118,
+    119,
+    120,
+    121,
+    122
+  ],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": true
+  }
+}

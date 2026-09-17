@@ -1,0 +1,25 @@
+<span class="search-row__surface">
+  @if (result().kind === 'heading') {
+    <svg class="search-row__tree" width="24" height="54" viewBox="0 0 24 54" aria-hidden="true">
+      <path [attr.d]="treePath()" fill="none" stroke="currentColor" stroke-width="1.5" />
+    </svg>
+  }
+  <ng-icon
+    [name]="result().kind === 'heading' ? 'lucideHash' : 'lucideFile'"
+    size="20px"
+    color="currentColor"
+    class="search-row__icon"
+    aria-hidden="true"
+  />
+  <span class="search-row__content">
+    <span class="search-row__title">{{ result().title }}</span>
+    <span class="search-row__path">{{ result().breadcrumb }}</span>
+  </span>
+  <ng-icon
+    name="lucideCornerDownLeft"
+    size="22px"
+    color="currentColor"
+    class="search-row__action"
+    aria-hidden="true"
+  />
+</span>

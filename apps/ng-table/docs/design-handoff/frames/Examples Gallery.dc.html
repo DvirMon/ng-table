@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NGP Table — Examples</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: oklch(0.16 0.005 260); font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: oklch(0.62 0.19 52); text-decoration: none; }
+  a:hover { color: oklch(0.68 0.19 52); }
+  [data-skip]:focus { transform: translateY(0) !important; opacity: 1 !important; }
+  ::selection { background: oklch(0.62 0.19 52 / 0.3); }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:oklch(0.16 0.005 260);color:white;">
+
+  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 24px;background:oklch(0.21 0.03 85);border-bottom:1px solid oklch(0.34 0.06 85);">
+    <span style="font:700 11px Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.12 85);">Reference frame</span>
+    <span style="flex:1;min-width:260px;font:400 13px/1.5 Inter,sans-serif;color:oklch(0.85 0.06 85);">Layout and states are spec-accurate. <strong style="font-weight:600;">All copy is invented placeholder and the preview canvases are empty reserved boxes</strong> — there is no NGP Table source in this project to render inside them. <strong style="font-weight:600;">This page has no entry in the nav tree yet</strong>, so no sidebar item is active.</span>
+    <button type="button" onClick="{{ toggleAnnotations }}" style="flex:none;padding:6px 12px;border-radius:20px;border:1px solid oklch(0.5 0.1 85);background:transparent;color:oklch(0.85 0.06 85);font:500 12.5px Inter,sans-serif;cursor:pointer;" style-hover="background:oklch(0.28 0.04 85);color:white;">{{ annotationLabel }}</button>
+  </div>
+
+  <a data-skip data-role="skip-link" data-spec="specs/foundations/Focus and Keyboard.md" data-purpose="First focusable element in the document. Moves focus to the H1, not just the hash." data-content="derived" href="#main" style="position:fixed;top:8px;left:8px;z-index:80;padding:8px 14px;border-radius:8px;background:oklch(0.2 0.005 260);border:1px solid oklch(0.62 0.19 52);color:white;font:500 13px Inter,sans-serif;transform:translateY(-200%);opacity:0;transition:transform 120ms ease,opacity 120ms ease;">Skip to content</a>
+
+  <header data-role="navbar" data-spec="specs/layout/Top Navbar.md" data-purpose="Docs treatment: sticky, own surface, bottom border. The marketing Home page overrides all three." data-content="derived" role="banner" style="position:sticky;top:0;z-index:10;height:56px;padding:0 24px;background:oklch(0.11 0.004 260);border-bottom:1px solid oklch(0.26 0.005 260);display:flex;align-items:center;justify-content:space-between;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button type="button" onClick="{{ toggleDrawer }}" aria-label="Open navigation" aria-expanded="{{ drawerExpanded }}" style="align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:oklch(0.17 0.005 260);color:oklch(0.78 0.005 260);font-size:15px;line-height:1;cursor:pointer;display:{{ hamburgerDisplay }};" style-hover="border-color:oklch(0.45 0.005 260);color:white;"><span aria-hidden="true">☰</span></button>
+      <div style="width:22px;height:22px;border-radius:6px;background:oklch(0.62 0.19 52);"></div>
+      <span style="font:600 15px/1.2 Inter,sans-serif;color:white;letter-spacing:-0.01em;">NGP Table</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button type="button" style="display:flex;align-items:center;gap:8px;width:220px;height:32px;padding:0 10px;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:oklch(0.17 0.005 260);color:oklch(0.6 0.01 260);font:400 13px Inter,sans-serif;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);">
+        <span aria-hidden="true" style="font-size:15px;line-height:1;">⌕</span>
+        <span style="flex:1;text-align:left;">Search docs</span>
+        <span style="font:400 11px 'JetBrains Mono',monospace;color:oklch(0.6 0.01 260);background:oklch(0.24 0.005 260);border-radius:4px;padding:2px 5px;">⌘K</span>
+      </button>
+      <a href="#" style="padding:5px 12px;border-radius:20px;border:1px solid oklch(0.3 0.005 260);color:oklch(0.78 0.005 260);font:500 13px Inter,sans-serif;" style-hover="border-color:oklch(0.45 0.005 260);color:white;background:oklch(0.2 0.005 260);">GitHub</a>
+    </div>
+  </header>
+
+  <div onClick="{{ closeDrawer }}" aria-hidden="true" style="position:fixed;inset:0;z-index:25;background:oklch(0 0 0 / 0.5);backdrop-filter:blur(2px);display:{{ scrimDisplay }};"></div>
+
+  <div style="display:grid;max-width:1440px;margin:0 auto;align-items:start;grid-template-columns:{{ gridColumns }};">
+
+    <nav data-role="sidebar" data-spec="specs/layout/Sidebar Navigation.md" data-purpose="Rendered from the nav tree in Content Model.md. Never hand-authored per page. Sticky with its own overflow scroll." data-content="derived" aria-label="Docs navigation" style="top:72px;max-height:calc(100vh - 72px);overflow-y:auto;padding:28px 20px;border-right:1px solid oklch(0.24 0.005 260);background:oklch(0.16 0.005 260);position:{{ sidebarPosition }};display:{{ sidebarDisplay }};width:{{ sidebarWidth }};z-index:{{ sidebarZ }};inset:{{ sidebarInset }};">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">Overview</a>
+      </div>
+      <div style="font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:0.05em;color:oklch(0.6 0.01 260);margin:18px 0 8px;">1. State Layer</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">Architecture</a>
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">PRD</a>
+      </div>
+      <div style="font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:0.05em;color:oklch(0.6 0.01 260);margin:18px 0 8px;">3. UI Layer</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#" style="margin:0 -10px;padding:9px 10px;border-left:2px solid transparent;color:oklch(0.78 0.005 260);font:400 13.5px Inter,sans-serif;" style-hover="background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);">Sorting</a>
+      </div>
+    </nav>
+
+    <main data-role="content-column" data-spec="specs/layout/Content Column.md" data-purpose="Examples Gallery: the repeating unit is H2 → one paragraph → preview window. Never two windows adjacent, never a bare code block." data-content="MOCK" id="main" role="main" tabindex="-1" style="padding:36px 40px;max-width:760px;outline:none;">
+      <div data-role="category-badge" data-spec="specs/Category Badge.md" data-purpose="Eyebrow — the resolved eyebrow for this route." data-content="derived" style="font:700 12px Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.62 0.19 52);margin-bottom:6px;">3. UI Layer</div>
+      <h1 data-role="prose.h1" data-spec="specs/Content Prose.md" data-purpose="Text is entry.label. Placeholder here: the entry does not exist in the tree yet." data-content="MOCK" style="margin:0 0 14px;font:700 32px Inter,sans-serif;letter-spacing:-0.01em;color:white;">Examples</h1>
+      <p data-role="prose.lede" data-spec="specs/Content Prose.md" data-purpose="One paragraph before the first example. Prose between examples is one paragraph maximum — more than that and it is a Doc Article." data-content="MOCK" style="margin:0 0 28px;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Each example is a complete, copyable component. The markup is yours in every one of them — the primitive only supplies state and behavior.</p>
+
+      <h2 data-role="prose.h2" data-spec="specs/Content Prose.md" data-purpose="Section start. One example per H2." data-content="MOCK" id="sec-basic" style="margin:32px 0 10px;font:600 19px Inter,sans-serif;color:white;">Sortable columns</h2>
+      <p style="margin:0 0 24px;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">A header click cycles ascending, descending, none. The comparator is yours.</p>
+      <div data-role="preview-window" data-spec="specs/Preview Window.md" data-purpose="Opens on the Preview tab, always. The Source tab holds the code — a gallery never carries a bare code block. One window per H2, never two adjacent." data-content="MOCK" style="margin:0 0 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div role="tablist" style="display:inline-flex;background:oklch(0.22 0.005 260);border-radius:8px;padding:3px;">
+            <button type="button" role="tab" aria-selected="true" style="padding:6px 14px;border:none;border-radius:6px;background:oklch(0.3 0.005 260);color:white;font:500 13px Inter,sans-serif;cursor:pointer;">Preview</button>
+            <button type="button" role="tab" aria-selected="false" style="padding:6px 14px;border:none;border-radius:6px;background:transparent;color:oklch(0.64 0.01 260);font:400 13px Inter,sans-serif;cursor:pointer;" style-hover="background:oklch(0.26 0.005 260);">Source</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button type="button" aria-haspopup="menu" aria-expanded="false" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid oklch(0.3 0.005 260);background:transparent;color:oklch(0.75 0.01 260);font:400 13px Inter,sans-serif;white-space:nowrap;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);">Example CSS <span aria-hidden="true">▾</span></button>
+            <button type="button" aria-label="Copy code" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:transparent;color:oklch(0.62 0.01 260);font-size:13px;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);"><span aria-hidden="true">⧉</span></button>
+            <button type="button" aria-label="Run example" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:transparent;color:oklch(0.62 0.01 260);font-size:13px;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);"><span aria-hidden="true">⚡</span></button>
+          </div>
+        </div>
+        <div role="tabpanel" aria-label="Sortable columns preview" style="display:flex;justify-content:center;padding:40px 32px;border-radius:12px;background:oklch(0.13 0.004 260);border:1px solid oklch(0.26 0.005 260);">
+          <div style="width:100%;max-width:520px;border:1px dashed oklch(0.3 0.005 260);border-radius:8px;padding:20px;text-align:center;font:400 13px 'JetBrains Mono',monospace;color:oklch(0.6 0.01 260);">live NGP Table example — the product component styles itself</div>
+        </div>
+      </div>
+
+      <h2 data-role="prose.h2" data-spec="specs/Content Prose.md" data-purpose="Section start. One example per H2." data-content="MOCK" id="sec-select" style="margin:32px 0 10px;font:600 19px Inter,sans-serif;color:white;">Row selection</h2>
+      <p style="margin:0 0 24px;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Selection is keyed, so it survives a refetch of the same rows.</p>
+      <div data-role="preview-window" data-spec="specs/Preview Window.md" data-purpose="Opens on the Preview tab, always. The Source tab holds the code — a gallery never carries a bare code block. One window per H2, never two adjacent." data-content="MOCK" style="margin:0 0 24px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div role="tablist" style="display:inline-flex;background:oklch(0.22 0.005 260);border-radius:8px;padding:3px;">
+            <button type="button" role="tab" aria-selected="true" style="padding:6px 14px;border:none;border-radius:6px;background:oklch(0.3 0.005 260);color:white;font:500 13px Inter,sans-serif;cursor:pointer;">Preview</button>
+            <button type="button" role="tab" aria-selected="false" style="padding:6px 14px;border:none;border-radius:6px;background:transparent;color:oklch(0.64 0.01 260);font:400 13px Inter,sans-serif;cursor:pointer;" style-hover="background:oklch(0.26 0.005 260);">Source</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button type="button" aria-haspopup="menu" aria-expanded="false" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;border:1px solid oklch(0.3 0.005 260);background:transparent;color:oklch(0.75 0.01 260);font:400 13px Inter,sans-serif;white-space:nowrap;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);">Example CSS <span aria-hidden="true">▾</span></button>
+            <button type="button" aria-label="Copy code" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:transparent;color:oklch(0.62 0.01 260);font-size:13px;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);"><span aria-hidden="true">⧉</span></button>
+            <button type="button" aria-label="Run example" style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:transparent;color:oklch(0.62 0.01 260);font-size:13px;cursor:pointer;" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);color:oklch(0.85 0.01 260);"><span aria-hidden="true">⚡</span></button>
+          </div>
+        </div>
+        <div role="tabpanel" aria-label="Row selection preview" style="display:flex;justify-content:center;padding:40px 32px;border-radius:12px;background:oklch(0.13 0.004 260);border:1px solid oklch(0.26 0.005 260);">
+          <div style="width:100%;max-width:520px;border:1px dashed oklch(0.3 0.005 260);border-radius:8px;padding:20px;text-align:center;font:400 13px 'JetBrains Mono',monospace;color:oklch(0.6 0.01 260);">live NGP Table example — the product component styles itself</div>
+        </div>
+      </div>
+
+      <nav data-role="pagination" data-spec="specs/Pagination Footer.md" data-purpose="Prev/next are the adjacent entries in flattened tree order. Placeholder here: this page is not in the tree." data-content="MOCK" aria-label="Page navigation" style="display:flex;gap:16px;padding-top:24px;margin-top:32px;border-top:1px solid oklch(0.24 0.005 260);">
+        <a href="#" style="flex:1;padding:14px 18px;border:1px solid oklch(0.28 0.005 260);border-radius:10px;" style-hover="background:oklch(0.2 0.005 260);">
+          <span style="display:flex;align-items:center;gap:6px;font:400 12.5px Inter,sans-serif;color:oklch(0.6 0.01 260);margin-bottom:4px;"><span aria-hidden="true">←</span> Previous</span>
+          <span style="display:block;font:600 14.5px Inter,sans-serif;color:oklch(0.9 0.005 260);">Sorting</span>
+        </a>
+        <div style="flex:1;" aria-hidden="true"></div>
+      </nav>
+    </main>
+
+    <aside data-role="toc" data-spec="specs/layout/TOC Column.md" data-purpose="Always renders on this archetype — one entry per example. Overrides Doc Article's 2-H2 minimum." data-content="derived" aria-label="On this page" style="position:sticky;top:72px;max-height:calc(100vh - 72px);overflow-y:auto;padding:36px 20px;display:{{ tocDisplay }};">
+      <div style="font:600 11px Inter,sans-serif;text-transform:uppercase;letter-spacing:0.05em;color:oklch(0.6 0.01 260);margin-bottom:10px;">On this page</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <a href="#sec-basic" aria-current="location" style="padding:9px 10px;border-left:2px solid oklch(0.62 0.19 52);color:oklch(0.62 0.19 52);font-size:13px;">Sortable columns</a>
+        <a href="#sec-select" style="padding:9px 10px;border-left:2px solid transparent;color:oklch(0.6 0.01 260);font-size:13px;" style-hover="color:oklch(0.85 0.01 260);background:oklch(0.2 0.005 260);">Row selection</a>
+      </div>
+    </aside>
+
+  </div>
+
+  <footer role="contentinfo" style="padding:28px;border-top:1px solid oklch(0.24 0.005 260);background:oklch(0.11 0.004 260);display:flex;justify-content:center;">
+    <span style="font:400 13px Inter,sans-serif;color:oklch(0.6 0.01 260);">© 2026 NGP Table. All rights reserved.</span>
+  </footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { annotated: false, narrow: false, drawerOpen: false };
+
+  componentDidMount() {
+    // The md collapse can't be expressed inline, so the breakpoint is observed in JS
+    // and drives inline styles. Threshold matches foundations/Responsive and Breakpoints.md.
+    this._mq = window.matchMedia('(max-width: 1023px)');
+    this._onMQ = (e) => this.setState({ narrow: e.matches, drawerOpen: false });
+    this._mq.addEventListener('change', this._onMQ);
+    this.setState({ narrow: this._mq.matches });
+  }
+
+  componentWillUnmount() {
+    this._mq?.removeEventListener('change', this._onMQ);
+  }
+
+  toggleDrawer = () => this.setState((s) => ({ drawerOpen: !s.drawerOpen }));
+  closeDrawer = () => this.setState({ drawerOpen: false });
+
+  toggleAnnotations = () => {
+    const on = !this.state.annotated;
+    this.setState({ annotated: on });
+    document.querySelectorAll('[data-role]').forEach((el) => {
+      const existing = el.querySelector(':scope > [data-annotation-tag]');
+      if (!on) { if (existing) existing.remove(); el.style.outline = ''; return; }
+      if (existing) return;
+      el.style.outline = '1px dashed oklch(0.62 0.19 52 / 0.55)';
+      if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+      const tag = document.createElement('div');
+      tag.setAttribute('data-annotation-tag', '');
+      tag.textContent = el.getAttribute('data-role');
+      tag.title = el.getAttribute('data-purpose') || '';
+      tag.style.cssText = 'position:absolute;top:-9px;left:8px;z-index:40;padding:1px 6px;border-radius:4px;background:oklch(0.62 0.19 52);color:oklch(0.16 0.02 52);font:600 10px Inter,sans-serif;letter-spacing:0.04em;text-transform:uppercase;pointer-events:auto;cursor:help;white-space:nowrap;';
+      el.appendChild(tag);
+    });
+  };
+
+  renderVals() {
+    const { narrow, drawerOpen } = this.state;
+    return {
+      toggleAnnotations: this.toggleAnnotations,
+      annotationLabel: this.state.annotated ? 'Hide roles' : 'Show roles',
+      toggleDrawer: this.toggleDrawer,
+      closeDrawer: this.closeDrawer,
+      gridColumns: narrow ? 'minmax(0,1fr)' : '270px minmax(0,1fr) 220px',
+      tocDisplay: narrow ? 'none' : 'block',
+      hamburgerDisplay: narrow ? 'flex' : 'none',
+      sidebarPosition: narrow ? 'fixed' : 'sticky',
+      sidebarDisplay: narrow && !drawerOpen ? 'none' : 'block',
+      sidebarWidth: narrow ? '300px' : 'auto',
+      sidebarZ: narrow ? 30 : 'auto',
+      sidebarInset: narrow ? '56px auto 0 0' : 'auto',
+      scrimDisplay: narrow && drawerOpen ? 'block' : 'none',
+      drawerExpanded: narrow && drawerOpen ? 'true' : 'false',
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+/* Two fixed halves, not `flex: 1` cards: at the ends of the tree one side is absent and the
+   remaining card must keep its own half rather than stretching (spec § One side only). */
+:host {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ngpt-sys-space-400);
+}

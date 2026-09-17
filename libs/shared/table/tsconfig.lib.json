@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc",
+    "incremental": true,
+    "tsBuildInfoFile": "../../../dist/out-tsc/shared-table-lib.tsbuildinfo",
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSourceMap": false,
+    "types": []
+  },
+  "exclude": ["src/**/*.spec.ts", "src/**/*.test.ts"],
+  "include": ["src/**/*.ts"]
+}

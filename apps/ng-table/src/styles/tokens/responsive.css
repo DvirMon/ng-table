@@ -1,0 +1,5 @@
+:root {
+  --ngpt-sys-breakpoint-sm: 640px;
+  --ngpt-sys-breakpoint-md: 1024px;
+  --ngpt-sys-breakpoint-lg: 1440px;
+}

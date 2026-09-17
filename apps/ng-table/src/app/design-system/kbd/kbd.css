@@ -1,0 +1,7 @@
+:host {
+  flex-shrink: 0;
+  font: 400 13px/1.6 var(--ngpt-sys-font-family-base);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small);
+  background: var(--ngpt-bg-code-chip);
+  color: var(--ngpt-text-secondary);
+}

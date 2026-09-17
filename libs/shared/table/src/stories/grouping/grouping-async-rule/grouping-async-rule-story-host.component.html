@@ -1,0 +1,87 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    A grouping level is being decided by the server. While the rule is unresolved the table holds
+    the grouping it was given — Region → Category — rather than flashing ungrouped and back. Watch
+    the pills: they do not move until the answer lands, and then the whole level set becomes the
+    rule's, because a resolved rule overrides the base choice rather than merging with it.
+  </p>
+
+  <div class="grouping-story__pills">
+    @for (level of table.groupingLevels(); track level.id) {
+      <span class="grouping-story__pill">{{ level.label }}</span>
+    }
+  </div>
+
+  @if (isGroupingRulePending()) {
+    <p class="grouping-story__notice" role="status">
+      Grouping rule pending — holding the last explicit grouping. Nothing below has changed yet.
+    </p>
+  } @else if (asyncRuleStatus() === 'error') {
+    <p class="grouping-story__notice" role="status">
+      The grouping rule failed. <code>onError</code> is required to return an explicit boolean, and
+      this one returns <code>false</code>: the rule set resolves to <code>[]</code> — actively
+      grouped by nothing, which is a different state from abstaining. Every row is still here, flat
+      and unfiltered by the failure; nothing blanked.
+    </p>
+  } @else {
+    <p class="grouping-story__notice" role="status">
+      The grouping rule resolved. The level set is now the rule's, not the base choice's.
+    </p>
+  }
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
+                @if (isFirst) {
+                  @if (row.groupKey?.value | isBlankGroup) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
+                  }
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
+                  }
+                }
+              </td>
+            }
+          } @else {
+            @if (row.data; as rowData) {
+              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+                <td
+                  class="story-host__cell"
+                  [class.grouping-story__cell--label]="isFirst"
+                  [class.grouping-story__cell--numeric]="column.id === 'amount'"
+                >
+                  @switch (column.id) {
+                    @case ('amount') {
+                      {{ column.accessor(rowData) | dealAmount }}
+                    }
+                    @case ('closedAt') {
+                      {{ column.accessor(rowData) | dealDate }}
+                    }
+                    @default {
+                      {{ column.accessor(rowData) }}
+                    }
+                  }
+                </td>
+              }
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

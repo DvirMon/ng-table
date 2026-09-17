@@ -1,0 +1,34 @@
+<div class="navbar__inner">
+  <div class="navbar__left">
+    @if (variant() === 'docs') {
+      <button ngptIconButton class="navbar__hamburger" aria-label="Open navigation" [size]="24">
+        <ng-icon
+          name="lucideMenu"
+          size="var(--ngpt-sys-icon-size-sm)"
+          color="currentColor"
+          aria-hidden="true"
+        />
+      </button>
+    }
+    <span class="navbar__logo" aria-hidden="true"></span>
+    <span class="navbar__title">NGP Table</span>
+  </div>
+
+  <div class="navbar__right">
+    @switch (variant()) {
+      @case ('docs') {
+        <!-- eslint-disable-next-line @angular-eslint/template/elements-content -- attribute-hosted component (ADR-0005): content comes from search-field.ts's own templateUrl -->
+        <button ngptSearchField [open]="searchOpen()" (click)="forwardOpenSearch()"></button>
+        <span class="navbar__dot" aria-hidden="true"></span>
+        <a class="navbar__link" href="#">Discord</a>
+        <a class="navbar__link" href="#">GitHub</a>
+      }
+      @case ('band') {
+        <!-- eslint-disable-next-line @angular-eslint/template/elements-content -- attribute-hosted component (ADR-0005): content comes from search-field.ts's own templateUrl -->
+        <button ngptSearchField variant="on-band" [open]="searchOpen()" (click)="forwardOpenSearch()"></button>
+        <a class="navbar__link" routerLink="/getting-started/introduction">Documentation</a>
+        <a class="navbar__link" href="#">GitHub</a>
+      }
+    }
+  </div>
+</div>

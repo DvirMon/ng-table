@@ -1,0 +1,64 @@
+<ngpt-navbar variant="band" [searchOpen]="searchOpen()" (openSearch)="openSearch()" />
+
+<ngpt-home-hero-band
+  [announcement]="content.hero.announcement"
+  [announcementStatus]="content.hero.announcementStatus"
+  [h1]="content.hero.h1"
+  [lede]="content.hero.lede"
+  [primaryLabel]="content.hero.primaryLabel"
+  [secondaryLabel]="content.hero.secondaryLabel"
+  (primaryClick)="scrollToInstall()"
+  (secondaryClick)="onSecondaryClick()"
+/>
+
+<section class="home-section home-section--features">
+  <div class="home-section__measure">
+    <span ngptCategoryBadge>{{ content.features.eyebrow }}</span>
+    <div ngptProse measure="marketing">
+      <h2>{{ content.features.heading }}</h2>
+    </div>
+    <div ngptHomeFeatureGrid class="home-section__grid">
+      @for (cell of content.features.cells; track cell.title) {
+        <article class="home-feature-cell">
+          <ng-icon
+            class="home-feature-cell__icon"
+            [name]="cell.icon"
+            size="var(--ngpt-sys-icon-size-lg)"
+            color="currentColor"
+            aria-hidden="true"
+          />
+          <h3 ngptFeatureGridTitle>{{ cell.title }}</h3>
+          <p ngptFeatureGridText>{{ cell.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>
+
+<section id="install" class="home-section home-section--install">
+  <div class="home-section__measure">
+    <span ngptCategoryBadge>{{ content.install.eyebrow }}</span>
+    <div ngptProse measure="marketing">
+      <h2>{{ content.install.heading }}</h2>
+      <p>{{ content.install.description }}</p>
+    </div>
+    <ngpt-home-install-row [command]="content.install.command" />
+  </div>
+</section>
+
+<footer ngptPageFooter>
+  <nav class="home-footer__links">
+    @for (link of content.footerLinks; track link.label) {
+      <a
+        ngptPageFooterLink
+        [href]="link.href"
+        [attr.target]="link.external ? '_blank' : null"
+        [attr.rel]="link.external ? 'noopener noreferrer' : null"
+        >{{ link.label }}</a
+      >
+    }
+  </nav>
+  <p>{{ content.footerCopyright }}</p>
+</footer>
+
+<ngpt-search-overlay [open]="searchOpen()" (closed)="closeSearch()" />

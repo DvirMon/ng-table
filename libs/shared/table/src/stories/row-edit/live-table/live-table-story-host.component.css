@@ -1,0 +1,46 @@
+.story-host__shortcut-hint {
+  margin-inline-start: auto;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+/* Header sort trigger — the `<th>` fills the button's clickable/aria-sort role, so the button
+   itself carries no chrome of its own. */
+.story-host__sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.story-host__cell--actions {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Square, label-less discard control — its name lives in aria-label/title, not on screen. */
+.story-host__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  margin-inline-end: 0;
+  color: #9ca3af;
+}
+
+.story-host__icon-button:hover,
+.story-host__icon-button:focus-visible {
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.story-host__icon-button svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}

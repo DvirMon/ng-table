@@ -1,0 +1,21 @@
+/* The host IS the consumer's <a> (ADR-0005), so no `display` is set at all — an anchor is inline
+   by default and participates directly in the surrounding prose flow. The old
+   `:host { display: contents }` existed only to hide a wrapper element that no longer ships. */
+:host {
+  color: var(--ngpt-accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--ngpt-accent) 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+:host(:hover) {
+  color: var(--ngpt-comp-link-hover);
+  text-decoration-color: currentColor;
+}
+
+/* Focus ring intentionally omitted here — the global :focus-visible policy
+   (src/styles/global.css) already applies `box-shadow: 0 0 0 2px var(--ngpt-focus-ring)`,
+   which matches this component's spec value exactly. */
+
+/* Screen-reader-only affordance for external links — `.visually-hidden` in src/styles/global.css.
+   See docs/decisions.md. */

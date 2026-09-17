@@ -1,0 +1,80 @@
+/* Host IS the <li> — unpainted spacer box only. Matches the reference's own <li>/<a> split
+   (docs/gaps-ngp-reference.md's "Full internal composition" note): a painted box's own padding
+   never creates visible separation from its sibling (padding is rendered *behind*, filling the
+   padding area with that same background) — only an unpainted outer box with a shorter painted
+   child produces a real gap. So the 4px row-to-row spacing lives here, unpainted; every other
+   visual property (background, radius, shadow, min-height) moved to .search-row__surface below. */
+:host {
+  display: block;
+  width: 100%;
+  padding-block-end: var(--ngpt-sys-space-100);
+}
+
+/* The painted box — background, radius, shadow, and the reference-measured 56px row height all
+   live here (docs/gaps-ngp-reference.md item 15), shorter than :host's padded box above. */
+.search-row__surface {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-150);
+  padding: var(--ngpt-sys-space-250) var(--ngpt-sys-space-300);
+  min-height: var(--ngpt-comp-search-input-height);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small);
+  cursor: pointer;
+  background: var(--ngpt-bg-active);
+  box-shadow: var(--_ngpt-search-shadow-hairline);
+}
+
+.search-row__tree,
+.search-row__icon {
+  flex-shrink: 0;
+  color: var(--ngpt-text-muted);
+}
+
+.search-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngpt-sys-space-050);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Wrapper box stays in the layout at fixed size on every row (no shift when it appears); the
+   icon itself is hidden until the row is active, matching the reference — its inner <svg> is
+   display:none on idle rows and only display:block on the active/hovered one (live-confirmed,
+   see docs/gaps-ngp-reference.md's correction to item 1). visibility (not display) here so the
+   22px box stays reserved either way without a conditional render. */
+.search-row__action {
+  flex-shrink: 0;
+  color: var(--ngpt-text-muted);
+  visibility: hidden;
+}
+
+.search-row__title {
+  font: var(--ngpt-sys-typescale-label-large);
+  color: var(--ngpt-text-secondary);
+}
+
+.search-row__path {
+  font: var(--ngpt-sys-typescale-label-small-2);
+  color: var(--ngpt-text-muted);
+}
+
+/* Highlight driven only by [data-active] (JS active-index state), never raw :hover — the
+   mouseenter/mousemove handlers already promote the hovered row to active, but a bare :hover
+   rule here would keep painting a row the cursor is merely resting on after keyboard nav moved
+   active elsewhere (native :hover stays true until the mouse actually moves off it). */
+:host([data-active]) .search-row__surface {
+  background: var(--ngpt-bg-accent-solid);
+}
+
+:host([data-active]) .search-row__title,
+:host([data-active]) .search-row__path,
+:host([data-active]) .search-row__tree,
+:host([data-active]) .search-row__icon,
+:host([data-active]) .search-row__action {
+  color: var(--ngpt-text-on-accent);
+}
+
+:host([data-active]) .search-row__action {
+  visibility: visible;
+}

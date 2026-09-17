@@ -1,0 +1,11 @@
+/* Fixed 3×2 grid, not responsive auto-fit (user call, 2026-08-23 — see docs/decisions.md). The
+   gap alone carries the separation — no cards, borders or tint (icons added per
+   `docs/decisions.md`, 2026-08-23, authored directly in `home.html`, not by this component).
+   Title/text styling moved to FeatureGridTitle/FeatureGridText (directive-per-part,
+   docs/decisions.md) — this component only owns the track formula, so default encapsulation +
+   :host is enough. */
+:host {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--ngpt-sys-space-800);
+}

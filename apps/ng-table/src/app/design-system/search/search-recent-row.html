@@ -1,0 +1,29 @@
+<span class="search-row__surface">
+  <ng-icon name="lucideHistory" size="20px" color="currentColor" class="search-row__icon" aria-hidden="true" />
+  <span class="search-row__content">
+    <span class="search-row__title">{{ entry().query }}</span>
+  </span>
+  <div class="search-row__actions">
+    <button
+      ngptIconButton
+      ngptFillIconOnHover
+      [size]="24"
+      type="button"
+      aria-label="Save this search"
+      title="Save this search"
+      (click)="onSaveButtonClick($event)"
+    >
+      <ng-icon name="lucideStar" size="22px" color="currentColor" aria-hidden="true" />
+    </button>
+    <button
+      ngptIconButton
+      [size]="24"
+      type="button"
+      aria-label="Remove this search from history"
+      title="Remove this search from history"
+      (click)="onRemoveButtonClick($event)"
+    >
+      <ng-icon name="lucideX" size="22px" color="currentColor" aria-hidden="true" />
+    </button>
+  </div>
+</span>

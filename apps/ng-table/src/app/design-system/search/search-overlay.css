@@ -1,0 +1,213 @@
+:host {
+  display: contents;
+  /* Search-local hairline shadow (docs/gaps-ngp-reference.md item 10) — a crisp 1px
+     border-simulating ring plus a barely-there 2px shadow, replacing --ngpt-sys-elevation-level2
+     everywhere in this component. Deliberately NOT a change to the shared elevation token —
+     every other modal/overlay in the app keeps the soft-blur elevation. */
+  --_ngpt-search-shadow-hairline: 0 0 0 1px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.search-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ngpt-sys-z-modal-scrim);
+  background: var(--ngpt-sys-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate);
+}
+
+.search-panel {
+  position: fixed;
+  top: 15vh;
+  left: 50%;
+  z-index: var(--ngpt-sys-z-modal);
+  display: flex;
+  flex-direction: column;
+  width: var(--ngpt-comp-search-panel-width);
+  max-height: var(--ngpt-comp-search-panel-max-height);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small-alt);
+  border: 1px solid var(--ngpt-border-subtle);
+  background: var(--ngpt-bg-elevated);
+  box-shadow: var(--_ngpt-search-shadow-hairline);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -8px);
+  transition:
+    opacity var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate),
+    transform var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate);
+}
+
+:host([data-open='true']) .search-scrim {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+:host([data-open='true']) .search-panel {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.search-input-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-250);
+  flex-shrink: 0;
+  height: var(--ngpt-comp-search-input-height);
+  padding: 0 var(--ngpt-sys-space-400);
+  margin: var(--ngpt-sys-space-300) var(--ngpt-sys-space-300) 0;
+  border-radius: var(--ngpt-sys-shape-corner-extra-small);
+  /* Lighter-than-panel surface per docs/gaps-ngp-reference.md item 9 — the panel itself is
+     --ngpt-bg-elevated (0.2); --ngpt-bg-active (0.24) is the nearest existing token that reads
+     visibly lighter, reused here rather than inventing a new surface token for this one case. */
+  background: var(--ngpt-bg-active);
+  box-shadow: var(--_ngpt-search-shadow-hairline);
+  /* Spec cites oklch(0.55 0.01 260) for both this icon and the placeholder below it — the
+     same hue as --ngpt-text-muted's real token value (0.6), just a slightly stale restated
+     literal. Token wins per CONVENTIONS.md's hardcode rule. */
+  color: var(--ngpt-text-muted);
+}
+
+/* Scoped override: the reference's clear button is bare in both states (no border, no hover
+   background — only the icon color shifts). Stock IconButton gives a border always plus a
+   hover-background pill, so this instance overrides both. First bare use case in the DS — see
+   docs/decisions.md item 16; promote to a real IconButton variant if a second one shows up. */
+.search-input-row__clear {
+  flex-shrink: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--ngpt-text-primary);
+}
+
+.search-input-row__clear:hover,
+.search-input-row__clear:focus-visible {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ngpt-accent);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  font: var(--ngpt-sys-typescale-body-large);
+  color: var(--ngpt-text-primary);
+}
+
+.search-input:focus-visible {
+  box-shadow: none;
+}
+
+.search-input::placeholder {
+  color: var(--ngpt-text-muted);
+}
+
+.search-results {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  /* Flush, 0 gap — reference rows touch directly; the per-row hairline shadow (below) is what
+     reads at row boundaries instead, per docs/gaps-ngp-reference.md item 18. */
+  padding: 0 var(--ngpt-sys-space-300);
+}
+
+.search-row-list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.search-group-label {
+  font: var(--ngpt-sys-typescale-label-small-alt);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  /* Accent-colored per docs/gaps-ngp-reference.md item 11 (measured against both the
+     "Documentation" result-group label and the "Recent" label — same treatment, no variant).
+     line-height/padding/margin match the reference's measured values, bleeding into the
+     panel's own padding rather than being independently inset. */
+  color: var(--ngpt-accent);
+  line-height: 32px;
+  padding: var(--ngpt-sys-space-200) var(--ngpt-sys-space-100) 0;
+  margin: 0 calc(-1 * var(--ngpt-sys-space-100));
+}
+
+/* Per-row styling now lives in search-result-row.css / search-recent-row.css (the host of each
+   is the <li> itself, ADR-0005 attribute-hosted). */
+
+.search-empty-state {
+  padding: var(--ngpt-sys-space-1000);
+  text-align: center;
+}
+
+.search-empty-state__title {
+  font: var(--ngpt-sys-typescale-label-large);
+  color: var(--ngpt-text-secondary);
+}
+
+.search-empty-state__hint {
+  font: var(--ngpt-sys-typescale-label-small-2);
+  color: var(--ngpt-text-muted);
+  margin-block-start: var(--ngpt-sys-space-100);
+}
+
+.search-empty-state__icon {
+  color: var(--ngpt-text-muted);
+  margin-block-end: var(--ngpt-sys-space-200);
+}
+
+.search-empty-state__suggest-label {
+  font: var(--ngpt-sys-typescale-label-small-2);
+  color: var(--ngpt-text-muted);
+  margin-block-start: var(--ngpt-sys-space-300);
+}
+
+.search-empty-state__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ngpt-sys-space-150);
+  margin-block-start: var(--ngpt-sys-space-150);
+}
+
+.search-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-150);
+  flex-shrink: 0;
+  height: var(--ngpt-sys-space-900);
+  padding: 0 var(--ngpt-sys-space-300);
+  border-top: 1px solid var(--ngpt-border-subtle);
+  box-shadow: var(--_ngpt-search-shadow-hairline);
+  font: var(--ngpt-sys-typescale-label-small-alt);
+  font-weight: 400;
+  color: var(--ngpt-text-muted);
+}
+
+/* `.visually-hidden` now in src/styles/global.css. */
+
+/* Media-feature values can't reference custom properties, so the sm/md breakpoints are
+   restated as literals here (matches Search.md's own CSS mock — not a hardcode violation,
+   a platform limitation). */
+@media (max-width: 639px) {
+  .search-panel {
+    width: calc(100vw - var(--ngpt-sys-space-800));
+    top: 8vh;
+  }
+}
+
+/* Transform-on-open/close suppression under reduced motion — each component's own job per
+   CONVENTIONS.md point 9 (global.css only shortens transition-duration, doesn't remove
+   transforms). The panel keeps its horizontal centering transform; only the vertical
+   open/close slide is removed, so it fades in place instead of sliding. */
+@media (prefers-reduced-motion: reduce) {
+  .search-panel,
+  :host([data-open='true']) .search-panel {
+    transform: translateX(-50%);
+  }
+}

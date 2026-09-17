@@ -1,0 +1,19 @@
+{
+  "slug": "row-edit-keyboard-a11y",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": null,
+  "workspaceRoot": "libs/shared/table/docs/3-ui/work/row-edit-keyboard-a11y",
+  "decisionsPath": "libs/shared/table/docs/3-ui/work/row-edit-keyboard-a11y/2-decisions.md",
+  "specPath": null,
+  "architecturePath": "libs/shared/table/docs/3-ui/architecture.md",
+  "githubIssues": [],
+  "checklist": {
+    "ticket": false,
+    "grill": false,
+    "spec": false,
+    "issues": false,
+    "tasks": false
+  }
+}

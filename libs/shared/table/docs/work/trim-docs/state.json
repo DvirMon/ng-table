@@ -1,0 +1,19 @@
+{
+  "slug": "trim-docs",
+  "ticketRef": "80",
+  "ticketUrl": "https://github.com/DvirMon/acme/issues/80",
+  "stack": "angular",
+  "isComplex": false,
+  "workspaceRoot": "libs/shared/table/docs/work/trim-docs",
+  "decisionsPath": "libs/shared/table/docs/work/trim-docs/decisions.md",
+  "specPath": null,
+  "architecturePath": null,
+  "githubIssues": [80],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": false,
+    "issues": false,
+    "tasks": false
+  }
+}

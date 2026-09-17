@@ -1,0 +1,494 @@
+import {
+  EnvironmentInjector,
+  createEnvironmentInjector,
+  runInInjectionContext,
+  signal,
+} from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { composeTable, type InternalFeature } from './compose-table';
+import { CORE_MEMBER_KEYS } from './slots';
+import type { TableEngineConfig } from './types';
+import type { AnyTableFeature, ColumnDefInput, RowId } from '../api/types';
+
+interface Row {
+  id: string;
+  name: string;
+  age: number;
+}
+
+const columns: ColumnDefInput<Row>[] = [{ id: 'name' }, { id: 'age' }];
+
+function makeRows(): Row[] {
+  return [
+    { id: 'r1', name: 'Charlie', age: 40 },
+    { id: 'r2', name: 'Ann', age: 25 },
+  ];
+}
+
+// Composes inside an injection context, as `createTable()` does. Returns the untyped store
+// because the engine's runtime fold is deliberately independent of the static member type
+// `ComposedFeatureMembers` reconstructs. Each call gets its own `data` signal so tests seed
+// rows at construction time — there is no post-construction write path anymore.
+function composeWithRows(
+  rows: Row[],
+  features: readonly AnyTableFeature[],
+  internalFeatures: readonly AnyTableFeature[] = []
+): Record<string, unknown> {
+  const data = signal(rows);
+  const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+  // Test-only marker features (e.g. `marking()`) don't distinguish consumer vs. internal
+  // calling convention, so this cast bridges the same static/dynamic seam `composeTable()`
+  // itself crosses to call `AnyTableFeature`-typed values (ADR-0003).
+  const internal = internalFeatures as unknown as readonly InternalFeature<Row>[];
+  return TestBed.runInInjectionContext(
+    () =>
+      composeTable(config, features, internal) as unknown as Record<
+        string,
+        unknown
+      >
+  );
+}
+
+function compose(
+  features: readonly AnyTableFeature[],
+  internalFeatures: readonly AnyTableFeature[] = []
+): Record<string, unknown> {
+  return composeWithRows([], features, internalFeatures);
+}
+
+/** Records a stage transform that tags each row's name, so fold order is observable. */
+function taggingStage(
+  stage: 'filter' | 'group' | 'sort' | 'expand',
+  tag: string
+): AnyTableFeature {
+  return () => ({
+    stages: {
+      [stage]: (rows: Row[]) =>
+        rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
+    },
+  });
+}
+
+describe('composeTable', () => {
+  it('resolves sparse column defs into full ColumnDefs', () => {
+    const store = compose([]);
+    const resolved = (store['columns'] as () => Record<string, unknown>[])();
+
+    expect(resolved).toHaveLength(2);
+    expect(resolved[0]).toMatchObject({
+      id: 'name',
+      visible: true,
+      order: 0,
+      label: 'name',
+    });
+  });
+
+  it('passes rows through untouched when no feature registers a stage', () => {
+    const store = composeWithRows(makeRows(), []);
+
+    expect((store['rows'] as () => Row[])()).toEqual(makeRows());
+  });
+
+  it('merges every feature’s members onto the store', () => {
+    const withA: AnyTableFeature = () => ({ members: { alpha: 1 } });
+    const withB: AnyTableFeature = () => ({ members: { beta: 2 } });
+
+    const store = compose([withA, withB]);
+
+    expect(store['alpha']).toBe(1);
+    expect(store['beta']).toBe(2);
+  });
+
+  it('folds stages in fixed pipeline order regardless of features array order', () => {
+    const store = composeWithRows(
+      [{ id: 'r1', name: 'Ann', age: 25 }],
+      [
+        taggingStage('expand', '-expand'),
+        taggingStage('sort', '-sort'),
+        taggingStage('filter', '-filter'),
+        taggingStage('group', '-group'),
+      ]
+    );
+
+    const [row] = (store['rows'] as () => Row[])();
+
+    expect(row.name).toBe('Ann-filter-group-sort-expand');
+  });
+
+  it('1:1-wraps rows into render rows when no feature provides a render stage', () => {
+    const store = composeWithRows(makeRows(), []);
+
+    expect((store['renderRows'] as () => unknown[])()).toEqual([
+      { id: 'r1', depth: 0, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 0, sourceIndex: 0 },
+      { id: 'r2', depth: 0, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 1, sourceIndex: 1 },
+    ]);
+  });
+
+  it('lets a feature claim a render stage', () => {
+    const withDepthOne: AnyTableFeature = () => ({
+      renderStages: {
+        tree: (rows) => rows.map((row) => ({ ...row, depth: 1 })),
+      },
+    });
+
+    const store = composeWithRows(makeRows(), [withDepthOne]);
+
+    const [first] = (store['renderRows'] as () => { depth: number }[])();
+    expect(first.depth).toBe(1);
+  });
+
+  it('throws when two features claim the same pipeline stage', () => {
+    expect(() =>
+      compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])
+    ).toThrow(/feature 1 and feature 2 both provide the "sort" pipeline stage/);
+  });
+
+  it('throws when two features claim the same render stage', () => {
+    const withTreeStage: AnyTableFeature = () => ({
+      renderStages: { tree: (rows) => rows },
+    });
+
+    expect(() => compose([withTreeStage, withTreeStage])).toThrow(
+      /feature 1 and feature 2 both provide the "tree" render stage/
+    );
+  });
+
+  describe('expandedRows contributions (ADR-0017)', () => {
+    it('composes two features that both contribute an expandedRows set without throwing', () => {
+      const withA: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['a'])),
+      });
+      const withB: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['b'])),
+      });
+
+      // Contrast with 'throws when two features claim the same render stage' above:
+      // expandedRows is the one slot that ACCUMULATES rather than single-claims (decision 7)
+      // — this is the ADR-0012 verification case a single-claim slot would fail.
+      expect(() => compose([withA, withB])).not.toThrow();
+    });
+
+    it('collects contributions from every feature in the fold, and both reach the prune', () => {
+      // Synthesize 'r2' as a child of 'r1' via a claimed 'tree' render stage — the only way to
+      // get a parentId onto a row without a real tree/grouping feature composed.
+      const withTreeChild: AnyTableFeature = () => ({
+        renderStages: {
+          tree: (rows) =>
+            rows.map((row) => (row.id === 'r2' ? { ...row, parentId: 'r1' } : row)),
+        },
+      });
+      // 'r1' lives on the FIRST-folded contributor, an unrelated id on the second. If the fold
+      // regressed into keeping only the most-recently-folded contributor (the exact "fixed it
+      // into a SlotRegistry claim" mistake the ADR warns about), 'r1' would be lost and 'r2'
+      // would stay hidden — this ordering is chosen so that regression fails loudly.
+      const withFirstContributor: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['r1'])),
+      });
+      const withSecondContributor: AnyTableFeature = () => ({
+        expandedRows: signal(new Set<RowId>(['unrelated'])),
+      });
+
+      const store = composeWithRows(makeRows(), [
+        withTreeChild,
+        withFirstContributor,
+        withSecondContributor,
+      ]);
+
+      const ids = (store['renderRows'] as () => { id: string }[])().map((row) => row.id);
+
+      expect(ids).toEqual(['r1', 'r2']);
+    });
+  });
+
+  it('composes render stages in RENDER_ORDER regardless of features array order', () => {
+    const withGroupStage: AnyTableFeature = () => ({
+      renderStages: {
+        group: (rows) => [
+          { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
+          ...rows,
+        ],
+      },
+    });
+    const withTreeStage: AnyTableFeature = () => ({
+      renderStages: {
+        tree: (rows) => rows.map((row) => (row.data === null ? row : { ...row, depth: row.depth + 1 })),
+      },
+    });
+
+    const forward = composeWithRows(makeRows(), [withGroupStage, withTreeStage]);
+    const reversed = composeWithRows(makeRows(), [withTreeStage, withGroupStage]);
+
+    const forwardRows = (forward['renderRows'] as () => unknown[])();
+    const reversedRows = (reversed['renderRows'] as () => unknown[])();
+
+    expect(forwardRows).toEqual(reversedRows);
+    expect(forwardRows).toEqual([
+      { id: 'group-1', depth: 0, kind: 'group', data: null, index: 0, sourceIndex: undefined },
+      { id: 'r1', depth: 1, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 1, sourceIndex: 0 },
+      { id: 'r2', depth: 1, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 2, sourceIndex: 1 },
+    ]);
+  });
+
+  it('assigns a contiguous 0-based index after a chain that both inserts and drops rows', () => {
+    const withGroupAndDrop: AnyTableFeature = () => ({
+      renderStages: {
+        group: (rows) => [
+          { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
+          ...rows,
+        ],
+        tree: (rows) => rows.filter((row) => row.id !== 'r1'),
+      },
+    });
+
+    const store = composeWithRows(makeRows(), [withGroupAndDrop]);
+    const rows = (store['renderRows'] as () => { index: number }[])();
+
+    expect(rows.map((row) => row.index)).toEqual([0, 1]);
+  });
+
+  it('throws when two features claim the same store member (ADR-0007)', () => {
+    const withEditing: AnyTableFeature = () => ({ members: { editing: signal(0) } });
+
+    expect(() => compose([withEditing, withEditing])).toThrow(
+      /feature 1 and feature 2 both provide the "editing" store member/
+    );
+  });
+
+  it('runs setup only after every feature is composed', () => {
+    let seenAtInit: unknown;
+    const withLateReader: AnyTableFeature = (store) => ({
+      setup: () => {
+        seenAtInit = store['contributedLater'];
+      },
+    });
+    const withLateMember: AnyTableFeature = () => ({
+      members: { contributedLater: 'present' },
+    });
+
+    compose([withLateReader, withLateMember]);
+
+    expect(seenAtInit).toBe('present');
+  });
+
+  it('shows a feature only earlier features’ members at factory time', () => {
+    let seenAtFactory: unknown = 'unset';
+    const withEarly: AnyTableFeature = () => ({ members: { early: 'yes' } });
+    const withReader: AnyTableFeature = (store) => {
+      seenAtFactory = { early: store['early'], late: store['late'] };
+      return {};
+    };
+    const withLate: AnyTableFeature = () => ({ members: { late: 'yes' } });
+
+    compose([withEarly, withReader, withLate]);
+
+    expect(seenAtFactory).toEqual({ early: 'yes', late: undefined });
+  });
+
+  it('lets a deferred read (inside a member function) see a later feature’s member (D25)', () => {
+    // Contrast with the factory-time case above: a *method* captures the shared store
+    // reference and is called after the whole fold completes, so it sees `late` even though
+    // `withEarlyReader` folds before `withLate` — runtime is less strict than the static type.
+    const withEarlyReader: AnyTableFeature = (store) => ({
+      members: {
+        readLateNow: () => (store as Record<string, unknown>)['late'],
+      },
+    });
+    const withLate: AnyTableFeature = () => ({ members: { late: 'yes' } });
+
+    const store = compose([withEarlyReader, withLate]);
+
+    expect((store['readLateNow'] as () => unknown)()).toBe('yes');
+  });
+
+  it('runs onDestroy hooks when the owning injector is destroyed', () => {
+    const destroyed: string[] = [];
+    const withTeardown: AnyTableFeature = () => ({
+      onDestroy: () => destroyed.push('torn-down'),
+    });
+
+    const injector = createEnvironmentInjector(
+      [],
+      TestBed.inject(EnvironmentInjector)
+    );
+    const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data: signal([]) };
+    runInInjectionContext(injector, () => composeTable(config, [withTeardown]));
+
+    expect(destroyed).toEqual([]);
+
+    injector.destroy();
+
+    expect(destroyed).toEqual(['torn-down']);
+  });
+
+  it('gives each composition independent state', () => {
+    const first = composeWithRows(makeRows(), []);
+    const second = composeWithRows([], []);
+
+    expect((first['rows'] as () => Row[])()).toHaveLength(2);
+    expect((second['rows'] as () => Row[])()).toHaveLength(0);
+  });
+
+  describe('base store before the fold', () => {
+    it('exposes the core members to a feature at factory time', () => {
+      let renderRowIdsAtFactory: unknown;
+      let countAtFactory: unknown;
+      const withCoreReader: AnyTableFeature = (store) => {
+        // Reading through the signals, not just checking they are functions — `trackBy` is a
+        // bare function too, so `typeof` alone would not prove these are live computeds.
+        renderRowIdsAtFactory = (
+          store['renderRows'] as () => { id: string }[]
+        )().map((row) => row.id);
+        countAtFactory = (store['totalRowCount'] as () => number)();
+        return {};
+      };
+
+      composeWithRows(makeRows(), [withCoreReader]);
+
+      expect(renderRowIdsAtFactory).toEqual(['r1', 'r2']);
+      expect(countAtFactory).toBe(2);
+    });
+
+    it('exposes indexById to a feature at factory time, mapping id to position', () => {
+      let indexAtFactory: ReadonlyMap<RowId, number> | undefined;
+      const withIndexReader: AnyTableFeature = (store) => {
+        indexAtFactory = (
+          store['indexById'] as () => ReadonlyMap<RowId, number>
+        )();
+        return {};
+      };
+
+      composeWithRows(makeRows(), [withIndexReader]);
+
+      expect(indexAtFactory).toEqual(
+        new Map([
+          ['r1', 0],
+          ['r2', 1],
+        ])
+      );
+    });
+
+    it('gives an internal feature the core handle, whose baseColumns is a live signal', () => {
+      let baseColumnsAtFactory: unknown;
+      const internalReadingCore: InternalFeature<Row> = (core) => {
+        baseColumnsAtFactory = core.baseColumns();
+        return {};
+      };
+
+      const data = signal(makeRows());
+      const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+      TestBed.runInInjectionContext(() =>
+        composeTable(config, [], [internalReadingCore])
+      );
+
+      expect(baseColumnsAtFactory).toHaveLength(2);
+    });
+
+    it.each(CORE_MEMBER_KEYS)(
+      'throws naming core and the feature position when a feature declares "%s"',
+      (key) => {
+        const withShadow: AnyTableFeature = () => ({
+          members: { [key]: 'shadow' },
+        });
+
+        expect(() => compose([withShadow])).toThrow(
+          new RegExp(`core and feature 1 both provide the "${key}" store member`)
+        );
+      }
+    );
+
+    it('lets a feature override totalRowCount (ADR-0005)', () => {
+      const withVirtualCount: AnyTableFeature = () => ({
+        members: { totalRowCount: signal(99) },
+      });
+
+      const store = composeWithRows(makeRows(), [withVirtualCount]);
+
+      expect((store['totalRowCount'] as () => number)()).toBe(99);
+    });
+
+    it('folds internal features before consumer features', () => {
+      const order: string[] = [];
+      const marking = (tag: string): AnyTableFeature => () => {
+        order.push(tag);
+        return {};
+      };
+
+      compose([marking('consumer')], [marking('internal')]);
+
+      expect(order).toEqual(['internal', 'consumer']);
+    });
+
+    it('does not let an internal feature shift consumer positions', () => {
+      const inert: AnyTableFeature = () => ({});
+
+      expect(() =>
+        compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')], [inert])
+      ).toThrow(/feature 1 and feature 2 both provide the "sort" pipeline stage/);
+    });
+
+    it('names an internal feature as internal in a collision', () => {
+      expect(() =>
+        compose([taggingStage('sort', '-b')], [taggingStage('sort', '-a')])
+      ).toThrow(
+        /internal feature 1 and feature 1 both provide the "sort" pipeline stage/
+      );
+    });
+  });
+
+  describe('onRowsRemoved (ADR-0006)', () => {
+    function composeWithData(
+      data: ReturnType<typeof signal<Row[]>>,
+      onRowsRemoved: (ids: readonly RowId[]) => void
+    ): void {
+      const withReconciler: AnyTableFeature = () => ({ onRowsRemoved });
+      const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+      TestBed.runInInjectionContext(() => composeTable(config, [withReconciler]));
+    }
+
+    it('fires with the diffed ids when data.update(...) drops a row', () => {
+      const data = signal(makeRows());
+      const removed: RowId[][] = [];
+      composeWithData(data, (ids) => removed.push([...ids]));
+
+      data.update((rows) => rows.filter((row) => row.id !== 'r1'));
+      TestBed.tick();
+
+      expect(removed).toEqual([['r1']]);
+    });
+
+    it('fires on a direct data.set(...) full replacement', () => {
+      const data = signal(makeRows());
+      const removed: RowId[][] = [];
+      composeWithData(data, (ids) => removed.push([...ids]));
+
+      data.set([{ id: 'r3', name: 'New', age: 1 }]);
+      TestBed.tick();
+
+      expect(removed).toEqual([['r1', 'r2']]);
+    });
+
+    it('does not fire when no composed feature declares onRowsRemoved', () => {
+      const data = signal(makeRows());
+      const config: TableEngineConfig<Row> = { columns, trackBy: 'id', data };
+      // No onRowsRemoved hook composed — the effect should never be created, so mutating
+      // `data` afterward must not throw or do anything observable here.
+      TestBed.runInInjectionContext(() => composeTable(config, []));
+
+      expect(() => {
+        data.set([]);
+        TestBed.tick();
+      }).not.toThrow();
+    });
+
+    it('does not fire when a data change only adds rows', () => {
+      const data = signal(makeRows());
+      const removed: RowId[][] = [];
+      composeWithData(data, (ids) => removed.push([...ids]));
+
+      data.update((rows) => [...rows, { id: 'r3', name: 'New', age: 1 }]);
+      TestBed.tick();
+
+      expect(removed).toEqual([]);
+    });
+  });
+});

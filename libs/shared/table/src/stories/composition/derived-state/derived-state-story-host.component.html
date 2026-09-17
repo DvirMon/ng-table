@@ -1,0 +1,46 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Tick rows to select them, then filter by department. Selected rows stay selected even once a
+    filter hides them — the banner below reads two derived members: one declared inside
+    <code>withSelection()</code>'s own slot, the other a trailing argument reading that member
+    back.
+  </p>
+
+  <ngp-derived-state-toolbar
+    [activeDept]="activeDept()"
+    [deptOptions]="deptOptions"
+    (selectDept)="setDeptFilter($event)"
+  />
+
+  <div class="story-host__counter" role="status">
+    {{ table.visibleSelected() }} visible · {{ table.hiddenSelected() }} hidden by filter
+  </div>
+
+  <table class="story-host__table">
+    <thead>
+      <tr>
+        <th class="story-host__cell">select</th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @let isSelected = table.selectedRows().has(row.id);
+
+        <tr [attr.aria-selected]="isSelected">
+          <td class="story-host__cell">
+            <input
+              type="checkbox"
+              [checked]="isSelected"
+              [attr.aria-label]="'Select ' + (row.data?.name ?? row.id)"
+              (change)="toggleRowSelection(row.id)"
+            />
+          </td>
+          <td class="story-host__cell">{{ row.data?.name }}</td>
+          <td class="story-host__cell">{{ row.data?.dept }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

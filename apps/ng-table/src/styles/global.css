@@ -1,0 +1,56 @@
+/* Base page treatment. Foundations/Focus and Keyboard.md and foundations/Motion.md own the policy
+   this file implements; per-component reduced-motion transform suppression (dropdown-menu, search
+   overlay, mobile drawer) lives in each of those components, not here. */
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font: var(--ngpt-sys-typescale-body-medium);
+  background: var(--ngpt-bg-app);
+  color: var(--ngpt-text-base);
+}
+
+/* :focus-visible only — a pointer click never leaves a ring behind.
+   Never removed without this replacement (foundations/Focus and Keyboard.md). */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
+}
+
+/* Screen-reader-only content: visually hidden, still in the accessibility tree.
+   Single source for the recipe — see inline-link.css, search-overlay.css,
+   copy-confirm.announcer.ts for consumers. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: var(--ngpt-sys-motion-duration-fast) !important;
+    animation-duration: var(--ngpt-sys-motion-duration-fast) !important;
+  }
+}

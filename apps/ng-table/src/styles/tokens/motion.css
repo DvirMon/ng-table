@@ -1,0 +1,8 @@
+:root {
+  --ngpt-sys-motion-duration-fast: 120ms;
+  --ngpt-sys-motion-duration-base: 180ms;
+  --ngpt-sys-motion-duration-slow: 260ms;
+  --ngpt-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0.2, 1);
+  --ngpt-sys-motion-easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ngpt-sys-motion-easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+}

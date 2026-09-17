@@ -1,0 +1,32 @@
+:root {
+  --ngpt-sys-font-family-base: Inter, system-ui, sans-serif;
+  --ngpt-sys-layout-grid-columns: 270px 1fr 220px;
+  --ngpt-sys-layout-sidebar-width: 270px;
+  --ngpt-sys-layout-content-max-width: 760px;
+  --ngpt-sys-layout-toc-width: 220px;
+  --ngpt-sys-layout-drawer-width: 300px;
+  --ngpt-sys-layout-scroll-offset: 72px;
+  --ngpt-sys-layout-wide-measure: 1080px;
+  --ngpt-sys-comp-eyebrow-gap: 6px;
+  --ngpt-sys-comp-nav-section-gap: 18px;
+  --ngpt-comp-navbar-height: 56px;
+  --ngpt-comp-navbar-logo-size: 22px;
+  --ngpt-comp-navbar-dot-size: 16px;
+  --ngpt-comp-navbar-dot-border: 1.5px;
+  --ngpt-comp-nav-border-width: 2px;
+  --ngpt-comp-toc-nested-indent: 22px;
+  --ngpt-comp-list-indent: 22px;
+  --ngpt-comp-icon-btn-size: 30px;
+  --ngpt-comp-icon-btn-confirm-hold: 1400ms;
+  --ngpt-comp-code-gutter-width: 40px;
+  --ngpt-comp-tab-item-px: 14px;
+  --ngpt-comp-select-px: 18px;
+  --ngpt-comp-search-field-width: 220px;
+  --ngpt-comp-search-field-height: 32px;
+  --ngpt-comp-search-panel-width: 560px;
+  --ngpt-comp-search-panel-max-height: 60vh;
+  --ngpt-comp-search-input-height: 56px;
+  --ngpt-comp-menu-min-width: 180px;
+  --ngpt-comp-menu-max-height: 320px;
+  --ngpt-comp-pagination-arrow-shift: 3px;
+}

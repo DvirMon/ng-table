@@ -1,0 +1,89 @@
+/* The host IS the trigger <button> (ADR-0005) — these were `.search-field` rules on an inner
+   element before the attribute-hosted conversion. */
+:host {
+  display: flex;
+  align-items: center;
+  gap: var(--ngpt-sys-space-200);
+  width: var(--ngpt-comp-search-field-width);
+  height: var(--ngpt-comp-search-field-height);
+  padding: 0 var(--ngpt-sys-space-250);
+  border-radius: var(--ngpt-sys-shape-corner-small);
+  border: 1px solid var(--ngpt-comp-control-border-default);
+  background: var(--ngpt-bg-raised);
+  color: var(--ngpt-text-muted);
+  font: var(--ngpt-sys-typescale-label-large-sm);
+  cursor: pointer;
+}
+
+:host(:hover) {
+  border-color: var(--ngpt-comp-pill-border-hover);
+}
+
+:host(:focus-visible) {
+  outline: none;
+  box-shadow: none;
+}
+
+:host(:focus-visible) ng-icon {
+  color: var(--ngpt-accent);
+}
+
+.search-field__placeholder {
+  flex: 1;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-field__keys {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--ngpt-sys-space-050);
+}
+
+/* on-band (Home hero navbar only): darkened well sunk into the accent band — matches the
+   band's own darken-not-lighten convention (hero-band.css's announcement pill, navbar.css's
+   link hover), rather than a bright white overlay that pops off the band. Literal oklch
+   alpha values — no --ngpt-* token covers a translucent-black well on an accent band. */
+:host([data-variant='on-band']) {
+  border-color: transparent;
+  background: oklch(0 0 0 / 0.15);
+  color: var(--ngpt-text-primary);
+}
+
+:host([data-variant='on-band']:hover) {
+  border-color: transparent;
+  background: oklch(0 0 0 / 0.22);
+}
+
+/* Scrolled band is already dark (navbar swaps to --ngpt-navbar-scrolled) — darkening further
+   would crush contrast, so lighten instead, mirroring navbar.css's own scrolled link-hover
+   swap. :host-context reaches the ngpt-navbar ancestor's [data-scrolled] attribute. */
+:host-context([data-scrolled='true'])[data-variant='on-band'] {
+  background: var(--ngpt-comp-tab-item-active-bg);
+}
+
+:host-context([data-scrolled='true'])[data-variant='on-band']:hover {
+  background: var(--ngpt-comp-tab-item-active-bg);
+  filter: brightness(1.2);
+}
+
+:host([data-variant='on-band']) [ngptKbd] {
+  background: transparent;
+  color: var(--ngpt-text-primary);
+}
+
+/* Below md: icon-only trigger — Search.md § Surface 1. */
+@media (max-width: 1023px) {
+  :host {
+    width: 32px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .search-field__placeholder,
+  .search-field__keys {
+    display: none;
+  }
+}

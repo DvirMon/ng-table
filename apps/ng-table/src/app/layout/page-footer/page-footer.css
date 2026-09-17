@@ -1,0 +1,14 @@
+/* Column flex rather than plain block: it supplies the 16px gap between Home's link row and the
+   copyright line without the row needing a primitive of its own. A footer with only the copyright
+   line has one child, so the gap never applies. */
+:host {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ngpt-sys-space-400);
+  text-align: center;
+  padding: var(--ngpt-sys-space-700);
+  font: var(--ngpt-sys-typescale-label-large-sm);
+  color: var(--ngpt-text-tertiary);
+  border-block-start: 1px solid var(--ngpt-comp-row-divider);
+}

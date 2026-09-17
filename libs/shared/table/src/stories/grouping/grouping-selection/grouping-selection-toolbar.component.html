@@ -1,0 +1,14 @@
+<div class="story-host__toolbar">
+  <label>
+    rep contains:
+    <input type="text" [value]="repFilter()" (input)="onFilterRepInput($event)" />
+  </label>
+  <button type="button" (click)="toggleGrouping.emit()">
+    {{ isGrouped() ? 'Ungroup' : 'Group by Region → Category' }}
+  </button>
+  <button type="button" (click)="clearSelection.emit()">Clear selection</button>
+  <span class="story-host__counter">{{ selectionReadout() }}</span>
+  <span class="story-host__counter">
+    group headers in the selection: {{ selectedGroupHeaderCount() }}
+  </span>
+</div>

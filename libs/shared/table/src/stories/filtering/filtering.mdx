@@ -1,0 +1,197 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as ClientStories from './client-filtering/client-filtering.stories';
+import * as ServerStories from './server-filtering/server-filtering.stories';
+import clientClass from './client-filtering/client-filtering-story-host.component.ts?raw';
+import clientTemplate from './client-filtering/client-filtering-story-host.component.html?raw';
+import clientToolbarClass from './client-filtering/client-filtering-toolbar.component.ts?raw';
+import clientToolbarTemplate from './client-filtering/client-filtering-toolbar.component.html?raw';
+import serverClass from './server-filtering/server-filtering-story-host.component.ts?raw';
+import serverTemplate from './server-filtering/server-filtering-story-host.component.html?raw';
+import serverToolbarClass from './server-filtering/server-filtering-toolbar.component.ts?raw';
+import serverToolbarTemplate from './server-filtering/server-filtering-toolbar.component.html?raw';
+import filteringStyles from './filtering-story.css?raw';
+import filteringSchema from './fixtures/schema.ts?raw';
+import filteringHttp from './fixtures/http.ts?raw';
+import sharedStyles from '../styles/story-host.css?raw';
+import '../styles/code-tabs.css';
+
+<Meta title="Table / Filtering" name="Docs" />
+
+# Filtering
+
+Two stories over one question: where the filtering happens. Both build the same kind of
+`withFiltering({ schema })` model — the table owns it either way — but `Client` lets the local
+`filter` stage narrow `rows()`, while `Server` sets `manual: true` and serializes the model's
+`criteria()` into a request instead. `Selection × Filtering` moved to
+[`Table / Selection`](?path=/docs/table-selection--docs) — its focus is selection surviving
+another feature's row churn, not filtering itself.
+
+Shared: `fixtures/schema.ts`, `fixtures/http.ts` and `filtering-story.css`, at the bottom of this
+page.
+
+---
+
+## Client
+
+The table owns the model: `withFiltering({ schema: clientInvoiceFilters })` builds `filters` at
+construction, and its criteria narrow the `filter` stage directly — no separate object outside the
+table, no composing step for the host to get wrong. `clientInvoiceFilters` is a hoisted `const`
+annotated `(path: FiltersPath<InvoiceRow>)` — it composes by spread, with no `filterSchema()`
+helper needed. The same schema shape is what `Server` re-serializes into a request instead of
+narrowing locally.
+
+One filter may target one path, so the `tags` column's include and exclude halves are a single
+compound `filter()` criterion fed by two multi-selects, and the quick filter spans `note` and `id`
+rather than borrowing `customer`, which already carries its own `contains`.
+
+<Canvas of={ClientStories.Client} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      client-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-client-source" />
+      client-filtering-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={clientClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={clientTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={clientToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={clientToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Server
+
+`withFiltering({ manual: true, schema: serverInvoiceFilters })` builds the same kind of model as
+`Client`, but `manual: true` skips the local `filter` stage — the server has already narrowed the
+page, so filtering it a second time would be wrong, not redundant. `table.filters().criteria()`
+drives the request through `resource({ params })` instead.
+
+There is no construction cycle even though `table`'s rows and the resource's params each seem to
+need the other: `createTable` reads its `data` argument through a lazily-evaluated signal, so the
+resource can read `table.filters().criteria()` at request time and the table can read the
+resource's resolved rows, without either one having to exist before the other. That absence of a
+cycle is the answer to the question standalone filters used to be the answer to.
+
+The query mapping is hand-written in the host on purpose: no library can know a given backend's
+parameter names, so that code is what a consumer actually writes.
+
+<Canvas of={ServerStories.Server} />
+
+Under failure, every request fails. Unlike the happy path, the canvas keeps whatever rows loaded
+last — they stay on screen behind an error marker instead of the table blanking — and a Retry
+button re-sends the current filter set rather than resetting it. The filter inputs are untouched by
+the failure, so the retried query is the one that failed, not a fresh one.
+
+<Canvas of={ServerStories.ServerRequestFailure} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      server-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-server-source" />
+      server-filtering-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={serverClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={serverTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={serverToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={serverToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Shared across the two
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" defaultChecked />
+      fixtures/schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" />
+      fixtures/http.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" />
+      filtering-story.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="filtering-shared-source" />
+      story-host.css
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={filteringSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringHttp} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteringStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+  </div>
+</div>

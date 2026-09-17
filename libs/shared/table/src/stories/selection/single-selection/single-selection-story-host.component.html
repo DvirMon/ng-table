@@ -1,0 +1,54 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    One row at a time. Pick a row, then pick another — the radio group unticks the first on its
+    own; Space selects and the arrow keys move between rows without any directive. Clear is a
+    button because a radio has no untick gesture. "Restore a 2-id saved selection" asks for two
+    rows at once, which a single-select table refuses.
+  </p>
+
+  <ngp-single-selection-toolbar
+    (clearSelection)="clearSelection()"
+    (restoreConflictingSelection)="restoreConflictingSelection()"
+  />
+
+  <table class="story-host__table">
+    <thead>
+      <tr>
+        <th class="story-host__cell selection-story__cell--control">
+          <span class="sr-only">Select</span>
+        </th>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+      </tr>
+    </thead>
+    <tbody>
+      @let selectedRowIds = table.selectedRows();
+
+      @for (row of table.renderRows(); track row.id) {
+        @let isSelected = selectedRowIds.has(row.id);
+
+        <tr
+          [class.selection-story__row--selected]="isSelected"
+          [attr.aria-selected]="isSelected"
+        >
+          <td class="story-host__cell selection-story__cell--control">
+            <input
+              class="selection-story__control"
+              type="radio"
+              name="row-selection"
+              [checked]="isSelected"
+              [attr.aria-label]="'Select ' + (row.data?.name ?? row.id)"
+              (change)="toggleRow(row.id)"
+            />
+          </td>
+          <td class="story-host__cell">{{ row.data?.name }}</td>
+          <td class="story-host__cell">{{ row.data?.dept }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (conflictMessage(); as message) {
+    <p class="selection-story__notice" role="alert">{{ message }}</p>
+  }
+</div>

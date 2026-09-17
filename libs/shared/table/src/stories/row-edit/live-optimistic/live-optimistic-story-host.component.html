@@ -1,0 +1,80 @@
+<div class="story-host">
+  @if (forceFailure()) {
+    <p class="story-host__hint">
+      Every save fails: the typed value shows immediately, same as the happy path, then reverts to
+      what it was before the edit once the request rejects. The row was never open, so nothing
+      closes — it just reverts.
+    </p>
+  } @else {
+    <p class="story-host__hint">
+      Optimistic updates & rollback — focus a field to start tracking a restore point, blur to
+      commit and save. On success the value stays as typed. Use the Storybook controls to force a
+      failure or add latency.
+    </p>
+  }
+
+  <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
+
+  <ngp-live-optimistic-toolbar
+    [undoRowId]="undo.rowId()"
+    [saveError]="saveError()"
+    (addRow)="addRow($event)"
+    (simulateLeavePage)="simulateLeavePage()"
+    (undoDelete)="undoDelete()"
+  />
+
+  @if (leavePagePendingCount(); as count) {
+    <p class="story-host__error" role="status">
+      {{ count }} unsaved change{{ count > 1 ? 's' : '' }} in progress — leaving now would lose
+      them.
+    </p>
+  } @else if (leavePagePendingCount() === 0) {
+    <p class="story-host__error" role="status">No unsaved changes — safe to leave.</p>
+  }
+
+  <p class="story-host__counter">
+    open rows: {{ liveTable.editing().size }} · in flight: {{ liveTable.pending().size }}
+  </p>
+
+  <table class="story-host__table" [ngpFocusNewRow]="newRowId()">
+    <thead>
+      <tr>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell">state</th>
+        <th class="story-host__cell">actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of liveTable.renderRows(); track row.id; let index = $index) {
+        @let isPending = liveTable.pending().has(row.id);
+
+        <tr
+          [class.story-host__row--saving]="isPending"
+          [attr.data-row-new]="row.id === newRowId() ? row.id : null"
+          (focusin)="onEnterRow(row.id)"
+          (focusout)="onLeaveRow(row.id)"
+        >
+          <td class="story-host__cell">
+            <input type="text" [formField]="rows[index].name" placeholder="name" />
+          </td>
+          <td class="story-host__cell">
+            <select [formField]="rows[index].dept">
+              @for (dept of deptOptions; track dept) {
+                <option [value]="dept">{{ dept }}</option>
+              }
+            </select>
+          </td>
+          <td class="story-host__cell">
+            @if (isPending) {
+              <span class="story-host__pending">saving…</span>
+            }
+          </td>
+          <td class="story-host__cell">
+            <button type="button" (click)="deleteRow(row.id)">Delete</button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

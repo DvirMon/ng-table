@@ -5,6 +5,24 @@
       "name": "issa-landing",
       "port": 4200,
       "url": "http://localhost:4200"
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "demo", "--port", "4201"],
+      "port": 4201
+    },
+    {
+      "name": "ng-table",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "serve", "ng-table", "--port", "4202"],
+      "port": 4202
+    },
+    {
+      "name": "shared-table-storybook",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["nx", "run", "shared-table:storybook"],
+      "port": 4403
     }
   ]
 }

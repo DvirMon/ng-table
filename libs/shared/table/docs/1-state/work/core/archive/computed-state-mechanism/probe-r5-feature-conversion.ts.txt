@@ -1,0 +1,270 @@
+// Probe for #72-#74: can a shipped feature recover row-typed core members from a generic `In`
+// cast-free, while still inferring `In` from the createTable slot with no type argument?
+// Self-contained: mirrors the library's real shapes (engine/types.ts, api/types.ts).
+
+declare const SIGNAL: unique symbol;
+interface Signal<T> { (): T; readonly [SIGNAL]: T }
+declare function signal<T>(v: T): Signal<T>;
+declare function computed<T>(f: () => T): Signal<T>;
+
+type RowId = string | number;
+type TrackByFn<TRow> = (row: TRow) => RowId;
+interface WritableView<T, U> extends Signal<T> { update(u: U): void }
+interface ColumnDef<TRow> { id: string; accessor: (row: TRow) => unknown }
+interface TableStore<TRow> {
+  readonly columns: WritableView<ColumnDef<TRow>[], (c: ColumnDef<TRow>[]) => ColumnDef<TRow>[]>;
+  readonly rows: Signal<TRow[]>;
+  readonly trackBy: TrackByFn<TRow>;
+  readonly indexById: Signal<ReadonlyMap<RowId, number>>;
+  readonly value: WritableView<TRow[], (rows: TRow[]) => TRow[]>;
+  readonly totalRowCount: Signal<number>;
+}
+interface TableFeatureSpec<TRow, Members extends object = {}> {
+  members?: Members;
+  stages?: { sort?: (rows: TRow[]) => TRow[] };
+  onRowsRemoved?: (ids: readonly RowId[]) => void;
+}
+type Shape = { rows: Signal<readonly unknown[]> };
+type RowOf<S> = S extends { rows: Signal<readonly (infer R)[]> } ? R : never;
+interface Feature<In extends Shape, Out extends object> {
+  (input: In): TableFeatureSpec<RowOf<In>, Out>;
+  readonly displayName?: string;
+}
+type DerivedDict = Record<string, Signal<unknown>>;
+type IsAny<T> = 0 extends 1 & T ? true : false;
+type NormalizeDerived<D> = IsAny<D> extends true ? {} : D;
+
+declare function createTableFeature<In extends Shape, Out extends object>(
+  factory: (input: In) => TableFeatureSpec<RowOf<In>, Out>
+): Feature<In, Out>;
+declare function createTableFeature<In extends Shape, Out extends object, D extends DerivedDict>(
+  factory: (input: In) => TableFeatureSpec<RowOf<In>, Out>,
+  derive: Feature<In & Out, D>
+): Feature<In, Out & NormalizeDerived<D>>;
+
+type ReadonlyStore<S> = {
+  readonly [K in keyof S]: S[K] extends WritableView<infer T, any> ? Signal<T> : S[K];
+};
+declare function withComputed<In extends Shape, D extends DerivedDict>(
+  factory: (store: ReadonlyStore<In>) => D
+): Feature<In, D>;
+
+declare function createTable<TRow>(data: Signal<TRow[]>, config: { trackBy: keyof TRow }): TableStore<TRow>;
+declare function createTable<TRow, O1 extends object>(
+  data: Signal<TRow[]>, config: { trackBy: keyof TRow }, f1: Feature<TableStore<TRow>, O1>
+): TableStore<TRow> & O1;
+declare function createTable<TRow, O1 extends object, O2 extends object>(
+  data: Signal<TRow[]>, config: { trackBy: keyof TRow },
+  f1: Feature<TableStore<TRow>, O1>, f2: Feature<TableStore<TRow> & O1, O2>
+): TableStore<TRow> & O1 & O2;
+declare function createTable<TRow, O1 extends object, O2 extends object, O3 extends object>(
+  data: Signal<TRow[]>, config: { trackBy: keyof TRow },
+  f1: Feature<TableStore<TRow>, O1>, f2: Feature<TableStore<TRow> & O1, O2>,
+  f3: Feature<TableStore<TRow> & O1 & O2, O3>
+): TableStore<TRow> & O1 & O2 & O3;
+
+// ---------------------------------------------------------------------------------------
+// MECHANISM UNDER TEST — F-bounded `In`: the feature's input is at least the row-typed core.
+// ---------------------------------------------------------------------------------------
+
+/** The core slice a feature reads, row-typed. `In extends CoreOf<In>` gives the factory body
+ * `input.rows(): RowOf<In>[]` etc. with no cast. */
+type CoreOf<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy' | 'columns' | 'value' | 'indexById'>;
+
+// --- withSelection: config first (may be `{}`), derive trailing ---------------------------
+interface WithSelectionConfig<TRow> {
+  enableMultiRowSelection?: boolean | ((row: TRow) => boolean);
+  initialSelection?: RowId[];
+}
+interface SelectionMembers {
+  readonly selectedRows: Signal<ReadonlySet<RowId>>;
+  select(ids: RowId[]): void;
+}
+function buildSelectionSpec<TRow>(
+  core: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
+  config: WithSelectionConfig<TRow>
+): TableFeatureSpec<TRow, SelectionMembers> {
+  const canMulti = typeof config.enableMultiRowSelection === 'function'
+    ? config.enableMultiRowSelection
+    : (): boolean => true;
+  const selected = signal(new Set<RowId>());
+  function resolveRow(id: RowId): TRow | undefined {
+    return core.rows().find((row) => core.trackBy(row) === id);
+  }
+  return {
+    members: {
+      selectedRows: selected,
+      select: (ids) => { ids.map(resolveRow).filter((r) => r !== undefined && canMulti(r)); },
+    },
+  };
+}
+function withSelection<In extends CoreOf<In>, D extends DerivedDict>(
+  derive: Feature<NoInfer<In> & SelectionMembers, D>
+): Feature<In, SelectionMembers & D>;
+function withSelection<In extends CoreOf<In>>(
+  config?: WithSelectionConfig<RowOf<In>>
+): Feature<In, SelectionMembers>;
+function withSelection<In extends CoreOf<In>, D extends DerivedDict>(
+  config: WithSelectionConfig<RowOf<In>> | undefined,
+  derive: Feature<NoInfer<In> & SelectionMembers, D>
+): Feature<In, SelectionMembers & D>;
+function withSelection(
+  a: WithSelectionConfig<any> | Feature<any, any> = {},
+  b?: Feature<any, any>
+): Feature<any, any> {
+  const isDeriveFirst = typeof a === 'function';
+  const config: WithSelectionConfig<any> = isDeriveFirst ? {} : a;
+  const derive = isDeriveFirst ? a : b;
+  const factory = (input: CoreOf<any>): TableFeatureSpec<any, SelectionMembers> =>
+    buildSelectionSpec(input, config);
+  return derive ? createTableFeature(factory, derive) : createTableFeature(factory);
+}
+
+// --- withSorting: no row-typed config, reads input.columns() -----------------------------
+interface SortingMembers { readonly sorting: Signal<string[]>; toggleSort(id: string): void }
+function withSorting<In extends CoreOf<In>>(config?: { multi?: boolean }): Feature<In, SortingMembers>;
+function withSorting<In extends CoreOf<In>, D extends DerivedDict>(
+  config: { multi?: boolean } | undefined, derive: Feature<In & SortingMembers, D>
+): Feature<In, SortingMembers & D>;
+function withSorting(config: { multi?: boolean } = {}, derive?: Feature<any, any>): Feature<any, any> {
+  const factory = <In extends CoreOf<In>>(input: In): TableFeatureSpec<RowOf<In>, SortingMembers> => {
+    const sorting = signal<string[]>([]);
+    return {
+      members: {
+        sorting,
+        toggleSort: (id) => { input.columns().find((c) => c.id === id); },
+      },
+      stages: { sort: (rows) => (config.multi ? rows : [...rows]) },
+    };
+  };
+  return derive ? createTableFeature(factory, derive) : createTableFeature(factory);
+}
+
+// --- withGrouping: lazy guarded read of a *later* feature's member, cast-free ------------
+interface ExpansionMembers { readonly expandedRows: Signal<Set<RowId>> }
+function isExpandedRowsSignal(value: unknown): value is Signal<ReadonlySet<RowId>> {
+  return typeof value === 'function';
+}
+/** Reads `expandedRows` off the shared store at call time — present only if `withExpansion()`
+ * is composed (any order); typed only when it precedes grouping. */
+function readExpandedRows(store: object): ReadonlySet<RowId> | undefined {
+  const hasMember = 'expandedRows' in store;
+  if (!hasMember) return undefined;
+  const member: unknown = store.expandedRows;
+  return isExpandedRowsSignal(member) ? member() : undefined;
+}
+interface GroupingMembers { readonly grouping: Signal<string[]> }
+type GroupingSchemaFn<TRow> = (path: { [K in keyof TRow]: K }) => void;
+type GroupingCfg<TRow> = { initialGrouping?: (keyof TRow & string)[] };
+function withGrouping<In extends CoreOf<In>>(configOrSchemaFn?: GroupingCfg<RowOf<In>> | GroupingSchemaFn<RowOf<In>>): Feature<In, GroupingMembers>;
+function withGrouping<In extends CoreOf<In>, D extends DerivedDict>(
+  configOrSchemaFn: GroupingCfg<RowOf<In>> | GroupingSchemaFn<RowOf<In>> | undefined, derive: Feature<NoInfer<In> & GroupingMembers, D>
+): Feature<In, GroupingMembers & D>;
+function withGrouping(configOrSchemaFn: GroupingCfg<any> | GroupingSchemaFn<any> = {}, derive?: Feature<any, any>): Feature<any, any> {
+  const config: GroupingCfg<any> = typeof configOrSchemaFn === 'function' ? {} : configOrSchemaFn;
+  const factory = <In extends CoreOf<In>>(input: In): TableFeatureSpec<RowOf<In>, GroupingMembers> => ({
+    members: { grouping: signal(config.initialGrouping ?? []) },
+    stages: { sort: (rows) => (readExpandedRows(input) ? rows : rows) },
+  });
+  const feature: Feature<any, any> = derive ? createTableFeature(factory, derive) : createTableFeature(factory);
+  return Object.assign(feature, { displayName: 'withGrouping' });
+}
+function withExpansion<In extends CoreOf<In>>(): Feature<In, ExpansionMembers> {
+  return createTableFeature((input: In) => ({
+    members: { expandedRows: signal(new Set<RowId>(input.rows().map(input.trackBy))) },
+  }));
+}
+
+// --- withOptimistic: no config at all — derive is the only parameter --------------------
+interface OptimisticMembers<TRow> { readonly editing: WritableView<ReadonlySet<RowId>, (s: TRow[]) => TRow[]> }
+declare function createEditingStore<TRow>(
+  input: Pick<TableStore<TRow>, 'value' | 'trackBy' | 'indexById'>
+): OptimisticMembers<TRow>;
+function withOptimistic<In extends CoreOf<In>>(): Feature<In, OptimisticMembers<RowOf<In>>>;
+function withOptimistic<In extends CoreOf<In>, D extends DerivedDict>(
+  derive: Feature<NoInfer<In> & OptimisticMembers<RowOf<NoInfer<In>>>, D>
+): Feature<In, OptimisticMembers<RowOf<In>> & D>;
+function withOptimistic(derive?: Feature<any, any>): Feature<any, any> {
+  const factory = <In extends CoreOf<In>>(input: In): TableFeatureSpec<RowOf<In>, OptimisticMembers<RowOf<In>>> => {
+    const store = createEditingStore<RowOf<In>>(input);
+    return { members: { editing: store.editing } };
+  };
+  return derive ? createTableFeature(factory, derive) : createTableFeature(factory);
+}
+
+// ---------------------------------------------------------------------------------------
+// ASSERTIONS — every call below has NO explicit row type argument.
+// ---------------------------------------------------------------------------------------
+type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
+declare function assertType<T extends true>(): void;
+
+interface Invoice { id: string; total: number; status: 'paid' | 'open' }
+declare const data: Signal<Invoice[]>;
+
+// 1. Row-typed callback, no annotation; result carries members; not any.
+const t1 = createTable(data, { trackBy: 'id' }, withSelection({ enableMultiRowSelection: (row) => row.status === 'open' }));
+assertType<Equal<typeof t1, TableStore<Invoice> & SelectionMembers>>();
+assertType<Equal<IsAny<typeof t1>, false>>();
+
+// 2. Omitted derive → `{}`, no index signature leaks (research trap #2).
+assertType<Equal<keyof typeof t1, keyof TableStore<Invoice> | keyof SelectionMembers>>();
+
+// 3. Trailing derive block sees core + own members; store gains the member; hiddenSelected example.
+const t3 = createTable(
+  data,
+  { trackBy: 'id' },
+  withSelection(
+    { enableMultiRowSelection: (row) => row.status === 'open' },
+    withComputed((store) => ({
+      hiddenSelected: computed(() => store.selectedRows().size - store.rows().length),
+    }))
+  ),
+  withSorting(),
+);
+assertType<Equal<typeof t3.hiddenSelected, Signal<number>>>();
+assertType<Equal<typeof t3.sorting, Signal<string[]>>>();
+assertType<Equal<keyof typeof t3, keyof TableStore<Invoice> | keyof SelectionMembers | 'hiddenSelected' | keyof SortingMembers>>();
+
+// 4. Column ids autocomplete from the row type (typo is a compile error).
+createTable(data, { trackBy: 'id' }, withGrouping({ initialGrouping: ['status'] }));
+// @ts-expect-error — not a key of Invoice
+createTable(data, { trackBy: 'id' }, withGrouping({ initialGrouping: ['nope'] }));
+
+// 5. Grouping + expansion in either order compiles; expansion-first types `expandedRows` on grouping's input.
+const t5a = createTable(data, { trackBy: 'id' }, withGrouping(), withExpansion());
+const t5b = createTable(data, { trackBy: 'id' }, withExpansion(), withGrouping());
+assertType<Equal<typeof t5a.expandedRows, Signal<Set<RowId>>>>();
+assertType<Equal<typeof t5b.grouping, Signal<string[]>>>();
+
+// 6. Optimistic: derive is the sole parameter; members are row-typed.
+const t6 = createTable(data, { trackBy: 'id' }, withOptimistic(withComputed((s) => ({ busy: computed(() => s.editing().size > 0) }))));
+assertType<Equal<typeof t6.busy, Signal<boolean>>>();
+assertType<Equal<typeof t6.editing, WritableView<ReadonlySet<RowId>, (s: Invoice[]) => Invoice[]>>>();
+
+// 7. Derive block's store is read-only: `.update` is gone.
+createTable(data, { trackBy: 'id' }, withSelection({}, withComputed((store) => {
+  // @ts-expect-error — write view lost .update
+  store.value.update;
+  return { n: computed(() => store.rows().length) };
+})));
+
+// 8. A derive block over a member the feature does not have is a compile error, not any.
+createTable(data, { trackBy: 'id' }, withSorting(undefined, withComputed((store) => ({
+  // @ts-expect-error — sorting's block cannot see selection
+  n: computed(() => store.selectedRows().size),
+}))));
+
+// 9. Standalone (uncontextual) call still compiles — `In` falls back to its constraint.
+const standalone = withSorting();
+assertType<Equal<IsAny<typeof standalone>, false>>();
+
+// 10. Derive in FIRST position (no config) with NoInfer — does `In` still come from the slot?
+const t10 = createTable(data, { trackBy: 'id' }, withSelection(withComputed((s) => ({ k: computed(() => s.selectedRows().size + s.rows().length) }))));
+assertType<Equal<typeof t10.k, Signal<number>>>();
+assertType<Equal<keyof typeof t10, keyof TableStore<Invoice> | keyof SelectionMembers | 'k'>>();
+
+// 11. Grouping: schema-fn first arg (typed path), trailing block, and displayName survive.
+const t11 = createTable(data, { trackBy: 'id' }, withGrouping((path) => { path.status; }, withComputed((s) => ({ levels: computed(() => s.grouping().length) }))));
+assertType<Equal<typeof t11.levels, Signal<number>>>();
+const g = withGrouping<TableStore<Invoice>>();
+assertType<Equal<typeof g.displayName, string | undefined>>();

@@ -1,0 +1,12 @@
+<div class="story-host__toolbar">
+  <button type="button" (click)="resetLevels.emit()">Reset levels</button>
+  <label>
+    Min category size:
+    <input
+      type="number"
+      min="1"
+      [value]="minCategoryRowCount()"
+      (change)="minCategoryRowCountChange.emit($any($event).target.valueAsNumber)"
+    />
+  </label>
+</div>

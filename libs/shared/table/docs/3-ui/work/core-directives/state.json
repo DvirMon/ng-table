@@ -1,0 +1,17 @@
+{
+  "workspaceRoot": "libs/shared/design-system/src/ui/table",
+  "stack": "angular",
+  "specPath": "docs/3-ui/directives/core.md",
+  "architecturePath": "docs/3-ui/architecture.md",
+  "checklist": {
+    "spec": true,
+    "architecture": true,
+    "tasks": true
+  },
+  "localIssues": [
+    "01-core-directives-and-di-tokens.md",
+    "02-column-directive.md",
+    "03-cell-directive.md",
+    "04-public-api-and-barrel-exports.md"
+  ]
+}

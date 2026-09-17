@@ -1,0 +1,118 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Selection under an active filter. Select a few rows, then filter them out of view: they stay
+    selected, and clearing the filter brings the selection back exactly as it was. Sorting never
+    changes the selection; deleting a row does.
+  </p>
+
+  <ngp-filtering-selection-toolbar
+    [statusField]="filterForm.status"
+    [customerField]="filterForm.customer"
+    [filters]="filters"
+    [statusOptions]="statusOptions"
+    [tagOptions]="tagOptions"
+    (toggleTag)="toggleTag($event)"
+    (clearAllFilters)="clearAllFilters()"
+  />
+
+  <div class="filtering-story__summary">
+    <span>
+      <strong>{{ selectedCount() }}</strong> selected across every scope ·
+      <strong>{{ table.totalRowCount() }}</strong> of
+      <strong>{{ table.value().length }}</strong> visible
+    </span>
+    <span class="story-host__counter">selected ids: {{ selectedIdsLabel() || 'none' }}</span>
+  </div>
+
+  @if (filters().isActive()) {
+    <p class="filtering-story__notice" role="status">
+      A filter is active. Rows selected before it was applied are still selected — but no shipped
+      signal reports how many of them are currently out of view, so this story cannot show that
+      count. Tracked in 1-state/work/computed-state-mechanism/1-intake.md and
+      0-product/selection.md §2.5.
+    </p>
+  }
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        <th class="story-host__cell">
+          <input
+            type="checkbox"
+            aria-label="Select all visible rows"
+            [checked]="isEveryVisibleRowSelected()"
+            [indeterminate]="isSomeVisibleRowSelected()"
+            (change)="toggleAllVisibleRows()"
+          />
+        </th>
+        @for (column of table.columns(); track column.id) {
+          @let direction = table.sortDirections().get(column.id);
+          <th
+            class="story-host__cell"
+            [attr.aria-sort]="
+              direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none'
+            "
+          >
+            <button type="button" (click)="toggleSort(column.id)">
+              {{ column.label }}
+              @switch (direction) {
+                @case ('asc') {
+                  ▲
+                }
+                @case ('desc') {
+                  ▼
+                }
+                @default {
+                  ↕
+                }
+              }
+            </button>
+          </th>
+        }
+        <th class="story-host__cell">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as invoice) {
+          @let isRowSelected = table.selectedRows().has(row.id);
+
+          <tr
+            [ngpTableRow]="row"
+            [class.is-selected]="isRowSelected"
+            [attr.aria-selected]="isRowSelected"
+          >
+            <td class="story-host__cell">
+              <input
+                type="checkbox"
+                [attr.aria-label]="'Select invoice ' + invoice.id"
+                [checked]="isRowSelected"
+                (change)="toggleRow(row.id)"
+              />
+            </td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.id }}</td>
+            <td class="story-host__cell">{{ invoice.customer }}</td>
+            <td class="story-host__cell">{{ invoice.status }}</td>
+            <td class="story-host__cell filtering-story__cell--numeric">{{ invoice.amount }}</td>
+            <td class="story-host__cell">
+              @for (tag of invoice.tags; track tag) {
+                <span class="filtering-story__tag">{{ tag }}</span>
+              } @empty {
+                <span class="filtering-story__blank"></span>
+              }
+            </td>
+            <td class="story-host__cell">
+              <button
+                type="button"
+                [attr.aria-label]="'Delete invoice ' + invoice.id"
+                (click)="deleteRow(row.id)"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,55 @@
+/* `:host` is the consumer's own `<aside ngptCallout>` — no wrapper element ships (ADR-0005). */
+:host {
+  display: grid;
+  grid-template-columns: var(--ngpt-sys-space-500) 1fr;
+  gap: var(--ngpt-sys-space-300);
+  align-items: start;
+  padding: var(--ngpt-sys-space-350) var(--ngpt-sys-space-400);
+  margin: 0 0 var(--ngpt-sys-space-600);
+  border-radius: var(--ngpt-sys-shape-corner-small-alt);
+  border: 1px solid;
+  font: var(--ngpt-sys-typescale-body-medium);
+  color: var(--ngpt-text-tertiary);
+}
+
+.callout-icon {
+  /* optical offset to sit on the first line of text; no token at 1px granularity */
+  margin-top: 1px;
+}
+
+.callout-title {
+  font: var(--ngpt-sys-typescale-label-large);
+  /* label-large is 400 by default; no 600-weight token exists at the 13.5px size the spec calls for */
+  font-weight: 600;
+  margin-bottom: var(--ngpt-sys-space-100);
+}
+
+:host([data-kind='note']) {
+  background: var(--ngpt-comp-callout-note-bg);
+  border-color: var(--ngpt-comp-callout-note-border);
+}
+
+:host([data-kind='note']) .callout-icon,
+:host([data-kind='note']) .callout-title {
+  color: var(--ngpt-comp-callout-note-accent);
+}
+
+:host([data-kind='warning']) {
+  background: var(--ngpt-comp-callout-warning-bg);
+  border-color: var(--ngpt-comp-callout-warning-border);
+}
+
+:host([data-kind='warning']) .callout-icon,
+:host([data-kind='warning']) .callout-title {
+  color: var(--ngpt-status-warning);
+}
+
+:host([data-kind='tip']) {
+  background: var(--ngpt-comp-callout-tip-bg);
+  border-color: var(--ngpt-comp-callout-tip-border);
+}
+
+:host([data-kind='tip']) .callout-icon,
+:host([data-kind='tip']) .callout-title {
+  color: var(--ngpt-status-success);
+}

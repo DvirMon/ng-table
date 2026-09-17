@@ -1,0 +1,112 @@
+/* Floating-surface recipe (src/styles/docs/Radius and Elevation.md) — :host is the panel itself,
+   not a wrapper; `ngpMenu` (hostDirectives, see dropdown-menu.ts) supplies role="menu" and
+   positions this element via the caller's `[ngpMenuTrigger]`/`ngpMenuTriggerOffset`. This file
+   only owns the box and its enter/exit motion (`[data-enter]`/`[data-exit]`, set by the
+   primitive while animating). */
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ngpt-sys-space-050);
+  min-width: var(--ngpt-comp-menu-min-width);
+  max-height: var(--ngpt-comp-menu-max-height);
+  overflow-y: auto;
+  padding: var(--ngpt-sys-space-150);
+  border-radius: var(--ngpt-sys-shape-corner-small-alt);
+  border: 1px solid var(--ngpt-border-subtle);
+  background: var(--ngpt-bg-elevated);
+  box-shadow: var(--ngpt-sys-elevation-level2);
+  outline: none;
+}
+
+:host([data-enter]) {
+  animation: ngpt-dropdown-menu-enter var(--ngpt-sys-motion-duration-base)
+    var(--ngpt-sys-motion-easing-decelerate);
+}
+
+:host([data-exit]) {
+  animation: ngpt-dropdown-menu-exit var(--ngpt-sys-motion-duration-base)
+    var(--ngpt-sys-motion-easing-decelerate);
+}
+
+@keyframes ngpt-dropdown-menu-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ngpt-dropdown-menu-exit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Per-component transform suppression (CONVENTIONS.md #9) — the global reduced-motion rule
+   only collapses transition durations, it doesn't touch the translateY offset itself. */
+@media (prefers-reduced-motion: reduce) {
+  :host([data-enter]),
+  :host([data-exit]) {
+    animation-duration: 0s;
+  }
+}
+
+.menu-label {
+  font: var(--ngpt-sys-typescale-label-small-alt);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ngpt-text-muted);
+  padding: var(--ngpt-sys-space-200) var(--ngpt-sys-space-250) var(--ngpt-sys-space-100);
+}
+
+.menu-divider {
+  border: none;
+  border-top: 1px solid var(--ngpt-border-subtle);
+  margin: var(--ngpt-sys-space-150) calc(-1 * var(--ngpt-sys-space-150));
+}
+
+.menu-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ngpt-sys-space-250);
+  padding: var(--ngpt-sys-space-200) var(--ngpt-sys-space-250);
+  border-radius: var(--ngpt-sys-shape-corner-extra-small-alt);
+  font: var(--ngpt-sys-typescale-label-large-sm);
+  color: var(--ngpt-text-tertiary);
+  cursor: pointer;
+}
+
+/* Menu sits at the same 0.20 lightness as the global hover token, so hover/roving-focus use the
+   active token (0.24) instead — spec's own note under the Build spec table. `data-hover` /
+   `data-focus-visible` come from the primitive's interaction tracking, not native :hover/:focus. */
+.menu-option[data-hover],
+.menu-option[data-focus-visible] {
+  background: var(--ngpt-bg-active);
+  color: var(--ngpt-text-secondary);
+}
+
+.menu-option[data-checked] {
+  color: var(--ngpt-accent);
+}
+
+.menu-option[data-disabled] {
+  color: var(--ngpt-comp-menu-text-disabled);
+  cursor: default;
+  background: none;
+}
+
+/* Spec states table: roving focus reuses the hover fill only, no separate ring — suppress the
+   global :focus-visible ring here so the two treatments don't stack (CONVENTIONS.md #4). */
+.menu-option:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

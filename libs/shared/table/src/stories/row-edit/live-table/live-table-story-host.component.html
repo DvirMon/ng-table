@@ -1,0 +1,120 @@
+<div class="story-host">
+  @if (forceFailure()) {
+    <p class="story-host__hint">
+      Every request fails: an edit reverts to its pre-commit value, a create leaves the typed
+      values in place for Retry, and a discard comes back instead of disappearing.
+    </p>
+  } @else {
+    <p class="story-host__hint">
+      The simplest editable table — every field is always editable, no edit mode to enter. Name
+      commits on blur; department commits the instant you pick a value. Discarding a row removes it
+      straight away — undo is the safety net, not a confirm dialog.
+    </p>
+  }
+
+  <div class="sr-only" aria-live="polite">{{ announcement() }}</div>
+
+  <ngp-live-table-toolbar
+    [undoLabel]="undoLabel()"
+    (insertRow)="insertRow($event)"
+    (undoLastAction)="undoLastAction()"
+  />
+  <ngp-commit-counter [data]="data()" />
+
+  <table class="story-host__table" [ngpFocusNewRow]="newRowId()">
+    <thead>
+      <tr>
+        <th class="story-host__cell" [attr.aria-sort]="nameSortAria()">
+          <button type="button" class="story-host__sort-button" (click)="table.toggleSort('name')">
+            name
+            @switch (table.sortDirections().get('name')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
+        <th class="story-host__cell" [attr.aria-sort]="deptSortAria()">
+          <button type="button" class="story-host__sort-button" (click)="table.toggleSort('dept')">
+            dept
+            @switch (table.sortDirections().get('dept')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
+        <th class="story-host__cell story-host__cell--actions">
+          <span class="sr-only">actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.sourceIndex !== undefined) {
+          @let isPending = table.pending().has(row.id);
+          @let rowError = flags.rowErrors().get(row.id);
+          @let discardLabel = 'Discard ' + (data()[row.sourceIndex] | rowLabel);
+
+          <tr
+            [attr.data-row-new]="row.id === newRowId() ? row.id : null"
+            [class.story-host__row--saving]="isPending"
+          >
+            <td class="story-host__cell">
+              <input type="text" [formField]="rows[row.sourceIndex].name" placeholder="name" />
+            </td>
+            <td class="story-host__cell">
+              <select [formField]="rows[row.sourceIndex].dept">
+                @for (dept of deptOptions; track dept) {
+                  <option [value]="dept">{{ dept }}</option>
+                }
+              </select>
+            </td>
+            <td class="story-host__cell story-host__cell--actions">
+              @if (isPending) {
+                <span class="story-host__pending">saving…</span>
+              }
+              <button
+                type="button"
+                class="story-host__icon-button"
+                [attr.aria-label]="discardLabel"
+                [title]="discardLabel"
+                (click)="discardRow(row.id)"
+              >
+                <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path
+                    d="M6.5 1.5h3M2.5 3.5h11M4.5 3.5l.7 9.4a1.5 1.5 0 0 0 1.5 1.4h2.6a1.5 1.5 0 0 0 1.5-1.4l.7-9.4M6.7 6.3v5.4M9.3 6.3v5.4"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              @if (rowError; as message) {
+                <p class="story-host__error" role="status">
+                  {{ message }}
+                  <button type="button" (click)="retryRow(row.id)">Retry</button>
+                  <button type="button" (click)="dismissError(row.id)">Dismiss</button>
+                </p>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>

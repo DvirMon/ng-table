@@ -1,0 +1,64 @@
+:host {
+  display: inline-flex;
+  font: var(--ngpt-sys-typescale-label-large-medium);
+  padding: var(--ngpt-sys-space-150) var(--ngpt-sys-space-300);
+  border-radius: var(--ngpt-sys-shape-corner-large);
+  border: 1px solid var(--ngpt-comp-pill-border-default);
+  background: transparent;
+  color: var(--ngpt-text-tertiary);
+  cursor: pointer;
+  /* the `a[ngptPillButton]` host — a pill never reads as underlined body text */
+  text-decoration: none;
+}
+
+:host(:hover) {
+  border-color: var(--ngpt-comp-pill-border-hover);
+  background: var(--ngpt-bg-hover);
+  color: var(--ngpt-text-secondary);
+}
+
+:host(:focus-visible) {
+  color: var(--ngpt-text-primary);
+  box-shadow: 0 0 0 2px var(--ngpt-focus-ring);
+  outline: none;
+}
+
+:host(:disabled) {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* on-band variants (Home hero only): filled pills, no outline border — spec § Variant: on-band */
+:host([data-variant='on-band']),
+:host([data-variant='on-band-inverse']) {
+  border: none;
+}
+
+:host([data-variant='on-band']),
+:host([data-variant='on-band']:hover),
+:host([data-variant='on-band']:focus-visible) {
+  color: var(--ngpt-onband-text);
+}
+
+:host([data-variant='on-band']) {
+  background: var(--ngpt-onband-fill);
+}
+
+:host([data-variant='on-band']:hover) {
+  background: var(--ngpt-onband-fill-hover);
+}
+
+/* Secondary on-band (inverse): dark fill, white text already covered by --ngpt-text-primary */
+:host([data-variant='on-band-inverse']),
+:host([data-variant='on-band-inverse']:hover),
+:host([data-variant='on-band-inverse']:focus-visible) {
+  color: var(--ngpt-text-primary);
+}
+
+:host([data-variant='on-band-inverse']) {
+  background: var(--ngpt-onband-fill-inverse);
+}
+
+:host([data-variant='on-band-inverse']:hover) {
+  background: var(--ngpt-onband-fill-inverse-hover);
+}

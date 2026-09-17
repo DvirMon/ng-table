@@ -1,0 +1,580 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as LiveBaseStories from './live-table/live-table.stories';
+import * as LiveOptimisticStories from './live-optimistic/live-optimistic.stories';
+import * as GatedSingleOptimisticStories from './gated-single-optimistic/gated-single-optimistic.stories';
+import * as GatedSinglePessimisticStories from './gated-single-pessimistic/gated-single-pessimistic.stories';
+import * as GatedMultipleStories from './gated-multiple-optimistic/gated-multiple-optimistic.stories';
+import * as GatedBulkStories from './gated-bulk-optimistic/gated-bulk-optimistic.stories';
+import * as FormWriteStories from './form-write-mutations/form-write-mutations.stories';
+import * as ExternalWriteStories from './external-write/external-write.stories';
+import * as SortingEditingStories from './sorting-editing/sorting-editing.stories';
+import liveBaseClass from './live-table/live-table-story-host.component.ts?raw';
+import liveBaseTemplate from './live-table/live-table-story-host.component.html?raw';
+import liveBaseStyles from './live-table/live-table-story-host.component.css?raw';
+import liveBaseToolbarClass from './live-table/live-table-toolbar.component.ts?raw';
+import liveBaseToolbarTemplate from './live-table/live-table-toolbar.component.html?raw';
+import liveOptimisticClass from './live-optimistic/live-optimistic-story-host.component.ts?raw';
+import liveOptimisticTemplate from './live-optimistic/live-optimistic-story-host.component.html?raw';
+import liveOptimisticToolbarClass from './live-optimistic/live-optimistic-toolbar.component.ts?raw';
+import liveOptimisticToolbarTemplate from './live-optimistic/live-optimistic-toolbar.component.html?raw';
+import gatedSingleOptimisticClass from './gated-single-optimistic/gated-single-optimistic-story-host.component.ts?raw';
+import gatedSingleOptimisticTemplate from './gated-single-optimistic/gated-single-optimistic-story-host.component.html?raw';
+import gatedSinglePessimisticClass from './gated-single-pessimistic/gated-single-pessimistic-story-host.component.ts?raw';
+import gatedSinglePessimisticTemplate from './gated-single-pessimistic/gated-single-pessimistic-story-host.component.html?raw';
+import insertRowToolbarClass from './ui/insert-row-toolbar.component.ts?raw';
+import insertRowToolbarTemplate from './ui/insert-row-toolbar.component.html?raw';
+import gatedMultipleClass from './gated-multiple-optimistic/gated-multiple-optimistic-story-host.component.ts?raw';
+import gatedMultipleTemplate from './gated-multiple-optimistic/gated-multiple-optimistic-story-host.component.html?raw';
+import gatedMultipleToolbarClass from './gated-multiple-optimistic/gated-multiple-optimistic-toolbar.component.ts?raw';
+import gatedMultipleToolbarTemplate from './gated-multiple-optimistic/gated-multiple-optimistic-toolbar.component.html?raw';
+import gatedBulkClass from './gated-bulk-optimistic/gated-bulk-optimistic-story-host.component.ts?raw';
+import gatedBulkTemplate from './gated-bulk-optimistic/gated-bulk-optimistic-story-host.component.html?raw';
+import gatedBulkToolbarClass from './gated-bulk-optimistic/gated-bulk-optimistic-toolbar.component.ts?raw';
+import gatedBulkToolbarTemplate from './gated-bulk-optimistic/gated-bulk-optimistic-toolbar.component.html?raw';
+import formWriteClass from './form-write-mutations/form-write-mutations-story-host.component.ts?raw';
+import formWriteTemplate from './form-write-mutations/form-write-mutations-story-host.component.html?raw';
+import formWriteToolbarClass from './form-write-mutations/form-write-mutations-toolbar.component.ts?raw';
+import formWriteToolbarTemplate from './form-write-mutations/form-write-mutations-toolbar.component.html?raw';
+import externalWriteClass from './external-write/external-write-story-host.component.ts?raw';
+import externalWriteTemplate from './external-write/external-write-story-host.component.html?raw';
+import externalWriteStyles from './external-write/external-write.css?raw';
+import externalWriteToolbarClass from './external-write/external-write-toolbar.component.ts?raw';
+import externalWriteToolbarTemplate from './external-write/external-write-toolbar.component.html?raw';
+import sortingEditingClass from './sorting-editing/sorting-editing-story-host.component.ts?raw';
+import sortingEditingTemplate from './sorting-editing/sorting-editing-story-host.component.html?raw';
+import sortingEditingSchema from './sorting-editing/sorting-editing.schema.ts?raw';
+import sortingEditingStyles from './sorting-editing/sorting-editing-flip.css?raw';
+import sortingEditingToolbarClass from './sorting-editing/sorting-editing-toolbar.component.ts?raw';
+import sortingEditingToolbarTemplate from './sorting-editing/sorting-editing-toolbar.component.html?raw';
+import rowSchema from './fixtures/schema.ts?raw';
+import rowHttp from './fixtures/http.ts?raw';
+import sharedStyles from '../styles/story-host.css?raw';
+import '../styles/code-tabs.css';
+
+<Meta title="Table / Row Editing" name="Docs" />
+
+# Row Editing
+
+Nine stories along two axes: whether an edit session is **gated** (a button opens the row) or
+**live** (focus delimits it), and whether a save is **optimistic** (the row closes before the
+round trip settles) or **pessimistic** (it waits). Each combination is a fixed-mode host rather
+than a toggle, because the mode is decided at construction.
+
+Shared: `fixtures/schema.ts` and `fixtures/http.ts`, at the bottom of this page. Three hosts bring
+their own stylesheet or schema, shown in their own tabs.
+
+---
+
+## Live Base
+
+<Canvas of={LiveBaseStories.LiveBase} />
+
+Turn on `forceFailure` in Controls and every request fails: an edit reverts to its pre-commit value,
+a create leaves the typed values in place for Retry, and a discard comes back instead of
+disappearing. One boolean away from the happy path, so it is a control rather than a second canvas.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" />
+      live-table-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-base-source" />
+      live-table-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={liveBaseClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveBaseTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveBaseStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveBaseToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveBaseToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Live Optimistic — updates and rollback
+
+The edit session is focus-delimited: there is no button to open a row, so there is no edit session
+to track, and no `withRowEdit()` is composed. `withOptimistic()` alone supplies the three rollback
+verbs (`captureEdit` / `releaseEdit` / `revertEdit`): focus captures a restore point, blur commits
+and saves, and a rejected save reverts to the captured value. `table.editing()` stays empty for the
+whole story; `table.pending()` is exactly the in-flight set.
+
+Also on this canvas: a screen-reader announcement on each pending-state transition, a "Simulate
+leave page" guard demo (plus a real `beforeunload` listener), and an Undo control that reappears
+for a few seconds after a delete settles, before its restore point is released.
+
+<Canvas of={LiveOptimisticStories.LiveOptimistic} />
+
+Turn on `forceFailure` in Controls and the edited value still shows on screen immediately, same as
+the happy path, then reverts to what it was before the edit — the row was never in an "open for
+editing" state, so nothing closes, it just reverts. One boolean away from the happy path, so it is a
+control rather than a second canvas.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
+      live-optimistic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-live-optimistic-source" />
+      live-optimistic-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={liveOptimisticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveOptimisticTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveOptimisticToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={liveOptimisticToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Gated Single Optimistic
+
+<Canvas of={GatedSingleOptimisticStories.GatedSingleOptimistic} />
+
+Turn on `forceFailure` in Controls and the row still closes immediately, then reverts to its
+pre-edit snapshot and reopens once Retry is clicked. One boolean away from the happy path, so it is
+a control rather than a second canvas.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
+      insert-row-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-optimistic-source" />
+      insert-row-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={gatedSingleOptimisticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedSingleOptimisticTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Gated Single Pessimistic
+
+<Canvas of={GatedSinglePessimisticStories.GatedSinglePessimistic} />
+
+Turn on `forceFailure` in Controls and the row stays open — pessimistic never closes early — the
+error shows inline, and Retry re-runs the same request. One boolean away from the happy path, so it
+is a control rather than a second canvas.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
+      insert-row-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-single-pessimistic-source" />
+      insert-row-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={gatedSinglePessimisticClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedSinglePessimisticTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={insertRowToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Gated Multiple Optimistic
+
+Optimistic-only is a deliberate constraint here, not an arbitrary default: a save must close its
+row before firing so an in-flight save is always `pending`, never `open` — otherwise a bulk-close
+op could silently discard a live restore point. Pessimistic multi-row editing has no story for the
+same reason.
+
+<Canvas of={GatedMultipleStories.GatedMultipleOptimistic} />
+
+Turn on `forceFailure` in Controls and rows still close immediately on Save All — closing never
+waits on the round trip. Each failed row reverts to its pre-edit value and shows a Retry/Dismiss
+control. One boolean away from the happy path, so it is a control rather than a second canvas.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
+      gated-multiple-optimistic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-multiple-source" />
+      gated-multiple-optimistic-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={gatedMultipleClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedMultipleTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedMultipleToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedMultipleToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Gated Bulk
+
+Opening several new rows uses `createRow`'s array overload — one call, no consumer loop — and
+saving them sends one `POST /api/rows/bulk` request instead of N separate ones, so a failure
+reverts and reopens the whole batch together. `Gated Multiple Optimistic`'s Save All is the other,
+older answer to the same open question: N independent requests, N independent outcomes.
+
+<Canvas of={GatedBulkStories.GatedBulk} />
+
+Turn on `forceFailure` in Controls and every row in the batch reverts to blank and reopens together
+— not some succeeding while others fail, which is the contrast with Save All. One boolean away from
+the happy path, so it is a control rather than a second canvas.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
+      gated-bulk-optimistic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-gated-bulk-source" />
+      gated-bulk-optimistic-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={gatedBulkClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedBulkTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedBulkToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={gatedBulkToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Form-Driven Mutations
+
+<Canvas of={FormWriteStories.FormDrivenMutations} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
+      form-write-mutations-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-form-write-source" />
+      form-write-mutations-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={formWriteClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={formWriteTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={formWriteToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={formWriteToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## External Write & Reconciliation
+
+<Canvas of={ExternalWriteStories.ExternalWrite} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" />
+      external-write-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-external-write-source" />
+      external-write-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={externalWriteClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={externalWriteTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={externalWriteStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={externalWriteToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={externalWriteToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Sorting × Editing
+
+<Canvas of={SortingEditingStories.SortingAndEditing} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      sorting-editing-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      sorting-editing-toolbar.component.html
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-sorting-editing-source" />
+      sorting-editing.schema.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingToolbarTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sortingEditingSchema} language="ts" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Shared across the nine
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-shared-source" defaultChecked />
+      fixtures/schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-shared-source" />
+      fixtures/http.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-shared-source" />
+      story-host.css
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={rowSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowHttp} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+  </div>
+</div>

@@ -1,0 +1,100 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Deliberate misuse, kept on screen instead of in a bug list. Nothing here is a pattern to copy
+    — <code>grouping-static/</code> is. Each control below drives one gap that is still open.
+  </p>
+
+  <ngp-grouping-regressions-toolbar
+    [isSummaryBroken]="isSummaryBroken()"
+    (resetLevels)="resetLevels()"
+    (groupByMissingColumn)="groupByMissingColumn()"
+    (toggleBrokenSummary)="toggleBrokenSummary()"
+  />
+
+  @if (droppedLevels().length > 0) {
+    <p class="grouping-story__notice">
+      {{ droppedLevelsText() }} names no column, so the table grouped by the remaining levels and
+      said nothing. This line is the story's own arithmetic — the library has no channel to report
+      a dropped level.
+    </p>
+  }
+
+  @if (isSummaryBroken()) {
+    <p class="grouping-story__notice">
+      One row's <code>amount</code> is now a value the <code>aggregateFn</code> refuses. The whole
+      table is down rather than that one group's summary blanking —
+      <code>engine/grouping.ts</code> calls <code>aggregateFn</code> unwrapped
+      (<a href="https://github.com/DvirMon/acme/issues/79">#79</a>). Restore it with the same
+      button.
+    </p>
+  }
+
+  @if (groupOrder() === 'throwing') {
+    <p class="grouping-story__notice">
+      <code>groupOrder</code> threw. Groups below are in stable first-occurrence order — the
+      comparator fallback — and the library reported it once for this evaluation, to the console.
+    </p>
+  }
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__aggregate]="!isFirst"
+              >
+                @if (isFirst) {
+                  @if (row.groupKey?.value | isBlankGroup) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
+                  }
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
+                  }
+                } @else {
+                  {{ row.aggregates?.[column.id] | dealAmount }}
+                }
+              </td>
+            }
+          } @else {
+            @if (row.data; as rowData) {
+              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+                <td
+                  class="story-host__cell"
+                  [class.grouping-story__cell--label]="isFirst"
+                  [class.grouping-story__cell--numeric]="column.id === 'amount'"
+                >
+                  @switch (column.id) {
+                    @case ('amount') {
+                      {{ column.accessor(rowData) | dealAmount }}
+                    }
+                    @case ('closedAt') {
+                      {{ column.accessor(rowData) | dealDate }}
+                    }
+                    @default {
+                      {{ column.accessor(rowData) }}
+                    }
+                  }
+                </td>
+              }
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

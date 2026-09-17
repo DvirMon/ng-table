@@ -1,0 +1,24 @@
+<div class="story-host__toolbar">
+  <span class="story-host__counter">
+    (force failure / latency are Storybook controls on this story)
+  </span>
+  <label>
+    at:
+    <input type="number" [value]="insertAt()" (input)="onInsertAtInput($event)" />
+  </label>
+  <button type="button" (click)="onAddRow()">Add row</button>
+  <button type="button" (click)="clearAll.emit()">Clear all</button>
+  <button type="button" (click)="saveAll.emit()">Save All</button>
+  @if (saveAllOutcome(); as outcome) {
+    <span class="story-host__counter" role="status">
+      @if (outcome.total === 0) {
+        No open rows to save.
+      } @else if (outcome.failed === 0) {
+        Saved all {{ outcome.total }} row(s).
+      } @else {
+        Saved {{ outcome.total - outcome.failed }} of {{ outcome.total }} row(s);
+        {{ outcome.failed }} failed.
+      }
+    </span>
+  }
+</div>

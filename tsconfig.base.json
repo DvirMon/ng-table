@@ -14,13 +14,14 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
-      "@acme/shared-design-system": ["./libs/shared/design-system/src/index.ts"],
+      "@acme/shared-design-system": [
+        "./libs/shared/design-system/src/index.ts"
+      ],
       "@acme/shared-design-system/styles": [
         "./libs/shared/design-system/src/styles/index.ts"
       ],
-      "@acme/shared-design-system/ui": [
-        "./libs/shared/design-system/src/ui/index.ts"
-      ]
+      "@acme/table": ["./libs/shared/table/src/index.ts"],
+      "@acme/table/forms": ["./libs/shared/table/src/forms/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

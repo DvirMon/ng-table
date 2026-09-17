@@ -1,0 +1,24 @@
+<a
+  ngptNavItem
+  class="sidebar__root"
+  [routerLink]="root().slug"
+  [active]="root().slug === activeSlug()"
+>
+  {{ root().label }}
+</a>
+
+@for (section of visibleSections(); track section.heading) {
+  <div class="sidebar__section-label">{{ section.heading }}</div>
+  <div class="sidebar__section-group">
+    @for (entry of section.entries; track entry.slug) {
+      <a
+        ngptNavItem
+        [routerLink]="entry.slug"
+        [active]="entry.slug === activeSlug()"
+        [nested]="entry.slug === activeSlug()"
+      >
+        {{ entry.label }}
+      </a>
+    }
+  </div>
+}

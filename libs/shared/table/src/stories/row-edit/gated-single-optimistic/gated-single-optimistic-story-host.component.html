@@ -1,0 +1,110 @@
+<div class="story-host">
+  @if (forceFailure()) {
+    <p class="story-host__hint">
+      Every save fails: the row still closes immediately (optimistic), then reverts to its
+      pre-edit snapshot and reopens once Retry is clicked.
+    </p>
+  } @else {
+    <p class="story-host__hint">
+      Rows show as text until Edit opens them. Cancel resets the row; Discard removes it — both
+      are separate, clearly-labeled buttons on any open row, no matter how the row was added. Save
+      closes the row immediately and reconciles over the network — a real MSW-intercepted `fetch`
+      that rolls the row back on failure (`forceFailure`/`latencyMs` are Storybook controls below).
+      Keyboard: Escape cancels the open row, Enter saves it, Tab stays inside its cells.
+    </p>
+  }
+
+  <ngp-insert-row-toolbar (addRow)="addBlankRow($event)" />
+
+  <table class="story-host__table">
+    <thead>
+      <tr>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">dept</th>
+        <th class="story-host__cell">actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @let isEditing = table.editing().has(row.id);
+        @let isPending = table.pending().has(row.id);
+        @let isForcedInvalid = flags.forcedInvalid().has(row.id);
+        @let rowError = flags.rowErrors().get(row.id);
+
+        <tr
+          [class.story-host__row--saving]="isPending"
+          (keydown)="isEditing ? onRowKeydown($event, row.id) : null"
+        >
+          <td class="story-host__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                @let needsUniqueNameFlag = field.name().errors().some((error) => error.kind === 'duplicateName');
+                <input
+                  type="text"
+                  [formField]="field.name"
+                  placeholder="name"
+                  [class.story-host__field--needs-change]="needsUniqueNameFlag"
+                  [attr.aria-invalid]="needsUniqueNameFlag || isForcedInvalid ? true : null"
+                  [attr.aria-describedby]="
+                    needsUniqueNameFlag ? 'gated-single-optimistic-duplicate-hint-' + row.id : null
+                  "
+                />
+                @if (needsUniqueNameFlag) {
+                  <span class="story-host__field-hint" [id]="'gated-single-optimistic-duplicate-hint-' + row.id">
+                    another row already uses this name
+                  </span>
+                }
+                @if (isForcedInvalid) {
+                  <span class="story-host__field-hint">forced invalid — Save disabled</span>
+                }
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.name }}</span>
+            }
+          </td>
+          <td class="story-host__cell">
+            @if (isEditing) {
+              <ng-container *ngpTableRowField="row; from: rows; let field">
+                <select [formField]="field.dept">
+                  @for (dept of deptOptions; track dept) {
+                    <option [value]="dept">{{ dept }}</option>
+                  }
+                </select>
+              </ng-container>
+            } @else {
+              <span>{{ row.data?.dept }}</span>
+            }
+          </td>
+          <td class="story-host__cell">
+            @if (isEditing) {
+              <button type="button" (click)="saveEdit(row.id)" [disabled]="isForcedInvalid">
+                Save
+              </button>
+              <button type="button" (click)="saveAndAddNext(row.id)" [disabled]="isForcedInvalid">
+                Save & add next
+              </button>
+              <button type="button" (click)="cancelEdit(row.id)">Cancel (reset)</button>
+              <button type="button" (click)="discardRow(row.id)">Discard (remove)</button>
+              <button type="button" (click)="flags.toggleForceInvalid(row.id)">
+                Force invalid: {{ isForcedInvalid ? 'on' : 'off' }}
+              </button>
+            } @else {
+              <button type="button" (click)="openEdit(row.id)">Edit</button>
+              <button type="button" (click)="duplicateRow(row.id)">Duplicate</button>
+              @if (isPending) {
+                <span class="story-host__pending">saving…</span>
+              }
+            }
+            @if (rowError; as message) {
+              <p class="story-host__error" role="status">
+                {{ message }}
+                <button type="button" (click)="retrySave(row.id)">Retry</button>
+                <button type="button" (click)="dismissError(row.id)">Dismiss</button>
+              </p>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

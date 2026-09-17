@@ -1,0 +1,8 @@
+<div class="story-host__toolbar">
+  <button type="button" (click)="expandAll.emit()">Expand all</button>
+  <button type="button" (click)="collapseAll.emit()">Collapse all</button>
+  <button type="button" [disabled]="isRefetching()" (click)="refetchRows.emit()">Refetch</button>
+  <button type="button" (click)="regroup.emit()">
+    {{ isRenested() ? 'Regroup: Region → Category → Rep' : 'Regroup: Category → Region → Rep' }}
+  </button>
+</div>
