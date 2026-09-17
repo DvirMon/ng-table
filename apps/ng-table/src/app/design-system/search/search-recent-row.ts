@@ -9,7 +9,7 @@ import type { RecentSearchEntry } from './search.types';
 /**
  * One `role="option"` row in the recent-searches listbox. Host IS the `<li>` (ADR-0005
  * attribute-hosted test) — no wrapper ships. Save/remove buttons stop propagation internally so
- * their click never also fires the row's own `select`.
+ * their click never also fires the row's own `selectEntry`.
  */
 @Component({
   selector: 'li[ngptSearchRecentRow]',
@@ -25,7 +25,7 @@ import type { RecentSearchEntry } from './search.types';
     '[attr.data-active]': "active() ? '' : null",
     '(mouseenter)': 'onPointerEnter($event)',
     '(mousemove)': 'onPointerMove($event)',
-    '(click)': 'select.emit(entry())',
+    '(click)': 'selectEntry.emit(entry())',
   },
 })
 export class SearchRecentRow {
@@ -33,7 +33,7 @@ export class SearchRecentRow {
   readonly active = input(false, { transform: booleanAttribute });
 
   readonly activate = output<string>();
-  readonly select = output<RecentSearchEntry>();
+  readonly selectEntry = output<RecentSearchEntry>();
   readonly save = output<void>();
   readonly remove = output<void>();
 

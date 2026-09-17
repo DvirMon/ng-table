@@ -22,7 +22,7 @@ import type { SearchResultRecord } from './search.types';
     '[attr.data-active]': "active() ? '' : null",
     '(mouseenter)': 'onPointerEnter($event)',
     '(mousemove)': 'onPointerMove($event)',
-    '(click)': 'select.emit(result())',
+    '(click)': 'selectResult.emit(result())',
   },
 })
 export class SearchResultRow {
@@ -32,7 +32,7 @@ export class SearchResultRow {
   readonly last = input(false, { transform: booleanAttribute });
 
   readonly activate = output<string>();
-  readonly select = output<SearchResultRecord>();
+  readonly selectResult = output<SearchResultRecord>();
 
   protected readonly rowId = computed(() => `search-result-${this.result().id}`);
   /** DocSearch reference paths (verified live): trunk continues past the branch unless closing. */

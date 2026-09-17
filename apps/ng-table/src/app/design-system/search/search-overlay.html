@@ -64,7 +64,7 @@
         [active]="result.id === activeRowId()"
         [last]="isLastHeadingInRun(group.results, i)"
         (activate)="onRowActivate($event)"
-        (select)="onResultRowSelect($event)"
+        (selectResult)="onResultRowSelect($event)"
       ></li>
       }
     </ul>
@@ -105,7 +105,7 @@
         [entry]="entry"
         [active]="entry.id === activeRowId()"
         (activate)="onRowActivate($event)"
-        (select)="onRecentRowSelect($event)"
+        (selectEntry)="onRecentRowSelect($event)"
         (save)="onRecentRowSave()"
         (remove)="onRecentRowRemove(entry)"
       ></li>
