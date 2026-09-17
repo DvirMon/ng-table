@@ -1,12 +1,12 @@
 ---
 title: Table
-summary: "Standalone `@acme/table` headless table primitive, extracted from Design System (ADR-0009)."
+summary: "Standalone `@ngp/table` headless table primitive, extracted from Design System (ADR-0009)."
 depends-on: []
 ---
 
 # Table — context
 
-Glossary and cross-domain vocabulary for `@acme/table`.
+Glossary and cross-domain vocabulary for `@ngp/table`.
 
 Extracted from `libs/shared/design-system` — see
 [design-system/docs/adr/0009](../design-system/docs/adr/0009-table-standalone-package.md) for

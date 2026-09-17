@@ -131,7 +131,7 @@ what makes it *visible*, not what makes it *work*.
 
 ```css
 /* my-table.css */
-@import '@acme/table/row-flip.css';
+@import '@ngp/table/row-flip.css';
 
 /* Required alongside the import — see caveat above. */
 .my-table {

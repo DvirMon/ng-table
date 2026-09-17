@@ -54,7 +54,7 @@ export const HOME_CONTENT: HomeContent = {
     eyebrow: 'Get Started',
     heading: 'Install and go',
     description: 'Add the package and start composing.',
-    command: 'npm install @acme/table',
+    command: 'npm install @ngp/table',
   },
   footerLinks: [
     { label: 'Sponsor', href: '#' },

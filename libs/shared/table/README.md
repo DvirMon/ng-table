@@ -1,10 +1,10 @@
-# @acme/table
+# @ngp/table
 
 Headless Angular data table: state management (`createTable()`), column schema, and
 attribute-only UI directives (`ngp` prefix). Zero runtime dependencies beyond `@angular/core`.
 
 ```ts
-import { createTable } from '@acme/table';
+import { createTable } from '@ngp/table';
 ```
 
 - Architecture and per-layer specs: [`docs/README.md`](docs/README.md)

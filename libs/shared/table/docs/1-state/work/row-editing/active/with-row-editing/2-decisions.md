@@ -886,7 +886,7 @@ captured at `beginEdit`. No machinery watches `data`, and no per-row subscriptio
 `*ngpTableRowField`, a structural directive that folds the E2 pattern —
 `@if (row.sourceIndex !== undefined) { @let field = rows[row.sourceIndex]; }` — into one
 template line, guard and bind together. Exported from a **secondary entry point**,
-`@acme/table/forms`, not the root barrel — `src/index.ts` stays forms-free even at type level,
+`@ngp/table/forms`, not the root barrel — `src/index.ts` stays forms-free even at type level,
 and a consumer who never edits never sees `@angular/forms` in their import graph.
 
 **Rationale — re-scoring D23's two objections against a directive, not a resolver function:**
@@ -917,8 +917,8 @@ existing precedent for this pattern in the repo — a path-mapped secondary barr
 build target, no `project.json` change.
 
 **Consequences:**
-- Two barrels now exist for `@acme/table`: `index.ts` (forms-free, the default surface) and
-  `forms/index.ts` (opt-in, editing-only). A consumer who imports only `@acme/table` never
+- Two barrels now exist for `@ngp/table`: `index.ts` (forms-free, the default surface) and
+  `forms/index.ts` (opt-in, editing-only). A consumer who imports only `@ngp/table` never
   resolves `@angular/forms` through this lib.
 - D23's directive-rejection sentence is superseded, not deleted — the resolver-function
   rejection (`fieldFor`) still stands in full; only the directive clause is revised.

@@ -127,7 +127,7 @@ Raw form:
 Folded, via the optional directive (D33):
 
 ```ts
-import { NgpTableRowFieldDirective } from '@acme/table/forms';
+import { NgpTableRowFieldDirective } from '@ngp/table/forms';
 ```
 
 ```html
@@ -139,7 +139,7 @@ import { NgpTableRowFieldDirective } from '@acme/table/forms';
 Guard and bind in one line. Its `ngTemplateContextGuard` asserts the narrowed `FieldTree<TRow>`
 **once, at the directive boundary**, which is precisely what killed the resolver-function form.
 
-**Secondary entry point, deliberately.** `@acme/table/forms`, never the root barrel — a consumer
+**Secondary entry point, deliberately.** `@ngp/table/forms`, never the root barrel — a consumer
 who never edits never resolves `@angular/forms` through this library, even at type level.
 
 ---

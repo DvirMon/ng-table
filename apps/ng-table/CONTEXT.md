@@ -1,6 +1,6 @@
 ---
 title: ng-table
-summary: "Dark-only documentation and marketing site for NGP Table (`@acme/table`); does not implement the table itself."
+summary: "Dark-only documentation and marketing site for NGP Table (`@ngp/table`); does not implement the table itself."
 depends-on: [Table]
 ---
 
@@ -8,7 +8,7 @@ depends-on: [Table]
 
 ## What this is
 
-A dark-only documentation and marketing website for **NGP Table** (`@acme/table`, `libs/shared/table`), a
+A dark-only documentation and marketing website for **NGP Table** (`@ngp/table`, `libs/shared/table`), a
 headless Angular table primitive: `createTable()` + `with-*()` feature plugins + attribute-only directives.
 Two zones: a marketing page at `/`, and docs under `/docs`. This app is the site; it does not implement the
 table itself.

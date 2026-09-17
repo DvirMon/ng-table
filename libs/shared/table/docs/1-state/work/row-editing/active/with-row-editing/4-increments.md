@@ -157,7 +157,7 @@ writing the demo reveals. If `applyEach` + two `debounce` lines reads fine, O19 
 into one structural directive line.
 
 **Decision:** D33, fully specified — supersedes D23's directive-clause rejection. Exported from a
-secondary entry point (`@acme/table/forms`), not the root barrel, so the core surface stays
+secondary entry point (`@ngp/table/forms`), not the root barrel, so the core surface stays
 forms-free even at type level.
 
 **Depends on:** E1 (`sourceIndex`), E2 (the pattern it folds). Does not depend on, or block, E5 —
