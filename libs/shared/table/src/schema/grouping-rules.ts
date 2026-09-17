@@ -1,30 +1,38 @@
 import type { Resource, Signal } from '@angular/core';
+import type { GroupWhen } from '../api/types';
 import { assertPathIsCurrent } from './column-schema';
 import type { ColumnHandle } from './column-schema.types';
 import type { AnyGroupingRule, GroupingAsyncRule } from './grouping-schema.types';
 
 /**
- * Declares one grouping level, gated by `when`. `when` returning `undefined` (pending) makes
+ * Declares one grouping level, gated by `enable`. `enable` returning `undefined` (pending) makes
  * the *whole* rule set abstain — not just this level. Call order = level order: the Nth
  * `applyGrouping`/`applyGroupingAsync` call in a schema fn becomes the Nth entry in the
  * resulting grouping array, when active.
  */
 export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
-  opts: { when: () => boolean | undefined }
+  opts: { enable: () => boolean | undefined; when?: GroupWhen<TRow> }
 ): void {
-  assertPathIsCurrent(path).record({ kind: 'grouping', columnId: path.id, when: opts.when });
+  assertPathIsCurrent(path).record({
+    kind: 'grouping',
+    columnId: path.id,
+    enable: opts.enable,
+    when: opts.when,
+  });
 }
 
 /**
  * Resource-backed counterpart — the rule owns fetching/re-querying. `onError` is required: an
- * errored resource must produce an explicit boolean, never silent abstention.
+ * errored resource must produce an explicit boolean, never silent abstention. `when` decides
+ * admission for this column only, independent of `onSuccess`/`onError`'s level activation.
  */
-export interface GroupingAsyncOpts<TParams, TResult> {
+export interface GroupingAsyncOpts<TRow, TParams, TResult> {
   params: () => TParams | undefined;
   factory: (params: Signal<TParams | undefined>) => Resource<TResult | undefined>;
   onSuccess: (result: TResult) => boolean;
   onError: (error: unknown) => boolean;
+  when?: GroupWhen<TRow>;
 }
 
 export function applyGroupingAsync<
@@ -34,7 +42,7 @@ export function applyGroupingAsync<
   TResult
 >(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
-  opts: GroupingAsyncOpts<TParams, TResult>
+  opts: GroupingAsyncOpts<TRow, TParams, TResult>
 ): void {
   const rule: GroupingAsyncRule<TRow, TParams, TResult> = {
     kind: 'grouping-async',
@@ -43,6 +51,7 @@ export function applyGroupingAsync<
     factory: opts.factory,
     onSuccess: opts.onSuccess,
     onError: opts.onError,
+    when: opts.when,
   };
   // Same generic-erasure boundary documented in `column-schema.ts`'s `record()`
   // (`MetadataAsyncRule`'s contravariant `factory`/`onSuccess` positions defeat plain

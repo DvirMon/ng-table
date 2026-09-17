@@ -1,4 +1,4 @@
-import type { ClusterSummary, ColumnDef, GroupSummary, RenderRow } from '../api/types';
+import type { ClusterSummary, ColumnDef, GroupSummary, GroupWhen, RenderRow } from '../api/types';
 import {
   admitClusters,
   buildClusters,
@@ -232,9 +232,9 @@ describe('admitClusters (#119 table-wide admission)', () => {
     const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
       row[columnId as keyof Order]
     );
-    const groupWhen = (c: ClusterSummary<Order>): boolean => c.key !== 'EU';
+    const when = (c: ClusterSummary<Order>): boolean => c.key !== 'EU';
 
-    const result = admitClusters(nodes, groupWhen, (items) => items, new Set());
+    const result = admitClusters(nodes, when, (items) => items, new Set());
 
     expect(result).toHaveLength(nodes.length);
     const originalEu = nodes.find((node) => node.value === 'EU')!;
@@ -263,17 +263,17 @@ describe('admitClusters (#119 table-wide admission)', () => {
     expect(seenColumnIds).not.toContain('category');
   });
 
-  it('a throwing groupWhen admits the cluster and reports once per column, not once per cluster', () => {
+  it('a throwing when admits the cluster and reports once per column, not once per cluster', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
         row[columnId as keyof Order]
       );
-      const throwingGroupWhen = (): boolean => {
+      const throwingWhen = (): boolean => {
         throw new Error('boom');
       };
 
-      const result = admitClusters(nodes, throwingGroupWhen, (items) => items, new Set());
+      const result = admitClusters(nodes, throwingWhen, (items) => items, new Set());
 
       // Every node at every level (2 region clusters + 4 category clusters) hit the throw
       // independently, yet all are admitted.
@@ -285,6 +285,78 @@ describe('admitClusters (#119 table-wide admission)', () => {
     } finally {
       reportSpy.mockRestore();
     }
+  });
+});
+
+describe('admitClusters (#120 per-column admission)', () => {
+  it('per-column when narrows an otherwise-admitted cluster to dissolved', () => {
+    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
+      row[columnId as keyof Order]
+    );
+    const columnWhen = new Map<string, GroupWhen<Order>>([
+      ['region', (c: ClusterSummary<Order>) => c.key !== 'EU'],
+    ]);
+
+    const result = admitClusters(nodes, undefined, (items) => items, new Set(), columnWhen);
+
+    const us = result.find((node) => node.value === 'US')!;
+    const eu = result.find((node) => node.value === 'EU')!;
+    expect(us.admitted).toBe(true);
+    expect(eu.admitted).toBe(false);
+  });
+
+  it('admits only when both the table-wide and per-column predicates pass', () => {
+    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
+      row[columnId as keyof Order]
+    );
+    const when = (): boolean => true;
+    const columnWhen = new Map<string, GroupWhen<Order>>([
+      ['region', (c: ClusterSummary<Order>) => c.key !== 'EU'],
+    ]);
+
+    const result = admitClusters(nodes, when, (items) => items, new Set(), columnWhen);
+
+    const us = result.find((node) => node.value === 'US')!;
+    const eu = result.find((node) => node.value === 'EU')!;
+    expect(us.admitted).toBe(true); // table-wide true AND column true
+    expect(eu.admitted).toBe(false); // table-wide true AND column false -> dissolved
+  });
+
+  it('a throwing per-column predicate admits that vote, but a false table-wide result still dissolves the cluster (AND)', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
+        row[columnId as keyof Order]
+      );
+      const when = (): boolean => false;
+      const throwingColumnWhen: GroupWhen<Order> = () => {
+        throw new Error('boom');
+      };
+      const columnWhen = new Map<string, GroupWhen<Order>>([['region', throwingColumnWhen]]);
+
+      const result = admitClusters(nodes, when, (items) => items, new Set(), columnWhen);
+
+      // The per-column vote defaults to admit (true) on throw, but AND'd with the table-wide
+      // `false` the cluster is still dissolved overall.
+      expect(result.every((node) => node.admitted === false)).toBe(true);
+      // One report for the one column the throwing predicate targets, not one per cluster.
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('a columnWhen entry for a columnId that never appears in nodes is inert (no-op on an inactive level)', () => {
+    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
+      row[columnId as keyof Order]
+    );
+    // 'category' names no active level here (the only level clustered is 'region').
+    const columnWhen = new Map<string, GroupWhen<Order>>([['category', () => false]]);
+
+    const result = admitClusters(nodes, undefined, (items) => items, new Set(), columnWhen);
+
+    expect(result.every((node) => node.admitted)).toBe(true);
+    expect(result.map((node) => node.value)).toEqual(nodes.map((node) => node.value));
   });
 });
 
@@ -315,12 +387,12 @@ describe('admission-aware ordering (sortClusters with no groupOrder)', () => {
   });
 
   it('a comparator that sorts dissolved-first puts those nodes and their leaves first (dissolution is post-ordering)', () => {
-    const groupWhen = (c: ClusterSummary<Order>): boolean => c.key !== 'EU'; // dissolve EU
+    const when = (c: ClusterSummary<Order>): boolean => c.key !== 'EU'; // dissolve EU
     const dissolvedFirst = (a: GroupSummary<Order>, b: GroupSummary<Order>): number =>
       Number(a.admitted) - Number(b.admitted);
 
     const result = clusterRows(orders, ['region'], columns, {
-      groupWhen,
+      when,
       groupOrder: dissolvedFirst,
     });
 
@@ -338,7 +410,7 @@ describe('admission-aware ordering (sortClusters with no groupOrder)', () => {
     const dissolveEverything = (): boolean => false;
 
     const result = clusterRows(localOrders, ['region', 'category'], columns, {
-      groupWhen: dissolveEverything,
+      when: dissolveEverything,
     });
 
     // Re-clustering by category would group the two Books rows together ([1, 3, 2]). Flat

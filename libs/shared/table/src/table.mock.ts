@@ -89,8 +89,8 @@ export interface GroupWhenMockRow {
 }
 
 /** Two US rows, one EU, one `null` region, one `undefined` region — the two JS "blank"
- * representations coexist so a `groupWhen` predicate can be exercised against both without two
- * separate fixtures. See `withGrouping()`'s `groupWhen` (#119) tests. */
+ * representations coexist so a `when` predicate can be exercised against both without two
+ * separate fixtures. See `withGrouping()`'s `when` (#119) tests. */
 export const mockGroupWhenRows: GroupWhenMockRow[] = [
   { id: 1, region: 'US', amount: 100 },
   { id: 2, region: 'US', amount: 300 },

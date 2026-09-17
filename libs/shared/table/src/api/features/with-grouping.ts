@@ -10,6 +10,7 @@ import {
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
+  collectGroupPredicates,
   foldGroupingRules,
   isGroupingAsyncRule,
   isGroupingRule,
@@ -46,7 +47,7 @@ export interface WithGroupingConfig<TRow> {
   /** Table-wide admission — judged at every active level. A cluster returning `false` renders its
    * rows flat at the parent's depth: no header, no group id, no aggregates. Throws: the cluster is
    * admitted, reported once per column per evaluation. */
-  groupWhen?: GroupWhen<TRow>;
+  when?: GroupWhen<TRow>;
   /** Base+overlay fold. Returning `string[]` overrides `initial`; `undefined` abstains and holds
    * it; `[]` is actively grouped by nothing — distinct from abstain. Mutually exclusive with
    * `rules`/`schema` in practice (both compile to this same slot) — the rules-array layer (below)
@@ -126,9 +127,12 @@ function buildGroupingSpec<TRow>(
   const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
     rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id);
 
+  const columnWhen = collectGroupPredicates(rules);
+
   const clusterOpts: ClusterOpts<TRow> = {
     groupOrder: config.groupOrder,
-    groupWhen: config.groupWhen,
+    when: config.when,
+    columnWhen: columnWhen.size > 0 ? columnWhen : undefined,
   };
 
   const groupIds = computed(() =>

@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 /**
- * Toolbar for the static grouping story — a single reset action.
+ * Toolbar for the static grouping story — reset levels and (optional) minimum category size.
  */
 @Component({
   selector: 'ngp-grouping-static-toolbar',
@@ -10,5 +10,7 @@ import { ChangeDetectionStrategy, Component, output } from '@angular/core';
   styleUrls: ['../../styles/story-host.css'],
 })
 export class GroupingStaticToolbarComponent {
+  readonly minCategoryRowCount = input<number>(2);
   readonly resetLevels = output<void>();
+  readonly minCategoryRowCountChange = output<number>();
 }

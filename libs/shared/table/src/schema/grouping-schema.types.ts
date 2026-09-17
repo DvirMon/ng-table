@@ -1,16 +1,19 @@
 import type { Resource, Signal } from '@angular/core';
+import type { GroupWhen } from '../api/types';
 import type { ColumnsPath } from './column-schema.types';
 
 /**
- * One schema-fn/rules-array level: `when` contributes whether this column is an active grouping
- * level. `undefined` (pending) makes the whole rule set abstain — never "this level doesn't
- * apply", that's `false`, and never "the value hasn't loaded", that's also `undefined` but
- * resolved to abstain at the fold, not at this rule.
+ * One schema-fn/rules-array level: `enable` contributes whether this column is an active
+ * grouping level. `undefined` (pending) makes the whole rule set abstain — never "this level
+ * doesn't apply", that's `false`, and never "the value hasn't loaded", that's also `undefined`
+ * but resolved to abstain at the fold, not at this rule.
  */
 export interface GroupingRule<TRow = unknown> {
   readonly kind: 'grouping';
   readonly columnId: string;
-  readonly when: () => boolean | undefined;
+  readonly enable: () => boolean | undefined;
+  /** Admission for this column only, AND'd with the table-wide `when`. */
+  readonly when?: GroupWhen<TRow>;
 }
 
 /**
@@ -31,6 +34,8 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
   factory(params: Signal<TParams | undefined>): Resource<TResult | undefined>;
   onSuccess(result: TResult): boolean;
   readonly onError: (error: unknown) => boolean;
+  /** Admission for this column only, AND'd with the table-wide `when`. */
+  readonly when?: GroupWhen<TRow>;
 }
 
 export type AnyGroupingRule<TRow = unknown> = GroupingRule<TRow> | GroupingAsyncRule<TRow>;

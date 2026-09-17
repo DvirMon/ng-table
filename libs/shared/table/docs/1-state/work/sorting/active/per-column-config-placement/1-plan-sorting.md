@@ -45,7 +45,7 @@ Rationale recorded for the ADR (step 8):
   applies under `setSorting()`.
 - **General rule for #134** (settles the sorting half; `aggregateFn` follows later under the
   same rule): a per-column fact goes in the feature's schema fn only when it is reactive,
-  async, or call-order-bearing (`applyGrouping.when`, `applyVisible`). A static per-column
+  async, or call-order-bearing (`applyGrouping.enable`, `applyVisible`). A static per-column
   behavior override still uses the schema fn for placement consistency and single-writer
   enforcement. A table-wide set of columns is a config field.
 
@@ -77,7 +77,7 @@ export interface SortingRule<TRow = unknown> extends SortingRuleOpts<TRow> { rea
 export type SortingSchemaFn<TRow> = (path: ColumnsPath<TRow, SortingRule<TRow>>) => void;
 ```
 
-Mirror of `grouping-schema.types.ts`. No async variant, no `when`.
+Mirror of `grouping-schema.types.ts`. No async variant, no `enable`.
 
 ### 2. `applySorting()` — new `src/schema/sorting-rules.ts`
 

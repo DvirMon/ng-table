@@ -3,12 +3,18 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
+  collectGroupPredicates,
   foldGroupingRules,
   isGroupingAsyncRule,
   isGroupingRule,
   type GroupingRuleEntry,
 } from './grouping-rules';
-import type { GroupingAsyncRule, GroupingRule } from '../schema/grouping-schema.types';
+import type { GroupWhen } from '../api/types';
+import type {
+  AnyGroupingRule,
+  GroupingAsyncRule,
+  GroupingRule,
+} from '../schema/grouping-schema.types';
 
 /**
  * Minimal controllable `Resource` test double — only the subset
@@ -49,7 +55,11 @@ function makeControllableResource<TResult>(): {
  * instantiation) — `onSuccess` narrows with `Boolean()` rather than an `as` assertion since the
  * actual resolved values in these tests are always booleans.
  */
-function makeAsyncRule(control: { resource: Resource<unknown> }, columnId = 'region'): GroupingAsyncRule {
+function makeAsyncRule(
+  control: { resource: Resource<unknown> },
+  columnId = 'region',
+  when?: GroupWhen<unknown>
+): GroupingAsyncRule {
   return {
     kind: 'grouping-async',
     columnId,
@@ -57,6 +67,7 @@ function makeAsyncRule(control: { resource: Resource<unknown> }, columnId = 'reg
     factory: () => control.resource,
     onSuccess: (result) => Boolean(result),
     onError: () => false,
+    when,
   };
 }
 
@@ -66,7 +77,7 @@ function makeEntry(columnId: string, value: boolean | undefined): GroupingRuleEn
 
 describe('isGroupingRule / isGroupingAsyncRule', () => {
   it('discriminates by kind', () => {
-    const rule: GroupingRule = { kind: 'grouping', columnId: 'a', when: () => true };
+    const rule: GroupingRule = { kind: 'grouping', columnId: 'a', enable: () => true };
     const control = makeControllableResource<boolean>();
     const asyncRule = makeAsyncRule(control, 'b');
 
@@ -78,11 +89,11 @@ describe('isGroupingRule / isGroupingAsyncRule', () => {
 });
 
 describe('buildGroupingRuleEntries', () => {
-  it('preserves call order and wraps each `when` in a live signal', () => {
+  it('preserves call order and wraps each `enable` in a live signal', () => {
     const flag = signal(false);
     const rules: GroupingRule[] = [
-      { kind: 'grouping', columnId: 'a', when: () => false },
-      { kind: 'grouping', columnId: 'b', when: () => flag() },
+      { kind: 'grouping', columnId: 'a', enable: () => false },
+      { kind: 'grouping', columnId: 'b', enable: () => flag() },
     ];
 
     const entries = buildGroupingRuleEntries(rules);
@@ -146,5 +157,47 @@ describe('buildAsyncGroupingRuleEntry', () => {
 
     control.setStatus('reloading');
     expect(entry.result()).toBe(true);
+  });
+});
+
+describe('collectGroupPredicates', () => {
+  it('collects when from a mix of GroupingRule and GroupingAsyncRule entries', () => {
+    const regionWhen: GroupWhen<unknown> = () => true;
+    const repWhen: GroupWhen<unknown> = () => false;
+    const control = makeControllableResource<boolean>();
+    const rules: AnyGroupingRule[] = [
+      { kind: 'grouping', columnId: 'region', enable: () => true, when: regionWhen },
+      makeAsyncRule(control, 'rep', repWhen),
+    ];
+
+    const predicates = collectGroupPredicates(rules);
+
+    expect(predicates.size).toBe(2);
+    expect(predicates.get('region')).toBe(regionWhen);
+    expect(predicates.get('rep')).toBe(repWhen);
+  });
+
+  it('excludes a rule with no when from the map', () => {
+    const rules: AnyGroupingRule[] = [
+      { kind: 'grouping', columnId: 'region', enable: () => true },
+    ];
+
+    const predicates = collectGroupPredicates(rules);
+
+    expect(predicates.size).toBe(0);
+    expect(predicates.has('region')).toBe(false);
+  });
+
+  it('last write wins for a duplicate columnId', () => {
+    const first: GroupWhen<unknown> = () => true;
+    const second: GroupWhen<unknown> = () => false;
+    const rules: AnyGroupingRule[] = [
+      { kind: 'grouping', columnId: 'region', enable: () => true, when: first },
+      { kind: 'grouping', columnId: 'region', enable: () => true, when: second },
+    ];
+
+    const predicates = collectGroupPredicates(rules);
+
+    expect(predicates.get('region')).toBe(second);
   });
 });

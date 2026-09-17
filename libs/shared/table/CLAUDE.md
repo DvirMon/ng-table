@@ -98,6 +98,13 @@ stay `import type`; making either a value import breaks the build.
 
 - **Type narrowing:** Use `as const` on discriminators (`data-row-kind: 'header' | 'body' as const`); never use bare `as` assertions. Type guards preferred over assertions.
 
+- **`when` vs `enable` on a rule's predicates** ([ADR-0018](docs/adr/0018-when-vs-enable-predicate-naming.md)):
+  `when` is the default name for any dynamically-toggled conditional, data- or state-driven alike.
+  `enable` is reserved for the narrow case where one rule object must carry two orthogonal
+  predicates — one data-driven, one external-state-driven — that cannot share a name; there, the
+  external-state one becomes `enable` and `when` is freed for the data-driven one (grouping's
+  `applyGrouping({ enable, when })` is the only feature with this shape today).
+
 - **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md)).
   Wiring errors — slot/member collisions, duplicate registration, a `trackBy` naming no field —
   throw, and every existing throw site is one of these. A **consumer callback** (`accessor`,

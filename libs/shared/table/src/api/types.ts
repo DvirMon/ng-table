@@ -110,7 +110,7 @@ export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
 /** A group's raw clustering value, opaque to consumers. See `withGrouping()`'s decisions doc. */
 export type GroupKey = unknown;
 
-/** What `groupWhen` judges: a built cluster's own contents, before admission is decided. */
+/** What `when` judges: a built cluster's own contents, before admission is decided. */
 export interface ClusterSummary<TRow> {
   readonly columnId: string;
   readonly key: GroupKey;

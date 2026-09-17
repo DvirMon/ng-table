@@ -55,8 +55,8 @@ parent: ../architecture.md
 >   collapse (D17, issue #59) — it re-derives the cluster tree from `rows()` (pipeline output)
 >   rather than scanning `renderRows()`.
 >
-> - **Clusters admit by default; `groupWhen` (#119) can leave one flat.** Every built cluster
->   renders as a group unless `config.groupWhen` rejects it — a table-wide predicate over that
+> - **Clusters admit by default; `when` (#119) can leave one flat.** Every built cluster
+>   renders as a group unless `config.when` rejects it — a table-wide predicate over that
 >   cluster's own contents. A rejected cluster's rows exit the grouping tree entirely (no header,
 >   no group id, no aggregates, not sub-clustered by a deeper level) and render flat at the
 >   parent's depth. Full contract: 3-spec.md's Public surface; mechanism and rejected alternatives:

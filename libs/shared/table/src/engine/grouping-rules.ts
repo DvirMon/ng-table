@@ -1,4 +1,5 @@
 import { computed, linkedSignal, type ResourceStatus, type Signal } from '@angular/core';
+import type { GroupWhen } from '../api/types';
 import type { AnyGroupingRule, GroupingAsyncRule, GroupingRule } from '../schema/grouping-schema.types';
 
 /**
@@ -31,7 +32,7 @@ function reportGroupingRuleError(columnId: string): void {
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
-    `[withGrouping] a groupingRule 'when' predicate threw for column "${columnId}". Excluding ` +
+    `[withGrouping] a groupingRule 'enable' predicate threw for column "${columnId}". Excluding ` +
       'that level from this evaluation instead of grouping by it.'
   );
 }
@@ -43,7 +44,7 @@ export function buildGroupingRuleEntries<TRow>(
     columnId: rule.columnId,
     result: computed(() => {
       try {
-        return rule.when();
+        return rule.enable();
       } catch {
         reportGroupingRuleError(rule.columnId);
         return false;
@@ -96,4 +97,21 @@ export function foldGroupingRules(entries: readonly GroupingRuleEntry[]): string
     if (value) levels.push(entry.columnId);
   }
   return levels;
+}
+
+/**
+ * Static per-column admission predicates, collected off the same `rules` array `withGrouping()`
+ * builds — independent of `foldGroupingRules`, which resolves level *order*, not admission. Last
+ * write wins for a duplicate `columnId` (undocumented edge case, not validated).
+ */
+export function collectGroupPredicates<TRow>(
+  rules: readonly AnyGroupingRule<TRow>[]
+): Map<string, GroupWhen<TRow>> {
+  const predicates = new Map<string, GroupWhen<TRow>>();
+  for (const rule of rules) {
+    if (rule.when) {
+      predicates.set(rule.columnId, rule.when);
+    }
+  }
+  return predicates;
 }

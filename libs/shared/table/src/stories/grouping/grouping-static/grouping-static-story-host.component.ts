@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, input, linkedSignal, signal, untracked } from '@angular/core';
 import {
   addGroupLevel,
   createTable,
@@ -10,6 +10,7 @@ import {
   withGrouping,
   type GroupKey,
 } from '../../../index';
+import type { GroupingRule } from '../../../schema/grouping-schema.types';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { DEAL_COLUMN_IDS, groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -28,6 +29,13 @@ function isPresentKey(key: GroupKey): boolean {
  *
  * `withGrouping()` alone, with levels editable from the UI. Every sibling grouping story
  * composes one more feature; this one composes nothing else, so its source is copyable as-is.
+ *
+ * Demonstrates AND-combination of table-wide and per-column `when` thresholds:
+ * - Table-wide: blank region clusters are rejected (unless toggled off)
+ * - Per-column (category): clusters with fewer than `minCategoryRowCount` rows are rejected
+ *
+ * Toggle `keepBlankRegionsFlat` and `applyMinCategorySize` in the Controls panel to see
+ * the independent and combined effects.
  */
 @Component({
   selector: 'ngp-grouping-static-story-host',
@@ -40,6 +48,12 @@ export class GroupingStaticStoryHostComponent {
   readonly groupedColumnMode = input<GroupedColumnMode>('keep');
   readonly stickyHeaders = input(false);
   readonly keepBlankRegionsFlat = input(false);
+  readonly applyMinCategorySize = input(false);
+  readonly minCategoryRowCount = input(2);
+
+  /** Resets from the `minCategoryRowCount` arg but stays writable from the toolbar's own number
+   * input — a story-canvas edit, not a Storybook Controls edit. */
+  protected readonly minCategoryRowCountValue = linkedSignal(() => this.minCategoryRowCount());
 
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
@@ -47,7 +61,8 @@ export class GroupingStaticStoryHostComponent {
     groupingConfig,
     withGrouping({
       initial: STATIC_GROUPING_LEVELS,
-      groupWhen: (cluster) => !this.keepBlankRegionsFlat() || isPresentKey(cluster.key),
+      when: (cluster) => !this.keepBlankRegionsFlat() || isPresentKey(cluster.key),
+      rules: [this.buildCategoryMinSizeRule()],
     })
   );
 
@@ -88,6 +103,25 @@ export class GroupingStaticStoryHostComponent {
 
   protected resetLevels(): void {
     this.table.grouping.update(setGroupLevels<DealRow>(STATIC_GROUPING_LEVELS));
+  }
+
+  /**
+   * Builds a grouping rule that never affects level activation (`enable: () => undefined`) but
+   * contributes a per-column `when` predicate for the 'category' level. The predicate rejects
+   * category clusters with fewer than `minCategoryRowCountValue` rows when `applyMinCategorySize`
+   * is enabled, demonstrating AND-combination with the table-wide `when`.
+   *
+   * Checking the signals inside the predicate (not wrapping the rule itself) allows reactive
+   * toggling without rebuilding the table.
+   */
+  private buildCategoryMinSizeRule(): GroupingRule<DealRow> {
+    return {
+      kind: 'grouping',
+      columnId: 'category',
+      enable: () => undefined, // Abstain: never affect level activation
+      when: (cluster) =>
+        !this.applyMinCategorySize() || cluster.rows.length >= this.minCategoryRowCountValue(),
+    };
   }
 
   /**

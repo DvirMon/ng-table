@@ -13,7 +13,7 @@ export interface ClusterNode<T> {
   readonly items: T[]; // every leaf under this node, at any depth
   readonly children: ClusterNode<T>[]; // empty ⇒ this node is the deepest clustered level
   /** Set by `admitClusters`. `buildClusters` leaves it `true` — an unjudged tree is fully
-   * admitted, which is what makes a table with no `groupWhen` byte-identical to today. */
+   * admitted, which is what makes a table with no `when` byte-identical to today. */
   readonly admitted: boolean;
 }
 
@@ -41,7 +41,9 @@ function toGroupId(path: string): RowId {
  * `clusterRows`/`buildGroupRenderRows`/`collectGroupIds` into one trailing parameter. */
 export interface ClusterOpts<TRow> {
   readonly groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
-  readonly groupWhen?: GroupWhen<TRow>;
+  readonly when?: GroupWhen<TRow>;
+  /** Per-column admission, AND'd with `when`. A columnId with no active level is inert. */
+  readonly columnWhen?: ReadonlyMap<string, GroupWhen<TRow>>;
 }
 
 /** Runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
@@ -94,24 +96,49 @@ function reportGroupWhenError(columnId: string): void {
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
-    `[withGrouping] groupWhen threw for column "${columnId}". Admitting the cluster (rendering ` +
+    `[withGrouping] when threw for column "${columnId}". Admitting the cluster (rendering ` +
       'it as a group) for the affected cluster(s) in this evaluation.'
   );
 }
 
+/** One predicate's vote on one cluster — `undefined` predicate is vacuously admitting (no floor
+ * from that side). A throw admits (ADR-0014's visible fallback) and reports once per column per
+ * `reportedColumns` set. */
+function evaluateGroupWhen<TRow>(
+  predicate: GroupWhen<TRow> | undefined,
+  summary: ClusterSummary<TRow>,
+  columnId: string,
+  reportedColumns: Set<string>
+): boolean {
+  if (!predicate) {
+    return true;
+  }
+  try {
+    return predicate(summary);
+  } catch {
+    if (!reportedColumns.has(columnId)) {
+      reportedColumns.add(columnId);
+      reportGroupWhenError(columnId);
+    }
+    return true;
+  }
+}
+
 /**
- * Marking pass — decides `admitted` per node via `groupWhen`, before ordering or emission runs.
- * A rejected node's descendants are never judged, since a dissolved cluster's rows never render
- * as its own group. Reports a throwing predicate once per column per caller evaluation, matching
+ * Marking pass — decides `admitted` per node via `when` AND'd with `columnWhen`'s
+ * per-column predicate for that node's own column, before ordering or emission runs. A rejected
+ * node's descendants are never judged, since a dissolved cluster's rows never render as its own
+ * group. Reports a throwing predicate once per column per caller evaluation, matching
  * `computeAggregates`.
  */
 export function admitClusters<T, TRow>(
   nodes: ClusterNode<T>[],
-  groupWhen: GroupWhen<TRow> | undefined,
+  when: GroupWhen<TRow> | undefined,
   toRows: (items: T[]) => TRow[],
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
+  columnWhen?: ReadonlyMap<string, GroupWhen<TRow>>
 ): ClusterNode<T>[] {
-  if (!groupWhen) {
+  if (!when && !columnWhen?.size) {
     return nodes;
   }
   return nodes.map((node) => {
@@ -120,18 +147,16 @@ export function admitClusters<T, TRow>(
       key: node.value,
       rows: toRows(node.items),
     };
-    let admitted: boolean;
-    try {
-      admitted = groupWhen(summary);
-    } catch {
-      admitted = true;
-      if (!reportedColumns.has(node.columnId)) {
-        reportedColumns.add(node.columnId);
-        reportGroupWhenError(node.columnId);
-      }
-    }
+    const admittedByTable = evaluateGroupWhen(when, summary, node.columnId, reportedColumns);
+    const admittedByColumn = evaluateGroupWhen(
+      columnWhen?.get(node.columnId),
+      summary,
+      node.columnId,
+      reportedColumns
+    );
+    const admitted = admittedByTable && admittedByColumn;
     const children = admitted
-      ? admitClusters(node.children, groupWhen, toRows, reportedColumns)
+      ? admitClusters(node.children, when, toRows, reportedColumns, columnWhen)
       : node.children;
     return { ...node, admitted, children };
   });
@@ -253,7 +278,13 @@ export function clusterRows<TRow>(
     return rows;
   }
   const nodes = buildClusterNodes(rows, levels, columns);
-  const admitted = admitClusters(nodes, opts?.groupWhen, (items) => items, new Set());
+  const admitted = admitClusters(
+    nodes,
+    opts?.when,
+    (items) => items,
+    new Set(),
+    opts?.columnWhen
+  );
   const ordered = sortClusters(admitted, opts?.groupOrder, (items) => items, { done: false });
   return flattenLeaves(ordered);
 }
@@ -366,7 +397,7 @@ export function buildGroupRenderRows<TRow>(
   });
   const toRows = (items: Omit<RenderRow<TRow>, 'index'>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
-  const admitted = admitClusters(nodes, opts?.groupWhen, toRows, new Set());
+  const admitted = admitClusters(nodes, opts?.when, toRows, new Set(), opts?.columnWhen);
   const ordered = sortClusters(admitted, opts?.groupOrder, toRows, { done: false });
   return emitGroupRows(ordered, 0, '', columns, new Set());
 }
@@ -437,7 +468,13 @@ export function collectGroupIds<TRow>(
     return [];
   }
   const nodes = buildClusterNodes(rows, levels, columns);
-  const admitted = admitClusters(nodes, opts?.groupWhen, (items) => items, new Set());
+  const admitted = admitClusters(
+    nodes,
+    opts?.when,
+    (items) => items,
+    new Set(),
+    opts?.columnWhen
+  );
   const ordered = sortClusters(admitted, opts?.groupOrder, (items) => items, { done: false });
   return collectClusterGroupIds(ordered, '');
 }

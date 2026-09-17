@@ -5,7 +5,11 @@
     header carries its value, its row count and its <code>amount</code> total, at every depth.
   </p>
 
-  <ngp-grouping-static-toolbar (resetLevels)="resetLevels()" />
+  <ngp-grouping-static-toolbar
+    [minCategoryRowCount]="minCategoryRowCountValue()"
+    (resetLevels)="resetLevels()"
+    (minCategoryRowCountChange)="minCategoryRowCountValue.set($event)"
+  />
 
   <div class="grouping-story__tabs" role="group" aria-label="Group by column">
     @for (column of visibleColumns(); track column.id) {
@@ -70,9 +74,16 @@
 
   <p class="grouping-story__notice">
     Flip <strong>keepBlankRegionsFlat</strong> in the Controls panel to see the opt-out:
-    <code>groupWhen</code> rejects the blank-region cluster, so those deals render flat at the
+    <code>when</code> rejects the blank-region cluster, so those deals render flat at the
     parent's depth instead of clustering — one flat run, not merged into <strong>Region</strong>,
     and not grouped by <strong>Category</strong> either.
+  </p>
+
+  <p class="grouping-story__notice">
+    Toggle <strong>applyMinCategorySize</strong> to see a per-column threshold AND-combined with
+    the table-wide rule: categories with fewer than <strong>minCategoryRowCount</strong> rows
+    flatten, independently of whether the region is blank. Adjust
+    <strong>minCategoryRowCount</strong> to see different collapse thresholds.
   </p>
 
   <table

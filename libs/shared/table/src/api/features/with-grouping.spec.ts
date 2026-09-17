@@ -51,8 +51,8 @@ function makeColumns(): ColumnDef<GroupingMockRow>[] {
 }
 
 /** `[kind, depth, id-if-a-row]` per render row — the shape shared by the `groupOrder` ordering
- * assertions below and the `groupWhen` cases (#119). Generic over any row shape carrying a
- * numeric `id`, so it also serves the local `groupWhen`-only fixtures below. */
+ * assertions below and the `when` cases (#119). Generic over any row shape carrying a
+ * numeric `id`, so it also serves the local `when`-only fixtures below. */
 function toShape<TRow extends { id: number }>(
   rows: readonly { kind: string; depth: number; data: TRow | null }[]
 ): [string, number, number | undefined][] {
@@ -1362,8 +1362,8 @@ describe('groupingRule declarative sugar (#60)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             schema: (path) => {
-              applyGrouping(path.region, { when: () => regionActive() });
-              applyGrouping(path.category, { when: () => categoryActive() });
+              applyGrouping(path.region, { enable: () => regionActive() });
+              applyGrouping(path.category, { enable: () => categoryActive() });
             },
           })
         )
@@ -1375,8 +1375,8 @@ describe('groupingRule declarative sugar (#60)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             rules: [
-              { kind: 'grouping', columnId: 'region', when: () => regionActive() },
-              { kind: 'grouping', columnId: 'category', when: () => categoryActive() },
+              { kind: 'grouping', columnId: 'region', enable: () => regionActive() },
+              { kind: 'grouping', columnId: 'category', enable: () => categoryActive() },
             ],
           })
         )
@@ -1409,8 +1409,8 @@ describe('groupingRule declarative sugar (#60)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             schema: (path) => {
-              applyGrouping(path.category, { when: () => true });
-              applyGrouping(path.region, { when: () => true });
+              applyGrouping(path.category, { enable: () => true });
+              applyGrouping(path.region, { enable: () => true });
             },
           })
         )
@@ -1426,9 +1426,9 @@ describe('groupingRule declarative sugar (#60)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             schema: (path) => {
-              applyGrouping(path.category, { when: () => true });
+              applyGrouping(path.category, { enable: () => true });
             },
-            rules: [{ kind: 'grouping', columnId: 'region', when: () => true }],
+            rules: [{ kind: 'grouping', columnId: 'region', enable: () => true }],
           })
         )
       );
@@ -1448,7 +1448,7 @@ describe('groupingRule declarative sugar (#60)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.category, { when: () => categoryActive() });
+              applyGrouping(path.category, { enable: () => categoryActive() });
             },
           })
         )
@@ -1469,7 +1469,7 @@ describe('groupingRule declarative sugar (#60)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.category, { when: () => undefined });
+              applyGrouping(path.category, { enable: () => undefined });
             },
           })
         )
@@ -1481,7 +1481,7 @@ describe('groupingRule declarative sugar (#60)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             schema: (path) => {
-              applyGrouping(path.category, { when: () => undefined });
+              applyGrouping(path.category, { enable: () => undefined });
             },
           })
         )
@@ -1493,14 +1493,14 @@ describe('groupingRule declarative sugar (#60)', () => {
   });
 
   describe('pending / resolved / errored rule contributions', () => {
-    it('a pending rule (when returns undefined) makes the whole rule set abstain', () => {
+    it('a pending rule (enable returns undefined) makes the whole rule set abstain', () => {
       const store = inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             initial: ['region'],
-            rules: [{ kind: 'grouping', columnId: 'category', when: () => undefined }],
+            rules: [{ kind: 'grouping', columnId: 'category', enable: () => undefined }],
           })
         )
       );
@@ -1515,8 +1515,8 @@ describe('groupingRule declarative sugar (#60)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             rules: [
-              { kind: 'grouping', columnId: 'region', when: () => true },
-              { kind: 'grouping', columnId: 'category', when: () => false },
+              { kind: 'grouping', columnId: 'region', enable: () => true },
+              { kind: 'grouping', columnId: 'category', enable: () => false },
             ],
           })
         )
@@ -1548,7 +1548,7 @@ describe('groupingRule declarative sugar (#60)', () => {
     });
   });
 
-  describe('a throwing when predicate (ADR-0014)', () => {
+  describe('a throwing enable predicate (ADR-0014)', () => {
     it('excludes that level and reports once per evaluation, not once per row', () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
@@ -1558,11 +1558,11 @@ describe('groupingRule declarative sugar (#60)', () => {
             { trackBy: mockGroupingTrackBy, columns: makeColumns() },
             withGrouping({
               rules: [
-                { kind: 'grouping', columnId: 'region', when: () => true },
+                { kind: 'grouping', columnId: 'region', enable: () => true },
                 {
                   kind: 'grouping',
                   columnId: 'category',
-                  when: () => {
+                  enable: () => {
                     throw new Error('boom');
                   },
                 },
@@ -1613,7 +1613,7 @@ describe('groupingRule declarative sugar (#60)', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
-            rules: [{ kind: 'grouping', columnId: 'not-a-column', when: () => true }],
+            rules: [{ kind: 'grouping', columnId: 'not-a-column', enable: () => true }],
           })
         )
       )
@@ -1630,7 +1630,7 @@ describe('groupingRule declarative sugar (#60)', () => {
             // `id` is a real `GroupingMockRow` key (typechecks through `path`) but not a
             // registered column — `makeColumns()` only registers region/category/amount.
             schema: (path) => {
-              applyGrouping(path.id, { when: () => true });
+              applyGrouping(path.id, { enable: () => true });
             },
           })
         )
@@ -1677,13 +1677,13 @@ function groupWhenColumns(
 
 const EU_GROUP_ID = 'group:>region:string:EU';
 
-describe('groupWhen (#119 table-wide admission)', () => {
+describe('when (#119 table-wide admission)', () => {
   it('rows with no region render flat at depth 0; regions with a value keep their header (headline scenario)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], groupWhen: (c) => c.key != null })
+        withGrouping({ initial: ['region'], when: (c) => c.key != null })
       )
     );
 
@@ -1700,12 +1700,12 @@ describe('groupWhen (#119 table-wide admission)', () => {
     ]);
   });
 
-  it('a size-threshold groupWhen dissolves single-row clusters and keeps the rest (OQ-6)', () => {
+  it('a size-threshold when dissolves single-row clusters and keeps the rest (OQ-6)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 })
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
       )
     );
 
@@ -1726,7 +1726,7 @@ describe('groupWhen (#119 table-wide admission)', () => {
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 })
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
       )
     );
 
@@ -1749,7 +1749,7 @@ describe('groupWhen (#119 table-wide admission)', () => {
         createTable(
           signal<GroupWhenMockRow[]>(mockGroupWhenRows),
           { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns(throwingAggregateFn) },
-          withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 })
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
         )
       );
 
@@ -1766,7 +1766,7 @@ describe('groupWhen (#119 table-wide admission)', () => {
       createTable(
         signal<GroupWhenMockRow[]>(mockGroupWhenRows),
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
-        withGrouping({ initial: ['region'], groupWhen: (c) => c.rows.length >= 2 }),
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 }),
         withSorting()
       )
     );
@@ -1789,7 +1789,7 @@ describe('groupWhen (#119 table-wide admission)', () => {
         { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
         withGrouping({
           initial: ['region'],
-          groupWhen: (c) => c.rows.length >= 2,
+          when: (c) => c.rows.length >= 2,
           groupOrder: (a, b) => Number(a.admitted) - Number(b.admitted),
         })
       )
@@ -1810,7 +1810,7 @@ describe('groupWhen (#119 table-wide admission)', () => {
     ]);
   });
 
-  it('omitting groupWhen leaves renderRows() byte-identical to the pre-#119 shape (regression gate for the whole slice)', () => {
+  it('omitting when leaves renderRows() byte-identical to the pre-#119 shape (regression gate for the whole slice)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -1845,13 +1845,13 @@ function repColumns(): ColumnDef<RepMockRow>[] {
   ];
 }
 
-describe('groupWhen Q1 through the public surface (#119)', () => {
+describe('when Q1 through the public surface (#119)', () => {
   it('a null-region row escapes flat at depth 0, never nested under a rep header', () => {
     const store = inContext(() =>
       createTable(
         signal<RepMockRow[]>(mockRepRows),
         { trackBy: mockRepTrackBy, columns: repColumns() },
-        withGrouping({ initial: ['region', 'rep'], groupWhen: (c) => c.key != null })
+        withGrouping({ initial: ['region', 'rep'], when: (c) => c.key != null })
       )
     );
 
@@ -1873,7 +1873,7 @@ describe('groupWhen Q1 through the public surface (#119)', () => {
   });
 });
 
-describe('rowsOf and groupWhen (Q3, #119)', () => {
+describe('rowsOf and when (Q3, #119)', () => {
   it("a parent's rowsOf still includes rows from a dissolved child cluster", () => {
     const store = inContext(() =>
       createTable(
@@ -1881,7 +1881,7 @@ describe('rowsOf and groupWhen (Q3, #119)', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          groupWhen: (c) => c.columnId !== 'category' || c.rows.length >= 2,
+          when: (c) => c.columnId !== 'category' || c.rows.length >= 2,
         })
       )
     );
@@ -1892,19 +1892,19 @@ describe('rowsOf and groupWhen (Q3, #119)', () => {
     expect(store.rowsOf(usHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
   });
 
-  // `rowsOf`/`rowsBeneathGroup` never receive `groupWhen` (no `ClusterOpts` is threaded through
+  // `rowsOf`/`rowsBeneathGroup` never receive `when` (no `ClusterOpts` is threaded through
   // that path) — they rebuild the raw cluster tree and resolve purely by path, so a *dissolved*
   // cluster's own id still resolves to its real leaves, same as before #119. Only an id matching
-  // no cluster at all returns `[]`; that guarantee already holds without groupWhen, and this case
-  // confirms composing groupWhen doesn't change it.
-  it('rowsOf on an id matching no cluster at all returns [], no throw — unaffected by a configured groupWhen', () => {
+  // no cluster at all returns `[]`; that guarantee already holds without `when`, and this case
+  // confirms composing `when` doesn't change it.
+  it('rowsOf on an id matching no cluster at all returns [], no throw — unaffected by a configured when', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          groupWhen: (c) => c.columnId !== 'category' || c.rows.length >= 2,
+          when: (c) => c.columnId !== 'category' || c.rows.length >= 2,
         })
       )
     );
@@ -1952,7 +1952,7 @@ describe('types', () => {
     // @ts-expect-error — the either/or first positional is gone (#118); a schema fn belongs in
     // `config.schema`.
     withGrouping((path) => {
-      applyGrouping(path.region, { when: () => true });
+      applyGrouping(path.region, { enable: () => true });
     });
   });
 

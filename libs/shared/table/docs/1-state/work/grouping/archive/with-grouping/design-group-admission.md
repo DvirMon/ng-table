@@ -1,11 +1,15 @@
 ---
-title: Design — group admission (`groupWhen`)
+title: Design — group admission (`when`)
 type: design
 status: settled shape, 2026-09-15 — config + `schema` fn, `withComputed` unchanged in slot 2.
   3 open questions (Q1–Q3), none blocking the shape. Q1 decided 2026-09-16, Q3 confirmed by test
   2026-09-17. Surface half (`initial` + `schema` in one config, either/or overload deleted) shipped
-  in #118. Table-wide `groupWhen` shipped in #119. Per-column `groupWhen` (AND-combined) and
-  `applyGroupOrder` remain proposed, not implemented — that is #120 and #121.
+  in #118. Table-wide `groupWhen` shipped in #119. Per-column `groupWhen` (AND-combined) shipped in
+  #120. `applyGroupOrder` remains proposed, not implemented — that is #121.
+  Terminology updated 2026-09-17: the admission predicate this doc called `groupWhen` throughout
+  is renamed `when` (both scopes); level activation, called `when` throughout, is renamed
+  `enable`. See ADR-0018. The body below uses the current names, except the `GroupWhen<TRow>`
+  type name itself (kept — see the ADR's consequences).
 date: 2026-09-15
 audience: developers
 ---
@@ -60,7 +64,7 @@ type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
 `GroupSummary<TRow>` — `groupOrder`'s argument — becomes
 `ClusterSummary<TRow> & { readonly admitted: boolean }`. The split is not cosmetic:
-`groupWhen` **decides** admission, so it cannot be handed a summary that already states it.
+`when` **decides** admission, so it cannot be handed a summary that already states it.
 
 Returning `false` ⇒ no header, no group id, no aggregates; the cluster's rows emit flat at the
 **parent's** depth, in whatever position `groupOrder` gave the cluster.
@@ -92,8 +96,8 @@ interface WithGroupingConfig<TRow> {
   /** Seeds `grouping`. Unknown column id throws at construction (D14). */
   initial?: ColumnId<TRow>[];
 
-  /** Table-wide admission — every active level. AND'd with any per-column `groupWhen`. */
-  groupWhen?: GroupWhen<TRow>;
+  /** Table-wide admission — every active level. AND'd with any per-column `when`. */
+  when?: GroupWhen<TRow>;
 
   /** Declarative per-column rules. Records by side effect; returns nothing. */
   schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void;
@@ -116,12 +120,12 @@ Slot 2 is unchanged from every other feature (`with-sorting.ts:199`).
 withGrouping(
   {
     initial: ['region', 'rep'],
-    groupWhen: (c) => c.rows.length >= 2,
+    when: (c) => c.rows.length >= 2,
 
     schema: (path) => {
       applyGrouping(path.region, {
-        when: () => this.groupByRegion(),
-        groupWhen: (c) => c.key != null,          // no region ⇒ stays flat
+        enable: () => this.groupByRegion(),
+        when: (c) => c.key != null,               // no region ⇒ stays flat
       });
       applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)));
 
@@ -130,7 +134,7 @@ withGrouping(
         factory: (p) => groupingPreferenceResource(p),
         onSuccess: (pref) => pref.groupByRep,
         onError: () => false,
-        groupWhen: (c) => c.rows.length >= 3,     // AND'd with table-wide >= 2
+        when: (c) => c.rows.length >= 3,          // AND'd with table-wide >= 2
       });
       applyGroupOrder(path.rep, (a, b) => b.rows.length - a.rows.length);
     },
@@ -179,14 +183,14 @@ design's scope.
 function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
   opts: {
-    when: () => boolean | undefined;      // level activation — unchanged
-    groupWhen?: GroupWhen<TRow>;          // new — admission, this column only
+    enable: () => boolean | undefined;    // level activation — unchanged, renamed from `when`
+    when?: GroupWhen<TRow>;               // new — admission, this column only
   },
 ): void;
 ```
 
-Same `groupWhen` member on `applyGroupingAsync`'s opts. The async rule's `onSuccess`/`onError`
-decide *level activation*; `groupWhen` decides *admission*. Orthogonal, and a `groupWhen` on a
+Same `when` member on `applyGroupingAsync`'s opts. The async rule's `onSuccess`/`onError`
+decide *level activation*; `when` decides *admission*. Orthogonal, and a `when` on a
 column that is not an active level is a silent no-op by construction.
 
 ### Combining the two scopes
@@ -198,20 +202,20 @@ Precedent: `foldColumnRules` AND-combines same-column `VISIBLE` entries (`engine
 Rejected: per-column *overrides* table-wide — it makes the effective rule for any level
 unreadable without knowing both, and "the table's floor" is the more useful table-wide semantic.
 
-Table-wide `groupWhen` stays in the config because the path proxy is keyed by `keyof TRow`
+Table-wide `when` stays in the config because the path proxy is keyed by `keyof TRow`
 (`schema/column-schema.ts:88-103`) — there is no wildcard node to hang "every level" on.
 
-### `groupWhen` does not flow through `foldGroupingRules`
+### `when` does not flow through `foldGroupingRules`
 
 Recorded on the same rule object, folded by a different function. `foldGroupingRules` resolves
-`string[] | undefined` level order and abstains for the whole set when any `when` is pending
+`string[] | undefined` level order and abstains for the whole set when any `enable` is pending
 (D13) — none of which applies to a row-data predicate. Admission needs a plain
 `Map<columnId, GroupWhen>` collected off the same rules array (`collectGroupPredicates`), read at
-cluster time. A pending `when` has nothing to say about `groupWhen`.
+cluster time. A pending `enable` has nothing to say about `when`.
 
 ## Failure handling
 
-`groupWhen` is a consumer callback evaluated against row data — runtime class, per ADR-0014 and
+`when` is a consumer callback evaluated against row data — runtime class, per ADR-0014 and
 `classify-errors-construction-vs-runtime`:
 
 - **Throws ⇒ admit the cluster** (group it). The fallback must be the *visible* direction;
@@ -276,7 +280,7 @@ applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)
 applyGroupOrder(path.rep, (a, b) => b.rows.length - a.rows.length);
 ```
 
-Unlike `groupWhen`, there is **no table-wide counterpart to keep**. A comparator over
+Unlike `when`, there is **no table-wide counterpart to keep**. A comparator over
 `GroupSummary` has no meaning spanning levels — it never receives two clusters from different
 columns — so the config-level slot is not a "default", it is the same per-level operation
 declared in a place that hides which level it applies to. `WithGroupingConfig.groupOrder` is
@@ -308,7 +312,7 @@ arranges rows within them.
 **Q1 — Does a dissolved cluster's rows still group by the *next* level?** — **DECIDED
 2026-09-16: exit entirely.** Recorded in [2-decisions.md](2-decisions.md). The recommendation
 below stands; the counter-case was checked and rejected. Note the question is only observable
-where `groupWhen` is non-monotone in size (a value predicate, or a per-column threshold looser at
+where `when` is non-monotone in size (a value predicate, or a per-column threshold looser at
 a deeper level) — under a size threshold a rejected cluster's sub-clusters are all rejected too,
 so both answers render identically.
 Level 1 rejects a cluster — do its rows cluster by level 2 inside the flat region, or exit the
@@ -326,7 +330,7 @@ Nothing marks where admitted groups end and dissolved rows begin. A consumer wan
 "Ungrouped (12)" heading has no row to hang it on, since a dissolved cluster emits no header by
 definition.
 *Recommendation:* ship nothing in v1. The escape hatch is admitting the cluster and styling its
-header differently — which the consumer can already do, since `groupWhen` is their predicate and
+header differently — which the consumer can already do, since `when` is their predicate and
 they know which clusters it rejects. Revisit if the flat region turns out to need a divider more
 often than not.
 
