@@ -95,12 +95,6 @@ export class GroupingCollapsibleStoryHostComponent {
     () => this.table.grouping()[0] === RENESTED_GROUPING_LEVELS[0]
   );
 
-  /** Whether a column is a grouping level, by id — the join between `grouping()` and `columns()`
-   * that a column would carry itself if it had a `groupIndex` (#115). */
-  protected readonly isGroupedById = computed<Record<string, boolean>>(() =>
-    Object.fromEntries(this.table.grouping().map((level) => [level, true]))
-  );
-
   protected expandAllGroups(): void {
     this.table.expandAll(this.table.groupIds());
   }

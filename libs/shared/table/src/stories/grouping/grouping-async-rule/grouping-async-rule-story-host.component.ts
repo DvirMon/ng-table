@@ -74,11 +74,6 @@ export class GroupingAsyncRuleStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
-  /** Label per level id — see #115, which would put this on the column itself. */
-  protected readonly columnLabelById = computed<Record<string, string>>(() =>
-    Object.fromEntries(this.table.columns().map((column) => [column.id, column.label]))
-  );
-
   protected readonly asyncRuleStatus = computed(() => this.asyncRuleResource?.status() ?? 'idle');
 
   protected readonly isGroupingRulePending = computed(

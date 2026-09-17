@@ -39,6 +39,14 @@ parent: ../architecture.md
 >   cluster tree, not `renderRows()`). `[]` when ungrouped. It's what `expandAll(table.groupIds())`
 >   uses to open every level in one call, since expansion's own discovery only walks real data rows.
 >
+> - **`groupingLevels`/`isGroupedBy` publish the column↔level relation (issue #115)** —
+>   `table.groupingLevels(): Signal<ColumnDef<TRow>[]>` is the current levels as full `ColumnDef`s,
+>   ordered outermost first; `table.isGroupedBy(columnId): boolean` is the O(1) inverse membership
+>   check. Both derive from the same resolved level list `grouping()`/`renderRows()` already use,
+>   so a level naming no known column is dropped from both, never from just one. A dynamic
+>   group-by panel (chip strip + per-column toggle row) reads both directly instead of hand-rolling
+>   the `grouping()` ↔ `columns()` join itself.
+>
 > - **Collapse/expand shipped, `withGrouping()` has zero knowledge of it (#133, ADR-0017)** —
 >   `withGrouping()`'s render stage emits every cluster member unconditionally, each carrying its
 >   parent's id. Collapsing a group id omits its descendants from `renderRows()` via the

@@ -12,9 +12,9 @@
       <button
         type="button"
         class="grouping-story__tab"
-        [attr.aria-pressed]="isGroupedById()[column.id]"
+        [attr.aria-pressed]="table.isGroupedBy(column.id)"
         [title]="
-          isGroupedById()[column.id]
+          table.isGroupedBy(column.id)
             ? 'A grouping level — toggling it off calls removeGroupLevel()'
             : 'Add this column as the last grouping level'
         "
@@ -27,16 +27,16 @@
 
   <div class="grouping-story__pills">
     @for (
-      level of table.grouping();
-      track level;
+      level of table.groupingLevels();
+      track level.id;
       let index = $index, isFirst = $first, isLast = $last
     ) {
       <span class="grouping-story__pill">
-        {{ columnLabelById()[level] }}
+        {{ level.label }}
         <button
           type="button"
           [disabled]="isFirst"
-          [attr.aria-label]="'Move ' + columnLabelById()[level] + ' one level earlier'"
+          [attr.aria-label]="'Move ' + level.label + ' one level earlier'"
           (click)="moveLevel(index, index - 1)"
         >
           ◀
@@ -44,15 +44,15 @@
         <button
           type="button"
           [disabled]="isLast"
-          [attr.aria-label]="'Move ' + columnLabelById()[level] + ' one level later'"
+          [attr.aria-label]="'Move ' + level.label + ' one level later'"
           (click)="moveLevel(index, index + 1)"
         >
           ▶
         </button>
         <button
           type="button"
-          [attr.aria-label]="'Remove ' + columnLabelById()[level] + ' as a grouping level'"
-          (click)="ungroupColumn(level)"
+          [attr.aria-label]="'Remove ' + level.label + ' as a grouping level'"
+          (click)="ungroupColumn(level.id)"
         >
           ×
         </button>

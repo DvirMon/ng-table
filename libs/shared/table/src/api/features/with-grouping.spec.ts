@@ -12,6 +12,7 @@ import {
   type GroupWhenMockRow,
   type RepMockRow,
 } from '../../table.mock';
+import { setColumns } from '../../mutations/update-columns';
 import { setGroupLevels } from '../../mutations/update-grouping';
 import { applyGrouping } from '../../schema/grouping-rules';
 import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
@@ -754,6 +755,178 @@ describe('groupIds', () => {
         EU_FURNITURE_HEADER_ID,
       ].sort()
     );
+  });
+});
+
+describe('groupingLevels (#115)', () => {
+  it('returns the level columns in level order, outermost first, carrying real labels', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region', 'category'] })
+      )
+    );
+
+    expect(store.groupingLevels().map((column) => column.id)).toEqual(['region', 'category']);
+    expect(store.groupingLevels().map((column) => column.label)).toEqual(['Region', 'Category']);
+  });
+
+  it('ungrouped table: returns []', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping()
+      )
+    );
+
+    expect(store.groupingLevels()).toEqual([]);
+  });
+
+  it('dropped level (D4): a level naming no known column is absent, agreeing with what renderRows() actually emits', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    store.grouping.update(setGroupLevels(['region', 'ghost']));
+    TestBed.tick();
+
+    expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
+    expect(store.isGroupedBy('ghost')).toBe(false);
+
+    // Agreement with the pipeline: "ghost" never clusters — every header is a depth-0 region
+    // header, no nested per-"ghost" level exists, matching groupIds() (derived separately, from
+    // the same resolved level list) header-for-header.
+    const headerRows = store.renderRows().filter((row) => row.kind === 'group');
+    expect(headerRows.map((row) => row.id).sort()).toEqual([EU_HEADER_ID, US_HEADER_ID].sort());
+    expect(headerRows.every((row) => row.depth === 0)).toBe(true);
+    expect(store.groupIds().sort()).toEqual(headerRows.map((row) => row.id).sort());
+  });
+
+  it('reactivity: a computed() reading groupingLevels recomputes after grouping.update and after a level column is removed via setColumns', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    const levelIds = computed(() => store.groupingLevels().map((column) => column.id));
+    expect(levelIds()).toEqual(['region']);
+
+    store.grouping.update(setGroupLevels(['region', 'category']));
+    TestBed.tick();
+    expect(levelIds()).toEqual(['region', 'category']);
+
+    store.columns.update(
+      setColumns<GroupingMockRow>(makeColumns().filter((column) => column.id !== 'region'))
+    );
+    TestBed.tick();
+    expect(levelIds()).toEqual(['category']);
+  });
+
+  it('overlay-decided levels: reflects a schema-fn fold, including while an async rule is still pending', () => {
+    const control = makeControllableResource<unknown>();
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region'],
+          rules: [makeAsyncGroupingRule(control, 'category')],
+        })
+      )
+    );
+
+    // Pending: holds the last explicit (base) grouping.
+    expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
+
+    control.resolve(true);
+    TestBed.tick();
+    expect(store.groupingLevels().map((column) => column.id)).toEqual(['category']);
+  });
+});
+
+describe('isGroupedBy (#115)', () => {
+  it('true for every level id, false for a non-level column and an unknown id', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    expect(store.isGroupedBy('region')).toBe(true);
+    expect(store.isGroupedBy('category')).toBe(false);
+    expect(store.isGroupedBy('does-not-exist')).toBe(false);
+  });
+
+  it('ungrouped table: always false', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping()
+      )
+    );
+
+    expect(store.isGroupedBy('region')).toBe(false);
+  });
+
+  it('reactivity: agrees with groupingLevels after a grouping.update, inside a computed()', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    const isCategoryGrouped = computed(() => store.isGroupedBy('category'));
+    expect(isCategoryGrouped()).toBe(false);
+
+    store.grouping.update(setGroupLevels(['region', 'category']));
+    TestBed.tick();
+    expect(isCategoryGrouped()).toBe(true);
+  });
+});
+
+describe('groupingLevels/isGroupedBy composition order (#115)', () => {
+  it('withGrouping() before withSorting(): both members present and correct', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] }),
+        withSorting()
+      )
+    );
+
+    expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
+    expect(store.isGroupedBy('region')).toBe(true);
+    expect(store.isGroupedBy('category')).toBe(false);
+  });
+
+  it('withSorting() before withGrouping(): both members present and correct', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withSorting(),
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
+    expect(store.isGroupedBy('region')).toBe(true);
+    expect(store.isGroupedBy('category')).toBe(false);
   });
 });
 

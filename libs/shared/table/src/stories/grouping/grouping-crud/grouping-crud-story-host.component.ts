@@ -58,16 +58,9 @@ export class GroupingCrudStoryHostComponent {
     () => this.table.grouping().length - 1,
   );
 
-  /** Column id of the deepest level, named in the hint so it follows a grouping change. */
-  protected readonly deepestLevel = computed(
-    () => this.table.grouping()[this.leafGroupDepth()] ?? '',
-  );
-
-  /** Level id to column label — `grouping()` carries bare ids, and the hint renders a label. */
-  protected readonly columnLabelById = computed<Record<string, string>>(() =>
-    Object.fromEntries(
-      this.table.columns().map((column) => [column.id, column.label]),
-    ),
+  /** Column of the deepest level, named in the hint so it follows a grouping change. */
+  protected readonly deepestLevelColumn = computed(
+    () => this.table.groupingLevels()[this.leafGroupDepth()],
   );
 
   /** A banner cell spans every rendered column plus the trailing actions column. */

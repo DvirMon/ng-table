@@ -60,20 +60,6 @@ export class GroupingStaticStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
-  /**
-   * The two facts a group-by UI needs and `grouping()` does not carry: whether a column is a
-   * level, and what a level is called. Both are joins between `grouping()` (bare column ids) and
-   * `columns()`, and both would come off the column itself if it had a `groupIndex` — see #115.
-   * Records rather than `Map`s so a template reads them by index instead of calling `.get()`.
-   */
-  protected readonly isGroupedById = computed<Record<string, boolean>>(() =>
-    Object.fromEntries(this.table.grouping().map((level) => [level, true]))
-  );
-
-  protected readonly columnLabelById = computed<Record<string, string>>(() =>
-    Object.fromEntries(this.table.columns().map((column) => [column.id, column.label]))
-  );
-
   constructor() {
     effect(() => this.syncGroupedColumnMode());
   }
@@ -86,15 +72,10 @@ export class GroupingStaticStoryHostComponent {
     this.table.grouping.update(removeGroupLevel<DealRow>(columnId));
   }
 
-  /** Click-time only — the tab strip reads `isGroupedById()`, resolved once per change. */
-  private isGroupedBy(columnId: string): boolean {
-    return this.table.grouping().includes(columnId);
-  }
-
   /** One control per column, one boolean state: grouped or not. The two writes stay separate
    * updaters — the toggle only picks which one this click is. */
   protected toggleGroupByColumn(columnId: string): void {
-    if (this.isGroupedBy(columnId)) {
+    if (this.table.isGroupedBy(columnId)) {
       this.ungroupColumn(columnId);
       return;
     }
@@ -121,7 +102,7 @@ export class GroupingStaticStoryHostComponent {
     untracked(() => {
       const shouldHideGroupedColumns = mode === 'hide';
       for (const column of this.table.columns()) {
-        const isGroupedColumn = grouping.includes(column.id);
+        const isGroupedColumn = this.table.isGroupedBy(column.id);
         const shouldBeVisible = !(shouldHideGroupedColumns && isGroupedColumn);
         if (column.visible !== shouldBeVisible) {
           this.table.columns.update(toggleColumnVisibility<DealRow>(column.id));

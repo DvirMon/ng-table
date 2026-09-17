@@ -21,7 +21,7 @@
     ancestor header — a <em>Region</em> banner with <em>Category</em> groups
     beneath it — pins one level and leaves the rest undecided, so there is no
     such thing as "the" row to add there; a button on it could only guess a
-    category. Add from a {{ columnLabelById()[deepestLevel()] }} banner instead.
+    category. Add from a {{ deepestLevelColumn()?.label }} banner instead.
   </p>
 
   <ngp-grouping-crud-toolbar
@@ -95,7 +95,7 @@
                     </button>
                   } @else {
                     <span class="grouping-crud__no-add">
-                      add from a {{ columnLabelById()[deepestLevel()] }} group
+                      add from a {{ deepestLevelColumn()?.label }} group
                     </span>
                   }
                 </div>

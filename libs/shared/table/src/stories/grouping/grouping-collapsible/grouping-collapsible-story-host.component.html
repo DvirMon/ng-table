@@ -54,7 +54,7 @@
             <button
               type="button"
               [title]="
-                isGroupedById()[column.id]
+                table.isGroupedBy(column.id)
                   ? 'A grouping level — sorting it cannot reorder rows within a group, since they all share its value'
                   : 'Sort by this column'
               "
@@ -73,7 +73,7 @@
                 }
               }
             </button>
-            @if (isGroupedById()[column.id]) {
+            @if (table.isGroupedBy(column.id)) {
               <span class="grouping-story__count">grouped</span>
             }
           </th>

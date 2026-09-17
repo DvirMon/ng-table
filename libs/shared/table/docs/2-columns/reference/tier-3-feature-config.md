@@ -62,6 +62,11 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
   `applyAggregateFn` duplicates the existing `ColumnDef.aggregateFn` field, so it narrows to
   reactive-only like the sorting/filtering functions above.
 - **AG-Grid analog:** `rowGroup` / `rowGroupIndex` + `aggFunc`.
+- **Looking for "is this column a grouping level" or "what level is this"?** That relation lives
+  on `withGrouping()`, not `ColumnDef` — `table.groupingLevels(): Signal<ColumnDef<TRow>[]>` and
+  `table.isGroupedBy(columnId): boolean` (issue #115). `ColumnDef` gained no new field for it: the
+  levels are dynamic (edited at runtime via `table.grouping.update(...)`), so a per-column value
+  set at construction can't track them. See [grouping.md](../../1-state/features/grouping.md).
 
 ## Summary
 

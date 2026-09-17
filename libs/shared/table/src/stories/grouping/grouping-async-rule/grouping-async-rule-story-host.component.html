@@ -7,8 +7,8 @@
   </p>
 
   <div class="grouping-story__pills">
-    @for (level of table.grouping(); track level) {
-      <span class="grouping-story__pill">{{ columnLabelById()[level] }}</span>
+    @for (level of table.groupingLevels(); track level.id) {
+      <span class="grouping-story__pill">{{ level.label }}</span>
     }
   </div>
 

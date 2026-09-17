@@ -3,6 +3,7 @@ import {
   buildGroupRenderRows,
   clusterRows,
   collectGroupIds,
+  resolveGroupingLevels,
   rowsBeneathGroup,
   type ClusterOpts,
 } from '../../engine/grouping';
@@ -19,6 +20,7 @@ import { runColumnsSchemaFn } from '../../schema/column-schema';
 import type { AnyGroupingRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
 import { createTableFeature } from '../create-table-feature';
 import type {
+  ColumnDef,
   ColumnId,
   DerivedDict,
   GroupingUpdater,
@@ -69,6 +71,13 @@ export interface GroupingMembers<TRow> {
    * derives from the cluster tree, not `renderRows()`. `[]` when ungrouped. Feeds
    * `expandAll(table.groupIds())` (issue #131). */
   readonly groupIds: Signal<RowId[]>;
+  /** Current grouping levels as `ColumnDef`s, ordered outermost first — the inverse of
+   * `isGroupedBy`. Derives from the same resolved level list (issue #115 D4), so a level naming
+   * no known column can never appear here. `[]` when ungrouped. */
+  readonly groupingLevels: Signal<ColumnDef<TRow>[]>;
+  /** O(1) membership check for one column, backed by a set derived alongside `groupingLevels` —
+   * a toggle row over N columns stays O(N). `false` for an unknown column id, never a throw. */
+  readonly isGroupedBy: (columnId: string) => boolean;
 }
 
 /**
@@ -126,8 +135,18 @@ function buildGroupingSpec<TRow>(
     collectGroupIds(input.rows(), grouping(), input.columns(), clusterOpts)
   );
 
+  const resolvedLevels = computed(() => resolveGroupingLevels(grouping(), input.columns()));
+  const groupingLevels = computed(() => {
+    const columnById = new Map(input.columns().map((c) => [c.id, c]));
+    return resolvedLevels()
+      .map((id) => columnById.get(id))
+      .filter((column): column is ColumnDef<TRow> => column !== undefined);
+  });
+  const groupedIds = computed(() => new Set(resolvedLevels()));
+  const isGroupedBy = (columnId: string): boolean => groupedIds().has(columnId);
+
   return {
-    members: { grouping: groupingView, rowsOf, groupIds },
+    members: { grouping: groupingView, rowsOf, groupIds, groupingLevels, isGroupedBy },
     stages: {
       group: (rows) => clusterRows(rows, grouping(), input.columns(), clusterOpts),
     },
