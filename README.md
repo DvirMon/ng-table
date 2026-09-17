@@ -13,7 +13,7 @@ Each project owns its own `CLAUDE.md`, `CONTEXT.md` and `docs/adr/`. Start at `l
 
 ```bash
 npm install
-npm start                     # ng-table docs site, http://localhost:4202
+npm start                     # ng-table docs site, http://localhost:4200
 npm run table:sb              # shared-table Storybook, http://localhost:4403
 npx nx test shared-table
 npx nx run-many -t lint typecheck

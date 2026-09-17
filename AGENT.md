@@ -10,7 +10,7 @@
 ## Commands
 
 ```bash
-npx nx serve ng-table                 # port 4202
+npx nx serve ng-table                 # port 4200
 npx nx run shared-table:storybook     # port 4403
 npx nx test shared-table
 npx nx run <project>:typecheck        # ngc — template-aware; never bare tsc on Angular projects

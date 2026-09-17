@@ -12,7 +12,7 @@ the acme monorepo's `apps/demo`.
 ## Commands
 
 ```bash
-npx nx serve ng-table   # dev server, port 4202 (.claude/launch.json)
+npx nx serve ng-table   # dev server, port 4200 (.claude/launch.json)
 npx nx build ng-table
 npx nx lint ng-table
 npx nx test ng-table
