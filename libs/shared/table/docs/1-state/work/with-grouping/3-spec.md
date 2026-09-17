@@ -152,7 +152,7 @@ and the `'group'` render stage) and colocated unit specs. Exported from the sing
 
 ### Public surface
 
-Shape settled across D1, D3, D4, D6, D7, D8, D14:
+Shape settled across D1, D3, D4, D6, D7, D8, D14; amended by #118.
 
 ```ts
 type ColumnId<TRow> = Extract<keyof TRow, string> | (string & {});   // D14
@@ -163,14 +163,19 @@ interface GroupSummary<TRow> {
 }
 
 interface WithGroupingConfig<TRow> {
+  initial?: ColumnId<TRow>[];                                       // D14
   groupingRule?: () => string[] | undefined;                        // D6, D7 — abstain contract
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;  // D4
-  rules?: GroupingRule<TRow>[];                                     // D8, rules-array layer
+  schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #118
+  rules?: AnyGroupingRule<TRow>[];                                  // D8, rules-array layer
 }
 
-// D8 — schema-fn layer, reusing createRecorderSession()
-withGrouping<TRow>((path: ColumnsPath<TRow>) => {
-  applyGrouping(path.category, { when: () => boolean | undefined });
+// D8 — schema-fn layer, now a config member rather than an either/or first positional (#118)
+withGrouping({
+  initial: ['region'],
+  schema: (path) => {
+    applyGrouping(path.category, { when: () => boolean | undefined });
+  },
 });
 
 interface GroupingMembers<TRow> {

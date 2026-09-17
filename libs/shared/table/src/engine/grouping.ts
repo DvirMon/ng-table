@@ -28,7 +28,7 @@ function toGroupId(path: string): RowId {
 }
 
 /** Runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
- * rest." Construction-time validation (a bad `initialGrouping` id) is `withGrouping()`'s job,
+ * rest." Construction-time validation (a bad `initial` id) is `withGrouping()`'s job,
  * not this. */
 export function resolveGroupingLevels<TRow>(
   grouping: readonly string[],

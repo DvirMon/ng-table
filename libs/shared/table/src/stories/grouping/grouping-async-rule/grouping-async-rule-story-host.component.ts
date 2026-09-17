@@ -62,7 +62,7 @@ export class GroupingAsyncRuleStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({
-      initialGrouping: STATIC_GROUPING_LEVELS,
+      initial: STATIC_GROUPING_LEVELS,
       rules: [this.repGroupingRule],
     })
   );

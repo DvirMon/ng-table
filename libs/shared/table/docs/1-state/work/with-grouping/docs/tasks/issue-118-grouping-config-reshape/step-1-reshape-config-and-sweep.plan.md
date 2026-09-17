@@ -210,7 +210,8 @@ here, and do not delete a test because its old call shape is gone.
 - [ ] `withGrouping(config, withComputed(fn))` composes exactly as before.
 - [ ] An unknown column id in `initial` still throws at construction (D14).
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
-- [ ] `nx test shared-table` passes with no assertion changed — only call shapes.
+- [ ] `shared-table` suite green in CI on the PR, with no assertion changed — only call
+      shapes. Not run locally; the byte-identical claim above is unverified until it passes.
 
 ---
 [Step 2: Tests for the combined shape](step-2-tests.plan.md) →

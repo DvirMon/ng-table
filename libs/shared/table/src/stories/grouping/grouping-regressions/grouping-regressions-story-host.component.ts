@@ -85,7 +85,7 @@ export class GroupingRegressionsStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({
-      initialGrouping: STATIC_GROUPING_LEVELS,
+      initial: STATIC_GROUPING_LEVELS,
       groupOrder: this.compareGroups,
     })
   );

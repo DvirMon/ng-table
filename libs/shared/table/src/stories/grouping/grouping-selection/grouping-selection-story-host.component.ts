@@ -41,7 +41,7 @@ export class GroupingSelectionStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initialGrouping: SELECTION_GROUPING_LEVELS }),
+    withGrouping({ initial: SELECTION_GROUPING_LEVELS }),
     withSelection(),
     withFiltering({ predicates: () => [this.filters().matcher()] })
   );

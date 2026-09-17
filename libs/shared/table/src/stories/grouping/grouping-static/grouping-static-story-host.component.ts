@@ -37,7 +37,7 @@ export class GroupingStaticStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initialGrouping: STATIC_GROUPING_LEVELS })
+    withGrouping({ initial: STATIC_GROUPING_LEVELS })
   );
 
   /** `columns()` is the folded list, not a render order — it carries `visible`/`order` and leaves

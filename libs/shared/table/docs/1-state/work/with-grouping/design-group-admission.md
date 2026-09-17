@@ -2,7 +2,9 @@
 title: Design — group admission (`groupWhen`)
 type: design
 status: settled shape, 2026-09-15 — config + `schema` fn, `withComputed` unchanged in slot 2.
-  3 open questions (Q1–Q3), none blocking the shape. Q1 decided 2026-09-16.
+  3 open questions (Q1–Q3), none blocking the shape. Q1 decided 2026-09-16. Surface half (`initial`
+  + `schema` in one config, either/or overload deleted) shipped in #118; `groupWhen` at both scopes
+  and `applyGroupOrder` remain proposed, not implemented.
 date: 2026-09-15
 audience: developers
 ---

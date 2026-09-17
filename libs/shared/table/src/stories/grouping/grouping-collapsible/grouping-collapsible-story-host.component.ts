@@ -57,7 +57,7 @@ export class GroupingCollapsibleStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initialGrouping: COLLAPSIBLE_GROUPING_LEVELS }),
+    withGrouping({ initial: COLLAPSIBLE_GROUPING_LEVELS }),
     withExpansion(),
     withSorting(),
     // Optional. Default: read `table.expandedRows().has(row.id)` directly in the template for

@@ -35,5 +35,5 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
 
 export type AnyGroupingRule<TRow = unknown> = GroupingRule<TRow> | GroupingAsyncRule<TRow>;
 
-/** Schema fn passed to `withGrouping()`'s rules-array normalization. */
+/** Schema fn passed as `WithGroupingConfig.schema`. */
 export type GroupingSchemaFn<TRow> = (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void;

@@ -129,7 +129,8 @@ of them was passing a schema fn positionally.
 - [ ] Passing a schema fn as the first positional is a compile error, asserted with
       `@ts-expect-error`.
 - [ ] An unknown column id throws at construction from both `initial` and `schema`.
-- [ ] `nx test shared-table` passes.
+- [ ] The new cases pass locally (`nx test shared-table --testFile=…`, this spec only); the
+      full `shared-table` suite is green in CI on the PR.
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
 
 ---

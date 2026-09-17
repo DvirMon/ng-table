@@ -43,7 +43,7 @@ export class GroupingCrudStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initialGrouping: STATIC_GROUPING_LEVELS }),
+    withGrouping({ initial: STATIC_GROUPING_LEVELS }),
   );
 
   protected readonly visibleColumns = computed(() =>

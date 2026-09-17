@@ -33,20 +33,22 @@ type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
 export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
    * parallel to `engine/rows.ts`'s `trackBy` throw site. */
-  initialGrouping?: ColumnId<TRow>[];
+  initial?: ColumnId<TRow>[];
   /** Orders clusters by their contents, siblings only, at every depth. Omitted: stable
    * first-occurrence order. Throws: falls back to stable order for the affected level and
    * reports once per evaluation. Decoupled from `sorting`. See `withGrouping()`'s decisions
    * doc. */
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
-  /** Base+overlay fold. Returning `string[]` overrides `baseGrouping`; `undefined` abstains
-   * and holds it; `[]` is actively grouped by nothing — distinct from abstain. Mutually
-   * exclusive with `rules` in practice (both compile to this same slot) — the rules-array layer
-   * (below) is sugar that produces exactly this shape. */
+  /** Base+overlay fold. Returning `string[]` overrides `initial`; `undefined` abstains and holds
+   * it; `[]` is actively grouped by nothing — distinct from abstain. Mutually exclusive with
+   * `rules`/`schema` in practice (both compile to this same slot) — the rules-array layer (below)
+   * is sugar that produces exactly this shape. */
   groupingRule?: () => string[] | undefined;
-  /** Rules-array layer: compiles to `groupingRule` via `foldGroupingRules`. Call order (array
-   * order here, schema-fn call order when using the function-argument overload) determines level
-   * order. */
+  /** Declarative per-column rules. Records by side effect; returns nothing. Call order is level
+   * order. Composes with `rules` — both land in the same array, `schema`-recorded rules first. */
+  schema?: GroupingSchemaFn<TRow>;
+  /** Rules-array layer: compiles to `groupingRule` via `foldGroupingRules`. The pre-recorded form
+   * of what `schema` records. */
   rules?: AnyGroupingRule<TRow>[];
 }
 
@@ -71,15 +73,18 @@ function buildGroupingSpec<TRow>(
   input: Pick<TableStore<TRow>, 'columns' | 'rows'>,
   config: WithGroupingConfig<TRow>
 ): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
-  const initial: string[] = config.initialGrouping ?? [];
+  const initial: string[] = config.initial ?? [];
   const knownIds = new Set(input.columns().map((c) => c.id));
   const unknownIds = initial.filter((id) => !knownIds.has(id));
   if (unknownIds.length > 0) {
     throw new Error(
-      `[withGrouping] initialGrouping names unknown column id(s): ${unknownIds.join(', ')}.`
+      `[withGrouping] initial names unknown column id(s): ${unknownIds.join(', ')}.`
     );
   }
-  const rules = config.rules ?? [];
+  const schemaRules = config.schema
+    ? [...runColumnsSchemaFn<TRow, AnyGroupingRule<TRow>>(config.schema)]
+    : [];
+  const rules = [...schemaRules, ...(config.rules ?? [])];
   const unknownRuleIds = rules.map((rule) => rule.columnId).filter((id) => !knownIds.has(id));
   if (unknownRuleIds.length > 0) {
     throw new Error(
@@ -129,25 +134,21 @@ function buildGroupingSpec<TRow>(
  * orders cluster siblings.
  */
 export function withGrouping<In extends GroupingInput<In>>(
-  configOrSchemaFn?: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>>
+  config?: WithGroupingConfig<RowOf<In>>
 ): Feature<In, GroupingMembers<RowOf<In>>>;
 export function withGrouping<In extends GroupingInput<In>, D extends DerivedDict>(
-  configOrSchemaFn: WithGroupingConfig<RowOf<In>> | GroupingSchemaFn<RowOf<In>> | undefined,
-  derive: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>
+  config: WithGroupingConfig<RowOf<In>> | undefined,
+  compute: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>
 ): Feature<In, GroupingMembers<RowOf<In>> & D>;
 export function withGrouping(
-  configOrSchemaFn: WithGroupingConfig<any> | GroupingSchemaFn<any> = {},
-  derive?: Feature<any, any>
+  config: WithGroupingConfig<any> = {},
+  compute?: Feature<any, any>
 ): Feature<any, any> {
-  const config: WithGroupingConfig<any> =
-    typeof configOrSchemaFn === 'function'
-      ? { rules: [...runColumnsSchemaFn<any, AnyGroupingRule<any>>(configOrSchemaFn)] }
-      : configOrSchemaFn;
   const factory = <In extends GroupingInput<In>>(
     input: In
   ): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> => buildGroupingSpec(input, config);
-  const feature: Feature<any, any> = derive
-    ? createTableFeature(factory, derive)
+  const feature: Feature<any, any> = compute
+    ? createTableFeature(factory, compute)
     : createTableFeature(factory);
   return Object.assign(feature, { displayName: 'withGrouping' });
 }

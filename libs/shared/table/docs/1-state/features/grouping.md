@@ -21,7 +21,8 @@ parent: ../architecture.md
 >   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
 >   (D1) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. On top of that,
 >   `table.grouping` folds an optional `groupingRule`/`rules`-array/schema-fn overlay over that base
->   value — `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #60). Cluster
+>   value — `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #60), the
+>   schema fn reached through `config.schema` since #118. Cluster
 >   order is `groupOrder` on `withGrouping()`'s config (D4, issue #58) — omitted, stable
 >   first-occurrence order; supplied, orders siblings within a parent by their contents, fully
 >   decoupled from `sorting` (D5). Full contract: 3-spec.md's own Methods section — not restated
