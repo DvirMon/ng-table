@@ -18,28 +18,45 @@ jobs:
         with:
           script: |
             const wr = context.payload.workflow_run;
-            for (const linked of wr.pull_requests) {
-              const { data: pr } = await github.rest.pulls.get({
+            const closesPattern = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
+
+            async function closeIssue(issueNumber, body) {
+              await github.rest.issues.update({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: linked.number,
+                issue_number: issueNumber,
+                state: 'closed',
               });
-              if (pr.state !== 'open' || pr.base.ref !== 'main') continue;
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body,
+              });
+            }
 
-              const closesPattern = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
-              for (const match of pr.body?.matchAll(closesPattern) ?? []) {
-                const issueNumber = Number(match[1]);
-                await github.rest.issues.update({
+            if (wr.pull_requests.length > 0) {
+              for (const linked of wr.pull_requests) {
+                const { data: pr } = await github.rest.pulls.get({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  state: 'closed',
+                  pull_number: linked.number,
                 });
-                await github.rest.issues.createComment({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: issueNumber,
-                  body: `Closed automatically — CI passed on PR #${pr.number} (${wr.html_url}).`,
-                });
+                if (pr.state !== 'open' || pr.base.ref !== 'main') continue;
+
+                for (const match of pr.body?.matchAll(closesPattern) ?? []) {
+                  await closeIssue(
+                    Number(match[1]),
+                    `Closed automatically — CI passed on PR #${pr.number} (${wr.html_url}).`
+                  );
+                }
+              }
+            } else if (wr.event === 'push' && wr.head_branch === 'main') {
+              const message = wr.head_commit?.message ?? '';
+              for (const match of message.matchAll(closesPattern)) {
+                await closeIssue(
+                  Number(match[1]),
+                  `Closed automatically — CI passed on commit ${wr.head_sha.slice(0, 7)} (${wr.html_url}).`
+                );
               }
             }
