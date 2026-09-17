@@ -1,0 +1,35 @@
+{
+  "slug": "grouping-expansion-coupling",
+  "ticketRef": "130",
+  "ticketUrl": "https://github.com/DvirMon/acme/issues/130",
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling",
+  "decisionsPath": null,
+  "specPath": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling/plan.md",
+  "architecturePath": null,
+  "githubIssues": [
+    130,
+    131,
+    132,
+    133
+  ],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": false
+  },
+  "subs": {
+    "132": {
+      "specPath": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling/spec-132.md",
+      "architecturePath": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling/architecture-132.md",
+      "checklist": {
+        "spec": true,
+        "tasks": true
+      },
+      "tasksPath": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling/docs/tasks/"
+    }
+  }
+}

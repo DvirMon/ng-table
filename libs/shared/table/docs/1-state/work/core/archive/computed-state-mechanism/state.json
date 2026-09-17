@@ -1,0 +1,33 @@
+{
+  "slug": "computed-state-mechanism",
+  "ticketRef": "DvirMon/acme#67",
+  "ticketUrl": "https://github.com/DvirMon/acme/issues/67",
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/core/archive/computed-state-mechanism",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/core/archive/computed-state-mechanism/3-decisions.md",
+  "specPath": "libs/shared/table/docs/1-state/work/core/archive/computed-state-mechanism/spec.md",
+  "architecturePath": "libs/shared/table/docs/1-state/work/core/archive/computed-state-mechanism/architecture.md",
+  "githubIssues": [
+    67,
+    68,
+    69,
+    70,
+    71,
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78
+  ],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": true
+  },
+  "designPath": "libs/shared/table/docs/1-state/work/core/archive/computed-state-mechanism/2-research.md"
+}

@@ -1,0 +1,19 @@
+{
+  "slug": "column-group-index",
+  "ticketRef": "115",
+  "ticketUrl": "https://github.com/DvirMon/acme/issues/115",
+  "stack": "angular",
+  "isComplex": null,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/grouping/active/column-group-index",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/grouping/active/column-group-index/2-decisions.md",
+  "specPath": null,
+  "architecturePath": null,
+  "githubIssues": [115],
+  "checklist": {
+    "intake": true,
+    "grill": false,
+    "spec": false,
+    "issues": false,
+    "tasks": false
+  }
+}

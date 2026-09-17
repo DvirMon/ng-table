@@ -1,0 +1,19 @@
+{
+  "slug": "with-filtering",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/filtering/archive/with-filtering",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/filtering/archive/with-filtering/design-options-hybrid-api.md",
+  "specPath": "libs/shared/table/docs/1-state/features/filtering.md",
+  "architecturePath": null,
+  "githubIssues": [61, 62],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": true
+  }
+}

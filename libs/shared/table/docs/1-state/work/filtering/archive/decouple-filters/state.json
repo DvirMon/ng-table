@@ -1,0 +1,19 @@
+{
+  "slug": "decouple-filters",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "angular",
+  "isComplex": true,
+  "workspaceRoot": "libs/shared/table/docs/1-state/work/filtering/archive/decouple-filters",
+  "decisionsPath": "libs/shared/table/docs/1-state/work/filtering/archive/with-filtering/migration-decouple-filters-from-table.md",
+  "specPath": "libs/shared/table/docs/1-state/work/filtering/archive/decouple-filters/spec.md",
+  "architecturePath": "libs/shared/table/docs/1-state/work/filtering/archive/decouple-filters/architecture.md",
+  "githubIssues": [101, 102, 103, 104, 105, 106, 107],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": true
+  }
+}
