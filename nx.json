@@ -14,7 +14,6 @@
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/ci.yml"]
   },
-  "nxCloudId": "688c754c7bf6c57dc1a252b5",
   "targetDefaults": {
     "@angular/build:application": {
       "cache": true,
@@ -55,21 +54,6 @@
       "linter": "eslint",
       "style": "css",
       "unitTestRunner": "vitest"
-    },
-    "@nx/react": {
-      "application": {
-        "babel": true,
-        "style": "css",
-        "linter": "none",
-        "bundler": "vite"
-      },
-      "component": {
-        "style": "css"
-      },
-      "library": {
-        "style": "css",
-        "linter": "none"
-      }
     }
   },
   "plugins": [

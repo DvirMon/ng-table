@@ -8,7 +8,7 @@ globs:
 
 Split generated/edited code by concern instead of putting everything in one file. Use `<feature>.<concern>.ts`, not a bare generic name — this avoids collisions when multiple features live in sibling folders and keeps imports self-describing.
 
-Reference implementations: `apps/issa-landing/src/design-system/components/upload/FileUploader/` (flat, 24 files) and `libs/shared/table/src/` (grouped — see "Once a domain outgrows flat" below).
+Reference implementation: `libs/shared/table/src/` (grouped — see "Once a domain outgrows flat" below).
 
 | Concern | File | Contents |
 |---|---|---|

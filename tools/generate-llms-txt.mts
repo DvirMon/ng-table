@@ -12,7 +12,7 @@
  *   - `package.json` `name` / `description` — the H1 and the blockquote summary.
  *   - every `CONTEXT.md` beneath `apps/` and `libs/` — its frontmatter supplies `title`,
  *     `summary` and `depends-on`; the ADR path is derived from the context folder.
- *   - `AGENT.md`, `docs/adr/*.md`, `docs/agents/*.md` — the `## Optional` list, titled by each
+ *   - `AGENT.md`, `docs/agents/knowledge-base/*.md` — the `## Optional` list, titled by each
  *     file's H1.
  *
  * Format: https://llmstxt.org/ — H1, blockquote, optional body prose, then H2 sections that
@@ -38,7 +38,7 @@ const GENERATOR_PATH = 'tools/generate-llms-txt.mts';
 const CONTEXT_SEARCH_ROOTS = ['apps', 'libs'];
 
 /** Repo-level agent conventions and cross-context ADRs, listed under `## Optional`. */
-const OPTIONAL_SOURCES = ['AGENT.md', 'docs/adr', 'docs/agents'];
+const OPTIONAL_SOURCES = ['AGENT.md', 'docs/agents/knowledge-base'];
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.nx']);
 
