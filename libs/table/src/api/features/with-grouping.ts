@@ -10,6 +10,7 @@ import {
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
+  collectGroupOrder,
   collectGroupPredicates,
   foldGroupingRules,
   isGroupingAsyncRule,
@@ -25,7 +26,6 @@ import type {
   ColumnId,
   DerivedDict,
   GroupingUpdater,
-  GroupSummary,
   GroupWhen,
   RenderRow,
   RowId,
@@ -39,11 +39,6 @@ export interface WithGroupingConfig<TRow> {
   /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
    * parallel to `engine/rows.ts`'s `trackBy` throw site. */
   initial?: ColumnId<TRow>[];
-  /** Orders clusters by their contents, siblings only, at every depth. Omitted: stable
-   * first-occurrence order. Throws: falls back to stable order for the affected level and
-   * reports once per evaluation. Decoupled from `sorting`. See `withGrouping()`'s decisions
-   * doc. */
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
   /** Table-wide admission — judged at every active level. A cluster returning `false` renders its
    * rows flat at the parent's depth: no header, no group id, no aggregates. Throws: the cluster is
    * admitted, reported once per column per evaluation. */
@@ -128,9 +123,10 @@ function buildGroupingSpec<TRow>(
     rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id);
 
   const columnWhen = collectGroupPredicates(rules);
+  const groupOrderByColumn = collectGroupOrder(rules);
 
   const clusterOpts: ClusterOpts<TRow> = {
-    groupOrder: config.groupOrder,
+    groupOrderByColumn: groupOrderByColumn.size > 0 ? groupOrderByColumn : undefined,
     when: config.when,
     columnWhen: columnWhen.size > 0 ? columnWhen : undefined,
   };
@@ -164,8 +160,8 @@ function buildGroupingSpec<TRow>(
  * Adds column-based row grouping to a `createTable()`. Reads only `columns`/`rows` off the
  * store handed in, with zero knowledge of expansion. Claims the `'group'` pipeline and render
  * stages (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds
- * `groupingRule`/`rules`/a schema fn over `baseGrouping` — see the decisions doc. `groupOrder`
- * orders cluster siblings.
+ * `groupingRule`/`rules`/a schema fn over `baseGrouping` — see the decisions doc. Per-column
+ * `applyGroupOrder` rules order cluster siblings.
  */
 export function withGrouping<In extends GroupingInput<In>>(
   config?: WithGroupingConfig<RowOf<In>>

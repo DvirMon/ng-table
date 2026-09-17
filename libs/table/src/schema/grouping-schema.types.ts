@@ -1,5 +1,5 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupWhen } from '../api/types';
+import type { GroupOrder, GroupWhen } from '../api/types';
 import type { ColumnsPath } from './column-schema.types';
 
 /**
@@ -38,7 +38,19 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
   readonly when?: GroupWhen<TRow>;
 }
 
-export type AnyGroupingRule<TRow = unknown> = GroupingRule<TRow> | GroupingAsyncRule<TRow>;
+/** One column's `applyGroupOrder(path.x, cmp)` declaration. Unlike `GroupingRule`/
+ * `GroupingAsyncRule`, this kind never activates or deactivates a level — it only orders that
+ * level's siblings once it's active. */
+export interface GroupOrderRule<TRow = unknown> {
+  readonly kind: 'group-order';
+  readonly columnId: string;
+  readonly comparator: GroupOrder<TRow>;
+}
+
+export type AnyGroupingRule<TRow = unknown> =
+  | GroupingRule<TRow>
+  | GroupingAsyncRule<TRow>
+  | GroupOrderRule<TRow>;
 
 /** Schema fn passed as `WithGroupingConfig.schema`. */
 export type GroupingSchemaFn<TRow> = (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void;

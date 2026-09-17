@@ -1,6 +1,11 @@
 import { computed, linkedSignal, type ResourceStatus, type Signal } from '@angular/core';
-import type { GroupWhen } from '../api/types';
-import type { AnyGroupingRule, GroupingAsyncRule, GroupingRule } from '../schema/grouping-schema.types';
+import type { GroupOrder, GroupWhen } from '../api/types';
+import type {
+  AnyGroupingRule,
+  GroupingAsyncRule,
+  GroupingRule,
+  GroupOrderRule,
+} from '../schema/grouping-schema.types';
 
 /**
  * Pure grouping-rule resolution: turns `GroupingRule`/`GroupingAsyncRule` values into live
@@ -17,6 +22,12 @@ export function isGroupingAsyncRule<TRow>(
   rule: AnyGroupingRule<TRow>
 ): rule is GroupingAsyncRule<TRow> {
   return rule.kind === 'grouping-async';
+}
+
+export function isGroupOrderRule<TRow>(
+  rule: AnyGroupingRule<TRow>
+): rule is GroupOrderRule<TRow> {
+  return rule.kind === 'group-order';
 }
 
 /**
@@ -109,9 +120,27 @@ export function collectGroupPredicates<TRow>(
 ): Map<string, GroupWhen<TRow>> {
   const predicates = new Map<string, GroupWhen<TRow>>();
   for (const rule of rules) {
-    if (rule.when) {
+    if (!isGroupOrderRule(rule) && rule.when) {
       predicates.set(rule.columnId, rule.when);
     }
   }
   return predicates;
+}
+
+/**
+ * Static per-column ordering comparators, collected off the same `rules` array `withGrouping()`
+ * builds — independent of `foldGroupingRules` (level order) and `collectGroupPredicates`
+ * (admission), exactly the way those two are independent of each other. Last write wins for a
+ * duplicate `columnId` (undocumented edge case, not validated).
+ */
+export function collectGroupOrder<TRow>(
+  rules: readonly AnyGroupingRule<TRow>[]
+): Map<string, GroupOrder<TRow>> {
+  const comparators = new Map<string, GroupOrder<TRow>>();
+  for (const rule of rules) {
+    if (isGroupOrderRule(rule)) {
+      comparators.set(rule.columnId, rule.comparator);
+    }
+  }
+  return comparators;
 }

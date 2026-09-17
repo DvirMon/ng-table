@@ -14,11 +14,11 @@ import {
 } from '../../table.mock';
 import { setColumns } from '../../mutations/update-columns';
 import { setGroupLevels } from '../../mutations/update-grouping';
-import { applyGrouping } from '../../schema/grouping-rules';
+import { applyGrouping, applyGroupOrder } from '../../schema/grouping-rules';
 import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
 import type { WritableView } from '../../engine/writable-view';
-import { filter } from '../../filters/rules';
-import type { FiltersPath } from '../../filters/types';
+import { filter } from './with-filtering/rules';
+import type { FiltersPath } from './with-filtering/types';
 import { createTable } from '../create-table';
 import { withComputed } from './with-computed';
 import { withExpansion } from './with-expansion';
@@ -286,7 +286,7 @@ describe('withGrouping', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          groupOrder: (a, b) => b.rows.length - a.rows.length,
+          schema: (path) => applyGroupOrder(path.category, (a, b) => b.rows.length - a.rows.length),
         })
       )
     );
@@ -320,9 +320,11 @@ describe('withGrouping', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          // Ascending alphabetical by key — reorders the region level (EU < US) but is a
-          // no-op on category order within either region (Electronics < Furniture already).
-          groupOrder: (a, b) => String(a.key).localeCompare(String(b.key)),
+          // Ascending alphabetical by key — reorders the region level (EU < US). Applied only to
+          // `path.region`, never to `path.category` — category never has a comparator, so it
+          // stays on the stable admission-partition default at every depth.
+          schema: (path) =>
+            applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key))),
         })
       )
     );
@@ -379,9 +381,10 @@ describe('withGrouping', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             initial: ['region'],
-            groupOrder: () => {
-              throw new Error('boom');
-            },
+            schema: (path) =>
+              applyGroupOrder(path.region, () => {
+                throw new Error('boom');
+              }),
           })
         )
       );
@@ -397,6 +400,68 @@ describe('withGrouping', () => {
     } finally {
       reportSpy.mockRestore();
     }
+  });
+
+  it('two levels with different comparators order independently in the same renderRows() output (#87 AC2)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region', 'category'],
+          schema: (path) => {
+            applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)));
+            applyGroupOrder(path.category, (a, b) => b.rows.length - a.rows.length);
+          },
+        })
+      )
+    );
+
+    const rows = store.renderRows();
+
+    // Region: ascending by key reorders EU ahead of US (insertion order was US, EU).
+    // Category: descending by rows.length reorders EU's own children (Furniture, 2 rows, ahead
+    // of Electronics, 1 row) — a genuinely different rule than region's, applied only within its
+    // own level, proving the two comparators order independently in one output.
+    expect(toShape(rows)).toEqual([
+      ['group', 0, undefined], // EU (reordered ahead of US)
+      ['group', 1, undefined], // EU > Furniture (reordered ahead of Electronics)
+      ['row', 2, 5],
+      ['row', 2, 6],
+      ['group', 1, undefined], // EU > Electronics
+      ['row', 2, 4],
+      ['group', 0, undefined], // US
+      ['group', 1, undefined], // US > Electronics (already matches descending-count order)
+      ['row', 2, 1],
+      ['row', 2, 2],
+      ['group', 1, undefined], // US > Furniture
+      ['row', 2, 3],
+    ]);
+  });
+
+  it('applyGroupOrder on a column with no active level is a silent no-op — no reordering, no throw', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region'],
+          schema: (path) =>
+            // 'amount' is never grouped by (not in `initial`, never named by `applyGrouping`) —
+            // this comparator has no active level to attach to and must never run.
+            applyGroupOrder(path.amount, (a, b) => String(b.key).localeCompare(String(a.key))),
+        })
+      )
+    );
+
+    expect(() => store.renderRows()).not.toThrow();
+
+    const groupIds = store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => row.id);
+
+    expect(groupIds).toEqual(['group:>region:string:US', 'group:>region:string:EU']);
   });
 
   it("removing a cluster's sole members removes that cluster from renderRows() with no residual", () => {
@@ -1790,7 +1855,8 @@ describe('when (#85 table-wide admission)', () => {
         withGrouping({
           initial: ['region'],
           when: (c) => c.rows.length >= 2,
-          groupOrder: (a, b) => Number(a.admitted) - Number(b.admitted),
+          schema: (path) =>
+            applyGroupOrder(path.region, (a, b) => Number(a.admitted) - Number(b.admitted)),
         })
       )
     );

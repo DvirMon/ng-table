@@ -1,6 +1,7 @@
 import type {
   ClusterSummary,
   ColumnDef,
+  GroupOrder,
   GroupSummary,
   GroupWhen,
   RenderRow,
@@ -40,7 +41,7 @@ function toGroupId(path: string): RowId {
 /** Internal engine surface, not public API — collapses the two optional callbacks shared by
  * `clusterRows`/`buildGroupRenderRows`/`collectGroupIds` into one trailing parameter. */
 export interface ClusterOpts<TRow> {
-  readonly groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
+  readonly groupOrderByColumn?: ReadonlyMap<string, GroupOrder<TRow>>;
   readonly when?: GroupWhen<TRow>;
   /** Per-column admission, AND'd with `when`. A columnId with no active level is inert. */
   readonly columnWhen?: ReadonlyMap<string, GroupWhen<TRow>>;
@@ -185,21 +186,57 @@ function reportGroupOrderError(): void {
 }
 
 /**
- * Recursively re-orders each node list's own siblings by `groupOrder`, never against a
- * different parent's children. `toRows` bridges `T` (raw `TRow` for the pipeline stage, a
- * render-row wrapper for the render stage) to `GroupSummary.rows`. `reported` is shared across
- * the whole recursive walk for one caller's evaluation. See `withGrouping()`'s decisions doc.
+ * Recursively re-orders each node list's own siblings, resolving the comparator per list by its
+ * own `columnId` (every node in one list shares one, per `buildClusters`'s invariant). `toRows`
+ * bridges `T` (raw `TRow` for the pipeline stage, a render-row wrapper for the render stage) to
+ * `GroupSummary.rows`. `reported` is shared across the whole recursive walk for one caller's
+ * evaluation. See `withGrouping()`'s decisions doc.
  */
 export function sortClusters<T, TRow>(
   nodes: ClusterNode<T>[],
-  groupOrder: ((a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number) | undefined,
+  groupOrderByColumn: ReadonlyMap<string, GroupOrder<TRow>> | undefined,
   toRows: (items: T[]) => TRow[],
   reported: { done: boolean }
 ): ClusterNode<T>[] {
-  if (!groupOrder) {
-    return partitionAndRecurse(nodes);
+  const comparator =
+    nodes.length > 0 ? groupOrderByColumn?.get(nodes[0].columnId) : undefined;
+  if (!comparator) {
+    return partitionAndRecurse(nodes, groupOrderByColumn, toRows, reported);
   }
-  let ordered = nodes;
+  const ordered = orderWithComparator(nodes, comparator, toRows, reported);
+  return ordered.map((node) => ({
+    ...node,
+    children: sortClusters(node.children, groupOrderByColumn, toRows, reported),
+  }));
+}
+
+/** Stable partition — admitted siblings in first-occurrence order, then dissolved siblings in
+ * first-occurrence order — the default sibling order for any level with no comparator of its
+ * own. Recurses so the same rule applies at every depth, but returns `nodes` itself, and each
+ * untouched node itself, when nothing in the subtree is dissolved: reference-preserving, which
+ * is load-bearing for "composing `withGrouping()` with no extra config changes nothing". */
+function partitionAndRecurse<T, TRow>(
+  nodes: ClusterNode<T>[],
+  groupOrderByColumn: ReadonlyMap<string, GroupOrder<TRow>> | undefined,
+  toRows: (items: T[]) => TRow[],
+  reported: { done: boolean }
+): ClusterNode<T>[] {
+  const recursed = nodes.map((node) => {
+    const children = sortClusters(node.children, groupOrderByColumn, toRows, reported);
+    return children === node.children ? node : { ...node, children };
+  });
+  const unchanged = recursed.every((node, index) => node === nodes[index]);
+  return partitionByAdmission(unchanged ? nodes : recursed);
+}
+
+// Only reached when this node list's own column has a comparator. A throwing comparator falls
+// back to `nodes`' pre-sort order and reports once per evaluation.
+function orderWithComparator<T, TRow>(
+  nodes: ClusterNode<T>[],
+  comparator: GroupOrder<TRow>,
+  toRows: (items: T[]) => TRow[],
+  reported: { done: boolean }
+): ClusterNode<T>[] {
   try {
     const summaries = nodes.map((node) => ({
       node,
@@ -210,34 +247,16 @@ export function sortClusters<T, TRow>(
         admitted: node.admitted,
       } satisfies GroupSummary<TRow>,
     }));
-    ordered = [...summaries]
-      .sort((a, b) => groupOrder(a.summary, b.summary))
+    return [...summaries]
+      .sort((a, b) => comparator(a.summary, b.summary))
       .map((entry) => entry.node);
   } catch {
     if (!reported.done) {
       reported.done = true;
       reportGroupOrderError();
     }
-    ordered = nodes;
+    return nodes;
   }
-  return ordered.map((node) => ({
-    ...node,
-    children: sortClusters(node.children, groupOrder, toRows, reported),
-  }));
-}
-
-/** Stable partition — admitted siblings in first-occurrence order, then dissolved siblings in
- * first-occurrence order — the default sibling order once nothing supplies `groupOrder`.
- * Recurses so the same rule applies at every depth, but returns `nodes` itself, and each
- * untouched node itself, when nothing in the subtree is dissolved: reference-preserving, which
- * is load-bearing for "composing `withGrouping()` with no extra config changes nothing". */
-function partitionAndRecurse<T>(nodes: ClusterNode<T>[]): ClusterNode<T>[] {
-  const recursed = nodes.map((node) => {
-    const children = partitionAndRecurse(node.children);
-    return children === node.children ? node : { ...node, children };
-  });
-  const unchanged = recursed.every((node, index) => node === nodes[index]);
-  return partitionByAdmission(unchanged ? nodes : recursed);
 }
 
 function partitionByAdmission<T>(nodes: ClusterNode<T>[]): ClusterNode<T>[] {
@@ -285,7 +304,9 @@ export function clusterRows<TRow>(
     new Set(),
     opts?.columnWhen
   );
-  const ordered = sortClusters(admitted, opts?.groupOrder, (items) => items, { done: false });
+  const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
+    done: false,
+  });
   return flattenLeaves(ordered);
 }
 
@@ -398,7 +419,7 @@ export function buildGroupRenderRows<TRow>(
   const toRows = (items: Omit<RenderRow<TRow>, 'index'>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
   const admitted = admitClusters(nodes, opts?.when, toRows, new Set(), opts?.columnWhen);
-  const ordered = sortClusters(admitted, opts?.groupOrder, toRows, { done: false });
+  const ordered = sortClusters(admitted, opts?.groupOrderByColumn, toRows, { done: false });
   return emitGroupRows(ordered, 0, '', columns, new Set());
 }
 
@@ -475,6 +496,8 @@ export function collectGroupIds<TRow>(
     new Set(),
     opts?.columnWhen
   );
-  const ordered = sortClusters(admitted, opts?.groupOrder, (items) => items, { done: false });
+  const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
+    done: false,
+  });
   return collectClusterGroupIds(ordered, '');
 }

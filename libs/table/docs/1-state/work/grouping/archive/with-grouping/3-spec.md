@@ -173,8 +173,8 @@ interface WithGroupingConfig<TRow> {
   initial?: ColumnId<TRow>[];                                       // D14
   groupWhen?: GroupWhen<TRow>;                                      // #85 — table-wide admission
   groupingRule?: () => string[] | undefined;                        // D6, D7 — abstain contract
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;  // D4
-  schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #84
+  // groupOrder removed — see applyGroupOrder(path.x, cmp), #87
+  schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #84, #87
   rules?: AnyGroupingRule<TRow>[];                                  // D8, rules-array layer
 }
 
@@ -231,6 +231,12 @@ cluster and reports once per column per evaluation. Full mechanism and rejected 
   which also operates on each group's member values rather than its key alone. Precedent among
   table libraries is thin and that is deliberate: only AG Grid ships a comparator-shaped hook
   (`initialGroupOrderComparator`, Enterprise-gated); three of four table libraries ship nothing.
+  **Amended by #87:** the comparator is declared per column, via `applyGroupOrder(path.x, cmp)`
+  in the `schema` fn, not as one `WithGroupingConfig.groupOrder` member applied at every depth —
+  siblings always share a `columnId`, so the declaration site now matches where the comparator
+  was already scoped. The behavior this decision states — over contents not keys, decoupled from
+  sort, stable-first-occurrence default — is unchanged; only where a consumer writes the
+  comparator moved.
 - **Group order and row sort stay fully decoupled (D5).** No shared state, no composition API.
   `groupOrder` orders clusters; `sorting` reorders rows within a cluster only, guaranteed by the
   fixed pipeline order plus sort stability. Three of four researched libraries instead reuse

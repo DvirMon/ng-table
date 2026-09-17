@@ -23,10 +23,11 @@ parent: ../architecture.md
 >   `table.grouping` folds an optional `groupingRule`/`rules`-array/schema-fn overlay over that base
 >   value — `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #26), the
 >   schema fn reached through `config.schema` since #84. Cluster
->   order is `groupOrder` on `withGrouping()`'s config (D4, issue #24) — omitted, stable
->   first-occurrence order; supplied, orders siblings within a parent by their contents, fully
->   decoupled from `sorting` (D5). Full contract: 3-spec.md's own Methods section — not restated
->   here.
+>   order is `applyGroupOrder(path.x, cmp)`, declared per column (D4 amended, issue #87) — a
+>   comparator orders that column's own siblings only; two levels can order by different criteria
+>   in one table. Omitted, stable first-occurrence order; supplied, orders siblings within a
+>   parent by their contents, fully decoupled from `sorting` (D5). Full contract: 3-spec.md's own
+>   Methods section — not restated here.
 > - **Single-level only** — wrong. `withGrouping()` ships multi-level clustering. `grouping` is
 >   `string[]`, ordered, index 0 = outermost level (D3), with aggregation computed at every depth
 >   from that cluster's own leaves, never a descendant's already-computed aggregate (D9). Grand
@@ -62,7 +63,7 @@ parent: ../architecture.md
 >   parent's depth. Full contract: 3-spec.md's Public surface; mechanism and rejected alternatives:
 >   [work/with-grouping/design-group-admission.md](../work/grouping/archive/with-grouping/design-group-admission.md).
 >
-> Still open, deliberately unbuilt: `manual: true` and routing a header click to `groupOrder` — see
+> Still open, deliberately unbuilt: `manual: true` and routing a header click to `applyGroupOrder` — see
 > `2-decisions.md`'s Open section. Neither blocks the rest of this contract.
 
 ## Executive Summary
@@ -186,7 +187,7 @@ Researched against three popular table libraries before locking this shape:
 ## Competitive position
 
 **Verdict: shipped** — see the banner above for what's built (D1–D17) vs. deliberately deferred
-(`manual: true`, header-click routing to `groupOrder`).
+(`manual: true`, header-click routing to `applyGroupOrder`).
 
 > **Scope sentence corrected 2026-09-10.** This paragraph previously read "the single-level scope
 > **deliberately** sidesteps TanStack's unresolved depth-0 aggregation-correctness bug by not

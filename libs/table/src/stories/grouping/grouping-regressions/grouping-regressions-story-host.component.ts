@@ -1,6 +1,7 @@
 import { Component, computed, input, signal } from '@angular/core';
 import {
   addGroupLevel,
+  applyGroupOrder,
   createTable,
   patchRow,
   setGroupLevels,
@@ -85,7 +86,10 @@ export class GroupingRegressionsStoryHostComponent {
     groupingConfig,
     withGrouping({
       initial: STATIC_GROUPING_LEVELS,
-      groupOrder: this.compareGroups,
+      schema: (path) => {
+        applyGroupOrder(path.region, this.compareGroups);
+        applyGroupOrder(path.category, this.compareGroups);
+      },
     })
   );
 

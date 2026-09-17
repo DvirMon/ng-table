@@ -176,11 +176,44 @@ describe('sortClusters', () => {
     const groupOrder = (a: GroupSummary<string>, b: GroupSummary<string>): number =>
       a.rows.length - b.rows.length;
 
-    const result = sortClusters(nodes, groupOrder, (items) => items, { done: false });
+    const result = sortClusters(
+      nodes,
+      new Map([
+        ['top', groupOrder],
+        ['sub', groupOrder],
+      ]),
+      (items) => items,
+      { done: false }
+    );
 
     expect(result.map((node) => node.value)).toEqual(['A', 'B']);
     expect(result[0].children.map((node) => node.value)).toEqual(['a1', 'a2']); // reordered
     expect(result[1].children.map((node) => node.value)).toEqual(['b1', 'b2']); // unchanged
+  });
+
+  it('two different columns order independently — top descending by key, sub descending by rows.length, with no cross-talk', () => {
+    const { nodes } = twoParentFixture();
+    const topByKeyDescending = (a: GroupSummary<string>, b: GroupSummary<string>): number =>
+      String(b.key).localeCompare(String(a.key));
+    const subByLengthDescending = (a: GroupSummary<string>, b: GroupSummary<string>): number =>
+      b.rows.length - a.rows.length;
+
+    const result = sortClusters(
+      nodes,
+      new Map([
+        ['top', topByKeyDescending],
+        ['sub', subByLengthDescending],
+      ]),
+      (items) => items,
+      { done: false }
+    );
+
+    // 'top' reorders by its own rule (descending by key: 'B' before 'A') while 'sub' reorders
+    // each parent's own children by a genuinely different rule (descending by rows.length) —
+    // neither comparator leaks into the other column's node lists.
+    expect(result.map((node) => node.value)).toEqual(['B', 'A']); // reordered: B before A
+    expect(result[0].children.map((node) => node.value)).toEqual(['b2', 'b1']); // reordered: b2 (3 rows) before b1 (1 row)
+    expect(result[1].children.map((node) => node.value)).toEqual(['a2', 'a1']); // reordered: a2 (3 rows) before a1 (1 row)
   });
 
   it('groupOrder omitted (undefined) returns the nodes array unchanged, by reference, at every level', () => {
@@ -201,7 +234,15 @@ describe('sortClusters', () => {
         throw new Error('boom');
       };
 
-      const result = sortClusters(nodes, throwingGroupOrder, (items) => items, { done: false });
+      const result = sortClusters(
+        nodes,
+        new Map([
+          ['top', throwingGroupOrder],
+          ['sub', throwingGroupOrder],
+        ]),
+        (items) => items,
+        { done: false }
+      );
 
       // Top level and both parents' children each hit the throw independently, yet all fall
       // back to their pre-sort (insertion) order.
@@ -360,7 +401,7 @@ describe('admitClusters (#86 per-column admission)', () => {
   });
 });
 
-describe('admission-aware ordering (sortClusters with no groupOrder)', () => {
+describe('admission-aware ordering (sortClusters, per-column)', () => {
   function admissionNode(value: string, admitted: boolean): ClusterNode<string> {
     return { columnId: 'top', value, items: [value], children: [], admitted };
   }
@@ -393,7 +434,7 @@ describe('admission-aware ordering (sortClusters with no groupOrder)', () => {
 
     const result = clusterRows(orders, ['region'], columns, {
       when,
-      groupOrder: dissolvedFirst,
+      groupOrderByColumn: new Map([['region', dissolvedFirst]]),
     });
 
     // EU (dissolved) leaves come first, then US (admitted) leaves — reversed from insertion

@@ -1,5 +1,5 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupWhen } from '../api/types';
+import type { GroupOrder, GroupWhen } from '../api/types';
 import { assertPathIsCurrent } from './column-schema';
 import type { ColumnHandle } from './column-schema.types';
 import type { AnyGroupingRule, GroupingAsyncRule } from './grouping-schema.types';
@@ -59,4 +59,21 @@ export function applyGroupingAsync<
   // 'grouping-async'` never matches record()'s `MetadataAsyncRule` arm, so TS falls through to
   // the `TRule` arm here instead, which needs the same double-cast bridge.
   assertPathIsCurrent(path).record(rule as unknown as AnyGroupingRule<TRow>);
+}
+
+/**
+ * Declares the sibling-ordering comparator for one grouping level. Unlike `applyGrouping`, this
+ * does not activate or deactivate the level — a `GroupOrderRule` on a column with no active
+ * level is a silent no-op. Comparator receives `GroupSummary` (post-admission, `admitted`
+ * included), so it can place a dissolved cluster's flat rows anywhere among its siblings.
+ */
+export function applyGroupOrder<TRow, K extends Extract<keyof TRow, string>>(
+  path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
+  comparator: GroupOrder<TRow>
+): void {
+  assertPathIsCurrent(path).record({
+    kind: 'group-order',
+    columnId: path.id,
+    comparator,
+  });
 }

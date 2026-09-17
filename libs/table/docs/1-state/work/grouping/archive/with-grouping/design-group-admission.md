@@ -5,7 +5,8 @@ status: settled shape, 2026-09-15 — config + `schema` fn, `withComputed` uncha
   3 open questions (Q1–Q3), none blocking the shape. Q1 decided 2026-09-16, Q3 confirmed by test
   2026-09-17. Surface half (`initial` + `schema` in one config, either/or overload deleted) shipped
   in #84. Table-wide `groupWhen` shipped in #85. Per-column `groupWhen` (AND-combined) shipped in
-  #86. `applyGroupOrder` remains proposed, not implemented — that is #87.
+  #86. `applyGroupOrder` shipped in #87 — `groupOrder` moved off `WithGroupingConfig` onto the
+  schema, one comparator declared per column.
   Terminology updated 2026-09-17: the admission predicate this doc called `groupWhen` throughout
   is renamed `when` (both scopes); level activation, called `when` throughout, is renamed
   `enable`. See ADR-0018. The body below uses the current names, except the `GroupWhen<TRow>`
