@@ -25,7 +25,7 @@ know what's actually shipped before updating frontmatter/status.
 
 ## Why This Step Exists
 
-D12/issue #6's acceptance criteria require "a perf pass against `performance.md`'s two axes at a
+D12/issue #7's acceptance criteria require "a perf pass against `performance.md`'s two axes at a
 representative nesting depth, findings recorded" before this ships — multi-level grouping is the
 first table feature with a plausible super-linear shape. `performance.md` itself states "no
 budgets measured, no stress suite built" — there is no CI-gated benchmark harness to plug into
@@ -63,14 +63,14 @@ budget against.
 
 ### 3. `features/grouping.md` — frontmatter + superseded banner
 
-- `code: none` → `code: partial` (issue #6 ships the core; `groupOrder`/collapse/declarative
-  rules are still `code: none` until #58/#59/#60 land — `partial` is correct, not `shipped`).
+- `code: none` → `code: partial` (issue #7 ships the core; `groupOrder`/collapse/declarative
+  rules are still `code: none` until #24/#59/#60 land — `partial` is correct, not `shipped`).
 - Trim the superseded-sections banner at the top of the file: the **Methods** section and
   single-level-scope text are now fully superseded by shipped code, not just by the decisions
   doc — update the banner's wording accordingly (it currently says "read the decisions first,"
   which is still true for the *unshipped* parts, D4/D6–D8/D11, but no longer the framing for
   D1/D3/D9, which are now implemented).
-- Do not mark the file `code: shipped` — that's accurate only once #58/#59/#60 also land.
+- Do not mark the file `code: shipped` — that's accurate only once #24/#59/#60 also land.
 
 ### 4. Regenerate `docs/status.md`
 
@@ -82,7 +82,7 @@ hand-edit `status.md`, it's generated from feature-spec frontmatter). This picks
 
 - This step intentionally does **not** touch `2-columns/architecture.md`'s D13 sync-vs-async
   backport (mentioned in `3-spec.md`'s "Documentation updates this work owes") — that criterion
-  only makes sense once `applyGrouping`/`applyGroupingAsync` exist (#60). Doing it here would be
+  only makes sense once `applyGrouping`/`applyGroupingAsync` exist (#26). Doing it here would be
   documenting an API this issue doesn't ship.
 
 ## Risks / Watchouts

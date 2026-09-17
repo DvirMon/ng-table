@@ -318,11 +318,11 @@ so the invariant still lives with the feature that owns it.
 - **O22** *(narrowed 2026-08-26 by D37)* ~~Is optimistic rollback an editing concern or a mutation
   concern?~~ **Ownership half resolved** — it is its own feature, composed by `withRowEdit()`
   (Option 2's composition half). What remains open is only the **representation**: a restore point
-  holds a *value*, so delete and move stay uncoverable (G5, tracked as [#54](https://github.com/DvirMon/acme/issues/54)). Re-derive an inverse-operation
+  holds a *value*, so delete and move stay uncoverable (G5, tracked as [#20](https://github.com/DvirMon/ng-table/issues/20)). Re-derive an inverse-operation
   representation when a consumer needs optimistic delete, reading it against D32 (a batched write
   is one rollback unit, not N) and against ADR-0006 (which locks in "no optimistic delete" rather
   than fixing it).
-- **O24** *(new, from D37, tracked as [#53](https://github.com/DvirMon/acme/issues/53))* **Where does `swapRowId(from, to)` live after the split?** G3's leading
+- **O24** *(new, from D37, tracked as [#19](https://github.com/DvirMon/ng-table/issues/19))* **Where does `swapRowId(from, to)` live after the split?** G3's leading
   fix re-keys whichever of `open` / `snapshots` hold `from` — post-D37 those sit in different
   features, so it straddles the boundary the same way `beginEdit` does. Plan G3 **after** this
   effort, not in parallel.

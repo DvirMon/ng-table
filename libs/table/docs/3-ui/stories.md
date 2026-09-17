@@ -117,7 +117,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `filtering/filtering-story.css` | Filtering-specific styling — filter row, active markers, chip summary, notices |
 | `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
 | `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
-| `grouping/fixtures/schema.ts` | One table config over one column list, the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #79's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
+| `grouping/fixtures/schema.ts` | One table config over one column list, the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #45's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
 | `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
 | `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
 | `grouping/fixtures/http.ts` | `createGroupedRowsResource()` and `createGroupingPreferenceResource()` (`httpResource`-based, 2026-09-16) — the refetch and async-grouping-rule sources; `toErrorMessage()` replaces the old `normalizeError`/`isMessageBody` pair |
@@ -516,7 +516,7 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
 
   **A regression demo is now its own story, and says so.** The rule: a host that ships a
   known-wrong behavior links the issue on canvas and is marked "do not copy" — it does not sit
-  inside the story a reader is meant to copy. A broken summary takes the whole table down (#79)
+  inside the story a reader is meant to copy. A broken summary takes the whole table down (#45)
   and a dropped grouping level is unannounced; blank group keys still cluster unlabelled in
   `grouping-static/`, which is the one regression left in it, because a blank key is ordinary data
   rather than misuse.

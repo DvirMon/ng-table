@@ -6,7 +6,7 @@ issue: 62
 
 # Step 7 — `withFiltering()` client adapter, retire imperative surface
 
-**PR scope:** Depends on Step 6 (and, transitively, all of issue #61 — `createFilters()` and
+**PR scope:** Depends on Step 6 (and, transitively, all of issue #27 — `createFilters()` and
 `createFilterEvaluator()` must exist). Breaking public-API change, same PR: the old imperative
 surface is deleted in the same step that ships the replacement, so filtering never regresses to
 "exists but does nothing" (R26).
@@ -24,8 +24,8 @@ surface is deleted in the same step that ships the replacement, so filtering nev
 
 ## Why This Step Exists
 
-`createFilterEvaluator()` (`api/filters/evaluator.ts`, shipped in issue #61) was built
-specifically for this consumer — its own JSDoc names `withFiltering()` (issue #62) as the only
+`createFilterEvaluator()` (`api/filters/evaluator.ts`, shipped in issue #27) was built
+specifically for this consumer — its own JSDoc names `withFiltering()` (issue #28) as the only
 caller. This step is the adapter that wires a per-pipeline-run evaluator into the `filter` stage
 and deletes the superseded imperative implementation it replaces.
 
@@ -48,7 +48,7 @@ state worth shipping alone.
 > concretely-keyed filter set unassignable (`FilterNode<T>` holds an invariant
 > `WritableSignal<T>`) and forced consumers back to `unknown` criteria. See
 > `docs/1-state/features/filtering.md` §Config for the current contract. The signature below is
-> also pre-#69 in its feature shape (`(core: …)`), superseded separately.
+> also pre-#35 in its feature shape (`(core: …)`), superseded separately.
 
 ```ts
 export interface WithFilteringConfig<TRow> {

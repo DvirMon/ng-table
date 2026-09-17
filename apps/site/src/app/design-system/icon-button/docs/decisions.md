@@ -36,7 +36,7 @@ custom property that `.icon-button` reads). This is a deviation from "never hard
 non-default sizes. Flagging per the rule 10 instruction rather than silently improvising past it.
 
 `data-size` isn't in the fixed contract's host-attribute list (only `data-copy-state` is
-called out) — added it because rule #2/#3 both push variants/state through `data-*` attributes
+called out) — added it because rule #3/#3 both push variants/state through `data-*` attributes
 rather than inline styles or classes, and size is otherwise unreachable from outside the
 component's view encapsulation.
 
@@ -76,7 +76,7 @@ wires the clipboard timer (install-row, code-block).
 - **Focus ring not restyled locally.** The spec's mock CSS repeats `box-shadow: 0 0 0 2px
   var(--ngpt-focus-ring)` under `:focus-visible`, but `src/styles/global.css` already applies
   that exact rule globally. Only added the state-specific part (`color:
-  var(--ngpt-text-primary)`) locally, per CONVENTIONS rule #4 ("don't restyle focus locally
+  var(--ngpt-text-primary)`) locally, per CONVENTIONS rule #5 ("don't restyle focus locally
   unless your spec says an element needs a different treatment") — the ring itself needs no
   different treatment here.
 

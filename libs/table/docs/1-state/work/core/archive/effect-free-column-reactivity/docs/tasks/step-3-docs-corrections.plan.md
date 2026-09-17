@@ -16,7 +16,7 @@
 ## Why This Step Exists
 
 The table's internal engine reference (`CLAUDE.md`) currently describes `engine/core.ts` and
-`api/update-columns.ts` in terms of the pre-#50 shape (`columns` as the writable single source of
+`api/update-columns.ts` in terms of the pre-#15 shape (`columns` as the writable single source of
 truth). Once Step 1 lands, that description is wrong and would mislead the next maintainer who
 reads it before touching either file. `TableFeatureSpec` is ADR-0003's documented feature
 contract, and Step 1 adds semantics to its `columnRules` key (from "declared but unread" to
@@ -33,7 +33,7 @@ amendment, not a new ADR (per `4-architecture.md`'s open question 1, resolved th
   `0003-*.md` — confirm before editing) and add an amendment section (don't rewrite history)
   documenting: `TableFeatureSpec.columnRules` is now read by `composeTable()`'s `foldFeatures()`
   and merged additively (not through `SlotRegistry` — rules from multiple features on the same
-  column both apply, combined via `foldColumnRules`'s AND reducer), landed via #49/#50.
+  column both apply, combined via `foldColumnRules`'s AND reducer), landed via #14/#50.
 
 ## Implementation Notes
 

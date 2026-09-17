@@ -26,17 +26,17 @@ narrower/weaker), **missing** (nothing in `src/`).
 | Sizing/resizing | **Not implemented** — `ColumnDef.width` "typed, sketched, not used," blocked on a presentation-fields ADR | **Missing** vs. all four (all ship sizing in core) |
 | Pinning | **Not implemented** — `withColumnPinning()` "not yet started" | **Missing** vs. all four (all ship pinning in core) |
 | Filter variants | N/A (no filtering feature) | **Missing**, see Filtering below |
-| Atomic layout persistence | **Not implemented** — no persistence of any column state | **Missing.** Ironically low-stakes right now since there's no sizing/pinning to lose yet — but per the audit's #2 cross-cutting gap, this is worth designing correctly from the start rather than retrofitting once sizing/pinning ship, given every competitor's retrofit attempt has bugs |
+| Atomic layout persistence | **Not implemented** — no persistence of any column state | **Missing.** Ironically low-stakes right now since there's no sizing/pinning to lose yet — but per the audit's #3 cross-cutting gap, this is worth designing correctly from the start rather than retrofitting once sizing/pinning ship, given every competitor's retrofit attempt has bugs |
 
 ## Rows — selection and pinning missing; expansion on par; reordering missing
 
 | Concern | libs/shared/table | vs. the four |
 |---|---|---|
-| Selection (single/multi) | **Not implemented** — no `withSelection()`, no selection state anywhere in `src/` | **Missing.** This is the single biggest baseline gap — all four libraries ship row selection in core, and it's the audit's #1-ranked developer pain point overall (selection × pagination/filtering scope). Nothing to even have the scope bug yet, but also nothing developers can build on. |
+| Selection (single/multi) | **Not implemented** — no `withSelection()`, no selection state anywhere in `src/` | **Missing.** This is the single biggest baseline gap — all four libraries ship row selection in core, and it's the audit's #2-ranked developer pain point overall (selection × pagination/filtering scope). Nothing to even have the scope bug yet, but also nothing developers can build on. |
 | Pinning (top/bottom) | Not implemented | **Missing** — though PrimeNG also has none, so this isn't uniquely behind |
 | Expansion / tree data | `withExpansion()` — sub-rows, `everExpanded` ledger, ADR-0012 proposes splitting panel vs. tree (not yet done) | On par with TanStack/MRT; ahead of the "detail panel is a separate MRT-only concept" split in that `withExpansion()` already covers panel-like use today, though ADR-0012 flags this as needing a real split eventually |
 | Row reordering (drag) | Not implemented — `moveRow` has no verb, blocked on `withDragDrop()` | Same gap as TanStack; behind AG Grid/PrimeNG (both ship built-in drag reorder) |
-| Row-removal reconciliation across features | ADR-0006 diff-and-prune mechanism | **Ahead** — no competitor documents an equivalent generalized "notify every feature when rows disappear" hook; this is closer to solving the audit's #4 cross-cutting gap (edit rollback / state consistency) than anything in the four libraries |
+| Row-removal reconciliation across features | ADR-0006 diff-and-prune mechanism | **Ahead** — no competitor documents an equivalent generalized "notify every feature when rows disappear" hook; this is closer to solving the audit's #5 cross-cutting gap (edit rollback / state consistency) than anything in the four libraries |
 
 ## Sorting — on par, ahead on null-ordering rigor
 
@@ -46,7 +46,7 @@ narrower/weaker), **missing** (nothing in `src/`).
 | Custom comparator | Per-column `sortFn`, `detectComparator` fallback | On par |
 | Manual/server mode | `withSorting({ manual: true })` | On par — same shape as TanStack's `manualSorting` |
 | Null/empty value ordering | Explicit, shipped: `nulls: 'last'` default, `''` treated as real value unless opted out via `applySortNulls` | **Ahead** — none of the four libraries' docs mention a deliberate null-ordering contract; this is usually silent/undefined behavior elsewhere |
-| Sort × grouping interaction | N/A — grouping doesn't exist yet | Can't yet inherit the sort×grouping bug class the audit flags in TanStack/MUI X/AG Grid (#5 sentiment item) — worth testing for explicitly once grouping ships, as a chance to *not* repeat that bug |
+| Sort × grouping interaction | N/A — grouping doesn't exist yet | Can't yet inherit the sort×grouping bug class the audit flags in TanStack/MUI X/AG Grid (#6 sentiment item) — worth testing for explicitly once grouping ships, as a chance to *not* repeat that bug |
 
 ## Filtering — missing entirely
 
@@ -67,7 +67,7 @@ grouping (`grouping: string | null`) with per-column `aggregateFn`, composing
 optionally with `withExpansion()` for collapse — this is a smaller, more
 disciplined scope than any of the four libraries' full grouping models
 (single-level vs. TanStack/AG Grid's arbitrary-depth nesting), which
-sidesteps the audit's #3 cross-cutting gap (multi-level aggregation
+sidesteps the audit's #4 cross-cutting gap (multi-level aggregation
 correctness — TanStack's own unresolved depth-0 bug) by not attempting depth
 at all in v1.
 
@@ -88,7 +88,7 @@ pagination in their free/core tier — this is a baseline gap.
 | Concern | libs/shared/table | vs. the four |
 |---|---|---|
 | Cell/row edit state model | `withOptimistic()` (always-editable, rollback-only) and `withRowEdit()` (gated single/multi-row sessions with a commit-boundary `draft` signal), sharing one `EditingState` core | **Ahead of all four.** TanStack/MRT/PrimeNG/AG Grid all have *some* edit-state model, but none separate "optimistic live editing" from "gated session editing" as two composable, independently-testable features sharing one core |
-| Dirty tracking / optimistic rollback / undo | `RowRestorePoint` (`row`, `at`, `detached`) makes rollback structurally sound including re-inserting a removed row at its original position; `swapRowId` handles the temp-id → server-id handoff cleanly | **Directly answers the audit's #4/#3 cross-cutting gap** — "nobody has a good answer for dirty tracking/rollback/undo-vs-server-rejection" was the single strongest sentiment finding (dev.to XState article, no vendor has shipped this). This codebase has a considered answer already in production via the `gated-*-optimistic`/`gated-*-pessimistic` stories. |
+| Dirty tracking / optimistic rollback / undo | `RowRestorePoint` (`row`, `at`, `detached`) makes rollback structurally sound including re-inserting a removed row at its original position; `swapRowId` handles the temp-id → server-id handoff cleanly | **Directly answers the audit's #5/#3 cross-cutting gap** — "nobody has a good answer for dirty tracking/rollback/undo-vs-server-rejection" was the single strongest sentiment finding (dev.to XState article, no vendor has shipped this). This codebase has a considered answer already in production via the `gated-*-optimistic`/`gated-*-pessimistic` stories. |
 | Validation | Deliberately not owned by the table (commit-boundary pattern via consumer's own Angular Signal Forms + `debounce`) | Same non-goal as all four (none ship validation state either) — but the *reason* here is documented as a deliberate boundary (D1/D20/D43), not an oversight |
 | Bulk edit | `createRow` bulk-add overload (array), but no bulk `removeRow`/`patchRow` (needs `withSelection()`, doesn't exist) | Blocked on the Rows-section selection gap above — worth sequencing selection before extending bulk-edit further |
 | Move/reorder rollback | **G5 gap** — no rollback representation for a reordered row (blocked on `withDragDrop()`) | N/A — no competitor supports row-order rollback either |
@@ -100,7 +100,7 @@ filters, pagination) to URL/localStorage/server. PrimeNG is the only
 competitor with a *named* API here (`stateStorage`/`stateKey`), and even it
 has multiple confirmed correctness bugs (order-restore broken until 17.12.0,
 width corruption, spurious restores). **The gap here isn't "behind PrimeNG" so
-much as "nothing to compare yet"** — but per the audit's #2 cross-cutting gap,
+much as "nothing to compare yet"** — but per the audit's #3 cross-cutting gap,
 this is worth designing as one atomic, round-trippable object from the start
 once sizing/pinning/filtering/pagination exist, rather than retrofitting
 piecemeal the way every competitor did.
@@ -121,7 +121,7 @@ it — and (b) how directly it maps to the audit's cross-cutting pain points.
 1. **Row selection** (`withSelection()`) — missing entirely, blocks bulk edit
    verbs already stubbed out (`removeRow(id[])`/`patchRow(id[], partial)`),
    and is every competitor's baseline feature. Design the selection-scope
-   concept (page/filtered/all) deliberately from day one — the audit's #1
+   concept (page/filtered/all) deliberately from day one — the audit's #2
    sentiment finding is that nobody else has done this cleanly; there's a real
    chance to lead here rather than inherit the ambiguity.
 2. **Grouping & aggregation** (`withGrouping()`) — the feature that prompted

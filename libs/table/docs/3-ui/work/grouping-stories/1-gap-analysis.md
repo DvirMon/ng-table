@@ -6,7 +6,7 @@ status: >
   one host, so the async rule split into `grouping-async-rule/` and the deliberate-misuse controls
   into `grouping-regressions/`. Nothing on canvas changed; `0-product/grouping.md` now names the
   story that renders each mark. 4.2 also moved ❌ → 🟡, because the `owner` column declares an
-  `accessor` and the engine keys the group on it — see #114. All story folders shipped —
+  `accessor` and the engine keys the group on it — see #80. All story folders shipped —
   `grouping-static/`, `grouping-async-rule/`, `grouping-regressions/`, `grouping-collapsible/`,
   `grouping-selection/` — plus the four group-level updaters exported from `index.ts` and the
   async grouping rule. Coverage re-derived into `0-product/grouping.md`: §1–§4 is 9 ✅, 5 🟡, 3 ❌;
@@ -14,7 +14,7 @@ status: >
   C3 (S4's "is everything expanded" signal, so neither Expand-all button can label itself), C5
   (blank/object group keys, S7/S8), S2/#79 (an `aggregateFn` that throws takes the whole table
   down instead of blanking one summary), and D14's missing half (a dropped level is announced by
-  the story's own arithmetic, not by the library). C4 is issue #60 steps 5–6.
+  the story's own arithmetic, not by the library). C4 is issue #26 steps 5–6.
 date: 2026-09-14
 parent: ../../architecture.md
 ---
@@ -45,7 +45,7 @@ revised story carries a **Changed from the first pass** block. Also folded in:
 Coverage marks in the product doc are re-derived here from `src/`, not trusted. That doc's
 blanket "every story is ❌, verified 2026-09-10" is **stale**: `withGrouping()`, the `'group'`
 pipeline and render stages, `groupOrder`, collapse-via-`expandedRows`, and `rowsOf()` all shipped
-between 2026-09-10 and today (issues #58/#59/#65, all 5/5 steps done — the `0 / 5 complete`
+between 2026-09-10 and today (issues #24/#59/#65, all 5/5 steps done — the `0 / 5 complete`
 headers on their `progress.md` files are stale counters, the step rows are all ✅). The marks move
 from ❌ to 🟡 in bulk. What does **not** move: nothing in `src/stories/` touches grouping at all.
 
@@ -224,7 +224,7 @@ the filtered summary, and cannot be shown without it.
 | 1.1 contiguous rows, header per group | **new** — `@for` over `renderRows()`, branching on `row.kind === 'group'`; header row reads its label from `row.groupKey` (C1). P1: the label is the header's primary content, unanimously |
 | 1.2 count per group | **new** — `{{ table.rowsOf(row).length }}` in the header, **plus a `showCount` arg defaulting to `true`** — P6's shape is default-on-with-a-switch in all three peers that render one. A filter input proves the count is of visible rows |
 | 1.3 per-group summary | **new** — an `amount` column with `aggregateFn`, rendered from `row.aggregates` **on the group header row** (P7 — the convergent placement); nested levels show a parent total that is the sum of its subtree, which is T2's blank-at-depth-0 bug not happening |
-| 1.3 failure — one bad group *([#79](https://github.com/DvirMon/acme/issues/79), filed 2026-09-13 — runtime-class error per ADR-0014, degrade not throw; fallback + reporting shape specced there, not inline)* | **new**, honest regression — a "Break one group's summary" button flips a signal the `aggregateFn` throws on; today this takes the table down (S2). Annotated in the doc-comment, starts passing when ADR-0014's wrap lands. No peer documents this behavior at all, so the product doc's criterion is the only bar |
+| 1.3 failure — one bad group *([#45](https://github.com/DvirMon/ng-table/issues/45), filed 2026-09-13 — runtime-class error per ADR-0014, degrade not throw; fallback + reporting shape specced there, not inline)* | **new**, honest regression — a "Break one group's summary" button flips a signal the `aggregateFn` throws on; today this takes the table down (S2). Annotated in the doc-comment, starts passing when ADR-0014's wrap lands. No peer documents this behavior at all, so the product doc's criterion is the only bar |
 | 1.4 what the table is grouped by | **new** — a persistent pill list of the active levels, in order, above the table. This is AG Grid's Row Group Panel (P4b) in its read-only half |
 | 1.4 / U2 what happens to the grouped column | **new**, **added in revision** — a `groupedColumnMode` arg (`keep` / `hide` / `move-to-front`) over the already-exported `toggleColumnVisibility` / `reorderColumns` (`index.ts:67-69`). P12 is four libraries with four defaults; U2 is open; a story that renders all three is how the choice gets made on screen instead of on paper |
 | 3.1 / 3.2 change and re-nest the grouping | **new**, **changed** — a per-column-header **"Group by this column" / "Ungroup"** control (P4, the convergent route) for `addGroupLevel`/`removeGroupLevel`, and the §1.4 pills made interactive — drag-or-`◀ ▶` to reorder, `×` to remove (P4b) — for `reorderGroupLevels`. A "Reset levels" control exercises `setGroupLevels`. Needs C2 |
@@ -318,11 +318,11 @@ selection readout.
 last explicit choice rather than flashing ungrouped" — the one genuinely async surface grouping
 has, and §1.4's "not silently getting a different report". Adds one story export to B, not a folder.
 
-**Status corrected 2026-09-13.** The first pass called this blocked on issue #60 step 4, with
+**Status corrected 2026-09-13.** The first pass called this blocked on issue #26 step 4, with
 `applyGrouping` "exported but inert". Step 4 is **done** — `progress.md` reads 4/6, and
 `api/features/with-grouping.ts:96-108` folds `config.groupingRule ?? rulesGroupingRule` over
 `baseGrouping` and writes through to `baseGrouping`. `applyGrouping`/`applyGroupingAsync` are live
-(`index.ts:44-45`). What remains on #60 is step 5 (tests through the public surface, in progress)
+(`index.ts:44-45`). What remains on #26 is step 5 (tests through the public surface, in progress)
 and step 6 (docs, pending) — neither changes behavior, so **C4 drops from a hard edge to a tracked
 note**.
 
@@ -376,7 +376,7 @@ unblocking change in the plan and every story in it is behind the change.
 **C3 — S4 signal + S5 group-aware expand/collapse verb** (OQ-3, no issue open). D's Expand-all
 button ships as an honest regression without it and starts passing when it lands — a soft edge, so
 D is not held.
-**C4 — issue #60 steps 5–6** (tests through the public surface, then docs). Steps 1–4 are done;
+**C4 — issue #26 steps 5–6** (tests through the public surface, then docs). Steps 1–4 are done;
 the fold is live and `applyGrouping`/`applyGroupingAsync` work, so **this is no longer an edge on
 F**. Owned by the state effort, tracked here only because step 6 owes the doc updates these
 stories will cite.
@@ -401,7 +401,7 @@ soft edges (regression demos / tracked, nothing held):
 **Parallel-safe: [A, C1, C2] — start now. Parallel-safe: [B, D, E] after A + C1 (B also after C2).
 Dependency: A + C1 + C2 → B → F.**
 
-**Changed from the first pass:** one edge removed — `C4 → F`, because issue #60 step 4 shipped
+**Changed from the first pass:** one edge removed — `C4 → F`, because issue #26 step 4 shipped
 (see F above), so F is now blocked only by B. Node set is unchanged: the revision's new
 affordances (`groupedColumnMode`, `showCount`, indentation, the chevron/keyboard toggle, E's
 `cascade` arg) all build on already-exported surface — `toggleColumnVisibility`/`reorderColumns`
@@ -427,7 +427,7 @@ the summary line above are all re-derived from that single ranking.
 | End-user group ordering as an affordance (P9c) | **Added in revision.** No library anywhere lets a person place group instances in an arbitrary order — the research is unanimous on the absence. B exposes `groupOrder` as a developer-config Storybook arg for that reason; inventing an end-user drag-to-reorder-groups UI in a story would imply a settled UX that does not exist. It is design work (§9.3), not porting |
 | End user picking the aggregation function | **Added in revision.** AG Grid (`valueAggSubMenu`) and MUI X (column menu → Aggregation) both ship it; ours is fixed by the developer on `ColumnDef.aggregateFn`. That is §9.1's third bullet — an unowned capability, and it needs the column menu that does not exist |
 | `TableSnapshot.grouping?: string \| null` | A live contradiction with D3 in `state-persistence.md:90` — a doc/type fix, not a demonstrable mechanism |
-| `tier-3-feature-config.md`'s `applyGroup(path, …)` | **Added in revision** (from `research-grouping-internal-coverage.md` §3.2). Both the name and the mechanism diverge from the shipped `applyGrouping` and from D6's no-`effect()` fold. A doc fix owed by issue #60 step 6, not a story |
+| `tier-3-feature-config.md`'s `applyGroup(path, …)` | **Added in revision** (from `research-grouping-internal-coverage.md` §3.2). Both the name and the mechanism diverge from the shipped `applyGrouping` and from D6's no-`effect()` fold. A doc fix owed by issue #26 step 6, not a story |
 | `3-ui/directives/grouping.md`'s "no new directive" decision | Needs revisiting (it predates D3's multi-level array), but that is a spec decision. These stories are Tier 0 by necessity and will show what a directive would have to own |
 
 ---

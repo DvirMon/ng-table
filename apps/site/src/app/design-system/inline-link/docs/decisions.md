@@ -28,7 +28,7 @@ stays derived from the token.
 Spec's focus value (`0 0 0 2px oklch(0.68 0.22 328 / 0.6)`) matches `--ngpt-focus-ring` and the
 global `:focus-visible` policy in `src/styles/global.css` exactly (`box-shadow: 0 0 0 2px
 var(--ngpt-focus-ring)`), which already applies to the rendered `<a>` unscoped by Angular's
-emulated encapsulation. No local `:focus-visible` rule was added, per convention #4.
+emulated encapsulation. No local `:focus-visible` rule was added, per convention #5.
 
 ## `:host { display: contents }`
 

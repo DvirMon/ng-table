@@ -113,4 +113,4 @@ server round-trip.
 Worth noting for later: Signal Forms expresses *async config* as a resource-backed rule
 (`validateAsync`), which this repo already mirrors in `applyVisibleAsync` / `metadataAsync`. If
 declarative server-seeding of filters is ever wanted, that is the shape — not an imperative
-setter in an `effect()`. Out of scope for issue #5.
+setter in an `effect()`. Out of scope for issue #6.

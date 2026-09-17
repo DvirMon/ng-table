@@ -1,6 +1,6 @@
 # Step 10 — Migrate `state.spec.ts`, rewrite `with-filtering.spec.ts`
 
-**PR scope:** PR 1 of 1 (`#125`). **Parallel-safe with: Step 7, Step 8, Step 9.**
+**PR scope:** PR 1 of 1 (`#91`). **Parallel-safe with: Step 7, Step 8, Step 9.**
 **Task type:** `test`
 **Stack:** angular
 **Skills used:** `unit-test`
@@ -21,9 +21,9 @@ runtime `undefined is not a function` in two files and says nothing useful about
 step is what returns the suite to green, and it is independent of every story step: it imports
 nothing from `src/stories/`.
 
-Issue `#125`'s spec list is stale on three counts, verified against the tree:
+Issue `#91`'s spec list is stale on three counts, verified against the tree:
 
-- `create-filters.types.spec.ts` no longer exists — `#124` Step 6 rewrote it as
+- `create-filters.types.spec.ts` no longer exists — `#90` Step 6 rewrote it as
   `api/features/with-filtering.types.spec.ts` (304 LOC). Nothing to do.
 - `create-filters.spec.ts` is **already migrated** (773 LOC, `buildFilterModel` + object schema).
   Nothing to do.
@@ -115,7 +115,7 @@ name and narrows the pipeline. Do **not** restate criterion semantics here — t
 ## Non-Goals
 
 - `create-filters.spec.ts`, `matchers.spec.ts`, `with-filtering.types.spec.ts` — already correct.
-- Adding runtime coverage for `when`. `#124` Step 1's acceptance covers it in
+- Adding runtime coverage for `when`. `#90` Step 1's acceptance covers it in
   `create-filters.spec.ts`.
 - Story-host specs. There are none.
 

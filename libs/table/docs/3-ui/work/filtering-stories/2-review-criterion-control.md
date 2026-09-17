@@ -170,14 +170,14 @@ L2 (library) withFiltering TState param ───┘        typed nodes, form() 
 
 ### One control stays hand-wired
 
-Originally two. The status select was the other, and #97 closed it: the mismatch was that
+Originally two. The status select was the other, and #63 closed it: the mismatch was that
 `equals` declares `null` as its empty criterion while a native `<select>` can only express empty
 as `''`, so a bound select wrote a value `isEmpty` did not treat as empty and the filter sat
 permanently active while matching nothing. `FilterOptions.emptyValue` now lets a filter declare
 what empty means — `equals(path.status, { emptyValue: '' })` — and all three hosts bind status
 through plain `[formField]` with an `<option value="">`. No accessor, no adapter.
 
-> **Mechanism changed 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116); the
+> **Mechanism changed 2026-09-16 by [#82](https://github.com/DvirMon/ng-table/issues/82); the
 > outcome did not.** `emptyValue` became *additive*, so an `equals` criterion always carries the
 > rule's own `null` alongside any declared empty — which a `<select>`'s `string` control value
 > cannot hold. All three hosts now declare the status filter as
@@ -208,13 +208,13 @@ supported route and needs no assertion.
 
 | Issue | What |
 |---|---|
-| [#97](https://github.com/DvirMon/acme/issues/97) | **Closed** by `FilterOptions.emptyValue` — the status select binds through `[formField]`; the tag multi-select stays hand-wired by the control's own shape. Still closed after [#116](https://github.com/DvirMon/acme/issues/116), which moved the mechanism to `filter(path.status, matchesStatus, { emptyValue: '' })` — see "One control stays hand-wired" |
-| [#98](https://github.com/DvirMon/acme/issues/98) | No runtime coverage for the writable root or `form()` over the criterion model |
-| [#99](https://github.com/DvirMon/acme/issues/99) | Restoring a persisted snapshot has no typed entry point |
-| [#100](https://github.com/DvirMon/acme/issues/100) | `.storybook/preview.ts` implicit-any errors |
-| [#90](https://github.com/DvirMon/acme/issues/90) | **Closed** by L2 — typed `createFilters()` state now reaches `withFiltering()` |
-| [#91](https://github.com/DvirMon/acme/issues/91) | Partially addressed — typed `TState` fixes property access; the `composition/derived-state` story has not adopted it |
-| [#94](https://github.com/DvirMon/acme/issues/94) | Plain `tsc` misses template errors — hit twice in this review |
+| [#63](https://github.com/DvirMon/ng-table/issues/63) | **Closed** by `FilterOptions.emptyValue` — the status select binds through `[formField]`; the tag multi-select stays hand-wired by the control's own shape. Still closed after [#82](https://github.com/DvirMon/ng-table/issues/82), which moved the mechanism to `filter(path.status, matchesStatus, { emptyValue: '' })` — see "One control stays hand-wired" |
+| [#64](https://github.com/DvirMon/ng-table/issues/64) | No runtime coverage for the writable root or `form()` over the criterion model |
+| [#65](https://github.com/DvirMon/ng-table/issues/65) | Restoring a persisted snapshot has no typed entry point |
+| [#66](https://github.com/DvirMon/ng-table/issues/66) | `.storybook/preview.ts` implicit-any errors |
+| [#56](https://github.com/DvirMon/ng-table/issues/56) | **Closed** by L2 — typed `createFilters()` state now reaches `withFiltering()` |
+| [#57](https://github.com/DvirMon/ng-table/issues/57) | Partially addressed — typed `TState` fixes property access; the `composition/derived-state` story has not adopted it |
+| [#60](https://github.com/DvirMon/ng-table/issues/60) | Plain `tsc` misses template errors — hit twice in this review |
 
 ## Not verified
 

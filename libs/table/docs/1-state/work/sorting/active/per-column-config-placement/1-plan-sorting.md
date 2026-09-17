@@ -1,17 +1,17 @@
 ---
 title: Plan — sorting per-column config moves to withSorting({ sortable, schema })
 type: plan
-status: approved shape, 2026-09-17 — not implemented. Settles the sorting half of #134; aggregateFn follows under the same rule.
+status: approved shape, 2026-09-17 — not implemented. Settles the sorting half of #100; aggregateFn follows under the same rule.
 date: 2026-09-17
 audience: developers
-issue: https://github.com/DvirMon/acme/issues/134
+issue: https://github.com/DvirMon/ng-table/issues/100
 ---
 
-# #134 — sorting: move per-column config to `withSorting({ sortable, schema })`
+# #100 — sorting: move per-column config to `withSorting({ sortable, schema })`
 
 ## Context
 
-Issue #134 asks where a feature's per-column config lives. Sorting is split three ways today:
+Issue #100 asks where a feature's per-column config lives. Sorting is split three ways today:
 `sortFn` / `enableSorting` on `ColumnDef` (`api/types.ts:80-81`), null placement via
 `applySortNulls` in `TableConfig.columnsSchema` routed through the `SORT_NULLS` metadata key
 (`schema/column-rules.ts:60`, `engine/columns.ts:87`). Blast radius measured in the issue: 0
@@ -43,7 +43,7 @@ Rationale recorded for the ADR (step 8):
   same as `withGrouping.initial`). `setSorting()` stays unguarded — programmatic writes are
   explicit (MUI precedent). A rule on a column outside the set is inert for clicks, still
   applies under `setSorting()`.
-- **General rule for #134** (settles the sorting half; `aggregateFn` follows later under the
+- **General rule for #100** (settles the sorting half; `aggregateFn` follows later under the
   same rule): a per-column fact goes in the feature's schema fn only when it is reactive,
   async, or call-order-bearing (`applyGrouping.enable`, `applyVisible`). A static per-column
   behavior override still uses the schema fn for placement consistency and single-writer
@@ -142,7 +142,7 @@ every column sortable).
 ### 8. Record the decision
 
 - New `docs/adr/0018-per-column-feature-config-placement.md` (via `adr-writer`): the general rule above, the sortability-is-a-set argument, prior-art table, what it supersedes (D2 wording; D4 unchanged), and that `aggregateFn` is the remaining field to migrate.
-- Comment on #134 with the rule + link; keep the issue open for `aggregateFn` (or close and open a scoped follow-up — user's call at implementation time).
+- Comment on #100 with the rule + link; keep the issue open for `aggregateFn` (or close and open a scoped follow-up — user's call at implementation time).
 
 ## Verification
 
@@ -154,6 +154,6 @@ every column sortable).
 ## Out of scope
 
 - `aggregateFn` migration (same rule, `withGrouping`) — follow-up.
-- #115 `groupIndex` — its placement now has a rule to follow.
+- #81 `groupIndex` — its placement now has a rule to follow.
 - Table-wide `nulls` default on the config — still open in `sorting.md`; not added.
 - Header-cell directive binding `aria-sort`/`data-sortable` — `isSortable()` gives it what it needs; the directive change is `docs/3-ui/directives/sort.md`'s own work.

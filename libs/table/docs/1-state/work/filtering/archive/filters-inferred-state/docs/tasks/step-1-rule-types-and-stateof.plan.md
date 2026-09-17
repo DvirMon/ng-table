@@ -1,6 +1,6 @@
 # Step 1 — Add the rule types and the `StateOf` fold
 
-**PR scope:** PR 1 of 2 (`#110`). **Parallel-safe with: Step 2.** **Blocks Step 3, Step 4.**
+**PR scope:** PR 1 of 2 (`#76`). **Parallel-safe with: Step 2.** **Blocks Step 3, Step 4.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `typescript-conventions`, `file-organization`
@@ -17,7 +17,7 @@ this step — they are Steps 3 and 4.
 
 ## Why This Step Exists
 
-This is the type-level mechanism the whole issue rests on. Every other step in `#110` is a rewrite
+This is the type-level mechanism the whole issue rests on. Every other step in `#76` is a rewrite
 of a runtime file to produce or consume the shapes declared here, so nothing else can start until
 the shapes exist and compile.
 
@@ -119,7 +119,7 @@ once nothing references it.
 - Deleting `FILTER_RECORDER`, `FilterSchemaRecorder` or `FilterHandle`'s recorder field. They still
   have live callers until Step 4 lands; Step 5 removes them.
 - `rowOf` / `RowToken` — Step 2, in its own file.
-- Asserting any of this in a spec — that is `#112`.
+- Asserting any of this in a spec — that is `#78`.
 
 ## Acceptance Checks
 

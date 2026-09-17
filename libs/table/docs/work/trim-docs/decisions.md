@@ -1,11 +1,11 @@
 # trim-docs — decisions
 
-Source: [#80](https://github.com/DvirMon/acme/issues/80). Workspace is domain-wide
+Source: [#46](https://github.com/DvirMon/ng-table/issues/46). Workspace is domain-wide
 (`docs/work/`), not tier-scoped — the ticket spans `0-product` through `adr` plus `src/**`.
 
 ## Measurements (2026-09-16)
 
-Issue #80 measured 267 docs files / 42,865 lines on 2026-09-13. Three days later:
+Issue #46 measured 267 docs files / 42,865 lines on 2026-09-13. Three days later:
 
 | Surface | Files | Lines |
 |---|---|---|
@@ -60,7 +60,7 @@ record the issue's open question worries about losing.
 ## Decisions
 
 - **2026-09-16 — Tier 4 is out of scope.** All 308 `**/work/**` files (44,016 lines) stay
-  untouched, including the 216 spent `step-*.plan.md` / `progress.md` files. #80's two tier-4
+  untouched, including the 216 spent `step-*.plan.md` / `progress.md` files. #46's two tier-4
   open questions (compress vs. collapse) are answered by exclusion, not by a disposition.
   N1 and N2 are closed; no retention policy is set by this ticket.
 - **2026-09-16 — Scope is tiers 1–3 plus source comments:** 36 docs files / 9,811 lines
@@ -68,7 +68,7 @@ record the issue's open question worries about losing.
   `src/**/*.ts` files.
 - **2026-09-16 — `0-product/**` stays in scope.** Proposing to exclude it was unfounded — it
   rested on a single 38-line sample read as "already dense". The four product docs are the
-  largest in the domain and grew between #80's measurement (2026-09-13) and today
+  largest in the domain and grew between #46's measurement (2026-09-13) and today
   (grouping 1,117→1,392, selection 744→938, filtering 768→876), which argues for trimming them,
   not skipping them.
 - **2026-09-16 — `0-product/**` has a machine consumer, so its structure is frozen.** The
@@ -77,13 +77,13 @@ record the issue's open question worries about losing.
   **Covered by:** link untouched. This constrains *how* to cut, not *whether*.
 - **2026-09-16 — Bar is "cut what carries nothing", no budget.** No per-file or per-kind line
   ceiling. A line goes only if removing it loses no information; whatever survives is the right
-  length. #80's second open question is answered: line delta is a reported outcome, never a
+  length. #46's second open question is answered: line delta is a reported outcome, never a
   target to hit.
 - **2026-09-16 — The work is conceptual trimming, not word-level trimming.** Reason about what
   content belongs at all, then remove what does not. Simplifying the wording *and the concept*
   is the main lever; shortening sentences while keeping every item is not the ask.
 - **2026-09-16 — Mechanical "counts unchanged" verification is rejected.** It enforces the wrong
-  invariant: keeping every bullet/heading guarantees word-level trimming only. #80's acceptance
+  invariant: keeping every bullet/heading guarantees word-level trimming only. #46's acceptance
   criterion "step/criteria counts unchanged" is therefore wrong as written and must be replaced.
 - **2026-09-16 — Removal is governed by a per-kind documentation contract.** Each artifact kind
   owes a specific, structured minimum; content outside that contract is misplaced, not
@@ -103,31 +103,31 @@ record the issue's open question worries about losing.
 | # | Decision |
 |---|---|
 | D1 | Tier 4 out of scope entirely. No retention policy set by this ticket. |
-| D2 | `0-product/**` stays in scope. Excluding it was unfounded — those four docs are the largest in the domain and grew between #80's measurement and today. |
+| D2 | `0-product/**` stays in scope. Excluding it was unfounded — those four docs are the largest in the domain and grew between #46's measurement and today. |
 | D3 | `0-product/**` structure is frozen: the `story-plan` skill re-derives its coverage marks against story code. Every heading, ✅/🟡/❌ mark, acceptance-criterion bullet and `**Covered by:**` link survives verbatim. Trim around them. |
 | D4 | Bar is "cut what carries nothing" — no per-file or per-kind line budget. Line delta is a reported outcome, never a target. |
-| D5 | Mechanical "counts unchanged" verification is **rejected**. It enforces the wrong invariant — keeping every bullet guarantees word-level trimming only. #80's acceptance criterion is wrong as written and gets replaced. |
+| D5 | Mechanical "counts unchanged" verification is **rejected**. It enforces the wrong invariant — keeping every bullet guarantees word-level trimming only. #46's acceptance criterion is wrong as written and gets replaced. |
 | D6 | Removal is governed by a per-kind documentation contract (below). Content outside its kind's contract is misplaced, not information to preserve. |
 | D7 | Before deleting out-of-contract reasoning: check whether it already lives in `docs/`. If yes, delete. If it exists nowhere else, relocate it to the owning doc first. Nothing is dropped without a home. |
-| D8 | `capability:` / `spec:` / `code:` frontmatter is **frozen** — it is generator input for `docs/status.md`. Conversely, status narrated inline in body prose ("Shipped —", "built, uncommitted", "decided in #96") is duplicated state and is removable, because `status.md` already derives it. |
+| D8 | `capability:` / `spec:` / `code:` frontmatter is **frozen** — it is generator input for `docs/status.md`. Conversely, status narrated inline in body prose ("Shipped —", "built, uncommitted", "decided in #62") is duplicated state and is removable, because `status.md` already derives it. |
 | D9 | The target format for story documentation is derived from what TanStack Table, Angular Material, AG Grid and MUI X converged on — measured, not assumed. AG Grid was one example, not the specification. |
 | D10 | The per-kind contracts are an **upstream deliverable**, not a side product of trimming. "What does this kind owe" has no answer without them, and verification checks a trimmed file against its contract — which is why bullet counts (D5) were the wrong instrument: there was nothing to check against. |
-| D11 | The contracts are the only part of this work that survives the trim. Docs grew +15,157 lines in three days; a trim with no contract decays back. #78 already presumes a bar exists ("write those at the new terse bar"). |
+| D11 | The contracts are the only part of this work that survives the trim. Docs grew +15,157 lines in three days; a trim with no contract decays back. #44 already presumes a bar exists ("write those at the new terse bar"). |
 | D12 | **No agent per kind.** That is the enumerated-surface-per-case shape `general-mechanism-over-enumerated-cases` warns against — four agents differing only in which paragraph they load is four maintenance points for one mechanism. Split on the real seam instead: **source comments vs. markdown**. Different tools, different risk, different verification (a source pass ends in `nx run shared-table:typecheck`; a markdown pass does not). Two dispatch targets, each loading the contract for the class of file it is handed. |
 | D13 | **A contract over ~40 lines has stopped being a contract.** Writing five of them is itself a docs-writing job inside a docs-*reduction* ticket; they must not become the next thing needing a trim. |
-| D14 | ~~Contracts written inside #80 as step 1.~~ **Superseded by D21** — decided before the `~/.claude/` seam surfaced. The contracts cannot be repo work; they file in work item A, which precedes #80. |
+| D14 | ~~Contracts written inside #46 as step 1.~~ **Superseded by D21** — decided before the `~/.claude/` seam surfaced. The contracts cannot be repo work; they file in work item A, which precedes #46. |
 | D15 | Duplications resolve to **one owner, others link** — no summary retained in the linking file. Each of D1-D22 ends with exactly one file stating the claim. Drift is the reason: D11 already has four files disagreeing about whether reducer-combine shipped. |
 | D16 | **The contracts are defined in this plan, not in step 1.** A contract is a decision; deferring it into execution is the readiness-gate mistake again. Step 1 files already-decided text. |
 | D17 | **An ADR contract already exists** — `~/.claude/skills/domain-modeling/ADR-FORMAT.md`: title + 1-3 sentences, optional sections "most ADRs won't need." The repo ignores it: 14 of 15 table ADRs carry Context/Decision/Consequences, 9 carry Alternatives, several carry discussion sections (`## The D37 objection`, `## Options, weighed`, `## Research`). ADR-0001 is 8 lines and conforms; ADR-0015 is 270. The ADR problem is enforcement, not absence. |
 | D18 | **One `adr-writer` agent.** The mechanism, not "it's standalone work": ADRs are written mid-grill by the party holding the whole discussion, and that party writes the discussion. An agent handed only *decision / why / consequences / alternatives* cannot reproduce 270 lines it never saw. Context isolation is the fix. `domain-modeling` dispatches it instead of writing inline. |
 | D19 | **Contracts live in `~/.claude/conventions/doc-contracts/`, never in `.claude/rules/`.** Rules inject into every matching context; a format should load only when its consumer asks for it. Agents *reference* the contract by path. `conventions/` already exists for exactly this — "opt-in, not always-on." |
 | D20 | **Source-comment contracts are framework-agnostic.** They sit above `angular-developer` / `react-developer`. `story-implementer`, `angular-implementer` and `react-implementer` each get a one-line pointer to the contract for the file class they produce. No new agent for source comments — the writers already exist. |
-| D21 | **The global tooling is its own work item, outside #80.** Agent, contracts, skill rewiring and agent pointers all live under `~/.claude/` and cannot ship in a repo commit. It is a prerequisite of #80, sequenced first, small: 4 contract files, 1 agent, 3 pointer edits, 1 skill edit. |
+| D21 | **The global tooling is its own work item, outside #46.** Agent, contracts, skill rewiring and agent pointers all live under `~/.claude/` and cannot ship in a repo commit. It is a prerequisite of #46, sequenced first, small: 4 contract files, 1 agent, 3 pointer edits, 1 skill edit. |
 | D22 | **Each contract is grilled and accepted individually before it files.** Writing four into the plan as settled was the readiness-gate mistake in reverse. **`story-doc.md` accepted 2026-09-16** (38 lines; survey-grounded). **`adr.md` accepted 2026-09-16** (36 lines; validated by rewriting ADR-0016, 130→21). **`product-doc.md` accepted 2026-09-16** (37 lines; skeleton derived from the four existing docs). **`jsdoc.md` accepted 2026-09-16** (40 lines; source-surveyed, then reconciled against written conventions — 4 adopted, 3 overruled with reasons). **All four contracts accepted; work item A1 files them verbatim.** |
 | D23 | **The `ai-docs` skill is retired, split on the same seam as D12.** It predates the contracts and carries a competing format inline: "JSDoc under 50 words, one channel, `@example` only when props are ambiguous" against `jsdoc.md`'s two channels, 25-60 words, `@example` on entry points. Whichever an agent loads first wins. One format per kind (D15) governs tooling too, not only docs. |
 | D24 | **Two skills, split by file class — markdown vs. TypeScript source.** `kipi` keeps the markdown side unchanged: colocated `docs/` folders, config-driven file set, dispatching `domain-docs-writer`. A new `source-docs` skill owns the TypeScript side — rewrites `/** */` and `//` in place against `doc-contracts/jsdoc.md`, never writes a `.md` file. This is D12's seam one level up: not two agents differing by which paragraph they load, but two skills differing by what they open and how they are verified. A `source-docs` run ends in `nx run <project>:typecheck`; a `kipi` run has no equivalent. |
-| D25 | **`source-docs` takes a path at any granularity** — one file, a feature folder, or a whole lib — and walks the `.ts` files under it. That is how #80 step 3 actually runs (`api/`, `engine/`, `filters/`, `schema/`, `mutations/`, `directives/`); a strictly per-file contract would need a caller to loop over ~100 files. |
-| D26 | **`source-docs` excludes story hosts and `.stories.ts`.** Those stay owned by `story-implementer` through its A4 pointer to `story-doc.md` — a story doc block is written by the party that built the story, at the moment it is built, the same isolation argument as D18. **Consequence:** #80 step 2 is not a `source-docs` run. It stays a dispatch to the source target loading `story-doc.md`. The skill is a going-forward authoring tool for non-story source, not the trim's instrument. |
+| D25 | **`source-docs` takes a path at any granularity** — one file, a feature folder, or a whole lib — and walks the `.ts` files under it. That is how #46 step 3 actually runs (`api/`, `engine/`, `filters/`, `schema/`, `mutations/`, `directives/`); a strictly per-file contract would need a caller to loop over ~100 files. |
+| D26 | **`source-docs` excludes story hosts and `.stories.ts`.** Those stay owned by `story-implementer` through its A4 pointer to `story-doc.md` — a story doc block is written by the party that built the story, at the moment it is built, the same isolation argument as D18. **Consequence:** #46 step 2 is not a `source-docs` run. It stays a dispatch to the source target loading `story-doc.md`. The skill is a going-forward authoring tool for non-story source, not the trim's instrument. |
 | D27 | **`ai-docs`'s `spec.md` / `narrative.md` templates become kipi config, not contracts.** They are a design-system doc shape, present in this repo only under `apps/issa-landing/src/design-system/components/**` and nowhere in `libs/table`. `kipi` already refuses to own a file set — it reads `docs/agents/domain-docs.md`. So the templates file there, scoped to the issa-landing context, and `doc-contracts/` gains nothing. One rule travels with them: `narrative.md` rationale **links** the ADR and never restates it, or it reintroduces the duplication D15 exists to kill. |
 | D28 | **The step-1 "relocate the 17 orphan claims" pre-pass is dropped.** The "17" was never enumerated in the issue, this file, or the plan — and re-asked, the user had no recollection of it either. It was carried forward as a bare count from an earlier discovery pass that never persisted the list. D7's check is not abandoned — it now runs inline, per file, inside steps 1-4: before deleting out-of-contract reasoning, confirm it already lives elsewhere in `docs/`; if not, relocate first. No separate counted pre-pass. |
 | D29 | **Same fix applies to "22 cross-file duplications (D1-D22)."** The plan names only 5 by example (Competitive position block, coverage-mark legend, pipeline order, RenderRow+ADR-0011, selectAllIds()/D59); the other 17 were never individually catalogued either. Step 3 (reference docs) finds duplicated blocks by reading, not by checking off a missing list — same discover-as-you-go mechanism as D28, applied to duplication resolution instead of orphan relocation. |

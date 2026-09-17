@@ -46,13 +46,13 @@ would produce a fragment with no lesson of its own.
 Born from the split, so it already has the target shape. Imports `GROUPING_STORY_PIPES`. JSDoc is
 four lines of mechanism with no decision ancestry. `forceFailure`/`latencyMs` are harness knobs but
 the rule's own `params: () => ({ forceFailure: …, latencyMs: … })` reads them — that is the async
-rule's API surface, not a demo dial bolted on. The one issue link (`#115` on `columnLabelById`) is
+rule's API surface, not a demo dial bolted on. The one issue link (`#81` on `columnLabelById`) is
 the allowed kind: a pointer to why a workaround exists.
 
 ### `grouping-regressions/` — clean, and criterion 3 is its job
 
 Marked "do not copy" on canvas and in its JSDoc. `BREAKABLE_ROW_ID`, `toggleBrokenSummary`,
-`droppedLevels` and the throwing comparator are the product. ADR-0014 and `#79` references are the
+`droppedLevels` and the throwing comparator are the product. ADR-0014 and `#45` references are the
 allowed kind — they name the constraint the demo exists to show.
 
 `formatValue` is imported but not for display: `externalRank` and the `by-label` comparator use it

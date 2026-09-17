@@ -1,6 +1,6 @@
 # Step 6 — Export the row-type token from the domain barrel
 
-**PR scope:** PR 1 of 2 (`#110`). **Depends on: Step 2, Step 5.**
+**PR scope:** PR 1 of 2 (`#76`). **Depends on: Step 2, Step 5.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `file-organization`
@@ -15,7 +15,7 @@
 ## Why This Step Exists
 
 `rowOf()` is the server-mode escape hatch and is useless while it is internal — the story that
-demonstrates it in `#111` reaches it through the library's public surface, not through a deep
+demonstrates it in `#77` reaches it through the library's public surface, not through a deep
 import. The barrel is also where the deletion in Step 5 becomes visible: the header names
 `recorder.ts` as an internal the barrel deliberately withholds, and that file no longer exists.
 
@@ -52,11 +52,11 @@ the header correction on Step 5.
   wholesale alongside several others. Confirm no other domain already exports `rowOf` or `RowToken`
   before adding them.
 - The library's maintainer notes describe this barrel by what it lists and what it withholds. Those
-  notes are `#113`'s to correct — this step changes the barrel, not the notes.
+  notes are `#79`'s to correct — this step changes the barrel, not the notes.
 
 ## Non-Goals
 
-- Editing `libs/shared/table/CLAUDE.md` or any doc that describes the barrel — `#113`.
+- Editing `libs/shared/table/CLAUDE.md` or any doc that describes the barrel — `#79`.
 - Restructuring the barrel, or splitting the domain's public surface — a separate concern,
   deliberately sequenced after this ticket.
 - Exporting anything else new. `FilterRule`, `StateOf`, `GroupRule` and `ConditionalRule` are

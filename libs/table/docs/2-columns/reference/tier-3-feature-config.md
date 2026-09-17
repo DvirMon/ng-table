@@ -64,7 +64,7 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
 - **AG-Grid analog:** `rowGroup` / `rowGroupIndex` + `aggFunc`.
 - **Looking for "is this column a grouping level" or "what level is this"?** That relation lives
   on `withGrouping()`, not `ColumnDef` — `table.groupingLevels(): Signal<ColumnDef<TRow>[]>` and
-  `table.isGroupedBy(columnId): boolean` (issue #115). `ColumnDef` gained no new field for it: the
+  `table.isGroupedBy(columnId): boolean` (issue #81). `ColumnDef` gained no new field for it: the
   levels are dynamic (edited at runtime via `table.grouping.update(...)`), so a per-column value
   set at construction can't track them. See [grouping.md](../../1-state/features/grouping.md).
 
@@ -85,7 +85,7 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
 - [x] **Feature-absent handling** — RESOLVED 2026-07-31: compile error. `applyGroup` on a column
   rejects at type-check time when `withGrouping()` is not composed — matching how the store now
   expresses a dependency, as an F-bounded `Feature<In, Out>` input slice typed by argument order
-  (#67), not the removed ngrx `type<>` marker. Requires threading feature presence into the `columnsSchema` /
+  (#33), not the removed ngrx `type<>` marker. Requires threading feature presence into the `columnsSchema` /
   `columnSchema()` generic. Same resolution should apply to the analogous case in
   [`1-state/architecture.md`](../../1-state/architecture.md).
 - [x] **Reusable archetypes** — RESOLVED 2026-07-31: deferred. No confirmed repeated-bundle use

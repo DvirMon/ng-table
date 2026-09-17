@@ -1,6 +1,6 @@
 # Step 4 — Member audit: `matcher()`/`dirty()` go internal, `predicates` is deleted
 
-**PR scope:** PR 1 of 1 (`#124`). **Depends on: Step 3.** **Blocks Step 5.**
+**PR scope:** PR 1 of 1 (`#90`). **Depends on: Step 3.** **Blocks Step 5.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`, `classify-errors-construction-vs-runtime`
@@ -63,7 +63,7 @@ The public surface lands at **eight members** (spec §Members): root `value`/`cr
 - **The manual check must come before the matcher request**, or a manual table builds an evaluator
   it never uses on every pipeline pass.
 - Removing the public `matcher()` is what makes a consumer's own `filters().matcher()` call a
-  compile error. Any story host still doing that breaks — expected, `#125` migrates them.
+  compile error. Any story host still doing that breaks — expected, `#91` migrates them.
 
 ## Non-Goals
 

@@ -40,7 +40,7 @@ docs/
 Each work effort carries a pipeline: `1-ticket → 2-decisions/grill → 3-spec → 4-issues →
 5-tasks`, with `state.json` threading machine-readable state (slug, paths, `githubIssues`,
 checklist booleans) between skills. Task plans nest one folder per GitHub issue
-(`docs/tasks/issue-77-integration-green/step-N-*.plan.md` + `progress.md`).
+(`docs/tasks/issue-43-integration-green/step-N-*.plan.md` + `progress.md`).
 
 Frontmatter vocabulary in use, by frequency: `title` (213), `type` (209), `issue` (99), `date`
 (95), `status` (74), `audience` (68), `parent` (41), `version` (40), `capability` (29), `spec`

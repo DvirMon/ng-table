@@ -124,7 +124,7 @@ no store, no `createTable()` needed (mirrors `mutations/update-columns.spec.ts`'
 
 ## Non-Goals
 
-- No `groupingRule`/rules-array/schema-fn config layer (#60) — these four are the entire write
+- No `groupingRule`/rules-array/schema-fn config layer (#26) — these four are the entire write
   surface for this issue.
 - No validation against a live `columns` list here — an updater is a pure `string[] =>
   string[]` function with no store access; the unknown-id degrade (D14) happens downstream, in

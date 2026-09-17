@@ -1,6 +1,6 @@
 # Implementation Progress — filtering (createFilters() + withFiltering())
 
-**Issues:** #61 (createFilters() standalone primitive), #62 (withFiltering() client adapter)
+**Issues:** #27 (createFilters() standalone primitive), #28 (withFiltering() client adapter)
 **Status:** 9 / 9 complete
 
 | Step | Title | Status | PR |

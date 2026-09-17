@@ -116,7 +116,7 @@ blanks a screen — disproportionate to the fault, and undiagnosable from the sy
 which is the unrecoverable direction of failure, and it puts a `try`/`catch` in the per-row loop
 for every filter on every evaluation.
 
-**A per-member fallback for a throwing derived signal.** Rejected (#67). A fallback value —
+**A per-member fallback for a throwing derived signal.** Rejected (#33). A fallback value —
 `undefined`, the previous value, a zero — makes a broken derivation indistinguishable from a
 working one, and the member's consumers (template bindings, other features' reads) carry the wrong
 value silently. Unlike the four degrading callbacks above, there is no reading the library can pick
@@ -145,7 +145,7 @@ setting library-wide policy it does not own.
 - Not enforced by the type system, in the same way as ADR-0006's `onRowsRemoved` contract: adding
   a new consumer callback without a wrap site compiles fine and reintroduces the exposure.
 
-## Amendment (2026-09, #67): derived signals
+## Amendment (2026-09, #33): derived signals
 
 `withComputed()` introduced a consumer callback that splits across both classes of this ADR, and
 one half of it is the policy's only exception. Both halves live inside `withComputed()`

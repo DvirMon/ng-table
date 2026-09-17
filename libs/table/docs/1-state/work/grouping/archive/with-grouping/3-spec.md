@@ -152,7 +152,7 @@ and the `'group'` render stage) and colocated unit specs. Exported from the sing
 
 ### Public surface
 
-Shape settled across D1, D3, D4, D6, D7, D8, D14; amended by #118.
+Shape settled across D1, D3, D4, D6, D7, D8, D14; amended by #84.
 
 ```ts
 type ColumnId<TRow> = Extract<keyof TRow, string> | (string & {});   // D14
@@ -164,21 +164,21 @@ interface ClusterSummary<TRow> {
 }
 
 interface GroupSummary<TRow> extends ClusterSummary<TRow> {
-  readonly admitted: boolean;   // false ⇒ emits flat, no header — #119
+  readonly admitted: boolean;   // false ⇒ emits flat, no header — #85
 }
 
 type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
 interface WithGroupingConfig<TRow> {
   initial?: ColumnId<TRow>[];                                       // D14
-  groupWhen?: GroupWhen<TRow>;                                      // #119 — table-wide admission
+  groupWhen?: GroupWhen<TRow>;                                      // #85 — table-wide admission
   groupingRule?: () => string[] | undefined;                        // D6, D7 — abstain contract
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;  // D4
-  schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #118
+  schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #84
   rules?: AnyGroupingRule<TRow>[];                                  // D8, rules-array layer
 }
 
-// D8 — schema-fn layer, now a config member rather than an either/or first positional (#118)
+// D8 — schema-fn layer, now a config member rather than an either/or first positional (#84)
 withGrouping({
   initial: ['region'],
   schema: (path) => {
@@ -189,7 +189,7 @@ withGrouping({
 interface GroupingMembers<TRow> {
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;  // D1, D6
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];      // D16, D16.1
-  readonly groupIds: Signal<RowId[]>;  // issue #131
+  readonly groupIds: Signal<RowId[]>;  // issue #97
 }
 
 type GroupingUpdater<TRow> = (grouping: string[]) => string[];
@@ -201,7 +201,7 @@ function removeGroupLevel<TRow>(id: ColumnId<TRow>): GroupingUpdater<TRow>;
 function reorderGroupLevels<TRow>(from: number, to: number): GroupingUpdater<TRow>;
 ```
 
-**`groupWhen` (#119), three facts the signature doesn't state:** dissolution — dropping a
+**`groupWhen` (#85), three facts the signature doesn't state:** dissolution — dropping a
 rejected cluster's header and re-parenting its rows to the parent's depth — happens **after**
 `groupOrder` runs, so the position a comparator gives a dissolved cluster is the position its flat
 rows occupy; with no `groupOrder` supplied, the default is a stable partition (admitted siblings
@@ -279,7 +279,7 @@ cluster and reports once per column per evaluation. Full mechanism and rejected 
   implementable but deferred (ADR-0003, `architecture.md`'s "Known DX cost"). D8's schema fn needs
   a typed `path` proxy, and `ctx` is where that would come from — grouping is specced to accept it
   rather than needing rework when it lands.
-- **Nested-group collapse is grouping's own subtree walk (D11) — shipped, issue #59.** `'group'`
+- **Nested-group collapse is grouping's own subtree walk (D11) — shipped, issue #25.** `'group'`
   runs before `'tree'` in `RENDER_ORDER`, so grouping cannot lean on `withExpansion()`'s
   tree-walking — by the time `'tree'` runs, grouping has already emitted its rows. Skipping
   descendants of a collapsed group id is the `'group'` stage's own logic. Group collapse state
@@ -287,7 +287,7 @@ cluster and reports once per column per evaluation. Full mechanism and rejected 
   than declaring a hard dependency — that member moves to `withTree()` under
   [ADR-0012](../../../../../adr/0012-split-expansion-into-panel-and-tree.md) (`proposed`, not
   implemented), and an optional read stays correct on both sides of that split.
-- **`rowsOf` stays correct under collapse (D17) — shipped, issue #59.** See `2-decisions.md` D17
+- **`rowsOf` stays correct under collapse (D17) — shipped, issue #25.** See `2-decisions.md` D17
   for the full rationale — `rowsBeneathGroup` re-derives the cluster tree from `rows()` (pipeline
   output, never collapse-affected) instead of scanning `renderRows()`, so a collapsed group still
   resolves its full leaf set.

@@ -1,6 +1,6 @@
 # Step 5 — Barrels: drop the standalone surface, add `FiltersPath`
 
-**PR scope:** PR 1 of 1 (`#124`). **Depends on: Step 4.** **Blocks Step 6.**
+**PR scope:** PR 1 of 1 (`#90`). **Depends on: Step 4.** **Blocks Step 6.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `file-organization`
@@ -19,7 +19,7 @@
 Last of the source steps because a barrel is a statement about a surface, and the surface is not
 settled until Step 4 finishes auditing it. Writing it earlier means writing it twice.
 
-`src/index.ts:89` re-exports `./filters` wholesale (the one-barrel-per-domain decision from `#106`),
+`src/index.ts:89` re-exports `./filters` wholesale (the one-barrel-per-domain decision from `#72`),
 so this step edits the domain barrel and the public surface follows. Only the header comment in
 `src/index.ts` needs touching, and only because it describes what the delegation means.
 
@@ -61,7 +61,7 @@ so this step edits the domain barrel and the public surface follows. Only the he
 - **This is the step that breaks the repo.** Every story host and fixture importing `createFilters`
   fails from here. That is the issue's stated contract — it "does not stay green on its own" — so
   the acceptance check is a *scoped* typecheck, not a repo-wide one. Do not patch call sites to get
-  green; that work is `#125`.
+  green; that work is `#91`.
 
 ## Non-Goals
 
@@ -77,7 +77,7 @@ so this step edits the domain barrel and the public surface follows. Only the he
       barrel.
 - [ ] `nx run shared-table:typecheck` reports no error originating in `src/filters/*.ts`,
       `src/api/features/with-filtering.ts` or either barrel. Errors under `src/stories/**` are
-      expected here and belong to `#125`. Run twice.
+      expected here and belong to `#91`. Run twice.
 
 ---
 ← [Step 4: Member audit](step-4-member-audit.plan.md) | [Step 6: Inference probe](step-6-inference-probe.plan.md) →

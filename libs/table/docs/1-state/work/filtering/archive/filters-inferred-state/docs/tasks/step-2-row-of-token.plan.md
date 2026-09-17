@@ -1,6 +1,6 @@
 # Step 2 — Add the row-type token
 
-**PR scope:** PR 1 of 2 (`#110`). **Parallel-safe with: Step 1.** **Blocks Step 4, Step 6.**
+**PR scope:** PR 1 of 2 (`#76`). **Parallel-safe with: Step 1.** **Blocks Step 4, Step 6.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `typescript-conventions`, `file-organization`
@@ -66,7 +66,7 @@ export function rowOf<TRow>(): RowToken<TRow>;
 
 - Exporting it from the domain barrel — Step 6.
 - Accepting it in `createFilters`' first argument — Step 4.
-- Any story or doc that demonstrates it — `#111` and `#113`.
+- Any story or doc that demonstrates it — `#77` and `#79`.
 
 ## Acceptance Checks
 

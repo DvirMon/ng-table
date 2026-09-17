@@ -109,13 +109,13 @@ has no path-proxy concern of its own.
 
 ### Safe-evaluate runtime guard (ADR-0014 — "runtime never throws")
 
-14. Build the mechanism `withFiltering()` (issue #62, separate) will call per row: something like
+14. Build the mechanism `withFiltering()` (issue #28, separate) will call per row: something like
     an internal (non-exported-from-`index.ts`) `evaluateFilter(record, row): boolean | 'error'` or
     equivalent, which:
     - Reads the cell via the record's path accessor.
     - Wraps the predicate call in try/catch.
     - On throw: deactivates *that filter* for this evaluation (treat as non-matching, or however
-      the eventual caller composes results — decide and document here since issue #62 will build
+      the eventual caller composes results — decide and document here since issue #28 will build
       on it), and reports **once per filter per evaluation** (not per row) — matching the
       `classify-errors-construction-vs-runtime` split: this is the runtime half, so it degrades,
       it never throws up to the caller.
@@ -142,7 +142,7 @@ has no path-proxy concern of its own.
 
 - `TRow` must be explicitly annotated at the call site — there's no value argument to infer from
   (R11/R24, `filters.md` "Signature"). Don't add an inference workaround; this is accepted.
-- Keep the internal evaluate-guard function `@internal`, exported only for `api/features/with-filtering.ts` (issue #62) to import directly — not part of the `index.ts` public barrel.
+- Keep the internal evaluate-guard function `@internal`, exported only for `api/features/with-filtering.ts` (issue #28) to import directly — not part of the `index.ts` public barrel.
 
 ## Risks / Watchouts
 
@@ -159,8 +159,8 @@ has no path-proxy concern of its own.
 ## Non-Goals
 
 - No rule functions (`equals`, `contains`, etc.) — Step 5.
-- No actual per-row filtering loop over a table's rows — that's `withFiltering()`, issue #62. This
-  step only builds the guarded single-predicate evaluator issue #62 will call once per row per
+- No actual per-row filtering loop over a table's rows — that's `withFiltering()`, issue #28. This
+  step only builds the guarded single-predicate evaluator issue #28 will call once per row per
   active filter.
 - No `Forms`/Signal Forms integration code — `filters().value` being a real `WritableSignal` is
   what makes that free (filters.md §Forms); nothing extra to build for it here.

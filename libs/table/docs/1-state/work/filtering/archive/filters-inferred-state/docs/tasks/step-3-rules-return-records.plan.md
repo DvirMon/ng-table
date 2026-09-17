@@ -1,6 +1,6 @@
 # Step 3 — Rules return their records; `anyOf` and `applyWhen` compose by value
 
-**PR scope:** PR 1 of 2 (`#110`). **Depends on: Step 1.** **Blocks Step 4.**
+**PR scope:** PR 1 of 2 (`#76`). **Depends on: Step 1.** **Blocks Step 4.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `typescript-conventions`, `declarative-naming`
@@ -78,7 +78,7 @@ until the rules produce them.
   through the record's own `key`/`paths`, which is why collapsing the matcher generics to `unknown`
   in the runtime shape is sound even though the compiler cannot prove it.
 - `equals`' `const TEmpty = null` parameter and the `emptyValue` override behaviour are unchanged.
-  **Superseded 2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116):** `TEmpty` now
+  **Superseded 2026-09-16 by [#82](https://github.com/DvirMon/ng-table/issues/82):** `TEmpty` now
   defaults to `never` and the criterion is `TRow[K] | null | TEmpty` — `emptyValue` *extends* the
   rule's empty set rather than displacing it, and `isEmpty` (promoted from `filter()` to every rule
   via `FilterOptions`) is the total override.
@@ -94,7 +94,7 @@ until the rules produce them.
   to `unknown`; if it widens, constrain the `isEmpty` site so the predicate wins. This is an open
   question in the architecture doc — resolve it here and record the answer in the step's PR
   description. **Resolved, then moved 2026-09-16 by
-  [#116](https://github.com/DvirMon/acme/issues/116):** the mismatch is a hard `TS2322` at the
+  [#82](https://github.com/DvirMon/ng-table/issues/82):** the mismatch is a hard `TS2322` at the
   `options` argument, and `isEmpty` now lives on `FilterOptions` itself — wrapped in `NoInfer`, so
   it contributes no inference back to the criterion at all.
 - **`anyOf` borrows `isEmpty`/`emptyValue` from its first child.** That borrow was conventional and
@@ -111,7 +111,7 @@ until the rules produce them.
 - Changing what any predicate matches, how emptiness is decided, or the null-cell policy.
 - Adding a new rule kind. The shipped set is fixed; anything else is a custom `filter()`.
 - Deleting `recorder.ts` — Step 5, once `create-filters.ts` has stopped importing it.
-- Rewriting any schema at a call site — `#111`.
+- Rewriting any schema at a call site — `#77`.
 
 ## Acceptance Checks
 

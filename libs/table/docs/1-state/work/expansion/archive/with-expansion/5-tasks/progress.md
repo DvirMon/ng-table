@@ -1,6 +1,6 @@
 # Implementation Progress — NGP Table — withExpansion() feature
 
-**Issue:** #4
+**Issue:** #5
 **Status:** 4 / 4 complete
 
 | Step | Title | Status | PR |

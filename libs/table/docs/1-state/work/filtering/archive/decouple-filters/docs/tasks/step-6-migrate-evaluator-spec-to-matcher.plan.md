@@ -1,6 +1,6 @@
 # Step 6 — Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`
 
-**PR scope:** PR 1 of 3 (`#105`). **Blocks Step 7.**
+**PR scope:** PR 1 of 3 (`#71`). **Blocks Step 7.**
 **Task type:** `test`
 **Stack:** angular
 **Skills used:** `unit-test`
@@ -15,13 +15,13 @@
 
 ## Why This Step Exists
 
-`#105` deletes `createFilterEvaluator(filters)` — the overload that reads the compiled state back
+`#71` deletes `createFilterEvaluator(filters)` — the overload that reads the compiled state back
 out of a built `Filters` object through the internal symbol. Seven sites in
 `create-filters.spec.ts` construct an evaluator that way today, so the deletion in Step 7 breaks
 the spec file unless this lands first.
 
 It is sequenced **before** the deletion, not after, because `matcher()` already exists
-(shipped in `#102`). The migration is green on its own; reversing the two would leave a revision
+(shipped in `#68`). The migration is green on its own; reversing the two would leave a revision
 of the branch that does not compile.
 
 The tests themselves are not the target — they assert the filter model's own evaluation semantics

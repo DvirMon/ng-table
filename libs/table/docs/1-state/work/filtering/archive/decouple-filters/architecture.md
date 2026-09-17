@@ -105,7 +105,7 @@ Two reporting layers, deliberately, because they have different information:
 A term produced by `matcher()` reports under its own filter key from inside the evaluator and
 never surfaces as a throw, so the index-based report is the floor for **anonymous** terms, not a
 replacement. Per ADR-0014 both report in production as well as dev, through the existing
-`console.error` channel — do not widen it here ([#92](https://github.com/DvirMon/acme/issues/92)).
+`console.error` channel — do not widen it here ([#58](https://github.com/DvirMon/ng-table/issues/58)).
 
 Catch per **term**: per row yields a half-filtered set plus a `try` in the hot loop; per pass means
 one throw returns every row unfiltered, which is the silent, unrecoverable direction.
@@ -239,7 +239,7 @@ Current filters exports to relocate: `index.ts:87-104` — `createFilters`, the 
 
 ## Known-stale references in the decision record
 
-- **[#90](https://github.com/DvirMon/acme/issues/90) is already CLOSED.** S2 says to close it as
+- **[#56](https://github.com/DvirMon/ng-table/issues/56) is already CLOSED.** S2 says to close it as
   fixed-by-design; that is already done. No action owed.
 - **S4's file list includes `recorder.ts`.** Correct as of today. The inferred-criterion-map work
   deletes that file — but it is sequenced *after* this one, so the list stands.

@@ -28,7 +28,7 @@ Verified against `libs/shared/table/src/`, not assumed.
 | Type assertions are `expectTypeOf` from `vitest`, enforced by `tsc`, not the runner | `src/filters/create-filters.spec.ts:683-743`, `src/api/features/with-filtering.spec.ts:268-300` |
 | `tsconfig.spec.json` includes only `src/**/*.test.ts`, `src/**/*.spec.ts`, `src/**/*.d.ts` | `libs/shared/table/tsconfig.spec.json` |
 
-**Uncommitted in the working tree:** the decoupling ticket's PR 2 (`#106`) — `src/filters/index.ts`
+**Uncommitted in the working tree:** the decoupling ticket's PR 2 (`#72`) — `src/filters/index.ts`
 and the `src/index.ts:88` delegation. Its steps 11–13 (spec rewrites, doc pointers) are still open.
 Sequence this work behind that PR landing; the two touch `src/filters/index.ts` and the filters
 specs.
@@ -152,7 +152,7 @@ export function anyOf<TKey extends string, C extends readonly [unknown, ...unkno
 ): GroupRule<TKey, CriterionOf<C[0]>>;
 ```
 
-> **Corrected 2026-09-14 during `/implement` of `#110`.** The signature first published here —
+> **Corrected 2026-09-14 during `/implement` of `#76`.** The signature first published here —
 > `children: C` returning `GroupRule<TKey, CriterionOf<C[number]>>` — does **not** reject a
 > mixed-criterion group, contrary to the claim below it. `CriterionOf` distributes over the
 > `C[number]` union and silently yields `string | RangeCriterion`. Verified by compiled probe. The
@@ -182,7 +182,7 @@ export function applyWhen<TRow, S extends readonly unknown[]>(
 Returns **one nestable node**, not an array. `StateOf` and the runtime flattener both recurse into
 it, so the node folds to its children's top-level keys when placed directly in a schema array.
 
-> **Corrected 2026-09-14 during `/implement` of `#110`.** This section previously claimed
+> **Corrected 2026-09-14 during `/implement` of `#76`.** This section previously claimed
 > `applyWhen(…)` and `...applyWhen(…)` are equivalent. They are not: a plain object has no
 > `[Symbol.iterator]`, so the spread form is a `TS2488` compile error. Verified by compiled probe.
 > **Place the node directly, without a spread — that is the only supported form.** The design goal
@@ -296,7 +296,7 @@ Three reviewable units, per R46 as re-ranked by R47:
    build is green only at the end of this unit, so 1 and 2 share a branch or a stack.
 3. **Docs** — `Parallel-safe with: 1, 2` once the signature is fixed.
 
-External edge: the decoupling ticket's PR 2 (`#106`, in the working tree) and its steps 11–13.
+External edge: the decoupling ticket's PR 2 (`#72`, in the working tree) and its steps 11–13.
 Land those first — they touch `src/filters/index.ts` and the same spec files.
 
 ## Open questions
@@ -308,7 +308,7 @@ Land those first — they touch `src/filters/index.ts` and the same spec files.
    matches Signal Forms' `applyWhen(path, …)`, which is where R15 took the rule from. Keep the
    parameter and keep a comment saying it is retained for signature parity, not inference.
 2. ~~**Does `filter()`'s `options.isEmpty` need to participate in `StateOf`?**~~ — **resolved
-   2026-09-16 by [#116](https://github.com/DvirMon/acme/issues/116): no.** A mismatch between the
+   2026-09-16 by [#82](https://github.com/DvirMon/ng-table/issues/82): no.** A mismatch between the
    two sites was verified to be a hard `TS2322` at the `options` argument, not a silent widening.
    `isEmpty` then moved from `filter()`'s own options onto `FilterOptions` itself — available to
    every rule — and its parameter is wrapped in `NoInfer`, so it is contextually typed from the
@@ -317,6 +317,6 @@ Land those first — they touch `src/filters/index.ts` and the same spec files.
    Every schema changes shape, so the diff is large and the review is by inspection. If a case
    needs its *assertion* changed rather than its schema, that is a semantic regression — stop and
    check it against the decisions doc rather than accommodating it.
-4. ~~**Which issue closes `#90`?**~~ — **resolved 2026-09-14 at `/to-issues`: the docs issue.**
+4. ~~**Which issue closes `#56`?**~~ — **resolved 2026-09-14 at `/to-issues`: the docs issue.**
    It tracks the two `TState` landmines, which delete with the parameter. It closes as
    fixed-by-design, not as work, alongside the doc reconciliation that removes the landmine text.

@@ -123,10 +123,10 @@ describe('buildFilterModel — schema must return an object literal (R40)', () =
     ).toThrow('return its rules as an object literal');
   });
 
-  it('throws, naming the object form, when the schema returns an array (the pre-#124 shape)', () => {
+  it('throws, naming the object form, when the schema returns an array (the pre-#90 shape)', () => {
     expect(() =>
       buildFilterModel<Invoice, Record<string, AnyRule>>(
-        // @ts-expect-error — an array schema was rejected as a type once #110 landed; asserting
+        // @ts-expect-error — an array schema was rejected as a type once #76 landed; asserting
         // the runtime backstop for an untyped caller reaching this from JS.
         (path) => [equals(path.status)],
       ),
@@ -139,7 +139,7 @@ describe('buildFilterModel — anyOf without rules', () => {
     expect(() =>
       build((_path) => ({
         // @ts-expect-error — anyOf's non-empty-tuple constraint rejects an empty group at the
-        // type level (#110); the runtime throw is the backstop for an untyped caller, asserted
+        // type level (#76); the runtime throw is the backstop for an untyped caller, asserted
         // here. The type-level rejection itself is asserted in with-filtering.types.spec.ts.
         search: anyOf([]),
       })),

@@ -67,7 +67,7 @@ verbs (`toggleSort`/`setSorting`/`clearSorting`) stop being grandfathered; every
 `sorting`/`selection`/`expansion` moves onto its slice (e.g. `table.toggleSort(id)` →
 `table.sorting.toggle(id)`). `filtering` becomes a non-callable namespace.
 
-- **Sequencing.** Do not start implementation before #77 (positional composition) is green —
+- **Sequencing.** Do not start implementation before #43 (positional composition) is green —
   stacking a second structural migration on an unverified one gives any failure two candidate
   causes. Spec work is not blocked.
 - **ADR-0007's member-claim registry stays**, and guards less: each feature claims one key, so

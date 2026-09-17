@@ -1,6 +1,6 @@
 # Step 4 — The row carrier, the array schema, and the construction guard
 
-**PR scope:** PR 1 of 2 (`#110`). **Depends on: Step 1, Step 2, Step 3.** **Blocks Step 5.**
+**PR scope:** PR 1 of 2 (`#76`). **Depends on: Step 1, Step 2, Step 3.** **Blocks Step 5.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `typescript-conventions`, `classify-errors-construction-vs-runtime`, `terse-jsdoc-for-ai-and-humans`
@@ -120,7 +120,7 @@ that does not match its type.
 - Touching `src/api/features/with-filtering.ts`. It takes a predicate list and nothing else, and
   imports nothing from this domain. **If an edit to it seems necessary, the edit is wrong.**
 - Reading `rows`. Ever. Rows reach the engine through the table feature's predicate list.
-- Rewriting any spec or story — `#111`.
+- Rewriting any spec or story — `#77`.
 
 ## Acceptance Checks
 

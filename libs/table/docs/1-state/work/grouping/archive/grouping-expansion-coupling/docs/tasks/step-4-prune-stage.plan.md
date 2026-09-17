@@ -21,7 +21,7 @@ This is the replacement the epic is built around: hiding moves from *while emitt
 emitting*. Everything before this step is additive scaffolding; everything after is verification.
 
 It stays behavior-neutral because grouping keeps its own prune (D6) and pruning twice is
-idempotent — which is exactly why #132 and #133 are separate issues.
+idempotent — which is exactly why #98 and #99 are separate issues.
 
 ## What To Do
 
@@ -120,7 +120,7 @@ that unions the sources lives in `core.ts`, which is already the signal boundary
 
 ## Non-Goals
 
-- No deletion of grouping's prune or `readExpandedRows` — that is #133.
+- No deletion of grouping's prune or `readExpandedRows` — that is #99.
 - No pagination feature. `'paginate'` remains an unclaimed slot; only the ordering relative to it
   is established here.
 - No tests — Steps 5 and 6.

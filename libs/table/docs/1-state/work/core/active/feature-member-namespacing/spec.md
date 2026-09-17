@@ -216,7 +216,7 @@ createTable(data, config,
   not callable" — has no live case today. `withFiltering()` stays memberless. The ADR owes a
   correction, tracked as a docs item.
 - **`rowsOf`, not `rowIdsOf`.** The ADR's motivating example names `rowIdsOf` returning ids; what
-  shipped under D16 / issue #65 is `rowsOf(group)` returning leaf rows. The shipped name moves
+  shipped under D16 / issue #31 is `rowsOf(group)` returning leaf rows. The shipped name moves
   under the slice as-is. The ADR owes the same correction.
 
 ### Derived-state placement
@@ -260,7 +260,7 @@ createTable(data, config,
   keys, so both can coexist under ADR-0007 without colliding. Expand: each feature gains its slice
   while its flat members stay. Migrate: story hosts, demo apps and docs move to the slice form in
   batches that each stay green. Contract: the flat members are deleted once no caller remains.
-- **Nothing starts before #77 is green.** Stacking a second structural migration on an unverified
+- **Nothing starts before #43 is green.** Stacking a second structural migration on an unverified
   one gives any failure two candidate causes. (ADR-0015, sequencing.)
 - Blast radius, priced against the tree: `src/directives/` reads zero feature members; roughly
   one hundred reads across thirteen Storybook hosts, thirty across five `apps/demo` demos, and a
@@ -290,8 +290,8 @@ Two seams, both existing files, both at the public factory:
   and the row type flows to the next slot after a sliced feature. Prior art: the type-assertion
   block already in the factory spec, and ADR-0015's four-check probe with its negative control.
 
-Story hosts are verified by rendering, not by unit tests — the same user-run walkthrough gate #75
-and #77 use.
+Story hosts are verified by rendering, not by unit tests — the same user-run walkthrough gate #41
+and #43 use.
 
 ## Out of Scope
 

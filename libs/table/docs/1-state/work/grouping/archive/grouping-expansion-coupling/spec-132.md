@@ -1,7 +1,7 @@
-# Spec — #132 `RenderRow.parentId` + engine-owned prune stage
+# Spec — #98 `RenderRow.parentId` + engine-owned prune stage
 
-**Issue:** [#132](https://github.com/DvirMon/acme/issues/132) — sub of epic
-[#130](https://github.com/DvirMon/acme/issues/130).
+**Issue:** [#98](https://github.com/DvirMon/ng-table/issues/98) — sub of epic
+[#96](https://github.com/DvirMon/ng-table/issues/96).
 **Epic contract:** [`plan.md`](plan.md) Part B (B0–B2). This spec settles only what B2 left open.
 **Architecture:** [`architecture-132.md`](architecture-132.md).
 
@@ -212,12 +212,12 @@ collapsed-set registration; anything requiring a group id to be parsed.
 ## Out of Scope
 
 - **Deleting the grouping-side prune and the cross-feature read.** That is the next slice
-  (#133), gated on this one. Doing it here would make "no behavior change" unverifiable, since
+  (#99), gated on this one. Doing it here would make "no behavior change" unverifiable, since
   both the old and new paths would be moving in one step.
 - **The expansion split itself.** This slice takes the split's already-recorded decisions as given
   — they are what force D4 — but builds neither the tree feature nor the panel feature, and moves
   no member between them.
-- **The write-side gap.** Discovering group ids to expand is a separate slice (#131), independent
+- **The write-side gap.** Discovering group ids to expand is a separate slice (#97), independent
   of this one and unaffected by it: the parent link fixes who gets hidden, not who gets found.
 - **Any consumer-facing API for reading ancestry beyond the single parent link.** No ancestor
   walk, no parent-row accessor, no depth-to-parent mapping. If one is wanted later it derives from
@@ -225,7 +225,7 @@ collapsed-set registration; anything requiring a group id to be parsed.
 - **Performance work.** The pass is linear and additive; no benchmarking, no memoization strategy,
   no incremental-prune design.
 - **Documentation rewrites beyond the ADR and the superseded-decision marker.** The feature specs
-  whose caveats disappear are updated when the caveat actually disappears, in #133.
+  whose caveats disappear are updated when the caveat actually disappears, in #99.
 
 ## Further Notes
 

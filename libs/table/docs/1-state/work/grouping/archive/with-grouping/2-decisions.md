@@ -160,7 +160,7 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   where that would come from, so grouping should be specced to accept it rather than needing
   rework when it lands. Handoff written for that work.
 
-- **D11 (2026-09-10) — Nested-group collapse is grouping's own subtree walk — shipped, issue #59.**
+- **D11 (2026-09-10) — Nested-group collapse is grouping's own subtree walk — shipped, issue #25.**
   `'group'` runs *before* `'tree'` in `RENDER_ORDER`, so grouping cannot lean on
   `withExpansion()`'s tree-walking — by the time `'tree'` runs, grouping has already emitted its
   rows. Skipping descendants of a collapsed group id is the `'group'` stage's own logic.
@@ -172,15 +172,15 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   implemented) — an optional read stays correct on both sides of that split.
 
   **Superseded by [ADR-0017](../../../../../adr/0017-engine-owned-descendant-prune.md) (2026-09-16,
-  issue #132).** The stage-order constraint cited above was real — `'group'` does run before
+  issue #98).** The stage-order constraint cited above was real — `'group'` does run before
   `'tree'` — but it was a consequence of `RenderRow` carrying no parent link, not an independent
   reason to couple the two features. With `RenderRow.parentId` and an engine-owned terminal
-  `'prune'` stage, grouping stops reading `withExpansion()`'s state at all (#133 deletes the read
-  this decision documented). This slice (#132) lands the replacement while grouping's own prune
-  stays in place per ADR-0017 D6; #133 is what actually removes the code this decision describes.
+  `'prune'` stage, grouping stops reading `withExpansion()`'s state at all (#99 deletes the read
+  this decision documented). This slice (#98) lands the replacement while grouping's own prune
+  stays in place per ADR-0017 D6; #99 is what actually removes the code this decision describes.
 
 - **D17 (2026-09-12) — `rowsOf` resolves by re-deriving the cluster tree from `rows()`, not by
-  scanning `renderRows()` — shipped, issue #59.** D16 shipped `rowsOf` before collapse existed,
+  scanning `renderRows()` — shipped, issue #25.** D16 shipped `rowsOf` before collapse existed,
   reading `renderRows()` between a header and the next row at or above its depth. Once D11 makes
   `renderRows()` omit a collapsed group's descendants, that scan finds nothing for a collapsed
   header and silently returns `[]` — breaking the selection-cascade recipe the moment a group is

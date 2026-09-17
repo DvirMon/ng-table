@@ -28,10 +28,10 @@ readonly filters = createFilters(this.data, (path) => [
 ]);
 ```
 
-> **`criterion()` / `criteria()` / `isActive()` replace `active()`** (R49, decided in `#96`).
+> **`criterion()` / `criteria()` / `isActive()` replace `active()`** (R49, decided in `#62`).
 
 > **The domain lives in `src/filters/`** — a top-level sibling of `api/`, `engine/` and
-> `directives/`, with its own barrel (`#106`, [ADR-0004](../adr/0004-table-source-layout.md)'s
+> `directives/`, with its own barrel (`#72`, [ADR-0004](../adr/0004-table-source-layout.md)'s
 > 2026-09 amendment). `create-filters.ts` plus `evaluator`, `matchers`, `row-of`, `rules`,
 > `state`, `types` and `validate` are on disk, with `create-filters.spec.ts`, `matchers.spec.ts` and
 > `state.spec.ts` covering them. Four Storybook stories exercise the surface end to end
@@ -399,7 +399,7 @@ is a binding contract as much as a matching one. A native `<select>` can express
 `equals` filter with its default `null` empty would write `''` on the "any" option, which is not
 empty: the filter stays permanently active while matching no row. Declaring `emptyValue: ''`
 lines the criterion up with the control, and `<option value="">` deactivates the filter through
-plain `[formField]`, with no accessor and no story-local handler (#97).
+plain `[formField]`, with no accessor and no story-local handler (#63).
 
 `number`/`date` inputs need nothing here — Signal Forms already maps an empty box to `null`,
 which is exactly what `inRange`/`inDateRange` call empty.
@@ -688,7 +688,7 @@ domain.
 
 `withFiltering` and `WithFilteringConfig` are deliberately **not** here — they are the table's
 surface, documented in [features/filtering.md](features/filtering.md). Listing them in this file
-was the doc-level version of the coupling `#105` removed.
+was the doc-level version of the coupling `#71` removed.
 
 Rules and matchers are split across two files rather than one because they are consumed at
 different times — rules only inside a schema body, matchers only inside a custom predicate — and

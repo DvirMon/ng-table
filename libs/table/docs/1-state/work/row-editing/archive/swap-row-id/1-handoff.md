@@ -10,7 +10,7 @@ parent: ../with-row-editing/2-decisions.md
 
 Self-contained brief. Everything needed is here or linked. Closes
 [G3](../../active/with-row-editing/5-gaps.md) via [D49](../with-row-editing/2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03),
-tracked as [#53](https://github.com/DvirMon/acme/issues/53).
+tracked as [#19](https://github.com/DvirMon/ng-table/issues/19).
 
 ## Why now
 
@@ -163,5 +163,5 @@ G4's `{ multiple: true }` combination with optimistic create exposes a real case
 ## Not in scope
 
 `G5`'s move half (optimistic rollback for a row *move*, tracked as
-[#54](https://github.com/DvirMon/acme/issues/54)) — unrelated representation question (O22),
+[#20](https://github.com/DvirMon/ng-table/issues/20)) — unrelated representation question (O22),
 no consumer need yet.

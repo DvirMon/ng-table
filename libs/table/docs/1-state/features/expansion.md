@@ -73,14 +73,14 @@ children are loaded — for lazy-loaded children, where `childrenAccessor` legit
 
   **Specced, not yet implemented.** The rest of `withExpansion()` is shipped; `everExpanded` has no code in `src/` yet, so this section is the contract to build against rather than a description of current behavior. This is why the spec's `code:` axis reads `partial`.
 
-- **Dual use:** this feature backs both (a) row detail/tree-child expansion, and (b) group row collapse/expand state for `withGrouping()` (see `with-grouping.md`) — group rows are treated as rows with an id, tracked in the same `expandedRows` set. A group row's id is synthesized by `withGrouping()`'s render layer (e.g. `` `group:${columnId}:${value}` ``), not a real `TRow` id — `expandedRows` doesn't care whether an id belongs to a real row or a synthetic group header, it's just a set of ids. Neither `withExpansion()`'s `'tree'` render stage nor `withGrouping()`'s `'group'` render stage reads this set themselves (#133) — both emit their full tree unconditionally, each row/header carrying its parent's id, and the engine-owned `'prune'` render stage (ADR-0017) is the single place that consults `expandedRows` to hide descendants of a collapsed id, dual use and all.
+- **Dual use:** this feature backs both (a) row detail/tree-child expansion, and (b) group row collapse/expand state for `withGrouping()` (see `with-grouping.md`) — group rows are treated as rows with an id, tracked in the same `expandedRows` set. A group row's id is synthesized by `withGrouping()`'s render layer (e.g. `` `group:${columnId}:${value}` ``), not a real `TRow` id — `expandedRows` doesn't care whether an id belongs to a real row or a synthetic group header, it's just a set of ids. Neither `withExpansion()`'s `'tree'` render stage nor `withGrouping()`'s `'group'` render stage reads this set themselves (#99) — both emit their full tree unconditionally, each row/header carrying its parent's id, and the engine-owned `'prune'` render stage (ADR-0017) is the single place that consults `expandedRows` to hide descendants of a collapsed id, dual use and all.
 
 ## Methods
 
 | Method | Description |
 |---|---|
 | `toggleExpanded(rowId: RowId, options?)` | Toggle a single row/group's expanded state. Emits `rowExpanded` once. |
-| `expandAll(ids?, options?)` | Expand every expandable row (auto-discovered via `childrenAccessor`, data rows only) unioned with any `ids` passed explicitly — e.g. `table.groupIds()` from `withGrouping()` (#131), used verbatim, no `isExpandable` filter, no recursion. Emits `rowExpanded` once per newly expanded id over the union. |
+| `expandAll(ids?, options?)` | Expand every expandable row (auto-discovered via `childrenAccessor`, data rows only) unioned with any `ids` passed explicitly — e.g. `table.groupIds()` from `withGrouping()` (#97), used verbatim, no `isExpandable` filter, no recursion. Emits `rowExpanded` once per newly expanded id over the union. |
 | `collapseAll(options?)` | Collapse every row/group. Emits `rowExpanded` once per previously expanded id. Does **not** clear `everExpanded`. |
 
 Every write verb takes `options?: { emitEvent?: boolean }` — see

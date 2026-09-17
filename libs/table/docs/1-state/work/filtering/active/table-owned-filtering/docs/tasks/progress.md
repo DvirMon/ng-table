@@ -1,15 +1,15 @@
-# Implementation Progress — table-owned-filtering (`#123`)
+# Implementation Progress — table-owned-filtering (`#89`)
 
-**Epic:** [#123](https://github.com/DvirMon/acme/issues/123)
+**Epic:** [#89](https://github.com/DvirMon/ng-table/issues/89)
 **Status:** 11 / 11 complete
 
-Steps 1–6 cover [`#124`](https://github.com/DvirMon/acme/issues/124) — spec steps 1–6, one PR.
+Steps 1–6 cover [`#90`](https://github.com/DvirMon/ng-table/issues/90) — spec steps 1–6, one PR.
 Nothing outside `src/filters/`, `src/api/features/with-filtering.ts` and `src/index.ts` changes.
-**That issue does not stay green on its own**: call sites break at Step 5 and migrate in `#125`.
-Steps 7–11 cover [`#125`](https://github.com/DvirMon/acme/issues/125) — spec steps 7–8, one PR.
-Issues `#126`–`#127` get their own plans and continue the step numbering.
+**That issue does not stay green on its own**: call sites break at Step 5 and migrate in `#91`.
+Steps 7–11 cover [`#91`](https://github.com/DvirMon/ng-table/issues/91) — spec steps 7–8, one PR.
+Issues `#92`–`#93` get their own plans and continue the step numbering.
 
-## `#124` — `withFiltering` owns the filter model · PR 1 of 1
+## `#90` — `withFiltering` owns the filter model · PR 1 of 1
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
@@ -20,7 +20,7 @@ Issues `#126`–`#127` get their own plans and continue the step numbering.
 | 5 | [Barrels: drop the standalone surface, add `FiltersPath`](step-5-barrels.plan.md) | `code` | ✅ done | — |
 | 6 | [Rewrite the compile-time probe for `StateOf` inference](step-6-inference-probe.plan.md) | `test` | ✅ done | — |
 
-## `#125` — Migrate every filtering call site and spec · PR 1 of 1
+## `#91` — Migrate every filtering call site and spec · PR 1 of 1
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
@@ -32,7 +32,7 @@ Issues `#126`–`#127` get their own plans and continue the step numbering.
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 
-## Dependency graph — `#125`
+## Dependency graph — `#91`
 
 ```
  7 ─┐
@@ -47,15 +47,15 @@ Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
   cannot pass until every call site has landed.
 - **Frontier at start:** `[7, 8, 9, 10]`.
 
-## Notes carried from planning — `#125`
+## Notes carried from planning — `#91`
 
-- **`schema` nests inside config.** `#125`'s body shows `withFiltering(config, schema)`. What `#124`
+- **`schema` nests inside config.** `#91`'s body shows `withFiltering(config, schema)`. What `#90`
   actually shipped is `withFiltering({ manual: true, schema })` — `with-filtering.ts:7-19`. Every
   step file uses the shipped form.
 - **Three items in the issue's spec list are already done**, verified against the tree:
   `create-filters.types.spec.ts` was rewritten as `api/features/with-filtering.types.spec.ts` by
   Step 6; `create-filters.spec.ts` is already on `buildFilterModel` + object schema; the server host
-  already uses `rxResource` with no `effect`/`untracked` loop. What is left in `#125` is the
+  already uses `rxResource` with no `effect`/`untracked` loop. What is left in `#91` is the
   ownership move, not the loop unwind the body describes.
 - **Two call sites the issue's list omits**, found by grep: `stories/grouping/grouping-selection/`
   composes `withFiltering({ predicates })` and reaches the model through
@@ -66,21 +66,21 @@ Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
   empty while appearing to work (Step 7). `server-filtering-toolbar.component.ts:36` calls
   `.dirty()`, now `@internal` (Step 8).
 - **The predicate story is deleted, not rewritten.** Decided by the user. R54's replacement —
-  express a scope by narrowing the rows signal — therefore ships with no demo, and `#126` picks up
+  express a scope by narrowing the rows signal — therefore ships with no demo, and `#92` picks up
   the coverage mark in `docs/0-product/filtering.md` and the reference in `docs/3-ui/stories.md`.
-- **Steps 9 and 3–5 of `#124` were merged on the user's call** (coarser grain): selection,
+- **Steps 9 and 3–5 of `#90` were merged on the user's call** (coarser grain): selection,
   composition and grouping call sites plus the deletion are one step, because their "What To Do" is
   the same three lines four times over.
-- **The lib is red for the whole issue until Step 11.** No step in `#125` leaves the tree compiling
+- **The lib is red for the whole issue until Step 11.** No step in `#91` leaves the tree compiling
   on its own — the acceptance is a gate, not a per-step property. Steps 7–10 each verify only that
   no error originates in their own files.
 - **`StateOf` stays off the public barrel.** Stories import it from `filters/types`, as
-  `grouping/fixtures/utils.ts` already does for `FilterNode`. The barrel is `#124` Step 5's settled
+  `grouping/fixtures/utils.ts` already does for `FilterNode`. The barrel is `#90` Step 5's settled
   surface; widening it is not this issue's call.
 - **`dirty()` is `@internal`, not deleted.** It is still on `FiltersRoot`, so `state.spec.ts` keeps
   its source-reconciliation case; only the story stops reading it.
 - **Uncommitted grouping work is in the tree** (`with-grouping.ts`, `engine/grouping.ts`,
   `with-grouping.spec.ts`, the `grouping-static` story host). Step 9 touches `grouping/fixtures/`
   and `grouping-selection/` only — no overlap, but rebase before starting.
-- **Not in this issue:** every doc under `libs/table/docs/` (`#126`) and relocating
-  `src/filters/` into `api/features/with-filtering/` + `engine/filters/` (`#127`).
+- **Not in this issue:** every doc under `libs/table/docs/` (`#92`) and relocating
+  `src/filters/` into `api/features/with-filtering/` + `engine/filters/` (`#93`).

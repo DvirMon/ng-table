@@ -1,6 +1,6 @@
 # Implementation Progress — RenderRow.parentId + engine-owned prune stage
 
-**Issue:** #132
+**Issue:** #98
 **Status:** 7 / 7 complete
 
 | Step | Title | Status | PR |
@@ -35,10 +35,10 @@
   collapsed-set), which fixes the slot's name and semantics. Do not start Step 3 from the
   architecture doc's sketch alone.
 - **No pagination feature exists.** `'paginate'` is a reserved `RENDER_ORDER` slot with nothing
-  behind it, so #132's "page size counts visible rows" criterion is covered structurally in
+  behind it, so #98's "page size counts visible rows" criterion is covered structurally in
   `render-stages.spec.ts` with a fake transform. The real-feature assertion belongs to whoever
   builds `withPagination()`.
 - **Behavior must not change.** Grouping keeps its own prune throughout (D6); every pre-existing
-  test passes unedited. Deleting grouping's prune is #133.
+  test passes unedited. Deleting grouping's prune is #99.
 - Verification is run manually by the repo owner: `nx run shared-table:typecheck`,
   `nx run shared-table:typecheck-spec`, `nx test shared-table`, and the grouping Storybook entry.

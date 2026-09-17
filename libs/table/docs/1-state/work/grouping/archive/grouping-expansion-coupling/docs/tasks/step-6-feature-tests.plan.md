@@ -77,7 +77,7 @@ the wrong thing.
 ## Risks / Watchouts
 
 - **No existing case may be edited.** Both feature specs must pass unedited — the primary
-  acceptance criterion for #132. A failure means Step 2 or Step 4 is wrong, not the test.
+  acceptance criterion for #98. A failure means Step 2 or Step 4 is wrong, not the test.
 - **Do not hard-code a group id.** Read it off the emitted header.
 - `types.types.spec.ts` is a new file in `api/`. Confirm `tsconfig.spec.json`'s include actually
   covers it before relying on the check — a compile-time assertion file that nothing typechecks is

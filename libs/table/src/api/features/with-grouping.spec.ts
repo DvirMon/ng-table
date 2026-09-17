@@ -51,7 +51,7 @@ function makeColumns(): ColumnDef<GroupingMockRow>[] {
 }
 
 /** `[kind, depth, id-if-a-row]` per render row — the shape shared by the `groupOrder` ordering
- * assertions below and the `when` cases (#119). Generic over any row shape carrying a
+ * assertions below and the `when` cases (#85). Generic over any row shape carrying a
  * numeric `id`, so it also serves the local `when`-only fixtures below. */
 function toShape<TRow extends { id: number }>(
   rows: readonly { kind: string; depth: number; data: TRow | null }[]
@@ -262,7 +262,7 @@ describe('withGrouping', () => {
     expect(rows.every((row) => row.kind !== 'group' || row.depth === 0)).toBe(true); // no second level
   });
 
-  it('groupOrder omitted preserves first-occurrence cluster order (regression, unchanged from issue #6)', () => {
+  it('groupOrder omitted preserves first-occurrence cluster order (regression, unchanged from issue #7)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -758,7 +758,7 @@ describe('groupIds', () => {
   });
 });
 
-describe('groupingLevels (#115)', () => {
+describe('groupingLevels (#81)', () => {
   it('returns the level columns in level order, outermost first, carrying real labels', () => {
     const store = inContext(() =>
       createTable(
@@ -853,7 +853,7 @@ describe('groupingLevels (#115)', () => {
   });
 });
 
-describe('isGroupedBy (#115)', () => {
+describe('isGroupedBy (#81)', () => {
   it('true for every level id, false for a non-level column and an unknown id', () => {
     const store = inContext(() =>
       createTable(
@@ -898,7 +898,7 @@ describe('isGroupedBy (#115)', () => {
   });
 });
 
-describe('groupingLevels/isGroupedBy composition order (#115)', () => {
+describe('groupingLevels/isGroupedBy composition order (#81)', () => {
   it('withGrouping() before withSorting(): both members present and correct', () => {
     const store = inContext(() =>
       createTable(
@@ -930,8 +930,8 @@ describe('groupingLevels/isGroupedBy composition order (#115)', () => {
   });
 });
 
-describe('collapse/expand (#59)', () => {
-  it('no withExpansion() composed: every cluster renders flat and fully expanded (regression, unchanged from #6)', () => {
+describe('collapse/expand (#25)', () => {
+  it('no withExpansion() composed: every cluster renders flat and fully expanded (regression, unchanged from #7)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -1188,7 +1188,7 @@ describe('collapse/expand (#59)', () => {
       // ExpansionMembers yet. The runtime store does have `expandedRows` once expansion
       // composes after (any deferred read off the shared object, e.g. a trailing
       // `withComputed()` block, would see it) — this restriction is type-level only.
-      // `withGrouping()` itself no longer performs such a read at all (#133) — grouping's own
+      // `withGrouping()` itself no longer performs such a read at all (#99) — grouping's own
       // render stage has zero knowledge of expansion; the engine-owned `'prune'` stage governs
       // collapse/expand visibility regardless of argument order (ADR-0017).
       inContext(() =>
@@ -1297,7 +1297,7 @@ function makeAsyncGroupingRule(
   };
 }
 
-describe('groupingRule declarative sugar (#60)', () => {
+describe('groupingRule declarative sugar (#26)', () => {
   // `applyGroupingAsync` without `onError` is a `@ts-expect-error` compile-time case, already
   // covered by `schema/grouping-rules.spec.ts` (Step 3, "applyGroupingAsync without onError is a
   // compile error") — not duplicated here.
@@ -1437,7 +1437,7 @@ describe('groupingRule declarative sugar (#60)', () => {
     });
   });
 
-  describe('initial + schema in one call (#118)', () => {
+  describe('initial + schema in one call (#84)', () => {
     it('the schema rule overrides the initial seed when it resolves — initial is a seed, not a floor (D6/D7)', () => {
       const categoryActive = signal(false);
 
@@ -1677,7 +1677,7 @@ function groupWhenColumns(
 
 const EU_GROUP_ID = 'group:>region:string:EU';
 
-describe('when (#119 table-wide admission)', () => {
+describe('when (#85 table-wide admission)', () => {
   it('rows with no region render flat at depth 0; regions with a value keep their header (headline scenario)', () => {
     const store = inContext(() =>
       createTable(
@@ -1810,7 +1810,7 @@ describe('when (#119 table-wide admission)', () => {
     ]);
   });
 
-  it('omitting when leaves renderRows() byte-identical to the pre-#119 shape (regression gate for the whole slice)', () => {
+  it('omitting when leaves renderRows() byte-identical to the pre-#85 shape (regression gate for the whole slice)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -1845,7 +1845,7 @@ function repColumns(): ColumnDef<RepMockRow>[] {
   ];
 }
 
-describe('when Q1 through the public surface (#119)', () => {
+describe('when Q1 through the public surface (#85)', () => {
   it('a null-region row escapes flat at depth 0, never nested under a rep header', () => {
     const store = inContext(() =>
       createTable(
@@ -1873,7 +1873,7 @@ describe('when Q1 through the public surface (#119)', () => {
   });
 });
 
-describe('rowsOf and when (Q3, #119)', () => {
+describe('rowsOf and when (Q3, #85)', () => {
   it("a parent's rowsOf still includes rows from a dissolved child cluster", () => {
     const store = inContext(() =>
       createTable(
@@ -1894,7 +1894,7 @@ describe('rowsOf and when (Q3, #119)', () => {
 
   // `rowsOf`/`rowsBeneathGroup` never receive `when` (no `ClusterOpts` is threaded through
   // that path) — they rebuild the raw cluster tree and resolve purely by path, so a *dissolved*
-  // cluster's own id still resolves to its real leaves, same as before #119. Only an id matching
+  // cluster's own id still resolves to its real leaves, same as before #85. Only an id matching
   // no cluster at all returns `[]`; that guarantee already holds without `when`, and this case
   // confirms composing `when` doesn't change it.
   it('rowsOf on an id matching no cluster at all returns [], no throw — unaffected by a configured when', () => {
@@ -1948,8 +1948,8 @@ describe('types', () => {
     expectTypeOf(store).not.toBeAny();
   });
 
-  it('a positional schema fn is a compile error — the deleted overload does not come back (#118)', () => {
-    // @ts-expect-error — the either/or first positional is gone (#118); a schema fn belongs in
+  it('a positional schema fn is a compile error — the deleted overload does not come back (#84)', () => {
+    // @ts-expect-error — the either/or first positional is gone (#84); a schema fn belongs in
     // `config.schema`.
     withGrouping((path) => {
       applyGrouping(path.region, { enable: () => true });

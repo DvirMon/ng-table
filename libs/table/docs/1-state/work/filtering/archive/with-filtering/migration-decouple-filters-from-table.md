@@ -2,7 +2,7 @@
 title: Migration — decouple createFilters() from withFiltering()
 type: plan
 date: 2026-09-14
-status: in progress — S1 (#102) and S2 (#103) shipped; S3a/S3b/S4/S5/S6 outstanding and now
+status: in progress — S1 (#68) and S2 (#69) shipped; S3a/S3b/S4/S5/S6 outstanding and now
   merged into R47's ranking
 ---
 
@@ -43,7 +43,7 @@ Dependency chain: `S1,S2 → S3 → S4 → S6`.
 
 ---
 
-## S1 — `matcher()` on the filters root — ✅ shipped (#102, `fded966`)
+## S1 — `matcher()` on the filters root — ✅ shipped (#68, `fded966`)
 
 **Depends on:** nothing. **Parallel-safe with:** S2.
 **Files:** `api/filters.types.ts`, `api/filters/evaluator.ts`, `api/filters/state.ts`,
@@ -72,7 +72,7 @@ Why a method on the root rather than a property on the callable: `Filters` is a 
 `keyof TState`, so a top-level `matcher` key would collide with a filter literally named
 `matcher`. The root is already a plain interface.
 
-## S2 — `withFiltering` takes `predicates` — ⚠️ shipped partially (#103, `8184df5`)
+## S2 — `withFiltering` takes `predicates` — ⚠️ shipped partially (#69, `8184df5`)
 
 **Depends on:** nothing. **Parallel-safe with:** S1.
 **Files:** `api/features/with-filtering.ts`, `index.ts`.
@@ -82,11 +82,11 @@ Why a method on the root rather than a property on the callable: `Filters` is a 
 > "either input alone is enough; supplying both ANDs the filter model with the predicate terms."
 > So `createFilterEvaluator` and `type Filters` are still imported, and the `TState` generic is
 > still on the interface and both overloads — meaning the two call-site landmines and
-> [#90](https://github.com/DvirMon/acme/issues/90) are still live.
+> [#56](https://github.com/DvirMon/ng-table/issues/56) are still live.
 >
 > **Resolved by [R48](design-options-hybrid-api.md#r48) — finish the step as written.** `filters`
 > leaves the config, `predicates` becomes required, both imports and the `TState` generic delete,
-> and #90 closes as fixed-by-design. Hard-blocks R47's call-site pass, since every `withFiltering`
+> and #56 closes as fixed-by-design. Hard-blocks R47's call-site pass, since every `withFiltering`
 > site changes shape.
 >
 > The third and fourth bullets shipped as written.
@@ -95,13 +95,13 @@ Why a method on the root rather than a property on the callable: `Filters` is a 
 - **Delete both imports** (`createFilterEvaluator`, `type Filters`) — the stated requirement.
 - **Delete the `TState` generic** from the interface and both overloads. This removes the two
   documented call-site landmines (`TState` must be a `type` not an `interface`; never pass `In`
-  explicitly) and **obsoletes [#90](https://github.com/DvirMon/acme/issues/90)** — close it as
+  explicitly) and **obsoletes [#56](https://github.com/DvirMon/ng-table/issues/56)** — close it as
   fixed-by-design, not as work.
 - **Add stage-level degradation.** Per ADR-0014 the catch unit is one term: try the term, and on
   a throw drop that term for this pass and report once. Not per row (half-filtered set plus a
   `try` in the hot loop), not per pass (one throw would return every row unfiltered). The report
   names the term by index; an owner with real names (`createFilters`) already reports its own.
-  Relates to [#92](https://github.com/DvirMon/acme/issues/92) — same console-only channel, do not
+  Relates to [#58](https://github.com/DvirMon/ng-table/issues/58) — same console-only channel, do not
   widen it here.
 
 ## S3a — specs
@@ -197,7 +197,7 @@ rewrite.
 - Per-column filter awareness for header UI (`activeColumns?: () => ReadonlySet<ColumnId>`).
   **Still an open question** — nothing in `directives/` reads filter state today. If the answer
   is yes, it lands as a second table-owned field and still imports nothing.
-- [#91](https://github.com/DvirMon/acme/issues/91) (property access under
+- [#57](https://github.com/DvirMon/ng-table/issues/57) (property access under
   `noPropertyAccessFromIndexSignature`) and
-  [#96](https://github.com/DvirMon/acme/issues/96) (`active()` naming) are filters-lib bugs,
+  [#62](https://github.com/DvirMon/ng-table/issues/62) (`active()` naming) are filters-lib bugs,
   unaffected either way — but both get cheaper to fix once the lib stands alone.

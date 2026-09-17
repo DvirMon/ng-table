@@ -27,7 +27,7 @@ export class ServerFilteringToolbarComponent {
   readonly loadError = input.required<string | null>();
   readonly statusOptions = input.required<readonly InvoiceStatus[]>();
   readonly tagOptions = input.required<readonly string[]>();
-  /** The late-default race, computed on the host: `dirty()` is `@internal` as of #124. */
+  /** The late-default race, computed on the host: `dirty()` is `@internal` as of #90. */
   readonly amountIgnoresServerDefault = input.required<boolean>();
 
   readonly deliverServerDefault = output<void>();

@@ -80,7 +80,7 @@ focus to trigger").
 ## `data-open` / `data-filled` instead of the mock's `.is-active` class
 
 The HTML/CSS mock in `docs/spec.md` keys the active-state styling off `.is-active` and
-`[aria-expanded="true"]`. CONVENTIONS.md #3 ("state as `data-*` attributes — never state classes")
+`[aria-expanded="true"]`. CONVENTIONS.md #4 ("state as `data-*` attributes — never state classes")
 overrides that: `[attr.data-open]` on the host drives the active border/ring/text treatment,
 `[attr.data-filled]` drives the "has a value, not currently open/focused" text-color state that
 the spec's own front-matter states list (`empty/placeholder` vs `filled`) calls out but the Build

@@ -1,6 +1,6 @@
 # Step 7 — Client-filtering host takes the owned model
 
-**PR scope:** PR 1 of 1 (`#125`). **Parallel-safe with: Step 8, Step 9, Step 10.**
+**PR scope:** PR 1 of 1 (`#91`). **Parallel-safe with: Step 8, Step 9, Step 10.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`
@@ -27,7 +27,7 @@ data signal*, which is the shape R52 deletes.
 
 It also carries a **live bug this step must fix, not just migrate around**. `filter-report-log.ts`
 matches console messages beginning `'[createFilters]'`. `evaluator.ts:29` now emits
-`'[withFiltering]'` — renamed by `#124`'s Step 4. The story's degradation panel therefore matches
+`'[withFiltering]'` — renamed by `#90`'s Step 4. The story's degradation panel therefore matches
 nothing and renders empty, while the "Break the tags filter" toggle still appears to work. A reader
 would read that as ADR-0014 not reporting. It is a one-string fix and it belongs here, with the
 story that owns the panel.
@@ -72,7 +72,7 @@ story that owns the panel.
 3. **`ClientCriteria` derives from the schema, not the root.**
    `type ClientCriteria = StateOf<ReturnType<typeof clientInvoiceFilters>>`, importing `StateOf`
    from `../../../filters/types`. It is not on the barrel — that is deliberate and settled by
-   `#124` Step 5; stories already reach into `filters/types` for `FilterNode`.
+   `#90` Step 5; stories already reach into `filters/types` for `FilterNode`.
 
 4. **Host: the table owns the model.**
 
@@ -95,7 +95,7 @@ story that owns the panel.
 
 6. **Fix `filter-report-log.ts`.** `'[createFilters]'` → `'[withFiltering]'` at both the JSDoc and
    the `startsWith` guard. Verify against `src/filters/evaluator.ts:29` rather than trusting this
-   file — if `#124` left a different prefix, that is the string.
+   file — if `#90` left a different prefix, that is the string.
 
 7. **Prose.** The host's class JSDoc, `client-filtering.stories.ts:18` and
    `fixtures/schema.ts:24` all describe "`createFilters()` feeds `withFiltering()` as one matcher
@@ -105,7 +105,7 @@ story that owns the panel.
 ## Implementation Notes
 
 - `withFiltering`'s shipped signature nests `schema` **inside config** — `withFiltering({ schema })`,
-  not `withFiltering(config, schema)`. Issue `#125`'s body shows the second form; it is stale, and
+  not `withFiltering(config, schema)`. Issue `#91`'s body shows the second form; it is stale, and
   `src/api/features/with-filtering.ts:7-19` is the truth.
 - `anyOf` no longer takes a key. `anyOf('search', [...])` → `search: anyOf([...])` — the object key
   is the name now (R51).

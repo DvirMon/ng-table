@@ -8,7 +8,7 @@ The NGP Table state layer ships (`createTable()`, `withSorting()`, columns schem
 
 Backfilled 2026-08-07. This ticket documents work whose spec already exists: the UI layer was drilled across several architecture sessions rather than through `/to-ticket` → `/grill-with-docs` → `/to-spec`, so the pipeline had no ticket or workspace to thread through. The specs are real and complete — this ticket exists to give `/to-issues` and `/to-tasks` an anchor, not to re-open decisions already made.
 
-Everything blocking this work has cleared. [#39](https://github.com/DvirMon/acme/issues/39) landed `RenderRow` + `renderRows()` on the core store, which was the last dependency — `ngpTableRow` binds a `RenderRow` and could not be built before it.
+Everything blocking this work has cleared. [#10](https://github.com/DvirMon/ng-table/issues/10) landed `RenderRow` + `renderRows()` on the core store, which was the last dependency — `ngpTableRow` binds a `RenderRow` and could not be built before it.
 
 Every other UI-layer feature (sort, selection, expansion, drag & drop, resizing, grouping) injects `NGP_TABLE_STORE` or `NGP_TABLE_ROW`, so none of them can start until this lands.
 

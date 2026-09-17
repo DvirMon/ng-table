@@ -40,7 +40,7 @@ cluster works without it.
 **Decision:** D23, fully specified — engine derives it after the render-row builder runs, from
 `data` + `trackBy`; `undefined` for synthesized rows.
 
-**Depends on:** #46 (shipped — `data` is the single source of truth).
+**Depends on:** #11 (shipped — `data` is the single source of truth).
 
 **Open questions blocking it:** none.
 

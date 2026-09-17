@@ -23,7 +23,7 @@ Not a split of one concern — distinct concerns that resemble one. The row *ref
 
 ## Prerequisites
 
-`ngpTableExpandable` and `ngpTableExpandToggle` inject `NGP_TABLE_ROW`, so they depend on `ngpTableRow`, which depended on `RenderRow`/`renderRows()`. Landed 2026-08-07 via [#39](https://github.com/DvirMon/acme/issues/39).
+`ngpTableExpandable` and `ngpTableExpandToggle` inject `NGP_TABLE_ROW`, so they depend on `ngpTableRow`, which depended on `RenderRow`/`renderRows()`. Landed 2026-08-07 via [#10](https://github.com/DvirMon/ng-table/issues/10).
 
 **Outstanding:** the detail-panel path needs `everExpanded` on `withExpansion()` — see "Detail Panels Are Lazy and Persistent" below. Tier 0–2 (tree children) can be built without it; tier 3 cannot.
 

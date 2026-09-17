@@ -82,7 +82,7 @@ withSelection({ enableRowSelection: false })                          // no row 
 withSelection({ enableRowSelection: (row) => row.status !== 'locked' }) // per-row exception
 ```
 
-D58 (#63). A rule on the write verbs, never stored state — resolved per row, inside each write,
+D58 (#29). A rule on the write verbs, never stored state — resolved per row, inside each write,
 against the row(s) involved.
 
 - **Gates id-adding writes only** — `toggle`, `select`, and the `initialSelection` seed. Never
@@ -152,7 +152,7 @@ deliberately does not solve: page-scoped select-all; the read-side "are all visi
 selected" signal, routed to
 [`work/computed-state-mechanism/1-intake.md`](../work/computed-state-mechanism/1-intake.md).
 
-## `isSelectable()` — denominator recipe (D61, #66)
+## `isSelectable()` — denominator recipe (D61, #32)
 
 ```ts
 const ids = selectAllIds(table).filter(table.isSelectable);
@@ -200,7 +200,7 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 ## Open Questions
 
 - [x] **Group-header select-all.** Resolved 2026-09-12 by D16 — no library cascade semantics;
-      `table.rowsOf(group)` (issue #65) plus a consumer-owned cascade
+      `table.rowsOf(group)` (issue #31) plus a consumer-owned cascade
       (`select(rowsOf(group).map(r => r.id))`), matching D1's flat, caller-supplies-the-id-set
       design. See [`2-decisions.md`](../work/with-selection/2-decisions.md) and
       [`0-product/selection.md`](../../0-product/selection.md) §6.
@@ -208,7 +208,7 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
       selection directly, but selection's scope-free design assumes rows are addressable by id
       regardless of which is composed; revisit if that assumption changes.
 - [x] **`selectionStateOf(ids)` denominator vs. `enableRowSelection`.** Resolved 2026-09-12 by
-      D61 (#66): `isSelectable(id)` exposes the D58 predicate read-side; the caller pre-filters
+      D61 (#32): `isSelectable(id)` exposes the D58 predicate read-side; the caller pre-filters
       (`selectAllIds(table).filter(table.isSelectable)`) rather than `selectionStateOf()`
       consulting the predicate itself. D58's write/read split is unchanged.
 - [ ] **Residual questions after D58** (see [2-decisions.md](../work/with-selection/2-decisions.md)):
@@ -226,7 +226,7 @@ one shipping a delta at all. PrimeNG approximates it with two events (`onRowSele
 `onRowUnselect`, which can't describe a single-select replace in one emission); AG Grid and
 TanStack Table ship no delta. On "select all" scope, `withSelection()` refuses the scope
 concept entirely (D1) where AG Grid and Material React Table leak the ambiguity into a `source`
-enum / `forceAll` flag after the fact — this was the audit's #1-ranked gap and is now resolved,
+enum / `forceAll` flag after the fact — this was the audit's #2-ranked gap and is now resolved,
 not just narrowed.
 
 Full reasoning:

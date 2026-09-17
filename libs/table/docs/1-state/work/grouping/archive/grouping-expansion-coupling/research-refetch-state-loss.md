@@ -1,4 +1,4 @@
-# Research relocated from 0-product/grouping.md (D7, trim-docs #80)
+# Research relocated from 0-product/grouping.md (D7, trim-docs #46)
 
 Competitive citations for story 2.4 ("Keep my place while scrolling a long group" /
 expand-state-survives-refetch), previously inline in the story's Design status field.

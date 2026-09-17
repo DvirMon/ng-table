@@ -136,7 +136,7 @@ encapsulation id, the mechanic ADR-0005 records for `prose`), so they must live 
 
 The spec's mock is `<footer class="page-footer">Copyright © 2026 NGP Table</footer>` — the string is
 the footer's *content*, and under the inversion content is the consumer's. It also puts the copy
-where `CONVENTIONS.md` #5 wants it (authored copy in `home.content.ts`, never hardcoded in a
+where `CONVENTIONS.md` #6 wants it (authored copy in `home.content.ts`, never hardcoded in a
 block). The earlier decision to hardcode it ("§ Copyright text hardcoded") is superseded: it was
 justified by the component owning the template, which it no longer does.
 

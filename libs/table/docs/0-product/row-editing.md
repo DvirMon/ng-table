@@ -329,7 +329,7 @@ every open row rather than stranding one.
 
 **Coverage:** gated — `gated-single-optimistic/`, `gated-single-pessimistic/`,
 `gated-multiple-optimistic/` all add-and-fill (inserted at `insertAt`) through a real server
-create; `swapRowId(from, to)` (D49, closes G3 / [#53](https://github.com/DvirMon/acme/issues/53))
+create; `swapRowId(from, to)` (D49, closes G3 / [#19](https://github.com/DvirMon/ng-table/issues/19))
 keeps the row open and addressable under its new server-assigned id, demonstrated end to end in
 all three. Live — `live-table/` and `live-optimistic/` both have a real create round trip with
 the same `swapRowId` re-keying (`live-table/`'s Add row also focuses the new row). Remaining for

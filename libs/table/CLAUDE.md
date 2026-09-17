@@ -126,7 +126,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/status.md` | Every capability's spec/code maturity, state and UI layer side by side. The entry point for "what's the state of X?" | **Generated** — `npm run table:status`. Never hand-edit; fix the owning spec's frontmatter and regenerate |
 | `docs/1-state/row-mutations.md` | Core-API spec — `table.value.update()` + the row updaters. Not in `features/` because mutation is core, not a `with-*()` plugin (D8) | Permanent |
 | `docs/1-state/state-persistence.md` | Cross-feature spec — one atomic snapshot of sort + columns + filters + pagination. Sibling of `row-mutations.md` for the same D8 reason: persistence spans features, it isn't one plugin's state | Permanent |
-| `docs/1-state/filters.md` | Core-API spec for the filters domain's rules/types, reached only through `withFiltering`'s `schema` config — the model is table-owned (#124), not a standalone primitive. Due for a merge into `features/filtering.md`, tracked separately | Permanent |
+| `docs/1-state/filters.md` | Core-API spec for the filters domain's rules/types, reached only through `withFiltering`'s `schema` config — the model is table-owned (#90), not a standalone primitive. Due for a merge into `features/filtering.md`, tracked separately | Permanent |
 | `docs/2-columns/reference/` | Column schema reference (tier levels, ownership, derivation); read-only reference | Permanent; reflects current schema semantics |
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |
@@ -237,7 +237,7 @@ Rules:
   reading `s.expandedRows` off the accumulated `In` is typed only when `withExpansion()` precedes
   it, though the runtime store would have the member either way — features that do read `composed`
   should write the compile-time-legal order. `withGrouping()` is no longer such an example: it read
-  `composed['expandedRows']` as a lazy guarded read inside its group render stage until #133/
+  `composed['expandedRows']` as a lazy guarded read inside its group render stage until #99/
   ADR-0017 moved collapse/expand visibility entirely into the engine-owned `'prune'` render stage —
   `withGrouping()` now composes with zero knowledge of expansion, in any argument order.
 - Internal features (the column-schema wiring) are not consumer `Feature`s: they keep receiving

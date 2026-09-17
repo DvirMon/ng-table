@@ -73,7 +73,7 @@ Specific choices:
   `effect()` / `resource()` and the `DestroyRef` that `onDestroy` hooks register on.
 - **Compile-time feature-input checking stays at its existing level**: each feature annotates
   its own factory parameter (`Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'> & Shape` since
-  #67 — `TableCore<TRow>` now reaches internal features only, ADR-0010). No typed fold over
+  #33 — `TableCore<TRow>` now reaches internal features only, ADR-0010). No typed fold over
   the `Features` tuple — see "Not rebuilt" below.
 
 ## Consequences
@@ -146,7 +146,7 @@ be expressed), while its cost is real: every spec would be built inside one expr
 ADR deliberately kept. Tree-shaking is identical either way; both shapes import features
 top-level. Revisit when a second feature actually wants another feature's state.
 
-## Amendment (2026-09, #67): row-type inference shipped — by positional composition, not `ctx`
+## Amendment (2026-09, #33): row-type inference shipped — by positional composition, not `ctx`
 
 The section above is superseded. A feature call no longer takes a row type: `withExpansion()`, not
 `withExpansion<Department>()`.
@@ -180,7 +180,7 @@ decision.
 ## Amendment (2026-08-17): `TableFeatureSpec.columnRules` is now read
 
 `TableFeatureSpec.columnRules` was declared by this ADR's `TableFeatureSpec` shape but not yet
-read by anything — a feature could set it and nothing would happen. Landed via #49/#50:
+read by anything — a feature could set it and nothing would happen. Landed via #14/#50:
 
 - `composeTable()`'s `foldFeatures()` (`engine/compose-table.ts`) now reads
   `spec.columnRules` off every feature and pushes its entries onto a shared, mutable

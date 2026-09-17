@@ -9,7 +9,7 @@ issue: 57
 
 # How other libraries make a row non-selectable
 
-Run for [#57](https://github.com/DvirMon/acme/issues/57). `withSelection()` has no concept of a
+Run for [#23](https://github.com/DvirMon/ng-table/issues/23). `withSelection()` has no concept of a
 row that cannot be selected at all — `enableMultiRowSelection` restricts *co-selection* only, and
 D8 makes every write verb respond regardless of whether the id is data-backed. Its sibling doc
 [research-selection-change-events.md](research-selection-change-events.md) was scoped to the

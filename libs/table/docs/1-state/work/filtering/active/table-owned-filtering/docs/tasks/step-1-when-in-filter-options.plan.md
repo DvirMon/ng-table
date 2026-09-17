@@ -1,6 +1,6 @@
 # Step 1 — `when` moves into `FilterOptions`; `applyWhen` is deleted
 
-**PR scope:** PR 1 of 1 (`#124`). **Blocks Step 2.**
+**PR scope:** PR 1 of 1 (`#90`). **Blocks Step 2.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`, `classify-errors-construction-vs-runtime`

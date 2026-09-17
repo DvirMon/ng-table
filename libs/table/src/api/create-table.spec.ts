@@ -40,7 +40,7 @@ function makeStore(
  * while `toggled` is on — used to prove `renderRows()` recomputes downstream of the pipeline
  * when a feature's own state changes, not just when the consumer's `data` signal re-emits.
  * Built with `createTableFeature()` per this step's scope: shipped `with-*` features aren't
- * converted to the one-argument factory shape until #72–#74.
+ * converted to the one-argument factory shape until #38–#40.
  */
 function withReversibleSort(): Feature<
   TableStore<Row>,
@@ -420,7 +420,7 @@ describe('createTable', () => {
     // Trap 3: a derive helper whose return type is declared as an intersection collapses the
     // composed store to an unusable shape. `createTableFeature`'s derive overload returns a
     // single `Feature<In, Out & D>`, so the composed store stays exactly the base plus both
-    // contributions — asserted here on #69's own derive helper. `withComputed` (#70) is the
+    // contributions — asserted here on #35's own derive helper. `withComputed` (#36) is the
     // other declaration site and asserts the same property there.
     it('case 19 — trap 3: the derive helper returns one Feature, not an intersection', () => {
       const withDerived = createTableFeature(
@@ -523,7 +523,7 @@ describe('createTable', () => {
     });
 
     // -------------------------------------------------------------------------------------
-    // withComputed() (#70) — both placements, not-any, trap 3. Reuses this describe block's
+    // withComputed() (#36) — both placements, not-any, trap 3. Reuses this describe block's
     // own fixtures (`Invoice`, `invoiceColumns`, `withA`/`withB`) rather than duplicating them.
     // -------------------------------------------------------------------------------------
 
@@ -675,7 +675,7 @@ describe('createTable', () => {
     });
 
     // -------------------------------------------------------------------------------------
-    // composeFeatures() (#71) — composite slots, nesting, the arity escape hatch, not-any.
+    // composeFeatures() (#37) — composite slots, nesting, the arity escape hatch, not-any.
     // Same fixtures as above; `withC` is the third contribution nesting needs.
     // -------------------------------------------------------------------------------------
 
@@ -827,7 +827,7 @@ describe('createTable', () => {
 
       void table;
 
-      // Known limitation (#78): declared standalone there is no contextual `In`, so
+      // Known limitation (#44): declared standalone there is no contextual `In`, so
       // `withMatchFlag`'s own `In` falls back to its `Shape` constraint and `RowOf<Shape>`
       // is `unknown` — the same call inline in a slot below recovers `Invoice`.
       const standalone = composeFeatures(

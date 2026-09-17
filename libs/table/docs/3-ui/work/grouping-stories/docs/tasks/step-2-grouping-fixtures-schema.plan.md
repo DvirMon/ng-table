@@ -58,7 +58,7 @@ Also export the initial grouping levels each story starts from (e.g.
 ## Risks / Watchouts
 
 - `aggregateFn` is called unwrapped by `engine/grouping.ts` — a throwing one takes the table down.
-  That is deliberate and is Step 4's honest-regression demo ([#79](https://github.com/DvirMon/acme/issues/79)); do not defensively wrap it here.
+  That is deliberate and is Step 4's honest-regression demo ([#45](https://github.com/DvirMon/ng-table/issues/45)); do not defensively wrap it here.
 
 ## Non-Goals
 

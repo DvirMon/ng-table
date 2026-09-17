@@ -90,7 +90,7 @@ export function resolveGroupingLevels<TRow>(
  * Recursive stable partition. `accessor(item, columnId)` is supplied by the caller so this
  * builder never needs to know whether `T` is a raw `TRow` or a wrapped render row.
  * `Map` preserves insertion order, which is what gives "first-occurrence order when no
- * `groupOrder` is supplied" (#58) for free — do not swap for a plain object or a sort.
+ * `groupOrder` is supplied" (#24) for free — do not swap for a plain object or a sort.
  */
 export function buildClusters<T>(
   items: T[],
@@ -175,7 +175,7 @@ Cover:
   from `index.ts` — engine-internal, consumed by `with-grouping.ts` (Step 4) and by Step 2's
   render-stage code living in this same file.
 - Do not reach for `GroupKey`/`GroupSummary` types here — those are `groupOrder`'s public shape
-  (#58, D4), out of scope for this issue. `ClusterNode<T>`'s `columnId`/`value` pair is the
+  (#24, D4), out of scope for this issue. `ClusterNode<T>`'s `columnId`/`value` pair is the
   internal equivalent this issue actually needs.
 
 ## Risks / Watchouts
@@ -190,7 +190,7 @@ Cover:
 
 ## Non-Goals
 
-- No `GroupKey`/`GroupSummary` (#58). No render-stage code (Step 2). No wiring into a feature
+- No `GroupKey`/`GroupSummary` (#24). No render-stage code (Step 2). No wiring into a feature
   (Step 4) — this step ships an unconsumed, fully-tested pure module.
 
 ## Acceptance Checks

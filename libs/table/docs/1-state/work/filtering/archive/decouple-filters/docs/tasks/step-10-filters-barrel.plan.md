@@ -1,6 +1,6 @@
 # Step 10 — Give the filters domain its own barrel; the public barrel delegates to it
 
-**PR scope:** PR 2 of 3 (`#106`). **Depends on: Step 9.** **Blocks Step 11, Step 12.**
+**PR scope:** PR 2 of 3 (`#72`). **Depends on: Step 9.** **Blocks Step 11, Step 12.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `file-organization`

@@ -22,10 +22,10 @@
 
 ## Why This Step Exists
 
-Issue #50 is the atomic swap that delivers effect-free column reactivity end-to-end (per
+Issue #15 is the atomic swap that delivers effect-free column reactivity end-to-end (per
 `4-architecture.md`, `3-spec.md`). `columns` stops being a single writable signal three sources
 fight over, and becomes a derivation: a writable `baseColumns`, a `columnRules` registry folded
-via `foldColumnRules` (landed in #49), and a derived `columns` overlaying one on the other. The
+via `foldColumnRules` (landed in #14), and a derived `columns` overlaying one on the other. The
 two `effect()`s in `with-columns-schema/wiring.ts` disappear as a consequence of the split, not
 as a separately-targeted deletion.
 
@@ -35,7 +35,7 @@ breaks every direct writer (`update-columns.ts`, `wiring.ts`'s `patchColumnVisib
 write-path retargeting has to land in the same change that removes the old write path.
 
 **Ground truth override:** `4-architecture.md`'s `ColumnRuleRegistry<TRow>` sketch (`{ readonly
-visible: ColumnRuleEntry[] }`, entry without `kind`) is stale — #49 shipped a different, already-
+visible: ColumnRuleEntry[] }`, entry without `kind`) is stale — #14 shipped a different, already-
 merged shape: `ColumnRuleRegistry<TRow> = readonly ColumnRuleEntry<TRow>[]` (a flat array) with
 `ColumnRuleEntry.kind: 'visible'` as the discriminant (`engine/columns.ts`). Build against the
 actual shipped types, not the doc's sketch. `foldColumnRules` itself is already correct and
@@ -65,7 +65,7 @@ needs no changes here.
 - `TableCore<TRow>.columns`: `WritableSignal<ColumnDef<TRow>[]>` → `Signal<ColumnDef<TRow>[]>`.
 - `TableCore<TRow>` gains `readonly baseColumns: WritableSignal<ColumnDef<TRow>[]>` with the same
   "engine-internal only" annotation `data` already carries.
-- `TableFeatureSpec.columnRules` already exists from #49 (`columnRules?: ColumnRuleRegistry<TRow>`)
+- `TableFeatureSpec.columnRules` already exists from #14 (`columnRules?: ColumnRuleRegistry<TRow>`)
   — update its doc comment: it's no longer "unused by any feature yet," it's now read by
   `composeTable()`'s `foldFeatures()`. Leave the field itself unchanged.
 
@@ -105,7 +105,7 @@ needs no changes here.
 
 - Delete both `effect()` blocks and `patchColumnVisible`.
 - `groupRulesByColumnId` is no longer needed here — grouping moved into `foldColumnRules`
-  (already landed in #49). Delete it too, unless still needed for building entries (check before
+  (already landed in #14). Delete it too, unless still needed for building entries (check before
   deleting — one entry per rule is fine, no grouping needed at this layer).
 - Rename and rewrite the two wiring functions to build `ColumnRuleEntry[]` values instead of
   performing writes:
@@ -172,7 +172,7 @@ needs no changes here.
 
 ## Implementation Notes
 
-- `foldColumnRules` (from #49) is a flat-array fold over `ColumnRuleEntry<TRow>[]` with
+- `foldColumnRules` (from #14) is a flat-array fold over `ColumnRuleEntry<TRow>[]` with
   `kind: 'visible'` as the only branch today — nothing in this step touches `engine/columns.ts`.
 - `TableStore.columns` (`api/types.ts`) is already a readonly `Signal` in the public type — no
   public type changes ripple from this step.

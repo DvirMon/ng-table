@@ -165,7 +165,7 @@ readonly filterForm = form(this.filters().value, (path) => {
 3. ~~Which symbols the barrel exports, and from which file~~ — unblocked by R30; the list is in
    [filters.md](../../filters.md#public-api).
 4. ~~The fate of the superseded `with-filtering.ts`~~ — resolved, see R26.
-5. Issue #5: close-and-replace, or rewrite (R13). **Belongs at `/to-issues`, not spec time.**
+5. Issue #6: close-and-replace, or rewrite (R13). **Belongs at `/to-issues`, not spec time.**
 6. `state-persistence.md`'s filter slice (R22), and the shared persistence feature (R21).
    **Deferred by design** — R21 hands it to a separate persistence feature; do not solve it here.
 7. ~~Matcher/rule name collision~~ — resolved, see R30.
@@ -690,14 +690,14 @@ filter that auto-scanned every column — `anyOf` lists its paths explicitly ins
 (case-insensitive auto-scan) and D3 (auto-detected default predicate) describe that removed
 behavior and go with them. D2 (no built-in debounce) is unaffected.
 
-**They are not dead fields today, so deleting them is not free.** Issue #5's framing ("typed but
+**They are not dead fields today, so deleting them is not free.** Issue #6's framing ("typed but
 unconsumed") no longer holds: both are declared at `api/types.ts:78-79` and actively consumed by
 the superseded `api/features/with-filtering.ts` — `const match = column.filterFn ??
 defaultFilterMatch;` and `if (column.enableFiltering === false) { return false; }`. Removing the
 two fields therefore means removing that feature file and its spec as well. That is the same
 open user decision the handoff already records; R12 does not settle it unilaterally.
 
-**R13 — Issue #5 is left untouched until the spec is written.** Roughly 7 of its 12 requirements
+**R13 — Issue #6 is left untouched until the spec is written.** Roughly 7 of its 12 requirements
 are contradicted — every one that names an API symbol — and it still refers to `createTableStore()`
 and `store.setData()`, both renamed in shipped code. Its behavioral half survives: filtering runs
 first in the pipeline, filters AND together (refined by R8 to *across filters* AND, *within a
@@ -1098,7 +1098,7 @@ third way to debounce, inside the filter schema, would duplicate a mechanism the
 already provides.
 
 **R26 — The superseded `with-filtering.ts` stays on disk; its removal is an implementation task,
-not a spec-time edit** (resolves Still-open #4, and the deletion half of R12).
+not a spec-time edit** (resolves Still-open #5, and the deletion half of R12).
 
 `src/api/features/with-filtering.ts`, its spec, `FilterRule` in `api/types.ts`, the
 `src/index.ts` barrel line, and `ColumnDef.filterFn` / `ColumnDef.enableFiltering` are all left
@@ -1132,7 +1132,7 @@ Consequences for the spec pipeline:
   saying the code exists.
 
 **R27 — Null/undefined cells are handled inside the matchers, with no consumer-facing option**
-(resolves Still-open #1).
+(resolves Still-open #2).
 
 The policy, in full:
 
@@ -1223,7 +1223,7 @@ Dropping it removes a shipped matcher and closes the open question about criteri
 same step. The consumer's UI control is still a toggle; the rule behind it is `equals`.
 
 **R29 — A throwing predicate deactivates its filter; it never takes the table down**
-(resolves Still-open #2). Full reasoning in
+(resolves Still-open #3). Full reasoning in
 [ADR-0014](../../../../../adr/0014-runtime-error-policy.md), which this decision produced and which
 governs every consumer callback in the library, not just filter predicates.
 
@@ -1246,8 +1246,8 @@ consumer-owned `JSON.parse` persistence makes a stale criterion the likeliest re
 Residue, carried into the specs: a filter that failed still appears in `active()`, because
 `active()` describes which criteria are *set* (R14), not which evaluations succeeded.
 
-**R30 — Rules keep the bare verb; matchers take a boolean-guard prefix** (resolves Still-open #7,
-unblocks #3).
+**R30 — Rules keep the bare verb; matchers take a boolean-guard prefix** (resolves Still-open #8,
+unblocks #4).
 
 R7 shipped both forms under one name, which cannot compile: `equals(path.status)` registers a
 filter (one argument, a path, returns `void`), while `equals(cell, criterion)` tests a value (two
@@ -1509,7 +1509,7 @@ nesting is syntax, not structure. R15's semantics are unchanged: every rule insi
 gate, none references the others.
 
 > **Correction to [research-typescript-inference-probes.md](../filters-inferred-state/research-typescript-inference-probes.md)'s
-> "Known holes" #1.** Key collision is *not* an open hole. `filters/validate.ts` already throws at
+> "Known holes" #2.** Key collision is *not* an open hole. `filters/validate.ts` already throws at
 > construction on a duplicate key ("Two filters both resolve to the key …"), alongside the
 > path-uniqueness check — both shipped with R5/R31. The type-level merge the research doc
 > describes is real but unobservable: construction throws before anyone reads `TState`. Node 6 of
@@ -1569,7 +1569,7 @@ which is the one a reader migrating from the old void shape will actually make. 
 a mixed body that returns some rules and bare-calls others; that residue is accepted rather than
 paid for with a custom lint rule.
 
-> **Correction to the research doc's "Known holes" #3.** Its proposed fix — the
+> **Correction to the research doc's "Known holes" #4.** Its proposed fix — the
 > `no-unused-expressions` lint rule — does not fire here. That rule deliberately permits bare call
 > expressions, on the assumption a call has side effects. After R34 these calls have none, so the
 > rule sees nothing to report. A runtime guard, or a purpose-written lint rule, are the only two
@@ -1623,7 +1623,7 @@ Per §1 partial type-argument inference does not exist, so naming `TRow` forces 
 too — which is the cost this whole change removes.
 
 > **⚠️ R43 is obsolete — the gap closed itself on 2026-09-14, before this was implemented.**
-> `matcher(): (row: TRow) => boolean` on `FiltersRoot<TRow, TState>` (#102, `fded966` — S1 of
+> `matcher(): (row: TRow) => boolean` on `FiltersRoot<TRow, TState>` (#68, `fded966` — S1 of
 > [migration-decouple-filters-from-table.md](migration-decouple-filters-from-table.md)) puts
 > `TRow` in the type body for a reason that isn't a brand: the root compiles a real row
 > predicate, so it genuinely consumes the row type. **Build no phantom member.** The spec below
@@ -1729,7 +1729,7 @@ settled.
 R34–R46 were written against the pre-decoupling shape, in which `withFiltering({ filters })` held
 a `Filters` object and imported the filters closure. That shape is already gone in `src/`:
 [migration-decouple-filters-from-table.md](migration-decouple-filters-from-table.md)'s S1 and S2
-shipped as **#102** (`fded966`) and **#103** (`8184df5`) while this section was being written.
+shipped as **#68** (`fded966`) and **#69** (`8184df5`) while this section was being written.
 This is the reconciliation.
 
 **R47 — One merged plan, re-ranked; R46's sequencing and R43 both go.** The two plans were
@@ -1772,8 +1772,8 @@ Three consequences for the implementation order:
 
 | | |
 |---|---|
-| R43 | **obsolete — do not build.** `matcher()` (#102) consumes `TRow` for a real reason; the phantom brand is unnecessary. Its spec-site claim now describes shipped code (`with-filtering.spec.ts:458`, `create-filters.spec.ts:711`) |
-| #103's dual input | superseded by **R48** — `filters` leaves `WithFilteringConfig`; `predicates` is the only way in, and AND-ing both is the consumer's own array |
+| R43 | **obsolete — do not build.** `matcher()` (#68) consumes `TRow` for a real reason; the phantom brand is unnecessary. Its spec-site claim now describes shipped code (`with-filtering.spec.ts:458`, `create-filters.spec.ts:711`) |
+| #69's dual input | superseded by **R48** — `filters` leaves `WithFilteringConfig`; `predicates` is the only way in, and AND-ing both is the consumer's own array |
 | R46 | superseded by R47 — the split stands, the sequencing merges with S3a–S6 |
 | R41 | **site list and count corrected** in place; its `WithFilteringConfig` half is now an open question, below |
 | R42 | `rowOf()` is exported from `index.ts` today, but S6 splits the barrel — it lands in the filters barrel, not the table's |
@@ -1814,7 +1814,7 @@ The three live options, in the order they should be considered:
 
 1. **Finish S2 — delete `filters` from the config.** One way in (`predicates`), `TState` and its
    two documented call-site landmines go, R41 applies cleanly to `Filters` alone, and
-   [#90](https://github.com/DvirMon/acme/issues/90) closes as fixed-by-design. Costs the
+   [#56](https://github.com/DvirMon/ng-table/issues/56) closes as fixed-by-design. Costs the
    convenience form at every story host.
 2. **Keep `filters`, keep the default on `WithFilteringConfig` only.** R41 applies to `Filters`
    where the widening trap actually bites, and the config keeps a default nothing infers.
@@ -1843,7 +1843,7 @@ What this settles, beyond the config itself:
   and no type parameter left on the table side to infer.
 - **Both documented call-site landmines delete** — "`TState` must be a `type`, not an `interface`"
   and "never pass `In` explicitly as a type argument". Neither has anything left to constrain.
-  [#90](https://github.com/DvirMon/acme/issues/90) closes as **fixed-by-design**, not as work.
+  [#56](https://github.com/DvirMon/ng-table/issues/56) closes as **fixed-by-design**, not as work.
 - **`with-filtering.ts` imports nothing from the filters closure** — `createFilterEvaluator` and
   `type Filters` both go, which was S2's stated requirement and the actual test of the decoupling.
   `applyFilterModel()` goes with them; `applyPredicateTerms()` becomes the whole stage.
@@ -1852,7 +1852,7 @@ What this settles, beyond the config itself:
   `{ filters: this.filters }` — one line, visible at the seam, and it is the line that makes the
   two objects' independence legible rather than merely structural.
 
-Superseding #103's "either input alone is enough; supplying both ANDs the filter model with the
+Superseding #69's "either input alone is enough; supplying both ANDs the filter model with the
 predicate terms": AND-ing was never the point of keeping `filters` — a consumer wanting both
 writes `predicates: () => [this.filters().matcher(), ...myTerms]`, which is the same AND, stated
 once, in the consumer's own array. The general mechanism absorbs the enumerated case
@@ -1862,7 +1862,7 @@ Lands in R47's **library** unit, and hard-blocks the call-site pass — every `w
 changes shape, so it must settle before the story hosts and specs are rewritten.
 
 **R49 — `active()` splits into a value member and a boolean: `criterion()` / `criteria()` /
-`isActive()`.** Decided in [#96](https://github.com/DvirMon/acme/issues/96), recorded here because
+`isActive()`.** Decided in [#62](https://github.com/DvirMon/ng-table/issues/62), recorded here because
 it changes the public member set this document specifies. `active()` read as a predicate and
 returned data — on a node, the criterion or `undefined`; on the root, a `Partial<TState>` — so
 every consumer asking "is this filter narrowing?" tested a returned object for emptiness at the
@@ -1876,9 +1876,9 @@ call site.
 `value()` is untouched: the model stays complete, and R14's "why both" reasoning survives the
 rename intact — only the derived half is renamed and split.
 
-**Documented ahead of its code.** #96 is code-only (`filters/types.ts`, `state.ts`,
+**Documented ahead of its code.** #62 is code-only (`filters/types.ts`, `state.ts`,
 `evaluator.ts`, the three story hosts); [`docs/1-state/filters.md`](../../../../filters.md) already
-describes this shape, because the doc half was absorbed into #113 to stop the two issues rewriting
+describes this shape, because the doc half was absorbed into #79 to stop the two issues rewriting
 the same sections twice.
 
 ## Open questions for the grill

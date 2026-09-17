@@ -81,7 +81,7 @@ ran, how many passes occurred, or the internal shape of the slot.
 ## Risks / Watchouts
 
 - **Do not edit existing cases to make them pass.** Every current `render-stages.spec.ts` and
-  `compose-table.spec.ts` case must pass unedited — that is #132's primary acceptance criterion.
+  `compose-table.spec.ts` case must pass unedited — that is #98's primary acceptance criterion.
   A failure here means Step 4 is wrong.
 - Do not test pagination itself. The fake `paginate` transform exists only to prove ordering.
 - The union case may belong in a `core.ts` spec rather than here, depending on where Step 4 put the

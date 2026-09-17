@@ -272,7 +272,7 @@ No additions beyond the fixed contract at original build time. `search-field`'s 
   isn't wired, so this is test data, not indexing.
 - `SearchOverlay.resultGroups` (2026-08-23) now runs a real case-insensitive substring match
   (`search-overlay.utils.ts`'s `groupSearchResults`) against `SEARCH_INDEX_MOCK`, grouped by
-  section in `entryOrder`, capped at 5 per group (closes gap #5). This is intentionally the
+  section in `entryOrder`, capped at 5 per group (closes gap #6). This is intentionally the
   simplest possible matching — no fuzzy match, no ranking/scoring, no highlighting of the
   matched substring in the title (spec's "Query match highlight" row is still unimplemented).
   `Search Index.md`'s full matching/ranking rules are still deferred until Content Model.md

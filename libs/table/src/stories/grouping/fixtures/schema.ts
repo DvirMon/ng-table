@@ -9,7 +9,7 @@ import type { DealRow } from './types';
  *
  * Rejects a negative amount rather than summing it. `engine/grouping.ts` calls this **unwrapped**,
  * so one bad record takes the whole table down instead of blanking that group's summary — the
- * runtime-class failure ADR-0014's retrofit has not reached yet (#79). `grouping-regressions/`'s
+ * runtime-class failure ADR-0014's retrofit has not reached yet (#45). `grouping-regressions/`'s
  * "Break one group's summary" control injects exactly such a record on demand.
  */
 function sumAmount(rows: DealRow[]): number {

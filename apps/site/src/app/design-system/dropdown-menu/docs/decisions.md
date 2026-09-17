@@ -104,7 +104,7 @@ presence.
 
 ## Focus-visible: suppressed locally on `.menu-option`
 
-CONVENTIONS.md #4 says don't restyle focus locally unless the spec calls for different treatment.
+CONVENTIONS.md #5 says don't restyle focus locally unless the spec calls for different treatment.
 The States table is explicit that "Option focused" ("Keyboard arrow lands on it") uses "Same fill
 as hover" — no separate ring is described. Left as-is, the global `:focus-visible` policy would
 stack its box-shadow ring on top of that fill. `.menu-option:focus-visible { outline: none;

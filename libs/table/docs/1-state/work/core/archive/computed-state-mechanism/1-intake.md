@@ -21,7 +21,7 @@ commit to a shape.
    [`docs/0-product/filtering.md`](../../../../../0-product/filtering.md) — see OQ-2 and story F-S1.
 2. **"Are all currently-visible rows selected?"** — the read side a select-all checkbox needs to
    render checked/indeterminate/unchecked and to decide select-vs-deselect on click. Same shape as
-   #1 (compare `selectedRows()` against `table.rows()`/`table.renderRows()`), different comparison.
+   #2 (compare `selectedRows()` against `table.rows()`/`table.renderRows()`), different comparison.
    Surfaced verifying `selectAllIds()` (the plain write-side helper designed alongside this intake,
    see `selection.md` once recorded) against TanStack Table
    [#4781](https://github.com/TanStack/table/issues/4781) — `getIsAllRowsSelected()` reporting
@@ -29,7 +29,7 @@ commit to a shape.
    visible" on the read side either.
 
 Both are read-side derived values over the same two signals (`selectedRows()` + a row-set from
-core). A design here should account for both, not solve #1 and rediscover #2 later.
+core). A design here should account for both, not solve #2 and rediscover #3 later.
 
 ## Seams that already exist
 

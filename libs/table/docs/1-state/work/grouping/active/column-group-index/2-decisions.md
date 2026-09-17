@@ -1,5 +1,5 @@
 ---
-title: Decisions — groupIndex on ColumnDef (#115)
+title: Decisions — groupIndex on ColumnDef (#81)
 type: decisions
 status: drilling — D1-D7 settled (shape decided); N5-N7 open, none blocking.
 date: 2026-09-17
@@ -8,7 +8,7 @@ audience: developers
 
 # groupIndex on ColumnDef — decisions
 
-Source: [#115](https://github.com/DvirMon/acme/issues/115).
+Source: [#81](https://github.com/DvirMon/ng-table/issues/81).
 Directly re-opens **D2** in [`../with-grouping/2-decisions.md`](../../archive/with-grouping/2-decisions.md).
 
 ## Corrections to the issue body, made before grilling (2026-09-16)
@@ -94,7 +94,7 @@ N6   (independent, leaf — issue already scopes it to "a look, not a commitment
 - **D3 (2026-09-17) — `isGroupedBy(): boolean`, not `groupIndexOf(): number | undefined`.**
   Every existing call site asks *is this column a level*, never *which level*. `groupingLevels()`
   already answers "which" by position. Rejecting the index also drops the name `groupIndex` that
-  #115 was filed under — the issue's title outlived its own evidence. Reversible: add
+  #81 was filed under — the issue's title outlived its own evidence. Reversible: add
   `groupIndexOf` if a per-column index need ever appears.
 
 - **D4 (2026-09-17) — Both members derive from `groupingLevels()`, not from `grouping()`.**
@@ -161,7 +161,7 @@ Findings:
   *reactive, conditional, async-capable* state. `enableSorting` is a static boolean where a
   reactive `applySortable()` (mirroring `applyVisible()`) would be the consistent shape.
 
-Consequence for #115: N0 is **upstream of N1**. `groupIndex` would add a fourth field to a
+Consequence for #81: N0 is **upstream of N1**. `groupIndex` would add a fourth field to a
 surface that may be about to relocate. Revised graph:
 
 ```
@@ -174,12 +174,12 @@ N5, N6 independent
 
 Likely an ADR, not a ticket decision — it sets library-wide policy across four features.
 
-- **N0 spun out to [#134](https://github.com/DvirMon/acme/issues/134) (2026-09-16).** Placement
+- **N0 spun out to [#100](https://github.com/DvirMon/ng-table/issues/100) (2026-09-16).** Placement
   rule for per-column feature config — library-wide policy across four features, too big for this
   ticket. Rules A (nothing on `ColumnDef`) and B (static pure fns stay, reactive state moves)
   drafted there with Q1-Q5.
 
-  **#115 is not blocked on it.** Decision: scope #115 so its outcome does not depend on #134's.
+  **#81 is not blocked on it.** Decision: scope #81 so its outcome does not depend on #100's.
   Consequence for N1 — a shape that adds a **top-level `ColumnDef` field** is the one arm whose
-  correctness depends on #134 landing rule B. A feature member is #134-independent by
-  construction; a `meta` key is partly exposed (#134 Q3 covers the `columnsSchema` channel).
+  correctness depends on #100 landing rule B. A feature member is #100-independent by
+  construction; a `meta` key is partly exposed (#100 Q3 covers the `columnsSchema` channel).

@@ -90,7 +90,7 @@ export interface GroupWhenMockRow {
 
 /** Two US rows, one EU, one `null` region, one `undefined` region — the two JS "blank"
  * representations coexist so a `when` predicate can be exercised against both without two
- * separate fixtures. See `withGrouping()`'s `when` (#119) tests. */
+ * separate fixtures. See `withGrouping()`'s `when` (#85) tests. */
 export const mockGroupWhenRows: GroupWhenMockRow[] = [
   { id: 1, region: 'US', amount: 100 },
   { id: 2, region: 'US', amount: 300 },
@@ -107,7 +107,7 @@ export interface RepMockRow {
   rep: string;
 }
 
-/** Two-level (region → rep) fixture for #119's Q1 test — a null-region row must escape the
+/** Two-level (region → rep) fixture for #85's Q1 test — a null-region row must escape the
  * grouping tree entirely rather than re-clustering under a `rep` header. */
 export const mockRepRows: RepMockRow[] = [
   { id: 1, region: 'US', rep: 'Alice' },

@@ -20,11 +20,11 @@ work in the repo.
 
 | Issue | Effect of the re-doc | Verdict |
 |---|---|---|
-| #51 | Its last open AC is now **moot** — see below | **Close** |
-| #52 | Narrowed, not invalidated — both ACs still stand | Keep |
-| #54, #5, #6, #7 | Untouched by either commit | Keep |
+| #16 | Its last open AC is now **moot** — see below | **Close** |
+| #17 | Narrowed, not invalidated — both ACs still stand | Keep |
+| #20, #6, #7, #8 | Untouched by either commit | Keep |
 
-### #51 — close it
+### #16 — close it
 
 The one outstanding criterion was a doc line: record the `onRowsRemoved` convention in
 `architecture.md`'s open-questions list *"so a future `withSelection()` is written with the
@@ -44,7 +44,7 @@ also lives in `CLAUDE.md` and in `features/column-pinning.md` / `features/column
 The AC was a tripwire for a specific future mistake. That future arrived and the mistake
 did not. Close it.
 
-### #52 — still valid, and the re-doc did not touch either AC
+### #17 — still valid, and the re-doc did not touch either AC
 
 Worth stating precisely, because `expansion.md` grew 99 lines and none of them were these:
 
@@ -56,7 +56,7 @@ Worth stating precisely, because `expansion.md` grew 99 lines and none of them w
   remove; it does not cover remove-then-re-add-the-same-id.
 
 One clarification the re-doc *does* provide: **stale restored ids are a different problem
-from removal reconciliation**, and #52 should not absorb them. Removal prunes ids that
+from removal reconciliation**, and #17 should not absorb them. Removal prunes ids that
 arrive as removals; stale restored ids never arrive at all, because they were never in
 `data` to begin with. That is its own decision (below), not part of this issue.
 
@@ -111,7 +111,7 @@ is deliberately not a signal and not a predicate. `WithExpansionConfig` in
 `src/api/features/with-expansion.ts:16` has `childrenAccessor` and `isExpandable` — no
 `initialExpanded`. Grep finds the name nowhere in `src/`.
 
-Depends on #2 above.
+Depends on #3 above.
 
 ### 4. Expansion snapshot slice — blocked
 
@@ -128,16 +128,16 @@ P0  withSelection() implementation          spec ready, unblocks bulk verbs, no 
 P0  stale-restored-ids decision             one call, gates initialExpanded + initialSelection
 P0  selection doc debts (5 files)           ship with the feature, not after
 
-P1  #52  expansion removal reconciliation   2 small ACs, behavior change already half-landed
+P1  #17  expansion removal reconciliation   2 small ACs, behavior change already half-landed
 P1  initialExpanded implementation          needs the P0 decision first
 
-P2  #6   withGrouping()                     unblocked by ADR-0011; rewrite the stale body first
-P2  #5   withFiltering()                    unblocks O15/O16 in the row-editing gaps
+P2  #7   withGrouping()                     unblocked by ADR-0011; rewrite the stale body first
+P2  #6   withFiltering()                    unblocks O15/O16 in the row-editing gaps
 
-P3  #7   pipeline integration verification  blocked on #5 and #6 both existing
-P3  #54  move rollback                      blocked on withDragDrop()/moveRow existing
+P3  #8   pipeline integration verification  blocked on #6 and #7 both existing
+P3  #20  move rollback                      blocked on withDragDrop()/moveRow existing
 
---  #51  close                              last AC moot
+--  #16  close                              last AC moot
 ```
 
 Dependency edges that actually constrain the order:
@@ -148,13 +148,13 @@ stale-restored-ids ──▶ initialExpanded
 
 withSelection() ──▶ bulk removeRow(id[]) / patchRow(id[], partial)
 
-ADR-0011 (shipped) ──▶ #6 withGrouping
-#5 + #6 ──▶ #7 pipeline verification
-withDragDrop()/moveRow ──▶ #54
+ADR-0011 (shipped) ──▶ #7 withGrouping
+#6 + #7 ──▶ #8 pipeline verification
+withDragDrop()/moveRow ──▶ #20
 state-persistence ──▶ expansion snapshot slice
 ```
 
-Everything else is parallel-safe. #52 in particular touches only expansion and depends on
+Everything else is parallel-safe. #17 in particular touches only expansion and depends on
 nothing above it.
 
 ## Non-table backlog, for completeness

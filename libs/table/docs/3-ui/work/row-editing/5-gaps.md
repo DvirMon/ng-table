@@ -73,7 +73,7 @@ Nothing moves focus into the row on `beginEdit`, and nothing restores it to the 
 close. Related: D26 notes that the temp-id swap destroys and recreates the `<tr>`, taking focus
 inside it with it — see
 [G3](../../../1-state/work/with-row-editing/5-gaps.md) /
-[#53](https://github.com/DvirMon/acme/issues/53) for the state-layer half of that.
+[#19](https://github.com/DvirMon/ng-table/issues/19) for the state-layer half of that.
 
 **Re-scoped 2026-09-04** — same as G1 (D1 in `work/row-edit-keyboard-a11y/2-decisions.md`):
 documented recipe, not a shipped directive.

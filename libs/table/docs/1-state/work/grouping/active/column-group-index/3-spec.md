@@ -1,5 +1,5 @@
 ---
-title: Spec — the column↔grouping-level relation on withGrouping() (#115)
+title: Spec — the column↔grouping-level relation on withGrouping() (#81)
 type: spec
 status: ready
 date: 2026-09-17
@@ -109,7 +109,7 @@ factories. These two members are read-only projections.
     change to level resolution reaches every consumer at once instead of needing a sweep of
     hand-rolled copies.
 22. As a maintainer, I want the members added without touching `ColumnDef`, so that this ships
-    independently of #134's placement rule for per-column feature config.
+    independently of #100's placement rule for per-column feature config.
 23. As a maintainer, I want the `grouping` member to keep exactly one meaning, so that its read
     type and its write updaters stay describing the same thing.
 24. As a maintainer, I want no new engine contribution slot or column rule for this, so that the
@@ -124,7 +124,7 @@ factories. These two members are read-only projections.
 
 **D2 — Two members on `withGrouping()`, nothing on `ColumnDef`.** `GroupingMembers<TRow>` gains
 `groupingLevels: Signal<ColumnDef<TRow>[]>` and `isGroupedBy: (columnId: string) => boolean`.
-`ColumnDef` is unchanged. This is the arm whose correctness does not depend on #134 landing a
+`ColumnDef` is unchanged. This is the arm whose correctness does not depend on #100 landing a
 particular placement rule.
 
 **D3 — `isGroupedBy(): boolean`, not `groupIndexOf(): number | undefined`.** Every existing call
@@ -178,7 +178,7 @@ inline `grouping.includes(column.id)` in the static host's grouped-column-mode s
 that currently iterate `grouping()` and look a label up by id iterate `groupingLevels()` instead.
 
 **Docs.** The grouping feature reference gains a note for both members, in the same form the
-`groupIds` (#131) and `rowsOf` (#65) entries take. The columns reference gets a pointer stating
+`groupIds` (#97) and `rowsOf` (#31) entries take. The columns reference gets a pointer stating
 that the column↔level relation lives on the grouping feature, not on `ColumnDef` — so a reader
 looking for it in the obvious wrong place is redirected.
 
@@ -194,7 +194,7 @@ were computed from different sources is not testing D4.
 `describe('groupingLevels')` and `describe('isGroupedBy')` blocks. No new seam is introduced and
 nothing is tested at the engine layer — level resolution already has its coverage there. Prior art
 is immediate and in the same file: the existing `describe('rowsOf')` and `describe('groupIds')`
-blocks, added for #65 and #131, test exactly this class of published projection through the same
+blocks, added for #31 and #97, test exactly this class of published projection through the same
 construction helpers and fixtures.
 
 **Cases to cover.**
@@ -221,7 +221,7 @@ template-aware and therefore catches a template still binding a deleted member.
 
 - **`groupIndexOf(columnId)`** — no call site wants an index (D3). Reversible later.
 - **`ColumnDef.groupIndex`**, and any new column-rule key or engine contribution slot for it.
-- **#134's placement rule** for per-column feature config (`sortFn` / `enableSorting` /
+- **#100's placement rule** for per-column feature config (`sortFn` / `enableSorting` /
   `aggregateFn` / `applySortNulls`). This spec is deliberately independent of its outcome.
 - **N5** — whether `grouping: string[]` stays the only write surface. Expected trivially yes;
   unconfirmed, and this spec adds no write surface either way.

@@ -56,13 +56,13 @@ Site-specific:
 ## Implementation Notes
 
 - `predicate-filtering.mdx:15-16` already describes the predicate contract correctly (it shipped
-  with `#103`). Read it for voice and vocabulary, then leave it alone.
+  with `#69`). Read it for voice and vocabulary, then leave it alone.
 - `client-filtering-story-host.component.ts:338,349` mirror console reports prefixed `[createFilters]`.
   That prefix is emitted by the evaluator and is unchanged by this issue — do not touch it.
 - Per the repo's JSDoc rule, keep these terse. A host doc comment states what the story shows and
   the one non-obvious constraint; it is not a tutorial on the feature's config.
 - No decision narration in source comments — the reasoning for the decoupling belongs in the ADR
-  (`#105`), not in a story host's header.
+  (`#71`), not in a story host's header.
 
 ## Risks / Watchouts
 
@@ -73,8 +73,8 @@ Site-specific:
 
 ## Non-Goals
 
-- Rewriting `docs/1-state/features/filtering.md` or `docs/1-state/filters.md` — those are `#107`.
-- Writing ADR-0016 — that is `#105`.
+- Rewriting `docs/1-state/features/filtering.md` or `docs/1-state/filters.md` — those are `#73`.
+- Writing ADR-0016 — that is `#71`.
 - Any code change. If a prose fix reveals a code bug, note it and stop.
 
 ## Acceptance Checks

@@ -1,8 +1,8 @@
 # Research — config object vs. functional extension for consumer-facing options
 
 **Date:** 2026-09-15 · **Status:** §6's recommendation (D + C) **shipped 2026-09-16** via
-[#116](https://github.com/DvirMon/acme/issues/116); the rest is research, not yet grilled ·
-**Trigger:** [D4](../../../filtering/archive/filters-inferred-state/docs/tasks/issue-111-call-sites/decisions.md) ·
+[#82](https://github.com/DvirMon/ng-table/issues/82); the rest is research, not yet grilled ·
+**Trigger:** [D4](../../../filtering/archive/filters-inferred-state/docs/tasks/issue-77-call-sites/decisions.md) ·
 **Feeds:** `filters/types.ts` `FilterOptions`, `filters/rules.ts` `resolveEmptiness`
 
 > **Evidence discipline.** Every library claim below names the URL or package path it was read
@@ -344,7 +344,7 @@ all three.
 
 ## 5. Type-inference consequences
 
-This is where the general question becomes a local one, because `#111` just made the criterion map
+This is where the general question becomes a local one, because `#77` just made the criterion map
 inferred and `StateOf<S>` folds `CriterionOf<R>` out of each rule's return type. A shape that
 degrades `TEmpty` degrades the public state type of every consumer.
 
@@ -382,7 +382,7 @@ Equal<CriterionOf<typeof baseOverride>, string>          // PASS — the subtrac
    `emptyValue?: TEmpty | ((d: Emptiness) => Emptiness)`, `TEmpty` has a candidate only on the value
    branch; on the function branch it falls back to its default. The same call site then yields
    `TRow[K] | null` or `TRow[K] | ''` depending on *which syntax the consumer used* — exactly the
-   coupling `#111` removed. *Assert:* both branches against `Equal<…>`; expect divergence.
+   coupling `#77` removed. *Assert:* both branches against `Equal<…>`; expect divergence.
    **FAIL — understated, twice over.**
 
    *(a) In the real signature shape it does not compile at all.* `emptyValue` is declared in **both**
@@ -621,7 +621,7 @@ half-shipped on `filter()`, already precedented by TanStack's `autoRemove`. No c
 (`FilterOptions.emptyValue` JSDoc), the spec block at `create-filters.spec.ts:197`, and the "Empty
 criteria" section of `docs/1-state/filters.md`.
 
-> **Shipped 2026-09-16 — [#116](https://github.com/DvirMon/acme/issues/116).** Two deltas against
+> **Shipped 2026-09-16 — [#82](https://github.com/DvirMon/ng-table/issues/82).** Two deltas against
 > the scope above, both found at implementation:
 >
 > - **C landed on `FilterOptions`, not on six rule signatures.** `isEmpty?: (criterion:
@@ -632,7 +632,7 @@ criteria" section of `docs/1-state/filters.md`.
 > - **One in-repo consumer paid D's stated cost.** All three filtering story hosts bound a native
 >   `<select>` to `equals(path.status, { emptyValue: '' })` and relied on the *narrowing* D
 >   removes. They now declare `filter(path.status, matchesStatus, { emptyValue: '' })` — an
->   explicit `string` criterion — which keeps `[formField]` binding with no accessor. #97 stays
+>   explicit `string` criterion — which keeps `[formField]` binding with no accessor. #63 stays
 >   closed; only the mechanism moved. Worth noting for §7: a shape that widens a public type
 >   relocates work to call sites that were relying on the narrow one.
 

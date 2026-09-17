@@ -100,7 +100,7 @@ remove it.
 - `git diff main -- apps/demo` empty. The public export list in `index.ts` is unchanged name for
   name; only paths moved.
 
-## Amendment (2026-09, #106): one barrel per domain, and `filters/` is a domain
+## Amendment (2026-09, #72): one barrel per domain, and `filters/` is a domain
 
 `filters/` is now a top-level sibling of `api/`, `engine/` and `directives/`, and it has its own
 `index.ts`. That is not a per-folder barrel, and it is not a retraction of the rule above.

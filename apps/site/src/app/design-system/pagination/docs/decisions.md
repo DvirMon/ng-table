@@ -27,7 +27,7 @@ fill it. `flex:1` on each card would stretch a lone card to 100% width once its 
 "never a placeholder for the missing side" rule cuts both ways — no placeholder card, but also no
 stretch). Used CSS Grid instead: `grid-template-columns: 1fr 1fr`, each card explicitly placed via
 `[data-side='prev'] { grid-column: 1 }` / `[data-side='next'] { grid-column: 2 }` (state as
-`data-*`, per this app's convention #3). A missing side leaves its grid column empty — no reflow.
+`data-*`, per this app's convention #4). A missing side leaves its grid column empty — no reflow.
 
 ## Reduced motion
 

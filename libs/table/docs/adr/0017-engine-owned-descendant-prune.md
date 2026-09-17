@@ -1,6 +1,6 @@
 # ADR-0017 — `RenderRow.parentId` + an engine-owned terminal prune replace feature-side descendant hiding
 
-**Status:** accepted — decided 2026-09-16, implemented in `#132`.
+**Status:** accepted — decided 2026-09-16, implemented in `#98`.
 **Related:** [ADR-0011](0011-chained-render-stages.md) (stage allocation — partially superseded:
 not every render stage is feature-claimable), [ADR-0012](0012-split-expansion-into-panel-and-tree.md)
 (proposed — forces the accumulating slot, and is made cheaper by it), [ADR-0006](0006-row-id-state-reconciliation.md)
@@ -45,4 +45,4 @@ breaks the prune silently.
 - Nothing checks that a new synthesizing stage stamps `parentId`; forgetting it yields silently unprunable rows.
 - The accumulating-slot exception needs a comment on the field saying why, or a future reader "fixes" it into a `SlotRegistry` claim and reintroduces the ADR-0012 throw.
 - That justification rests on ADR-0012, still **proposed** — if the split is abandoned, single-claim is correct again and this should be revisited.
-- This slice is behavior-neutral: grouping keeps its own prune, so hiding runs twice (idempotent) until `#133` deletes it and the cross-feature read.
+- This slice is behavior-neutral: grouping keeps its own prune, so hiding runs twice (idempotent) until `#99` deletes it and the cross-feature read.

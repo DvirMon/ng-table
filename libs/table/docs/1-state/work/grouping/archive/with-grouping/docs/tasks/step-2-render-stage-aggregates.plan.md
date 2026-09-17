@@ -125,7 +125,7 @@ plain 1:1 seed from `buildDefaultRenderRows` (`engine/rows.ts`) — every `item.
   cluster's member rows at `depth: 1`.
 - Two levels: nested headers at `depth: 0` and `depth: 1`, leaf rows at `depth: 2`; a header's
   `aggregates` reflects only its own subtree.
-- **The depth-correctness case (issue #6's own acceptance criterion):** an `aggregateFn` where a
+- **The depth-correctness case (issue #7's own acceptance criterion):** an `aggregateFn` where a
   parent aggregate computed over its own leaves differs from what it would be if computed over
   the mean/sum of its children's aggregates (e.g. an unweighted average with unequal cluster
   sizes per child — see Step 5's fixture data for the concrete numbers). Assert the parent
@@ -138,9 +138,9 @@ plain 1:1 seed from `buildDefaultRenderRows` (`engine/rows.ts`) — every `item.
 - `hasChildren: node.items.length > 0` is always `true` in practice — a `ClusterNode` is never
   constructed with zero items (the bucket that produced it had at least one row). Keep the field
   anyway; it's part of `RenderRow`'s existing public contract (already set by `withExpansion()`
-  for tree rows) and a future `groupOrder`/empty-group scenario (#58) may change that invariant.
+  for tree rows) and a future `groupOrder`/empty-group scenario (#24) may change that invariant.
 - This step does **not** read `expandedRows` — that optional read (`store.expandedRows?.()`) is
-  #59's job. Every cluster renders fully expanded here, unconditionally.
+  #25's job. Every cluster renders fully expanded here, unconditionally.
 
 ## Risks / Watchouts
 
@@ -151,8 +151,8 @@ plain 1:1 seed from `buildDefaultRenderRows` (`engine/rows.ts`) — every `item.
 
 ## Non-Goals
 
-- No `groupOrder` (#58) — clusters emit in first-occurrence order, unconditionally.
-- No collapse/expand (#59).
+- No `groupOrder` (#24) — clusters emit in first-occurrence order, unconditionally.
+- No collapse/expand (#25).
 - `aggregateFn` itself stays unguarded (no `try`/`catch` around the consumer callback) — ADR-0014
   names this a cross-cutting retrofit not owned by any one feature; adding it here would be
   scope creep past this issue's acceptance criteria.

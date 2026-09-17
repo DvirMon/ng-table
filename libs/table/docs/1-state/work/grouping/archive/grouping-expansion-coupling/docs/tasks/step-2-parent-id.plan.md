@@ -54,7 +54,7 @@ Top-level headers get `undefined`, so the new parameter is optional or takes `un
 entry call in `buildGroupRenderRows` (line 275).
 
 **Leave the `isExpanded` gate at line 232 exactly as it is.** Grouping keeps pruning in this slice
-(D6) — deleting it is #133.
+(D6) — deleting it is #99.
 
 ### `api/features/with-expansion.ts` — the tree stage
 
@@ -94,7 +94,7 @@ has taken a wrong turn.
 
 - No prune, no `RENDER_ORDER` change, no `collapsedRows` slot.
 - No tests — Step 6 covers `parentId` assertions and the compile-time optionality check.
-- No deletion of `readExpandedRows` (that is #133).
+- No deletion of `readExpandedRows` (that is #99).
 
 ## Acceptance Checks
 

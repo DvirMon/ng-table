@@ -1,6 +1,6 @@
 # Step 7 — Delete the coupled filtering surface and the filters side channel
 
-**PR scope:** PR 1 of 3 (`#105`). **Depends on: Step 6.** **Blocks Step 8, Step 9.**
+**PR scope:** PR 1 of 3 (`#71`). **Depends on: Step 6.** **Blocks Step 8, Step 9.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`, `typescript-conventions`
@@ -24,7 +24,7 @@
 
 ## Why This Step Exists
 
-This is the contract half of expand–contract. `#102`–`#104` added `matcher()`, added `predicates`,
+This is the contract half of expand–contract. `#68`–`#70` added `matcher()`, added `predicates`,
 and migrated every caller. The old surface now has no consumers, and until it is deleted the
 decoupling is a convention rather than a fact.
 
@@ -75,7 +75,7 @@ the domain.
 - `index.ts:13` is `export * from './api/features/with-filtering'` — no barrel edit is needed here,
   and `WithFilteringConfig<TRow>` stays exported under the same name with one fewer parameter.
 - Removing a defaulted type parameter is not source-breaking for callers who never passed it, and
-  no caller does — `#104` verified the inventory. It **is** a public API change and Step 8 records
+  no caller does — `#70` verified the inventory. It **is** a public API change and Step 8 records
   it.
 - Keep `applyPredicateTerms` and `reportPredicateError` exactly as they are. The per-term catch
   unit is settled (ADR-0014, and restated in ADR-0016); this step deletes, it does not redesign.
@@ -92,7 +92,7 @@ the domain.
   is pruned too aggressively, `matcher()` breaks and every filtering story goes silently
   unfiltered.
 - The story hosts and specs already pass `predicates`, so making it required should produce zero
-  errors. If `tsc` reports one, a caller was missed in `#104` — fix the caller, do not re-widen
+  errors. If `tsc` reports one, a caller was missed in `#70` — fix the caller, do not re-widen
   the field back to optional.
 
 ## Non-Goals

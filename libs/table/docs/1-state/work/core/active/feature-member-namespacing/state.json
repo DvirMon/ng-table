@@ -1,7 +1,7 @@
 {
   "slug": "feature-member-namespacing",
-  "ticketRef": "DvirMon/acme#82",
-  "ticketUrl": "https://github.com/DvirMon/acme/issues/82",
+  "ticketRef": "#48",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/48",
   "stack": "angular",
   "isComplex": true,
   "workspaceRoot": "libs/table/docs/1-state/work/core/active/feature-member-namespacing",

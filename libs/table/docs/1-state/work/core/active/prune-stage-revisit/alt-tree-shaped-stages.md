@@ -5,7 +5,7 @@ at the data-model level, not the scheduling level. Peer: `alt-1-terminal-finaliz
 
 ## Today — the state this replaces
 
-Reference snapshot of the shipped design (`#132`), so the prototype below reads as a diff.
+Reference snapshot of the shipped design (`#98`), so the prototype below reads as a diff.
 
 ### Flow
 

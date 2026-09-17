@@ -186,7 +186,7 @@ region's total is the sum of its subtree; the totals follow the filter; every co
 stated failure behavior: a throwing `aggregateFn` leaves only the affected group's total empty.
 
 **Design status:** covered — D9 fixes aggregates to leaf rows at every depth; per-group aggregation
-failure falls back per ADR-0014 ([#79](https://github.com/DvirMon/acme/issues/79)), reported once
+failure falls back per ADR-0014 ([#45](https://github.com/DvirMon/ng-table/issues/45)), reported once
 per column per evaluation. `aggregateFn` receives whole rows, not just the one column's values. See
 [`research-grouping-ux-capabilities.md`](../1-state/work/with-grouping/research-grouping-ux-capabilities.md).
 
@@ -571,7 +571,7 @@ bucket, with no report.
 
 **Design status — gap.** Works via a column's own `accessor`, undocumented as the contract; a column
 with none silently merges into one `[object Object]` bucket, unreported under ADR-0014. See
-[#114](https://github.com/DvirMon/acme/issues/114). Raised as **OQ-5** with 4.1 — one decision.
+[#80](https://github.com/DvirMon/ng-table/issues/80). Raised as **OQ-5** with 4.1 — one decision.
 
 ## 4.3 — A group with exactly one row in it — 🟡 partly covered *(consistent, but nowhere stated)*
 
@@ -687,7 +687,7 @@ there to dangle.
 recipe, not a library guarantee.
 
 **Design status:** the library ships no cascade semantics (D16) — three majors ship three mutually
-incompatible defaults, no majority to inherit. `table.rowsOf(group)` (issue #65) hands back the
+incompatible defaults, no majority to inherit. `table.rowsOf(group)` (issue #31) hands back the
 group's member rows; the consumer builds whatever cascade it wants
 (`select(rowsOf(group).map(r => r.id))`), the same flat pattern `withSelection()` already uses (D1).
 See [`research-grouping-community-pain.md`](../1-state/work/with-grouping/research-grouping-community-pain.md).
@@ -951,9 +951,9 @@ Owned by `1-state/work/with-grouping/` and the feature docs it supersedes.
 | S5 | No group-level expand/collapse verb | 2.2, 2.3 | `withExpansion().expandAll()` walks `childrenAccessor` over real rows (`with-expansion.ts:119-135`) and cannot discover a group at all |
 | S6 | No initial expansion depth | 2.3 | AG Grid and MUI X both model this as a depth; TanStack has no depth concept |
 | S7 | Missing / null group values are undefined behavior | 4.1 | D14 covers an unknown column *id*, not a missing *value*. `sorting.md:167-169` flags the same hole from its side. OQ-5 |
-| S8 | Non-primitive group values have no **label** contract for a column with no `accessor` | 4.2 | `RenderRow.groupKey` ships; the label path is `ColumnDef.accessor`. A column declaring none falls through `toGroupKey`'s `` `${typeof value}:${String(value)}` `` and merges every distinct object into one bucket, silently, with no report under ADR-0014. Pairs with U8. [#114](https://github.com/DvirMon/acme/issues/114), OQ-5 |
+| S8 | Non-primitive group values have no **label** contract for a column with no `accessor` | 4.2 | `RenderRow.groupKey` ships; the label path is `ColumnDef.accessor`. A column declaring none falls through `toGroupKey`'s `` `${typeof value}:${String(value)}` `` and merges every distinct object into one bucket, silently, with no report under ADR-0014. Pairs with U8. [#80](https://github.com/DvirMon/ng-table/issues/80), OQ-5 |
 | S9 | Single-row group behavior unstated | 4.3 | OQ-6 |
-| S12 | `rowsOf()` call-site form unsettled | X-G1 | Shipped as `table.rowsOf(g)`, flat (issue #65). Whether it stays flat or moves under `table.grouping.rowsOf(g)` is open — [ADR-0015](../adr/0015-feature-member-namespacing.md), `proposed` |
+| S12 | `rowsOf()` call-site form unsettled | X-G1 | Shipped as `table.rowsOf(g)`, flat (issue #31). Whether it stays flat or moves under `table.grouping.rowsOf(g)` is open — [ADR-0015](../adr/0015-feature-member-namespacing.md), `proposed` |
 
 **Two live contradictions, not forward-looking notes:**
 

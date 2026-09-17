@@ -42,7 +42,7 @@ function externalRank(key: unknown): number {
  * normal usage, not this file.
  *
  * The throwing aggregate takes the whole table down instead of blanking one summary
- * ([#79](https://github.com/DvirMon/acme/issues/79)); the dropped level is reported nowhere
+ * ([#45](https://github.com/DvirMon/ng-table/issues/45)); the dropped level is reported nowhere
  * but this story's own on-canvas notice.
  */
 @Component({

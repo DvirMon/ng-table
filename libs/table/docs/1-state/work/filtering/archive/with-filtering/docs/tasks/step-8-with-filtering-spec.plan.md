@@ -56,7 +56,7 @@ Cover, per `filtering.md` and the issue's acceptance criteria:
 ## Implementation Notes
 
 - Tests go through the public `createTable()` surface only, via `TestBed` — no reaching into
-  `api/filters/evaluator.ts` internals directly (that's Step 4/6's territory from issue #61).
+  `api/filters/evaluator.ts` internals directly (that's Step 4/6's territory from issue #27).
 - Follow this package's existing spec shape for feature files (see `with-sorting.spec.ts`): a
   local `Row` interface, a `makeColumns()` helper, a `makeStore()` helper wrapping
   `TestBed.runInInjectionContext(() => createTable(...))`.
@@ -65,7 +65,7 @@ Cover, per `filtering.md` and the issue's acceptance criteria:
 
 - Don't test `createFilters()`'s own state semantics (`value()`/`reset()`/`dirty()` mechanics,
   key derivation, duplicate-path throws) here — that's fully owned by
-  `create-filters.spec.ts` (issue #61, Step 6). This file tests the pipeline integration only:
+  `create-filters.spec.ts` (issue #27, Step 6). This file tests the pipeline integration only:
   given a built `Filters<TRow>`, does the table's `filter` stage honor it correctly.
 
 ## Non-Goals

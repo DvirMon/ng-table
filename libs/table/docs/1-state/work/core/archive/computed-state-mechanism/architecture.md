@@ -42,7 +42,7 @@ Contract in [`spec.md`](spec.md); evidence in [`2-research.md`](2-research.md); 
     mapped type; mutating methods stay visible by necessity. (D28.)
 12. **Arity 15, overloads generated** for both `createTable()` and `composeFeatures()` from one
     `tools/` script with a committed-output drift check. (D27.)
-13. **No spike.** #77 integrate-and-verify is the runtime verification. (D26.)
+13. **No spike.** #43 integrate-and-verify is the runtime verification. (D26.)
 14. **`createTableSchema()` is deleted.** `trackBy` explicit at every call site. (D25.)
 
 ## Current source — what each change lands against
@@ -67,7 +67,7 @@ Contract in [`spec.md`](spec.md); evidence in [`2-research.md`](2-research.md); 
 ```ts
 // engine/types.ts
 // `unknown`, not `any`: Signal<TRow[]> is assignable to Signal<readonly unknown[]> and RowOf
-// still infers through it. Trap #1 in 2-research.md is exactly a wildcard in a constraint slot —
+// still infers through it. Trap #2 in 2-research.md is exactly a wildcard in a constraint slot —
 // re-verify against the probe before shipping.
 export type Shape = { rows: Signal<readonly unknown[]> };
 export type RowOf<S> = S extends { rows: Signal<readonly (infer R)[]> } ? R : never;
@@ -182,11 +182,11 @@ parallel; docs last.
 Resolved at `/to-issues`; see [`review-spec-architecture.md`](review-spec-architecture.md) and
 D25–D28. Kept for the record:
 
-1. `createTableSchema()` — **deleted** (D25, #69).
-2. Overload count — **15** (D27, #69).
+1. `createTableSchema()` — **deleted** (D25, #35).
+2. Overload count — **15** (D27, #35).
 3. Hand-write or generate — **generate**, one script for both `createTable` and `composeFeatures`
-   (D27, #69).
-4. Spike — **no**; #77 integrate-and-verify is the runtime verification (D26).
-5. `totalRowCount` override path — one sentence owed on ADR-0005 (#78). Still a pre-existing gap;
+   (D27, #35).
+4. Spike — **no**; #43 integrate-and-verify is the runtime verification (D26).
+5. `totalRowCount` override path — one sentence owed on ADR-0005 (#44). Still a pre-existing gap;
    not blocking.
-6. Editing features' shared store — finding recorded on #74, rationale rewritten in #78.
+6. Editing features' shared store — finding recorded on #40, rationale rewritten in #44.

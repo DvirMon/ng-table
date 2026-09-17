@@ -68,4 +68,4 @@ puts an id in `editing` before the row exists in `data`) and `withExpansion()`'s
   `onRowsRemoved` reproduces this bug invisibly. Mitigated only by documentation
   (`CLAUDE.md`'s feature-plugin section).
 - **`revertEdit` on a deleted row becomes a no-op by construction** — the entry is gone before
-  anything can call it, closing review finding #5 without a separate decision.
+  anything can call it, closing review finding #6 without a separate decision.

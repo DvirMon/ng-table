@@ -1,7 +1,7 @@
 {
   "slug": "prune-stage-revisit",
   "ticketRef": "135",
-  "ticketUrl": "https://github.com/DvirMon/acme/issues/135",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/101",
   "stack": "angular",
   "isComplex": null,
   "workspaceRoot": "libs/table/docs/1-state/work/core/active/prune-stage-revisit",

@@ -113,7 +113,7 @@ its own filter key from inside the evaluator — full statement in
 
 ## Compile-Time Dependencies
 
-None. `with-filtering.ts` imports nothing from the filters domain and names no filter type (`#105`).
+None. `with-filtering.ts` imports nothing from the filters domain and names no filter type (`#71`).
 It reads nothing from other features and contributes no members.
 
 It no longer reads anything from the columns config either: `ColumnDef.filterFn` and
@@ -145,14 +145,14 @@ Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filt
 - **R23** — `manual` is kept for cross-feature consistency. Still holds, with the weaker rationale
   recorded under [`manual`](#manual) above.
 - **R49** — `criteria()` is the filter model's set-criteria member, named `active()` in `src/`
-  until `#96` lands. This file mentions it only in passing; the member set belongs to
+  until `#62` lands. This file mentions it only in passing; the member set belongs to
   [filters.md](../filters.md#state).
 - **R26** — **executed 2026-09-14.** The superseded imperative implementation is gone:
   `setColumnFilter()`, `setGlobalFilter()`, `clearFilters()`, `columnFilters` and `globalFilter`
   no longer exist. It was a planned breaking change, not a cleanup, and it is done — anything
   still naming those five members is stale.
 
-**Superseded by [ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md) (`#105`).** The
+**Superseded by [ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md) (`#71`).** The
 options doc discusses this feature as an *adapter over a filter model*, with `filters` as its
 config field and a criterion-map type parameter carried through. Both are gone; the feature takes
 a predicate list and the wiring is composition the consumer writes. Any R-number describing the
@@ -179,7 +179,7 @@ Superseded behavioral decisions from v1.1 of this file, kept here so the change 
 ## Competitive position
 
 **Verdict: closed.** `api/features/with-filtering.ts` implements the client-side filter stage over
-a consumer-supplied predicate list (#62, reshaped by #105), replacing the superseded imperative
+a consumer-supplied predicate list (#28, reshaped by #71), replacing the superseded imperative
 shape.
 
 Column + global filtering is baseline in all four competitors' free tier. Full reasoning:

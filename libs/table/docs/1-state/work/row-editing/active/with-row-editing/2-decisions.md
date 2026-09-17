@@ -11,7 +11,7 @@ Episodic work folder for the editing feature cluster: F1 editable cells, F2 edit
 F3 row actions, F5 dirty/validation/commit. Split out 2026-08-16 from
 [`work/with-mutations/2-decisions.md`](../../archive/with-mutations/2-decisions.md), which retains the
 mutation core this cluster builds on (`updateRows`, `addRow`/`removeRow`/`patchRow`, `at`
-semantics, temp-id handling — shipped as issue #47). No issue filed for this cluster yet.
+semantics, temp-id handling — shipped as issue #12). No issue filed for this cluster yet.
 
 Decision numbering (D10, D13–D18, D20–D25, D28, D29) and open-question numbering (O2–O4,
 O10–O19, O21) are unchanged from the original log, so cross-references elsewhere in the repo
@@ -653,7 +653,7 @@ snapshot was already writable; now it is also deletable.
   `endEdit` on success, `revertEdit` on failure, entry alive throughout.
 - **Scope is optimistic update and create only.** Delete and move are uncovered, and structurally
   so — see **O22**.
-- Re-opens fixes #3/#4/#5 from the E3/E4 review — `beginEdit` on a pending row, what single-mode
+- Re-opens fixes #4/#4/#5 from the E3/E4 review — `beginEdit` on a pending row, what single-mode
   switching does to a pending row, and which map `revertEdit` reads first — resolved below.
 
 ### D31.1 — `beginEdit` on a pending row re-opens it, keeping the original snapshot
@@ -662,7 +662,7 @@ Entry moves `pending → editing`, carrying the snapshot captured at the *first*
 reopens showing its current (optimistic, unconfirmed) values, but Cancel still returns to the true
 pre-edit state — the oldest restore point wins, which is what Cancel means to a user.
 
-This also settles review finding #3 for the non-pending case: `beginEdit` must stop re-capturing
+This also settles review finding #4 for the non-pending case: `beginEdit` must stop re-capturing
 over an existing snapshot. Re-capture is `rebaseEdit`'s job (D34); `beginEdit` only ever captures
 when there is no entry in either map.
 
@@ -692,7 +692,7 @@ consumer already has everything needed to gate it: they trigger the switch thems
 (the draft resets cleanly, never stale) once the switch happens. See the demo pattern in
 `gated-single-optimistic-story-host.component.ts`.
 
-**Resolves review finding #4** — original text, true only under the live-table model: opening
+**Resolves review finding #5** — original text, true only under the live-table model: opening
 row B while row A is open closes A the way `endEdit` does, and under D24 the user's typed value
 was already committed on blur and visible before they clicked away, so silently reverting it
 would have been the surprise. Kept for history; does not describe gated mode's current behavior.
@@ -963,7 +963,7 @@ build target, no `project.json` change.
   - A snapshot holds a *value*, never an index, so position is unrecoverable even with a fixed
     restore. Same reason `move` is uncovered.
 
-  This is review finding #5 seen from the other side: [ADR-0006](../../../../../adr/0006-row-id-state-reconciliation.md)
+  This is review finding #6 seen from the other side: [ADR-0006](../../../../../adr/0006-row-id-state-reconciliation.md)
   **dissolves** it by reconciling the entry away when the row leaves `data` — which locks in "no
   optimistic delete" rather than fixing it. Worth re-reading O22 against ADR-0006 before that ADR
   ships.

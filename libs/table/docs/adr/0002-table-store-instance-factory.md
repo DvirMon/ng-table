@@ -33,7 +33,7 @@ protected readonly table = createTable(this.data, { trackBy: 'id', columns }, wi
   landed with zero consumer diff. The instance-factory decision this ADR records still stands.)*
 - **`config` is structural, read once** at construction — `trackBy` / `columns` /
   `columnsSchema`, mirroring `form()`'s single `rootCompile`. Features are trailing positional
-  arguments, folded once. Only `data` is reactive. *(Amended 2026-09 by #67: the config was a
+  arguments, folded once. Only `data` is reactive. *(Amended 2026-09 by #33: the config was a
   thunk `optsFn` until then; it is now a plain object, and there is no `features` key.)*
 - **Writes go through `table.value.update(updater)`** — the per-slice `WritableView` (D30). The
   consumer's own signal is the row set; the engine holds no copy and runs no data effect.
@@ -43,7 +43,7 @@ protected readonly table = createTable(this.data, { trackBy: 'id', columns }, wi
   (services, tests), the same escape hatch `form()` exposes. *(Superseded 2026-08-11 by
   ADR-0003: there is no store class, so the child injector is gone —
   `runInInjectionContext(injector, …)` supplies the context instead. The injector moved onto
-  the config object with #67's positional surface.)*
+  the config object with #33's positional surface.)*
 
 ## Consequences
 

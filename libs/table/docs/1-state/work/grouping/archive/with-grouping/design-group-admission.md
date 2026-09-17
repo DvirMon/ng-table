@@ -4,8 +4,8 @@ type: design
 status: settled shape, 2026-09-15 — config + `schema` fn, `withComputed` unchanged in slot 2.
   3 open questions (Q1–Q3), none blocking the shape. Q1 decided 2026-09-16, Q3 confirmed by test
   2026-09-17. Surface half (`initial` + `schema` in one config, either/or overload deleted) shipped
-  in #118. Table-wide `groupWhen` shipped in #119. Per-column `groupWhen` (AND-combined) shipped in
-  #120. `applyGroupOrder` remains proposed, not implemented — that is #121.
+  in #84. Table-wide `groupWhen` shipped in #85. Per-column `groupWhen` (AND-combined) shipped in
+  #86. `applyGroupOrder` remains proposed, not implemented — that is #87.
   Terminology updated 2026-09-17: the admission predicate this doc called `groupWhen` throughout
   is renamed `when` (both scopes); level activation, called `when` throughout, is renamed
   `enable`. See ADR-0018. The body below uses the current names, except the `GroupWhen<TRow>`
@@ -338,7 +338,7 @@ often than not.
 parent.** `rowsBeneathGroup` re-derives the cluster tree; a dissolved cluster itself has no group
 id to resolve, so `rowsOf` on anything resolving to it returns `[]` with no throw — but the
 *parent* group's `rowsOf` still includes those rows, since dissolution changes depth, not
-membership. Landed as recommended below; `with-grouping.spec.ts` (#119 Step 4) asserts both
+membership. Landed as recommended below; `with-grouping.spec.ts` (#85 Step 4) asserts both
 halves through the public surface.
 
 ## Out of scope
@@ -351,5 +351,5 @@ Two things were raised while shaping this and deliberately do **not** belong to 
   probed every route before D19-D22 landed.
 - **OQ-5's display half** — what a header *shows* for a missing or non-primitive value. A
   consumer who admits `null` clusters still needs a stated label, and
-  [#114](https://github.com/DvirMon/acme/issues/114) still owns the accessor contract. Admission
+  [#80](https://github.com/DvirMon/ng-table/issues/80) still owns the accessor contract. Admission
   only offers the escape hatch of not creating the group at all.

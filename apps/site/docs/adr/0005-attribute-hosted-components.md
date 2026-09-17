@@ -83,7 +83,7 @@ set by the consumer on the element. Inputs carry only what is genuinely the prim
 - **`prose` still needs `ViewEncapsulation.None`.** Moving to `article[ngptProse]` fixes the
   non-semantic host, but emulated encapsulation still cannot reach projected content — projected
   nodes carry the *declaring* component's encapsulation id, so `:host h2` would never match.
-  CONVENTIONS.md #8 survives; only its host element changes.
+  CONVENTIONS.md #9 survives; only its host element changes.
 - Consumers author their own `<ng-icon>` children, so `icon-button` loses `icon: input<string>()`
   and its 13-icon `provideIcons` registry, and loses `pressed: output<void>()` — consumers bind the
   native `(click)`.

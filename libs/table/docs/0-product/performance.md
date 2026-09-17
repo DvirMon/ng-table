@@ -54,7 +54,7 @@ expensive cells are forty expensive cells whether or not a virtualizer is presen
 
 ## Findings
 
-**2026-09-10 — `withGrouping()` (issue #6), exploratory measurement, not a benchmark harness.**
+**2026-09-10 — `withGrouping()` (issue #7), exploratory measurement, not a benchmark harness.**
 Ran `clusterRows` + `buildGroupRenderRows` (`engine/grouping.ts`) directly against synthetic
 data — no `TestBed`, no rendered component, per this file's axis-1 framing of "does the pipeline
 stage stay linear." One machine, one run each — figures are indicative, not a certified budget.

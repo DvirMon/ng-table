@@ -103,7 +103,7 @@ the contract. Link, don't duplicate.
 - No source changes.
 - Not documenting the `withTree()` split itself.
 - Not updating `features/grouping.md` or `features/expansion.md` — their caveats disappear in
-  #133, and they are edited there.
+  #99, and they are edited there.
 
 ## Acceptance Checks
 

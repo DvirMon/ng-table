@@ -260,7 +260,7 @@ describe('withComputed', () => {
 
   describe('persistence', () => {
     it.todo(
-      'derived members are excluded from a persistence snapshot — assert once state-persistence.md owns a slice (#78)'
+      'derived members are excluded from a persistence snapshot — assert once state-persistence.md owns a slice (#44)'
     );
   });
 });

@@ -1,15 +1,15 @@
-# Implementation Progress — filters-inferred-state (`#109`)
+# Implementation Progress — filters-inferred-state (`#75`)
 
-**Epic:** [#109](https://github.com/DvirMon/acme/issues/109) — createFilters: infer `TState` from the schema
+**Epic:** [#75](https://github.com/DvirMon/ng-table/issues/75) — createFilters: infer `TState` from the schema
 **Spec:** [spec.md](../../spec.md) · **Architecture:** [architecture.md](../../architecture.md)
 
-Four issues. `#110` and `#111` share a branch — `#110` changes the declaration shape and breaks
-every call site, and the build is green only at the end of `#111`.
+Four issues. `#76` and `#77` share a branch — `#76` changes the declaration shape and breaks
+every call site, and the build is green only at the end of `#77`.
 
-External edge: the decoupling ticket (`#101`, steps 1–13) is complete and merged. Nothing blocks
-`#110`.
+External edge: the decoupling ticket (`#67`, steps 1–13) is complete and merged. Nothing blocks
+`#76`.
 
-## `#110` — the library mechanism · PR 1 of 2 · ✅ committed (`ffd9649`)
+## `#76` — the library mechanism · PR 1 of 2 · ✅ committed (`ffd9649`)
 
 **Status:** 6 / 6 complete
 
@@ -35,11 +35,11 @@ Parallel-safe: `[1, 2]`. Dependency: `1, 3 → 4 → 5 → 6`; `2 → 4`, `2 →
 
 The library typecheck (`tsconfig.lib.json`) is green after every step except 3, which breaks
 `create-filters.ts` until 4 lands. The **spec** typecheck is red from step 3 to the end of the
-issue — that is by design, and `#111` restores it.
+issue — that is by design, and `#77` restores it.
 
 ### Deviations from the plan, decided during `/implement` (2026-09-14)
 
-Two acceptance criteria on `#110` were written against behaviour the architecture's own
+Two acceptance criteria on `#76` were written against behaviour the architecture's own
 signatures did not deliver. Both were caught by compiled probe, not by a self-report.
 
 | Claim as planned | What actually happens | Resolution |
@@ -51,14 +51,14 @@ Amended in place (marked as corrections, not silently rewritten): `architecture.
 and `applyWhen` contract blocks, the type-facts list), `spec.md` (user story 21, the R37 bullet,
 the type-spec outline), `step-4`'s acceptance checks, and the `rules.ts` / `types.ts` doc comments.
 
-**Still owed to `#113`:** R44's wording in `design-options-hybrid-api.md`.
-**Still owed to `#112`:** its AC *"produces the same top-level keys whether spread or not"* is now
+**Still owed to `#79`:** R44's wording in `design-options-hybrid-api.md`.
+**Still owed to `#78`:** its AC *"produces the same top-level keys whether spread or not"* is now
 false and would have been written as a failing type assertion.
 
-### Known state at the end of `#110`
+### Known state at the end of `#76`
 
 `src/filters/` typechecks with **zero** errors. The library as a whole does **not** — five call
-sites still declare the previous shape, which is exactly what `#111` exists to fix and why the two
+sites still declare the previous shape, which is exactly what `#77` exists to fix and why the two
 share a branch:
 
 - `src/stories/composition/derived-state/derived-state-story-host.component.ts`
@@ -68,7 +68,7 @@ share a branch:
 - `src/stories/grouping/fixtures/schema.ts`
 
 plus `create-filters.spec.ts`, `state.spec.ts` and `with-filtering.spec.ts`. **The test suite
-cannot pass until `#111` lands** — the filters spec does not compile against the new signature.
+cannot pass until `#77` lands** — the filters spec does not compile against the new signature.
 
 ### `/code-review` outcome (2026-09-14, two axes vs `22b0ae5`)
 
@@ -97,15 +97,15 @@ cannot pass until `#111` lands** — the filters spec does not compile against t
 `{ ...child, kind: 'conditional', condition }` overwrites the inner `condition` with the outer one.
 The deleted recorder did exactly the same, so behaviour is unchanged, which is what the spec required.
 
-## `#111` — every call site · PR 2 of 2 · ✅ complete
+## `#77` — every call site · PR 2 of 2 · ✅ complete
 
-**Status:** 9 / 9 complete — [`issue-111-call-sites/progress.md`](issue-111-call-sites/progress.md)
+**Status:** 9 / 9 complete — [`issue-77-call-sites/progress.md`](issue-77-call-sites/progress.md)
 
 Five story/fixture sites and three specs, all parallel-safe, plus a green gate that depends on all
 eight. That folder also records four corrections to this issue's own body and to
 `architecture.md`'s file-layout table.
 
-## `#112` — the compiled type seam · ✅ complete
+## `#78` — the compiled type seam · ✅ complete
 
 **Status:** 1 / 1 complete. Implemented directly from the issue body — `/to-tasks` was never run
 for it, and the scope is one new file plus one Nx target, which does not decompose into steps.
@@ -121,13 +121,13 @@ for it, and the scope is one new file plus one Nx target, which does not decompo
 
 ### Scope taken beyond the issue body, on the user's call
 
-Two library changes in `types.ts`/`rules.ts` that `#112` does not ask for. Both came out of
+Two library changes in `types.ts`/`rules.ts` that `#78` does not ask for. Both came out of
 `/code-review` and both were decided explicitly rather than absorbed quietly. Neither changes a
 public export — `filters/index.ts` is untouched.
 
 | Change | Why it is here and not in a follow-up |
 |---|---|
-| phantom `__row` + `RowOfRule`, used by `anyOf` | The erasure was on `#111`'s list as owed to `#110`/`#112`. Asserting it without fixing it would have meant writing a test for behaviour the library does not have |
+| phantom `__row` + `RowOfRule`, used by `anyOf` | The erasure was on `#77`'s list as owed to `#76`/`#78`. Asserting it without fixing it would have meant writing a test for behaviour the library does not have |
 | `FlattenItem` discards `any` | Found while investigating why the spread case could not be asserted where a consumer writes it. Without it, the criterion is only satisfiable at a synthetic position |
 
 ### Three decisions taken during implementation
@@ -171,7 +171,7 @@ written, not at a synthetic position.
 
 ### `anyOf`'s row-type erasure — closed here, on the user's call
 
-`issue-111-call-sites/progress.md` left this open and assigned it to `#110`/`#112`: the
+`issue-77-call-sites/progress.md` left this open and assigned it to `#76`/`#78`: the
 homogeneity intersection's right half was `FilterRule<string, CriterionOf<C[0]>, unknown>`, so a
 child built from an unrelated row's handle passed silently. Fixed rather than recorded as a hole.
 
@@ -209,6 +209,6 @@ read as clean when they were not. Filter on `error` alone, or read the output un
 
 | Issue | Scope | Run `/to-tasks` when |
 |---|---|---|
-| [#113](https://github.com/DvirMon/acme/issues/113) | docs, ADRs, `CLAUDE.md`, the design record | any time — merge after `#111` |
+| [#79](https://github.com/DvirMon/ng-table/issues/79) | docs, ADRs, `CLAUDE.md`, the design record | any time — merge after `#77` |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.

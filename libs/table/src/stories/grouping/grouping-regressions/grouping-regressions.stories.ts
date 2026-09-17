@@ -30,7 +30,7 @@ type Story = StoryObj<GroupingRegressionsStoryHostComponent>;
  * grouping by a missing column, and one poisoned row's amount blanking a summary.
  *
  * The poisoned-row case takes the whole table down instead of blanking that one summary
- * ([#79](https://github.com/DvirMon/acme/issues/79)).
+ * ([#45](https://github.com/DvirMon/ng-table/issues/45)).
  */
 export const SilentDegradation: Story = {};
 

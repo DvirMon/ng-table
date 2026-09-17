@@ -1,6 +1,6 @@
 # How other table libraries handle a consumer callback that throws
 
-Research for [#92](https://github.com/DvirMon/acme/issues/92) — whether ADR-0014's "degrade and
+Research for [#58](https://github.com/DvirMon/ng-table/issues/58) — whether ADR-0014's "degrade and
 report" needs an observable report channel, or whether `console.error` is the right floor.
 
 ## Method

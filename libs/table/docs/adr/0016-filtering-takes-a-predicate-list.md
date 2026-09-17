@@ -1,6 +1,6 @@
 # ADR-0016 — The filter model is the consumer's; the table takes a predicate list
 
-**Status:** accepted — decided 2026-09-14, implemented in `#105`.
+**Status:** accepted — decided 2026-09-14, implemented in `#71`.
 **Related:** [ADR-0014](0014-runtime-error-policy.md) (runtime error policy), [ADR-0004](0004-table-source-layout.md) (layout by contract boundary). Shipped surface: [`../1-state/filters.md`](../1-state/filters.md).
 
 `withFiltering()` used to accept a whole `Filters<TRow, TState>` object and read its compiled

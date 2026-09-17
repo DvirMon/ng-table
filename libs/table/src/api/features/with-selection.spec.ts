@@ -436,7 +436,7 @@ describe('withSelection', () => {
     expect(completed).toBe(true);
   });
 
-  // Issue #73 acceptance: "the `hiddenSelected` example from the spec compiles and evaluates
+  // Issue #39 acceptance: "the `hiddenSelected` example from the spec compiles and evaluates
   // correctly." The example is a count difference (selectedRows().size - rows().length), not a
   // set difference — asserted below is what it actually computes, not a literal "hidden" count.
   it('hiddenSelected (spec headline case): withComputed derives off withSelection, types and runtime', () => {

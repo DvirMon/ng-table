@@ -1,6 +1,6 @@
 # Step 9 — Remaining call sites: selection, composition, grouping; delete the predicate story
 
-**PR scope:** PR 1 of 1 (`#125`). **Parallel-safe with: Step 7, Step 8, Step 10.**
+**PR scope:** PR 1 of 1 (`#91`). **Parallel-safe with: Step 7, Step 8, Step 10.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`
@@ -25,7 +25,7 @@ barrel can be called clean. Merged into one step on the user's call: splitting t
 four step files whose "What To Do" is the same three lines, and none of them individually moves the
 lib closer to compiling than the others.
 
-Two of these are **not in issue `#125`'s call-site list** and were found by grep:
+Two of these are **not in issue `#91`'s call-site list** and were found by grep:
 
 - `stories/grouping/grouping-selection/` composes `withFiltering({ predicates: () => [this.filters().matcher()] })`
   (`:45`) and reaches the model through `grouping/fixtures/utils.ts`.
@@ -112,8 +112,8 @@ Remove all six files and the folder. Then grep `src/` for anything that named it
 `predicate-filtering.stories.ts`'s story id, any `.mdx` import, any relative link. **Leave
 `filtering.mdx` alone**; Step 11 owns it and will remove the section.
 
-`docs/0-product/filtering.md`'s coverage mark and `docs/3-ui/stories.md`'s reference are `#126`'s,
-not this step's — but note in the PR that they now point at a deleted story, so `#126` does not have
+`docs/0-product/filtering.md`'s coverage mark and `docs/3-ui/stories.md`'s reference are `#92`'s,
+not this step's — but note in the PR that they now point at a deleted story, so `#92` does not have
 to rediscover it.
 
 ## Implementation Notes
@@ -122,7 +122,7 @@ to rediscover it.
 - `grouping-selection` imports from the barrel (`'../../../index'`); the others use deep relative
   paths. Keep each file's existing convention rather than normalising — that is churn this step
   does not own.
-- `StateOf` is not on the barrel by decision (`#124` Step 5). Stories import it from
+- `StateOf` is not on the barrel by decision (`#90` Step 5). Stories import it from
   `filters/types`, as `grouping/fixtures/utils.ts` already does for `FilterNode`.
 
 ## Risks / Watchouts
@@ -141,7 +141,7 @@ to rediscover it.
 ## Non-Goals
 
 - `filtering.mdx` — Step 11.
-- `docs/0-product/filtering.md`, `docs/3-ui/stories.md` — `#126`.
+- `docs/0-product/filtering.md`, `docs/3-ui/stories.md` — `#92`.
 - Rewriting `predicate-filtering` as an R54 scope demo. Considered and rejected.
 - Normalising barrel-vs-relative imports across story folders.
 

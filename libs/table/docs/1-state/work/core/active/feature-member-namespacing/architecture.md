@@ -24,7 +24,7 @@ Consumed by `/to-tasks`, not left to age. Paths are real and current as of `feat
 4. **Derive-block placement follows declaration site** — nested ⇒ the host's slice; top-level ⇒
    flat. `withComputed()` is unchanged; the host decides the merge target. (ADR-0015, settled
    2026-09-12; type-probed 2026-09-13.)
-5. **Migration is expand–contract**, gated on #77 green. (spec §Migration strategy.)
+5. **Migration is expand–contract**, gated on #43 green. (spec §Migration strategy.)
 6. **`withFiltering()` stays memberless.** ADR-0015's filtering row cites members R12 deleted.
    (spec correction.)
 7. **`rowsOf`, not `rowIdsOf`** — the shipped D16 name moves under the slice unchanged.
@@ -180,4 +180,4 @@ hand:
   `docs/3-ui/directives/expansion.md` (4), `selection.md` (1), `docs/0-product/grouping.md`
   (close S12), `selection.md` (2), `row-editing.md` (1), `docs/1-state/architecture.md` (1),
   ADR-0007 and ADR-0013 examples (1 each).
-- Library `CLAUDE.md`: the rename table, beside the positional-migration table #78 owes.
+- Library `CLAUDE.md`: the rename table, beside the positional-migration table #44 owes.

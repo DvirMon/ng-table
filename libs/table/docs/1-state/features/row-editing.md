@@ -254,7 +254,7 @@ writes one, `table.pending()` reads the other, and rollback silently does nothin
 
 Order-independence is **not** the justification, and has not been since the member claim landed:
 composing both is a collision, not a sharing arrangement. The finding is recorded on
-[#74](https://github.com/DvirMon/acme/issues/74) — that issue's AC 2 text ("works in either
+[#40](https://github.com/DvirMon/ng-table/issues/40) — that issue's AC 2 text ("works in either
 order") was stale at close, and the observable contract is the throw above.
 
 ### Config

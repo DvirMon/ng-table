@@ -75,7 +75,7 @@ Cover, per `filters.md`:
 
 ## Risks / Watchouts
 
-- Don't test the per-row filtering *loop* here — that's issue #62's `withFiltering()` spec. This
+- Don't test the per-row filtering *loop* here — that's issue #28's `withFiltering()` spec. This
   file tests `createFilters()`'s own state/validation/evaluator-building contract only, calling
   the Step 4 evaluator directly with hand-built rows where a "does it filter" assertion is needed.
 

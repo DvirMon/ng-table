@@ -17,7 +17,7 @@ not run `ngtsc`. Configuration is not invocation.
 This is not hypothetical: it shipped a real bug. `server-filtering-story-host.component.html`
 bound `[formField]="filterForm.status"` against a component whose member is `searchForm`. Plain
 `tsc` exited 0 on that tree; `ngc` caught it. See
-[#94](https://github.com/DvirMon/acme/issues/94).
+[#60](https://github.com/DvirMon/ng-table/issues/60).
 
 ## What to write in a step file
 

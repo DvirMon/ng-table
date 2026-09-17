@@ -100,7 +100,7 @@ frame's — spec.md states it directly: 40px past the copy column's 660px cap.
 
 Spec says only "a colored status dot" with no enumerated variants; the frame shows one green dot
 ("Now in public beta"). Added `announcementStatus: input<HeroBandAnnouncementStatus>('success')`
-mapped via `[attr.data-status]` (CONVENTIONS.md #3: state as `data-*` attributes) to the existing
+mapped via `[attr.data-status]` (CONVENTIONS.md #4: state as `data-*` attributes) to the existing
 `--ngpt-status-success/warning/error/neutral` tokens, default `'success'` reproducing the current
 copy's meaning. This is a small, already-tokenized axis (the status tokens exist site-wide for
 exactly this purpose) rather than a bespoke enumerated flag, and costs nothing when unused.

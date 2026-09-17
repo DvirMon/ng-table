@@ -4,9 +4,9 @@
 [with-filtering/design-options-hybrid-api.md](../with-filtering/design-options-hybrid-api.md) ·
 **Feeds:** the filtering spec
 
-> **Two "Known holes" below are wrong and are corrected in the decisions.** #1 (key collision)
+> **Two "Known holes" below are wrong and are corrected in the decisions.** #2 (key collision)
 > is already closed — `filters/validate.ts` throws on a duplicate key at construction, so the
-> type-level merge is never observed. #3's proposed fix, the `no-unused-expressions` lint rule,
+> type-level merge is never observed. #4's proposed fix, the `no-unused-expressions` lint rule,
 > does not fire: it deliberately permits bare call expressions. A construction-time throw (R40)
 > was taken instead.
 

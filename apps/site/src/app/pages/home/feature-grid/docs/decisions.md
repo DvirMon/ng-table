@@ -100,7 +100,7 @@ projected nodes carry the *consumer's* encapsulation id, so a plain `:host h3` c
 
 | Option | Verdict |
 |---|---|
-| `ViewEncapsulation.None` (the `prose` route) | Rejected — `CONVENTIONS.md` #8 reserves it for `prose` explicitly ("No other component needs this"), and it would need a host *class* for scoping since None emits no `_nghost` attribute |
+| `ViewEncapsulation.None` (the `prose` route) | Rejected — `CONVENTIONS.md` #9 reserves it for `prose` explicitly ("No other component needs this"), and it would need a host *class* for scoping since None emits no `_nghost` attribute |
 | A primitive per element (`h3[…Title]`, `p[…Text]`, plus the cell) | Rejected — three or four attribute components so that a page-local block can set two fonts is more ceremony than it earns, and it forces every cell's author to remember four attributes |
 | `:host ::ng-deep h3` / `p` | **Chosen** |
 
@@ -130,7 +130,7 @@ no-cards/borders/tint/icons rule and the prose-scale typography are all still im
 ## `FeatureCell` kept
 
 No longer an input type. Kept as the typed shape for the six authored cells in
-`home.content.ts` (`CONVENTIONS.md` #5 — page-local blocks never hardcode copy), which the Home
+`home.content.ts` (`CONVENTIONS.md` #6 — page-local blocks never hardcode copy), which the Home
 template then `@for`s over into authored `<article>` markup. Deleting it would only push the same
 shape into an inline literal.
 
@@ -143,7 +143,7 @@ in Angular, and there is no reason to introduce deprecated API into a codebase w
 Switched to `ViewEncapsulation.None` with every rule scoped under a `.ngpt-home-feature-grid` host
 class. This is not a new exception: it is the identical mechanism `prose` already uses, for the
 identical reason — projected nodes carry the *declaring* component's encapsulation id, so no
-encapsulated selector from this component can ever reach them. CONVENTIONS.md #8 has been widened
+encapsulated selector from this component can ever reach them. CONVENTIONS.md #9 has been widened
 from "prose is the one exception" to "styling projected content requires it; scope every rule under
 a host class", which is what both components actually do.
 
@@ -154,7 +154,7 @@ force the consumer to annotate markup that reads perfectly well as plain HTML.
 ## Reversed again: directive-per-part, `ViewEncapsulation.None` dropped
 
 Re-litigated after a research pass (`docs/encapsulation-research.md`) confirmed `None` disables
-scoping for the *entire* stylesheet, not just the projected-content rules — `CONVENTIONS.md` #8's
+scoping for the *entire* stylesheet, not just the projected-content rules — `CONVENTIONS.md` #9's
 host-class scoping is a hand-enforced convention, not compiler-enforced, so it can silently drift
 per file. Given this app is trying to avoid `None` for DS components generally, the "more ceremony"
 objection above was re-weighed against that leak risk and lost.
@@ -169,7 +169,7 @@ back to `:host` — it never needed to reach projected nodes, only its own host 
 Cost accepted: consumers write two attributes per cell (`ngptFeatureGridTitle`, `ngptFeatureGridText`)
 instead of plain `<h3>`/`<p>`. Traded intentionally for zero global-scope risk and no
 `ViewEncapsulation.None` anywhere in this domain. This is now the app's reference pattern for
-structured (non-arbitrary) projected content — see `CONVENTIONS.md` #8. `ngpt-prose` keeps `None`:
+structured (non-arbitrary) projected content — see `CONVENTIONS.md` #9. `ngpt-prose` keeps `None`:
 its content is arbitrary rich text (any heading level, lists, links, inline code), so there is no
 fixed part-set to hang directives on.
 

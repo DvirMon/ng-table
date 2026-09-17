@@ -27,7 +27,7 @@ styling). Evidence:
 
 Given that, `ViewEncapsulation.None` is not load-bearing for code/link styling at all — it's
 needed *only* for the elements that have no dedicated component (headings, lists, blockquote, hr,
-strong/em), which is exactly what CONVENTIONS.md #8 and this spec's "owns" list describe.
+strong/em), which is exactly what CONVENTIONS.md #9 and this spec's "owns" list describe.
 
 **Loose end, not resolved by this build:** `spec.md`'s own "HTML/CSS mock" section shows plain
 `<code>withSorting()</code>` inside a `<li>`, with no `.code-chip` class and no `<ngpt-code-chip>`
@@ -155,7 +155,7 @@ instead, per its own `docs/decisions.md`). This was the cheapest possible moment
   attributes could never match the consumer's headings. Prose exists **only** to style content it
   does not declare, so emulated encapsulation would leave it styling nothing at all. Changing
   `<ngpt-prose>` to `<article ngptProse>` does not move the projected content into prose's template,
-  so it does not change this. CONVENTIONS.md #8 and ADR-0005 § Consequences both say so directly.
+  so it does not change this. CONVENTIONS.md #9 and ADR-0005 § Consequences both say so directly.
 - **`class: 'ngpt-prose'` stays, and every selector in `prose.css` stays scoped under it.** It is
   the direct consequence of the point above: with `ViewEncapsulation.None` every rule in the file is
   emitted global. `.ngpt-prose h2 { … }` is what stops it from restyling every `h2` on the site.

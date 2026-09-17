@@ -77,7 +77,7 @@ anywhere in `apps/site` or `apps/issa-landing` does this for a duration). Declar
 `CONFIRM_HOLD_MS = 1400` constant with a comment pointing at the token instead, rather than
 inventing a `getComputedStyle` read with no precedent. This is the same category of unavoidable
 token-boundary gap `icon-button/docs/decisions.md` flags for its 24/32 sizes — reporting rather
-than silently improvising past rule #2 ("never hardcode a `--ngpt-*`'d value"), since that rule
+than silently improvising past rule #3 ("never hardcode a `--ngpt-*`'d value"), since that rule
 is about CSS literals and there is no CSS-reachable form of a `setTimeout` argument.
 
 ## Spec-vs-frame

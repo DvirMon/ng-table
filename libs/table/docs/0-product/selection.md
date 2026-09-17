@@ -596,7 +596,7 @@ signal to compute it from.
 
 **X-G1 already exists** at [`grouping.md`](grouping.md) §5 "Owned by selection *(built)*" —
 ticking a group header's checkbox. **Linked, not restated.** Resolved by D16: the library ships no
-cascade semantics — `table.rowsOf(group)` (issue #65) plus a consumer-owned cascade, matching the
+cascade semantics — `table.rowsOf(group)` (issue #31) plus a consumer-owned cascade, matching the
 flat-ids stance (D13). X-G1 is marked ✅ as the consumer recipe D16 calls for, demonstrated by
 `grouping-selection/`. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §4.

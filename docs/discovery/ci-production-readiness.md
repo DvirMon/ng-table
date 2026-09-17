@@ -71,7 +71,7 @@ GitHub Pages (R16).
 
 | | Addition | Verdict | Rationale | Source |
 |---|---|---|---|---|
-| R1 | Run `nx affected -t typecheck` | **worth it for solo** | Target exists on both projects and never runs; `tsc` never opens a template, and that gap shipped bug #94 in this repo | [R3][R5] |
+| R1 | Run `nx affected -t typecheck` | **worth it for solo** | Target exists on both projects and never runs; `tsc` never opens a template, and that gap shipped bug #60 in this repo | [R3][R5] |
 | R2 | Drop the `build --exclude=shared-table,ng-table` | **worth it for solo** | Only two projects exist, so the exclusion list is the whole workspace — the line is a no-op wearing a green check | [R1][P1] |
 | R3 | Add `npm run llms:check` (and `table:overloads:check`) | **worth it for solo** | CLAUDE.md declares `llms:check` "must stay clean"; an unenforced invariant drifts | [R4] |
 | R4 | `concurrency: ${{ github.workflow }}-${{ github.ref }}` + `cancel-in-progress` | **worth it for solo** | Public repo → unlimited free minutes, so this isn't a quota fix; still worth it for faster feedback — a superseded push shouldn't leave a stale run queued/running | [S10][S11][P2] |
@@ -170,6 +170,6 @@ GitHub Pages (R16).
 | R2 | `nx.json` — `namedInputs.sharedGlobals` | — | yes — read |
 | R3 | `libs/table/project.json` (targets incl. `typecheck`; no sibling `package.json`) | — | yes — read |
 | R4 | `CLAUDE.md` — "`npm run llms:check` must stay clean" | — | yes — read |
-| R5 | `.claude/rules/typecheck-angular-templates.md` — bug #94 | — | yes — read |
+| R5 | `.claude/rules/typecheck-angular-templates.md` — bug #60 | — | yes — read |
 </content>
 </invoke>

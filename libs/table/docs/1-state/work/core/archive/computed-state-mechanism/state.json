@@ -1,7 +1,7 @@
 {
   "slug": "computed-state-mechanism",
-  "ticketRef": "DvirMon/acme#67",
-  "ticketUrl": "https://github.com/DvirMon/acme/issues/67",
+  "ticketRef": "#33",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/33",
   "stack": "angular",
   "isComplex": true,
   "workspaceRoot": "libs/shared/table/docs/1-state/work/core/archive/computed-state-mechanism",

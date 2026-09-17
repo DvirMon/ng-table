@@ -123,7 +123,7 @@ module — here, `rules.ts` imports `assertFilterPathIsCurrent` from `create-fil
 ## Non-Goals
 
 - No runtime evaluation loop — rules only *declare*, they never run a predicate against real row
-  data (that happens in Step 4's safe-evaluate guard, called later by issue #62).
+  data (that happens in Step 4's safe-evaluate guard, called later by issue #28).
 
 ## Acceptance Checks
 

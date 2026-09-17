@@ -1,6 +1,6 @@
 # Step 6 — Rewrite the compile-time probe for `StateOf` inference
 
-**PR scope:** PR 1 of 1 (`#124`). **Depends on: Step 5.**
+**PR scope:** PR 1 of 1 (`#90`). **Depends on: Step 5.**
 **Task type:** `test`
 **Stack:** angular
 **Skills used:** `unit-test`
@@ -15,7 +15,7 @@
 
 ## Why This Step Exists
 
-Issue `#124`'s acceptance demands the inference be asserted **with a compiled probe, not a runtime
+Issue `#90`'s acceptance demands the inference be asserted **with a compiled probe, not a runtime
 test** — every rule (`equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone`, `filter`,
 `anyOf`) must produce exactly its criterion type through `StateOf`. A runtime test cannot observe
 that; the criterion map exists only at compile time.
@@ -78,7 +78,7 @@ the carrier, and `applyWhen` — all deleted by Steps 1–3. Rewrite rather than
 
 ## Non-Goals
 
-- Migrating the story-host specs or fixtures — `#125`.
+- Migrating the story-host specs or fixtures — `#91`.
 - Runtime coverage of `when` gating. Step 1's acceptance covers it; if a runtime test is wanted it
   goes in `create-filters.spec.ts`, not here.
 
@@ -87,7 +87,7 @@ the carrier, and `applyWhen` — all deleted by Steps 1–3. Rewrite rather than
 - [ ] `nx run shared-table:typecheck-spec` clean. Run twice — a `.ts` error aborts `ngc` before the
       template phase.
 - [ ] `nx run shared-table:typecheck` reports no error originating in `src/filters/**` or
-      `src/api/features/with-filtering.ts`. Errors under `src/stories/**` remain expected (`#125`).
+      `src/api/features/with-filtering.ts`. Errors under `src/stories/**` remain expected (`#91`).
 - [ ] Every one of the eight rules has an exact-criterion assertion.
 - [ ] No `createFilters`, `rowOf` or `applyWhen` referenced in any spec under `src/filters/`.
 - [ ] The cross-row and mismatched-criterion `anyOf` rejections are `@ts-expect-error` cases that

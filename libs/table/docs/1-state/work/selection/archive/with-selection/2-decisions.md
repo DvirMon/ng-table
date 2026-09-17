@@ -29,7 +29,7 @@ _(appended as they settle)_
   "select all" is the call site passing the id set it means (`table.rows().map(r => r.id)`, a
   server-supplied list, whatever). Consequence: **no runtime or compile-time dependency on
   `withPagination()` / `withFiltering()`** — closes the cross-cutting open question in
-  `architecture.md` ("select all scope"). Rationale: the audit's #1 finding is that every
+  `architecture.md` ("select all scope"). Rationale: the audit's #2 finding is that every
   competitor's scope enum blurs the distinction; refusing to name it is how we lead rather than
   inherit it. Per `general-mechanism-over-enumerated-cases`.
   **Rationale amended 2026-09-06** (challenged during D2): the reason is not "no enumerated
@@ -123,7 +123,7 @@ _(appended as they settle)_
   know which ids a given backend considers live without the fetch the caller already owns.
 
 - **D58 (2026-09-09) — row selectability ships as `enableRowSelection`, a write-path gate.**
-  Answers Q1 of [#57](https://github.com/DvirMon/acme/issues/57); research at
+  Answers Q1 of [#23](https://github.com/DvirMon/ng-table/issues/23); research at
   [research-row-selectability.md](research-row-selectability.md).
 
   ```ts
@@ -226,14 +226,14 @@ _(appended as they settle)_
 
 - ~~**Group-header select-all.**~~ **Resolved 2026-09-12 by D16** (from `withGrouping()`'s own
   grilling, `0-product/grouping.md` §5 X-G1): the library ships no cascade semantics.
-  `table.rowsOf(group)` (issue #65) hands back the group's members; the consumer builds whatever
+  `table.rowsOf(group)` (issue #31) hands back the group's members; the consumer builds whatever
   cascade policy they want on top (`select(rowsOf(group).map(r => r.id))`) — consumer code, not a
   library verb, matching D1's existing flat, caller-supplies-the-id-set design. `withGrouping()`
   is no longer unbuilt (`spec: drafted, code: partial`); represented in the product use-cases at
   [`0-product/selection.md`](../../../../../0-product/selection.md) §6.
 - **D60 (2026-09-12) — a blocked write is a silent no-op; no throw, no warn.** Answers Q5 of
-  [#57](https://github.com/DvirMon/acme/issues/57); implemented as part of
-  [#63](https://github.com/DvirMon/acme/issues/63). When `enableRowSelection` filters ids out of a
+  [#23](https://github.com/DvirMon/ng-table/issues/23); implemented as part of
+  [#29](https://github.com/DvirMon/ng-table/issues/29). When `enableRowSelection` filters ids out of a
   `toggle`/`select`/seed, nothing is logged and nothing is emitted — a fully-blocked write falls
   through `applyNextSelection`'s existing no-op guard.
 
@@ -253,13 +253,13 @@ _(appended as they settle)_
   caller mistake from the intended path — it would fire on correct code.
 
 - **D61 (2026-09-12) — `isSelectable(id)` ships as a `SelectionMembers` read method, exposing
-  the D58 predicate.** Answers Q4 of [#57](https://github.com/DvirMon/acme/issues/57)/**#66**.
+  the D58 predicate.** Answers Q4 of [#23](https://github.com/DvirMon/ng-table/issues/23)/**#32**.
 
   ```ts
   isSelectable(id: RowId): boolean;   // resolveRow(id) === undefined || canSelect(row) — D8-permissive
   ```
 
-  Chosen over the other two options recorded on #66:
+  Chosen over the other two options recorded on #32:
   1. ~~Filter inside `selectionStateOf` itself.~~ Rejected — would narrow D58's explicit
      "write path, not read path" (`selectedRows()`/`selectionStateOf()` stay predicate-free),
      and a settled decision isn't reopened without new information the original call didn't have.
@@ -284,11 +284,11 @@ _(appended as they settle)_
   write sides both call it.
 
 - **Non-selectable rows — residual questions after D58**
-  ([#57](https://github.com/DvirMon/acme/issues/57), research at
+  ([#23](https://github.com/DvirMon/ng-table/issues/23), research at
   [research-row-selectability.md](research-row-selectability.md)). D58 settles *whether* the gate
   ships and its write-path scope.
   - ~~Does `selectionStateOf(ids)` exclude non-selectable ids from its denominator?~~ Answered by
-    **D61** above (#66) — the caller filters via `isSelectable`, `selectionStateOf()` itself is
+    **D61** above (#32) — the caller filters via `isSelectable`, `selectionStateOf()` itself is
     unchanged.
   - ~~Does a blocked write need to be distinguishable from a no-op?~~ Answered by **D60** below.
   - Is `withExpansion()` the same question? It cites D8 for stale restored ids

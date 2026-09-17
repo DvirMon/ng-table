@@ -1,7 +1,7 @@
 {
   "slug": "grouping-expansion-coupling",
   "ticketRef": "130",
-  "ticketUrl": "https://github.com/DvirMon/acme/issues/130",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/96",
   "stack": "angular",
   "isComplex": true,
   "workspaceRoot": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling",

@@ -216,7 +216,7 @@ describe('sortClusters', () => {
   });
 });
 
-describe('admitClusters (#119 table-wide admission)', () => {
+describe('admitClusters (#85 table-wide admission)', () => {
   it('returns its input by reference at every level when no predicate is supplied — the no-op guarantee', () => {
     const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
       row[columnId as keyof Order]
@@ -288,7 +288,7 @@ describe('admitClusters (#119 table-wide admission)', () => {
   });
 });
 
-describe('admitClusters (#120 per-column admission)', () => {
+describe('admitClusters (#86 per-column admission)', () => {
   it('per-column when narrows an otherwise-admitted cluster to dissolved', () => {
     const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
       row[columnId as keyof Order]

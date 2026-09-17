@@ -34,7 +34,7 @@ The unanswered question grouping leaves behind is **what a group row renders**, 
 
 ## Known Blocker
 
-The render seam exists — [#39](https://github.com/DvirMon/acme/issues/39) landed 2026-08-07, giving the core store `renderRows()` plus the `_buildRenderRows` override slot `withGrouping()` is meant to fill. But nothing emits `kind: 'group'` yet: `withGrouping()` itself is unimplemented, so the default 1:1 wrap is the only builder that exists. This file can be drilled on paper now; its examples can't be verified against a running table until `withGrouping()` ships.
+The render seam exists — [#10](https://github.com/DvirMon/ng-table/issues/10) landed 2026-08-07, giving the core store `renderRows()` plus the `_buildRenderRows` override slot `withGrouping()` is meant to fill. But nothing emits `kind: 'group'` yet: `withGrouping()` itself is unimplemented, so the default 1:1 wrap is the only builder that exists. This file can be drilled on paper now; its examples can't be verified against a running table until `withGrouping()` ships.
 
 ## To Drill
 

@@ -86,7 +86,7 @@ Seven files. Disjoint from every other node's file set.
 
 | File | Verdict to record |
 |---|---|
-| `1-state/features/row-editing.md` | **ahead of all four** — the two-feature optimistic/gated split sharing one `EditingState` core, and `RowRestorePoint` making rollback structurally sound. Directly answers the audit's #4 cross-cutting gap, which no vendor has shipped an answer to |
+| `1-state/features/row-editing.md` | **ahead of all four** — the two-feature optimistic/gated split sharing one `EditingState` core, and `RowRestorePoint` making rollback structurally sound. Directly answers the audit's #5 cross-cutting gap, which no vendor has shipped an answer to |
 | `1-state/row-mutations.md` | **ahead of 3 of 4** — TanStack/MRT/PrimeNG have no transaction/patch API at all; roughly comparable in intent to AG Grid's `applyTransaction`, narrower (no batch/async variant) |
 | `1-state/architecture.md` | **ahead** — ADR-0006 diff-and-prune row-removal reconciliation has no documented competitor equivalent |
 | `2-columns/architecture.md` | **ahead** — declarative, async-resolved, multi-writer column visibility (`applyVisible`/`applyVisibleAsync`) exists nowhere in the four |
@@ -106,7 +106,7 @@ someone drills them, not after.
 
 | File | Verdict to record |
 |---|---|
-| `1-state/features/selection.md` | **missing** — the #1 baseline gap and the audit's #1 sentiment finding. Carries the warning to decide selection scope (page / filtered / all) deliberately on day one; nobody else has done this cleanly |
+| `1-state/features/selection.md` | **missing** — the #2 baseline gap and the audit's #2 sentiment finding. Carries the warning to decide selection scope (page / filtered / all) deliberately on day one; nobody else has done this cleanly |
 | `1-state/features/grouping.md` | **missing** — spec drafted, zero code. Record that the single-level scope deliberately sidesteps TanStack's unresolved depth-0 aggregation bug, so a future reader doesn't "fix" the scope by adding depth |
 | `1-state/features/filtering.md` | **missing** — spec drafted, zero code; `ColumnDef.filterFn`/`enableFiltering` already typed and unconsumed. Baseline in all four |
 | `1-state/features/pagination.md` | **missing** — stub, design not settled. Baseline in all four |

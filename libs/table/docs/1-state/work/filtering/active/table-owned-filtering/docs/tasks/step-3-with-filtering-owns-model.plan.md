@@ -1,6 +1,6 @@
 # Step 3 — `withFiltering(config, schema)` owns the model; the row carrier is deleted
 
-**PR scope:** PR 1 of 1 (`#124`). **Depends on: Step 2.** **Blocks Step 4.**
+**PR scope:** PR 1 of 1 (`#90`). **Depends on: Step 2.** **Blocks Step 4.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`, `file-organization`
@@ -30,7 +30,7 @@ before state or the after state.
 This is also where R10's original blocker is formally closed. `create-table.ts` reads rows through
 a thunk inside a `computed()`, so a `resource()` whose `params` read `table.filters().criteria()`
 wires with no construction cycle. Nothing in this step needs to *prove* that — the proof is the
-server story in `#125` — but do not reintroduce an anchor "just in case" for server mode.
+server story in `#91` — but do not reintroduce an anchor "just in case" for server mode.
 
 ## What To Do
 

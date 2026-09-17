@@ -72,7 +72,7 @@ no-op one if it is not already.
 |---|---|---|
 | `withFiltering({ filters })` contributes `{}` | `:435` | replace with the predicate form; the store-type fact is the table's, the `{ filters }` spelling is not |
 | `filters: TRow is consumed — a Filters<OtherRow> is rejected` | `:451` | `create-filters.spec.ts:709` owns row-type rejection |
-| `either input alone is accepted` | `:466` | asserts the transitional two-field config; `#105` deletes one of the two fields |
+| `either input alone is accepted` | `:466` | asserts the transitional two-field config; `#71` deletes one of the two fields |
 
 Keep `trailing block: withComputed adds visibleCount …` (`:488`), rewritten to `predicates`.
 
@@ -138,7 +138,7 @@ is gone.
 ## Non-Goals
 
 - Deleting the file, or deleting `create-filters.spec.ts`'s existing cases.
-- Removing the `filters` field from `WithFilteringConfig` — `#105`.
+- Removing the `filters` field from `WithFilteringConfig` — `#71`.
 - Touching `api/filters/matchers.spec.ts` or `api/filters/state.spec.ts`.
 - Adding a second integration case, however tempting the AND-across-both shape is.
 

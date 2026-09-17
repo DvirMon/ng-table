@@ -24,7 +24,7 @@ tree, just not exposed as a heading.
 
 ## No icon/glyph mapping needed
 Spec has no glyph placeholder — component is plain text only, so
-`src/styles/docs/Iconography.md`'s glyph-mapping step (contract rule #7) doesn't apply here.
+`src/styles/docs/Iconography.md`'s glyph-mapping step (contract rule #8) doesn't apply here.
 
 ## Converted to `span[ngptCategoryBadge]` — ADR-0005
 

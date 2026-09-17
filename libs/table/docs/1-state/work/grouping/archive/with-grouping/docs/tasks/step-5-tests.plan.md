@@ -28,7 +28,7 @@ already have their own specs from Steps 1–3).
 Testing Decisions (`../../3-spec.md`): "A test composes the feature into a real table via the
 table factory and asserts on the public members (`table.grouping`, `table.renderRows`). No test
 reaches into the fold's internals... Structural and DOM tests belong to the directive layer."
-This step is that — the acceptance criteria in issue #6 that can only be proven end-to-end
+This step is that — the acceptance criteria in issue #7 that can only be proven end-to-end
 (standalone composition, filter→group ordering, construction throw) live here, not in Steps 1–3's
 pure-function specs.
 
@@ -62,7 +62,7 @@ export const mockGroupingRows: GroupingMockRow[] = [
 ];
 ```
 
-### 2. `with-grouping.spec.ts` — cover every issue-#6 acceptance criterion
+### 2. `with-grouping.spec.ts` — cover every issue-#7 acceptance criterion
 
 Compose via the real `createTable()` factory (`data: signal(mockGroupingRows)`, `columns` with
 `id: 'region'`/`'category'`/`'amount'`, `features: [withGrouping<GroupingMockRow>()]`), matching
@@ -77,7 +77,7 @@ Compose via the real `createTable()` factory (`data: signal(mockGroupingRows)`, 
   header's `aggregates.amount` equals `150` (true leaf average across all 3 US rows), not `125`
   (naive average of the two category averages). This is the test the spec calls out by name.
 - `withGrouping()` composed alone (no other features): `renderRows()` renders every group fully
-  expanded — no collapsed/hidden rows, since #59's `expandedRows` coupling doesn't exist yet.
+  expanded — no collapsed/hidden rows, since #25's `expandedRows` coupling doesn't exist yet.
 - Compose `withFiltering()`-equivalent (or a manual pre-filtered `data` signal, whichever this
   repo's current filtering primitive supports at implementation time — check
   `docs/1-state/filters.md`/`createFilters()`'s landed shape before writing this case) alongside
@@ -115,11 +115,11 @@ Compose via the real `createTable()` factory (`data: signal(mockGroupingRows)`, 
 
 - No directive/DOM/template tests — out of scope for the state layer per this package's
   `CLAUDE.md` Testing section.
-- No `groupOrder`/collapse/rule-engine test cases (#58/#59/#60).
+- No `groupOrder`/collapse/rule-engine test cases (#24/#59/#60).
 
 ## Acceptance Checks
 
-- [ ] Every bullet in issue #6's Acceptance Criteria maps to at least one passing test here (or,
+- [ ] Every bullet in issue #7's Acceptance Criteria maps to at least one passing test here (or,
       for the construction-throw and pipeline-order criteria, to a Step 1–4 spec already covering
       it — note which, don't duplicate).
 - [ ] `nx test shared-table` passes.

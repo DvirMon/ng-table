@@ -1,4 +1,4 @@
-# Research relocated from ADR-0005 (D7, trim-docs #80)
+# Research relocated from ADR-0005 (D7, trim-docs #46)
 
 CDK Table / TanStack / WAI-ARIA investigation that informed
 [ADR-0005](../../../adr/0005-generic-table-host.md)'s decision to inject ARIA roles

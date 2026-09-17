@@ -1,6 +1,6 @@
 # Step 2 — Object-literal schema; delete the key-derivation layer
 
-**PR scope:** PR 1 of 1 (`#124`). **Depends on: Step 1.** **Blocks Step 3.**
+**PR scope:** PR 1 of 1 (`#90`). **Depends on: Step 1.** **Blocks Step 3.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`, `typescript-conventions`

@@ -1,6 +1,6 @@
 # Step 9 — Relocate the filters domain to its own top-level folder
 
-**PR scope:** PR 2 of 3 (`#106`). **Depends on: Step 7.** **Blocks Step 10.**
+**PR scope:** PR 2 of 3 (`#72`). **Depends on: Step 7.** **Blocks Step 10.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `file-organization`

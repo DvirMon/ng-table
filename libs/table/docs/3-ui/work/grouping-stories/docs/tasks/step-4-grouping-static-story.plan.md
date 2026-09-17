@@ -69,7 +69,7 @@ no-op), 3.3 (+ throwing comparator), 3.4, 4.1, 4.2, 4.3, 4.4, F-G1, and P5b inde
    OQ-3's "is it just CSS?" empirically.
 9. Honest-regression controls, each annotated in the doc-comment as a live gap, not a workaround:
    - **Break one group's summary** — flips a signal the `aggregateFn` throws on. Today this takes
-     the table down (S2, [#79](https://github.com/DvirMon/acme/issues/79)); starts passing when
+     the table down (S2, [#45](https://github.com/DvirMon/ng-table/issues/45)); starts passing when
      ADR-0014's wrap lands.
    - **Group by a column that isn't there** — the table degrades to the remaining levels (D14) and
      the story states on canvas that nothing tells the person.

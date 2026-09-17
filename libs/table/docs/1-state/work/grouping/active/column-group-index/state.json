@@ -1,7 +1,7 @@
 {
   "slug": "column-group-index",
   "ticketRef": "115",
-  "ticketUrl": "https://github.com/DvirMon/acme/issues/115",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/81",
   "stack": "angular",
   "isComplex": false,
   "workspaceRoot": "libs/table/docs/1-state/work/grouping/active/column-group-index",

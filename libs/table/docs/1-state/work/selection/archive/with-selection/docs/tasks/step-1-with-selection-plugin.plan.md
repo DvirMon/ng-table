@@ -58,7 +58,7 @@ issue: 55
 
 3. Internal state, all closure-local (no engine-managed state, per the plugin pattern):
    - `const selectedIds = signal(new Set<RowId>())`
-   - `const selectionChangedSource = new Subject<SelectionChange>()` — **must be a plain `Subject`, never `ReplaySubject`/`BehaviorSubject`** (D16 constraint #1 — a replaying variant would deliver construction state to every late subscriber).
+   - `const selectionChangedSource = new Subject<SelectionChange>()` — **must be a plain `Subject`, never `ReplaySubject`/`BehaviorSubject`** (D16 constraint #2 — a replaying variant would deliver construction state to every late subscriber).
 
 4. Resolve the multi-select predicate once at factory time from config:
    ```ts
@@ -110,7 +110,7 @@ issue: 55
 
 ## Risks / Watchouts
 
-- **Do not reuse `select()`/`selectionChanged`-emitting code paths for `initialSelection`.** It's tempting to call `select(config.initialSelection)` in the constructor for DRY-ness — this is explicitly forbidden (D16 constraint #2) because `select()` emits.
+- **Do not reuse `select()`/`selectionChanged`-emitting code paths for `initialSelection`.** It's tempting to call `select(config.initialSelection)` in the constructor for DRY-ness — this is explicitly forbidden (D16 constraint #3) because `select()` emits.
 - **Do not make `selectionChangedSource` a `ReplaySubject`/`BehaviorSubject`** even to make "read current state from the stream" convenient elsewhere — D16 forbids this explicitly; current state is read from `selectedRows()`, never carried in the stream.
 - **The multi-select truncation must apply to every write verb that can add ids** (`toggle`, `select`, and the `initialSelection` seed) — not just `toggle`. `deselect`/`clearSelection` never add, so the rule is moot for them.
 - Resolve the predicate's row lookup from `core.rows()` (pipeline output, already-sorted/filtered), not `core.value()` (raw data) — matches `with-expansion.ts`'s established pattern of reading `core.rows` for this kind of per-row lookup.

@@ -114,7 +114,7 @@ doc is the result of that design conversation.
   runtime, not whether it happened to be fetched.** Backported from D13
   ([`work/with-grouping/2-decisions.md`](../1-state/work/with-grouping/2-decisions.md),
   [`work/with-grouping/3-spec.md`](../1-state/work/with-grouping/3-spec.md)), which names the same
-  criterion for `applyGrouping`/`applyGroupingAsync` (shipped, issue #60); this file described the
+  criterion for `applyGrouping`/`applyGroupingAsync` (shipped, issue #26); this file described the
   two as counterparts without ever stating when to choose which.
 
   | | `applyVisible` (sync/reactive) | `applyVisibleAsync` (resource-backed) |
@@ -153,7 +153,7 @@ doc is the result of that design conversation.
   `createTableFeature(<In extends SortingInput<In>>(input: In) => TableFeatureSpec<RowOf<In>, SortingMembers>)`
   factory that owns its own signals and returns `{ members, stages }`, reading `input.columns()` —
   F-bounded on the store slice it needs, row type recovered as `RowOf<In>`, never written at the
-  call site (#67). Same posture the schema resolution internals take. (Superseded 2026-08-11: the old
+  call site (#33). Same posture the schema resolution internals take. (Superseded 2026-08-11: the old
   `signalStoreFeature({state, props}, withState(...), ...)` chain and the `store._pipeline`
   mutation it relied on are gone — see ADR-0003.)
 - `TableFeatureSpec` carries `setup` / `onDestroy` — the right primitive for the async wiring.
@@ -238,7 +238,7 @@ export interface TableConfig<TRow> {
   columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;   // optional sibling
   injector?: Injector;                                          // outside an injection context
 }
-// Features are trailing positional arguments, not a config key (#67):
+// Features are trailing positional arguments, not a config key (#33):
 //   createTable(data, config, withSorting(), withGrouping())
 ```
 

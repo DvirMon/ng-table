@@ -1,4 +1,4 @@
-# Architecture — #132 `RenderRow.parentId` + engine-owned prune stage
+# Architecture — #98 `RenderRow.parentId` + engine-owned prune stage
 
 Companion to [`spec-132.md`](spec-132.md). Consumed by `/to-tasks`; paths and types are exact as
 of 2026-09-16.

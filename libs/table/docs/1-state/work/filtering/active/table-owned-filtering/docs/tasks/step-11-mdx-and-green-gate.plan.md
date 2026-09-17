@@ -1,6 +1,6 @@
 # Step 11 — `filtering.mdx` prose and the green gate
 
-**PR scope:** PR 1 of 1 (`#125`). **Depends on: Step 7, Step 8, Step 9.**
+**PR scope:** PR 1 of 1 (`#91`). **Depends on: Step 7, Step 8, Step 9.**
 **Task type:** `docs`
 **Stack:** angular
 **Skills used:** — (main thread, no agent)
@@ -56,16 +56,16 @@ the lib does not compile until every call site has landed.
    including `.html` templates, and fix what Steps 7–9 left.
 
 6. **Run the gate.** Both runs, both targets, plus the suite. This is the step that reports whether
-   `#125` met its acceptance.
+   `#91` met its acceptance.
 
 ## Implementation Notes
 
 - `docs/1-state/filters.md`, `docs/1-state/features/filtering.md`, `docs/0-product/filtering.md`,
-  `docs/3-ui/stories.md`, `libs/table/CLAUDE.md` and ADR-0016 are **`#126`**. This step stops
-  at the `src/` boundary — that is exactly where `#125`'s acceptance draws the line ("anywhere under
+  `docs/3-ui/stories.md`, `libs/table/CLAUDE.md` and ADR-0016 are **`#92`**. This step stops
+  at the `src/` boundary — that is exactly where `#91`'s acceptance draws the line ("anywhere under
   `src/`").
 - Step 9's PR note should already flag that `docs/0-product/filtering.md` and `docs/3-ui/stories.md`
-  point at the deleted predicate story. Carry that forward into `#126` rather than fixing it here.
+  point at the deleted predicate story. Carry that forward into `#92` rather than fixing it here.
 - Storybook MDX resolves its `of={}` references at build time against the story file. A leftover
   `PredicateStories` import fails the Storybook build, not the typecheck — grep, do not rely on the
   gate below to catch it.
@@ -76,7 +76,7 @@ the lib does not compile until every call site has landed.
   belong to any of Steps 7–9. Attribute by path before assuming this step introduced it.
 - **`ngc` aborts before the template phase on a `.ts` error.** A first run that reports only `.ts`
   errors has said nothing whatsoever about the six story-host templates this issue touches. Fix,
-  then run again. A pass claimed off an aborted run is how `#94` shipped.
+  then run again. A pass claimed off an aborted run is how `#60` shipped.
 - Deleting a `<Canvas of={…}>` whose story export is already gone yields a Storybook-only failure
   that no static check reaches. Per the repo's standing rule, do not start Storybook to check —
   grep for `PredicateStories` and `Predicates` and state in the PR that a Storybook run is what
@@ -84,8 +84,8 @@ the lib does not compile until every call site has landed.
 
 ## Non-Goals
 
-- Every doc under `libs/table/docs/` — `#126`.
-- Relocating `src/filters/` — `#127`.
+- Every doc under `libs/table/docs/` — `#92`.
+- Relocating `src/filters/` — `#93`.
 - Rewriting the MDX's structure. Two sections change their claims and one is deleted; the document's
   shape is not this issue's subject.
 

@@ -101,7 +101,7 @@ for edit when the swap lands stays open under the new id instead of being pruned
 reconciliation. Tests colocated in `optimistic-mutations.spec.ts`, including the ordering-
 invariant test pinning the effect-scheduling assumption D49's decision record relies on.
 
-**Tracked as [#53](https://github.com/DvirMon/acme/issues/53)** (opened 2026-08-26).
+**Tracked as [#19](https://github.com/DvirMon/ng-table/issues/19)** (opened 2026-08-26).
 
 **Re-derived 2026-08-25 against the shipped code.** The original entry was wrong on its
 mechanism: `snapshots` is a plain `Map` in the feature's own signal, not derived from `data`, so
@@ -179,7 +179,7 @@ see D35). A predicate matching N rows wants N rows open, so a row rule cannot be
 
 ### G5 — Optimistic rollback covers update, create, and (now) delete; move stays uncovered *(state layer)*
 
-**Tracked as [#54](https://github.com/DvirMon/acme/issues/54)** (opened 2026-08-26).
+**Tracked as [#20](https://github.com/DvirMon/ng-table/issues/20)** (opened 2026-08-26).
 
 **Delete closed 2026-08-27** — [`work/with-optimistic-crud/2-decisions.md`](../../archive/with-optimistic-crud/2-decisions.md),
 D45–D47. A restore point now carries its index (`RowRestorePoint.at`), and `removeEdit(id)`
@@ -278,7 +278,7 @@ side, leaving the mutation decisions and the engine `CLAUDE.md` citations untouc
 2. ~~**D30 is used twice across files.**~~ `rebaseEdit` is now **D34**. The `WritableView` write
    pattern keeps D30 — it is the cross-cutting one, cited by the engine `CLAUDE.md` and
    `row-mutations.md`.
-3. ~~**The disposition table claims finding #5 and #6 are dissolved by ADR-0006**, which is
+3. ~~**The disposition table claims finding #6 and #7 are dissolved by ADR-0006**, which is
    unimplemented.~~ ADR-0006 is implemented and `accepted`; the claim is now true. See G2.
 
 A collision table at the head of `2-decisions.md`'s renumbered section records both moves, so a
@@ -363,9 +363,9 @@ G*n*", nothing more. Follow the link before acting on any of them.
 
 | # | Question | Gates | Full text |
 |---|---|---|---|
-| ~~**O24**~~ | ~~Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features?~~ **Resolved 2026-09-03** — its own updater in `mutations/optimistic-mutations.ts`, touching both maps, owned by neither feature | **G3** ([#53](https://github.com/DvirMon/acme/issues/53)) — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
+| ~~**O24**~~ | ~~Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features?~~ **Resolved 2026-09-03** — its own updater in `mutations/optimistic-mutations.ts`, touching both maps, owned by neither feature | **G3** ([#19](https://github.com/DvirMon/ng-table/issues/19)) — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
 | ~~**O20**~~ | ~~On an id swap: enforce end-edit-first, migrate the orphaned key, or document the sequence?~~ **Resolved 2026-09-03** — migrate the key; end-edit-first rejected outright, it gates a consumer action on internal sync | **G3** — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
-| **O22** | *(representation half, delete closed 2026-08-27)* Inverse operation instead of a fixed-position snapshot, so rollback can cover **move**? | **G5** ([#54](https://github.com/DvirMon/acme/issues/54)) — delete no longer blocked | [with-optimistic-crud](../../archive/with-optimistic-crud/2-decisions.md) |
+| **O22** | *(representation half, delete closed 2026-08-27)* Inverse operation instead of a fixed-position snapshot, so rollback can cover **move**? | **G5** ([#20](https://github.com/DvirMon/ng-table/issues/20)) — delete no longer blocked | [with-optimistic-crud](../../archive/with-optimistic-crud/2-decisions.md) |
 | **O23** | Should openness be declarative — `applyEditable({ when })` mirroring `applyVisible()`? | blocked *by* **G4** — a predicate matching N rows forces `multiple: true` | [with-row-editing](2-decisions.md) |
 | **O15** | How does the `filter` stage express "keep these ids even though the predicate rejects them"? | phantom — needs `withFiltering()` | [with-row-editing](2-decisions.md) |
 | **O16** | Where does a *retained* row sit once it no longer matches the filter — in place, or collected? | phantom — same | [with-row-editing](2-decisions.md) |
@@ -428,7 +428,7 @@ the first row a person opens. See the [UI register](../../../../../3-ui/work/row
 G5's delete half shipped 2026-08-27 (D45–D47), out of order relative to G3/G4/G6, since a
 consumer-visible worst-case failure mode (delete loses the row, no recovery) outweighed the
 sequencing. Its move half is still not in the order — no consumer need yet — tracked as
-[#54](https://github.com/DvirMon/acme/issues/54).
+[#20](https://github.com/DvirMon/ng-table/issues/20).
 
 **The UI-layer order lives with the UI gaps** — G1/G9/G10 are one directive effort, G7 is docs +
 demo. See [`3-ui/work/row-editing/5-gaps.md`](../../../../../3-ui/work/row-editing/5-gaps.md).

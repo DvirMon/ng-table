@@ -1,5 +1,5 @@
 ---
-title: Plan — rename grouping's predicates to the `when`/`enable` convention (#120)
+title: Plan — rename grouping's predicates to the `when`/`enable` convention (#86)
 type: plan
 status: decided 2026-09-17, not executed. Convention settled; rename + ADR-0018 pending.
 date: 2026-09-17
@@ -22,7 +22,7 @@ Level activation (`when`) asks *is this column a grouping level*; admission (`gr
 [`design-group-admission.md`](../../archive/with-grouping/design-group-admission.md)
 — "The surface", "Combining the two scopes".
 
-Table-wide `groupWhen` shipped in #119 (commit 2bc86a6). Per-column `groupWhen` is #120,
+Table-wide `groupWhen` shipped in #85 (commit 2bc86a6). Per-column `groupWhen` is #86,
 currently **uncommitted** in the working tree (`schema/grouping-rules.ts`,
 `grouping-schema.types.ts`, `engine/grouping-rules.ts` `collectGroupPredicates`,
 `engine/grouping.ts` `columnGroupWhen`, + specs + the `grouping-static` story).
@@ -99,7 +99,7 @@ Specs assert that reporting happens (`engine/grouping.spec.ts:266+`,
 
 **Specs** — `schema/grouping-rules.spec.ts`, `engine/grouping-rules.spec.ts`,
 `engine/grouping.spec.ts`, `api/features/with-grouping.spec.ts` (largest: 27 `groupWhen` + 19
-grouping-`when` occurrences, concentrated in `describe('groupWhen (#119 table-wide admission)')`
+grouping-`when` occurrences, concentrated in `describe('groupWhen (#85 table-wide admission)')`
 at `:1679`, `:1847`, `:1875`, and the rules/schema blocks at `:1364-1632`). Rename the `describe`
 labels too.
 
@@ -119,13 +119,13 @@ and `grouping-static-story-host.component.html:77`.
 
 **Canonical design doc** — `work/grouping/archive/with-grouping/design-group-admission.md`: update
 the terminology in "The surface", "Rules", "Combining the two scopes", and the
-"`groupWhen` does not flow through `foldGroupingRules`" heading. It is archived but is what #120
+"`groupWhen` does not flow through `foldGroupingRules`" heading. It is archived but is what #86
 is built from, so stale names there are actively misleading. Add a dated line to its frontmatter
 `status:` recording the rename.
 
-**Leave alone** — the archived `issue-118-*` / `issue-119-*` step plans and `progress.md` files
+**Leave alone** — the archived `issue-84-*` / `issue-85-*` step plans and `progress.md` files
 (historical record of what shipped under the old names), and the
-`issue-119-group-when-table-wide/` directory name. Renaming a shipped task folder breaks the
+`issue-85-group-when-table-wide/` directory name. Renaming a shipped task folder breaks the
 cross-links at `step-2-…:147` and `step-4-tests.plan.md:124` for no gain.
 
 ## Record the convention
@@ -135,14 +135,14 @@ It governs future features, not just grouping, so it needs a durable home:
 1. **New ADR** — `docs/adr/0018-when-vs-enable-predicate-naming.md` (next free number; 0009 is
    already absent from the sequence). Decision: `when` for any dynamic conditional; `enable` only
    to separate an external-state condition from a data condition on the same rule. Consequences:
-   `applyVisible`/`FilterOptions` keep a single `when`; a future `applySortable()` (#134) gets
+   `applyVisible`/`FilterOptions` keep a single `when`; a future `applySortable()` (#100) gets
    `when` unless it needs the same two-source split.
 2. **Pointer in `libs/table/CLAUDE.md`** — one line under "Naming conventions — internal
    state and type narrowing", citing the ADR. Conventions only, no status.
-3. **#119 API break, recorded** — table-wide `groupWhen` → `when` breaks a merged public API.
+3. **#85 API break, recorded** — table-wide `groupWhen` → `when` breaks a merged public API.
    Pre-1.0, single in-repo consumer (`grouping-static` + specs), no deprecation window — the same
    trade `design-group-admission.md` took for removing `WithGroupingConfig.groupOrder`. State it
-   in the #120 PR body and in the ADR's consequences.
+   in the #86 PR body and in the ADR's consequences.
 
 ## Verification
 

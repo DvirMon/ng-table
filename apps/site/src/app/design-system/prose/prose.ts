@@ -6,7 +6,7 @@ import type { ProseMeasure } from './prose.types';
  * strong/em, and heading anchor links. Attribute-hosted (ADR-0005) on the consumer's own
  * `<article>` (a standalone doc page) or `<div>` (a prose run inside a larger section).
  *
- * The one `ViewEncapsulation.None` component in this build (CONVENTIONS.md #8) and it stays that
+ * The one `ViewEncapsulation.None` component in this build (CONVENTIONS.md #9) and it stays that
  * way after the attribute-host conversion: projected nodes carry the *declaring* component's
  * encapsulation id, so under emulated encapsulation no `:host h2` rule here could ever match
  * content delivered through `<ng-content>`. Changing the host element does not change that.

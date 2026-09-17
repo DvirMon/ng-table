@@ -1,6 +1,6 @@
 # Step 11 — Rewrite the feature's spec for the predicate list
 
-**PR scope:** PR 3 of 3 (`#107`). **Depends on: Step 10.** **Parallel-safe with Step 12.**
+**PR scope:** PR 3 of 3 (`#73`). **Depends on: Step 10.** **Parallel-safe with Step 12.**
 **Task type:** `docs`
 **Stack:** angular
 **Skills used:** `audit-docs`, `concise-docs`

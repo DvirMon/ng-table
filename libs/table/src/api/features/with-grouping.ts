@@ -70,10 +70,10 @@ export interface GroupingMembers<TRow> {
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
   /** Every group header id that exists in the data, at every level, collapse-independent —
    * derives from the cluster tree, not `renderRows()`. `[]` when ungrouped. Feeds
-   * `expandAll(table.groupIds())` (issue #131). */
+   * `expandAll(table.groupIds())` (issue #97). */
   readonly groupIds: Signal<RowId[]>;
   /** Current grouping levels as `ColumnDef`s, ordered outermost first — the inverse of
-   * `isGroupedBy`. Derives from the same resolved level list (issue #115 D4), so a level naming
+   * `isGroupedBy`. Derives from the same resolved level list (issue #81 D4), so a level naming
    * no known column can never appear here. `[]` when ungrouped. */
   readonly groupingLevels: Signal<ColumnDef<TRow>[]>;
   /** O(1) membership check for one column, backed by a set derived alongside `groupingLevels` —

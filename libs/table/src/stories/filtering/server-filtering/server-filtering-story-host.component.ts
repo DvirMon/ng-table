@@ -146,7 +146,7 @@ export class ServerFilteringStoryHostComponent {
       this.serverTotal() === 0,
   );
 
-  /** The late-default race, made visible without `dirty()` (internal since #124): the typed
+  /** The late-default race, made visible without `dirty()` (internal since #90): the typed
    * criterion no longer follows the declared source, so an arriving default loses. */
   protected readonly amountIgnoresServerDefault = computed(() => {
     const typed = this.table.filters.amount().value();

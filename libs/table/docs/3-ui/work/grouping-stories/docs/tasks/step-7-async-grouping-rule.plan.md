@@ -33,10 +33,10 @@ Node F. `applyGroupingAsync()` is the one genuinely async surface grouping has, 
 unless raced on purpose. It also carries product story 1.4's "not silently getting a different
 report".
 
-Status corrected in the gap analysis: this was called blocked on issue #60 step 4; that step is
+Status corrected in the gap analysis: this was called blocked on issue #26 step 4; that step is
 done (`api/features/with-grouping.ts` folds `config.groupingRule ?? rulesGroupingRule` over
 `baseGrouping`, and `applyGrouping` / `applyGroupingAsync` are live on the public surface). Only
-#60's tests-and-docs steps remain, which change no behaviour.
+#26's tests-and-docs steps remain, which change no behaviour.
 
 ## What To Do
 
@@ -65,7 +65,7 @@ done (`api/features/with-grouping.ts` folds `config.groupingRule ?? rulesGroupin
 
 - `1-state/filters.md`-style stale docs exist for grouping too: `tier-3-feature-config.md`'s
   `applyGroup(path, …)` names a mechanism that diverges from the shipped `applyGrouping`. Do not
-  follow it; it is a doc fix owed by issue #60 step 6.
+  follow it; it is a doc fix owed by issue #26 step 6.
 
 ## Non-Goals
 

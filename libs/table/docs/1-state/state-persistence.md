@@ -44,7 +44,7 @@ column state that belongs to no feature at all. A `withPersistence()` that reach
 five other features' internals would be an enumerated surface that every new feature has to
 edit — see the mechanism proposed below.
 
-**Sequenced last, deliberately.** Priority #6 in
+**Sequenced last, deliberately.** Priority #7 in
 [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md#priority-ranking-for-what-to-build-next):
 column sizing, pinning, filtering and pagination all have to exist before there is a layout
 worth persisting. (Filtering now lands as a standalone primitive rather than a table feature —
@@ -62,7 +62,7 @@ the closest thing to a real answer (`getState()`/`setState()`), has its own post
 gap (#7445) and does not capture row order (#11492). Both retrofitted persistence onto
 features that already shipped their own state, one slice at a time.
 
-The audit's #2 cross-cutting gap is exactly this: *atomic, round-trippable layout state is
+The audit's #3 cross-cutting gap is exactly this: *atomic, round-trippable layout state is
 genuinely hard, not a solved problem any of these four can be copied wholesale.* So the
 design rules below are written as constraints on the eventual implementation, and the
 competitors' bug list is transcribed into a test list rather than left as prose.
@@ -233,7 +233,7 @@ speculative one. These are the acceptance tests, not a wishlist.
 
 - [ ] **Is selection persisted?** PrimeNG deliberately excludes selection and expansion from
   its persisted slice set. Selection is arguably session state, not layout — but it is also
-  the audit's #1 gap. Both preconditions that used to block this are gone: `withSelection()`
+  the audit's #2 gap. Both preconditions that used to block this are gone: `withSelection()`
   has shipped, tested code (`spec: drilled, code: partial`), and D1 settled the selection-scope
   question (no scope concept — every write names its own ids) on 2026-09-06. `selection.md`'s
   own D19 already answers the substance: `withSelection()` will declare a persistence slice

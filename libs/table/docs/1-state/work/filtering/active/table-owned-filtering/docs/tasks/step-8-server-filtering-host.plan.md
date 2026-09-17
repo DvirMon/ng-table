@@ -1,6 +1,6 @@
 # Step 8 — Server-filtering host: the filters move into the table
 
-**PR scope:** PR 1 of 1 (`#125`). **Parallel-safe with: Step 7, Step 9, Step 10.**
+**PR scope:** PR 1 of 1 (`#91`). **Parallel-safe with: Step 7, Step 9, Step 10.**
 **Task type:** `code`
 **Stack:** angular
 **Skills used:** `angular-developer`
@@ -30,7 +30,7 @@ and a `linkedSignal` pair. What remains is the ownership move, which is smaller 
 implies but is the part that carries the argument.
 
 Second thing only this step can settle: the toolbar reads `filters().amount().dirty()` to render the
-late-default race. `dirty()` is `@internal` as of `#124` Step 4. The issue is explicit — the
+late-default race. `dirty()` is `@internal` as of `#90` Step 4. The issue is explicit — the
 indicator reads from what the story can still observe, or the step says plainly that nothing can.
 Something can, and it is in this host already.
 
@@ -99,7 +99,7 @@ Something can, and it is in this host already.
 7. **The race indicator.** Host computes it and passes it down:
 
    ```ts
-   /** The late-default race, made visible without `dirty()` (internal since #124): the typed
+   /** The late-default race, made visible without `dirty()` (internal since #90): the typed
     * criterion no longer follows the declared source, so an arriving default loses. */
    protected readonly amountIgnoresServerDefault = computed(() => {
      const typed = this.table.filters.amount().value();

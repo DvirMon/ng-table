@@ -48,8 +48,8 @@ precedent at [`row-edit-stories/2-gap-analysis.md`](../row-edit-stories/2-gap-an
 > filtering UX is the old imperative shape") are the *same* stale premise as the product doc's —
 > both were written the day before the code landed, and `src/` as of 2026-09-13 contradicts them.
 > Two of its §5 contradictions have since **resolved on their own**: `docs/status.md` has been
-> regenerated, so `filtering` now reads `drilled | shipped` (#2 closed) and a `filters` row now
-> exists (#3 closed). Node E shrinks accordingly — see the build order.
+> regenerated, so `filtering` now reads `drilled | shipped` (#3 closed) and a `filters` row now
+> exists (#4 closed). Node E shrinks accordingly — see the build order.
 
 ## What actually ships today (re-derived from `src/`, not from spec marks)
 
@@ -373,7 +373,7 @@ This node is a **cross-plan blocker**: the selection plan's node I cannot flip i
 **E — `1-state/filters.md` frontmatter `code: none` → `code: shipped`, then regenerate
 `docs/status.md` (`npm run table:status`).** *independent / leaf.*
 `Depends on: nothing.` `Parallel-safe with: everything.` **Scope reduced by the research check:**
-`cov §5`'s contradictions #2 and #3 have both resolved on their own — `status.md` has since been
+`cov §5`'s contradictions #3 and #4 have both resolved on their own — `status.md` has since been
 regenerated, so the `filtering` row now reads `drilled | shipped` and a `filters` row now exists.
 What remains is one wrong fact: `filters.md` declares `code: none` while `src/api/create-filters.ts`
 and `src/api/filters/` ship, which makes the regenerated `filters` row wrong in its own way. (The

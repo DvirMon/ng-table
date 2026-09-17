@@ -1,6 +1,6 @@
 # Step 8 — ADR-0016: the filter model is the consumer's, the table takes a predicate list
 
-**PR scope:** PR 1 of 3 (`#105`). **Depends on: Step 7.**
+**PR scope:** PR 1 of 3 (`#71`). **Depends on: Step 7.**
 **Task type:** `docs`
 **Stack:** angular
 **Skills used:** —
@@ -59,14 +59,14 @@ in kind (a cross-cutting policy with rejected alternatives). Cover exactly these
   `../1-state/work/decouple-filters/spec.md` and
   `../1-state/work/with-filtering/migration-decouple-filters-from-table.md` (both relative to
   `docs/adr/`, where the new file lives).
-- Reference the epic and this issue: `#101`, `#105`.
+- Reference the epic and this issue: `#67`, `#71`.
 - Match the frontmatter of the neighbouring ADRs exactly — read `0015` and copy its key set.
 - Per the repo's own convention, decision rationale belongs here and **not** in source JSDoc. Do not
   add a D-number or an ADR paragraph to `with-filtering.ts` while writing this.
 
 ## Risks / Watchouts
 
-- Do not describe the folder move (`#106`) or the doc split (`#107`) as done — neither has landed
+- Do not describe the folder move (`#72`) or the doc split (`#73`) as done — neither has landed
   when this ADR is written. Reference the layout only as a consequence recorded elsewhere, or omit
   it.
 - Point 4 is the one a reader will arrive at from a compile error in their own code. Write its

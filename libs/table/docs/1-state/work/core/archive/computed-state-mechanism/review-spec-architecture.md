@@ -22,7 +22,7 @@ is retired … No shipped feature uses it today."* False. `withGrouping()` reads
 
 Under positional composition the read splits in two: the **type** of grouping's input includes
 `expandedRows` only if `withExpansion()` precedes it; the **runtime** lazy read on the shared store
-object works in either order. Spec must state that rule explicitly. Issue: #72 AC "grouping picks
+object works in either order. Spec must state that rule explicitly. Issue: #38 AC "grouping picks
 up expansion regardless of argument order".
 
 ### 2. Architecture fold steps 3 and 4 contradict each other
@@ -31,14 +31,14 @@ Step 3: *"A derive feature is not special-cased."* Step 4: *"wrap each derived m
 during evaluation reports the member key … validate each returned value with `isSignal()`."* At
 fold level `isSignal()` would reject every method member an ordinary feature contributes
 (`selectRow`, `beginEdit`, `rowsOf`). The wrapping and validation must live **inside**
-`withComputed()`; the fold stays uniform. Issue: #70 is written this way; architecture should say
+`withComputed()`; the fold stays uniform. Issue: #36 is written this way; architecture should say
 so.
 
 ### 3. `indexById` / `baseColumns` unaddressed
 
 Both editing features read `core.indexById` (`with-row-edit.ts:86`, `editing-state.ts:230`);
 column-schema wiring reads `core.baseColumns`. Neither is on `TableStore`, so a
-`Feature<In extends Shape>` cannot reach them. Neither doc mentions it. Settled in #69:
+`Feature<In extends Shape>` cannot reach them. Neither doc mentions it. Settled in #35:
 `indexById` becomes a public read-only member; `baseColumns` stays engine-only because the schema
 wiring is spliced internally and keeps taking the core handle. Decisions log owes a D25.
 
@@ -54,7 +54,7 @@ Decide one of:
   distinguished statically) — story 16 holds for views, "by convention" for methods;
 - (b) drop the compile-time claim; document read-only as convention.
 
-Recommend (a), stated explicitly in spec + architecture "Types to add". Issue: #70 AC "writing
+Recommend (a), stated explicitly in spec + architecture "Types to add". Issue: #36 AC "writing
 through it is a compile error" assumes (a).
 
 ## Inconsistencies
@@ -73,20 +73,20 @@ say three. Rename the header.
 ### 7. `describeFeature` description wrong
 
 Architecture table: *"`describeFeature(index)` → `features[0]`"*. Actual: `features[${index}]`,
-off by one because `wireColumnsSchemaAsync` is spliced as feature 0. #68 wording corrected.
+off by one because `wireColumnsSchemaAsync` is spliced as feature 0. #34 wording corrected.
 
 ### 8. Persistence gate unmet
 
 Spec: *"The persistence spec and this change both touch the feature contract and must agree
 before either lands."* `state-persistence.md` has no mention of derived members or
 `withComputed`. Owed-docs list marks it "unchanged by D21" — the exclusion row is still owed.
-Either add the one paragraph now or downgrade the gate to "before persistence lands". Issue: #78.
+Either add the one paragraph now or downgrade the gate to "before persistence lands". Issue: #44.
 
 ### 9. `any` in `Shape`
 
 `Shape = { rows: Signal<readonly any[]> }`. `Signal<TRow[]>` is assignable to
 `Signal<readonly unknown[]>`, and `RowOf` infers through `readonly (infer R)[]` either way. Repo
-convention avoids `any`; research trap #1 is precisely "a wildcard in a constraint's slot".
+convention avoids `any`; research trap #2 is precisely "a wildcard in a constraint's slot".
 Re-verify the probe with `unknown[]`.
 
 ### 10. No migration guide owed
@@ -94,7 +94,7 @@ Re-verify the probe with `unknown[]`.
 Story 28 promises a "clear mechanical rewrite"; the owed-docs list has no before/after entry.
 Add a before/after table (thunk+array → positional; `withX<TRow>()` → `withX()`;
 `createTableSchema()` → plain object with explicit `trackBy`; `options.injector` →
-`config.injector`) to `CLAUDE.md` or a `MIGRATION.md`. Issue: #78.
+`config.injector`) to `CLAUDE.md` or a `MIGRATION.md`. Issue: #44.
 
 ### 11. Types are stricter than runtime — say it once
 
@@ -107,19 +107,19 @@ are the stricter of the two; finding 1 is the worked example.
 
 D24 verified *"a `withComputed` in slot 1 cannot see a later slot's members (compile error, not a
 silent `any`)"*. Spec's type seam lists "a member of an uncomposed feature being absent" but not
-the later-slot case, nor `composeFeatures()` at all. Issues: #69, #71 ACs.
+the later-slot case, nor `composeFeatures()` at all. Issues: #35, #37 ACs.
 
 ## Settled by the breakdown — record, don't reopen
 
-- OQ1 `createTableSchema()` — removed (#69). Consequence: `trackBy` explicit at every call site;
+- OQ1 `createTableSchema()` — removed (#35). Consequence: `trackBy` explicit at every call site;
   consistent with story 3.
-- OQ4 spike — no; #77 integrate-and-verify is the runtime verification. Record in decisions log.
-- OQ5 `totalRowCount` override — one sentence owed on ADR-0005 (#78).
-- OQ6 editing store — finding recorded on #74, rationale rewritten in #78.
+- OQ4 spike — no; #43 integrate-and-verify is the runtime verification. Record in decisions log.
+- OQ5 `totalRowCount` override — one sentence owed on ADR-0005 (#44).
+- OQ6 editing store — finding recorded on #40, rationale rewritten in #44.
 
 ## Verified correct
 
-- No shipped feature declares a core key → #68 breaks nothing.
+- No shipped feature declares a core key → #34 breaks nothing.
 - `Signal<TRow[]>` satisfies `Shape` and `RowOf` infers `TRow` (mutable → readonly array
   assignability).
 - `injector` in config, `columnsSchema` dual form, ADR-0010 splice intact, pipeline order fixed —

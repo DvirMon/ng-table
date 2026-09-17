@@ -18,7 +18,7 @@
 
 ## Why This Step Exists
 
-`#103` added `predicates` to `WithFilteringConfig` alongside the existing `filters` field; `#105`
+`#69` added `predicates` to `WithFilteringConfig` alongside the existing `filters` field; `#71`
 deletes `filters`. Every consumer must be off the old field before that deletion can land, and the
 five story hosts are the only non-spec consumers in the repo.
 
@@ -45,7 +45,7 @@ the table, not what the model is.
 ## Implementation Notes
 
 - `this.filters` is the callable filter object; `this.filters()` is its root; `matcher()` is the
-  root method added in `#102`. All three calls happen inside the thunk, so the whole chain is read
+  root method added in `#68`. All three calls happen inside the thunk, so the whole chain is read
   on every pass.
 - **Reactivity is preserved by construction.** `matcher()` reads the criterion signals when it is
   called, and the thunk is called once per pipeline pass, so the same signal graph that drove the
@@ -58,7 +58,7 @@ the table, not what the model is.
   feature arguments — keep the trailing comma and argument order untouched.
 - `server-filtering-story-host.component.ts` composes no filtering feature at all. It is **not** in
   this step; its prose is handled in Step 5.
-- `predicate-filtering-story-host.component.ts` already runs on `predicates` (landed with `#103`).
+- `predicate-filtering-story-host.component.ts` already runs on `predicates` (landed with `#69`).
   Leave it alone.
 
 ## Risks / Watchouts
@@ -71,7 +71,7 @@ the table, not what the model is.
 
 ## Non-Goals
 
-- Deleting the `filters` field from `WithFilteringConfig` — that is `#105`.
+- Deleting the `filters` field from `WithFilteringConfig` — that is `#71`.
 - Touching `createFilters()` schemas, criterion types or story fixtures.
 - Adding a new story host — the plain-predicate story already exists.
 - Prose/`.mdx` updates — Step 5.

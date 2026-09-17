@@ -1,6 +1,6 @@
 # Step 13 — Split the older workspace's pointers and regenerate the roll-up
 
-**PR scope:** PR 3 of 3 (`#107`). **Depends on: Step 11, Step 12.**
+**PR scope:** PR 3 of 3 (`#73`). **Depends on: Step 11, Step 12.**
 **Task type:** `chore`
 **Stack:** angular
 **Skills used:** —

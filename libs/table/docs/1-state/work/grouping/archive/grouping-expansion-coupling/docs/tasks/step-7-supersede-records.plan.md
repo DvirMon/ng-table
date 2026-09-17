@@ -63,16 +63,16 @@ and so the record edits can land whenever the ADR exists rather than blocking on
   treat the whole chained-stage model as up for revision.
 - Do not touch `docs/1-state/features/grouping.md` or `features/expansion.md`. Their cross-feature
   caveats are still **true** at the end of this slice — grouping still reads `expandedRows` (D6).
-  They are corrected in #133, when the caveat actually stops being true. Editing them here would
+  They are corrected in #99, when the caveat actually stops being true. Editing them here would
   make the docs lie.
 - `docs/status.md` is generated from spec frontmatter. Neither file edited here carries that
   frontmatter, so no regeneration is needed — do not hand-edit `status.md`.
 
 ## Non-Goals
 
-- No feature-spec updates (#133).
+- No feature-spec updates (#99).
 - No new ADR — Step 1 wrote it.
-- No changes to `docs/1-state/architecture.md`; it is listed in `plan.md` B4 as a #133 doc update.
+- No changes to `docs/1-state/architecture.md`; it is listed in `plan.md` B4 as a #99 doc update.
 
 ## Acceptance Checks
 

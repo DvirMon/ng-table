@@ -1,4 +1,4 @@
-# Research relocated from ADR-0006 (D7, trim-docs #80)
+# Research relocated from ADR-0006 (D7, trim-docs #46)
 
 Prior art, memory analysis, and the open trackBy-swap question that were previously inline in
 [ADR-0006](../../../../../adr/0006-row-id-state-reconciliation.md) — the decision and its accepted

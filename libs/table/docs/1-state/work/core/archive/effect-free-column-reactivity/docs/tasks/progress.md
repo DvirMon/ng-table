@@ -1,6 +1,6 @@
 # Implementation Progress — Wire column state as derivation, remove effect()-driven writes
 
-**Issue:** #50
+**Issue:** #15
 **Status:** 3 / 3 complete
 
 | Step | Title | Status | PR |

@@ -1,6 +1,6 @@
 # Step 12 — Document the filter model's match contract
 
-**PR scope:** PR 3 of 3 (`#107`). **Depends on: Step 10.** **Parallel-safe with Step 11.**
+**PR scope:** PR 3 of 3 (`#73`). **Depends on: Step 10.** **Parallel-safe with Step 11.**
 **Task type:** `docs`
 **Stack:** angular
 **Skills used:** `audit-docs`, `concise-docs`
@@ -18,7 +18,7 @@
 
 ## Why This Step Exists
 
-`matcher()` shipped in `#102` and is the reason the two domains can be independent at all, but this
+`matcher()` shipped in `#68` and is the reason the two domains can be independent at all, but this
 document does not mention it once — the only public member of the filters root that is undocumented.
 A consumer reading this file today cannot discover the one thing the model exists to answer.
 

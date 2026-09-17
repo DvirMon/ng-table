@@ -38,7 +38,7 @@ the engine is allowed to hold at all* before either the `ColumnDef` seed field o
 feature's state slice can land.
 
 Second, softer dependency: [state-persistence.md](../state-persistence.md) is sequenced
-after this feature (gap-analysis priority #5 before #6), so this spec fixes the width
+after this feature (gap-analysis priority #6 before #7), so this spec fixes the width
 serialization shape and persistence consumes it — not the reverse.
 
 ## State Shape (sketch — not locked)

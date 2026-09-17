@@ -27,7 +27,7 @@ Last allocated before this file: **D44**.
 The product pass over row editing
 ([`docs/0-product/row-editing.md`](../../../../../0-product/row-editing.md)) found the worst failure
 mode in the table: a failed delete loses the row, permanently, with no recovery anywhere in the
-stack. G5 / [#54](https://github.com/DvirMon/acme/issues/54) deferred this on the grounds that a
+stack. G5 / [#20](https://github.com/DvirMon/ng-table/issues/20) deferred this on the grounds that a
 restore point holds a *value*, never an index, so `revertEdit` cannot re-insert. That premise
 turned out to be narrower than it looked — closing delete specifically needed only a position on
 the snapshot, not the full inverse-operation representation O22 originally called for.

@@ -1,6 +1,6 @@
 # Implementation Progress — NGP Table — withGrouping() core (multi-level clustering + aggregation)
 
-**Issue:** #6
+**Issue:** #7
 **Status:** 6 / 6 complete (status.md regen deferred to user — see note on Step 6)
 
 | Step | Title | Status | PR |

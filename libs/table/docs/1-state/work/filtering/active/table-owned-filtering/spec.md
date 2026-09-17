@@ -104,7 +104,7 @@ export interface FilterOptions<TSource = unknown, TRow = unknown> {
 ```
 
 `emptyValue` and `isEmpty` carry the semantics
-[#116](https://github.com/DvirMon/acme/issues/116) shipped, unchanged by this work: **`isEmpty`
+[#82](https://github.com/DvirMon/ng-table/issues/82) shipped, unchanged by this work: **`isEmpty`
 replaces; `emptyValue` extends and seeds; with neither, the rule's own holds.** `isEmpty` is on
 every rule, not just `filter()`, and `NoInfer` keeps it from typing the criterion a second time.
 `equals`' criterion is therefore `TRow[K] | null | TEmpty` — an override widens it, never narrows
@@ -138,7 +138,7 @@ produce a pending state (R53).
 ## Behaviour that must not change
 
 Criterion semantics, `source` defaults and the late-default race, empty criteria (additive
-`emptyValue`, total `isEmpty` — #116), the null-cell
+`emptyValue`, total `isEmpty` — #82), the null-cell
 policy, ADR-0014 per-filter/per-evaluation degradation, `anyOf` OR semantics and its
 homogeneous-criterion compile check, the duplicate-**path** construction throw, and
 `form(filters().value, schema)` binding with no adapter (R18).

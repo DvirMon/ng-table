@@ -24,8 +24,8 @@ angular-implementer
 
 ## Why This Step Exists
 
-Issue #4. `withExpansion()` was blocked on `RenderRow`/`renderRows()` existing on the core
-store — that landed via #39 (2026-08-07). Nothing else blocks this now. See
+Issue #5. `withExpansion()` was blocked on `RenderRow`/`renderRows()` existing on the core
+store — that landed via #10 (2026-08-07). Nothing else blocks this now. See
 `libs/shared/design-system/src/ui/table/docs/1-state/features/expansion.md` for the full spec.
 
 ## What To Do
@@ -86,7 +86,7 @@ inferable from `expandedRows` after the change) — see spec's Events Owned.
 
 Assigned directly inside `withMethods`'s factory function body, before the `return { ... }`,
 exactly where `with-sorting.ts` assigns `store._pipeline.sort = ...`. Do **not** touch
-`store._pipeline.expand` — the revised render-layer design (noted directly in issue #4's body)
+`store._pipeline.expand` — the revised render-layer design (noted directly in issue #5's body)
 routes expansion through `_buildRenderRows`, not the `PipelineStages.expand` stage; that field
 stays unused (pre-existing, out of scope for this step).
 
@@ -143,7 +143,7 @@ store._buildRenderRows = (rows) =>
 
 ## Non-Goals
 
-- `withGrouping()` (#6) — separate ticket.
+- `withGrouping()` (#7) — separate ticket.
 - Any UI-layer directive (`ngpTableExpandToggle`, `docs/3-ui/directives/expansion.md`) — separate, UI-layer
   work, unblocked but not part of this state-layer step.
 - Lazy-load UX / per-row loading state — spec explicitly leaves this unassigned (Open Questions).

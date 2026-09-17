@@ -1,7 +1,7 @@
 {
   "slug": "trim-docs",
   "ticketRef": "80",
-  "ticketUrl": "https://github.com/DvirMon/acme/issues/80",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/46",
   "stack": "angular",
   "isComplex": false,
   "workspaceRoot": "libs/table/docs/work/trim-docs",

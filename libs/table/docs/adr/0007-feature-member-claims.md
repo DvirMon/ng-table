@@ -85,7 +85,7 @@ making them impossible, but at the cost of the flat store surface every existing
 directive reads, and it would make D37's "one door — `table.editing` regardless of composition"
 unexpressible.
 
-## Amendment (2026-09, #67): core-key pre-claims, the unclaimed `totalRowCount`, derive-block claimants
+## Amendment (2026-09, #33): core-key pre-claims, the unclaimed `totalRowCount`, derive-block claimants
 
 Positional composition (`createTable(data, config, ...features)`, ADR-0003's 2026-09 amendment)
 extended the claim mechanism in three ways a feature author hits directly.

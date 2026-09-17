@@ -24,7 +24,7 @@ test-implementer
 
 ## Why This Step Exists
 
-Issue #4's acceptance criteria requires: "Tests go through the public `createTable()` surface
+Issue #5's acceptance criteria requires: "Tests go through the public `createTable()` surface
 only, via `TestBed`" and `nx test shared-design-system` passing. Mirrors
 `with-sorting.spec.ts`'s structure (`TestBed`, `createTable()` + the feature under test, no
 reach into private internals).

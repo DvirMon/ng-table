@@ -33,9 +33,9 @@ Spec: `../../3-spec.md`, "Public surface" and D1/D14. Decisions: `../../2-decisi
 
 **Scope note, read before starting:** the spec's D6 (base + overlay fold: `grouping =
 groupingRule() ?? baseGrouping()`) is real, but its `groupingRule` config doesn't exist until
-issue #60. Building the fold now with no config to drive it would be scaffolding for a config
+issue #26. Building the fold now with no config to drive it would be scaffolding for a config
 surface that isn't specced here yet. This step ships `table.grouping` reading `baseGrouping`
-**directly** — #60 swaps that one read site for the fold and adds `groupingRule`/`rules` to
+**directly** — #26 swaps that one read site for the fold and adds `groupingRule`/`rules` to
 `WithGroupingConfig`, which is additive to this step's shape, not a rework of it.
 
 ## What To Do
@@ -138,9 +138,9 @@ introduce a new asymmetry).
 
 ## Non-Goals
 
-- No `groupingRule`, no `rules` array, no schema-fn layer (#60).
-- No `groupOrder` (#58).
-- No collapse/expand, no `expandedRows` read (#59).
+- No `groupingRule`, no `rules` array, no schema-fn layer (#26).
+- No `groupOrder` (#24).
+- No collapse/expand, no `expandedRows` read (#25).
 
 ## Acceptance Checks
 

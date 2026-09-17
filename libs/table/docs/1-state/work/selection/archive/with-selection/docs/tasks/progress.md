@@ -1,6 +1,6 @@
 # Implementation Progress — withSelection() feature plugin + enableRowSelection() (D58) + selectAllIds() (D59)
 
-**Issues:** #55, #56 (feature plugin + spec), #63 (enableRowSelection() write-path gate), #64 (selectAllIds() helper)
+**Issues:** #21, #22 (feature plugin + spec), #29 (enableRowSelection() write-path gate), #30 (selectAllIds() helper)
 **Status:** 8 / 8 complete
 
 | Step | Title | Status | PR |

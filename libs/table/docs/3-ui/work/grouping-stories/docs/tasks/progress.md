@@ -23,7 +23,7 @@
 `grouping-story.css` (commit `a1b96fc`).
 
 **Tracked, not blocking:** C3 (S4 signal + group-aware expand/collapse verb, OQ-3) — Step 5 ships
-an honest regression until it lands. C4 (issue #60 steps 5–6). C5 (null/empty group-key policy,
+an honest regression until it lands. C4 (issue #26 steps 5–6). C5 (null/empty group-key policy,
 S7/OQ-5) — Step 4 carries it as a regression demo.
 
 ## Cross-plan write edges (added 2026-09-13, parallel run)
@@ -68,7 +68,7 @@ editorial:
 
 - **`0-product/grouping.md` 1.3 is 🟡, not ✅.** *Break one group's summary* takes the whole table
   down rather than blanking one summary — `engine/grouping.ts` calls `aggregateFn` unwrapped
-  (S2, [#79](https://github.com/DvirMon/acme/issues/79)). That is the story's stated failure
+  (S2, [#45](https://github.com/DvirMon/ng-table/issues/45)). That is the story's stated failure
   behavior inverted.
 - **`0-product/grouping.md` 2.4 is 🟡.** Sticky group headers ship, but every depth sticks to
   `top: 0`, so nested headers overlap instead of stacking — two of three criteria unmet.

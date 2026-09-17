@@ -79,7 +79,7 @@ fill. The measurement that matters instead is what ships in **code** without an 
 > **The one place the research is the stale side.** [`research-selection-internal-coverage.md`][internal]
 > §2's shipped-member list omits `isSelectable`. It ships —
 > `src/api/features/with-selection.ts:41` declares it, `:192` exports it, added by commit `ab618f8`
-> (D61, issue #66) *after* that audit's 2026-09-12 read. The plan's original claim stands; the
+> (D61, issue #32) *after* that audit's 2026-09-12 read. The plan's original claim stands; the
 > audit is one commit behind. No other claim in it failed re-verification.
 
 **Redundancy / merge candidates: none**, and no existing story should absorb selection. Every

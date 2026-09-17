@@ -52,7 +52,7 @@ function matchesQuery(record: SearchResultRecord, needle: string): boolean {
 /**
  * Filters `records` against `query`, groups by section in tree order (`entryOrder`), and caps
  * each group at `MAX_RESULTS_PER_GROUP` — no scroll-to-fit, matching the DocSearch reference
- * (gaps-ngp-reference.md #5).
+ * (gaps-ngp-reference.md #6).
  */
 export function groupSearchResults(
   records: readonly SearchResultRecord[],

@@ -8,7 +8,7 @@ date: 2026-08-11
 # Decisions — Row Mutations
 
 Episodic work folder for the row-mutation core (F4 static-vs-live table — row CRUD),
-raised 2026-08-11. Shipped as issue #47 (`updateRows`/`addRow`/`removeRow`/`patchRow`).
+raised 2026-08-11. Shipped as issue #12 (`updateRows`/`addRow`/`removeRow`/`patchRow`).
 
 **This file is the reasoning, not the contract.** The shipped surface is specced in
 [`row-mutations.md`](../../../../row-mutations.md). This log contains superseded decisions

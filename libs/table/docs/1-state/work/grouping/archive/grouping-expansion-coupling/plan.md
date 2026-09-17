@@ -175,7 +175,7 @@ subs, with native sub-issue and blocked-by edges plus `issue-graph.md` in the wo
 - The ADR is S2's first step, not its own issue — no issue whose sole deliverable is a document;
   decision and implementation review together. Hence S2's `needs:spec`.
 
-**Close #128** (https://github.com/DvirMon/acme/issues/128) as superseded by S1 — created by
+**Close #94** (https://github.com/DvirMon/ng-table/issues/94) as superseded by S1 — created by
 hand, outside the pipeline, Part A only.
 
 Both docs stay in the repo: `prior-art.md` (verified discovery output) and `plan.md` (the record

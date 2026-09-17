@@ -23,7 +23,7 @@ read `with-selection.ts`).
 
 The issue's acceptance criteria requires `3-spec.md` updated with the new config field and the
 three scope rules. Keeps the spec in sync with D58, the same way `filtering.md` was brought back
-in sync with shipped code for #62.
+in sync with shipped code for #28.
 
 ## What To Do
 
@@ -58,7 +58,7 @@ in sync with shipped code for #62.
 ## Risks / Watchouts
 
 - Don't mark Q4/Q5 resolved — they stay open per `2-decisions.md`; resolving them isn't in scope
-  for #63.
+  for #29.
 - `docs/1-state/features/selection.md` may also document `WithSelectionConfig` — check it, but
   only update it if the issue's acceptance criteria imply it (they name `3-spec.md` only). Flag
   rather than silently expanding scope if it also needs the field.

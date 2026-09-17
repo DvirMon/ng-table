@@ -63,7 +63,7 @@ once Steps 4–7 land, most of those become ✅ and the rest need an explicit, s
 
 ## Non-Goals
 
-- No edits to `1-state/` docs — issue #60 step 6 owns those, including the `applyGroup(path, …)`
+- No edits to `1-state/` docs — issue #26 step 6 owns those, including the `applyGroup(path, …)`
   correction in `tier-3-feature-config.md`.
 
 ## Acceptance Checks

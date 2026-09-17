@@ -23,7 +23,7 @@ doesn't read `selection.utils.ts` or its spec).
 
 `selection.md`'s `## selectAllIds() helper` section currently ends "Not yet coded" (D59's
 proposed-but-unbuilt state). This step brings the doc back in sync with shipped code, the same
-way `filtering.md` was synced after #62.
+way `filtering.md` was synced after #28.
 
 ## What To Do
 
@@ -55,7 +55,7 @@ way `filtering.md` was synced after #62.
 
 - Don't silently mark `code: shipped` — that's a claim about the whole `withSelection()`
   capability, not just this helper, and isn't this issue's call to make.
-- Don't touch `3-spec.md` — the issue's acceptance criteria don't name it, unlike #63's Step 5;
+- Don't touch `3-spec.md` — the issue's acceptance criteria don't name it, unlike #29's Step 5;
   `selectAllIds()` was never sketched there (only in `selection.md`).
 
 ## Non-Goals

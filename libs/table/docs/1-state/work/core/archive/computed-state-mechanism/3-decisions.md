@@ -492,7 +492,7 @@ re-litigating the graph.
 - **D26 (2026-09-12) — no spike; the integrate-and-verify issue is the runtime verification.**
   D12 re-taken after D21's architecture change (architecture OQ4, research "still unverified:
   everything runtime"). User's call at `/to-issues`: proceed without a prototype branch. Runtime
-  behaviour is first proven green as a whole on the integration branch (#77), with per-issue specs
+  behaviour is first proven green as a whole on the integration branch (#43), with per-issue specs
   written against the positional form before then.
 - **D27 (2026-09-12) — arity 15, overloads generated.** Architecture OQ2/OQ3 closed together:
   keep 15 (spec already decided it; nothing measured argues for less), and generate because
