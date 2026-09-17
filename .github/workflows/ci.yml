@@ -10,6 +10,10 @@ permissions:
   actions: read
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -26,7 +30,11 @@ jobs:
 
       - run: npm ci
 
-      # TEMPORARY: excludes carried over from acme for known-failing test/build until fixed
-      - run: npx nx run-many -t lint
-      - run: npx nx run-many -t test --exclude=ng-table
-      - run: npx nx run-many -t build --exclude=shared-table,ng-table
+      - uses: nrwl/nx-set-shas@v5
+
+      - run: npm run llms:check
+      - run: npx nx affected -t lint typecheck
+
+      # TEMPORARY: exclude carried over from acme for known-failing test until fixed
+      - run: npx nx affected -t test --exclude=ng-table
+      - run: npx nx affected -t build
