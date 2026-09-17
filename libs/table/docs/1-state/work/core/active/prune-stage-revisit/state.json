@@ -4,7 +4,7 @@
   "ticketUrl": "https://github.com/DvirMon/acme/issues/135",
   "stack": "angular",
   "isComplex": null,
-  "workspaceRoot": "libs/shared/table/docs/1-state/work/core/active/prune-stage-revisit",
+  "workspaceRoot": "libs/table/docs/1-state/work/core/active/prune-stage-revisit",
   "decisionsPath": null,
   "specPath": null,
   "architecturePath": null,

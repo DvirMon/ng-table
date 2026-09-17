@@ -10,9 +10,9 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/api/features/with-filtering.ts` | — | edit — `predicates` and `applyPredicateTerms` deleted |
-| `libs/shared/table/src/filters/types.ts` | `:30-47` | edit — `FilterNode.dirty` marked internal |
-| `libs/shared/table/src/filters/types.ts` | `:49-79` | edit — `FiltersRoot.matcher`/`dirty` marked internal |
+| `libs/table/src/api/features/with-filtering.ts` | — | edit — `predicates` and `applyPredicateTerms` deleted |
+| `libs/table/src/filters/types.ts` | `:30-47` | edit — `FilterNode.dirty` marked internal |
+| `libs/table/src/filters/types.ts` | `:49-79` | edit — `FiltersRoot.matcher`/`dirty` marked internal |
 
 ## Why This Step Exists
 

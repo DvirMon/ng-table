@@ -20,7 +20,7 @@ node: I
 
 ## Files
 
-- `libs/shared/table/docs/3-ui/stories.md` (edit)
+- `libs/table/docs/3-ui/stories.md` (edit)
 
 ## Why This Step Exists
 

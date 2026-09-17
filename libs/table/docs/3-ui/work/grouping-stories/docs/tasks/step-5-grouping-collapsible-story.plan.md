@@ -20,10 +20,10 @@ node: D
 
 ## Files
 
-- `libs/shared/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` (create)
-- `libs/shared/table/src/stories/grouping/grouping-collapsible/grouping-collapsible.stories.ts` (create)
-- `libs/shared/table/src/stories/grouping/grouping-collapsible/grouping-collapsible.mdx` (create)
+- `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts` (create)
+- `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` (create)
+- `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible.stories.ts` (create)
+- `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible.mdx` (create)
 
 ## Why This Step Exists
 
@@ -104,7 +104,7 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
 - [ ] Sorting a data column leaves group order intact; sorting the grouped column is a legible
       no-op.
 - [ ] A `children`-bearing row shows the tree affordance separately from the group chevron.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 4: grouping-static/](step-4-grouping-static-story.plan.md) | [Step 6: grouping-selection/](step-6-grouping-selection-story.plan.md) →

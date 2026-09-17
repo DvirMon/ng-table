@@ -10,13 +10,13 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering.filters.ts` | `:1-53` | rewrite — hoisted schema `const`, no `createFilters` |
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | `:93-103`, `:113-131`, `:155` | edit — `table.filters`, prose |
-| `libs/shared/table/src/stories/filtering/client-filtering/filter-report-log.ts` | `:8`, `:20` | edit — report prefix is `[withFiltering]` |
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering.stories.ts` | `:18` | edit — prose only |
-| `libs/shared/table/src/stories/filtering/fixtures/schema.ts` | `:24` | edit — comment names the composition that no longer exists |
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.html` | — | edit — only if a binding names `filters` off the host |
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-toolbar.component.ts` | — | edit — only if its `Filters<…>` input type import moves |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering.filters.ts` | `:1-53` | rewrite — hoisted schema `const`, no `createFilters` |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | `:93-103`, `:113-131`, `:155` | edit — `table.filters`, prose |
+| `libs/table/src/stories/filtering/client-filtering/filter-report-log.ts` | `:8`, `:20` | edit — report prefix is `[withFiltering]` |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering.stories.ts` | `:18` | edit — prose only |
+| `libs/table/src/stories/filtering/fixtures/schema.ts` | `:24` | edit — comment names the composition that no longer exists |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.html` | — | edit — only if a binding names `filters` off the host |
+| `libs/table/src/stories/filtering/client-filtering/client-filtering-toolbar.component.ts` | — | edit — only if its `Filters<…>` input type import moves |
 
 ## Why This Step Exists
 

@@ -1,8 +1,8 @@
 {
   "name": "shared-table",
-  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "library",
-  "sourceRoot": "libs/shared/table/src",
+  "sourceRoot": "libs/table/src",
   "prefix": "ngp",
   "tags": ["scope:shared", "type:ui"],
   "targets": {
@@ -14,7 +14,7 @@
       "cache": true,
       "inputs": ["default", "^default"],
       "options": {
-        "command": "ngc -p libs/shared/table/tsconfig.lib.json --noEmit"
+        "command": "ngc -p libs/table/tsconfig.lib.json --noEmit"
       }
     },
     "typecheck-spec": {
@@ -22,17 +22,17 @@
       "cache": true,
       "inputs": ["default", "^default"],
       "options": {
-        "command": "ngc -p libs/shared/table/tsconfig.spec.json --noEmit"
+        "command": "ngc -p libs/table/tsconfig.spec.json --noEmit"
       }
     },
     "build": {
       "executor": "@angular/build:application",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/libs/shared/table",
-        "browser": "libs/shared/table/src/index.ts",
+        "outputPath": "dist/libs/table",
+        "browser": "libs/table/src/index.ts",
         "polyfills": [],
-        "tsConfig": "libs/shared/table/tsconfig.lib.json",
+        "tsConfig": "libs/table/tsconfig.lib.json",
         "index": false
       },
       "configurations": {
@@ -63,15 +63,15 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "storybook dev -p 4403",
-        "cwd": "libs/shared/table"
+        "cwd": "libs/table"
       }
     },
     "build-storybook": {
       "executor": "nx:run-commands",
       "outputs": ["{workspaceRoot}/dist/storybook/shared-table"],
       "options": {
-        "command": "storybook build -o ../../../dist/storybook/shared-table",
-        "cwd": "libs/shared/table"
+        "command": "storybook build -o ../../dist/storybook/shared-table",
+        "cwd": "libs/table"
       }
     }
   }

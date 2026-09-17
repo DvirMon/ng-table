@@ -10,11 +10,11 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/api/features/with-filtering.ts` | `:1-75` | rewrite — two overloads, owns the model, exposes `filters` |
-| `libs/shared/table/src/filters/create-filters.ts` | — | edit — becomes the internal model builder; `createFilters` and its `rows` anchor deleted |
-| `libs/shared/table/src/filters/row-of.ts` | — | **delete** |
-| `libs/shared/table/src/filters/types.ts` | `:105-115` | edit — `FiltersPath` loses its `[TRow] extends [never]` brand |
-| `libs/shared/table/src/filters/types.ts` | `:143-151` | edit — `__row`/`RowOfRule` reassessed |
+| `libs/table/src/api/features/with-filtering.ts` | `:1-75` | rewrite — two overloads, owns the model, exposes `filters` |
+| `libs/table/src/filters/create-filters.ts` | — | edit — becomes the internal model builder; `createFilters` and its `rows` anchor deleted |
+| `libs/table/src/filters/row-of.ts` | — | **delete** |
+| `libs/table/src/filters/types.ts` | `:105-115` | edit — `FiltersPath` loses its `[TRow] extends [never]` brand |
+| `libs/table/src/filters/types.ts` | `:143-151` | edit — `__row`/`RowOfRule` reassessed |
 
 ## Why This Step Exists
 

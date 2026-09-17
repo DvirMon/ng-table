@@ -14,8 +14,8 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "paths": {
-      "@ngp/table": ["./libs/shared/table/src/index.ts"],
-      "@ngp/table/forms": ["./libs/shared/table/src/forms/index.ts"]
+      "@ngp/table": ["./libs/table/src/index.ts"],
+      "@ngp/table/forms": ["./libs/table/src/forms/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

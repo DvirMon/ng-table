@@ -20,7 +20,7 @@ node: C2
 
 ## Files
 
-- `libs/shared/table/src/index.ts` (edit)
+- `libs/table/src/index.ts` (edit)
 
 ## Why This Step Exists
 
@@ -64,7 +64,7 @@ grouping block adjacent to the column-updater block so the two read as siblings.
 ## Acceptance Checks
 
 - [ ] The four updaters import from `@acme/shared-table`-equivalent root path in a scratch file.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 [Step 2: grouping fixtures — schema.ts](step-2-grouping-fixtures-schema.plan.md) →

@@ -10,8 +10,8 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/filters/state.spec.ts` | `:1-30` | edit — construction preamble only |
-| `libs/shared/table/src/api/features/with-filtering.spec.ts` | `:1-302` | rewrite — 10 of 18 cases assert a deleted API |
+| `libs/table/src/filters/state.spec.ts` | `:1-30` | edit — construction preamble only |
+| `libs/table/src/api/features/with-filtering.spec.ts` | `:1-302` | rewrite — 10 of 18 cases assert a deleted API |
 
 ## Why This Step Exists
 
@@ -123,10 +123,10 @@ name and narrows the pipeline. Do **not** restate criterion semantics here — t
 
 - [ ] `nx run shared-table:typecheck-spec` clean. Run twice — a `.ts` error aborts `ngc` before the
       template phase.
-- [ ] `npx vitest run libs/shared/table/src/filters/state.spec.ts libs/shared/table/src/api/features/with-filtering.spec.ts`
+- [ ] `npx vitest run libs/table/src/filters/state.spec.ts libs/table/src/api/features/with-filtering.spec.ts`
       green.
 - [ ] No `createFilters`, `rowOf`, `applyWhen` or `predicates` in any file under
-      `libs/shared/table/src/**/*.spec.ts`.
+      `libs/table/src/**/*.spec.ts`.
 - [ ] All eight members have a case in `with-filtering.spec.ts`, asserted through a composed store.
 - [ ] The once-per-evaluation case fails if `with-filtering.ts` is changed to call `matcher()`
       inside the `rows.filter` callback — if it does not, it is not testing the claim.

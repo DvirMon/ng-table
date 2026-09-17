@@ -10,13 +10,13 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/stories/selection/filtering-selection/filtering-selection.filters.ts` | `:1-21` | rewrite — hoisted schema `const` |
-| `libs/shared/table/src/stories/selection/filtering-selection/filtering-selection-story-host.component.ts` | `:32-46` | edit — model into the table, field order |
-| `libs/shared/table/src/stories/composition/derived-state/derived-state-story-host.component.ts` | `:3`, `:31-50` | edit — inline schema, `table.filters` |
-| `libs/shared/table/src/stories/grouping/fixtures/schema.ts` | `:1-3`, `:75-84` | edit — `createDealFilters()` → `dealFilters` `const` |
-| `libs/shared/table/src/stories/grouping/fixtures/utils.ts` | `:1-2`, `:41-49` | edit — helper signatures follow the schema |
-| `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` | `:12-20`, `:39-45`, `:57` | edit — model into the table |
-| `libs/shared/table/src/stories/filtering/predicate-filtering/` | all 6 files | **delete** |
+| `libs/table/src/stories/selection/filtering-selection/filtering-selection.filters.ts` | `:1-21` | rewrite — hoisted schema `const` |
+| `libs/table/src/stories/selection/filtering-selection/filtering-selection-story-host.component.ts` | `:32-46` | edit — model into the table, field order |
+| `libs/table/src/stories/composition/derived-state/derived-state-story-host.component.ts` | `:3`, `:31-50` | edit — inline schema, `table.filters` |
+| `libs/table/src/stories/grouping/fixtures/schema.ts` | `:1-3`, `:75-84` | edit — `createDealFilters()` → `dealFilters` `const` |
+| `libs/table/src/stories/grouping/fixtures/utils.ts` | `:1-2`, `:41-49` | edit — helper signatures follow the schema |
+| `libs/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` | `:12-20`, `:39-45`, `:57` | edit — model into the table |
+| `libs/table/src/stories/filtering/predicate-filtering/` | all 6 files | **delete** |
 
 ## Why This Step Exists
 

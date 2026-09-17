@@ -1,7 +1,7 @@
 # Decisions — dropdown-menu
 
 Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixed contract in
-`apps/ng-table/docs/CONVENTIONS.md`. Read this before wiring `dropdown-pill` or `select-trigger`
+`apps/site/docs/CONVENTIONS.md`. Read this before wiring `dropdown-pill` or `select-trigger`
 against the real component — it's the exact shipped API, not the guessed one from the contract.
 
 ## Final public API

@@ -25,10 +25,10 @@ node: C
 
 ## Files
 
-- `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.html` (create)
-- `libs/shared/table/src/stories/filtering/server-filtering/server-filtering.stories.ts` (create)
-- `libs/shared/table/src/stories/filtering/server-filtering/server-filtering.mdx` (create)
+- `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` (create)
+- `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.html` (create)
+- `libs/table/src/stories/filtering/server-filtering/server-filtering.stories.ts` (create)
+- `libs/table/src/stories/filtering/server-filtering/server-filtering.mdx` (create)
 
 ## Why This Step Exists
 
@@ -102,7 +102,7 @@ Code tabs: `HTML`, `TS`, `CSS`, `filtering/fixtures/filters.ts`, `filtering/fixt
 - [ ] Typing before the server default arrives survives its arrival (`dirty()` blocks the write).
 - [ ] Loading, no-matches and failed render as three distinct blocks; `ForcedFailure` keeps the
       previous rows on screen with a Retry.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 4: client-filtering/](step-4-client-filtering-story.plan.md) | [Step 6: selection-filtering/](step-6-selection-filtering-story.plan.md) →

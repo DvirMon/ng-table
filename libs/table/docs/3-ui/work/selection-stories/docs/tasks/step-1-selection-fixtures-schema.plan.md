@@ -20,7 +20,7 @@ node: B
 
 ## Files
 
-- `libs/shared/table/src/stories/selection/fixtures/schema.ts` (create)
+- `libs/table/src/stories/selection/fixtures/schema.ts` (create)
 
 ## Why This Step Exists
 
@@ -67,7 +67,7 @@ Export two `TableConfig<SelectionRow>` values plus the shared column list (`name
 ## Acceptance Checks
 
 - [ ] Two configs exported, typed `TableConfig<SelectionRow>`, no inline mock data.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 [Step 2: multi-selection/](step-2-multi-selection-story.plan.md) →

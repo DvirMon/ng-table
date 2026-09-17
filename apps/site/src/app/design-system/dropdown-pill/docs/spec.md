@@ -25,7 +25,7 @@ tokens: [--ngpt-sys-typescale-label-large-sm, --ngpt-sys-space-150, --ngpt-sys-s
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
 
 # Dropdown Pill
 

@@ -410,7 +410,7 @@ describe('withFiltering', () => {
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf`/
   // `@ts-expect-error` — they are inert at runtime. These are only enforced by
-  // `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`, which is the verification step
+  // `tsc -p libs/table/tsconfig.spec.json --noEmit`, which is the verification step
   // for this describe block.
   // -------------------------------------------------------------------------------------
   describe('types', () => {

@@ -19,7 +19,7 @@ tokens: [--ngpt-sys-typescale-display-large, --ngpt-sys-typescale-headline-marke
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — this is the single source of truth for its token `:root` block; `src/styles/tokens/` mirrors it verbatim.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — this is the single source of truth for its token `:root` block; `src/styles/tokens/` mirrors it verbatim.
 
 # Foundations — Typography
 

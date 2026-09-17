@@ -84,7 +84,7 @@ ADR-0005 — the old template's root was a `<nav>` plus text inside a non-semant
 host that needed a compensating `role=` to be a landmark at all. That is ADR-0005's own stated test
 for "this is attribute-hosted."
 
-And the array input made this domain break the invariant in `libs/shared/table/CLAUDE.md`:
+And the array input made this domain break the invariant in `libs/table/CLAUDE.md`:
 **"Attribute-only directives — never insert/remove/reorder DOM. Structural logic lives in the
 template (consumer's responsibility)."** The `@if`/`@for` over `links()` was exactly that
 structural logic, held one level too deep — Home could not add a link with an icon, a

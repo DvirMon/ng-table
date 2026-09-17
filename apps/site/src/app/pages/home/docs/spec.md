@@ -8,7 +8,7 @@ rule: >
   those are defined here and are not components. Styling values still live in foundations.
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
 
 # Page — Home
 

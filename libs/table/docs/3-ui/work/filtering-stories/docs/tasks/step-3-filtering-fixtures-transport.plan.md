@@ -20,8 +20,8 @@ node: A (part)
 
 ## Files
 
-- `libs/shared/table/src/stories/filtering/fixtures/handlers.ts` (create)
-- `libs/shared/table/src/stories/filtering/fixtures/http.ts` (create)
+- `libs/table/src/stories/filtering/fixtures/handlers.ts` (create)
+- `libs/table/src/stories/filtering/fixtures/http.ts` (create)
 
 ## Why This Step Exists
 
@@ -58,7 +58,7 @@ cluster so the story folders never write into each other.
 
 - [ ] `GET /api/invoices` narrows by params and returns a matching `total`, including `0`.
 - [ ] Both headers honoured; forced failure returns a 500 with a message.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 2: filtering fixtures — schema.ts](step-2-filtering-fixtures-schema.plan.md) | [Step 4: client-filtering/](step-4-client-filtering-story.plan.md) →

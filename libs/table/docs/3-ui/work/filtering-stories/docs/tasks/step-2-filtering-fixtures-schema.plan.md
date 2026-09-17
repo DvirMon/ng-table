@@ -25,7 +25,7 @@ node: A (part)
 
 ## Files
 
-- `libs/shared/table/src/stories/filtering/fixtures/schema.ts` (create)
+- `libs/table/src/stories/filtering/fixtures/schema.ts` (create)
 
 ## Why This Step Exists
 
@@ -63,7 +63,7 @@ Node A's config half. All three configs land up front so Steps 4, 5 and 6 stay p
 ## Acceptance Checks
 
 - [ ] Three configs plus `filterFormSchema` exported; no inline mock data.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 1: filtering fixtures — filters.ts](step-1-filtering-fixtures-filters.plan.md) | [Step 3: filtering fixtures — transport](step-3-filtering-fixtures-transport.plan.md) →

@@ -1,7 +1,7 @@
 # copy-confirm — decisions
 
 New domain, created by the ADR-0005 conversion pass. Everything here is a build-time judgment call
-not spelled out in the ADR or in `apps/ng-table/docs/CONVENTIONS.md`.
+not spelled out in the ADR or in `apps/site/docs/CONVENTIONS.md`.
 
 ## Selector is `button[ngptCopyConfirm]`, not a bare attribute
 
@@ -106,7 +106,7 @@ following that precedent rather than adding an undeclared dependency.
 
 **Two deltas this creates, both flagged rather than hidden:**
 
-- **DOM insertion by a directive.** The attribute-hosted invariant `libs/shared/table` states is
+- **DOM insertion by a directive.** The attribute-hosted invariant `libs/table` states is
   "attribute-only, never insert or reorder DOM". The announcer node goes into `document.body`, not
   into the consumer's subtree, so no consumer markup is inserted, reordered, or reflowed — but it
   is still a node this directive creates, and worth knowing about.

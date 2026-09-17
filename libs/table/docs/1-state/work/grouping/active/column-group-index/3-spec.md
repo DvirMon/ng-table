@@ -190,7 +190,7 @@ looking for it in the obvious wrong place is redirected.
 derivation, the backing set, or the engine helper. A test that would still pass if the two members
 were computed from different sources is not testing D4.
 
-**One seam.** `libs/shared/table/src/api/features/with-grouping.spec.ts`, as new top-level
+**One seam.** `libs/table/src/api/features/with-grouping.spec.ts`, as new top-level
 `describe('groupingLevels')` and `describe('isGroupedBy')` blocks. No new seam is introduced and
 nothing is tested at the engine layer — level resolution already has its coverage there. Prior art
 is immediate and in the same file: the existing `describe('rowsOf')` and `describe('groupIds')`

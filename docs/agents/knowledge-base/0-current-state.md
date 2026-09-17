@@ -6,9 +6,9 @@ status: measured
 audience: developers
 ---
 
-# Current state — `libs/shared/table` knowledge base
+# Current state — `libs/table` knowledge base
 
-Measured 2026-09-14 against `libs/shared/table/docs/`.
+Measured 2026-09-14 against `libs/table/docs/`.
 
 ## Shape
 

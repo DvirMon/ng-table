@@ -21,10 +21,10 @@ folder.
 
 ## Files
 
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.ts` (edit)
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.html` (edit)
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static.stories.ts` (edit)
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static.mdx` (edit)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.ts` (edit)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.html` (edit)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static.stories.ts` (edit)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static.mdx` (edit)
 
 ## Why This Step Exists
 
@@ -76,7 +76,7 @@ done (`api/features/with-grouping.ts` folds `config.groupingRule ?? rulesGroupin
 - [ ] `AsyncGroupingRule` renders; during the pending window the previous grouping stays applied.
 - [ ] Forced failure leaves a legible fallback, never a blank table.
 - [ ] `Default` and `ThrowingGroupOrder` behave exactly as after Step 4.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 6: grouping-selection/](step-6-grouping-selection-story.plan.md) | [Step 8: grouping docs](step-8-grouping-docs.plan.md) →

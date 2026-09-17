@@ -100,10 +100,10 @@ owns only the tree it reads.
 
 ## Seed tree
 
-Filled from the source docs at `libs/shared/table/docs/` (2026-08-25). `Architecture` and `PRD` files are
+Filled from the source docs at `libs/table/docs/` (2026-08-25). `Architecture` and `PRD` files are
 repo-internal (contributor-facing spec docs, not consumer API docs) — **dropped from the tree entirely**,
 same call in every section that had one (State Layer, Columns, UI Layer). They stay where they are under
-`libs/shared/table/docs/`, never routed on the docs site. State Layer and UI Layer keep separate entries
+`libs/table/docs/`, never routed on the docs site. State Layer and UI Layer keep separate entries
 per feature (e.g. two "Sorting" pages, one per layer) — same label, different section, different slug;
 each entry's own label still matches its own sidebar item / H1 / pagination card 1:1, so this does not
 violate the label rule above. Section "2. Columns" was inferred from the `2-columns/` doc folder sitting

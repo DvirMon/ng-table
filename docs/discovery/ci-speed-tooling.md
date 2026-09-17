@@ -116,7 +116,7 @@ widening its peer range after TS 7.1 [S10] — not in three independent decision
 | R1 | `.github/workflows/ci.yml` | — | yes — read; no format check, no build-storybook step |
 | R2 | `eslint.config.mjs` (root) | — | yes — read; `@nx/enforce-module-boundaries` |
 | R3 | `node_modules/@nx/eslint-plugin/dist/src/flat-configs/angular-template.js` | @nx/eslint-plugin 23.1.1 | yes — read; `templateRecommended` + `templateAccessibility` on `**/*.html` |
-| R4 | `apps/ng-table/eslint.config.mjs` | — | yes — read; `@angular-eslint/component-selector`, `directive-selector`, `ngpt` prefix |
+| R4 | `apps/site/eslint.config.mjs` | — | yes — read; `@angular-eslint/component-selector`, `directive-selector`, `ngpt` prefix |
 | R5 | `libs/table/project.json` | — | yes — read; `typecheck` = `ngc -p tsconfig.lib.json --noEmit`; `build` = `@angular/build:application`, same tsConfig, browser entry `src/index.ts` |
 | R6 | `libs/table/tsconfig.lib.json` | — | yes — read; `"include": ["src/**/*.ts"]` |
 | R7 | `package.json` | — | yes — read; typescript 6.0.3, vitest 4.1.9, nx 23.1.1, @swc/core 1.15.8 |

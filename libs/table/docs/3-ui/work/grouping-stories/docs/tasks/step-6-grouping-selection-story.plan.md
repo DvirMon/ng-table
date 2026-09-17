@@ -20,10 +20,10 @@ node: E
 
 ## Files
 
-- `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.html` (create)
-- `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection.stories.ts` (create)
-- `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection.mdx` (create)
+- `libs/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` (create)
+- `libs/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.html` (create)
+- `libs/table/src/stories/grouping/grouping-selection/grouping-selection.stories.ts` (create)
+- `libs/table/src/stories/grouping/grouping-selection/grouping-selection.mdx` (create)
 
 ## Why This Step Exists
 
@@ -88,7 +88,7 @@ Covers X-G1 in five parts.
 - [ ] The group checkbox renders indeterminate for a partial selection.
 - [ ] Ticking a collapsed group under an active filter selects exactly the rows the header counts.
 - [ ] The readout counts rows only; ungrouping leaves the selection intact and error-free.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 5: grouping-collapsible/](step-5-grouping-collapsible-story.plan.md) | [Step 7: async grouping rule](step-7-async-grouping-rule.plan.md) →

@@ -20,10 +20,10 @@ node: D
 
 ## Files
 
-- `libs/shared/table/src/stories/selection/single-selection/single-selection-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/selection/single-selection/single-selection-story-host.component.html` (create)
-- `libs/shared/table/src/stories/selection/single-selection/single-selection.stories.ts` (create)
-- `libs/shared/table/src/stories/selection/single-selection/single-selection.mdx` (create)
+- `libs/table/src/stories/selection/single-selection/single-selection-story-host.component.ts` (create)
+- `libs/table/src/stories/selection/single-selection/single-selection-story-host.component.html` (create)
+- `libs/table/src/stories/selection/single-selection/single-selection.stories.ts` (create)
+- `libs/table/src/stories/selection/single-selection/single-selection.mdx` (create)
 
 ## Why This Step Exists
 
@@ -80,7 +80,7 @@ Covers §1.1, §1.7, §2.1, §3.3 (twice), §4.1.
 - [ ] A 2-id restore throws under `ngDevMode`, is caught, and the discarded id is named on canvas.
 - [ ] Clear selection empties the selection; there is no header control.
 - [ ] Arrow keys move within the radio group; Space selects.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 2: multi-selection/](step-2-multi-selection-story.plan.md) | [Step 4: coverage marks + doc drift](step-4-selection-docs.plan.md) →

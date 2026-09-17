@@ -20,10 +20,10 @@ node: B
 
 ## Files
 
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.html` (create)
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static.stories.ts` (create)
-- `libs/shared/table/src/stories/grouping/grouping-static/grouping-static.mdx` (create)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.ts` (create)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.html` (create)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static.stories.ts` (create)
+- `libs/table/src/stories/grouping/grouping-static/grouping-static.mdx` (create)
 
 ## Why This Step Exists
 
@@ -120,7 +120,7 @@ no-op), 3.3 (+ throwing comparator), 3.4, 4.1, 4.2, 4.3, 4.4, F-G1, and P5b inde
 - [ ] All four level updaters are reachable from the canvas and imported from the library root.
 - [ ] `groupOrder`, `showCount`, `groupedColumnMode`, `stickyHeaders` all take effect.
 - [ ] `ThrowingGroupOrder` renders the D15 fallback order and the report on canvas.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 3: grouping fixtures — transport](step-3-grouping-fixtures-transport.plan.md) | [Step 5: grouping-collapsible/](step-5-grouping-collapsible-story.plan.md) →

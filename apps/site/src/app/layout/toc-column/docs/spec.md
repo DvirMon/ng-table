@@ -26,7 +26,7 @@ tokens: [--ngpt-sys-layout-toc-width, --ngpt-sys-space-900, --ngpt-sys-space-500
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/specs/layout/TOC Column.md`) — spec wins over the reference frame there. Built desktop-only this pass, mock headings, no scroll-spy; see `decisions.md`.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/specs/layout/TOC Column.md`) — spec wins over the reference frame there. Built desktop-only this pass, mock headings, no scroll-spy; see `decisions.md`.
 
 # Layout — TOC Column ("On this page")
 

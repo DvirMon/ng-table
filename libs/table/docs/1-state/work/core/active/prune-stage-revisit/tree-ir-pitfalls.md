@@ -265,4 +265,4 @@ churn and no recursion at all — at the cost of the walk being less obvious to 
 | S17 | https://github.com/mui/mui-x/issues/4268 | — | yes — issue body read; slow expansion of heavily nested trees with virtualization off |
 | S18 | https://github.com/angular/components/issues/11101 | cdk 6.0.0-rc.1 | yes — page read; ~6s for 1,000 nodes, `detectChanges` per insert, ~6× estimated win |
 | S19 | https://github.com/handsontable/handsontable/pull/13454 | 16.2+ | yes — PR body read; row-header width from `levelCount` only |
-| R1 | libs/shared/table/src/engine/render-stages.ts | — | no — located only; not read this run |
+| R1 | libs/table/src/engine/render-stages.ts | — | no — located only; not read this run |

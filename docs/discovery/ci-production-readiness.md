@@ -84,7 +84,7 @@ GitHub Pages (R16).
 | R11 | Dependabot version updates | **worth it for solo** | Config-only, `groups` + `open-pull-requests-limit` keep PR volume to one batch; the solo failure mode is silently rotting deps, not too many PRs | [S15] |
 | R12 | Renovate instead of Dependabot | **situational** | Only if grouped-Angular-major batching becomes painful; adds an external app to a private repo | [S15] |
 | R13 | CodeQL / code scanning | **worth it for solo** | Needs public visibility or paid GitHub Code Security [S13]; the repo is public, so it's free — default setup is a few clicks, no workflow authoring | [S13][P2] |
-| R14 | Library publish + versioning workflow | **skip for now** | `libs/shared/table` has no `package.json` and no packaging target — nothing to publish yet | [R3] |
+| R14 | Library publish + versioning workflow | **skip for now** | `libs/table` has no `package.json` and no packaging target — nothing to publish yet | [R3] |
 | R15 | npm trusted publishing (OIDC) when R14 happens | **worth it, when it applies** | Removes the long-lived `NPM_TOKEN` and emits provenance by default — strictly better than a secret on day one | [S14] |
 | R16 | Storybook deploy to GitHub Pages | **situational** | Pages on Free needs public visibility [S16], which this repo has — no plan blocker. Worth it once there's a docs site worth publishing; not a correctness gap today | [S16][P2] |
 | R17 | Coverage reporting / thresholds | **skip until team grows** | Coverage gates exist to police contributors you can't review; solo, the number is information you already have locally | — |
@@ -168,7 +168,7 @@ GitHub Pages (R16).
 | P2 | `gh repo view --json visibility` → `PRIVATE` | — | yes — ran it |
 | R1 | `.github/workflows/ci.yml` | — | yes — read |
 | R2 | `nx.json` — `namedInputs.sharedGlobals` | — | yes — read |
-| R3 | `libs/shared/table/project.json` (targets incl. `typecheck`; no sibling `package.json`) | — | yes — read |
+| R3 | `libs/table/project.json` (targets incl. `typecheck`; no sibling `package.json`) | — | yes — read |
 | R4 | `CLAUDE.md` — "`npm run llms:check` must stay clean" | — | yes — read |
 | R5 | `.claude/rules/typecheck-angular-templates.md` — bug #94 | — | yes — read |
 </content>

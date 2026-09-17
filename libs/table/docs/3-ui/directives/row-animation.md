@@ -157,7 +157,7 @@ what makes it *visible*, not what makes it *work*.
 
 **Neither step 2 nor 3** → rows still reorder, no visible glide.
 
-`row-flip.css` (`libs/shared/table/src/row-flip.css`) ships only:
+`row-flip.css` (`libs/table/src/row-flip.css`) ships only:
 
 ```css
 .ngp-table-row--flip {

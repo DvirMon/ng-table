@@ -8,7 +8,7 @@ globs:
 
 Split generated/edited code by concern instead of putting everything in one file. Use `<feature>.<concern>.ts`, not a bare generic name — this avoids collisions when multiple features live in sibling folders and keeps imports self-describing.
 
-Reference implementation: `libs/shared/table/src/` (grouped — see "Once a domain outgrows flat" below).
+Reference implementation: `libs/table/src/` (grouped — see "Once a domain outgrows flat" below).
 
 | Concern | File | Contents |
 |---|---|---|
@@ -31,7 +31,7 @@ The general model (the three levels, how to pick a folder axis, the invariants o
 the global `file-organization.md` rule, injected into every session. Don't restate it here. This
 section is only this repo's instance of it.
 
-`libs/shared/table/src/` crossed the threshold at ~17 source files and now
+`libs/table/src/` crossed the threshold at ~17 source files and now
 groups by contract boundary first, lifecycle phase second:
 
 ```
@@ -47,7 +47,7 @@ single files — they haven't outgrown one.
 
 Full rationale, plus the Angular Signal Forms / TanStack / AG Grid comparison and the three
 Angular conventions deliberately rejected:
-[ADR-0004](../../libs/shared/table/docs/adr/0004-table-source-layout.md).
+[ADR-0004](../../libs/table/docs/adr/0004-table-source-layout.md).
 
 This does not require rewriting existing single-file components; apply it to new features and when a file grows past one concern.
 

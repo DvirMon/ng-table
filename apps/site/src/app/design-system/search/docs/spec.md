@@ -34,7 +34,7 @@ tokens: [--ngpt-comp-search-field-width, --ngpt-comp-search-field-height, --ngpt
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
 
 > **2026-08-23 revision:** row icons, active-row fill, border-radius, footer glyphs, 5-item cap,
 > field focus treatment, input-row well, hairline shadow, group-label color, row/input height,

@@ -1,7 +1,7 @@
 {
   "name": "ng-table",
   "version": "0.0.0",
-  "description": "Nx workspace for @ngp/table — a signal-based Angular table engine (libs/shared/table) and its docs site (apps/ng-table). Each project owns its own CONTEXT.md glossary and docs/adr/.",
+  "description": "Nx workspace for @ngp/table — a signal-based Angular table engine (libs/table) and its docs site (apps/site). Each project owns its own CONTEXT.md glossary and docs/adr/.",
   "license": "MIT",
   "private": true,
   "engines": {
@@ -11,9 +11,9 @@
     "start": "npx nx serve ng-table",
     "table:sb": "npx nx run shared-table:storybook",
     "table:build-storybook": "npx nx run shared-table:build-storybook",
-    "table:status": "node --experimental-strip-types libs/shared/table/tools/generate-status.ts",
-    "table:overloads": "node --experimental-strip-types libs/shared/table/tools/generate-overloads.ts",
-    "table:overloads:check": "node --experimental-strip-types libs/shared/table/tools/generate-overloads.ts --check",
+    "table:status": "node --experimental-strip-types libs/table/tools/generate-status.ts",
+    "table:overloads": "node --experimental-strip-types libs/table/tools/generate-overloads.ts",
+    "table:overloads:check": "node --experimental-strip-types libs/table/tools/generate-overloads.ts --check",
     "llms": "node --experimental-strip-types tools/generate-llms-txt.mts",
     "llms:check": "node --experimental-strip-types tools/generate-llms-txt.mts --check"
   },
@@ -77,7 +77,7 @@
   },
   "msw": {
     "workerDirectory": [
-      "libs/shared/table/public"
+      "libs/table/public"
     ]
   }
 }

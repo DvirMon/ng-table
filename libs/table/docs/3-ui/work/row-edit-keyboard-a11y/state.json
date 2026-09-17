@@ -4,10 +4,10 @@
   "ticketUrl": null,
   "stack": "angular",
   "isComplex": null,
-  "workspaceRoot": "libs/shared/table/docs/3-ui/work/row-edit-keyboard-a11y",
-  "decisionsPath": "libs/shared/table/docs/3-ui/work/row-edit-keyboard-a11y/2-decisions.md",
+  "workspaceRoot": "libs/table/docs/3-ui/work/row-edit-keyboard-a11y",
+  "decisionsPath": "libs/table/docs/3-ui/work/row-edit-keyboard-a11y/2-decisions.md",
   "specPath": null,
-  "architecturePath": "libs/shared/table/docs/3-ui/architecture.md",
+  "architecturePath": "libs/table/docs/3-ui/architecture.md",
   "githubIssues": [],
   "checklist": {
     "ticket": false,

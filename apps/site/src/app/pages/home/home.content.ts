@@ -2,7 +2,7 @@ import type { HomeContent } from './home.types';
 
 /**
  * Home's authored marketing copy (`docs/CONVENTIONS.md` #5). Every claim here must be verifiable
- * against `libs/shared/table`'s own docs (`README.md`, `CLAUDE.md`) — no invented benchmarks,
+ * against `libs/table`'s own docs (`README.md`, `CLAUDE.md`) — no invented benchmarks,
  * adoption numbers, or version numbers.
  */
 export const HOME_CONTENT: HomeContent = {

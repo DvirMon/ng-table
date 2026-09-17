@@ -10,16 +10,16 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/filters/types.ts` | `:5-7` | delete — `EnforceLiteralKey` |
-| `libs/shared/table/src/filters/types.ts` | `:12-27` | edit — `FilterOptions` loses `as`/`TAs` |
-| `libs/shared/table/src/filters/types.ts` | `:152-165` | edit — `FilterRule` loses `TKey`/`__key` |
-| `libs/shared/table/src/filters/types.ts` | `:181-231` | replace — `Flatten`/`FlattenItem`/`IsAny` deleted, `StateOf` rewritten |
-| `libs/shared/table/src/filters/rules.ts` | `:38-42` | delete — `RuleKey` |
-| `libs/shared/table/src/filters/rules.ts` | `:86-303` | edit — every rule drops `TAs`, `as`, and its own `key` |
-| `libs/shared/table/src/filters/rules.ts` | `:283-303` | edit — `anyOf` loses its positional `key` parameter |
-| `libs/shared/table/src/filters/create-filters.ts` | `:42-68` | replace — `flattenRules` → `Object.entries` walk |
-| `libs/shared/table/src/filters/create-filters.ts` | `:108-118` | edit — the not-an-array throw names the object form |
-| `libs/shared/table/src/filters/validate.ts` | `:14-40` | edit — the duplicate-key and empty-key throws are deleted |
+| `libs/table/src/filters/types.ts` | `:5-7` | delete — `EnforceLiteralKey` |
+| `libs/table/src/filters/types.ts` | `:12-27` | edit — `FilterOptions` loses `as`/`TAs` |
+| `libs/table/src/filters/types.ts` | `:152-165` | edit — `FilterRule` loses `TKey`/`__key` |
+| `libs/table/src/filters/types.ts` | `:181-231` | replace — `Flatten`/`FlattenItem`/`IsAny` deleted, `StateOf` rewritten |
+| `libs/table/src/filters/rules.ts` | `:38-42` | delete — `RuleKey` |
+| `libs/table/src/filters/rules.ts` | `:86-303` | edit — every rule drops `TAs`, `as`, and its own `key` |
+| `libs/table/src/filters/rules.ts` | `:283-303` | edit — `anyOf` loses its positional `key` parameter |
+| `libs/table/src/filters/create-filters.ts` | `:42-68` | replace — `flattenRules` → `Object.entries` walk |
+| `libs/table/src/filters/create-filters.ts` | `:108-118` | edit — the not-an-array throw names the object form |
+| `libs/table/src/filters/validate.ts` | `:14-40` | edit — the duplicate-key and empty-key throws are deleted |
 
 ## Why This Step Exists
 

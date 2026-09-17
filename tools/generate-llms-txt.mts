@@ -43,7 +43,7 @@ const OPTIONAL_SOURCES = ['AGENT.md', 'docs/agents/knowledge-base'];
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'coverage', '.git', '.nx']);
 
 interface Context {
-  /** Repo-relative posix path of the context folder, e.g. `libs/shared/table`. */
+  /** Repo-relative posix path of the context folder, e.g. `libs/table`. */
   dir: string;
   title: string;
   summary: string;

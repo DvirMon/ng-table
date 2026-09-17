@@ -10,9 +10,9 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/filters/index.ts` | `:1-27` | rewrite — the domain's surface after the model moved |
-| `libs/shared/table/src/index.ts` | `:1-3` | edit — the header comment's claim about the filters domain |
-| `libs/shared/table/CLAUDE.md` | — | edit — the `filters/index.ts` row and the `filters/` layout line |
+| `libs/table/src/filters/index.ts` | `:1-27` | rewrite — the domain's surface after the model moved |
+| `libs/table/src/index.ts` | `:1-3` | edit — the header comment's claim about the filters domain |
+| `libs/table/CLAUDE.md` | — | edit — the `filters/index.ts` row and the `filters/` layout line |
 
 ## Why This Step Exists
 
@@ -38,7 +38,7 @@ so this step edits the domain barrel and the public surface follows. Only the he
 5. `RangeCriterion` / `DateRangeCriterion` from `rules.ts`: check whether they are currently
    reachable and keep that answer unchanged. A consumer typing an `inRange` criterion needs them;
    if they were exported before, they stay exported.
-6. Update `libs/shared/table/CLAUDE.md`. Two places state the old surface as fact and become
+6. Update `libs/table/CLAUDE.md`. Two places state the old surface as fact and become
    false here: the `filters/index.ts` row in the file table ("`createFilters` and `rowOf`, four
    types … the nine rules") and the `src/` layout block's "the standalone `createFilters()`
    domain". Both are invariants/conventions, not status — they belong in that file and must be

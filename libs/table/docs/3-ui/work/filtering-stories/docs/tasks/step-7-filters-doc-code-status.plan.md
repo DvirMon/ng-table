@@ -20,8 +20,8 @@ node: E
 
 ## Files
 
-- `libs/shared/table/docs/1-state/filters.md` (edit)
-- `libs/shared/table/docs/status.md` (regenerate — see below)
+- `libs/table/docs/1-state/filters.md` (edit)
+- `libs/table/docs/status.md` (regenerate — see below)
 
 ## Why This Step Exists
 

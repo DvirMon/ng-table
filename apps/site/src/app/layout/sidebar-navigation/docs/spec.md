@@ -30,7 +30,7 @@ tokens: [--ngpt-sys-layout-sidebar-width, --ngpt-sys-layout-scroll-offset, --ngp
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/specs/layout/Sidebar Navigation.md`) — spec wins over the reference frame there. Built desktop-only this pass; see `decisions.md`.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/specs/layout/Sidebar Navigation.md`) — spec wins over the reference frame there. Built desktop-only this pass; see `decisions.md`.
 
 # Layout — Sidebar Navigation
 

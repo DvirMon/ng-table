@@ -4,10 +4,10 @@
   "ticketUrl": null,
   "stack": "angular",
   "isComplex": false,
-  "workspaceRoot": "libs/shared/table/docs/1-state/work/core/active/row-id-state-reconciliation",
-  "decisionsPath": "libs/shared/table/docs/adr/0006-row-id-state-reconciliation.md",
-  "specPath": "libs/shared/table/docs/adr/0006-row-id-state-reconciliation.md",
-  "architecturePath": "libs/shared/table/docs/1-state/architecture.md",
+  "workspaceRoot": "libs/table/docs/1-state/work/core/active/row-id-state-reconciliation",
+  "decisionsPath": "libs/table/docs/adr/0006-row-id-state-reconciliation.md",
+  "specPath": "libs/table/docs/adr/0006-row-id-state-reconciliation.md",
+  "architecturePath": "libs/table/docs/1-state/architecture.md",
   "githubIssues": [51, 52],
   "checklist": { "intake": true, "grill": true, "spec": true, "issues": true, "tasks": false }
 }

@@ -19,7 +19,7 @@ snippets: `~/.claude/skills/pointer-keyboard-active-state/SKILL.md` (reusable, n
 # Decisions — search (search-field, search-overlay)
 
 Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixed contract in
-`apps/ng-table/docs/CONVENTIONS.md`.
+`apps/site/docs/CONVENTIONS.md`.
 
 ## 2026-08-23 — second-pass gap decisions (user calls) — implemented, see entry below
 

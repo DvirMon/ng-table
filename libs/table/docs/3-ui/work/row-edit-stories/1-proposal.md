@@ -9,7 +9,7 @@ parent: ../../architecture.md
 # Proposal — Row-editing Storybook stories
 
 Purpose: showcase every currently shipped row-editing capability in Storybook, for
-`libs/shared/table`.
+`libs/table`.
 
 > **Delivered 2026-08-26.** Storybook, MSW and four stories are in `src/stories/`. Two things
 > changed after this was written:
@@ -71,7 +71,7 @@ out if you'd rather see it isolated.
 
 ## 3. Setup needed before any story lands
 
-- New `.storybook/` for `libs/shared/table` (clone `libs/shared/design-system/.storybook`:
+- New `.storybook/` for `libs/table` (clone `libs/shared/design-system/.storybook`:
   `main.ts`, `preview.ts`, `tsconfig.json`).
 - `project.json` targets: `storybook`, `build-storybook`, `test-storybook` (copy shape from
   `shared-design-system`'s `project.json`).
@@ -81,9 +81,9 @@ out if you'd rather see it isolated.
 
 - **S4 mock: MSW** (`msw-storybook-addon`, intercepting a real `fetch`/`HttpClient` call) —
   confirmed.
-- **Storybook scope: lib-scoped, in `libs/shared/table`** — confirmed. Not reused from
-  `apps/ng-table`'s existing `.storybook` (that one's scoped to the site's own 16 local
+- **Storybook scope: lib-scoped, in `libs/table`** — confirmed. Not reused from
+  `apps/site`'s existing `.storybook` (that one's scoped to the site's own 16 local
   marketing-DS components — a different subject) and not a new dedicated app. New
-  `libs/shared/table/.storybook/` mirrors `libs/shared/design-system`'s setup (§3).
-- Story file location: `libs/shared/table/src/stories/*.stories.ts` — new folder, colocated
+  `libs/table/.storybook/` mirrors `libs/shared/design-system`'s setup (§3).
+- Story file location: `libs/table/src/stories/*.stories.ts` — new folder, colocated
   with source. `docs/3-ui/` stays doc-only per repo convention.

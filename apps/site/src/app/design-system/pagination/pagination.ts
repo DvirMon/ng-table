@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 /**
  * Attribute-hosted on the consumer's `<nav>` (ADR-0005) — the container half of the pair. It owns
  * only the two-column track; the consumer authors the `<a ngptPaginationLink>` cards, so nothing
- * here inserts, removes or reorders DOM (`libs/shared/table/CLAUDE.md` § Locked invariants).
+ * here inserts, removes or reorders DOM (`libs/table/CLAUDE.md` § Locked invariants).
  *
  * `aria-label` is a static host attribute, not an input: the spec's a11y front-matter fixes the
  * label to "Pagination" for every instance (same call as `callout`'s `role="note"`).

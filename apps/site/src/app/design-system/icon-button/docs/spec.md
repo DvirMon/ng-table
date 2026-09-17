@@ -31,7 +31,7 @@ tokens: [--ngpt-comp-icon-btn-size, --ngpt-sys-shape-corner-small, --ngpt-comp-c
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
 
 # Icon Button
 
@@ -155,7 +155,7 @@ directly on `failed` — no selection fallback. A hidden-textarea + `document.ex
 was specified here at one point; struck deliberately, not silently dropped. `document.execCommand` is
 deprecated, and the directive that owns this state machine (`copy-confirm/`, see ADR-0005) has no
 template, so a textarea would mean a `@Directive` inserting DOM nodes into the consumer's subtree — the
-one thing `libs/shared/table`'s attribute-hosted invariant forbids. Full reasoning in
+one thing `libs/table`'s attribute-hosted invariant forbids. Full reasoning in
 `../../copy-confirm/docs/decisions.md` § "No `execCommand` fallback". `aria-label` and `title` change with
 the glyph, and on failure the label tells the reader to select the text manually. A button that appears
 inert on click is worse than one that reports failure.

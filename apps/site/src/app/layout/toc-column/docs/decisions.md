@@ -16,7 +16,7 @@ templated cell, same reasoning as the sidebar's rows before those became `nav-it
 component because `nav-item` is *reused* across sidebar and elsewhere with its own active/nested API).
 No reuse case exists for a toc-item yet; revisit if one appears.
 
-**Mock headings shaped after `libs/shared/table/src/api/row-edit-mutations.ts`'s updaters** (`beginEdit`,
+**Mock headings shaped after `libs/table/src/api/row-edit-mutations.ts`'s updaters** (`beginEdit`,
 `addNewRow`, `endEdit`, `clearEditing`, `revertEdit`, `rebaseEdit`, `settleEdit`), since that's the
 concrete example discussed for the `/state-layer/row-editing` article this TOC would eventually serve.
 One H3 (`Snapshot resolution`, nested under `revertEdit`) included to exercise the nested-item treatment.

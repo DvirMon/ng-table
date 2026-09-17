@@ -28,7 +28,7 @@ interaction, the drag handle, the ghost line and the sticky cursor are UI layer.
 
 ## Blocker
 
-**Presentation-fields ADR — unwritten.** `libs/shared/table/CLAUDE.md`'s `ColumnDef`
+**Presentation-fields ADR — unwritten.** `libs/table/CLAUDE.md`'s `ColumnDef`
 footprint warning records `ColumnDef.width` as documented-but-unimplemented and explicitly
 blocked on that ADR; the field is a sketch in
 [2-columns/reference/tier-2-layout.md](../../2-columns/reference/tier-2-layout.md), and no

@@ -23,7 +23,7 @@ This is the one call worth flagging loudly. `spec.md`'s ownership table says:
 > Copy affordance | **Not here** — lives in the Preview Window toolbar as an Icon Button. A code
 > block outside a Preview Window therefore has no copy button; that is deliberate, not an omission.
 
-But `apps/ng-table/docs/CONVENTIONS.md`'s **Fixed component contracts** table — the reconciled,
+But `apps/site/docs/CONVENTIONS.md`'s **Fixed component contracts** table — the reconciled,
 decided-now contract downstream/parallel agents build against — says code-block "consumes
 icon-button... copy button reuses icon-button's confirmation states," and the build instructions for
 this task were explicit and detailed about wiring the copy button here (drive `state` from a local

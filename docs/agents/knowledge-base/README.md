@@ -10,7 +10,7 @@ audience: developers
 
 Research pack answering four questions:
 
-1. **[0-current-state.md](0-current-state.md)** — how `libs/shared/table` documents its knowledge
+1. **[0-current-state.md](0-current-state.md)** — how `libs/table` documents its knowledge
    base today, measured, with the gaps named.
 2. **[1-llm-wiki-method.md](1-llm-wiki-method.md)** — what the LLM Wiki method is (Karpathy's
    pattern, the arXiv formalisation, the shipped implementations), and how it maps onto what we
@@ -26,7 +26,7 @@ Research pack answering four questions:
    `llms.txt`.
 
 Nothing here is a decision. Decisions that come out of it belong in an ADR under the owning
-context (`libs/shared/table/docs/adr/`, or a repo-level one if the method spans contexts).
+context (`libs/table/docs/adr/`, or a repo-level one if the method spans contexts).
 
 ## One-paragraph summary
 

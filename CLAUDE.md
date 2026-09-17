@@ -4,8 +4,8 @@ Tech stack, commands, and project map live in `AGENT.md` — not duplicated here
 
 Two Nx projects, each owning its own `CLAUDE.md` (maintainer invariants), `CONTEXT.md` (glossary) and `docs/adr/`:
 
-- `libs/shared/table/CLAUDE.md` — the library. Read before touching `libs/shared/table/src/**`.
-- `apps/ng-table/CLAUDE.md` — the docs site. Read `apps/ng-table/docs/CONVENTIONS.md` before adding a component or page block.
+- `libs/table/CLAUDE.md` — the library. Read before touching `libs/table/src/**`.
+- `apps/site/CLAUDE.md` — the docs site. Read `apps/site/docs/CONVENTIONS.md` before adding a component or page block.
 
 `llms.txt` is generated (`npm run llms`); `npm run llms:check` must stay clean.
 

@@ -85,7 +85,7 @@ an element wrapper — `<ngpt-pagination>` emitted a non-semantic host around a 
 built, and foreclosed the element (the cards could never be a `routerLink`-driven `<a>` the
 consumer controls, nor carry `target`/`rel`/`download`).
 
-More directly, this domain violated the invariant in `libs/shared/table/CLAUDE.md`: **"Attribute-only
+More directly, this domain violated the invariant in `libs/table/CLAUDE.md`: **"Attribute-only
 directives — never insert/remove/reorder DOM. Structural logic lives in the template (consumer's
 responsibility)."** The old component's `@if (prev())` / `@if (next())` *was* structural logic, and
 it lived here rather than in the consumer's template. That decision is now the consumer's: omitting

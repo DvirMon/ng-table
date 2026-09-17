@@ -28,7 +28,7 @@ tokens: [--ngpt-comp-navbar-height, --ngpt-sys-space-600, --ngpt-sys-z-navbar, -
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — spec wins over the reference frame there.
 
 # Layout — Top Navbar
 

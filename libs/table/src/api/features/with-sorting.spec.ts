@@ -516,7 +516,7 @@ describe('withSorting', () => {
 
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — inert at
-  // runtime, only enforced by `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`.
+  // runtime, only enforced by `tsc -p libs/table/tsconfig.spec.json --noEmit`.
   // -------------------------------------------------------------------------------------
   describe('types', () => {
     it('withSorting() alone contributes exactly SortingMembers, never widened to any', () => {

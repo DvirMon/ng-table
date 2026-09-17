@@ -19,9 +19,9 @@ plan: ../../1-gap-analysis.md
 
 ## Files
 
-- `libs/shared/table/docs/0-product/grouping.md` (edit)
-- `libs/shared/table/docs/3-ui/stories.md` (edit)
-- `libs/shared/table/docs/3-ui/work/grouping-stories/1-gap-analysis.md` (edit — status line)
+- `libs/table/docs/0-product/grouping.md` (edit)
+- `libs/table/docs/3-ui/stories.md` (edit)
+- `libs/table/docs/3-ui/work/grouping-stories/1-gap-analysis.md` (edit — status line)
 
 ## Why This Step Exists
 

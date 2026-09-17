@@ -26,10 +26,10 @@ node: B
 
 ## Files
 
-- `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.html` (create)
-- `libs/shared/table/src/stories/filtering/client-filtering/client-filtering.stories.ts` (create)
-- `libs/shared/table/src/stories/filtering/client-filtering/client-filtering.mdx` (create)
+- `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` (create)
+- `libs/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.html` (create)
+- `libs/table/src/stories/filtering/client-filtering/client-filtering.stories.ts` (create)
+- `libs/table/src/stories/filtering/client-filtering/client-filtering.mdx` (create)
 
 ## Why This Step Exists
 
@@ -114,7 +114,7 @@ Code tabs: `HTML`, `TS`, `CSS`, `filtering/fixtures/filters.ts`, `filtering/fixt
 - [ ] The quick filter returns no match on the numeric/nullable cells instead of throwing.
 - [ ] Breaking the notes filter widens the result set and reports once per evaluation.
 - [ ] No-matches and no-data render as distinct states.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 3: filtering fixtures — transport](step-3-filtering-fixtures-transport.plan.md) | [Step 5: server-filtering/](step-5-server-filtering-story.plan.md) →

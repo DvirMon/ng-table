@@ -24,10 +24,10 @@ node: D
 
 ## Files
 
-- `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.html` (create)
-- `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering.stories.ts` (create)
-- `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering.mdx` (create)
+- `libs/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` (create)
+- `libs/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.html` (create)
+- `libs/table/src/stories/filtering/selection-filtering/selection-filtering.stories.ts` (create)
+- `libs/table/src/stories/filtering/selection-filtering/selection-filtering.mdx` (create)
 
 ## Why This Step Exists
 
@@ -108,7 +108,7 @@ Code tabs: `HTML`, `TS`, `CSS`, `filtering/fixtures/filters.ts`, `filtering/fixt
 - [ ] Filtering out a selected row retains it; clearing the filter restores the selection exactly.
 - [ ] The hidden-selection notice states the missing signal and does not fake it.
 - [ ] Sorting leaves the selection untouched; deleting a filtered-out selected row drops the count.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 5: server-filtering/](step-5-server-filtering-story.plan.md) | [Step 7: filters.md code status](step-7-filters-doc-code-status.plan.md) →

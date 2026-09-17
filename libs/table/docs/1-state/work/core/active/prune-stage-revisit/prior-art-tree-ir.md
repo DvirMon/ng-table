@@ -206,7 +206,7 @@ pass [S9], Handsontable with a recursive descendant enumeration per collapse [S1
 performance.** Every library that injects synthetic rows — AG Grid's group footers and detail rows
 [S12], SlickGrid's totals rows [S20] — does it inside the flatten walk, because that is the only
 place where "immediately after this node's children, at this level" is a well-defined position.
-A filter over an already-flat list cannot insert; it can only remove. If `libs/shared/table` ever
+A filter over an already-flat list cannot insert; it can only remove. If `libs/table` ever
 wants a group-footer row, a "load more" row under a lazy branch, or a detail row, the flatten-walk
 form is the one that admits them without a second insertion pass. That is a stronger argument for
 the proposal than anything about `depth` derivation.
@@ -222,7 +222,7 @@ skipped node is not recoverable. Node-elision is a real feature of the nested fo
 Holding a tree and a flat list in the same type, with `rows` silently changing shape at the
 expanded stage [S1][S3], means no consumer can tell from the type whether `rows` is nested. Two
 early-out branches [S3] make it conditional on runtime state. The public docs do not mention it
-[S4]. If `libs/shared/table` adopts a nested `RenderNode`, the lesson is to give the nested IR and
+[S4]. If `libs/table` adopts a nested `RenderNode`, the lesson is to give the nested IR and
 the flat `RenderRow[]` **different type names** and never let one field hold both — the stated goal
 ("flat data in, flat rows out") already implies the nested form stays internal, which is the right
 call and the one PrimeNG and CDK also make [S8][S11].

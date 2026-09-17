@@ -264,7 +264,7 @@ state shape), [`1-state/row-mutations.md`](../../../../row-mutations.md) (the th
 as the pessimistic surface), [`3-ui/stories.md`](../../../../../3-ui/stories.md) :142,
 [`0-product/row-editing.md`](../../../../../0-product/row-editing.md) OQ-7,
 **[`adr/0006`](../../../../../adr/0006-row-id-state-reconciliation.md) :198-209 "Open" — stale: G3/O20
-closed 2026-09-03, and `ABSENT` was removed by D46**, and `libs/shared/table/CLAUDE.md`'s file
+closed 2026-09-03, and `ABSENT` was removed by D46**, and `libs/table/CLAUDE.md`'s file
 table.
 
 ```
@@ -287,7 +287,7 @@ and [`with-row-edit.ts`](../../../../../../src/api/features/with-row-edit.ts) (m
 
 ## Verification
 
-1. `npx tsc --noEmit -p libs/shared/table/tsconfig.lib.json` after **every** step.
+1. `npx tsc --noEmit -p libs/table/tsconfig.lib.json` after **every** step.
 2. `nx test shared-table` — colocated specs. New tests required:
    - `closeEdit` leaves `pending` empty (the invariant).
    - delete → revert → retry-create keeps `unconfirmed` — **the `pruneByIds` exemption has no

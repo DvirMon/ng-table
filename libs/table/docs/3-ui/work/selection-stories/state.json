@@ -4,10 +4,10 @@
   "ticketUrl": null,
   "stack": "angular",
   "isComplex": true,
-  "workspaceRoot": "libs/shared/table/docs/3-ui/work/selection-stories",
+  "workspaceRoot": "libs/table/docs/3-ui/work/selection-stories",
   "decisionsPath": null,
-  "specPath": "libs/shared/table/docs/3-ui/work/selection-stories/1-gap-analysis.md",
-  "architecturePath": "libs/shared/table/docs/3-ui/architecture.md",
+  "specPath": "libs/table/docs/3-ui/work/selection-stories/1-gap-analysis.md",
+  "architecturePath": "libs/table/docs/3-ui/architecture.md",
   "githubIssues": [],
   "checklist": {
     "ticket": false,

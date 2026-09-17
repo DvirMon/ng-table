@@ -20,7 +20,7 @@ tokens: [--ngpt-sys-shape-corner-none, --ngpt-sys-shape-corner-extra-small, --ng
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
-> Distributed here from the design handoff bundle (`apps/ng-table/docs/design-handoff/`) during Wave 0 spec distribution — this is the single source of truth for its token `:root` block; `src/styles/tokens/` mirrors it verbatim.
+> Distributed here from the design handoff bundle (`apps/site/docs/design-handoff/`) during Wave 0 spec distribution — this is the single source of truth for its token `:root` block; `src/styles/tokens/` mirrors it verbatim.
 
 # Foundations — Radius, Elevation & Overlays
 
@@ -117,6 +117,6 @@ dismisses what it sits under, and whatever it covers is scroll-locked.
 
 **2026-08-23:** changed from a translucent `oklch(0 0 0 / 0.5)` fill + 2px blur to a solid,
 unblurred fill, matched against a live scrape of the Angular Primitives reference overlay — see
-`apps/ng-table/src/app/design-system/search/docs/decisions.md` § scrim token. `--ngpt-sys-scrim-blur`
+`apps/site/src/app/design-system/search/docs/decisions.md` § scrim token. `--ngpt-sys-scrim-blur`
 was removed entirely (the reference has no blur, permanently, not a variable value) — the mobile
 drawer, when built, should not reintroduce it.

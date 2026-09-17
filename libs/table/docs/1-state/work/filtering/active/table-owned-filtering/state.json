@@ -4,9 +4,9 @@
   "ticketUrl": null,
   "stack": "angular",
   "isComplex": true,
-  "workspaceRoot": "libs/shared/table/docs/1-state/work/filtering/active/table-owned-filtering",
-  "decisionsPath": "libs/shared/table/docs/1-state/work/filtering/archive/with-filtering/design-options-hybrid-api.md",
-  "specPath": "libs/shared/table/docs/1-state/work/filtering/active/table-owned-filtering/spec.md",
+  "workspaceRoot": "libs/table/docs/1-state/work/filtering/active/table-owned-filtering",
+  "decisionsPath": "libs/table/docs/1-state/work/filtering/archive/with-filtering/design-options-hybrid-api.md",
+  "specPath": "libs/table/docs/1-state/work/filtering/active/table-owned-filtering/spec.md",
   "architecturePath": null,
   "githubIssues": [
     123,

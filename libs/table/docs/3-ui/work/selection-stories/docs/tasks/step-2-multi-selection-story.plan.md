@@ -20,10 +20,10 @@ node: C
 
 ## Files
 
-- `libs/shared/table/src/stories/selection/multi-selection/multi-selection-story-host.component.ts` (create)
-- `libs/shared/table/src/stories/selection/multi-selection/multi-selection-story-host.component.html` (create)
-- `libs/shared/table/src/stories/selection/multi-selection/multi-selection.stories.ts` (create)
-- `libs/shared/table/src/stories/selection/multi-selection/multi-selection.mdx` (create)
+- `libs/table/src/stories/selection/multi-selection/multi-selection-story-host.component.ts` (create)
+- `libs/table/src/stories/selection/multi-selection/multi-selection-story-host.component.html` (create)
+- `libs/table/src/stories/selection/multi-selection/multi-selection.stories.ts` (create)
+- `libs/table/src/stories/selection/multi-selection/multi-selection.mdx` (create)
 
 ## Why This Step Exists
 
@@ -106,7 +106,7 @@ No MSW handlers. Code tabs: `HTML`, `TS`, `CSS`, `selection/fixtures/schema.ts`.
 - [ ] Restoring a saved selection with an unknown id writes the rest and logs nothing.
 - [ ] Deleting a selected row externally drops the count with an empty event log.
 - [ ] `clearSelection()` emits exactly one delta.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 1: selection fixtures — schema.ts](step-1-selection-fixtures-schema.plan.md) | [Step 3: single-selection/](step-3-single-selection-story.plan.md) →

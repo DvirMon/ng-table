@@ -73,7 +73,7 @@ wire that looks functional but is partly inert.
 `sizing.css` defines `--ngpt-comp-icon-btn-confirm-hold: 1400ms`, confirmed present. The
 `setTimeout` duration is a TS number, not a CSS value, and this repo has no precedent for reading
 a custom property into JS at runtime for a timing value (checked; no `getComputedStyle` usage
-anywhere in `apps/ng-table` or `apps/issa-landing` does this for a duration). Declared a local
+anywhere in `apps/site` or `apps/issa-landing` does this for a duration). Declared a local
 `CONFIRM_HOLD_MS = 1400` constant with a comment pointing at the token instead, rather than
 inventing a `getComputedStyle` read with no precedent. This is the same category of unavoidable
 token-boundary gap `icon-button/docs/decisions.md` flags for its 24/32 sizes — reporting rather

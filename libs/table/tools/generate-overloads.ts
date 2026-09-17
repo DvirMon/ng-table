@@ -16,8 +16,8 @@ import { join, posix, relative, resolve } from 'node:path';
 import { format, resolveConfig } from 'prettier';
 
 const LIB_ROOT = resolve(import.meta.dirname, '..');
-const REPO_ROOT = resolve(LIB_ROOT, '..', '..', '..');
-const GENERATOR_PATH = 'libs/shared/table/tools/generate-overloads.ts';
+const REPO_ROOT = resolve(LIB_ROOT, '..', '..');
+const GENERATOR_PATH = 'libs/table/tools/generate-overloads.ts';
 
 /** D27: 15 feature slots. A 16th argument matches no overload — that is the intended error. */
 const ARITY = 15;

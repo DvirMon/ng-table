@@ -10,7 +10,7 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/stories/filtering/filtering.mdx` | `:1-24`, `:38-49`, `:95-113`, `:159-194`, `:222+` | edit — rewrite two sections, delete one |
+| `libs/table/src/stories/filtering/filtering.mdx` | `:1-24`, `:38-49`, `:95-113`, `:159-194`, `:222+` | edit — rewrite two sections, delete one |
 | — | — | verify — full typecheck ×2, full suite |
 
 ## Why This Step Exists
@@ -61,7 +61,7 @@ the lib does not compile until every call site has landed.
 ## Implementation Notes
 
 - `docs/1-state/filters.md`, `docs/1-state/features/filtering.md`, `docs/0-product/filtering.md`,
-  `docs/3-ui/stories.md`, `libs/shared/table/CLAUDE.md` and ADR-0016 are **`#126`**. This step stops
+  `docs/3-ui/stories.md`, `libs/table/CLAUDE.md` and ADR-0016 are **`#126`**. This step stops
   at the `src/` boundary — that is exactly where `#125`'s acceptance draws the line ("anywhere under
   `src/`").
 - Step 9's PR note should already flag that `docs/0-product/filtering.md` and `docs/3-ui/stories.md`
@@ -84,7 +84,7 @@ the lib does not compile until every call site has landed.
 
 ## Non-Goals
 
-- Every doc under `libs/shared/table/docs/` — `#126`.
+- Every doc under `libs/table/docs/` — `#126`.
 - Relocating `src/filters/` — `#127`.
 - Rewriting the MDX's structure. Two sections change their claims and one is deleted; the document's
   shape is not this issue's subject.
@@ -95,7 +95,7 @@ the lib does not compile until every call site has landed.
       run says anything about templates.
 - [ ] `nx run shared-table:typecheck-spec` **clean**. Run twice, same reason.
 - [ ] Full spec suite green.
-- [ ] `grep -rn "createFilters\|rowOf\|applyWhen\|RowToken\|predicates" libs/shared/table/src/`
+- [ ] `grep -rn "createFilters\|rowOf\|applyWhen\|RowToken\|predicates" libs/table/src/`
       returns nothing.
 - [ ] No `<Canvas>`, import or heading in `filtering.mdx` refers to the predicate story.
 - [ ] The server section states the resource wiring **and** why there is no construction cycle.

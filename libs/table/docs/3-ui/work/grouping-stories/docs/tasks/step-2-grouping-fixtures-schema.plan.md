@@ -20,7 +20,7 @@ node: A (part)
 
 ## Files
 
-- `libs/shared/table/src/stories/grouping/fixtures/schema.ts` (create)
+- `libs/table/src/stories/grouping/fixtures/schema.ts` (create)
 
 ## Why This Step Exists
 
@@ -67,7 +67,7 @@ Also export the initial grouping levels each story starts from (e.g.
 ## Acceptance Checks
 
 - [ ] Three configs exported, typed `TableConfig<DealRow>`, no inline mock data.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 1: export group-level updaters](step-1-export-group-level-updaters.plan.md) | [Step 3: grouping fixtures — transport](step-3-grouping-fixtures-transport.plan.md) →

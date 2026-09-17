@@ -1165,7 +1165,7 @@ describe('collapse/expand (#59)', () => {
     // -----------------------------------------------------------------------------------
     // Type-level half. The vitest executor does NOT typecheck `expectTypeOf`/
     // `@ts-expect-error` — inert at runtime, only enforced by
-    // `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`.
+    // `tsc -p libs/table/tsconfig.spec.json --noEmit`.
     // -----------------------------------------------------------------------------------
     it('a trailing derive on grouping sees expandedRows only when expansion is composed first (D25 — types stricter than runtime)', () => {
       // Expansion first: grouping's trailing block sees expandedRows off the accumulated `In`.
@@ -1925,7 +1925,7 @@ describe('rowsOf and when (Q3, #119)', () => {
 // -------------------------------------------------------------------------------------
 // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf`/
 // `@ts-expect-error` — they are inert at runtime. These are only enforced by
-// `tsc -p libs/shared/table/tsconfig.spec.json --noEmit`, which is the verification step
+// `tsc -p libs/table/tsconfig.spec.json --noEmit`, which is the verification step
 // for this describe block.
 // -------------------------------------------------------------------------------------
 describe('types', () => {

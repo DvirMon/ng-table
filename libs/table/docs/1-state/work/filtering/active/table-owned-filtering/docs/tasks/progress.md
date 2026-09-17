@@ -82,5 +82,5 @@ Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 - **Uncommitted grouping work is in the tree** (`with-grouping.ts`, `engine/grouping.ts`,
   `with-grouping.spec.ts`, the `grouping-static` story host). Step 9 touches `grouping/fixtures/`
   and `grouping-selection/` only — no overlap, but rebase before starting.
-- **Not in this issue:** every doc under `libs/shared/table/docs/` (`#126`) and relocating
+- **Not in this issue:** every doc under `libs/table/docs/` (`#126`) and relocating
   `src/filters/` into `api/features/with-filtering/` + `engine/filters/` (`#127`).

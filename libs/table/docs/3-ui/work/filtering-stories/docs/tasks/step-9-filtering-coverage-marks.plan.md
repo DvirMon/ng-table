@@ -20,8 +20,8 @@ node: F
 
 ## Files
 
-- `libs/shared/table/docs/0-product/filtering.md` (edit)
-- `libs/shared/table/docs/3-ui/work/filtering-stories/1-gap-analysis.md` (edit — status line)
+- `libs/table/docs/0-product/filtering.md` (edit)
+- `libs/table/docs/3-ui/work/filtering-stories/1-gap-analysis.md` (edit — status line)
 
 ## Why This Step Exists
 

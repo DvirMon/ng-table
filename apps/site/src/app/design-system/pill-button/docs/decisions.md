@@ -1,7 +1,7 @@
 # Decisions — pill-button
 
 Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixed contract in
-`apps/ng-table/docs/CONVENTIONS.md`.
+`apps/site/docs/CONVENTIONS.md`.
 
 ## Additions beyond the fixed contract
 
@@ -34,10 +34,10 @@ inner wrapper. `<ng-content>` still projects the label directly onto that host.
 
 Consequence for every call site: `<ngpt-pill-button>Label</ngpt-pill-button>` becomes
 `<button ngptPillButton>Label</button>` (camelCase attribute selector, per ADR-0005 — see
-`apps/ng-table/docs/CONVENTIONS.md` § "Selector prefix `ngpt`"). Updated the three existing call
+`apps/site/docs/CONVENTIONS.md` § "Selector prefix `ngpt`"). Updated the three existing call
 sites (`navbar`, `hero-band`, `dropdown-pill`). `variant`/`disabled` inputs, `data-variant` host
 attribute, and all CSS (moved from a `.pill-button` inner-element rule to `:host`/`:host(:pseudo)`
-directly) are unchanged in behavior. `apps/ng-table/eslint.config.mjs`'s
+directly) are unchanged in behavior. `apps/site/eslint.config.mjs`'s
 `@angular-eslint/component-selector` rule gained a second config entry (`type: 'attribute'`,
 `style: 'camelCase'`) alongside the existing element/kebab-case one to allow this.
 

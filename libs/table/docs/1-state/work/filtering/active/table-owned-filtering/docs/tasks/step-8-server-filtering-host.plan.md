@@ -10,12 +10,12 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering.filters.ts` | `:1-27` | rewrite — hoisted schema `const`, no `createFilters`/`rowOf`/`as:` |
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | `:62-138`, `:148` | edit — model into the table, field order, prose |
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.ts` | `:34-36` | edit — `dirty()` is `@internal` |
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.html` | — | edit — only what the input rename forces |
-| `libs/shared/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.html` | `:10` | edit — prose |
-| `libs/shared/table/src/stories/filtering/fixtures/utils.ts` | — | read only — `EMPTY_RANGE`, `isRangeCriterion` unchanged |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering.filters.ts` | `:1-27` | rewrite — hoisted schema `const`, no `createFilters`/`rowOf`/`as:` |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | `:62-138`, `:148` | edit — model into the table, field order, prose |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.ts` | `:34-36` | edit — `dirty()` is `@internal` |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-toolbar.component.html` | — | edit — only what the input rename forces |
+| `libs/table/src/stories/filtering/server-filtering/server-filtering-story-host.component.html` | `:10` | edit — prose |
+| `libs/table/src/stories/filtering/fixtures/utils.ts` | — | read only — `EMPTY_RANGE`, `isRangeCriterion` unchanged |
 
 ## Why This Step Exists
 

@@ -76,7 +76,7 @@ directly.
 
 ## Code changes
 
-Rename the fields, then fix what reads them. All within `libs/shared/table` — the inventory
+Rename the fields, then fix what reads them. All within `libs/table` — the inventory
 confirms zero references in `apps/` or any other lib.
 
 **Declarations** — `schema/grouping-schema.types.ts`, `schema/grouping-rules.ts` (both
@@ -137,7 +137,7 @@ It governs future features, not just grouping, so it needs a durable home:
    to separate an external-state condition from a data condition on the same rule. Consequences:
    `applyVisible`/`FilterOptions` keep a single `when`; a future `applySortable()` (#134) gets
    `when` unless it needs the same two-source split.
-2. **Pointer in `libs/shared/table/CLAUDE.md`** — one line under "Naming conventions — internal
+2. **Pointer in `libs/table/CLAUDE.md`** — one line under "Naming conventions — internal
    state and type narrowing", citing the ADR. Conventions only, no status.
 3. **#119 API break, recorded** — table-wide `groupWhen` → `when` breaks a merged public API.
    Pre-1.0, single in-repo consumer (`grouping-static` + specs), no deprecation window — the same
@@ -161,7 +161,7 @@ nx test shared-table
 Then confirm the rename left nothing behind:
 
 ```bash
-grep -rn "groupWhen" libs/shared/table/src
+grep -rn "groupWhen" libs/table/src
 ```
 
 Expected survivors only: `GroupWhen` type references, `evaluateGroupWhen`,

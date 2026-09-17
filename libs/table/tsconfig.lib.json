@@ -1,9 +1,9 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../dist/out-tsc",
+    "outDir": "../../dist/out-tsc",
     "incremental": true,
-    "tsBuildInfoFile": "../../../dist/out-tsc/shared-table-lib.tsbuildinfo",
+    "tsBuildInfoFile": "../../dist/out-tsc/shared-table-lib.tsbuildinfo",
     "declaration": true,
     "declarationMap": true,
     "inlineSourceMap": false,

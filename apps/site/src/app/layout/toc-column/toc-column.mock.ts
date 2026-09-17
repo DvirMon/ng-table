@@ -1,7 +1,7 @@
 import type { TocHeading } from './toc-column.types';
 
 /**
- * Stand-in headings, shaped like the row-editing updaters in `libs/shared/table/src/api/row-edit-mutations.ts`
+ * Stand-in headings, shaped like the row-editing updaters in `libs/table/src/api/row-edit-mutations.ts`
  * once that file becomes the `/state-layer/row-editing` article's content. Real TOC data is always
  * derived from the current article's own H2/H3 (`Content Model.md`), never hand-authored per page —
  * this file exists only because no real article exists yet.

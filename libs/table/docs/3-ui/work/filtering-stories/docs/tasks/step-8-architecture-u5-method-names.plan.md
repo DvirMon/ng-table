@@ -20,7 +20,7 @@ node: G
 
 ## Files
 
-- `libs/shared/table/docs/3-ui/architecture.md` (edit)
+- `libs/table/docs/3-ui/architecture.md` (edit)
 
 ## Why This Step Exists
 

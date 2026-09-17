@@ -71,7 +71,7 @@ The builder auto-detects it and prefers it over jsdom — no config change, no c
 
 Only worth doing after R1 is measured; it is strictly larger than R1 and carries a real risk (below).
 
-Create `libs/shared/table/vitest-base.config.ts`:
+Create `libs/table/vitest-base.config.ts`:
 
 ```ts
 import { defineConfig } from 'vitest/config';
@@ -96,7 +96,7 @@ which may touch `document` at init even for injector-only tests. If it throws un
 ### R3 — make coverage a configuration, not the default
 
 ```jsonc
-// libs/shared/table/project.json
+// libs/table/project.json
 "test": {
   "executor": "@nx/angular:unit-test",
   "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
@@ -145,7 +145,7 @@ Read `environment / 33` as the per-worker figure, not a total — see §1.
 
 ## 6. Applied (2026-09-14)
 
-- **R1** — `npm i -D happy-dom` → `happy-dom@20.14.5` (resolves from `libs/shared/table/src`). No config change needed; `findTestEnvironment` prefers it over jsdom automatically.
+- **R1** — `npm i -D happy-dom` → `happy-dom@20.14.5` (resolves from `libs/table/src`). No config change needed; `findTestEnvironment` prefers it over jsdom automatically.
 - **R3** — `project.json`: `coverage` moved off `options` into a `coverage` configuration.
   - `nx test shared-table` → no coverage (inner loop).
   - `nx test shared-table -c coverage` → coverage report.

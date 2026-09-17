@@ -20,14 +20,14 @@ node: I
 
 ## Files
 
-- `libs/shared/table/docs/0-product/selection.md` (edit)
-- `libs/shared/table/docs/0-product/filtering.md` (edit — F-S1 bullet 1)
-- `libs/shared/table/docs/0-product/grouping.md` (edit — X-G1 story body)
-- `libs/shared/table/docs/1-state/features/selection.md` (edit — open questions)
-- `libs/shared/table/docs/1-state/work/with-selection/2-decisions.md` (edit — open questions)
-- `libs/shared/table/docs/1-state/state-persistence.md` (edit)
-- `libs/shared/table/docs/3-ui/work/selection-stories/1-gap-analysis.md` (edit — status line)
-- `libs/shared/table/docs/status.md` (regenerate, if any frontmatter moves)
+- `libs/table/docs/0-product/selection.md` (edit)
+- `libs/table/docs/0-product/filtering.md` (edit — F-S1 bullet 1)
+- `libs/table/docs/0-product/grouping.md` (edit — X-G1 story body)
+- `libs/table/docs/1-state/features/selection.md` (edit — open questions)
+- `libs/table/docs/1-state/work/with-selection/2-decisions.md` (edit — open questions)
+- `libs/table/docs/1-state/state-persistence.md` (edit)
+- `libs/table/docs/3-ui/work/selection-stories/1-gap-analysis.md` (edit — status line)
+- `libs/table/docs/status.md` (regenerate, if any frontmatter moves)
 
 ## Why This Step Exists
 

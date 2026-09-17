@@ -1,7 +1,7 @@
 # Decisions — select-trigger
 
 Build-time judgment calls not spelled out verbatim in `docs/spec.md` or the fixed contract in
-`apps/ng-table/docs/CONVENTIONS.md`.
+`apps/site/docs/CONVENTIONS.md`.
 
 ## Final public API
 

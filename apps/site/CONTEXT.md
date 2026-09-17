@@ -8,7 +8,7 @@ depends-on: [Table]
 
 ## What this is
 
-A dark-only documentation and marketing website for **NGP Table** (`@ngp/table`, `libs/shared/table`), a
+A dark-only documentation and marketing website for **NGP Table** (`@ngp/table`, `libs/table`), a
 headless Angular table primitive: `createTable()` + `with-*()` feature plugins + attribute-only directives.
 Two zones: a marketing page at `/`, and docs under `/docs`. This app is the site; it does not implement the
 table itself.
@@ -77,7 +77,7 @@ within it — check here before "fixing" one.
 
 | Gap | Status |
 |---|---|
-| **Home page** | Built (Wave 3) — `pages/home/home.*` composes hero-band/feature-grid/install-row per `pages/home/docs/spec.md`; `home.content.ts` copy is sourced from `libs/shared/table`'s own docs. See `pages/home/docs/decisions.md` |
+| **Home page** | Built (Wave 3) — `pages/home/home.*` composes hero-band/feature-grid/install-row per `pages/home/docs/spec.md`; `home.content.ts` copy is sourced from `libs/table`'s own docs. See `pages/home/docs/decisions.md` |
 | **`preview-window`** | Built (Wave 3), narrowed to `docs/CONVENTIONS.md`'s fixed contract (tab-switcher + code-block + one copy icon-button) — no consumer yet, so the "Example CSS" dropdown-pill and Run button aren't built. See `design-system/preview-window/docs/decisions.md` |
 | **`feature-grid`, `page-footer`** | Called by Home (Wave 3) — the ADR-0005 inversion held, no friction surfaced |
 | **Duplicate copy button** | Resolved — `code-block` gained `showCopyButton: input<boolean>(true)`; `preview-window`'s Source tab passes `false` so only the toolbar's Copy button shows. See `design-system/code-block/docs/decisions.md` |

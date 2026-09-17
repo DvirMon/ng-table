@@ -1151,7 +1151,7 @@ forcing it.
   a new test covers the `removeRow` + `endEdit` compose; a new test covers plain `revertEdit`
   resetting an `addNewRow`'d row.
 
-**Not yet done:** story/demo call sites (`libs/shared/table/src/stories/gated-edit/*`,
+**Not yet done:** story/demo call sites (`libs/table/src/stories/gated-edit/*`,
 `apps/demo/.../table-row-edit-demo`) still call `revertEdit(id)` unconditionally from a single
 `cancelEdit` handler for both the discard-intent and reset-intent Add buttons — those need to
 route the discard-intent button through the composed `removeRow`+`endEdit` call instead, tracking

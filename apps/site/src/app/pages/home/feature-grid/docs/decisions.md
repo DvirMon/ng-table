@@ -76,7 +76,7 @@ ADR-0005 — the host was a non-semantic `<ngpt-home-feature-grid>` element that
 carry `display: grid`, which is precisely a case of styling something that should be the
 consumer's own element.
 
-The stronger reason is the invariant in `libs/shared/table/CLAUDE.md`: **"Attribute-only directives
+The stronger reason is the invariant in `libs/table/CLAUDE.md`: **"Attribute-only directives
 — never insert/remove/reorder DOM. Structural logic lives in the template (consumer's
 responsibility)."** A `@for` over an input array is DOM insertion, and it made the cell shape
 closed: a cell could never gain a `<code>` in its description, a link, or a differing heading level

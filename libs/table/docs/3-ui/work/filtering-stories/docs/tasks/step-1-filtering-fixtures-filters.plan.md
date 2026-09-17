@@ -27,7 +27,7 @@ node: A (part)
 
 ## Files
 
-- `libs/shared/table/src/stories/filtering/fixtures/filters.ts` (create)
+- `libs/table/src/stories/filtering/fixtures/filters.ts` (create)
 
 ## Why This Step Exists
 
@@ -83,7 +83,7 @@ Export one factory per story, each returning a `createFilters<InvoiceRow>(…)` 
 - [ ] Three factories exported, each callable in an injection context.
 - [ ] Every shipped rule kind appears at least once; the quick filter spans a nullable and a numeric
       path.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 [Step 2: filtering fixtures — schema.ts](step-2-filtering-fixtures-schema.plan.md) →

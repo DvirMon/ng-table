@@ -12,7 +12,7 @@ import { join, posix, relative, resolve } from 'node:path';
 
 const DOCS_ROOT = resolve(import.meta.dirname, '..', 'docs');
 const OUTPUT_FILE = join(DOCS_ROOT, 'status.md');
-const GENERATOR_PATH = 'libs/shared/table/tools/generate-status.ts';
+const GENERATOR_PATH = 'libs/table/tools/generate-status.ts';
 
 /** D3: only these carry `capability:`/`spec:`/`code:`. Everything else keeps free-text `status:`. */
 const STATE_FEATURES_DIR = join(DOCS_ROOT, '1-state', 'features');

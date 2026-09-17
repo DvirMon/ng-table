@@ -52,7 +52,7 @@ Two properties matter specifically for a code repo's docs:
 ```bash
 npm install -g @tobilu/qmd        # verify the package identity first
 
-qmd collection add libs/shared/table/docs --name table-docs
+qmd collection add libs/table/docs --name table-docs
 qmd update                        # (re)index
 qmd embed                         # build vectors
 
@@ -96,8 +96,8 @@ wiki, isolated index" rule, and it keeps design-system results out of table quer
 ```yaml
 # ~/.config/qmd/index.yml (sketch)
 collections:
-  table-docs:   { path: libs/shared/table/docs,  pattern: "**/*.md" }
-  table-src:    { path: libs/shared/table/src,   pattern: "**/*.ts" }
+  table-docs:   { path: libs/table/docs,  pattern: "**/*.md" }
+  table-src:    { path: libs/table/src,   pattern: "**/*.ts" }
   ds-docs:      { path: libs/shared/design-system/docs, pattern: "**/*.md" }
   issa-docs:    { path: apps/issa-landing, pattern: "**/docs/**/*.md" }
   guidelines:   { path: ~/.claude, pattern: "**/*.md" }

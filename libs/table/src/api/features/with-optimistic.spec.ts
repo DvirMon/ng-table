@@ -146,7 +146,7 @@ describe('withOptimistic', () => {
 
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — it is
-  // inert at runtime. These are only enforced by `tsc -p libs/shared/table/tsconfig.spec.json
+  // inert at runtime. These are only enforced by `tsc -p libs/table/tsconfig.spec.json
   // --noEmit`, which is the verification step for this describe block.
   // -------------------------------------------------------------------------------------
   describe('types', () => {

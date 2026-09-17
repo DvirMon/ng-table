@@ -10,8 +10,8 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/filters/create-filters.types.spec.ts` | `:1-322` | rewrite — probes `withFiltering`'s object schema, not `createFilters` |
-| `libs/shared/table/src/filters/create-filters.spec.ts` | — | edit — only what the construction-throw changes force |
+| `libs/table/src/filters/create-filters.types.spec.ts` | `:1-322` | rewrite — probes `withFiltering`'s object schema, not `createFilters` |
+| `libs/table/src/filters/create-filters.spec.ts` | — | edit — only what the construction-throw changes force |
 
 ## Why This Step Exists
 

@@ -5,7 +5,7 @@ status: reflects current practice as of the 21 stories in src/stories/
 date: 2026-09-16
 ---
 
-# Storybook story conventions — `libs/shared/table`
+# Storybook story conventions — `libs/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
 existing 21 stories already follow, so a new one doesn't drift from it. Not previously written
@@ -196,7 +196,7 @@ symmetry would be a later, separate pass).
 - **Standalone, separate template.** `templateUrl`/`styleUrl`, never an inline `template:`
   string — same rule as every other Angular component in this repo
   (`.claude/rules/typescript-conventions.md`, restated for a sibling app in
-  `apps/ng-table/docs/CONVENTIONS.md`). A story is still a component; it doesn't get an
+  `apps/site/docs/CONVENTIONS.md`). A story is still a component; it doesn't get an
   exception for being demo-only.
 - **Class name keeps the `Component` suffix** (`GatedEditStoryHostComponent`, not
   `GatedEditStoryHost`) — this is the one place in the repo that suffix convention is kept,

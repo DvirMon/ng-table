@@ -3,7 +3,7 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "projectType": "application",
   "prefix": "ngpt",
-  "sourceRoot": "apps/ng-table/src",
+  "sourceRoot": "apps/site/src",
   "tags": [],
   "targets": {
     "build": {
@@ -11,17 +11,17 @@
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "dist/apps/ng-table",
-        "browser": "apps/ng-table/src/main.ts",
+        "outputPath": "dist/apps/site",
+        "browser": "apps/site/src/main.ts",
         "polyfills": [],
-        "tsConfig": "apps/ng-table/tsconfig.app.json",
+        "tsConfig": "apps/site/tsconfig.app.json",
         "assets": [
           {
             "glob": "**/*",
-            "input": "apps/ng-table/public"
+            "input": "apps/site/public"
           }
         ],
-        "styles": ["apps/ng-table/src/styles.css"]
+        "styles": ["apps/site/src/styles.css"]
       },
       "configurations": {
         "production": {
@@ -70,7 +70,7 @@
       "cache": true,
       "inputs": ["default", "^default"],
       "options": {
-        "command": "ngc -p apps/ng-table/tsconfig.app.json --noEmit"
+        "command": "ngc -p apps/site/tsconfig.app.json --noEmit"
       }
     },
     "typecheck-spec": {
@@ -78,7 +78,7 @@
       "cache": true,
       "inputs": ["default", "^default"],
       "options": {
-        "command": "ngc -p apps/ng-table/tsconfig.spec.json --noEmit"
+        "command": "ngc -p apps/site/tsconfig.spec.json --noEmit"
       }
     },
     "test": {
@@ -92,7 +92,7 @@
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "ng-table:build",
-        "staticFilePath": "dist/apps/ng-table/browser",
+        "staticFilePath": "dist/apps/site/browser",
         "spa": true
       }
     },
@@ -100,7 +100,7 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "storybook dev -p 4401",
-        "cwd": "apps/ng-table"
+        "cwd": "apps/site"
       }
     },
     "build-storybook": {
@@ -108,7 +108,7 @@
       "outputs": ["{workspaceRoot}/dist/storybook/ng-table"],
       "options": {
         "command": "storybook build -o ../../dist/storybook/ng-table",
-        "cwd": "apps/ng-table"
+        "cwd": "apps/site"
       }
     }
   }

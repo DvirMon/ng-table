@@ -61,7 +61,7 @@ domain's implementation must follow so parallel agents never need to coordinate 
    same element — `<button ngptIconButton ngptCopyConfirm>`. Legal because only *component +
    component* is forbidden on one host. Do not reach for `hostDirectives`: it is statically
    resolved, so it applies the behavior to every consumer and forces the component to re-declare
-   the directive's inputs (`libs/shared/table/CLAUDE.md`). Behavior imported from `ng-primitives`
+   the directive's inputs (`libs/table/CLAUDE.md`). Behavior imported from `ng-primitives`
    is the exception — it arrives through `hostDirectives` because it is unconditional for the
    domain that declares it (`dropdown-pill`'s `NgpMenuTrigger`).
 
@@ -84,7 +84,7 @@ domain's implementation must follow so parallel agents never need to coordinate 
    (`.claude/rules/file-organization.md`).
 3. **State as `data-*` attributes** — never state classes, never inline styles. Mirrors the table
    library's own invariant ("state as `data-*` attributes, values as CSS custom properties",
-   `libs/shared/table/CLAUDE.md`). Examples: `data-scrolled`, `data-open`, `data-copy-state="idle|copied|failed"`.
+   `libs/table/CLAUDE.md`). Examples: `data-scrolled`, `data-open`, `data-copy-state="idle|copied|failed"`.
 4. **Real interactive elements.** `<button>` for actions, `<a>` for navigation — never a `<div>` with a
    click handler. `aria-*` attributes per each spec's `a11y` front-matter. Focus ring comes from the global
    `:focus-visible` policy in `src/styles/global.css` — don't restyle focus locally unless your spec says

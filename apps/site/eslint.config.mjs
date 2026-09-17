@@ -3,7 +3,7 @@ import baseConfig from '../../eslint.config.mjs';
 
 export default [
   {
-    ignores: ['apps/ng-table/docs/design-handoff/**'],
+    ignores: ['apps/site/docs/design-handoff/**'],
   },
   ...nx.configs['flat/angular'],
   ...nx.configs['flat/angular-template'],

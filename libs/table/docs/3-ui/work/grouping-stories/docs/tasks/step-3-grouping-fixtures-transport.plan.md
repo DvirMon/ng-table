@@ -20,8 +20,8 @@ node: A (part)
 
 ## Files
 
-- `libs/shared/table/src/stories/grouping/fixtures/handlers.ts` (create)
-- `libs/shared/table/src/stories/grouping/fixtures/http.ts` (create)
+- `libs/table/src/stories/grouping/fixtures/handlers.ts` (create)
+- `libs/table/src/stories/grouping/fixtures/http.ts` (create)
 
 ## Why This Step Exists
 
@@ -60,7 +60,7 @@ need a real intercepted round trip. `3-ui/stories.md` is explicit: never a fake 
 
 - [ ] `GET /api/grouped-rows` honours both headers; forced failure returns a 500 with a message.
 - [ ] Each response's rows are newly constructed objects, not a shared module-level array.
-- [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean.
+- [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
 ← [Step 2: grouping fixtures — schema.ts](step-2-grouping-fixtures-schema.plan.md) | [Step 4: grouping-static/](step-4-grouping-static-story.plan.md) →

@@ -10,14 +10,14 @@
 
 | File | Line | Action |
 |---|---|---|
-| `libs/shared/table/src/filters/types.ts` | `:12-27` | edit — `FilterOptions` gains `when` |
-| `libs/shared/table/src/filters/types.ts` | `:170-179` | delete — `ConditionalRule` |
-| `libs/shared/table/src/filters/types.ts` | `:196-211` | edit — `FlattenItem` loses its `ConditionalRule` branch |
-| `libs/shared/table/src/filters/rules.ts` | `:305-346` | delete — `applyWhen` and its comment block |
-| `libs/shared/table/src/filters/create-filters.ts` | `:15-40` | delete — `ConditionalNode`, `isConditionalNode` |
-| `libs/shared/table/src/filters/create-filters.ts` | `:42-68` | edit — `flattenRules` loses its conditional branch |
-| `libs/shared/table/src/filters/create-filters.ts` | `:130-152` | edit — the gate pass reads `record.options.when` |
-| `libs/shared/table/src/filters/index.ts` | `:7` | edit — drop `applyWhen` from the rule re-export |
+| `libs/table/src/filters/types.ts` | `:12-27` | edit — `FilterOptions` gains `when` |
+| `libs/table/src/filters/types.ts` | `:170-179` | delete — `ConditionalRule` |
+| `libs/table/src/filters/types.ts` | `:196-211` | edit — `FlattenItem` loses its `ConditionalRule` branch |
+| `libs/table/src/filters/rules.ts` | `:305-346` | delete — `applyWhen` and its comment block |
+| `libs/table/src/filters/create-filters.ts` | `:15-40` | delete — `ConditionalNode`, `isConditionalNode` |
+| `libs/table/src/filters/create-filters.ts` | `:42-68` | edit — `flattenRules` loses its conditional branch |
+| `libs/table/src/filters/create-filters.ts` | `:130-152` | edit — the gate pass reads `record.options.when` |
+| `libs/table/src/filters/index.ts` | `:7` | edit — drop `applyWhen` from the rule re-export |
 
 ## Why This Step Exists
 
