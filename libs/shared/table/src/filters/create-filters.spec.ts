@@ -1,10 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { createFilters } from './create-filters';
+import { buildFilterModel } from './create-filters';
 import {
   anyOf,
-  applyWhen,
   contains,
   equals,
   filter,
@@ -14,8 +13,7 @@ import {
   inRange,
 } from './rules';
 import { hasAnyOf, hasNoneOf } from './matchers';
-import { rowOf } from './row-of';
-import type { FiltersPath } from './types';
+import type { AnyRule, FiltersPath } from './types';
 
 interface Invoice {
   status: string;
@@ -44,19 +42,23 @@ function invoice(overrides: Partial<Invoice> = {}): Invoice {
   };
 }
 
-function build<S extends readonly unknown[]>(schema: (path: FiltersPath<Invoice>) => S) {
-  return TestBed.runInInjectionContext(() => createFilters(rowOf<Invoice>(), schema));
+/** `buildFilterModel` needs no injection context — `state.ts` builds only `signal`/`computed`/
+ *  `linkedSignal`, none of which require one. */
+function build<S extends Record<string, AnyRule>>(
+  schema: (path: FiltersPath<Invoice>) => S,
+) {
+  return buildFilterModel<Invoice, S>(schema);
 }
 
-describe('createFilters — schema declaration', () => {
+describe('buildFilterModel — schema declaration', () => {
   it('produces a correctly-keyed node per declared rule', () => {
-    const filters = build((path) => [
-      equals(path.status),
-      inRange(path.amount),
-      inDateRange(path.dueDate),
-      anyOf('search', [contains(path.customer), contains(path.notes)]),
-      hasAny(path.tags),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status),
+      amount: inRange(path.amount),
+      dueDate: inDateRange(path.dueDate),
+      search: anyOf([contains(path.customer), contains(path.notes)]),
+      tags: hasAny(path.tags),
+    }));
 
     expect(filters.status().value()).toBe(null);
     expect(filters.amount().value()).toEqual({ min: null, max: null });
@@ -66,144 +68,143 @@ describe('createFilters — schema declaration', () => {
   });
 });
 
-describe('createFilters — keys', () => {
-  it('borrows the key from a single path', () => {
-    const filters = build((path) => [equals(path.status)]);
+describe('buildFilterModel — keys', () => {
+  it('the schema object property names the filter, not the path', () => {
+    const filters = build((path) => ({ status: equals(path.status) }));
     expect(filters.status().value()).toBe(null);
   });
 
-  it('as overrides the borrowed key', () => {
-    const filters = build((path) => [inDateRange(path.dueDate, { as: 'due' })]);
-    expect(filters.due().value()).toEqual({ from: null, to: null });
-  });
-
-  it('rejects a widened `string` variable for `as` at compile time (filters.md: "must be a string literal")', () => {
-    build((path) => {
-      const dynamicName = String('status'); // widened to `string`, not a literal
-      return [
-        // @ts-expect-error — `as` must be a string literal, not a `string`-typed variable (R32 fix).
-        equals(path.status, { as: dynamicName }),
-      ];
-    });
-  });
-
-  it('anyOf takes its key positionally, never borrowed from a path', () => {
-    const filters = build((path) => [anyOf('search', [contains(path.customer)])]);
+  it("anyOf's key is the schema object property too — there is no separate positional key", () => {
+    const filters = build((path) => ({
+      search: anyOf([contains(path.customer)]),
+    }));
     expect(filters.search().value()).toBe('');
   });
 });
 
-describe('createFilters — one filter per path', () => {
-  it('throws when two rules target the same path, even with different `as` names', () => {
+describe('buildFilterModel — one filter per path', () => {
+  it('throws when two schema keys target the same path', () => {
     expect(() =>
-      build((path) => [
-        hasAny(path.tags, { as: 'included' }),
-        hasNone(path.tags, { as: 'excluded' }),
-      ])
+      build((path) => ({
+        included: hasAny(path.tags),
+        excluded: hasNone(path.tags),
+      })),
     ).toThrow();
   });
 
   it('does not throw for a compound filter() over one path', () => {
     expect(() =>
-      build((path) => [
-        filter(
+      build((path) => ({
+        tags: filter(
           path.tags,
           (cell: string[], c: { include: string[]; exclude: string[] }) =>
             hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude),
           {
             emptyValue: { include: [], exclude: [] },
             isEmpty: (c) => c.include.length === 0 && c.exclude.length === 0,
-          }
+          },
         ),
-      ])
+      })),
     ).not.toThrow();
   });
 });
 
-describe('createFilters — duplicate keys', () => {
-  it('throws when two `as` values collide', () => {
+describe('buildFilterModel — schema must return an object literal (R40)', () => {
+  it('throws, naming the object form, when the schema calls rules as statements and returns nothing', () => {
     expect(() =>
-      build((path) => [
-        equals(path.status, { as: 'shared' }),
-        contains(path.customer, { as: 'shared' }),
-      ])
-    ).toThrow();
+      buildFilterModel<Invoice, Record<string, AnyRule>>(
+        // @ts-expect-error — a schema returning `void` fails `S extends Record<string,
+        // AnyRule>`; asserting the runtime backstop for an untyped caller, same pattern as
+        // the anyOf-without-rules test below.
+        (path) => {
+          equals(path.status);
+        },
+      ),
+    ).toThrow('return its rules as an object literal');
   });
 
-  it('throws when an `as` collides with a borrowed key', () => {
+  it('throws, naming the object form, when the schema returns an array (the pre-#124 shape)', () => {
     expect(() =>
-      build((path) => [equals(path.status), contains(path.customer, { as: 'status' })])
-    ).toThrow();
+      buildFilterModel<Invoice, Record<string, AnyRule>>(
+        // @ts-expect-error — an array schema was rejected as a type once #110 landed; asserting
+        // the runtime backstop for an untyped caller reaching this from JS.
+        (path) => [equals(path.status)],
+      ),
+    ).toThrow('return its rules as an object literal');
   });
 });
 
-describe('createFilters — anyOf without rules', () => {
+describe('buildFilterModel — anyOf without rules', () => {
   it('throws when anyOf declares no rules', () => {
     expect(() =>
-      build((_path) => [
+      build((_path) => ({
         // @ts-expect-error — anyOf's non-empty-tuple constraint rejects an empty group at the
         // type level (#110); the runtime throw is the backstop for an untyped caller, asserted
-        // here. The type-level rejection itself is asserted in #112's types spec.
-        anyOf('search', []),
-      ])
+        // here. The type-level rejection itself is asserted in with-filtering.types.spec.ts.
+        search: anyOf([]),
+      })),
     ).toThrow();
   });
 });
 
-describe('createFilters — state semantics', () => {
+describe('buildFilterModel — state semantics', () => {
   it('value() returns the complete shape', () => {
-    const filters = build((path) => [
-      equals(path.status),
-      contains(path.customer, { as: 'search' }),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status),
+      search: contains(path.customer),
+    }));
     expect(filters().value()).toEqual({ status: null, search: '' });
   });
 
   it('criteria() omits empty entries', () => {
-    const filters = build((path) => [
-      equals(path.status),
-      contains(path.customer, { as: 'search' }),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status),
+      search: contains(path.customer),
+    }));
     filters.status().value.set('open');
     expect(filters().criteria()).toEqual({ status: 'open' });
   });
 
   it('reset() with no arg reverts to source, or empty when no source', () => {
-    const filters = build((path) => [equals(path.status)]);
+    const filters = build((path) => ({ status: equals(path.status) }));
     filters.status().value.set('closed');
     filters.status().reset();
     expect(filters.status().value()).toBe(null);
   });
 
   it('reset(null) sets the empty value', () => {
-    const filters = build((path) => [equals(path.status)]);
+    const filters = build((path) => ({ status: equals(path.status) }));
     filters.status().value.set('closed');
     filters.status().reset(null);
     expect(filters.status().value()).toBe(null);
   });
 
   it('reset(value) sets an arbitrary value', () => {
-    const filters = build((path) => [inRange(path.amount)]);
+    const filters = build((path) => ({ amount: inRange(path.amount) }));
     filters.amount().reset({ min: 0, max: 500 });
     expect(filters.amount().value()).toEqual({ min: 0, max: 500 });
   });
 
   it('dirty() is false untouched and true once written', () => {
-    const filters = build((path) => [equals(path.status)]);
+    const filters = build((path) => ({ status: equals(path.status) }));
     expect(filters.status().dirty()).toBe(false);
     filters.status().value.set('open');
     expect(filters.status().dirty()).toBe(true);
   });
 });
 
-describe('createFilters — emptyValue extends, isEmpty replaces', () => {
+describe('buildFilterModel — emptyValue extends, isEmpty replaces', () => {
   it("seeds the node with the declared empty value instead of the rule's own", () => {
-    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
+    const filters = build((path) => ({
+      status: equals(path.status, { emptyValue: '' }),
+    }));
     expect(filters.status().value()).toBe('');
   });
 
   it("treats the declared empty value as empty — a native <select>'s '' deactivates the filter", () => {
-    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
+    const filters = build((path) => ({
+      status: equals(path.status, { emptyValue: '' }),
+    }));
     filters.status().value.set('open');
     expect(filters().criteria()).toEqual({ status: 'open' });
 
@@ -213,16 +214,21 @@ describe('createFilters — emptyValue extends, isEmpty replaces', () => {
   });
 
   it("still treats the rule's own empty value as empty alongside the override", () => {
-    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
+    const filters = build((path) => ({
+      status: equals(path.status, { emptyValue: '' }),
+    }));
     filters.status().value.set(null);
     expect(filters().criteria()).toEqual({});
     expect(filters.status().criterion()).toBeUndefined();
   });
 
   it('isEmpty subtracts the rule empty — null is a meaningful criterion again', () => {
-    const filters = build((path) => [
-      equals(path.status, { emptyValue: '', isEmpty: (criterion) => criterion === '' }),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status, {
+        emptyValue: '',
+        isEmpty: (criterion) => criterion === '',
+      }),
+    }));
     filters.status().value.set(null);
     expect(filters().criteria()).toEqual({ status: null });
     filters.status().value.set('');
@@ -230,14 +236,18 @@ describe('createFilters — emptyValue extends, isEmpty replaces', () => {
   });
 
   it('reset(null) returns to the declared empty value', () => {
-    const filters = build((path) => [equals(path.status, { emptyValue: '' })]);
+    const filters = build((path) => ({
+      status: equals(path.status, { emptyValue: '' }),
+    }));
     filters.status().value.set('open');
     filters.status().reset(null);
     expect(filters.status().value()).toBe('');
   });
 
   it('compares structurally, so an object empty value works on any rule', () => {
-    const filters = build((path) => [inRange(path.amount, { emptyValue: { min: 0, max: null } })]);
+    const filters = build((path) => ({
+      amount: inRange(path.amount, { emptyValue: { min: 0, max: null } }),
+    }));
     expect(filters().criteria()).toEqual({});
     filters.amount().value.set({ min: 100, max: null });
     expect(filters().criteria()).toEqual({ amount: { min: 100, max: null } });
@@ -246,9 +256,11 @@ describe('createFilters — emptyValue extends, isEmpty replaces', () => {
   });
 
   it('isEmpty is promoted to the named rules, not just filter()', () => {
-    const filters = build((path) => [
-      contains(path.customer, { isEmpty: (criterion) => criterion === '—' }),
-    ]);
+    const filters = build((path) => ({
+      customer: contains(path.customer, {
+        isEmpty: (criterion) => criterion === '—',
+      }),
+    }));
 
     // The rule's own `''` empty is replaced outright, so it now narrows.
     filters.customer().value.set('');
@@ -259,12 +271,16 @@ describe('createFilters — emptyValue extends, isEmpty replaces', () => {
   });
 
   it('an explicit isEmpty still wins over emptyValue on filter()', () => {
-    const filters = build((path) => [
-      filter(path.tags, (cell, criterion: readonly string[]) => hasAnyOf(cell, criterion), {
-        emptyValue: ['none'],
-        isEmpty: (criterion) => criterion.length === 0,
-      }),
-    ]);
+    const filters = build((path) => ({
+      tags: filter(
+        path.tags,
+        (cell, criterion: readonly string[]) => hasAnyOf(cell, criterion),
+        {
+          emptyValue: ['none'],
+          isEmpty: (criterion) => criterion.length === 0,
+        },
+      ),
+    }));
     expect(filters.tags().value()).toEqual(['none']);
     expect(filters().criteria()).toEqual({ tags: ['none'] });
     filters.tags().value.set([]);
@@ -272,23 +288,27 @@ describe('createFilters — emptyValue extends, isEmpty replaces', () => {
   });
 });
 
-describe('createFilters — sources', () => {
+describe('buildFilterModel — sources', () => {
   it('untouched with no source: not dirty, not in criteria()', () => {
-    const filters = build((path) => [equals(path.status)]);
+    const filters = build((path) => ({ status: equals(path.status) }));
     expect(filters.status().dirty()).toBe(false);
     expect(filters().criteria()).toEqual({});
   });
 
   it('untouched with a source present: not dirty, is in criteria()', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
+    const filters = build((path) => ({
+      amount: inRange(path.amount, { source: () => bounds() }),
+    }));
     expect(filters.amount().dirty()).toBe(false);
     expect(filters().criteria()).toEqual({ amount: { min: 0, max: 10000 } });
   });
 
   it('a user write makes it dirty and keeps it in criteria()', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
+    const filters = build((path) => ({
+      amount: inRange(path.amount, { source: () => bounds() }),
+    }));
     filters.amount().value.set({ min: 100, max: 500 });
     expect(filters.amount().dirty()).toBe(true);
     expect(filters().criteria()).toEqual({ amount: { min: 100, max: 500 } });
@@ -296,7 +316,9 @@ describe('createFilters — sources', () => {
 
   it('writing exactly the source value is dirty=false but still active', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
+    const filters = build((path) => ({
+      amount: inRange(path.amount, { source: () => bounds() }),
+    }));
     filters.amount().value.set({ min: 0, max: 10000 });
     expect(filters.amount().dirty()).toBe(false);
     expect(filters().criteria()).toEqual({ amount: { min: 0, max: 10000 } });
@@ -304,7 +326,9 @@ describe('createFilters — sources', () => {
 
   it('reset(null) is dirty and removed from criteria()', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
+    const filters = build((path) => ({
+      amount: inRange(path.amount, { source: () => bounds() }),
+    }));
     filters.amount().reset(null);
     expect(filters.amount().dirty()).toBe(true);
     expect(filters().criteria()).toEqual({});
@@ -312,7 +336,9 @@ describe('createFilters — sources', () => {
 
   it('a later source change does not stomp a dirty filter value', () => {
     const bounds = signal({ min: 0, max: 10000 });
-    const filters = build((path) => [inRange(path.amount, { source: () => bounds() })]);
+    const filters = build((path) => ({
+      amount: inRange(path.amount, { source: () => bounds() }),
+    }));
     filters.amount().value.set({ min: 100, max: 500 });
     bounds.set({ min: 0, max: 20000 });
     TestBed.flushEffects();
@@ -320,76 +346,94 @@ describe('createFilters — sources', () => {
   });
 });
 
-describe('createFilters — combination semantics (via the safe-evaluate guard)', () => {
+describe('buildFilterModel — combination semantics (via the safe-evaluate guard)', () => {
   it('ORs an anyOf group across its children', () => {
-    const filters = build((path) => [
-      anyOf('search', [contains(path.customer), contains(path.notes)]),
-    ]);
+    const filters = build((path) => ({
+      search: anyOf([contains(path.customer), contains(path.notes)]),
+    }));
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
     expect(matches(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
-    expect(matches(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
+    expect(
+      matches(invoice({ customer: 'Globex', notes: 'contact acme' })),
+    ).toBe(true);
     expect(matches(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
   });
 
   it('ANDs separate filters across the root', () => {
-    const filters = build((path) => [
-      equals(path.status),
-      contains(path.customer, { as: 'search' }),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status),
+      search: contains(path.customer),
+    }));
     filters.status().value.set('open');
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
-    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
-    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
-    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(
+      true,
+    );
+    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(
+      false,
+    );
+    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(
+      false,
+    );
   });
 });
 
-describe('createFilters — null/undefined cells', () => {
+describe('buildFilterModel — null/undefined cells', () => {
   it('a positive matcher fails a nullable cell', () => {
-    const filters = build((path) => [equals(path.subCategory)]);
+    const filters = build((path) => ({
+      subCategory: equals(path.subCategory),
+    }));
     filters.subCategory().value.set('widgets');
     const matches = filters().matcher();
-    expect(matches(invoice({ subCategory: undefined as unknown as string }))).toBe(false);
+    expect(
+      matches(invoice({ subCategory: undefined as unknown as string })),
+    ).toBe(false);
   });
 
   it('hasNone passes a nullable/empty array cell', () => {
-    const filters = build((path) => [hasNone(path.tags)]);
+    const filters = build((path) => ({ tags: hasNone(path.tags) }));
     filters.tags().value.set(['urgent']);
     const matches = filters().matcher();
-    expect(matches(invoice({ tags: undefined as unknown as string[] }))).toBe(true);
+    expect(matches(invoice({ tags: undefined as unknown as string[] }))).toBe(
+      true,
+    );
   });
 
   it('a custom filter() predicate receives the cell unguarded and can match nulls', () => {
-    const filters = build((path) => [
-      filter(path.notes, (cell: string, want: boolean) => want === (cell == null || cell === ''), {
-        emptyValue: false,
-      }),
-    ]);
+    const filters = build((path) => ({
+      notes: filter(
+        path.notes,
+        (cell: string, want: boolean) => want === (cell == null || cell === ''),
+        { emptyValue: false },
+      ),
+    }));
     filters.notes().value.set(true);
     const matches = filters().matcher();
-    expect(matches(invoice({ notes: undefined as unknown as string }))).toBe(true);
+    expect(matches(invoice({ notes: undefined as unknown as string }))).toBe(
+      true,
+    );
     expect(matches(invoice({ notes: 'has content' }))).toBe(false);
   });
 });
 
-describe('createFilters — errors (ADR-0014)', () => {
+describe('buildFilterModel — errors (ADR-0014)', () => {
   it('a throwing predicate deactivates only its own filter and is reported once per evaluator, not per row', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const filters = build((path) => [
-        equals(path.status),
-        filter(
+      const filters = build((path) => ({
+        status: equals(path.status),
+        broken: filter(
           path.customer,
           () => {
             throw new Error('boom');
           },
-          { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
+          { emptyValue: 'x', isEmpty: () => false },
         ),
-      ]);
+      }));
       filters.status().value.set('open');
       const matches = filters().matcher();
 
@@ -407,15 +451,15 @@ describe('createFilters — errors (ADR-0014)', () => {
   it('a failed filter still appears in criteria()', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const filters = build((path) => [
-        filter(
+      const filters = build((path) => ({
+        broken: filter(
           path.customer,
           () => {
             throw new Error('boom');
           },
-          { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
+          { emptyValue: 'x', isEmpty: () => false },
         ),
-      ]);
+      }));
       expect(filters().criteria()).toEqual({ broken: 'x' });
     } finally {
       reportSpy.mockRestore();
@@ -425,16 +469,16 @@ describe('createFilters — errors (ADR-0014)', () => {
   it('other filters keep narrowing when one throws', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const filters = build((path) => [
-        equals(path.status),
-        filter(
+      const filters = build((path) => ({
+        status: equals(path.status),
+        broken: filter(
           path.customer,
           () => {
             throw new Error('boom');
           },
-          { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
+          { emptyValue: 'x', isEmpty: () => false },
         ),
-      ]);
+      }));
       filters.status().value.set('closed');
       const matches = filters().matcher();
       expect(matches(invoice({ status: 'open' }))).toBe(false);
@@ -444,45 +488,71 @@ describe('createFilters — errors (ADR-0014)', () => {
   });
 });
 
-describe('createFilters — applyWhen', () => {
+describe('buildFilterModel — when gating', () => {
   it('excludes the gated rule from criteria() while the condition is false', () => {
-    const filters = build((path) => [
-      equals(path.category),
-      applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
-        equals(path.subCategory),
-      ]),
-    ]);
+    const filters = build((path) => ({
+      category: equals(path.category),
+      subCategory: equals(path.subCategory, {
+        when: ({ valueOf }) => valueOf(path.category) !== null,
+      }),
+    }));
     filters.subCategory().value.set('widgets');
     expect(filters().criteria()).toEqual({});
   });
 
   it('includes the gated rule once the condition becomes true, without redeclaring the schema', () => {
-    const filters = build((path) => [
-      equals(path.category),
-      applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
-        equals(path.subCategory),
-      ]),
-    ]);
+    const filters = build((path) => ({
+      category: equals(path.category),
+      subCategory: equals(path.subCategory, {
+        when: ({ valueOf }) => valueOf(path.category) !== null,
+      }),
+    }));
     filters.subCategory().value.set('widgets');
     expect(filters().criteria()).toEqual({});
 
     filters.category().value.set('electronics');
-    expect(filters().criteria()).toEqual({ category: 'electronics', subCategory: 'widgets' });
+    expect(filters().criteria()).toEqual({
+      category: 'electronics',
+      subCategory: 'widgets',
+    });
+  });
+
+  it('gated off: criterion()/isActive() go dark, value()/reset() are unaffected', () => {
+    const filters = build((path) => ({
+      category: equals(path.category),
+      subCategory: equals(path.subCategory, {
+        when: ({ valueOf }) => valueOf(path.category) !== null,
+      }),
+    }));
+    const subCategory = filters.subCategory();
+    subCategory.value.set('widgets');
+
+    expect(subCategory.criterion()).toBeUndefined();
+    expect(subCategory.isActive()).toBe(false);
+    expect(subCategory.value()).toBe('widgets');
+
+    subCategory.reset();
+    expect(subCategory.value()).toBe(null);
+
+    subCategory.value.set('gadgets');
+    filters.category().value.set('electronics');
+    expect(subCategory.criterion()).toBe('gadgets');
+    expect(subCategory.isActive()).toBe(true);
   });
 });
 
-describe('createFilters — matcher()', () => {
+describe('buildFilterModel — matcher()', () => {
   function buildBrokenFilters() {
-    return build((path) => [
-      equals(path.status),
-      filter(
+    return build((path) => ({
+      status: equals(path.status),
+      broken: filter(
         path.customer,
         () => {
           throw new Error('boom');
         },
-        { emptyValue: 'x', isEmpty: () => false, as: 'broken' }
+        { emptyValue: 'x', isEmpty: () => false },
       ),
-    ]);
+    }));
   }
 
   function brokenRows(): Invoice[] {
@@ -494,7 +564,7 @@ describe('createFilters — matcher()', () => {
   }
 
   it('filters a plain array with no table composed at all', () => {
-    const filters = build((path) => [equals(path.status)]);
+    const filters = build((path) => ({ status: equals(path.status) }));
     filters.status().value.set('open');
 
     const rows = [
@@ -503,14 +573,13 @@ describe('createFilters — matcher()', () => {
       invoice({ status: 'open', customer: 'Initech' }),
     ];
 
-    expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual([
-      'Acme',
-      'Initech',
-    ]);
+    expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual(
+      ['Acme', 'Initech'],
+    );
   });
 
   it('reflects the criteria current at the moment it was requested', () => {
-    const filters = build((path) => [equals(path.status)]);
+    const filters = build((path) => ({ status: equals(path.status) }));
 
     filters.status().value.set('open');
     const matchesOpen = filters().matcher();
@@ -524,10 +593,10 @@ describe('createFilters — matcher()', () => {
   });
 
   it('skips an empty criterion rather than narrowing to nothing', () => {
-    const filters = build((path) => [
-      equals(path.status),
-      contains(path.customer, { as: 'search' }),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status),
+      search: contains(path.customer),
+    }));
     filters.status().value.set('open');
 
     const rows = [invoice({ status: 'open' }), invoice({ status: 'closed' })];
@@ -536,50 +605,62 @@ describe('createFilters — matcher()', () => {
   });
 
   it('ORs an anyOf group across its children', () => {
-    const filters = build((path) => [
-      anyOf('search', [contains(path.customer), contains(path.notes)]),
-    ]);
+    const filters = build((path) => ({
+      search: anyOf([contains(path.customer), contains(path.notes)]),
+    }));
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
     expect(matches(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
-    expect(matches(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
+    expect(
+      matches(invoice({ customer: 'Globex', notes: 'contact acme' })),
+    ).toBe(true);
     expect(matches(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
   });
 
   it('ANDs separate filters across the root', () => {
-    const filters = build((path) => [
-      equals(path.status),
-      contains(path.customer, { as: 'search' }),
-    ]);
+    const filters = build((path) => ({
+      status: equals(path.status),
+      search: contains(path.customer),
+    }));
     filters.status().value.set('open');
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
-    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
-    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
-    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(
+      true,
+    );
+    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(
+      false,
+    );
+    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(
+      false,
+    );
   });
 
-  it('does not narrow through a filter applyWhen has gated off', () => {
-    const filters = build((path) => [
-      equals(path.category),
-      applyWhen(path, ({ valueOf }) => valueOf(path.category) !== null, [
-        equals(path.subCategory),
-      ]),
-    ]);
+  it('does not narrow through a filter gated off by when', () => {
+    const filters = build((path) => ({
+      category: equals(path.category),
+      subCategory: equals(path.subCategory, {
+        when: ({ valueOf }) => valueOf(path.category) !== null,
+      }),
+    }));
     filters.subCategory().value.set('widgets');
 
     const gatedOff = filters().matcher();
-    expect(gatedOff(invoice({ category: null, subCategory: 'gadgets' }))).toBe(true);
+    expect(gatedOff(invoice({ category: null, subCategory: 'gadgets' }))).toBe(
+      true,
+    );
 
     filters.category().value.set('electronics');
     const gatedOn = filters().matcher();
-    expect(gatedOn(invoice({ category: 'electronics', subCategory: 'gadgets' }))).toBe(false);
+    expect(
+      gatedOn(invoice({ category: 'electronics', subCategory: 'gadgets' })),
+    ).toBe(false);
   });
 
   it('fails a positive matcher on a null cell', () => {
-    const filters = build((path) => [equals(path.category)]);
+    const filters = build((path) => ({ category: equals(path.category) }));
     filters.category().value.set('electronics');
     const matches = filters().matcher();
 
@@ -599,7 +680,9 @@ describe('createFilters — matcher()', () => {
 
         expect(matched.map((row) => row.customer)).toEqual(['Acme', 'Initech']);
         expect(reportSpy).toHaveBeenCalledTimes(1);
-        expect(String(reportSpy.mock.calls[0]?.[0])).toContain('filter "broken"');
+        expect(String(reportSpy.mock.calls[0]?.[0])).toContain(
+          'filter "broken"',
+        );
       } finally {
         reportSpy.mockRestore();
       }
@@ -624,7 +707,8 @@ describe('createFilters — matcher()', () => {
 
   // Type-level assertions that also assert runtime behaviour. Vitest does not typecheck
   // `expectTypeOf` at runtime — `nx run shared-table:typecheck-spec` is what enforces those.
-  // Inference facts with no runtime half live in `create-filters.types.spec.ts` instead.
+  // Inference facts with no runtime half live in `api/features/with-filtering.types.spec.ts`
+  // instead.
   describe('types', () => {
     /** Separately declared, same shape — the predicate correlates structurally, not nominally. */
     type InvoiceShape = { [K in keyof Invoice]: Invoice[K] };
@@ -633,8 +717,19 @@ describe('createFilters — matcher()', () => {
       auditedBy: string;
     }
 
+    // `equals<TRow, K>` is pinned explicitly here (not left inferred, as a real schema always
+    // writes it) — `buildFilterModel` infers `TRow` from this call's own arrow function rather
+    // than from a fixed `data` slot the way `withFiltering`+`createTable` does, and that leaves
+    // `equals`'s `TEmpty` default undischarged, which makes `expectTypeOf(...).toEqualTypeOf`
+    // report a spurious mismatch even though the resolved type is correct (assignability holds).
+    // The consumer-representative inference path — schema inferred with no explicit type args,
+    // composed through `withFiltering`+`createTable` — is what `with-filtering.types.spec.ts`
+    // asserts; this block only re-confirms the same shapes have a runtime-observable half.
     function buildTypedFilters() {
-      return build((path) => [equals(path.status), equals(path.category)]);
+      return build((path) => ({
+        status: equals<Invoice, 'status'>(path.status),
+        category: equals<Invoice, 'category'>(path.category),
+      }));
     }
 
     it('accepts a structurally identical row type and a wider one carrying extra fields', () => {
@@ -670,10 +765,9 @@ describe('createFilters — matcher()', () => {
         invoice({ status: 'open', customer: 'Initech' }),
       ];
 
-      expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual([
-        'Acme',
-        'Initech',
-      ]);
+      expect(
+        rows.filter(filters().matcher()).map((row) => row.customer),
+      ).toEqual(['Acme', 'Initech']);
     });
   });
 });

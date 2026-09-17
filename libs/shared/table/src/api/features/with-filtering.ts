@@ -1,73 +1,73 @@
+import { buildFilterModel } from '../../filters/create-filters';
+import type { AnyRule, Filters, FiltersPath, StateOf } from '../../filters/types';
 import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict } from '../types';
 
-export interface WithFilteringConfig<TRow> {
-  /** One call = one evaluation. Terms AND'd; a term that throws is dropped for that pass. */
-  predicates: () => readonly ((row: TRow) => boolean)[];
+export interface WithFilteringConfig<TRow, S extends Record<string, AnyRule> = {}> {
+  /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
+   * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
   manual?: boolean;
+  /** Declares the owned filter model, exposed as `filters`. Built once at construction; its
+   * criteria narrow the pipeline's `filter` stage through `matcher()`. */
+  schema?: (path: FiltersPath<TRow>) => S;
+}
+
+export interface FilteringMembers<TRow, TState extends Record<string, unknown>> {
+  readonly filters: Filters<TRow, TState>;
 }
 
 /**
- * Narrows by each term in turn, AND'd. One `try` per term rather than per row: a throwing
- * term aborts its own pass before its result is kept, so it applies to no row at all instead
- * of to the rows it reached first. Sibling terms keep narrowing.
+ * Adds filtering to a `createTable()`. With `schema`, builds and owns the filter model,
+ * exposing it as `filters`, and its criteria narrow the pipeline's `filter` stage; without
+ * `schema`, contributes no member and the stage is a no-op. See
+ * `docs/1-state/features/filtering.md`.
  */
-function applyPredicateTerms<TRow>(
-  rows: TRow[],
-  terms: readonly ((row: TRow) => boolean)[]
-): TRow[] {
-  let narrowed = rows;
-  for (let index = 0; index < terms.length; index++) {
-    try {
-      narrowed = narrowed.filter(terms[index]);
-    } catch (error) {
-      reportPredicateError(terms[index], index, error);
-    }
-  }
-  return narrowed;
-}
-
-function reportPredicateError<TRow>(
-  predicate: (row: TRow) => boolean,
-  index: number,
-  error: unknown
-): void {
-  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
-  // runtime-degradation logging abstraction to reuse in this codebase yet.
-  console.error(
-    `[withFiltering] The predicate at index ${index} threw while evaluating a row. ` +
-      'This predicate does not narrow for this pass; other predicates are unaffected.',
-    { index, predicate, error }
-  );
-}
-
-/**
- * Adds client-side filtering to a `createTable()` — a thunk of plain row predicates, applied to
- * the pipeline's `filter` stage. See `docs/1-state/features/filtering.md`. Owns no filter state;
- * the consumer holds the predicates.
- */
-export function withFiltering<In extends Shape>(config: WithFilteringConfig<RowOf<In>>): Feature<In, {}>;
+export function withFiltering<In extends Shape>(
+  config?: WithFilteringConfig<RowOf<In>, {}> & { schema?: undefined }
+): Feature<In, {}>;
+export function withFiltering<In extends Shape, S extends Record<string, AnyRule>>(
+  config: WithFilteringConfig<RowOf<In>, S> & { schema: (path: FiltersPath<RowOf<In>>) => S }
+): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>>>;
 export function withFiltering<In extends Shape, D extends DerivedDict>(
-  config: WithFilteringConfig<RowOf<In>>,
+  config: (WithFilteringConfig<RowOf<In>, {}> & { schema?: undefined }) | undefined,
   derive: Feature<NoInfer<In>, D>
 ): Feature<In, D>;
+export function withFiltering<
+  In extends Shape,
+  S extends Record<string, AnyRule>,
+  D extends DerivedDict
+>(
+  config: WithFilteringConfig<RowOf<In>, S> & { schema: (path: FiltersPath<RowOf<In>>) => S },
+  derive: Feature<NoInfer<In> & FilteringMembers<RowOf<In>, StateOf<S>>, D>
+): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>> & D>;
 export function withFiltering(
-  config: WithFilteringConfig<any>,
+  config?: WithFilteringConfig<any, any>,
   derive?: Feature<any, any>
 ): Feature<any, any> {
-  const manual = config.manual ?? false;
-  const factory = <In extends Shape>(_input: In): TableFeatureSpec<RowOf<In>, {}> => ({
-    stages: {
-      filter: (rows) => {
-        if (manual) {
-          return rows;
-        }
-        const terms = config.predicates();
-        return applyPredicateTerms<RowOf<In>>(rows, terms);
+  const manual = config?.manual ?? false;
+  const schemaFn = config?.schema;
+
+  const factory = <In extends Shape>(_input: In): TableFeatureSpec<RowOf<In>, any> => {
+    const filters = schemaFn ? buildFilterModel<RowOf<In>, any>(schemaFn) : undefined;
+
+    return {
+      members: filters ? { filters } : {},
+      stages: {
+        filter: (rows) => {
+          const shouldSkipFiltering = manual || !filters;
+          if (shouldSkipFiltering) {
+            return rows;
+          }
+          // One matcher per stage evaluation, not per row — it carries its own
+          // error-dedup scope and memoized narrowing set.
+          const matcher = filters().matcher();
+          return rows.filter(matcher);
+        },
       },
-    },
-  });
+    };
+  };
+
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)
     : createTableFeature(factory);

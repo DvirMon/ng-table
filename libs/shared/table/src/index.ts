@@ -1,8 +1,10 @@
 // Public API of the table. This file defines the table's own consumer surface and re-exports
 // the filters domain's barrel (`./filters`) wholesale — one barrel per domain, not one per repo
-// (ADR-0004's 2026-09 amendment). `api/`, `schema/`, `mutations/`, `engine/` and `directives/`
-// are phases of this domain and still have no barrels of their own, so anything under them not
-// listed here is internal (mirrors Angular Signal Forms' `public_api.ts`).
+// (ADR-0004's 2026-09 amendment). The filters barrel supplies rules and types only; a consumer
+// reaches filtering itself through `withFiltering` (below), not through the filters domain
+// directly. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are phases of this
+// domain and still have no barrels of their own, so anything under them not listed here is
+// internal (mirrors Angular Signal Forms' `public_api.ts`).
 export * from './api/create-table';
 export * from './api/types';
 export * from './directives/table.tokens';

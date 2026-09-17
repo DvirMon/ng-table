@@ -30,7 +30,7 @@ src/
   api/          ← factory + declaration surface a consumer touches
   schema/       ← column schema DSL: columnSchema(), metadata, visibility/sort rules
   mutations/    ← row and column mutation verbs
-  filters/      ← the standalone createFilters() domain. Owns its own barrel (ADR-0016)
+  filters/      ← rules/types domain, reached via withFiltering(). Owns its own barrel (ADR-0016)
   engine/       ← the runtime; nothing here is exported
   directives/   ← UI layer
   table.mock.ts ← shared test fixtures
@@ -41,7 +41,7 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | File | Purpose |
 |---|---|
 | `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. **One barrel per domain, not one per repo:** `filters/` is its own domain (usable with no table at all) and defines its own surface, which this file re-exports wholesale |
-| `filters/index.ts` | The filters domain's public surface — `createFilters` and `rowOf`, four types (`Filters`, `FilterNode`, `FilterOptions`, `RowToken`), the nine rules, the six matchers. Lists them explicitly; `export *`-ing the source files here would leak `createFilterEvaluatorFrom` and the evaluator internals. `evaluator.ts`, `state.ts`, `validate.ts` are internal because they are not listed here |
+| `filters/index.ts` | The filters domain's public surface — four types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`), the eight rules, the six matchers. Lists them explicitly; `export *`-ing the source files here would leak `buildFilterModel`, `createFilterEvaluatorFrom` and the evaluator internals. `create-filters.ts`, `evaluator.ts`, `state.ts`, `validate.ts` are internal because they are not listed here — a consumer reaches the model through `withFiltering`'s `schema` config, not this barrel |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
@@ -119,7 +119,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/status.md` | Every capability's spec/code maturity, state and UI layer side by side. The entry point for "what's the state of X?" | **Generated** — `npm run table:status`. Never hand-edit; fix the owning spec's frontmatter and regenerate |
 | `docs/1-state/row-mutations.md` | Core-API spec — `table.value.update()` + the row updaters. Not in `features/` because mutation is core, not a `with-*()` plugin (D8) | Permanent |
 | `docs/1-state/state-persistence.md` | Cross-feature spec — one atomic snapshot of sort + columns + filters + pagination. Sibling of `row-mutations.md` for the same D8 reason: persistence spans features, it isn't one plugin's state | Permanent |
-| `docs/1-state/filters.md` | Core-API spec — the standalone `createFilters()` primitive. Not in `features/` (same D8 reason): it is usable with no table at all, and in server mode the table never composes a filtering feature. `features/filtering.md` is the thin client-side adapter over it | Permanent |
+| `docs/1-state/filters.md` | Core-API spec for the filters domain's rules/types, reached only through `withFiltering`'s `schema` config — the model is table-owned (#124), not a standalone primitive. Due for a merge into `features/filtering.md`, tracked separately | Permanent |
 | `docs/2-columns/reference/` | Column schema reference (tier levels, ownership, derivation); read-only reference | Permanent; reflects current schema semantics |
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |

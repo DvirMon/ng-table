@@ -26,17 +26,16 @@ function reportFilterError<TRow>(record: FilterRuleRecord<TRow>, row: TRow): voi
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
-    `[createFilters] The predicate for filter "${record.key}" threw while evaluating a row. ` +
+    `[withFiltering] The predicate for filter "${record.key}" threw while evaluating a row. ` +
       'This filter does not narrow for this evaluation; other filters are unaffected.',
     { key: record.key, predicate: record.predicate, cell }
   );
 }
 
-/** One record's own predicate against one row — `'error'` on a throwing predicate, never
- *  propagated further up. `'group'` (anyOf) ORs its children against the shared criterion.
- *  `row as Record<string, unknown>` is a generic-erasure read, not a validated cast — every
- *  path here was recorded from a real `keyof TRow` access, so the index always exists or reads
- *  `undefined`, which the matchers' own null policy already handles. */
+// One record's own predicate against one row — `'error'` on a throwing predicate, never
+// propagated further. `'group'` (anyOf) ORs its children against the shared criterion.
+// `row as Record<string, unknown>` is a generic-erasure read, not a validated cast — every
+// path here was recorded from a real `keyof TRow` access.
 function evaluateRecord<TRow>(
   record: FilterRuleRecord<TRow>,
   criterion: unknown,
@@ -90,9 +89,9 @@ export function createFilterEvaluatorFrom<TRow>(
 
   let narrowingRecordsMemo: { record: FilterRuleRecord<TRow>; criterion: unknown }[] | undefined;
 
-  /** The records that narrow this pass: node present, condition met, criterion non-empty. Gating
-   *  and emptiness read criterion state, which is constant across one evaluation, so this
-   *  resolves once per instance rather than once per row. */
+  // The records that narrow this pass: node present, condition met, criterion non-empty.
+  // Criterion state is constant across one evaluation, so this resolves once per instance
+  // rather than once per row.
   function narrowingRecords(): { record: FilterRuleRecord<TRow>; criterion: unknown }[] {
     if (narrowingRecordsMemo !== undefined) {
       return narrowingRecordsMemo;
@@ -103,7 +102,9 @@ export function createFilterEvaluatorFrom<TRow>(
       if (!node) {
         continue;
       }
-      if (record.condition && !record.condition(buildValueOfContext<TRow>(internal))) {
+      const when = record.options?.when;
+      const isGatedOff = when && !when(buildValueOfContext<TRow>(internal));
+      if (isGatedOff) {
         continue;
       }
       const criterion = node.criterion();
