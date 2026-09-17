@@ -1,8 +1,8 @@
 ---
 title: Decisions — groupIndex on ColumnDef (#115)
 type: decisions
-status: drilling — node graph mapped, no decisions settled yet.
-date: 2026-09-16
+status: drilling — D1-D7 settled (shape decided); N5-N7 open, none blocking.
+date: 2026-09-17
 audience: developers
 ---
 
@@ -71,11 +71,62 @@ N6   (independent, leaf — issue already scopes it to "a look, not a commitment
 
 ## Settled
 
-_(none yet)_
+- **D1 (2026-09-17) — The scenario is a *dynamic* group-by panel, not grouping in general.**
+  A table whose levels are fixed by the developer (`initialGrouping`, no control) needs none of
+  this data. The need appears only when a person edits levels at runtime. Two UI pieces:
+  an ordered level chip strip (reorder/remove) and a per-column toggle row.
+
+- **D2 (2026-09-17) — Option B: two feature members on `withGrouping()`. Nothing on `ColumnDef`.**
+
+  ```ts
+  readonly groupingLevels: Signal<ColumnDef<TRow>[]>;      // ordered, outermost first
+  readonly isGroupedBy: (columnId: string) => boolean;     // O(1), Map-backed
+  ```
+
+  They are inverse lookups of one relation and the panel does both every render:
+  `groupingLevels` iterates levels → columns (serves the chips); `isGroupedBy` queries a
+  column → membership (serves the toggles). Shipping one leaves the consumer hand-rolling
+  the other half of the same control.
+
+  Deletes `columnLabelById` (4 of 4 grouping story hosts), `isGroupedById` (2), the private
+  `isGroupedBy()` method, and `grouping.includes(column.id)` in `syncGroupedColumnMode`.
+
+- **D3 (2026-09-17) — `isGroupedBy(): boolean`, not `groupIndexOf(): number | undefined`.**
+  Every existing call site asks *is this column a level*, never *which level*. `groupingLevels()`
+  already answers "which" by position. Rejecting the index also drops the name `groupIndex` that
+  #115 was filed under — the issue's title outlived its own evidence. Reversible: add
+  `groupIndexOf` if a per-column index need ever appears.
+
+- **D4 (2026-09-17) — Both members derive from `groupingLevels()`, not from `grouping()`.**
+  So `resolveGroupingLevels`'s D14 drop (a level naming no known column) applies exactly once
+  and the two members cannot disagree with each other or with what the pipeline clusters on.
+
+- **D5 (2026-09-17) — Rejected: widening `grouping`'s `WritableView` read type.**
+  The seam exists (`createWritableView` already separates read from write), but it would make
+  `grouping` mean two things depending on which half you touch, against id-based write updaters
+  (`with-grouping` D1). A separate member keeps one name, one meaning.
+
+- **D6 (2026-09-17) — Rejected: a standalone `createGroupBy(table)` helper.**
+  `createFilters()` exists because R10's construction cycle forced it (ADR-0016), not for
+  ergonomics. No cycle here, so the precedent does not transfer.
+
+- **D7 (2026-09-17) — Level order and `groupOrder` stay unrelated, and this changes neither.**
+  Three orthogonal orderings: levels (which column nests in which), clusters (`groupOrder`,
+  sibling buckets within a level, `with-grouping` D4), rows (`sorting`, leaves within a cluster,
+  `with-grouping` D5). `groupingLevels` reflects level order only.
 
 ## Open
 
-- N1 — in flight.
+- N5 (Q3) — `grouping: string[]` stays the only write surface. Expected trivially yes; confirm.
+- N6 (Q4) — same treatment for `withSelection()` / `withExpansion()`. Issue already scopes this
+  to "a look, not a commitment". Leaf, not blocking.
+- N7 — story-host cleanup + columns/grouping reference docs. Implementation, not a decision.
+
+Collapsed by D2 — no longer questions:
+
+- N2 (contribution mechanism) — moot, the shape needs no engine surface beyond two computeds.
+- N3 (dropped-level index semantics) — answered by D4.
+- N4 (cycle stance) — moot, no `columns → grouping` edge is created.
 
 ## N0 added (2026-09-16) — raised in grill, upstream of N1
 
@@ -89,7 +140,7 @@ Audit of where per-column feature config lives today — **three placements, no 
 | sorting | `sortFn` | `ColumnDef` literal | static pure fn |
 | sorting | `enableSorting` | `ColumnDef` literal | static boolean |
 | sorting | null/empty placement | `columnsSchema` → `applySortNulls` → `SORT_NULLS` meta | static opts, reactive channel |
-| grouping | is-this-column-a-level | `withGrouping(schemaFn)` → `GroupingRule.when` | reactive, async-capable |
+| grouping | is-this-column-a-level | `withGrouping(schemaFn)` → `GroupingRule.enable` | reactive, async-capable |
 | grouping | `aggregateFn` | `ColumnDef` literal | static pure fn |
 | visibility | `visible` | `ColumnDef` literal **and** `columnsSchema` → `applyVisible` | both |
 | filtering | — | none (row predicates, ADR-0016) | n/a |
@@ -106,7 +157,7 @@ Findings:
   R10's construction cycle pushed the whole filter set out to `createFilters()`, outside the
   table (ADR-0016). Structural, not stylistic.
 - **A real distinction may justify a split**: `sortFn`/`aggregateFn` are *static pure functions*
-  in the same class as `accessor` — they never change. `GroupingRule.when` / `applyVisible` are
+  in the same class as `accessor` — they never change. `GroupingRule.enable` / `applyVisible` are
   *reactive, conditional, async-capable* state. `enableSorting` is a static boolean where a
   reactive `applySortable()` (mirroring `applyVisible()`) would be the consistent shape.
 
