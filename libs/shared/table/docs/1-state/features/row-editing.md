@@ -81,7 +81,7 @@ This also answers "user clicks sort while a row is open": `data` still holds the
 so the row sorts by its old value and stays put. Falls out of the model rather than needing a
 rule.
 
-**Observed, not inferred.** `src/stories/live-table/` and `apps/demo/src/app/table-edit-demo/`
+**Observed, not inferred.** `src/stories/live-table/` and `apps/demo/src/app/table-edit-demo/` (acme monorepo)
 instrument `data()` emissions with a counter beside a live-value/committed-value column pair.
 `debounce(field, 'blur')` holds the boundary; `debounce(field, 0)` commits immediately.
 
@@ -608,7 +608,7 @@ Storybook stories (`src/stories/`) are the primary reference; the demo app preda
 | `external-write/` | a server push under an open row, resolved with `captureEdit` | migrated |
 | `form-write-mutations/` | writing rows through the form instead of the updaters, and what that skips | migrated |
 
-| Demo | Shows |
+| Demo (acme monorepo `apps/demo`) | Shows |
 |---|---|
 | `apps/demo/src/app/table-edit-demo/` | E2 — the live table, composing no editing feature (D29) |
 | `apps/demo/src/app/table-row-field-demo/` | E5' — `*ngpTableRowField` |

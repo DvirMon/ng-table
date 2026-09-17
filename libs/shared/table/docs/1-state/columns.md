@@ -129,7 +129,7 @@ effect(() => {
 });
 ```
 
-See `apps/demo/src/app/table-demo/` for a working illustration of this pattern.
+See `apps/demo/src/app/table-demo/` in the acme monorepo for a working illustration of this pattern.
 
 **Pattern B (opt-in, via `columnsSchema`)** — `applyVisibleAsync` moves this `effect()` +
 `resource()` + `updateColumns()` wiring into the store instead (a scoped exception to the

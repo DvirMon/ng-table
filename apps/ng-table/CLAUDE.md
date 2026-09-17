@@ -6,8 +6,8 @@ region, or page block — it fixes selectors/inputs for every domain so they don
 
 ## Stack
 
-Angular 22, standalone + zoneless + `OnPush`, signals, new control flow, CSS (not SCSS). Mirrors
-`apps/demo` — see that app's `project.json` for the target shapes this one follows.
+Angular 22, standalone + zoneless + `OnPush`, signals, new control flow, CSS (not SCSS). Target shapes in `project.json` follow
+the acme monorepo's `apps/demo`.
 
 ## Commands
 
@@ -41,4 +41,4 @@ src/styles/docs/              the 8 foundations specs
 ```
 
 No barrels (ADR-0002) — import components directly from their file. No shared design-token library outside
-this app; tokens are app-local, matching `apps/issa-landing`'s precedent, not `libs/shared/design-system`.
+this app; tokens are app-local, matching the acme monorepo's `apps/issa-landing` precedent, not its `libs/shared/design-system`.

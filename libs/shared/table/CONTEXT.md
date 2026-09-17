@@ -8,8 +8,8 @@ depends-on: []
 
 Glossary and cross-domain vocabulary for `@ngp/table`.
 
-Extracted from `libs/shared/design-system` — see
-[design-system/docs/adr/0009](../design-system/docs/adr/0009-table-standalone-package.md) for
+Extracted from the acme monorepo's `libs/shared/design-system` — see
+[ADR-0009](docs/adr/0009-table-standalone-package.md) for
 the extraction record, and this lib's own `docs/adr/0001`–`0005` for the table's own
 architectural decisions (sorting default, store factory, in-house store engine, source layout,
 generic host).
@@ -20,7 +20,7 @@ All directives use the `ngp` prefix (`ngpTable`, `ngpTableRow`, `ngpTableCell`,
 `ngpTableHeaderCell`). This is **not** an ng-primitives dependency — this package has zero
 runtime dependencies beyond `@angular/core` (verified: no `ng-primitives`, `@angular/cdk`, or
 state-management imports anywhere in `src/`). `ngp` predates and is unrelated to
-`libs/shared/design-system`'s `acme` prefix convention; do not harmonize the two.
+the acme design-system's `acme` prefix convention; do not harmonize the two.
 
 ## Related
 
