@@ -11,8 +11,11 @@ weak or dead: `build` excludes both projects in a 2-project workspace, so that l
 repo's own rule recording a template bug that plain `tsc` shipped [R5]; `llms:check` is documented
 as "must stay clean" and is unenforced [R4]. Fix those three and add `concurrency` — that is the
 whole gap. Caching, Nx Cloud, and DTE are optimizations for a workspace this size, not correctness
-[S2]; the one with real value is `concurrency`, because this is a **private** repo on GitHub Free
-with a 2,000 minute/month budget [P2][S11].
+[S2]. `concurrency` is still worth adding (faster feedback on superseded pushes), but not for
+budget reasons: **the repo is public** [P2-corrected], and public repos get unlimited free GitHub
+Actions minutes [S11] — the 2,000 min/month Free-tier cap this doc originally cited does not apply.
+Public visibility also unlocks two rows that were previously "skip while private": CodeQL (R13) and
+GitHub Pages (R16).
 
 ## Method
 
@@ -20,8 +23,10 @@ with a 2,000 minute/month budget [P2][S11].
 - Nx docs re-fetched at current URLs — the `nx.dev/ci/recipes/...` paths in older guidance now 404;
   live pages are under `nx.dev/docs/...`. `nx.json`, both `project.json`, both workflows read
   directly [R1][R2][R3].
-- Repo visibility probed with `gh repo view --json visibility` → `PRIVATE` [P2]. Every plan-gated
-  row below turns on that fact.
+- Repo visibility probed with `gh repo view --json visibility` → `PRIVATE` at research time [P2].
+  **Correction (2026-09-17, same day):** the user confirmed the repo is actually **public**;
+  `gh api repos/DvirMon/ng-table` also now returns `"visibility":"public"`. Every plan-gated row
+  below was re-checked against public visibility; see the corrected rows in Inventory.
 - Reliability: Nx's **own** CI page is written for an Nx-Cloud-connected workspace and presents no
   non-Cloud variant [S1]. Read it as a product recommendation, not a neutral baseline.
 
@@ -69,7 +74,7 @@ with a 2,000 minute/month budget [P2][S11].
 | R1 | Run `nx affected -t typecheck` | **worth it for solo** | Target exists on both projects and never runs; `tsc` never opens a template, and that gap shipped bug #94 in this repo | [R3][R5] |
 | R2 | Drop the `build --exclude=shared-table,ng-table` | **worth it for solo** | Only two projects exist, so the exclusion list is the whole workspace — the line is a no-op wearing a green check | [R1][P1] |
 | R3 | Add `npm run llms:check` (and `table:overloads:check`) | **worth it for solo** | CLAUDE.md declares `llms:check` "must stay clean"; an unenforced invariant drifts | [R4] |
-| R4 | `concurrency: ${{ github.workflow }}-${{ github.ref }}` + `cancel-in-progress` | **worth it for solo** | 2,000 min/month on a private Free repo; superseded pushes otherwise burn the budget twice | [S10][S11][P2] |
+| R4 | `concurrency: ${{ github.workflow }}-${{ github.ref }}` + `cancel-in-progress` | **worth it for solo** | Public repo → unlimited free minutes, so this isn't a quota fix; still worth it for faster feedback — a superseded push shouldn't leave a stale run queued/running | [S10][S11][P2] |
 | R5 | Bump `nx-set-shas` v4 → v5 | **worth it for solo** | v5 is current (node24 runtime); one-line, no behavior change | [S12] |
 | R6 | `setup-node` `cache: 'npm'` | **already done** | Present in the workflow today; this is the highest-value cache at this size | [R1] |
 | R7 | `actions/cache` on `.nx/cache` + `.nx/workspace-data/*.db*` | **situational** | Correct and safe here, but with 2 projects `affected` rarely narrows anything and `npm ci` + Angular build dominate — measure before adding | [S7][S9][S2] |
@@ -78,10 +83,10 @@ with a 2,000 minute/month budget [P2][S11].
 | R10 | `nx fix-ci` (self-healing) | **skip until team grows** | Requires the Nx Cloud connection and exists to unblock reviewers you don't have | [S1][S3] |
 | R11 | Dependabot version updates | **worth it for solo** | Config-only, `groups` + `open-pull-requests-limit` keep PR volume to one batch; the solo failure mode is silently rotting deps, not too many PRs | [S15] |
 | R12 | Renovate instead of Dependabot | **situational** | Only if grouped-Angular-major batching becomes painful; adds an external app to a private repo | [S15] |
-| R13 | CodeQL / code scanning | **skip until team grows** | Needs public visibility or paid GitHub Code Security; this repo is private on Free | [S13][P2] |
+| R13 | CodeQL / code scanning | **worth it for solo** | Needs public visibility or paid GitHub Code Security [S13]; the repo is public, so it's free — default setup is a few clicks, no workflow authoring | [S13][P2] |
 | R14 | Library publish + versioning workflow | **skip for now** | `libs/shared/table` has no `package.json` and no packaging target — nothing to publish yet | [R3] |
 | R15 | npm trusted publishing (OIDC) when R14 happens | **worth it, when it applies** | Removes the long-lived `NPM_TOKEN` and emits provenance by default — strictly better than a secret on day one | [S14] |
-| R16 | Storybook deploy to GitHub Pages | **skip while private** | Pages on a private repo needs GitHub Pro or above; Free is public-repo-only | [S16][P2] |
+| R16 | Storybook deploy to GitHub Pages | **situational** | Pages on Free needs public visibility [S16], which this repo has — no plan blocker. Worth it once there's a docs site worth publishing; not a correctness gap today | [S16][P2] |
 | R17 | Coverage reporting / thresholds | **skip until team grows** | Coverage gates exist to police contributors you can't review; solo, the number is information you already have locally | — |
 | R18 | Artifact upload (Storybook build, dist) | **situational** | 500 MB artifact storage on Free; useful only to eyeball a built docs site from a PR | [S11] |
 | R19 | Merge queue | **skip until team grows** | Its purpose is serializing concurrent merges from multiple authors | [S2] |
