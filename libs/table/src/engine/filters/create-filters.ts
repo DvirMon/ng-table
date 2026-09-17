@@ -1,15 +1,7 @@
 import { buildValueOfContext, type FiltersInternal } from './evaluator';
 import { buildFilterState, buildFiltersObject, gateByCondition } from './state';
-import {
-  type AnyRule,
-  type FilterHandle,
-  type FilterNode,
-  type FilterRuleRecord,
-  type FilterValueOfContext,
-  type Filters,
-  type FiltersPath,
-  type StateOf,
-} from './types';
+import type { AnyRule, FilterHandle, FilterRuleRecord, FilterValueOfContext, StateOf } from './types';
+import type { Filters, FiltersPath, FilterNode } from '../../api/features/with-filtering/types';
 import { pathsOf, validateRecords } from './validate';
 
 // Stamps each declared rule's key from its object-literal property name — the schema's object

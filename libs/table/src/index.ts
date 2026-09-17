@@ -1,10 +1,9 @@
-// Public API of the table. This file defines the table's own consumer surface and re-exports
-// the filters domain's barrel (`./filters`) wholesale — one barrel per domain, not one per repo
-// (ADR-0004's 2026-09 amendment). The filters barrel supplies rules and types only; a consumer
-// reaches filtering itself through `withFiltering` (below), not through the filters domain
-// directly. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are phases of this
-// domain and still have no barrels of their own, so anything under them not listed here is
-// internal (mirrors Angular Signal Forms' `public_api.ts`).
+// Public API of the table. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are
+// phases of one domain and have no barrels of their own, so anything under them not listed here
+// is internal (mirrors Angular Signal Forms' `public_api.ts`). `filters/` was a second domain
+// with its own barrel until R50 (ADR-0004, 2026-09 amendment) closed the standalone trajectory
+// that justified it — the filters surface now folds into `withFiltering`'s own feature folder,
+// so this file is once again the only one defining the public surface.
 export * from './api/create-table';
 export * from './api/types';
 export * from './directives/table.tokens';
@@ -14,6 +13,30 @@ export * from './directives/ngp-table-header-cell.directive';
 export * from './directives/ngp-table-cell.directive';
 export * from './api/features/with-sorting';
 export * from './api/features/with-filtering';
+export type {
+  Filters,
+  FilterNode,
+  FilterOptions,
+  FiltersPath,
+} from './api/features/with-filtering/types';
+export {
+  anyOf,
+  contains,
+  equals,
+  filter,
+  hasAny,
+  hasNone,
+  inDateRange,
+  inRange,
+} from './api/features/with-filtering/rules';
+export {
+  hasAnyOf,
+  hasNoneOf,
+  isContaining,
+  isEqual,
+  isInDateRange,
+  isInRange,
+} from './api/features/with-filtering/matchers';
 export { withExpansion } from './api/features/with-expansion';
 export type { WithExpansionConfig } from './api/features/with-expansion';
 export { withRowEdit } from './api/features/with-row-edit';
@@ -47,7 +70,7 @@ export { columnSchema } from './schema/column-schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column-rules';
 export type { SortNullsOpts } from './schema/column-rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './schema/column-metadata';
-export { applyGrouping, applyGroupingAsync } from './schema/grouping-rules';
+export { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema/grouping-rules';
 export type { GroupingAsyncOpts } from './schema/grouping-rules';
 export type {
   AnyGroupingRule,
@@ -88,4 +111,3 @@ export type {
   ColumnsPath,
   ColumnsSchemaFn,
 } from './schema/column-schema.types';
-export * from './filters';

@@ -6,13 +6,8 @@ import {
   type Signal,
   type WritableSignal,
 } from '@angular/core';
-import type {
-  FilterNode,
-  FilterRuleRecord,
-  FilterValueOfContext,
-  Filters,
-  FiltersRoot,
-} from './types';
+import type { FilterRuleRecord, FilterValueOfContext } from './types';
+import type { FilterNode, Filters, FiltersRoot } from '../../api/features/with-filtering/types';
 import { createFilterEvaluatorFrom, type FiltersInternal } from './evaluator';
 
 /** Structural equality for the criterion shapes this library ships: primitives, plain range

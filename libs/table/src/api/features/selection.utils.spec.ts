@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
 import { createTable } from '../create-table';
-import { filter } from '../../filters/rules';
+import { filter } from './with-filtering/rules';
 import { selectAllIds } from './selection.utils';
 import { withFiltering } from './with-filtering';
 import { withSelection } from './with-selection';

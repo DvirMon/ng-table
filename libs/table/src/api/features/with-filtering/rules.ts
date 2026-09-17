@@ -1,14 +1,14 @@
 import type {
   CriterionOf,
   FilterHandle,
-  FilterOptions,
   FilterRule,
   FilterRuleRecord,
   GroupRule,
   ItemOf,
   RowOfRule,
-} from './types';
-import { equalsCriterion } from './state';
+} from '../../../engine/filters/types';
+import type { FilterOptions } from './types';
+import { equalsCriterion } from '../../../engine/filters/state';
 import {
   hasAnyOf,
   hasNoneOf,

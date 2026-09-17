@@ -3,7 +3,7 @@ import { createTable } from '../../../api/create-table';
 import { withComputed } from '../../../api/features/with-computed';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';
-import { equals } from '../../../filters/rules';
+import { equals } from '../../../api/features/with-filtering/rules';
 import type { RowId } from '../../../api/types';
 import { COMPOSITION_DEPT_OPTIONS, COMPOSITION_ROWS_MOCK } from '../fixtures/mock';
 import { derivedStateConfig } from '../fixtures/schema';

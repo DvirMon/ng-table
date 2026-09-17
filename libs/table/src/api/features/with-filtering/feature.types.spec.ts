@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import { createTable } from '../create-table';
-import { withFiltering } from './with-filtering';
+import { createTable } from '../../create-table';
+import { withFiltering } from './feature';
 import {
   anyOf,
   contains,
@@ -10,16 +10,16 @@ import {
   hasNone,
   inDateRange,
   inRange,
-} from '../../filters/rules';
-import type { DateRangeCriterion, RangeCriterion } from '../../filters/rules';
-import type { Filters, FiltersPath } from '../../filters/types';
-import type { ColumnDef, TableDataInput } from '../types';
+} from './rules';
+import type { DateRangeCriterion, RangeCriterion } from './rules';
+import type { Filters, FiltersPath } from './types';
+import type { ColumnDef, TableDataInput } from '../../types';
 
 /**
  * Compile-time seam for `withFiltering()`'s `schema` config, composed into a real
  * `createTable()` — `RowOf<In>` is what supplies `TRow` to the schema fn, so a probe against
  * the feature builder alone would not exercise the inference path a consumer actually takes.
- * Sibling of the runtime seam in `../../filters/create-filters.spec.ts`.
+ * Sibling of the runtime seam in `../../../engine/filters/create-filters.spec.ts`.
  * **`nx run shared-table:typecheck-spec` is what enforces this file** — the runner executes
  * `expectTypeOf` and `@ts-expect-error` without typechecking either.
  *

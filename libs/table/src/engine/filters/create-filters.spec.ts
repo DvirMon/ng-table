@@ -11,9 +11,10 @@ import {
   hasNone,
   inDateRange,
   inRange,
-} from './rules';
-import { hasAnyOf, hasNoneOf } from './matchers';
-import type { AnyRule, FiltersPath } from './types';
+} from '../../api/features/with-filtering/rules';
+import { hasAnyOf, hasNoneOf } from '../../api/features/with-filtering/matchers';
+import type { AnyRule } from './types';
+import type { FiltersPath } from '../../api/features/with-filtering/types';
 
 interface Invoice {
   status: string;

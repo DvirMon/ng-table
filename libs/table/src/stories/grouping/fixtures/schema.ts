@@ -1,6 +1,6 @@
 import type { ColumnDefInput, ColumnId, TableConfig } from '../../../api/types';
-import { contains } from '../../../filters/rules';
-import type { FiltersPath } from '../../../filters/types';
+import { contains } from '../../../api/features/with-filtering/rules';
+import type { FiltersPath } from '../../../api/features/with-filtering/types';
 import type { DealRow } from './types';
 
 /**

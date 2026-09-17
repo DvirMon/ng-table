@@ -3,9 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { debounce, form } from '@angular/forms/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildFilterModel } from './create-filters';
-import { contains, equals, inRange } from './rules';
+import { contains, equals, inRange } from '../../api/features/with-filtering/rules';
 import { equalsCriterion } from './state';
-import type { AnyRule, FiltersPath } from './types';
+import type { AnyRule } from './types';
+import type { FiltersPath } from '../../api/features/with-filtering/types';
 
 interface Invoice {
   status: string | null;

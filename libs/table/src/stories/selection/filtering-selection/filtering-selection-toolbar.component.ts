@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 import type { FieldTree } from '@angular/forms/signals';
 import { FormField } from '@angular/forms/signals';
-import type { Filters } from '../../../filters/types';
+import type { Filters } from '../../../api/features/with-filtering/types';
 import type { InvoiceRow, InvoiceStatus } from '../../filtering/fixtures/types';
 import type { SelectionCriteria } from './filtering-selection.filters';
 

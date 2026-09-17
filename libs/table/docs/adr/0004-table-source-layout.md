@@ -127,3 +127,39 @@ The test for a future folder is therefore not size but independence: could it be
 the table, and does it import nothing from it? If not, it is a phase and gets no barrel. Extracting
 `filters/` to its own package is now a move rather than a rewrite; do that when a second consumer
 exists, not before.
+
+## Amendment (2026-09, #93): the independence test failed, `filters/` folds back into phases
+
+`filters/` did not get a second consumer. R50 (`table-owned-filtering/spec.md`) found the
+opposite: `create-table.ts` reads rows through a thunk inside a `computed()`, so a table-owned
+filter model composes with no construction cycle even in server mode — the ownership split the
+2026-09 amendment argued from no longer holds. `filters/` was a domain because a standalone
+consumer was a live trajectory; with that trajectory closed, the folder misstates the
+architecture under this ADR's own contract-boundary-first axis: most of it is runtime that
+nothing outside `withFiltering()` reaches.
+
+Split by lifecycle phase, same as everything else:
+
+| File | Lands in |
+|---|---|
+| `rules.ts`, `matchers.ts`, public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) | `api/features/with-filtering/` |
+| model builder (`create-filters.ts`), `state.ts`, `evaluator.ts`, `validate.ts`, internal types | `engine/filters/` |
+
+`api/features/with-filtering/` mirrors `engine/columns-schema/`'s declare / compile / run split
+internally: `feature.ts` (declare — `withFiltering()`) calls `engine/filters/create-filters.ts`
+(compile — `buildFilterModel()`), which calls `engine/filters/state.ts` (run). Its own
+`index.ts` re-exports only `feature.ts` — a resolution convenience for the one file path
+`src/index.ts` already imported, not a second domain barrel. `src/index.ts` lists the rules,
+matchers and public types explicitly, the same way it already lists every other feature's
+exports; `filters/index.ts` is deleted, not replaced.
+
+The public/internal type split reintroduces the kind of two-file type-only cycle this ADR
+already accepted for `api/types.ts` ↔ `engine/types.ts`: `FilterOptions.when` (public) reads
+through `FilterValueOfContext` (engine-internal), and `FilterRuleRecord.options`
+(engine-internal) is typed as `FilterOptions` (public). Both files stay `import type` on the
+cross edge, same invariant as the original pair.
+
+The independence test from the previous amendment still stands as the test for the *next*
+folder — it just resolved "no" for this one, one release after resolving "yes". Extracting
+filtering to its own package remains a move away if a second consumer ever shows up; today nothing
+does.

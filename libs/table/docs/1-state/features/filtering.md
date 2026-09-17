@@ -562,24 +562,24 @@ Each is additive if revisited — none of them is foreclosed by shipping without
 
 ## Public API
 
-`withFiltering`, `WithFilteringConfig` and `FilteringMembers` are the table's own surface,
-exported from `src/index.ts` (`api/features/with-filtering.ts`). The rules, matchers and public
-types below are the filters domain's own surface, exported from `src/filters/index.ts` and
-re-exported by `src/index.ts` wholesale:
+`withFiltering`, `WithFilteringConfig`, `FilteringMembers`, the rules, the matchers and the
+public types are all exported from `src/index.ts`, listed explicitly like every other feature
+(ADR-0004's 2026-09 #93 amendment folded the standalone `filters/` domain back into the table's
+own phases — there is no second barrel):
 
 | Symbol | From | Kind |
 |---|---|---|
-| `withFiltering`, `WithFilteringConfig`, `FilteringMembers` | `api/features/with-filtering.ts` | feature |
-| `Filters`, `FilterNode`, `FilterOptions`, `FiltersPath` | `filters/types.ts` | types |
-| `equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone` | `filters/rules.ts` | declaration rules |
-| `filter` | `filters/rules.ts` | the general rule |
-| `anyOf` | `filters/rules.ts` | the grouping rule |
-| `isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`, `hasNoneOf` | `filters/matchers.ts` | matchers (R30) |
+| `withFiltering`, `WithFilteringConfig`, `FilteringMembers` | `api/features/with-filtering/feature.ts` | feature |
+| `Filters`, `FilterNode`, `FilterOptions`, `FiltersPath` | `api/features/with-filtering/types.ts` | types |
+| `equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone` | `api/features/with-filtering/rules.ts` | declaration rules |
+| `filter` | `api/features/with-filtering/rules.ts` | the general rule |
+| `anyOf` | `api/features/with-filtering/rules.ts` | the grouping rule |
+| `isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`, `hasNoneOf` | `api/features/with-filtering/matchers.ts` | matchers (R30) |
 
-Anything under `src/filters/` not listed above is internal — `create-filters.ts` (the model
-builder, called `buildFilterModel` internally), `evaluator.ts`, `state.ts` and `validate.ts` are
-private to the domain. `withFiltering`'s `schema` config is the only entry point to the model;
-there is no standalone constructor a consumer calls directly.
+Everything under `engine/filters/` is internal — `create-filters.ts` (the model builder, called
+`buildFilterModel` internally), `evaluator.ts`, `state.ts` and `validate.ts` are private to the
+feature. `withFiltering`'s `schema` config is the only entry point to the model; there is no
+standalone constructor a consumer calls directly.
 
 **Removed** (breaking changes across R26, R50–R56, both executed): the pre-`createFilters()`
 imperative surface (`setColumnFilter`, `clearColumnFilter`, `setGlobalFilter`, `clearFilters`,

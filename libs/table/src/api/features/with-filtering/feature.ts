@@ -1,8 +1,9 @@
-import { buildFilterModel } from '../../filters/create-filters';
-import type { AnyRule, Filters, FiltersPath, StateOf } from '../../filters/types';
-import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
-import { createTableFeature } from '../create-table-feature';
-import type { DerivedDict } from '../types';
+import { buildFilterModel } from '../../../engine/filters/create-filters';
+import type { AnyRule, StateOf } from '../../../engine/filters/types';
+import type { Filters, FiltersPath } from './types';
+import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../../engine/types';
+import { createTableFeature } from '../../create-table-feature';
+import type { DerivedDict } from '../../types';
 
 export interface WithFilteringConfig<TRow, S extends Record<string, AnyRule> = {}> {
   /** Skips the `filter` stage — rows pass through untouched, but the model still builds and

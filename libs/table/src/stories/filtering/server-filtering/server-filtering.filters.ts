@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
-import { contains, filter, hasNone, inRange } from '../../../filters/rules';
-import type { FiltersPath, StateOf } from '../../../filters/types';
+import { contains, filter, hasNone, inRange } from '../../../api/features/with-filtering/rules';
+import type { FiltersPath } from '../../../api/features/with-filtering/types';
+import type { StateOf } from '../../../engine/filters/types';
 import type { InvoiceRow, RangeCriterion } from '../fixtures/types';
 import { EMPTY_RANGE, matchesStatus } from '../fixtures/utils';
 

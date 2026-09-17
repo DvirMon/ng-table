@@ -1,4 +1,5 @@
-import type { Filters, FilterNode, StateOf } from '../../../filters/types';
+import type { Filters, FilterNode } from '../../../api/features/with-filtering/types';
+import type { StateOf } from '../../../engine/filters/types';
 import type { dealFilters } from './schema';
 import type { DealRow } from './types';
 

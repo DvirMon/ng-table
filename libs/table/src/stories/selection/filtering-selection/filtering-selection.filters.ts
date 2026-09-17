@@ -1,5 +1,6 @@
-import { contains, filter, hasAny } from '../../../filters/rules';
-import type { FiltersPath, StateOf } from '../../../filters/types';
+import { contains, filter, hasAny } from '../../../api/features/with-filtering/rules';
+import type { FiltersPath } from '../../../api/features/with-filtering/types';
+import type { StateOf } from '../../../engine/filters/types';
 import type { InvoiceRow } from '../../filtering/fixtures/types';
 import { matchesStatus } from '../../filtering/fixtures/utils';
 
