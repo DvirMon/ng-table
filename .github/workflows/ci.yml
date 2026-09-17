@@ -28,7 +28,7 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm ci --prefer-offline --no-audit --fund=false
 
       - uses: nrwl/nx-set-shas@v5
 
