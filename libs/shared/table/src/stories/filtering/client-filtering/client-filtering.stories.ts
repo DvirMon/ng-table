@@ -15,8 +15,8 @@ type Story = StoryObj<ClientFilteringStoryHostComponent>;
 /**
  * Table with client-side filtering
  *
- * Per-column inputs and a quick filter, all driven by `createFilters()` feeding
- * `withFiltering()`. Type in the customer box and watch the row count follow.
+ * Per-column inputs and a quick filter — the table owns the model directly via
+ * `withFiltering({ schema })`. Type in the customer box and watch the row count follow.
  *
  * Reset restores the declared defaults; Clear all empties every criterion.
  */

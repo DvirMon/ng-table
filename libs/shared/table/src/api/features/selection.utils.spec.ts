@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
 import { createTable } from '../create-table';
+import { filter } from '../../filters/rules';
 import { selectAllIds } from './selection.utils';
 import { withFiltering } from './with-filtering';
 import { withSelection } from './with-selection';
@@ -21,7 +22,14 @@ function makeFilteredStore(): TableStore<MockRow> {
     createTable(
       signal<MockRow[]>(mockRows),
       { trackBy: mockTrackBy, columns: makeColumns() },
-      withFiltering({ predicates: () => [(row: MockRow) => row.id === 1] })
+      withFiltering({
+        // Unconditionally active (no user input to wait for) — `isEmpty: () => false` skips the
+        // emptyValue-equality check `filter()` would otherwise apply, which would treat the
+        // initial value (equal to `emptyValue`) as empty and never narrow at all.
+        schema: (path) => ({
+          isRowOne: filter(path.id, (cell) => cell === 1, { emptyValue: null, isEmpty: () => false }),
+        }),
+      })
     )
   );
 }

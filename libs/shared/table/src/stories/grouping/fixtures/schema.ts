@@ -1,7 +1,6 @@
-import { createFilters } from '../../../filters/create-filters';
-import { contains } from '../../../filters/rules';
-import { rowOf } from '../../../filters/row-of';
 import type { ColumnDefInput, ColumnId, TableConfig } from '../../../api/types';
+import { contains } from '../../../filters/rules';
+import type { FiltersPath } from '../../../filters/types';
 import type { DealRow } from './types';
 
 /**
@@ -70,15 +69,6 @@ export const MISSING_GROUPING_LEVEL = 'territory';
  * shape a saved report or a pinned-priority list would take. Values absent from it sort last. */
 export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'North East'];
 
-/**
- * One text criterion over `rep`, used only by `grouping-selection/` — enough to move a selected
- * row out of view, and to show counts and summaries following the visible rows.
- *
- * Must be called from an injection context (a component field initializer).
- *
- * Return type is deliberately inferred, not annotated — `utils.ts`'s helpers key off
- * `ReturnType<typeof createDealFilters>` so they follow this schema rather than restate it.
- */
-export function createDealFilters() {
-  return createFilters(rowOf<DealRow>(), (path) => [contains(path.rep)]);
-}
+/** One text criterion over `rep`, used only by `grouping-selection/` — enough to move a
+ * selected row out of view, and to show counts and summaries following the visible rows. */
+export const dealFilters = (path: FiltersPath<DealRow>) => ({ rep: contains(path.rep) });

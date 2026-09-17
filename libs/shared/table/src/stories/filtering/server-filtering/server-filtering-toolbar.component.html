@@ -29,7 +29,7 @@
     [class.filtering-story__field--active]="filters().amount().isActive()"
   >
     <span class="filtering-story__label">
-      Amount (inRange){{ isAmountDirty() ? ' — dirty' : '' }}
+      Amount (inRange){{ amountIgnoresServerDefault() ? ' — dirty' : '' }}
     </span>
     <input type="number" aria-label="Minimum amount" [formField]="amountField().min" />
     <input type="number" aria-label="Maximum amount" [formField]="amountField().max" />

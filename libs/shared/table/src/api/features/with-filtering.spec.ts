@@ -1,14 +1,11 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { createFilters } from '../../filters/create-filters';
 import { createTable } from '../create-table';
-import { equals } from '../../filters/rules';
-import { rowOf } from '../../filters/row-of';
+import { contains, equals, filter } from '../../filters/rules';
 import { withComputed } from './with-computed';
 import { withFiltering } from './with-filtering';
 import type { ColumnDef, TableStore } from '../types';
-import type { FiltersPath } from '../../filters/types';
 
 interface Row {
   id: string;
@@ -33,12 +30,6 @@ function makeRows(): Row[] {
   ];
 }
 
-// Kept only to build the filter model for the one integration case below — the filter model's own
-// behavior and typing live in `create-filters.spec.ts`.
-function buildFilters<S extends readonly unknown[]>(schema: (path: FiltersPath<Row>) => S) {
-  return TestBed.runInInjectionContext(() => createFilters(rowOf<Row>(), schema));
-}
-
 /** Runs a `createTable()` build inside an Angular injection context. */
 function inContext<T>(build: () => T): T {
   return TestBed.runInInjectionContext(build);
@@ -50,78 +41,94 @@ describe('withFiltering', () => {
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ predicates: () => [(row: Row) => row.id !== 'r2'] })
+        withFiltering({ schema: (path) => ({ name: contains(path.name) }) })
       )
     );
 
-    expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
+    store.filters.name().value.set('A');
+
+    expect(store.rows().map((row) => row.id)).toEqual(['r1']);
   });
 
-  it('narrows rows() with a plain predicate and no filter model at all', () => {
+  it('narrows rows() from a schema criterion', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ predicates: () => [(row: Row) => row.status === 'open'] })
+        withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
       )
     );
+
+    store.filters.status().value.set('open');
 
     expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
   });
 
-  it('combines separate predicate terms with AND', () => {
+  it('narrows conjunctively across two criteria (AND)', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
         withFiltering({
-          predicates: () => [
-            (row: Row) => row.status === 'open',
-            (row: Row) => row.category === 'b',
-          ],
+          schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
         })
       )
     );
 
+    store.filters.status().value.set('open');
+    store.filters.category().value.set('b');
+
     expect(store.rows().map((row) => row.id)).toEqual(['r3']);
   });
 
-  it('never narrows while the term list is empty', () => {
+  it('never narrows while every criterion is empty', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ predicates: () => [] })
+        withFiltering({
+          schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
+        })
       )
     );
 
     expect(store.rows()).toHaveLength(3);
   });
 
-  it('contributes no members beyond the core store surface', () => {
+  it('contributes no members beyond the core store surface when no schema is given', () => {
     const store = inContext(() =>
-      createTable(
-        signal<Row[]>([]),
-        { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ predicates: () => [] })
-      )
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withFiltering())
     );
 
-    expect('predicates' in store).toBe(false);
     expect('filters' in store).toBe(false);
   });
 
-  it('recomputes the list when a signal read inside the thunk changes', () => {
-    const wantedStatus = signal('open');
+  it('re-narrows automatically when a criterion changes', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
+      )
+    );
+
+    expect(store.rows()).toHaveLength(3);
+
+    store.filters.status().value.set('open');
+    expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
+
+    store.filters.status().value.set('closed');
+    expect(store.rows().map((row) => row.id)).toEqual(['r2']);
+  });
+
+  it('re-narrows when a rule source changes and the user has not overridden it', () => {
+    const wantedStatus = signal<string | null>('open');
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
         withFiltering({
-          predicates: () => {
-            const status = wantedStatus();
-            return [(row: Row) => row.status === status];
-          },
+          schema: (path) => ({ status: equals(path.status, { source: () => wantedStatus() }) }),
         })
       )
     );
@@ -129,67 +136,64 @@ describe('withFiltering', () => {
     expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
 
     wantedStatus.set('closed');
-
     expect(store.rows().map((row) => row.id)).toEqual(['r2']);
   });
 
-  it('calls the thunk once per pass, not once per row', () => {
-    const listTerms = vi.fn(() => [(row: Row) => row.status === 'open']);
+  it('calls matcher() once per stage evaluation, not once per row', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()), // 3 rows: a per-row call would be 3
         { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ predicates: listTerms })
+        withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
       )
     );
 
-    expect(store.rows()).toHaveLength(2);
-    expect(listTerms).toHaveBeenCalledTimes(1);
+    store.filters.status().value.set('open');
+    const matcherSpy = vi.spyOn(store.filters(), 'matcher');
+
+    expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3']);
+    expect(matcherSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('the trailing block sees post-predicate rows: visibleCount reflects the narrowed set', () => {
-    const wantedStatus = signal('open');
+  it('the trailing block sees post-filter rows: visibleCount reflects the narrowed set', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
         withFiltering(
-          {
-            predicates: () => {
-              const status = wantedStatus();
-              return [(row: Row) => row.status === status];
-            },
-          },
+          { schema: (path) => ({ status: equals(path.status) }) },
           withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
         )
       )
     );
 
+    store.filters.status().value.set('open');
     expect(store.visibleCount()).toBe(2);
 
-    wantedStatus.set('closed');
+    store.filters.status().value.set('closed');
     expect(store.visibleCount()).toBe(1);
   });
 
   describe('manual mode', () => {
-    it('skips the stage without ever calling the predicate thunk', () => {
-      const listTerms = vi.fn(() => [(row: Row) => row.status === 'open']);
+    it('skips the stage although the model still builds and filters is still exposed', () => {
       const rawRows = makeRows();
       const store = inContext(() =>
         createTable(
           signal<Row[]>(rawRows),
           { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ predicates: listTerms, manual: true })
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }), manual: true })
         )
       );
 
+      store.filters.status().value.set('open');
+
       expect(store.rows()).toEqual(rawRows);
-      expect(listTerms).not.toHaveBeenCalled();
+      expect(store.filters().criteria()).toEqual({ status: 'open' });
     });
   });
 
-  describe('errors', () => {
-    it('drops a throwing term for the pass while its sibling keeps narrowing', () => {
+  describe('errors — ADR-0014', () => {
+    it('drops a throwing rule for the pass while its sibling keeps narrowing', () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
         const store = inContext(() =>
@@ -197,50 +201,64 @@ describe('withFiltering', () => {
             signal<Row[]>(makeRows()),
             { trackBy: 'id', columns: makeColumns() },
             withFiltering({
-              predicates: () => [
-                () => {
-                  throw new Error('boom');
-                },
-                (row: Row) => row.category === 'b',
-              ],
+              schema: (path) => ({
+                broken: filter(
+                  path.name,
+                  () => {
+                    throw new Error('boom');
+                  },
+                  { emptyValue: false, isEmpty: () => false }
+                ),
+                category: equals(path.category),
+              }),
             })
           )
         );
 
-        // Not a widening to all 3 rows — the surviving term still narrows.
+        store.filters.category().value.set('b');
+
+        // Not widened to all 3 rows — the surviving rule still narrows.
         expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r3']);
         expect(reportSpy).toHaveBeenCalledTimes(1);
-        expect(reportSpy.mock.calls[0][0]).toContain('index 0');
       } finally {
         reportSpy.mockRestore();
       }
     });
 
-    // ADR-0014 wraps per term, not per row: a term that throws part-way must apply to no row
-    // at all, rather than keeping the narrowing it managed before the throw.
-    it('drops a term throwing on a later row from the whole pass, not just the rows after it', () => {
+    // The boundary is the evaluation, not the row: a row past the first throw is also
+    // unaffected by the dropped rule, not just the row where it happened.
+    it('drops a term throwing on a row from the rest of the pass, not just that row', () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
+        const rows: Row[] = [
+          ...makeRows(),
+          { id: 'r4', name: 'Dee', status: 'open', category: 'a' },
+        ];
         const store = inContext(() =>
           createTable(
-            signal<Row[]>(makeRows()),
+            signal<Row[]>(rows),
             { trackBy: 'id', columns: makeColumns() },
             withFiltering({
-              predicates: () => [
-                (row: Row) => {
-                  if (row.id === 'r3') {
-                    throw new Error('boom');
-                  }
-                  return row.status === 'open';
-                },
-              ],
+              schema: (path) => ({
+                name: filter(
+                  path.name,
+                  (name: string) => {
+                    if (name === 'Cid') {
+                      throw new Error('boom');
+                    }
+                    return name === 'Ann';
+                  },
+                  { emptyValue: false, isEmpty: () => false }
+                ),
+              }),
             })
           )
         );
 
-        // A per-row catch would keep r1 (tested before the throw) and r3 (skipped after it),
-        // excluding only r2 — an order-dependent result set.
-        expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r2', 'r3']);
+        // r2 (Bob) is decided false before the throw and stays excluded. r3 (Cid) throws and
+        // drops the rule. r4 (Dee), evaluated after the drop, is untouched by the now-dropped
+        // rule and is kept too — not just r3, the row that threw.
+        expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r3', 'r4']);
         expect(reportSpy).toHaveBeenCalledTimes(1);
       } finally {
         reportSpy.mockRestore();
@@ -248,19 +266,145 @@ describe('withFiltering', () => {
     });
   });
 
-  it('composes with a filter model through matcher()', () => {
-    const filters = buildFilters((path) => [equals(path.status)]);
-    const store = inContext(() =>
-      createTable(
-        signal<Row[]>(makeRows()),
-        { trackBy: 'id', columns: makeColumns() },
-        withFiltering({ predicates: () => [filters().matcher(), (row: Row) => row.category === 'b'] })
-      )
-    );
+  describe('members — reached through a composed store', () => {
+    it('root filters().value is writable and fans out to per-key members', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
+          })
+        )
+      );
 
-    filters.status().value.set('open');
+      store.filters().value.set({ status: 'open', category: 'b' });
 
-    expect(store.rows().map((row) => row.id)).toEqual(['r3']);
+      expect(store.filters.status().value()).toBe('open');
+      expect(store.filters.category().value()).toBe('b');
+      expect(store.rows().map((row) => row.id)).toEqual(['r3']);
+    });
+
+    it('root filters().criteria() omits filters that are empty', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
+          })
+        )
+      );
+
+      store.filters.status().value.set('open');
+
+      expect(store.filters().criteria()).toEqual({ status: 'open' });
+    });
+
+    it('root filters().isActive() reflects whether any filter narrows', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
+        )
+      );
+
+      expect(store.filters().isActive()).toBe(false);
+
+      store.filters.status().value.set('open');
+
+      expect(store.filters().isActive()).toBe(true);
+    });
+
+    it('root filters().reset() reverts to source, reset(null) reverts to empty', () => {
+      const sourceStatus = signal('closed');
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            schema: (path) => ({ status: equals(path.status, { source: () => sourceStatus() }) }),
+          })
+        )
+      );
+
+      store.filters.status().value.set('open');
+      store.filters().reset();
+      expect(store.filters.status().value()).toBe('closed');
+
+      store.filters.status().value.set('open');
+      store.filters().reset(null);
+      expect(store.filters.status().value()).toBe(null);
+    });
+
+    it('per-key filters.status().value reads and writes that filter, narrowing the pipeline', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
+        )
+      );
+
+      store.filters.status().value.set('closed');
+
+      expect(store.filters.status().value()).toBe('closed');
+      expect(store.rows().map((row) => row.id)).toEqual(['r2']);
+    });
+
+    it('per-key filters.status().criterion() is undefined while the filter is empty', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ schema: (path) => ({ status: equals(path.status) }) })
+        )
+      );
+
+      expect(store.filters.status().criterion()).toBeUndefined();
+
+      store.filters.status().value.set('open');
+
+      expect(store.filters.status().criterion()).toBe('open');
+    });
+
+    it('per-key filters.status().isActive() reflects that filter alone', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
+          })
+        )
+      );
+
+      store.filters.category().value.set('b');
+
+      expect(store.filters.status().isActive()).toBe(false);
+      expect(store.filters.category().isActive()).toBe(true);
+    });
+
+    it('per-key filters.status().reset() reverts only that filter', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            schema: (path) => ({ status: equals(path.status), category: equals(path.category) }),
+          })
+        )
+      );
+
+      store.filters.status().value.set('open');
+      store.filters.category().value.set('b');
+
+      store.filters.status().reset();
+
+      expect(store.filters.status().value()).toBe(null);
+      expect(store.filters.category().value()).toBe('b');
+    });
   });
 
   // -------------------------------------------------------------------------------------
@@ -270,17 +414,24 @@ describe('withFiltering', () => {
   // for this describe block.
   // -------------------------------------------------------------------------------------
   describe('types', () => {
-    it('withFiltering({ predicates }) alone contributes {} — recovered exactly as TableStore<Row>, never widened to any', () => {
+    it('withFiltering() and withFiltering({ manual: true }) with no schema contribute {} — recovered exactly as TableStore<Row>, never widened to any', () => {
       const store = inContext(() =>
-        createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withFiltering({ predicates: () => [(row: Row) => row.status === 'open'] })
-        )
+        createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withFiltering())
       );
 
       expectTypeOf(store).toEqualTypeOf<TableStore<Row>>();
       expectTypeOf(store).not.toBeAny();
+
+      const manualStore = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({ manual: true })
+        )
+      );
+
+      expectTypeOf(manualStore).toEqualTypeOf<TableStore<Row>>();
+      expectTypeOf(manualStore).not.toBeAny();
     });
 
     it('trailing block: withComputed adds visibleCount, keyof store is TableStore<Row> | "visibleCount"', () => {
@@ -289,7 +440,7 @@ describe('withFiltering', () => {
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
           withFiltering(
-            { predicates: () => [(row: Row) => row.status === 'open'] },
+            undefined,
             withComputed((s) => ({ visibleCount: computed(() => s.rows().length) }))
           )
         )

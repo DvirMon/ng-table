@@ -7,10 +7,11 @@
     </p>
   } @else {
     <p class="story-host__hint">
-      Server filtering — no filtering feature is composed; <code>createFilters()</code> feeds the request and
-      the rows arrive already narrowed. Type in the search box with latency on and watch the
-      request counter: one request per typing pause, not per keystroke. Type an amount, then press
-      <em>Deliver server default now</em> — the default loses to what you typed.
+      Server filtering — the table owns the model; <code>manual: true</code> skips the local filter
+      stage and <code>criteria()</code> drives the request directly, already narrowed on arrival.
+      Type in the search box with latency on and watch the request counter: one request per typing
+      pause, not per keystroke. Type an amount, then press <em>Deliver server default now</em> —
+      the default loses to what you typed.
     </p>
   }
 
@@ -18,10 +19,11 @@
     [searchField]="searchForm.search"
     [statusField]="searchForm.status"
     [amountField]="searchForm.amount"
-    [filters]="filters"
+    [filters]="table.filters"
     [loadError]="loadError()"
     [statusOptions]="statusOptions"
     [tagOptions]="tagOptions"
+    [amountIgnoresServerDefault]="amountIgnoresServerDefault()"
     (deliverServerDefault)="deliverServerDefault()"
     (retry)="retry()"
   />

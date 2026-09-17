@@ -2,11 +2,10 @@ import { computed, isSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { debounce, form } from '@angular/forms/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createFilters } from './create-filters';
-import { rowOf } from './row-of';
+import { buildFilterModel } from './create-filters';
 import { contains, equals, inRange } from './rules';
 import { equalsCriterion } from './state';
-import type { FiltersPath } from './types';
+import type { AnyRule, FiltersPath } from './types';
 
 interface Invoice {
   status: string | null;
@@ -20,16 +19,21 @@ type RangeCriterion = { min: number | null; max: number | null };
 
 const EMPTY_RANGE: RangeCriterion = { min: null, max: null };
 
-function build<S extends readonly unknown[]>(schema: (path: FiltersPath<Invoice>) => S) {
-  return TestBed.runInInjectionContext(() => createFilters(rowOf<Invoice>(), schema));
+/** `buildFilterModel` needs no injection context — `state.ts` builds only `signal`/`computed`/
+ *  `linkedSignal`, none of which require one. */
+function build<S extends Record<string, AnyRule>>(schema: (path: FiltersPath<Invoice>) => S) {
+  return buildFilterModel<Invoice, S>(schema);
 }
 
 function buildInvoiceFilters(source?: () => RangeCriterion) {
-  return build((path) => [
-    equals(path.status),
-    inRange(path.amount, source ? { source } : undefined),
-    contains(path.customer),
-  ]);
+  return build((path) => ({
+    // `equals`'s generic inference collapses to `unknown` here without the explicit
+    // arguments — a TS quirk in reverse-mapped-type inference over an object-literal schema,
+    // reproduced with `contains`/`inRange` unaffected (they carry no `const TEmpty` param).
+    status: equals<Invoice, 'status', never>(path.status),
+    amount: inRange(path.amount, source ? { source } : undefined),
+    customer: contains(path.customer),
+  }));
 }
 
 /**
@@ -251,7 +255,7 @@ describe('filters root — a Signal Form binds to it directly', () => {
 });
 
 /**
- * R25 keeps debouncing in the Signal Form rather than in `createFilters`, so `debounce()` over
+ * R25 keeps debouncing in the Signal Form rather than in `buildFilterModel`, so `debounce()` over
  * the criterion model is the only thing standing between a keystroke and a request
  * (`server-filtering-story-host.component.ts:123`). `controlValue` is the buffered half — a write
  * there schedules a sync, and only the elapsed timer writes through to the criterion.

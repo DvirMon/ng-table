@@ -21,7 +21,8 @@ const narrowColumns: ColumnDefInput<InvoiceRow>[] = [
   { id: 'tags', label: 'Tags' },
 ];
 
-/** Consumed by `client-filtering/`, which composes `withFiltering({ predicates: () => [filters().matcher()] })`. */
+/** Consumed by `client-filtering/`, which composes `withFiltering({ schema: clientInvoiceFilters })` —
+ * the table owns the model directly. */
 export const clientInvoiceConfig: TableConfig<InvoiceRow> = {
   trackBy: 'id',
   columns: clientColumns,

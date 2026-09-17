@@ -1,27 +1,19 @@
-import type { Signal } from '@angular/core';
-import { createFilters } from '../../../filters/create-filters';
+import { signal } from '@angular/core';
 import { contains, filter, hasNone, inRange } from '../../../filters/rules';
-import { rowOf } from '../../../filters/row-of';
+import type { FiltersPath, StateOf } from '../../../filters/types';
 import type { InvoiceRow, RangeCriterion } from '../fixtures/types';
-import { matchesStatus } from '../fixtures/utils';
+import { EMPTY_RANGE, matchesStatus } from '../fixtures/utils';
 
-/**
- * Declares the server-filtering criterion schema — extracted so `ServerCriteria` below names
- * the inferred state without deriving it off the component class.
- *
- * `data` is never fetched — `rowOf<InvoiceRow>()` supplies the row type in the slot real row
- * data would otherwise occupy, since the filters exist before any page has loaded.
- */
-export function createServerFilters(serverDefaultAmount: Signal<RangeCriterion>) {
-  return createFilters(rowOf<InvoiceRow>(), (path) => [
-    filter(path.status, matchesStatus, { emptyValue: '' }),
-    contains(path.customer, { as: 'search' }),
-    inRange(path.amount, { source: () => serverDefaultAmount() }),
-    hasNone(path.tags, { as: 'excludedTags' }),
-  ]);
-}
+/** Empty until "Deliver server default now" is pressed — the race needs a late arrival. */
+export const serverDefaultAmount = signal<RangeCriterion>(EMPTY_RANGE);
 
-type ServerFiltersRoot = ReturnType<ReturnType<typeof createServerFilters>>;
+/** The table supplies `TRow` (as `RowOf<In>`); this schema only ever needs `path`. */
+export const serverInvoiceFilters = (path: FiltersPath<InvoiceRow>) => ({
+  status: filter(path.status, matchesStatus, { emptyValue: '' }),
+  search: contains(path.customer),
+  amount: inRange(path.amount, { source: () => serverDefaultAmount() }),
+  excludedTags: hasNone(path.tags),
+});
 
 /** The criterion map the schema above infers. Derived, never restated. */
-export type ServerCriteria = ReturnType<ServerFiltersRoot['value']>;
+export type ServerCriteria = StateOf<ReturnType<typeof serverInvoiceFilters>>;

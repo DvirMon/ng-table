@@ -1,6 +1,5 @@
 import { Component, computed, signal } from '@angular/core';
 import { createTable } from '../../../api/create-table';
-import { createFilters } from '../../../filters/create-filters';
 import { withComputed } from '../../../api/features/with-computed';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';
@@ -28,12 +27,13 @@ export class DerivedStateStoryHostComponent {
   protected readonly data = signal<CompositionRow[]>(COMPOSITION_ROWS_MOCK);
   protected readonly deptOptions = COMPOSITION_DEPT_OPTIONS;
 
-  protected readonly filters = createFilters(this.data, (path) => [equals(path.dept)]);
-
   protected readonly table = createTable(
     this.data,
     derivedStateConfig,
-    withFiltering({ predicates: () => [this.filters().matcher()] }),
+    // `equals()`'s generics collapse `TCriterion` to `unknown` when called bare inside an
+    // object-literal schema — saturating them keeps `activeDept` typed as `string | null`
+    // instead of `unknown`. Latent defect in `filters/rules.ts`; flagged, not fixed here.
+    withFiltering({ schema: (path) => ({ dept: equals<CompositionRow, 'dept', never>(path.dept) }) }),
     withSelection(
       {},
       withComputed((store) => ({
@@ -48,7 +48,7 @@ export class DerivedStateStoryHostComponent {
     })),
   );
 
-  protected readonly activeDept = computed(() => this.filters.dept().value());
+  protected readonly activeDept = computed(() => this.table.filters.dept().value());
 
   protected toggleRowSelection(id: RowId): void {
     this.table.toggle(id);
@@ -58,7 +58,7 @@ export class DerivedStateStoryHostComponent {
    * rather than writing an empty string the `equals` criterion would then match on. */
   protected setDeptFilter(value: string): void {
     const isAllSelected = value === '';
-    const dept = this.filters.dept();
+    const dept = this.table.filters.dept();
 
     if (isAllSelected) {
       dept.reset(null);

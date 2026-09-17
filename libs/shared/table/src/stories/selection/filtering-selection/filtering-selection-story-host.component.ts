@@ -13,7 +13,7 @@ import { INVOICE_ROWS_MOCK, STATUS_OPTIONS, TAG_OPTIONS } from '../../filtering/
 import { selectionInvoiceConfig } from '../../filtering/fixtures/schema';
 import type { InvoiceRow } from '../../filtering/fixtures/types';
 import { toggleOption } from '../../filtering/fixtures/utils';
-import { createFilteringSelectionFilters } from './filtering-selection.filters';
+import { selectionInvoiceFilters } from './filtering-selection.filters';
 import { FilteringSelectionToolbarComponent } from './filtering-selection-toolbar.component';
 
 /**
@@ -32,19 +32,19 @@ import { FilteringSelectionToolbarComponent } from './filtering-selection-toolba
 export class FilteringSelectionStoryHostComponent {
   protected readonly data = signal<InvoiceRow[]>(INVOICE_ROWS_MOCK);
 
-  /** The subset this story filters by — enough to move rows in and out of view while a
-   * selection is held, without rebuilding the client story's whole filter row. */
-  protected readonly filters = createFilteringSelectionFilters(this.data);
-
-  protected readonly filterForm = form(this.filters().value);
-
   protected readonly table = createTable(
     this.data,
     selectionInvoiceConfig,
-    withFiltering({ predicates: () => [this.filters().matcher()] }),
+    withFiltering({ schema: selectionInvoiceFilters }),
     withSelection(),
     withSorting(),
   );
+
+  /** The subset this story filters by — enough to move rows in and out of view while a
+   * selection is held, without rebuilding the client story's whole filter row. */
+  protected readonly filters = this.table.filters;
+
+  protected readonly filterForm = form(this.filters().value);
 
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly tagOptions = TAG_OPTIONS;

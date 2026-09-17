@@ -1,7 +1,7 @@
 # Implementation Progress — table-owned-filtering (`#123`)
 
 **Epic:** [#123](https://github.com/DvirMon/acme/issues/123)
-**Status:** 6 / 11 complete
+**Status:** 11 / 11 complete
 
 Steps 1–6 cover [`#124`](https://github.com/DvirMon/acme/issues/124) — spec steps 1–6, one PR.
 Nothing outside `src/filters/`, `src/api/features/with-filtering.ts` and `src/index.ts` changes.
@@ -24,11 +24,11 @@ Issues `#126`–`#127` get their own plans and continue the step numbering.
 
 | Step | Title | Type | Status | PR |
 |---|---|---|---|---|
-| 7 | [Client-filtering host takes the owned model](step-7-client-filtering-host.plan.md) | `code` | ⬚ pending | — |
-| 8 | [Server-filtering host: the filters move into the table](step-8-server-filtering-host.plan.md) | `code` | ⬚ pending | — |
-| 9 | [Remaining call sites; delete the predicate story](step-9-remaining-call-sites.plan.md) | `code` | ⬚ pending | — |
-| 10 | [Migrate `state.spec.ts`, rewrite `with-filtering.spec.ts`](step-10-specs.plan.md) | `test` | ⬚ pending | — |
-| 11 | [`filtering.mdx` prose and the green gate](step-11-mdx-and-green-gate.plan.md) | `docs` | ⬚ pending | — |
+| 7 | [Client-filtering host takes the owned model](step-7-client-filtering-host.plan.md) | `code` | ✅ done | — |
+| 8 | [Server-filtering host: the filters move into the table](step-8-server-filtering-host.plan.md) | `code` | ✅ done | — |
+| 9 | [Remaining call sites; delete the predicate story](step-9-remaining-call-sites.plan.md) | `code` | ✅ done | — |
+| 10 | [Migrate `state.spec.ts`, rewrite `with-filtering.spec.ts`](step-10-specs.plan.md) | `test` | ✅ done | — |
+| 11 | [`filtering.mdx` prose and the green gate](step-11-mdx-and-green-gate.plan.md) | `docs` | ✅ done | — |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 

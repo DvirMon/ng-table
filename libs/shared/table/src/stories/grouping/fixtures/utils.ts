@@ -1,5 +1,6 @@
-import type { FilterNode } from '../../../filters/types';
-import type { createDealFilters } from './schema';
+import type { Filters, FilterNode, StateOf } from '../../../filters/types';
+import type { dealFilters } from './schema';
+import type { DealRow } from './types';
 
 /**
  * What the grouping pipes are built on, plus the two filter accessors a host needs in TypeScript.
@@ -38,13 +39,15 @@ export function formatAmount(value: unknown): string {
 }
 
 /** Current criterion of the "rep" filter, for rendering an input's value. */
-export function readRepCriterion(filters: ReturnType<typeof createDealFilters>): string {
+export function readRepCriterion(
+  filters: Filters<DealRow, StateOf<ReturnType<typeof dealFilters>>>
+): string {
   return filters.rep().value();
 }
 
 /** The "rep" filter's node, for writing a new criterion via `.value.set(...)`. */
 export function repFilterNode(
-  filters: ReturnType<typeof createDealFilters>
+  filters: Filters<DealRow, StateOf<ReturnType<typeof dealFilters>>>
 ): FilterNode<string> {
   return filters.rep();
 }

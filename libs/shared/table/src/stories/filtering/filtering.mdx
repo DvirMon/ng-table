@@ -1,16 +1,10 @@
 import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as ClientStories from './client-filtering/client-filtering.stories';
-import * as PredicateStories from './predicate-filtering/predicate-filtering.stories';
 import * as ServerStories from './server-filtering/server-filtering.stories';
 import clientClass from './client-filtering/client-filtering-story-host.component.ts?raw';
 import clientTemplate from './client-filtering/client-filtering-story-host.component.html?raw';
 import clientToolbarClass from './client-filtering/client-filtering-toolbar.component.ts?raw';
 import clientToolbarTemplate from './client-filtering/client-filtering-toolbar.component.html?raw';
-import predicateClass from './predicate-filtering/predicate-filtering-story-host.component.ts?raw';
-import predicateTemplate from './predicate-filtering/predicate-filtering-story-host.component.html?raw';
-import predicateToolbarClass from './predicate-filtering/predicate-filtering-toolbar.component.ts?raw';
-import predicateToolbarTemplate from './predicate-filtering/predicate-filtering-toolbar.component.html?raw';
-import predicateSchema from './predicate-filtering/predicate-filtering.schema.ts?raw';
 import serverClass from './server-filtering/server-filtering-story-host.component.ts?raw';
 import serverTemplate from './server-filtering/server-filtering-story-host.component.html?raw';
 import serverToolbarClass from './server-filtering/server-filtering-toolbar.component.ts?raw';
@@ -25,22 +19,26 @@ import '../styles/code-tabs.css';
 
 # Filtering
 
-Three stories over one question: where the filtering happens. `Client` feeds a filter model into
-the pipeline, `Server` serializes the same model into a request, and `Predicates` composes no
-model at all. `Selection × Filtering` moved to [`Table / Selection`](?path=/docs/table-selection--docs)
-— its focus is selection surviving another feature's row churn, not filtering itself.
+Two stories over one question: where the filtering happens. Both build the same kind of
+`withFiltering({ schema })` model — the table owns it either way — but `Client` lets the local
+`filter` stage narrow `rows()`, while `Server` sets `manual: true` and serializes the model's
+`criteria()` into a request instead. `Selection × Filtering` moved to
+[`Table / Selection`](?path=/docs/table-selection--docs) — its focus is selection surviving
+another feature's row churn, not filtering itself.
 
 Shared: `fixtures/schema.ts`, `fixtures/http.ts` and `filtering-story.css`, at the bottom of this
-page. `Predicates` brings its own schema, shown in its own tab.
+page.
 
 ---
 
 ## Client
 
-`withFiltering({ predicates: () => [filters().matcher()] })` feeds a standalone `createFilters()`
-object into the pipeline's `filter` stage as one predicate term. The feature takes row predicates,
-not a filter model; the host composes the two. The filters are the consumer's — the feature owns no
-filter state — which is why the same declarations feed a server request unchanged in `Server`.
+The table owns the model: `withFiltering({ schema: clientInvoiceFilters })` builds `filters` at
+construction, and its criteria narrow the `filter` stage directly — no separate object outside the
+table, no composing step for the host to get wrong. `clientInvoiceFilters` is a hoisted `const`
+annotated `(path: FiltersPath<InvoiceRow>)` — it composes by spread, with no `filterSchema()`
+helper needed. The same schema shape is what `Server` re-serializes into a request instead of
+narrowing locally.
 
 One filter may target one path, so the `tags` column's include and exclude halves are a single
 compound `filter()` criterion fed by two multi-selects, and the quick filter spans `note` and `id`
@@ -94,11 +92,16 @@ rather than borrowing `customer`, which already carries its own `contains`.
 
 ## Server
 
-No filtering feature is composed here. `withFiltering({ predicates: () => [], manual: true })`
-exists for symmetry with `withSorting()`, but in server mode it is an identity pass-through that
-still claims the `filter` stage — composing it would occupy a slot to do nothing. The same
-`createFilters()` object the client story turns into a predicate via `matcher()` is serialized into
-`GET /api/invoices` instead, and the rows arrive already narrowed.
+`withFiltering({ manual: true, schema: serverInvoiceFilters })` builds the same kind of model as
+`Client`, but `manual: true` skips the local `filter` stage — the server has already narrowed the
+page, so filtering it a second time would be wrong, not redundant. `table.filters().criteria()`
+drives the request through `resource({ params })` instead.
+
+There is no construction cycle even though `table`'s rows and the resource's params each seem to
+need the other: `createTable` reads its `data` argument through a lazily-evaluated signal, so the
+resource can read `table.filters().criteria()` at request time and the table can read the
+resource's resolved rows, without either one having to exist before the other. That absence of a
+cycle is the answer to the question standalone filters used to be the answer to.
 
 The query mapping is hand-written in the host on purpose: no library can know a given backend's
 parameter names, so that code is what a consumer actually writes.
@@ -156,70 +159,7 @@ the failure, so the retried query is the one that failed, not a fresh one.
 
 ---
 
-## Predicates
-
-This table filters with plain handwritten predicates and composes **no filter model at all** —
-`withFiltering({ predicates })` takes a thunk returning `(row) => boolean` terms, and the host
-imports nothing from the filters domain: no `createFilters()`, no `Filters` type, no rules, no
-matchers. That absence is the point; the sibling stories cover what a filter model adds.
-
-The thunk is called once per filter pass, so terms built from ordinary signals re-narrow when those
-signals change. Terms are AND'd, and a control with nothing in it contributes no term.
-
-<Canvas of={PredicateStories.Predicates} />
-
-<div className="code-tabs">
-  <div className="code-tabs-list">
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-predicates-source" defaultChecked />
-      TS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-predicates-source" />
-      HTML
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-predicates-source" />
-      CSS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-predicates-source" />
-      predicate-filtering-toolbar.component.ts
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-predicates-source" />
-      predicate-filtering-toolbar.component.html
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="filtering-predicates-source" />
-      predicate-filtering.schema.ts
-    </label>
-  </div>
-  <div className="code-tabs-panels">
-    <div className="code-tabs-panel">
-      <Source code={predicateClass} language="tsx" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={predicateTemplate} language="html" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={filteringStyles} language="css" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={predicateToolbarClass} language="tsx" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={predicateToolbarTemplate} language="html" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={predicateSchema} language="ts" />
-    </div>
-  </div>
-</div>
-
----
-
-## Shared across the three
+## Shared across the two
 
 <div className="code-tabs">
   <div className="code-tabs-list">

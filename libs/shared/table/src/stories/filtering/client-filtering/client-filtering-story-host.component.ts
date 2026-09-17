@@ -18,7 +18,10 @@ import { FILTERING_STORY_PIPES } from '../filtering-story.pipes';
 import { createFilterReportLog } from './filter-report-log';
 import { CLIENT_FILTER_KEYS } from './client-filtering.types';
 import type { ActiveCriterion, ClientFilterKey, SavedFilterLoad } from './client-filtering.types';
-import { createClientFilters } from './client-filtering.filters';
+import {
+  clientInvoiceFilters,
+  tagsPredicateIsBroken as tagsPredicateIsBrokenControl,
+} from './client-filtering.filters';
 import type { ClientCriteria } from './client-filtering.filters';
 import { ClientFilteringToolbarComponent } from './client-filtering-toolbar.component';
 
@@ -69,9 +72,10 @@ function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriter
 /**
  * Table with client-side filtering
  *
- * Per-column and compound predicates via `createFilters()` feed `withFiltering()` as one
- * matcher term, with Signal Forms driving the criteria directly. Load a stale saved filter
- * raw or through validation to compare the two paths.
+ * The table owns the filter model directly: `clientInvoiceFilters` is a hoisted schema and
+ * `withFiltering({ schema })` builds and exposes `filters`, with Signal Forms driving the
+ * criteria directly. Load a stale saved filter raw or through validation to compare the two
+ * paths.
  */
 @Component({
   selector: 'ngp-client-filtering-story-host',
@@ -85,23 +89,24 @@ function keepValidCriteria(saved: Record<string, unknown>): Partial<ClientCriter
   styleUrls: ['../../styles/story-host.css', '../filtering-story.css'],
 })
 export class ClientFilteringStoryHostComponent {
-  /** Flipped by the "Break the tags filter" toggle; read by the compound `tags` predicate. */
-  protected readonly tagsPredicateIsBroken = signal(false);
-
   protected readonly data = signal<InvoiceRow[]>(INVOICE_ROWS_MOCK);
-
-  /** Public, not protected, only so `ClientCriteria` above can derive the criterion map from it. */
-  readonly filters = createClientFilters(this.data, this.tagsPredicateIsBroken);
-
-  /** Signal Forms directly over the criterion model — `filters().value` is a `WritableSignal`,
-   * so the form writes through to the nodes and there is nothing to keep in sync. */
-  protected readonly filterForm = form(this.filters().value);
 
   protected readonly table = createTable(
     this.data,
     clientInvoiceConfig,
-    withFiltering({ predicates: () => [this.filters().matcher()] }),
+    withFiltering({ schema: clientInvoiceFilters }),
   );
+
+  /** The shipped member, read by the template and `activeCriteria` below. */
+  protected readonly filters = this.table.filters;
+
+  /** Signal Forms directly over the criterion model — `filters().value` is a `WritableSignal`,
+   * so the form writes through to the nodes and there is nothing to keep in sync. */
+  protected readonly filterForm = form(this.table.filters().value);
+
+  /** Template alias for the "Break the tags filter" toggle; the module-scope signal it points
+   * to lives beside the schema in `client-filtering.filters.ts`. */
+  protected readonly tagsPredicateIsBroken = tagsPredicateIsBrokenControl;
 
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly tagOptions = TAG_OPTIONS;
@@ -147,12 +152,12 @@ export class ClientFilteringStoryHostComponent {
 
   protected toggleTagsPredicate(): void {
     this.filterReports.clear();
-    this.tagsPredicateIsBroken.update((isBroken) => !isBroken);
+    tagsPredicateIsBrokenControl.update((isBroken) => !isBroken);
   }
 
   /**
-   * The anti-pattern, on purpose. `reset()` takes a `Partial<…>` of the criterion map
-   * `createFilters` inferred from the schema above, and this snapshot satisfies none of it —
+   * The anti-pattern, on purpose. `reset()` takes a `Partial<…>` of the criterion map the
+   * schema above infers, and this snapshot satisfies none of it —
    * `status: 'archived'` is not an `InvoiceStatus`, `amount` carries pre-rename keys,
    * `retiredFilter` names nothing. **Not being able to write this without stepping outside the
    * type is the finding**, so the escape is left visible rather than hidden behind a helper: an

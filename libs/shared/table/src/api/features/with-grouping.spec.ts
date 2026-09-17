@@ -16,6 +16,8 @@ import { setGroupLevels } from '../../mutations/update-grouping';
 import { applyGrouping } from '../../schema/grouping-rules';
 import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
 import type { WritableView } from '../../engine/writable-view';
+import { filter } from '../../filters/rules';
+import type { FiltersPath } from '../../filters/types';
 import { createTable } from '../create-table';
 import { withComputed } from './with-computed';
 import { withExpansion } from './with-expansion';
@@ -60,6 +62,12 @@ function toShape<TRow extends { id: number }>(
 function inContext<T>(build: () => T): T {
   return TestBed.runInInjectionContext(build);
 }
+
+/** Drops id 2 (US > Electronics, amount 300) — shared so stores that must be provably identical
+ * (pipeline-order argument swap) reuse one schema instead of two independently-constant ones. */
+const excludeAmount300 = (path: FiltersPath<GroupingMockRow>) => ({
+  amount: filter(path.amount, (cell) => cell !== 300, { emptyValue: null, isEmpty: () => false }),
+});
 
 describe('withGrouping', () => {
   it('grouping() starts empty; setGroupLevels updates it and re-clusters renderRows()', () => {
@@ -204,7 +212,7 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ predicates: () => [(row: GroupingMockRow) => row.amount !== 300] }), // drops id 2 (US > Electronics, amount 300)
+        withFiltering({ schema: excludeAmount300 }),
         withGrouping({ initial: ['region', 'category'] })
       )
     );
@@ -540,20 +548,19 @@ describe('rowsOf', () => {
 
   it('reactivity: a computed() reading rowsOf recomputes after a data write, a filter change, and a grouping change', () => {
     const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
-    // A signal read inside the predicates thunk, rather than a fixed value at composition, so
-    // this case can still exercise "a filter change" as one of its three reactivity triggers.
-    const amountToExclude = signal<number | null>(null);
     const store = inContext(() =>
       createTable(
         data,
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withFiltering({
-          predicates: () => {
-            const excluded = amountToExclude();
-            return excluded == null
-              ? []
-              : [(row: GroupingMockRow) => row.amount !== excluded];
-          },
+          // `emptyValue: null` keeps the rule inactive until a criterion is written — the
+          // criterion itself (`filters.amount().value`) is the signal read that exercises
+          // "a filter change" as one of this case's three reactivity triggers.
+          schema: (path) => ({
+            amount: filter(path.amount, (cell, criterion) => cell !== criterion, {
+              emptyValue: null as number | null,
+            }),
+          }),
         }),
         withGrouping({ initial: ['region'] })
       )
@@ -575,7 +582,7 @@ describe('rowsOf', () => {
     expect(usLeafIds()).toEqual([1, 2, 3, 7]);
 
     // Filter change: excludes the row just added.
-    amountToExclude.set(40);
+    store.filters.amount().value.set(40);
     TestBed.tick();
     expect(usLeafIds()).toEqual([1, 2, 3]);
 
@@ -591,7 +598,7 @@ describe('rowsOf', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ predicates: () => [(row: GroupingMockRow) => row.amount !== 300] }), // excludes id 2 (US > Electronics)
+        withFiltering({ schema: excludeAmount300 }),
         withGrouping({ initial: ['region', 'category'] })
       )
     );
@@ -1033,14 +1040,11 @@ describe('collapse/expand (#59)', () => {
 
 describe('pipeline order (story 22)', () => {
   it('filter -> group -> sort executes in the same fixed order regardless of feature argument order', () => {
-    // Shared predicate rather than one per store — keeps the two stores provably identical.
-    const isNotExcludedAmount = (row: GroupingMockRow): boolean => row.amount !== 300; // drops id 2 from both, regardless of argument order
-
     const filterGroupSort = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withFiltering({ predicates: () => [isNotExcludedAmount] }),
+        withFiltering({ schema: excludeAmount300 }),
         withGrouping({ initial: ['region'] }),
         withSorting()
       )
@@ -1052,7 +1056,7 @@ describe('pipeline order (story 22)', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withSorting(),
         withGrouping({ initial: ['region'] }),
-        withFiltering({ predicates: () => [isNotExcludedAmount] })
+        withFiltering({ schema: excludeAmount300 })
       )
     );
 

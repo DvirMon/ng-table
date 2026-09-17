@@ -27,13 +27,12 @@ export class ServerFilteringToolbarComponent {
   readonly loadError = input.required<string | null>();
   readonly statusOptions = input.required<readonly InvoiceStatus[]>();
   readonly tagOptions = input.required<readonly string[]>();
+  /** The late-default race, computed on the host: `dirty()` is `@internal` as of #124. */
+  readonly amountIgnoresServerDefault = input.required<boolean>();
 
   readonly deliverServerDefault = output<void>();
   readonly retry = output<void>();
 
-  /** The late-default race, made visible: dirty means the typed value is no longer following
-   * the declared `source`, so an arriving server default loses. */
-  protected readonly isAmountDirty = computed(() => this.filters().amount().dirty());
   protected readonly excludedTagSet = computed(
     () => new Set(this.filters().excludedTags().value()),
   );

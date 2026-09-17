@@ -9,11 +9,7 @@ import {
   type RowId,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import {
-  createDealFilters,
-  groupingConfig,
-  SELECTION_GROUPING_LEVELS,
-} from '../fixtures/schema';
+import { dealFilters, groupingConfig, SELECTION_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { readRepCriterion, repFilterNode } from '../fixtures/utils';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
@@ -37,13 +33,12 @@ export class GroupingSelectionStoryHostComponent {
   readonly cascade = input<CascadeMode>('descendants');
 
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
-  protected readonly filters = createDealFilters();
   protected readonly table = createTable(
     this.data,
     groupingConfig,
     withGrouping({ initial: SELECTION_GROUPING_LEVELS }),
     withSelection(),
-    withFiltering({ predicates: () => [this.filters().matcher()] })
+    withFiltering({ schema: dealFilters })
   );
 
   protected readonly visibleColumns = computed(() =>
@@ -53,7 +48,7 @@ export class GroupingSelectionStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
-  protected readonly repFilter = computed(() => readRepCriterion(this.filters));
+  protected readonly repFilter = computed(() => readRepCriterion(this.table.filters));
 
   protected readonly isGrouped = computed(() => this.table.grouping().length > 0);
 
@@ -76,7 +71,7 @@ export class GroupingSelectionStoryHostComponent {
   });
 
   protected onFilterRep(value: string): void {
-    repFilterNode(this.filters).value.set(value);
+    repFilterNode(this.table.filters).value.set(value);
   }
 
   /**

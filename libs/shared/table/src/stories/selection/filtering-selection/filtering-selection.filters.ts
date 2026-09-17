@@ -1,20 +1,15 @@
-import type { Signal } from '@angular/core';
-import { createFilters } from '../../../filters/create-filters';
 import { contains, filter, hasAny } from '../../../filters/rules';
+import type { FiltersPath, StateOf } from '../../../filters/types';
 import type { InvoiceRow } from '../../filtering/fixtures/types';
 import { matchesStatus } from '../../filtering/fixtures/utils';
 
-/** Declares the filtering-selection criterion schema — extracted so `SelectionCriteria` below
- * names the inferred state without deriving it off the component class. */
-export function createFilteringSelectionFilters(data: Signal<InvoiceRow[]>) {
-  return createFilters(data, (path) => [
-    filter(path.status, matchesStatus, { emptyValue: '' }),
-    contains(path.customer),
-    hasAny(path.tags),
-  ]);
-}
-
-type SelectionFiltersRoot = ReturnType<ReturnType<typeof createFilteringSelectionFilters>>;
+/** Hoisted so `SelectionCriteria` below names the inferred state without deriving it off the
+ * component class. */
+export const selectionInvoiceFilters = (path: FiltersPath<InvoiceRow>) => ({
+  status: filter(path.status, matchesStatus, { emptyValue: '' }),
+  customer: contains(path.customer),
+  tags: hasAny(path.tags),
+});
 
 /** The criterion map the schema above infers. Derived, never restated. */
-export type SelectionCriteria = ReturnType<SelectionFiltersRoot['value']>;
+export type SelectionCriteria = StateOf<ReturnType<typeof selectionInvoiceFilters>>;
