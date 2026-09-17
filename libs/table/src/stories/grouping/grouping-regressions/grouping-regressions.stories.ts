@@ -29,8 +29,7 @@ type Story = StoryObj<GroupingRegressionsStoryHostComponent>;
  * Two degradations the library performs silently, both reached from the canvas buttons:
  * grouping by a missing column, and one poisoned row's amount blanking a summary.
  *
- * The poisoned-row case takes the whole table down instead of blanking that one summary
- * ([#45](https://github.com/DvirMon/ng-table/issues/45)).
+ * The poisoned-row case takes the whole table down instead of blanking that one summary.
  */
 export const SilentDegradation: Story = {};
 

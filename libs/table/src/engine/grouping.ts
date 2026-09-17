@@ -61,7 +61,7 @@ export function resolveGroupingLevels<TRow>(
  * Recursive stable partition. `accessor(item, columnId)` is supplied by the caller so this
  * builder never needs to know whether `T` is a raw `TRow` or a wrapped render row.
  * `Map` preserves insertion order, which is what gives "first-occurrence order when no
- * `groupOrder` is supplied" (#24) for free — do not swap for a plain object or a sort.
+ * `groupOrder` is supplied" for free — do not swap for a plain object or a sort.
  */
 export function buildClusters<T>(
   items: T[],
@@ -455,7 +455,7 @@ function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string):
 
 /**
  * Every group header id that exists in the data, at every level — collapse-independent, so it
- * can seed "expand everything" (issue #97). `[]` when ungrouped.
+ * can seed "expand everything". `[]` when ungrouped.
  */
 export function collectGroupIds<TRow>(
   rows: TRow[],

@@ -41,9 +41,8 @@ function externalRank(key: unknown): number {
  * level naming no column, and an `aggregateFn` refusing its value. Copy `grouping-static/` for
  * normal usage, not this file.
  *
- * The throwing aggregate takes the whole table down instead of blanking one summary
- * ([#45](https://github.com/DvirMon/ng-table/issues/45)); the dropped level is reported nowhere
- * but this story's own on-canvas notice.
+ * The throwing aggregate takes the whole table down instead of blanking one summary; the
+ * dropped level is reported nowhere but this story's own on-canvas notice.
  */
 @Component({
   selector: 'ngp-grouping-regressions-story-host',

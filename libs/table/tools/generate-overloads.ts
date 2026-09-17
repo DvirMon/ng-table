@@ -4,7 +4,7 @@
  * `src/api/features/compose-features.overloads.ts`.
  *
  * Run: `npm run table:overloads` (`-- --dry-run` prints, `-- --check` fails on drift).
- * Arity and the accumulation rule come from D27 / issue #35: slot k is typed against the
+ * Arity and the accumulation rule come from D27: slot k is typed against the
  * base ∩ every preceding slot's contribution, so argument order governs member visibility.
  *
  * Output is run through Prettier with the repo's own config, so `prettier --write` over the
