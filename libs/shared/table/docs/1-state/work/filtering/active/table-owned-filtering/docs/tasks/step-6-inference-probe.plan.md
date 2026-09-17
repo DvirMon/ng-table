@@ -94,4 +94,4 @@ the carrier, and `applyWhen` — all deleted by Steps 1–3. Rewrite rather than
       genuinely error.
 
 ---
-← [Step 5: Barrels](step-5-barrels.plan.md)
+← [Step 5: Barrels](step-5-barrels.plan.md) | [Step 7: Client-filtering host](step-7-client-filtering-host.plan.md) →

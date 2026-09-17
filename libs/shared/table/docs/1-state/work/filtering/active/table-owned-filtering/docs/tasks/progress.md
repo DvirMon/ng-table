@@ -1,12 +1,13 @@
 # Implementation Progress — table-owned-filtering (`#123`)
 
 **Epic:** [#123](https://github.com/DvirMon/acme/issues/123)
-**Status:** 0 / 6 complete
+**Status:** 6 / 11 complete
 
 Steps 1–6 cover [`#124`](https://github.com/DvirMon/acme/issues/124) — spec steps 1–6, one PR.
 Nothing outside `src/filters/`, `src/api/features/with-filtering.ts` and `src/index.ts` changes.
-**This issue does not stay green on its own**: call sites break at Step 5 and migrate in `#125`.
-Issues `#125`–`#127` get their own plans and continue the step numbering.
+**That issue does not stay green on its own**: call sites break at Step 5 and migrate in `#125`.
+Steps 7–11 cover [`#125`](https://github.com/DvirMon/acme/issues/125) — spec steps 7–8, one PR.
+Issues `#126`–`#127` get their own plans and continue the step numbering.
 
 ## `#124` — `withFiltering` owns the filter model · PR 1 of 1
 
@@ -19,48 +20,67 @@ Issues `#125`–`#127` get their own plans and continue the step numbering.
 | 5 | [Barrels: drop the standalone surface, add `FiltersPath`](step-5-barrels.plan.md) | `code` | ✅ done | — |
 | 6 | [Rewrite the compile-time probe for `StateOf` inference](step-6-inference-probe.plan.md) | `test` | ✅ done | — |
 
+## `#125` — Migrate every filtering call site and spec · PR 1 of 1
+
+| Step | Title | Type | Status | PR |
+|---|---|---|---|---|
+| 7 | [Client-filtering host takes the owned model](step-7-client-filtering-host.plan.md) | `code` | ⬚ pending | — |
+| 8 | [Server-filtering host: the filters move into the table](step-8-server-filtering-host.plan.md) | `code` | ⬚ pending | — |
+| 9 | [Remaining call sites; delete the predicate story](step-9-remaining-call-sites.plan.md) | `code` | ⬚ pending | — |
+| 10 | [Migrate `state.spec.ts`, rewrite `with-filtering.spec.ts`](step-10-specs.plan.md) | `test` | ⬚ pending | — |
+| 11 | [`filtering.mdx` prose and the green gate](step-11-mdx-and-green-gate.plan.md) | `docs` | ⬚ pending | — |
+
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 
-## Dependency graph
+## Dependency graph — `#125`
 
 ```
-1 ──> 2 ──> 3 ──> 4 ──> 5 ──> 6
+ 7 ─┐
+ 8 ─┼──> 11
+ 9 ─┘
+10      (no edge)
 ```
 
-- **Parallel-safe:** none. Stated plainly rather than claimed — see below.
-- **Dependency:** `1 → 2` (an object literal has nowhere to put an `applyWhen` node, so the gate
-  must move onto rule options while the array schema still exists); `2 → 3` (the feature's
-  `schema: (path) => S` signature is only expressible once `S` is an object of rules);
-  `3 → 4` (`predicates` cannot be deleted before the owned matcher replaces it); `4 → 5` (a barrel
-  states a surface, and the surface is not settled until the member audit lands); `5 → 6` (the probe
-  imports through the barrel it is asserting).
-- **Frontier at start:** `[1]`.
+- **Parallel-safe:** `[7, 8, 9, 10]` — disjoint file sets, all on the frontier at start.
+- **Dependency:** `[7,8,9] → 11`. One MDX file describes all three filtering stories; four steps
+  editing it is a merge conflict, not a graph edge. Step 11 also carries the whole-lib gate, which
+  cannot pass until every call site has landed.
+- **Frontier at start:** `[7, 8, 9, 10]`.
 
-## Notes carried from planning
+## Notes carried from planning — `#125`
 
-- **The spec's graph is a discussion ordering, not an execution one.** `spec.md` marks `[3,4,5]`
-  parallel-safe after `1–2`; at file grain they are not. Spec steps 2, 3 and 4 all rewrite
-  `types.ts`, and spec 2's `flattenRules` rewrite collides with spec 3's conditional branch inside
-  the same function. Re-mapped per `dependency-task-graph`; claimed parallelism here would be false.
-- **Spec steps 3 and 2 are swapped.** `when` lands first. Ordering object-schema before `when`
-  produces an intermediate where `applyWhen` returns a node with no object key to be keyed by.
-- **Spec steps 1 and 4 are merged into Step 3.** "`TRow` is `RowOf<In>`" and "delete the carrier"
-  are the same edit from two sides — `rowOf()` exists only because `createFilters` had no table to
-  ask. Split, Step 1 would ship a builder taking a `rows` anchor it no longer reads.
-- **Step 3 carries the one real open question**: `withFiltering` already has a trailing
-  `derive: Feature<NoInfer<In>, D>` overload, and adding `schema` creates two 2-argument forms. The
-  step says to decide explicitly and flag it, not guess.
-- **Step 3 drops the builder's injection plumbing.** `createTable` already composes inside the
-  owner's injection context (`api/create-table.ts:53`), so the builder's `inject(Injector)` +
-  `runInInjectionContext` is redundant.
-- **`ngc` aborts before the template phase on a `.ts` error.** Every acceptance check says run
-  twice; only the second, source-clean run says anything about templates.
-- **Step 6 is `test`, not part of Step 5.** `/implement` routes on `Task type`, and folding the probe
-  into a `code` step means the testing conventions never load.
-- Unchanged throughout, by decision: criterion semantics, `source` defaults and the late-default
-  race, the null-cell policy, ADR-0014 per-filter/per-evaluation degradation, `anyOf` OR semantics
-  and its homogeneous-criterion compile check, the duplicate-**path** throw, and
-  `form(filters().value, schema)` binding with no adapter.
-- **Not in this issue:** relocating `src/filters/` into `api/features/with-filtering/` +
-  `engine/filters/` (spec step 10) — deliberately last so a churning rename does not inflate every
-  other diff.
+- **`schema` nests inside config.** `#125`'s body shows `withFiltering(config, schema)`. What `#124`
+  actually shipped is `withFiltering({ manual: true, schema })` — `with-filtering.ts:7-19`. Every
+  step file uses the shipped form.
+- **Three items in the issue's spec list are already done**, verified against the tree:
+  `create-filters.types.spec.ts` was rewritten as `api/features/with-filtering.types.spec.ts` by
+  Step 6; `create-filters.spec.ts` is already on `buildFilterModel` + object schema; the server host
+  already uses `rxResource` with no `effect`/`untracked` loop. What is left in `#125` is the
+  ownership move, not the loop unwind the body describes.
+- **Two call sites the issue's list omits**, found by grep: `stories/grouping/grouping-selection/`
+  composes `withFiltering({ predicates })` and reaches the model through
+  `grouping/fixtures/utils.ts`; the issue's "`selection-filtering/`" is
+  `stories/selection/filtering-selection/`.
+- **Two silent breakages, not migrations.** `filter-report-log.ts` matches `'[createFilters]'` while
+  `evaluator.ts:29` now emits `'[withFiltering]'`, so the client story's ADR-0014 panel renders
+  empty while appearing to work (Step 7). `server-filtering-toolbar.component.ts:36` calls
+  `.dirty()`, now `@internal` (Step 8).
+- **The predicate story is deleted, not rewritten.** Decided by the user. R54's replacement —
+  express a scope by narrowing the rows signal — therefore ships with no demo, and `#126` picks up
+  the coverage mark in `docs/0-product/filtering.md` and the reference in `docs/3-ui/stories.md`.
+- **Steps 9 and 3–5 of `#124` were merged on the user's call** (coarser grain): selection,
+  composition and grouping call sites plus the deletion are one step, because their "What To Do" is
+  the same three lines four times over.
+- **The lib is red for the whole issue until Step 11.** No step in `#125` leaves the tree compiling
+  on its own — the acceptance is a gate, not a per-step property. Steps 7–10 each verify only that
+  no error originates in their own files.
+- **`StateOf` stays off the public barrel.** Stories import it from `filters/types`, as
+  `grouping/fixtures/utils.ts` already does for `FilterNode`. The barrel is `#124` Step 5's settled
+  surface; widening it is not this issue's call.
+- **`dirty()` is `@internal`, not deleted.** It is still on `FiltersRoot`, so `state.spec.ts` keeps
+  its source-reconciliation case; only the story stops reading it.
+- **Uncommitted grouping work is in the tree** (`with-grouping.ts`, `engine/grouping.ts`,
+  `with-grouping.spec.ts`, the `grouping-static` story host). Step 9 touches `grouping/fixtures/`
+  and `grouping-selection/` only — no overlap, but rebase before starting.
+- **Not in this issue:** every doc under `libs/shared/table/docs/` (`#126`) and relocating
+  `src/filters/` into `api/features/with-filtering/` + `engine/filters/` (`#127`).
