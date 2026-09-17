@@ -51,7 +51,7 @@ function buildFiltersPath<TRow>(): FiltersPath<TRow> {
 /**
  * Builds the filter model from a schema function — the internal engine behind `withFiltering`'s
  * `schema` config. Not part of the public API; the feature is the only caller. See
- * `docs/1-state/filters.md`.
+ * `docs/1-state/features/filtering.md`.
  */
 export function buildFilterModel<TRow, S extends Record<string, AnyRule>>(
   schema: (path: FiltersPath<TRow>) => S

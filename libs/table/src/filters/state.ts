@@ -52,8 +52,9 @@ interface FilterState<TCriterion> {
   readonly sourceValue: Signal<TCriterion>;
 }
 
-/** Builds one filter's reactive state (`value`/`active`/`reset`/`dirty`) per `filters.md`'s
- *  "State" and "Sources" sections. `dirty` is a `computed()`, never a stored flag. */
+/** Builds one filter's reactive state (`value`/`criterion`/`reset`/`dirty`) per
+ *  `features/filtering.md`'s "State" and "Sources" sections. `dirty` is a `computed()`, never a
+ *  stored flag. */
 export function buildFilterState<TCriterion>(
   record: FilterRuleRecord<unknown, unknown, TCriterion>
 ): FilterState<TCriterion> {
@@ -116,7 +117,7 @@ export function gateByCondition<TRow, TCriterion>(
  * The root criterion model as a real `WritableSignal<TState>`: a read composes every child
  * node, a write fans back out to them. The nodes stay the single storage location — this is a
  * view over them, never a copy — which is what lets a Signal Form sit directly on the filter
- * model with no adapter and no sync effect (see `filters.md` §Forms).
+ * model with no adapter and no sync effect (see `features/filtering.md` §Forms).
  *
  * `Object.assign` onto a `computed()` so the result carries a reactive node and is a valid
  * `form()` model.

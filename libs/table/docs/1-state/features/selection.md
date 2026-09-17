@@ -147,7 +147,7 @@ table.deselect(selectAllIds(table));                         // "deselect all vi
 `select()`/`deselect()` directly, rather than becoming a third case here (D59).
 
 Shipped at `api/features/selection.utils.ts` (D59) — a plain function, no DI/injection context,
-against the already-shipped `TableStore` surface; not blocked on `createFilters()`. What it
+against the already-shipped `TableStore` surface; not blocked on `withFiltering()`. What it
 deliberately does not solve: page-scoped select-all; the read-side "are all visible rows
 selected" signal, routed to
 [`work/computed-state-mechanism/1-intake.md`](../work/computed-state-mechanism/1-intake.md).

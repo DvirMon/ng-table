@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withFiltering()
 type: architecture
-version: 3.1
-date: 2026-09-14
+version: 4.0
+date: 2026-09-17
 capability: filtering
 spec: drilled
 code: shipped
@@ -14,173 +14,627 @@ parent: ../architecture.md
 
 ## Executive Summary
 
-The client-side half of filtering, and **only** that half. It applies a list of row predicates
-to the rows in the pipeline's `filter` stage.
+Filtering is table-owned. `withFiltering(config)` builds the filter model from a `schema` and
+exposes it as `table.filters` — the same feature applies the model's criteria to the pipeline's
+`filter` stage (client mode) or builds the model without applying it (`manual: true`, server
+mode, where the criteria drive the request that produces the data instead).
 
 ```ts
-readonly filters = createFilters(this.data, (path) => [
-  equals(path.status),
-  inRange(path.amount),
-]);
-
 readonly table = createTable(
   this.data,
-  { trackBy: 'id', columns: [...] },
-  withFiltering({ predicates: () => [this.filters().matcher()] }),
+  config,
+  withFiltering({
+    schema: (path: FiltersPath<Invoice>) => ({
+      status: equals(path.status),
+      amount: inRange(path.amount, { source: () => bounds() }),
+      search: contains(path.customer),
+    }),
+  }),
 );
+
+table.filters().criteria();          // { status: 'open', search: 'acme' } — empties omitted
+table.filters.status().value.set('open');
 ```
 
-`this.data` appears in both calls and is not shared state: the table reads the rows,
-`createFilters` only takes the row type from them.
+`TRow` is inferred from the table's own row data — `RowOf<In>`, recovered from the enclosing
+`createTable()` config, never annotated at the call site.
 
-It owns no filter state, and it does not know what a filter is. A predicate is the whole
-contract: the feature imports nothing from the filters domain and names no filter type
-([ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md)). The snippet above is ordinary
-composition the consumer writes — [`createFilters()`](../filters.md) is one way to produce a
-term, a hand-written `(row) => boolean` is another, and the model works with no table at all.
+There is one feature, one call, one member. There is no standalone `createFilters()` and no
+separate filter object to wire up — that split existed for one release
+([ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md)) and is gone (R50). Everything a
+consumer needs — the eight members, the eight rules, the resource wiring for server mode — is in
+this file.
 
-**In server mode this feature is not composed at all.** The filters feed the request that
-produces the data; the table renders rows that arrive already filtered (R10).
-
-## Config
+## Signature
 
 ```ts
-interface WithFilteringConfig<TRow> {
-  predicates: () => readonly ((row: TRow) => boolean)[];
+export interface WithFilteringConfig<TRow, S extends Record<string, AnyRule> = {}> {
+  /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
+   * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
   manual?: boolean;
+  /** Declares the owned filter model, exposed as `filters`. Built once at construction; its
+   * criteria narrow the pipeline's `filter` stage through `matcher()`. */
+  schema?: (path: FiltersPath<TRow>) => S;
+}
+
+export interface FilteringMembers<TRow, TState extends Record<string, unknown>> {
+  readonly filters: Filters<TRow, TState>;
+}
+
+export function withFiltering<In extends Shape>(
+  config?: WithFilteringConfig<RowOf<In>, {}> & { schema?: undefined }
+): Feature<In, {}>;
+
+export function withFiltering<In extends Shape, S extends Record<string, AnyRule>>(
+  config: WithFilteringConfig<RowOf<In>, S> & { schema: (path: FiltersPath<RowOf<In>>) => S }
+): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>>>;
+```
+
+(A third and fourth overload accept a trailing `derive` block, the same `createTableFeature`
+composition seam every feature shares — not filtering-specific, see `architecture.md`.)
+
+- **With `schema`**, the feature builds the model and contributes `filters`.
+- **Without `schema`**, the feature contributes no member at all — `table.filters` is a compile
+  error, not `undefined` (asserted in `with-filtering.types.spec.ts`). `withFiltering()` with no
+  arguments composes only to keep the `filter` pipeline stage a documented no-op; there is no
+  reason to write it.
+- `TRow` comes from the table (`RowOf<In>`), not a generic the caller supplies.
+- **The criterion map is inferred from the schema's returned object.** `StateOf<S>` folds one
+  entry per declared filter or `anyOf` group, keyed **verbatim** by the object's own property
+  names — see [Keys](#keys). It is never a type parameter a caller writes.
+
+## The schema
+
+The schema runs once, at construction, inside `withFiltering`'s own factory — no injection
+context of its own, no separate construction call. **It returns its rules as an object
+literal**, keyed by whatever property names the consumer chooses:
+
+```ts
+withFiltering({
+  schema: (path: FiltersPath<Invoice>) => ({
+    status: equals(path.status),
+    isArchived: equals(path.isArchived),
+    amount: inRange(path.amount, { source: () => bounds() }),
+    dueDate: inDateRange(path.dueDate),
+
+    search: anyOf([                                     // one criterion, several predicates, OR'd
+      contains(path.customer),
+      contains(path.notes),
+      filter(path.id, (cell, q: string) => String(cell).includes(q)),
+    ]),
+
+    subCategory: equals(path.subCategory, {
+      when: ({ valueOf }) => valueOf(path.category) !== null,  // gated: only narrows once a category is chosen
+    }),
+
+    tags: filter(path.tags, (cell, c: { include: string[]; exclude: string[] }) =>
+      hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude)),   // matcher form — see below
+  }),
+})
+```
+
+A body that calls rules as statements instead of returning them declares nothing and throws —
+see [Errors](#errors).
+
+### Rules
+
+| Rule | Criterion | Notes |
+|---|---|---|
+| `equals(path)` | the cell's own type | covers boolean columns too — there is no `toggle()` (R28) |
+| `contains(path)` | `string` | case-insensitive substring |
+| `inRange(path)` | `{ min, max }` | one filter, not two (R2) |
+| `inDateRange(path)` | `{ from, to }` | one filter, not two |
+| `hasAny(path)` | `T[]` | array cell intersects the criterion |
+| `hasNone(path)` | `T[]` | array cell is disjoint from the criterion |
+| `filter(path, predicate)` | whatever the predicate takes | the general rule — peer of the others, not a layer beneath them (R7) |
+| `anyOf(children)` | shared across the group | one criterion, several paths, each with its own predicate; OR'd (R8). `children` is a non-empty tuple of already-built rules, not a nested schema callback. The key comes from the schema object property it's assigned to, same as any rule — there is no separate positional key argument |
+
+Every single-path rule takes an optional trailing `{ source, emptyValue, isEmpty, when }` — see
+[Sources](#sources), [Empty criteria](#empty-criteria) and [`when`](#when). `anyOf`'s children are
+themselves rule calls, each carrying their own path and predicate.
+
+### Matchers
+
+Every rule has a matcher twin: the plain binary function the library calls per row. Rules keep
+the bare verb because they *do* something (register a filter); matchers take a boolean-guard
+prefix because they *return* something (R30).
+
+| Rule — declares, returns its record | Matcher — tests, returns `boolean` |
+|---|---|
+| `equals(path)` | `isEqual(cell, criterion)` |
+| `contains(path)` | `isContaining(cell, criterion)` |
+| `inRange(path)` | `isInRange(cell, criterion)` |
+| `inDateRange(path)` | `isInDateRange(cell, criterion)` |
+| `hasAny(path)` | `hasAnyOf(cell, criterion)` |
+| `hasNone(path)` | `hasNoneOf(cell, criterion)` |
+
+Both of a matcher's arguments arrive at **evaluation** time — the cell from the row, the
+criterion from filter state. A matcher never carries a constant.
+
+Matchers are exported so a custom predicate is assembled from shipped parts rather than written
+from scratch, which is what makes [one filter per path](#one-filter-per-path) affordable:
+
+```ts
+filter(path.tags, (cell, c) => hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude));
+```
+
+### Keys
+
+**A filter's key is the schema object's own property name, verbatim** (R51). There is no key
+derivation from the path and no rename option — the key you write is the key `table.filters`
+exposes and the key `criteria()`/`value()` use:
+
+```ts
+{
+  status: equals(path.status),                    // → filters.status
+  customerAccountName: equals(path.customerAccountName, { as: 'customer' }),   // ✗ `as` no longer exists
 }
 ```
 
-`TRow` infers from the enclosing `createTable()` config — no per-call generic (`5a3a09d`).
+An object literal cannot repeat a key, so the duplicate-**key** throw from the array-schema era
+is gone — that is now a compile error, not a runtime check (R51). What still throws at
+construction is a duplicate **path**: two different keys targeting the same underlying field.
+See [One filter per path](#one-filter-per-path).
 
-| Field | Purpose |
-|---|---|
-| `predicates` | a thunk returning the row predicates to apply. Required — the feature's only input |
-| `manual` | skip the client-side filter stage |
+### One filter per path
 
-Two facts the thunk shape carries:
-
-- **One call is one evaluation.** The thunk is invoked once per pass, not once per row, so every
-  row in a pass sees the same term list.
-- **It is read reactively.** Filtering recomputes when a signal the thunk reads changes — which is
-  what makes the `matcher()` term in the snippet above track the criteria with no wiring of its
-  own. A filter model is one way to produce a term, not a config option.
-
-## Behavior
-
-- Claims the `filter` pipeline stage. Filtering runs **first**, before group/sort/expand
-  (unchanged), so `aggregateFn` never sees unfiltered rows.
-- Applies the terms in order, **AND**'d — each narrows the survivors further. An empty list never
-  narrows.
-- **AND is the only combinator the table assumes.** OR lives inside a term, because the table has
-  no vocabulary for expressing which terms group with which (ADR-0016).
-- Criterion-level semantics — OR within an `anyOf` group, empty criteria skipped before
-  evaluation, the null/undefined cell policy (R27) — belong to whatever term the consumer
-  supplies, and for a `matcher()` term they are the filter model's:
-  [filters.md](../filters.md#semantics). The feature adds no policy of its own.
-
-## `manual`
+Two keys filtering the same path throws at construction, matching `SlotRegistry`'s
+single-occupancy rule for member keys and pipeline stages (R5):
 
 ```ts
-withFiltering({ predicates: () => [], manual: true })
+withFiltering({
+  schema: (path) => ({
+    included: hasAny(path.tags),
+    excluded: hasNone(path.tags),   // ✗ throws — one path, two filters
+  }),
+});
 ```
 
-- The pipeline **skips the client-side filter stage** entirely; the terms are not evaluated.
-- Whatever produced the terms is untouched — a filter model's `value()`, `criteria()` and `dirty()`
-  behave identically.
+> `[withFiltering] "included" and "excluded" both filter path "tags". Only one filter may target
+> a given path — two keys may not target one path. Combine with filter() over a compound
+> criterion instead.`
 
-**Retained for symmetry, not necessity** (R23), and the argument is one step weaker than it was.
-`predicates` is now required and consumer-supplied, so "skip the stage" is very close to "do not
-compose the feature" — which is what the ordinary server-side path already does under R10. It is
-kept because `withSorting` carries the same flag, and a table filtering server-side while sorting
-client-side composes two features whose `manual` settings differ.
+Combining operators on one column means dropping to `filter()` with one predicate over a compound
+criterion (R6):
 
-Precision on the precedent: `manual` is a **two-feature** convention, not a universal one. Only
-`withSorting` and `withFiltering` accept it; `withExpansion`'s config has just
-`childrenAccessor` / `isExpandable`, and `withGrouping` does not exist (it appears only as a
-doc-comment in `api/types.ts`).
+```ts
+tags: filter(path.tags, (cell, c: { include: string[]; exclude: string[] }) =>
+  hasAnyOf(cell, c.include) && hasNoneOf(cell, c.exclude)),   // ✓ one filter, compound criterion
+```
+
+The trade is knowing: include/exclude is a genuinely common pattern and it costs a custom
+predicate. Chosen on reversibility (R6, upheld under R31) — revisit if the workaround proves to
+be reached for repeatedly. `client-filtering/`'s Tags filter is exactly this workaround, on
+canvas.
+
+### `when`
+
+Gates a filter off without touching its stored value:
+
+```ts
+interface FilterOptions<TSource = unknown, TRow = unknown> {
+  readonly source?: () => TSource;
+  readonly emptyValue?: TSource;
+  readonly isEmpty?: (criterion: NoInfer<TSource>) => boolean;
+  readonly when?: (ctx: FilterValueOfContext<TRow>) => boolean;
+}
+```
+
+```ts
+subCategory: equals(path.subCategory, {
+  when: ({ valueOf }) => valueOf(path.category) !== null,   // only applies once a category is chosen
+}),
+```
+
+`when` returns `boolean`, not a tri-state — filtering has no async rule that would need a pending
+state (R53). Gated off, `criterion()` and `isActive()` go dark (`criterion()` reads `undefined`,
+as if the filter were empty); `value` and `reset` are unaffected — the stored value survives being
+gated off and reappears once the condition is true again. `when`'s `valueOf` reads any other
+filter's current value, including one declared later in the same schema — gating resolves in a
+second pass, once every node exists, so declaration order never matters.
+
+**Superseded:** the array-schema era's `applyWhen(path, condition, children)` — a separate node
+kind wrapping a whole group of rules — is gone. `when` is a per-rule option instead, which is
+strictly more granular (each rule in a would-be group can gate independently) and removes the
+"placed, never spread" footgun `applyWhen` had (R15's array-return shape doesn't exist to be
+spread wrong).
+
+## State
+
+**Property access is a child; a call is state** — the Signal Forms shape (R20).
+
+```ts
+table.filters()                       // root state
+table.filters().value()               // { status: null, amount: {min,max}, search: 'acme' } — complete
+table.filters().value.set(next)       // writable — fans out per key to the child nodes
+table.filters().criteria()            // { search: 'acme' } — empties omitted
+table.filters().isActive()            // true — at least one criterion is set
+table.filters().reset(v?)             // no arg → source; null → empty; partial → those keys
+
+table.filters.status                  // a filter node
+table.filters.status().value()        // its criterion, always — the model
+table.filters.status().criterion()    // its criterion, or undefined when empty
+table.filters.status().isActive()     // whether this filter is narrowing
+table.filters.status().value.set('open')
+table.filters.status().reset()
+```
+
+### Members — eight (R56)
+
+| | Root `filters()` | Per key `filters.status()` |
+|---|---|---|
+| Writable criterion | `value: WritableSignal<TState>` | `value: WritableSignal<TCriterion>` |
+| Effective criterion, empties omitted | `criteria(): Partial<TState>` | `criterion(): TCriterion \| undefined` |
+| Narrowing right now | `isActive()` | `isActive()` |
+| Back to the declared source | `reset(value?)` | `reset()` |
+
+`matcher()` (root) and `dirty()` (root and node) exist and are exercised in `create-filters.spec.ts` /
+`state.spec.ts`, but are `@internal` — not part of the eight, not part of the public contract a
+consumer writes against.
+
+| Member | Purpose |
+|---|---|
+| `value` | a `WritableSignal<TState>` — one entry per declared filter, read with `value()`, written with `value.set`/`.update`. The complete model, no optional-key handling (R14), and the model a Signal Form binds to directly |
+| `criteria()` | derived, empties omitted — request params and anything else that consumes the set criteria (R14) |
+| `isActive()` | derived boolean — "N filters applied", `hasFilters`, an empty-state message (R49) |
+| `reset(value?)` | one verb, three behaviors (R17); takes a `Partial<TState>`. `clear()` does not exist — it is `reset(null)` |
+
+A filter node carries the same split: `criterion()` returns its criterion or `undefined` when
+empty, `isActive()` answers the boolean (R49). There is no `active()` on either — a name that
+read as a predicate while returning data was the reason for the split.
+
+**Every derived member is a `computed`** — `criterion` and `isActive` on a node, `criteria` and
+`isActive` on the root. Reading one in a template per row, per chip or per field costs a cache
+hit, not a recomputation.
+
+Why both `value()` and `criteria()`: a criterion is user-editable input, two-way bound to a
+control — that is the Signal Forms *model*, always complete. "Which filters are currently
+narrowing" is derived output — that is `criteria()`, only what is set. Different things, both
+needed.
+
+`table.filters().value` is a real `WritableSignal` — a writable view over the child nodes, which
+stay the single storage location. That is what makes [Forms](#forms) free.
+
+### `reset(value?)`
+
+```ts
+table.filters().reset();                             // → source (or empty with no source)
+table.filters().reset(null);                         // → empty
+table.filters().reset({ status: 'open' });           // → that key; every other key back to its source
+table.filters.amount().reset();                      // → a node's own source (no argument on a node)
+```
+
+`null` is a **sentinel meaning "this filter's empty value"**, not a literal — `''` for text,
+`{ min: null, max: null }` for a range, `[]` for a multi-select.
+
+**The value form takes a `Partial<TState>`.** A key the object omits is reset to its declared
+source, which is what makes restoring a partial snapshot a complete state. Restoring *untrusted*
+persisted JSON is therefore a two-step job — validate it into a `Partial<TState>`, then reset —
+and the type is what says so: an unvalidated snapshot is not filter state.
+
+**`reset` and `value.set` treat an omitted key oppositely, and deliberately.** `reset` is a
+*restore*: what you leave out goes back to its source. `value.set` is a *model write*: it takes a
+complete `TState`, because that is what a Signal Form hands it on every edit.
+
+**Diverges from Signal Forms deliberately.** `FieldState.reset(value?)` resets *touched and
+dirty flags* and, with no argument, does not change the value. Ours changes the **value**. Both
+are reachable at once when a form is layered over the filters: `filterForm.search().reset()`
+clears flags, `table.filters.search().reset()` changes the criterion.
+
+### Sources
+
+`{ source }` declares a default the user can override — typically server-supplied and arriving
+after construction.
+
+```ts
+inRange(path.amount, { source: () => bounds() });
+```
+
+One mechanism covers all three origins of a default (R19): a resolved DI token or route value, an
+HTTP response landing later, and a constant. `dirty` (internal) decides who wins when a source
+arrives late — a typed value is never overwritten by a late-arriving default. `server-filtering/`
+demonstrates this: type into the amount box before the server's default range resolves and the
+typed value wins.
+
+### Empty criteria
+
+Every rule declares what counts as *no filter*: `''` for `contains`, `null` for `equals`,
+`{min:null,max:null}` for `inRange`, `[]` for `hasAny`/`hasNone`. An empty criterion is skipped
+before evaluation and omitted from `criteria()`.
+
+`{ emptyValue }` **adds** to that default for one filter — it does not replace it. `{ isEmpty }`
+is the total override, the only way to **subtract** — to make `null` a meaningful, non-empty
+criterion again. Precedence: **`isEmpty` replaces; `emptyValue` extends and seeds; with neither,
+the rule's own holds.**
+
+```ts
+equals(path.status, { emptyValue: '' });                                  // both '' and null deactivate
+equals(path.status, { emptyValue: '', isEmpty: (c) => c === '' });        // null now filters
+```
+
+**Why a rule's default is not always right: the control has a say.** A native `<select>` can
+express empty only as `''` — a `<select>` bound to an `equals` filter with its default `null`
+empty would write `''` on the "any" option, which is not empty. Declaring `emptyValue: ''` lines
+the criterion up with the control.
+
+`filter()` is the one rule with no declared empty of its own — with neither `isEmpty` nor
+`emptyValue`, a `filter()` rule is never empty.
+
+## Wiring — three modes
+
+### Client
+
+```ts
+readonly table = createTable(
+  this.data,
+  { trackBy: 'id', columns },
+  withFiltering({
+    schema: (path: FiltersPath<Invoice>) => ({
+      status: equals(path.status, { emptyValue: '' }),
+      customer: contains(path.customer),
+      amount: inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE }),
+    }),
+  }),
+);
+```
+
+The feature claims the pipeline's `filter` stage, running **first** — before group/sort/expand
+(unchanged) — so an `aggregateFn` never sees unfiltered rows. Each pass compiles one matcher from
+the current criteria (`table.filters().matcher()`, internal) and filters the rows through it.
+
+### Server
+
+**The feature is still composed** — unlike the predicate-list era — but `manual: true` skips the
+client-side `filter` stage. The model exists purely to drive the request:
+
+```ts
+protected readonly table: TableStore<Invoice> & FilteringMembers<Invoice, ServerCriteria> =
+  createTable(
+    someRowsSignal,
+    config,
+    withFiltering({ manual: true, schema: serverInvoiceFilters }),
+  );
+
+protected readonly invoices = rxResource({
+  params: () => toQueryParams(this.table.filters().criteria()),   // criteria(), not value()
+  stream: ({ params }) => this.invoiceApi.fetchInvoices(params),
+});
+```
+
+There is no construction cycle: `table` reads its rows from a signal that is itself derived from
+`invoices` (a `linkedSignal` bridging the resolved page, per `server-filtering-story-host.component.ts`)
+— passed inline, never stored as a named field, so nothing needs `invoices` to exist before
+`table` does. `withFiltering`'s own factory only needs `table.filters` to exist by the time
+`invoices`' `params` first reads it, which is well after both fields are assigned.
+
+**`criteria()`, not `value()`, is the request shape.** `status=` forces the server to
+disambiguate "no filter" from "status is empty"; omitting unset optional params is the REST
+convention. **No per-filter `encode`** (R16) — server APIs differ irreconcilably, and mapping
+`criteria()` to query params is a pure function the consumer owns (`toQueryParams` in the story).
+
+The server's own row total overrides the core `totalRowCount` member through a small
+`createTableFeature()` composed alongside `withFiltering` — the one member ADR-0005 leaves
+overridable.
+
+### Forms
+
+Optional. The form's model **is** the filter model — no adapter, no sync effect, no duplicated
+state (R18).
+
+```ts
+readonly filterForm = form(table.filters().value, (path) => {
+  required(path.search);
+  debounce(path.search, 300);
+  min(path.amount.min, 0);
+});
+```
+```html
+<input [formField]="filterForm.search" />
+<select [formField]="filterForm.status">
+  <option value="">any</option>
+</select>
+```
+
+A `<select>` binds only when its filter's empty criterion is `''` — see
+[Empty criteria](#empty-criteria).
+
+**Which way the view points.** Each filter node owns its own signal; the root is a writable view
+composed over them — a read gathers every node, a write fans back out per key. Storage is one
+location per criterion, so nothing is copied and the two cannot desync.
+
+Node-first is what keeps per-filter `source`/`dirty` reconciliation local to the node that owns
+it: a node with a declared `source` is a `linkedSignal` whose late-arrival rule is its own
+business, not a merge the root has to arbitrate across keys.
+
+**Debounce lives here** (R25). No debounce inside `withFiltering` — the form is built over the
+filter model, so Signal Forms' `debounce()` applies to the criteria directly. `server-filtering/`
+is the one story that needs it (`debounce(path.search, 300)`); the client story is synchronous
+and has no request to throttle.
+
+## Semantics
+
+- **Combination:** within an `anyOf` group, **OR**; across filters, **AND** (R8). **AND is the
+  only combinator the pipeline stage assumes** — OR lives inside a term (`anyOf`, or a compound
+  `filter()` predicate), because the stage has no vocabulary for expressing which criteria group
+  with which.
+- **Empty criteria skip their predicate.** What counts as empty is per-rule — declared beside the
+  rule, extended with `{ emptyValue }` or replaced with `{ isEmpty }` — applied before evaluation,
+  so an empty filter never reaches persisted state or a query string (R14).
+- **Null/undefined cell values** (R27): a null or undefined cell **fails every positive matcher**
+  (`isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`) and **passes every
+  negative one** (`hasNoneOf`) — a row with no tags has none of them. Guarded inside each shipped
+  matcher, never in the runner, so a custom `filter()` predicate receives the cell unguarded and
+  can match nulls:
+
+  ```ts
+  filter(path.notes, (cell, want: boolean) => want === (cell == null || cell === ''));
+  ```
+
+- **Order of evaluation:** `when` gate → empty-criterion check (skip the filter entirely) → read
+  the cell → matcher, which owns its own null branch. A null cell is only ever reached by an
+  *active, ungated* filter.
+
+### One `matcher()` call is one evaluation
+
+The internal evaluator compiles the narrowing records once per call — gating and emptiness
+resolve per call, not per row — and per-filter error reporting is deduped within that one
+instance. The feature calls it once per pipeline pass, so each pass reports independently.
 
 ## Errors
 
-Per [ADR-0014](../../adr/0014-runtime-error-policy.md) and
-[ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md). **The catch unit is one term.** A
-term that throws is dropped for that pass and reported once, by its index; its siblings keep
-narrowing, and it never takes the table down.
+Per [ADR-0014](../../adr/0014-runtime-error-policy.md).
 
-The index is the floor, for anonymous terms. A term produced by `matcher()` already reports under
-its own filter key from inside the evaluator — full statement in
-[filters.md](../filters.md#errors).
+**Construction throws** — a duplicate filter on one path (R5), an `anyOf` with no children.
+Deterministic, fires before data flows, no sane degraded reading:
 
-## Compile-Time Dependencies
+> `[withFiltering] The schema function must return its rules as an object literal. A body that
+> calls rules as statements declares nothing — return an object: (path) => ({ status:
+> equals(path.status) })`
 
-None. `with-filtering.ts` imports nothing from the filters domain and names no filter type (`#71`).
-It reads nothing from other features and contributes no members.
+> `[withFiltering] anyOf(…) declared no rules.`
 
-It no longer reads anything from the columns config either: `ColumnDef.filterFn` and
-`ColumnDef.enableFiltering` are removed (R12). `filterFn` has no criterion to pair with once
-predicates live in the schema keyed by path, and `enableFiltering` existed only to exclude a
-column from a global filter that auto-scanned every column — `anyOf` lists its paths explicitly
-instead.
+> `[withFiltering] "included" and "excluded" both filter path "tags". Only one filter may target
+> a given path — two keys may not target one path. Combine with filter() over a compound
+> criterion instead.`
 
-## Members Owned
+**Runtime never throws.** A predicate that throws drops *that filter* for the rest of the
+evaluation; other filters still narrow and the table still renders. Reported once per filter per
+evaluation — not per row — with the filter key and the offending cell, in production as well as
+dev. Wrapped per filter, never per row: per-row catching yields an inconsistent row set (some
+rows tested, some skipped) and puts a `try` in the hot loop. The catch unit is the same whether
+the term came from `table.filters().matcher()` or a hand-written predicate elsewhere in the
+pipeline — one term, one report, by key.
 
-**None.** Deliberate: there is no `table.filters`, no `table.setColumnFilter()`. Whatever produces
-the predicates is the consumer's, and a table-side mirror would create a second path to state the
-table does not own.
+**"For the rest of the evaluation" is literal.** The predicate answers row by row, so rows it
+already answered for keep that filter's narrowing; only rows from the throwing one onward skip
+it. `client-filtering/`'s *Break the tags filter* toggle makes this checkable rather than
+asserted — the result set gets **wider**, never blank.
 
-## Events Owned
+Custom predicates are the likeliest thing here to throw, because R27 hands them an unguarded
+cell by design. The likeliest *reason* is a stale criterion — persistence is consumer-owned, so a
+snapshot written by an older schema revives with a shape the predicate never expected.
 
-**None.** The old `filterChanged` observable is gone. Criteria live wherever the consumer put
-them — with `createFilters()` that is a signal, so a consumer who wants to react reads it and a
-resource depending on `criteria()` re-runs on its own.
+**Residue:** a filter that failed still appears in `criteria()`, and still counts toward
+`isActive()`. Both describe which criteria are *set*, not which evaluations succeeded.
+
+## Persistence
+
+Consumer-owned. `withFiltering` ships no storage adapter (R21).
+
+```ts
+localStorage.setItem('f', JSON.stringify(table.filters().value()));
+
+const saved: unknown = JSON.parse(localStorage.getItem('f') ?? 'null');
+table.filters().reset(keepValidCriteria(saved));
+```
+
+`value()` and `reset(value)` are both halves already; swapping `sessionStorage`, a URL, or a
+server-side profile is a one-word change.
+
+**Validating the snapshot is consumer-owned too.** `reset()` takes `Partial<TState>`; a parsed
+snapshot is `unknown`. It reaches `reset()` only because `JSON.parse` returns `any`, and what
+follows is silent unless guarded first — as `keepValidCriteria()` does in
+`stories/filtering/client-filtering/`.
+
+What a shipped mechanism would buy — debounced writes, a version stamp plus migration, revival
+for non-JSON criteria, the drift rule (unknown key → ignore, missing key → leave at default) —
+are the same problems sort and column state have, so a shared persistence feature is designed
+separately, taking the table's snapshot and the filter model as separate inputs. See
+[state-persistence.md](../state-persistence.md).
+
+## Deliberately not shipped
+
+| Not shipped | Instead | Decision |
+|---|---|---|
+| Runtime operator picker (AG Grid / PrimeNG column menu) | operators are fixed at declaration | R1 |
+| A *second* filter on one path | one predicate over a compound criterion | R5, R6 |
+| A key-rename option (the old `as`) | the schema's own property name is the key | R51 |
+| `toggle()` | `equals()` over a boolean column | R28 |
+| `ColumnDef.filterFn` / `enableFiltering` | predicates live in the schema | R12 |
+| A raw-predicate escape hatch (`predicates`) | narrow the rows signal passed into `createTable()` — `filter` runs first in `PIPELINE_ORDER`, so the pipeline output is identical | R54 |
+| Per-filter `encode` for server params | consumer maps `criteria()` | R16 |
+| Debounce | Signal Forms' `debounce()` over the model | R25 |
+| Persistence / storage adapter, and any validating `restore(unknown)` | consumer's `JSON.stringify` + a guard + `reset(value)` | R21 |
+| Data-derived filter options (set filters) | consumer computes them | R11 |
+| Any null/empty-cell option (`matchEmpty`, `cell:`, `isBlank`, `orEmpty`) | one internal policy; `filter()` for anything else | R27 |
+
+Each is additive if revisited — none of them is foreclosed by shipping without it.
+
+## Public API
+
+`withFiltering`, `WithFilteringConfig` and `FilteringMembers` are the table's own surface,
+exported from `src/index.ts` (`api/features/with-filtering.ts`). The rules, matchers and public
+types below are the filters domain's own surface, exported from `src/filters/index.ts` and
+re-exported by `src/index.ts` wholesale:
+
+| Symbol | From | Kind |
+|---|---|---|
+| `withFiltering`, `WithFilteringConfig`, `FilteringMembers` | `api/features/with-filtering.ts` | feature |
+| `Filters`, `FilterNode`, `FilterOptions`, `FiltersPath` | `filters/types.ts` | types |
+| `equals`, `contains`, `inRange`, `inDateRange`, `hasAny`, `hasNone` | `filters/rules.ts` | declaration rules |
+| `filter` | `filters/rules.ts` | the general rule |
+| `anyOf` | `filters/rules.ts` | the grouping rule |
+| `isEqual`, `isContaining`, `isInRange`, `isInDateRange`, `hasAnyOf`, `hasNoneOf` | `filters/matchers.ts` | matchers (R30) |
+
+Anything under `src/filters/` not listed above is internal — `create-filters.ts` (the model
+builder, called `buildFilterModel` internally), `evaluator.ts`, `state.ts` and `validate.ts` are
+private to the domain. `withFiltering`'s `schema` config is the only entry point to the model;
+there is no standalone constructor a consumer calls directly.
+
+**Removed** (breaking changes across R26, R50–R56, both executed): the pre-`createFilters()`
+imperative surface (`setColumnFilter`, `clearColumnFilter`, `setGlobalFilter`, `clearFilters`,
+`columnFilters`, `globalFilter`, `filterChanged`, `ColumnDef.filterFn`,
+`ColumnDef.enableFiltering`); the standalone-era surface (`createFilters`, `rowOf`, `RowToken`,
+`applyWhen`, `ConditionalRule`, the array-schema shape, `FilterOptions.as`,
+`WithFilteringConfig.predicates`).
 
 ## Decisions
 
-Recorded in [work/with-filtering/design-options-hybrid-api.md](../work/with-filtering/design-options-hybrid-api.md)
-(R1–R31). The three that governed this file specifically:
+Recorded in [design-options-hybrid-api.md](../work/filtering/archive/with-filtering/design-options-hybrid-api.md)
+(R1–R56). The ones that shaped this file specifically:
 
-- **R10** — `createFilters()` is standalone, not a config field of this feature. Forced by server
-  mode: filters feed the request that produces the data, so a table-owned filter object cannot be
-  constructed at all.
-- **R23** — `manual` is kept for cross-feature consistency. Still holds, with the weaker rationale
-  recorded under [`manual`](#manual) above.
-- **R49** — `criteria()` is the filter model's set-criteria member, named `active()` in `src/`
-  until `#62` lands. This file mentions it only in passing; the member set belongs to
-  [filters.md](../filters.md#state).
-- **R26** — **executed 2026-09-14.** The superseded imperative implementation is gone:
-  `setColumnFilter()`, `setGlobalFilter()`, `clearFilters()`, `columnFilters` and `globalFilter`
-  no longer exist. It was a planned breaking change, not a cleanup, and it is done — anything
-  still naming those five members is stale.
+- **R10, superseded by R50.** R10 held that server mode forces filters to live outside the table,
+  because filters feed the request that *produces* the data and a table-owned filter object
+  supposedly couldn't be constructed before that data exists. **The claim was false** — a
+  table's row-data signal is read through a thunk, so a `resource()` whose params read
+  `table.filters().criteria()` wires with no construction cycle, and the shipped server story
+  proves it. With the blocker gone, ownership tracks who originates the value (the survey rule
+  in `research-filter-state-ownership.md`) and filters are always born with a table — so filtering
+  moved table-owned, alongside AG Grid, PrimeNG, NgRx and `MatTableDataSource`.
+- **R50–R56** — the table-owned redesign this file now documents in full: `withFiltering(config)`
+  owns the model (R50); the schema returns an object literal, not an array (R51); `when` replaces
+  `applyWhen` (R53); `matcher()`/`dirty()` become internal (R56); the raw-predicate escape hatch
+  is deleted with no replacement, a scope is a narrowed rows signal instead (R54).
+- **R23** — `manual` is kept on `withFiltering()` for cross-feature consistency with
+  `withSorting()`'s own `manual` flag. Under R50 its meaning shifted: previously "skip the stage"
+  was close to "do not compose the feature at all"; now the feature is *always* composed when a
+  schema exists (client or server), and `manual` is genuinely "build the model, skip only the
+  local `filter` stage."
+- **R26** — executed. The superseded imperative implementation (`setColumnFilter()` etc.) no
+  longer exists; anything still naming those five members is stale.
 
-**Superseded by [ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md) (`#71`).** The
-options doc discusses this feature as an *adapter over a filter model*, with `filters` as its
-config field and a criterion-map type parameter carried through. Both are gone; the feature takes
-a predicate list and the wiring is composition the consumer writes. Any R-number describing the
-`filters` config field, `createFilterEvaluator`, or a caller-supplied criterion map describes a
-shape that no longer exists — read the ADR for what replaced it, not the options doc.
-
-Superseded behavioral decisions from v1.1 of this file, kept here so the change is traceable:
-
-| | Old decision | Status |
-|---|---|---|
-| D1 | Global filter match is case-insensitive, not configurable | **Gone.** It described an auto-scan over every filterable column. `anyOf` lists its paths and predicates explicitly, so case sensitivity is whatever the chosen predicate does |
-| D2 | No built-in debounce | **Stands** — reaffirmed by R25, which routes debouncing through the Signal Form over the model |
-| D3 | Missing `filterFn` falls back to an auto-detected default | **Gone.** Every filter names its predicate; there is no "missing predicate" case left |
+**Superseding [ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md).** That ADR's
+`predicates: () => readonly ((row: TRow) => boolean)[]` config field, and its claim that server
+mode composes no filtering feature at all, describe a shape that no longer exists. Read
+`ADR-0016`'s own successor note for what replaced it and why; this file is the current contract.
 
 ## Resolved Questions
 
-- [x] ~~Interaction with `withGrouping()`'s aggregation~~ — resolved 2026-07-31 (`architecture.md`):
-  `aggregateFn` runs over filtered rows, since `group` clusters after `filter` in the fixed
-  pipeline order.
-- [x] ~~Global filter case-sensitivity / debounce~~ — resolved 2026-09-09 (D1/D2), then
-  superseded as above.
-- [x] ~~Where filter state lives~~ — resolved 2026-09-09, R10. Not here.
+- [x] ~~Interaction with `withGrouping()`'s aggregation~~ — `aggregateFn` runs over filtered rows,
+  since `group` clusters after `filter` in the fixed pipeline order.
+- [x] ~~Where filter state lives~~ — table-owned (R50), superseding the standalone-primitive
+  answer this file gave from 2026-09-09 to 2026-09-14.
+- [x] ~~Whether a raw predicate escape hatch should exist~~ — no (R54). A scope is expressed by
+  narrowing the rows signal, not a predicate with no criterion.
 
 ## Competitive position
 
-**Verdict: closed.** `api/features/with-filtering.ts` implements the client-side filter stage over
-a consumer-supplied predicate list (#28, reshaped by #71), replacing the superseded imperative
-shape.
+**Verdict: closed, and now precedented on the ownership question too.** No surveyed library
+(AG Grid, PrimeNG, TanStack, `MatTableDataSource`) exposed a filter object usable with no table at
+the time of the original survey — that absence motivated the standalone design this file
+superseded. Table ownership itself, though, is the position 4 of the 4 surveyed libraries already
+took (AG Grid, PrimeNG, NgRx, `MatTableDataSource`); what remains novel is the fine-grained
+reactive shape (`table.filters.status().criterion()`), not the ownership boundary.
 
 Column + global filtering is baseline in all four competitors' free tier. Full reasoning:
-[gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+[gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

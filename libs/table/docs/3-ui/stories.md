@@ -67,8 +67,8 @@ src/stories/
 │       ├── <story-name>.stories.ts                  ← Storybook Meta + exported story objects
 │       └── (no per-story mdx — one <feature>.mdx per feature, at the feature root)
 ├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
-├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 3 hosts
-│   └── client-filtering/  server-filtering/  predicate-filtering/
+├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 2 hosts
+│   └── client-filtering/  server-filtering/
 ├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 5 hosts
 │   └── grouping-static/  grouping-async-rule/  grouping-regressions/
 │       grouping-collapsible/  grouping-selection/
@@ -109,7 +109,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `composition/fixtures/mock.ts` | Fixture rows and the dept option list (`COMPOSITION_ROWS_MOCK`, `COMPOSITION_DEPT_OPTIONS`) |
 | `composition/fixtures/schema.ts` | `compositionColumns` and `derivedStateConfig` (`TableConfig<CompositionRow>`, `trackBy: 'id'` + `columns`) |
 | `filtering/fixtures/types.ts` | `InvoiceRow` (one field per shipped rule kind, `note` nullable for the blank-cell case), `InvoiceStatus`, the criterion shapes, and the three per-story `…FilterState` models |
-| `filtering/fixtures/mock.ts` | `INVOICE_ROWS_MOCK` plus the hand-supplied `STATUS_OPTIONS`/`TAG_OPTIONS` — `createFilters()` takes no `data` argument, so option lists are never derived from rows |
+| `filtering/fixtures/mock.ts` | `INVOICE_ROWS_MOCK` plus the hand-supplied `STATUS_OPTIONS`/`TAG_OPTIONS` — a filter schema takes no `data` argument, so option lists are never derived from rows |
 | `filtering/fixtures/schema.ts` | `clientInvoiceConfig`, `serverInvoiceConfig`, `selectionInvoiceConfig` (one per story over one column list), and `serverFilterFormSchema` — the `debounce(path.search, 300)` that only the server story needs |
 | `filtering/fixtures/utils.ts` | Type guards and pure helpers (`isInvoiceStatus`, `isRangeCriterion`, `toggleOption`, `formatCriterion`) |
 | `filtering/fixtures/http.ts` | `injectInvoiceApi()` — `GET /api/invoices`; the host builds `params`, because the query mapping is the shipped DX |
@@ -156,12 +156,16 @@ Don't inline mock data, column definitions, or the table config inside a story-h
 the host composes features on `createTable(...)`, the fixtures file owns the config and the
 Signal Forms schema — same rule as any other component in this repo (`file-organization.md`).
 
-**`createFilters()` is the exception, and belongs in the host** (2026-09-14). A filters schema is
-a declaration a consumer writes, not data a story is handed — the same category as the
-`createTable()` call it sits next to, and unreadable one file away. Fixtures keep the rows, the
-option lists, the table config and the form schema; the `createFilters(rows, (path) => [ … ])`
-call goes in the host's field initializer. Nothing to annotate: the row type comes from the
-carrier and every node's criterion type is inferred from the returned rules.
+**A filters schema is the exception, and lives beside its host, not in `fixtures/`** (2026-09-14,
+revised 2026-09-16 for the table-owned model). It is a declaration a consumer writes, not data a
+story is handed — the same category as the `createTable()` call it feeds, and unreadable one file
+away. Fixtures keep the rows, the option lists, the table config and the form schema; each host
+gets its own hoisted `<story>.filters.ts` (`client-filtering.filters.ts`,
+`server-filtering.filters.ts`, `filtering-selection.filters.ts`, `grouping/fixtures/schema.ts`'s
+`dealFilters`), a `const` annotated `(path: FiltersPath<Row>) => ({ … })` passed straight into
+`withFiltering({ schema })` inside the host's `createTable()` call. Nothing to annotate beyond
+`path`: the row type comes from the table (`RowOf<In>`) and every criterion type is inferred from
+the schema's own rule calls.
 
 **Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
 via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack
@@ -169,7 +173,7 @@ Query. No shared/cached server-state exists across these demo-only stories to ju
 caching model, and `HttpClient` matches the repo's only other transport precedent.
 
 **`server-filtering/` is the one read-only transport on `rxResource`** (2026-09-16, per
-`docs/1-state/work/table-owned-filtering/spec.md` step 7). `rxResource({ params, stream })` over
+`docs/1-state/work/filtering/active/table-owned-filtering/spec.md` step 7). `rxResource({ params, stream })` over
 `injectInvoiceApi().fetchInvoices(...)` replaces a hand-rolled `effect()` + `untracked()` + `load()`
 loop; a `linkedSignal` (not a copy `effect()`) turns the resolved page into the `WritableSignal`
 `createTable()` needs, using the `{ source, computation(value, previous) }` overload so the
@@ -479,18 +483,22 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   persistent per-row errors with Retry, one manual undo slot); `live-optimistic/` isolates just
   the `withOptimistic()` rollback verbs (capture on focus, revert-after-failure on blur), plus a
   timed Undo affordance for delete.
-- **`filtering/` — three hosts, and the composition differs between them on purpose.**
-  `client-filtering/` composes `withFiltering({ predicates: () => [filters().matcher()] })` and is
-  the baseline: five rule kinds plus a declared `anyOf` quick filter, a chip summary,
+- **`filtering/` — two hosts, and the composition differs between them on purpose.**
+  `client-filtering/` composes `withFiltering({ schema: clientInvoiceFilters })` and is the
+  baseline: five rule kinds plus a declared `anyOf` quick filter, a chip summary,
   `Reset to defaults` vs. `Clear all` as two visibly different buttons, and a broken-predicate
-  toggle that widens the result set.
-  `server-filtering/` composes **no filtering feature at all** — `createFilters()` feeds the
-  request and the rows arrive narrowed, so a client `filter` stage would have nothing to do; it
-  also carries the only `debounce` in the set and overrides core `totalRowCount` with the server's
-  own via `createTableFeature()` (ADR-0005). `predicate-filtering/` composes a hand-written
-  `(row) => boolean` with no filter model at all, which is what makes the predicate list the
-  contract rather than a convenience. All three put any `createFilters()` call in the host, not
-  `fixtures/`. `selection/filtering-selection/` (not here — see below) adds `withSelection()` +
+  toggle that widens the result set. `server-filtering/` composes
+  `withFiltering({ manual: true, schema: serverInvoiceFilters })` — the model still builds and
+  `table.filters` is still exposed, but the local `filter` stage is skipped because the request
+  already returns narrowed rows; `table.filters().criteria()` drives an `rxResource`'s params. It
+  also carries the only `debounce` in the set and overrides core `totalRowCount` with the
+  server's own via `createTableFeature()` (ADR-0005). Both hosts hoist their schema into their own
+  `<story>.filters.ts`, not `fixtures/` — see the schema-file convention above. A third host,
+  `predicate-filtering/`, demonstrated a hand-written `(row) => boolean` with no filter model at
+  all under the now-superseded predicate-list API ([ADR-0016](../adr/0016-filtering-takes-a-predicate-list.md));
+  it was deleted rather than rewritten once R54 removed the raw-predicate escape hatch it existed
+  to demonstrate — a scope is now expressed by narrowing the rows signal, which has no story of
+  its own. `selection/filtering-selection/` (not here — see below) adds `withSelection()` +
   `withSorting()` on top of `withFiltering()` and is where selection-under-filter is measured —
   see `0-product/filtering.md` §5 F-S1; it lives under `selection/` because selection surviving
   row churn, not the filtering itself, is what the story proves.

@@ -2,7 +2,7 @@ import type { WritableSignal } from '@angular/core';
 
 /**
  * Per-filter override: editable default (`source`), extra/total emptiness
- * (`emptyValue`/`isEmpty`), gating (`when`). See `docs/1-state/filters.md`.
+ * (`emptyValue`/`isEmpty`), gating (`when`). See `docs/1-state/features/filtering.md`.
  */
 export interface FilterOptions<TSource = unknown, TRow = unknown> {
   readonly source?: () => TSource;
@@ -73,7 +73,7 @@ export interface FiltersRoot<TRow, TState extends Record<string, unknown>> {
 
 /**
  * Callable + indexable: calling reads root state, property access reaches a child filter
- * node. See `docs/1-state/filters.md`'s Signature section.
+ * node. See `docs/1-state/features/filtering.md`'s State section.
  */
 export type Filters<TRow, TState extends Record<string, unknown>> = (() => FiltersRoot<
   TRow,

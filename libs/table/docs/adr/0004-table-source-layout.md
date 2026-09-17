@@ -106,12 +106,15 @@ remove it.
 `index.ts`. That is not a per-folder barrel, and it is not a retraction of the rule above.
 
 The rejection stands on "two places defining the surface is how it drifts". That argument bites
-when two files define *the same* surface. `filters/index.ts` defines a different one: the
-`createFilters()` domain is usable with no table at all, has no import edge to the table in either
-direction ([ADR-0016](0016-filtering-takes-a-predicate-list.md)), and in server mode ships to
-consumers who compose no filtering feature. Its surface is its own, so it is defined once, in the
-domain that owns it. `src/index.ts` re-exports it wholesale with `export * from './filters'` — one
-hand-maintained list, not two.
+when two files define *the same* surface. `filters/index.ts` defines a different one: its rules,
+matchers and public types are usable with no table at all, and the domain has no import edge to
+the table in either direction — `with-filtering.ts` imports from `filters/`, never the reverse.
+(In server mode `withFiltering({ manual: true, schema })` is still composed, per the table-owned
+redesign in [ADR-0016](0016-filtering-takes-a-predicate-list.md)'s successor note — the domain's
+own standalone usability is what stayed true from the ADR's original argument, not the "server
+mode composes nothing" claim, which did not.) Its surface is its own, so it is defined once, in
+the domain that owns it. `src/index.ts` re-exports it wholesale with `export * from './filters'` —
+one hand-maintained list, not two.
 
 Restated, the invariant is: **one barrel per domain, not one per folder, and not one per repo.**
 `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are phases of the table's own domain,

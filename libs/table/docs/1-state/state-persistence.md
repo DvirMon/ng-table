@@ -12,30 +12,34 @@ parent: ./architecture.md
 
 # State Persistence
 
-> **⚠️ The `filters` slice conflicts with the filtering redesign (2026-09-09).**
+> **⚠️ The `filters` slice conflicts with the filtering redesign (2026-09-09, revised 2026-09-14).**
 > This spec puts `filters?: { columnFilters: FilterRule[]; globalFilter: string }` inside the
-> table's snapshot. The filtering design has since moved filter state **out of the table** into a
-> standalone `createFilters()` primitive (forced by server-side mode, where filters feed the
-> request that produces the data), and `FilterRule` / `globalFilter` no longer exist as shapes.
-> The table therefore cannot populate that slice.
+> table's snapshot. `FilterRule` / `globalFilter` no longer exist as shapes — filter state is now
+> `withFiltering()`'s own model (`table.filters`), keyed by whatever property names a schema
+> declares, not a fixed `columnFilters`/`globalFilter` pair. The table went through an intermediate
+> design where filters lived **outside** it in a standalone `createFilters()` primitive (R10); that
+> premise turned out to be false and was reversed (R50) — filters are table-owned again, but under
+> a shape this spec's `filters` slice still cannot populate as written.
 >
-> Two ways out, to be settled when this feature is designed: drop the slice and let the consumer
-> merge two objects, or make persistence a shared utility taking the table's snapshot and a
-> filters model as separate inputs. The second is the current preference — the four hard parts
-> (debounced writes, version stamp + migration, revive for non-JSON values, drift rules) are
-> identical for both, and solving them once gives one unified persistence DX.
+> Two ways out, to be settled when this feature is designed: replace the slice's shape to mirror
+> `table.filters().value()` directly (now that filters live on the table, a table-owned snapshot
+> could read it like any other member), or make persistence a shared utility taking the table's
+> snapshot and the filter model as separate inputs regardless of where either lives. The four hard
+> parts (debounced writes, version stamp + migration, revive for non-JSON values, drift rules) are
+> identical either way, and solving them once gives one unified persistence DX.
 >
-> See [work/with-filtering/design-options-hybrid-api.md](./work/with-filtering/design-options-hybrid-api.md),
-> R10, R21 and R22.
+> See [design-options-hybrid-api.md](./work/filtering/archive/with-filtering/design-options-hybrid-api.md),
+> R10, R21, R22 and R50.
 
 ## Executive Summary
 
 Save and restore a table's layout — sort, column order/visibility/width/pin, filters,
 pagination, grouping — as **one atomic, versioned, round-trippable object**.
 
-Filters are the exception to "a table's layout" as of the banner above: they now live outside the
-table in a standalone `createFilters()` object, so persisting them means taking a second input,
-not reading a table slice.
+Filters are the exception to "a table's layout" as of the banner above: they are `withFiltering()`'s
+own model, keyed by a per-table schema rather than the fixed `columnFilters`/`globalFilter` shape
+this spec's `filters` slice assumed, so persisting them means reading `table.filters().value()`
+directly rather than a slice this file can define in advance.
 
 **Not a `with-*()` feature** (same reasoning as [row-mutations.md](./row-mutations.md), D8,
 which is why this file is its sibling rather than living under `features/`). Persistence is
@@ -45,19 +49,20 @@ five other features' internals would be an enumerated surface that every new fea
 edit — see the mechanism proposed below.
 
 **Sequenced last, deliberately.** Priority #7 in
-[gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md#priority-ranking-for-what-to-build-next):
+[gap-analysis.md](./work/meta/archive/state-feature-competitive-audit/gap-analysis.md#priority-ranking-for-what-to-build-next):
 column sizing, pinning, filtering and pagination all have to exist before there is a layout
-worth persisting. (Filtering now lands as a standalone primitive rather than a table feature —
-it still gates this work, but as a second persistence input rather than another table slice.) Today the snapshot would contain sort rules and column order and nothing
-else — and a shape fixed against that toy payload is a shape that needs migrating four
-times before it is ever useful. This spec exists now to *fix the contract each of those
-features writes toward*, not to be built now.
+worth persisting. (Filtering is a table feature (`withFiltering()`) like any other — it still
+gates this work, but because its criteria don't fit the `filters` slice as originally shaped, per
+the banner above, not because it lives outside the table.) Today the snapshot would contain sort
+rules and column order and nothing else — and a shape fixed against that toy payload is a shape
+that needs migrating four times before it is ever useful. This spec exists now to *fix the
+contract each of those features writes toward*, not to be built now.
 
 ## Why this doc is unusually prescriptive
 
 PrimeNG is the only one of the four competitors with a *named* persistence API
 (`[stateStorage]`/`[stateKey]`), and it has accumulated five confirmed correctness bugs
-(see [audit.md](./work/state-feature-competitive-audit/audit.md#state-persistence)). AG Grid,
+(see [audit.md](./work/meta/archive/state-feature-competitive-audit/audit.md#state-persistence)). AG Grid,
 the closest thing to a real answer (`getState()`/`setState()`), has its own post-init reapply
 gap (#7445) and does not capture row order (#11492). Both retrofitted persistence onto
 features that already shipped their own state, one slice at a time.
@@ -275,4 +280,4 @@ speculative one. These are the acceptance tests, not a wishlist.
 the only competitor with a named API here, and its confirmed bug list is what this spec's
 test list is built from.
 
-Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](./work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

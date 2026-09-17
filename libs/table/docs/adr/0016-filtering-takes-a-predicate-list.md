@@ -1,7 +1,8 @@
 # ADR-0016 — The filter model is the consumer's; the table takes a predicate list
 
-**Status:** accepted — decided 2026-09-14, implemented in `#71`.
-**Related:** [ADR-0014](0014-runtime-error-policy.md) (runtime error policy), [ADR-0004](0004-table-source-layout.md) (layout by contract boundary). Shipped surface: [`../1-state/filters.md`](../1-state/filters.md).
+**Status:** superseded 2026-09-14 by R50–R56 (`#89`) — the predicate list this ADR shipped was
+replaced by a table-owned model within the same day. See [Successor](#successor) below.
+**Related:** [ADR-0014](0014-runtime-error-policy.md) (runtime error policy), [ADR-0004](0004-table-source-layout.md) (layout by contract boundary). Current shipped surface: [`../1-state/features/filtering.md`](../1-state/features/filtering.md).
 
 `withFiltering()` used to accept a whole `Filters<TRow, TState>` object and read its compiled
 state back out through a module-private symbol — an import edge into the filters domain, a
@@ -40,5 +41,31 @@ reported once, by its index, per [ADR-0014](0014-runtime-error-policy.md).
   () => [], manual: true })`.
 - `matcher(): (row: TRow) => boolean` puts `TRow` in the type body (previously phantom on
   `Filters<TRow, TState>`), so a filter set built for an unrelated row type is now a compile
-  error instead of a silently empty table. See
-  [`../1-state/filters.md`](../1-state/filters.md#matcher) for the fix if you hit this error.
+  error instead of a silently empty table. This behavior survived the successor redesign
+  unchanged — see
+  [`../1-state/features/filtering.md`](../1-state/features/filtering.md#state) for the fix if you
+  hit this error.
+
+## Successor
+
+Decided the same day this ADR was accepted, superseded before its first release. R50 reopened
+R10's premise — filters feed the request that produces server-mode data, which was read as
+meaning a table-owned filter object couldn't be constructed at all. The premise was false: a
+table's row-data signal is read through a thunk, so a `resource()` (or `rxResource`) whose params
+read `table.filters().criteria()` wires with no construction cycle. With that blocker gone,
+ownership tracks who originates the value, and filters are always born with a table — so
+`withFiltering(config)` now builds and owns the model directly, exposed as `table.filters`.
+
+Concretely: `predicates: () => readonly ((row: TRow) => boolean)[]` is gone from
+`WithFilteringConfig`, replaced by `schema: (path: FiltersPath<TRow>) => S`. Server mode still
+composes `withFiltering()` — now with `manual: true` — instead of composing nothing. The
+**raw-predicate escape hatch this ADR enabled has no replacement** (R54): a predicate with no
+criterion is a *scope*, not a filter, and a scope is expressed by narrowing the rows signal
+passed into `createTable()` — `filter` runs first in `PIPELINE_ORDER`, so the pipeline output is
+identical either way. This ADR's per-term error-degradation reasoning (one throwing term reported
+once, by key, dropped for the rest of the evaluation) carried forward unchanged into the
+successor's per-filter reporting.
+
+Current contract: [`../1-state/features/filtering.md`](../1-state/features/filtering.md). Full
+decision log: [`design-options-hybrid-api.md`](../1-state/work/filtering/archive/with-filtering/design-options-hybrid-api.md)
+(R50–R56).

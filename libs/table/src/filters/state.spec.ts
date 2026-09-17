@@ -173,7 +173,7 @@ describe('filters node — source reconciliation stays on the node', () => {
 
 /**
  * R18 as an executable claim rather than a sentence: "the form's model **is** the filter model —
- * no adapter, no sync effect, no duplicated state" (`filters.md` §Forms).
+ * no adapter, no sync effect, no duplicated state" (`features/filtering.md` §Forms).
  *
  * This is the check the original work never had. R18 was recorded as a property already true,
  * the task plan cited that phrasing to build nothing for it, and the implementation shipped a

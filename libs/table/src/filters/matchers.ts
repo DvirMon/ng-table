@@ -1,5 +1,6 @@
 /**
- * Plain binary predicates behind each declaration rule (see `filters.md`'s Matchers table).
+ * Plain binary predicates behind each declaration rule (see `features/filtering.md`'s Matchers
+ * table).
  * Exported so a custom `filter()` predicate composes from shipped parts instead of writing
  * matching logic from scratch. Pure functions only — no signals, no Angular imports.
  */
