@@ -3,7 +3,9 @@
 **Status:** accepted — decided 2026-09-17.
 **Related:** [ADR-0017](0017-engine-owned-descendant-prune.md) (prune stage that admission applies to), [issue #86](https://github.com/DvirMon/ng-table/issues/86). Research: `docs/1-state/work/grouping/active/column-group-index/2-decisions.md`.
 
-`when` is the default naming for any dynamically-toggled conditional on a feature's rule — whether driven by row/cluster data or external component state (signal, resource, toggle). On grouping rules, `enable: () => boolean | undefined` is the narrow exception: level *activation* (external-state driven, pre-clustering), paired with `when: (cluster) => boolean` for *admission* (data-driven, post-clustering). The two orthogonal predicates on one rule object cannot share a name because they fire at different pipeline moments with different failure semantics. `GroupingAsyncRule` has no `enable` — its activation is already `onSuccess`/`onError`.
+`when` is the default naming for any dynamically-toggled conditional on a feature's rule — whether driven by row/cluster data or external component state (signal, resource, toggle). On grouping rules, `enable?: () => boolean | undefined` is the narrow exception: level *activation* (external-state driven, pre-clustering), paired with `when: (cluster) => boolean` for *admission* (data-driven, post-clustering). The two orthogonal predicates on one rule object cannot share a name because they fire at different pipeline moments with different failure semantics. `GroupingAsyncRule` has no `enable` — its activation is already `onSuccess`/`onError`.
+
+`enable` is optional, not required: a rule carrying only `when` (no activation opinion) omits `enable` entirely rather than passing a no-op lambda. Present-and-returning-`undefined` still abstains the whole rule set — omission and "pending" are deliberately different signals.
 
 Table-wide `WithGroupingConfig.groupWhen` renames to `when` (unifies with per-column admission naming); the two scopes AND-combine as the same kind of predicate. One feature with this shape today; a future feature should default to plain `when` unless it needs the same data/external-state split.
 

@@ -39,6 +39,22 @@ describe('applyGrouping / applyGroupingAsync', () => {
     expect(rules[0]).toMatchObject({ when: undefined });
   });
 
+  it('omitting enable compiles and records it as undefined — a when-only rule', () => {
+    const when = (): boolean => true;
+    const rules = runColumnsSchemaFn<GroupingMockRow, AnyGroupingRule<GroupingMockRow>>(
+      (path) => {
+        applyGrouping(path.region, { when });
+      }
+    );
+
+    expect(rules[0]).toMatchObject({
+      kind: 'grouping',
+      columnId: 'region',
+      enable: undefined,
+      when,
+    });
+  });
+
   it('applyGroupingAsync without onError is a compile error', () => {
     runColumnsSchemaFn<GroupingMockRow, AnyGroupingRule<GroupingMockRow>>((path) => {
       // @ts-expect-error — `onError` is required (D13/D15): an errored resource must produce an

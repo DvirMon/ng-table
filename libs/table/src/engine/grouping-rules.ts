@@ -9,9 +9,8 @@ import type {
 
 /**
  * Pure grouping-rule resolution: turns `GroupingRule`/`GroupingAsyncRule` values into live
- * `GroupingRuleEntry` signals, and folds those entries into the resolved `string[] | undefined`
- * grouping level order. No signals-store wiring here — `withGrouping()` (Step 4) is the only
- * caller that touches a table store.
+ * `GroupingRuleEntry` signals, and masks a declared level order by those entries. No
+ * signals-store wiring here — `withGrouping()` is the only caller that touches a table store.
  */
 
 export function isGroupingRule<TRow>(rule: AnyGroupingRule<TRow>): rule is GroupingRule<TRow> {
@@ -43,7 +42,7 @@ function reportGroupingRuleError(columnId: string): void {
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
-    `[withGrouping] a groupingRule 'enable' predicate threw for column "${columnId}". Excluding ` +
+    `[withGrouping] a grouping rule's 'enable' predicate threw for column "${columnId}". Excluding ` +
       'that level from this evaluation instead of grouping by it.'
   );
 }
@@ -55,7 +54,7 @@ export function buildGroupingRuleEntries<TRow>(
     columnId: rule.columnId,
     result: computed(() => {
       try {
-        return rule.enable();
+        return rule.enable?.();
       } catch {
         reportGroupingRuleError(rule.columnId);
         return false;
@@ -91,28 +90,35 @@ export function buildAsyncGroupingRuleEntry<TRow>(
 }
 
 /**
- * A pending entry (`result() === undefined`) makes the whole set abstain — the caller's
- * `groupingRule()` returns `undefined` and the outer base/overlay fold falls back to
- * `baseGrouping`. Otherwise, collects `columnId`s whose entry resolved `true`, preserving
- * entry order (= call order in the schema fn / rules-array order).
+ * Masks the declared level order by each level's rule result. `levels` owns which columns group
+ * and in what nesting order; a rule only switches one of them off. A rule naming a column
+ * `levels` does not contain is inert — it can never introduce a level, matching how a `when`
+ * predicate or a `GroupOrderRule` on an inactive column is a no-op.
+ *
+ * A pending entry (`result() === undefined`) makes the whole set abstain: `levels` passes
+ * through unmasked, so a table holds its declared grouping rather than flashing ungrouped while
+ * a rule resolves. A `when`-only rule declares no `enable` and never reaches here.
  *
  * Deliberately does NOT AND-combine same-column entries the way `engine/columns.ts`'s
- * `foldColumnRules` does for `VISIBLE` — grouping rules resolve into one ordered `string[]` of
- * distinct columns, not a per-column merge.
+ * `foldColumnRules` does for `VISIBLE`. Last write wins for a duplicate `columnId`, matching
+ * `collectGroupPredicates`/`collectGroupOrder` (undocumented edge case, not validated).
  */
-export function foldGroupingRules(entries: readonly GroupingRuleEntry[]): string[] | undefined {
-  const levels: string[] = [];
+export function maskGroupingLevels(
+  levels: readonly string[],
+  entries: readonly GroupingRuleEntry[]
+): string[] {
+  const results = new Map<string, boolean>();
   for (const entry of entries) {
     const value = entry.result();
-    if (value === undefined) return undefined;
-    if (value) levels.push(entry.columnId);
+    if (value === undefined) return [...levels];
+    results.set(entry.columnId, value);
   }
-  return levels;
+  return levels.filter((id) => results.get(id) !== false);
 }
 
 /**
  * Static per-column admission predicates, collected off the same `rules` array `withGrouping()`
- * builds — independent of `foldGroupingRules`, which resolves level *order*, not admission. Last
+ * builds — independent of `maskGroupingLevels`, which gates declared levels, not admission. Last
  * write wins for a duplicate `columnId` (undocumented edge case, not validated).
  */
 export function collectGroupPredicates<TRow>(
@@ -129,7 +135,7 @@ export function collectGroupPredicates<TRow>(
 
 /**
  * Static per-column ordering comparators, collected off the same `rules` array `withGrouping()`
- * builds — independent of `foldGroupingRules` (level order) and `collectGroupPredicates`
+ * builds — independent of `maskGroupingLevels` (level gating) and `collectGroupPredicates`
  * (admission), exactly the way those two are independent of each other. Last write wins for a
  * duplicate `columnId` (undocumented edge case, not validated).
  */

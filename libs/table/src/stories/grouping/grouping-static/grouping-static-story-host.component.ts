@@ -106,10 +106,10 @@ export class GroupingStaticStoryHostComponent {
   }
 
   /**
-   * Builds a grouping rule that never affects level activation (`enable: () => undefined`) but
-   * contributes a per-column `when` predicate for the 'category' level. The predicate rejects
-   * category clusters with fewer than `minCategoryRowCountValue` rows when `applyMinCategorySize`
-   * is enabled, demonstrating AND-combination with the table-wide `when`.
+   * Builds a grouping rule that omits `enable` — it contributes no level activation, only a
+   * per-column `when` predicate for the 'category' level. The predicate rejects category clusters
+   * with fewer than `minCategoryRowCountValue` rows when `applyMinCategorySize` is enabled,
+   * demonstrating AND-combination with the table-wide `when`.
    *
    * Checking the signals inside the predicate (not wrapping the rule itself) allows reactive
    * toggling without rebuilding the table.
@@ -118,7 +118,6 @@ export class GroupingStaticStoryHostComponent {
     return {
       kind: 'grouping',
       columnId: 'category',
-      enable: () => undefined, // Abstain: never affect level activation
       when: (cluster) =>
         !this.applyMinCategorySize() || cluster.rows.length >= this.minCategoryRowCountValue(),
     };

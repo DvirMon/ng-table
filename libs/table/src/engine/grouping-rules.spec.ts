@@ -4,9 +4,9 @@ import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
   collectGroupPredicates,
-  foldGroupingRules,
   isGroupingAsyncRule,
   isGroupingRule,
+  maskGroupingLevels,
   type GroupingRuleEntry,
 } from './grouping-rules';
 import type { GroupWhen } from '../api/types';
@@ -106,21 +106,39 @@ describe('buildGroupingRuleEntries', () => {
   });
 });
 
-describe('foldGroupingRules', () => {
-  it('returns [] for no rules (grouped by nothing, not abstain)', () => {
-    expect(foldGroupingRules([])).toEqual([]);
+describe('maskGroupingLevels', () => {
+  it('returns the declared levels unchanged when there are no rules', () => {
+    expect(maskGroupingLevels(['a', 'b'], [])).toEqual(['a', 'b']);
   });
 
-  it('abstains (returns undefined) when one entry among several is pending', () => {
+  it('abstains when one entry among several is pending — declared levels pass through', () => {
     const entries = [makeEntry('a', true), makeEntry('b', undefined), makeEntry('c', true)];
 
-    expect(foldGroupingRules(entries)).toBeUndefined();
+    expect(maskGroupingLevels(['a', 'b', 'c'], entries)).toEqual(['a', 'b', 'c']);
   });
 
-  it('folds resolved entries in call order to the columns that resolved true', () => {
+  it('drops only the levels whose entry resolved false, keeping declared order', () => {
     const entries = [makeEntry('a', false), makeEntry('b', true), makeEntry('c', true)];
 
-    expect(foldGroupingRules(entries)).toEqual(['b', 'c']);
+    expect(maskGroupingLevels(['a', 'b', 'c'], entries)).toEqual(['b', 'c']);
+  });
+
+  it('is inert for a rule naming a column the declared levels do not contain', () => {
+    const entries = [makeEntry('z', true), makeEntry('y', false)];
+
+    expect(maskGroupingLevels(['a', 'b'], entries)).toEqual(['a', 'b']);
+  });
+
+  it('keeps declared order regardless of entry order', () => {
+    const entries = [makeEntry('c', true), makeEntry('a', true), makeEntry('b', false)];
+
+    expect(maskGroupingLevels(['a', 'b', 'c'], entries)).toEqual(['a', 'c']);
+  });
+
+  it('returns [] when every declared level resolved false', () => {
+    const entries = [makeEntry('a', false), makeEntry('b', false)];
+
+    expect(maskGroupingLevels(['a', 'b'], entries)).toEqual([]);
   });
 });
 

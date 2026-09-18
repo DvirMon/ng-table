@@ -107,7 +107,8 @@ for **`api/features/with-filtering/types.ts` ↔ `engine/filters/types.ts`**: `F
   `enable` is reserved for the narrow case where one rule object must carry two orthogonal
   predicates — one data-driven, one external-state-driven — that cannot share a name; there, the
   external-state one becomes `enable` and `when` is freed for the data-driven one (grouping's
-  `applyGrouping({ enable, when })` is the only feature with this shape today).
+  `applyGrouping({ enable?, when })` is the only feature with this shape today — `enable` is
+  optional; a rule with no activation opinion omits it rather than abstaining the whole set).
 
 - **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md)).
   Wiring errors — slot/member collisions, duplicate registration, a `trackBy` naming no field —

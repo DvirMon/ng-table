@@ -5,14 +5,15 @@ import type { ColumnHandle } from './column-schema.types';
 import type { AnyGroupingRule, GroupingAsyncRule } from './grouping-schema.types';
 
 /**
- * Declares one grouping level, gated by `enable`. `enable` returning `undefined` (pending) makes
- * the *whole* rule set abstain — not just this level. Call order = level order: the Nth
- * `applyGrouping`/`applyGroupingAsync` call in a schema fn becomes the Nth entry in the
- * resulting grouping array, when active.
+ * Declares one grouping level. `enable`, when passed, gates activation — returning `undefined`
+ * (pending) makes the *whole* rule set abstain, not just this level. Omitting `enable` declares a
+ * `when`-only rule that contributes no activation. Call order = level order: the Nth
+ * `applyGrouping`/`applyGroupingAsync` call **that declares `enable`** in a schema fn becomes the
+ * Nth entry in the resulting grouping array, when active.
  */
 export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
-  opts: { enable: () => boolean | undefined; when?: GroupWhen<TRow> }
+  opts: { enable?: () => boolean | undefined; when?: GroupWhen<TRow> }
 ): void {
   assertPathIsCurrent(path).record({
     kind: 'grouping',

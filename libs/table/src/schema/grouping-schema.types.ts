@@ -3,15 +3,18 @@ import type { GroupOrder, GroupWhen } from '../api/types';
 import type { ColumnsPath } from './column-schema.types';
 
 /**
- * One schema-fn/rules-array level: `enable` contributes whether this column is an active
- * grouping level. `undefined` (pending) makes the whole rule set abstain — never "this level
- * doesn't apply", that's `false`, and never "the value hasn't loaded", that's also `undefined`
- * but resolved to abstain at the fold, not at this rule.
+ * One schema-fn/rules-array level. `enable`, when present, contributes whether this column is an
+ * active grouping level; `undefined` (pending) makes the whole rule set abstain — never "this
+ * level doesn't apply", that's `false`, and never "the value hasn't loaded", that's also
+ * `undefined` but resolved to abstain at the fold, not at this rule. Omitting `enable` means this
+ * rule contributes no level activation at all — it carries only `when`.
  */
 export interface GroupingRule<TRow = unknown> {
   readonly kind: 'grouping';
   readonly columnId: string;
-  readonly enable: () => boolean | undefined;
+  /** Omit to carry only `when` (no activation contribution). Present-and-`undefined` (pending)
+   * still makes the whole rule set abstain. */
+  readonly enable?: () => boolean | undefined;
   /** Admission for this column only, AND'd with the table-wide `when`. */
   readonly when?: GroupWhen<TRow>;
 }

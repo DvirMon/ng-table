@@ -12,14 +12,19 @@ import {
   buildGroupingRuleEntries,
   collectGroupOrder,
   collectGroupPredicates,
-  foldGroupingRules,
   isGroupingAsyncRule,
   isGroupingRule,
+  maskGroupingLevels,
+  type GroupingRuleEntry,
 } from '../../engine/grouping-rules';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createWritableView, type WritableView } from '../../engine/writable-view';
 import { runColumnsSchemaFn } from '../../schema/column-schema';
-import type { AnyGroupingRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
+import type {
+  AnyGroupingRule,
+  GroupingRule,
+  GroupingSchemaFn,
+} from '../../schema/grouping-schema.types';
 import { createTableFeature } from '../create-table-feature';
 import type {
   ColumnDef,
@@ -36,23 +41,20 @@ import type {
 type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
 
 export interface WithGroupingConfig<TRow> {
-  /** Seeds `grouping` at construction. An id naming no known column throws — a wiring error,
-   * parallel to `engine/rows.ts`'s `trackBy` throw site. */
+  /** The declared grouping levels, outermost first — array order *is* nesting order. Seeds the
+   * writable `grouping` view; rules gate these levels but can never add one. An id naming no
+   * known column throws — a wiring error, parallel to `engine/rows.ts`'s `trackBy` throw site. */
   initial?: ColumnId<TRow>[];
   /** Table-wide admission — judged at every active level. A cluster returning `false` renders its
    * rows flat at the parent's depth: no header, no group id, no aggregates. Throws: the cluster is
    * admitted, reported once per column per evaluation. */
   when?: GroupWhen<TRow>;
-  /** Base+overlay fold. Returning `string[]` overrides `initial`; `undefined` abstains and holds
-   * it; `[]` is actively grouped by nothing — distinct from abstain. Mutually exclusive with
-   * `rules`/`schema` in practice (both compile to this same slot) — the rules-array layer (below)
-   * is sugar that produces exactly this shape. */
-  groupingRule?: () => string[] | undefined;
-  /** Declarative per-column rules. Records by side effect; returns nothing. Call order is level
-   * order. Composes with `rules` — both land in the same array, `schema`-recorded rules first. */
+  /** Declarative per-column rules. Records by side effect; returns nothing. Call order carries
+   * no meaning — nesting order comes from `initial`. Composes with `rules`: both land in the same
+   * array, `schema`-recorded rules first. */
   schema?: GroupingSchemaFn<TRow>;
-  /** Rules-array layer: compiles to `groupingRule` via `foldGroupingRules`. The pre-recorded form
-   * of what `schema` records. */
+  /** Rules-array layer: masks `initial` via `maskGroupingLevels`. The pre-recorded form of what
+   * `schema` records. */
   rules?: AnyGroupingRule<TRow>[];
 }
 
@@ -102,17 +104,28 @@ function buildGroupingSpec<TRow>(
       `[withGrouping] rules name unknown column id(s): ${unknownRuleIds.join(', ')}.`
     );
   }
+  const emptyRule = rules.find(
+    (rule): rule is GroupingRule<TRow> => isGroupingRule(rule) && !rule.enable && !rule.when
+  );
+  if (emptyRule) {
+    throw new Error(
+      `[withGrouping] applyGrouping on column '${emptyRule.columnId}' declares neither enable nor when.`
+    );
+  }
 
   const baseGrouping = signal<string[]>(initial);
 
-  const ruleEntries = [
-    ...buildGroupingRuleEntries(rules.filter(isGroupingRule)),
-    ...rules.filter(isGroupingAsyncRule).map(buildAsyncGroupingRuleEntry),
-  ];
-  const rulesGroupingRule =
-    ruleEntries.length > 0 ? (): string[] | undefined => foldGroupingRules(ruleEntries) : undefined;
-  const effectiveGroupingRule = config.groupingRule ?? rulesGroupingRule;
-  const grouping = computed(() => effectiveGroupingRule?.() ?? baseGrouping());
+  // One pass in recorded order so sync/async entries interleave in true call order (a
+  // `when`-only grouping rule and every group-order rule contribute no entry at all).
+  const ruleEntries: GroupingRuleEntry[] = [];
+  for (const rule of rules) {
+    if (isGroupingRule(rule)) {
+      if (rule.enable) ruleEntries.push(...buildGroupingRuleEntries([rule]));
+    } else if (isGroupingAsyncRule(rule)) {
+      ruleEntries.push(buildAsyncGroupingRuleEntry(rule));
+    }
+  }
+  const grouping = computed(() => maskGroupingLevels(baseGrouping(), ruleEntries));
 
   const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
     () => grouping(),
@@ -159,9 +172,9 @@ function buildGroupingSpec<TRow>(
 /**
  * Adds column-based row grouping to a `createTable()`. Reads only `columns`/`rows` off the
  * store handed in, with zero knowledge of expansion. Claims the `'group'` pipeline and render
- * stages (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` folds
- * `groupingRule`/`rules`/a schema fn over `baseGrouping` — see the decisions doc. Per-column
- * `applyGroupOrder` rules order cluster siblings.
+ * stages (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` reads
+ * `initial` masked by `rules`/a schema fn — see the decisions doc. Per-column `applyGroupOrder`
+ * rules order cluster siblings.
  */
 export function withGrouping<In extends GroupingInput<In>>(
   config?: WithGroupingConfig<RowOf<In>>

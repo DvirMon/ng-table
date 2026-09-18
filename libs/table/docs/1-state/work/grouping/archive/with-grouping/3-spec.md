@@ -58,12 +58,13 @@ specced the way single-level grouping was, as a shape first and a performance co
 logic that turns clustered rows into `RenderRow`s with group headers and per-cluster aggregates
 at every depth.
 
-State is a base-plus-overlay fold, the same shape `effect-free-column-reactivity` established for
-`columns`: a writable base that updater writes land on, an optional async-capable rule layer that
-can override it, and a derived read exposed through a `WritableView` — no `effect()` anywhere in
-the feature. Declarative sugar (a schema function, a rules array, a bare lambda) sits on top of
-the same fold as three deletable layers, reusing the `columnSchema()` machinery already shipped
-for column rules rather than inventing a parallel mechanism.
+State is a declared-array-plus-mask, the same shape `effect-free-column-reactivity` established
+for `columns`: a writable base holding the declared levels that updater writes land on, an
+optional async-capable rule layer that can only narrow it (never introduce or reorder a level),
+and a derived read exposed through a `WritableView` — no `effect()` anywhere in the feature.
+Declarative sugar (a schema function, a rules array) sits on top of the same mask as two
+deletable layers, reusing the `columnSchema()` machinery already shipped for column rules rather
+than inventing a parallel mechanism.
 
 Group order and row sort stay fully decoupled by construction: `groupOrder` orders clusters,
 `sorting` reorders rows only within a cluster, and the fixed `filter → group → sort → expand`
@@ -171,11 +172,10 @@ type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
 interface WithGroupingConfig<TRow> {
   initial?: ColumnId<TRow>[];                                       // D14
-  groupWhen?: GroupWhen<TRow>;                                      // #85 — table-wide admission
-  groupingRule?: () => string[] | undefined;                        // D6, D7 — abstain contract
+  when?: GroupWhen<TRow>;                                           // #85, #86 — table-wide + per-column admission
   // groupOrder removed — see applyGroupOrder(path.x, cmp), #87
   schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #84, #87
-  rules?: AnyGroupingRule<TRow>[];                                  // D8, rules-array layer
+  rules?: AnyGroupingRule<TRow>[];                                  // D8, rules-array layer — pending removal, ADR-0019 Phase B
 }
 
 // D8 — schema-fn layer, now a config member rather than an either/or first positional (#84)
@@ -244,31 +244,41 @@ cluster and reports once per column per evaluation. Full mechanism and rejected 
   (TanStack; MUI X #16540/#12684/#8493; AG Grid #7850) — our pipeline gets AG Grid's *opt-in*
   `groupMaintainOrder: true` behavior as its only behavior, for free, by construction. Accepted
   consequence: sorting by the grouped column is a visible no-op.
-- **Base + overlay fold; async needs no `effect()` (D6).** `baseGrouping = signal<string[]>([])`
-  holds updater writes; `groupingRule = computed(() => config.groupingRule?.())` is
-  async-capable; `grouping = computed(() => groupingRule() ?? baseGrouping())` is the fold,
-  exposed as a `WritableView` that reads the fold and writes through to base. This is
+- **Declared array + mask; async needs no `effect()` (D6).** `baseGrouping =
+  signal<string[]>(initial)` holds the declared levels, outermost first, and every updater write —
+  it is the single source of level order and level membership. The rules-array/schema layer
+  resolves into live `GroupingRuleEntry` signals, one per rule that declares `enable`
+  (async-capable, since each entry is its own signal); `grouping = computed(() =>
+  maskGroupingLevels(baseGrouping(), ruleEntries))` masks that declared array by those entries'
+  resolved booleans, exposed as a `WritableView` that reads the masked value and writes through to
+  base. This is
   [`effect-free-column-reactivity`](../../../core/archive/effect-free-column-reactivity/2-decisions.md) D1–D3
   applied verbatim: D1's "one signal, three write sources" is the failure avoided, D2 supplies
   the base/overlay split, D3 establishes that reading a `resource()` is ordinary signal
   composition — no new mechanism invented for grouping.
-- **`groupingRule: () => string[] | undefined` is the contract (D7).** `['category']` groups by
-  category; `[]` is actively grouped by nothing; `undefined` abstains and holds `baseGrouping`.
-  `[]` ≠ `undefined` — the abstain branch is load-bearing for server-seeded initial values, so the
-  table holds its seed instead of flashing flat and jumping. Mirrors `applyVisible`'s
-  `boolean | undefined` contract. Retention while loading belongs at the resource boundary in
-  consumer code (`linkedSignal`, `resource`'s own retention), never in the fold, which stays a
-  pure function of `{ baseGrouping, ruleResult }`. Accepted consequence: base writes are shadowed
-  while the rule returns a value, so a user's updater write can be clobbered when a
-  late-resolving rule stops abstaining — "pick one mode per table" is guidance, not an enforced
-  invariant.
-- **Declarative sugar ships as three deletable layers (D8).** Schema fn → rules array → bare
-  lambda, each removable without breaking the layer below. The schema fn reuses
-  `createRecorderSession()` (`schema/column-schema.ts`), which already collects `apply*` calls
-  into an ordered array in call order and hands out typed `ColumnHandle`s via the `ColumnsPath`
-  proxy. Call order = group level order; no separate index config. Follows the standing "general
-  mechanism + convenience, not contract" criterion (the `updateRows` reference case) rather than a
-  per-column rule registry with indices and mutual exclusion.
+- **`maskGroupingLevels`'s output is `string[]` (D7).** It filters `baseGrouping()`'s declared
+  array down to the levels no rule resolved `false`, preserving declared order — it can only
+  narrow that array, never widen or reorder it. A rule naming a column the array doesn't declare
+  is inert, the same as a `when` predicate or a `GroupOrderRule` on an inactive column. Any entry
+  resolving `undefined` (pending) abstains the whole mask: the declared array passes through
+  unchanged, so a table holds its seed/updater-written levels instead of flashing ungrouped while
+  a rule resolves. A rule that omits `enable` contributes no entry at all, so a `when`-only rule
+  can never itself trigger masking or abstention. This removes the old override-fold's accepted
+  shadowing consequence entirely: an updater write to `grouping` always lands on `baseGrouping`
+  and is immediately visible (any active rule then only ever narrows *that* new array) — a write
+  can no longer be replaced wholesale by a rule the way it could when a rule's own `string[]`
+  overrode `initial`.
+- **Declarative sugar ships as two deletable layers (D8).** Schema fn → rules array, each
+  removable without breaking the layer below. (A third, bare-lambda `groupingRule` config field
+  existed through #87 as an escape hatch for both layers, letting a rule replace `initial`
+  wholesale; it had zero call sites outside its own definition and was removed once masking
+  replaced the override-fold — a rule no longer carries an array of its own to hand back.) The
+  schema fn reuses `createRecorderSession()` (`schema/column-schema.ts`), which already collects
+  `apply*` calls into an ordered array and hands out typed `ColumnHandle`s via the `ColumnsPath`
+  proxy — but under masking, **call order carries no meaning**: nesting order comes entirely from
+  `initial`, and a rule only ever switches one of `initial`'s declared levels on or off. Follows
+  the standing "general mechanism + convenience, not contract" criterion (the `updateRows`
+  reference case) rather than a per-column rule registry with indices and mutual exclusion.
 - **Full multi-level ships; grand totals and pivoting do not (D9).** Reopens and supersedes
   `grouping.md`'s single-level decision. That scope-out was calibrated against competitors' own
   architecture — aggregation computed inside row-model passes over wrapper objects with `subRows`,
@@ -390,11 +400,12 @@ wrong file.
 - `groupOrder` omitted preserves first-occurrence order; supplied, it reorders clusters without
   disturbing row order within a cluster; a `sort` on the grouped column is confirmed to be a
   no-op on cluster order.
-- The base/overlay fold: a `groupingRule` returning a value overrides `baseGrouping`; returning
-  `undefined` falls back to it; returning `[]` is grouped by nothing, distinct from the abstain
-  case.
-- The schema-fn, rules-array, and lambda config layers each produce the same resulting fold for an
-  equivalent rule, and call order in the schema fn determines level order.
+- The mask: a rule resolving `false` narrows `baseGrouping`'s declared array by that one level; a
+  rule naming a column the array doesn't declare is inert; every rule resolving `undefined`
+  abstains the whole mask, holding the declared array unmasked; a rule with no `enable` (a
+  `when`-only rule) never masks anything.
+- The schema-fn and rules-array config layers each produce the same resulting mask for an
+  equivalent rule; call order in the schema fn carries no meaning — `initial` fixes level order.
 - A pending rule (returns `undefined`) makes the whole rule set abstain; a resolved rule
   contributes its boolean; an errored rule's `onError` result is never treated as abstention.
 - `applyGroupingAsync` without an `onError` is a compile error; with one, an errored resource

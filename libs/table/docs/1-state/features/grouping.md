@@ -20,8 +20,9 @@ parent: ../architecture.md
 > - **Methods** — `setGrouping()`/`clearGrouping()` never shipped. The real write surface is
 >   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
 >   (D1) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. On top of that,
->   `table.grouping` folds an optional `groupingRule`/`rules`-array/schema-fn overlay over that base
->   value — `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #26), the
+>   `table.grouping` masks that declared base value by an optional `rules`-array/schema-fn layer —
+>   it can switch a declared level off, never introduce or reorder one — via
+>   `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #26), the
 >   schema fn reached through `config.schema` since #84. Cluster
 >   order is `applyGroupOrder(path.x, cmp)`, declared per column (D4 amended, issue #87) — a
 >   comparator orders that column's own siblings only; two levels can order by different criteria
@@ -68,13 +69,13 @@ parent: ../architecture.md
 
 ## Executive Summary
 
-Multi-level grouping (`table.grouping: string[]`, D3) with per-column aggregate computation, resolved from a base value optionally overlaid by a declarative `groupingRule`/rules-array/schema-fn (D6–D8, issue #26). Group collapse/expand state is deliberately delegated to `withExpansion()` rather than duplicated — but `withExpansion()` is an optional composition, not a hard requirement (see Compile-Time Dependencies, decided 2026-07-31).
+Multi-level grouping (`table.grouping: string[]`, D3) with per-column aggregate computation, resolved from a declared base array optionally masked by a declarative rules-array/schema-fn (D6–D8, issue #26) — a rule can switch a declared level off, never introduce or reorder one. Group collapse/expand state is deliberately delegated to `withExpansion()` rather than duplicated — but `withExpansion()` is an optional composition, not a hard requirement (see Compile-Time Dependencies, decided 2026-07-31).
 
 ## State Shape
 
 See [3-spec.md](../work/grouping/archive/with-grouping/3-spec.md) for the current contract —
-`table.grouping: WritableView<string[], GroupingUpdater<TRow>>`, folding a base value with an
-optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
+`table.grouping: WritableView<string[], GroupingUpdater<TRow>>`, masking the declared base array
+with an optional `rules`/schema-fn layer (D6–D8). Not restated here.
 
 ## Behavior
 
@@ -89,13 +90,17 @@ optional `groupingRule`/`rules`/schema-fn overlay (D6–D8). Not restated here.
 
 `setGrouping()`/`clearGrouping()` never shipped. See [3-spec.md](../work/grouping/archive/with-grouping/3-spec.md)'s
 Methods section for the real write surface — `table.grouping.update(updater)`, the
-`mutations/update-grouping.ts` updater factories, and the `groupingRule`/`applyGrouping()`/
-`applyGroupingAsync()` declarative overlay (D6–D8, issue #26). Not restated here.
+`mutations/update-grouping.ts` updater factories, and the `applyGrouping()`/
+`applyGroupingAsync()` declarative mask layer (D6–D8, issue #26). Not restated here.
 
 ## `manual` Contract
 
+**Deferred, not implemented** — no `manual` key exists on `WithGroupingConfig` today (see the
+banner above and `2-decisions.md`'s Open section). This section is a design sketch for if/when it
+ships, not a usable API.
+
 ```ts
-withGrouping({ manual: true })
+withGrouping({ manual: true }) // sketch only — does not compile today
 ```
 
 - State updates normally on `setGrouping`.
