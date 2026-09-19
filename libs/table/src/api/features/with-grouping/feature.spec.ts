@@ -14,6 +14,7 @@ import {
 } from '../../../table.mock';
 import { setColumns } from '../../../mutations/update-columns';
 import { setGroupLevels } from '../../../mutations/update-grouping';
+import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema';
 import type { GroupingHandle } from './types';
 import type { WritableView } from '../../../engine/writable-view';
@@ -1562,6 +1563,56 @@ describe('grouping declarative sugar (#26)', () => {
       expect(withSeed.grouping()).toEqual(['region']);
       expect(withoutSeed.grouping()).toEqual([]);
     });
+
+    it('accepts the object form of initial, normalizing it to the same key list (D9)', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial: [{ key: 'region' }] })
+        )
+      );
+
+      expect(store.grouping()).toEqual(['region']);
+    });
+
+    it('accepts a mixed string/object initial array (D9)', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial: ['region', { key: 'category' }] })
+        )
+      );
+
+      expect(store.grouping()).toEqual(['region', 'category']);
+    });
+
+    it("an initial entry's label wins over a matching column's label (D9)", () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial: [{ key: 'region', label: 'Sales Region' }] })
+        )
+      );
+
+      const header = store.renderRows().find((row) => row.kind === 'group')!;
+      expect(header.groupKey?.label).toBe('Sales Region');
+    });
+
+    it('an object-form level with no label falls through to the matching column label (D9)', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial: [{ key: 'region' }] })
+        )
+      );
+
+      const header = store.renderRows().find((row) => row.kind === 'group')!;
+      expect(header.groupKey?.label).toBe('Region');
+    });
   });
 
   describe('pending / resolved / errored rule contributions', () => {
@@ -2193,5 +2244,167 @@ describe('types', () => {
         applyGrouping(path.notAField, { enable: () => true });
       },
     });
+  });
+});
+
+describe('collapse state across a sort', () => {
+  // `grouping-collapsible/`'s sort toggles claim this on canvas; nothing asserted it. The
+  // mechanism is `queries.spec.ts`'s "same ids after a row reorder" — group ids are built from
+  // the cluster's value, not its position — read here through the composed store, which is the
+  // only place the claim is actually observable.
+  function setup() {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>([...mockGroupingRows]),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] }),
+        withExpansion(),
+        withSorting()
+      )
+    );
+    return store;
+  }
+
+  it('a sort change leaves expandedRows untouched', () => {
+    const store = setup();
+
+    store.toggleExpanded(US_HEADER_ID);
+    const expandedBefore = [...store.expandedRows()].sort();
+
+    store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
+    TestBed.tick();
+
+    expect([...store.expandedRows()].sort()).toEqual(expandedBefore);
+  });
+
+  it('an expanded group is still expanded, and a collapsed sibling still collapsed, after the sort', () => {
+    const store = setup();
+
+    store.toggleExpanded(US_HEADER_ID);
+    store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
+    TestBed.tick();
+
+    const rows = store.renderRows();
+    expect(findHeader(rows, US_HEADER_ID)).toBeDefined();
+    // The opened group's own leaves are on screen; no other group's are.
+    const visibleIds = rows.filter((row) => row.kind === 'row').map((row) => row.id).sort();
+    expect(visibleIds).toEqual([1, 2, 3]);
+  });
+});
+
+describe('writes target rows; clustering re-derives', () => {
+  // `grouping-crud/` showed these four on canvas. They are a consumer pattern over core row
+  // mutations rather than a grouping API lesson, so the story was removed and the facts moved
+  // here — see the story lesson audit's D8. Nothing below names a group id.
+  function setup(initial: ColumnId<GroupingMockRow>[] = ['region', 'category']) {
+    return inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>([...mockGroupingRows]),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial })
+      )
+    );
+  }
+
+  /** Every `kind: 'group'` header id currently rendered, in render order. */
+  function headerIds(store: { renderRows: () => readonly RenderRow<GroupingMockRow>[] }): string[] {
+    return store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => String(row.id));
+  }
+
+  it('patching a row group field moves that row between clusters', () => {
+    const store = setup(['region']);
+
+    // Row 1 starts under US. Nothing here mentions a cluster — only the field the level reads.
+    expect(store.rowsOf(findHeader(store.renderRows(), US_HEADER_ID)!).map((r) => r.id)).toEqual([
+      1, 2, 3,
+    ]);
+
+    store.value.update(patchRow<GroupingMockRow>(1, { region: 'EU' }));
+    TestBed.tick();
+
+    expect(store.rowsOf(findHeader(store.renderRows(), US_HEADER_ID)!).map((r) => r.id)).toEqual([
+      2, 3,
+    ]);
+    const euHeader = findHeader(store.renderRows(), 'group:>region:string:EU')!;
+    expect(store.rowsOf(euHeader).map((r) => r.id).sort()).toEqual([1, 4, 5, 6]);
+  });
+
+  it('patching a row to a name a sibling already holds merges the two clusters', () => {
+    const store = setup(['region', 'category']);
+
+    // US has Electronics and Furniture as siblings.
+    expect(headerIds(store)).toContain(US_ELECTRONICS_HEADER_ID);
+    expect(headerIds(store)).toContain('group:>region:string:US>category:string:Furniture');
+
+    // Row 3 is US > Furniture's only leaf. Renaming its category to a sibling's name is what a
+    // taxonomy rename does one row at a time.
+    store.value.update(patchRow<GroupingMockRow>(3, { category: 'Electronics' }));
+    TestBed.tick();
+
+    expect(headerIds(store)).not.toContain('group:>region:string:US>category:string:Furniture');
+    const merged = findHeader(store.renderRows(), US_ELECTRONICS_HEADER_ID)!;
+    expect(store.rowsOf(merged).map((r) => r.id).sort()).toEqual([1, 2, 3]);
+  });
+
+  it("removing a cluster's last leaf removes its header, with no group state to clean up", () => {
+    const store = setup(['region', 'category']);
+
+    // US > Furniture holds exactly row 3.
+    store.value.update(removeRow<GroupingMockRow>(3));
+    TestBed.tick();
+
+    expect(headerIds(store)).not.toContain('group:>region:string:US>category:string:Furniture');
+    // Its parent survives, because its other subtree still has leaves.
+    expect(headerIds(store)).toContain(US_HEADER_ID);
+  });
+
+  it('an appended row lands under the cluster its field values name, with no placement write', () => {
+    const store = setup(['region', 'category']);
+
+    // Appended at the end, carrying EU > Electronics. No updater takes a group id.
+    store.value.update(
+      insertRow<GroupingMockRow>({ id: 7, region: 'EU', category: 'Electronics', amount: 40 })
+    );
+    TestBed.tick();
+
+    const header = findHeader(store.renderRows(), EU_ELECTRONICS_HEADER_ID)!;
+    expect(store.rowsOf(header).map((r) => r.id).sort()).toEqual([4, 7]);
+    // And the row is rendered inside that subtree, not trailing the table.
+    const rendered = store.renderRows();
+    const headerIndex = rendered.findIndex((row) => row.id === EU_ELECTRONICS_HEADER_ID);
+    expect(rendered[headerIndex + 1]?.data?.id).toBe(4);
+    expect(rendered[headerIndex + 2]?.data?.id).toBe(7);
+  });
+});
+
+describe('collapse state across a row replacement', () => {
+  // `grouping-collapsible/`'s Refetch replaces every row with a freshly-constructed object
+  // carrying the same id. Its canvas claimed collapse state survives that; nothing asserted it
+  // (story lesson audit, D6). The failed-refetch half is consumer wiring — a `linkedSignal` that
+  // holds its previous value, so the data signal never changes and there is nothing for the
+  // library to get wrong. What the library owes is this: same ids, new object identities, same
+  // group ids, so the expansion state still matches.
+  it('replacing every row object with an equal-id copy leaves expandedRows untouched', () => {
+    const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] }),
+        withExpansion()
+      )
+    );
+
+    store.toggleExpanded(US_HEADER_ID);
+    const expandedBefore = [...store.expandedRows()].sort();
+
+    data.set(mockGroupingRows.map((row) => ({ ...row })));
+    TestBed.tick();
+
+    expect([...store.expandedRows()].sort()).toEqual(expandedBefore);
+    expect(findHeader(store.renderRows(), US_HEADER_ID)).toBeDefined();
   });
 });
