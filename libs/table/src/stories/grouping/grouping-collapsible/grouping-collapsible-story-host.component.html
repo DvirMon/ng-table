@@ -115,46 +115,44 @@
                   }
                   <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
                 } @else {
-                  {{ row.aggregates?.[column.id] | dealAmount }}
+                  {{ row.cells[column.id] | dealAmount }}
                 }
               </td>
             }
           </tr>
         } @else {
-          @if (row.data; as rowData) {
-            <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
-              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
-                <td
-                  class="story-host__cell"
-                  [class.grouping-story__cell--label]="isFirst"
-                  [class.grouping-story__cell--numeric]="column.id === 'amount'"
-                >
-                  @if (isFirst && row.hasChildren) {
-                    <button
-                      type="button"
-                      class="grouping-story__chevron"
-                      [attr.aria-expanded]="row.isExpanded"
-                      [attr.aria-label]="
-                        (row.isExpanded ? 'Hide' : 'Show') + ' the line items on this deal'
-                      "
-                      (click)="table.toggleExpanded(row.id)"
-                    ></button>
+          <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @if (isFirst && row.hasChildren) {
+                  <button
+                    type="button"
+                    class="grouping-story__chevron"
+                    [attr.aria-expanded]="row.isExpanded"
+                    [attr.aria-label]="
+                      (row.isExpanded ? 'Hide' : 'Show') + ' the line items on this deal'
+                    "
+                    (click)="table.toggleExpanded(row.id)"
+                  ></button>
+                }
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ row.cells[column.id] | dealAmount }}
                   }
-                  @switch (column.id) {
-                    @case ('amount') {
-                      {{ column.accessor(rowData) | dealAmount }}
-                    }
-                    @case ('closedAt') {
-                      {{ column.accessor(rowData) | dealDate }}
-                    }
-                    @default {
-                      {{ column.accessor(rowData) }}
-                    }
+                  @case ('closedAt') {
+                    {{ row.cells[column.id] | dealDate }}
                   }
-                </td>
-              }
-            </tr>
-          }
+                  @default {
+                    {{ row.cells[column.id] }}
+                  }
+                }
+              </td>
+            }
+          </tr>
         }
       }
     </tbody>

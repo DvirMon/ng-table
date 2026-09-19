@@ -1,4 +1,5 @@
-import type { ColumnDef, RenderRow, RowId } from '../../api/types';
+import type { ColumnDef, RowId } from '../../api/types';
+import type { StagedRow } from '../render-stages';
 import {
   admitClusters,
   buildClusters,
@@ -76,21 +77,21 @@ function resolveGroupLabel<TRow>(
  * header's descendants when its id is missing from the unioned `expandedRows` set.
  */
 function emitGroupRows<TRow>(
-  nodes: ClusterNode<Omit<RenderRow<TRow>, 'index'>>[],
+  nodes: ClusterNode<StagedRow<TRow>>[],
   depth: number,
   parentPath: string,
   columns: ColumnDef<TRow>[],
   reportedColumns: Set<string>,
   labelByColumn: ReadonlyMap<string, string> | undefined,
   parentId?: RowId
-): Omit<RenderRow<TRow>, 'index'>[] {
+): StagedRow<TRow>[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) {
       return node.items.map((item) => ({ ...item, depth, parentId }));
     }
     const path = buildGroupPath(parentPath, node.columnId, node.value);
     const id = toGroupId(path);
-    const header: Omit<RenderRow<TRow>, 'index'> = {
+    const header: StagedRow<TRow> = {
       id,
       depth,
       kind: 'group',
@@ -123,11 +124,11 @@ function emitGroupRows<TRow>(
  * insertion and `computeAggregates` read from one tree, never two divergent walks.
  */
 export function buildGroupRenderRows<TRow>(
-  rows: Omit<RenderRow<TRow>, 'index'>[],
+  rows: StagedRow<TRow>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
-): Omit<RenderRow<TRow>, 'index'>[] {
+): StagedRow<TRow>[] {
   if (grouping.length === 0) {
     return rows;
   }
@@ -140,7 +141,7 @@ export function buildGroupRenderRows<TRow>(
     }
     return readGroupFieldValue(item.data, key, opts?.extractValueByColumn);
   });
-  const toRows = (items: Omit<RenderRow<TRow>, 'index'>[]): TRow[] =>
+  const toRows = (items: StagedRow<TRow>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
   const admitted = admitClusters(nodes, opts?.when, toRows, new Set(), opts?.columnWhen);
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, toRows, { done: false });

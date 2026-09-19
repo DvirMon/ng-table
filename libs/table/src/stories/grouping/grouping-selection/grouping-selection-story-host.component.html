@@ -89,7 +89,7 @@
                   }
                   <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
                 } @else {
-                  {{ row.aggregates?.[column.id] | dealAmount }}
+                  {{ row.cells[column.id] | dealAmount }}
                 }
               </td>
             }
@@ -116,13 +116,13 @@
                 >
                   @switch (column.id) {
                     @case ('amount') {
-                      {{ column.accessor(rowData) | dealAmount }}
+                      {{ row.cells[column.id] | dealAmount }}
                     }
                     @case ('closedAt') {
-                      {{ column.accessor(rowData) | dealDate }}
+                      {{ row.cells[column.id] | dealDate }}
                     }
                     @default {
-                      {{ column.accessor(rowData) }}
+                      {{ row.cells[column.id] }}
                     }
                   }
                 </td>

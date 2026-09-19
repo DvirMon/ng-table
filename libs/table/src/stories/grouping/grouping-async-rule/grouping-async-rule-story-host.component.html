@@ -58,26 +58,24 @@
               </td>
             }
           } @else {
-            @if (row.data; as rowData) {
-              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
-                <td
-                  class="story-host__cell"
-                  [class.grouping-story__cell--label]="isFirst"
-                  [class.grouping-story__cell--numeric]="column.id === 'amount'"
-                >
-                  @switch (column.id) {
-                    @case ('amount') {
-                      {{ column.accessor(rowData) | dealAmount }}
-                    }
-                    @case ('closedAt') {
-                      {{ column.accessor(rowData) | dealDate }}
-                    }
-                    @default {
-                      {{ column.accessor(rowData) }}
-                    }
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ row.cells[column.id] | dealAmount }}
                   }
-                </td>
-              }
+                  @case ('closedAt') {
+                    {{ row.cells[column.id] | dealDate }}
+                  }
+                  @default {
+                    {{ row.cells[column.id] }}
+                  }
+                }
+              </td>
             }
           }
         </tr>

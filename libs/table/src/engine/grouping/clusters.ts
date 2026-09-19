@@ -41,6 +41,26 @@ function toGroupKey(value: unknown): string {
   return `${typeof value}:${String(value)}`;
 }
 
+// True when `value` (post-`extractValue`) has no dedicated `toGroupKey` branch and would
+// collapse every distinct instance into one `"object:[object Object]"` bucket. `null`/
+// `undefined`/`Date` each get their own branch and are not reportable.
+function isCollapsingGroupValue(value: unknown): boolean {
+  return typeof value === 'object' && value !== null && !(value instanceof Date);
+}
+
+// Extends ADR-0014's throw-must-be-visible reasoning to a silent collapse. Reported once per
+// field per `buildClusters` call tree — declaring `extractValue` on the field is the fix,
+// which is what makes this actionable rather than merely noisy.
+function reportNonPrimitiveGroupValue(columnId: string): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[withGrouping] field "${columnId}" groups on a non-primitive value — every distinct ` +
+      'object collapses into one group. Declare extractValue on that field to key the group ' +
+      'on a primitive.'
+  );
+}
+
 /** The one place `parentPath>columnId:key` is built — `render.ts`'s `emitGroupRows` and
  * `queries.ts`'s `findClusterByPath` both call this instead of reconstructing the format, so
  * the two can never silently drift out of sync (the id an emitted header carries vs. the id a
@@ -62,7 +82,8 @@ export function toGroupId(path: string): RowId {
 export function buildClusters<T>(
   items: T[],
   levels: readonly string[],
-  accessor: (item: T, columnId: string) => unknown
+  accessor: (item: T, columnId: string) => unknown,
+  reportedFields: Set<string> = new Set()
 ): ClusterNode<T>[] {
   const [columnId, ...rest] = levels;
   if (columnId === undefined) {
@@ -71,6 +92,10 @@ export function buildClusters<T>(
   const buckets = new Map<string, { value: unknown; items: T[] }>();
   for (const item of items) {
     const value = accessor(item, columnId);
+    if (isCollapsingGroupValue(value) && !reportedFields.has(columnId)) {
+      reportedFields.add(columnId);
+      reportNonPrimitiveGroupValue(columnId);
+    }
     const key = toGroupKey(value);
     const bucket = buckets.get(key);
     if (bucket) {
@@ -83,7 +108,7 @@ export function buildClusters<T>(
     columnId,
     value,
     items: bucketItems,
-    children: buildClusters(bucketItems, rest, accessor),
+    children: buildClusters(bucketItems, rest, accessor, reportedFields),
     admitted: true,
   }));
 }

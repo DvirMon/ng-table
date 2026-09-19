@@ -119,8 +119,24 @@ describe('composeTable', () => {
     const store = composeWithRows(makeRows(), []);
 
     expect((store['renderRows'] as () => unknown[])()).toEqual([
-      { id: 'r1', depth: 0, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 0, sourceIndex: 0 },
-      { id: 'r2', depth: 0, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 1, sourceIndex: 1 },
+      {
+        id: 'r1',
+        depth: 0,
+        kind: 'row',
+        data: { id: 'r1', name: 'Charlie', age: 40 },
+        index: 0,
+        sourceIndex: 0,
+        cells: { name: 'Charlie', age: 40 },
+      },
+      {
+        id: 'r2',
+        depth: 0,
+        kind: 'row',
+        data: { id: 'r2', name: 'Ann', age: 25 },
+        index: 1,
+        sourceIndex: 1,
+        cells: { name: 'Ann', age: 25 },
+      },
     ]);
   });
 
@@ -223,9 +239,33 @@ describe('composeTable', () => {
 
     expect(forwardRows).toEqual(reversedRows);
     expect(forwardRows).toEqual([
-      { id: 'group-1', depth: 0, kind: 'group', data: null, index: 0, sourceIndex: undefined },
-      { id: 'r1', depth: 1, kind: 'row', data: { id: 'r1', name: 'Charlie', age: 40 }, index: 1, sourceIndex: 0 },
-      { id: 'r2', depth: 1, kind: 'row', data: { id: 'r2', name: 'Ann', age: 25 }, index: 2, sourceIndex: 1 },
+      {
+        id: 'group-1',
+        depth: 0,
+        kind: 'group',
+        data: null,
+        index: 0,
+        sourceIndex: undefined,
+        cells: {},
+      },
+      {
+        id: 'r1',
+        depth: 1,
+        kind: 'row',
+        data: { id: 'r1', name: 'Charlie', age: 40 },
+        index: 1,
+        sourceIndex: 0,
+        cells: { name: 'Charlie', age: 40 },
+      },
+      {
+        id: 'r2',
+        depth: 1,
+        kind: 'row',
+        data: { id: 'r2', name: 'Ann', age: 25 },
+        index: 2,
+        sourceIndex: 1,
+        cells: { name: 'Ann', age: 25 },
+      },
     ]);
   });
 

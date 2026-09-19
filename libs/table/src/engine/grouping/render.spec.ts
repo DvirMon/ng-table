@@ -1,4 +1,5 @@
-import type { ColumnDef, RenderRow } from '../../api/types';
+import type { ColumnDef } from '../../api/types';
+import type { StagedRow } from '../render-stages';
 import { buildGroupRenderRows } from './render';
 
 interface Order {
@@ -51,7 +52,7 @@ function averageAggregateColumn(id: string): ColumnDef<OrderWithAmount> {
 
 function toSeedRenderRows<TRow extends { id: number }>(
   rows: TRow[]
-): Omit<RenderRow<TRow>, 'index'>[] {
+): StagedRow<TRow>[] {
   return rows.map((row) => ({ id: row.id, depth: 0, kind: 'row' as const, data: row }));
 }
 

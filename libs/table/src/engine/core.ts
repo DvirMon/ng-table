@@ -1,5 +1,6 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { ColumnDef, RenderRow, RowId } from '../api/types';
+import { buildDataCells, buildGroupCells } from './cells';
 import { foldColumnRules, resolveColumnDefs, type ColumnRuleEntry } from './columns';
 import { runPipeline, type PipelineStages } from './pipeline';
 import { runRenderStages, type RenderStages } from './render-stages';
@@ -79,13 +80,16 @@ export function createTableCore<TRow>(
 
   // Downstream of `rows` (the pipeline output), not `data` directly — recomputes on every
   // filter/group/sort/expand change, not just when the consumer's `data` signal re-emits.
-  // `index` and `sourceIndex` are assigned here, centrally, rather than by any render stage:
-  // `index` is purely the row's position in the final array (feeds `aria-rowindex`),
+  // `index`, `sourceIndex` and `cells` are assigned here, centrally, rather than by any render
+  // stage: `index` is purely the row's position in the final array (feeds `aria-rowindex`),
   // assigned once after the whole render-stage chain runs, and `sourceIndex` resolves via
   // `indexById` — `undefined` for a synthesized row (`row.data === null`) since there is no
-  // `data()` entry to point to.
+  // `data()` entry to point to. `cells` reads `columns()`, so any column change recomputes
+  // every render row (ADR-0022).
   const renderRows = computed(() => {
     const byId = indexById();
+    const resolvedColumns = columns();
+    const reportedColumns = new Set<string>();
     const shaped = runRenderStages(seedRenderRows(rows()), renderStages, expanded());
     return shaped.map((row, index) => {
       const isSynthesizedRow = row.data === null;
@@ -93,6 +97,9 @@ export function createTableCore<TRow>(
         ...row,
         index,
         sourceIndex: isSynthesizedRow ? undefined : byId.get(row.id),
+        cells: isSynthesizedRow
+          ? buildGroupCells(row.aggregates)
+          : buildDataCells(row.data, resolvedColumns, reportedColumns),
       };
     });
   });

@@ -68,6 +68,160 @@ describe('createTableCore — sourceIndex', () => {
   });
 });
 
+describe('createTableCore — cells on data rows (ADR-0022)', () => {
+  it('stamps a cells entry per column in columns(), keyed by accessor output, including a hidden column', () => {
+    const { renderRows } = createTableCore<Row>({
+      columns: [
+        { id: 'name' },
+        { id: 'shout', visible: false, accessor: (row: Row) => row.name.toUpperCase() },
+      ],
+      trackBy: 'id',
+      data: signal(makeRows()),
+    });
+
+    const [row] = renderRows();
+
+    expect(row.cells).toEqual({ name: 'Ann', shout: 'ANN' });
+  });
+
+  it('recomputes cells when data changes', () => {
+    const data = signal(makeRows());
+    const { renderRows } = createTableCore<Row>({ columns, trackBy: 'id', data });
+
+    expect(renderRows()[0].cells['name']).toBe('Ann');
+
+    data.set([{ id: 'r1', name: 'Zed' }, ...makeRows().slice(1)]);
+
+    expect(renderRows()[0].cells['name']).toBe('Zed');
+  });
+
+  it('recomputes cells when columns changes', () => {
+    const { core, renderRows } = createTableCore<Row>({
+      columns,
+      trackBy: 'id',
+      data: signal(makeRows()),
+    });
+
+    expect(renderRows()[0].cells['name']).toBe('Ann');
+
+    core.columns.update((cols) =>
+      cols.map((column) =>
+        column.id === 'name'
+          ? { ...column, accessor: (row: Row) => row.name.toUpperCase() }
+          : column
+      )
+    );
+
+    expect(renderRows()[0].cells['name']).toBe('ANN');
+  });
+
+  it('a throwing accessor degrades only that cell, leaving siblings resolved, and logs once across a multi-row table', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { renderRows } = createTableCore<Row>({
+        columns: [
+          { id: 'name' },
+          {
+            id: 'bad',
+            accessor: () => {
+              throw new Error('boom');
+            },
+          },
+        ],
+        trackBy: 'id',
+        data: signal(makeRows()),
+      });
+
+      const rows = renderRows();
+
+      expect(rows.every((row) => row.cells['bad'] === undefined)).toBe(true);
+      expect(rows.map((row) => row.cells['name'])).toEqual(['Ann', 'Bea', 'Cid']);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+});
+
+describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
+  it("a group header's cells deep-equals its aggregates", () => {
+    const { renderRows, renderStages } = createTableCore<Row>({
+      columns,
+      trackBy: 'id',
+      data: signal(makeRows()),
+    });
+    const aggregates = { amount: 150 };
+    renderStages.group = (rows) => [
+      {
+        id: 'group-1',
+        depth: 0,
+        kind: 'group',
+        data: null,
+        aggregates,
+        groupKey: { columnId: 'name', value: 'all', label: 'All' },
+      },
+      ...rows,
+    ];
+
+    const [groupRow] = renderRows();
+
+    expect(groupRow.cells).toEqual(aggregates);
+  });
+
+  it('a column with no aggregateFn is absent from a group header cells (reading undefined)', () => {
+    const { renderRows, renderStages } = createTableCore<Row>({
+      columns,
+      trackBy: 'id',
+      data: signal(makeRows()),
+    });
+    // 'name' has no aggregateFn — a real aggregation stage would never populate an entry for it
+    // in `aggregates`, so the synthesized row here mirrors that: only 'amount' is present.
+    renderStages.group = (rows) => [
+      {
+        id: 'group-1',
+        depth: 0,
+        kind: 'group',
+        data: null,
+        aggregates: { amount: 150 },
+        groupKey: { columnId: 'name', value: 'all', label: 'All' },
+      },
+      ...rows,
+    ];
+
+    const [groupRow] = renderRows();
+
+    expect(groupRow.cells['name']).toBeUndefined();
+    expect('name' in groupRow.cells).toBe(false);
+  });
+
+  it("a group header carries no cells entry keyed by groupKey.columnId unless that column has an aggregateFn", () => {
+    const { renderRows, renderStages } = createTableCore<Row>({
+      columns,
+      trackBy: 'id',
+      data: signal(makeRows()),
+    });
+    // groupKey.columnId is 'name', but 'name' carries no aggregateFn, so aggregates never gets a
+    // 'name' entry — the D5 amendment: the group's own clustered value is never merged back into
+    // cells under its own column id.
+    renderStages.group = (rows) => [
+      {
+        id: 'group-1',
+        depth: 0,
+        kind: 'group',
+        data: null,
+        aggregates: {},
+        groupKey: { columnId: 'name', value: 'Ann', label: 'Ann' },
+      },
+      ...rows,
+    ];
+
+    const [groupRow] = renderRows();
+
+    expect(groupRow.groupKey?.columnId).toBe('name');
+    expect('name' in groupRow.cells).toBe(false);
+  });
+});
+
 describe('createTableCore — expandedRows union (ADR-0017)', () => {
   it('unions two contributed expandedRows sets — a row shows if either set contains its parent', () => {
     // `core.ts` is the boundary that unions every feature's contributed `expandedRows`

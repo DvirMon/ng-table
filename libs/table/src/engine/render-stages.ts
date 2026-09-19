@@ -9,9 +9,11 @@ export const RENDER_ORDER = ['group', 'tree', 'prune', 'paginate'] as const;
 
 export type RenderStage = (typeof RENDER_ORDER)[number];
 
-export type RenderRowTransform<TRow> = (
-  rows: Omit<RenderRow<TRow>, 'index'>[]
-) => Omit<RenderRow<TRow>, 'index'>[];
+/** A render row mid-chain: `index` and `cells` are both stamped centrally in `engine/core.ts`
+ * after the whole chain runs, so a stage never sees or sets either. */
+export type StagedRow<TRow> = Omit<RenderRow<TRow>, 'index' | 'cells'>;
+
+export type RenderRowTransform<TRow> = (rows: StagedRow<TRow>[]) => StagedRow<TRow>[];
 
 /**
  * The render-row transforms a feature may **declare** via `TableFeatureSpec.renderStages`. Two
@@ -40,9 +42,9 @@ export const CLAIMABLE_RENDER_STAGES = RENDER_ORDER.filter(
 // `'tree'` and `'prune'` that breaks parent-before-child emission breaks this silently. See
 // ADR-0017.
 function pruneUnexpandedDescendants<TRow>(
-  rows: Omit<RenderRow<TRow>, 'index'>[],
+  rows: StagedRow<TRow>[],
   expanded: ReadonlySet<RowId> | undefined
-): Omit<RenderRow<TRow>, 'index'>[] {
+): StagedRow<TRow>[] {
   if (expanded === undefined) {
     return rows;
   }
@@ -68,10 +70,10 @@ function pruneUnexpandedDescendants<TRow>(
  * `undefined`) for "no contributor," which is a pass-through.
  */
 export function runRenderStages<TRow>(
-  rows: Omit<RenderRow<TRow>, 'index'>[],
+  rows: StagedRow<TRow>[],
   stages: RenderStages<TRow>,
   expanded?: ReadonlySet<RowId>
-): Omit<RenderRow<TRow>, 'index'>[] {
+): StagedRow<TRow>[] {
   return RENDER_ORDER.reduce((current, stage) => {
     if (stage === 'prune') {
       return pruneUnexpandedDescendants(current, expanded);

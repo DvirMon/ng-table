@@ -1,5 +1,11 @@
 import type { ClusterSummary, GroupSummary, GroupWhen } from '../../api/types';
-import { admitClusters, buildClusters, sortClusters, type ClusterNode } from './clusters';
+import {
+  admitClusters,
+  buildClusterNodes,
+  buildClusters,
+  sortClusters,
+  type ClusterNode,
+} from './clusters';
 import { clusterRows } from './pipeline';
 
 interface Order {
@@ -48,6 +54,181 @@ describe('buildClusters', () => {
 
     for (const node of nodes) {
       assertItemsCoverChildren(node);
+    }
+  });
+});
+
+describe('buildClusters / buildClusterNodes — non-primitive group-value report', () => {
+  interface MetaRow {
+    id: number;
+    meta: { tag: string };
+  }
+  interface TwoLevelRow {
+    id: number;
+    alpha: { x: number };
+    beta: { y: number };
+  }
+  interface ArrayRow {
+    id: number;
+    tags: number[];
+  }
+  interface NullableRow {
+    id: number;
+    value: unknown;
+  }
+  interface DateRow {
+    id: number;
+    createdAt: Date;
+  }
+
+  it('fires once for an object-valued grouping field, naming the field and extractValue', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: MetaRow[] = [
+        { id: 1, meta: { tag: 'a' } },
+        { id: 2, meta: { tag: 'b' } },
+      ];
+
+      buildClusters<MetaRow>(rows, ['meta'], (row, columnId) => row[columnId as keyof MetaRow]);
+
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+      const message = reportSpy.mock.calls[0][0] as string;
+      expect(message).toContain('meta');
+      expect(message).toContain('extractValue');
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('logs exactly once across many rows sharing one object-valued field', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: MetaRow[] = Array.from({ length: 50 }, (_, index) => ({
+        id: index,
+        meta: { tag: `t${index}` },
+      }));
+
+      buildClusters<MetaRow>(rows, ['meta'], (row, columnId) => row[columnId as keyof MetaRow]);
+
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('two object-valued levels each log once, independently', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: TwoLevelRow[] = [
+        { id: 1, alpha: { x: 1 }, beta: { y: 1 } },
+        { id: 2, alpha: { x: 2 }, beta: { y: 2 } },
+      ];
+
+      buildClusters<TwoLevelRow>(rows, ['alpha', 'beta'], (row, columnId) =>
+        row[columnId as keyof TwoLevelRow]
+      );
+
+      expect(reportSpy).toHaveBeenCalledTimes(2);
+      const messages = reportSpy.mock.calls.map((call) => call[0] as string);
+      expect(messages[0]).toContain('alpha');
+      expect(messages[1]).toContain('beta');
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('fires for an array-valued field', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: ArrayRow[] = [
+        { id: 1, tags: [1, 2] },
+        { id: 2, tags: [3, 4] },
+      ];
+
+      buildClusters<ArrayRow>(rows, ['tags'], (row, columnId) => row[columnId as keyof ArrayRow]);
+
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+      const message = reportSpy.mock.calls[0][0] as string;
+      expect(message).toContain('tags');
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('stays quiet when a declared extractValue reduces the field to a primitive, driven through buildClusterNodes', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: MetaRow[] = [
+        { id: 1, meta: { tag: 'a' } },
+        { id: 2, meta: { tag: 'b' } },
+      ];
+      const extractValueByColumn = new Map<string, (fieldValue: unknown) => unknown>([
+        ['meta', (fieldValue) => (fieldValue as { tag: string }).tag],
+      ]);
+
+      buildClusterNodes<MetaRow>(rows, ['meta'], extractValueByColumn);
+
+      expect(reportSpy).not.toHaveBeenCalled();
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('stays quiet for null and undefined field values', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: NullableRow[] = [
+        { id: 1, value: null },
+        { id: 2, value: undefined },
+      ];
+
+      buildClusterNodes<NullableRow>(rows, ['value']);
+
+      expect(reportSpy).not.toHaveBeenCalled();
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('stays quiet for Date field values', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: DateRow[] = [
+        { id: 1, createdAt: new Date('2024-01-01') },
+        { id: 2, createdAt: new Date('2024-01-02') },
+      ];
+
+      buildClusterNodes<DateRow>(rows, ['createdAt']);
+
+      expect(reportSpy).not.toHaveBeenCalled();
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('clustering itself is unchanged for an object-valued field — distinct objects still land in one node', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const rows: MetaRow[] = [
+        { id: 1, meta: { tag: 'a' } },
+        { id: 2, meta: { tag: 'b' } },
+        { id: 3, meta: { tag: 'c' } },
+      ];
+
+      const nodes = buildClusters<MetaRow>(
+        rows,
+        ['meta'],
+        (row, columnId) => row[columnId as keyof MetaRow]
+      );
+
+      expect(nodes).toHaveLength(1);
+      expect(nodes[0].columnId).toBe('meta');
+      expect(nodes[0].value).toBe(rows[0].meta);
+      expect(nodes[0].items).toEqual(rows);
+      expect(nodes[0].children).toEqual([]);
+      expect(nodes[0].admitted).toBe(true);
+    } finally {
+      reportSpy.mockRestore();
     }
   });
 });

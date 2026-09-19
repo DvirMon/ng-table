@@ -3,11 +3,12 @@ import {
   CLAIMABLE_RENDER_STAGES,
   runRenderStages,
   type RenderStages,
+  type StagedRow,
 } from './render-stages';
-import type { RenderRow, RowId } from '../api/types';
+import type { RowId } from '../api/types';
 
 type Row = { id: string };
-type Shaped = Omit<RenderRow<Row>, 'index'>;
+type Shaped = StagedRow<Row>;
 
 function makeRow(id: string, parentId?: string): Shaped {
   return {

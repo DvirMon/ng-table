@@ -31,6 +31,7 @@ export function mockDataRenderRow(overrides: Partial<RenderRow<unknown>> = {}): 
     kind: 'row',
     data: { name: 'Ada' },
     index: 0,
+    cells: {},
     ...overrides,
   };
 }
@@ -42,6 +43,7 @@ export function mockGroupRenderRow(overrides: Partial<RenderRow<unknown>> = {}):
     kind: 'group',
     data: null,
     index: 0,
+    cells: {},
     ...overrides,
   };
 }

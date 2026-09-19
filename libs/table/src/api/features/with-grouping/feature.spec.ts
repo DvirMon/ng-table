@@ -2132,6 +2132,7 @@ describe('rowsOf and when (Q3, #85)', () => {
       kind: 'group',
       data: null,
       index: 0,
+      cells: {},
     };
 
     expect(() => store.rowsOf(bogusHeader)).not.toThrow();

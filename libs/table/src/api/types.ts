@@ -69,6 +69,13 @@ export interface RenderRow<TRow> {
   // `undefined` on a top-level row and whenever nothing nests. Opaque: never parsed back apart,
   // since a group id's separators differ from a tree id's.
   readonly parentId?: RowId;
+
+  // The resolved value per column, keyed by declared column id — `accessor` output for a
+  // `kind: 'row'`, the group's own aggregates for a `kind: 'group'`. Stamped centrally in
+  // `engine/core.ts` after the whole RENDER_ORDER chain runs, alongside `index`/`sourceIndex`
+  // (ADR-0011). Does not follow column visibility or order: the consumer's own visible-column
+  // loop still decides what renders (ADR-0022). Values are raw — format with a pipe.
+  readonly cells: Readonly<Record<string, unknown>>;
 }
 
 export interface ColumnDef<TRow = unknown, TId extends string = string> {

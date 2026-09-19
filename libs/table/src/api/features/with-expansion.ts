@@ -1,9 +1,10 @@
 import { signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { pruneByIds } from '../../engine/rows';
+import type { StagedRow } from '../../engine/render-stages';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
-import type { DerivedDict, RenderRow, RowId, TableStore, TrackByFn } from '../types';
+import type { DerivedDict, RowId, TableStore, TrackByFn } from '../types';
 
 export interface WithExpansionConfig<TRow> {
   /** Reads a row's nested children. Default: `(row as { children?: TRow[] }).children`. */
@@ -78,7 +79,7 @@ function toChildRenderRow<TRow>(
   depth: number,
   trackBy: TrackByFn<TRow>,
   parentId: RowId
-): Omit<RenderRow<TRow>, 'index'> {
+): StagedRow<TRow> {
   return { id: trackBy(row), depth, kind: 'row', data: row, parentId };
 }
 
@@ -100,15 +101,15 @@ function buildTreeStage<TRow>(
   expandedRows: Signal<Set<RowId>>,
   childrenAccessor: (row: TRow) => TRow[] | undefined,
   isExpandable: (row: TRow) => boolean
-): (rows: Omit<RenderRow<TRow>, 'index'>[]) => Omit<RenderRow<TRow>, 'index'>[] {
+): (rows: StagedRow<TRow>[]) => StagedRow<TRow>[] {
   function expandRow(
-    row: Omit<RenderRow<TRow>, 'index'>,
+    row: StagedRow<TRow>,
     expanded: Set<RowId>
-  ): Omit<RenderRow<TRow>, 'index'>[] {
+  ): StagedRow<TRow>[] {
     if (row.data === null) {
       return [row];
     }
-    const self: Omit<RenderRow<TRow>, 'index'> = {
+    const self: StagedRow<TRow> = {
       ...row,
       hasChildren: isExpandable(row.data),
       isExpanded: expanded.has(row.id),

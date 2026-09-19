@@ -145,6 +145,13 @@ supply one only for computed/derived values (`fullName`, a formatted price, a ne
 string-key shorthand (unlike `trackBy`) — an explicit accessor, when provided, is always a function.
 The resolved `ColumnDef` (`store.columns()`) always has `accessor` populated, default or explicit.
 
+`accessor` is the write side of a column's value; `store.renderRows()[i].cells[columnId]` is the
+read side — the resolved value, stamped centrally per render row. A `kind: 'group'` row's `cells`
+carries its aggregates instead, and its header text is `groupKey.label`, not a `cells` entry. Full
+contract, including the id-uniqueness constraint `cells` depends on:
+[`../2-columns/reference/tier-1-intrinsic.md`](../2-columns/reference/tier-1-intrinsic.md#accessor--the-value-contract--decided-2026-09-19)
+and [ADR-0022](../adr/0022-render-row-cell-values.md).
+
 ## Consumed By
 
 Other features read `columns` directly rather than declaring a compile-time feature dependency on it (since it's core config, always present, not an optional feature):

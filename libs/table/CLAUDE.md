@@ -62,6 +62,7 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `engine/pipeline.ts` | `PIPELINE_ORDER` + `runPipeline()`. **`PipelineStages` is derived from the array** — one declaration, so a typed stage is always an executed stage |
 | `engine/render-stages.ts` | `RENDER_ORDER` + `runRenderStages()` — the `RenderRow[] → RenderRow[]` mirror of `pipeline.ts` (ADR-0011). **`RenderStages` is derived from the array**, same invariant as `PipelineStages` |
 | `engine/columns.ts` | Pure `ColumnDef[] → ColumnDef[]` transforms. No signals, no Angular |
+| `engine/cells.ts` | Pure `readAccessor` / `buildDataCells` / `buildGroupCells` — the `RenderRow.cells` builders `renderRows` stamps centrally (ADR-0022), including the ADR-0014 `accessor` wrap |
 | `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` — the always-run `RenderRow[]` seed a render stage chain starts from (ADR-0011) |
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims pipeline stages, render stages, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `Feature<In, Out>`, `Shape`, `RowOf`, `TableCore`, `TableFeatureSpec`, `TableEngineConfig` — the feature contract |

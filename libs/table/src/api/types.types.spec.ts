@@ -29,6 +29,7 @@ describe('RenderRow.parentId', () => {
         kind: 'row',
         data: { id: 1, name: 'Ada' },
         index: 0,
+        cells: {},
       };
       expectTypeOf(row).toEqualTypeOf<RenderRow<Row>>();
     });
@@ -48,6 +49,7 @@ describe('RenderRow.parentId', () => {
         kind: 'row',
         data: { id: 1, name: 'Ada' },
         index: 0,
+        cells: {},
         // @ts-expect-error — parentId is RowId | undefined (string | number | undefined); a
         // boolean is none of those.
         parentId: true,

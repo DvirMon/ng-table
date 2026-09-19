@@ -11,6 +11,17 @@ import {
   type ColumnRuleEntry,
 } from './columns';
 
+// `columns.ts` reads the bare identifier `ngDevMode`, which resolves through the global object
+// at runtime. `@angular/core` already ambient-declares `ngDevMode` as `const`, so it can't be
+// redeclared with `var` to surface it on `globalThis`'s type — this narrow, test-local cast is
+// the only way to flip the flag without editing the ambient declaration.
+function getNgDevMode(): boolean | undefined {
+  return (globalThis as Record<string, unknown>)['ngDevMode'] as boolean | undefined;
+}
+function setNgDevMode(value: boolean | undefined): void {
+  (globalThis as Record<string, unknown>)['ngDevMode'] = value;
+}
+
 interface Person {
   id: number;
   name: string;
@@ -38,6 +49,55 @@ describe('resolveColumnDefs', () => {
     ]);
 
     expect(column).toMatchObject({ visible: false, order: 7, label: 'Full name' });
+  });
+
+  it('throws with the exact D10 message when two columns share an id', () => {
+    expect(() =>
+      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }])
+    ).toThrow(
+      '[createTable] Duplicate column id provided: "name" — ensure all column ids are unique.'
+    );
+  });
+
+  it('does not throw for two distinct ids sharing the same accessor function reference', () => {
+    const sharedAccessor = (row: Person): unknown => row.name;
+
+    expect(() =>
+      resolveColumnDefs<Person>([
+        { id: 'name', accessor: sharedAccessor },
+        { id: 'fullName', accessor: sharedAccessor },
+      ])
+    ).not.toThrow();
+  });
+
+  it('does not throw for a list with no duplicates', () => {
+    expect(() =>
+      resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }])
+    ).not.toThrow();
+  });
+
+  it('ngDevMode = false resolves duplicates last-wins without throwing, then restores', () => {
+    const previous = getNgDevMode();
+    try {
+      setNgDevMode(false);
+
+      let columns: ReturnType<typeof resolveColumnDefs<Person>> = [];
+      expect(() => {
+        columns = resolveColumnDefs<Person>([
+          { id: 'name', label: 'First label' },
+          { id: 'name', label: 'Second label' },
+        ]);
+      }).not.toThrow();
+
+      expect(columns).toHaveLength(2);
+      expect(columns[1].label).toBe('Second label');
+      // Downstream consumers (e.g. `buildDataCells`) key by `column.id` into a plain object, so
+      // the production path this case exercises resolves the collision last-wins.
+      const byId = Object.fromEntries(columns.map((column) => [column.id, column]));
+      expect(byId['name'].label).toBe('Second label');
+    } finally {
+      setNgDevMode(previous);
+    }
   });
 });
 

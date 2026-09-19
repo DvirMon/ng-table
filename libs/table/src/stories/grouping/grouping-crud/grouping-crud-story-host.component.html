@@ -75,7 +75,7 @@
                   @if (showCount()) {
                     <span class="grouping-crud__banner-text">
                       {{ row | groupRowCount: table }} deals ·
-                      {{ row.aggregates?.['amount'] | dealAmount }}
+                      {{ row.cells['amount'] | dealAmount }}
                     </span>
                   }
 
@@ -121,7 +121,7 @@
                       }}</span>
                     }
                   } @else {
-                    {{ row.aggregates?.[column.id] | dealAmount }}
+                    {{ row.cells[column.id] | dealAmount }}
                   }
                 </td>
               }
@@ -150,13 +150,13 @@
               >
                 @switch (column.id) {
                   @case ('amount') {
-                    {{ column.accessor(rowData) | dealAmount }}
+                    {{ row.cells[column.id] | dealAmount }}
                   }
                   @case ('closedAt') {
-                    {{ column.accessor(rowData) | dealDate }}
+                    {{ row.cells[column.id] | dealDate }}
                   }
                   @default {
-                    {{ column.accessor(rowData) }}
+                    {{ row.cells[column.id] }}
                   }
                 }
               </td>

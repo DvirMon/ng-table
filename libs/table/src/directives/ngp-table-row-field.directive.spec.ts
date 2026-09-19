@@ -19,6 +19,7 @@ function mockRow(overrides: Partial<RenderRow<MockRow>> = {}): RenderRow<MockRow
     kind: 'row',
     data: { id: 1, name: 'Ada' },
     index: 0,
+    cells: {},
     ...overrides,
   };
 }
@@ -30,6 +31,7 @@ function mockGroupRow(overrides: Partial<RenderRow<MockRow>> = {}): RenderRow<Mo
     kind: 'group',
     data: null,
     index: 0,
+    cells: {},
     ...overrides,
   };
 }

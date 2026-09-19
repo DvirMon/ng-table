@@ -11,20 +11,46 @@ import type { ColumnDef, ColumnDefInput } from '../api/types';
  * `signal.update()` wrappers around these, so column behavior is testable without a live store.
  */
 
+// Angular's global dev-mode flag. Declared locally because `tsconfig.lib.json` sets
+// `"types": []`, so no ambient declaration is in scope. Module-scoped, so it cannot
+// collide with another file's declaration.
+declare const ngDevMode: boolean | undefined;
+
 // Narrows `unknown` to an indexable object before a default accessor reads `def.id` off it —
 // `TRow` is unconstrained here, so nothing guarantees `row` is actually object-shaped.
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
+// Guards against two columns silently colliding on `id`, e.g. in a keyed record like
+// `RenderRow.cells`. Deterministic and construction-time, so it throws (ADR-0014).
+function assertUniqueColumnIds<TRow>(defs: ColumnDefInput<TRow>[]): void {
+  const seen = new Set<string>();
+  for (const def of defs) {
+    if (seen.has(def.id)) {
+      throw new Error(
+        `[createTable] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`
+      );
+    }
+    seen.add(def.id);
+  }
+}
+
 /**
  * Fills in `accessor`/`visible`/`order`/`label` for any column def that omitted them, so the
  * resolved state (`store.columns()`) is always a full `ColumnDef[]` regardless of how sparse
  * the author-facing `ColumnDefInput[]` was.
+ *
+ * @remarks
+ * Note: throws on a duplicate `id` in dev mode — two columns sharing an id would collide in
+ * `RenderRow.cells`, a record keyed by id.
  */
 export function resolveColumnDefs<TRow>(
   defs: ColumnDefInput<TRow>[]
 ): ColumnDef<TRow>[] {
+  if (typeof ngDevMode === 'undefined' || ngDevMode) {
+    assertUniqueColumnIds(defs);
+  }
   return defs.map((def, index) => ({
     ...def,
     accessor:
