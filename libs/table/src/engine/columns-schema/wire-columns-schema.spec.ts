@@ -13,16 +13,33 @@ interface Row {
   status: string;
 }
 
-function makeColumns(): ColumnDef<Row>[] {
+// No `ColumnDef<Row>[]` return annotation — that would widen `id` to `string` and turn
+// `ColumnsPath` into an index signature (ADR-0019).
+function makeColumns() {
   return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-    { id: 'status', accessor: (row) => row.status, visible: true, order: 1, label: 'status' },
-  ];
+    {
+      id: 'name' as const,
+      accessor: (row: Row) => row.name,
+      visible: true,
+      order: 0,
+      label: 'name',
+    },
+    {
+      id: 'status' as const,
+      accessor: (row: Row) => row.status,
+      visible: true,
+      order: 1,
+      label: 'status',
+    },
+  ] satisfies ColumnDef<Row>[];
 }
 
-// Mirrors `table.store.spec.ts` / `with-sorting.spec.ts` — builds a live
-// store instance inside an injection context.
-function makeStore(cfg: TableConfig<Row>): TableStore<Row> {
+// Mirrors `table.store.spec.ts` / `with-sorting.spec.ts` — builds a live store instance inside
+// an injection context. Generic over `TId` (not fixed to `TableConfig<Row>`'s default `string`)
+// so a caller's literal `columns` still contextually types its `columnsSchema` callback — the
+// returned store itself stays erased to `string` (ADR-0019's amendment: `TId` never reaches
+// `TableStore`).
+function makeStore<TId extends string = string>(cfg: TableConfig<Row, TId>): TableStore<Row> {
   return TestBed.runInInjectionContext(() =>
     createTable(signal<Row[]>([]), cfg)
   );
@@ -119,7 +136,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   });
 
   it('accepts a standalone columnSchema() value identically to an inline schemaFn', () => {
-    const sharedSchema = columnSchema<Row>((path) => {
+    const sharedSchema = columnSchema<Row, 'name' | 'status'>((path) => {
       applyVisible(path.status, { when: () => false });
     });
     const store = makeStore({
@@ -273,10 +290,16 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     // `setColumns` call drops it from the *active* list (rule goes inert, no error), and a
     // further `setColumns` call re-adds it by the same id (rule re-applies with no
     // re-registration) — which is what D9's fold-time id lookup actually provides.
-    const initialColumns: ColumnDef<Row>[] = [
+    const initialColumns = [
       ...makeColumns(),
-      { id: 'id', accessor: (row) => row.id, visible: false, order: 2, label: 'id' },
-    ];
+      {
+        id: 'id' as const,
+        accessor: (row: Row) => row.id,
+        visible: false,
+        order: 2,
+        label: 'id',
+      },
+    ] satisfies ColumnDef<Row>[];
 
     const store = makeStore({
       trackBy: 'id',
@@ -292,7 +315,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'id')?.visible).toBe(true);
 
     expect(() => {
-      store.columns.update(setColumns<Row>([{ id: 'status', visible: true }]));
+      store.columns.update(setColumns([{ id: 'status', visible: true }]));
       TestBed.tick();
     }).not.toThrow();
 
@@ -302,9 +325,9 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
     // `id` rejoins the list — its rule picks back up on the next evaluation, no re-registration.
     store.columns.update(
-      setColumns<Row>([
+      setColumns([
         { id: 'status', visible: true },
-        { id: 'id', accessor: (row) => row.id, visible: false },
+        { id: 'id', accessor: (row: Row) => row.id, visible: false },
       ])
     );
     TestBed.tick();

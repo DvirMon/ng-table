@@ -9,17 +9,17 @@ import type { ColumnDefInput } from '../../api/types';
 
 /** Compile phase: turns author-facing schema input into a validated flat `ColumnRule[]`. */
 
-function isColumnSchema<TRow>(
-  value: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>
+function isColumnSchema<TRow, TId extends string>(
+  value: ColumnsSchemaFn<TRow, TId> | ColumnSchema<TRow>
 ): value is ColumnSchema<TRow> {
   return typeof value === 'object' && value !== null && value.kind === 'column-schema';
 }
 
-function assertRuleColumnIdsAreKnown<TRow>(
+function assertRuleColumnIdsAreKnown<TRow, TId extends string>(
   rules: readonly ColumnRule<TRow>[],
-  columns: ColumnDefInput<TRow>[]
+  columns: ColumnDefInput<TRow, TId>[]
 ): void {
-  const knownColumnIds = new Set(columns.map((column) => column.id));
+  const knownColumnIds = new Set<string>(columns.map((column) => column.id));
   for (const rule of rules) {
     if (!knownColumnIds.has(rule.columnId)) {
       throw new Error(
@@ -68,10 +68,10 @@ function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): 
  * (`applyVisible`/`applyVisibleAsync` are both reactive/async-only per the
  * ownership model), so `columns` is returned unchanged.
  */
-export function resolveColumnsConfig<TRow>(
-  columns: ColumnDefInput<TRow>[],
-  schema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>
-): { columns: ColumnDefInput<TRow>[]; rules: readonly ColumnRule<TRow>[] } {
+export function resolveColumnsConfig<TRow, TId extends string>(
+  columns: ColumnDefInput<TRow, TId>[],
+  schema?: ColumnsSchemaFn<TRow, TId> | ColumnSchema<TRow>
+): { columns: ColumnDefInput<TRow, TId>[]; rules: readonly ColumnRule<TRow>[] } {
   if (!schema) {
     return { columns, rules: [] };
   }

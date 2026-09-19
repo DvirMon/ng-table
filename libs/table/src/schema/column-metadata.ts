@@ -36,7 +36,7 @@ export function createColumnMetaKey<T>(): ColumnMetaKey<T> {
  * `key`/`logic` are only ever read back together, still at their original type, inside
  * `wiring.ts`.
  */
-export function metadata<TRow, K extends Extract<keyof TRow, string>, T>(
+export function metadata<TRow, K extends string, T>(
   path: ColumnHandle<TRow, K>,
   key: ColumnMetaKey<T>,
   logic: NoInfer<T> | ((ctx: ColumnRuleContext<TRow>) => NoInfer<T>)
@@ -58,7 +58,7 @@ export function metadata<TRow, K extends Extract<keyof TRow, string>, T>(
  * through the same recorder `metadata()` uses.
  * @internal
  */
-export function metadataAsync<TRow, K extends Extract<keyof TRow, string>, TParams, TResult, T>(
+export function metadataAsync<TRow, K extends string, TParams, TResult, T>(
   path: ColumnHandle<TRow, K>,
   key: ColumnMetaKey<T>,
   opts: {

@@ -37,23 +37,23 @@ export interface ColumnSchemaRecorder<TRow, TRule = ColumnRule<TRow>> {
 
 /**
  * Structural proxy — the `get` trap fabricates a `ColumnHandle<TRow, K, TRule>` for any string
- * property accessed; typing is 100% compile-time.
+ * property accessed; typing is 100% compile-time. Keyed by `TId`, the literal ids declared in
+ * `TableConfig.columns` — not `keyof TRow` — so a derived column (id absent from `TRow`) is
+ * nameable too (ADR-0019).
  */
-export type ColumnsPath<TRow, TRule = ColumnRule<TRow>> = {
-  readonly [K in Extract<keyof TRow, string>]: ColumnHandle<TRow, K, TRule>;
+export type ColumnsPath<TRow, TId extends string, TRule = ColumnRule<TRow>> = {
+  readonly [K in TId]: ColumnHandle<TRow, K, TRule>;
 };
 
-export interface ColumnHandle<
-  TRow,
-  K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>,
-  TRule = ColumnRule<TRow>
-> {
+export interface ColumnHandle<TRow, K extends string = string, TRule = ColumnRule<TRow>> {
   readonly id: K;
   /** @internal */
   readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow, TRule>;
 }
 
-export type ColumnsSchemaFn<TRow> = (path: ColumnsPath<TRow>) => void;
+export type ColumnsSchemaFn<TRow, TId extends string = string> = (
+  path: ColumnsPath<TRow, TId>
+) => void;
 
 /** Opaque, compiled form of a schema fn — the standalone-reuse value. */
 export interface ColumnSchema<TRow> {

@@ -4,6 +4,10 @@
 
 import type { Feature, Shape } from '../../engine/types';
 
+/**
+ * Call signatures for `composeFeatures()` — the same left-to-right accumulation as
+ * `createTable()`, collapsed into one `Feature<In, …>` so a bundle costs a single slot.
+ */
 export interface ComposeFeaturesOverloads {
   <In extends Shape, O1 extends object>(f1: Feature<In, O1>): Feature<In, O1>;
   <In extends Shape, O1 extends object, O2 extends object>(

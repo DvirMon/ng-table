@@ -16,11 +16,25 @@ interface Row {
   status: string;
 }
 
-function makeColumns(): ColumnDef<Row>[] {
+// No `ColumnDef<Row>[]` return annotation — that would widen `id` to `string` and turn
+// `ColumnsPath` into an index signature (ADR-0019).
+function makeColumns() {
   return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-    { id: 'status', accessor: (row) => row.status, visible: true, order: 1, label: 'status' },
-  ];
+    {
+      id: 'name' as const,
+      accessor: (row: Row) => row.name,
+      visible: true,
+      order: 0,
+      label: 'name',
+    },
+    {
+      id: 'status' as const,
+      accessor: (row: Row) => row.status,
+      visible: true,
+      order: 1,
+      label: 'status',
+    },
+  ] satisfies ColumnDef<Row>[];
 }
 
 // Builds a live store instance the same way a component field does — inside an injection
@@ -186,7 +200,7 @@ describe('createTable', () => {
   });
 
   it('applies a standalone columnSchema() value via applyVisible', () => {
-    const hideStatus = columnSchema<Row>((path) => {
+    const hideStatus = columnSchema<Row, 'name' | 'status'>((path) => {
       applyVisible(path.status, { when: () => false });
     });
 

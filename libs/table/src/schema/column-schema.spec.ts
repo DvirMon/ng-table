@@ -10,13 +10,18 @@ interface Row {
   status: string;
 }
 
-function makeColumns(): ColumnDefInput<Row>[] {
-  return [{ id: 'name' }, { id: 'status' }];
+// The declared column-id union these specs exercise — not `keyof Row` (ADR-0019).
+type MockColumnId = 'name' | 'status';
+
+// No `ColumnDefInput<Row>[]` return annotation — that would widen `id` to `string` and turn
+// `ColumnsPath` into an index signature.
+function makeColumns() {
+  return [{ id: 'name' as const }, { id: 'status' as const }] satisfies ColumnDefInput<Row>[];
 }
 
 describe('columnSchema', () => {
   it('records an applyVisible rule for the targeted column', () => {
-    const schema = columnSchema<Row>((path) => {
+    const schema = columnSchema<Row, MockColumnId>((path) => {
       applyVisible(path.status, { when: () => false });
     });
 
@@ -29,7 +34,7 @@ describe('columnSchema', () => {
   });
 
   it('records multiple rules across different columns in call order', () => {
-    const schema = columnSchema<Row>((path) => {
+    const schema = columnSchema<Row, MockColumnId>((path) => {
       applyVisible(path.status, { when: () => true });
       applyVisible(path.name, { when: () => false });
     });
@@ -41,7 +46,7 @@ describe('columnSchema', () => {
   });
 
   it('records an applyVisibleAsync rule', () => {
-    const schema = columnSchema<Row>((path) => {
+    const schema = columnSchema<Row, MockColumnId>((path) => {
       applyVisibleAsync(path.status, {
         params: () => 'role',
         factory: () =>
@@ -62,14 +67,14 @@ describe('columnSchema', () => {
   });
 
   it('assertPathIsCurrent rejects a ColumnHandle stashed and reused after the schema fn returns', () => {
-    let stashedPath: ColumnsPath<Row> | undefined;
-    columnSchema<Row>((path) => {
+    let stashedPath: ColumnsPath<Row, MockColumnId> | undefined;
+    columnSchema<Row, MockColumnId>((path) => {
       stashedPath = path;
     });
 
     expect(stashedPath).toBeDefined();
     expect(() => {
-      applyVisible((stashedPath as ColumnsPath<Row>).status, {
+      applyVisible((stashedPath as ColumnsPath<Row, MockColumnId>).status, {
         when: () => true,
       });
     }).toThrow(/outside its schema function/);
@@ -77,11 +82,11 @@ describe('columnSchema', () => {
 
   it('produces a fresh, independent recorder session per call', () => {
     let firstHandle: ColumnHandle<Row> | undefined;
-    columnSchema<Row>((path) => {
+    columnSchema<Row, MockColumnId>((path) => {
       firstHandle = path.name;
     });
 
-    const second = columnSchema<Row>((path) => {
+    const second = columnSchema<Row, MockColumnId>((path) => {
       applyVisible(path.status, { when: () => true });
     });
 
@@ -96,7 +101,7 @@ describe('resolveColumnsConfig', () => {
   it('passes columns through unchanged and returns an empty rule list when no schema is given', () => {
     const columns = makeColumns();
 
-    const resolved = resolveColumnsConfig<Row>(columns);
+    const resolved = resolveColumnsConfig(columns);
 
     expect(resolved.columns).toBe(columns);
     expect(resolved.rules).toEqual([]);
@@ -105,7 +110,7 @@ describe('resolveColumnsConfig', () => {
   it('normalizes an inline schema fn through the same recorder path as columnSchema()', () => {
     const columns = makeColumns();
 
-    const resolved = resolveColumnsConfig<Row>(columns, (path) => {
+    const resolved = resolveColumnsConfig(columns, (path) => {
       applyVisible(path.status, { when: () => false });
     });
 
@@ -115,11 +120,11 @@ describe('resolveColumnsConfig', () => {
 
   it('accepts a standalone columnSchema() value directly', () => {
     const columns = makeColumns();
-    const schema = columnSchema<Row>((path) => {
+    const schema = columnSchema<Row, MockColumnId>((path) => {
       applyVisible(path.name, { when: () => true });
     });
 
-    const resolved = resolveColumnsConfig<Row>(columns, schema);
+    const resolved = resolveColumnsConfig(columns, schema);
 
     expect(resolved.rules).toBe(schema.rules);
   });
@@ -128,10 +133,13 @@ describe('resolveColumnsConfig', () => {
     interface WithExtra extends Row {
       extra: string;
     }
-    const columns = makeColumns() as unknown as ColumnDefInput<WithExtra>[];
+    const columns = makeColumns() as unknown as ColumnDefInput<
+      WithExtra,
+      'name' | 'status' | 'extra'
+    >[];
 
     expect(() =>
-      resolveColumnsConfig<WithExtra>(columns, (path) => {
+      resolveColumnsConfig<WithExtra, 'name' | 'status' | 'extra'>(columns, (path) => {
         applyVisible(path.extra, { when: () => true });
       })
     ).toThrow(/Unknown column id "extra"/);

@@ -25,12 +25,15 @@ const ARITY = 15;
 interface OverloadSpec {
   /** Name of the emitted call-signature interface. */
   name: string;
+  /** JSDoc lines emitted above the interface, without the `*` prefixes. */
+  doc: string[];
   /** Absolute path of the file it is emitted to. */
   outputFile: string;
   /** Import lines the emitted file needs. */
   imports: string[];
-  /** Generic parameter carrying the accumulation base, e.g. `TRow` or `In extends Shape`. */
-  baseGeneric: string;
+  /** Generic parameters carrying the accumulation base, e.g. `['TRow', 'TId extends string']`
+   * or `['In extends Shape']`. */
+  baseGenerics: string[];
   /** The type every slot's `In` and the return type accumulate onto. */
   base: string;
   /** Parameters emitted before the feature slots. */
@@ -43,14 +46,22 @@ interface OverloadSpec {
 
 const CREATE_TABLE: OverloadSpec = {
   name: 'CreateTableOverloads',
+  doc: [
+    'Call signatures for `createTable()` — one per feature-slot count, 0 to 15.',
+    'Slot k is typed against the store slots 1..k-1 have already built, so a feature sees',
+    'its predecessors and the return type is the full intersection.',
+  ],
   outputFile: join(LIB_ROOT, 'src', 'api', 'create-table.overloads.ts'),
   imports: [
     "import type { Feature } from '../engine/types';",
     "import type { TableConfig, TableDataInput, TableStore } from './types';",
   ],
-  baseGeneric: 'TRow',
+  // `TId` is inferred from `config` (both `columns` and `columnsSchema` sit on that one
+  // argument, ADR-0019) but never reaches the accumulation base — no feature or the returned
+  // `TableStore` names a column id any more (D7: grouping moved to row-keyed paths).
+  baseGenerics: ['TRow', 'TId extends string'],
   base: 'TableStore<TRow>',
-  leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow>'],
+  leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow, TId>'],
   includeZeroFeature: true,
   renderReturn: (base, featureCount) =>
     [base, ...contributions(featureCount)].join(' & '),
@@ -58,6 +69,10 @@ const CREATE_TABLE: OverloadSpec = {
 
 const COMPOSE_FEATURES: OverloadSpec = {
   name: 'ComposeFeaturesOverloads',
+  doc: [
+    'Call signatures for `composeFeatures()` — the same left-to-right accumulation as',
+    '`createTable()`, collapsed into one `Feature<In, …>` so a bundle costs a single slot.',
+  ],
   outputFile: join(
     LIB_ROOT,
     'src',
@@ -66,7 +81,7 @@ const COMPOSE_FEATURES: OverloadSpec = {
     'compose-features.overloads.ts'
   ),
   imports: ["import type { Feature, Shape } from '../../engine/types';"],
-  baseGeneric: 'In extends Shape',
+  baseGenerics: ['In extends Shape'],
   base: 'In',
   leadingParams: [],
   includeZeroFeature: false,
@@ -92,7 +107,7 @@ function renderSlotInput(base: string, slot: number): string {
 
 function renderSignature(spec: OverloadSpec, featureCount: number): string {
   const generics = [
-    spec.baseGeneric,
+    ...spec.baseGenerics,
     ...contributions(featureCount).map(
       (contribution) => `${contribution} extends object`
     ),
@@ -128,6 +143,9 @@ function renderOverloads(spec: OverloadSpec): string {
 
   return [
     renderHeader(spec),
+    '/**',
+    ...spec.doc.map((line) => ` * ${line}`),
+    ' */',
     `export interface ${spec.name} {`,
     ...signatures,
     '}',

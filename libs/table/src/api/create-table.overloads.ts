@@ -5,38 +5,50 @@
 import type { Feature } from '../engine/types';
 import type { TableConfig, TableDataInput, TableStore } from './types';
 
+/**
+ * Call signatures for `createTable()` — one per feature-slot count, 0 to 15.
+ * Slot k is typed against the store slots 1..k-1 have already built, so a feature sees
+ * its predecessors and the return type is the full intersection.
+ */
 export interface CreateTableOverloads {
-  <TRow>(
+  <TRow, TId extends string>(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
   ): TableStore<TRow>;
-  <TRow, O1 extends object>(
+  <TRow, TId extends string, O1 extends object>(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
   ): TableStore<TRow> & O1;
-  <TRow, O1 extends object, O2 extends object>(
+  <TRow, TId extends string, O1 extends object, O2 extends object>(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
   ): TableStore<TRow> & O1 & O2;
-  <TRow, O1 extends object, O2 extends object, O3 extends object>(
+  <
+    TRow,
+    TId extends string,
+    O1 extends object,
+    O2 extends object,
+    O3 extends object,
+  >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
   ): TableStore<TRow> & O1 & O2 & O3;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
     O4 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -44,6 +56,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -51,7 +64,7 @@ export interface CreateTableOverloads {
     O5 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -60,6 +73,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -68,7 +82,7 @@ export interface CreateTableOverloads {
     O6 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -78,6 +92,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5 & O6;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -87,7 +102,7 @@ export interface CreateTableOverloads {
     O7 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -98,6 +113,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5 & O6 & O7;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -108,7 +124,7 @@ export interface CreateTableOverloads {
     O8 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -120,6 +136,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -131,7 +148,7 @@ export interface CreateTableOverloads {
     O9 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -144,6 +161,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -156,7 +174,7 @@ export interface CreateTableOverloads {
     O10 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -173,6 +191,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -186,7 +205,7 @@ export interface CreateTableOverloads {
     O11 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -207,6 +226,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -221,7 +241,7 @@ export interface CreateTableOverloads {
     O12 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -258,6 +278,7 @@ export interface CreateTableOverloads {
     O12;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -273,7 +294,7 @@ export interface CreateTableOverloads {
     O13 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -327,6 +348,7 @@ export interface CreateTableOverloads {
     O13;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -343,7 +365,7 @@ export interface CreateTableOverloads {
     O14 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,
@@ -415,6 +437,7 @@ export interface CreateTableOverloads {
     O14;
   <
     TRow,
+    TId extends string,
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -432,7 +455,7 @@ export interface CreateTableOverloads {
     O15 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow>,
+    config: TableConfig<TRow, TId>,
     f1: Feature<TableStore<TRow>, O1>,
     f2: Feature<TableStore<TRow> & O1, O2>,
     f3: Feature<TableStore<TRow> & O1 & O2, O3>,

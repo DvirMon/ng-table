@@ -17,9 +17,11 @@ import {
  * async callback).
  *
  * Generic on `TRule`, defaulting to `ColumnRule<TRow>` — see `ColumnSchemaRecorder`'s doc for
- * why the default keeps every existing call site source-compatible.
+ * why the default keeps every existing call site source-compatible. Exported so
+ * `schema/grouping-rules.ts` can build its own (differently-keyed) path proxy off the same
+ * session mechanism without duplicating it — the session itself is key-space agnostic.
  */
-function createRecorderSession<TRow, TRule = ColumnRule<TRow>>(): {
+export function createRecorderSession<TRow, TRule = ColumnRule<TRow>>(): {
   recorder: ColumnSchemaRecorder<TRow, TRule>;
   rules: TRule[];
   close(): void;
@@ -66,7 +68,7 @@ function createRecorderSession<TRow, TRule = ColumnRule<TRow>>(): {
  * has closed. Every `apply*` function must call this before recording.
  */
 export function assertPathIsCurrent<TRow, TRule = ColumnRule<TRow>>(
-  handle: ColumnHandle<TRow, Extract<keyof TRow, string>, TRule>
+  handle: ColumnHandle<TRow, string, TRule>
 ): ColumnSchemaRecorder<TRow, TRule> {
   const recorder = handle[COLUMN_RECORDER];
   // Recorder.record() itself throws if the session already closed — routing
@@ -79,13 +81,13 @@ export function assertPathIsCurrent<TRow, TRule = ColumnRule<TRow>>(
  * fabricates a `ColumnHandle<TRow, K, TRule>` for any string property accessed —
  * it never reads real column data.
  */
-export function buildColumnsPath<TRow, TRule = ColumnRule<TRow>>(
+export function buildColumnsPath<TRow, TId extends string, TRule = ColumnRule<TRow>>(
   recorder: ColumnSchemaRecorder<TRow, TRule>
-): ColumnsPath<TRow, TRule> {
-  const handleCache = new Map<string, ColumnHandle<TRow, Extract<keyof TRow, string>, TRule>>();
+): ColumnsPath<TRow, TId, TRule> {
+  const handleCache = new Map<string, ColumnHandle<TRow, string, TRule>>();
 
-  return new Proxy({} as ColumnsPath<TRow, TRule>, {
-    get(_target, property): ColumnHandle<TRow, Extract<keyof TRow, string>, TRule> | undefined {
+  return new Proxy({} as ColumnsPath<TRow, TId, TRule>, {
+    get(_target, property): ColumnHandle<TRow, string, TRule> | undefined {
       if (typeof property !== 'string') {
         return undefined;
       }
@@ -93,8 +95,8 @@ export function buildColumnsPath<TRow, TRule = ColumnRule<TRow>>(
       if (cached) {
         return cached;
       }
-      const handle: ColumnHandle<TRow, Extract<keyof TRow, string>, TRule> = {
-        id: property as Extract<keyof TRow, string>,
+      const handle: ColumnHandle<TRow, string, TRule> = {
+        id: property,
         [COLUMN_RECORDER]: recorder,
       };
       handleCache.set(property, handle);
@@ -109,11 +111,11 @@ export function buildColumnsPath<TRow, TRule = ColumnRule<TRow>>(
  * `resolveColumnsConfig()`'s inline-fn normalization, so both paths compile
  * to the same internal `ColumnRule[]` shape.
  */
-export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
-  fn: (path: ColumnsPath<TRow, TRule>) => void
+export function runColumnsSchemaFn<TRow, TId extends string, TRule = ColumnRule<TRow>>(
+  fn: (path: ColumnsPath<TRow, TId, TRule>) => void
 ): readonly TRule[] {
   const session = createRecorderSession<TRow, TRule>();
-  const path = buildColumnsPath(session.recorder);
+  const path = buildColumnsPath<TRow, TId, TRule>(session.recorder);
   fn(path);
   session.close();
   return session.rules;
@@ -127,8 +129,12 @@ export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
  *
  * Does NOT validate `columnId`s against a `columns` array — `columns` isn't
  * known at this call site. That check happens in `resolveColumnsConfig()`.
+ * `TId` defaults to `string` since a standalone schema isn't tied to one table's declared
+ * columns — the same validation runs regardless once it's attached via `columnsSchema`/`schema`.
  */
-export function columnSchema<TRow>(fn: ColumnsSchemaFn<TRow>): ColumnSchema<TRow> {
+export function columnSchema<TRow, TId extends string = string>(
+  fn: ColumnsSchemaFn<TRow, TId>
+): ColumnSchema<TRow> {
   return {
     kind: 'column-schema',
     rules: runColumnsSchemaFn(fn),

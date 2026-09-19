@@ -44,9 +44,11 @@ export interface RenderRow<TRow> {
   // inference native `<table>` gives for free.
   readonly index: number;
 
-  // The column and value a `group` row was clustered on, so a header can render its own
-  // label without parsing it back out of the composite `id`. Set only for `kind: 'group'`.
-  readonly groupKey?: { columnId: string; value: unknown };
+  // The field, value and resolved label a `group` row was clustered on, so a header can render
+  // itself without parsing anything back out of the composite `id`. `label` resolves explicit ->
+  // a column whose id matches `columnId` -> the raw field name (D7a). Set only for `kind:
+  // 'group'`.
+  readonly groupKey?: { columnId: string; value: unknown; label: string };
 
   // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
   readonly aggregates?: Record<string, unknown>;
@@ -69,8 +71,8 @@ export interface RenderRow<TRow> {
   readonly parentId?: RowId;
 }
 
-export interface ColumnDef<TRow = unknown> {
-  id: string;
+export interface ColumnDef<TRow = unknown, TId extends string = string> {
+  id: TId;
   accessor: (row: TRow) => unknown;
   visible: boolean;
   order: number;
@@ -93,10 +95,15 @@ export interface ColumnDef<TRow = unknown> {
  * full `ColumnDef` at store construction — `accessor` defaults to `(row) => row[id]`,
  * `visible` defaults to `true`, `order` defaults to the column's index in the array,
  * `label` defaults to `id`. Only `id` is required. The resolved store state
- * (`store.columns()`) is always a full `ColumnDef[]`.
+ * (`store.columns()`) is always a full `ColumnDef[]`. `TId` defaults to `string` so every
+ * existing reference compiles untouched; `createTable()`'s overloads infer the literal union
+ * declared in `columns` (ADR-0019).
  */
-export type ColumnDefInput<TRow = unknown> = Pick<ColumnDef<TRow>, 'id'> &
-  Partial<Omit<ColumnDef<TRow>, 'id'>>;
+export type ColumnDefInput<TRow = unknown, TId extends string = string> = Pick<
+  ColumnDef<TRow, TId>,
+  'id'
+> &
+  Partial<Omit<ColumnDef<TRow, TId>, 'id'>>;
 
 /**
  * Known row keys autocomplete; any other string still compiles, so derived columns
@@ -138,10 +145,10 @@ export type ReadonlyStore<S> = {
   readonly [K in keyof S]: S[K] extends WritableView<infer T, any> ? Signal<T> : S[K];
 };
 
-export interface TableConfig<TRow> {
+export interface TableConfig<TRow, TId extends string = string> {
   trackBy: TrackByConfig<TRow>;
-  columns: ColumnDefInput<TRow>[];
-  columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;
+  columns: ColumnDefInput<TRow, TId>[];
+  columnsSchema?: ColumnsSchemaFn<TRow, TId> | ColumnSchema<TRow>;
   injector?: Injector;
 }
 
@@ -150,9 +157,9 @@ export interface TableConfig<TRow> {
 // (Step 2) type each feature argument's `In`/`Out` individually.
 export type AnyTableFeature = Feature<any, any>;
 
-export type ColumnsUpdater<TRow> = (
-  columns: ColumnDef<TRow>[]
-) => ColumnDef<TRow>[];
+export type ColumnsUpdater<TRow, TId extends string = string> = (
+  columns: ColumnDef<TRow, TId>[]
+) => ColumnDef<TRow, TId>[];
 
 /**
  * Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` so id-based

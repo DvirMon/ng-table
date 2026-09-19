@@ -12,7 +12,7 @@ import type { ColumnHandle, ColumnRuleContext } from './column-schema.types';
  * (`VISIBLE` is exempted from `metadata()`'s single-writer rule — see
  * `docs/2-columns/reference/column-metadata.md`).
  */
-export function applyVisible<TRow, K extends Extract<keyof TRow, string>>(
+export function applyVisible<TRow, K extends string>(
   path: ColumnHandle<TRow, K>,
   visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean }
 ): void {
@@ -35,12 +35,10 @@ export interface VisibleAsyncOpts<TRow, TParams, TResult> {
  * Convenience wrapper over `metadataAsync()` writing to `VISIBLE` — the resource-backed
  * counterpart to `applyVisible()` above.
  */
-export function applyVisibleAsync<
-  TRow,
-  K extends Extract<keyof TRow, string>,
-  TParams,
-  TResult
->(path: ColumnHandle<TRow, K>, opts: VisibleAsyncOpts<TRow, TParams, TResult>): void {
+export function applyVisibleAsync<TRow, K extends string, TParams, TResult>(
+  path: ColumnHandle<TRow, K>,
+  opts: VisibleAsyncOpts<TRow, TParams, TResult>
+): void {
   metadataAsync(path, VISIBLE, opts);
 }
 
@@ -57,7 +55,7 @@ export interface SortNullsOpts {
  * `applyVisible()` above. Single-writer, unlike `VISIBLE` — a second `applySortNulls()` call
  * on the same column throws at resolve time.
  */
-export function applySortNulls<TRow, K extends Extract<keyof TRow, string>>(
+export function applySortNulls<TRow, K extends string>(
   path: ColumnHandle<TRow, K>,
   opts: SortNullsOpts
 ): void {

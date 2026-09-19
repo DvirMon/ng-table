@@ -10,8 +10,13 @@ interface Row {
   status: string;
 }
 
-function makeColumns(): ColumnDefInput<Row>[] {
-  return [{ id: 'name' }, { id: 'status' }];
+// The declared column-id union these specs exercise — not `keyof Row` (ADR-0019).
+type MockColumnId = 'name' | 'status';
+
+// No `ColumnDefInput<Row>[]` return annotation — that would widen `id` to `string` and turn
+// `ColumnsPath` into an index signature.
+function makeColumns() {
+  return [{ id: 'name' as const }, { id: 'status' as const }] satisfies ColumnDefInput<Row>[];
 }
 
 describe('createColumnMetaKey', () => {
@@ -27,7 +32,7 @@ describe('createColumnMetaKey', () => {
 describe('metadata', () => {
   it('records a MetadataRule for the targeted column', () => {
     const KEY = createColumnMetaKey<string>();
-    const schema = columnSchema<Row>((path) => {
+    const schema = columnSchema<Row, MockColumnId>((path) => {
       metadata(path.status, KEY, 'admin-only');
     });
 
@@ -43,7 +48,7 @@ describe('metadata', () => {
   it('records a reactive closure form unevaluated', () => {
     const KEY = createColumnMetaKey<number>();
     const logic = () => 42;
-    const schema = columnSchema<Row>((path) => {
+    const schema = columnSchema<Row, MockColumnId>((path) => {
       metadata(path.status, KEY, logic);
     });
 
@@ -51,14 +56,14 @@ describe('metadata', () => {
   });
 
   it('rejects a ColumnHandle stashed and reused after the schema fn returns', () => {
-    let stashedPath: ColumnsPath<Row> | undefined;
-    columnSchema<Row>((path) => {
+    let stashedPath: ColumnsPath<Row, MockColumnId> | undefined;
+    columnSchema<Row, MockColumnId>((path) => {
       stashedPath = path;
     });
 
     const KEY = createColumnMetaKey<string>();
     expect(() => {
-      metadata((stashedPath as ColumnsPath<Row>).status, KEY, 'x');
+      metadata((stashedPath as ColumnsPath<Row, MockColumnId>).status, KEY, 'x');
     }).toThrow(/outside its schema function/);
   });
 });
@@ -89,7 +94,7 @@ describe('resolveColumnsConfig — duplicate metadata registration', () => {
     const KEY = createColumnMetaKey<string>();
 
     expect(() =>
-      resolveColumnsConfig<Row>(columns, (path) => {
+      resolveColumnsConfig(columns, (path) => {
         metadata(path.status, KEY, 'a');
         metadata(path.status, KEY, 'b');
       })
@@ -100,7 +105,7 @@ describe('resolveColumnsConfig — duplicate metadata registration', () => {
     const columns = makeColumns();
     const KEY = createColumnMetaKey<string>();
 
-    const resolved = resolveColumnsConfig<Row>(columns, (path) => {
+    const resolved = resolveColumnsConfig(columns, (path) => {
       metadata(path.status, KEY, 'a');
       metadata(path.name, KEY, 'b');
     });
@@ -113,7 +118,7 @@ describe('resolveColumnsConfig — duplicate metadata registration', () => {
     const keyA = createColumnMetaKey<string>();
     const keyB = createColumnMetaKey<string>();
 
-    const resolved = resolveColumnsConfig<Row>(columns, (path) => {
+    const resolved = resolveColumnsConfig(columns, (path) => {
       metadata(path.status, keyA, 'a');
       metadata(path.status, keyB, 'b');
     });

@@ -326,12 +326,33 @@ describe('withSorting', () => {
       note: string | null;
     }
 
-    function makeNullableColumns(): ColumnDef<NullableRow>[] {
+    // No `ColumnDef<NullableRow>[]` return annotation — a couple of these tests attach a
+    // `columnsSchema` alongside these columns, and a wide annotation would widen `id` to
+    // `string`, turning that schema's `ColumnsPath` into an index signature (ADR-0019).
+    function makeNullableColumns() {
       return [
-        { id: 'age', accessor: (row) => row.age, visible: true, order: 0, label: 'age' },
-        { id: 'joined', accessor: (row) => row.joined, visible: true, order: 1, label: 'joined' },
-        { id: 'note', accessor: (row) => row.note, visible: true, order: 2, label: 'note' },
-      ];
+        {
+          id: 'age' as const,
+          accessor: (row: NullableRow) => row.age,
+          visible: true,
+          order: 0,
+          label: 'age',
+        },
+        {
+          id: 'joined' as const,
+          accessor: (row: NullableRow) => row.joined,
+          visible: true,
+          order: 1,
+          label: 'joined',
+        },
+        {
+          id: 'note' as const,
+          accessor: (row: NullableRow) => row.note,
+          visible: true,
+          order: 2,
+          label: 'note',
+        },
+      ] satisfies ColumnDef<NullableRow>[];
     }
 
     it('sorts a nullable Date column without throwing', () => {
