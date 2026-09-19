@@ -4,7 +4,7 @@ import * as WhenStories from './grouping-when/grouping-when.stories';
 import * as AggregatesStories from './grouping-aggregates/grouping-aggregates.stories';
 import * as ColumnsStories from './grouping-columns/grouping-columns.stories';
 import * as AsyncRuleStories from './grouping-async-rule/grouping-async-rule.stories';
-import * as RegressionsStories from './grouping-regressions/grouping-regressions.stories';
+import * as OrderStories from './grouping-order/grouping-order.stories';
 import * as CollapsibleStories from './grouping-collapsible/grouping-collapsible.stories';
 import * as SelectionStories from './grouping-selection/grouping-selection.stories';
 import basicClass from './grouping-basic/grouping-basic-story-host.component.ts?raw';
@@ -21,8 +21,8 @@ import columnsClass from './grouping-columns/grouping-columns-story-host.compone
 import columnsTemplate from './grouping-columns/grouping-columns-story-host.component.html?raw';
 import asyncRuleClass from './grouping-async-rule/grouping-async-rule-story-host.component.ts?raw';
 import asyncRuleTemplate from './grouping-async-rule/grouping-async-rule-story-host.component.html?raw';
-import regressionsClass from './grouping-regressions/grouping-regressions-story-host.component.ts?raw';
-import regressionsTemplate from './grouping-regressions/grouping-regressions-story-host.component.html?raw';
+import orderClass from './grouping-order/grouping-order-story-host.component.ts?raw';
+import orderTemplate from './grouping-order/grouping-order-story-host.component.html?raw';
 import collapsibleClass from './grouping-collapsible/grouping-collapsible-story-host.component.ts?raw';
 import collapsibleTemplate from './grouping-collapsible/grouping-collapsible-story-host.component.html?raw';
 import selectionClass from './grouping-selection/grouping-selection-story-host.component.ts?raw';
@@ -32,8 +32,6 @@ import groupingPipes from './grouping-story.pipes.ts?raw';
 import groupingSchema from './fixtures/schema.ts?raw';
 import groupingHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
-import regressionsToolbarClass from './grouping-regressions/grouping-regressions-toolbar.component.ts?raw';
-import regressionsToolbarTemplate from './grouping-regressions/grouping-regressions-toolbar.component.html?raw';
 import collapsibleToolbarClass from './grouping-collapsible/grouping-collapsible-toolbar.component.ts?raw';
 import collapsibleToolbarTemplate from './grouping-collapsible/grouping-collapsible-toolbar.component.html?raw';
 import selectionToolbarClass from './grouping-selection/grouping-selection-toolbar.component.ts?raw';
@@ -295,59 +293,53 @@ rather than a second canvas.
 
 ---
 
-## Regressions — **do not copy this host**
+## Order — which sibling comes first
 
-Deliberate misuse, kept on screen instead of in a bug list. The comparator throws on every sibling
-pair it is handed and the table does not go down: the clustering sort catches, falls back to stable
-first-occurrence order for the affected levels, and reports once per evaluation.
+`applyGroupOrder` orders group **headers** among their siblings at one level. Not the rows inside a
+group, which is `withSorting()`. Not which groups exist, which is `when`. Not which columns are
+levels, which is `initial`.
 
-Two canvas buttons drive the other two cases. *Group by a column that is not there* adds a level
-naming no column: the table groups everything into one `undefined`-keyed cluster and says nothing,
-so the notice on canvas is the story's own arithmetic rather than a library report. That one really
-is silent. *Break one group's summary* poisons one row's `amount` so the `aggregateFn` throws — per
-ADR-0014 the table stays up, the affected groups' `amount` total blanks, and it is reported once
-per column per evaluation.
+With no comparator, siblings keep **first-occurrence** order — the order each key was first seen
+while scanning the rows. The comparator receives a `GroupSummary`, not a row, and its `rows` field
+is the cluster's own leaves; that is what makes `by-count`, or ordering by a total, ordinary code.
+`external-list` is the shape a saved report or a pinned-priority list takes, with unlisted values
+sorting last.
 
-<Canvas of={RegressionsStories.ThrowingGroupOrder} />
+`throwing` sits last in the select because nobody picks it deliberately: the comparator throws on
+every sibling pair it is handed and the table does not go down. Per ADR-0014 the clustering sort
+catches, falls back to stable first-occurrence order for the affected levels, and reports once per
+evaluation.
+
+A comparator is also declared for `Rep`, which is not a level by default. It is inert until the
+canvas button adds it — **`applyGroupOrder` never activates a level**, which is the whole split
+from `applyGrouping`.
+
+<Canvas of={OrderStories.Order} />
 
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
-      <input type="radio" name="grouping-regressions-source" defaultChecked />
+      <input type="radio" name="grouping-order-source" defaultChecked />
       TS
     </label>
     <label className="code-tabs-tab">
-      <input type="radio" name="grouping-regressions-source" />
+      <input type="radio" name="grouping-order-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
-      <input type="radio" name="grouping-regressions-source" />
+      <input type="radio" name="grouping-order-source" />
       CSS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-regressions-source" />
-      grouping-regressions-toolbar.component.ts
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-regressions-source" />
-      grouping-regressions-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
-      <Source code={regressionsClass} language="tsx" />
+      <Source code={orderClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={regressionsTemplate} language="html" />
+      <Source code={orderTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
       <Source code={groupingStyles} language="css" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={regressionsToolbarClass} language="tsx" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={regressionsToolbarTemplate} language="html" />
     </div>
   </div>
 </div>

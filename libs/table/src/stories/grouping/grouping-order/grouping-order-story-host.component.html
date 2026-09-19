@@ -1,0 +1,111 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    <code>applyGroupOrder</code> orders group <strong>headers</strong> among their siblings at one
+    level — not the rows inside a group, which is <code>withSorting()</code>, and not which groups
+    exist, which is <code>when</code>. Pick a comparator in Controls.
+  </p>
+
+  <div class="story-host__toolbar">
+    <button type="button" (click)="toggleRepLevel()">
+      {{ isRepGrouped() ? 'Remove Rep as a level' : 'Add Rep as a level' }}
+    </button>
+    <button type="button" (click)="resetLevels()">Reset levels</button>
+  </div>
+
+  @switch (groupOrder()) {
+    @case ('first-occurrence') {
+      <p class="grouping-story__notice">
+        No ordering opinion — the comparator returns a constant <code>0</code> and the sort is
+        stable, so siblings keep the order each key was <em>first seen</em> while scanning the
+        rows. This is also what you get by declaring no comparator at all.
+      </p>
+    }
+    @case ('by-label') {
+      <p class="grouping-story__notice">
+        <code>localeCompare</code> on the group key. The comparator receives a
+        <code>GroupSummary</code>, so <code>a.key</code> is the cluster's value, not a row.
+      </p>
+    }
+    @case ('by-count') {
+      <p class="grouping-story__notice">
+        <code>b.rows.length - a.rows.length</code> — biggest cluster first.
+        <code>GroupSummary.rows</code> is the cluster's own leaves, which is what makes ordering
+        by size, or by a total, possible at all.
+      </p>
+    }
+    @case ('external-list') {
+      <p class="grouping-story__notice">
+        A caller-supplied ranking — <strong>{{ externalOrder.join(' → ') }}</strong> — with values
+        absent from it sorting last. The shape a saved report or a pinned-priority list takes.
+      </p>
+    }
+    @case ('throwing') {
+      <p class="grouping-story__notice">
+        The comparator throws on every sibling pair it is handed, and the table is still up. Per
+        ADR-0014 the clustering sort catches, falls back to stable first-occurrence order for the
+        affected levels, and reported it once for this evaluation, to the console.
+      </p>
+    }
+  }
+
+  <p class="grouping-story__notice">
+    A comparator is declared for <strong>Rep</strong> too, but <strong>Rep</strong> is
+    {{ isRepGrouped() ? 'currently a level, so that declaration is now in effect' : 'not a level, so that declaration is inert' }}.
+    <code>applyGroupOrder</code> never activates a level — on a column with no active level it is
+    a silent no-op. That is the split from <code>applyGrouping</code>.
+  </p>
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
+                @if (isFirst) {
+                  @if (row.groupKey?.value | isBlankGroup) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
+                  }
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
+                  }
+                }
+              </td>
+            }
+          } @else {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ row.cells[column.id] | dealAmount }}
+                  }
+                  @case ('closedAt') {
+                    {{ row.cells[column.id] | dealDate }}
+                  }
+                  @default {
+                    {{ row.cells[column.id] }}
+                  }
+                }
+              </td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

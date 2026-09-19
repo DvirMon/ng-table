@@ -10,7 +10,7 @@ import type { DealRow } from './types';
  * Rejects a negative amount rather than summing it. `engine/grouping/render.ts` calls this inside
  * an ADR-0014 wrap, so one bad record blanks that column's aggregate for the affected groups and
  * reports once per column per evaluation — it never takes the table down.
- * `grouping-regressions/`'s "Break one group's summary" control injects such a record on demand.
+ * `grouping-aggregates/`'s "Make one row's amount unsummable" control injects such a record.
  */
 function sumAmount(rows: DealRow[]): number {
   return rows.reduce((total, row) => {
@@ -77,13 +77,13 @@ export const RENESTED_GROUPING_LEVELS: ColumnId<DealRow>[] = ['category', 'regio
  * only reaches descendants from one that is also said to reach parents. */
 export const SELECTION_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
 
-/** The level `grouping-regressions/`'s "Group by a field that doesn't exist" control adds — no
- * `DealRow` field carries this key, so every row reads `undefined` for it and the table groups
- * everything into one phantom cluster instead of crashing (D7 — a grouping level names a row
- * field directly, with no column-existence guard). */
+/** A level naming a field no `DealRow` carries, and no column declares. Reserved for
+ * `grouping-keys/`, where it is `label`'s third resolution step — explicit → a column whose id
+ * matches → the raw field name (D7a). Unreferenced until that story is written; see the lesson
+ * audit's D3. */
 export const MISSING_GROUPING_LEVEL = 'territory';
 
-/** Backs `grouping-regressions/`'s `external-list` group order — a caller-supplied ranking, the
+/** Backs `grouping-order/`'s `external-list` comparator — a caller-supplied ranking, the
  * shape a saved report or a pinned-priority list would take. Values absent from it sort last. */
 export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'North East'];
 

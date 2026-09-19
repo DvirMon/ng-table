@@ -18,7 +18,7 @@ export function isBlankGroupValue(value: unknown): boolean {
 
 /**
  * Value to text, for the one place that needs a string in TypeScript rather than in a template:
- * `grouping-regressions/`'s `groupOrder` comparator and its external-rank lookup.
+ * `grouping-order/`'s comparator and its external-rank lookup.
  */
 export function formatValue(value: unknown): string {
   if (value instanceof Date) {
