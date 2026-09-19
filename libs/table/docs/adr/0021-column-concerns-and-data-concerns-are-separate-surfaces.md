@@ -94,7 +94,7 @@ does not. A new capability that splits this way is following the rule, not bendi
 ## Consequences
 
 - **Grouping moves to a data-keyed path** (D7). `GroupingSchemaFn`'s path becomes a mapped type
-  over `Extract<keyof TRow, string>`; value extraction moves to the rule via `extractValue`.
+  over `Extract<keyof TRow, string>`; value extraction moves to the rule via `applyGroupKey` (D9).
 - **Filtering was already correct.** `FiltersPath<TRow>` needs no change — it was ahead of the
   rule rather than inconsistent with it.
 - **ADR-0019 narrows to `columnsSchema`.** Its cross-argument `ColumnIdOf<S>` recovery had no
@@ -104,9 +104,9 @@ does not. A new capability that splits this way is following the rule, not bendi
 - **Third-party features (ADR-0020) are bound by this rule.** An author registering a stage and
   declaring a schema names row fields, not columns.
 - **The cost is a second copy of the value fact.** A column's `accessor` and a feature rule's
-  `extractValue` can compute different things with nothing checking they agree — a group header can
-  disagree with the column beneath it. Accepted knowingly in exchange for features that operate on
-  data the table does not display. See D7.
+  `applyGroupKey` extractor can compute different things with nothing checking they agree — a
+  group header can disagree with the column beneath it. Accepted knowingly in exchange for
+  features that operate on data the table does not display. See D7.
 - **A capability that reads rows *and* wants column-scoped policy declares on both surfaces**, as
   sorting already does. That is two declarations, not one with a mode flag.
 

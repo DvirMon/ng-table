@@ -1,7 +1,7 @@
 ---
 title: Decisions — `initial` declares, rules mask
 type: decisions
-status: D1–D4 shipped 2026-09-17 (`5ecc437`); D7 shipped 2026-09-18 (uncommitted); D5/D8 decided 2026-09-19, D5 built 2026-09-19 (uncommitted); D6 open
+status: D1–D4 shipped 2026-09-17 (`5ecc437`); D7 shipped 2026-09-18 (uncommitted); D5/D8 decided 2026-09-19, D5 built 2026-09-19 (uncommitted); D9 built 2026-09-19 (uncommitted); D6 open
 date: 2026-09-18
 audience: developers
 ---
@@ -176,6 +176,62 @@ sequences the work; this file records what was decided and why, including one de
 
   Reopens only if D3 is reversed and a rule may introduce an undeclared level, which has no
   declared position by construction.
+
+- **D9 (2026-09-19) — one declarator per concern: `applyGrouping` activates,
+  `applyGroupKey` derives, `applyGroupOrder` orders. `label` moves to `initial`.**
+
+  D7 left `applyGrouping` carrying four unrelated things — activation (`enable`), admission
+  (`when`), key derivation (`extractValue`) and display (`label`). They split:
+
+  ```ts
+  initial: [{ key: 'closedAt', label: 'Closed' }, 'region'];
+
+  applyGrouping(path.region, { enable, when });   // activation
+  applyGroupKey(path.closedAt, (d) => monthOf(d)); // key derivation
+  applyGroupOrder(path.region, cmp);               // sibling order
+  ```
+
+  `applyGroupKey` takes its extractor positionally, like `applyGroupOrder` — `K` comes off the
+  handle, so `(fieldValue: TRow[K]) => unknown` stays narrowed without an options object. A
+  second `applyGroupKey` on one field is a duplicate registration and throws at construction.
+
+  **`initial` accepts `{ key, label? }` or a bare key.** The object form is the static, per-level
+  declaration; the string shorthand keeps `initial: ['region', 'status']` free.
+
+  **`grouping` state stays `string[]`.** The writable view reads and writes keys, never level
+  objects. This is what keeps the state JSON-serializable: a level object carrying `extractValue`
+  would lose its function through `JSON.stringify`, restore as `[{ key: 'closedAt' }]`, and key
+  by raw `Date` — one group per row, silently, with no throw. Labels are a registry lookup off
+  `initial`, so nothing new has to round-trip.
+
+  **`extractValue` stays keyed by row field, not by `initial` entry.** `grouping.update(g => [...g,
+  'owner'])` can add a level never declared in `initial`; because `applyGroupKey` records against
+  the field, that level still finds its extractor. Putting extraction on the `initial` entry would
+  have left runtime-added levels keying raw.
+
+  **Label resolution (supersedes D7a's first link):** `initial` entry's `label` → matching
+  column's `label` → raw key. The rule is no longer a label source.
+
+  **Consequences:**
+
+  - New rule kind `'grouping-key'` in `AnyGroupingRule`; `collectExtractValue` reads that kind
+    instead of scanning `GroupingRule`s.
+  - `extractValue` and `label` come off both `GroupingRule` and `GroupingAsyncRule`. An async
+    rule needing an extractor declares `applyGroupKey` on the same field, independently.
+  - `feature.ts`'s "declares neither enable nor when" throw becomes correct as written. Under D7
+    it rejected the legitimate `applyGrouping(path.x, { extractValue })` — that spelling no
+    longer exists, so an `applyGrouping` with neither predicate is now genuinely empty.
+  - The two-copies cost ADR-0021 accepted is unchanged — `accessor` and `applyGroupKey` can still
+    disagree. This decision moves where the second copy is declared, not whether it exists.
+
+  **Why not fold extraction into the column's `accessor`:** the accessor and the group key are
+  the same value only in the trivial object-unwrap case. `closedAt: Date` needs the cell to show
+  a date and the group to key a month; a numeric column needs `42` in the cell and `0–100` in the
+  header. Folding them changes what renders. Two further cases have no accessor to borrow at all:
+  a level naming a field with no column (D7's whole motivation), and a derived column whose
+  `accessor` spans fields no single `keyof TRow` names.
+
+---
 
 ## Open
 

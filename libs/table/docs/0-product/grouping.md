@@ -554,7 +554,7 @@ lever; no decision picks the library's own answer for missing/empty group values
 [`research-grouping-ux-capabilities.md`](../1-state/work/grouping/archive/with-grouping/research-grouping-ux-capabilities.md).
 Raised as **OQ-5**.
 
-## 4.2 — A grouped column whose values are not text — 🟡 partly covered *(the rule owns `extractValue`; no story declares one)*
+## 4.2 — A grouped column whose values are not text — 🟡 partly covered *(`applyGroupKey` owns extraction; no story declares one)*
 
 > As someone grouping by assignee where each assignee is an object with a name and an id, I want
 > to see the names.
@@ -573,22 +573,22 @@ Raised as **OQ-5**.
 
 **Covered by:** the mechanism, not a story. **Grouping does not read a column's `accessor`** — D7
 settled that a grouping level names a *row field*, read by bracket access
-(`engine/grouping/clusters.ts`, `readGroupFieldValue`). The per-rule `extractValue` is the
-supported path: `applyGrouping(path.owner, { extractValue: (o) => o.name })` fixes the bucketing,
-and a sibling `label` fixes the header, resolving explicit → a column whose id matches the field →
-the raw field name (D7a). `Date` and number levels need neither — `toGroupKey` tags the key with
-its `typeof`, so `1` and `"1"` do not collide.
+(`engine/grouping/clusters.ts`, `readGroupFieldValue`). `applyGroupKey` is the supported path for
+bucketing: `applyGroupKey(path.owner, (o) => o.name)` fixes the group key, and an `initial` entry's
+own `label` fixes the header, resolving explicit → a column whose id matches the field → the raw
+field name (D7a, D9). `Date` and number levels need neither — `toGroupKey` tags the key with its
+`typeof`, so `1` and `"1"` do not collide.
 
-**Why it is 🟡:** no story declares `extractValue` for an object-valued level. The shared fixture's
-`owner` column carries an `accessor` for its *cells* only, so grouping by Owner today lands every
-row in one `object:[object Object]` bucket — the criterion's stated failure, happening, unreported
-under ADR-0014. The contract exists and is unit-tested (`with-grouping/schema.spec.ts`); the
-person's experience of it does not.
+**Why it is 🟡:** no story declares `applyGroupKey` for an object-valued level. The shared
+fixture's `owner` column carries an `accessor` for its *cells* only, so grouping by Owner today
+lands every row in one `object:[object Object]` bucket — the criterion's stated failure,
+happening, unreported under ADR-0014. The contract exists and is unit-tested
+(`with-grouping/schema.spec.ts`); the person's experience of it does not.
 
-**Design status — gap narrowed.** `extractValue` + `label` (D7a) answer the label and bucketing
-halves. What remains: nothing detects an object key that survived without an `extractValue`, so the
-merge is silent. See [#80](https://github.com/DvirMon/ng-table/issues/80). Raised as **OQ-5** with
-4.1 — one decision.
+**Design status — gap narrowed.** `applyGroupKey` + `initial`'s `label` (D7a, D9) answer the label
+and bucketing halves. What remains: nothing detects an object key that survived without an
+`applyGroupKey`, so the merge is silent. See [#80](https://github.com/DvirMon/ng-table/issues/80).
+Raised as **OQ-5** with 4.1 — one decision.
 
 ## 4.3 — A group with exactly one row in it — ✅ covered *(stated 2026-09-19 — OQ-6)*
 

@@ -76,7 +76,7 @@ export function applyVisibleAsync<TRow, K extends Extract<keyof TRow, string>, T
   `ngDevMode` (ADR-0022, D10). Two columns sharing an `accessor` under *different* ids stays legal
   — the supported way to show one field twice.
 - **`accessor` is not in the grouping path.** A grouping level names a row field and reads it by
-  bracket access; value narrowing there is the rule's own `extractValue`, not the column's
+  bracket access; value narrowing there is the rule's own `applyGroupKey` (D9), not the column's
   `accessor`. Grouping and cell values are separate vocabularies (ADR-0021).
 
 ## `label` — array-only, static ✅ decided 2026-08-03

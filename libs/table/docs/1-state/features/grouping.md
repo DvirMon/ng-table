@@ -27,8 +27,10 @@ parent: ../architecture.md
 >   order is `applyGroupOrder(path.x, cmp)`, declared per column (D4 amended, issue #87) — a
 >   comparator orders that column's own siblings only; two levels can order by different criteria
 >   in one table. Omitted, stable first-occurrence order; supplied, orders siblings within a
->   parent by their contents, fully decoupled from `sorting` (D5). Full contract: 3-spec.md's own
->   Methods section — not restated here.
+>   parent by their contents, fully decoupled from `sorting` (D5). Key derivation is
+>   `applyGroupKey(path.x, extractValue)`, declared per column, split off `applyGrouping()`'s opts
+>   (grouping-config-simplification's own D9). Full contract: 3-spec.md's own Methods section — not
+>   restated here.
 > - **Single-level only** — wrong. `withGrouping()` ships multi-level clustering. `grouping` is
 >   `string[]`, ordered, index 0 = outermost level (D3), with aggregation computed at every depth
 >   from that cluster's own leaves, never a descendant's already-computed aggregate (D9). Grand
