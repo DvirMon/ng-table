@@ -1,6 +1,7 @@
 import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
 import * as BasicStories from './grouping-basic/grouping-basic.stories';
 import * as WhenStories from './grouping-when/grouping-when.stories';
+import * as KeysStories from './grouping-keys/grouping-keys.stories';
 import * as AggregatesStories from './grouping-aggregates/grouping-aggregates.stories';
 import * as ColumnsStories from './grouping-columns/grouping-columns.stories';
 import * as AsyncRuleStories from './grouping-async-rule/grouping-async-rule.stories';
@@ -13,6 +14,8 @@ import whenClass from './grouping-when/grouping-when-story-host.component.ts?raw
 import whenTemplate from './grouping-when/grouping-when-story-host.component.html?raw';
 import whenToolbarClass from './grouping-when/grouping-when-toolbar.component.ts?raw';
 import whenToolbarTemplate from './grouping-when/grouping-when-toolbar.component.html?raw';
+import keysClass from './grouping-keys/grouping-keys-story-host.component.ts?raw';
+import keysTemplate from './grouping-keys/grouping-keys-story-host.component.html?raw';
 import aggregatesClass from './grouping-aggregates/grouping-aggregates-story-host.component.ts?raw';
 import aggregatesTemplate from './grouping-aggregates/grouping-aggregates-story-host.component.html?raw';
 import aggregatesToolbarClass from './grouping-aggregates/grouping-aggregates-toolbar.component.ts?raw';
@@ -42,8 +45,8 @@ import '../styles/code-tabs.css';
 
 # Grouping
 
-One story, one lesson, one canvas — in the order worth reading them. The first five are
-`withGrouping()`'s own surface; the last three compose it with one more feature.
+One story, one lesson, one canvas — in the order worth reading them. The first seven are
+`withGrouping()`'s own surface; the last two compose it with one more feature.
 
 **`Basic` is the one to copy.** Its host composes `withGrouping({ initial })` and nothing else, so
 nothing in its source is another lesson's setup — no predicate it does not need, no second feature,
@@ -152,6 +155,55 @@ reactive without reconstructing the table.
     </div>
     <div className="code-tabs-panel">
       <Source code={whenToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Keys — what a level clusters on, and what its header calls itself
+
+Two declarators, one lesson: `applyGroupKey` decides the group **key** a level clusters on;
+an `initial` entry's `label` decides what its header **calls itself**. Bundled in one story
+because they answer adjacent questions a reader could otherwise conflate — not because either
+is large on its own.
+
+`Sales Region` carries an explicit `initial` label and wins over its column's own. `Closed` has
+none, so it falls back to the `closedAt` column's own label. The canvas button adds a third
+level, `territory` — a field no row declares and no column names — whose header falls back all
+the way to the raw field name: explicit → matching column → raw field name, the full three-tier
+resolution in one render.
+
+`applyGroupKey` buckets `closedAt` into a `YYYY-MM` string, so twelve distinct timestamps
+collapse into five month groups. Turning it off in Controls groups on the exact `Date` instead —
+the engine never coarsens a key on its own.
+
+<Canvas of={KeysStories.Keys} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-keys-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-keys-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-keys-source" />
+      CSS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={keysClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={keysTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingStyles} language="css" />
     </div>
   </div>
 </div>

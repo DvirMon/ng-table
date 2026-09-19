@@ -1,0 +1,89 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Two declarators, one lesson: <code>applyGroupKey</code> decides what a level clusters
+    <em>on</em>; an <code>initial</code> entry's <code>label</code> decides what its header
+    <em>calls itself</em>. Every header below shows both, as <code>label: value</code>.
+  </p>
+
+  <div class="story-host__toolbar">
+    <button
+      type="button"
+      [attr.aria-pressed]="groupedByTerritory()"
+      (click)="toggleTerritoryLevel()"
+    >
+      {{ groupedByTerritory() ? 'Remove' : 'Add' }} an undeclared field ("territory") as a level
+    </button>
+  </div>
+
+  <p class="grouping-story__notice">
+    <strong>Sales Region</strong> carries an explicit <code>initial</code> label — it wins even
+    though a <code>region</code> column exists with its own label ("Region"). <strong>Closed</strong>
+    has none, so it falls back to the matching <code>closedAt</code> column's own label. Add the
+    third level above and its header falls back all the way to the raw field name,
+    <code>territory</code> — no column declares it, and nothing else does either.
+  </p>
+
+  <p class="grouping-story__notice">
+    <code>applyGroupKey</code> buckets <code>closedAt</code> into a <code>YYYY-MM</code> string.
+    Twelve distinct timestamps collapse into <strong>{{ table.groupIds().length }}</strong> group
+    ids. Turn the toggle off in Controls and the engine groups on the exact <code>Date</code>
+    instead — it never coarsens a key on its own (D7).
+  </p>
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
+                @if (isFirst) {
+                  <span class="grouping-story__group-label">
+                    {{ row.groupKey?.label }}:
+                    @if (row.groupKey?.value | isBlankGroup) {
+                      <span class="grouping-story__group-label--blank">no value</span>
+                    } @else if (isDateValue(row.groupKey?.value)) {
+                      {{ row.groupKey.value | dealDate }}
+                    } @else {
+                      {{ row.groupKey?.value }}
+                    }
+                  </span>
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
+                  }
+                }
+              </td>
+            }
+          } @else {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ row.cells[column.id] | dealAmount }}
+                  }
+                  @case ('closedAt') {
+                    {{ row.cells[column.id] | dealDate }}
+                  }
+                  @default {
+                    {{ row.cells[column.id] }}
+                  }
+                }
+              </td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
