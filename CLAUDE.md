@@ -16,3 +16,9 @@ Code under `libs/**` and `apps/**` splits by concern (types, store, mock data, u
 ## Typechecking
 
 Acceptance checks on an Angular project cite `nx run <project>:typecheck` (ngc, template-aware), never bare `npx tsc`. See `.claude/rules/typecheck-angular-templates.md`.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues. `/ship` pushes straight to `main` (no PR) — see `docs/agents/issue-tracker.md`.
