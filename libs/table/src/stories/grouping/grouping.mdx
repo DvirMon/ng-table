@@ -1,11 +1,24 @@
 import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
-import * as StaticStories from './grouping-static/grouping-static.stories';
+import * as BasicStories from './grouping-basic/grouping-basic.stories';
+import * as WhenStories from './grouping-when/grouping-when.stories';
+import * as AggregatesStories from './grouping-aggregates/grouping-aggregates.stories';
+import * as ColumnsStories from './grouping-columns/grouping-columns.stories';
 import * as AsyncRuleStories from './grouping-async-rule/grouping-async-rule.stories';
 import * as RegressionsStories from './grouping-regressions/grouping-regressions.stories';
 import * as CollapsibleStories from './grouping-collapsible/grouping-collapsible.stories';
 import * as SelectionStories from './grouping-selection/grouping-selection.stories';
-import staticClass from './grouping-static/grouping-static-story-host.component.ts?raw';
-import staticTemplate from './grouping-static/grouping-static-story-host.component.html?raw';
+import basicClass from './grouping-basic/grouping-basic-story-host.component.ts?raw';
+import basicTemplate from './grouping-basic/grouping-basic-story-host.component.html?raw';
+import whenClass from './grouping-when/grouping-when-story-host.component.ts?raw';
+import whenTemplate from './grouping-when/grouping-when-story-host.component.html?raw';
+import whenToolbarClass from './grouping-when/grouping-when-toolbar.component.ts?raw';
+import whenToolbarTemplate from './grouping-when/grouping-when-toolbar.component.html?raw';
+import aggregatesClass from './grouping-aggregates/grouping-aggregates-story-host.component.ts?raw';
+import aggregatesTemplate from './grouping-aggregates/grouping-aggregates-story-host.component.html?raw';
+import aggregatesToolbarClass from './grouping-aggregates/grouping-aggregates-toolbar.component.ts?raw';
+import aggregatesToolbarTemplate from './grouping-aggregates/grouping-aggregates-toolbar.component.html?raw';
+import columnsClass from './grouping-columns/grouping-columns-story-host.component.ts?raw';
+import columnsTemplate from './grouping-columns/grouping-columns-story-host.component.html?raw';
 import asyncRuleClass from './grouping-async-rule/grouping-async-rule-story-host.component.ts?raw';
 import asyncRuleTemplate from './grouping-async-rule/grouping-async-rule-story-host.component.html?raw';
 import regressionsClass from './grouping-regressions/grouping-regressions-story-host.component.ts?raw';
@@ -19,8 +32,6 @@ import groupingPipes from './grouping-story.pipes.ts?raw';
 import groupingSchema from './fixtures/schema.ts?raw';
 import groupingHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
-import staticToolbarClass from './grouping-static/grouping-static-toolbar.component.ts?raw';
-import staticToolbarTemplate from './grouping-static/grouping-static-toolbar.component.html?raw';
 import regressionsToolbarClass from './grouping-regressions/grouping-regressions-toolbar.component.ts?raw';
 import regressionsToolbarTemplate from './grouping-regressions/grouping-regressions-toolbar.component.html?raw';
 import collapsibleToolbarClass from './grouping-collapsible/grouping-collapsible-toolbar.component.ts?raw';
@@ -33,72 +44,206 @@ import '../styles/code-tabs.css';
 
 # Grouping
 
-Five stories, in the order worth reading them. **`Static` is the one to copy** — its host composes
-`withGrouping()` alone, so nothing in its source is another feature's setup. `Regressions` is
-deliberate misuse and is marked so. The other three each compose grouping with one more feature.
+One story per lesson, in the order worth reading them. The first four are `withGrouping()`'s own
+surface; the rest compose it with one more feature. **`Basic` is the one to copy** — its host
+composes `withGrouping({ initial })` and nothing else, so nothing in its source is another
+lesson's setup.
 
-Shared across all five: `fixtures/schema.ts` (one column list, one config, and the grouping levels
-that do differ per story), `fixtures/http.ts` (the intercepted round trips),
-`grouping-story.pipes.ts` (one pure pipe per formatting concern, so no host formats in a method)
-and `grouping-story.css`. Those are at the bottom of this page, once.
+Shared across all of them: `fixtures/schema.ts` (one column list, two configs — with and without
+aggregates — and the grouping levels that do differ per story), `fixtures/http.ts` (the intercepted
+round trips), `grouping-story.pipes.ts` (one pure pipe per formatting concern, so no host formats
+in a method) and `grouping-story.css`. Those are at the bottom of this page, once.
 
 ---
 
-## Static — the grouped table as its own product
+## Basic — the whole feature, with nothing else on
 
-`withGrouping()` and nothing else. Every other story on this page composes grouping with one more
-feature; this one composes none, so its source is copyable as-is — including deliberately **no**
-`withExpansion()`, because a chevron with nothing to expand is a control that does nothing. Group
-headers carry value, count and `amount` total at every depth.
+`withGrouping({ initial })` and nothing else: no schema, no predicate, no second feature — and
+deliberately no `withExpansion()`, because a chevron with nothing to expand is a control that does
+nothing. Array order is nesting order.
 
-Aggregates are post-filter by construction (`filter` precedes `group` in the pipeline), but the
-control that proves it lives in `Group selection` below, which composes `withFiltering()` for its
-own reasons — not here.
+Group headers carry value and count. No `amount` total, because totals are `aggregateFn`'s lesson
+and it has its own story below; scenery on a baseline is how a reader mis-attributes an option.
 
 The tab strip toggles a column as a level; the pills below reorder and remove them. One control per
 column, one boolean state, so adding a duplicate level is unreachable from the UI rather than a
-no-op to explain.
+no-op to explain. Every write is an updater on `table.grouping`.
 
-<Canvas of={StaticStories.Static} />
+<Canvas of={BasicStories.Basic} />
 
 <div className="code-tabs">
   <div className="code-tabs-list">
     <label className="code-tabs-tab">
-      <input type="radio" name="grouping-static-source" defaultChecked />
+      <input type="radio" name="grouping-basic-source" defaultChecked />
       TS
     </label>
     <label className="code-tabs-tab">
-      <input type="radio" name="grouping-static-source" />
+      <input type="radio" name="grouping-basic-source" />
       HTML
     </label>
     <label className="code-tabs-tab">
-      <input type="radio" name="grouping-static-source" />
+      <input type="radio" name="grouping-basic-source" />
       CSS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-static-source" />
-      grouping-static-toolbar.component.ts
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-static-source" />
-      grouping-static-toolbar.component.html
     </label>
   </div>
   <div className="code-tabs-panels">
     <div className="code-tabs-panel">
-      <Source code={staticClass} language="tsx" />
+      <Source code={basicClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={staticTemplate} language="html" />
+      <Source code={basicTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
       <Source code={groupingStyles} language="css" />
     </div>
+  </div>
+</div>
+
+---
+
+## When — which clusters survive
+
+Two predicates, AND-combined: the table-wide `when`, judged at every active level, and a
+per-column one off an `applyGrouping` rule, judged for its own column only.
+
+A rejected cluster is **not hidden**. Its rows render flat at the parent's depth with no header,
+no group id and no aggregates — which is why rejecting at level 1 also takes those rows out of
+level 2: they left the tree, so there is nothing left to sub-group. The on-canvas count of
+depth-0 rows is there to make that legible without counting by eye.
+
+Both predicates read signals *inside* the callback rather than being rebuilt, so the toggles are
+reactive without reconstructing the table.
+
+<Canvas of={WhenStories.When} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-when-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-when-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-when-source" />
+      grouping-when-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-when-source" />
+      grouping-when-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
     <div className="code-tabs-panel">
-      <Source code={staticToolbarClass} language="tsx" />
+      <Source code={whenClass} language="tsx" />
     </div>
     <div className="code-tabs-panel">
-      <Source code={staticToolbarTemplate} language="html" />
+      <Source code={whenTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={whenToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={whenToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Aggregates — totals at every depth
+
+`aggregateFn` is a **column** option, not a `withGrouping()` one: the column knows how to
+summarise a set of rows, and grouping is what supplies the sets. This is the one story whose
+column list carries one.
+
+A parent total is the sum of its own leaves, not of the headers beneath it — so there is no
+blank-at-depth-0 hole. Aggregates are post-filter by construction, since `filter` precedes `group`
+in the pipeline; the control that proves it lives in `Group selection` below, which composes
+`withFiltering()` for its own reasons.
+
+The toolbar poisons one row so `sumAmount` throws on it. Per ADR-0014 the table stays up: that one
+column's aggregate falls back to `undefined` for the affected groups, reported once per column per
+evaluation rather than once per group, with every other column untouched.
+
+<Canvas of={AggregatesStories.Aggregates} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-aggregates-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-aggregates-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-aggregates-source" />
+      grouping-aggregates-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-aggregates-source" />
+      grouping-aggregates-toolbar.component.html
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={aggregatesClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={aggregatesTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={aggregatesToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={aggregatesToolbarTemplate} language="html" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Columns — what happens to a column once it becomes a level
+
+`withGrouping()` does not touch the column list, and takes no position on whether a grouped column
+keeps its place. All three dispositions — keep, hide, move to front — are consumer code over
+`toggleColumnVisibility` and `reorderColumns`.
+
+`hide` sets `visible: false`; the column stays in `table.columns()`, so the disposition reverses
+cleanly when the level comes off. `columns()` is the folded list rather than a render order — it
+carries `visible` and `order` and leaves the reading to whoever renders it, which is why
+`move-to-front` is a write to `order` and not the table re-sorting itself.
+
+<Canvas of={ColumnsStories.Columns} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-columns-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-columns-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-columns-source" />
+      CSS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={columnsClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={columnsTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingStyles} language="css" />
     </div>
   </div>
 </div>
@@ -321,7 +466,7 @@ no group header is ever in the selection.
 
 ---
 
-## Shared across the five
+## Shared across the page
 
 <div className="code-tabs">
   <div className="code-tabs-list">

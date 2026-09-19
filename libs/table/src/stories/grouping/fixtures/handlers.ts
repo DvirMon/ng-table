@@ -38,7 +38,7 @@ export const groupingHandlers = [
     return HttpResponse.json({ rows, total: rows.length });
   }),
 
-  /** Backs `grouping-static/`'s `applyGroupingAsync()` rule: whether `rep` is an active grouping
+  /** Backs `grouping-async-rule/`'s `applyGroupingAsync()` rule: whether `rep` is an active grouping
    * level is a server decision the table waits on. A forced failure is what makes the rule's
    * required `onError` produce an explicit boolean instead of abstaining (D13/D15). */
   http.get('/api/grouping-preference', async ({ request }) => {

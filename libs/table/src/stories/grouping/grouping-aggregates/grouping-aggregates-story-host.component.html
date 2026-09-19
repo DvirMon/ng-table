@@ -1,40 +1,36 @@
 <div class="story-host">
   <p class="story-host__hint">
-    Deliberate misuse, kept on screen instead of in a bug list. Nothing here is a pattern to copy
-    — <code>grouping-basic/</code> is. Each control below drives a callback that misbehaves, or a
-    level that names nothing.
+    <code>aggregateFn</code> is declared on the <strong>column</strong>, not on
+    <code>withGrouping()</code> — the column knows how to summarise a set of rows, and grouping
+    is what supplies the sets. Here <code>amount</code> carries a sum, so every header at every
+    depth shows one.
   </p>
 
-  <ngp-grouping-regressions-toolbar
+  <ngp-grouping-aggregates-toolbar
     [isSummaryBroken]="isSummaryBroken()"
-    (resetLevels)="resetLevels()"
-    (groupByMissingColumn)="groupByMissingColumn()"
     (toggleBrokenSummary)="toggleBrokenSummary()"
   />
 
-  @if (hasMissingLevel()) {
-    <p class="grouping-story__notice">
-      This grouping level names a row field that doesn't exist, so every row reads
-      <code>undefined</code> for it and the table clustered everything into one phantom group
-      instead of crashing. This line is the story's own arithmetic — the library has no channel
-      to report it.
-    </p>
-  }
+  <p class="grouping-story__notice">
+    A parent total is the sum of its own leaves, not of the headers beneath it — so the
+    <strong>Region</strong> row equals its categories added up, at every depth and with no
+    blank-at-depth-0 hole.
+  </p>
+
+  <p class="grouping-story__notice">
+    Aggregates are post-filter by construction, because <code>filter</code> precedes
+    <code>group</code> in the pipeline: a cluster only ever sees rows that survived filtering.
+    <code>grouping-selection</code> composes <code>withFiltering()</code> and has the control
+    that proves it.
+  </p>
 
   @if (isSummaryBroken()) {
     <p class="grouping-story__notice">
-      One row's <code>amount</code> is now a value the <code>aggregateFn</code> refuses. Every
-      total above it is blank rather than the table going down — the wrap in
+      One row's <code>amount</code> is now a value <code>sumAmount</code> refuses. The totals
+      above it are blank and the table is still up: the wrap in
       <code>engine/grouping/render.ts</code> falls back to an undefined aggregate for that column
-      alone, and reports it once per column for this evaluation, to the console. Restore it with
-      the same button.
-    </p>
-  }
-
-  @if (groupOrder() === 'throwing') {
-    <p class="grouping-story__notice">
-      <code>groupOrder</code> threw. Groups below are in stable first-occurrence order — the
-      comparator fallback — and the library reported it once for this evaluation, to the console.
+      alone, and reported it once for this evaluation, to the console. Every other column's
+      aggregate is unaffected.
     </p>
   }
 
@@ -62,7 +58,19 @@
                       no value
                     </span>
                   } @else {
-                    <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
+                    <span class="grouping-story__group-label">
+                      @switch (row.groupKey?.columnId) {
+                        @case ('amount') {
+                          {{ row.groupKey.value | dealAmount }}
+                        }
+                        @case ('closedAt') {
+                          {{ row.groupKey.value | dealDate }}
+                        }
+                        @default {
+                          {{ row.groupKey?.value }}
+                        }
+                      }
+                    </span>
                   }
                   @if (showCount()) {
                     <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>

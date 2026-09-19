@@ -33,24 +33,38 @@ const dealColumns: ColumnDefInput<DealRow>[] = [
   { id: 'region', label: 'Region' },
   { id: 'category', label: 'Category' },
   { id: 'rep', label: 'Rep' },
-  { id: 'amount', label: 'Amount', aggregateFn: sumAmount },
+  { id: 'amount', label: 'Amount' },
   { id: 'closedAt', label: 'Closed' },
   { id: 'owner', label: 'Owner', accessor: (row) => row.owner.name },
 ];
+
+/** The same list with `amount` carrying `sumAmount`. Derived rather than written twice — two
+ * hand-maintained copies of one column list is a silent-drift bug the compiler won't catch. */
+const dealColumnsWithTotals: ColumnDefInput<DealRow>[] = dealColumns.map((column) =>
+  column.id === 'amount' ? { ...column, aggregateFn: sumAmount } : column
+);
 
 /** Base column order, in declaration order — what `groupedColumnMode: 'keep'` restores and what
  * `'move-to-front'` re-ranks against. */
 export const DEAL_COLUMN_IDS: string[] = dealColumns.map((column) => column.id);
 
-/** The one config every grouping story passes to `createTable()`. */
+/** Group headers carry a per-subtree `amount` total. The config for every story whose canvas
+ * shows one — `grouping-aggregates/` owns that lesson, the rest inherit it incidentally. */
 export const groupingConfig: TableConfig<DealRow> = {
+  trackBy: 'id',
+  columns: dealColumnsWithTotals,
+};
+
+/** No `aggregateFn` anywhere — group headers carry value and count only. The config for the
+ * stories whose lesson is not aggregation, so nothing on their canvas is scenery. */
+export const plainGroupingConfig: TableConfig<DealRow> = {
   trackBy: 'id',
   columns: dealColumns,
 };
 
 /** Two levels — enough to show a parent total that is the sum of its subtree without burying the
  * baseline in nesting. */
-export const STATIC_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
+export const BASE_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
 
 /** Three levels, so collapsing a parent visibly hides a whole subtree (D11). */
 export const COLLAPSIBLE_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category', 'rep'];

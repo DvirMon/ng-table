@@ -1,16 +1,13 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-/**
- * Toolbar for the static grouping story — reset levels and (optional) minimum category size.
- */
+/** Toolbar for the `when` story — the per-column threshold, editable on canvas. */
 @Component({
-  selector: 'ngp-grouping-static-toolbar',
+  selector: 'ngp-grouping-when-toolbar',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './grouping-static-toolbar.component.html',
+  templateUrl: './grouping-when-toolbar.component.html',
   styleUrls: ['../../styles/story-host.css'],
 })
-export class GroupingStaticToolbarComponent {
+export class GroupingWhenToolbarComponent {
   readonly minCategoryRowCount = input<number>(2);
-  readonly resetLevels = output<void>();
   readonly minCategoryRowCountChange = output<number>();
 }

@@ -4,7 +4,7 @@ import { createTable, withGrouping } from '../../../index';
 import { applyGroupingAsync } from '../../../api/features/with-grouping/schema';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupingPreferenceResource, type GroupingPreference } from '../fixtures/http';
-import { groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
+import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 
@@ -38,7 +38,7 @@ export class GroupingAsyncRuleStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({
-      initial: STATIC_GROUPING_LEVELS,
+      initial: BASE_GROUPING_LEVELS,
       schema: (path) =>
         applyGroupingAsync(path.rep, {
           params: () => ({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }),

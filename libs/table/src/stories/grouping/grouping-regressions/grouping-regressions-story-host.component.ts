@@ -13,7 +13,7 @@ import {
   EXTERNAL_GROUP_ORDER,
   groupingConfig,
   MISSING_GROUPING_LEVEL,
-  STATIC_GROUPING_LEVELS,
+  BASE_GROUPING_LEVELS,
 } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { formatValue } from '../fixtures/utils';
@@ -40,7 +40,7 @@ function externalRank(key: unknown): number {
  *
  * Renders three open grouping gaps rather than describing them: a comparator that throws, a
  * level naming a row field that doesn't exist, and an `aggregateFn` refusing its value. Copy
- * `grouping-static/` for normal usage, not this file.
+ * `grouping-basic/` for normal usage, not this file.
  *
  * The throwing comparator and the throwing aggregate both degrade and report (ADR-0014); the
  * phantom group is the one case reported nowhere but this story's own on-canvas notice.
@@ -85,7 +85,7 @@ export class GroupingRegressionsStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({
-      initial: STATIC_GROUPING_LEVELS,
+      initial: BASE_GROUPING_LEVELS,
       schema: (path) => {
         applyGroupOrder(path.region, this.compareGroups);
         applyGroupOrder(path.category, this.compareGroups);
@@ -117,7 +117,7 @@ export class GroupingRegressionsStoryHostComponent {
   );
 
   protected resetLevels(): void {
-    this.table.grouping.update(setGroupLevels<DealRow>(STATIC_GROUPING_LEVELS));
+    this.table.grouping.update(setGroupLevels<DealRow>(BASE_GROUPING_LEVELS));
   }
 
   protected groupByMissingColumn(): void {

@@ -1,0 +1,106 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Two predicates decide which clusters survive. The table-wide <code>when</code> is judged at
+    every active level; a per-column <code>when</code> from an <code>applyGrouping</code> rule
+    judges only its own column. Both must pass, so they read as AND.
+  </p>
+
+  <ngp-grouping-when-toolbar
+    [minCategoryRowCount]="minCategoryRowCountValue()"
+    (minCategoryRowCountChange)="minCategoryRowCountValue.set($event)"
+  />
+
+  <p class="grouping-story__notice">
+    With both toggles off, blank regions cluster as unlabelled groups —
+    <code>null</code>, <code>undefined</code> and <code>''</code> are three separate keys, so
+    three separate groups.
+  </p>
+
+  @if (keepBlankRegionsFlat()) {
+    <p class="grouping-story__notice">
+      Table-wide <code>when</code> rejects the blank-region clusters. Their deals render flat at
+      the parent's depth — one flat run, not one merged group — and they are not grouped by
+      <strong>Category</strong> either, because they left the tree at level 1. With no comparator
+      supplied they land after the groups that were admitted.
+    </p>
+  }
+
+  @if (applyMinCategorySize()) {
+    <p class="grouping-story__notice">
+      The per-column <code>when</code> on <strong>Category</strong> rejects clusters with fewer
+      than <strong>{{ minCategoryRowCountValue() }}</strong> rows. It is judged independently of
+      the region rule, so a small category flattens under a blank region and a named one alike.
+    </p>
+  }
+
+  <p class="grouping-story__notice">
+    Rows at depth 0 with no header above them: <strong>{{ flatRowCount() }}</strong>. A rejected
+    cluster leaves its rows in the table — it never hides them.
+  </p>
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
+                @if (isFirst) {
+                  @if (row.groupKey?.value | isBlankGroup) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">
+                      @switch (row.groupKey?.columnId) {
+                        @case ('amount') {
+                          {{ row.groupKey.value | dealAmount }}
+                        }
+                        @case ('closedAt') {
+                          {{ row.groupKey.value | dealDate }}
+                        }
+                        @default {
+                          {{ row.groupKey?.value }}
+                        }
+                      }
+                    </span>
+                  }
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
+                  }
+                }
+              </td>
+            }
+          } @else {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ row.cells[column.id] | dealAmount }}
+                  }
+                  @case ('closedAt') {
+                    {{ row.cells[column.id] | dealDate }}
+                  }
+                  @default {
+                    {{ row.cells[column.id] }}
+                  }
+                }
+              </td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

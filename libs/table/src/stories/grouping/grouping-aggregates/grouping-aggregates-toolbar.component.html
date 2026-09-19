@@ -1,0 +1,5 @@
+<div class="story-host__toolbar">
+  <button type="button" (click)="toggleBrokenSummary.emit()">
+    {{ isSummaryBroken() ? "Restore that row's amount" : "Make one row's amount unsummable" }}
+  </button>
+</div>

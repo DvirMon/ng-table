@@ -1,0 +1,106 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Grouping by a column says nothing about where that column belongs in the table.
+    <code>withGrouping()</code> takes no position, so the disposition is consumer code over
+    <code>toggleColumnVisibility</code> and <code>reorderColumns</code>. Switch
+    <strong>groupedColumnMode</strong> in Controls, then toggle a column below.
+  </p>
+
+  <div class="story-host__toolbar">
+    <button type="button" (click)="resetLevels()">Reset levels</button>
+  </div>
+
+  <div class="grouping-story__tabs" role="group" aria-label="Group by column">
+    @for (column of visibleColumns(); track column.id) {
+      <button
+        type="button"
+        class="grouping-story__tab"
+        [attr.aria-pressed]="table.isGroupedBy(column.id)"
+        (click)="toggleGroupByColumn(column.id)"
+      >
+        {{ column.label }}
+      </button>
+    }
+  </div>
+
+  @if (hiddenColumnLabels().length > 0) {
+    <p class="grouping-story__notice">
+      Hidden because they are levels: <strong>{{ hiddenColumnLabels().join(', ') }}</strong>. The
+      column is still in <code>table.columns()</code> carrying <code>visible: false</code> — the
+      disposition is a flag, not a removal, so toggling the level back restores it.
+    </p>
+  }
+
+  <p class="grouping-story__notice">
+    <code>columns()</code> is the folded list, not a render order: it carries
+    <code>visible</code> and <code>order</code> and leaves the reading to whoever renders it.
+    That is why <code>move-to-front</code> is a write to <code>order</code> rather than the table
+    re-sorting itself.
+  </p>
+
+  <table class="story-host__table grouping-story__table">
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
+          @if (row.kind === 'group') {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
+                @if (isFirst) {
+                  @if (row.groupKey?.value | isBlankGroup) {
+                    <span class="grouping-story__group-label grouping-story__group-label--blank">
+                      no value
+                    </span>
+                  } @else {
+                    <span class="grouping-story__group-label">
+                      @switch (row.groupKey?.columnId) {
+                        @case ('amount') {
+                          {{ row.groupKey.value | dealAmount }}
+                        }
+                        @case ('closedAt') {
+                          {{ row.groupKey.value | dealDate }}
+                        }
+                        @default {
+                          {{ row.groupKey?.value }}
+                        }
+                      }
+                    </span>
+                  }
+                  @if (showCount()) {
+                    <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
+                  }
+                }
+              </td>
+            }
+          } @else {
+            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              <td
+                class="story-host__cell"
+                [class.grouping-story__cell--label]="isFirst"
+                [class.grouping-story__cell--numeric]="column.id === 'amount'"
+              >
+                @switch (column.id) {
+                  @case ('amount') {
+                    {{ row.cells[column.id] | dealAmount }}
+                  }
+                  @case ('closedAt') {
+                    {{ row.cells[column.id] | dealDate }}
+                  }
+                  @default {
+                    {{ row.cells[column.id] }}
+                  }
+                }
+              </td>
+            }
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
