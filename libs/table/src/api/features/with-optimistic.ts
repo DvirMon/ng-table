@@ -3,7 +3,7 @@ import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types
 import type { WritableView } from '../../engine/writable-view';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict, RowId } from '../types';
-import { createEditingStore, type EditingStoreInput, type EditingUpdater, type PendingOp } from './editing-state';
+import { createEditingStore, type EditingStoreInput, type EditingUpdater, type PendingOp } from './editing/state';
 
 export interface OptimisticMembers<TRow> {
   /** Read: which rows are open for editing — **always empty** unless `withRowEdit()` is composed,

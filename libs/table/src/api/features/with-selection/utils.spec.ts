@@ -1,12 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
-import { createTable } from '../create-table';
-import { filter } from './with-filtering/rules';
-import { selectAllIds } from './selection.utils';
-import { withFiltering } from './with-filtering';
-import { withSelection } from './with-selection';
-import type { ColumnDef, TableStore } from '../types';
+import { mockRows, mockTrackBy, type MockRow } from '../../../table.mock';
+import { createTable } from '../../create-table';
+import { filter } from '../with-filtering/rules';
+import { selectAllIds } from './utils';
+import { withFiltering } from '../with-filtering';
+import { withSelection } from './feature';
+import type { ColumnDef, TableStore } from '../../types';
 
 function makeColumns(): ColumnDef<MockRow>[] {
   return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];

@@ -5,8 +5,8 @@ import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
-import { columnSchema } from '../schema/column-schema';
-import { applyVisible } from '../schema/column-rules';
+import { columnSchema } from '../columns-schema/schema';
+import { applyVisible } from '../columns-schema/rules';
 import type { Feature, RowOf, Shape } from '../engine/types';
 import type { ColumnDef, ReadonlyStore, RenderRow, RowId, TableStore } from './types';
 

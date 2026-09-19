@@ -1,13 +1,13 @@
 import { computed, signal } from '@angular/core';
 
 import type { RowEditMembers } from './api/features/with-row-edit';
-import { createDraftRows } from './api/features/draft-rows';
+import { createDraftRows } from './api/features/editing/draft-rows';
 import {
   pendingIds,
   pendingOps,
   type EditingState,
   type EditingUpdater,
-} from './api/features/editing-state';
+} from './api/features/editing/state';
 import type { ColumnDef, RenderRow, RowId, RowUpdater, TableStore, TrackByFn } from './api/types';
 import { createWritableView } from './engine/writable-view';
 

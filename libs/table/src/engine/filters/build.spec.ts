@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
-import { buildFilterModel } from './create-filters';
+import { buildFilterModel } from './build';
 import {
   anyOf,
   contains,

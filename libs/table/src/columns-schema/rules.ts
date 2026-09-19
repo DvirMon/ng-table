@@ -1,7 +1,7 @@
 import type { ResourceRef, Signal } from '@angular/core';
 import { SORT_NULLS, VISIBLE } from '../engine/columns';
-import { metadata, metadataAsync } from './column-metadata';
-import type { ColumnHandle, ColumnRuleContext } from './column-schema.types';
+import { metadata, metadataAsync } from './metadata';
+import type { ColumnHandle, ColumnRuleContext } from './types';
 
 /**
  * Reactive show/hide rule. Static visibility never goes through the schema

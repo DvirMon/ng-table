@@ -5,7 +5,7 @@ import {
   type EditingState,
   type PendingOp,
   type RowRestorePoint,
-} from '../api/features/editing-state';
+} from '../api/features/editing/state';
 import { createTable } from '../api/create-table';
 import { withRowEdit } from '../api/features/with-row-edit';
 import {

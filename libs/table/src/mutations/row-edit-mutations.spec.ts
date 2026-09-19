@@ -3,7 +3,7 @@ import {
   type EditingState,
   type PendingOp,
   type RowRestorePoint,
-} from '../api/features/editing-state';
+} from '../api/features/editing/state';
 import { beginEdit, clearEdit, createRow, endEdit } from './row-edit-mutations';
 import { releaseEdit, revertEdit } from './optimistic-mutations';
 import { removeRow } from './row-mutations';

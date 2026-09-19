@@ -1,4 +1,4 @@
-import { buildFilterModel } from '../../../engine/filters/create-filters';
+import { buildFilterModel } from '../../../engine/filters/build';
 import type { AnyRule, StateOf } from '../../../engine/filters/types';
 import type { Filters, FiltersPath } from './types';
 import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../../engine/types';

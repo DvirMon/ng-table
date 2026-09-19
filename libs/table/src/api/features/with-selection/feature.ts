@@ -1,9 +1,9 @@
 import { signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
-import { pruneByIds } from '../../engine/rows';
-import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
-import { createTableFeature } from '../create-table-feature';
-import type { DerivedDict, RowId, TableStore } from '../types';
+import { pruneByIds } from '../../../engine/rows';
+import type { Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
+import { createTableFeature } from '../../create-table-feature';
+import type { DerivedDict, RowId, TableStore } from '../../types';
 
 export interface WithSelectionConfig<TRow> {
   /** Whether a row may be selected at all. Default: `true`. */

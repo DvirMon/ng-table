@@ -41,7 +41,7 @@ docs/           ← this library's own docs (see "Docs structure" below)
 |---|---|
 | `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. Lists filtering's rules, matchers and public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) explicitly, same as every other feature — `filters/` was a second domain with its own barrel until R50 (ADR-0004, 2026-09 #93 amendment) closed the standalone trajectory that justified it |
 | `api/features/with-filtering/` | `feature.ts` (declare — `withFiltering()`), `rules.ts`, `matchers.ts`, public `types.ts`. Its own `index.ts` re-exports only `feature.ts` — a resolution convenience, not a second barrel |
-| `engine/filters/` | `create-filters.ts` (compile — `buildFilterModel()`), `state.ts`/`evaluator.ts` (run), `validate.ts`, internal `types.ts`. Nothing here is reachable from `src/index.ts`; a consumer reaches the model through `withFiltering`'s `schema` config |
+| `engine/filters/` | `build.ts` (compile — `buildFilterModel()`), `state.ts`/`evaluator.ts` (run), `validate.ts`, internal `types.ts`. Nothing here is reachable from `src/index.ts`; a consumer reaches the model through `withFiltering`'s `schema` config |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
@@ -74,10 +74,9 @@ docs/           ← this library's own docs (see "Docs structure" below)
 
 Naming: the folder supplies the domain, so files inside drop the `table.` prefix
 (`engine/pipeline.ts`, not `engine/table.pipeline.ts`; `engine/filters/types.ts`, not
-`engine/filters/filters.types.ts`). A factory verb is not the domain, so
-`engine/filters/create-filters.ts` keeps its name — it is named for the symbol it exports, like
-`api/create-table.ts`. Kebab-case, not Angular's internal snake_case —
-`.claude/rules/file-organization.md` governs.
+`engine/filters/filters.types.ts`). The compile-phase entry point is named for its verb, not
+its domain — `engine/filters/build.ts`, mirroring `engine/columns-schema/resolve.ts`.
+Kebab-case, not Angular's internal snake_case — `.claude/rules/file-organization.md` governs.
 
 **`api/types.ts` ↔ `engine/types.ts` is a deliberate type-only import cycle.** Both sides must
 stay `import type`; making either a value import breaks the build. Same shape, same invariant,

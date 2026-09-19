@@ -2,13 +2,13 @@ import { computed, effect, signal, type Signal, type WritableSignal } from '@ang
 import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict, TableStore } from '../types';
-import { createDraftRows } from './draft-rows';
+import { createDraftRows } from './editing/draft-rows';
 import {
   closeAll,
   createEditingStore,
   type EditingState,
   type EditingStoreInput,
-} from './editing-state';
+} from './editing/state';
 import type { OptimisticMembers } from './with-optimistic';
 
 export interface WithRowEditConfig {

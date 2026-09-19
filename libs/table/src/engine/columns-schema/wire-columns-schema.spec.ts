@@ -1,8 +1,8 @@
 import { signal, type ResourceRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { columnSchema } from '../../schema/column-schema';
-import { createColumnMetaKey, metadata, readColumnMeta } from '../../schema/column-metadata';
-import { applyVisible, applyVisibleAsync } from '../../schema/column-rules';
+import { columnSchema } from '../../columns-schema/schema';
+import { createColumnMetaKey, metadata, readColumnMeta } from '../../columns-schema/metadata';
+import { applyVisible, applyVisibleAsync } from '../../columns-schema/rules';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
 import type { ColumnDef, TableConfig, TableStore } from '../../api/types';

@@ -63,7 +63,7 @@ export interface FilterRuleRecord<TRow, TCell = unknown, TCriterion = unknown> {
 // nothing else distinguishes two rules built from different rows.
 /**
  * A rule's static inference channel — phantom `__criterion`/`__row` members read by `StateOf`.
- * Omits `key`: a rule carries no key of its own until `create-filters.ts` stamps one from the
+ * Omits `key`: a rule carries no key of its own until `build.ts` stamps one from the
  * schema object's property name.
  * @internal
  */

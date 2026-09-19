@@ -1,5 +1,5 @@
 import { linkedSignal, type WritableSignal } from '@angular/core';
-import type { RowId, TrackByFn } from '../types';
+import type { RowId, TrackByFn } from '../../types';
 
 interface DraftRowsSource<TRow> {
   readonly data: TRow[];

@@ -11,21 +11,21 @@ import {
   type GroupingMockRow,
   type GroupWhenMockRow,
   type RepMockRow,
-} from '../../table.mock';
-import { setColumns } from '../../mutations/update-columns';
-import { setGroupLevels } from '../../mutations/update-grouping';
-import { applyGrouping, applyGroupingAsync, applyGroupOrder } from '../../schema/grouping-rules';
-import type { GroupingHandle } from '../../schema/grouping-schema.types';
-import type { WritableView } from '../../engine/writable-view';
-import { filter } from './with-filtering/rules';
-import type { FiltersPath } from './with-filtering/types';
-import { createTable } from '../create-table';
-import { withComputed } from './with-computed';
-import { withExpansion } from './with-expansion';
-import { withFiltering } from './with-filtering';
-import { withGrouping, type WithGroupingConfig } from './with-grouping';
-import { withSelection } from './with-selection';
-import { withSorting } from './with-sorting';
+} from '../../../table.mock';
+import { setColumns } from '../../../mutations/update-columns';
+import { setGroupLevels } from '../../../mutations/update-grouping';
+import { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema';
+import type { GroupingHandle } from './types';
+import type { WritableView } from '../../../engine/writable-view';
+import { filter } from '../with-filtering/rules';
+import type { FiltersPath } from '../with-filtering/types';
+import { createTable } from '../../create-table';
+import { withComputed } from '../with-computed';
+import { withExpansion } from '../with-expansion';
+import { withFiltering } from '../with-filtering';
+import { withGrouping, type WithGroupingConfig } from './feature';
+import { withSelection } from '../with-selection';
+import { withSorting } from '../with-sorting';
 import type {
   ColumnDef,
   ColumnId,
@@ -33,7 +33,7 @@ import type {
   RenderRow,
   RowId,
   TableStore,
-} from '../types';
+} from '../../types';
 
 // Grouping reads row fields directly, never a column's `accessor` (D7) — no literal-id
 // inference is needed here, so a plain `ColumnDef<GroupingMockRow>[]` annotation is enough.
@@ -1388,8 +1388,8 @@ function applyAsyncGroupingRule(
 
 describe('grouping declarative sugar (#26)', () => {
   // `applyGroupingAsync` without `onError` is a `@ts-expect-error` compile-time case, already
-  // covered by `schema/grouping-rules.spec.ts` (Step 3, "applyGroupingAsync without onError is a
-  // compile error") — not duplicated here.
+  // covered by `schema.spec.ts` (Step 3, "applyGroupingAsync without onError is a compile
+  // error") — not duplicated here.
 
   describe('enable masks the declared array: no-introduce / hold / off', () => {
     // Intent, not current behavior. `initial` declares which columns group and in what nesting

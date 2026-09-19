@@ -4,7 +4,7 @@ import { createTable } from '../../../api/create-table';
 import { withFiltering } from '../../../api/features/with-filtering';
 import { withSelection } from '../../../api/features/with-selection';
 import { withSorting } from '../../../api/features/with-sorting';
-import { selectAllIds } from '../../../api/features/selection.utils';
+import { selectAllIds } from '../../../api/features/with-selection/utils';
 import type { RowId } from '../../../api/types';
 import { removeRow } from '../../../mutations/row-mutations';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';

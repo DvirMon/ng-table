@@ -47,7 +47,7 @@ export class GatedSinglePessimisticStoryHostComponent {
   protected readonly table = createTable(this.data, editTableConfig, withRowEdit());
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or leak into the
-   * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/draft-rows.ts`). */
+   * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/editing/draft-rows.ts`). */
   protected readonly rows = form(this.table.draft, editRowsWithUniqueNameSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
 

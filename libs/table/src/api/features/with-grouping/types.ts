@@ -1,6 +1,6 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupOrder, GroupWhen } from '../api/types';
-import { COLUMN_RECORDER, type ColumnSchemaRecorder } from './column-schema.types';
+import type { GroupOrder, GroupWhen } from '../../types';
+import { PATH_RECORDER, type PathRecorder } from '../../../schema/path-proxy';
 
 /**
  * One `applyGrouping()` declaration. `enable`, when present, contributes whether this field is an
@@ -38,8 +38,8 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
   readonly params: () => TParams | undefined;
   // Method-shorthand syntax (not a `readonly factory: (…) => …` property) deliberately, so
   // `TParams`/`TResult` check bivariantly here — this member is reached only through
-  // `ColumnSchemaRecorder.record()`'s generic `| TRule` catch-all arm (`column-schema.ts`),
-  // which erases to this type's default `<unknown, unknown>` instantiation; a property-typed
+  // `PathRecorder.record()`'s generic `| TRule` catch-all arm (`schema/path-proxy.ts`), which
+  // erases to this type's default `<unknown, unknown>` instantiation; a property-typed
   // function would reject a concretely-typed `factory`/`onSuccess` under strict contravariance.
   factory(params: Signal<TParams | undefined>): Resource<TResult | undefined>;
   onSuccess(result: TResult): boolean;
@@ -68,13 +68,14 @@ export type AnyGroupingRule<TRow = unknown> =
 
 /**
  * Handle fabricated by `GroupingPath`'s `get` trap for one row field — NOT a `ColumnHandle`.
- * Same recorder shape (`column-schema.ts`'s proxy machinery is key-space agnostic), but a
- * distinct type: a grouping schema fn never sees a declared column id (D7).
+ * Same recorder shape (`schema/path-proxy.ts`'s proxy machinery is key-space agnostic and
+ * shared with columns, not owned by either), but a distinct type: a grouping schema fn never
+ * sees a declared column id (D7).
  */
 export interface GroupingHandle<TRow, K extends string = string> {
   readonly id: K;
   /** @internal */
-  readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow, AnyGroupingRule<TRow>>;
+  readonly [PATH_RECORDER]: PathRecorder<TRow, AnyGroupingRule<TRow>>;
 }
 
 /**

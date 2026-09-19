@@ -1,6 +1,6 @@
-import { columnSchema } from './column-schema';
-import { applyVisible, applyVisibleAsync } from './column-rules';
-import type { ColumnHandle, ColumnsPath } from './column-schema.types';
+import { columnSchema } from './schema';
+import { applyVisible, applyVisibleAsync } from './rules';
+import type { ColumnHandle, ColumnsPath } from './types';
 import type { ColumnDefInput } from '../api/types';
 import { resolveColumnsConfig } from '../engine/columns-schema';
 

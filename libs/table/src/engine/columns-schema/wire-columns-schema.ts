@@ -2,7 +2,7 @@ import type {
   ColumnRule,
   ColumnRuleContext,
   ColumnsSchemaStore,
-} from '../../schema/column-schema.types';
+} from '../../columns-schema/types';
 import type { ColumnRuleEntry } from '../columns';
 import type { TableFeatureSpec } from '../types';
 import {

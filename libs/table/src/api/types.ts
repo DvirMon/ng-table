@@ -1,5 +1,5 @@
 import type { Injector, Signal, WritableSignal } from '@angular/core';
-import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from '../schema/column-schema.types';
+import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
 import type { Feature } from '../engine/types';
 import type { WritableView } from '../engine/writable-view';
 
@@ -85,7 +85,7 @@ export interface ColumnDef<TRow = unknown, TId extends string = string> {
 
   // Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity — never
   // interpreted by the engine. Read via `readColumnMeta()`, written via `metadata()`
-  // (`schema/column-metadata.ts`).
+  // (`columns-schema/metadata.ts`).
   meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
 }
 

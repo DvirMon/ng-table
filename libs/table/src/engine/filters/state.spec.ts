@@ -2,7 +2,7 @@ import { computed, isSignal, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { debounce, form } from '@angular/forms/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildFilterModel } from './create-filters';
+import { buildFilterModel } from './build';
 import { contains, equals, inRange } from '../../api/features/with-filtering/rules';
 import { equalsCriterion } from './state';
 import type { AnyRule } from './types';

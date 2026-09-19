@@ -2,6 +2,7 @@ import { buildValueOfContext, type FiltersInternal } from './evaluator';
 import { buildFilterState, buildFiltersObject, gateByCondition } from './state';
 import type { AnyRule, FilterHandle, FilterRuleRecord, FilterValueOfContext, StateOf } from './types';
 import type { Filters, FiltersPath, FilterNode } from '../../api/features/with-filtering/types';
+import { createPathProxy } from '../../schema/path-proxy';
 import { pathsOf, validateRecords } from './validate';
 
 // Stamps each declared rule's key from its object-literal property name — the schema's object
@@ -14,29 +15,16 @@ function keyRules<TRow>(declared: Record<string, AnyRule>): FilterRuleRecord<TRo
 }
 
 // Structural `path` proxy handed to a schema fn — fabricates a `FilterHandle` per string
-// property and caches it, so a schema passing the same path to two rules gets identity-stable
-// handles. No argument and no recorder: every rule builds and returns its own record.
+// property, via the same Proxy+cache mechanism columns/grouping use. No recorder session here,
+// deliberately: unlike `applyVisible`/`applyGrouping` (imperative calls that must be collected
+// as a side effect while the schema fn runs), every filter rule builder is a pure function that
+// immediately returns its own record — the schema fn's own returned object *is* the full
+// declaration, so there is nothing a session would need to collect.
 function buildFiltersPath<TRow>(): FiltersPath<TRow> {
-  const handleCache = new Map<string, FilterHandle<TRow, Extract<keyof TRow, string>>>();
-
-  return new Proxy(
-    {},
-    {
-      get(_target, property): FilterHandle<TRow, Extract<keyof TRow, string>> | undefined {
-        if (typeof property !== 'string') {
-          return undefined;
-        }
-        const cached = handleCache.get(property);
-        if (cached) {
-          return cached;
-        }
-        const handle: FilterHandle<TRow, Extract<keyof TRow, string>> = {
-          id: property as Extract<keyof TRow, string>,
-        };
-        handleCache.set(property, handle);
-        return handle;
-      },
-    }
+  return createPathProxy(
+    (id): FilterHandle<TRow, Extract<keyof TRow, string>> => ({
+      id: id as Extract<keyof TRow, string>,
+    })
   ) as FiltersPath<TRow>;
 }
 

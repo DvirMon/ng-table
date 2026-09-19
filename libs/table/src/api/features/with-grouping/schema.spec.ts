@@ -1,6 +1,6 @@
-import { applyGrouping, applyGroupingAsync, runGroupingSchemaFn } from './grouping-rules';
-import type { GroupingPath } from './grouping-schema.types';
-import type { GroupingMockRow } from '../table.mock';
+import { applyGrouping, applyGroupingAsync, runGroupingSchemaFn } from './schema';
+import type { GroupingPath } from './types';
+import type { GroupingMockRow } from '../../../table.mock';
 
 describe('applyGrouping / applyGroupingAsync', () => {
   it('records rules in call order across multiple applyGrouping calls', () => {

@@ -6,7 +6,7 @@ import { captureEdit, releaseEdit, revertEdit } from '../../mutations/optimistic
 import { patchRow, removeRow } from '../../mutations/row-mutations';
 import type { WritableView } from '../../engine/writable-view';
 import type { ColumnDef, RowId, TableStore } from '../types';
-import type { EditingUpdater } from './editing-state';
+import type { EditingUpdater } from './editing/state';
 import { withComputed } from './with-computed';
 import { withOptimistic, type OptimisticMembers } from './with-optimistic';
 import { withRowEdit } from './with-row-edit';

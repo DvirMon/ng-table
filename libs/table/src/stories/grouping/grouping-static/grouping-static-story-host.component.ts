@@ -10,7 +10,7 @@ import {
   withGrouping,
   type GroupKey,
 } from '../../../index';
-import { applyGrouping } from '../../../schema/grouping-rules';
+import { applyGrouping } from '../../../api/features/with-grouping/schema';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { DEAL_COLUMN_IDS, groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';

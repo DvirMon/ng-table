@@ -1,12 +1,8 @@
 import { computed, signal, type Signal } from '@angular/core';
-import {
-  buildGroupRenderRows,
-  clusterRows,
-  collectAppliedLevels,
-  collectGroupIds,
-  rowsBeneathGroup,
-  type ClusterOpts,
-} from '../../engine/grouping';
+import { clusterRows } from '../../../engine/grouping/pipeline';
+import { buildGroupRenderRows } from '../../../engine/grouping/render';
+import { collectAppliedLevels, collectGroupIds, rowsBeneathGroup } from '../../../engine/grouping/queries';
+import type { ClusterOpts } from '../../../engine/grouping/clusters';
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
@@ -18,12 +14,12 @@ import {
   isGroupingRule,
   maskGroupingLevels,
   type GroupingRuleEntry,
-} from '../../engine/grouping-rules';
-import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
-import { createWritableView, type WritableView } from '../../engine/writable-view';
-import { runGroupingSchemaFn } from '../../schema/grouping-rules';
-import type { AnyGroupingRule, GroupingRule, GroupingSchemaFn } from '../../schema/grouping-schema.types';
-import { createTableFeature } from '../create-table-feature';
+} from '../../../engine/grouping/rules';
+import type { Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
+import { createWritableView, type WritableView } from '../../../engine/writable-view';
+import { runGroupingSchemaFn } from './schema';
+import type { AnyGroupingRule, GroupingRule, GroupingSchemaFn } from './types';
+import { createTableFeature } from '../../create-table-feature';
 import type {
   ColumnDef,
   ColumnId,
@@ -33,7 +29,7 @@ import type {
   RenderRow,
   RowId,
   TableStore,
-} from '../types';
+} from '../../types';
 
 /** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. */
 type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
@@ -174,7 +170,8 @@ function buildGroupingSpec<TRow>(
 /**
  * Adds row-field grouping to a `createTable()`. Reads only `columns`/`rows` off the store handed
  * in, with zero knowledge of expansion. Claims the `'group'` pipeline and render stages
- * (`engine/grouping.ts`'s `clusterRows`/`buildGroupRenderRows`). `table.grouping` reads `initial`
+ * (`engine/grouping/pipeline.ts`'s `clusterRows`, `engine/grouping/render.ts`'s
+ * `buildGroupRenderRows`). `table.grouping` reads `initial`
  * masked by `schema`, then filtered to the levels `when` actually admitted (D5) — writes still
  * target the unfiltered declared set. See the decisions doc. Per-column `applyGroupOrder` rules
  * order cluster siblings. `schema`'s `path` is keyed by `keyof TRow` (D7), not a declared column

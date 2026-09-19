@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { createTable } from '../../../api/create-table';
 import { withSelection } from '../../../api/features/with-selection';
-import { selectAllIds } from '../../../api/features/selection.utils';
+import { selectAllIds } from '../../../api/features/with-selection/utils';
 import type { RowId } from '../../../api/types';
 import { patchRow, removeRow } from '../../../mutations/row-mutations';
 import { SAVED_SELECTION_IDS, SELECTION_ROWS_MOCK } from '../fixtures/mock';

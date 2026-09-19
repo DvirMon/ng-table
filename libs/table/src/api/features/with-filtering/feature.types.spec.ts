@@ -19,7 +19,7 @@ import type { ColumnDef, TableDataInput } from '../../types';
  * Compile-time seam for `withFiltering()`'s `schema` config, composed into a real
  * `createTable()` — `RowOf<In>` is what supplies `TRow` to the schema fn, so a probe against
  * the feature builder alone would not exercise the inference path a consumer actually takes.
- * Sibling of the runtime seam in `../../../engine/filters/create-filters.spec.ts`.
+ * Sibling of the runtime seam in `../../../engine/filters/build.spec.ts`.
  * **`nx run shared-table:typecheck-spec` is what enforces this file** — the runner executes
  * `expectTypeOf` and `@ts-expect-error` without typechecking either.
  *

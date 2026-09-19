@@ -1,7 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { applySortNulls } from '../../schema/column-rules';
+import { applySortNulls } from '../../columns-schema/rules';
 import { createTable } from '../create-table';
 import { withComputed } from './with-computed';
 import { withSorting, type SortingMembers } from './with-sorting';

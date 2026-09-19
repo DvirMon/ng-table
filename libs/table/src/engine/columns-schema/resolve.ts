@@ -1,10 +1,10 @@
 import { VISIBLE } from '../columns';
-import { columnSchema } from '../../schema/column-schema';
+import { columnSchema } from '../../columns-schema/schema';
 import type {
   ColumnRule,
   ColumnSchema,
   ColumnsSchemaFn,
-} from '../../schema/column-schema.types';
+} from '../../columns-schema/types';
 import type { ColumnDefInput } from '../../api/types';
 
 /** Compile phase: turns author-facing schema input into a validated flat `ColumnRule[]`. */
@@ -37,7 +37,7 @@ function assertRuleColumnIdsAreKnown<TRow, TId extends string>(
  * object identity, matching `createColumnMetaKey()`'s identity-is-the-key design.
  *
  * `VISIBLE` (`engine/columns.ts`) is exempted: `applyVisible()`/`applyVisibleAsync()`
- * (`schema/column-rules.ts`) are allowed to target the same column multiple times, AND-combined
+ * (`columns-schema/rules.ts`) are allowed to target the same column multiple times, AND-combined
  * by `foldColumnRules` — the one deliberate multi-writer key in the table.
  */
 function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): void {

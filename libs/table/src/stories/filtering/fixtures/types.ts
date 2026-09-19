@@ -33,7 +33,7 @@ export interface DateRangeCriterion {
 }
 
 /** The compound include/exclude criterion the `tags` column carries. One filter may target a
- * path (`create-filters`'s construction check), so include and exclude share a single
+ * path (`build.ts`'s construction check), so include and exclude share a single
  * criterion fed by two multi-selects instead of being two `hasAny`/`hasNone` filters. */
 export interface TagCriterion {
   include: readonly string[];

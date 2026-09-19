@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { describe, expect, it } from 'vitest';
-import type { ColumnMetaKey } from '../schema/column-schema.types';
+import type { ColumnMetaKey } from '../columns-schema/types';
 import {
   applyColumnOrder,
   foldColumnRules,

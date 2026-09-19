@@ -1,43 +1,33 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupOrder, GroupWhen } from '../api/types';
-import { assertPathIsCurrent, createRecorderSession } from './column-schema';
-import { COLUMN_RECORDER, type ColumnSchemaRecorder } from './column-schema.types';
+import type { GroupOrder, GroupWhen } from '../../types';
+import {
+  assertPathIsCurrent,
+  createPathProxy,
+  createRecorderSession,
+  PATH_RECORDER,
+  type PathRecorder,
+} from '../../../schema/path-proxy';
 import type {
   AnyGroupingRule,
   GroupingAsyncRule,
   GroupingHandle,
   GroupingPath,
   GroupingSchemaFn,
-} from './grouping-schema.types';
+} from './types';
 
 /**
  * Builds the structural `path` proxy handed to a grouping schema fn. The `get` trap fabricates a
  * `GroupingHandle<TRow, K>` for any string property accessed — it never reads real row data.
- * Reuses `column-schema.ts`'s recorder-session mechanism (key-space agnostic); the handle shape
- * it produces is `GroupingHandle`, never `ColumnHandle` (D7 — a different key space).
+ * Shares the schema-declare-phase Proxy+recorder mechanism (`schema/path-proxy.ts`, key-space
+ * agnostic) with `column-schema.ts`; the handle shape it produces is `GroupingHandle`, never
+ * `ColumnHandle` (D7 — a different key space, and no import from `column-schema.ts` either).
  */
 function buildGroupingPath<TRow>(
-  recorder: ColumnSchemaRecorder<TRow, AnyGroupingRule<TRow>>
+  recorder: PathRecorder<TRow, AnyGroupingRule<TRow>>
 ): GroupingPath<TRow> {
-  const handleCache = new Map<string, GroupingHandle<TRow>>();
-
-  return new Proxy({} as GroupingPath<TRow>, {
-    get(_target, property): GroupingHandle<TRow> | undefined {
-      if (typeof property !== 'string') {
-        return undefined;
-      }
-      const cached = handleCache.get(property);
-      if (cached) {
-        return cached;
-      }
-      const handle: GroupingHandle<TRow> = {
-        id: property,
-        [COLUMN_RECORDER]: recorder,
-      };
-      handleCache.set(property, handle);
-      return handle;
-    },
-  });
+  return createPathProxy(
+    (id): GroupingHandle<TRow> => ({ id, [PATH_RECORDER]: recorder })
+  ) as GroupingPath<TRow>;
 }
 
 /**
@@ -110,7 +100,7 @@ export function applyGroupingAsync<TRow, K extends Extract<keyof TRow, string>, 
     extractValue: opts.extractValue as ((fieldValue: unknown) => unknown) | undefined,
     label: opts.label,
   };
-  // Same generic-erasure boundary documented in `column-schema.ts`'s `record()`
+  // Same generic-erasure boundary documented in `schema/path-proxy.ts`'s `record()`
   // (`MetadataAsyncRule`'s contravariant `factory`/`onSuccess` positions defeat plain
   // assignability against the fixed `AnyGroupingRule<TRow>` union member) — `kind:
   // 'grouping-async'` never matches record()'s `MetadataRule`/`MetadataAsyncRule` arm, so TS

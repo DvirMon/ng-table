@@ -1,11 +1,11 @@
 import { computed, linkedSignal, type ResourceStatus, type Signal } from '@angular/core';
-import type { GroupOrder, GroupWhen } from '../api/types';
+import type { GroupOrder, GroupWhen } from '../../api/types';
 import type {
   AnyGroupingRule,
   GroupingAsyncRule,
   GroupingRule,
   GroupOrderRule,
-} from '../schema/grouping-schema.types';
+} from '../../api/features/with-grouping/types';
 
 /**
  * Pure grouping-rule resolution: turns `GroupingRule`/`GroupingAsyncRule` values into live
@@ -152,10 +152,11 @@ export function collectGroupOrder<TRow>(
 }
 
 /**
- * Static per-field value extractors (D7), collected off the same `rules` array. `engine/
- * grouping.ts` reads a field's raw value off the row and passes it through the matching
- * extractor, if any — the fold never runs a rule callback itself. Last write wins for a
- * duplicate `columnId` (same undocumented edge case as the two collectors above).
+ * Static per-field value extractors (D7), collected off the same `rules` array.
+ * `engine/grouping/clusters.ts`'s `readGroupFieldValue` reads a field's raw value off the row
+ * and passes it through the matching extractor, if any — the fold never runs a rule callback
+ * itself. Last write wins for a duplicate `columnId` (same undocumented edge case as the two
+ * collectors above).
  */
 export function collectExtractValue<TRow>(
   rules: readonly AnyGroupingRule<TRow>[]
@@ -170,9 +171,9 @@ export function collectExtractValue<TRow>(
 }
 
 /**
- * Static per-field explicit labels (D7a), collected the same way. `engine/grouping.ts` resolves
- * a group header's label as explicit -> a column whose id matches the field -> the raw field
- * name, in that order — this map is only the first tier.
+ * Static per-field explicit labels (D7a), collected the same way. `engine/grouping/render.ts`'s
+ * `resolveGroupLabel` resolves a group header's label as explicit -> a column whose id matches
+ * the field -> the raw field name, in that order — this map is only the first tier.
  */
 export function collectGroupLabels<TRow>(
   rules: readonly AnyGroupingRule<TRow>[]

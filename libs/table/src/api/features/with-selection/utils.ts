@@ -1,4 +1,4 @@
-import type { RowId, TableStore } from '../types';
+import type { RowId, TableStore } from '../../types';
 
 /** The slice of the core store this helper reads. */
 type SelectAllIdsInput<TRow> = Pick<TableStore<TRow>, 'rows' | 'value' | 'trackBy'>;

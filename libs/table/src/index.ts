@@ -53,7 +53,7 @@ export type {
   SelectionWriteOptions,
   SelectionMembers,
 } from './api/features/with-selection';
-export { selectAllIds } from './api/features/selection.utils';
+export { selectAllIds } from './api/features/with-selection/utils';
 export type {
   EditingState,
   EditingUpdater,
@@ -62,22 +62,22 @@ export type {
   RowRestorePoint,
   RowSnapshot,
   SnapshotMap,
-} from './api/features/editing-state';
+} from './api/features/editing/state';
 export { createTableFeature } from './api/create-table-feature';
 export { withComputed } from './api/features/with-computed';
 export { composeFeatures } from './api/features/compose-features';
-export { columnSchema } from './schema/column-schema';
-export { applySortNulls, applyVisible, applyVisibleAsync } from './schema/column-rules';
-export type { SortNullsOpts } from './schema/column-rules';
-export { createColumnMetaKey, metadata, readColumnMeta } from './schema/column-metadata';
-export { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema/grouping-rules';
-export type { GroupingAsyncOpts } from './schema/grouping-rules';
+export { columnSchema } from './columns-schema/schema';
+export { applySortNulls, applyVisible, applyVisibleAsync } from './columns-schema/rules';
+export type { SortNullsOpts } from './columns-schema/rules';
+export { createColumnMetaKey, metadata, readColumnMeta } from './columns-schema/metadata';
+export { applyGrouping, applyGroupingAsync, applyGroupOrder } from './api/features/with-grouping/schema';
+export type { GroupingAsyncOpts } from './api/features/with-grouping/schema';
 export type {
   AnyGroupingRule,
   GroupingAsyncRule,
   GroupingRule,
   GroupingSchemaFn,
-} from './schema/grouping-schema.types';
+} from './api/features/with-grouping/types';
 export { insertRow, removeRow, patchRow } from './mutations/row-mutations';
 export { beginEdit, clearEdit, createRow, endEdit } from './mutations/row-edit-mutations';
 export type { BeginEditOptions } from './mutations/row-edit-mutations';
@@ -110,4 +110,4 @@ export type {
   ColumnSchema,
   ColumnsPath,
   ColumnsSchemaFn,
-} from './schema/column-schema.types';
+} from './columns-schema/types';

@@ -8,13 +8,13 @@ import {
   isGroupingRule,
   maskGroupingLevels,
   type GroupingRuleEntry,
-} from './grouping-rules';
-import type { GroupWhen } from '../api/types';
+} from './rules';
+import type { GroupWhen } from '../../api/types';
 import type {
   AnyGroupingRule,
   GroupingAsyncRule,
   GroupingRule,
-} from '../schema/grouping-schema.types';
+} from '../../api/features/with-grouping/types';
 
 /**
  * Minimal controllable `Resource` test double — only the subset

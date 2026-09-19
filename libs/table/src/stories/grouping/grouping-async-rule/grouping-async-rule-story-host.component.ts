@@ -1,7 +1,7 @@
 import { Component, computed, input, signal } from '@angular/core';
 import type { HttpResourceRef } from '@angular/common/http';
 import { createTable, withGrouping } from '../../../index';
-import { applyGroupingAsync } from '../../../schema/grouping-rules';
+import { applyGroupingAsync } from '../../../api/features/with-grouping/schema';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupingPreferenceResource, type GroupingPreference } from '../fixtures/http';
 import { groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';

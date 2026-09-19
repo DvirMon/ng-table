@@ -1,13 +1,13 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { removeRow } from '../../mutations/row-mutations';
-import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
-import { createTable } from '../create-table';
-import { withComputed } from './with-computed';
-import { withSelection, type SelectionChange, type SelectionMembers } from './with-selection';
-import { withSorting } from './with-sorting';
-import type { ColumnDef, RowId, TableStore } from '../types';
+import { removeRow } from '../../../mutations/row-mutations';
+import { mockRows, mockTrackBy, type MockRow } from '../../../table.mock';
+import { createTable } from '../../create-table';
+import { withComputed } from '../with-computed';
+import { withSelection, type SelectionChange, type SelectionMembers } from './feature';
+import { withSorting } from '../with-sorting';
+import type { ColumnDef, RowId, TableStore } from '../../types';
 
 function makeColumns(): ColumnDef<MockRow>[] {
   return [

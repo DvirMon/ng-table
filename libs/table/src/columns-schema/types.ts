@@ -1,5 +1,6 @@
 import type { ResourceRef, Signal } from '@angular/core';
 import type { ColumnDef } from '../api/types';
+import { PATH_RECORDER, type PathRecorder } from '../schema/path-proxy';
 
 // Resolves to `baseColumns`, never the derived `columns` — rules observe declared and
 // imperatively-updated column state, never another rule's own output. Reading `columns` here
@@ -7,32 +8,6 @@ import type { ColumnDef } from '../api/types';
 /** Read-only reactive context handed to a rule's `when`/`params` callback. */
 export interface ColumnRuleContext<TRow> {
   readonly columns: () => ColumnDef<TRow>[];
-}
-
-/** @internal */
-export const COLUMN_RECORDER: unique symbol = Symbol('COLUMN_RECORDER');
-
-// Generic on `TRule`, defaulting to `ColumnRule<TRow>` so every existing caller (naming zero
-// type arguments) keeps resolving to the same type. A session is homogeneous — one rule
-// family per session — instantiated differently at different call sites (e.g. a future
-// grouping session at `TRule = AnyGroupingRule<TRow>`), never widened to `unknown` here.
-/**
- * Internal recorder every `apply*` call writes into. One instance per `columnSchema()` /
- * inline-fn execution.
- * @internal
- */
-export interface ColumnSchemaRecorder<TRow, TRule = ColumnRule<TRow>> {
-  // Generic on `TParams`/`TResult`/`T` so a caller building a `MetadataRule`/`MetadataAsyncRule`
-  // at its own instantiated types can pass the literal straight through — contextual typing
-  // checks it directly, no erasing cast needed at the call site (a structurally-typed `rule:
-  // TRule` parameter can't accept this, since `MetadataAsyncRule`'s `factory`/`onSuccess`
-  // occupy contravariant positions). `| TRule` covers a session instantiated at a non-default
-  // `TRule` (e.g. a grouping session), recording straight through since those rule families
-  // don't need the `Metadata*` contextual-typing shape.
-  /** Records one rule into this session for later resolution by `resolveColumnsConfig()`. */
-  record<TParams = unknown, TResult = unknown, T = unknown>(
-    rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T> | TRule
-  ): void;
 }
 
 /**
@@ -48,7 +23,7 @@ export type ColumnsPath<TRow, TId extends string, TRule = ColumnRule<TRow>> = {
 export interface ColumnHandle<TRow, K extends string = string, TRule = ColumnRule<TRow>> {
   readonly id: K;
   /** @internal */
-  readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow, TRule>;
+  readonly [PATH_RECORDER]: PathRecorder<TRow, TRule>;
 }
 
 export type ColumnsSchemaFn<TRow, TId extends string = string> = (
@@ -88,7 +63,7 @@ export interface MetadataRule<TRow, T = unknown> {
 // resource construction (`factory(params)`) must happen once at wiring time, not on every fold.
 /**
  * Resource-backed counterpart to `MetadataRule`. Not part of the public `metadata()` surface —
- * used internally by `applyVisibleAsync()` (`schema/column-rules.ts`).
+ * used internally by `applyVisibleAsync()` (`columns-schema/rules.ts`).
  */
 export interface MetadataAsyncRule<TRow, TParams = unknown, TResult = unknown, T = unknown> {
   readonly kind: 'metadata-async';

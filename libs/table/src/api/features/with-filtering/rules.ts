@@ -25,8 +25,8 @@ import {
 //
 // Every rule erases its generics to `FilterRuleRecord<TRow>`'s `unknown` storage shape via
 // `as` — sound because the erased type only ever round-trips through the record's own
-// `key`/`paths` at read time (`create-filters.ts`), never re-derived structurally. `key` itself
-// is never part of the returned literal; `create-filters.ts` stamps it from the schema
+// `key`/`paths` at read time (`build.ts`), never re-derived structurally. `key` itself
+// is never part of the returned literal; `build.ts` stamps it from the schema
 // object's own property name.
 
 /** A closed numeric range — either bound `null` for unbounded. */

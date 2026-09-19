@@ -1,10 +1,10 @@
 import type { Signal } from '@angular/core';
-import type { ColumnMetaKey } from '../schema/column-schema.types';
+import type { ColumnMetaKey } from '../columns-schema/types';
 import type { ColumnDef, ColumnDefInput } from '../api/types';
 
-// `ColumnMetaKey` is type-only and `column-schema.types.ts` has no import back into
-// `engine/`, so this reverse (engine -> api) edge doesn't close a cycle — it's just the one
-// place `engine/` needs an `api/` type to describe what it's folding.
+// `ColumnMetaKey` is type-only and `columns-schema/types.ts` has no import back into
+// `engine/`, so this reverse (engine -> columns-schema) edge doesn't close a cycle — it's just
+// the one place `engine/` needs a `columns-schema/` type to describe what it's folding.
 
 /**
  * Pure `ColumnDef[]` transforms. No signals, no Angular — the store's column methods are thin
@@ -69,7 +69,7 @@ export function toggleColumnVisible<TRow>(
 }
 
 /**
- * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`schema/column-rules.ts`) write
+ * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`columns-schema/rules.ts`) write
  * to — never exported, so consumers can't read or collide with it via `readColumnMeta()`.
  * `foldColumnRules` special-cases it: unlike every other metadata key (single-writer, enforced
  * by `resolve.ts`), multiple entries targeting `VISIBLE` on the same column are allowed and
@@ -78,7 +78,7 @@ export function toggleColumnVisible<TRow>(
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
- * Internal metadata key `applySortNulls()` (`schema/column-rules.ts`) writes to — the per-column
+ * Internal metadata key `applySortNulls()` (`columns-schema/rules.ts`) writes to — the per-column
  * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
  * writer: two `applySortNulls()` calls on the same column throw at resolve time, so it needs no
  * special case in `foldColumnRules` — it flows through the generic `meta` map like any consumer

@@ -2,8 +2,8 @@ import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { SORT_NULLS } from '../../engine/columns';
 import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
-import { readColumnMeta } from '../../schema/column-metadata';
-import type { SortNullsOpts } from '../../schema/column-rules';
+import { readColumnMeta } from '../../columns-schema/metadata';
+import type { SortNullsOpts } from '../../columns-schema/rules';
 import { createTableFeature } from '../create-table-feature';
 import type { ColumnDef, DerivedDict, SortDirection, SortRule, TableStore } from '../types';
 

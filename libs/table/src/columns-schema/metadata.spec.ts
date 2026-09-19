@@ -1,6 +1,6 @@
-import { columnSchema } from './column-schema';
-import { createColumnMetaKey, metadata, readColumnMeta } from './column-metadata';
-import type { ColumnsPath } from './column-schema.types';
+import { columnSchema } from './schema';
+import { createColumnMetaKey, metadata, readColumnMeta } from './metadata';
+import type { ColumnsPath } from './types';
 import { resolveColumnsConfig } from '../engine/columns-schema';
 import type { ColumnDefInput } from '../api/types';
 

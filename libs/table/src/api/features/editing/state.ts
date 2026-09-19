@@ -1,7 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
-import { pruneByIds, resolveIndex } from '../../engine/rows';
-import { createWritableView, type WritableView } from '../../engine/writable-view';
-import type { RowId, TableStore, TrackByFn } from '../types';
+import { pruneByIds, resolveIndex } from '../../../engine/rows';
+import { createWritableView, type WritableView } from '../../../engine/writable-view';
+import type { RowId, TableStore, TrackByFn } from '../../types';
 
 // The editing state model — restore-point shape, state shape, updater contract, and the store
 // both editing features are built on. Types and factory live together the way

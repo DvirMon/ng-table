@@ -6,7 +6,7 @@ import type { RenderRow, RowId } from './types';
  * fact with no runtime expression, since `undefined` at runtime is indistinguishable from a
  * field that was never optional. **`nx run shared-table:typecheck-spec` is what enforces this
  * file** — the runner executes `expectTypeOf`/`@ts-expect-error` without typechecking either.
- * Modeled on `filters/create-filters.types.spec.ts`, this library's existing compile-time
+ * Modeled on `filters/build.types.spec.ts`, this library's existing compile-time
  * assertion file convention.
  */
 
