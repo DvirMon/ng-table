@@ -24,16 +24,6 @@ export default meta;
 type Story = StoryObj<GroupingRegressionsStoryHostComponent>;
 
 /**
- * Grouping — silent degradations
- *
- * Two degradations the library performs silently, both reached from the canvas buttons:
- * grouping by a missing column, and one poisoned row's amount blanking a summary.
- *
- * The poisoned-row case takes the whole table down instead of blanking that one summary.
- */
-export const SilentDegradation: Story = {};
-
-/**
  * Grouping — throwing comparator
  *
  * The `groupOrder` comparator throws on every sibling pair. The table stays up on the

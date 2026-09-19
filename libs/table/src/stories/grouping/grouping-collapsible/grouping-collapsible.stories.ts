@@ -30,14 +30,3 @@ type Story = StoryObj<GroupingCollapsibleStoryHostComponent>;
  * re-nests the hierarchy.
  */
 export const Collapsible: Story = {};
-
-/**
- * Collapsible grouping — refresh failure
- *
- * Refetch fails on every attempt, exercising the error path: collapse state must survive a
- * failed refresh with nothing left half-applied.
- */
-export const CollapsibleRefreshFailure: Story = {
-  name: 'Collapsible — Refresh Failure',
-  args: { forceFailure: true },
-};

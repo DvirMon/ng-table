@@ -42,8 +42,7 @@ type Story = StoryObj<GroupingStaticStoryHostComponent>;
  * `when: (cluster) => isPresentKey(cluster.key)` is how a consumer opts out — a rejected
  * cluster's rows render flat at the parent's depth instead. With `STATIC_GROUPING_LEVELS` at
  * `['region', 'category']`, opted-out rows leave the tree entirely and are not grouped by
- * `category` either. See `BlankRegionsFlat` below, or flip `keepBlankRegionsFlat` in the
- * Controls panel.
+ * `category` either. Flip `keepBlankRegionsFlat` in the Controls panel to see it.
  *
  * The `applyMinCategorySize` toggle demonstrates a per-column `when` threshold on the
  * `category` level, AND-combined with the table-wide blank-region rule: a category cluster
@@ -51,23 +50,3 @@ type Story = StoryObj<GroupingStaticStoryHostComponent>;
  * its region is blank. Adjust `minCategoryRowCount` to see different collapse thresholds.
  */
 export const Static: Story = {};
-
-/**
- * Deals with no region stay flat
- *
- * `when: (cluster) => isPresentKey(cluster.key)` rejects the blank-region cluster, so its
- * rows render at the parent's depth with no header — one flat run, not one merged group, and
- * with no comparator supplied they land after the groups that were admitted.
- */
-export const BlankRegionsFlat: Story = { args: { keepBlankRegionsFlat: true } };
-
-/**
- * Two levels with different thresholds
- *
- * Demonstrates AND-combination of table-wide and per-column `when`: blank-region clusters
- * are rejected (table-wide), AND category clusters smaller than 2 rows are also rejected
- * (per-column). Single-row categories under any region (including non-blank) flatten.
- */
-export const TwoLevelsWithThresholds: Story = {
-  args: { keepBlankRegionsFlat: true, applyMinCategorySize: true, minCategoryRowCount: 2 },
-};

@@ -1,7 +1,8 @@
 <div class="story-host">
   <p class="story-host__hint">
     Deliberate misuse, kept on screen instead of in a bug list. Nothing here is a pattern to copy
-    — <code>grouping-static/</code> is. Each control below drives one gap that is still open.
+    — <code>grouping-static/</code> is. Each control below drives a callback that misbehaves, or a
+    level that names nothing.
   </p>
 
   <ngp-grouping-regressions-toolbar
@@ -22,11 +23,11 @@
 
   @if (isSummaryBroken()) {
     <p class="grouping-story__notice">
-      One row's <code>amount</code> is now a value the <code>aggregateFn</code> refuses. The whole
-      table is down rather than that one group's summary blanking —
-      <code>engine/grouping.ts</code> calls <code>aggregateFn</code> unwrapped
-      (<a href="https://github.com/DvirMon/acme/issues/79">#79</a>). Restore it with the same
-      button.
+      One row's <code>amount</code> is now a value the <code>aggregateFn</code> refuses. Every
+      total above it is blank rather than the table going down — the wrap in
+      <code>engine/grouping/render.ts</code> falls back to an undefined aggregate for that column
+      alone, and reports it once per column for this evaluation, to the console. Restore it with
+      the same button.
     </p>
   }
 

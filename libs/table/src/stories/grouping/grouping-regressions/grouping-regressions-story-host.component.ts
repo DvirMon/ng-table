@@ -42,8 +42,8 @@ function externalRank(key: unknown): number {
  * level naming a row field that doesn't exist, and an `aggregateFn` refusing its value. Copy
  * `grouping-static/` for normal usage, not this file.
  *
- * The throwing aggregate takes the whole table down instead of blanking one summary; the
- * phantom group is reported nowhere but this story's own on-canvas notice.
+ * The throwing comparator and the throwing aggregate both degrade and report (ADR-0014); the
+ * phantom group is the one case reported nowhere but this story's own on-canvas notice.
  */
 @Component({
   selector: 'ngp-grouping-regressions-story-host',
@@ -126,7 +126,7 @@ export class GroupingRegressionsStoryHostComponent {
 
   /** Poisons — or restores — one row's `amount`. A patched row, not a flag the fixture reads:
    * the `aggregateFn` fails on a *record*, which is the failure class ADR-0014 says must degrade
-   * rather than throw. Today it throws. */
+   * rather than throw — and does, in `engine/grouping/render.ts`. */
   protected toggleBrokenSummary(): void {
     const shouldBreak = !this.isSummaryBroken();
     this.table.value.update(

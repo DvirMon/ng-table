@@ -7,10 +7,10 @@ import type { DealRow } from './types';
  * Sum of `amount` over a cluster's own leaves, at every depth (D9) — so a parent total is the
  * sum of its subtree, which is TanStack's blank-at-depth-0 bug not happening.
  *
- * Rejects a negative amount rather than summing it. `engine/grouping.ts` calls this **unwrapped**,
- * so one bad record takes the whole table down instead of blanking that group's summary — the
- * runtime-class failure ADR-0014's retrofit has not reached yet. `grouping-regressions/`'s
- * "Break one group's summary" control injects exactly such a record on demand.
+ * Rejects a negative amount rather than summing it. `engine/grouping/render.ts` calls this inside
+ * an ADR-0014 wrap, so one bad record blanks that column's aggregate for the affected groups and
+ * reports once per column per evaluation — it never takes the table down.
+ * `grouping-regressions/`'s "Break one group's summary" control injects such a record on demand.
  */
 function sumAmount(rows: DealRow[]): number {
   return rows.reduce((total, row) => {
