@@ -42,10 +42,17 @@ import '../styles/code-tabs.css';
 
 # Grouping
 
-One story per lesson, in the order worth reading them. The first four are `withGrouping()`'s own
-surface; the rest compose it with one more feature. **`Basic` is the one to copy** — its host
-composes `withGrouping({ initial })` and nothing else, so nothing in its source is another
-lesson's setup.
+One story, one lesson, one canvas — in the order worth reading them. The first five are
+`withGrouping()`'s own surface; the last three compose it with one more feature.
+
+**`Basic` is the one to copy.** Its host composes `withGrouping({ initial })` and nothing else, so
+nothing in its source is another lesson's setup — no predicate it does not need, no second feature,
+and no `aggregateFn`, because a baseline carrying scenery is how a reader mis-attributes an option
+to the wrong place.
+
+Each story composes the fewest features its lesson needs. Where a second feature does appear —
+`withExpansion()` in `Collapsible`, `withFiltering()` in `Group selection` — the page says what it
+is there to make visible.
 
 Shared across all of them: `fixtures/schema.ts` (one column list, two configs — with and without
 aggregates — and the grouping levels that do differ per story), `fixtures/http.ts` (the intercepted
@@ -205,49 +212,6 @@ evaluation rather than once per group, with every other column untouched.
 
 ---
 
-## Columns — what happens to a column once it becomes a level
-
-`withGrouping()` does not touch the column list, and takes no position on whether a grouped column
-keeps its place. All three dispositions — keep, hide, move to front — are consumer code over
-`toggleColumnVisibility` and `reorderColumns`.
-
-`hide` sets `visible: false`; the column stays in `table.columns()`, so the disposition reverses
-cleanly when the level comes off. `columns()` is the folded list rather than a render order — it
-carries `visible` and `order` and leaves the reading to whoever renders it, which is why
-`move-to-front` is a write to `order` and not the table re-sorting itself.
-
-<Canvas of={ColumnsStories.Columns} />
-
-<div className="code-tabs">
-  <div className="code-tabs-list">
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-columns-source" defaultChecked />
-      TS
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-columns-source" />
-      HTML
-    </label>
-    <label className="code-tabs-tab">
-      <input type="radio" name="grouping-columns-source" />
-      CSS
-    </label>
-  </div>
-  <div className="code-tabs-panels">
-    <div className="code-tabs-panel">
-      <Source code={columnsClass} language="tsx" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={columnsTemplate} language="html" />
-    </div>
-    <div className="code-tabs-panel">
-      <Source code={groupingStyles} language="css" />
-    </div>
-  </div>
-</div>
-
----
-
 ## Async Rule — a level decided by the server
 
 One grouping level over a real intercepted request, through an `applyGroupingAsync()`-shaped column
@@ -337,6 +301,49 @@ from `applyGrouping`.
     </div>
     <div className="code-tabs-panel">
       <Source code={orderTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingStyles} language="css" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Columns — what happens to a column once it becomes a level
+
+`withGrouping()` does not touch the column list, and takes no position on whether a grouped column
+keeps its place. All three dispositions — keep, hide, move to front — are consumer code over
+`toggleColumnVisibility` and `reorderColumns`.
+
+`hide` sets `visible: false`; the column stays in `table.columns()`, so the disposition reverses
+cleanly when the level comes off. `columns()` is the folded list rather than a render order — it
+carries `visible` and `order` and leaves the reading to whoever renders it, which is why
+`move-to-front` is a write to `order` and not the table re-sorting itself.
+
+<Canvas of={ColumnsStories.Columns} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-columns-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-columns-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="grouping-columns-source" />
+      CSS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={columnsClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={columnsTemplate} language="html" />
     </div>
     <div className="code-tabs-panel">
       <Source code={groupingStyles} language="css" />

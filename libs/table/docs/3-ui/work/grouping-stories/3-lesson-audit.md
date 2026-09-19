@@ -655,19 +655,42 @@ Ten stories, ten lessons, one canvas each.
 Today: six folders, ten canvases, three API options uncovered, one shipped feature
 filed under "do not copy", and one folder absent from the docs page.
 
+### 4b. Docs to re-audit once the migration lands
+
+Deferred deliberately — audited in one pass at the end rather than chased per step.
+
+| Doc | Why it is suspect |
+|---|---|
+| `docs/0-product/grouping.md` | carries per-story coverage marks against the old set |
+| `d8b2434` "grouping-crud coverage sweep, six-story reindex" | indexes six stories including `grouping-crud`, now deleted (D8) |
+| `76432ee` "close #88 — single-row/missing-value grouping answers" | written against the pre-split stories |
+| `docs/work/grouping-doc-audit/`, `docs/work/spec-coverage-audit/` | untracked at the time of this audit; unknown overlap |
+| `grouping-regressions` references anywhere in docs | the folder disappears in step 3 |
+
 ### 4a. Spec assertions this audit hands to `with-grouping`
 
-Behaviour that left a canvas and must not leave the codebase:
+Behaviour that left a canvas and must not leave the codebase. All seven now land in
+`api/features/with-grouping/feature.spec.ts`.
 
-| From | Assertion |
-|---|---|
-| D5 | A sort toggle does not disturb collapse state |
-| D6 | A failed refetch leaves collapse state untouched, nothing half-applied |
-| D7 | No group id ever enters selection state |
-| D8 | Patching a row's group field moves it between clusters |
-| D8 | Patching to a name a sibling holds merges the two clusters |
-| D8 | Removing a cluster's last leaf removes its header |
-| D8 | No write names a group id — writes target rows, clustering re-derives |
+| From | Assertion | Where |
+|---|---|---|
+| D5 | A sort toggle does not disturb collapse state | `collapse state across a sort` |
+| D6 | Replacing every row object with an equal-id copy leaves `expandedRows` untouched | `collapse state across a row replacement` |
+| D7 | No group id ever enters selection state | `rowsOf` → cascade recipe |
+| D8 | Patching a row's group field moves it between clusters | `writes target rows; clustering re-derives` |
+| D8 | Patching to a name a sibling holds merges the two clusters | same |
+| D8 | Removing a cluster's last leaf removes its header | same |
+| D8 | An appended row lands under the cluster its field values name | same |
+
+Two were narrowed while writing them, and the narrowing is the honest half:
+
+- **D6's failure path is consumer wiring, not library behaviour.** A failed refetch means the
+  consumer's `linkedSignal` holds its previous value, so the data signal never changes and there
+  is nothing for the library to get wrong. What the library owes is the *success* case — same
+  ids, new object identities, same group ids — which is what the canvas was actually showing.
+- **D8's "no write names a group id" is not separately assertable.** It is a property of the
+  other three: every updater in them takes a `RowId` or a row, and none takes a group. Written as
+  the append case, where a row lands inside a subtree without any placement write.
 
 ---
 
