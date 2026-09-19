@@ -5,7 +5,7 @@ capability: grouping
 status: >
   Six stories cover grouping: `grouping-static/`, `grouping-async-rule/`,
   `grouping-regressions/`, `grouping-collapsible/`, `grouping-selection/`, `grouping-crud/`.
-  §1–§4: 10 ✅, 6 🟡, 1 ❌. Cross-feature: X-G1, S-G1, E-G1 ✅; S-G2, F-G1 🟡;
+  §1–§4: 11 ✅, 5 🟡, 1 ❌. Cross-feature: X-G1, S-G1, E-G1 ✅; S-G2, F-G1 🟡;
   F-G2, P-G1, P-G2, D-G1 ❌.
 date: 2026-09-19
 audience: product, design, engineering
@@ -590,7 +590,7 @@ halves. What remains: nothing detects an object key that survived without an `ex
 merge is silent. See [#80](https://github.com/DvirMon/ng-table/issues/80). Raised as **OQ-5** with
 4.1 — one decision.
 
-## 4.3 — A group with exactly one row in it — 🟡 partly covered *(consistent, but nowhere stated)*
+## 4.3 — A group with exactly one row in it — ✅ covered *(stated 2026-09-19 — OQ-6)*
 
 > As someone with a list where half the categories have a single item, I do not want to click
 > twice to see one row.
@@ -602,16 +602,20 @@ merge is silent. See [#80](https://github.com/DvirMon/ng-table/issues/80). Raise
 - If they render as groups, they do not cost more interaction than the row is worth.
 
 **Covered by:** [`grouping-static/`](../../src/stories/grouping/grouping-static/) and
-[`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/), for the *consistent*
-half only. The South region holds exactly one deal and renders as an ordinary group at every level —
-it counts, it summarises, it orders, and in
-[`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) it costs the extra click.
+[`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) for the default —
+the South region holds exactly one deal and renders as an ordinary group at every level, counting,
+summarising and ordering like any other. `grouping-static/`'s per-column row-count threshold on
+`category` is the escape hatch for the second criterion: a consumer who *does* want single-row (or
+below-N-row) groups to skip the extra click rejects them at admission and they render flat instead.
 
-**Why it is 🟡:** the criterion is "consistent **and stated**". It is consistent by construction —
-`buildClusters` has no size threshold — but nothing in the docs or on canvas says "always a group" is
-the deliberate answer, so a reader cannot tell the behavior from an accident.
+**Stated answer:** always a group, unless a `when`/`enable` admission predicate says otherwise
+(ADR-0018, #86/#87). No size threshold applies by default — `buildClusters` builds one cluster per
+distinct value regardless of size, and admission is what a consumer bolts on to change that. This is
+the deliberate policy, not an accident of construction.
 
-**Design status — gap.** No decision on single-row group handling. Raised as **OQ-6**.
+**Design status:** covered — admission (`when`/`enable`) shipped 2026-09-19, closing the mechanism
+question. Whether the extra click is bad enough in practice to justify a library-shipped default
+(vs. requiring an explicit `when`) is a separate UX question, not blocking this story — see OQ-6.
 
 ## 4.4 — A saved grouping that no longer fits the table — 🟡 partly covered *(the level is not dropped; the story is what says so)*
 
@@ -922,23 +926,23 @@ would silently break it.
 prunes them, so this may already work by accident. Confirm it, then make it a stated guarantee with
 a test.
 
-**OQ-5 — What is a group key, and what happens when the value is missing or is not text? — open.**
+**OQ-5 — What is a group key, and what happens when the value is missing or is not text? —
+mechanism resolved 2026-09-19; display half open.**
 §4.1 and §4.2 are one decision.
-*Recommendation:* every row belongs to exactly one group, including rows with no value; the missing
-group gets a stated label and a fixed position (last); a non-primitive value groups through the
-rule's own `extractValue` and labels through its `label` (D7a), never `[object Object]`.
-*To decide:* whether `null`, `undefined` and `""` are one group or three. Recommendation: one,
-labelled once, with a per-column opt-out — mirroring `applySortNulls()`.
-*No longer owed:* `RenderRow.groupKey` ships (`api/types.ts:51`) and carries `label` as well as
-`columnId`/`value`. `features/grouping.md:150` still types it without `label` — that spec is behind
-the code, not the other way round.
+*Closed by:* group admission (`when`/`enable`, ADR-0018, #85/#86) — a consumer can reject a blank or
+non-primitive-keyed cluster and its rows stay flat instead of forming an unlabelled group. That is
+the mechanism half, demonstrated in `grouping-static/`.
+*Still open, deliberately not closed here:* the library ships no default of its own for a missing
+value (one labelled group, three unlabelled ones, or flat — S7) — a consumer opinion, not a library
+one, today. What a header *displays* for a missing or non-primitive value is [#80](https://github.com/DvirMon/ng-table/issues/80)'s accessor-contract
+work, not this one. Do not read this entry as OQ-5 closed whole.
 
-**OQ-6 — What happens to a group containing exactly one row? — open.**
-*Recommendation:* it renders as an ordinary group. Consistency beats the saved click, and the
-alternative — collapsing single-child groups into their row — makes the table's structure depend on
-its data, which is harder to explain than an extra click.
-*To decide:* whether the extra click is bad enough in the real category-list case to justify
-auto-expanding single-row groups. Ask a user; do not guess.
+**OQ-6 — What happens to a group containing exactly one row? — resolved 2026-09-19.**
+*Closed by:* §4.3 — always a group, unless a `when`/`enable` predicate rejects it (ADR-0018).
+Consistent by construction and now stated on canvas via `grouping-static/`'s per-column threshold.
+*Remaining, non-blocking:* whether the extra click is bad enough in the real category-list case to
+justify the library shipping an opinionated default (vs. requiring an explicit `when`). A UX
+preference question, not a mechanism gap — ask a user rather than guess.
 
 **OQ-7 — Do groups split across pages, or do page sizes vary? — open, and blocked.**
 *Recommendation:* whole groups, variable page length — a person paging through a grouped report is
@@ -977,7 +981,7 @@ Owned by `1-state/work/grouping/archive/with-grouping/` and the feature docs it 
 | S6 | No initial expansion depth | 2.3 | AG Grid and MUI X both model this as a depth; TanStack has no depth concept. No longer blocked on discovery — `groupIds()` ships (#97); the ids just carry no level |
 | S7 | Missing / null group values have no library default | 4.1 | D14 covers an unknown column *id*, not a missing *value*. Group admission (`when`/`enable`, ADR-0018) lets a consumer reject blank clusters so those rows stay flat — demonstrated in `grouping-static/`. What is undecided is the library's own answer: one labelled blank group, three unlabelled ones, or flat. OQ-5 |
 | S8 | An object group key with no `extractValue` merges silently | 4.2 | `RenderRow.groupKey` ships (`api/types.ts:51`), carrying `label`; the rule's own `extractValue` + `label` (D7a) are the supported path — **not** `ColumnDef.accessor`, which grouping no longer reads (D7). A rule declaring neither falls through `toGroupKey`'s `` `${typeof value}:${String(value)}` `` and merges every distinct object into one bucket, with no report under ADR-0014. Pairs with U8. [#80](https://github.com/DvirMon/ng-table/issues/80), OQ-5 |
-| S9 | Single-row group behavior unstated | 4.3 | OQ-6 |
+| S9 | ~~Single-row group behavior unstated~~ — resolved 2026-09-19 | 4.3 | Always a group unless `when`/`enable` rejects it (ADR-0018). OQ-6 closed |
 | S10 | A degraded grouping level is unreportable | 4.4 | An unknown level yields one phantom cluster per parent (D7) rather than being dropped. The behavior is defined and tested; nothing tells the person, and whether the phantom or a drop is the right product answer is undecided |
 | S12 | `rowsOf()` call-site form unsettled | X-G1 | Shipped as `table.rowsOf(g)`, flat (issue #31). Whether it stays flat or moves under `table.grouping.rowsOf(g)` is open — [ADR-0015](../adr/0015-feature-member-namespacing.md), accepted 2026-09-13, unimplemented |
 

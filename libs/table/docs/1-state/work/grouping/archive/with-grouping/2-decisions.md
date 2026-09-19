@@ -389,12 +389,14 @@ Research backing these: [research-group-ordering.md](research-group-ordering.md)
   design against it.
 - **Header click on the grouped column.** D5 makes it a no-op. Routing it to `groupOrder` instead
   is a directive-level convenience — UI layer, not store.
-- **Group admission (`groupWhen`) — shape settled 2026-09-15, not yet built.** Whether a built
+- **Group admission (`when`) — shape settled 2026-09-15, built 2026-09-19.** Whether a built
   cluster earns a header at all: missing values and small clusters stay flat instead of grouping.
-  One predicate, two scopes — `config.groupWhen` table-wide, `applyGrouping(path.x, { groupWhen })`
-  per column, AND-combined. Dissolved clusters stay ordering participants (`GroupSummary.admitted`)
-  so the comparator places the flat region; default is a stable partition with the flat rows last.
-  Closes the mechanism half of `0-product/grouping.md`'s OQ-5 and OQ-6. Carries two amendments:
+  One predicate, two scopes — `config.when` table-wide, `applyGrouping(path.x, { when })` per
+  column, AND-combined (the field shipped as `when`, not `groupWhen` — ADR-0018's `when`/`enable`
+  rename folded this in before it landed). Dissolved clusters stay ordering participants
+  (`GroupSummary.admitted`) so the comparator places the flat region; default is a stable partition
+  with the flat rows last. Closes the mechanism half of `0-product/grouping.md`'s OQ-5 and OQ-6 —
+  the library-default and display questions stay open, tracked at S7/#80. Carries two amendments:
   **D4's `groupOrder` moves from the config to `applyGroupOrder(path.x, cmp)`** (siblings always
   share a `columnId`, so the slot was already per-level), and `initialGrouping` is renamed
   `initial` under a `withGrouping(config, withComputed(...))` shape where `config.schema` holds the
