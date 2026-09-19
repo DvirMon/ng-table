@@ -1,12 +1,5 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
-import {
-  createTable,
-  setGroupLevels,
-  withComputed,
-  withExpansion,
-  withGrouping,
-  withSorting,
-} from '../../../index';
+import { createTable, setGroupLevels, withExpansion, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupedRowsResource, toErrorMessage } from '../fixtures/http';
 import {
@@ -21,11 +14,16 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
 /**
  * Collapsible grouping, navigable outline
  *
- * `withGrouping()` + `withExpansion()` + `withSorting()` compose into a collapsible, sortable
- * outline — collapse or expand any group header to explore the hierarchy.
+ * `withGrouping()` + `withExpansion()`, and nothing else — collapse or expand any group header to
+ * explore the hierarchy.
  *
- * Expand All passes `table.groupIds()` explicitly — `expandAll()` alone only discovers real
- * data rows via `childrenAccessor` and cannot reach a group header.
+ * Expand All passes `table.groupIds()` explicitly. `expandAll()` alone only discovers real data
+ * rows via `childrenAccessor` and cannot reach a group header, which is the reason `groupIds()`
+ * exists: it derives from the cluster tree rather than from `renderRows()`, so it finds every
+ * header at every depth regardless of what is currently collapsed.
+ *
+ * Group headers read `table.expandedRows().has(row.id)` — `renderRows()` stamps `isExpanded` on
+ * `kind: 'row'` only, never on a header, because the tree stage early-returns for `data === null`.
  */
 @Component({
   selector: 'ngp-grouping-collapsible-story-host',
@@ -58,21 +56,7 @@ export class GroupingCollapsibleStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({ initial: COLLAPSIBLE_GROUPING_LEVELS }),
-    withExpansion(),
-    withSorting(),
-    // Optional. Default: read `table.expandedRows().has(row.id)` directly in the template for
-    // `kind: 'group'` rows (`row.isExpanded` already covers `kind: 'row'` — `renderRows()`
-    // stamps it there, just never on group headers, since the tree stage early-returns for
-    // `data === null`). This derive block trades that Set lookup for a second full-array map on
-    // every recompute, just to give the template one uniform field across both row kinds — reach
-    // for it only if a template touching the Set directly is the thing you want to avoid.
-    withComputed((store) => ({
-      displayRows: computed(() =>
-        store.renderRows().map((row) =>
-          row.kind === 'group' ? { ...row, isExpanded: store.expandedRows().has(row.id) } : row
-        )
-      ),
-    }))
+    withExpansion()
   );
 
   protected readonly visibleColumns = computed(() =>

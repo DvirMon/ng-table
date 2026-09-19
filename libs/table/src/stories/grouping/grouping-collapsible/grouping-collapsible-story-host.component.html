@@ -9,8 +9,8 @@
     <p class="story-host__hint">
       Three levels deep — Region, then Category, then Rep — and everything starts collapsed. Click
       a chevron, or anywhere on the header row, to open one; Enter and Space work on the chevron
-      because it is a real button. Collapsing a parent takes its whole subtree with it. Refetch,
-      the sort toggles and Regroup are here to attack the collapse state from three directions.
+      because it is a real button. Collapsing a parent takes its whole subtree with it. Refetch
+      and Regroup attack the collapse state from two directions.
     </p>
   }
 
@@ -37,13 +37,11 @@
   }
 
   <p class="grouping-story__notice">
-    Sorting <strong>Region</strong> — a grouped column — is D5's accepted no-op *within* a group:
-    every row in a Region group already holds the same Region, so nothing inside moves. Sorting
-    <strong>Amount</strong> orders rows inside each group and leaves them contiguous, because the
-    <code>'group'</code> render stage re-clusters after the pipeline's sort. Watch the order of the
-    <em>headers</em> in both cases: with no <code>groupOrder</code> supplied, group order is
-    first-occurrence over the sorted rows, so it follows the sort. Supplying a
-    <code>groupOrder</code> comparator is what decouples the two.
+    Expand All passes <code>table.groupIds()</code> explicitly — <code>expandAll()</code> on its
+    own discovers data rows through <code>childrenAccessor</code> and cannot reach a group header.
+    <code>groupIds()</code> derives from the cluster tree rather than from
+    <code>renderRows()</code>, so it finds every header at every depth no matter what is collapsed
+    right now.
   </p>
 
   <table class="story-host__table grouping-story__table">
@@ -51,28 +49,7 @@
       <tr>
         @for (column of visibleColumns(); track column.id) {
           <th class="story-host__cell">
-            <button
-              type="button"
-              [title]="
-                table.isGroupedBy(column.id)
-                  ? 'A grouping level — sorting it cannot reorder rows within a group, since they all share its value'
-                  : 'Sort by this column'
-              "
-              (click)="table.toggleSort(column.id)"
-            >
-              {{ column.label }}
-              @switch (table.sortDirections().get(column.id)) {
-                @case ('asc') {
-                  ▲
-                }
-                @case ('desc') {
-                  ▼
-                }
-                @default {
-                  ↕
-                }
-              }
-            </button>
+            {{ column.label }}
             @if (table.isGroupedBy(column.id)) {
               <span class="grouping-story__count">grouped</span>
             }
@@ -81,7 +58,7 @@
       </tr>
     </thead>
     <tbody>
-      @for (row of table.displayRows(); track row.id) {
+      @for (row of table.renderRows(); track row.id) {
         @if (row.kind === 'group') {
           <tr
             [attr.data-row-kind]="row.kind"
@@ -98,9 +75,9 @@
                   <button
                     type="button"
                     class="grouping-story__chevron"
-                    [attr.aria-expanded]="row.isExpanded"
+                    [attr.aria-expanded]="table.expandedRows().has(row.id)"
                     [attr.aria-label]="
-                      (row.isExpanded ? 'Collapse ' : 'Expand ') +
+                      (table.expandedRows().has(row.id) ? 'Collapse ' : 'Expand ') +
                       ((row.groupKey?.value | isBlankGroup)
                         ? 'the unlabelled group'
                         : row.groupKey?.value)

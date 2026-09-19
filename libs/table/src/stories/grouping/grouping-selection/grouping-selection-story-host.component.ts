@@ -19,9 +19,10 @@ import type { CascadeMode } from './grouping-selection.types';
 /**
  * Group selection, cascading checkboxes
  *
- * Ticking a group's checkbox cascades via a consumer-owned `cascade` function over
- * `rowsOf()` — all three peer defaults are ordinary code, not library options. A group's
- * tri-state derives fresh on every render rather than being stored.
+ * Ticking a group's checkbox cascades via a consumer-owned `cascade` function over `rowsOf()` —
+ * the peer defaults are ordinary code, not library options. A group's tri-state derives fresh on
+ * every render rather than being stored, which is also why cascading to *parents* needs no write
+ * and is therefore not a mode.
  */
 @Component({
   selector: 'ngp-grouping-selection-story-host',
@@ -90,8 +91,8 @@ export class GroupingSelectionStoryHostComponent {
 
   /**
    * The whole cascade, in one function reading the arg signal. `self` writes nothing because there
-   * is no group record to write; every other mode writes the same leaf set, and the "parents"
-   * direction needs no write at all.
+   * is no group record to write; `descendants` writes the leaf set. The upward direction is
+   * absent on purpose — an ancestor's tri-state is derived, so there is nothing to write.
    */
   protected onToggleGroupSelection(row: RenderRow<DealRow>): void {
     const shouldCascadeToDescendants = this.cascade() !== 'self';

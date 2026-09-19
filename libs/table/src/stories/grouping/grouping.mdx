@@ -348,16 +348,25 @@ from `applyGrouping`.
 
 ## Collapsible — the navigable outline
 
-`withGrouping()` + `withExpansion()` + `withSorting()`: a real `<button>` chevron carrying
+`withGrouping()` + `withExpansion()`, and nothing else: a real `<button>` chevron carrying
 `aria-expanded`, the whole header row as hit area, and subtree collapse. A deal carrying `children`
 renders a second, separately-keyed chevron from the `'tree'` stage.
 
+Expand All is the reason `groupIds()` exists. `expandAll()` on its own discovers data rows through
+`childrenAccessor` and cannot reach a group header, so the outline needs
+`expandAll(table.groupIds())` — and `groupIds()` derives from the cluster tree rather than from
+`renderRows()`, so it finds every header at every depth no matter what is collapsed right now.
+
+Group headers read `table.expandedRows().has(row.id)` directly. `renderRows()` stamps `isExpanded`
+on `kind: 'row'` only, never on a header, because the tree stage early-returns for `data === null`.
+
 <Canvas of={CollapsibleStories.Collapsible} />
 
-Three attacks on the collapse state live here — Refetch with freshly-constructed rows, sort
-toggles, and a Regroup that changes every group id at once. `forceFailure` in Controls makes
-refetch fail every time instead of returning a fresh page, so nothing is replaced, an error line
-appears, and the collapse state is untouched.
+Regroup re-nests the three levels, so every group id changes at once and the outline visibly
+rebuilds. `forceFailure` in Controls makes Refetch fail every time instead of returning a fresh
+page. That collapse state survives a refetch, a failed refetch or a sort is asserted in
+`with-grouping`'s spec rather than shown here — a control whose whole outcome is "nothing moved"
+gives a reader nothing to look at.
 
 <div className="code-tabs">
   <div className="code-tabs-list">
@@ -403,14 +412,23 @@ appears, and the collapse state is untouched.
 
 ---
 
-## Group selection — three cascades, one `rowsOf()`
+## Group selection — the cascade, over one `rowsOf()`
 
 The `cascade` control is this story's whole argument, not a convenience. D16 made the
-group-selection cascade consumer-owned precisely because the three major libraries ship three
-different defaults, so a single hardcoded cascade in a story would read as the library taking a
-position it deliberately does not take. All three are written here as ordinary code over one
-`rowsOf()` call, with tri-state group checkboxes derived rather than stored, and a readout proving
-no group header is ever in the selection.
+group-selection cascade consumer-owned precisely because the major libraries ship different
+defaults, so a single hardcoded cascade in a story would read as the library taking a position it
+deliberately does not take. Both modes are ordinary code over one `rowsOf()` call, with tri-state
+group checkboxes derived rather than stored, and a readout proving no group header is ever in the
+selection.
+
+MUI X's both-directions default is not a third mode, because reaching parents needs no write: a
+group's tri-state derives from `selectionStateOf()` every render, so an ancestor turns from
+indeterminate to checked on its own. A radio option that changes nothing on screen teaches that
+worse than one sentence does.
+
+`withFiltering()` is composed here for a reason the other stories do not have — it makes
+"`rowsOf()` is post-filter by construction" visible. Filter a rep out and every group's checkbox
+and count follow the rows that survived.
 
 <Canvas of={SelectionStories.GroupSelection} />
 

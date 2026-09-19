@@ -1,9 +1,9 @@
 <div class="story-host">
   <p class="story-host__hint">
-    Tick a group's checkbox and watch what it does to the rows beneath it. The
-    <code>cascade</code> control switches between the three defaults the major libraries disagree
-    on — the library itself ships none of them, which is why all three are ordinary code here.
-    Filter by rep first: a group's checkbox and its count are the same set of rows, always.
+    Tick a group's checkbox and watch what it does to the rows beneath it. The major libraries
+    disagree on what should happen, and this one ships none of their answers — which is why the
+    <code>cascade</code> control is ordinary consumer code over a single <code>rowsOf()</code>
+    call. Filter by rep first: a group's checkbox and its count are the same set of rows, always.
   </p>
 
   <ngp-grouping-selection-toolbar
@@ -22,17 +22,16 @@
       is no group node here — a group is a view, not a record — so the checkbox writes nothing and
       stays a read-only tri-state readout. Switch to <code>descendants</code> to give it an effect.
     </p>
-  } @else if (cascade() === 'descendants+parents') {
-    <p class="grouping-story__notice">
-      <code>descendants+parents</code> is MUI X's default. The downward half is the same
-      <code>select(rowsOf(group))</code> write as <code>descendants</code>. The upward half costs no
-      code at all: a Region's box is derived from its own <code>rowsOf()</code> every render, so it
-      turns from indeterminate to checked the moment its last Category does.
-    </p>
   } @else {
     <p class="grouping-story__notice">
       <code>descendants</code> is TanStack's default: every leaf beneath the group, at any depth,
       through one <code>select(rowsOf(group).map(trackBy))</code> call.
+    </p>
+    <p class="grouping-story__notice">
+      MUI X's both-directions default needs no third mode, and no extra code. The upward half is
+      already happening: a Region's box is derived from its own <code>rowsOf()</code> every render,
+      so it turns from indeterminate to checked the moment its last Category does. Watch a Region
+      while ticking its categories one at a time.
     </p>
   }
 
