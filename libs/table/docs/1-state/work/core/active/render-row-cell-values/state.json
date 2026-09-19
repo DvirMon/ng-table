@@ -1,0 +1,13 @@
+{
+  "slug": "render-row-cell-values",
+  "ticketRef": "80",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/80",
+  "stack": "angular",
+  "isComplex": false,
+  "workspaceRoot": "libs/table/docs/1-state/work/core/active/render-row-cell-values",
+  "decisionsPath": "libs/table/docs/1-state/work/core/active/render-row-cell-values/decisions.md",
+  "specPath": "libs/table/docs/1-state/work/core/active/render-row-cell-values/spec.md",
+  "architecturePath": "libs/table/docs/1-state/architecture.md",
+  "githubIssues": [80],
+  "checklist": { "intake": true, "grill": true, "spec": false, "issues": false, "tasks": false }
+}
