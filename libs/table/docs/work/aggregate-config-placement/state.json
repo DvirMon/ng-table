@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "runId": "aggregate-config-placement-2026-09-19T15:56:26Z",
+  "slug": "aggregate-config-placement",
+  "ticketRef": "100",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/100",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/work/aggregate-config-placement",
+  "stack": "angular",
+  "isComplex": true,
+  "decisionsPath": "libs/table/docs/work/aggregate-config-placement/1-decisions.md",
+  "specPath": null,
+  "architecturePath": null,
+  "githubIssues": [100],
+  "createdAt": "2026-09-19T15:56:26Z",
+  "updatedAt": "2026-09-19T18:20:00Z"
+}
