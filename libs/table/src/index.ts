@@ -70,11 +70,12 @@ export { columnSchema } from './columns-schema/schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './columns-schema/rules';
 export type { SortNullsOpts } from './columns-schema/rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './columns-schema/metadata';
-export { applyGrouping, applyGroupingAsync, applyGroupOrder } from './api/features/with-grouping/schema';
+export { applyGrouping, applyGroupingAsync, applyGroupKey, applyGroupOrder } from './api/features/with-grouping/schema';
 export type { GroupingAsyncOpts } from './api/features/with-grouping/schema';
 export type {
   AnyGroupingRule,
   GroupingAsyncRule,
+  GroupingLevel,
   GroupingRule,
   GroupingSchemaFn,
 } from './api/features/with-grouping/types';

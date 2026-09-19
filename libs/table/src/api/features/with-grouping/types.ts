@@ -1,5 +1,5 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupOrder, GroupWhen } from '../../types';
+import type { ColumnId, GroupOrder, GroupWhen } from '../../types';
 import { PATH_RECORDER, type PathRecorder } from '../../../schema/path-proxy';
 
 /**
@@ -17,13 +17,6 @@ export interface GroupingRule<TRow = unknown> {
   readonly enable?: () => boolean | undefined;
   /** Admission for this column only, AND'd with the table-wide `when`. */
   readonly when?: GroupWhen<TRow>;
-  /** Extracts the group key from the targeted row field. The engine does not defensively
-   * normalize, stringify or deep-compare keys — this must return a primitive (D7). Omit when the
-   * field is already a primitive. */
-  readonly extractValue?: (fieldValue: unknown) => unknown;
-  /** Explicit group-header label. Resolves explicit -> a column whose id matches this rule's
-   * targeted field -> the raw field name (D7a). */
-  readonly label?: string;
 }
 
 /**
@@ -46,10 +39,6 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
   readonly onError: (error: unknown) => boolean;
   /** Admission for this column only, AND'd with the table-wide `when`. */
   readonly when?: GroupWhen<TRow>;
-  /** See `GroupingRule.extractValue` — same contract, same D7 rationale. */
-  readonly extractValue?: (fieldValue: unknown) => unknown;
-  /** See `GroupingRule.label` (D7a). */
-  readonly label?: string;
 }
 
 /** One field's `applyGroupOrder(path.x, cmp)` declaration. Unlike `GroupingRule`/
@@ -61,10 +50,27 @@ export interface GroupOrderRule<TRow = unknown> {
   readonly comparator: GroupOrder<TRow>;
 }
 
+/** One `applyGroupKey(path.x, extractValue)` declaration (D9) — key derivation only, never
+ * activation/ordering. The engine does not defensively normalize, stringify or deep-compare
+ * keys — this must return a primitive (D7). */
+export interface GroupKeyRule<TRow = unknown> {
+  readonly kind: 'grouping-key';
+  readonly columnId: string;
+  readonly extractValue: (fieldValue: unknown) => unknown;
+}
+
 export type AnyGroupingRule<TRow = unknown> =
   | GroupingRule<TRow>
   | GroupingAsyncRule<TRow>
-  | GroupOrderRule<TRow>;
+  | GroupOrderRule<TRow>
+  | GroupKeyRule<TRow>;
+
+/** One `initial` entry (D9) — static level config: which field, and its display label.
+ * Resolves explicit `label` -> a column whose id matches `key` -> the raw field name (D7a). */
+export interface GroupingLevel<TRow> {
+  readonly key: ColumnId<TRow>;
+  readonly label?: string;
+}
 
 /**
  * Handle fabricated by `GroupingPath`'s `get` trap for one row field — NOT a `ColumnHandle`.

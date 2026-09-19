@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
+  collectGroupKeys,
   collectGroupPredicates,
   isGroupingAsyncRule,
   isGroupingRule,
@@ -217,5 +218,48 @@ describe('collectGroupPredicates', () => {
     const predicates = collectGroupPredicates(rules);
 
     expect(predicates.get('region')).toBe(second);
+  });
+
+  it('collects only the when-carrying rule from a mix with a grouping-key rule', () => {
+    const repWhen: GroupWhen<unknown> = () => true;
+    const rules: AnyGroupingRule[] = [
+      { kind: 'grouping-key', columnId: 'region', extractValue: (v) => v },
+      { kind: 'grouping', columnId: 'rep', enable: () => true, when: repWhen },
+    ];
+
+    const predicates = collectGroupPredicates(rules);
+
+    expect(predicates.size).toBe(1);
+    expect(predicates.get('rep')).toBe(repWhen);
+    expect(predicates.has('region')).toBe(false);
+  });
+});
+
+describe('collectGroupKeys', () => {
+  it('collects extractValue from grouping-key rules only', () => {
+    const extractValue = (value: unknown): unknown => value;
+    const rules: AnyGroupingRule[] = [
+      { kind: 'grouping-key', columnId: 'closedAt', extractValue },
+      { kind: 'grouping', columnId: 'region', enable: () => true },
+    ];
+
+    const extractors = collectGroupKeys(rules);
+
+    expect(extractors.size).toBe(1);
+    expect(extractors.get('closedAt')).toBe(extractValue);
+    expect(extractors.has('region')).toBe(false);
+  });
+
+  it('last write wins for a duplicate columnId', () => {
+    const first = (): string => 'a';
+    const second = (): string => 'b';
+    const rules: AnyGroupingRule[] = [
+      { kind: 'grouping-key', columnId: 'closedAt', extractValue: first },
+      { kind: 'grouping-key', columnId: 'closedAt', extractValue: second },
+    ];
+
+    const extractors = collectGroupKeys(rules);
+
+    expect(extractors.get('closedAt')).toBe(second);
   });
 });

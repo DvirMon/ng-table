@@ -56,8 +56,6 @@ export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   opts: {
     enable?: () => boolean | undefined;
     when?: GroupWhen<TRow>;
-    extractValue?: (fieldValue: TRow[K]) => unknown;
-    label?: string;
   }
 ): void {
   assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record({
@@ -65,8 +63,22 @@ export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
     columnId: path.id,
     enable: opts.enable,
     when: opts.when,
-    extractValue: opts.extractValue as ((fieldValue: unknown) => unknown) | undefined,
-    label: opts.label,
+  });
+}
+
+/**
+ * Declares the key-derivation for one grouping level (D9). Positional, like `applyGroupOrder` —
+ * this is the only concern it carries. The extractor must return a primitive; the engine does not
+ * defensively normalize, stringify or deep-compare keys (D7).
+ */
+export function applyGroupKey<TRow, K extends Extract<keyof TRow, string>>(
+  path: GroupingHandle<TRow, K>,
+  extractValue: (fieldValue: TRow[K]) => unknown
+): void {
+  assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record({
+    kind: 'grouping-key',
+    columnId: path.id,
+    extractValue: extractValue as (fieldValue: unknown) => unknown,
   });
 }
 
@@ -81,8 +93,6 @@ export interface GroupingAsyncOpts<TRow, K extends Extract<keyof TRow, string>, 
   onSuccess: (result: TResult) => boolean;
   onError: (error: unknown) => boolean;
   when?: GroupWhen<TRow>;
-  extractValue?: (fieldValue: TRow[K]) => unknown;
-  label?: string;
 }
 
 export function applyGroupingAsync<TRow, K extends Extract<keyof TRow, string>, TParams, TResult>(
@@ -97,8 +107,6 @@ export function applyGroupingAsync<TRow, K extends Extract<keyof TRow, string>, 
     onSuccess: opts.onSuccess,
     onError: opts.onError,
     when: opts.when,
-    extractValue: opts.extractValue as ((fieldValue: unknown) => unknown) | undefined,
-    label: opts.label,
   };
   // Same generic-erasure boundary documented in `schema/path-proxy.ts`'s `record()`
   // (`MetadataAsyncRule`'s contravariant `factory`/`onSuccess` positions defeat plain

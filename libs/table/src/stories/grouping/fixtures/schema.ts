@@ -27,7 +27,7 @@ function sumAmount(rows: DealRow[]): number {
  * what the table holds. `owner` is the one column whose row field is an object, so it carries the
  * `accessor` that turns it into the value a cell renders; every other column falls back to the
  * default `row[id]`. Grouping no longer reads a column's `accessor` at all (D7 — a level's value
- * comes straight off the row field, or through the rule's own `extractValue`), so this list needs no
+ * comes straight off the row field, or through `applyGroupKey` (D9)), so this list needs no
  * literal-id inference and takes a plain `ColumnDefInput<DealRow>[]` annotation. */
 const dealColumns: ColumnDefInput<DealRow>[] = [
   { id: 'region', label: 'Region' },
@@ -77,10 +77,8 @@ export const RENESTED_GROUPING_LEVELS: ColumnId<DealRow>[] = ['category', 'regio
  * only reaches descendants from one that is also said to reach parents. */
 export const SELECTION_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
 
-/** A level naming a field no `DealRow` carries, and no column declares. Reserved for
- * `grouping-keys/`, where it is `label`'s third resolution step — explicit → a column whose id
- * matches → the raw field name (D7a). Unreferenced until that story is written; see the lesson
- * audit's D3. */
+/** A level naming a field no `DealRow` carries, and no column declares. `grouping-keys/`'s third
+ * `label` resolution step — explicit → a column whose id matches → the raw field name (D7a). */
 export const MISSING_GROUPING_LEVEL = 'territory';
 
 /** Backs `grouping-order/`'s `external-list` comparator — a caller-supplied ranking, the

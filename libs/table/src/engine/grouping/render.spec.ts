@@ -162,7 +162,7 @@ describe('buildGroupRenderRows', () => {
     expect(usElectronicsLeaf.parentId).toBe(usElectronicsHeader.id);
   });
 
-  describe('extractValue and label resolution (D7)', () => {
+  describe('applyGroupKey and label resolution (D9)', () => {
     it("runs a level's raw field value through its extractValue extractor before it becomes the group key", () => {
       const seed = toSeedRenderRows(orders);
       const bucketByRegion = new Map<string, (fieldValue: unknown) => unknown>([

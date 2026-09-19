@@ -6,10 +6,9 @@ import type { ClusterOpts } from '../../../engine/grouping/clusters';
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
-  collectGroupLabels,
+  collectGroupKeys,
   collectGroupOrder,
   collectGroupPredicates,
-  collectExtractValue,
   isGroupingAsyncRule,
   isGroupingRule,
   maskGroupingLevels,
@@ -18,7 +17,7 @@ import {
 import type { Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
 import { runGroupingSchemaFn } from './schema';
-import type { AnyGroupingRule, GroupingRule, GroupingSchemaFn } from './types';
+import type { GroupingLevel, GroupingRule, GroupingSchemaFn } from './types';
 import { createTableFeature } from '../../create-table-feature';
 import type {
   ColumnDef,
@@ -36,11 +35,12 @@ type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
 
 export interface WithGroupingConfig<TRow> {
   /** The declared grouping levels, outermost first — array order *is* nesting order. Seeds the
-   * writable `grouping` view; rules gate these levels but can never add one. Stays a free string
-   * (not a `ColumnsPath`-checked field): a level names a row field, which may or may not have a
-   * matching column (D7) — a level naming a field no row actually carries degrades to one
-   * `undefined`-keyed cluster rather than throwing (matches `schema`'s own runtime contract). */
-  initial?: ColumnId<TRow>[];
+   * writable `grouping` view; rules gate these levels but can never add one. A bare string (not a
+   * `ColumnsPath`-checked field) or a `GroupingLevel` object carrying its own `label` (D9). A
+   * level names a row field, which may or may not have a matching column (D7) — a level naming a
+   * field no row actually carries degrades to one `undefined`-keyed cluster rather than throwing
+   * (matches `schema`'s own runtime contract). */
+  initial?: (ColumnId<TRow> | GroupingLevel<TRow>)[];
   /** Table-wide admission — judged at every active level. A cluster returning `false` renders its
    * rows flat at the parent's depth: no header, no group id, no aggregates. Throws: the cluster is
    * admitted, reported once per column per evaluation. */
@@ -79,6 +79,26 @@ export interface GroupingMembers<TRow> {
 }
 
 /**
+ * Splits `initial` into the plain `string[]` of keys grouping state carries (D9 — a level object
+ * is never written to writable state; see `2-decisions.md`) and each level's own `label`, if any.
+ */
+function normalizeGroupingLevels<TRow>(
+  levels: readonly (ColumnId<TRow> | GroupingLevel<TRow>)[]
+): { keys: string[]; labelByKey: Map<string, string> } {
+  const keys: string[] = [];
+  const labelByKey = new Map<string, string>();
+  for (const level of levels) {
+    if (typeof level === 'string') {
+      keys.push(level);
+    } else {
+      keys.push(level.key);
+      if (level.label) labelByKey.set(level.key, level.label);
+    }
+  }
+  return { keys, labelByKey };
+}
+
+/**
  * The factory body: builds the feature spec from the store slice it reads plus its resolved
  * config. Shared by both `withGrouping()` overloads via the generic `factory` below.
  */
@@ -86,7 +106,7 @@ function buildGroupingSpec<TRow>(
   input: Pick<TableStore<TRow>, 'columns' | 'rows'>,
   config: WithGroupingConfig<TRow>
 ): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
-  const initial: string[] = config.initial ?? [];
+  const { keys: initial, labelByKey } = normalizeGroupingLevels<TRow>(config.initial ?? []);
   const rules = config.schema ? [...runGroupingSchemaFn<TRow>(config.schema)] : [];
   const emptyRule = rules.find(
     (rule): rule is GroupingRule<TRow> => isGroupingRule(rule) && !rule.enable && !rule.when
@@ -115,15 +135,14 @@ function buildGroupingSpec<TRow>(
 
   const columnWhen = collectGroupPredicates(rules);
   const groupOrderByColumn = collectGroupOrder(rules);
-  const extractValueByColumn = collectExtractValue(rules);
-  const labelByColumn = collectGroupLabels(rules);
+  const extractValueByColumn = collectGroupKeys(rules);
 
   const clusterOpts: ClusterOpts<TRow> = {
     groupOrderByColumn: groupOrderByColumn.size > 0 ? groupOrderByColumn : undefined,
     when: config.when,
     columnWhen: columnWhen.size > 0 ? columnWhen : undefined,
     extractValueByColumn: extractValueByColumn.size > 0 ? extractValueByColumn : undefined,
-    labelByColumn: labelByColumn.size > 0 ? labelByColumn : undefined,
+    labelByColumn: labelByKey.size > 0 ? labelByKey : undefined,
   };
 
   // Applied (D5): declared, filtered to the prefix that actually admitted at least one cluster.

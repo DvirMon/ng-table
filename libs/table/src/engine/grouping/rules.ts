@@ -4,6 +4,7 @@ import type {
   AnyGroupingRule,
   GroupingAsyncRule,
   GroupingRule,
+  GroupKeyRule,
   GroupOrderRule,
 } from '../../api/features/with-grouping/types';
 
@@ -27,6 +28,12 @@ export function isGroupOrderRule<TRow>(
   rule: AnyGroupingRule<TRow>
 ): rule is GroupOrderRule<TRow> {
   return rule.kind === 'group-order';
+}
+
+export function isGroupKeyRule<TRow>(
+  rule: AnyGroupingRule<TRow>
+): rule is GroupKeyRule<TRow> {
+  return rule.kind === 'grouping-key';
 }
 
 /**
@@ -93,7 +100,7 @@ export function buildAsyncGroupingRuleEntry<TRow>(
  * Masks the declared level order by each level's rule result. `levels` owns which columns group
  * and in what nesting order; a rule only switches one of them off. A rule naming a column
  * `levels` does not contain is inert — it can never introduce a level, matching how a `when`
- * predicate or a `GroupOrderRule` on an inactive column is a no-op.
+ * predicate, a `GroupOrderRule`, or a `GroupKeyRule` on an inactive column is a no-op.
  *
  * A pending entry (`result() === undefined`) makes the whole set abstain: `levels` passes
  * through unmasked, so a table holds its declared grouping rather than flashing ungrouped while
@@ -101,7 +108,8 @@ export function buildAsyncGroupingRuleEntry<TRow>(
  *
  * Deliberately does NOT AND-combine same-column entries the way `engine/columns.ts`'s
  * `foldColumnRules` does for `VISIBLE`. Last write wins for a duplicate `columnId`, matching
- * `collectGroupPredicates`/`collectGroupOrder` (undocumented edge case, not validated).
+ * `collectGroupPredicates`/`collectGroupOrder`/`collectGroupKeys` (undocumented edge case, not
+ * validated).
  */
 export function maskGroupingLevels(
   levels: readonly string[],
@@ -126,7 +134,7 @@ export function collectGroupPredicates<TRow>(
 ): Map<string, GroupWhen<TRow>> {
   const predicates = new Map<string, GroupWhen<TRow>>();
   for (const rule of rules) {
-    if (!isGroupOrderRule(rule) && rule.when) {
+    if ((isGroupingRule(rule) || isGroupingAsyncRule(rule)) && rule.when) {
       predicates.set(rule.columnId, rule.when);
     }
   }
@@ -152,37 +160,20 @@ export function collectGroupOrder<TRow>(
 }
 
 /**
- * Static per-field value extractors (D7), collected off the same `rules` array.
- * `engine/grouping/clusters.ts`'s `readGroupFieldValue` reads a field's raw value off the row
- * and passes it through the matching extractor, if any — the fold never runs a rule callback
- * itself. Last write wins for a duplicate `columnId` (same undocumented edge case as the two
- * collectors above).
+ * Static per-field value extractors (D7/D9), collected off the same `rules` array from
+ * `applyGroupKey`'s `GroupKeyRule` declarations. `engine/grouping/clusters.ts`'s
+ * `readGroupFieldValue` reads a field's raw value off the row and passes it through the matching
+ * extractor, if any — the fold never runs a rule callback itself. Last write wins for a
+ * duplicate `columnId` (same undocumented edge case as the two collectors above).
  */
-export function collectExtractValue<TRow>(
+export function collectGroupKeys<TRow>(
   rules: readonly AnyGroupingRule<TRow>[]
 ): Map<string, (fieldValue: unknown) => unknown> {
   const extractors = new Map<string, (fieldValue: unknown) => unknown>();
   for (const rule of rules) {
-    if (!isGroupOrderRule(rule) && rule.extractValue) {
+    if (isGroupKeyRule(rule)) {
       extractors.set(rule.columnId, rule.extractValue);
     }
   }
   return extractors;
-}
-
-/**
- * Static per-field explicit labels (D7a), collected the same way. `engine/grouping/render.ts`'s
- * `resolveGroupLabel` resolves a group header's label as explicit -> a column whose id matches
- * the field -> the raw field name, in that order — this map is only the first tier.
- */
-export function collectGroupLabels<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
-): Map<string, string> {
-  const labels = new Map<string, string>();
-  for (const rule of rules) {
-    if (!isGroupOrderRule(rule) && rule.label) {
-      labels.set(rule.columnId, rule.label);
-    }
-  }
-  return labels;
 }

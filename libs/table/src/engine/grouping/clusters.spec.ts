@@ -81,7 +81,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
     createdAt: Date;
   }
 
-  it('fires once for an object-valued grouping field, naming the field and extractValue', () => {
+  it('fires once for an object-valued grouping field, naming the field and applyGroupKey', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const rows: MetaRow[] = [
@@ -94,7 +94,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
       expect(reportSpy).toHaveBeenCalledTimes(1);
       const message = reportSpy.mock.calls[0][0] as string;
       expect(message).toContain('meta');
-      expect(message).toContain('extractValue');
+      expect(message).toContain('applyGroupKey');
     } finally {
       reportSpy.mockRestore();
     }
@@ -155,7 +155,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
     }
   });
 
-  it('stays quiet when a declared extractValue reduces the field to a primitive, driven through buildClusterNodes', () => {
+  it('stays quiet when a declared applyGroupKey reduces the field to a primitive, driven through buildClusterNodes', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const rows: MetaRow[] = [

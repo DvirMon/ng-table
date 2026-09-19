@@ -1,4 +1,4 @@
-import { applyGrouping, applyGroupingAsync, runGroupingSchemaFn } from './schema';
+import { applyGroupKey, applyGrouping, applyGroupingAsync, runGroupingSchemaFn } from './schema';
 import type { GroupingPath } from './types';
 import type { GroupingMockRow } from '../../../table.mock';
 
@@ -45,17 +45,16 @@ describe('applyGrouping / applyGroupingAsync', () => {
     });
   });
 
-  it('records extractValue and label when supplied', () => {
+  it('records a grouping-key rule carrying its extractor', () => {
     const extractValue = (region: string): string => region.toUpperCase();
     const rules = runGroupingSchemaFn<GroupingMockRow>((path) => {
-      applyGrouping(path.region, { enable: () => true, extractValue, label: 'Region' });
+      applyGroupKey(path.region, extractValue);
     });
 
     expect(rules[0]).toMatchObject({
-      kind: 'grouping',
+      kind: 'grouping-key',
       columnId: 'region',
       extractValue,
-      label: 'Region',
     });
   });
 
