@@ -12,9 +12,9 @@ import {
   type GroupWhenMockRow,
   type RepMockRow,
 } from '../../../table.mock';
+import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import { setColumns } from '../../../mutations/update-columns';
 import { setGroupLevels } from '../../../mutations/update-grouping';
-import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema';
 import type { GroupingHandle } from './types';
 import type { WritableView } from '../../../engine/writable-view';
@@ -22,11 +22,11 @@ import { filter } from '../with-filtering/rules';
 import type { FiltersPath } from '../with-filtering/types';
 import { createTable } from '../../create-table';
 import { withComputed } from '../with-computed';
-import { withExpansion } from '../with-expansion';
+import { withExpansion, type ExpansionMembers } from '../with-expansion';
 import { withFiltering } from '../with-filtering';
-import { withGrouping, type WithGroupingConfig } from './feature';
+import { withGrouping, type GroupingMembers, type WithGroupingConfig } from './feature';
 import { withSelection } from '../with-selection';
-import { withSorting } from '../with-sorting';
+import { withSorting, type SortingMembers } from '../with-sorting';
 import type {
   ColumnDef,
   ColumnId,
@@ -2248,12 +2248,14 @@ describe('types', () => {
 });
 
 describe('collapse state across a sort', () => {
-  // `grouping-collapsible/`'s sort toggles claim this on canvas; nothing asserted it. The
-  // mechanism is `queries.spec.ts`'s "same ids after a row reorder" — group ids are built from
-  // the cluster's value, not its position — read here through the composed store, which is the
-  // only place the claim is actually observable.
-  function setup() {
-    const store = inContext(() =>
+  // Group ids are built from the cluster's value, not its position (`queries.spec.ts`, "same ids
+  // after a row reorder"), read here through the composed store — the only place a sort's effect
+  // on collapse state is observable.
+  function setup(): TableStore<GroupingMockRow> &
+    GroupingMembers<GroupingMockRow> &
+    ExpansionMembers &
+    SortingMembers {
+    return inContext(() =>
       createTable(
         signal<GroupingMockRow[]>([...mockGroupingRows]),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
@@ -2262,7 +2264,6 @@ describe('collapse state across a sort', () => {
         withSorting()
       )
     );
-    return store;
   }
 
   it('a sort change leaves expandedRows untouched', () => {
@@ -2293,10 +2294,11 @@ describe('collapse state across a sort', () => {
 });
 
 describe('writes target rows; clustering re-derives', () => {
-  // `grouping-crud/` showed these four on canvas. They are a consumer pattern over core row
-  // mutations rather than a grouping API lesson, so the story was removed and the facts moved
-  // here — see the story lesson audit's D8. Nothing below names a group id.
-  function setup(initial: ColumnId<GroupingMockRow>[] = ['region', 'category']) {
+  // Nothing below names a group id: every write targets rows, and the clustering re-derives.
+  // See the story lesson audit's D8.
+  function setup(
+    initial: ColumnId<GroupingMockRow>[] = ['region', 'category']
+  ): TableStore<GroupingMockRow> & GroupingMembers<GroupingMockRow> {
     return inContext(() =>
       createTable(
         signal<GroupingMockRow[]>([...mockGroupingRows]),
@@ -2381,12 +2383,9 @@ describe('writes target rows; clustering re-derives', () => {
 });
 
 describe('collapse state across a row replacement', () => {
-  // `grouping-collapsible/`'s Refetch replaces every row with a freshly-constructed object
-  // carrying the same id. Its canvas claimed collapse state survives that; nothing asserted it
-  // (story lesson audit, D6). The failed-refetch half is consumer wiring — a `linkedSignal` that
-  // holds its previous value, so the data signal never changes and there is nothing for the
-  // library to get wrong. What the library owes is this: same ids, new object identities, same
-  // group ids, so the expansion state still matches.
+  // A refetch replaces every row with a freshly-constructed object carrying the same id. Same
+  // ids and new object identities must still yield the same group ids, so expansion state keeps
+  // matching. See the story lesson audit's D6.
   it('replacing every row object with an equal-id copy leaves expandedRows untouched', () => {
     const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
     const store = inContext(() =>

@@ -9,5 +9,5 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 })
 export class GroupingWhenToolbarComponent {
   readonly minCategoryRowCount = input<number>(2);
-  readonly minCategoryRowCountChange = output<number>();
+  readonly setMinCategorySize = output<number>();
 }

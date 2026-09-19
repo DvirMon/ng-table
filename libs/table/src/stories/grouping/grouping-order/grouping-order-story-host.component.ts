@@ -51,9 +51,9 @@ export class GroupingOrderStoryHostComponent {
   readonly showCount = input(true);
 
   /**
-   * One closure, every mode. A comparator per mode would teach a shape a consumer has to
-   * un-learn — a level takes exactly one, and it may read a signal. `first-occurrence` returns a
-   * constant 0, and the sort is stable, so the clustering order survives untouched.
+   * One closure, every mode — a level takes exactly one comparator, and it may read a signal.
+   * `first-occurrence` returns a constant 0, and the sort is stable, so the clustering order
+   * survives untouched.
    */
   private readonly compareGroups = (
     a: GroupSummary<DealRow>,

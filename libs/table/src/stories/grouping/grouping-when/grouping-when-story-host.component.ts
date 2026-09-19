@@ -1,6 +1,5 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { createTable, withGrouping, type GroupKey } from '../../../index';
-import { applyGrouping } from '../../../api/features/with-grouping/schema';
+import { applyGrouping, createTable, withGrouping, type GroupKey } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { plainGroupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';

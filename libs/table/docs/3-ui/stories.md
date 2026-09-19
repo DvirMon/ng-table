@@ -1,14 +1,14 @@
 ---
 title: Storybook story conventions
 type: reference
-status: reflects current practice as of the 21 stories in src/stories/
-date: 2026-09-16
+status: reflects current practice as of the 23 stories in src/stories/
+date: 2026-09-19
 ---
 
 # Storybook story conventions — `libs/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
-existing 21 stories already follow, so a new one doesn't drift from it. Not previously written
+existing 23 stories already follow, so a new one doesn't drift from it. Not previously written
 down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
 moves on.
 
@@ -69,9 +69,9 @@ src/stories/
 ├── composition/                             ← fixtures/ + derived-state/: the positional-composition showcase (withComputed() in both placements)
 ├── filtering/                               ← fixtures/ + filtering-story.css + filtering-story.pipes.ts + 2 hosts
 │   └── client-filtering/  server-filtering/
-├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 5 hosts
-│   └── grouping-static/  grouping-async-rule/  grouping-regressions/
-│       grouping-collapsible/  grouping-selection/
+├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 8 hosts
+│   └── grouping-basic/  grouping-when/  grouping-aggregates/  grouping-async-rule/
+│       grouping-order/  grouping-columns/  grouping-collapsible/  grouping-selection/
 └── selection/                               ← fixtures/ + selection-story.css + 3 hosts
     └── multi-selection/  single-selection/  filtering-selection/
 ```
@@ -117,7 +117,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `filtering/filtering-story.css` | Filtering-specific styling — filter row, active markers, chip summary, notices |
 | `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
 | `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
-| `grouping/fixtures/schema.ts` | One table config over one column list, the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative — #45's demo), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `createDealFilters()` |
+| `grouping/fixtures/schema.ts` | Two table configs over one column list — `groupingConfig` (its `amount` column carries `sumAmount`) and `plainGroupingConfig` (no `aggregateFn` anywhere), the second derived from the first so the column list is written once. Plus the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative, which `grouping-aggregates/` injects), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `dealFilters` |
 | `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
 | `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
 | `grouping/fixtures/http.ts` | `createGroupedRowsResource()` and `createGroupingPreferenceResource()` (`httpResource`-based, 2026-09-16) — the refetch and async-grouping-rule sources; `toErrorMessage()` replaces the old `normalizeError`/`isMessageBody` pair |
@@ -143,7 +143,7 @@ contain" below for when to reach for one):
 | Directive | `row-edit/ui/focus-new-row.directive.ts` |
 
 Story-local **arg types** follow the same one-story-stays-local rule:
-`grouping-static/grouping-static.types.ts`, `grouping-regressions/grouping-regressions.types.ts`,
+`grouping-order/grouping-order.types.ts`, `grouping-columns/grouping-columns.types.ts`,
 `grouping-selection/grouping-selection.types.ts`, `client-filtering/client-filtering.types.ts`,
 `sorting-editing.types.ts`, `gated-multiple-optimistic.types.ts` and
 `multi-selection/multi-selection.types.ts` each name that host's own Storybook controls or
@@ -245,8 +245,10 @@ copy honestly (from the 2026-09-15/16 audit of every non-grouping host,
    a pipe, or in a `computed()`/derived record if it's a per-row lookup rather than pure
    formatting.
 3. **Regression-demo arithmetic** — code that injects or measures a known-wrong state. Legitimate
-   when it *is* the story's subject (`grouping-regressions/`), not when it's bolted onto a host
-   proving something else.
+   only in the story that owns the API option being degraded, as one control among that option's
+   others (`grouping-aggregates/`'s poison-a-row button, `grouping-order/`'s `throwing` mode),
+   never bolted onto a host proving something else, and never as a story of its own. A degraded
+   path is part of an option's contract — a reader meets it where they meet the option.
 4. **Decision-narration JSDoc** — D-numbers, P-numbers, S-numbers, §-ancestry, competitor issue
    links, ADR rationale. Belongs in `docs/`, not source comments — no exception for being
    demo-only. A bare one-token pointer to a requirement id (`D41`, `§1.6`) may stay; a sentence explaining
@@ -346,11 +348,11 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
 - **The page is standalone, not attached.** `<Meta title="Table / Grouping" name="Docs" />` with no
   `of=`, so the docs entry lands as a sibling leaf (`table-grouping--docs`) beside the stories
   rather than nesting under one of them. Canvases come from any imported CSF:
-  `<Canvas of={StaticStories.Static} />`.
+  `<Canvas of={BasicStories.Basic} />`.
 - **No `autodocs`.** `.storybook/main.ts` configures none, so deleting a per-story mdx removes its
   docs entry outright — no `tags: ['!autodocs']` needed anywhere.
 - **Stories are flat.** Every CSF in a feature shares one `title` (`'Table / Grouping'`) and names
-  its export for the lesson (`Static`, `AsyncRule`, `SilentDegradation`), so the sidebar is one
+  its export for the lesson (`Basic`, `When`, `Aggregates`, `AsyncRule`), so the sidebar is one
   level: a feature node holding its stories plus `Docs`. Storybook accepts a shared title across
   files and keeps each CSF's own `component`. Where the display name needs a character an
   identifier cannot carry, set it explicitly: `name: 'Selection × Filtering'`.
@@ -360,8 +362,8 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   A file belonging to exactly one host (`sorting-editing.schema.ts`, `external-write.css`) stays in
   that story's own group.
 - **Why one page:** the code-tabs block is hand-written markup, and per-story mdx meant a fresh
-  copy of it for every story. It also makes the reading order explicit — "`Static` is the one to
-  copy, `Regressions` is not" is a sequence, which three sibling pages cannot express.
+  copy of it for every story. It also makes the reading order explicit — "`Basic` first, then the
+  one option you came for" is a sequence, which sibling pages cannot express.
 
 ## `.stories.ts` and `.mdx`
 
@@ -502,32 +504,34 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   `withSorting()` on top of `withFiltering()` and is where selection-under-filter is measured —
   see `0-product/filtering.md` §5 F-S1; it lives under `selection/` because selection surviving
   row churn, not the filtering itself, is what the story proves.
-- **`grouping/` — five hosts, split by what the table *is*, not by feature flags.**
-  `grouping-static/` is the grouped table as its own product: `withGrouping()` and **no second
-  feature at all**, deliberately including no `withExpansion()`, because a chevron with nothing to
-  expand is a control that does nothing. It had a rep filter until 2026-09-15 — the lesson was
-  real (aggregates are post-filter) but it belonged to a story that owns filtering, not to the one
-  host advertised as copyable. `fixtures/schema.ts` lost four config exports the same day: five
-  per-story names held one identical `TableConfig`, and that file is a published code tab, so five
-  names read as five setups. Per-story `*_GROUPING_LEVELS` stay — those do differ. `grouping-collapsible/` is the navigable outline — `withExpansion()` +
-  `withSorting()`, a real `<button>` chevron carrying `aria-expanded`, and three separate attacks
-  on the collapse state. `grouping-selection/` renders all three peer cascade defaults off one
-  `rowsOf()` call.
+- **`grouping/` — eight hosts, one per lesson in the public grouping API.** The split axis is
+  *what a reader came to learn*, not what the table is: `grouping-basic/` (`initial` as the
+  declared-level array, and writing levels through `table.grouping`), `grouping-when/` (cluster
+  admission — the table-wide `when` AND-combined with a per-column one off an `applyGrouping`
+  rule), `grouping-aggregates/` (`aggregateFn` as a **column** option, and its ADR-0014 degrade
+  path under a control that poisons one record), `grouping-async-rule/` (`applyGroupingAsync`
+  over a real intercepted request — pending, resolved and failed), `grouping-order/`
+  (`applyGroupOrder` — sibling order at one level, including the silent no-op on a column that
+  is not currently a level), `grouping-columns/` (`groupedColumnMode` — what becomes of a column
+  once it is a level), `grouping-collapsible/` (the navigable outline: `withExpansion()`, a real
+  `<button>` chevron carrying `aria-expanded`, and collapse state under regrouping and refetch),
+  and `grouping-selection/` (a group checkbox built from one `rowsOf()` call).
 
-  `grouping-async-rule/` and `grouping-regressions/` were **split out of `grouping-static/`
-  2026-09-15**, because that host had grown to carry three lessons and its source is what the
-  mdx's TS tab shows verbatim. A reader copying it got a comparator built to throw, a transport
-  knob and two regression controls along with the grouping. The async rule owns the
-  pending/resolved/failed states over a real intercepted request; the regressions host owns
-  `groupOrder`'s five modes including the throwing one, the level naming no column, and the
-  `aggregateFn` handed a value it refuses.
+  **One story, one lesson** (2026-09-19, `work/grouping-stories/3-lesson-audit.md`). The previous
+  split was by what the table *is* — `grouping-static/` as "the grouped table as its own product"
+  — which let one host accumulate three lessons at once, and a host's source is what the mdx's TS
+  tab shows verbatim. `grouping-static/` became `grouping-basic/` plus `grouping-when/`,
+  `grouping-aggregates/` and `grouping-columns/`. `grouping-regressions/` and `grouping-crud/`
+  were removed outright: a degraded path belongs to the option it degrades (see "What a host may
+  not contain" #3), and a CRUD flow that touches no grouping-specific API is a spec case, not a
+  story — those four facts now live in `with-grouping`'s own spec. Granularity goes below
+  "feature": one config option earns a story when a reader would come looking for that option by
+  name.
 
-  **A regression demo is now its own story, and says so.** The rule: a host that ships a
-  known-wrong behavior links the issue on canvas and is marked "do not copy" — it does not sit
-  inside the story a reader is meant to copy. A broken summary takes the whole table down (#45)
-  and a dropped grouping level is unannounced; blank group keys still cluster unlabelled in
-  `grouping-static/`, which is the one regression left in it, because a blank key is ordinary data
-  rather than misuse.
+  **A story's fixtures must not carry another story's scenery.** `fixtures/schema.ts` exports two
+  configs for this reason — a host whose lesson is not aggregation composes `plainGroupingConfig`,
+  so no unexplained totals sit on its canvas. The two are derived from one column list, not
+  written twice.
 - **`selection/` — three hosts, because the mode is a construction-time argument.**
   `multi-selection/` puts the whole read/write surface of `withSelection()` on one screen,
   including a `selectionChanged` event log that is the only place D9's single-delta clear and

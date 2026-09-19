@@ -7,7 +7,7 @@
 
   <ngp-grouping-when-toolbar
     [minCategoryRowCount]="minCategoryRowCountValue()"
-    (minCategoryRowCountChange)="minCategoryRowCountValue.set($event)"
+    (setMinCategorySize)="minCategoryRowCountValue.set($event)"
   />
 
   <p class="grouping-story__notice">

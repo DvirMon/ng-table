@@ -47,14 +47,13 @@ export class GroupingAggregatesStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
-  /** Read off the data, not a flag: the failure is data-dependent, which is exactly why
-   * ADR-0014 classes it runtime rather than construction. */
+  /** Read off the data, not a flag — the failure is data-dependent (ADR-0014). */
   protected readonly isSummaryBroken = computed(() =>
     this.data().some((row) => row.amount < 0)
   );
 
   /** Poisons — or restores — one row's `amount`. A patched row, not a flag the fixture reads:
-   * `aggregateFn` fails on a *record*, which is what makes it the runtime class. */
+   * `aggregateFn` fails on a *record*. */
   protected toggleBrokenSummary(): void {
     const shouldBreak = !this.isSummaryBroken();
     this.table.value.update(
