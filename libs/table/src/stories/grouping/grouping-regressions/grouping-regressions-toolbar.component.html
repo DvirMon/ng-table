@@ -1,7 +1,7 @@
 <div class="story-host__toolbar">
   <button type="button" (click)="resetLevels.emit()">Reset levels</button>
   <button type="button" (click)="groupByMissingColumn.emit()">
-    Group by a column that isn't there
+    Group by a field that doesn't exist
   </button>
   <button type="button" (click)="toggleBrokenSummary.emit()">
     {{ isSummaryBroken() ? "Restore that group's summary" : "Break one group's summary" }}

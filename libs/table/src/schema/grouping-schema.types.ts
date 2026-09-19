@@ -1,9 +1,9 @@
 import type { Resource, Signal } from '@angular/core';
 import type { GroupOrder, GroupWhen } from '../api/types';
-import type { ColumnsPath } from './column-schema.types';
+import { COLUMN_RECORDER, type ColumnSchemaRecorder } from './column-schema.types';
 
 /**
- * One schema-fn/rules-array level. `enable`, when present, contributes whether this column is an
+ * One `applyGrouping()` declaration. `enable`, when present, contributes whether this field is an
  * active grouping level; `undefined` (pending) makes the whole rule set abstain — never "this
  * level doesn't apply", that's `false`, and never "the value hasn't loaded", that's also
  * `undefined` but resolved to abstain at the fold, not at this rule. Omitting `enable` means this
@@ -17,6 +17,13 @@ export interface GroupingRule<TRow = unknown> {
   readonly enable?: () => boolean | undefined;
   /** Admission for this column only, AND'd with the table-wide `when`. */
   readonly when?: GroupWhen<TRow>;
+  /** Extracts the group key from the targeted row field. The engine does not defensively
+   * normalize, stringify or deep-compare keys — this must return a primitive (D7). Omit when the
+   * field is already a primitive. */
+  readonly extractValue?: (fieldValue: unknown) => unknown;
+  /** Explicit group-header label. Resolves explicit -> a column whose id matches this rule's
+   * targeted field -> the raw field name (D7a). */
+  readonly label?: string;
 }
 
 /**
@@ -39,9 +46,13 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
   readonly onError: (error: unknown) => boolean;
   /** Admission for this column only, AND'd with the table-wide `when`. */
   readonly when?: GroupWhen<TRow>;
+  /** See `GroupingRule.extractValue` — same contract, same D7 rationale. */
+  readonly extractValue?: (fieldValue: unknown) => unknown;
+  /** See `GroupingRule.label` (D7a). */
+  readonly label?: string;
 }
 
-/** One column's `applyGroupOrder(path.x, cmp)` declaration. Unlike `GroupingRule`/
+/** One field's `applyGroupOrder(path.x, cmp)` declaration. Unlike `GroupingRule`/
  * `GroupingAsyncRule`, this kind never activates or deactivates a level — it only orders that
  * level's siblings once it's active. */
 export interface GroupOrderRule<TRow = unknown> {
@@ -55,5 +66,26 @@ export type AnyGroupingRule<TRow = unknown> =
   | GroupingAsyncRule<TRow>
   | GroupOrderRule<TRow>;
 
+/**
+ * Handle fabricated by `GroupingPath`'s `get` trap for one row field — NOT a `ColumnHandle`.
+ * Same recorder shape (`column-schema.ts`'s proxy machinery is key-space agnostic), but a
+ * distinct type: a grouping schema fn never sees a declared column id (D7).
+ */
+export interface GroupingHandle<TRow, K extends string = string> {
+  readonly id: K;
+  /** @internal */
+  readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow, AnyGroupingRule<TRow>>;
+}
+
+/**
+ * Structural `path` proxy handed to a grouping schema fn — a property access fabricates a
+ * `GroupingHandle` per row field. Keyed by `Extract<keyof TRow, string>`, not a declared column
+ * id: grouping partitions data, and the identifier a consumer writes should name the thing being
+ * partitioned (D7, `2-decisions.md`). Same shape `FiltersPath<TRow>` already uses.
+ */
+export type GroupingPath<TRow> = {
+  readonly [K in Extract<keyof TRow, string>]: GroupingHandle<TRow, K>;
+};
+
 /** Schema fn passed as `WithGroupingConfig.schema`. */
-export type GroupingSchemaFn<TRow> = (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void;
+export type GroupingSchemaFn<TRow> = (path: GroupingPath<TRow>) => void;

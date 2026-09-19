@@ -10,7 +10,7 @@ import {
   withGrouping,
   type GroupKey,
 } from '../../../index';
-import type { GroupingRule } from '../../../schema/grouping-schema.types';
+import { applyGrouping } from '../../../schema/grouping-rules';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { DEAL_COLUMN_IDS, groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -62,7 +62,15 @@ export class GroupingStaticStoryHostComponent {
     withGrouping({
       initial: STATIC_GROUPING_LEVELS,
       when: (cluster) => !this.keepBlankRegionsFlat() || isPresentKey(cluster.key),
-      rules: [this.buildCategoryMinSizeRule()],
+      // A `when`-only rule (no `enable`): contributes no level activation, only a per-column
+      // predicate for 'category'. Checking the signals inside the predicate (not wrapping the
+      // rule itself) allows reactive toggling without rebuilding the table.
+      schema: (path) =>
+        applyGrouping(path.category, {
+          when: (cluster) =>
+            !this.applyMinCategorySize() ||
+            cluster.rows.length >= this.minCategoryRowCountValue(),
+        }),
     })
   );
 
@@ -106,24 +114,6 @@ export class GroupingStaticStoryHostComponent {
   }
 
   /**
-   * Builds a grouping rule that omits `enable` — it contributes no level activation, only a
-   * per-column `when` predicate for the 'category' level. The predicate rejects category clusters
-   * with fewer than `minCategoryRowCountValue` rows when `applyMinCategorySize` is enabled,
-   * demonstrating AND-combination with the table-wide `when`.
-   *
-   * Checking the signals inside the predicate (not wrapping the rule itself) allows reactive
-   * toggling without rebuilding the table.
-   */
-  private buildCategoryMinSizeRule(): GroupingRule<DealRow> {
-    return {
-      kind: 'grouping',
-      columnId: 'category',
-      when: (cluster) =>
-        !this.applyMinCategorySize() || cluster.rows.length >= this.minCategoryRowCountValue(),
-    };
-  }
-
-  /**
    * What happens to a column once it becomes a level, over the public column updaters. Reads only
    * the two signals that decide the target state; the column list is read and written inside
    * `untracked()`, so the effect never re-triggers off its own write.
@@ -138,7 +128,7 @@ export class GroupingStaticStoryHostComponent {
         const isGroupedColumn = this.table.isGroupedBy(column.id);
         const shouldBeVisible = !(shouldHideGroupedColumns && isGroupedColumn);
         if (column.visible !== shouldBeVisible) {
-          this.table.columns.update(toggleColumnVisibility<DealRow>(column.id));
+          this.table.columns.update(toggleColumnVisibility(column.id));
         }
       }
 
@@ -146,7 +136,7 @@ export class GroupingStaticStoryHostComponent {
       const orderedIds = shouldMoveGroupedToFront
         ? [...grouping, ...DEAL_COLUMN_IDS.filter((id) => !grouping.includes(id))]
         : DEAL_COLUMN_IDS;
-      this.table.columns.update(reorderColumns<DealRow>(orderedIds));
+      this.table.columns.update(reorderColumns(orderedIds));
     });
   }
 }

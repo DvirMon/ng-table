@@ -25,8 +25,10 @@ function sumAmount(rows: DealRow[]): number {
 
 /** One column list for every grouping story — they differ in which features they compose, not in
  * what the table holds. `owner` is the one column whose row field is an object, so it carries the
- * `accessor` that turns it into the value a cell renders and a group keys on; every other column
- * falls back to the default `row[id]`. */
+ * `accessor` that turns it into the value a cell renders; every other column falls back to the
+ * default `row[id]`. Grouping no longer reads a column's `accessor` at all (D7 — a level's value
+ * comes straight off the row field, or through the rule's own `extractValue`), so this list needs no
+ * literal-id inference and takes a plain `ColumnDefInput<DealRow>[]` annotation. */
 const dealColumns: ColumnDefInput<DealRow>[] = [
   { id: 'region', label: 'Region' },
   { id: 'category', label: 'Category' },
@@ -61,8 +63,10 @@ export const RENESTED_GROUPING_LEVELS: ColumnId<DealRow>[] = ['category', 'regio
  * only reaches descendants from one that is also said to reach parents. */
 export const SELECTION_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
 
-/** The level `grouping-regressions/`'s "Group by a column that isn't there" control adds — no
- * column carries this id, so `resolveGroupingLevels` drops it and the table groups by the rest. */
+/** The level `grouping-regressions/`'s "Group by a field that doesn't exist" control adds — no
+ * `DealRow` field carries this key, so every row reads `undefined` for it and the table groups
+ * everything into one phantom cluster instead of crashing (D7 — a grouping level names a row
+ * field directly, with no column-existence guard). */
 export const MISSING_GROUPING_LEVEL = 'territory';
 
 /** Backs `grouping-regressions/`'s `external-list` group order — a caller-supplied ranking, the

@@ -14,8 +14,8 @@ import {
 } from '../../table.mock';
 import { setColumns } from '../../mutations/update-columns';
 import { setGroupLevels } from '../../mutations/update-grouping';
-import { applyGrouping, applyGroupOrder } from '../../schema/grouping-rules';
-import type { GroupingAsyncRule } from '../../schema/grouping-schema.types';
+import { applyGrouping, applyGroupingAsync, applyGroupOrder } from '../../schema/grouping-rules';
+import type { GroupingHandle } from '../../schema/grouping-schema.types';
 import type { WritableView } from '../../engine/writable-view';
 import { filter } from './with-filtering/rules';
 import type { FiltersPath } from './with-filtering/types';
@@ -35,10 +35,24 @@ import type {
   TableStore,
 } from '../types';
 
+// Grouping reads row fields directly, never a column's `accessor` (D7) — no literal-id
+// inference is needed here, so a plain `ColumnDef<GroupingMockRow>[]` annotation is enough.
 function makeColumns(): ColumnDef<GroupingMockRow>[] {
   return [
-    { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'Region' },
-    { id: 'category', accessor: (row) => row.category, visible: true, order: 1, label: 'Category' },
+    {
+      id: 'region',
+      accessor: (row) => row.region,
+      visible: true,
+      order: 0,
+      label: 'Region',
+    },
+    {
+      id: 'category',
+      accessor: (row) => row.category,
+      visible: true,
+      order: 1,
+      label: 'Category',
+    },
     {
       id: 'amount',
       accessor: (row) => row.amount,
@@ -228,19 +242,20 @@ describe('withGrouping', () => {
     expect(usHeader?.aggregates?.['amount']).toBe(75);
   });
 
-  it('initial naming an unknown column throws synchronously when composed', () => {
-    expect(() =>
-      inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['not-a-column'] })
-        )
+  it('initial naming a field no row carries degrades to one phantom cluster, never a throw (D7)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['not-a-column'] })
       )
-    ).toThrow();
+    );
+
+    expect(store.grouping()).toEqual(['not-a-column']);
+    expect(store.renderRows().filter((row) => row.kind === 'group')).toHaveLength(1);
   });
 
-  it('an unknown level passed to setGroupLevels does not throw — it is dropped, not the whole grouping', () => {
+  it('an unknown level passed to setGroupLevels does not throw — it degrades to one phantom cluster per parent, never dropped (D7)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -257,9 +272,15 @@ describe('withGrouping', () => {
     // pipeline/render read time, not at write time.
     expect(store.grouping()).toEqual(['region', 'not-a-column']);
 
+    // 'not-a-column' names no row field, so every row shares the same `undefined` value at that
+    // level — one uninformative phantom cluster per region, but still rendered (D7: an unknown
+    // field degrades to a phantom cluster, it is never silently dropped).
     const rows = store.renderRows();
-    expect(rows.filter((row) => row.kind === 'group')).toHaveLength(2); // region only
-    expect(rows.every((row) => row.kind !== 'group' || row.depth === 0)).toBe(true); // no second level
+    const headerRows = rows.filter((row) => row.kind === 'group');
+    expect(headerRows).toHaveLength(4); // 2 region headers + 1 phantom child each
+    expect(headerRows.filter((row) => row.depth === 0)).toHaveLength(2); // US, EU
+    expect(headerRows.filter((row) => row.depth === 1)).toHaveLength(2); // phantom 'not-a-column' cluster per region
+    expect(rows.every((row) => row.kind !== 'row' || row.depth === 2)).toBe(true); // every leaf nested one level deeper
   });
 
   it('groupOrder omitted preserves first-occurrence cluster order (regression, unchanged from issue #7)', () => {
@@ -849,7 +870,7 @@ describe('groupingLevels (#81)', () => {
     expect(store.groupingLevels()).toEqual([]);
   });
 
-  it('dropped level (D4): a level naming no known column is absent, agreeing with what renderRows() actually emits', () => {
+  it('dropped level (D4/D7): a level naming no known column has no ColumnDef, but isGroupedBy still agrees with what renderRows() actually emits', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -861,15 +882,22 @@ describe('groupingLevels (#81)', () => {
     store.grouping.update(setGroupLevels(['region', 'ghost']));
     TestBed.tick();
 
+    // groupingLevels() can only report a ColumnDef for a real column — 'ghost' has none, so it's
+    // absent here even though it is still an active grouping level.
     expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
-    expect(store.isGroupedBy('ghost')).toBe(false);
+    // isGroupedBy agrees with what actually renders below, not with groupingLevels()'s
+    // column-only view: 'ghost' produces a real (if uninformative) header per region, so it
+    // reads as grouped.
+    expect(store.isGroupedBy('ghost')).toBe(true);
 
-    // Agreement with the pipeline: "ghost" never clusters — every header is a depth-0 region
-    // header, no nested per-"ghost" level exists, matching groupIds() (derived separately, from
-    // the same resolved level list) header-for-header.
+    // Agreement with the pipeline: "ghost" still clusters — one phantom header per region
+    // (every row in a region shares the same `undefined` "ghost" value), it is never dropped
+    // (D7). Depth 0 = region headers, depth 1 = the phantom "ghost" cluster nested under each.
     const headerRows = store.renderRows().filter((row) => row.kind === 'group');
-    expect(headerRows.map((row) => row.id).sort()).toEqual([EU_HEADER_ID, US_HEADER_ID].sort());
-    expect(headerRows.every((row) => row.depth === 0)).toBe(true);
+    expect(headerRows.filter((row) => row.depth === 0).map((row) => row.id).sort()).toEqual(
+      [EU_HEADER_ID, US_HEADER_ID].sort()
+    );
+    expect(headerRows.filter((row) => row.depth === 1)).toHaveLength(2); // phantom "ghost" cluster per region
     expect(store.groupIds().sort()).toEqual(headerRows.map((row) => row.id).sort());
   });
 
@@ -889,14 +917,12 @@ describe('groupingLevels (#81)', () => {
     TestBed.tick();
     expect(levelIds()).toEqual(['region', 'category']);
 
-    store.columns.update(
-      setColumns<GroupingMockRow>(makeColumns().filter((column) => column.id !== 'region'))
-    );
+    store.columns.update(setColumns(makeColumns().filter((column) => column.id !== 'region')));
     TestBed.tick();
     expect(levelIds()).toEqual(['category']);
   });
 
-  it('overlay-decided levels: reflects a schema-fn fold, including while an async rule is still pending', () => {
+  it('overlay-decided levels: reflects an async rule masking a declared level, including while still pending', () => {
     const control = makeControllableResource<unknown>();
     const store = inContext(() =>
       createTable(
@@ -904,17 +930,17 @@ describe('groupingLevels (#81)', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region'],
-          rules: [makeAsyncGroupingRule(control, 'category')],
+          schema: (path) => applyAsyncGroupingRule(path.region, control),
         })
       )
     );
 
-    // Pending: holds the last explicit (base) grouping.
+    // Pending: abstains, holding the declared array unmasked.
     expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
 
-    control.resolve(true);
+    control.resolve(false);
     TestBed.tick();
-    expect(store.groupingLevels().map((column) => column.id)).toEqual(['category']);
+    expect(store.groupingLevels().map((column) => column.id)).toEqual([]);
   });
 });
 
@@ -1321,8 +1347,8 @@ describe('pipeline order (story 22)', () => {
 /**
  * Minimal controllable `Resource` test double — mirrors `engine/grouping-rules.spec.ts`'s
  * `makeControllableResource`/`makeAsyncRule` (Step 3), reused here for public-surface
- * (`rules`-array `GroupingAsyncRule`) coverage rather than inventing a second harness. Only the
- * subset `buildAsyncGroupingRuleEntry` actually reads (`status`, `value`, `error`).
+ * (`schema`-recorded `applyGroupingAsync`) coverage rather than inventing a second harness. Only
+ * the subset `buildAsyncGroupingRuleEntry` actually reads (`status`, `value`, `error`).
  */
 function makeControllableResource<TResult>(): {
   resource: Resource<TResult | undefined>;
@@ -1347,51 +1373,38 @@ function makeControllableResource<TResult>(): {
   };
 }
 
-function makeAsyncGroupingRule(
+function applyAsyncGroupingRule(
+  path: GroupingHandle<GroupingMockRow, 'region'>,
   control: { resource: Resource<unknown> },
-  columnId: string,
   onError: (error: unknown) => boolean = () => false
-): GroupingAsyncRule<GroupingMockRow> {
-  return {
-    kind: 'grouping-async',
-    columnId,
+): void {
+  applyGroupingAsync(path, {
     params: () => 'p',
     factory: () => control.resource,
     onSuccess: (result) => Boolean(result),
     onError,
-  };
+  });
 }
 
-describe('groupingRule declarative sugar (#26)', () => {
+describe('grouping declarative sugar (#26)', () => {
   // `applyGroupingAsync` without `onError` is a `@ts-expect-error` compile-time case, already
   // covered by `schema/grouping-rules.spec.ts` (Step 3, "applyGroupingAsync without onError is a
   // compile error") — not duplicated here.
 
-  describe('groupingRule lambda: override / fallback / actively-empty', () => {
-    it('returning a value overrides baseGrouping', () => {
+  describe('enable masks the declared array: no-introduce / hold / off', () => {
+    // Intent, not current behavior. `initial` declares which columns group and in what nesting
+    // order; a rule only gates one of them. Introducing a level the array never declared is
+    // exactly what the old replace-fold allowed and the mask model removes.
+    it('a rule cannot introduce a level absent from initial', () => {
       const store = inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             initial: ['region'],
-            groupingRule: () => ['category'],
-          })
-        )
-      );
-
-      expect(store.grouping()).toEqual(['category']);
-    });
-
-    it('returning undefined (abstain) falls back to baseGrouping', () => {
-      const active = signal(false);
-      const store = inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({
-            initial: ['region'],
-            groupingRule: () => (active() ? ['category'] : undefined),
+            schema: (path) => {
+              applyGrouping(path.category, { enable: () => true });
+            },
           })
         )
       );
@@ -1399,14 +1412,33 @@ describe('groupingRule declarative sugar (#26)', () => {
       expect(store.grouping()).toEqual(['region']);
     });
 
-    it('returning [] groups by nothing — distinct from abstain, not baseGrouping', () => {
+    it('enable returning undefined (pending) holds the declared array unmasked', () => {
       const store = inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             initial: ['region'],
-            groupingRule: () => [],
+            schema: (path) => {
+              applyGrouping(path.region, { enable: () => undefined });
+            },
+          })
+        )
+      );
+
+      expect(store.grouping()).toEqual(['region']);
+    });
+
+    it('enable false on every declared level groups by nothing', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initial: ['region'],
+            schema: (path) => {
+              applyGrouping(path.region, { enable: () => false });
+            },
           })
         )
       );
@@ -1416,16 +1448,17 @@ describe('groupingRule declarative sugar (#26)', () => {
     });
   });
 
-  describe('config layers fold identically', () => {
-    it('schema-fn, rules-array, and lambda layers produce the same fold for equivalent rules', () => {
+  describe('schema fold', () => {
+    it('folds every recorded rule into one mask, all active', () => {
       const regionActive = signal(true);
       const categoryActive = signal(true);
 
-      const schemaFnStore = inContext(() =>
+      const store = inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
+            initial: ['region', 'category'],
             schema: (path) => {
               applyGrouping(path.region, { enable: () => regionActive() });
               applyGrouping(path.category, { enable: () => categoryActive() });
@@ -1434,45 +1467,17 @@ describe('groupingRule declarative sugar (#26)', () => {
         )
       );
 
-      const rulesArrayStore = inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({
-            rules: [
-              { kind: 'grouping', columnId: 'region', enable: () => regionActive() },
-              { kind: 'grouping', columnId: 'category', enable: () => categoryActive() },
-            ],
-          })
-        )
-      );
-
-      const lambdaStore = inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({
-            groupingRule: () => {
-              const levels: string[] = [];
-              if (regionActive()) levels.push('region');
-              if (categoryActive()) levels.push('category');
-              return levels;
-            },
-          })
-        )
-      );
-
-      expect(schemaFnStore.grouping()).toEqual(['region', 'category']);
-      expect(rulesArrayStore.grouping()).toEqual(schemaFnStore.grouping());
-      expect(lambdaStore.grouping()).toEqual(schemaFnStore.grouping());
+      expect(store.grouping()).toEqual(['region', 'category']);
     });
 
-    it('call order in the schema fn determines level order', () => {
+    it('call order in the schema fn carries no meaning - initial fixes level order', () => {
       const store = inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
+            initial: ['region', 'category'],
+            // Deliberately recorded in the opposite order to `initial`.
             schema: (path) => {
               applyGrouping(path.category, { enable: () => true });
               applyGrouping(path.region, { enable: () => true });
@@ -1481,29 +1486,31 @@ describe('groupingRule declarative sugar (#26)', () => {
         )
       );
 
-      expect(store.grouping()).toEqual(['category', 'region']);
+      expect(store.grouping()).toEqual(['region', 'category']);
     });
 
-    it('schema-recorded levels precede rules-array levels in the folded order (D8)', () => {
+    it('multiple schema-recorded rules mask the same declared order (D8)', () => {
       const store = inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
+            initial: ['region', 'category'],
             schema: (path) => {
               applyGrouping(path.category, { enable: () => true });
+              applyGrouping(path.region, { enable: () => false });
             },
-            rules: [{ kind: 'grouping', columnId: 'region', enable: () => true }],
           })
         )
       );
 
-      expect(store.grouping()).toEqual(['category', 'region']);
+      // Neither rule contributes ordering — masking only ever narrows `initial`.
+      expect(store.grouping()).toEqual(['category']);
     });
   });
 
   describe('initial + schema in one call (#84)', () => {
-    it('the schema rule overrides the initial seed when it resolves — initial is a seed, not a floor (D6/D7)', () => {
+    it('a schema rule gates a declared level and is inert for an undeclared one — initial is the floor', () => {
       const categoryActive = signal(false);
 
       const store = inContext(() =>
@@ -1519,11 +1526,11 @@ describe('groupingRule declarative sugar (#26)', () => {
         )
       );
 
-      // Rule resolves to `[]` (categoryActive false) — overrides the `['region']` seed entirely.
-      expect(store.grouping()).toEqual([]);
+      // `category` is not declared, so its rule cannot introduce it either way.
+      expect(store.grouping()).toEqual(['region']);
 
       categoryActive.set(true);
-      expect(store.grouping()).toEqual(['category']);
+      expect(store.grouping()).toEqual(['region']);
     });
 
     it('a pending schema rule abstains to initial when given, and to [] when not — proves initial reaches baseGrouping through the new key name', () => {
@@ -1565,7 +1572,9 @@ describe('groupingRule declarative sugar (#26)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             initial: ['region'],
-            rules: [{ kind: 'grouping', columnId: 'category', enable: () => undefined }],
+            schema: (path) => {
+              applyGrouping(path.category, { enable: () => undefined });
+            },
           })
         )
       );
@@ -1579,10 +1588,11 @@ describe('groupingRule declarative sugar (#26)', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
-            rules: [
-              { kind: 'grouping', columnId: 'region', enable: () => true },
-              { kind: 'grouping', columnId: 'category', enable: () => false },
-            ],
+            initial: ['region', 'category'],
+            schema: (path) => {
+              applyGrouping(path.region, { enable: () => true });
+              applyGrouping(path.category, { enable: () => false });
+            },
           })
         )
       );
@@ -1597,19 +1607,22 @@ describe('groupingRule declarative sugar (#26)', () => {
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
-            rules: [makeAsyncGroupingRule(control, 'region', () => true)],
+            initial: ['region'],
+            schema: (path) => applyAsyncGroupingRule(path.region, control, () => false),
           })
         )
       );
 
-      // Before settle: the entry is pending -> the whole set abstains -> baseGrouping ([]).
-      expect(store.grouping()).toEqual([]);
+      // Before settle: the entry is pending -> the whole mask abstains -> declared array
+      // passes through unmasked.
+      expect(store.grouping()).toEqual(['region']);
 
       control.reject(new Error('boom'));
       TestBed.tick();
 
-      // onError resolved to a real `true` contribution — never re-treated as still-pending.
-      expect(store.grouping()).toEqual(['region']);
+      // onError resolved to a real `false` contribution, masking the level off — never
+      // re-treated as still-pending (pending would have left `region` unmasked).
+      expect(store.grouping()).toEqual([]);
     });
   });
 
@@ -1622,16 +1635,15 @@ describe('groupingRule declarative sugar (#26)', () => {
             signal<GroupingMockRow[]>(mockGroupingRows),
             { trackBy: mockGroupingTrackBy, columns: makeColumns() },
             withGrouping({
-              rules: [
-                { kind: 'grouping', columnId: 'region', enable: () => true },
-                {
-                  kind: 'grouping',
-                  columnId: 'category',
+              initial: ['region', 'category'],
+              schema: (path) => {
+                applyGrouping(path.region, { enable: () => true });
+                applyGrouping(path.category, {
                   enable: () => {
                     throw new Error('boom');
                   },
-                },
-              ],
+                });
+              },
             })
           )
         );
@@ -1649,12 +1661,60 @@ describe('groupingRule declarative sugar (#26)', () => {
     });
   });
 
-  it('an updater write to grouping is shadowed while an active rule keeps returning a value (D7)', () => {
+  describe('a rule declaring neither enable nor when', () => {
+    it('throws at construction, naming the offending column', () => {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<GroupingMockRow[]>(mockGroupingRows),
+            { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+            withGrouping({
+              initial: ['region'],
+              schema: (path) => {
+                applyGrouping(path.category, {});
+              },
+            })
+          )
+        )
+      ).toThrow(
+        "[withGrouping] applyGrouping on field 'category' declares neither enable nor when."
+      );
+    });
+  });
+
+  it('a when-only rule (no enable) never masks — it coexists with an unrelated activating rule', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ groupingRule: () => ['region'] })
+        withGrouping({
+          initial: ['region', 'category'],
+          schema: (path) => {
+            // `when`-only: contributes no entry, so it can never mask `region` off.
+            applyGrouping(path.region, { when: () => true });
+            applyGrouping(path.category, { enable: () => false });
+          },
+        })
+      )
+    );
+
+    expect(store.grouping()).toEqual(['region']);
+  });
+
+  // Intent, not current behavior, and the reason D7's accepted shadowing consequence goes away:
+  // a rule masks whatever the array currently holds, so it can switch a level off but can never
+  // replace the array. An updater write is therefore always respected.
+  it('an updater write to grouping is respected, then masked — never replaced', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region'],
+          schema: (path) => {
+            applyGrouping(path.region, { enable: () => true });
+          },
+        })
       )
     );
 
@@ -1662,48 +1722,33 @@ describe('groupingRule declarative sugar (#26)', () => {
 
     store.grouping.update(setGroupLevels(['category']));
 
-    // Documented behavior (D7's accepted consequence), not a bug: the write lands on
-    // `baseGrouping`, but while `groupingRule` keeps actively returning a value, `grouping()`
-    // continues to reflect the rule's output, never the shadowed write.
-    expect(store.grouping()).toEqual(['region']);
+    // The write lands and holds: `region`'s rule has no say over a level the array no longer
+    // declares, and `category` carries no rule, so nothing masks it.
+    expect(store.grouping()).toEqual(['category']);
   });
 
-  it('an unknown column id in rules throws at construction (mirrors the initial check above)', () => {
-    // The schema-fn config layer compiles to this same `rules` array before this validation
-    // runs (`buildGroupingSpec()`'s `config.schema` branch) — the next test proves the schema
-    // path reaches the same guard rather than bypassing it.
-    expect(() =>
-      inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({
-            rules: [{ kind: 'grouping', columnId: 'not-a-column', enable: () => true }],
-          })
-        )
+  it('grouping by a real row field with no declared column works — the case D7 exists for', () => {
+    // `id` is never registered as a column (`makeColumns()` only declares
+    // region/category/amount) — D7 reads a grouping level straight off the row, with no
+    // column-existence guard, so the level is active anyway.
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['id'] })
       )
-    ).toThrow();
+    );
+
+    expect(store.grouping()).toEqual(['id']);
+    // No `ColumnDef` names 'id', so it can't appear in the column-shaped projection — still
+    // correct, since `id` is an active level regardless (proven above).
+    expect(store.groupingLevels()).toEqual([]);
+
+    const headers = store.renderRows().filter((row) => row.kind === 'group');
+    expect(headers.length).toBe(new Set(mockGroupingRows.map((row) => row.id)).size);
   });
 
-  it('an unknown column id recorded via schema throws through the same rules guard, not bypassing it', () => {
-    expect(() =>
-      inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({
-            // `id` is a real `GroupingMockRow` key (typechecks through `path`) but not a
-            // registered column — `makeColumns()` only registers region/category/amount.
-            schema: (path) => {
-              applyGrouping(path.id, { enable: () => true });
-            },
-          })
-        )
-      )
-    ).toThrow();
-  });
-
-  it('no groupingRule/rules configured: renderRows() is unaffected by the fold — regression for initial + updater writes', () => {
+  it('no rules configured: renderRows() is unaffected by the mask — regression for initial + updater writes', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -1719,7 +1764,7 @@ describe('groupingRule declarative sugar (#26)', () => {
 
     expect(store.grouping()).toEqual(['region', 'category']);
     // Same 12-row shape as the "two-level grouping" case in the `withGrouping` describe above —
-    // the base/overlay fold is a pure pass-through when no groupingRule/rules are configured.
+    // the mask is a pure pass-through when no rules are configured.
     expect(store.renderRows()).toHaveLength(12);
   });
 });
@@ -1799,6 +1844,112 @@ describe('when (#85 table-wide admission)', () => {
     expect(
       store.renderRows().some((row) => row.kind === 'group' && row.id === EU_GROUP_ID)
     ).toBe(false);
+  });
+
+  // The state surface reports the *observed* result, not declared intent: a level whose every
+  // cluster `when` rejects is not an applied grouping level, so it is absent from `grouping()`,
+  // `isGroupedBy()` and `groupingLevels()`. Partial rejection is not the same thing — one
+  // surviving cluster keeps the level applied. See grouping's decisions doc.
+  describe('when rejects every cluster at a level', () => {
+    it('drops the level from grouping() entirely, matching the flat render output', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+          { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+          // Largest cluster is US at 2 rows, so no cluster clears the threshold.
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 })
+        )
+      );
+
+      // Render side: entirely flat, no header anywhere.
+      expect(store.groupIds()).toEqual([]);
+      expect(store.renderRows().every((row) => row.kind === 'row')).toBe(true);
+      expect(store.renderRows().every((row) => row.depth === 0)).toBe(true);
+
+      // State side agrees: nothing is grouped.
+      expect(store.grouping()).toEqual([]);
+      expect(store.isGroupedBy('region')).toBe(false);
+      expect(store.groupingLevels()).toEqual([]);
+    });
+
+    it('re-applies and un-applies the level as data crosses the threshold', () => {
+      const data = signal<GroupWhenMockRow[]>([
+        { id: 1, region: 'US', amount: 100 },
+        { id: 2, region: 'US', amount: 200 },
+        { id: 3, region: 'US', amount: 300 },
+      ]);
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 })
+        )
+      );
+
+      expect(store.groupIds()).toHaveLength(1);
+      expect(store.grouping()).toEqual(['region']);
+
+      // One row leaves; the sole cluster drops under the threshold and dissolves.
+      data.set([
+        { id: 1, region: 'US', amount: 100 },
+        { id: 2, region: 'US', amount: 200 },
+      ]);
+
+      expect(store.groupIds()).toEqual([]);
+      expect(store.renderRows().every((row) => row.kind === 'row')).toBe(true);
+      expect(store.grouping()).toEqual([]);
+      expect(store.isGroupedBy('region')).toBe(false);
+
+      // And back again — the declared array is untouched, so the level returns.
+      data.set([
+        { id: 1, region: 'US', amount: 100 },
+        { id: 2, region: 'US', amount: 200 },
+        { id: 3, region: 'US', amount: 300 },
+      ]);
+
+      expect(store.grouping()).toEqual(['region']);
+      expect(store.isGroupedBy('region')).toBe(true);
+    });
+
+    // The boundary: rejection must be total. One surviving cluster keeps the level applied,
+    // so a threshold that dissolves some regions but not others changes nothing in state.
+    it('a partially dissolved level stays applied', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+          { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+          // US (2 rows) survives; EU, null and undefined (1 row each) dissolve.
+          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
+        )
+      );
+
+      expect(store.groupIds()).toHaveLength(1);
+      expect(store.grouping()).toEqual(['region']);
+      expect(store.isGroupedBy('region')).toBe(true);
+    });
+
+    // `enable` reaches the same end state by a different route — it removes the level from the
+    // fold rather than from the cluster tree. Both surfaces must agree either way.
+    it('an async enable resolving false also empties grouping()', () => {
+      const control = makeControllableResource<unknown>();
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initial: ['region'],
+            schema: (path) => applyAsyncGroupingRule(path.region, control),
+          })
+        )
+      );
+
+      control.resolve(false);
+      TestBed.tick();
+
+      expect(store.grouping()).toEqual([]);
+      expect(store.groupIds()).toEqual([]);
+      expect(store.isGroupedBy('region')).toBe(false);
+    });
   });
 
   it('never calls aggregateFn for a dissolved cluster — proven by a throw that never fires', () => {
@@ -2022,15 +2173,24 @@ describe('types', () => {
     });
   });
 
-  // `ColumnId<TRow>` is `Extract<keyof TRow, string> | (string & {})` (`api/types.ts`, D14):
-  // the `string & {}` arm keeps editor autocomplete while leaving any string assignable, so an
-  // unknown id is a runtime throw, not a compile error — see the two "throws" cases above.
-  // What is checkable, and what story 6 actually promises, is that the config's row type is
-  // recovered from the slot rather than written at the call site.
+  // `ColumnId<TRow>` is `Extract<keyof TRow, string> | (string & {})` (`api/types.ts`, D14): the
+  // `string & {}` arm keeps editor autocomplete on `initial` while leaving any string
+  // assignable — `initial` names a level with no runtime existence guard either way (D7, the
+  // "grouping by a real row field" case above). `schema`'s `path`, by contrast, is keyed by
+  // `keyof TRow` and rejects a genuinely unknown field at the call site, below.
   it('recovers the row type from the slot — config is row-typed with no explicit type argument', () => {
     expectTypeOf<Parameters<typeof withGrouping<TableStore<GroupingMockRow>>>[0]>().toEqualTypeOf<
       WithGroupingConfig<GroupingMockRow> | undefined
     >();
     expectTypeOf<keyof GroupingMockRow & string>().toMatchTypeOf<ColumnId<GroupingMockRow>>();
+  });
+
+  it('a field not on the row is a compile error, never a runtime throw (D7)', () => {
+    withGrouping<TableStore<GroupingMockRow>>({
+      schema: (path) => {
+        // @ts-expect-error 'notAField' is not a key of GroupingMockRow.
+        applyGrouping(path.notAField, { enable: () => true });
+      },
+    });
   });
 });

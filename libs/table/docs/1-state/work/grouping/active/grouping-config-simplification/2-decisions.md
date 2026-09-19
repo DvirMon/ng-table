@@ -1,0 +1,233 @@
+---
+title: Decisions — `initial` declares, rules mask
+type: decisions
+status: D1–D4 shipped 2026-09-17 (`5ecc437`); D7 shipped 2026-09-18 (uncommitted); D5/D8 decided 2026-09-19, D5 built 2026-09-19 (uncommitted); D6 open
+date: 2026-09-18
+audience: developers
+---
+
+# Grouping config simplification — decisions
+
+Companion to [`1-plan-config-simplification.md`](1-plan-config-simplification.md). The plan
+sequences the work; this file records what was decided and why, including one decision that
+**supersedes** part of that plan.
+
+---
+
+- **D1 (2026-09-17) — `initial` declares the levels; rules only gate them. Supersedes D6/D7's
+  base+overlay fold.**
+
+  The plan's Step 4 states the base+overlay contract "is **not** deleted". It is. Shipped in
+  `5ecc437`.
+
+  Old fold — a resolved rule set **replaced** `initial` outright:
+
+  ```ts
+  grouping = rulesGroupingRule?.() ?? baseGrouping();   // ['region'] + rule on category → ['category']
+  ```
+
+  New fold — rules mask the declared array:
+
+  ```ts
+  grouping = maskGroupingLevels(baseGrouping(), ruleEntries);
+  ```
+
+  `initial` now owns two things at once: **which** columns group, and — because it is an array —
+  **their nesting order**. A rule contributes one boolean per declared level and nothing else.
+
+  Why: the old shape let a rule introduce a level the consumer never declared, and let a
+  late-resolving rule clobber a user's write to `table.grouping`. The second was logged as
+  accepted in the archived `2-decisions.md` D7 ("a user's updater write can be clobbered when a
+  late-resolving rule stops abstaining"). Under a mask it cannot happen: writes are filtered,
+  never replaced. **D7's accepted consequence is retired, not merely mitigated.**
+
+- **D2 (2026-09-17) — call order in a schema fn carries no meaning.**
+
+  The archived D8 established "Call order = group level order; no index config." Reversed. A
+  schema fn is declarative; statement sequence is a hidden coupling, where swapping two lines
+  silently re-nests the table with nothing at the call site saying so. Nesting order comes from
+  `initial` and only from `initial`.
+
+  Consequence: the plan's Step 8 sync/async call-order bug **dissolves**. `[...sync, ...async]`
+  produced an entry order that did not match call order — which no longer matters, because entry
+  order no longer decides anything. Fix it for tidiness or drop it; it is not a correctness bug
+  under D1.
+
+- **D3 (2026-09-17) — a rule naming an undeclared column is inert.**
+
+  It cannot introduce a level, in either direction. This matches the two neighbouring rule kinds,
+  which already behave this way: `collectGroupPredicates` ("a columnId with no active level is
+  inert") and `GroupOrderRule` ("a silent no-op"). All three rule kinds now agree.
+
+- **D4 (2026-09-17) — a pending rule abstains the whole set, and abstain passes the declared
+  levels through unmasked.**
+
+  `undefined` from any entry means *hold what is declared*, not *group by nothing*. A table
+  therefore holds its levels while a rule resolves rather than flashing flat. Whole-set abstain
+  (not per-level) is carried over unchanged from the old fold.
+
+- **D7 (2026-09-18) — grouping's schema path is keyed by the row model, not by declared column
+  ids. Removes grouping as ADR-0019's motivating consumer.**
+
+  `GroupingSchemaFn`'s path becomes a mapped type over `Extract<keyof TRow, string>` — the same
+  shape `FiltersPath<TRow>` already uses — rather than `ColumnsPath<TRow, TId, …>`.
+
+  Rationale: grouping partitions **data**. The identifier a consumer writes should name the thing
+  being partitioned, not a display concept that happens to read it. Under column keying, grouping
+  by a field you do not display requires declaring a column purely as a data carrier.
+
+  Value extraction moves to the rule. A non-primitive field supplies its own extractor:
+
+  ```ts
+  applyGrouping(path.owner, {
+    enable: () => true,
+    extractValue: (owner) => owner.name,
+  });
+  ```
+
+  Accepted as a fair price, by explicit analogy to Signal Forms' derived-value access.
+
+  **Contract:** `extractValue` must return a primitive. The engine does **not** defensively normalize,
+  stringify or deep-compare keys — a non-primitive key is a consumer error. Two objects with equal
+  contents are never `===`, so an un-extracted object field yields one group per row; stringifying
+  instead collapses every row into one. Both are wrong, and papering over either puts real per-row
+  cost in the hot loop.
+
+  **Label resolution (D7a):** `label` becomes optional on the grouping rule, resolved explicit →
+  matching column's `label` → raw key. Step 2 keeps the common case free but can borrow a label
+  from a column whose accessor computes a different value than `extractValue`. Left standing rather
+  than guarded — it is the same two-copies risk `extractValue` already introduces, and belongs in the
+  docs as a consequence.
+
+  **Counter-arguments on record, all judged non-blocking:**
+
+  - *The value fact now exists twice* — `accessor` for the cell, `extractValue` for the group, with
+    nothing checking they agree. A group header can disagree with the column beneath it. This is
+    the real cost of D7 and is accepted knowingly.
+  - *Derived values have no name in row-key space* — a `fullName` column meaning `first + ' ' +
+    last` cannot be named by any `keyof TRow`. Answered by `extractValue`: name any contributing field
+    and extract. The path segment is then partly decorative, which is accepted.
+  - *Performance* — not a factor. Both designs do one extraction call per row per level; the
+    column-keyed `Map.get(columnId)` is hoistable out of the loop either way. Allocation is a
+    wash. The only real cost would be defensive key normalization, which the contract above
+    forbids.
+
+  **Effect on ADR-0019:** the ADR is not void — `applyVisible`, `applySortNulls` and `metadata()`
+  are genuinely column-scoped and keep every reason the ADR gives. But ADR-0019's Consequences
+  cited grouping's Phase B as the unblock it delivers, and that is no longer true. **Done
+  2026-09-18** — ADR-0019 now carries an Amendment narrowing it to `columnsSchema` and retracting
+  the `ColumnIdOf<S>` cross-argument recovery.
+
+  **Generalized as [ADR-0021](../../../../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md)**
+  — a capability belongs to the column surface if it needs nothing from the row data, to a feature
+  if it reads rows. D7 is that rule's first application; filtering was already compliant.
+
+---
+
+- **D5 (2026-09-19) — `grouping()` reports the **applied** levels, not declared intent.**
+
+  A level that admits no cluster is not a grouping level. The render side already says so —
+  `groupIds()` is `[]` and every row is flat — so reporting it as active makes `grouping()`,
+  `isGroupedBy()` and `groupingLevels()` contradict what is on screen. The public read follows
+  the render.
+
+  The two specs under `describe('when rejects every cluster at a level')` in
+  `with-grouping.spec.ts` are the contract. Built 2026-09-19 (uncommitted) — both now green.
+
+  **Declared vs applied.** `grouping()` cannot both feed clustering and depend on admission, so
+  the value splits in two:
+
+  | | source | consumers |
+  |---|---|---|
+  | **declared** | `maskGroupingLevels(baseGrouping(), ruleEntries)` | `stages.group`, `renderStages.group`, `groupIds`, `rowsOf` |
+  | **applied** | levels with at least one admitted cluster, read off the tree `clusterRows` already builds | `grouping()` read, `groupingLevels`, `isGroupedBy` |
+
+  No cycle: applied is derived *from* the clustered tree, downstream of declared.
+
+  **A level is applied when at least one cluster at its depth is admitted.** `when` is judged per
+  cluster, so partial admission is normal — some clusters grouped, some dissolved to flat. Only
+  total rejection drops the level. (`admitClusters` does not recurse into a rejected parent, so a
+  deeper level counts only where its ancestors survived.)
+
+  **Writes stay declared.** `table.grouping` becomes read-applied / write-declared: the updater
+  still receives and replaces `baseGrouping`, so a gated-off or unadmitted level is never
+  silently dropped by a `grouping.update()` round-trip.
+
+  **Order is unaffected.** Nothing is ever pushed — declared is filtered, applied is filtered
+  again. A level that returns, whether because a rule flipped or because data crossed a
+  threshold, reappears at its declared index. This is what makes a separate `order:` config
+  unnecessary (see D8).
+
+  Counter-argument on record, accepted: `when` is data-dependent, so `grouping()` now changes as
+  rows change, and a chip bound to `isGroupedBy` can toggle on its own. Judged correct rather
+  than surprising — under D5 `grouping()` *means* "levels currently in effect", and intent lives
+  in `initial` plus the writable, not in the read.
+
+- **D8 (2026-09-19) — no per-rule `order` field; `initial` is the only statement of nesting.**
+
+  Considered and rejected: a zero-based `order` on each grouping rule, to pin a level's position
+  regardless of when its rule resolves. Unnecessary — the mask never pushes, so position is
+  already stable across resolution timing (D1). Adding it would restore D2's hidden coupling with
+  a number instead of a line position: two places declaring nesting that must be hand-synced,
+  unanswerable collisions and gaps, and an `initial` array whose order no longer means anything.
+
+  Runtime reordering is a **write**, not a declaration — `addGroupLevel` / `removeGroupLevel` /
+  `reorderGroupLevels` already cover it, and there the user's own click order is the intent.
+
+  Reopens only if D3 is reversed and a rule may introduce an undeclared level, which has no
+  declared position by construction.
+
+## Open
+
+- **D6 — does `schema` accept a pre-built value for cross-table reuse?**
+
+  Moved here from ADR-0019, where it did not belong — it is this config's shape, not
+  `ColumnsPath`'s keying. Holding a pre-built rules array and sharing it across tables is the one
+  thing `rules` does that nothing else covers. The precedent for keeping that inside one entry is
+  `TableConfig.columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>`, mirrored as
+  `schema?: GroupingSchemaFn<TRow> | GroupingSchema<TRow>`. Decide before Phase B deletes `rules`.
+
+---
+
+## Known stale, not yet fixed
+
+- **`grouping-async-rule` story is now a no-op demo.** It declares `initial: ['region',
+  'category']` and an async rule for `'rep'`. Under D1/D3 that rule can never add `rep`, so the
+  story compiles, renders, and demonstrates nothing. Its own doc comment still claims the rule
+  "replaces the level set outright". Either declare `rep` in `initial` and let the rule gate it,
+  or rewrite the story around gating. No test catches this.
+- **D7 is now built** (uncommitted): `GroupingSchemaFn`/`GroupingPath`/`GroupingHandle`
+  (`schema/grouping-schema.types.ts`, `schema/grouping-rules.ts`) are keyed by `keyof TRow`, not
+  `ColumnsPath`; `applyGrouping`/`applyGroupingAsync` carry `extractValue`/`label`;
+  `engine/grouping.ts` reads a level's value via `row[key]` (through `extractValue` when declared)
+  instead of a column's `accessor`; `RenderRow.groupKey` gained a resolved `label`. The
+  `column-rules.ts`/`column-metadata.ts` half of ADR-0019 (declared-column-id keying) is
+  untouched by this and stands on its own merits.
+- **`initial` and a grouping rule no longer validate against declared columns at all** (D7's
+  natural consequence — the whole point is grouping by a field with no column). A level or rule
+  naming a field no row carries degrades to one phantom cluster keyed by `undefined`, never a
+  throw. `engine/grouping.spec.ts` and `with-grouping.spec.ts` assert the new behavior; the
+  `grouping-regressions` story's "group by a column that isn't there" control was renamed to
+  match.
+- **D7's field was originally named `valueOf`, fixed to `extractValue`.** `Object.prototype`
+  already has a `valueOf` method, inherited by every plain object — a rule that omits the option
+  entirely (`applyGrouping(path.region, { enable: () => true })`) still reads `opts.valueOf`
+  (and later `rule.valueOf`) as truthy, since the lookup falls through to the built-in instead of
+  landing on `undefined`. `collectValueOf` then registered `Object.prototype.valueOf` itself as
+  that column's extractor, and `readGroupFieldValue` called it as a bare function —
+  `Object.prototype.valueOf.call(undefined, raw)` in strict mode — throwing `TypeError: Cannot
+  convert undefined or null to object` for *any* grouped column with a rule attached, whether or
+  not that rule ever declared an extractor. Caught by `with-grouping.spec.ts`'s "a throwing
+  enable predicate" test. Renamed throughout (`GroupingRule`/`GroupingAsyncRule.extractValue`,
+  `applyGrouping`/`applyGroupingAsync`'s opts, `collectExtractValue`,
+  `ClusterOpts.extractValueByColumn`) rather than switching the presence check to
+  `Object.hasOwn` — same fix, but the rename also forecloses the same trap resurfacing at any
+  future truthiness check on this field. Same caution applies to any future rule-option name:
+  avoid `toString`/`constructor`/`hasOwnProperty`/etc. for the same reason.
+- **Two `with-grouping.spec.ts` tests were still asserting the pre-D7 contract.** "an unknown
+  level passed to `setGroupLevels` does not throw — it is dropped" and `groupingLevels (#81)`'s
+  "dropped level (D4)" both expected an unknown field to be silently omitted from clustering.
+  D7's actual, accepted contract is the opposite (phantom-cluster, never dropped — see above).
+  Rewritten 2026-09-19 to assert the phantom nesting; the second also flips
+  `isGroupedBy('ghost')` from `false` to `true`, since the field genuinely produces a rendered
+  header and D5 now defines `isGroupedBy` against the *applied* levels, not a column-only view.

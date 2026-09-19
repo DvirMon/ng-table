@@ -37,19 +37,19 @@ const columns: ColumnDef<Order>[] = [column('id'), column('region'), column('cat
 
 describe('clusterRows', () => {
   it('clusters by 1 level: same-key rows land contiguous, first-occurrence order preserved', () => {
-    const result = clusterRows(orders, ['region'], columns);
+    const result = clusterRows(orders, ['region']);
 
     expect(result.map((row) => row.region)).toEqual(['US', 'US', 'US', 'EU', 'EU']);
   });
 
   it('preserves original relative order within each cluster', () => {
-    const result = clusterRows(orders, ['region'], columns);
+    const result = clusterRows(orders, ['region']);
 
     expect(result.map((row) => row.id)).toEqual([1, 3, 4, 2, 5]);
   });
 
   it('clusters by 2 levels: leaf clusters are contiguous at every depth', () => {
-    const result = clusterRows(orders, ['region', 'category'], columns);
+    const result = clusterRows(orders, ['region', 'category']);
 
     // All US rows contiguous, and within US, all Electronics rows contiguous.
     expect(result.map((row) => [row.region, row.category])).toEqual([
@@ -62,19 +62,20 @@ describe('clusterRows', () => {
   });
 
   it('returns the same array reference when grouping is empty', () => {
-    const result = clusterRows(orders, [], columns);
+    const result = clusterRows(orders, []);
 
     expect(result).toBe(orders);
   });
 
-  it('returns the same array reference when every id in grouping is unknown', () => {
-    const result = clusterRows(orders, ['nope'], columns);
+  it('groups everything into one cluster when a level names a field no row carries (D7 — no column-existence guard)', () => {
+    const result = clusterRows(orders, ['nope']);
 
-    expect(result).toBe(orders);
+    // A single phantom cluster keyed by `undefined`, in original insertion order.
+    expect(result.map((row) => row.id)).toEqual([1, 2, 3, 4, 5]);
   });
 
-  it('drops a single unknown id among otherwise-valid levels, clustering by the rest', () => {
-    const result = clusterRows(orders, ['nope', 'region'], columns);
+  it('an unknown-field level still nests: it wraps the rest in one outer no-op cluster', () => {
+    const result = clusterRows(orders, ['nope', 'region']);
 
     expect(result.map((row) => row.region)).toEqual(['US', 'US', 'US', 'EU', 'EU']);
   });
@@ -432,7 +433,7 @@ describe('admission-aware ordering (sortClusters, per-column)', () => {
     const dissolvedFirst = (a: GroupSummary<Order>, b: GroupSummary<Order>): number =>
       Number(a.admitted) - Number(b.admitted);
 
-    const result = clusterRows(orders, ['region'], columns, {
+    const result = clusterRows(orders, ['region'], {
       when,
       groupOrderByColumn: new Map([['region', dissolvedFirst]]),
     });
@@ -450,7 +451,7 @@ describe('admission-aware ordering (sortClusters, per-column)', () => {
     ];
     const dissolveEverything = (): boolean => false;
 
-    const result = clusterRows(localOrders, ['region', 'category'], columns, {
+    const result = clusterRows(localOrders, ['region', 'category'], {
       when: dissolveEverything,
     });
 
@@ -594,6 +595,40 @@ describe('buildGroupRenderRows', () => {
     expect(usElectronicsLeaf.parentId).toBe(usElectronicsHeader.id);
   });
 
+  describe('extractValue and label resolution (D7)', () => {
+    it("runs a level's raw field value through its extractValue extractor before it becomes the group key", () => {
+      const seed = toSeedRenderRows(orders);
+      const bucketByRegion = new Map<string, (fieldValue: unknown) => unknown>([
+        ['region', (value) => (value === 'US' ? 'domestic' : 'intl')],
+      ]);
+
+      const result = buildGroupRenderRows(seed, ['region'], columns, {
+        extractValueByColumn: bucketByRegion,
+      });
+
+      const headers = result.filter((row) => row.kind === 'group');
+      expect(headers.map((row) => row.groupKey?.value)).toEqual(['domestic', 'intl']);
+    });
+
+    it("label resolves explicit -> a matching column's label -> the raw field name (D7a)", () => {
+      const seed = toSeedRenderRows(orders);
+
+      const explicit = buildGroupRenderRows(seed, ['region'], columns, {
+        labelByColumn: new Map([['region', 'Sales Region']]),
+      });
+      expect(explicit.find((row) => row.kind === 'group')?.groupKey?.label).toBe('Sales Region');
+
+      // No explicit label: falls back to the matching column's own `label` ('region', per the
+      // `column()` fixture helper above).
+      const columnFallback = buildGroupRenderRows(seed, ['region'], columns);
+      expect(columnFallback.find((row) => row.kind === 'group')?.groupKey?.label).toBe('region');
+
+      // Neither an explicit label nor a matching column: falls back to the raw field name.
+      const rawKeyFallback = buildGroupRenderRows(seed, ['nope'], columns);
+      expect(rawKeyFallback.find((row) => row.kind === 'group')?.groupKey?.label).toBe('nope');
+    });
+  });
+
   describe('a throwing aggregateFn (ADR-0014)', () => {
     function throwingAggregateColumn(id: string): ColumnDef<OrderWithAmount> {
       return {
@@ -690,7 +725,7 @@ describe('rowsBeneathGroup', () => {
   // related parameter to even pass, which is the whole point of D17's rewrite.
 
   it("a depth-0 group id returns every leaf under all of its sub-clusters", () => {
-    const result = rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:>region:string:US');
+    const result = rowsBeneathGroup(orders, ['region', 'category'], 'group:>region:string:US');
 
     expect(result.map((row) => row.id).sort()).toEqual([1, 3, 4]);
   });
@@ -699,7 +734,6 @@ describe('rowsBeneathGroup', () => {
     const result = rowsBeneathGroup(
       orders,
       ['region', 'category'],
-      columns,
       'group:>region:string:US>category:string:Electronics'
     );
 
@@ -709,13 +743,13 @@ describe('rowsBeneathGroup', () => {
 
   it('an id matching no cluster returns [], no throw', () => {
     expect(() =>
-      rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope')
+      rowsBeneathGroup(orders, ['region', 'category'], 'group:nope')
     ).not.toThrow();
-    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'group:nope')).toEqual([]);
+    expect(rowsBeneathGroup(orders, ['region', 'category'], 'group:nope')).toEqual([]);
   });
 
   it('a malformed/non-group id returns [], no throw', () => {
-    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 1)).toEqual([]);
-    expect(rowsBeneathGroup(orders, ['region', 'category'], columns, 'not-a-group-id')).toEqual([]);
+    expect(rowsBeneathGroup(orders, ['region', 'category'], 1)).toEqual([]);
+    expect(rowsBeneathGroup(orders, ['region', 'category'], 'not-a-group-id')).toEqual([]);
   });
 });

@@ -11,11 +11,12 @@
     (toggleBrokenSummary)="toggleBrokenSummary()"
   />
 
-  @if (droppedLevels().length > 0) {
+  @if (hasMissingLevel()) {
     <p class="grouping-story__notice">
-      {{ droppedLevelsText() }} names no column, so the table grouped by the remaining levels and
-      said nothing. This line is the story's own arithmetic — the library has no channel to report
-      a dropped level.
+      This grouping level names a row field that doesn't exist, so every row reads
+      <code>undefined</code> for it and the table clustered everything into one phantom group
+      instead of crashing. This line is the story's own arithmetic — the library has no channel
+      to report it.
     </p>
   }
 

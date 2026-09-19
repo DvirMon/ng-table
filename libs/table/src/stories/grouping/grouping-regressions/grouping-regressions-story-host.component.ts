@@ -39,11 +39,11 @@ function externalRank(key: unknown): number {
  * Grouping edge cases — deliberate misuse
  *
  * Renders three open grouping gaps rather than describing them: a comparator that throws, a
- * level naming no column, and an `aggregateFn` refusing its value. Copy `grouping-static/` for
- * normal usage, not this file.
+ * level naming a row field that doesn't exist, and an `aggregateFn` refusing its value. Copy
+ * `grouping-static/` for normal usage, not this file.
  *
  * The throwing aggregate takes the whole table down instead of blanking one summary; the
- * dropped level is reported nowhere but this story's own on-canvas notice.
+ * phantom group is reported nowhere but this story's own on-canvas notice.
  */
 @Component({
   selector: 'ngp-grouping-regressions-story-host',
@@ -101,15 +101,14 @@ export class GroupingRegressionsStoryHostComponent {
   );
 
   /**
-   * The dropped-level report, computed by the story because the library has no channel for it:
-   * `resolveGroupingLevels` drops an id naming no column and groups by the rest, silently.
+   * Whether the deliberately-nonexistent level is currently active — computed by the story
+   * because the library has no channel to report it. Under D7, a grouping level names a row
+   * field directly: `territory` reads `undefined` off every row, so the table doesn't crash or
+   * drop the level — it clusters everything into one phantom group instead.
    */
-  protected readonly droppedLevels = computed(() => {
-    const knownIds = new Set(this.table.columns().map((column) => column.id));
-    return this.table.grouping().filter((level) => !knownIds.has(level));
-  });
-
-  protected readonly droppedLevelsText = computed(() => this.droppedLevels().join(', '));
+  protected readonly hasMissingLevel = computed(() =>
+    this.table.grouping().includes(MISSING_GROUPING_LEVEL)
+  );
 
   /** Read off the data, not a flag: the failure is data-dependent, which is exactly why
    * ADR-0014 classes it runtime rather than construction. */

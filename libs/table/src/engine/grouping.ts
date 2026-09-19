@@ -38,24 +38,19 @@ function toGroupId(path: string): RowId {
   return `group:${path}`;
 }
 
-/** Internal engine surface, not public API — collapses the two optional callbacks shared by
+/** Internal engine surface, not public API — collapses the optional callbacks shared by
  * `clusterRows`/`buildGroupRenderRows`/`collectGroupIds` into one trailing parameter. */
 export interface ClusterOpts<TRow> {
   readonly groupOrderByColumn?: ReadonlyMap<string, GroupOrder<TRow>>;
   readonly when?: GroupWhen<TRow>;
   /** Per-column admission, AND'd with `when`. A columnId with no active level is inert. */
   readonly columnWhen?: ReadonlyMap<string, GroupWhen<TRow>>;
-}
-
-/** Runtime degrade: an id naming no known column is dropped, not thrown on — "group by the
- * rest." Construction-time validation (a bad `initial` id) is `withGrouping()`'s job,
- * not this. */
-export function resolveGroupingLevels<TRow>(
-  grouping: readonly string[],
-  columns: ColumnDef<TRow>[]
-): string[] {
-  const knownIds = new Set(columns.map((c) => c.id));
-  return grouping.filter((id) => knownIds.has(id));
+  /** Per-field value extractors (D7) — `row[levelKey]` runs through the matching entry, if any,
+   * before it becomes a cluster's group key. Absent entries read the raw field value. */
+  readonly extractValueByColumn?: ReadonlyMap<string, (fieldValue: unknown) => unknown>;
+  /** Per-field explicit group-header labels (D7a). Resolution beyond this map (falling back to
+   * a matching column's own label, then the raw field name) happens in `emitGroupRows`. */
+  readonly labelByColumn?: ReadonlyMap<string, string>;
 }
 
 /**
@@ -269,16 +264,30 @@ function partitionByAdmission<T>(nodes: ClusterNode<T>[]): ClusterNode<T>[] {
   return [...admitted, ...dissolved];
 }
 
+/** The raw field value at `key` on `row`, run through `extractValueByColumn`'s matching extractor
+ * when one is declared (D7). `row` is read by bracket access, not a column's `accessor` — a
+ * grouping level names a row field, not a column. */
+function readGroupFieldValue<TRow>(
+  row: TRow,
+  key: string,
+  extractValueByColumn?: ReadonlyMap<string, (fieldValue: unknown) => unknown>
+): unknown {
+  const raw = (row as Record<string, unknown>)[key];
+  const extractValue = extractValueByColumn?.get(key);
+  return extractValue ? extractValue(raw) : raw;
+}
+
 /** Shared by `clusterRows` and `rowsBeneathGroup` — both cluster a raw `TRow[]` by the same
- * resolved levels via the same `columnById` accessor; only what they do with the resulting
+ * resolved levels via the same field-value extraction; only what they do with the resulting
  * tree differs. */
 function buildClusterNodes<TRow>(
   rows: TRow[],
   levels: readonly string[],
-  columns: ColumnDef<TRow>[]
+  extractValueByColumn?: ReadonlyMap<string, (fieldValue: unknown) => unknown>
 ): ClusterNode<TRow>[] {
-  const columnById = new Map(columns.map((c) => [c.id, c]));
-  return buildClusters(rows, levels, (row, columnId) => columnById.get(columnId)!.accessor(row));
+  return buildClusters(rows, levels, (row, key) =>
+    readGroupFieldValue(row, key, extractValueByColumn)
+  );
 }
 
 /**
@@ -289,14 +298,12 @@ function buildClusterNodes<TRow>(
 export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
 ): TRow[] {
-  const levels = resolveGroupingLevels(grouping, columns);
-  if (levels.length === 0) {
+  if (grouping.length === 0) {
     return rows;
   }
-  const nodes = buildClusterNodes(rows, levels, columns);
+  const nodes = buildClusterNodes(rows, grouping, opts?.extractValueByColumn);
   const admitted = admitClusters(
     nodes,
     opts?.when,
@@ -354,12 +361,27 @@ function computeAggregates<TRow>(
  * not this function's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a
  * header's descendants when its id is missing from the unioned `expandedRows` set.
  */
+/** Explicit -> a column whose id matches `columnId` -> the raw field name (D7a). */
+function resolveGroupLabel<TRow>(
+  columnId: string,
+  columns: ColumnDef<TRow>[],
+  labelByColumn?: ReadonlyMap<string, string>
+): string {
+  const explicit = labelByColumn?.get(columnId);
+  if (explicit) {
+    return explicit;
+  }
+  const column = columns.find((c) => c.id === columnId);
+  return column ? column.label : columnId;
+}
+
 function emitGroupRows<TRow>(
   nodes: ClusterNode<Omit<RenderRow<TRow>, 'index'>>[],
   depth: number,
   parentPath: string,
   columns: ColumnDef<TRow>[],
   reportedColumns: Set<string>,
+  labelByColumn: ReadonlyMap<string, string> | undefined,
   parentId?: RowId
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
@@ -373,7 +395,11 @@ function emitGroupRows<TRow>(
       depth,
       kind: 'group',
       data: null,
-      groupKey: { columnId: node.columnId, value: node.value },
+      groupKey: {
+        columnId: node.columnId,
+        value: node.value,
+        label: resolveGroupLabel(node.columnId, columns, labelByColumn),
+      },
       hasChildren: node.items.length > 0,
       aggregates: computeAggregates(
         node.items.map((item) => item.data).filter(isRowData),
@@ -384,7 +410,7 @@ function emitGroupRows<TRow>(
     };
     const nested =
       node.children.length > 0
-        ? emitGroupRows(node.children, depth + 1, path, columns, reportedColumns, id)
+        ? emitGroupRows(node.children, depth + 1, path, columns, reportedColumns, labelByColumn, id)
         : node.items.map((item) => ({ ...item, depth: depth + 1, parentId: id }));
     return [header, ...nested];
   });
@@ -402,25 +428,23 @@ export function buildGroupRenderRows<TRow>(
   columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
 ): Omit<RenderRow<TRow>, 'index'>[] {
-  const levels = resolveGroupingLevels(grouping, columns);
-  if (levels.length === 0) {
+  if (grouping.length === 0) {
     return rows;
   }
-  const columnById = new Map(columns.map((c) => [c.id, c]));
-  const nodes = buildClusters(rows, levels, (item, columnId) => {
+  const nodes = buildClusters(rows, grouping, (item, key) => {
     if (!isRowData(item.data)) {
       throw new Error(
         "[withGrouping] buildGroupRenderRows received a row with null data — the 'group' render " +
           "stage must run first in RENDER_ORDER, before anything can synthesize a null-data row."
       );
     }
-    return columnById.get(columnId)!.accessor(item.data);
+    return readGroupFieldValue(item.data, key, opts?.extractValueByColumn);
   });
   const toRows = (items: Omit<RenderRow<TRow>, 'index'>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
   const admitted = admitClusters(nodes, opts?.when, toRows, new Set(), opts?.columnWhen);
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, toRows, { done: false });
-  return emitGroupRows(ordered, 0, '', columns, new Set());
+  return emitGroupRows(ordered, 0, '', columns, new Set(), opts?.labelByColumn);
 }
 
 function findClusterByPath<T>(
@@ -451,14 +475,13 @@ function findClusterByPath<T>(
 export function rowsBeneathGroup<TRow>(
   rows: TRow[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[],
-  groupId: RowId
+  groupId: RowId,
+  opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn'>
 ): TRow[] {
-  const levels = resolveGroupingLevels(grouping, columns);
-  if (levels.length === 0) {
+  if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, levels, columns);
+  const nodes = buildClusterNodes(rows, grouping, opts?.extractValueByColumn);
   const node = findClusterByPath(nodes, '', groupId);
   return node ? flattenLeaves([node]) : [];
 }
@@ -481,14 +504,12 @@ function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string):
 export function collectGroupIds<TRow>(
   rows: TRow[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
 ): RowId[] {
-  const levels = resolveGroupingLevels(grouping, columns);
-  if (levels.length === 0) {
+  if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, levels, columns);
+  const nodes = buildClusterNodes(rows, grouping, opts?.extractValueByColumn);
   const admitted = admitClusters(
     nodes,
     opts?.when,
@@ -500,4 +521,37 @@ export function collectGroupIds<TRow>(
     done: false,
   });
   return collectClusterGroupIds(ordered, '');
+}
+
+/**
+ * D5's "applied" reading — the prefix of `declaredLevels` whose clusters actually admitted at
+ * least one node, counting only clusters reached through an admitted ancestor chain (a rejected
+ * node's children are never themselves judged by `admitClusters`, so they cannot count). Partial
+ * admission at a level (some clusters kept, some dissolved) still counts that level as applied;
+ * only *total* rejection at a level drops it, and every level beneath an unreached one is
+ * unreachable too, hence the early stop rather than a per-level independent check. `[]` when
+ * `declaredLevels` is empty. Backs `withGrouping()`'s public `grouping()`/`groupingLevels()`/
+ * `isGroupedBy()` reads; `declaredLevels` itself still owns clustering, `groupIds` and `rowsOf`.
+ */
+export function collectAppliedLevels<TRow>(
+  rows: TRow[],
+  declaredLevels: readonly string[],
+  opts?: ClusterOpts<TRow>
+): string[] {
+  if (declaredLevels.length === 0) {
+    return [];
+  }
+  const nodes = buildClusterNodes(rows, declaredLevels, opts?.extractValueByColumn);
+  const admitted = admitClusters(nodes, opts?.when, (items) => items, new Set(), opts?.columnWhen);
+
+  const applied: string[] = [];
+  let frontier = admitted;
+  for (const level of declaredLevels) {
+    if (!frontier.some((node) => node.admitted)) {
+      break;
+    }
+    applied.push(level);
+    frontier = frontier.filter((node) => node.admitted).flatMap((node) => node.children);
+  }
+  return applied;
 }

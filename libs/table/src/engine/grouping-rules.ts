@@ -150,3 +150,38 @@ export function collectGroupOrder<TRow>(
   }
   return comparators;
 }
+
+/**
+ * Static per-field value extractors (D7), collected off the same `rules` array. `engine/
+ * grouping.ts` reads a field's raw value off the row and passes it through the matching
+ * extractor, if any — the fold never runs a rule callback itself. Last write wins for a
+ * duplicate `columnId` (same undocumented edge case as the two collectors above).
+ */
+export function collectExtractValue<TRow>(
+  rules: readonly AnyGroupingRule<TRow>[]
+): Map<string, (fieldValue: unknown) => unknown> {
+  const extractors = new Map<string, (fieldValue: unknown) => unknown>();
+  for (const rule of rules) {
+    if (!isGroupOrderRule(rule) && rule.extractValue) {
+      extractors.set(rule.columnId, rule.extractValue);
+    }
+  }
+  return extractors;
+}
+
+/**
+ * Static per-field explicit labels (D7a), collected the same way. `engine/grouping.ts` resolves
+ * a group header's label as explicit -> a column whose id matches the field -> the raw field
+ * name, in that order — this map is only the first tier.
+ */
+export function collectGroupLabels<TRow>(
+  rules: readonly AnyGroupingRule<TRow>[]
+): Map<string, string> {
+  const labels = new Map<string, string>();
+  for (const rule of rules) {
+    if (!isGroupOrderRule(rule) && rule.label) {
+      labels.set(rule.columnId, rule.label);
+    }
+  }
+  return labels;
+}

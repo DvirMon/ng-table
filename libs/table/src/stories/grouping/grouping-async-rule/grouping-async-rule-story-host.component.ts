@@ -1,16 +1,9 @@
 import { Component, computed, input, signal } from '@angular/core';
 import type { HttpResourceRef } from '@angular/common/http';
-import {
-  createTable,
-  withGrouping,
-  type GroupingAsyncRule,
-} from '../../../index';
+import { createTable, withGrouping } from '../../../index';
+import { applyGroupingAsync } from '../../../schema/grouping-rules';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import {
-  createGroupingPreferenceResource,
-  type GroupedRowsRequestOptions,
-  type GroupingPreference,
-} from '../fixtures/http';
+import { createGroupingPreferenceResource, type GroupingPreference } from '../fixtures/http';
 import { groupingConfig, STATIC_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
@@ -40,30 +33,23 @@ export class GroupingAsyncRuleStoryHostComponent {
    * table's public surface exposes the folded `grouping()`, never the rule's resource. */
   private asyncRuleResource: HttpResourceRef<GroupingPreference | undefined> | undefined;
 
-  private readonly repGroupingRule: GroupingAsyncRule<
-    DealRow,
-    GroupedRowsRequestOptions,
-    GroupingPreference
-  > = {
-    kind: 'grouping-async',
-    columnId: 'rep',
-    params: () => ({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }),
-    factory: (params) => {
-      const ref = createGroupingPreferenceResource(params);
-      this.asyncRuleResource = ref;
-      return ref;
-    },
-    onSuccess: (preference) => preference.groupByRep,
-    onError: () => false,
-  };
-
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
     groupingConfig,
     withGrouping({
       initial: STATIC_GROUPING_LEVELS,
-      rules: [this.repGroupingRule],
+      schema: (path) =>
+        applyGroupingAsync(path.rep, {
+          params: () => ({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }),
+          factory: (params) => {
+            const ref = createGroupingPreferenceResource(params);
+            this.asyncRuleResource = ref;
+            return ref;
+          },
+          onSuccess: (preference) => preference.groupByRep,
+          onError: () => false,
+        }),
     })
   );
 
