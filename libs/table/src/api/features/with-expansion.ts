@@ -1,10 +1,12 @@
-import { signal, type Signal } from '@angular/core';
-import { Subject, type Observable } from 'rxjs';
-import { pruneByIds } from '../../engine/rows';
+import { computed, signal, type Signal } from '@angular/core';
+import type { Observable } from 'rxjs';
 import { mapNodes, type RenderNode, type RenderNodeTransform } from '../../engine/render-stages';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict, RowId, TableStore, TrackByFn } from '../types';
+import { createExpansionStore, type ExpansionWriteOptions } from './expansion/state';
+
+export type { ExpansionWriteOptions } from './expansion/state';
 
 export interface WithExpansionConfig<TRow> {
   /** Reads a row's nested children. Default: `(row as { children?: TRow[] }).children`. */
@@ -16,21 +18,13 @@ export interface WithExpansionConfig<TRow> {
    * at least once. Default: derived from `childrenAccessor` (non-empty array required).
    */
   isExpandable?: (row: TRow) => boolean;
+  /** Seeds `expandedRows`/`everExpanded` at construction. Emits nothing on `rowExpanded`. */
+  initialExpanded?: readonly RowId[];
 }
 
 /** The slice of the store this feature reads, F-bounded so a factory body gets
  *  `input.rows(): RowOf<In>[]` etc. with no cast. */
 type ExpansionInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
-
-/**
- * Suppresses the `rowExpanded` emission a write would otherwise produce. For writes that carry
- * no user intent — restoring persisted state, syncing from a server — where a subscriber would
- * otherwise mistake the write for an interaction. Mirrors Angular reactive forms'
- * `setValue(v, { emitEvent: false })`.
- */
-export interface ExpansionWriteOptions {
-  emitEvent?: boolean;
-}
 
 export interface ExpansionMembers {
   readonly expandedRows: Signal<Set<RowId>>;
@@ -154,28 +148,27 @@ function buildExpansionSpec<TRow>(
   const isExpandable =
     config.isExpandable ?? ((row: TRow) => hasNonEmptyChildren(childrenAccessor(row)));
 
-  const expandedRows = signal(new Set<RowId>());
+  // Accumulated via the store's `onExpanded` hook, never inside the store itself — additive-only
+  // and exempt from `onRowsRemoved` pruning (see `ExpansionMembers.everExpanded`).
   const everExpanded = signal(new Set<RowId>());
-  const rowExpandedSource = new Subject<RowId>();
 
-  function emitChanged(ids: readonly RowId[], options?: ExpansionWriteOptions): void {
-    if (options?.emitEvent === false) {
-      return;
-    }
-    ids.forEach((id) => rowExpandedSource.next(id));
-  }
+  const store = createExpansionStore({
+    initialExpanded: config.initialExpanded,
+    onExpanded: (ids) => {
+      everExpanded.update((seen) => {
+        const next = new Set(seen);
+        ids.forEach((id) => next.add(id));
+        return next;
+      });
+    },
+  });
+
+  // The store seeds `expanded` silently at construction — no `onExpanded` call for the initial
+  // set — so `everExpanded` is seeded here instead, synchronously, once.
+  everExpanded.set(new Set(store.expanded()));
 
   function toggleExpanded(rowId: RowId, options?: ExpansionWriteOptions): void {
-    const next = new Set(expandedRows());
-    const isCollapsing = next.has(rowId);
-    if (isCollapsing) {
-      next.delete(rowId);
-    } else {
-      next.add(rowId);
-      everExpanded.update((seen) => new Set(seen).add(rowId));
-    }
-    expandedRows.set(next);
-    emitChanged([rowId], options);
+    store.toggle(rowId, options);
   }
 
   function expandAll(options?: ExpansionWriteOptions): void;
@@ -195,38 +188,18 @@ function buildExpansionSpec<TRow>(
     );
     const ids = [...new Set([...discovered, ...(explicitIds ?? [])])];
 
-    const previous = expandedRows();
-    const newlyExpanded = ids.filter((id) => !previous.has(id));
-    everExpanded.update((seen) => {
-      const next = new Set(seen);
-      ids.forEach((id) => next.add(id));
-      return next;
-    });
-    expandedRows.set(new Set(ids));
-    emitChanged(newlyExpanded, options);
+    store.setExpanded(ids, options);
   }
 
   function collapseAll(options?: ExpansionWriteOptions): void {
-    const collapsed = [...expandedRows()];
-    expandedRows.set(new Set());
-    emitChanged(collapsed, options);
-  }
-
-  // `expandedRows` answers "is this row live and expanded" — an id that leaves `data` must
-  // leave here too. `everExpanded` answers "has this id ever been expanded" and is
-  // deliberately exempt (see its member doc).
-  function onRowsRemoved(ids: readonly RowId[]): void {
-    const next = pruneByIds(expandedRows(), ids);
-    if (next !== expandedRows()) {
-      expandedRows.set(new Set(next));
-    }
+    store.setExpanded([], options);
   }
 
   return {
     members: {
-      expandedRows: expandedRows.asReadonly(),
+      expandedRows: computed(() => new Set(store.expanded())),
       everExpanded: everExpanded.asReadonly(),
-      rowExpanded: rowExpandedSource.asObservable(),
+      rowExpanded: store.changed,
       toggleExpanded,
       expandAll,
       collapseAll,
@@ -236,9 +209,9 @@ function buildExpansionSpec<TRow>(
     },
     // Read-only hand-off of the feature's own set to `flattenVisible` — unioned with every
     // other contributor in `engine/core.ts`.
-    expandedRows: expandedRows.asReadonly(),
-    onDestroy: () => rowExpandedSource.complete(),
-    onRowsRemoved,
+    expandedRows: computed(() => store.expanded()),
+    onDestroy: () => store.destroy(),
+    onRowsRemoved: (ids) => store.onRowsRemoved(ids),
   };
 }
 

@@ -473,6 +473,63 @@ describe('withExpansion', () => {
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
   });
 
+  it('initialExpanded seeds expandedRows and everExpanded at construction, emitting nothing on rowExpanded', () => {
+    const emitted: RowId[] = [];
+    const store = inContext(() => {
+      const s = createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion({ initialExpanded: ['r1', 'c1'] })
+      );
+      s.rowExpanded.subscribe((id) => emitted.push(id));
+      return s;
+    });
+
+    expect(store.expandedRows().has('r1')).toBe(true);
+    expect(store.expandedRows().has('c1')).toBe(true);
+    expect(store.everExpanded().has('r1')).toBe(true);
+    expect(store.everExpanded().has('c1')).toBe(true);
+    expect(emitted).toEqual([]);
+  });
+
+  it('initialExpanded seeds renderRows as already expanded', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion({ initialExpanded: ['r1'] })
+      )
+    );
+
+    expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
+  });
+
+  it('initialExpanded seeded rows behave normally afterward: toggle, expandAll, collapseAll all work on top of the seed', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<Row[]>(makeRows()),
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion({ initialExpanded: ['r1'] })
+      )
+    );
+
+    // Toggle collapses the seeded row.
+    store.toggleExpanded('r1');
+    expect(store.expandedRows().has('r1')).toBe(false);
+    // everExpanded remains true — additive, never shrinks.
+    expect(store.everExpanded().has('r1')).toBe(true);
+
+    // expandAll expands everything expandable, including re-expanding r1.
+    store.expandAll();
+    expect(store.expandedRows().has('r1')).toBe(true);
+    expect(store.expandedRows().has('c1')).toBe(true);
+
+    // collapseAll clears everything, seed included.
+    store.collapseAll();
+    expect(store.expandedRows().size).toBe(0);
+    expect(store.everExpanded().has('r1')).toBe(true);
+  });
+
   it("C1 — mapNodes reaches through group nodes: composing withGrouping() + withExpansion() together, a data row nested under a group header still gets its own children nested (capability the walk didn't have before this migration)", () => {
     interface GroupableRow {
       id: string;
