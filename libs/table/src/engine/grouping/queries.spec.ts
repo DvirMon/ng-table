@@ -1,4 +1,4 @@
-import { rowsBeneathGroup } from './queries';
+import { collectGroupIds, rowsBeneathGroup } from './queries';
 
 interface Order {
   id: number;
@@ -46,5 +46,28 @@ describe('rowsBeneathGroup', () => {
   it('a malformed/non-group id returns [], no throw', () => {
     expect(rowsBeneathGroup(orders, ['region', 'category'], 1)).toEqual([]);
     expect(rowsBeneathGroup(orders, ['region', 'category'], 'not-a-group-id')).toEqual([]);
+  });
+});
+
+describe('collectGroupIds — stability across a row reorder', () => {
+  // The fact `grouping-collapsible/`'s sort toggles rest on: a group id is built from the
+  // cluster's own value (`buildGroupPath`), never from its position, so re-sorting the rows
+  // underneath cannot make an id drift. That is what lets `expandedRows` survive a sort —
+  // withExpansion never hears about the sort, it just keeps matching the same ids.
+  const resorted: Order[] = [...orders].reverse();
+
+  it('the same ids come back after the rows are reordered', () => {
+    const before = collectGroupIds(orders, ['region', 'category']);
+    const after = collectGroupIds(resorted, ['region', 'category']);
+
+    expect(after.length).toBe(before.length);
+    expect([...after].sort()).toEqual([...before].sort());
+  });
+
+  it('a collapsed id still resolves to its rows after the reorder', () => {
+    const collapsed = 'group:>region:string:US';
+
+    expect(rowsBeneathGroup(resorted, ['region', 'category'], collapsed).map((row) => row.id).sort())
+      .toEqual([1, 3, 4]);
   });
 });
