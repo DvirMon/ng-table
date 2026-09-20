@@ -1,8 +1,10 @@
 <div class="story-host">
   <p class="story-host__hint">
     <code>applyGroupOrder</code> orders group <strong>headers</strong> among their siblings at one
-    level — not the rows inside a group, which is <code>withSorting()</code>, and not which groups
-    exist, which is <code>when</code>. Pick a comparator in Controls.
+    level — not which groups exist, which is <code>when</code>, and not which columns are levels,
+    which is <code>initial</code>. Clicking a column that is a level can only ever move headers,
+    never rows, because every row under one of its groups holds the same value — whether it moves
+    them at all is what the comparator decides. Pick a comparator in Controls.
   </p>
 
   <div class="story-host__toolbar">
@@ -17,33 +19,40 @@
       <p class="grouping-story__notice">
         No ordering opinion — the comparator returns a constant <code>0</code> and the sort is
         stable, so siblings keep the order each key was <em>first seen</em> while scanning the
-        rows. This is also what you get by declaring no comparator at all.
+        rows. This is also what you get by declaring no comparator at all. The rows reach
+        clustering already sorted, so the headers inherit the row sort.
       </p>
     }
     @case ('by-label') {
       <p class="grouping-story__notice">
         <code>localeCompare</code> on the group key. The comparator receives a
-        <code>GroupSummary</code>, so <code>a.key</code> is the cluster's value, not a row.
+        <code>GroupSummary</code>, so <code>a.key</code> is the cluster's value, not a row. Sort
+        <strong>Closed</strong> and rows move while headers hold; sort <strong>Region</strong> and
+        nothing moves at all — that silence is the price of the decoupling, not a bug.
       </p>
     }
     @case ('by-count') {
       <p class="grouping-story__notice">
         <code>b.rows.length - a.rows.length</code> — biggest cluster first.
         <code>GroupSummary.rows</code> is the cluster's own leaves, which is what makes ordering
-        by size, or by a total, possible at all.
+        by size, or by a total, possible at all. Headers stay in size order; a row sort never
+        reaches this comparator.
       </p>
     }
     @case ('external-list') {
       <p class="grouping-story__notice">
         A caller-supplied ranking — <strong>{{ externalOrder.join(' → ') }}</strong> — with values
         absent from it sorting last. The shape a saved report or a pinned-priority list takes.
+        That order survives every row sort applied on top of it.
       </p>
     }
     @case ('throwing') {
       <p class="grouping-story__notice">
         The comparator throws on every sibling pair it is handed, and the table is still up. Per
         ADR-0014 the clustering sort catches, falls back to stable first-occurrence order for the
-        affected levels, and reported it once for this evaluation, to the console.
+        affected levels, and reported it once for this evaluation, to the console. The fallback
+        <em>is</em> first-occurrence, so headers follow the row sort again — a comparator that
+        throws pins nothing.
       </p>
     }
   }
@@ -59,7 +68,26 @@
     <thead>
       <tr>
         @for (column of visibleColumns(); track column.id) {
-          <th class="story-host__cell">{{ column.label }}</th>
+          @let direction = table.sortDirections().get(column.id);
+          <th class="story-host__cell" [attr.aria-sort]="direction | ariaSort">
+            <button type="button" (click)="table.toggleSort(column.id)">
+              {{ column.label }}
+              @switch (direction) {
+                @case ('asc') {
+                  ▲
+                }
+                @case ('desc') {
+                  ▼
+                }
+                @default {
+                  ↕
+                }
+              }
+            </button>
+            @if (table.isGroupedBy(column.id)) {
+              <span class="grouping-story__count">grouped</span>
+            }
+          </th>
         }
       </tr>
     </thead>

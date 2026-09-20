@@ -26,7 +26,6 @@ type Story = StoryObj<GroupingCollapsibleStoryHostComponent>;
  * Collapsible grouping, starts collapsed
  *
  * A three-level outline that opens fully collapsed. Expand a group header's chevron to reveal
- * its subtree. Collapse state survives Refetch and sort changes, but resets when Regroup
- * re-nests the hierarchy.
+ * its subtree. Collapse state survives Refetch, but resets when Regroup re-nests the hierarchy.
  */
 export const Collapsible: Story = {};

@@ -29,6 +29,7 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 })
 export class GroupingBasicStoryHostComponent {
   readonly showCount = input(true);
+  readonly stickyHeaders = input(false);
 
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(

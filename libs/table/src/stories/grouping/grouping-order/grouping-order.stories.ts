@@ -40,5 +40,10 @@ type Story = StoryObj<GroupingOrderStoryHostComponent>;
  *
  * A comparator is also declared for `Rep`, which is not a level by default — `applyGroupOrder`
  * never activates one, so that declaration is inert until the canvas button adds it.
+ *
+ * Composes `withSorting()` bare and trailing so the header order has a row sort to contrast
+ * against: under `first-occurrence` a header click moves headers, because siblings still follow
+ * the rows' own scan order; under a real comparator the headers hold and only rows inside a
+ * group move, or — sorting a level column itself — nothing visibly moves at all.
  */
 export const Order: Story = {};

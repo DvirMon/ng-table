@@ -45,8 +45,8 @@ import '../styles/code-tabs.css';
 
 # Grouping
 
-One story, one lesson, one canvas — in the order worth reading them. The first seven are
-`withGrouping()`'s own surface; the last two compose it with one more feature.
+One story, one lesson, one canvas — in the order worth reading them. Most are `withGrouping()`'s
+own surface; three compose it with exactly one more feature.
 
 **`Basic` is the one to copy.** Its host composes `withGrouping({ initial })` and nothing else, so
 nothing in its source is another lesson's setup — no predicate it does not need, no second feature,
@@ -54,8 +54,8 @@ and no `aggregateFn`, because a baseline carrying scenery is how a reader mis-at
 to the wrong place.
 
 Each story composes the fewest features its lesson needs. Where a second feature does appear —
-`withExpansion()` in `Collapsible`, `withFiltering()` in `Group selection` — the page says what it
-is there to make visible.
+`withSorting()` in `Order`, `withExpansion()` in `Collapsible`, `withFiltering()` in `Group
+selection` — the page says what it is there to make visible.
 
 Shared across all of them: `fixtures/schema.ts` (one column list, two configs — with and without
 aggregates — and the grouping levels that do differ per story), `fixtures/http.ts` (the intercepted
@@ -324,11 +324,19 @@ sorting last.
 `throwing` sits last in the select because nobody picks it deliberately: the comparator throws on
 every sibling pair it is handed and the table does not go down. Per ADR-0014 the clustering sort
 catches, falls back to stable first-occurrence order for the affected levels, and reports once per
-evaluation.
+evaluation. The fallback *is* first-occurrence, so headers follow the row sort again — a
+comparator that throws pins nothing.
 
 A comparator is also declared for `Rep`, which is not a level by default. It is inert until the
 canvas button adds it — **`applyGroupOrder` never activates a level**, which is the whole split
 from `applyGrouping`.
+
+This story also composes `withSorting()`, bare and trailing, because the header order is only
+legible next to the row sort it is not. Under `first-occurrence` a header click moves the
+**headers** — siblings still follow the rows' own scan order. Under a real comparator, headers
+hold: sorting a column inside a group reorders its rows while the header stays put, and sorting a
+level column itself moves nothing at all, because every row under one of its groups holds the
+same value.
 
 <Canvas of={OrderStories.Order} />
 
@@ -423,9 +431,9 @@ on `kind: 'row'` only, never on a header, because the tree stage early-returns f
 
 Regroup re-nests the three levels, so every group id changes at once and the outline visibly
 rebuilds. `forceFailure` in Controls makes Refetch fail every time instead of returning a fresh
-page. That collapse state survives a refetch, a failed refetch or a sort is asserted in
-`with-grouping`'s spec rather than shown here — a control whose whole outcome is "nothing moved"
-gives a reader nothing to look at.
+page. That collapse state survives a refetch or a sort is asserted in `with-grouping`'s spec
+rather than shown here — a control whose whole outcome is "nothing moved" gives a reader nothing
+to look at.
 
 <div className="code-tabs">
   <div className="code-tabs-list">

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "runId": "grouping-coverage-2026-09-19T00:00:00Z",
+  "slug": "grouping-coverage",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/3-ui/work/grouping-coverage",
+  "stack": "angular",
+  "isComplex": false,
+  "decisionsPath": "libs/table/docs/3-ui/work/grouping-stories/4-coverage-reaudit.md",
+  "specPath": "libs/table/docs/3-ui/work/grouping-coverage/1-plan.md",
+  "architecturePath": null,
+  "githubIssues": [],
+  "createdAt": "2026-09-19T00:00:00Z",
+  "updatedAt": "2026-09-19T00:00:00Z"
+}

@@ -512,7 +512,8 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   path under a control that poisons one record), `grouping-async-rule/` (`applyGroupingAsync`
   over a real intercepted request — pending, resolved and failed), `grouping-order/`
   (`applyGroupOrder` — sibling order at one level, including the silent no-op on a column that
-  is not currently a level), `grouping-columns/` (`groupedColumnMode` — what becomes of a column
+  is not currently a level; composes `withSorting()` bare and trailing so the header order has a
+  row sort to contrast against), `grouping-columns/` (`groupedColumnMode` — what becomes of a column
   once it is a level), `grouping-collapsible/` (the navigable outline: `withExpansion()`, a real
   `<button>` chevron carrying `aria-expanded`, and collapse state under regrouping and refetch),
   and `grouping-selection/` (a group checkbox built from one `rowsOf()` call).

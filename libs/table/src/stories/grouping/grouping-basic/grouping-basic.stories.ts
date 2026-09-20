@@ -9,9 +9,11 @@ const meta: Meta<GroupingBasicStoryHostComponent> = {
   },
   argTypes: {
     showCount: { control: 'boolean' },
+    stickyHeaders: { control: 'boolean' },
   },
   args: {
     showCount: true,
+    stickyHeaders: false,
   },
 };
 export default meta;

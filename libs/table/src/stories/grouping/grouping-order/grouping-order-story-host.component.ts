@@ -6,6 +6,7 @@ import {
   removeGroupLevel,
   setGroupLevels,
   withGrouping,
+  withSorting,
   type GroupSummary,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
@@ -30,8 +31,9 @@ function externalRank(key: unknown): number {
 /**
  * Sibling order — `applyGroupOrder`
  *
- * Orders group *headers* among their siblings at one level. Not the rows inside a group (that is
- * `withSorting()`), not which groups exist (`when`), not which columns are levels (`initial`).
+ * Orders group *headers* among their siblings at one level. Not the rows inside a group, not
+ * which groups exist (`when`), not which columns are levels (`initial`). `withSorting()` is
+ * composed here because the header order is only legible next to the row sort it is not.
  *
  * With no comparator, siblings keep first-occurrence order — the order each key was first seen
  * while scanning the rows. A comparator receives `GroupSummary`, not a row, which is what makes
@@ -88,7 +90,8 @@ export class GroupingOrderStoryHostComponent {
         // inert until `rep` is added below, which is the whole difference from `applyGrouping`.
         applyGroupOrder(path.rep, this.compareGroups);
       },
-    })
+    }),
+    withSorting()
   );
 
   protected readonly visibleColumns = computed(() =>

@@ -243,6 +243,39 @@ describe('withGrouping', () => {
     expect(usHeader?.aggregates?.['amount']).toBe(75);
   });
 
+  it('filter -> group pipeline order: cluster order ranks by post-filter size, not raw size', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withFiltering({ schema: excludeAmount300 }),
+        withGrouping({
+          initial: ['region'],
+          schema: (path) =>
+            applyGroupOrder(path.region, (a, b) => b.rows.length - a.rows.length),
+        })
+      )
+    );
+
+    // Unfiltered, US and EU are tied at 3 rows each, so a comparator ranking by raw size would
+    // keep first-occurrence order (US, EU). With id 2 excluded, US drops to 2 rows while EU
+    // stays at 3 — EU must now rank ahead of US, proving the comparator saw post-filter cluster
+    // sizes. `renderRows()`'s group headers re-derive their own order from the post-pipeline row
+    // *set* (buildGroupRenderRows rebuilds the whole cluster tree), so header order is the same
+    // regardless of which stage produced that set — it can't tell filter-then-group apart from
+    // group-then-filter. `rows()`, the flat pipeline output, is what `PIPELINE_ORDER` actually
+    // governs: `group`'s own sortClusters call runs against whatever `filter` has (or hasn't)
+    // already removed at that point in the fixed order.
+    const groupIds = store
+      .renderRows()
+      .filter((row) => row.kind === 'group')
+      .map((row) => row.id);
+    expect(groupIds).toEqual(['group:>region:string:EU', 'group:>region:string:US']);
+
+    const rowIds = store.rows().map((row) => (row as GroupingMockRow).id);
+    expect(rowIds).toEqual([4, 5, 6, 1, 3]);
+  });
+
   it('initial naming a field no row carries degrades to one phantom cluster, never a throw (D7)', () => {
     const store = inContext(() =>
       createTable(

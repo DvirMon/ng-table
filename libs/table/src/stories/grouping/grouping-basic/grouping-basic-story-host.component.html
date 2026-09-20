@@ -69,7 +69,10 @@
     <code>table.isGroupedBy(id)</code> for the same set, one column at a time.
   </p>
 
-  <table class="story-host__table grouping-story__table">
+  <table
+    class="story-host__table grouping-story__table"
+    [class.grouping-story__table--sticky]="stickyHeaders()"
+  >
     <thead>
       <tr>
         @for (column of visibleColumns(); track column.id) {

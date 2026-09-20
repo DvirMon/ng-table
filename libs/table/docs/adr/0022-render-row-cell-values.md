@@ -15,9 +15,9 @@ rendered value is `ColumnDef.accessor`, and calling it lives in the template —
 per cell per change-detection pass. Neither `RenderRow` nor `ColumnDef` exposes a resolved value,
 so every consumer re-derives one of two workarounds: a host method
 (`cellValue(column, row)`, unmemoised, run per cell per CD pass) or a parallel view model in a
-`computed()`, duplicating render rows the engine already built. `grouping-static/` shipped the
-host-method form and has just been migrated off it; the other five grouping story hosts still call
-`accessor` in the template.
+`computed()`, duplicating render rows the engine already built. Every grouping story host reads
+through the resolved `RenderRow.cells` record today; `grouping-basic/` is the baseline
+demonstration.
 
 ## Decision
 

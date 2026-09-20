@@ -48,10 +48,21 @@ export class GroupRowCountPipe implements PipeTransform {
   }
 }
 
+/** A header's `aria-sort`, from `table.sortDirections()`'s per-column value. */
+@Pipe({ name: 'ariaSort' })
+export class AriaSortPipe implements PipeTransform {
+  transform(direction: 'asc' | 'desc' | undefined): 'ascending' | 'descending' | 'none' {
+    if (direction === 'asc') return 'ascending';
+    if (direction === 'desc') return 'descending';
+    return 'none';
+  }
+}
+
 /** Every pipe above, for a story host's `imports`. */
 export const GROUPING_STORY_PIPES = [
   DealAmountPipe,
   DealDatePipe,
   IsBlankGroupPipe,
   GroupRowCountPipe,
+  AriaSortPipe,
 ] as const;

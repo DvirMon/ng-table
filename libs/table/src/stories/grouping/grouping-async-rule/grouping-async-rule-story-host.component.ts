@@ -3,7 +3,7 @@ import type { HttpResourceRef } from '@angular/common/http';
 import { applyGroupingAsync, createTable, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupingPreferenceResource, type GroupingPreference } from '../fixtures/http';
-import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
+import { plainGroupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 
@@ -35,7 +35,7 @@ export class GroupingAsyncRuleStoryHostComponent {
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
-    groupingConfig,
+    plainGroupingConfig,
     withGrouping({
       initial: BASE_GROUPING_LEVELS,
       schema: (path) =>

@@ -76,7 +76,6 @@
               <td
                 class="story-host__cell"
                 [class.grouping-story__cell--label]="isFirst"
-                [class.grouping-story__aggregate]="!isFirst"
               >
                 @if (isFirst) {
                   @if (row.groupKey?.value | isBlankGroup) {
@@ -87,8 +86,6 @@
                     <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
                   }
                   <span class="grouping-story__count">{{ row | groupRowCount: table }}</span>
-                } @else {
-                  {{ row.cells[column.id] | dealAmount }}
                 }
               </td>
             }

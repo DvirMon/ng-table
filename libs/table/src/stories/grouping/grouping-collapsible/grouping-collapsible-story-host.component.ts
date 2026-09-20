@@ -4,7 +4,7 @@ import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupedRowsResource, toErrorMessage } from '../fixtures/http';
 import {
   COLLAPSIBLE_GROUPING_LEVELS,
-  groupingConfig,
+  plainGroupingConfig,
   RENESTED_GROUPING_LEVELS,
 } from '../fixtures/schema';
 import type { DealPage, DealRow } from '../fixtures/types';
@@ -54,7 +54,7 @@ export class GroupingCollapsibleStoryHostComponent {
 
   protected readonly table = createTable(
     this.data,
-    groupingConfig,
+    plainGroupingConfig,
     withGrouping({ initial: COLLAPSIBLE_GROUPING_LEVELS }),
     withExpansion()
   );
