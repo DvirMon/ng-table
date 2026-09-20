@@ -1,5 +1,5 @@
-import type { ColumnDef } from '../../api/types';
-import type { StagedRow } from '../render-stages';
+import type { ColumnDef, GroupWhen } from '../../api/types';
+import type { RenderNode } from '../render-stages';
 import { buildGroupRenderRows } from './render';
 
 interface Order {
@@ -50,10 +50,22 @@ function averageAggregateColumn(id: string): ColumnDef<OrderWithAmount> {
   };
 }
 
-function toSeedRenderRows<TRow extends { id: number }>(
-  rows: TRow[]
-): StagedRow<TRow>[] {
-  return rows.map((row) => ({ id: row.id, depth: 0, kind: 'row' as const, data: row }));
+function toSeedRenderRows<TRow extends { id: number }>(rows: TRow[]): RenderNode<TRow>[] {
+  return rows.map((row) => ({ id: row.id, kind: 'row' as const, data: row, children: [] }));
+}
+
+/** Depth-first collection of every `kind: 'group'` header in a built tree, at any nesting
+ *  level — headers can sit inside another header now, so a test that wants "every header"
+ *  can't just filter the top-level array. */
+function collectGroupHeaders<TRow>(nodes: readonly RenderNode<TRow>[]): RenderNode<TRow>[] {
+  return nodes.flatMap((node) =>
+    node.kind === 'group' ? [node, ...collectGroupHeaders(node.children)] : []
+  );
+}
+
+/** Depth-first collection of every `kind: 'row'` leaf, at any nesting level. */
+function collectLeafRows<TRow>(nodes: readonly RenderNode<TRow>[]): RenderNode<TRow>[] {
+  return nodes.flatMap((node) => (node.kind === 'row' ? [node] : collectLeafRows(node.children)));
 }
 
 describe('buildGroupRenderRows', () => {
@@ -63,42 +75,85 @@ describe('buildGroupRenderRows', () => {
     const result = buildGroupRenderRows(seed, [], columns);
 
     expect(result).toBe(seed);
-    expect(result.every((row) => row.kind === 'row' && row.depth === 0)).toBe(true);
+    expect(result.every((row) => row.kind === 'row')).toBe(true);
   });
 
-  it('one level: one group header per distinct value, followed by its member rows at depth 1', () => {
+  it("throws when grouping receives a row whose data is already null — the 'group' render stage must run first in RENDER_ORDER", () => {
+    const seed: RenderNode<Order>[] = [{ id: 'synthetic', kind: 'group', data: null, children: [] }];
+
+    expect(() => buildGroupRenderRows(seed, ['region'], columns)).toThrow(
+      /must run first in RENDER_ORDER/
+    );
+  });
+
+  it('one level: one group header per distinct value, holding its member rows as children', () => {
     const seed = toSeedRenderRows(orders);
 
     const result = buildGroupRenderRows(seed, ['region'], columns);
 
-    const shape = result.map((row) => [row.kind, row.depth, row.kind === 'row' ? row.data?.region : undefined]);
-    expect(shape).toEqual([
-      ['group', 0, undefined],
-      ['row', 1, 'US'],
-      ['row', 1, 'US'],
-      ['row', 1, 'US'],
-      ['group', 0, undefined],
-      ['row', 1, 'EU'],
-      ['row', 1, 'EU'],
-    ]);
+    expect(result).toHaveLength(2); // one header per distinct region — members nest inside
+    expect(result.every((row) => row.kind === 'group')).toBe(true);
+
+    const us = result.find((row) => row.groupKey?.value === 'US')!;
+    expect(us.children.map((row) => row.kind)).toEqual(['row', 'row', 'row']);
+    expect(us.children.every((row) => row.data?.region === 'US')).toBe(true);
+
+    const eu = result.find((row) => row.groupKey?.value === 'EU')!;
+    expect(eu.children).toHaveLength(2);
+    expect(eu.children.every((row) => row.data?.region === 'EU')).toBe(true);
   });
 
-  it('two levels: nested headers at depth 0/1, leaf rows at depth 2', () => {
+  it('two levels: a header holds sub-headers as children, leaf rows nest at the deepest level', () => {
     const seed = toSeedRenderRows(orders);
 
     const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
 
-    // First group boundary is the 'US' header (depth 0), immediately followed by the
-    // 'Electronics' sub-header (depth 1), then the two matching leaf rows (depth 2).
-    expect(result[0].kind).toBe('group');
-    expect(result[0].depth).toBe(0);
-    expect(result[1].kind).toBe('group');
-    expect(result[1].depth).toBe(1);
-    expect(result[2].kind).toBe('row');
-    expect(result[2].depth).toBe(2);
+    const us = result.find((row) => row.groupKey?.value === 'US')!;
+    expect(us.kind).toBe('group');
+    // A region-level header holds only category sub-headers — never a leaf row directly.
+    expect(us.children.every((row) => row.kind === 'group')).toBe(true);
+
+    const usElectronics = us.children.find((row) => row.groupKey?.value === 'Electronics')!;
+    expect(usElectronics.kind).toBe('group');
+    expect(usElectronics.children.every((row) => row.kind === 'row')).toBe(true);
+    expect(usElectronics.children).toHaveLength(2);
   });
 
-  it('depth correctness: a header aggregates over its own leaves, not its children\'s aggregates', () => {
+  it('a non-admitted cluster inlines its items at the parent level instead of wrapping them in a header, without recursing into its own sub-clusters', () => {
+    const seed = toSeedRenderRows(orders);
+    const dissolveUs = new Map<string, GroupWhen<Order>>([
+      ['region', (cluster) => cluster.key !== 'US'],
+    ]);
+
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns, {
+      columnWhen: dissolveUs,
+    });
+
+    // EU stays admitted: one header, holding its own category sub-headers.
+    const eu = result.find((row) => row.kind === 'group' && row.groupKey?.value === 'EU')!;
+    expect(eu.children.every((row) => row.kind === 'group')).toBe(true);
+
+    // US is dissolved: no header wraps it — its 3 leaves splice into the top level directly,
+    // never re-clustered into region>category sub-headers of their own.
+    const usRows = result.filter((row) => row.kind === 'row');
+    expect(usRows).toHaveLength(3);
+    expect(usRows.every((row) => row.data?.region === 'US')).toBe(true);
+    expect(result.some((row) => row.kind === 'group' && row.groupKey?.value === 'US')).toBe(
+      false
+    );
+  });
+
+  it('D2: a header carries no hasChildren — children is what a header exposes now', () => {
+    const seed = toSeedRenderRows(orders);
+
+    const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
+
+    const headers = collectGroupHeaders(result);
+    expect(headers.every((header) => header.hasChildren === undefined)).toBe(true);
+    expect(headers.every((header) => header.children.length > 0)).toBe(true);
+  });
+
+  it("a header aggregates over its own leaves, not its children's aggregates", () => {
     // US > Electronics: amounts [10, 20] → avg 15. US > Books: amounts [100] → avg 100.
     // US's own-leaves average = (10 + 20 + 100) / 3 = 43.33...
     // Wrongly averaging the children's own averages would give (15 + 100) / 2 = 57.5 instead.
@@ -118,7 +173,9 @@ describe('buildGroupRenderRows', () => {
 
     const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns);
 
-    const usHeader = result.find((row) => row.kind === 'group' && row.depth === 0)!;
+    const usHeader = collectGroupHeaders(result).find(
+      (row) => row.groupKey?.columnId === 'region' && row.groupKey.value === 'US'
+    )!;
     expect(usHeader.aggregates?.['amount']).toBeCloseTo((10 + 20 + 100) / 3);
     expect(usHeader.aggregates?.['amount']).not.toBeCloseTo((15 + 100) / 2);
   });
@@ -127,39 +184,20 @@ describe('buildGroupRenderRows', () => {
     const seed = toSeedRenderRows(orders);
 
     const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
-    const headerIds = result.filter((row) => row.kind === 'group').map((row) => row.id);
+    const headerIds = collectGroupHeaders(result).map((row) => row.id);
 
     expect(new Set(headerIds).size).toBe(headerIds.length);
     expect(headerIds).toContain('group:>region:string:US>category:string:Electronics');
     expect(headerIds).toContain('group:>region:string:EU>category:string:Electronics');
   });
 
-  it('emits every cluster member unconditionally — no gating of its own, collapse/expand is the engine prune stage\'s job (ADR-0017)', () => {
+  it("emits every cluster as a header unconditionally — no gating of its own, collapse/expand is flattenVisible's job (ADR-0017/ADR-0023)", () => {
     const seed = toSeedRenderRows(orders);
 
     const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
 
-    expect(result.filter((row) => row.kind === 'group')).toHaveLength(6); // 2 regions + 4 region>category headers
-    expect(result.filter((row) => row.kind === 'row')).toHaveLength(5);
-  });
-
-  it('stamps every header and leaf with its parent\'s id, at every depth', () => {
-    const seed = toSeedRenderRows(orders);
-
-    const result = buildGroupRenderRows(seed, ['region', 'category'], columns);
-
-    const usHeader = result.find((row) => row.id === 'group:>region:string:US')!;
-    expect(usHeader.parentId).toBeUndefined();
-
-    const usElectronicsHeader = result.find(
-      (row) => row.id === 'group:>region:string:US>category:string:Electronics'
-    )!;
-    expect(usElectronicsHeader.parentId).toBe(usHeader.id);
-
-    const usElectronicsLeaf = result.find(
-      (row) => row.kind === 'row' && row.data?.region === 'US' && row.data?.category === 'Electronics'
-    )!;
-    expect(usElectronicsLeaf.parentId).toBe(usElectronicsHeader.id);
+    expect(collectGroupHeaders(result)).toHaveLength(6); // 2 regions + 4 region>category headers
+    expect(collectLeafRows(result)).toHaveLength(5);
   });
 
   describe('applyGroupKey and label resolution (D9)', () => {
@@ -206,7 +244,7 @@ describe('buildGroupRenderRows', () => {
       };
     }
 
-    it('leaves the failed group\'s aggregate undefined while the table state still computes for every group', () => {
+    it("leaves the failed group's aggregate undefined while the table state still computes for every group", () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
         const rows: OrderWithAmount[] = [
@@ -231,7 +269,7 @@ describe('buildGroupRenderRows', () => {
       }
     });
 
-    it('reports exactly once per callback per evaluation, even across multiple groups and nested depths', () => {
+    it('reports exactly once per callback per evaluation, even across multiple groups and nesting levels', () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
         const rows: OrderWithAmount[] = [
@@ -251,14 +289,14 @@ describe('buildGroupRenderRows', () => {
         // one of them hits the throwing aggregateFn independently.
         const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns);
 
-        expect(result.filter((row) => row.kind === 'group')).toHaveLength(5);
+        expect(collectGroupHeaders(result)).toHaveLength(5);
         expect(reportSpy).toHaveBeenCalledTimes(1);
       } finally {
         reportSpy.mockRestore();
       }
     });
 
-    it('a throwing aggregate on one column does not affect a sibling column\'s aggregate in the same group', () => {
+    it("a throwing aggregate on one column does not affect a sibling column's aggregate in the same group", () => {
       const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       try {
         const rows: OrderWithAmount[] = [

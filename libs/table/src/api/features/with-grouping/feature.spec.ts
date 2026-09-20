@@ -1314,8 +1314,9 @@ describe('collapse/expand (#25)', () => {
       // composes after (any deferred read off the shared object, e.g. a trailing
       // `withComputed()` block, would see it) — this restriction is type-level only.
       // `withGrouping()` itself no longer performs such a read at all (#99) — grouping's own
-      // render stage has zero knowledge of expansion; the engine-owned `'prune'` stage governs
-      // collapse/expand visibility regardless of argument order (ADR-0017).
+      // render stage has zero knowledge of expansion; `engine/flatten.ts`'s `flattenVisible`
+      // walk governs collapse/expand visibility regardless of argument order (ADR-0017,
+      // ADR-0023).
       inContext(() =>
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),

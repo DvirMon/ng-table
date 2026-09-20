@@ -234,15 +234,26 @@ function fHidesColumn(columnId: string, displayName: string): Feature<Store, NoM
   );
 }
 
-/** Stamps `parentId: 1` on row id 2 via the `'tree'` render stage — mimics a synthesizing
- * feature nesting one row beneath another, without a real tree feature. */
+/** Nests row id 2 under row id 1 via the `'tree'` render stage — mimics a synthesizing
+ * feature nesting one row beneath another. `parentId` isn't a settable `RenderNode`
+ * field; see ADR-0023. */
 function fParentsSecondRow(displayName: string): Feature<Store, NoMembers> {
   return named(
     displayName,
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
         renderStages: {
-          tree: (rows) => rows.map((row) => (row.id === 2 ? { ...row, parentId: 1 } : row)),
+          tree: (nodes) => {
+            const byId = new Map(nodes.map((node) => [node.id, node]));
+            const row1 = byId.get(1);
+            const row2 = byId.get(2);
+            if (!row1 || !row2) {
+              throw new Error('expected seeded nodes 1/2 to be present');
+            }
+            return nodes
+              .filter((node) => node.id !== 2)
+              .map((node) => (node.id === 1 ? { ...row1, children: [row2] } : node));
+          },
         },
       })
     )
@@ -463,13 +474,13 @@ describe('composeFeatures', () => {
   });
 
   describe('expandedRows (ADR-0017)', () => {
-    it('case 18 — an inner expandedRows contribution reaches the outer engine\'s prune', () => {
+    it('case 18 — an inner expandedRows contribution reaches the outer engine\'s flatten', () => {
       const data = signal([...mockRows]);
 
       // Row 2 is parented under row 1, but nothing is contributed as expanded — the outer
-      // engine's terminal prune should hide it. If `foldInnerFeatures` dropped the inner
+      // engine's `flattenVisible` walk should hide it. If `foldInnerFeatures` dropped the inner
       // `expandedRows` contribution (the ADR-0017 regression this guards), the composite would
-      // register no contributor at all and the prune would be a no-op, wrongly keeping row 2.
+      // register no contributor at all and every row would stay visible, wrongly keeping row 2.
       const store = makeStore(
         data,
         composeFeatures(fParentsSecondRow('fParentsSecondRow'), fExpandedRows([99], 'fExpandedRows'))

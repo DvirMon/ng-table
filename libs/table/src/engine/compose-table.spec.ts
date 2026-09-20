@@ -124,6 +124,7 @@ describe('composeTable', () => {
         depth: 0,
         kind: 'row',
         data: { id: 'r1', name: 'Charlie', age: 40 },
+        hasChildren: false,
         index: 0,
         sourceIndex: 0,
         cells: { name: 'Charlie', age: 40 },
@@ -133,6 +134,7 @@ describe('composeTable', () => {
         depth: 0,
         kind: 'row',
         data: { id: 'r2', name: 'Ann', age: 25 },
+        hasChildren: false,
         index: 1,
         sourceIndex: 1,
         cells: { name: 'Ann', age: 25 },
@@ -140,17 +142,19 @@ describe('composeTable', () => {
     ]);
   });
 
+  // `depth` isn't a settable `RenderNode` field (see ADR-0023) — proves stage-claiming
+  // through `hasChildren` instead.
   it('lets a feature claim a render stage', () => {
-    const withDepthOne: AnyTableFeature = () => ({
+    const withHasChildrenOverride: AnyTableFeature = () => ({
       renderStages: {
-        tree: (rows) => rows.map((row) => ({ ...row, depth: 1 })),
+        tree: (rows) => rows.map((row) => ({ ...row, hasChildren: true })),
       },
     });
 
-    const store = composeWithRows(makeRows(), [withDepthOne]);
+    const store = composeWithRows(makeRows(), [withHasChildrenOverride]);
 
-    const [first] = (store['renderRows'] as () => { depth: number }[])();
-    expect(first.depth).toBe(1);
+    const [first] = (store['renderRows'] as () => { hasChildren: boolean }[])();
+    expect(first.hasChildren).toBe(true);
   });
 
   it('throws when two features claim the same pipeline stage', () => {
@@ -184,13 +188,21 @@ describe('composeTable', () => {
       expect(() => compose([withA, withB])).not.toThrow();
     });
 
-    it('collects contributions from every feature in the fold, and both reach the prune', () => {
-      // Synthesize 'r2' as a child of 'r1' via a claimed 'tree' render stage — the only way to
-      // get a parentId onto a row without a real tree/grouping feature composed.
+    it('collects contributions from every feature in the fold, and both are visible after the flatten', () => {
+      // Nests 'r2' as a child of 'r1' via a claimed 'tree' render stage — flattenVisible derives
+      // depth/parentId from a node's position in the tree, so nesting via `children` is the only
+      // way to make one row's visibility depend on another row's expandedRows membership.
       const withTreeChild: AnyTableFeature = () => ({
         renderStages: {
-          tree: (rows) =>
-            rows.map((row) => (row.id === 'r2' ? { ...row, parentId: 'r1' } : row)),
+          tree: (nodes) => {
+            const byId = new Map(nodes.map((node) => [node.id, node]));
+            const r1 = byId.get('r1');
+            const r2 = byId.get('r2');
+            if (!r1 || !r2) {
+              throw new Error('expected seeded nodes r1/r2 to be present');
+            }
+            return [{ ...r1, children: [r2] }];
+          },
         },
       });
       // 'r1' lives on the FIRST-folded contributor, an unrelated id on the second. If the fold
@@ -219,15 +231,22 @@ describe('composeTable', () => {
   it('composes render stages in RENDER_ORDER regardless of features array order', () => {
     const withGroupStage: AnyTableFeature = () => ({
       renderStages: {
-        group: (rows) => [
-          { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
-          ...rows,
+        group: (nodes) => [
+          { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
         ],
       },
     });
+    // Tags only the 'group'-kind node — a node that exists solely because 'group' already ran.
+    // If RENDER_ORDER were not fixed (e.g. array order leaked into execution order), the
+    // reversed composition would run 'tree' before any group header exists to tag, and this
+    // assertion would catch it — a transform that touched every node regardless of kind would
+    // commute with 'group' and prove nothing about order.
     const withTreeStage: AnyTableFeature = () => ({
       renderStages: {
-        tree: (rows) => rows.map((row) => (row.data === null ? row : { ...row, depth: row.depth + 1 })),
+        tree: (nodes) =>
+          nodes.map((node) =>
+            node.kind === 'group' ? { ...node, aggregates: { touched: true } } : node
+          ),
       },
     });
 
@@ -244,15 +263,19 @@ describe('composeTable', () => {
         depth: 0,
         kind: 'group',
         data: null,
+        aggregates: { touched: true },
+        hasChildren: true,
         index: 0,
         sourceIndex: undefined,
-        cells: {},
+        cells: { touched: true },
       },
       {
         id: 'r1',
         depth: 1,
+        parentId: 'group-1',
         kind: 'row',
         data: { id: 'r1', name: 'Charlie', age: 40 },
+        hasChildren: false,
         index: 1,
         sourceIndex: 0,
         cells: { name: 'Charlie', age: 40 },
@@ -260,8 +283,10 @@ describe('composeTable', () => {
       {
         id: 'r2',
         depth: 1,
+        parentId: 'group-1',
         kind: 'row',
         data: { id: 'r2', name: 'Ann', age: 25 },
+        hasChildren: false,
         index: 2,
         sourceIndex: 1,
         cells: { name: 'Ann', age: 25 },
@@ -272,11 +297,17 @@ describe('composeTable', () => {
   it('assigns a contiguous 0-based index after a chain that both inserts and drops rows', () => {
     const withGroupAndDrop: AnyTableFeature = () => ({
       renderStages: {
-        group: (rows) => [
-          { id: 'group-1', depth: 0, kind: 'group' as const, data: null },
-          ...rows,
+        group: (nodes) => [
+          { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
         ],
-        tree: (rows) => rows.filter((row) => row.id !== 'r1'),
+        // Drops 'r1' from the header's children (not the top-level array — after 'group' runs,
+        // the top level holds only the header itself).
+        tree: (nodes) =>
+          nodes.map((node) =>
+            node.kind === 'group'
+              ? { ...node, children: node.children.filter((child) => child.id !== 'r1') }
+              : node
+          ),
       },
     });
 

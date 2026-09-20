@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { createTableCore } from './core';
 import type { RenderRow, RowId } from '../api/types';
-import type { RenderRowTransform } from './render-stages';
+import type { RenderNodeTransform } from './render-stages';
 
 interface Row {
   id: string;
@@ -46,9 +46,8 @@ describe('createTableCore — sourceIndex', () => {
       trackBy: 'id',
       data: signal(makeRows()),
     });
-    const withGroupRow: RenderRowTransform<Row> = (rows) => [
-      { id: 'group-1', depth: 0, kind: 'group', data: null },
-      ...rows.map((row) => ({ ...row, depth: 1 })),
+    const withGroupRow: RenderNodeTransform<Row> = (nodes) => [
+      { id: 'group-1', kind: 'group', data: null, children: nodes },
     ];
     renderStages.group = withGroupRow;
 
@@ -151,16 +150,15 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
       data: signal(makeRows()),
     });
     const aggregates = { amount: 150 };
-    renderStages.group = (rows) => [
+    renderStages.group = (nodes) => [
       {
         id: 'group-1',
-        depth: 0,
         kind: 'group',
         data: null,
         aggregates,
         groupKey: { columnId: 'name', value: 'all', label: 'All' },
+        children: nodes,
       },
-      ...rows,
     ];
 
     const [groupRow] = renderRows();
@@ -176,16 +174,15 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
     });
     // 'name' has no aggregateFn — a real aggregation stage would never populate an entry for it
     // in `aggregates`, so the synthesized row here mirrors that: only 'amount' is present.
-    renderStages.group = (rows) => [
+    renderStages.group = (nodes) => [
       {
         id: 'group-1',
-        depth: 0,
         kind: 'group',
         data: null,
         aggregates: { amount: 150 },
         groupKey: { columnId: 'name', value: 'all', label: 'All' },
+        children: nodes,
       },
-      ...rows,
     ];
 
     const [groupRow] = renderRows();
@@ -203,16 +200,15 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
     // groupKey.columnId is 'name', but 'name' carries no aggregateFn, so aggregates never gets a
     // 'name' entry — the D5 amendment: the group's own clustered value is never merged back into
     // cells under its own column id.
-    renderStages.group = (rows) => [
+    renderStages.group = (nodes) => [
       {
         id: 'group-1',
-        depth: 0,
         kind: 'group',
         data: null,
         aggregates: {},
         groupKey: { columnId: 'name', value: 'Ann', label: 'Ann' },
+        children: nodes,
       },
-      ...rows,
     ];
 
     const [groupRow] = renderRows();
@@ -224,10 +220,10 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
 
 describe('createTableCore — expandedRows union (ADR-0017)', () => {
   it('unions two contributed expandedRows sets — a row shows if either set contains its parent', () => {
-    // `core.ts` is the boundary that unions every feature's contributed `expandedRows`
-    // (`expandedSources`) before handing the result to the terminal 'prune' stage. Push two
-    // disjoint sets directly onto the handle, the same way `compose-table.ts`'s fold does one
-    // at a time — neither set alone covers both children, only the union does.
+    // `core.ts` unions every feature's contributed `expandedRows` (`expandedSources`) and feeds
+    // the result into `flattenVisible`, the only function that reads it. Push two disjoint sets
+    // directly onto the handle, the same way `compose-table.ts`'s fold does one at a time —
+    // neither set alone covers both children, only the union does.
     interface TreeRow {
       id: string;
     }
@@ -237,12 +233,20 @@ describe('createTableCore — expandedRows union (ADR-0017)', () => {
       trackBy: 'id',
       data: signal(rows),
     });
-    renderStages.tree = (rs) =>
-      rs.map((row) => {
-        if (row.id === 'c1') return { ...row, parentId: 'p1' };
-        if (row.id === 'c2') return { ...row, parentId: 'p2' };
-        return row;
-      });
+    renderStages.tree = (nodes) => {
+      const byId = new Map(nodes.map((node) => [node.id, node]));
+      const p1 = byId.get('p1');
+      const c1 = byId.get('c1');
+      const p2 = byId.get('p2');
+      const c2 = byId.get('c2');
+      if (!p1 || !c1 || !p2 || !c2) {
+        throw new Error('expected seeded nodes p1/c1/p2/c2 to be present');
+      }
+      return [
+        { ...p1, children: [c1] },
+        { ...p2, children: [c2] },
+      ];
+    };
     expandedSources.push(signal(new Set<RowId>(['p1'])));
     expandedSources.push(signal(new Set<RowId>(['p2'])));
 

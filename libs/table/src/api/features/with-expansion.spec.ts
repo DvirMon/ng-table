@@ -6,6 +6,7 @@ import { createTable } from '../create-table';
 import type { ColumnDef, RowId, TableStore } from '../types';
 import { withComputed } from './with-computed';
 import { withExpansion, type ExpansionMembers } from './with-expansion';
+import { withGrouping } from './with-grouping';
 
 interface Row {
   id: string;
@@ -259,7 +260,7 @@ describe('withExpansion', () => {
     expect(grandchild?.depth).toBe(2);
   });
 
-  it('hasChildren is true only for rows with a non-empty children array; isExpanded matches expandedRows membership', () => {
+  it('hasChildren is true only for rows with a non-empty children array; isExpanded matches expandedRows membership for a row with children, and is undefined for a childless row (C4)', () => {
     const store = inContext(() =>
       createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
     );
@@ -278,11 +279,89 @@ describe('withExpansion', () => {
     expect(c1?.hasChildren).toBe(true);
     expect(c1?.isExpanded).toBe(false);
 
+    // C4: c2 and r2 are childless (hasChildren: false) — the walk now leaves isExpanded
+    // undefined for them instead of stamping false.
     expect(c2?.hasChildren).toBe(false);
-    expect(c2?.isExpanded).toBe(false);
+    expect(c2?.isExpanded).toBeUndefined();
 
     expect(r2?.hasChildren).toBe(false);
-    expect(r2?.isExpanded).toBe(false);
+    expect(r2?.isExpanded).toBeUndefined();
+  });
+
+  it('C4 — flat table, withExpansion() composed, nothing expandable: isExpanded is undefined on every row (a leaf now reads undefined, not false)', () => {
+    interface FlatRow {
+      id: string;
+      name: string;
+    }
+    const flatRows: FlatRow[] = [
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ];
+    const columns: ColumnDef<FlatRow>[] = [
+      { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
+    ];
+
+    const store = inContext(() =>
+      createTable(signal<FlatRow[]>(flatRows), { trackBy: 'id', columns }, withExpansion())
+    );
+
+    const renderRows = store.renderRows();
+    expect(renderRows).toHaveLength(2);
+    expect(renderRows.every((row) => row.hasChildren === false)).toBe(true);
+    expect(renderRows.every((row) => row.isExpanded === undefined)).toBe(true);
+  });
+
+  it("C3 — a row whose childrenAccessor returns [] but isExpandable returns true renders hasChildren: true so its toggle shows before children load; toggling it adds no rows, and supplying children afterwards nests them at depth + 1", () => {
+    const data = signal<Row[]>([
+      { id: 'lazy', name: 'Lazy parent' }, // children undefined — not fetched yet
+      { id: 'leaf', name: 'Leaf' },
+    ]);
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: 'id', columns: makeColumns() },
+        withExpansion({ isExpandable: (row) => row.id === 'lazy' })
+      )
+    );
+
+    // Before anything is toggled or loaded: the toggle must already render.
+    const before = store.renderRows();
+    expect(before.map((row) => row.id)).toEqual(['lazy', 'leaf']);
+    expect(before.find((row) => row.id === 'lazy')?.hasChildren).toBe(true);
+
+    // Toggling open with no loaded children adds no rows — childrenAccessor still returns [].
+    store.toggleExpanded('lazy');
+    expect(store.renderRows().map((row) => row.id)).toEqual(['lazy', 'leaf']);
+
+    // Children load afterwards — no re-toggle needed, they appear nested at depth + 1.
+    data.update((rows) =>
+      rows.map((row) =>
+        row.id === 'lazy' ? { ...row, children: [{ id: 'lazy-child', name: 'Loaded child' }] } : row
+      )
+    );
+    TestBed.tick();
+
+    const after = store.renderRows();
+    expect(after.map((row) => row.id)).toEqual(['lazy', 'lazy-child', 'leaf']);
+    expect(after.find((row) => row.id === 'lazy-child')?.depth).toBe(1);
+  });
+
+  it("visibility comes entirely from the walk, not the 'tree' stage: nested rows are absent until toggled, then exactly that subtree's direct children appear (user story 7)", () => {
+    const store = inContext(() =>
+      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withExpansion())
+    );
+
+    // The 'tree' stage already nested c1/c2 under r1 and g1 under c1 — nothing renders until
+    // the walk is told to descend.
+    expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
+
+    // One toggle reveals exactly r1's own direct children — not c1's grandchild.
+    store.toggleExpanded('r1');
+    const renderRows = store.renderRows();
+    expect(renderRows.map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
+    expect(renderRows.find((row) => row.id === 'c1')?.depth).toBe(1);
+    expect(renderRows.find((row) => row.id === 'c2')?.depth).toBe(1);
+    expect(renderRows.map((row) => row.id)).not.toContain('g1');
   });
 
   it("a tree child's parentId is its parent row's id, at depth 1 and depth 2", () => {
@@ -392,6 +471,52 @@ describe('withExpansion', () => {
 
     store.toggleExpanded('r1');
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
+  });
+
+  it("C1 — mapNodes reaches through group nodes: composing withGrouping() + withExpansion() together, a data row nested under a group header still gets its own children nested (capability the walk didn't have before this migration)", () => {
+    interface GroupableRow {
+      id: string;
+      region: string;
+      children?: GroupableRow[];
+    }
+    const rows: GroupableRow[] = [
+      { id: 'p1', region: 'US', children: [{ id: 'c1', region: 'US' }] },
+      { id: 'p2', region: 'EU' },
+    ];
+    const columns: ColumnDef<GroupableRow>[] = [
+      { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'region' },
+    ];
+
+    const store = inContext(() =>
+      createTable(
+        signal<GroupableRow[]>(rows),
+        { trackBy: 'id', columns },
+        withGrouping({ initial: ['region'] }),
+        withExpansion()
+      )
+    );
+
+    const usHeader = store
+      .renderRows()
+      .find((row) => row.kind === 'group' && row.groupKey?.value === 'US');
+    expect(usHeader).toBeDefined();
+
+    // Expand the group header — p1 appears, stamped by the 'tree' stage reaching through the
+    // group node — but p1's own child is not yet toggled open.
+    store.toggleExpanded(usHeader?.id ?? '');
+    const afterGroupExpand = store.renderRows();
+    const p1 = afterGroupExpand.find((row) => row.id === 'p1');
+    expect(p1).toBeDefined();
+    expect(p1?.hasChildren).toBe(true);
+    expect(afterGroupExpand.map((row) => row.id)).not.toContain('c1');
+
+    // Expand p1 itself — c1 nests under it, independent of the group header.
+    store.toggleExpanded('p1');
+    const afterRowExpand = store.renderRows();
+    const c1 = afterRowExpand.find((row) => row.id === 'c1');
+    expect(c1).toBeDefined();
+    expect(c1?.depth).toBe(2); // group header depth 0, p1 depth 1, c1 depth 2
+    expect(c1?.parentId).toBe('p1');
   });
 
   // -------------------------------------------------------------------------------------
