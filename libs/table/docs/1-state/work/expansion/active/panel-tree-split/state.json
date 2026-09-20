@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "runId": "panel-tree-split-2026-09-20T00:00:00Z",
+  "slug": "panel-tree-split",
+  "ticketRef": "101",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/101",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/1-state/work/expansion/active/panel-tree-split",
+  "stack": "angular",
+  "isComplex": true,
+  "decisionsPath": "libs/table/docs/1-state/work/expansion/active/panel-tree-split/1-decisions.md",
+  "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
+  "specPath": "libs/table/docs/1-state/work/expansion/active/panel-tree-split/2-spec.md",
+  "architecturePath": "libs/table/docs/1-state/work/expansion/active/panel-tree-split/3-architecture.md",
+  "githubIssues": [
+    101
+  ],
+  "createdAt": "2026-09-20T00:00:00Z",
+  "updatedAt": "2026-09-20T00:00:00Z"
+}
