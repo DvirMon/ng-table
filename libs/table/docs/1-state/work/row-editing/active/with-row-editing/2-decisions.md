@@ -9,7 +9,7 @@ date: 2026-08-11
 
 Episodic work folder for the editing feature cluster: F1 editable cells, F2 edit UI modes,
 F3 row actions, F5 dirty/validation/commit. Split out 2026-08-16 from
-[`work/with-mutations/2-decisions.md`](../../archive/with-mutations/2-decisions.md), which retains the
+[`work/row-editing/archive/with-mutations/2-decisions.md`](../../archive/with-mutations/2-decisions.md), which retains the
 mutation core this cluster builds on (`updateRows`, `addRow`/`removeRow`/`patchRow`, `at`
 semantics, temp-id handling — shipped as issue #12). No issue filed for this cluster yet.
 

@@ -8,7 +8,7 @@ parent: ../../architecture.md
 
 # Gaps — what editing's UI layer does not cover yet
 
-Split out of [`1-state/work/with-row-editing/5-gaps.md`](../../../1-state/work/with-row-editing/5-gaps.md)
+Split out of [`1-state/work/row-editing/active/with-row-editing/5-gaps.md`](../../../1-state/work/row-editing/active/with-row-editing/5-gaps.md)
 on 2026-08-26. That register measures the **state layer** — which rows are open, what restores on
 Cancel, what happens on an id swap. This one measures the **UI layer**: how a person drives it.
 
@@ -72,7 +72,7 @@ table hits it, on the first row a user opens.
 Nothing moves focus into the row on `beginEdit`, and nothing restores it to the Edit button on
 close. Related: D26 notes that the temp-id swap destroys and recreates the `<tr>`, taking focus
 inside it with it — see
-[G3](../../../1-state/work/with-row-editing/5-gaps.md) /
+[G3](../../../1-state/work/row-editing/active/with-row-editing/5-gaps.md) /
 [#19](https://github.com/DvirMon/ng-table/issues/19) for the state-layer half of that.
 
 **Re-scoped 2026-09-04** — same as G1 (D1 in `work/row-edit-keyboard-a11y/2-decisions.md`):
@@ -127,7 +127,7 @@ phantom until filtering or pagination exists.
 | Library-detected edit triggers (blur hooks, dirty checking) | D20 — "editing" has exactly one definition: membership in the map. Trigger policy is the consumer's. |
 
 The full non-goals table, including the state-layer entries, stays in the
-[state-layer register](../../../1-state/work/with-row-editing/5-gaps.md#not-gaps--deliberate).
+[state-layer register](../../../1-state/work/row-editing/active/with-row-editing/5-gaps.md#not-gaps--deliberate).
 
 ---
 
@@ -138,7 +138,7 @@ index.
 
 | # | Question | Gates | Full text |
 |---|---|---|---|
-| **O17** | `applyEach` validates rows the user cannot see (filtered out, other pages), so `valid()` can be false because of row 4,000. How are submit and "save all" scoped? | **G7** — phantom until filtering or pagination exists | [with-row-editing](../../../1-state/work/with-row-editing/2-decisions.md) |
+| **O17** | `applyEach` validates rows the user cannot see (filtered out, other pages), so `valid()` can be false because of row 4,000. How are submit and "save all" scoped? | **G7** — phantom until filtering or pagination exists | [with-row-editing](../../../1-state/work/row-editing/active/with-row-editing/2-decisions.md) |
 
 Nothing gates **G1**, **G9** or **G10** — every verb they call shipped in E4, and the a11y contract
 is a directive decision, not an open one. **G11** is phantom on `withFiltering()`, not on a
@@ -146,7 +146,7 @@ question.
 
 The state layer's open questions — id-swap policy, rollback representation, declarative openness —
 are indexed in the
-[state register](../../../1-state/work/with-row-editing/5-gaps.md#open-decisions).
+[state register](../../../1-state/work/row-editing/active/with-row-editing/5-gaps.md#open-decisions).
 
 ---
 

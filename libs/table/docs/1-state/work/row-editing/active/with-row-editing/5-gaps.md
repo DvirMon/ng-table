@@ -23,7 +23,7 @@ and [`../../row-mutations.md`](../../../../row-mutations.md).
 > verbs; four stories now can. See G12 for what actually remains.
 >
 > **2. The two-feature split shipped** —
-> [`work/with-optimistic/2-decisions.md`](../../archive/with-optimistic/2-decisions.md), D37–D44, implemented
+> [`work/row-editing/archive/with-optimistic/2-decisions.md`](../../archive/with-optimistic/2-decisions.md), D37–D44, implemented
 > 2026-08-26. Optimistic rollback is now `withOptimistic()`, composed internally by
 > `withRowEdit()`, so a live table can use it. That changes G3, G4 and G5's framing; each is
 > annotated below. **It does not close G5** — the split changes who owns a restore point, not what
@@ -95,7 +95,7 @@ Tests colocated. The disposition table's claim is now true rather than aspiratio
 ### ~~G3 — Optimistic create has no identity story~~ *(state layer)* — **CLOSED 2026-09-03**
 
 **Closed by implementing `swapRowId(from, to)`** (`mutations/optimistic-mutations.ts`,
-`docs/1-state/work/swap-row-id/1-handoff.md`, D49). Both defects below are fixed: a pending
+`docs/1-state/work/row-editing/archive/swap-row-id/1-handoff.md`, D49). Both defects below are fixed: a pending
 create settled under the server id now re-keys `snapshots` instead of orphaning, and a row open
 for edit when the swap lands stays open under the new id instead of being pruned by ADR-0006's
 reconciliation. Tests colocated in `optimistic-mutations.spec.ts`, including the ordering-
@@ -181,7 +181,7 @@ see D35). A predicate matching N rows wants N rows open, so a row rule cannot be
 
 **Tracked as [#20](https://github.com/DvirMon/ng-table/issues/20)** (opened 2026-08-26).
 
-**Delete closed 2026-08-27** — [`work/with-optimistic-crud/2-decisions.md`](../../archive/with-optimistic-crud/2-decisions.md),
+**Delete closed 2026-08-27** — [`work/row-editing/archive/with-optimistic-crud/2-decisions.md`](../../archive/with-optimistic-crud/2-decisions.md),
 D45–D47. A restore point now carries its index (`RowRestorePoint.at`), and `removeEdit(id)`
 captures + removes in one write, so `revertEdit(id)` alone re-inserts it. `ABSENT` is gone
 (D46) — the mechanism that made delete unrepresentable no longer exists.

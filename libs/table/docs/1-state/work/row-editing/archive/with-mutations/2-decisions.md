@@ -15,7 +15,7 @@ raised 2026-08-11. Shipped as issue #12 (`updateRows`/`addRow`/`removeRow`/`patc
 (D12→D30, D6's call convention→D30) that no longer describe the code.
 
 Editing (F1 editable cells, F2 edit UI modes, F3 row actions, F5 dirty/validation/commit)
-split out to [`work/with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md) —
+split out to [`work/row-editing/active/with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md) —
 that cluster consumes the primitives decided here (`updateRows`, `addRow`/`removeRow`/`patchRow`,
 `at` semantics, temp-id handling) but decides nothing about mutation mechanics itself.
 
@@ -134,7 +134,7 @@ fixed order rule is untouched. Pinning newly-added rows (exempting them from
 filter/pagination until committed) belongs with the editing feature (F2), where the
 add-a-blank-row-then-fill-it flow actually lives — and it depends on O4's definition of
 "committed" anyway. Resolved in the editing cluster: see D20/D24/D25 in
-`work/with-row-editing/2-decisions.md`.
+`work/row-editing/active/with-row-editing/2-decisions.md`.
 
 ## Engine review — actual code read (2026-08-11)
 
@@ -311,7 +311,7 @@ mapping that needs solving; it is unrepresentable in storage coordinates.
 
 The second is the same mechanism the editing cluster needs for "don't move the row I'm editing",
 resolved there as D24's `debounce()` boundary rather than pipeline exemption — see
-`work/with-row-editing/2-decisions.md`.
+`work/row-editing/active/with-row-editing/2-decisions.md`.
 
 Unstated edge semantics for `at`, pending the above: omitted — append or prepend? Out of range —
 clamp or throw? Negative — from the end, or error? Resolved below as D27.
@@ -488,4 +488,4 @@ generic `value`.
 O9→D12, D19's `at` gap→D27, temp-id gap→D26.
 
 **Editing-cluster decisions and opens** (D10, D13–D18, D20–D25, D28, D29; O2–O4, O10–O19, O21)
-moved to [`work/with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md).
+moved to [`work/row-editing/active/with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md).

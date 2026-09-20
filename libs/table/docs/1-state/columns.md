@@ -184,4 +184,4 @@ async-resolved, multi-writer `applyVisible`/`applyVisibleAsync` rules exist in n
 here (see [features/column-sizing.md](./features/column-sizing.md) and
 [features/column-pinning.md](./features/column-pinning.md)).
 
-Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](./work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

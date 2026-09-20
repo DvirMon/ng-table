@@ -9,7 +9,7 @@ date: 2026-08-27
 
 Episodic work folder closing G5's delete half — a failed delete previously lost the row with no
 recovery. Continues the numbering of
-[`work/with-optimistic/2-decisions.md`](../with-optimistic/2-decisions.md) (D-numbers and
+[`work/row-editing/archive/with-optimistic/2-decisions.md`](../with-optimistic/2-decisions.md) (D-numbers and
 O-numbers are global across the `with-row-editing`/`with-optimistic`/`with-mutations` folders).
 Last allocated before this file: **D44**.
 
@@ -189,7 +189,7 @@ job was making undo *possible*, which `pending()` plus `removeEdit`/`revertEdit`
 | Doc | Change |
 |---|---|
 | `features/row-editing.md` | v2.1 — new/changed verb tables, `RowRestorePoint` type box, delete-rollback flow, `ABSENT` removal noted as breaking |
-| `work/with-row-editing/5-gaps.md` | G5 narrowed to move-only; O22 delete half closed |
+| `work/row-editing/active/with-row-editing/5-gaps.md` | G5 narrowed to move-only; O22 delete half closed |
 | ~~`docs/0-product/row-editing.md`~~ | **Do not edit — owned by the product pass, already updated there 2026-08-27.** §3.1/§3.2, D-2 and OQ-5 already reflect delete rollback being unblocked. Editing it from this effort would clobber the OQ-1…OQ-7 resolutions recorded in the same file. |
 
 ### Added 2026-08-27 by the product pass — two corrections in `features/row-editing.md`

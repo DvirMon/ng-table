@@ -231,4 +231,4 @@ not just narrowed.
 
 Full reasoning:
 [research-selection-change-events.md](../work/with-selection/research-selection-change-events.md),
-[gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+[gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

@@ -49,7 +49,7 @@ In `architecture.md`:
 ## Risks / Watchouts
 
 - Don't touch episodic work-folder docs that historically record `addRow` as a past decision
-  (e.g. `docs/1-state/work/with-mutations/2-decisions.md`, `with-row-editing/5-gaps.md`) — those
+  (e.g. `docs/1-state/work/row-editing/archive/with-mutations/2-decisions.md`, `with-row-editing/5-gaps.md`) — those
   are records of what was true when written, not living specs, and rewriting them would falsify
   history.
 

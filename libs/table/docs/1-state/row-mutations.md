@@ -25,7 +25,7 @@ Consumers who never edit still use this: a Delete button (D18, editing decisions
 push, a bulk action. Editing builds on top of it and is specced separately in
 [`features/row-editing.md`](./features/row-editing.md).
 
-Decision log: [`work/with-mutations/2-decisions.md`](./work/with-mutations/2-decisions.md).
+Decision log: [`work/row-editing/archive/with-mutations/2-decisions.md`](./work/row-editing/archive/with-mutations/2-decisions.md).
 
 ## Data Contract
 
@@ -175,7 +175,7 @@ that no longer holds focus.
 
 **Not enforced.** Whether the table should detect an orphaned key and migrate it is **O20**,
 open. This order is documentation, not a guarantee — and the optimistic-save path (D31) does not
-follow it, which is [G3 in the gap register](./work/with-row-editing/5-gaps.md).
+follow it, which is [G3 in the gap register](./work/row-editing/active/with-row-editing/5-gaps.md).
 
 ## Mutation Meets the Pipeline (D9)
 
@@ -234,4 +234,4 @@ at all (mutation is consumer-owned there), and while the updater verbs plus ADR-
 reconciliation are comparable in intent to AG Grid's `applyTransaction`, they are narrower in scope
 — no batch or async variant yet.
 
-Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](./work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

@@ -9,13 +9,13 @@ date: 2026-08-26
 
 Episodic work folder for splitting optimistic rollback out of `withRowEdit()` so a live
 (always-editable) table can use it. Continues the numbering of
-[`work/with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md) and
-[`work/with-mutations/2-decisions.md`](../with-mutations/2-decisions.md) — D-numbers and
+[`work/row-editing/active/with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md) and
+[`work/row-editing/archive/with-mutations/2-decisions.md`](../with-mutations/2-decisions.md) — D-numbers and
 O-numbers are global across all three folders. Last allocated before this file: **D36**, **O23**.
 
 **This file is the reasoning, not the contract.** The shipped surface is specced in
 [`features/row-editing.md`](../../../../features/row-editing.md); the gap register is
-[`work/with-row-editing/5-gaps.md`](../../active/with-row-editing/5-gaps.md).
+[`work/row-editing/active/with-row-editing/5-gaps.md`](../../active/with-row-editing/5-gaps.md).
 
 Two decisions below were **amended while implementing them** — `cancelEdit` turned out to be a
 duplicate verb, and the internal composition took a simpler shape than D37 described. Both are
@@ -356,7 +356,7 @@ colliding member, so nothing existing starts throwing.
 | Doc | Change |
 |---|---|
 | `features/row-editing.md` | the whole verb surface; the `pending` flicker (D41) |
-| `work/with-row-editing/5-gaps.md` | **stale** — predates `src/stories/`. G12's `rebaseEdit`, `clearEditing` and `{ multiple: true }` lines are closed by the `external-write` and `gated-edit-multiple` stories; only pessimistic save remains. Also: G5 restated against D38, G3 sequenced after (O24) |
+| `work/row-editing/active/with-row-editing/5-gaps.md` | **stale** — predates `src/stories/`. G12's `rebaseEdit`, `clearEditing` and `{ multiple: true }` lines are closed by the `external-write` and `gated-edit-multiple` stories; only pessimistic save remains. Also: G5 restated against D38, G3 sequenced after (O24) |
 | `table/CLAUDE.md` | ADR-0006 exemption list; `writable-view.ts` row naming `with-row-edit.ts` as the `editing` owner |
 | `docs/3-ui/work/row-edit-stories/1-proposal.md` | S1 stays feature-free (D39); new story for the live-optimistic path |
 

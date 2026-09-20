@@ -401,4 +401,4 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 (`applyVisible` / `applyVisibleAsync`, AND-combined) exists in none of TanStack, AG Grid, Material
 React Table or PrimeNG.
 
-Full reasoning: [gap-analysis.md](../1-state/work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../1-state/work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

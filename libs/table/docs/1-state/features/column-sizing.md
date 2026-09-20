@@ -172,4 +172,4 @@ contract this feature owes persistence:
 **Verdict: missing** — no sizing state of any kind in `src/`, while all four competitors
 ship column sizing and resizing in their free/core tier.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

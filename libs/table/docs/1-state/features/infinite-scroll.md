@@ -22,4 +22,4 @@ To be drilled in a future session: full state shape, methods, `manual` contract,
 
 **Verdict: not assessed** — the audit was deliberately scoped to the state layer, and the competitors' incremental-scroll loading sits in their rendering/virtualization surface, so it produced no findings here; the silence is that scoping decision, not an oversight.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

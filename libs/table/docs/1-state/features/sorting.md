@@ -165,7 +165,7 @@ row's position, or does the row-level predicate (S3) make the question moot?
 
 **S9 — Grouping.** An empty row may have no value in the grouping column, so it has no group to
 belong to. Where it renders under `withGrouping()` is undefined. Related to the deferred
-grouped-insertion scenario in `../work/with-mutations/2-decisions.md`.
+grouped-insertion scenario in `../work/row-editing/archive/with-mutations/2-decisions.md`.
 
 **Status:** parked. The editable-rows effort continues on its own questions; this is picked up as
 its own piece of work. The four items under Open Questions below predate S1–S9 and are narrower
@@ -207,4 +207,4 @@ comparator, `manual`) matches all four; null ordering is **ahead** of them, sinc
 default and per-column `applySortNulls` are a deliberate contract where all four leave the behavior
 silent or undefined.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

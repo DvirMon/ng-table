@@ -35,7 +35,7 @@ on this step — same file, sequenced to avoid overlapping edits.)
 
 ## Why This Step Exists
 
-`docs/1-state/work/with-duplicate-row/1-design.md` decided the verb should be named `insertRow`:
+`docs/1-state/work/row-editing/archive/with-duplicate-row/1-design.md` decided the verb should be named `insertRow`:
 it uses `Array.prototype.splice(at, 0, row)` semantics, which `row-mutations.md` already
 distinguishes from `at()` — "insert" names that; "add" doesn't. It also reads correctly for the
 duplicate flow (an insertion at a position, not an addition to a set). Taken now because D46's

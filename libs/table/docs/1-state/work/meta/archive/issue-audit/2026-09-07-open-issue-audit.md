@@ -38,7 +38,7 @@ Every acceptance criterion is met in code.
 - `swapRowId(from, to)` re-keys `open`, `snapshots` and `unconfirmed` in one write —
   `src/mutations/optimistic-mutations.ts:197`, exported from `src/index.ts`.
 - O24 (which feature owns the verb) resolved 2026-09-03: its own updater in
-  `mutations/`, owned by neither feature — `work/with-row-editing/5-gaps.md:366`.
+  `mutations/`, owned by neither feature — `work/row-editing/active/with-row-editing/5-gaps.md:366`.
 - Tests: `optimistic-mutations.spec.ts:512-700`, including the no-op case, the
   open-row-survives-swap case, and the ordering-invariant test.
 - Round-trip exercised in three story hosts (`gated-single-optimistic`,
@@ -98,7 +98,7 @@ As an umbrella it is also no longer load-bearing: its children are individually 
 
 The title and opening claim ("covers update and create only, never delete or move") are
 **out of date**. The delete half shipped 2026-08-27 —
-`work/with-optimistic-crud/2-decisions.md` D45-D48, tracked as DONE at `5-gaps.md:403`,
+`work/row-editing/archive/with-optimistic-crud/2-decisions.md` D45-D48, tracked as DONE at `5-gaps.md:403`,
 with `removeEdit` exported from `src/index.ts`. `5-gaps.md:180` already restates the gap
 correctly: "covers update, create, and (now) delete; move stays uncovered."
 

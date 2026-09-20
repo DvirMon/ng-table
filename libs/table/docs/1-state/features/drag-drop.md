@@ -24,4 +24,4 @@ To be drilled in a future session: full state shape, methods, `manual` contract 
 
 **Verdict: missing** — row reordering is absent and `moveRow` has no verb; same gap as TanStack, behind AG Grid and PrimeNG which both ship built-in drag reorder. **missing**, not "gap": the legend defines `gap` as present-but-weaker, and this is not present at all.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

@@ -17,7 +17,7 @@ their own row-scoped directive on top of the existing verbs (`revertEdit`, `endE
 code this package exports.
 
 **Why:** row-editing's trigger policy is already deliberately consumer-owned (D20/D43 in
-`work/with-row-editing/2-decisions.md` — "editing detects no triggers," membership in the state
+`work/row-editing/active/with-row-editing/2-decisions.md` — "editing detects no triggers," membership in the state
 is the only definition). Live, gated, and optimistic tables each want different Escape/Enter/
 focus semantics; a single shipped directive would either impose one opinion or grow enough
 config surface to become its own feature. Distinguished explicitly from expansion's

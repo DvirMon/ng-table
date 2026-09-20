@@ -130,7 +130,7 @@ already the key and `from` never was — nothing to prune.
 | `mutations/optimistic-mutations.spec.ts` | tests below |
 | `index.ts` | export `swapRowId` |
 | `features/row-editing.md` | replace G3's two defects with shipped behavior; resolve O20/O24 in the open-questions table |
-| `work/with-row-editing/5-gaps.md` | close G3, point at this handoff |
+| `work/row-editing/active/with-row-editing/5-gaps.md` | close G3, point at this handoff |
 
 **Landed ahead of this handoff, 2026-09-03:** `createRow(id, row, opts?)`
 (`mutations/row-edit-mutations.ts`, exported from `index.ts`) — `beginEdit(id, { insert: row })`

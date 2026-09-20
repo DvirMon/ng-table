@@ -21,8 +21,8 @@ Purpose: showcase every currently shipped row-editing capability in Storybook, f
 >    table. The stories themselves migrate with it.
 
 Source: [`features/row-editing.md`](../../../1-state/features/row-editing.md),
-[`4-increments.md`](../../../1-state/work/with-row-editing/4-increments.md) (E1-E6, E2b, E5'),
-[`5-gaps.md`](../../../1-state/work/with-row-editing/5-gaps.md) (G12 — demo coverage gaps).
+[`4-increments.md`](../../../1-state/work/row-editing/active/with-row-editing/4-increments.md) (E1-E6, E2b, E5'),
+[`5-gaps.md`](../../../1-state/work/row-editing/active/with-row-editing/5-gaps.md) (G12 — demo coverage gaps).
 
 ## 1. Feature inventory (what's shippable today)
 

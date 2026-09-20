@@ -392,7 +392,7 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   live's only axis is rollback vs. no rollback (`live-optimistic/` vs. `live-table/`).
   (`gated-multiple-pessimistic` has
   no story: bulk edit under `multiple: true` is optimistic-only by design — see
-  `docs/1-state/work/with-multiple-edit/1-design.md`, which closes G4 — so that combination is
+  `docs/1-state/work/row-editing/archive/with-multiple-edit/1-design.md`, which closes G4 — so that combination is
   intentionally unsupported, not merely undemoed. `gated-bulk-optimistic/` is optimistic-only for
   the same reason.)
 - The feature mdx carries prose only where a reader needs a *why* before the code — a non-obvious

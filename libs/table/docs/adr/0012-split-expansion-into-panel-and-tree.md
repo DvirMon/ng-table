@@ -99,7 +99,7 @@ so it takes AG Grid's split.
 5. **Group collapse delegates to `withExpansion()`**, not `withTree()`. `features/expansion.md`'s
    "dual use" note — group ids sharing the `expandedRows` set — stops being a hack: a collapsed
    group is open-id tracking with no row synthesis, which is exactly the panel feature's job.
-6. **[G6](../1-state/work/with-row-editing/5-gaps.md) is `withTree()`'s to fix.** Nested children
+6. **[G6](../1-state/work/row-editing/active/with-row-editing/5-gaps.md) is `withTree()`'s to fix.** Nested children
    get `data` but no `sourceIndex` (`indexById` is built from top-level `data()` only), so
    `ngp-table-row-field.resolve.ts` returns `null` and edits silently no-op on them. Under
    ADR-0011 this is a property of the `'tree'` render stage, and G6 is neither invalid nor a

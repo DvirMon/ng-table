@@ -161,4 +161,4 @@ order-restore bug). Ids absent from the current `columns()` are dropped on resto
 **Verdict: missing** — no pinning state in `src/`; all four competitors ship column pinning
 (PrimeNG as "frozen columns") in their free/core tier.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

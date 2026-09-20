@@ -4,7 +4,7 @@
 **Date:** 2026-08-26
 **Related:** [ADR-0003](0003-in-house-table-store-engine.md) (the feature contract this extends),
 [ADR-0006](0006-row-id-state-reconciliation.md) (the other contract obligation features carry),
-`docs/1-state/work/with-optimistic/2-decisions.md` (D37, the split that surfaced this)
+`docs/1-state/work/row-editing/archive/with-optimistic/2-decisions.md` (D37, the split that surfaced this)
 
 ## Context
 

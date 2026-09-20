@@ -51,4 +51,4 @@ None. Reads only `renderRows()`, which is always present on the core store (see 
 
 **Verdict: not assessed** — the audit was deliberately scoped to the state layer, and the competitors' virtualization is a rendering concern, so it produced no findings here; the silence is that scoping decision, not an oversight.
 
-Full reasoning: [gap-analysis.md](../work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

@@ -42,7 +42,7 @@ one story that papers over the difference.
 Marks are verified directly against `*-story-host.component.ts` under `src/stories/`, not
 `.mdx` wrappers or story names — those drift from what a story actually does as it gets
 extended. Cross-checked against the two gap registers
-([state](../1-state/work/with-row-editing/5-gaps.md), [UI](../3-ui/work/row-editing/5-gaps.md)).
+([state](../1-state/work/row-editing/active/with-row-editing/5-gaps.md), [UI](../3-ui/work/row-editing/5-gaps.md)).
 Coverage is **not** a scope limit — the uncovered stories are the point of the document.
 `gated-single-optimistic/`, `gated-single-pessimistic/`, and `gated-multiple-optimistic/` share
 most of their code (add/duplicate/delete/errors+retry/keyboard are copy-pasted across all three,
@@ -296,7 +296,7 @@ row, so there is no multi-row session to commit.
 independent saves, per-row failure reporting, matching D32's "N independent" answer (not shipped
 in the single-row stories — see the note at the top of this document). `gated-bulk-optimistic/`
 ships the other flavor D32 asked about: `saveBatch()`, one request for N rows, one rollback unit.
-Semantics: [`with-multiple-edit/1-design.md`](../1-state/work/with-multiple-edit/1-design.md) —
+Semantics: [`with-multiple-edit/1-design.md`](../1-state/work/row-editing/archive/with-multiple-edit/1-design.md) —
 bulk edit is optimistic-only (a save closes its row before firing), so the N-open-rows ×
 M-in-flight-saves hazard is unreachable with no new state, and a mode flip `true` → `false` closes
 every open row rather than stranding one.
@@ -393,7 +393,7 @@ exists — live has no explicit "run" concept, since every row is already an inp
   am not shown an error for having wanted what already happened.
 
 **Coverage:** ✅ for the mechanism and the failure path (D45–D47,
-[`1-state/work/with-optimistic-crud/2-decisions.md`](../1-state/work/with-optimistic-crud/2-decisions.md)).
+[`1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md`](../1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md)).
 `removeEdit(id)` captures row + position and removes the row in one call; a failed delete rolls
 back via `revertEdit(id)`, no consumer bookkeeping required. `src/stories/live-optimistic/`
 demonstrates it end to end — Delete button, simulated server failure, row reappearing. Delete is
@@ -506,7 +506,7 @@ one affordance.
   its own row from the moment it appears.
 
 **Coverage:** gated ✅ —
-[`1-state/work/with-duplicate-row/1-design.md`](../1-state/work/with-duplicate-row/1-design.md),
+[`1-state/work/row-editing/archive/with-duplicate-row/1-design.md`](../1-state/work/row-editing/archive/with-duplicate-row/1-design.md),
 the "Duplicate" action in `gated-single-optimistic/`, `gated-single-pessimistic/`, and
 `gated-multiple-optimistic/`. No new library API: `beginEdit(newId, { insert: {...source}, at:
 sourceIndex + 1 })`, the blank-row flow with a different starting value. The copy lands directly
@@ -693,7 +693,7 @@ rejected. If drag-and-drop ships before that is designed, it ships without undo.
 blocker** — `withSelection()` has shipped, tested code (`spec: drilled, code: partial`,
 `docs/status.md`). What's still missing is the bulk write verbs it would feed:
 `removeRow(id[])`/`patchRow(id[], partial)` are explicitly out of scope for that effort (D12,
-[`1-state/work/with-selection/2-decisions.md`](../1-state/work/with-selection/2-decisions.md)).
+[`1-state/work/with-selection/2-decisions.md`](../1-state/work/selection/archive/with-selection/2-decisions.md)).
 Bulk *edit* additionally needs the multiple-open semantics resolved first (G4) — the two features
 cannot be specified independently. See [`0-product/selection.md`](selection.md) §6 for the
 selection-side accounting of this story.
@@ -724,20 +724,20 @@ linked work-folder decision, not here.
 - **Where does an undone delete reappear, and how does the person notice?** Resolved: position
   follows the active sort (not a choice — it lands wherever the sort puts it). The "which rows
   just returned" signal is state-layer (D-numbered in
-  [`with-optimistic-crud/2-decisions.md`](../1-state/work/with-optimistic-crud/2-decisions.md));
+  [`with-optimistic-crud/2-decisions.md`](../1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md));
   the scroll/flash on it is a UI-layer directive, shipping with the G1/G9/G10 effort.
 - **Is the commit boundary the field or the row, in gated mode?** Resolved: the row, for the
   open session's lifetime (Edit until Save/Cancel); live mode stays field-level. Sorting-owned
   (§5 S-1), unblocked now that `applySortNulls()` shipped. Reasoning: D24/D25 in
-  [`with-row-editing/2-decisions.md`](../1-state/work/with-row-editing/2-decisions.md).
+  [`with-row-editing/2-decisions.md`](../1-state/work/row-editing/active/with-row-editing/2-decisions.md).
 - **When a slow save fails on a row being re-edited, who wins?** Resolved: the consumer's,
   entirely — the library takes no position, documents the hazard, and exposes `pending()` so it's
   guardable (D40 in
-  [`with-optimistic/2-decisions.md`](../1-state/work/with-optimistic/2-decisions.md)). Remaining:
+  [`with-optimistic/2-decisions.md`](../1-state/work/row-editing/archive/with-optimistic/2-decisions.md)). Remaining:
   `features/row-editing.md` §5 still shows the unguarded pattern.
 - **Delete: confirm, undo, or both?** Library half resolved — undo is supported, restore point
   carries position (D45–D47,
-  [`with-optimistic-crud/2-decisions.md`](../1-state/work/with-optimistic-crud/2-decisions.md)).
+  [`with-optimistic-crud/2-decisions.md`](../1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md)).
   Product half open: recommend undo for single deletes, confirm for bulk (§3.2, §3.3); settles
   once it's confirmed undo reliably reaches the server in target deployments.
 - **Does a "saving" state show on tables with no server?** Resolved: no — a local save is two
@@ -746,7 +746,7 @@ linked work-folder decision, not here.
   corrected there.
 - **Multiple open rows: design it, or refuse it?** Resolved: design the semantics now (refusing
   isn't reliably detectable at composition time). Specced:
-  [`with-multiple-edit/1-design.md`](../1-state/work/with-multiple-edit/1-design.md) — the real
+  [`with-multiple-edit/1-design.md`](../1-state/work/row-editing/archive/with-multiple-edit/1-design.md) — the real
   risk was `clearEdit()`/the single-mode trim dropping in-flight restore points under
   `multiple: true`; resolved by making bulk edit optimistic-only (D41). Save-all's "N independent
   or one batched write" (D32) bulk-*add* half shipped via widened-arity `createRow`/`insertRow`
