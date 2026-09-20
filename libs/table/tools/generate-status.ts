@@ -4,7 +4,7 @@
  *
  * Run: `npm run table:status` (add `-- --dry-run` to print without writing).
  * Contract for the frontmatter fields it reads:
- * `docs/1-state/work/state-feature-competitive-audit/decisions.md` (D1–D3).
+ * `docs/1-state/work/meta/archive/state-feature-competitive-audit/decisions.md` (D1–D3).
  */
 
 import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
@@ -28,6 +28,14 @@ const CROSS_FEATURE_FILES = [
  * doc (e.g. `performance.md`) has no `capability:` and is silently excluded, not diagnosed.
  */
 const PRODUCT_DOCS_DIR = join(DOCS_ROOT, '0-product');
+
+/**
+ * `docs/decisions/<capability>.md` — the capability's decision history. Looked up by filename,
+ * not by frontmatter: a log is named for exactly one capability, so there is nothing to parse.
+ * A capability with no log renders `—`, which is a real state (not yet consolidated), not a
+ * diagnostic.
+ */
+const DECISIONS_DIR = join(DOCS_ROOT, 'decisions');
 
 const SPEC_VALUES = ['none', 'stub', 'drafted', 'drilled'] as const;
 const CODE_VALUES = ['none', 'partial', 'shipped'] as const;
@@ -237,9 +245,15 @@ function renderStoryResearchCell(row: CapabilityRow): string {
   return row.product !== null ? `[✅](${row.product.href})` : MISSING_LAYER_CELL;
 }
 
+function renderDecisionsCell(row: CapabilityRow): string {
+  const logPath = join(DECISIONS_DIR, `${row.capability}.md`);
+  return existsSync(logPath) ? `[log](${toHref(logPath)})` : MISSING_LAYER_CELL;
+}
+
 function renderRow(row: CapabilityRow): string {
   const cells = [
     `\`${row.capability}\``,
+    renderDecisionsCell(row),
     renderStatusCell(row.state, 'spec'),
     renderStatusCell(row.state, 'code'),
     renderStatusCell(row.ui, 'spec'),
@@ -262,22 +276,32 @@ function renderHeader(): string {
     '> The specs are the single source of truth; this page is only a derived view of',
     '> their `capability:` / `spec:` / `code:` frontmatter. To change a value here,',
     "> edit the owning spec's frontmatter and regenerate — never edit this table.",
-    '>',
-    '> Field vocabulary: [decisions.md](1-state/work/state-feature-competitive-audit/decisions.md) (D1–D3).',
+    '',
+    '**Start at the Decisions column.** A capability answers from two permanent files: its',
+    'decision log (why it is shaped this way, what was reversed, what is still open) and its',
+    'spec (what it does today). Work folders hold the full rationale behind one decision — open',
+    'one only when a log row sends you there, and never read a work folder to find out what',
+    'shipped.',
+    '',
+    '> Field vocabulary:',
+    '> [decisions.md](1-state/work/meta/archive/state-feature-competitive-audit/decisions.md) (D1–D3).',
+    '> Log format: `~/.claude/conventions/doc-contracts/decisions-log.md`.',
     '',
   ].join('\n');
 }
 
 function renderStatusDoc(rows: CapabilityRow[]): string {
   const table = [
-    '| Capability | State spec | State code | UI spec | UI code | Story research | Docs |',
-    '|---|---|---|---|---|---|---|',
+    '| Capability | Decisions | State spec | State code | UI spec | UI code | Story research | Docs |',
+    '|---|---|---|---|---|---|---|---|',
     ...rows.map(renderRow),
   ].join('\n');
 
   const legend = [
     '',
     `\`${MISSING_LAYER_CELL}\` — that layer has no doc for this capability.`,
+    `\`${MISSING_LAYER_CELL}\` in **Decisions** — no consolidated log yet; its history is still`,
+    'spread across work folders. Consolidate it per `docs/agents/capability-docs.md`.',
     `${INVALID_VALUE_CELL} — the doc exists but its field is missing or unrecognised; the generator logged a diagnostic.`,
     '',
   ].join('\n');
