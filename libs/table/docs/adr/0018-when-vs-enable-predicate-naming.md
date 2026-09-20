@@ -1,7 +1,7 @@
 # ADR-0018 — `when` vs `enable` predicate naming on feature rules
 
 **Status:** accepted — decided 2026-09-17.
-**Related:** [ADR-0017](0017-engine-owned-descendant-prune.md) (prune stage that admission applies to), [issue #86](https://github.com/DvirMon/ng-table/issues/86). Research: `docs/1-state/work/grouping/active/column-group-index/2-decisions.md`.
+**Related:** [ADR-0017](0017-engine-owned-descendant-prune.md) (prune stage that admission applies to), [issue #86](https://github.com/DvirMon/ng-table/issues/86). Research: `docs/1-state/work/grouping/archive/column-group-index/2-decisions.md`.
 
 `when` is the default naming for any dynamically-toggled conditional on a feature's rule — whether driven by row/cluster data or external component state (signal, resource, toggle). On grouping rules, `enable?: () => boolean | undefined` is the narrow exception: level *activation* (external-state driven, pre-clustering), paired with `when: (cluster) => boolean` for *admission* (data-driven, post-clustering). The two orthogonal predicates on one rule object cannot share a name because they fire at different pipeline moments with different failure semantics. `GroupingAsyncRule` has no `enable` — its activation is already `onSuccess`/`onError`.
 

@@ -112,7 +112,7 @@ and `grouping-static-story-host.component.html:77`.
 
 **Live** — `docs/1-state/features/grouping.md:58-59` (the only live doc naming either field).
 
-**Active work docs** — `work/grouping/active/column-group-index/2-decisions.md:143,160` (both cite
+**Active work docs** — `work/grouping/archive/column-group-index/2-decisions.md:143,160` (both cite
 `GroupingRule.when` as the activation field → `GroupingRule.enable`);
 `work/sorting/active/per-column-config-placement/1-plan-sorting.md:48,80` (cites
 `applyGrouping.when`); `docs/2-columns/architecture.md:125` (pending-semantics table row).

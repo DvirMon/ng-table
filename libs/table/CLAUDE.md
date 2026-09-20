@@ -135,8 +135,36 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |
 | `docs/3-ui/work/<slug>/` | Episodic work folder: intake ticket, decisions, issues, task steps. One folder per implementation effort (e.g. `core-directives`, `with-expansion`) | Episodic; created fresh per effort, archived after ship |
+| `docs/decisions/<capability>.md` | **The capability's decision history** — one `G`-numbered line per decision, each linking to its full record. The first thing to read before changing a capability | Permanent; appended as decisions land |
+| `docs/work/<slug>/` | Cross-stream efforts owned by no single capability (`trim-docs`, `adr-scope-audit`). Unnumbered because they span every stream | Episodic |
 
 **Key rule:** Specs live in the stream's numbered folder (e.g. `docs/1-state/features/expansion.md`). Work happens in `docs/3-ui/work/<slug>/` (or `docs/1-state/work/with-expansion/` for state-layer efforts). Specs are edited in place; work folders are episodic containers.
+
+### The decisions log — `docs/decisions/<capability>.md`
+
+Two permanent files answer everything about a capability: its **spec**
+(what it does today) and its **decisions log** (why, what was tried, what was
+reversed). Everything else is a linked record.
+
+- **`adr/` vs `decisions/`.** `adr/` holds cross-capability architectural
+  constraints. `decisions/<capability>.md` is a per-capability index over that
+  capability's history — it links to ADRs and work folders and records nothing
+  that is not recorded elsewhere.
+- **Unnumbered, at `docs/` root.** The log spans product, state and UI, so it
+  belongs to no numbered stream. It sits beside `adr/`, `work/` and
+  `status.md` for the same reason those do.
+- **Its own `G1…Gn` numbering**, never reusing a work folder's `D`-number.
+  Grouping had four decision logs each numbered from `D1`, three of them
+  mutually redefining — a bare "D7" meant three different things. Global
+  numbering is what prevents that.
+- **One line per decision.** If a row needs a second line, that belongs in the
+  linked record. Supersession is expressed in the log's own `Status` column, so
+  nobody reconstructs it by diffing folders.
+
+**A work folder may not move to `archive/` until every decision in it is
+registered as a `G`-row in its capability's log.** This is the rule that keeps
+the log true. The sprawl it exists to prevent happened precisely because
+nothing rolled up before archiving.
 
 ### Feature-spec frontmatter — required fields
 
@@ -159,7 +187,7 @@ and UI docs. Never hand-edit it; fix the owning spec's frontmatter and regenerat
 fields on a new feature spec and it silently vanishes from the roll-up.
 
 Vocabulary, per-file assigned values, and the competitive-verdict block format:
-[`docs/1-state/work/state-feature-competitive-audit/decisions.md`](docs/1-state/work/state-feature-competitive-audit/decisions.md).
+[`docs/1-state/work/meta/archive/state-feature-competitive-audit/decisions.md`](docs/1-state/work/meta/archive/state-feature-competitive-audit/decisions.md).
 
 ## Specs describe intent, not necessarily shipped code
 
@@ -169,10 +197,15 @@ ahead of implementation. `api/types.ts` is what is actually exported, and `docs/
 
 ## Before implementing a feature
 
-1. **Read the 3-stream architecture index:** `docs/3-ui/architecture.md` — marks which features are blocked, which are deferred, which are ready.
+1. **Read the capability's decisions log:** `docs/decisions/<capability>.md` — every past decision, one line each, with links. This is what stops you re-deciding something already settled or reversing it by accident. Read it before the spec.
 2. **Locate the spec:** check the stream folder (e.g. `docs/1-state/features/expansion.md` for a state feature). Spec is the contract; code must match it exactly.
-3. **Check for a work folder:** if one exists (e.g. `docs/3-ui/work/core-directives/`), read `2-decisions.md` — it records what was decided during grill/interview, not what your PR should decide again.
-4. **Verify blockers:** `docs/3-ui/architecture.md` lists what else must ship first (e.g. `ngpTableRow` must exist before any row-scoped directive can land).
+3. **Read the 3-stream architecture index:** `docs/3-ui/architecture.md` — marks which features are blocked, which are deferred, which are ready.
+4. **Check for an active work folder:** if one exists (e.g. `docs/3-ui/work/core-directives/`), read `2-decisions.md` for detail the log only summarizes. Archived folders are already rolled up into the log — go there only for the full rationale behind a specific `G`-row.
+5. **Verify blockers:** `docs/3-ui/architecture.md` lists what else must ship first (e.g. `ngpTableRow` must exist before any row-scoped directive can land).
+
+**Never take a work folder's own `status:` or `state.json` as proof that
+something shipped.** Both go stale silently — a grouping plan read "approved,
+not started" for work already committed. Check `src/` and `git log`.
 
 ## Feature plugin pattern (`api/features/with-*.ts`)
 

@@ -8,7 +8,7 @@
   "workspaceRoot": "libs/table/docs/3-ui/work/grouping-coverage",
   "stack": "angular",
   "isComplex": false,
-  "decisionsPath": "libs/table/docs/3-ui/work/grouping-stories/4-coverage-reaudit.md",
+  "decisionsPath": "libs/table/docs/3-ui/work/archive/grouping-stories/4-coverage-reaudit.md",
   "specPath": "libs/table/docs/3-ui/work/grouping-coverage/1-plan.md",
   "architecturePath": null,
   "githubIssues": [],

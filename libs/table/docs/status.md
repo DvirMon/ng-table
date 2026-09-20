@@ -20,14 +20,13 @@
 | `drag-drop` | stub | none | stub | none | — | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
 | `expansion` | drilled | partial | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
 | `filtering` | drilled | shipped | — | — | [✅](0-product/filtering.md) | [state](1-state/features/filtering.md) · [product](0-product/filtering.md) |
-| `filters` | drilled | shipped | — | — | — | [state](1-state/filters.md) |
 | `grouping` | drilled | partial | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
 | `infinite-scroll` | stub | none | — | — | — | [state](1-state/features/infinite-scroll.md) |
 | `pagination` | stub | none | — | — | — | [state](1-state/features/pagination.md) |
 | `row-animation` | — | — | drilled | shipped | — | [ui](3-ui/directives/row-animation.md) |
 | `row-editing` | drilled | shipped | — | — | [✅](0-product/row-editing.md) | [state](1-state/features/row-editing.md) · [product](0-product/row-editing.md) |
 | `selection` | drilled | partial | stub | none | [✅](0-product/selection.md) | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) · [product](0-product/selection.md) |
-| `sorting` | drilled | shipped | drafted | none | — | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) |
+| `sorting` | drilled | shipped | drafted | none | [✅](0-product/sorting.md) | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) · [product](0-product/sorting.md) |
 | `state-persistence` | drafted | none | — | — | — | [state](1-state/state-persistence.md) |
 | `virtual-scroll` | drafted | none | — | — | — | [state](1-state/features/virtual-scroll.md) |
 

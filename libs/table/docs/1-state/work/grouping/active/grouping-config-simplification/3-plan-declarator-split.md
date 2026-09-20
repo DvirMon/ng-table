@@ -1,7 +1,7 @@
 ---
 title: Plan — split grouping's declarators (`applyGroupKey`, `label` on `initial`)
 type: plan
-status: D9 decided 2026-09-19, unbuilt. Plan approved 2026-09-19, not started.
+status: D9 decided 2026-09-19. Executed 2026-09-20 in `4c86322` — `applyGroupKey` is exported from `src/index.ts`.
 date: 2026-09-19
 audience: developers
 ---
@@ -95,7 +95,7 @@ still finds its extractor.
   last-wins as "undocumented edge case, not validated"; `collectGroupKeys`
   matches them (explicitly chosen). Closing that gap is a separate pass.
 - The planned `grouping-keys` story
-  (`libs/table/docs/3-ui/work/grouping-stories/3-lesson-audit.md` §3.3). This
+  (`libs/table/docs/3-ui/work/archive/grouping-stories/3-lesson-audit.md` §3.3). This
   refactor changes the API that story demonstrates; the story is its own
   effort.
 

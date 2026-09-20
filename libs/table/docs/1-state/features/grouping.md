@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withGrouping()
 type: architecture
-version: 1.2
-date: 2026-09-13
+version: 2.0
+date: 2026-09-20
 capability: grouping
 spec: drilled
 code: partial
@@ -12,198 +12,238 @@ parent: ../architecture.md
 
 # withGrouping()
 
-> **⚠️ Two sections superseded — D1–D17 all settled and shipped (issues #7, #24, #25, #26, #31),
-> except the two items `2-decisions.md`'s Open section leaves deliberately unbuilt.**
-> [work/with-grouping/2-decisions.md](../work/grouping/archive/with-grouping/2-decisions.md) (D1–D17) settles the
-> API surface, and [work/with-grouping/3-spec.md](../work/grouping/archive/with-grouping/3-spec.md) (`status: ready`)
-> writes it up as a contract. Superseded here:
-> - **Methods** — `setGrouping()`/`clearGrouping()` never shipped. The real write surface is
->   `table.grouping.update(updater)` with pure updater factories in `mutations/update-grouping.ts`
->   (D1) — `setGroupLevels`/`addGroupLevel`/`removeGroupLevel`/`reorderGroupLevels`. On top of that,
->   `table.grouping` masks that declared base value by an optional `rules`-array/schema-fn layer —
->   it can switch a declared level off, never introduce or reorder one — via
->   `applyGrouping()`/`applyGroupingAsync()` declarative sugar (D6–D8, issue #26), the
->   schema fn reached through `config.schema` since #84. Cluster
->   order is `applyGroupOrder(path.x, cmp)`, declared per column (D4 amended, issue #87) — a
->   comparator orders that column's own siblings only; two levels can order by different criteria
->   in one table. Omitted, stable first-occurrence order; supplied, orders siblings within a
->   parent by their contents, fully decoupled from `sorting` (D5). Key derivation is
->   `applyGroupKey(path.x, extractValue)`, declared per column, split off `applyGrouping()`'s opts
->   (grouping-config-simplification's own D9). Full contract: 3-spec.md's own Methods section — not
->   restated here.
-> - **Single-level only** — wrong. `withGrouping()` ships multi-level clustering. `grouping` is
->   `string[]`, ordered, index 0 = outermost level (D3), with aggregation computed at every depth
->   from that cluster's own leaves, never a descendant's already-computed aggregate (D9). Grand
->   totals and pivoting stay out of scope (D9).
-> - **Group selection has no cascade** — `rowsOf(group)` (D16, issue #31) returns every leaf row
->   beneath a header, at any depth; the consumer owns any selection cascade. A group's row count is
->   `rowsOf(group).length` — there is no separate count field on `RenderRow`.
-> - **`groupIds` publishes every header id (issue #97)** — `table.groupIds(): Signal<RowId[]>`
->   returns every group header's id, at every level, collapse-independent (derives from the
->   cluster tree, not `renderRows()`). `[]` when ungrouped. It's what `expandAll(table.groupIds())`
->   uses to open every level in one call, since expansion's own discovery only walks real data rows.
->
-> - **`groupingLevels`/`isGroupedBy` publish the column↔level relation (issue #81)** —
->   `table.groupingLevels(): Signal<ColumnDef<TRow>[]>` is the current levels as full `ColumnDef`s,
->   ordered outermost first; `table.isGroupedBy(columnId): boolean` is the O(1) inverse membership
->   check. Both derive from the same resolved level list `grouping()`/`renderRows()` already use,
->   so a level naming no known column is dropped from both, never from just one. A dynamic
->   group-by panel (chip strip + per-column toggle row) reads both directly instead of hand-rolling
->   the `grouping()` ↔ `columns()` join itself.
->
-> - **Collapse/expand shipped, `withGrouping()` has zero knowledge of it (#99, ADR-0017)** —
->   `withGrouping()`'s render stage emits every cluster member unconditionally, each carrying its
->   parent's id. Collapsing a group id omits its descendants from `renderRows()` via the
->   engine-owned `'prune'` render stage, which unions every composed feature's `expandedRows`
->   contribution; the header itself always still renders. `rowsOf(group)` stays correct under
->   collapse (D17, issue #25) — it re-derives the cluster tree from `rows()` (pipeline output)
->   rather than scanning `renderRows()`.
->
-> - **Clusters admit by default; `when` (#85) can leave one flat.** Every built cluster
->   renders as a group unless `config.when` rejects it — a table-wide predicate over that
->   cluster's own contents. A rejected cluster's rows exit the grouping tree entirely (no header,
->   no group id, no aggregates, not sub-clustered by a deeper level) and render flat at the
->   parent's depth. Full contract: 3-spec.md's Public surface; mechanism and rejected alternatives:
->   [work/with-grouping/design-group-admission.md](../work/grouping/archive/with-grouping/design-group-admission.md).
->
-> Still open, deliberately unbuilt: `manual: true` and routing a header click to `applyGroupOrder` — see
-> `2-decisions.md`'s Open section. Neither blocks the rest of this contract.
+**Decision history: [`decisions/grouping.md`](../../decisions/grouping.md).** That log is the
+first thing to read before changing anything here — it carries all 52 decisions, what superseded
+what, and the six still open. This file is the contract only: what grouping does today.
 
-## Executive Summary
+`code: partial` is deliberate. The feature ships, but aggregation's declaration site is
+mid-migration (G42–G45) and `manual: true` is structurally blocked (G16).
 
-Multi-level grouping (`table.grouping: string[]`, D3) with per-column aggregate computation, resolved from a declared base array optionally masked by a declarative rules-array/schema-fn (D6–D8, issue #26) — a rule can switch a declared level off, never introduce or reorder one. Group collapse/expand state is deliberately delegated to `withExpansion()` rather than duplicated — but `withExpansion()` is an optional composition, not a hard requirement (see Compile-Time Dependencies, decided 2026-07-31).
+## What it does
 
-## State Shape
+An opt-in feature plugin owning an ordered list of group-by levels, the verbs that change it, and
+the render-stage logic that turns clustered rows into `RenderRow`s with headers and per-cluster
+aggregates at every depth.
 
-See [3-spec.md](../work/grouping/archive/with-grouping/3-spec.md) for the current contract —
-`table.grouping: WritableView<string[], GroupingUpdater<TRow>>`, masking the declared base array
-with an optional `rules`/schema-fn layer (D6–D8). Not restated here.
+Multi-level from v1. `initial` declares the levels **and** their nesting order; declarative rules
+can only gate a declared level on or off, never introduce or reorder one (G32). Group order and
+row sort are decoupled by construction (G5). No `effect()` anywhere in the feature.
 
-## Behavior
+## Public surface
 
-- **Multi-level, ordered.** `grouping: string[]` — index 0 is the outermost level; aggregation runs at every depth from that cluster's own leaves, never a descendant's already-computed aggregate (D9). See 3-spec.md.
-- **Collapse/expand:** group rows are treated as rows with an id; when `withExpansion()` is also composed, its `expandedRows: Set<id>` tracks whether a given group is expanded or collapsed, and the engine-owned `'prune'` render stage (ADR-0017) hides a group's descendants when its id is missing from that set. `withGrouping()` does not maintain its own collapse state, and its render stage does not read `expandedRows` at all (#99) — it emits every cluster member unconditionally and lets the prune stage decide.
-- **Static grouping (no `withExpansion()`):** valid standalone use. All group rows render flat/always-expanded — no collapse affordance exists without `withExpansion()` composed.
-- **UI-layer split:** the store-level optionality above is only half the story — the template layer needs its own opt-in. Group row rendering is wrapped with an expand directive/template outlet only when the consumer chooses to (e.g. an `*ngpExpandableRow`-style directive reading/toggling `expandedRows`). Store never dictates template structure; it only exposes `expandedRows` for that directive to consume when present. This split (store composition + template composition, independently opt-in) is the actual mechanism behind "expansion is optional" — not a single switch.
-- **Aggregation:** per-column `aggregateFn(rows)` computes a summary value per group per column. The store recomputes this reactively whenever group membership changes (data, grouping, or filters change). This is purely a computed value — it defines *what* the aggregate is, not how/where it's rendered (that's UI-layer/template concern).
-- **No per-column opt-out** — every column can be grouped by; there is no `enableGrouping` flag (explicitly decided against, unlike `enableSorting`/`enableFiltering`).
-
-## Methods
-
-`setGrouping()`/`clearGrouping()` never shipped. See [3-spec.md](../work/grouping/archive/with-grouping/3-spec.md)'s
-Methods section for the real write surface — `table.grouping.update(updater)`, the
-`mutations/update-grouping.ts` updater factories, and the `applyGrouping()`/
-`applyGroupingAsync()` declarative mask layer (D6–D8, issue #26). Not restated here.
-
-## `manual` Contract
-
-**Deferred, not implemented** — no `manual` key exists on `WithGroupingConfig` today (see the
-banner above and `2-decisions.md`'s Open section). This section is a design sketch for if/when it
-ships, not a usable API.
+Verified against `src/api/features/with-grouping/` on 2026-09-20.
 
 ```ts
-withGrouping({ manual: true }) // sketch only — does not compile today
-```
+interface WithGroupingConfig<TRow> {
+  // Declared levels, outermost first — array order IS nesting order (G32).
+  // A level names a ROW FIELD, which may have no matching column (G36).
+  initial?: (ColumnId<TRow> | GroupingLevel<TRow>)[];
 
-- State updates normally on `setGrouping`.
-- Pipeline **skips the client-side grouping stage**.
-- `groupChanged` event fires; consumer's own `effect()` fetches pre-grouped data from the server and writes it into their own `data` signal.
-- Consistent with `withSorting()`'s manual contract.
+  // Table-wide admission, judged at every active level. AND'd with any per-column `when`.
+  when?: GroupWhen<TRow>;
 
-## Aggregation Contract
+  // The single declarative entry. Records by side effect; returns nothing.
+  // Call order carries no meaning — nesting comes from `initial` alone (G33).
+  schema?: GroupingSchemaFn<TRow>;
+}
 
-```ts
-interface ColumnDef {
-  aggregateFn?: (rows: Row[]) => unknown;
+interface GroupingLevel<TRow> {
+  readonly key: ColumnId<TRow>;
+  readonly label?: string;          // resolves: explicit -> matching column's label -> raw key
+}
+
+interface GroupingMembers<TRow> {
+  // Reads APPLIED levels; writes DECLARED ones (G37) — a gated-off level survives a round-trip.
+  readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;
+  readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
+  readonly groupIds: Signal<RowId[]>;
+  readonly groupingLevels: Signal<ColumnDef<TRow>[]>;   // applied levels as ColumnDefs
+  readonly isGroupedBy: (columnId: string) => boolean;  // O(1), against applied levels
 }
 ```
 
-- Chosen over: (a) no aggregation at all (consumer computes manually, more boilerplate/reactivity work for them), and (b) fixed built-in aggregates only (count/sum/avg — less flexible).
-- Store owns recomputation/reactivity; consumer owns the aggregation logic itself — same division of responsibility as `sortFn`.
+**There is no `rules` member.** The rules-array layer was removed; `schema` is the only
+declarative entry.
 
-## Compile-Time Dependencies
+**Grouping never reads a column's `accessor`.** A level's value comes from the row field named by
+the level, optionally transformed by `applyGroupKey` (G36). This is the single most common wrong
+assumption about this feature — a column and the group it sits under can legitimately disagree,
+and nothing checks that they don't.
 
-- **`withExpansion()`** — **optional, not required** (revised 2026-07-31; supersedes the original "must fail to compile without it" framing). `withGrouping()` composes standalone for static grouping, with zero knowledge of expansion (#99) — no lazy read, no guard, no argument-order dependency at runtime. When `withExpansion()` is also composed, group rows gain collapse/expand entirely through the engine-owned `'prune'` render stage (ADR-0017), which unions every feature's `expandedRows` contribution centrally.
-- Reads `aggregateFn` from core `columns` config directly (no feature dependency — see `columns.md`; retroactively corrected from an earlier "depends on `withColumns()`" framing).
+### Declarators — one per concern (G39)
 
-## Pipeline Stage: Clustering, Not Tree-Building
+Each is declared inside `schema`, against a `GroupingPath` keyed by `keyof TRow`:
 
-**Resolved 2026-07-31** (was an open question — see research summary below). The `group` pipeline stage stays `TRow[] => TRow[]`, matching `PipelineStages<TRow>`'s existing signature (`engine/pipeline.ts`) — **no breaking change** to the stage contract `withSorting()` (#4) already relies on.
+| Declarator | Concern |
+|---|---|
+| `applyGrouping(path.x, { enable?, when? })` | activation and per-column admission |
+| `applyGroupingAsync(path.x, { params, factory, onSuccess, onError })` | activation from a resource |
+| `applyGroupKey(path.x, extractValue)` | key derivation — must return a primitive |
+| `applyGroupOrder(path.x, cmp)` | sibling order at that level |
 
-`group` performs **stable clustering**: same-key rows are gathered into contiguous runs, order otherwise preserved. `sort` (running after `group`, per the fixed `filter → group → sort → expand` order) then sorts *within* each cluster — a stable sort keeps clusters contiguous, so no coordination is needed between the two stages beyond ordering.
+`applyGrouping` declaring neither `enable` nor `when` throws at construction. A second
+`applyGroupKey` on one field is a duplicate registration and throws.
+
+### Write surface
+
+`table.grouping.update(updater)` — never bare setters (G1). Updater factories:
+`setGroupLevels`, `addGroupLevel`, `removeGroupLevel`, `reorderGroupLevels`.
+
+State stays `string[]`, so it round-trips through `JSON.stringify` (G39). Labels are a registry
+lookup off `initial`, never part of the state.
+
+### Declared vs. applied (G37)
+
+| | Source | Consumers |
+|---|---|---|
+| **declared** | `maskGroupingLevels(baseGrouping(), ruleEntries)` | clustering, `groupIds`, `rowsOf` |
+| **applied** | levels with ≥1 admitted cluster, read off the cluster tree | `grouping()`, `groupingLevels`, `isGroupedBy` |
+
+A level that admits no cluster is not a grouping level — the public read follows what renders.
+Applied derives *from* the clustered tree, so there is no cycle.
+
+### Rule resolution
+
+| Entry state | `result()` | Effect on other levels |
+|---|---|---|
+| never resolved, pending | `undefined` | whole set abstains — declared passes through unmasked |
+| resolved, now pending | its last boolean | none (G51) |
+| resolved | that boolean | none |
+| threw | `false`, reported once | none |
+
+A rule naming an undeclared field is inert (G34). A rule with no `enable` contributes no entry,
+so a `when`-only rule can never mask or abstain.
+
+## Group admission (`when`)
+
+Every built cluster renders as a group unless a `when` predicate rejects it. A rejected cluster's
+rows exit the grouping tree entirely — no header, no group id, no aggregates — and render flat at
+the parent's depth. They do not re-enter at a deeper level (G22).
+
+Three facts the signature does not state: dissolution happens **after** ordering, so a comparator's
+position for a dissolved cluster is where its flat rows land; with no comparator the default is a
+stable partition, admitted siblings first; a throwing `when` **admits** the cluster and reports
+once per column per evaluation.
+
+Mechanism and rejected alternatives:
+[`design-group-admission.md`](../work/grouping/archive/with-grouping/design-group-admission.md).
+
+## Pipeline stage — clustering, not tree-building
+
+The `group` pipeline stage stays `TRow[] → TRow[]`, matching `PipelineStages<TRow>`. It performs
+**stable clustering**: same-key rows gathered into contiguous runs, order otherwise preserved.
+
+`sort` runs after `group` in the fixed `filter → group → sort → expand` order, so a stable sort
+keeps clusters contiguous and the two stages need no coordination. Headers and aggregates are not
+produced here — the render layer synthesizes them downstream, which is also why `aggregateFn`
+always receives post-filter rows.
+
+**A row sort does move group headers.** The `'group'` render stage re-clusters the *sorted* rows,
+so with no comparator supplied, first-occurrence group order follows the sort. Rows within a group
+stay contiguous. G5's decoupling is `applyGroupOrder`-only — supply one to pin group order across
+sort changes.
+
+## Render layer — `renderRows`
+
+`withGrouping()` claims the `'group'` render stage ([ADR-0011](../../adr/0011-chained-render-stages.md);
+`withExpansion()` claims `'tree'`, leaving `'group'` free). It walks the clustered `rows()`,
+inserts a `kind: 'group'` header at each cluster boundary with `id` synthesized as
+`group:${columnId}:${value}`, computes `aggregates` over that cluster's leaves, and stamps every
+header and leaf with its parent's id — emitting the full tree **unconditionally**.
+
+`store.renderRows` is always present on the core store, degenerating to a 1:1 wrap of `rows()`
+when no grouping is composed — zero behavior change for tables that predate the feature.
+
+**Consumer split:** logic-layer code (exports, `effect()`s, aggregate inputs) reads `rows()` —
+pure `TRow[]`, unaffected by grouping or collapse. Template and virtual-scroll code reads
+`renderRows()`.
+
+## Collapse/expand is not grouping's code
+
+Collapsing a group omits its descendants through the **engine-owned `'prune'` render stage**
+([ADR-0017](../../adr/0017-engine-owned-descendant-prune.md)), which unions every composed
+feature's `expandedRows`. `withGrouping()` reads no expansion state at all and composes in any
+argument order (G23). The header itself always still renders.
+
+Without `withExpansion()` composed, everything renders flat and expanded — valid standalone use.
+
+`rowsOf(group)` stays correct under collapse: it re-derives the cluster tree from `rows()`
+(pipeline output) rather than scanning `renderRows()` (G20).
+
+## Aggregation
+
+Per-column `aggregateFn(rows)` computes one summary value per group per column, recomputed
+reactively when membership changes. Two invariants make depth mechanical:
+
+1. **Aggregates always compute over a cluster's own leaf rows** — never over a descendant's
+   already-computed aggregate.
+2. **Ordering compares siblings within a parent** — not globally across depths.
+
+A throwing `aggregateFn` yields `undefined` for that column only; the group still renders. All
+three grouping callbacks wrap per callback, never per row, and report once per evaluation
+([ADR-0014](../../adr/0014-runtime-error-policy.md)).
+
+> **Migration in flight (G42–G45).** `aggregateFn` moves off `ColumnDef` to `applyAggregate`
+> declared through `GroupingPath`. Accepted, not built. `ColumnDef.aggregateFn` is deleted
+> outright when it lands, not deprecated.
+
+## Group selection
+
+A group header is a **view over rows, not a row** (G18). It never enters `selectedRows` and never
+counts toward a selection total. `rowsOf(group)` returns every leaf beneath a header at any depth;
+the consumer owns any cascade:
 
 ```ts
-group: (rows) => clusterByKey(rows, grouping(), columns())
+const ids = table.rowsOf(group).map(table.trackBy);
+table.selectionStateOf(ids) === 'all' ? table.deselect(ids) : table.select(ids);
 ```
 
-Group *headers* and *aggregates* are not produced here — they're synthesized downstream by the render layer (below), which is also where filtering-before-grouping resolves cleanly: `aggregateFn` always receives post-filter, pre-render-flatten rows, since clustering runs after the `filter` stage.
+A group's row count is `rowsOf(group).length` — there is no count field on `RenderRow`. Resolve a
+group by `id`, never by object identity: `renderRows()` rebuilds its objects every pass (G19).
 
-## Render Layer: `renderRows`
+The one deliberate exception is `expandedRows`, which does hold synthetic `group:` ids — that set
+holds *toggles*, not records, which is what makes group expansion survive a refetch for free.
 
-Introduces a second, render-oriented signal on the core store (`api/create-table.ts`), additive to — not replacing — `rows: Signal<TRow[]>`:
+## ADRs that constrain this feature
 
-```ts
-// api/types.ts
-interface RenderRow<TRow> {
-  readonly id: RowId;
-  readonly depth: number;              // 0 for flat/ungrouped
-  readonly kind: 'row' | 'group';
-  readonly data: TRow | null;          // null only for kind: 'group'
-  readonly groupKey?: { columnId: string; value: unknown };
-  readonly aggregates?: Record<string, unknown>;
-  readonly isExpanded?: boolean;       // only meaningful if withExpansion() composed
-  readonly hasChildren?: boolean;
-}
-```
+In descending order of how badly this goes wrong without them.
 
-`store.renderRows: Signal<RenderRow<TRow>[]>` is always present on the core store, degenerating to a 1:1 wrap of `rows()` (`{ kind: 'row', depth: 0, data: row, id: trackBy(row) }`) when no grouping is composed — **zero behavior change for every table shipped before this feature**.
+| ADR | What it constrains |
+|---|---|
+| [0017](../../adr/0017-engine-owned-descendant-prune.md) | Collapse is engine-owned. Grouping emits unconditionally and reads no expansion state |
+| [0021](../../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md) | Grouping's schema names **row fields**; `columnsSchema` names **declared column ids** |
+| [0018](../../adr/0018-when-vs-enable-predicate-naming.md) | `when` vs `enable` — grouping is the only feature carrying both predicates |
+| [0011](../../adr/0011-chained-render-stages.md) | The `'group'` render stage claim; `RenderStages` derives from `RENDER_ORDER` |
+| [0014](../../adr/0014-runtime-error-policy.md) | Consumer callbacks degrade and report; they never throw |
+| [0019](../../adr/0019-columns-path-keyed-by-declared-column-ids.md) | What G36 amended — grouping is no longer its motivating consumer |
+| [0022](../../adr/0022-render-row-cell-values.md) | `buildGroupCells` spreads `aggregates` into column-id-keyed `cells` |
+| [0012](../../adr/0012-split-expansion-into-panel-and-tree.md), [0006](../../adr/0006-row-id-state-reconciliation.md) | Background: stage allocation, and group ids as synthetic `RowId`s |
 
-`withGrouping()` claims the `'group'` render stage (`withExpansion()` claims `'tree'`, leaving
-`'group'` free — [ADR-0011](../../adr/0011-chained-render-stages.md)).
+## Not in scope
 
-`withGrouping()` claims the `'group'` render stage to walk the clustered `rows()`, insert a `kind: 'group'` header at each cluster boundary — `id` synthesized as e.g. `` `group:${columnId}:${value}` ``, `aggregates` computed via each column's `aggregateFn` over that cluster's rows — and stamps every header and leaf with its parent's id, emitting the full tree unconditionally (#99). Omitting a cluster's member rows when its group id isn't expanded is no longer this stage's concern: the engine-owned `'prune'` render stage (ADR-0017) does that centrally, over the unioned `expandedRows` from every contributing feature. This is why `withExpansion()`'s `expandedRows: Set<RowId>` transparently covers group ids alongside real row ids (see `with-expansion.md`, Dual Use).
+- **`manual: true`** (server-side grouping) — structurally blocked, not merely unbuilt: a
+  manual-mode feature whose state feeds the request producing `data` cannot live inside a feature
+  composed on `createTable(data, …)`. No competitor API to borrow (G16).
+- **Header-click routing to group order** — a directive-layer convenience, not a store decision (G17).
+- **Grand totals and pivoting** — the larger AG Grid Enterprise machinery, no current use case (G9).
+- **Per-column `enableGrouping` opt-out** — never scoped in.
 
-**Consumer split:** logic-layer code (exports, `effect()`s, `aggregateFn` inputs, anything not rendering) reads `rows()` — pure `TRow[]`, unaffected by grouping/collapse. UI-layer/template/virtual-scroll code reads `renderRows()` — flattened, collapse-aware, ready to slice for virtualization. Neither `withVirtualScroll()` (future) nor template directives need to know grouping exists; they only ever consume `renderRows()`.
+## Prior art
 
-### Prior art informing this design
+`renderRows` follows the MUI X / AG Grid separation — a derived tree layer over flat data, with
+`rows: Signal<TRow[]>` left untouched — rather than TanStack's always-wrap `Row<TData>`, which
+would force every consumer, including ungrouped tables, to unwrap `.original`.
 
-Researched against three popular table libraries before locking this shape:
+The depth>0 aggregation-correctness bugs three competitors carry (TanStack #3323/#3232; MUI X
+#16540/#12684/#8493) come from computing aggregates inside row-model passes over wrapper objects
+with `subRows`, where "which rows does this aggregate see" is ambiguous at depth. This library
+clusters in a pure `TRow[] → TRow[]` stage and aggregates downstream over already-fixed clusters,
+so that bug class does not apply — which is why G9 could reopen the single-level scope-out.
 
-- **TanStack Table** — single `Row<TData>` wrapper for every row (leaf or group), composed via mixins, `subRows`/`getIsGrouped()` distinguish structurally. ([Row Models Guide](https://tanstack.com/table/v8/docs/guide/row-models))
-- **MUI X DataGrid** — tree kept fully separate from data: `GridTreeNode = GridLeafNode | GridGroupNode | ...` (discriminated union, keyed by `type`) references row ids; actual `TData` stays in a flat id-keyed lookup, untouched. ([source](https://github.com/mui/mui-x/blob/master/packages/x-data-grid/src/models/gridRows.ts))
-- **AG Grid** — same separation: tree/grouping structure is a derived layer over flat data; `rowNode.rowIndex` is `null` unless the row survived the current filter+collapse pass — index is never stored, only assigned during a flatten/visible-rows walk. ([Row Overview](https://www.ag-grid.com/javascript-data-grid/row-interface/))
+On group ordering, three of four researched libraries reuse column sort recursively, a documented
+bug source (TanStack; MUI X; AG Grid #7850). Only AG Grid treats group order as its own concept,
+Enterprise-gated behind `groupMaintainOrder: true` — whose *unflagged* behavior this library gets
+for free from its fixed pipeline order.
 
-`renderRows` follows the MUI/AG-Grid separation (keeps `rows: Signal<TRow[]>` untouched, matching our "expansion is optional" decision) rather than TanStack's always-wrap approach, which would have forced every consumer — including ungrouped tables — to unwrap `.original`.
-
-## Events Owned
-
-- `groupChanged` — fires on every grouping state change.
-
-## Open Questions
-
-- [x] ~~Precise data shape for "group node" objects~~ — resolved above via `RenderRow<TRow>` + `renderRows`.
-- [x] ~~Whether/how grouping interacts with active filters~~ — resolved: `aggregateFn` receives post-filter rows, since `group` clustering runs after the `filter` stage.
-- [x] ~~Whether a row sort disturbs group order~~ — **it does, answered on screen 2026-09-14.**
-  `PIPELINE_ORDER` is `filter → group → sort → expand`, and the `'group'` render stage re-clusters
-  the **sorted** rows, so with no `groupOrder` supplied, first-occurrence group order follows the
-  sort. Rows *within* a group stay contiguous and undisturbed; the headers reorder. So D5's
-  decoupling of grouping from sorting is **`groupOrder`-only** — supply one to pin group order
-  across sort changes. `grouping-collapsible/` carries an on-canvas notice stating this; pipeline
-  verification is tracked in issue #8.
-
-## Competitive position
-
-**Verdict: shipped** — see the banner above for what's built (D1–D17) vs. deliberately deferred
-(`manual: true`, header-click routing to `applyGroupOrder`).
-
-> **Scope sentence corrected 2026-09-10.** This paragraph previously read "the single-level scope
-> **deliberately** sidesteps TanStack's unresolved depth-0 aggregation-correctness bug by not
-> attempting depth at all in v1 — do not 'fix' the scope by adding arbitrary depth." **D9 did
-> exactly that**, and deliberately: full multi-level ships. The reasoning that produced the old
-> sentence was that TanStack's depth bug came from depth itself; re-examined, it comes from its
-> `Row`-wrapper row-model architecture, which this codebase does not share. D9's two invariants —
-> aggregates always compute over a cluster's own **leaf** rows, never over a child cluster's
-> already-computed aggregate, and `groupOrder` orders siblings within a parent — are what actually
-> close that bug class, and they hold at any depth. Grand totals and pivoting remain out of scope.
-
-Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).
+Full competitive reasoning:
+[gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

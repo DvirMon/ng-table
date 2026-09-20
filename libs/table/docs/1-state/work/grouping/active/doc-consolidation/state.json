@@ -1,0 +1,21 @@
+{
+  "slug": "doc-consolidation",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "stack": "docs",
+  "isComplex": false,
+  "workspaceRoot": "libs/table/docs/1-state/work/grouping/active/doc-consolidation",
+  "decisionsPath": null,
+  "specPath": null,
+  "architecturePath": null,
+  "planPath": "libs/table/docs/1-state/work/grouping/active/doc-consolidation/1-plan.md",
+  "inputPath": "libs/table/docs/1-state/work/grouping/active/doc-consolidation/doc-inventory-2026-09-20.md",
+  "githubIssues": [],
+  "checklist": {
+    "intake": true,
+    "grill": false,
+    "spec": false,
+    "issues": false,
+    "tasks": false
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "slug": "column-group-index",
+  "ticketRef": "115",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/81",
+  "stack": "angular",
+  "isComplex": false,
+  "workspaceRoot": "libs/table/docs/1-state/work/grouping/archive/column-group-index",
+  "decisionsPath": "libs/table/docs/1-state/work/grouping/archive/column-group-index/2-decisions.md",
+  "specPath": "libs/table/docs/1-state/work/grouping/archive/column-group-index/3-spec.md",
+  "architecturePath": null,
+  "githubIssues": [
+    115,
+    134
+  ],
+  "checklist": {
+    "intake": true,
+    "grill": true,
+    "spec": true,
+    "issues": true,
+    "tasks": true
+  }
+}
