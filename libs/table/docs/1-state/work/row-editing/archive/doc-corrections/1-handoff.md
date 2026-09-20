@@ -41,7 +41,7 @@ briefly `pending` only when the consumer awaits between closing and releasing.
 
 ## 2. `with-optimistic-crud/2-decisions.md` — two decisions numbered D48
 
-**Where:** `docs/1-state/work/with-optimistic-crud/2-decisions.md`, headings at ~line 110 and ~line
+**Where:** `docs/1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md`, headings at ~line 110 and ~line
 153.
 
 | Line | Heading |

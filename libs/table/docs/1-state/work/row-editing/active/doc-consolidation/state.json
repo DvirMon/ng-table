@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "runId": "row-editing-doc-consolidation-20260920T000000Z",
+  "slug": "row-editing-doc-consolidation",
+  "ticketRef": null,
+  "ticketUrl": null,
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/1-state/work/row-editing/active/doc-consolidation",
+  "stack": "none",
+  "isComplex": false,
+  "decisionsPath": "libs/table/docs/1-state/work/row-editing/active/doc-consolidation/1-decisions.md",
+  "capabilityLogPath": "libs/table/docs/decisions/row-editing.md",
+  "specPath": null,
+  "architecturePath": null,
+  "githubIssues": [],
+  "createdAt": "2026-09-20T00:00:00Z",
+  "updatedAt": "2026-09-20T12:00:00Z"
+}
