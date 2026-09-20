@@ -6,6 +6,8 @@ on:
     types: [completed]
 
 permissions:
+  actions: read
+  contents: read
   issues: write
   pull-requests: read
 
@@ -18,60 +20,221 @@ jobs:
         with:
           script: |
             const wr = context.payload.workflow_run;
-            const closesPattern = /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
+            const { owner, repo } = context.repo;
+            const closesPattern =
+              /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
+            const MARKER = '<!-- ci-green-autoclose -->';
 
-            async function closeIssue(issueNumber, commentBody) {
-              const { data: issue } = await github.rest.issues.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-              });
+            // issueNumber -> { sources: string[] }
+            const targets = new Map();
 
-              // Any acceptance-criteria box still unchecked at this point was left that way by
-              // /implement specifically because it's a behavioural claim only the suite proves —
-              // see .claude/skills/implement. CI green is that proof, so flip it now.
-              const currentBody = issue.body ?? '';
-              const updatedBody = currentBody.replace(/^(\s*-\s\[) \]/gm, '$1x]');
-
-              await github.rest.issues.update({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                state: 'closed',
-                ...(updatedBody !== currentBody ? { body: updatedBody } : {}),
-              });
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issueNumber,
-                body: commentBody,
-              });
+            function collect(text, source) {
+              for (const m of (text ?? '').matchAll(closesPattern)) {
+                const n = Number(m[1]);
+                if (!targets.has(n)) targets.set(n, { sources: [] });
+                const t = targets.get(n);
+                if (!t.sources.includes(source)) t.sources.push(source);
+              }
             }
+
+            async function previousGreenSha() {
+              const { data } = await github.rest.actions.listWorkflowRuns({
+                owner, repo,
+                workflow_id: wr.workflow_id,
+                branch: 'main',
+                event: 'push',
+                status: 'success',
+                per_page: 20,
+              });
+              const earlier = data.workflow_runs
+                .filter((r) => r.id !== wr.id)
+                .filter((r) => new Date(r.created_at) < new Date(wr.created_at))
+                .sort(
+                  (a, b) => new Date(b.created_at) - new Date(a.created_at),
+                );
+              return earlier[0]?.head_sha ?? null;
+            }
+
+            // Every commit pushed since the last green CI run on main. The
+            // workflow_run payload only carries head_commit, so a push of N
+            // commits would otherwise leave N-1 commit messages unread.
+            async function commitsInPush() {
+              const fallback = wr.head_commit
+                ? [{ sha: wr.head_sha, message: wr.head_commit.message }]
+                : [];
+              const base = await previousGreenSha();
+              if (!base || base === wr.head_sha) {
+                core.info(
+                  'No usable previous green run — scanning head commit only.',
+                );
+                return fallback;
+              }
+              try {
+                const { data } = await github.rest.repos.compareCommits({
+                  owner, repo, base, head: wr.head_sha,
+                });
+                const commits = data.commits.map((c) => ({
+                  sha: c.sha,
+                  message: c.commit.message,
+                }));
+                core.info(
+                  `Scanning ${commits.length} commit(s) in ` +
+                  `${base.slice(0, 7)}..${wr.head_sha.slice(0, 7)}.`,
+                );
+                return commits.length > 0 ? commits : fallback;
+              } catch (err) {
+                core.warning(
+                  `compareCommits(${base.slice(0, 7)}..` +
+                  `${wr.head_sha.slice(0, 7)}) failed: ${err.message}. ` +
+                  'Falling back to head commit.',
+                );
+                return fallback;
+              }
+            }
+
+            async function alreadyAnnounced(issueNumber) {
+              const comments = await github.paginate(
+                github.rest.issues.listComments,
+                { owner, repo, issue_number: issueNumber, per_page: 100 },
+              );
+              return comments.some((c) => (c.body ?? '').includes(MARKER));
+            }
+
+            // ---- Discovery -------------------------------------------------
+
+            let trigger = '';
 
             if (wr.pull_requests.length > 0) {
+              trigger = 'pull_request';
               for (const linked of wr.pull_requests) {
                 const { data: pr } = await github.rest.pulls.get({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  pull_number: linked.number,
+                  owner, repo, pull_number: linked.number,
                 });
-                if (pr.state !== 'open' || pr.base.ref !== 'main') continue;
-
-                for (const match of pr.body?.matchAll(closesPattern) ?? []) {
-                  await closeIssue(
-                    Number(match[1]),
-                    `Closed automatically — CI passed on PR #${pr.number} (${wr.html_url}). ` +
-                    `Remaining acceptance criteria checked off.`
+                if (pr.state !== 'open' || pr.base.ref !== 'main') {
+                  core.info(
+                    `Skipping PR #${pr.number} ` +
+                    `(state=${pr.state}, base=${pr.base.ref}).`,
                   );
+                  continue;
                 }
+                collect(pr.body, `PR #${pr.number}`);
               }
             } else if (wr.event === 'push' && wr.head_branch === 'main') {
-              const message = wr.head_commit?.message ?? '';
-              for (const match of message.matchAll(closesPattern)) {
-                await closeIssue(
-                  Number(match[1]),
-                  `Closed automatically — CI passed on commit ${wr.head_sha.slice(0, 7)} (${wr.html_url}). ` +
-                    `Remaining acceptance criteria checked off.`
-                );
+              trigger = 'push to main';
+              for (const c of await commitsInPush()) {
+                collect(c.message, c.sha.slice(0, 7));
               }
+            } else {
+              core.info(
+                `Nothing to do: event=${wr.event}, branch=${wr.head_branch}.`,
+              );
             }
+
+            // ---- Action ----------------------------------------------------
+
+            const rows = [];
+
+            for (const [issueNumber, { sources }] of targets) {
+              const source = sources.join(', ');
+              let issue;
+              try {
+                ({ data: issue } = await github.rest.issues.get({
+                  owner, repo, issue_number: issueNumber,
+                }));
+              } catch (err) {
+                core.warning(`#${issueNumber}: not found (${err.status}).`);
+                rows.push([`#${issueNumber}`, '—', source, '—', 'not found']);
+                continue;
+              }
+
+              if (issue.pull_request) {
+                core.info(`#${issueNumber} is a PR, not an issue — skipping.`);
+                rows.push([
+                  `#${issueNumber}`, issue.title, source, '—', 'is a PR',
+                ]);
+                continue;
+              }
+
+              if (await alreadyAnnounced(issueNumber)) {
+                core.info(`#${issueNumber}: already handled — skipping.`);
+                rows.push([
+                  `#${issueNumber}`, issue.title, source, '—',
+                  'already handled',
+                ]);
+                continue;
+              }
+
+              // Any acceptance-criteria box still unchecked at this point was
+              // left that way by /implement specifically because it's a
+              // behavioural claim only the suite proves — see
+              // .claude/skills/implement. CI green is that proof, so flip it.
+              const currentBody = issue.body ?? '';
+              const flipped =
+                (currentBody.match(/^\s*-\s\[ \]/gm) ?? []).length;
+              const updatedBody = currentBody.replace(
+                /^(\s*-\s\[) \]/gm, '$1x]',
+              );
+
+              await github.rest.issues.update({
+                owner, repo, issue_number: issueNumber,
+                state: 'closed',
+                ...(flipped > 0 ? { body: updatedBody } : {}),
+              });
+
+              const provenance = wr.pull_requests.length > 0
+                ? source
+                : `commit ${source}`;
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issueNumber,
+                body:
+                  `${MARKER}\nClosed automatically — CI passed on ` +
+                  `${provenance} ([run](${wr.html_url})).` +
+                  (flipped > 0
+                    ? `\n\n${flipped} remaining acceptance ` +
+                      `criteri${flipped === 1 ? 'on' : 'a'} checked off.`
+                    : ''),
+              });
+
+              const wasOpen = issue.state === 'open';
+              core.info(
+                `#${issueNumber} "${issue.title}" — ` +
+                `${wasOpen ? 'closed' : 'already closed'}, ` +
+                `${flipped} box(es) flipped, from ${source}.`,
+              );
+              rows.push([
+                `#${issueNumber}`, issue.title, source, String(flipped),
+                wasOpen ? 'closed' : 'closed (was already)',
+              ]);
+            }
+
+            // ---- Report ----------------------------------------------------
+
+            const closedCount =
+              rows.filter((r) => r[4].startsWith('closed')).length;
+            const headline = targets.size === 0
+              ? `No linked issues found (${trigger || 'no matching trigger'})`
+              : `${closedCount} issue(s) closed from ${trigger}: ` +
+                rows.map((r) => r[0]).join(', ');
+
+            core.notice(headline);
+            core.summary.addHeading('Close linked issue on CI green', 2);
+            core.summary.addRaw(
+              `Trigger: \`${trigger || 'none'}\` · ` +
+              `head \`${wr.head_sha.slice(0, 7)}\` · ` +
+              `[CI run](${wr.html_url})`,
+              true,
+            );
+            if (rows.length > 0) {
+              core.summary.addTable([
+                ['Issue', 'Title', 'Source', 'Boxes', 'Result'].map(
+                  (h) => ({ data: h, header: true }),
+                ),
+                ...rows,
+              ]);
+            } else {
+              core.summary.addRaw(
+                '\nNo `Closes #N` / `Fixes #N` reference found.',
+                true,
+              );
+            }
+            await core.summary.write();
