@@ -8,27 +8,37 @@
 > The specs are the single source of truth; this page is only a derived view of
 > their `capability:` / `spec:` / `code:` frontmatter. To change a value here,
 > edit the owning spec's frontmatter and regenerate — never edit this table.
->
-> Field vocabulary: [decisions.md](1-state/work/state-feature-competitive-audit/decisions.md) (D1–D3).
 
-| Capability | State spec | State code | UI spec | UI code | Story research | Docs |
-|---|---|---|---|---|---|---|
-| `column-pinning` | drafted | none | — | — | — | [state](1-state/features/column-pinning.md) |
-| `column-sizing` | drafted | none | stub | none | — | [state](1-state/features/column-sizing.md) · [ui](3-ui/directives/resizing.md) |
-| `columns` | — | — | drafted | none | — | [ui](3-ui/directives/columns.md) |
-| `core` | — | — | drilled | partial | — | [ui](3-ui/directives/core.md) |
-| `drag-drop` | stub | none | stub | none | — | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
-| `expansion` | drilled | partial | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
-| `filtering` | drilled | shipped | — | — | [✅](0-product/filtering.md) | [state](1-state/features/filtering.md) · [product](0-product/filtering.md) |
-| `grouping` | drilled | partial | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
-| `infinite-scroll` | stub | none | — | — | — | [state](1-state/features/infinite-scroll.md) |
-| `pagination` | stub | none | — | — | — | [state](1-state/features/pagination.md) |
-| `row-animation` | — | — | drilled | shipped | — | [ui](3-ui/directives/row-animation.md) |
-| `row-editing` | drilled | shipped | — | — | [✅](0-product/row-editing.md) | [state](1-state/features/row-editing.md) · [product](0-product/row-editing.md) |
-| `selection` | drilled | partial | stub | none | [✅](0-product/selection.md) | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) · [product](0-product/selection.md) |
-| `sorting` | drilled | shipped | drafted | none | [✅](0-product/sorting.md) | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) · [product](0-product/sorting.md) |
-| `state-persistence` | drafted | none | — | — | — | [state](1-state/state-persistence.md) |
-| `virtual-scroll` | drafted | none | — | — | — | [state](1-state/features/virtual-scroll.md) |
+**Start at the Decisions column.** A capability answers from two permanent files: its
+decision log (why it is shaped this way, what was reversed, what is still open) and its
+spec (what it does today). Work folders hold the full rationale behind one decision — open
+one only when a log row sends you there, and never read a work folder to find out what
+shipped.
+
+> Field vocabulary:
+> [decisions.md](1-state/work/meta/archive/state-feature-competitive-audit/decisions.md) (D1–D3).
+> Log format: `~/.claude/conventions/doc-contracts/decisions-log.md`.
+
+| Capability | Decisions | State spec | State code | UI spec | UI code | Story research | Docs |
+|---|---|---|---|---|---|---|---|
+| `column-pinning` | — | drafted | none | — | — | — | [state](1-state/features/column-pinning.md) |
+| `column-sizing` | — | drafted | none | stub | none | — | [state](1-state/features/column-sizing.md) · [ui](3-ui/directives/resizing.md) |
+| `columns` | — | — | — | drafted | none | — | [ui](3-ui/directives/columns.md) |
+| `core` | — | — | — | drilled | partial | — | [ui](3-ui/directives/core.md) |
+| `drag-drop` | — | stub | none | stub | none | — | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
+| `expansion` | [log](decisions/expansion.md) | drilled | partial | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
+| `filtering` | — | drilled | shipped | — | — | [✅](0-product/filtering.md) | [state](1-state/features/filtering.md) · [product](0-product/filtering.md) |
+| `grouping` | [log](decisions/grouping.md) | drilled | partial | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
+| `infinite-scroll` | — | stub | none | — | — | — | [state](1-state/features/infinite-scroll.md) |
+| `pagination` | — | stub | none | — | — | — | [state](1-state/features/pagination.md) |
+| `row-animation` | — | — | — | drilled | shipped | — | [ui](3-ui/directives/row-animation.md) |
+| `row-editing` | [log](decisions/row-editing.md) | drilled | shipped | — | — | [✅](0-product/row-editing.md) | [state](1-state/features/row-editing.md) · [product](0-product/row-editing.md) |
+| `selection` | — | drilled | partial | stub | none | [✅](0-product/selection.md) | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) · [product](0-product/selection.md) |
+| `sorting` | [log](decisions/sorting.md) | drilled | shipped | drafted | none | [✅](0-product/sorting.md) | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) · [product](0-product/sorting.md) |
+| `state-persistence` | — | drafted | none | — | — | — | [state](1-state/state-persistence.md) |
+| `virtual-scroll` | — | drafted | none | — | — | — | [state](1-state/features/virtual-scroll.md) |
 
 `—` — that layer has no doc for this capability.
+`—` in **Decisions** — no consolidated log yet; its history is still
+spread across work folders. Consolidate it per `docs/agents/capability-docs.md`.
 `?` — the doc exists but its field is missing or unrecognised; the generator logged a diagnostic.
