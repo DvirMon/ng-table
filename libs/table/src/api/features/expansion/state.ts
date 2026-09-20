@@ -15,7 +15,7 @@ export interface ExpansionWriteOptions {
 }
 
 export interface ExpansionStoreOptions {
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
   /** Called with ids newly added to the set by any write. `withExpansion()` uses it to
    *  accumulate `everExpanded`; a future tree feature passes nothing. Mirrors
    *  `EditingStoreOptions.onWrite`. */
@@ -36,7 +36,7 @@ export interface ExpansionStore {
 }
 
 export function createExpansionStore(options: ExpansionStoreOptions = {}): ExpansionStore {
-  const expandedSignal = signal<ReadonlySet<RowId>>(new Set(options.initialExpanded ?? []));
+  const expandedSignal = signal<ReadonlySet<RowId>>(new Set(options.initial ?? []));
   const changedSource = new Subject<RowId>();
 
   function setExpanded(ids: readonly RowId[], writeOptions?: ExpansionWriteOptions): void {

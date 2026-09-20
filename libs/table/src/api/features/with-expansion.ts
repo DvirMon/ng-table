@@ -19,7 +19,7 @@ export interface WithExpansionConfig<TRow> {
    */
   isExpandable?: (row: TRow) => boolean;
   /** Seeds `expandedRows`/`everExpanded` at construction. Emits nothing on `rowExpanded`. */
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
 }
 
 /** The slice of the store this feature reads, F-bounded so a factory body gets
@@ -153,7 +153,7 @@ function buildExpansionSpec<TRow>(
   const everExpanded = signal(new Set<RowId>());
 
   const store = createExpansionStore({
-    initialExpanded: config.initialExpanded,
+    initial: config.initial,
     onExpanded: (ids) => {
       everExpanded.update((seen) => {
         const next = new Set(seen);

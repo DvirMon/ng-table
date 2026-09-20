@@ -473,13 +473,13 @@ describe('withExpansion', () => {
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
   });
 
-  it('initialExpanded seeds expandedRows and everExpanded at construction, emitting nothing on rowExpanded', () => {
+  it('initial seeds expandedRows and everExpanded at construction, emitting nothing on rowExpanded', () => {
     const emitted: RowId[] = [];
     const store = inContext(() => {
       const s = createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withExpansion({ initialExpanded: ['r1', 'c1'] })
+        withExpansion({ initial: ['r1', 'c1'] })
       );
       s.rowExpanded.subscribe((id) => emitted.push(id));
       return s;
@@ -492,24 +492,24 @@ describe('withExpansion', () => {
     expect(emitted).toEqual([]);
   });
 
-  it('initialExpanded seeds renderRows as already expanded', () => {
+  it('initial seeds renderRows as already expanded', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withExpansion({ initialExpanded: ['r1'] })
+        withExpansion({ initial: ['r1'] })
       )
     );
 
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
   });
 
-  it('initialExpanded seeded rows behave normally afterward: toggle, expandAll, collapseAll all work on top of the seed', () => {
+  it('initial seeded rows behave normally afterward: toggle, expandAll, collapseAll all work on top of the seed', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
         { trackBy: 'id', columns: makeColumns() },
-        withExpansion({ initialExpanded: ['r1'] })
+        withExpansion({ initial: ['r1'] })
       )
     );
 
