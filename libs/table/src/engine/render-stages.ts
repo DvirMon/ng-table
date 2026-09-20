@@ -2,10 +2,9 @@ import type { RenderRow, RowId } from '../api/types';
 
 /**
  * Fixed render-layer execution order, independent of `features` array order — `RenderStages`
- * derives from it. `'prune'` runs after every claimable stage and before `'paginate'`. See
- * ADR-0017.
+ * derives from it. `'prune'` runs after every claimable stage. See ADR-0017.
  */
-export const RENDER_ORDER = ['group', 'tree', 'prune', 'paginate'] as const;
+export const RENDER_ORDER = ['group', 'tree', 'prune'] as const;
 
 export type RenderStage = (typeof RENDER_ORDER)[number];
 

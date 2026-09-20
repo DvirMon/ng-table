@@ -245,7 +245,9 @@ Rules:
 - A second feature claiming the same `stages` key, the same `renderStages` key, or the same
   **member key** (ADR-0007), **throws at construction**. Render stages are per-named-stage
   collision, not whole-layer (ADR-0011) — `withExpansion()` claims `'tree'`, leaving
-  `'group'`/`'paginate'` free for `withGrouping()`/`withPagination()` once built.
+  `'group'` free for `withGrouping()`. `'paginate'` is not a reserved stage name — it was
+  dropped as an unclaimed anchor (#106); a future pagination feature's render-stage
+  question is undecided, not pre-answered by this name.
   [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) covers splitting
   `withExpansion()` into a detail-panel feature plus a `withTree()` claiming `'tree'` — read it,
   and its current status, before touching `renderStages` or `withExpansion()`.

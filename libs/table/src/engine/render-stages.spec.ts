@@ -5,7 +5,6 @@ import {
   type RenderStages,
   type StagedRow,
 } from './render-stages';
-import type { RowId } from '../api/types';
 
 type Row = { id: string };
 type Shaped = StagedRow<Row>;
@@ -25,13 +24,12 @@ describe('runRenderStages', () => {
     const trace: string[] = [];
     // Registered in reverse of the fixed order, to prove insertion order is irrelevant.
     const stages: RenderStages<Row> = {};
-    stages.paginate = (rows) => (trace.push('paginate'), rows);
     stages.tree = (rows) => (trace.push('tree'), rows);
     stages.group = (rows) => (trace.push('group'), rows);
 
     runRenderStages([makeRow('a')], stages);
 
-    expect(trace).toEqual(['group', 'tree', 'paginate']);
+    expect(trace).toEqual(['group', 'tree']);
     // 'prune' (ADR-0017) is engine-owned and unclaimable — it never touches `stages` and never
     // pushes to `trace`, so RENDER_ORDER (which now includes 'prune') is no longer the right
     // comparison. CLAIMABLE_RENDER_STAGES is RENDER_ORDER minus 'prune', derived, not a second
@@ -61,26 +59,6 @@ describe('runRenderStages', () => {
     const rows = [makeRow('a')];
 
     expect(runRenderStages(rows, {})).toBe(rows);
-  });
-
-  it('runs prune between tree and paginate — paginate sees pruning already applied', () => {
-    // The prune is not a registered stage, so it cannot be proven via a trace string (only
-    // registered `stages.*` closures push to one). Assert on what the fake `paginate`
-    // transform actually receives as input instead.
-    let paginateSawIds: RowId[] = [];
-    const stages: RenderStages<Row> = {
-      paginate: (rows) => {
-        paginateSawIds = rows.map((row) => row.id);
-        return rows;
-      },
-    };
-    const rows = [makeRow('parent'), makeRow('child', 'parent')];
-
-    // Nothing expanded — 'child' should be pruned before 'paginate' ever runs.
-    const result = runRenderStages(rows, stages, new Set());
-
-    expect(paginateSawIds).toEqual(['parent']);
-    expect(result.map((row) => row.id)).toEqual(['parent']);
   });
 
   it('is a pure no-op when expanded is undefined — zero contributors (D5)', () => {
