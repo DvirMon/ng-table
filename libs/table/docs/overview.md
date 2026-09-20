@@ -37,7 +37,9 @@ The NGP Table is a composable architecture documented as **three streams**, numb
 
 Consumers write native HTML. Directives are applied to HTML elements to enhance them. No monolithic table component exists. This follows Angular Material's composable directive pattern.
 
-**Rendering philosophy — no custom structural directives.** All row/child iteration and conditional rendering uses Angular's native control flow (`@for`, `@if`) directly in the consumer's template, reading store signals. Every NGP Table directive is an **attribute directive only** — it decorates an element that's already in the DOM (via `@for`/`@if`), it never inserts or removes DOM itself. This keeps iteration/recursion fully explicit and visible in the consumer's template rather than hidden inside a custom structural directive (e.g. no `*ngpTableRow`-style directive).
+**Rendering philosophy — no custom structural directives.** Row iteration and conditional rendering use Angular's native control flow (`@for`, `@if`) directly in the consumer's template, reading store signals. Every NGP Table directive is an **attribute directive only** — it decorates an element that's already in the DOM (via `@for`/`@if`), it never inserts or removes DOM itself. This keeps iteration fully explicit and visible in the consumer's template rather than hidden inside a custom structural directive (e.g. no `*ngpTableRow`-style directive).
+
+Nesting is the one thing the template does **not** recurse over. `renderRows()` is flat by construction — group headers and expanded children are entries in the same list, each stamped with its own `depth`, `parentId` and `isExpanded` — so a consumer writes one `@for` and reads `row.depth` for indentation. Hiding a collapsed row's descendants is the engine's `flattenVisible` walk, not a template condition ([ADR-0023](adr/0023-tree-shaped-render-ir.md)).
 
 > **Scope of "attribute-only" (clarified 2026-08-07).** The rule constrains **DOM structure**, not UI effect. A directive may drive appearance — host classes, `data-*` attributes, CSS custom properties — and may own enter/leave motion on the element it sits on (e.g. `ngpTableExpandable`, see `3-ui/directives/expansion.md`). What it may not do is create, remove, or reorder elements. Angular CDK's `cdkDrag` is the reference model: the directive class itself only toggles classes and drives transforms, while the preview and placeholder DOM come from the `DragRef` engine and from consumer-authored `cdkDragPreview` / `cdkDragPlaceholder` directives — that DOM-creating half is the part NGP Table does not do.
 
@@ -51,20 +53,15 @@ Consumers write native HTML. Directives are applied to HTML elements to enhance 
     </tr>
   </thead>
   <tbody>
-    @for (row of store.rows(); track row.id) {
-      <tr ngpTableRow>
-        <td>{{ row.name }}</td>
-        <td>{{ row.status }}</td>
+    <!-- One loop, no recursion: renderRows() is already flat. A group header and an
+         expanded row's children are entries in the same list, each carrying its own
+         depth — the engine's flattenVisible walk omits a collapsed row's descendants
+         rather than the template gating them (ADR-0023). -->
+    @for (row of store.renderRows(); track row.id) {
+      <tr ngpTableRow [attr.data-depth]="row.depth">
+        <td>{{ row.cells['name'] }}</td>
+        <td>{{ row.cells['status'] }}</td>
       </tr>
-
-      <!-- Nested/expanded rows: also native control flow, no structural directive -->
-      @if (store.expandedRows().has(row.id)) {
-        @for (child of row.children; track child.id) {
-          <tr ngpTableRow>
-            <td>{{ child.name }}</td>
-          </tr>
-        }
-      }
     }
   </tbody>
 </table>
