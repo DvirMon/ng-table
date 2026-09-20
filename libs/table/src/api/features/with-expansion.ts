@@ -1,7 +1,7 @@
 import { signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { pruneByIds } from '../../engine/rows';
-import type { StagedRow } from '../../engine/render-stages';
+import { mapNodes, type RenderNode, type RenderNodeTransform } from '../../engine/render-stages';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict, RowId, TableStore, TrackByFn } from '../types';
@@ -72,62 +72,52 @@ function isRowIdArray(value: unknown): value is readonly RowId[] {
   return Array.isArray(value);
 }
 
-// Wraps a raw `TRow` child as an unstamped render row at its parent's `depth + 1`, carrying the
-// parent's id so a child always knows its parent.
-function toChildRenderRow<TRow>(
+// Wraps a raw `TRow` child, recursively, as a nested `RenderNode` — the shape `mapNodes`
+// expects, not a sibling to be flattened later.
+function toChildNode<TRow>(
   row: TRow,
-  depth: number,
   trackBy: TrackByFn<TRow>,
-  parentId: RowId
-): StagedRow<TRow> {
-  return { id: trackBy(row), depth, kind: 'row', data: row, parentId };
+  childrenAccessor: (row: TRow) => TRow[] | undefined,
+  isExpandable: (row: TRow) => boolean
+): RenderNode<TRow> {
+  const children = childrenAccessor(row);
+  return {
+    id: trackBy(row),
+    kind: 'row',
+    data: row,
+    hasChildren: isExpandable(row),
+    children: hasNonEmptyChildren(children)
+      ? children.map((child) => toChildNode(child, trackBy, childrenAccessor, isExpandable))
+      : [],
+  };
 }
 
 /**
- * The `'tree'` render stage. Passes through any row a preceding stage already
- * produced (e.g. a `'group'` header, `data === null`) untouched, and for a data-backed row
- * stamps `hasChildren`/`isExpanded` onto it, then unconditionally appends its children,
- * recursively, at `row.depth + 1`, each carrying `parentId`. Collapse/expand visibility is not
- * this stage's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a row's
- * descendants when its id is missing from the unioned `expandedRows` set.
- *
- * Takes `expandedRows` as a `Signal` and reads it inside the returned transform, not at
- * declaration time: `composeTable()` calls a feature's factory once during the fold and
- * keeps the returned `renderStages.tree` function forever, so a value read at declaration
- * time would freeze the first render forever instead of tracking later toggles.
+ * The `'tree'` render stage. Passes through a node a preceding stage already synthesized (e.g.
+ * a `'group'` header, `data === null`) untouched, and for a data-backed node stamps
+ * `hasChildren` and nests its children beneath it via `mapNodes`. Collapse/expand visibility is
+ * not this stage's concern: `flattenVisible` hides a node's descendants when its id is missing
+ * from the unioned `expandedRows` set.
  */
 function buildTreeStage<TRow>(
   trackBy: TrackByFn<TRow>,
-  expandedRows: Signal<Set<RowId>>,
   childrenAccessor: (row: TRow) => TRow[] | undefined,
   isExpandable: (row: TRow) => boolean
-): (rows: StagedRow<TRow>[]) => StagedRow<TRow>[] {
-  function expandRow(
-    row: StagedRow<TRow>,
-    expanded: Set<RowId>
-  ): StagedRow<TRow>[] {
-    if (row.data === null) {
-      return [row];
-    }
-    const self: StagedRow<TRow> = {
-      ...row,
-      hasChildren: isExpandable(row.data),
-      isExpanded: expanded.has(row.id),
-    };
-    const children = childrenAccessor(row.data);
-    if (!hasNonEmptyChildren(children)) {
-      return [self];
-    }
-    const nested = children.flatMap((child) =>
-      expandRow(toChildRenderRow(child, row.depth + 1, trackBy, row.id), expanded)
-    );
-    return [self, ...nested];
-  }
-
-  return (rows) => {
-    const expanded = expandedRows();
-    return rows.flatMap((row) => expandRow(row, expanded));
-  };
+): RenderNodeTransform<TRow> {
+  return (nodes) =>
+    mapNodes(nodes, (node) => {
+      if (node.data === null) {
+        return node;
+      }
+      const children = childrenAccessor(node.data);
+      return {
+        ...node,
+        hasChildren: isExpandable(node.data),
+        children: hasNonEmptyChildren(children)
+          ? children.map((child) => toChildNode(child, trackBy, childrenAccessor, isExpandable))
+          : node.children,
+      };
+    });
 }
 
 // Recursively collects the id of every expandable row, at any depth — used by `expandAll()`
@@ -242,10 +232,10 @@ function buildExpansionSpec<TRow>(
       collapseAll,
     },
     renderStages: {
-      tree: buildTreeStage(input.trackBy, expandedRows, childrenAccessor, isExpandable),
+      tree: buildTreeStage(input.trackBy, childrenAccessor, isExpandable),
     },
-    // Read-only hand-off of the feature's own set to the engine's terminal `'prune'` render
-    // stage (ADR-0017) — unioned with every other contributor in `engine/core.ts`.
+    // Read-only hand-off of the feature's own set to `flattenVisible` — unioned with every
+    // other contributor in `engine/core.ts`.
     expandedRows: expandedRows.asReadonly(),
     onDestroy: () => rowExpandedSource.complete(),
     onRowsRemoved,

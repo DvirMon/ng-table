@@ -2,7 +2,7 @@ import { computed, DestroyRef, effect, inject } from '@angular/core';
 import type { AnyTableFeature, RowId, TableStore } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
 import { PIPELINE_ORDER } from './pipeline';
-import { CLAIMABLE_RENDER_STAGES } from './render-stages';
+import { RENDER_ORDER } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
@@ -101,7 +101,7 @@ function foldFeatures<TRow>(
     }
 
     if (spec.renderStages) {
-      for (const stage of CLAIMABLE_RENDER_STAGES) {
+      for (const stage of RENDER_ORDER) {
         const transform = spec.renderStages[stage];
         if (!transform) {
           continue;

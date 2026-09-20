@@ -1,5 +1,5 @@
 import type { RowId, TrackByConfig, TrackByFn } from '../api/types';
-import type { StagedRow } from './render-stages';
+import type { RenderNode } from './render-stages';
 
 /** Pure row-identity and render-row helpers. No signals, no Angular. */
 
@@ -22,12 +22,12 @@ export function normalizeTrackBy<TRow>(
   };
 }
 
-/** 1:1 wrap, no grouping — the render-row seed every render stage chain starts from. */
-export function buildDefaultRenderRows<TRow>(
+/** 1:1 wrap, no grouping — the render-node seed every render stage chain starts from. */
+export function buildDefaultRenderNodes<TRow>(
   trackBy: TrackByFn<TRow>
-): (rows: TRow[]) => StagedRow<TRow>[] {
+): (rows: TRow[]) => RenderNode<TRow>[] {
   return (rows) =>
-    rows.map((row) => ({ id: trackBy(row), depth: 0, kind: 'row', data: row }));
+    rows.map((row) => ({ id: trackBy(row), kind: 'row', data: row, children: [] }));
 }
 
 /**

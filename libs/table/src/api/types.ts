@@ -46,17 +46,19 @@ export interface RenderRow<TRow> {
 
   // The field, value and resolved label a `group` row was clustered on, so a header can render
   // itself without parsing anything back out of the composite `id`. `label` resolves explicit ->
-  // a column whose id matches `columnId` -> the raw field name (D7a). Set only for `kind:
-  // 'group'`.
+  // a column whose id matches `columnId` -> the raw field name. Set only for `kind: 'group'`.
   readonly groupKey?: { columnId: string; value: unknown; label: string };
 
   // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
   readonly aggregates?: Record<string, unknown>;
 
-  // Set only when `withExpansion()` is composed.
+  // Derived by `flattenVisible`'s walk: `undefined` unless a feature contributed to the
+  // unioned `expandedRows` slot *and* this row has children — a table with no expansion
+  // feature composed never stamps this, even on a row that has children.
   readonly isExpanded?: boolean;
 
-  // `hasChildren` is true for a `group` row that has at least one child.
+  // Derived by `flattenVisible`'s walk from the node's `children`, unless a stage overrides it
+  // via `RenderNode.hasChildren` (e.g. a lazy row whose children haven't loaded yet).
   readonly hasChildren?: boolean;
 
   // Index into `data()` for the `TRow` this render row was built from, resolved by trackBy
@@ -65,9 +67,9 @@ export interface RenderRow<TRow> {
   readonly sourceIndex?: number;
 
   // The id of the render row this one was synthesized beneath — the group header for a cluster
-  // member, the parent row for a tree child. Set by the synthesizing stage at emit time;
-  // `undefined` on a top-level row and whenever nothing nests. Opaque: never parsed back apart,
-  // since a group id's separators differ from a tree id's.
+  // member, the parent row for a tree child. Derived by `flattenVisible`'s walk from the node
+  // tree's own nesting; `undefined` on a top-level row and whenever nothing nests. Opaque:
+  // never parsed back apart, since a group id's separators differ from a tree id's.
   readonly parentId?: RowId;
 
   // The resolved value per column, keyed by declared column id — `accessor` output for a

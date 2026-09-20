@@ -1,5 +1,5 @@
-import type { ColumnDef, RowId } from '../../api/types';
-import type { StagedRow } from '../render-stages';
+import type { ColumnDef } from '../../api/types';
+import type { RenderNode } from '../render-stages';
 import {
   admitClusters,
   buildClusters,
@@ -54,7 +54,7 @@ function computeAggregates<TRow>(
   return aggregates;
 }
 
-/** Explicit -> a column whose id matches `columnId` -> the raw field name (D7a). */
+/** Explicit label -> a column whose id matches `columnId` -> the raw field name. */
 function resolveGroupLabel<TRow>(
   columnId: string,
   columns: ColumnDef<TRow>[],
@@ -69,31 +69,26 @@ function resolveGroupLabel<TRow>(
 }
 
 /**
- * Depth-first header + leaf walk over a `buildClusters` tree. Emits one `kind: 'group'` header
- * per admitted node, immediately followed by its nested headers/leaves, each carrying its
- * parent's id. A node with `admitted: false` emits its `items` flat at the parent's depth and
- * `parentId` instead — no header, no recursion into `children`. Collapse/expand visibility is
- * not this function's concern: the engine-owned `'prune'` render stage (ADR-0017) hides a
- * header's descendants when its id is missing from the unioned `expandedRows` set.
+ * Depth-first header + leaf walk over a `buildClusters` tree. Returns one `kind: 'group'` header
+ * per admitted node, nesting its children beneath it. A node with `admitted: false` inlines its
+ * `items` at the parent's level instead — no header, no recursion into `children`. Collapse/
+ * expand visibility is not this function's concern: `flattenVisible` decides what renders from
+ * the nested tree this produces.
  */
-function emitGroupRows<TRow>(
-  nodes: ClusterNode<StagedRow<TRow>>[],
-  depth: number,
+function buildGroupNodes<TRow>(
+  nodes: ClusterNode<RenderNode<TRow>>[],
   parentPath: string,
   columns: ColumnDef<TRow>[],
   reportedColumns: Set<string>,
-  labelByColumn: ReadonlyMap<string, string> | undefined,
-  parentId?: RowId
-): StagedRow<TRow>[] {
+  labelByColumn: ReadonlyMap<string, string> | undefined
+): RenderNode<TRow>[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) {
-      return node.items.map((item) => ({ ...item, depth, parentId }));
+      return node.items;
     }
     const path = buildGroupPath(parentPath, node.columnId, node.value);
-    const id = toGroupId(path);
-    const header: StagedRow<TRow> = {
-      id,
-      depth,
+    const header: RenderNode<TRow> = {
+      id: toGroupId(path),
       kind: 'group',
       data: null,
       groupKey: {
@@ -101,38 +96,36 @@ function emitGroupRows<TRow>(
         value: node.value,
         label: resolveGroupLabel(node.columnId, columns, labelByColumn),
       },
-      hasChildren: node.items.length > 0,
       aggregates: computeAggregates(
         node.items.map((item) => item.data).filter(isRowData),
         columns,
         reportedColumns
       ),
-      parentId,
+      children:
+        node.children.length > 0
+          ? buildGroupNodes(node.children, path, columns, reportedColumns, labelByColumn)
+          : node.items,
     };
-    const nested =
-      node.children.length > 0
-        ? emitGroupRows(node.children, depth + 1, path, columns, reportedColumns, labelByColumn, id)
-        : node.items.map((item) => ({ ...item, depth: depth + 1, parentId: id }));
-    return [header, ...nested];
+    return [header];
   });
 }
 
 /**
  * The `'group'` render stage (`RENDER_ORDER`, `engine/render-stages.ts`) — runs first, so its
- * input is always the plain 1:1 seed from `buildDefaultRenderRows`, every `item.data` a real
+ * input is always the plain 1:1 seed from `buildDefaultRenderNodes`, every `item.data` a real
  * `TRow`. Reuses `buildClusters` for the same tree the pipeline `group` stage builds, so header
  * insertion and `computeAggregates` read from one tree, never two divergent walks.
  */
 export function buildGroupRenderRows<TRow>(
-  rows: StagedRow<TRow>[],
+  rows: readonly RenderNode<TRow>[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
-): StagedRow<TRow>[] {
+): readonly RenderNode<TRow>[] {
   if (grouping.length === 0) {
     return rows;
   }
-  const nodes = buildClusters(rows, grouping, (item, key) => {
+  const nodes = buildClusters([...rows], grouping, (item, key) => {
     if (!isRowData(item.data)) {
       throw new Error(
         "[withGrouping] buildGroupRenderRows received a row with null data — the 'group' render " +
@@ -141,9 +134,9 @@ export function buildGroupRenderRows<TRow>(
     }
     return readGroupFieldValue(item.data, key, opts?.extractValueByColumn);
   });
-  const toRows = (items: StagedRow<TRow>[]): TRow[] =>
+  const toRows = (items: RenderNode<TRow>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
   const admitted = admitClusters(nodes, opts?.when, toRows, new Set(), opts?.columnWhen);
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, toRows, { done: false });
-  return emitGroupRows(ordered, 0, '', columns, new Set(), opts?.labelByColumn);
+  return buildGroupNodes(ordered, '', columns, new Set(), opts?.labelByColumn);
 }

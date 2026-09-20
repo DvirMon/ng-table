@@ -61,16 +61,16 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
   stages?: PipelineStages<TRow>;
 
   /**
-   * Render-row transforms over the pipeline output. Folded in the fixed order in
+   * Render-node transforms over the pipeline output. Folded in the fixed order in
    * `engine/render-stages.ts` (`RENDER_ORDER`), never `features` array order. Two features
    * claiming the same key throws.
    */
   renderStages?: RenderStages<TRow>;
 
   /**
-   * Ids this feature currently considers expanded, exposed read-only for the engine's
-   * terminal prune stage. Unlike every other slot, contributions from multiple features
-   * accumulate rather than single-claim. See ADR-0012, ADR-0017.
+   * Ids this feature currently considers expanded, exposed read-only for `flattenVisible`.
+   * Unlike every other slot, contributions from multiple features accumulate rather than
+   * single-claim. See ADR-0012.
    */
   expandedRows?: Signal<ReadonlySet<RowId>>;
 

@@ -2,9 +2,10 @@ import { computed, signal, type Signal } from '@angular/core';
 import type { ColumnDef, RenderRow, RowId } from '../api/types';
 import { buildDataCells, buildGroupCells } from './cells';
 import { foldColumnRules, resolveColumnDefs, type ColumnRuleEntry } from './columns';
+import { flattenVisible } from './flatten';
 import { runPipeline, type PipelineStages } from './pipeline';
 import { runRenderStages, type RenderStages } from './render-stages';
-import { buildDefaultRenderRows, normalizeTrackBy } from './rows';
+import { buildDefaultRenderNodes, normalizeTrackBy } from './rows';
 import type { TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
 
@@ -22,7 +23,7 @@ export interface TableCoreHandle<TRow> {
   readonly columnRules: ColumnRuleEntry<TRow>[];
   // Additively populated by `composeTable()`'s fold, one entry per feature declaring
   // `TableFeatureSpec.expandedRows` — accumulating, not single-claimed. Unioned below and fed
-  // into the terminal `'prune'` render stage (ADR-0017).
+  // into `flattenVisible`.
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
 }
 
@@ -44,17 +45,17 @@ export function createTableCore<TRow>(
   const stages: PipelineStages<TRow> = {};
   const renderStages: RenderStages<TRow> = {};
   const expandedSources: Signal<ReadonlySet<RowId>>[] = [];
-  // Always runs first, never replaced — the `RenderRow[]` seed every render stage chain
+  // Always runs first, never replaced — the `RenderNode[]` seed every render stage chain
   // starts from.
-  const seedRenderRows = buildDefaultRenderRows(trackBy);
+  const seedRenderNodes = buildDefaultRenderNodes(trackBy);
 
   const rows = computed(() => runPipeline(config.data(), stages));
 
-  // Unions every contributed `expandedRows` set for the terminal `'prune'` stage. `undefined`
-  // when zero features contributed the slot (a no-op prune); a defined — possibly empty —
-  // `Set` once at least one has, even if nothing is currently expanded. Recomputed on read
-  // like `rows`/`renderRows`, so a feature registering during the fold is visible by the time a
-  // consumer first reads `renderRows`. See ADR-0017.
+  // Unions every contributed `expandedRows` set for `flattenVisible`. `undefined` when zero
+  // features contributed the slot (a no-op — everything stays open); a defined — possibly
+  // empty — `Set` once at least one has, even if nothing is currently expanded. Recomputed on
+  // read like `rows`/`renderRows`, so a feature registering during the fold is visible by the
+  // time a consumer first reads `renderRows`.
   const expanded = computed<ReadonlySet<RowId> | undefined>(() => {
     if (expandedSources.length === 0) {
       return undefined;
@@ -90,8 +91,8 @@ export function createTableCore<TRow>(
     const byId = indexById();
     const resolvedColumns = columns();
     const reportedColumns = new Set<string>();
-    const shaped = runRenderStages(seedRenderRows(rows()), renderStages, expanded());
-    return shaped.map((row, index) => {
+    const tree = runRenderStages(seedRenderNodes(rows()), renderStages);
+    return flattenVisible(tree, expanded()).map((row, index) => {
       const isSynthesizedRow = row.data === null;
       return {
         ...row,

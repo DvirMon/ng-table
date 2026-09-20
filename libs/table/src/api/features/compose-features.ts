@@ -1,7 +1,7 @@
 import { computed, type Signal } from '@angular/core';
 import type { ColumnRuleEntry } from '../../engine/columns';
 import { PIPELINE_ORDER, type PipelineStages } from '../../engine/pipeline';
-import { CLAIMABLE_RENDER_STAGES, type RenderStages } from '../../engine/render-stages';
+import { RENDER_ORDER, type RenderStages } from '../../engine/render-stages';
 import { describeInnerFeature, SlotRegistry } from '../../engine/slots';
 import type { TableFeatureSpec } from '../../engine/types';
 import type { AnyTableFeature, RowId } from '../types';
@@ -48,7 +48,7 @@ function claimInnerRenderStages<TRow>(
   if (!spec.renderStages) {
     return;
   }
-  for (const stage of CLAIMABLE_RENDER_STAGES) {
+  for (const stage of RENDER_ORDER) {
     const transform = spec.renderStages[stage];
     if (!transform) {
       continue;
