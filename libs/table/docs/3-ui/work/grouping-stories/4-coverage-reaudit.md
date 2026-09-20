@@ -104,7 +104,7 @@ Legend: **→** is the change from the product doc's current mark.
 | F-G1 filtering a grouped table | 🟡 | 🟡 | Unchanged — `grouping-selection/` still the only host composing `withFiltering()`. |
 | F-G2 / P-G1 / P-G2 / D-G1 | ❌ | ❌ | Unchanged, all forward-looking. |
 | E-G1 groups + expandable rows | ✅ | ✅ | `grouping-collapsible/` still composes `withExpansion()` over a fixture carrying `children`. |
-| G-2 add a row into a group | ✅ *(in `row-editing.md` §5)* | **❌** | **Regression, and it is filed in another doc.** `grouping-crud/`'s *Add row to group* was G-2's only demo. The story was removed (lesson audit D8) and the four facts moved to `feature.spec.ts`. `row-editing.md` §5 still claims the story exists. |
+| G-2 add a row into a group | ✅ *(in `row-editing.md` §5)* | **❌** | **Regression.** `grouping-crud/`'s *Add row to group* was G-2's only demo. The story was removed (lesson audit D8) and the four facts moved to `feature.spec.ts`. **Correction (see §3d):** the claim that `row-editing.md` §5 "still claims the story exists" was wrong — it already marked G-2 ❌ *(forward-looking)* and never cited `grouping-crud/`. The dead claim was in `0-product/grouping.md` §5 itself, fixed there directly. |
 
 ### Tally
 
@@ -113,10 +113,20 @@ Legend: **→** is the change from the product doc's current mark.
 | Doc claims today | 11 | 5 | 1 |
 | Actual, on `main` | 8 | 5 | 4 |
 | Actual, once `grouping-keys/` commits | 9 | 5 | 3 |
+| After this migration (2026-09-20, `grouping-keys/` still uncommitted) | 9 | 6 | 2 |
 
-Cross-feature moves from `X-G1, S-G1, E-G1 ✅; S-G2, F-G1 🟡` to
-`X-G1, E-G1 ✅; F-G1 🟡; S-G1, S-G2, F-G2, P-G1, P-G2, D-G1 ❌`, plus G-2 regressing in
-`row-editing.md`.
+§1–§4 after the migration: 1.1/1.2/1.3/2.1/3.1/3.2/3.3/3.4/4.3 ✅; 1.4/2.2/2.4/2.5/4.1/4.2 🟡;
+2.3/4.4 ❌. `grouping-keys/` still stays out — it is written but uncommitted, so 4.2 stays 🟡 and
+4.4 stays ❌ rather than the "once committed" row's 9/5/3. Cross-feature, tracked separately in §2
+above (not part of this table's 17-item base), settles at X-G1/S-G1/S-G2/E-G1 ✅, F-G1 🟡,
+F-G2/P-G1/P-G2/D-G1 ❌ — the sorting regression (S-G1, S-G2) fully closed by 3a, not merely
+unchanged from "Doc claims today."
+
+Cross-feature moved from `X-G1, S-G1, E-G1 ✅; S-G2, F-G1 🟡` (doc claims) through
+`X-G1, E-G1 ✅; F-G1 🟡; S-G1, S-G2, F-G2, P-G1, P-G2, D-G1 ❌` (actual, on `main`, before this
+migration) to `X-G1, S-G1, S-G2, E-G1 ✅; F-G1 🟡; F-G2, P-G1, P-G2, D-G1 ❌` (after this
+migration) — S-G1 and S-G2 recovered by 3a, not left regressed. G-2's mark in `row-editing.md`
+was never actually regressed; see 3d's correction above.
 
 ## 3. Plan — closing the four regressions
 
@@ -147,6 +157,19 @@ which is the composition the lesson audit deliberately removed. Recommend leavin
 a pointer to the spec test, and amending the doc's ✅ bar to say so, rather than re-adding
 `withSorting()` to `grouping-collapsible/`.
 
+> **Outcome, 2026-09-20 (grouping-coverage step 4, doc side step 5).** Shipped exactly as decided:
+> `withSorting()` composes trailing in `grouping-order/`, bare (`multi` defaults `false`). S-G1
+> lands ✅, but with the criterion-2 trade named explicitly rather than marked silently: under
+> `first-occurrence` the click moves headers (criterion 2 never arises); under any comparator mode
+> the header shows a sort indicator while the table does not change — the exact anti-pattern
+> criterion 2 names — **and the story exhibits it on purpose**, because the user story's own verb
+> is "I want to understand why nothing moved." This is not a reversal of D5: it is the same
+> carve-out `3-lesson-audit.md:187-189` already made for `withFiltering()` staying on
+> `grouping-selection/` — a feature stays composed only where it makes an otherwise-invisible
+> outcome visible, and here *which thing moved* is the entire content of `applyGroupOrder`. S-G2
+> and 3.3's fourth criterion land ✅ too, both via the same composition, exactly as planned. 2.5
+> was left at 🟡 with a pointer to the spec assertion, as recommended.
+
 ### 3a-bis. Only `grouping-aggregates/` shows totals
 
 > **Decided 2026-09-19.** `grouping-async-rule/`, `grouping-collapsible/` and
@@ -159,6 +182,12 @@ a pointer to the spec test, and amending the doc's ✅ bar to say so, rather tha
 > `PIPELINE_ORDER` rather than something on screen. F-G1 stays 🟡 — it was already 🟡 for its
 > third criterion — but it is now 🟡 on two counts, not one. Recorded here so the next coverage
 > pass does not read it as an accident.
+
+> **Outcome, 2026-09-20.** Shipped as decided: `grouping-async-rule/`, `grouping-collapsible/` and
+> `grouping-selection/` all carry `plainGroupingConfig`; `grouping-aggregates/` is the only canvas
+> with an `aggregateFn`. The accepted cost landed exactly as predicted — F-G1's summaries half left
+> the canvas, and `0-product/grouping.md` §5's F-G1 entry (step 5) states both reasons rather than
+> one.
 
 ### 3b. Restore sticky headers — one arg, one class
 
@@ -179,6 +208,10 @@ Alternative, if you would rather not carry it: delete the dead CSS rule and move
 explicitly, with U5 absorbing the whole story. Cheaper, and honest — but it loses a demo that
 costs two lines.
 
+> **Outcome, 2026-09-20.** Shipped as decided, the carry-it option: `stickyHeaders` is a
+> Storybook arg on `grouping-basic/`, binding `grouping-story__table--sticky`. §2.4 returns to
+> 🟡 in `0-product/grouping.md` (step 5); U5's per-depth stacking gap is unchanged.
+
 ### 3c. Commit `grouping-keys/`
 
 | Product story covered | Covered by |
@@ -195,8 +228,15 @@ No work beyond landing it. It is the single highest-value item here: three marks
 |---|---|
 | G-2 adding a row into a group | **nothing on canvas** — mark ❌, point at `feature.spec.ts` |
 
-Not a story to build. `row-editing.md` §5 owns G-2's mark and currently cites a deleted folder.
-Whether G-2 deserves a row-editing story is that doc's call, not grouping's.
+Not a story to build. Whether G-2 deserves a row-editing story is that doc's call, not grouping's.
+
+> **Correction, checked 2026-09-20 (grouping-coverage step 6).** This section's premise was wrong.
+> `row-editing.md` §5 does **not** cite `grouping-crud/` and already marked G-2 ❌
+> *(forward-looking)* before this migration — it needed no edit. The dead claim — a coverage
+> assertion for G-2 against the deleted `grouping-crud/` folder, one sentence after crediting
+> `row-editing.md` with owning the mark — was in `0-product/grouping.md` §5 itself, a
+> self-contradiction in grouping's own doc. Fixed there directly (grouping-coverage step 5),
+> deleting the sentence; `row-editing.md` was left untouched, as it should be.
 
 ### 3e. Criteria that cannot fail are tests, not stories
 
@@ -222,18 +262,33 @@ that as a differentiator. A competitive claim is not a user story.
 that to hold — worth a test, not a decision."* The coverage mark demanded an on-canvas demo
 anyway. The design status was right.
 
-**What is actually missing is the test.** Nothing in `clusters.spec.ts` pins ordering-after-
-filter, so the one genuine risk — someone reordering `PIPELINE_ORDER` — is unguarded today. A
-story would never have caught that edit; an assertion does, immediately.
+**What is actually missing is the test.** Nothing pins ordering-after-filter, so the one genuine
+risk — someone reordering `PIPELINE_ORDER` — is unguarded today. A story would never have caught
+that edit; an assertion does, immediately.
 
-Resulting marks: §3.4 → ✅ on its one remaining criterion. F-G1 stays 🟡, but for its third
-criterion alone (collapse state restored with the groups), not two reasons.
+> **Correction, checked 2026-09-20 (grouping-coverage step 6).** This section originally named
+> `clusters.spec.ts` as the assertion's home. It landed in
+> [`with-grouping/feature.spec.ts`](../../../../src/api/features/with-grouping/feature.spec.ts)
+> instead: `clusterRows` takes `rows` as a parameter and has no filter stage of its own, so an
+> assertion at that level would only restate `Array.prototype.filter`. The pipeline-order
+> guarantee is a `withFiltering()` + `withGrouping()` composition fact, which is `feature.spec.ts`'s
+> level, not `clusters.spec.ts`'s.
+
+Resulting marks: §3.4 → ✅ on its one remaining criterion. F-G1's third criterion (collapse state
+restored with the groups) is unaffected by this section. **Note (see 3a-bis):** F-G1 stays 🟡 for
+two reasons overall once 3a-bis's aggregate-canvas consolidation is accounted for, not one — this
+section's "not two reasons" referred only to the count within *this* decision (one criterion
+deleted here, not two), not the story's final tally. Read 3a-bis for the second reason.
 
 **Convention.** Before writing an acceptance criterion, ask what would have to change for it to
 be false. If the answer is "an edit to the engine's own stage order" rather than "some data, or
 something a person does", it is a regression guard, not a story requirement. Put it in the spec
 and cite the competitor it differentiates against — do not spend a story's clarity demonstrating
 an invariant.
+
+> **Outcome, 2026-09-20.** Shipped as decided: all three criteria deleted from
+> `0-product/grouping.md` (step 5), one assertion added (step 3, corrected home above). §3.4 reads
+> ✅ on its single remaining criterion; F-G1's entry states both of its 🟡 reasons per 3a-bis.
 
 ## Left out on purpose
 
@@ -263,8 +318,9 @@ All four decisions are recorded inline above. Resulting work, by story:
 | `grouping-selection/` | edit — `plainGroupingConfig` | — |
 | `grouping-keys/` | commit it | — |
 
-Plus, outside the stories: one `clusters.spec.ts` assertion (§3e), three criteria deleted from
-`0-product/grouping.md`, and G-2's mark corrected in `row-editing.md` §5.
+Plus, outside the stories: one `feature.spec.ts` assertion (§3e), three criteria deleted from
+`0-product/grouping.md`, and the dead `grouping-crud/` claim removed from `0-product/grouping.md`
+§5 itself — `row-editing.md` §5 needed no correction; see 3d.
 
 Then rewrite `0-product/grouping.md`'s §0 table, every "Covered by" line, and the frontmatter
 tally — that is lesson-audit §4b, and this document is its input.
