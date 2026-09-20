@@ -535,6 +535,165 @@ describe('withSorting', () => {
     });
   });
 
+  describe('runtime error handling (ADR-0014)', () => {
+    it('a throwing accessor sorts that row as empty, without throwing', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const rows = makeRows();
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(rows),
+            {
+              trackBy: 'id',
+              columns: makeColumns({
+                name: {
+                  accessor: (row) => {
+                    if (row.id === 'r2') {
+                      throw new Error('boom');
+                    }
+                    return row.name;
+                  },
+                },
+              }),
+            },
+            withSorting()
+          )
+        );
+
+        expect(() => store.toggleSort('name')).not.toThrow();
+        // r2 (Ann) throws -> treated as empty -> placed last under the default
+        // nulls: 'last'. The remaining rows sort ascending by name: Bob, Charlie.
+        expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('the accessor error reports once per column across many rows', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            {
+              trackBy: 'id',
+              columns: makeColumns({
+                name: {
+                  accessor: () => {
+                    throw new Error('boom');
+                  },
+                },
+              }),
+            },
+            withSorting()
+          )
+        );
+
+        store.toggleSort('name');
+        store.rows();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('a throwing sortFn does not propagate; the affected pair falls back to input order', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const rows = makeRows();
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(rows),
+            {
+              trackBy: 'id',
+              columns: makeColumns({
+                name: {
+                  sortFn: () => {
+                    throw new Error('boom');
+                  },
+                },
+              }),
+            },
+            withSorting()
+          )
+        );
+
+        expect(() => store.toggleSort('name')).not.toThrow();
+        expect(store.rows().map((row) => row.id)).toEqual(rows.map((row) => row.id));
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('the sortFn error reports once per column even across many comparisons', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            {
+              trackBy: 'id',
+              columns: makeColumns({
+                name: {
+                  sortFn: () => {
+                    throw new Error('boom');
+                  },
+                },
+              }),
+            },
+            withSorting()
+          )
+        );
+
+        store.toggleSort('name');
+        store.rows();
+
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('accessor and comparator errors report independently across two columns in one multi-sort', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            {
+              trackBy: 'id',
+              columns: makeColumns({
+                name: {
+                  accessor: () => {
+                    throw new Error('boom-accessor');
+                  },
+                },
+                age: {
+                  sortFn: () => {
+                    throw new Error('boom-comparator');
+                  },
+                },
+              }),
+            },
+            withSorting({ multi: true })
+          )
+        );
+
+        store.toggleSort('name');
+        store.toggleSort('age');
+        store.rows();
+
+        expect(errorSpy).toHaveBeenCalledTimes(2);
+        const messages = errorSpy.mock.calls.map((call) => String(call[0]));
+        expect(messages.some((message) => message.includes('"name"'))).toBe(true);
+        expect(messages.some((message) => message.includes('"age"'))).toBe(true);
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+  });
+
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — inert at
   // runtime, only enforced by `tsc -p libs/table/tsconfig.spec.json --noEmit`.

@@ -1,6 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { SORT_NULLS } from '../../engine/columns';
+import { readAccessor } from '../../engine/cells';
 import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { readColumnMeta } from '../../columns-schema/metadata';
 import type { SortNullsOpts } from '../../columns-schema/rules';
@@ -95,6 +96,36 @@ function nullsOrderFor<TRow>(column: ColumnDef<TRow>): 'first' | 'last' {
   return readSortNulls(column)?.order ?? 'last';
 }
 
+function reportComparatorError(columnId: string): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[withSorting] comparator threw for column "${columnId}". Treating the affected ` +
+      'comparison as equal for this evaluation.'
+  );
+}
+
+// Note: a throwing comparator degrades to `0` (treated as equal) rather than failing the
+// whole sort (ADR-0014). Reports once per column per evaluation via the shared
+// `reportedColumns` set.
+function guardCompare<TRow>(
+  compare: (a: TRow, b: TRow) => number,
+  columnId: string,
+  reportedColumns: Set<string>
+): (a: TRow, b: TRow) => number {
+  return (a: TRow, b: TRow): number => {
+    try {
+      return compare(a, b);
+    } catch {
+      if (!reportedColumns.has(columnId)) {
+        reportedColumns.add(columnId);
+        reportComparatorError(columnId);
+      }
+      return 0;
+    }
+  };
+}
+
 function sortRows<TRow>(
   rows: TRow[],
   rules: SortRule[],
@@ -104,18 +135,26 @@ function sortRows<TRow>(
     return rows;
   }
   const columnById = new Map(columns.map((column) => [column.id, column]));
+  const reportedAccessorColumns = new Set<string>();
+  const reportedComparatorColumns = new Set<string>();
   const comparators = rules.flatMap((rule) => {
     const column = columnById.get(rule.columnId);
     if (!column) {
       return [];
     }
-    const compare = column.sortFn ?? detectComparator(column.accessor, rows);
+    const accessor = (row: TRow): unknown =>
+      readAccessor(column, row, reportedAccessorColumns);
+    const compare = guardCompare(
+      column.sortFn ?? detectComparator(accessor, rows),
+      column.id,
+      reportedComparatorColumns
+    );
     const sign = rule.direction === 'asc' ? 1 : -1;
     const nulls = nullsOrderFor(column);
 
     return [(a: TRow, b: TRow): number => {
-      const aEmpty = isEmpty(column.accessor(a), column);
-      const bEmpty = isEmpty(column.accessor(b), column);
+      const aEmpty = isEmpty(accessor(a), column);
+      const bEmpty = isEmpty(accessor(b), column);
       if (aEmpty || bEmpty) {
         if (aEmpty && bEmpty) return 0;
         // NOT multiplied by `sign` — placement stays on the same end regardless of direction.
