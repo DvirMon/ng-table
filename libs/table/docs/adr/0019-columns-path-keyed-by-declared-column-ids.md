@@ -1,7 +1,12 @@
 # ADR-0019 — `ColumnsPath` is keyed by declared column ids, not row keys
 
-**Status:** accepted 2026-09-18, **amended 2026-09-18** — decision core stands, mechanism and
-motivation narrowed (see [Amendment](#amendment-2026-09-18--scope-narrowed-to-the-column-schema-fn)).
+**Status:** accepted 2026-09-18; **amended 2026-09-18** (scope narrowed); **re-amended 2026-09-20**
+— that narrowing is reversed by [ADR-0024](0024-single-value-source-accessor.md). The decision core
+has stood through both. Read
+[Amendment 2026-09-20](#amendment-2026-09-20--narrowing-reversed-every-schema-fn-names-columns)
+first; the
+[2026-09-18 amendment](#amendment-2026-09-18--scope-narrowed-to-the-column-schema-fn-superseded-2026-09-20)
+is kept as history only.
 **Related:** [ADR-0004](0004-table-source-layout.md) (layout by contract boundary), [ADR-0010](0010-no-angular-lifecycle-names-on-engine-concepts.md) (columns-schema is an internal step). Affected surface: `schema/column-schema.types.ts`, every `apply*` rule that takes a `ColumnHandle`.
 
 **Scope note:** this ADR owns one decision — how `ColumnsPath` is keyed. The `WithGroupingConfig`
@@ -9,9 +14,48 @@ reshape that motivated it is one feature's config and lives in
 [`../1-state/work/grouping/active/grouping-config-simplification/`](../1-state/work/grouping/active/grouping-config-simplification/1-plan-config-simplification.md),
 not here.
 
-## Amendment 2026-09-18 — scope narrowed to the column schema fn
+## Amendment 2026-09-20 — narrowing reversed, every schema fn names columns
 
-**Read this before acting on anything below it.** Grouping — the consumer that motivated this
+**Read this before anything below it, including the 2026-09-18 amendment, which it supersedes.**
+
+[ADR-0024](0024-single-value-source-accessor.md) makes the column `accessor` the single value
+source: all four consumers (cells, sorting, grouping, filtering) read through
+`readAccessor(column, row)`, and any value used by grouping or filtering must be declared as a
+column — a carrier column (`visible: false`) where it is not displayed. ADR-0024's header names this
+ADR as *"the keying this ADR describes"*. So a schema fn on a **feature's** config keys by declared
+column id, exactly as `columnsSchema` does.
+
+**What this reverses in the 2026-09-18 amendment.**
+
+- **Its central claim.** "A schema fn declared on a feature's config is keyed by the row model
+  (`keyof TRow`), not by declared column ids" is no longer true. Grouping and filtering both re-key
+  to `TId`.
+- **The `ColumnIdOf<S>` retraction.** Cross-argument recovery has a consumer again: a feature's
+  schema fn sits on a different argument than `columns`, which is the exact case it was built for.
+  `ColumnIdOf<S>` and `TId` on `TableStore`/`TableCore` come back, and `create-table.overloads.ts`
+  with them.
+- **The spike's mootness.** The inference-order spike under [Open](#open) is no longer moot. Its
+  recorded outcome — **"Resolved: it works"**, kept explicitly *"should a future surface need it"* —
+  now applies directly. It still needs no re-running.
+- **Its citation of D7.** D7 is itself reversed by ADR-0024, which also reverses D7's rejection of
+  data-carrier columns. The current record is D11 in
+  [`../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md`](../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md).
+
+**What still stands, unchanged since the original.** Key `ColumnsPath` by the literal ids declared
+in `TableConfig.columns`. That core has survived both amendments; only its reach has moved.
+
+**The general rule, now inverted.** The 2026-09-18 amendment deferred a cross-cutting rule to its
+own ADR: *"a schema fn on `TableConfig` names columns; a schema fn on a feature's config names row
+fields."* That ADR was never written, and the rule is now simply **every schema fn names declared
+columns**. It is still owed its own ADR — D11 carries the reasoning meanwhile and explicitly does
+not claim it.
+
+## Amendment 2026-09-18 — scope narrowed to the column schema fn *(superseded 2026-09-20)*
+
+> **Superseded by [Amendment 2026-09-20](#amendment-2026-09-20--narrowing-reversed-every-schema-fn-names-columns).**
+> Kept as the record of what was decided on 2026-09-18 and why. Do not act on it.
+
+Grouping — the consumer that motivated this
 ADR — no longer uses `ColumnsPath` at all. Per D7 in
 [`../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md`](../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md),
 a schema fn declared on a **feature's** config is keyed by the row model (`keyof TRow`), not by
@@ -45,7 +89,8 @@ feature's config names row fields — is cross-cutting and belongs in its own AD
 is not a row key — a derived column declared `{ id: 'fullName', accessor: r => r.first + ' ' +
 r.last }`, which `ColumnId<TRow>` explicitly keeps expressible — cannot be named from any schema
 fn. Not from `applyVisible`, not from `applySortNulls`, not from `metadata()`. (As written this
-also named `applyGrouping`; grouping has since left this path — see the Amendment.)
+also named `applyGrouping`; grouping left this path on 2026-09-18 and returned to it on 2026-09-20
+— see both amendments.)
 
 The gap is **type-level only**. `buildColumnsPath`'s `get` trap already fabricates a handle for
 any string property (`schema/column-schema.ts`), and the consuming feature already validates
@@ -53,10 +98,11 @@ every recorded `columnId` against its resolved `columns` at construction.
 
 **Decision:** key `ColumnsPath` by the literal ids declared in `TableConfig.columns`.
 
-> **Amended.** As written this continued: "recovered structurally as `ColumnIdOf<S>` the way
-> `RowOf<S>` already recovers the row type from the store shape (`engine/types.ts`)." Retracted —
-> `TId` flows from `TableConfig.columns` to `TableConfig.columnsSchema` within one argument. No
-> store recovery.
+> **Amended 2026-09-18, restored 2026-09-20.** As written this continued: "recovered structurally
+> as `ColumnIdOf<S>` the way `RowOf<S>` already recovers the row type from the store shape
+> (`engine/types.ts`)." Retracted on 2026-09-18, when no feature schema named columns. **Restored**
+> under ADR-0024, which puts feature schemas back on declared column ids: `TId` still flows within
+> one argument for `columnsSchema`, and store recovery is what a *feature's* schema fn needs.
 
 This is strictly more correct than widening to `string`: it also rejects `path.someRowField`
 where that field was never declared as a column — a bug class invisible today.

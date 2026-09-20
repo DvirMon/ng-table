@@ -30,9 +30,10 @@ older cross-references still resolve.
 |---|---|
 | **WG** | [`archive/with-grouping/2-decisions.md`](../1-state/work/grouping/archive/with-grouping/2-decisions.md) — the foundational grill |
 | **CGI** | [`archive/column-group-index/2-decisions.md`](../1-state/work/grouping/archive/column-group-index/2-decisions.md) — #81, the column↔level relation |
-| **CS** | [`active/grouping-config-simplification/2-decisions.md`](../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md) — `initial` declares, rules mask |
+| **CS** | [`active/grouping-config-simplification/2-decisions.md`](../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md) — `initial` declares, rules mask; D10/D11 add the schema-architecture ruling |
 | **AGG** | [`active/aggregate-config-placement/1-decisions.md`](../1-state/work/grouping/active/aggregate-config-placement/1-decisions.md) — #100's `aggregateFn` slice |
 | **ST** | [`3-ui/work/archive/grouping-stories/3-lesson-audit.md`](../3-ui/work/archive/grouping-stories/3-lesson-audit.md) — the one-story-one-lesson restructure |
+| **SVS** | [ADR-0024](../adr/0024-single-value-source-accessor.md) — the accessor becomes the single value source |
 
 ## Decisions
 
@@ -80,9 +81,9 @@ older cross-references still resolve.
 | G40 | Does `schema` accept a pre-built value for cross-table reuse? | 09-19 | **open** — its stated deadline has passed: `rules` is already gone from `WithGroupingConfig` | CS D6 |
 | G41 | #100 is sliced — this decision set covers `aggregateFn` only | 09-19 | scope | AGG |
 | G42 | Aggregation stays a grouping-owned concept — no `withAggregation()` feature | 09-19 | accepted, unbuilt | AGG |
-| G43 | `applyAggregate` is declared through `GroupingPath`, row-field keyed | 09-19 | accepted, unbuilt | AGG |
+| G43 | `applyAggregate` is declared through `GroupingPath`, row-field keyed | 09-19 | **superseded by G58** — its premise (an accessor-only value can never be aggregated) no longer holds | AGG |
 | G44 | `ColumnDef.aggregateFn` is deleted outright, not deprecated-and-kept | 09-19 | accepted, unbuilt | AGG |
-| G45 | `applyAggregate` does not validate its field against declared columns | 09-19 | accepted, unbuilt | AGG |
+| G45 | `applyAggregate` does not validate its field against declared columns | 09-19 | **superseded by G59** — under a column-keyed path there is a set to validate against | AGG |
 | G46 | Sequencing: #100's `aggregateFn` slice lands before #47, which lands before #45 | 09-19 | **open** | AGG |
 | G47 | One story, one lesson — five mixed hosts become eight single-lesson hosts | 09-19 | shipped | ST D1 |
 | G48 | ADR-0014's retrofit shipped: three grouping wrap sites, each with a named fallback | 09-19 | shipped | ST D3 |
@@ -90,6 +91,23 @@ older cross-references still resolve.
 | G50 | The empty-rule guard widens — a field carrying only `applyGroupKey` is legal | 09-19 | shipped | ST D9 |
 | G51 | A pending rule holds its own last resolved boolean; only a never-resolved rule abstains the set | 09-19 | shipped | ST D11 |
 | G52 | Per-story keep/strip/remove calls — rolled up here rather than itemized | 09-19 | shipped | ST D2, D4–D7, D10 |
+| G53 | Grouping reads values through `readAccessor(column, row)`, not raw `row[key]` — supersedes CS D7's row-field keying | 09-20 | accepted, unbuilt | SVS |
+| G54 | Grouping by an undisplayed value needs a carrier column (`visible: false`) — reverses CS D7's rejection of data-carrier columns | 09-20 | accepted, unbuilt | SVS |
+| G55 | `resolveGroupLabel`'s raw-field-name fallback (CS D7a) is deleted — every level now has a column | 09-20 | accepted, unbuilt | SVS |
+| G56 | No non-data gate, no display-column kind — this library is headless, so a checkbox or action cell is consumer markup, never a column | 09-20 | closed, nothing to build | SVS |
+| G57 | ADR-0024's protection is a construction throw when a declaration names an undeclared column id; an accessor yielding `undefined` for every row degrades to one visibly-labelled group | 09-20 | accepted, unbuilt | SVS |
+| G58 | `applyAggregate` keys by declared column id like every other data concern — supersedes G43; an accessor-derived value is now aggregatable | 09-20 | accepted, unbuilt | SVS |
+| G59 | `applyAggregate` validates its column id at construction, via the same check as every other declaration (G57) — supersedes G45 | 09-20 | accepted, unbuilt | SVS |
+| G60 | `GroupingLevel.key` → `columnId`, and `ColumnId<TRow>` is retired — lands with ADR-0024's re-keying, never alone, because the name is honest only once the type moves | 09-20 | accepted, unbuilt | CS D10 |
+| G61 | One shared mechanism, **per-feature** schema entries — a single `TableConfig.schema` is rejected, since `applyGrouping` could then be declared with no `withGrouping()` composed. Originally written as four entries; sorting gained one the same day (G69), so the count is not the rule | 09-20 | accepted, unbuilt | CS D11a |
+| G62 | Two authoring forms, permanently — recording (returns `void`) and declaring (returns an object); converging filtering onto the void form erases its criterion type | 09-20 | accepted, unbuilt | CS D11c |
+| G63 | Three resolver **registers**, one name each — `valueOf` (what the data says), `criterionOf` (what the user asked for, filtering's existing `valueOf` renamed), `stateOf` (how the column is configured); a path resolves to a different kind of thing in each | 09-20 | accepted, unbuilt | CS D11d |
+| G64 | `criterionOf` is not `valueOf` renamed — they share a type only under `equals`; `inRange`'s criterion is `{ min, max }` against a `number` cell, and they differ in cardinality, direction and lifetime regardless | 09-20 | finding | CS D11d |
+| G65 | Two resolver tiers: one reading another **declaration** is bound to the schema and takes only a path (`criterionOf`, `stateOf`); one reading **data** takes a path and a subject (`valueOf(path, row)`), because a column-keyed path names a cross-section, not an instance | 09-20 | accepted, unbuilt | CS D11d |
+| G66 | No consumer callback in any of the four schemas has exactly one row as its subject — so a bound one-argument value resolver has nowhere to attach; the evidence for G65 | 09-20 | finding | CS D11d |
+| G67 | The resolver lives on a context object, never as a `ClusterSummary` member — an own `valueOf` on a value object the library sorts hijacks the language's coercion hook | 09-20 | accepted, unbuilt | CS D11d |
+| G68 | `applyGroupKey`'s extractor receives the accessor's output, not `TRow[K]` — forced by G60's re-keying | 09-20 | accepted, unbuilt | CS D11d |
+| G69 | `withSorting()` gains a schema fn in the recording form — **reverses D11a's "sorting has no schema of its own"**; `applySortNulls` moves out of `columnsSchema` and joins `applySortable` / `applySortFn` there. Listed here only because it amends G61; the decision itself is sorting's, as [SO21](sorting.md) | 09-20 | accepted, unbuilt | [#100](https://github.com/DvirMon/ng-table/issues/100) |
 
 All dates are 2026.
 
@@ -110,8 +128,10 @@ Six rows above carry `open`. In rough order of how likely they are to bite:
 Listed in descending order of how badly an agent gets grouping wrong without
 them. The contract doc carries the same list with a line on each.
 
+[ADR-0024](../adr/0024-single-value-source-accessor.md) ·
 [ADR-0017](../adr/0017-engine-owned-descendant-prune.md) ·
-[ADR-0021](../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md) ·
+[ADR-0021](../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md) — its
+path-vocabulary rule is superseded by ADR-0024; its capability test stands ·
 [ADR-0018](../adr/0018-when-vs-enable-predicate-naming.md) ·
 [ADR-0011](../adr/0011-chained-render-stages.md) ·
 [ADR-0014](../adr/0014-runtime-error-policy.md) ·

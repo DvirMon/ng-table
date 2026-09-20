@@ -160,7 +160,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/3-ui/directives/` | Directive specs and API contracts, one per directive; core pattern + DI wiring | Permanent; edited in place as directives ship |
 | `docs/3-ui/stories.md` | Storybook story conventions for `src/stories/` — file layout, story-host shape, mocking-actions pattern | Permanent; edited in place as story practice evolves |
 | `docs/3-ui/work/<slug>/` | Episodic work folder: intake ticket, decisions, issues, task steps. One folder per implementation effort (e.g. `core-directives`, `with-expansion`) | Episodic; created fresh per effort, archived after ship |
-| `docs/decisions/<capability>.md` | **The capability's decision history** — one `G`-numbered line per decision, each linking to its full record. The first thing to read before changing a capability | Permanent; appended as decisions land |
+| `docs/decisions/<capability>.md` | **The capability's decision history** — one line per decision, each linking to its full record. Each log picks its own prefix and states it in the header (`G` grouping, `E` expansion, `SO` sorting) The first thing to read before changing a capability | Permanent; appended as decisions land |
 | `docs/work/<slug>/` | Cross-stream efforts owned by no single capability (`trim-docs`, `adr-scope-audit`). Unnumbered because they span every stream | Episodic |
 | `docs/agents/` | Procedures an agent follows against *these* docs — repo-specific, because they assume this folder layout. `capability-docs.md` is the consolidation procedure | Permanent |
 

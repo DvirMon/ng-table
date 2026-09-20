@@ -1,7 +1,15 @@
 # ADR-0021 — Column concerns and data concerns are separate surfaces
 
-**Status:** accepted
+**Status:** accepted — path-vocabulary rule superseded by
+[ADR-0024](0024-single-value-source-accessor.md) (2026-09-20); the capability test stands
 **Date:** 2026-09-18
+
+> **Read ADR-0024 before acting on the "Path vocabulary follows the surface" section below.**
+> Its row for a feature's config — "path names row fields (`Extract<keyof TRow, string>`)" — no
+> longer holds. Since the column `accessor` is now the single value source, a feature reads a
+> value *through* its column and therefore keys by declared column id. The Decision's own test —
+> a capability belongs to the column surface if it needs nothing from the row data, to a feature
+> if it reads rows — is unaffected, as is everything in "Applying the test".
 **Related:** [ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md) (narrowed by this ADR
 to `columnsSchema` only), [ADR-0020](0020-open-stage-registration-for-third-party-features.md)
 (third-party feature authors are bound by the rule below),

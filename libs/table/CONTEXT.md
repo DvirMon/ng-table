@@ -14,6 +14,41 @@ the extraction record, and this lib's own `docs/adr/0001`–`0005` for the table
 architectural decisions (sorting default, store factory, in-house store engine, source layout,
 generic host).
 
+## Glossary
+
+**Accessor** — the single value source for a column. Every consumer that needs a
+column's value for a row reads it here: the rendered cell, sorting, grouping and
+filtering alike. There is no second value path, which is what makes a group
+header and the column beneath it unable to disagree.
+
+**Carrier column** — a column declared for its value alone and never rendered
+(`visible: false`). How a table groups, sorts or filters by something it does not
+display. It is an ordinary column in every other respect.
+
+**Display column** — a column object standing in for a rendered thing with no
+value: a selection checkbox, a row-actions cell, an expand toggle. **This
+library has none.** It is headless, so those are markup the consumer writes;
+the concept exists here only to name what a carrier column is not.
+
+**Schema entry** — the one place a feature's per-column rules are declared.
+Every feature that has per-column configuration owns exactly one, and they all
+share the same path vocabulary and the same plumbing. There is no second
+spelling: a feature does not also accept a keyed record of the same settings.
+`columnsSchema` is the column surface's own entry, not a shared dumping ground
+— it carries no feature's config.
+
+**Resolver** — a method a rule callback uses to reach something it was not
+handed. Every resolver names a path; what differs is the **register** it reads
+that path in. *What does the data say?* is one register, *what did the user ask
+for?* another, *how is this column configured?* a third. A path resolves to a
+different kind of thing in each, so each register has its own resolver rather
+than one name doing three jobs.
+
+The register also decides the shape. Two of them hold exactly one value per
+column, so naming the path is enough. The data register holds one value per
+row — a column being a cross-section of every row rather than one of them — so
+a resolver reading it must also name the subject.
+
 ## Selector prefix: `ngp`
 
 All directives use the `ngp` prefix (`ngpTable`, `ngpTableRow`, `ngpTableCell`,

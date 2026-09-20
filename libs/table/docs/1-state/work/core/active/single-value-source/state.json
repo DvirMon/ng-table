@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "runId": "single-value-source-2026-09-20T00:00:00Z",
+  "slug": "single-value-source",
+  "ticketRef": "110",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/110",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/1-state/work/core/active/single-value-source",
+  "stack": "angular",
+  "isComplex": true,
+  "decisionsPath": "libs/table/docs/1-state/work/core/active/single-value-source/decisions.md",
+  "specPath": null,
+  "architecturePath": "libs/table/docs/1-state/architecture.md",
+  "githubIssues": [110, 111, 112, 113, 114, 115, 116, 117, 100],
+  "createdAt": "2026-09-20T00:00:00Z",
+  "updatedAt": "2026-09-20T19:00:00Z"
+}
