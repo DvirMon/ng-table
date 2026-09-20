@@ -13,6 +13,7 @@ ADR-0015 slices.
 | [#120](https://github.com/DvirMon/ng-table/issues/120) | Collapsible grouping composes `withTree()`; grouping spec decoupled | 🟡 OPEN | #119 | #121 |
 | [#121](https://github.com/DvirMon/ng-table/issues/121) | `withExpansion()` narrows to the detail panel and ships as a slice | 🟡 OPEN | #120 | #122 |
 | [#122](https://github.com/DvirMon/ng-table/issues/122) | Reconcile the expansion docs and ADR-0012 with the split | 🟡 OPEN | #121 | — |
+| [#124](https://github.com/DvirMon/ng-table/issues/124) | Reconsider per-id emission (E3/E17) against `SelectionChange`'s `{ added, removed }` shape | 🟡 OPEN, `needs:triage` | — (off-chain) | none — parked |
 
 ## Graph
 

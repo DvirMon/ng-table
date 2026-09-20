@@ -62,6 +62,12 @@ cross-references still resolve.
   `tree()`. Revisit if a consumer asks for an explicit denominator input.
 - **`ReadonlySet<RowId>` narrowing** on both slices (today `Signal<Set<RowId>>`)
   — aligns with `withSelection()`, confirm at slicing time.
+- **E3/E17's per-id emission reconsidered against `SelectionChange`** — both
+  decisions settled on `Observable<RowId>` (one event per id), but
+  `withSelection()` carries the identical batch-write problem via a single
+  `SelectionChange { added, removed }` diff event instead. Filed as
+  [#124](https://github.com/DvirMon/ng-table/issues/124), pending a discovery
+  doc on comparable libraries' expand/collapse event shapes.
 
 ## Maintaining this log
 
