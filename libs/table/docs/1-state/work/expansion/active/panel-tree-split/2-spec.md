@@ -60,7 +60,7 @@ enough that two related features cannot coexist.
 Split the feature along the ADR's test, and settle the three things the ADR got wrong.
 
 - **`withExpansion()` becomes the detail-panel feature.** Open/closed id tracking,
-  `everExpanded`, `initialExpanded`, `onRowsRemoved` pruning. No `childrenAccessor`, no
+  `everExpanded`, `initial`, `onRowsRemoved` pruning. No `childrenAccessor`, no
   render stage — and, new in this spec, **no contribution to the render union**. Panel
   markup is gated on the slice directly; a panel never changes which rows render.
 - **`withTree()` is new** and owns rows: an optional `childrenAccessor`, `isExpandable`, the
@@ -211,7 +211,7 @@ signal, composition is order-independent. It owns:
 - the open-id set and its read-only projection,
 - the change `Subject` and its completion,
 - the single internal write, `setExpanded(ids, options?)` — the only writer of the signal,
-- `initialExpanded` seeding, read once, emitting nothing,
+- `initial` seeding, read once, emitting nothing,
 - `onRowsRemoved` pruning through `pruneByIds()`.
 
 It stops there. `everExpanded` is **not** in it (D3/E7) — a collapsed panel staying mounted
@@ -253,7 +253,7 @@ Configuration shrinks to persistence:
 
 ```ts
 interface WithExpansionConfig {
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
 }
 ```
 
@@ -262,7 +262,7 @@ correction to ADR-0012 — **does not declare `expandedRows` on its feature spec
 it contributes nothing to the union the flatten walk reads. Panel markup reads
 `table.expansion()` / `table.expansion.everExpanded()`.
 
-`initialExpanded` seeds `everExpanded` as well as the open set here: a restored-open row has
+`initial` seeds `everExpanded` as well as the open set here: a restored-open row has
 been opened, and its panel should mount at once.
 
 ### `withTree()` — the row tree
@@ -271,7 +271,7 @@ been opened, and its panel should mount at once.
 interface WithTreeConfig<TRow> {
   childrenAccessor?: (row: TRow) => TRow[] | undefined;
   isExpandable?: (row: TRow) => boolean;
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
 }
 ```
 
@@ -364,7 +364,7 @@ today's expansion spec already uses.
 **Seams** — checked with the maintainer before writing:
 
 - **`with-expansion.spec.ts` (existing, narrowed)** — the panel. Keeps the open-id state,
-  event, silent-write and prune cases; loses every tree case. Gains: `initialExpanded` seeds
+  event, silent-write and prune cases; loses every tree case. Gains: `initial` seeds
   both sets; the feature claims no render stage (`renderRows()` is 1:1 with `rows()`, every
   row at depth 0, `isExpanded` unstamped); and — the ADR correction — composed with
   `withTree()`, opening a panel on a row does **not** reveal that row's children.

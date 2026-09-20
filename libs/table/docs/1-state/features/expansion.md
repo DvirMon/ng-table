@@ -46,7 +46,7 @@ interface Row {
 interface WithExpansionConfig<TRow> {
   childrenAccessor?: (row: TRow) => TRow[] | undefined;
   isExpandable?: (row: TRow) => boolean;
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
 }
 ```
 
@@ -55,7 +55,7 @@ children are loaded — for lazy-loaded children, where `childrenAccessor` legit
 `undefined`/`[]` until the row has been opened once. Defaults to "non-empty array from
 `childrenAccessor`".
 
-`initialExpanded` is covered under [Initial State and Persistence](#initial-state-and-persistence).
+`initial` is covered under [Initial State and Persistence](#initial-state-and-persistence).
 
 `childrenAccessor` reads a row's nested children. Defaults to `(row) => (row as { children?: TRow[] }).children` — pass a custom accessor when children live under a different key. No `manual` config — see `2-decisions.md`; the `manual` contract below described no actual behavior difference from the default, so nothing exists for it to toggle.
 
@@ -120,10 +120,10 @@ array is rarely what a caller wants.
 **Specced 2026-09-07, not implemented.** Decided while resolving the `rowExpanded` bulk-verb
 gap; see [expansion-state-audit.md](../work/with-expansion/expansion-state-audit.md).
 
-### `initialExpanded` — a construction-time seed
+### `initial` — a construction-time seed
 
 ```ts
-withExpansion({ initialExpanded: savedIds() })
+withExpansion({ initial: savedIds() })
 ```
 
 A **plain array, read once** when the feature factory runs. It seeds `expandedRows` and
@@ -137,7 +137,7 @@ Deliberately not a `Signal<RowId[]>` and not a predicate:
   both answers are wrong: re-apply stomps every toggle the user has made since (the two-writer
   problem), and ignoring it makes accepting a signal a lie. A plain array makes the question
   unrepresentable. A consumer whose saved ids *are* a signal unwraps at the call site —
-  `initialExpanded: this.savedIds()` in a field initializer reads outside any reactive context,
+  `initial: this.savedIds()` in a field initializer reads outside any reactive context,
   so nothing is tracked.
 - **Not a predicate** (`(row, depth) => boolean`). Rejected: a predicate presumes the condition
   lives in row data, which is only one of the real cases — restored ids, a route param and a
@@ -165,7 +165,7 @@ not trigger a save"). Exposing it publicly rather than keeping it internal also 
 can restore asynchronously **today**, before that feature exists:
 
 ```ts
-// ids arriving after construction — the sync `initialExpanded` seed is already spent
+// ids arriving after construction — the sync `initial` seed is already spent
 this.savedIds.subscribe((ids) => this.table.expandAll({ emitEvent: false }));
 ```
 
@@ -174,7 +174,7 @@ preferable to the silent no-op a latched signal input would produce (D18's reaso
 
 ### Async restore belongs to the snapshot feature, not here
 
-There is deliberately **no `initialExpandedAsync`**. A `resource()`-backed per-feature restore
+There is deliberately **no `initialAsync`**. A `resource()`-backed per-feature restore
 was considered and rejected against [state-persistence.md](../state-persistence.md):
 
 - Its rule 1 ("one write path, one read path — no per-feature save/restore hooks") makes a
@@ -187,7 +187,7 @@ was considered and rejected against [state-persistence.md](../state-persistence.
   the enumerated surface that spec's "not a `with-*()` feature" reasoning already rejects.
 
 A consumer with a synchronously-readable backend (localStorage, sessionStorage, a route param)
-uses `initialExpanded` directly. One with an async backend either defers constructing the table
+uses `initial` directly. One with an async backend either defers constructing the table
 until the snapshot resolves, or waits for the snapshot feature.
 
 ### Snapshot slice
@@ -214,7 +214,7 @@ the primitive that design requires." It is called by `restore()`, an imperative 
 rather than a reactive context, so no effect is involved.
 
 `everExpanded` is **not** in the slice. It is a lazy-mount ledger, not layout, and `write()`
-seeding it is `initialExpanded`'s job at construction. Whether the restore path should union
+seeding it is `initial`'s job at construction. Whether the restore path should union
 into it is folded into the open question below.
 
 ## Compile-Time Dependencies
@@ -252,7 +252,7 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
   [research-row-selectability.md](../work/with-selection/research-row-selectability.md).
 - [x] Should `rowExpanded` fire separately for expand vs. collapse, or is a single event with inspectable state sufficient? Resolved — single `rowExpanded` event, direction inferable from `expandedRows` after the change. Shipped as specced.
 - [x] Do `expandAll()`/`collapseAll()` emit `rowExpanded`? Resolved 2026-09-06 — yes, once per affected id; no separate bulk event. The bulk verbs previously mutated `expandedRows` silently, which contradicted this doc and broke the lazy-load-on-expand use in PRD #29. Cross-library comparison, and why the AG Grid–style separate bulk event was not chosen (yet): [expansion-state-audit.md](../work/with-expansion/expansion-state-audit.md).
-- [x] **Stale restored ids.** `initialExpanded` (and a snapshot `write()`) can carry ids whose
+- [x] **Stale restored ids.** `initial` (and a snapshot `write()`) can carry ids whose
   rows are absent from `data` — deleted server-side since the state was saved. ADR-0006's prune
   runs on *removal*, and these ids never arrive to be removed, so they sit in `expandedRows`
   indefinitely. **Resolved 2026-09-08 — keep them; staleness is caller-owned.** This adopts
@@ -266,7 +266,7 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
   and filtering the seed would silently discard a correct restore. That case is indistinguishable
   at apply time from a genuinely dead id.
 
-  While persistence is consumer-owned — `initialExpanded` fed from localStorage, a route param,
+  While persistence is consumer-owned — `initial` fed from localStorage, a route param,
   a server profile — keeping saved ids in step with the server is the call site's job, and the
   call site is the only place with both the saved ids and the fetched rows. Revisit when
   [state-persistence.md](../state-persistence.md) is actually built, since `restore()` is
@@ -283,7 +283,7 @@ Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stage
   restore does not introduce it, and rejecting stale ids at the seed would not close it.
 
   Applies to the snapshot slice on the same terms — one answer for both, as the question asked.
-- [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initialExpanded`?
+- [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initial`?
 - [ ] **Does `expansionState` land here or in `withTree()`?** The member is justified (see
   [above](#expansionstate--proposed-not-implemented)); only its timing is open, because ADR-0012
   is already reopening this feature's surface. Same question applies to the proposed multi-id

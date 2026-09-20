@@ -8,7 +8,7 @@ ADR-0015 slices.
 
 | # | Title | State | Depends on | Blocks |
 |---|---|---|---|---|
-| [#118](https://github.com/DvirMon/ng-table/issues/118) | `createExpansionStore()` — the shared open-id factory, plus `initialExpanded` | 🟡 OPEN | — | #119 |
+| [#118](https://github.com/DvirMon/ng-table/issues/118) | `createExpansionStore()` — the shared open-id factory, plus `initial` | 🟡 OPEN | — | #119 |
 | [#119](https://github.com/DvirMon/ng-table/issues/119) | `withTree()` — the row tree, the `'tree'` stage and `state()` | 🟡 OPEN | #118 | #120 |
 | [#120](https://github.com/DvirMon/ng-table/issues/120) | Collapsible grouping composes `withTree()`; grouping spec decoupled | 🟡 OPEN | #119 | #121 |
 | [#121](https://github.com/DvirMon/ng-table/issues/121) | `withExpansion()` narrows to the detail panel and ships as a slice | 🟡 OPEN | #120 | #122 |

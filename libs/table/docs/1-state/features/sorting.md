@@ -83,6 +83,13 @@ interface ColumnDef {
 - If `sortFn` is supplied on the column def, it's used directly.
 - If omitted, the store falls back to built-in auto-detection (string/number/date comparison) — no auto-detection logic beyond this was specified.
 - `enableSorting: false` makes `toggleSort` a no-op for that column (default `true`).
+- Runtime failures degrade rather than crash the table
+  ([ADR-0014](../adr/0014-runtime-error-policy.md)): a column whose
+  `accessor` throws sorts that row as empty for this evaluation; a
+  `sortFn` (or the built-in comparator) that throws leaves the
+  affected comparison unordered, so the column's sort falls back to
+  input order rather than the whole table breaking. Both report once
+  per column per evaluation via `console.error`.
 
 ## Null / Empty Value Ordering — shipped
 

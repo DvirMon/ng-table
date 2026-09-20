@@ -23,7 +23,7 @@ against `libs/table/src` as of 2026-09-20 (post-#107/#108). Spec: [`2-spec.md`](
 | D6/E10 | Both features ship as ADR-0015 slices — `table.expansion`, `table.tree`. Other features stay flat until #50 |
 | D7/E11 | `setExpanded` is internal. Public: `toggle` / `expand` / `collapse` / `set`; omitted `ids` = all |
 | D8/E12 | `withGrouping()` is static. `withExpansion()` declares **no** `expandedRows` on its spec |
-| D10/E14 | `initialExpanded` ships here, seeded in the factory |
+| D10/E14 | `initial` ships here, seeded in the factory |
 | D11/E15 | `withTree()` has no levels API, ever |
 | D12/E16 | A throwing `childrenAccessor` degrades to "no children", reported once per evaluation, in production too |
 
@@ -57,7 +57,7 @@ export interface ExpansionWriteOptions {
 }
 
 export interface ExpansionStoreOptions {
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
   /** Called with ids newly added to the set by any write. `withExpansion()` uses it to
    *  accumulate `everExpanded`; `withTree()` passes nothing. Mirrors `EditingStoreOptions.onWrite`. */
   onExpanded?: (ids: readonly RowId[]) => void;
@@ -87,7 +87,7 @@ feature, which then calls `setExpanded` with concrete ids.
 
 ```ts
 export interface WithExpansionConfig {
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
 }
 
 export interface ExpansionSlice {
@@ -123,7 +123,7 @@ export interface WithTreeConfig<TRow> {
   /** Renders the toggle independently of whether children are loaded — lazy children.
    *  Default: the accessor returned a non-empty array. */
   isExpandable?: (row: TRow) => boolean;
-  initialExpanded?: readonly RowId[];
+  initial?: readonly RowId[];
 }
 
 export interface TreeSlice {
@@ -177,7 +177,7 @@ id, `expand(ids)` emits only newly opened ids, `collapse()` emits every previous
 ### `everExpanded`
 
 Accumulated in `withExpansion()` via `ExpansionStoreOptions.onExpanded`, never pruned by
-`onRowsRemoved` (its member doc already says why). `initialExpanded` seeds it on the panel
+`onRowsRemoved` (its member doc already says why). `initial` seeds it on the panel
 and not on the tree.
 
 ### The `'tree'` stage
@@ -257,7 +257,7 @@ Specs sit beside their features: `with-expansion.spec.ts` (existing, narrowed),
 **Specs**
 
 - [ ] `api/features/with-expansion.spec.ts` — narrow to the panel; delete tree cases; add the
-      no-stage, no-union and `initialExpanded` cases.
+      no-stage, no-union and `initial` cases.
 - [ ] `api/features/with-tree.spec.ts` — new; inherits the tree cases with an explicit
       accessor.
 - [ ] `api/features/with-grouping/feature.spec.ts` — ~15 sites compose `withExpansion()`

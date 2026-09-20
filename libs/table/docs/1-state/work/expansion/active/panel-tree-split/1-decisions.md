@@ -354,7 +354,7 @@ render stage **only when an accessor is supplied**. A collapse-only
 instance has no nodes to nest, so claiming the stage would block a
 future stage claimant for no benefit.
 
-### D10 — `initialExpanded` ships with the split (2026-09-20)
+### D10 — `initial` ships with the split (2026-09-20)
 
 **Decided.** The construction-time seed specced in
 `features/expansion.md` (2026-09-07, never built) lands in

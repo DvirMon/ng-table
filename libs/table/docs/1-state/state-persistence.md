@@ -248,10 +248,10 @@ speculative one. These are the acceptance tests, not a wishlist.
 - [x] **Is expansion persisted?** Resolved 2026-09-07 — **yes, as a slice**, and the slice
   mechanism above is the *only* restore path expansion gets. `withExpansion()` contributes
   `{ key: 'expansion', read: () => [...expandedRows()], write: (ids) => … }`; it deliberately
-  ships **no** `initialExpandedAsync` config, because a per-feature async restore violates rule 1
+  ships **no** `initialAsync` config, because a per-feature async restore violates rule 1
   (a second write path) and cannot satisfy rule 2 (each feature's resource resolves on its own
   clock, so cross-feature atomicity is unachievable per-feature). A separate, non-persistence
-  `initialExpanded?: readonly RowId[]` construction seed exists for synchronously-available
+  `initial?: readonly RowId[]` construction seed exists for synchronously-available
   state; it is not part of this mechanism. See
   [features/expansion.md](./features/expansion.md#initial-state-and-persistence).
 

@@ -47,7 +47,7 @@ cross-references still resolve.
 | E11 | `setExpanded` is internal; the public surface is `toggle`/`expand`/`collapse`/`set`, with an omitted `ids` meaning all — `expandAll`/`collapseAll` disappear as names | 09-20 | accepted, not built | PTS D7 |
 | E12 | `withGrouping()` is static; collapsible group headers come from composing `withTree()`, and `withExpansion()` contributes nothing to render visibility — reverses ADR-0012 Decision 5 and closes the union collision | 09-20 | accepted, not built | PTS D8 |
 | E13 | `childrenAccessor` is optional with no fallback — omitted means collapse-only, and `withTree()` claims the `'tree'` stage only when an accessor is given | 09-20 | accepted, not built | PTS D9 |
-| E14 | `initialExpanded` ships with the split, seeded in `createExpansionStore()` | 09-20 | accepted, not built | PTS D10 |
+| E14 | `initial` ships with the split, seeded in `createExpansionStore()` | 09-20 | accepted, not built | PTS D10 |
 | E15 | `withTree()` has no declared levels and never gains them — a declared-axis hierarchy is `withGrouping()`; `isExpandable` is the only row-selection knob | 09-20 | standing | PTS D11 |
 | E16 | A throwing `childrenAccessor` degrades to "no children" and reports once per evaluation (ADR-0014), never propagates | 09-20 | accepted, not built | PTS D12 |
 | E17 | One emission rule for every write: once per id in the symmetric difference of the old and new open sets — generalizes E3 across `toggle`/`expand`/`collapse`/`set` | 09-20 | accepted, not built | PTS spec |
