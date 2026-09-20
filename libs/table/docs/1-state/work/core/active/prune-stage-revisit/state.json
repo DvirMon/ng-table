@@ -1,13 +1,23 @@
 {
+  "schemaVersion": 1,
+  "runId": "prune-stage-revisit-2026-09-20T00:00:00Z",
   "slug": "prune-stage-revisit",
-  "ticketRef": "135",
-  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/101",
-  "stack": "angular",
-  "isComplex": null,
+  "ticketRef": "105",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/105",
+  "domainPath": "libs/table",
   "workspaceRoot": "libs/table/docs/1-state/work/core/active/prune-stage-revisit",
-  "decisionsPath": null,
-  "specPath": null,
-  "architecturePath": null,
-  "githubIssues": [135],
-  "checklist": { "intake": true, "grill": false, "spec": false, "issues": false, "tasks": false }
+  "stack": "angular",
+  "isComplex": true,
+  "decisionsPath": "libs/table/docs/1-state/work/core/active/prune-stage-revisit/1-decisions.md",
+  "specPath": "libs/table/docs/1-state/work/core/active/prune-stage-revisit/2-spec.md",
+  "architecturePath": "libs/table/docs/1-state/work/core/active/prune-stage-revisit/3-architecture.md",
+  "githubIssues": [
+    105,
+    106,
+    107,
+    108,
+    109
+  ],
+  "createdAt": "2026-09-17T14:52:00Z",
+  "updatedAt": "2026-09-20T00:00:00Z"
 }
