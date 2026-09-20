@@ -122,6 +122,8 @@ them. The contract doc carries the same list with a line on each.
 
 ## Maintaining this log
 
+Format contract: `~/.claude/conventions/doc-contracts/decisions-log.md`.
+
 - A decision is registered here **before** its work folder moves to `archive/`.
   That rule is in [`libs/table/CLAUDE.md`](../../CLAUDE.md) and is what keeps
   this file true.
