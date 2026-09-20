@@ -66,7 +66,7 @@ date, an issue's timestamp.
 | SO21 | `withSorting()` gains a schema fn in the recording form, and `applySortNulls` moves into it beside `applySortable` and `applySortFn` — supersedes SO20 and reverses CS D11a's "sorting has no schema of its own" | 09-20 | accepted, unbuilt | #100 · CS D11a |
 | SO22 | Three declarators, not one option bag — a column needing only null placement must not have to name a comparator slot (grouping's G39, same reason) | 09-20 | accepted, unbuilt | #100 |
 | SO23 | Sorting reads values through the ADR-0014-wrapped `readAccessor`, and a comparator reaches a carrier column via `ctx.valueOf(path.x, row)` — a data resolver, so it takes the row | 09-20 | accepted, unbuilt | SVS · CS D11d |
-| SO24 | `sortRows` calls `column.accessor` and a consumer `sortFn` **unwrapped**, escaping ADR-0014 — a pre-existing bug, fixed on its own rather than folded into the migration | 09-20 | shipped | SVS |
+| SO24 | `sortRows` calls `column.accessor` and a consumer `sortFn` **unwrapped**, escaping ADR-0014 — a pre-existing bug, fixed on its own rather than folded into the migration | 09-20 | **open** ([#112](https://github.com/DvirMon/ng-table/issues/112)) | SVS |
 
 All dates are 2026.
 
@@ -74,6 +74,10 @@ All dates are 2026.
 
 Seven rows carry `open`. In rough order of how likely they are to bite:
 
+- **SO24** — the ADR-0014 escape in `sortRows`. A throwing consumer `sortFn`
+  escapes `[...rows].sort()` and takes down the pipeline stage. It is a live
+  bug, not a gap: [#112](https://github.com/DvirMon/ng-table/issues/112), and
+  the cheapest thing on the epic's frontier.
 - **SO7** — the auto-detection algorithm. Shipped without a written spec, so
   the only statement of what it does is `detectComparator` itself. It becomes
   load-bearing once SO19 removes `sortFn` from `ColumnDef`, because the
@@ -92,7 +96,8 @@ them.
 
 [ADR-0024](../adr/0024-single-value-source-accessor.md) — the accessor is the
 only value source, so a comparator never reads a row field directly ·
-[ADR-0014](../adr/0014-runtime-error-policy.md) ·
+[ADR-0014](../adr/0014-runtime-error-policy.md) — and SO24 is the one place
+that is not yet honoured ·
 [ADR-0001](../adr/0001-sorting-single-column-default.md) ·
 [ADR-0021](../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md)
 — its capability test stands; its path-vocabulary rule does not, and SO20 is
