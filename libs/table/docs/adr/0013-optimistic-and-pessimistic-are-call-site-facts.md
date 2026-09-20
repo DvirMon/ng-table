@@ -1,7 +1,10 @@
 # ADR-0013 — Optimistic and pessimistic are call-site facts, named by the verb
 
-**Status:** proposed
+**Status:** accepted (2026-09-20)
 **Date:** 2026-09-05
+**Implementation state:** partial — tracked in
+[`decisions/row-editing.md`](../decisions/row-editing.md), not here. Decision 4's verb families
+are not fully shipped; do not read `accepted` as `built`.
 **Supersedes:** [`3-ui/stories.md`](../3-ui/stories.md)'s "Save-mode (Pessimistic/Optimistic) is a
 **gated**-only axis" (quoted below)
 **Narrows:** [`0-product/row-editing.md`](../0-product/row-editing.md) OQ-7's "'an optimistic flow'
@@ -35,7 +38,7 @@ The cost is already paid, and visible:
 
 ### The two claims this ADR acts on
 
-`3-ui/stories.md` :142 —
+`3-ui/stories.md` :383-390 (was `:142` when this ADR was written; the file grew) —
 
 > Save-mode (Pessimistic/Optimistic) is a **gated**-only axis — it means "does the row stay open
 > until the server confirms, or close right away" (`endEdit` after vs. before the fetch), which
@@ -53,7 +56,7 @@ consumer's flow at `createTable()` time, so refusing `multiple: true` on that ba
 impractical. What changes is only *where* the fact becomes legible: not at composition time, but at
 the **call site**, because the verb now names it. That is a narrowing, not a reversal.
 
-`stories.md` :142 is superseded outright. Its framing ties the axis to the presence of an edit
+That `stories.md` paragraph is superseded outright. Its framing ties the axis to the presence of an edit
 session, which makes it inapplicable to live tables — yet `live-table` adds a row eagerly with no
 request at all, which is the most optimistic thing in the codebase.
 
@@ -148,13 +151,18 @@ save-start, and on dismiss, in four different combinations.
   invariant, the new state shape.
 - [`1-state/row-mutations.md`](../1-state/row-mutations.md) — name the three `RowUpdater`s as the
   pessimistic data surface.
-- [`3-ui/stories.md`](../3-ui/stories.md) :142 — superseded, per above.
+- [`3-ui/stories.md`](../3-ui/stories.md) :383-390 — superseded, per above. **Still unmarked in
+  that file as of 2026-09-20** — the paragraph reads as current to anyone who opens `stories.md`
+  without knowing this ADR exists.
 - [`0-product/row-editing.md`](../0-product/row-editing.md) OQ-7 — narrowed, per above.
-- [ADR-0006](0006-row-id-state-reconciliation.md) :198-209 — its "Open" section is **already stale**
-  independently of this ADR: G3/O20 was closed 2026-09-03 by `swapRowId` (D49), and `ABSENT` was
-  removed by D46. This ADR adds the `unconfirmed` exemption to the same section.
+- [ADR-0006](0006-row-id-state-reconciliation.md) — **this obligation cannot be discharged as
+  written.** It cited an "Open" section at `:198-209`; that ADR is 71 lines and has only
+  Decision, Alternatives and Consequences. The section was removed at some point after this ADR
+  was drafted, taking with it the stale G3/O20 and `ABSENT` entries this bullet meant to fix.
+  The `unconfirmed` pruning exemption therefore belongs in ADR-0006's Consequences, and is
+  recorded meanwhile in [`decisions/row-editing.md`](../decisions/row-editing.md).
 - `libs/shared/table/CLAUDE.md` — the per-file verb lists in the file table.
 
 **Working notes:**
-[`1-state/work/optimistic-pessimistic-api/`](../1-state/work/optimistic-pessimistic-api/1-proposal.md)
+[`1-state/work/row-editing/active/optimistic-pessimistic-api/`](../1-state/work/row-editing/active/optimistic-pessimistic-api/1-proposal.md)
 (the sequenced plan and D50–D57).
