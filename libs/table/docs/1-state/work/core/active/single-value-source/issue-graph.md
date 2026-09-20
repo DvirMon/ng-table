@@ -8,12 +8,12 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 
 | # | Title | State | Depends on | Blocks |
 |---|---|---|---|---|
-| [#111](https://github.com/DvirMon/ng-table/issues/111) | Decouple the schema path mechanism from the columns schema | 🔵 IN PROGRESS | — | #114, #115, #100 |
+| [#111](https://github.com/DvirMon/ng-table/issues/111) | Decouple the schema path mechanism from the columns schema | ✅ CLOSED 09-20 (`a9e437b`) | — | #114, #115, #100 |
 | [#112](https://github.com/DvirMon/ng-table/issues/112) | `sortRows` calls accessor and `sortFn` unwrapped, escaping ADR-0014 | ✅ CLOSED 09-20 | — | #100 (cleared) |
 | [#113](https://github.com/DvirMon/ng-table/issues/113) | The declared column-id union reaches a feature's config | 🟡 OPEN | — | #114, #115, #100 |
-| [#114](https://github.com/DvirMon/ng-table/issues/114) | Grouping reads the accessor; levels and aggregates key by column id | 🟡 OPEN | #111, #113 | #117 |
-| [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | 🟡 OPEN | #111, #113 | #117 |
-| [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN | #111, #113 | — |
+| [#114](https://github.com/DvirMon/ng-table/issues/114) | Grouping reads the accessor; levels and aggregates key by column id | 🟡 OPEN | #111 (cleared), #113 | #117 |
+| [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | 🟡 OPEN | #111 (cleared), #113 | #117 |
+| [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN | #111 (cleared), #113 | — |
 | [#116](https://github.com/DvirMon/ng-table/issues/116) | ADR for the schema-declaration surface — keying, authoring forms, resolver naming | 🟡 OPEN | — | — |
 | [#117](https://github.com/DvirMon/ng-table/issues/117) | Rule contexts resolve declared columns — `valueOf`, `criterionOf`, `stateOf` | 🟡 OPEN | #114, #115 | — |
 
@@ -23,14 +23,15 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 #116  (ADR — docs, cites nothing, cited by everything)
 
 #111 ──────────┐
-   (mechanism) ├──► #114  (grouping + aggregates) ──┐
+   ✅ closed   ├──► #114  (grouping + aggregates) ──┐
 #113 ──────────┤                                    │
    (id union)  │                                    ├──► #117  (resolvers)
                ├──► #115  (filtering) ──────────────┘
 #111 ──────────┘
+   ✅ closed
 
 #111 ──────────┐
-   (mechanism) │
+   ✅ closed   │
 #112 ──────────┼──► #100  (sorting schema + config)
    ✅ closed   │
 #113 ──────────┘
@@ -39,23 +40,25 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 
 ## Summary
 
-- **Parallel-safe:** `#111`, `#113`, `#116` — no edge between them. `#111` touches only the schema
-  mechanism; `#113` only the generic plumbing and its generated overloads; `#116` is docs and
-  blocks nothing mechanically. `#112` was a fourth until it closed on 2026-09-20 — it touched only
-  `with-sorting.ts`.
+- **Parallel-safe:** `#113`, `#116` — no edge between them. `#113` touches only the generic
+  plumbing and its generated overloads; `#116` is docs and blocks nothing mechanically. `#111` and
+  `#112` were both in this set until they closed on 2026-09-20 — `#112` touched only
+  `with-sorting.ts`, `#111` only the schema mechanism.
 - **Also parallel-safe once their blockers close:** `#114`, `#115`, `#100` — they share blockers
   but nothing with each other, and they touch disjoint engines.
-- **Sequenced:** `#111 → #114/#115/#100` gated on the shared construction check — and for
-  `#100`, also on the recording runner that its new schema fn calls;
+- **Sequenced:** `#111 → #114/#115/#100` was gated on the shared construction check — and for
+  `#100`, also on the recording runner that its new schema fn calls — **cleared**, `#111` shipped
+  as `a9e437b`;
   `#113 → #114/#115/#100` gated on the literal id union (and on the types-spec guard inside
   `#113` that proves the union did not silently widen); `#112 → #100` was gated on the comparator
   call sites, which both change — **cleared**, `#112` shipped as `94e8050`;
   `#114/#115 → #117` gated on the features actually reading the accessor — a resolver over
   accessor values is meaningless before that.
-- **Current frontier:** `#111` (in progress), `#113`, `#116`. `#100` left it on 2026-09-20 and
-  `#112` closed the same day. `#113` is the riskiest and now gates **everything still unplanned**
-  — `#114`, `#115`, `#100` directly and `#117` through them — so starting it early is worth more
-  than finishing it fast; `#116` can land any time and is what the rest cite.
+- **Current frontier:** `#113`, `#116`. `#100` left it on 2026-09-20, `#112` closed the same day,
+  and `#111` closed the same day too (`a9e437b`). `#113` is the riskiest and now gates
+  **everything still unplanned** — `#114`, `#115`, `#100` directly and `#117` through them — so
+  starting it early is worth more than finishing it fast; `#116` can land any time and is what the
+  rest cite.
 - **`#117` is additive by construction.** No existing `when` predicate migrates into it —
   `cluster.key` is already accessor-resolved after `#114`, and plain model fields stay directly
   readable. It exists for the carrier-column case that has no spelling, which is why it is a
@@ -105,8 +108,8 @@ as D10/D11 in
 — neither is covered by `decisions.md`'s M/V/K/S node list, which predates that session.
 Titles and states pulled from `gh issue view` on 2026-09-20; `#100`'s `#111` edge added the
 same day when `withSorting()` gained a schema fn (G69). States re-verified against
-`gh issue list` on 2026-09-20 after `#112` closed (`94e8050`) and `#111` entered
-implementation. GitHub's native `blockedBy`/`blocking` fields are empty on every node —
+`gh issue list` on 2026-09-20 after `#112` closed (`94e8050`) and again after `#111` closed
+(`a9e437b`) via `/ship`. GitHub's native `blockedBy`/`blocking` fields are empty on every node —
 these edges live in the issue bodies' **Blocked by** sections and in this file, nowhere else.
 Related docs:
 [ADR-0024](../../../../adr/0024-single-value-source-accessor.md),
