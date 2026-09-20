@@ -6,6 +6,30 @@
 
 Data table engine for Angular 19+. Three-layer stack: state management (`createTable()`), column schema definition, and UI-layer directives. Attribute-only, no structural DOM injection. Ships as an Angular service + signals + directives, composable with `with-*()` feature plugins.
 
+## Answering any question about a capability
+
+This fires on *every* question about a feature — "what's the state of grouping?",
+"can I change X?", "why is Y shaped this way?" — not only when you are about to
+implement something.
+
+1. **`docs/status.md`** (generated) — the index. Its **Decisions** column links
+   each capability's log.
+2. **`docs/decisions/<capability>.md`** — every decision ever taken about it, one
+   line each, with what superseded what and what is still open.
+3. **The capability's spec** — `docs/1-state/features/<capability>.md` and
+   `docs/3-ui/directives/<capability>.md`. What it does *today*.
+
+Those three answer the question. A work folder is opened only when a log row
+sends you to one for the full rationale behind that row — never to find out what
+shipped, and never as a survey. Reading ten work folders to reconstruct a
+capability's history is the exact failure the log exists to prevent.
+
+A `—` in the Decisions column means that capability has not been consolidated
+yet; its history is still spread across work folders. Say so rather than
+answering as if the spread were the source of truth. Consolidating one is
+[`docs/agents/capability-docs.md`](docs/agents/capability-docs.md), entered with
+`/audit-docs <capability>`.
+
 ## Locked invariants — DO NOT CHANGE
 
 These are architectural constraints agreed in drilling sessions. Changing them requires cross-team decision and a new ADR.
@@ -60,10 +84,11 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `engine/compose-table.ts` | `composeTable()`: folds features, wires hooks. Nothing else |
 | `engine/core.ts` | `createTableCore()`: the consumer's row-data signal is the single source of truth for rows (no internal row copy), wrapped as `core.value` — a `WritableView` (`.update(updater)` writes through, D30). Columns split the same way but through an extra derivation: `baseColumns` (writable, private closure var, the actual write target) + `columnRules` (mutable array, populated additively by `composeTable()`'s `foldFeatures()` from each feature's `TableFeatureSpec.columnRules`) + `core.columns` — a `WritableView` reading `foldColumnRules(baseColumns(), columnRules)` and writing through to `baseColumns`. Plus the pipeline computeds. No bare mutation methods — every write is `table.<slice>.update(updater)` on the per-slice `WritableView` member (`engine/writable-view.ts`), D30 |
 | `engine/pipeline.ts` | `PIPELINE_ORDER` + `runPipeline()`. **`PipelineStages` is derived from the array** — one declaration, so a typed stage is always an executed stage |
-| `engine/render-stages.ts` | `RENDER_ORDER` + `runRenderStages()` — the `RenderRow[] → RenderRow[]` mirror of `pipeline.ts` (ADR-0011). **`RenderStages` is derived from the array**, same invariant as `PipelineStages` |
+| `engine/render-stages.ts` | `RenderNode<TRow>`, `RENDER_ORDER` + `runRenderStages()` — the `RenderNode[] → RenderNode[]` mirror of `pipeline.ts` (ADR-0011, amended by ADR-0023). **`RenderStages` is derived from the array**, same invariant as `PipelineStages`; every entry is claimable, no exclusion list. Also ships `mapNodes` — the post-order walk a render stage supplies a per-node function to, rather than hand-writing its own recursion |
+| `engine/flatten.ts` | `FlatRenderRow<TRow>` + `flattenVisible()` — the only function in `src` that reads contributed expansion state, and the only one that derives `depth`/`parentId`/`hasChildren`/`isExpanded` from a node's position in the tree (ADR-0023) |
 | `engine/columns.ts` | Pure `ColumnDef[] → ColumnDef[]` transforms. No signals, no Angular |
 | `engine/cells.ts` | Pure `readAccessor` / `buildDataCells` / `buildGroupCells` — the `RenderRow.cells` builders `renderRows` stamps centrally (ADR-0022), including the ADR-0014 `accessor` wrap |
-| `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderRows` — the always-run `RenderRow[]` seed a render stage chain starts from (ADR-0011) |
+| `engine/rows.ts` | Pure `normalizeTrackBy` / `buildDefaultRenderNodes` — the always-run `RenderNode[]` seed a render stage chain starts from (ADR-0011, ADR-0023) |
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims pipeline stages, render stages, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `Feature<In, Out>`, `Shape`, `RowOf`, `TableCore`, `TableFeatureSpec`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
@@ -137,6 +162,7 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 | `docs/3-ui/work/<slug>/` | Episodic work folder: intake ticket, decisions, issues, task steps. One folder per implementation effort (e.g. `core-directives`, `with-expansion`) | Episodic; created fresh per effort, archived after ship |
 | `docs/decisions/<capability>.md` | **The capability's decision history** — one `G`-numbered line per decision, each linking to its full record. The first thing to read before changing a capability | Permanent; appended as decisions land |
 | `docs/work/<slug>/` | Cross-stream efforts owned by no single capability (`trim-docs`, `adr-scope-audit`). Unnumbered because they span every stream | Episodic |
+| `docs/agents/` | Procedures an agent follows against *these* docs — repo-specific, because they assume this folder layout. `capability-docs.md` is the consolidation procedure | Permanent |
 
 **Key rule:** Specs live in the stream's numbered folder (e.g. `docs/1-state/features/expansion.md`). Work happens in `docs/3-ui/work/<slug>/` (or `docs/1-state/work/with-expansion/` for state-layer efforts). Specs are edited in place; work folders are episodic containers.
 
@@ -145,6 +171,11 @@ Docs are numbered by dependency order: state layer (1) → columns layer (2) →
 Two permanent files answer everything about a capability: its **spec**
 (what it does today) and its **decisions log** (why, what was tried, what was
 reversed). Everything else is a linked record.
+
+Format, status vocabulary and the four maintenance rules are the portable
+contract `~/.claude/conventions/doc-contracts/decisions-log.md`. The repo-specific
+part is below; the procedure that converts a capability that has none is
+[`docs/agents/capability-docs.md`](docs/agents/capability-docs.md).
 
 - **`adr/` vs `decisions/`.** `adr/` holds cross-capability architectural
   constraints. `decisions/<capability>.md` is a per-capability index over that
@@ -241,13 +272,18 @@ Rules:
 - Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
   `PipelineStages` derives from it, so there is no second list to keep in sync.
 - Add a render stage by editing `RENDER_ORDER` in `engine/render-stages.ts` — nothing else.
-  `RenderStages` derives from it, same invariant as `PipelineStages`.
+  `RenderStages` derives from it, same invariant as `PipelineStages`. `RENDER_ORDER` is exactly
+  "the stages a feature may claim" — `['group', 'tree']` today, no exclusion list beside it
+  (ADR-0023 deleted the one entry that wasn't claimable, `'prune'`; see the render-stage seam
+  paragraph below). A stage receives and returns `RenderNode<TRow>[]`, not flat rows — nest
+  children in `RenderNode.children` via `mapNodes`, never emit them as following siblings.
 - A second feature claiming the same `stages` key, the same `renderStages` key, or the same
   **member key** (ADR-0007), **throws at construction**. Render stages are per-named-stage
   collision, not whole-layer (ADR-0011) — `withExpansion()` claims `'tree'`, leaving
-  `'group'` free for `withGrouping()`. `'paginate'` is not a reserved stage name — it was
-  dropped as an unclaimed anchor (#106); a future pagination feature's render-stage
-  question is undecided, not pre-answered by this name.
+  `'group'` free for `withGrouping()`. Neither `'paginate'` nor `'prune'` is a reserved stage
+  name — both left `RENDER_ORDER` unclaimed (#106, #107); there is deliberately no anchor today
+  for "after the tree is flattened" (ADR-0020), and a future pagination feature's render-stage
+  question is undecided, not pre-answered by either name.
   [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) covers splitting
   `withExpansion()` into a detail-panel feature plus a `withTree()` claiming `'tree'` — read it,
   and its current status, before touching `renderStages` or `withExpansion()`.
@@ -277,8 +313,10 @@ Rules:
   it, though the runtime store would have the member either way — features that do read `composed`
   should write the compile-time-legal order. `withGrouping()` is no longer such an example: it read
   `composed['expandedRows']` as a lazy guarded read inside its group render stage until #99/
-  ADR-0017 moved collapse/expand visibility entirely into the engine-owned `'prune'` render stage —
-  `withGrouping()` now composes with zero knowledge of expansion, in any argument order.
+  ADR-0017 moved collapse/expand visibility out of feature code entirely — first into an
+  engine-owned `'prune'` render stage, then, as of ADR-0023 (#107), into `engine/flatten.ts`'s
+  `flattenVisible` walk, the only function in `src` that reads `expandedRows` at all.
+  `withGrouping()` composes with zero knowledge of expansion, in any argument order, either way.
 - Internal features (the column-schema wiring) are not consumer `Feature`s: they keep receiving
   the engine handle `TableCore<TRow>`, which is the only way to reach `baseColumns` (ADR-0010).
 

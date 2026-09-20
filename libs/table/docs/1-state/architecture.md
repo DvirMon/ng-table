@@ -33,7 +33,7 @@ something to avoid. The thing being minimized is the *enumerated surface area*, 
 ### The reference case — `updateRows`
 
 The row-mutation cluster is the worked example (see
-[`work/with-mutations/2-decisions.md`](work/with-mutations/2-decisions.md), D5–D8). The
+[`work/row-editing/archive/with-mutations/2-decisions.md`](work/row-editing/archive/with-mutations/2-decisions.md), D5–D8). The
 scenarios were add, remove, update, duplicate, bulk delete, import, and an open-ended tail. Rather
 than shipping a method per scenario, the API is:
 
@@ -155,7 +155,9 @@ precedes it, even though the runtime store would have the member either way (D25
 was the worked example for this rule before #99/ADR-0017: it used to read `composed['expandedRows']`
 as a lazy guarded read inside its group render stage. That read is gone — `withGrouping()` now
 composes with zero knowledge of expansion, in any argument order, and collapse/expand visibility
-is entirely the engine-owned `'prune'` render stage's job. Writing the compile-time-legal order
+is entirely `engine/flatten.ts`'s `flattenVisible` walk's job — the only function in `src` that
+reads `expandedRows` (ADR-0023, #107; it replaced the engine-owned `'prune'` render stage ADR-0017
+had introduced). Writing the compile-time-legal order
 is still the convention for any future feature that reads a later slot's member off the shared
 store reference; the guard exists because the runtime cannot enforce it.
 
@@ -230,4 +232,4 @@ See each reference file's own "Open Questions" section for issues local to that 
 row-removal reconciliation has no documented equivalent in any of the four; none of them documents
 a generalized "notify every feature when rows disappear" hook.
 
-Full reasoning: [gap-analysis.md](./work/state-feature-competitive-audit/gap-analysis.md).
+Full reasoning: [gap-analysis.md](./work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

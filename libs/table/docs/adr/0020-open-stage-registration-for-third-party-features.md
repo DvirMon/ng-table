@@ -3,8 +3,9 @@
 **Status:** proposed
 **Date:** 2026-09-18
 **Related:** [ADR-0011](0011-chained-render-stages.md) (`RENDER_ORDER`/`PIPELINE_ORDER`
-mechanism this ADR opens up), [ADR-0017](0017-engine-owned-descendant-prune.md)
-(`'prune'` reclassified here as a boundary), [ADR-0007](0007-feature-member-claims.md)
+mechanism this ADR opens up), [ADR-0023](0023-tree-shaped-render-ir.md) (`'prune'` deleted
+outright, not merely reclassified — the parent-before-child emission invariant this ADR
+built `preservesEmissionOrder` around no longer exists), [ADR-0007](0007-feature-member-claims.md)
 (construction-time collision precedent), [ADR-0012](0012-split-expansion-into-panel-and-tree.md)
 (`withTree()`/`withExpansion()` split — see the flagged item under `'expand'` below),
 [ADR-0021](0021-column-concerns-and-data-concerns-are-separate-surfaces.md) (a third-party feature
@@ -46,8 +47,12 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 
 2. **Anchor set:**
    - Pipeline: `'filter'`, `'sort'`.
-   - Render: `'group'`, `'tree'`, `'paginate'`, with `'prune'` as a **boundary**, not
-     an anchor — `'prune'` stays engine-owned and terminal (ADR-0017).
+   - Render: `'group'`, `'tree'`. **No post-flatten anchor exists.** `'paginate'` left
+     `RENDER_ORDER` unclaimed (#106) and `'prune'` was deleted outright, along with the
+     emission-order invariant it existed to protect (ADR-0023). There is deliberately no
+     reserved name standing in for "after the tree is flattened" — whether to add one is
+     [#102](https://github.com/DvirMon/ng-table/issues/102)'s call, not restored here by
+     default.
 
    `'expand'` (pipeline) is **removed**, not kept as a reserved anchor. It is unclaimed
    today (`withExpansion()` declares only `renderStages.tree`, no pipeline stage), and
@@ -65,17 +70,14 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
    > second consumer of "expand" semantics, and #101 was not open when the discovery
    > ran. Re-confirm against #101's final shape before this ADR moves to `accepted`.
 
-   `'paginate'` stays as a reserved, unclaimed anchor (unlike `'expand'`) — it remains
-   the only way for a future stage (e.g. virtual-scroll window, row pinning) to say
-   "before the window is cut."
+   *(D3 — `preservesEmissionOrder: boolean` — dropped 2026-09-20, ADR-0023. It existed
+   to let a stage declaration promise it would not break the parent-before-child
+   emission invariant `'prune'` relied on. That invariant is gone with `'prune'`: a
+   nested child cannot be emitted above its own parent in a tree-shaped IR, so there is
+   no emission order left for a stage to preserve or a flag for its author to get
+   wrong.)*
 
-3. **Render-stage declarations additionally carry `preservesEmissionOrder: boolean`.**
-   The engine refuses a `false` declaration positioned before the `'prune'` boundary —
-   this is the parent-before-child emission invariant ADR-0017 calls "load-bearing and
-   unchecked," now made a checkable, construction-time rule instead of an unstated
-   assumption.
-
-4. **The stage-name registry is a TypeScript `interface`, not a derived `const` array
+3. **The stage-name registry is a TypeScript `interface`, not a derived `const` array
    union**, mirroring MUI X's `GridPipeProcessingLookup`. A third-party package
    augments the interface via declaration merging, so its stage name stays a checked
    literal rather than widening to a bare `string`. Built-in anchor names are
@@ -86,11 +88,12 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
    > generated `*.overloads.ts`) was not checked here — MUI proves the pattern works in
    > a plain TS package, nothing was verified against this repo's own tooling.
 
-5. **Three invariants the engine checks at evaluation time** (not construction, since
-   they are data-dependent): parent-before-child emission order (one forward pass),
-   row-id uniqueness, and real-row id containment (output's non-synthesized ids are a
-   subset of input's). Violations degrade + report once per stage per evaluation
-   (ADR-0014's policy), never throw at runtime.
+4. **Two invariants the engine checks at evaluation time** (not construction, since
+   they are data-dependent): row-id uniqueness, and real-row id containment (output's
+   non-synthesized ids are a subset of input's). Violations degrade + report once per
+   stage per evaluation (ADR-0014's policy), never throw at runtime.
+   *(Parent-before-child emission order dropped from this list with D3, same reason —
+   ADR-0023.)*
 
    > **⚑ Open item.** The runtime error-policy citation ("throw at construction,
    > degrade at runtime, report in production too") is read from this library's
@@ -98,12 +101,18 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
    > [ADR-0014](0014-runtime-error-policy.md)'s Decision section directly. Confirm
    > before relying on it here.
 
-6. **Two invariants are declarable only, checked positionally at construction, not
+5. **Two invariants are declarable only, checked positionally at construction, not
    inferred:** `synthesizesRows: boolean` (a `true` stage cannot anchor before
    `'group'`) and a row-count-direction declaration (`'preserves' | 'may-shrink' |
    'may-grow'`) — a `'may-grow'` stage cannot sit after `'paginate'`.
 
-7. **DI-based placement override (`provideTableStages()`) is deferred**, and when
+   > **⚑ Open item.** This clause anchors against `'paginate'`, which is no longer in
+   > `RENDER_ORDER` (#106) and has no successor (decision 2 above). Re-derive this
+   > check once [#102](https://github.com/DvirMon/ng-table/issues/102) settles whether
+   > a post-flatten anchor exists at all — do not restore `'paginate'` as its target
+   > without that decision.
+
+6. **DI-based placement override (`provideTableStages()`) is deferred**, and when
    added, must be an edit function over the already-resolved order
    (`(order) => order`), never a replacement array or the definition site. Placement
    knowledge belongs with the feature author, who knows a stage's ordering
@@ -131,7 +140,7 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 - **MUI X-style pipe-processor groups (accumulate, `Map`-insertion order, random
   per-instance ids)** — rejected as the ordering model. No deterministic order, no
   collision detection by construction. Its `interface`-based group registry *is*
-  adopted (decision 4) — that part is a strictly better answer than a derived union.
+  adopted (decision 3) — that part is a strictly better answer than a derived union.
 - **Leaning on Angular Signal Forms' reducer model** (this library's stated structural
   reference) — does not transfer. Signal Forms has no ordering primitive at all, but
   only because every multi-contributor slot is commutative (`list`/`min`/`max`/`or`/
@@ -144,8 +153,6 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 - Third-party features can add a pipeline or render stage without a library release,
   positioned relative to fixed anchors, with construction-time errors naming both
   parties on any conflict.
-- `'prune'`'s parent-before-child invariant becomes checkable instead of an unstated
-  assumption a stranger's stage can silently break.
 - Stage names for third-party stages stay statically checked via interface
   augmentation rather than degrading to `string`.
 
