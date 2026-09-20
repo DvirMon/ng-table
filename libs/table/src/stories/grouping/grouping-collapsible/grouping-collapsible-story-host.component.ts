@@ -22,8 +22,8 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
  * exists: it derives from the cluster tree rather than from `renderRows()`, so it finds every
  * header at every depth regardless of what is currently collapsed.
  *
- * Group headers read `table.expandedRows().has(row.id)` — `renderRows()` stamps `isExpanded` on
- * `kind: 'row'` only, never on a header, because the tree stage early-returns for `data === null`.
+ * Group headers and data rows both read `row.isExpanded` — `flattenVisible()` stamps it on
+ * every render row once a composed feature contributes the expansion slot.
  */
 @Component({
   selector: 'ngp-grouping-collapsible-story-host',

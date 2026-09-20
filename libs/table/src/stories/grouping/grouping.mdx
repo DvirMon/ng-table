@@ -424,8 +424,8 @@ Expand All is the reason `groupIds()` exists. `expandAll()` on its own discovers
 `expandAll(table.groupIds())` — and `groupIds()` derives from the cluster tree rather than from
 `renderRows()`, so it finds every header at every depth no matter what is collapsed right now.
 
-Group headers read `table.expandedRows().has(row.id)` directly. `renderRows()` stamps `isExpanded`
-on `kind: 'row'` only, never on a header, because the tree stage early-returns for `data === null`.
+Group headers and data rows both read `row.isExpanded` — `flattenVisible()` stamps it on every
+render row once a composed feature contributes the expansion slot.
 
 <Canvas of={CollapsibleStories.Collapsible} />
 

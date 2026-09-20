@@ -74,9 +74,9 @@
                   <button
                     type="button"
                     class="grouping-story__chevron"
-                    [attr.aria-expanded]="table.expandedRows().has(row.id)"
+                    [attr.aria-expanded]="row.isExpanded"
                     [attr.aria-label]="
-                      (table.expandedRows().has(row.id) ? 'Collapse ' : 'Expand ') +
+                      (row.isExpanded ? 'Collapse ' : 'Expand ') +
                       ((row.groupKey?.value | isBlankGroup)
                         ? 'the unlabelled group'
                         : row.groupKey?.value)
