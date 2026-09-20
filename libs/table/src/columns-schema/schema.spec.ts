@@ -66,7 +66,7 @@ describe('columnSchema', () => {
     });
   });
 
-  it('assertPathIsCurrent rejects a ColumnHandle stashed and reused after the schema fn returns', () => {
+  it('record() rejects a ColumnHandle stashed and reused after the schema fn returns', () => {
     let stashedPath: ColumnsPath<Row, MockColumnId> | undefined;
     columnSchema<Row, MockColumnId>((path) => {
       stashedPath = path;

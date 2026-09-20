@@ -108,6 +108,7 @@ older cross-references still resolve.
 | G67 | The resolver lives on a context object, never as a `ClusterSummary` member — an own `valueOf` on a value object the library sorts hijacks the language's coercion hook | 09-20 | accepted, unbuilt | CS D11d |
 | G68 | `applyGroupKey`'s extractor receives the accessor's output, not `TRow[K]` — forced by G60's re-keying | 09-20 | accepted, unbuilt | CS D11d |
 | G69 | `withSorting()` gains a schema fn in the recording form — **reverses D11a's "sorting has no schema of its own"**; `applySortNulls` moves out of `columnsSchema` and joins `applySortable` / `applySortFn` there. Listed here only because it amends G61; the decision itself is sorting's, as [SO21](sorting.md) | 09-20 | accepted, unbuilt | [#100](https://github.com/DvirMon/ng-table/issues/100) |
+| G70 | One extracted runner, not two — the recording form's body is shared (`schema/run.ts`); the declaring form's stays in `engine/filters/build.ts` until ADR-0020's `stageSchema` is its second caller. Does not narrow G62: both authoring forms remain permanent | 09-20 | accepted | [#111](https://github.com/DvirMon/ng-table/issues/111), [workspace decisions](../1-state/work/core/active/single-value-source/decisions.md) |
 
 All dates are 2026.
 

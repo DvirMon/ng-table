@@ -50,15 +50,16 @@ as top-level siblings rather than subfolders. See ADR-0008.
 
 ```
 src/
-  index.ts      ← the table's own public surface; the only barrel (ADR-0004's 2026-09 #93 amendment)
-  api/          ← factory + declaration surface a consumer touches
-  schema/       ← column schema DSL: columnSchema(), metadata, visibility/sort rules
-  mutations/    ← row and column mutation verbs
-  engine/       ← the runtime; nothing here is exported
-  directives/   ← UI layer
-  table.mock.ts ← shared test fixtures
-tools/          ← repo-side utilities, OUTSIDE src/ so they stay out of the published build
-docs/           ← this library's own docs (see "Docs structure" below)
+  index.ts        ← the table's own public surface; the only barrel (ADR-0004's 2026-09 #93 amendment)
+  api/            ← factory + declaration surface a consumer touches
+  columns-schema/ ← column schema DSL: columnSchema(), metadata, visibility rules
+  schema/         ← the shared declare-phase mechanism, key-space agnostic
+  mutations/      ← row and column mutation verbs
+  engine/         ← the runtime; nothing here is exported
+  directives/     ← UI layer
+  table.mock.ts   ← shared test fixtures
+tools/            ← repo-side utilities, OUTSIDE src/ so they stay out of the published build
+docs/             ← this library's own docs (see "Docs structure" below)
 ```
 
 | File | Purpose |
@@ -73,10 +74,13 @@ docs/           ← this library's own docs (see "Docs structure" below)
 | `api/features/with-computed.ts` | `withComputed(block)` — library-declared derived state as a feature. The block is validated at construction (it must return signals; a throw while declaring throws) and every returned signal is rewrapped to report its member key and rethrow at evaluation (ADR-0014). Both checks live here, never in the fold |
 | `api/features/compose-features.ts` | `composeFeatures(...features)` — collapses N features into one `createTable()` slot, the arity escape hatch. Inner features fold against a per-composite `SlotRegistry` and merge into one spec; collisions are labelled `composeFeatures inner feature N` |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `op`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, each building its own instance. Composing both explicitly is a duplicate `editing` member claim and throws (ADR-0007), in either argument order |
-| `schema/column-schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
-| `schema/column-rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
-| `schema/column-metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `column-rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
-| `schema/column-schema.types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
+| `columns-schema/schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
+| `columns-schema/rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
+| `columns-schema/metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
+| `columns-schema/types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
+| `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
+| `schema/run.ts` | `runRecordedSchema(buildPath, fn)` — the one body behind every **recording-form** schema fn (`columnSchema()`, `withGrouping()`, `withSorting()`). The declaring form (filtering) keeps its own body in `engine/filters/build.ts` until ADR-0020's `stageSchema` is a second caller (#111 reading B) |
+| `schema/validate.ts` | `assertDeclarationsAreKnown(declaredIds, knownIds, label)` — the one construction-time check that a declared identifier names a real column, shared by every schema form. `label` names the declaring surface in the message |
 | `mutations/update-columns.ts` | `setColumns`/`reorderColumns`/`toggleColumnVisibility` updater factories, consumed via `table.columns.update(updater)` (D30) — writes always target `baseColumns` internally, never the derived fold |
 | `mutations/optimistic-mutations.ts` | `captureEdit`/`releaseEdit`/`revertEdit`/`discardEdit`/`removeEdit`/`patchEdit` — the rollback and capture-composing verbs, meaningful under either editing feature |
 | `mutations/row-edit-mutations.ts` | `beginEdit`/`endEdit`/`clearEdit` — the edit-session verbs; no-ops without `withRowEdit()` |

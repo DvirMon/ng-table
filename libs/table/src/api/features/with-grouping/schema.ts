@@ -1,12 +1,12 @@
 import type { Resource, Signal } from '@angular/core';
 import type { GroupOrder, GroupWhen } from '../../types';
 import {
-  assertPathIsCurrent,
   createPathProxy,
-  createRecorderSession,
   PATH_RECORDER,
+  recorderOf,
   type PathRecorder,
 } from '../../../schema/path-proxy';
+import { runRecordedSchema } from '../../../schema/run';
 import type {
   AnyGroupingRule,
   GroupingAsyncRule,
@@ -16,11 +16,15 @@ import type {
 } from './types';
 
 /**
- * Builds the structural `path` proxy handed to a grouping schema fn. The `get` trap fabricates a
- * `GroupingHandle<TRow, K>` for any string property accessed — it never reads real row data.
- * Shares the schema-declare-phase Proxy+recorder mechanism (`schema/path-proxy.ts`, key-space
- * agnostic) with `column-schema.ts`; the handle shape it produces is `GroupingHandle`, never
- * `ColumnHandle` (D7 — a different key space, and no import from `column-schema.ts` either).
+ * Builds the structural `path` proxy handed to a grouping schema fn. The `get`
+ * trap fabricates a `GroupingHandle<TRow, K>` for any string property
+ * accessed — it never reads real row data.
+ *
+ * @remarks
+ * Shares the schema-declare-phase Proxy+recorder mechanism
+ * (`schema/path-proxy.ts`, key-space agnostic) with `columns-schema/schema.ts`;
+ * the handle shape here is `GroupingHandle`, never `ColumnHandle` — this file
+ * imports nothing from `columns-schema/`.
  */
 function buildGroupingPath<TRow>(
   recorder: PathRecorder<TRow, AnyGroupingRule<TRow>>
@@ -32,24 +36,26 @@ function buildGroupingPath<TRow>(
 
 /**
  * Runs a grouping schema fn once, synchronously, through a fresh recorder session and returns
- * the rules it recorded. Mirrors `column-schema.ts`'s `runColumnsSchemaFn`, keyed by row field
- * instead of declared column id.
+ * the rules it recorded. Shares its body with `columns-schema/schema.ts`'s `runColumnsSchemaFn`
+ * via `runRecordedSchema`, keyed by row field instead of declared column id.
  */
 export function runGroupingSchemaFn<TRow>(
   fn: GroupingSchemaFn<TRow>
 ): readonly AnyGroupingRule<TRow>[] {
-  const session = createRecorderSession<TRow, AnyGroupingRule<TRow>>();
-  const path = buildGroupingPath<TRow>(session.recorder);
-  fn(path);
-  session.close();
-  return session.rules;
+  return runRecordedSchema<TRow, AnyGroupingRule<TRow>, GroupingPath<TRow>>(
+    (recorder) => buildGroupingPath<TRow>(recorder),
+    fn
+  );
 }
 
 /**
- * Declares one grouping level. `enable`, when passed, gates activation — returning `undefined`
- * (pending) makes the *whole* rule set abstain, not just this level. Omitting `enable` declares a
- * `when`-only rule that contributes no activation. Call order carries no meaning — nesting order
- * comes from `initial` (D2).
+ * Declares one grouping level.
+ *
+ * @remarks
+ * `enable`, when passed, gates activation — returning `undefined` (pending)
+ * makes the *whole* rule set abstain, not just this level. Omitting `enable`
+ * declares a `when`-only rule that contributes no activation. Call order
+ * carries no meaning; nesting order comes from `initial`.
  */
 export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: GroupingHandle<TRow, K>,
@@ -58,7 +64,7 @@ export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
     when?: GroupWhen<TRow>;
   }
 ): void {
-  assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record({
+  recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'grouping',
     columnId: path.id,
     enable: opts.enable,
@@ -67,15 +73,18 @@ export function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
 }
 
 /**
- * Declares the key-derivation for one grouping level (D9). Positional, like `applyGroupOrder` —
- * this is the only concern it carries. The extractor must return a primitive; the engine does not
- * defensively normalize, stringify or deep-compare keys (D7).
+ * Declares the key-derivation for one grouping level.
+ *
+ * @remarks
+ * Positional, like `applyGroupOrder` — this is the only concern it carries.
+ * The extractor must return a primitive; the engine does not defensively
+ * normalize, stringify or deep-compare keys.
  */
 export function applyGroupKey<TRow, K extends Extract<keyof TRow, string>>(
   path: GroupingHandle<TRow, K>,
   extractValue: (fieldValue: TRow[K]) => unknown
 ): void {
-  assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record({
+  recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'grouping-key',
     columnId: path.id,
     extractValue: extractValue as (fieldValue: unknown) => unknown,
@@ -83,9 +92,9 @@ export function applyGroupKey<TRow, K extends Extract<keyof TRow, string>>(
 }
 
 /**
- * Resource-backed counterpart — the rule owns fetching/re-querying. `onError` is required: an
- * errored resource must produce an explicit boolean, never silent abstention. `when` decides
- * admission for this column only, independent of `onSuccess`/`onError`'s level activation.
+ * Resource-backed grouping declaration — the rule owns fetching/re-querying.
+ * `onError` is required so an errored resource always yields an explicit boolean, never silent
+ * abstention; `when` gates admission for this column only.
  */
 export interface GroupingAsyncOpts<TRow, K extends Extract<keyof TRow, string>, TParams, TResult> {
   params: () => TParams | undefined;
@@ -108,14 +117,7 @@ export function applyGroupingAsync<TRow, K extends Extract<keyof TRow, string>, 
     onError: opts.onError,
     when: opts.when,
   };
-  // Same generic-erasure boundary documented in `schema/path-proxy.ts`'s `record()`
-  // (`MetadataAsyncRule`'s contravariant `factory`/`onSuccess` positions defeat plain
-  // assignability against the fixed `AnyGroupingRule<TRow>` union member) — `kind:
-  // 'grouping-async'` never matches record()'s `MetadataRule`/`MetadataAsyncRule` arm, so TS
-  // falls through to the `TRule` arm here instead, which needs the same double-cast bridge.
-  assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record(
-    rule as unknown as AnyGroupingRule<TRow>
-  );
+  recorderOf<TRow, AnyGroupingRule<TRow>>(path).record(rule);
 }
 
 /**
@@ -128,7 +130,7 @@ export function applyGroupOrder<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
   comparator: GroupOrder<TRow>
 ): void {
-  assertPathIsCurrent<TRow, AnyGroupingRule<TRow>>(path).record({
+  recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'group-order',
     columnId: path.id,
     comparator,

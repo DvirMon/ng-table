@@ -1,5 +1,5 @@
 import type { ResourceRef, Signal } from '@angular/core';
-import { assertPathIsCurrent } from '../schema/path-proxy';
+import { recorderOf } from '../schema/path-proxy';
 import type {
   ColumnHandle,
   ColumnMetaKey,
@@ -8,11 +8,9 @@ import type {
 import type { ColumnDef } from '../api/types';
 
 /**
- * Consumer-defined, non-participating side channel for column data — modeled on Signal
- * Forms' `createMetadataKey()`/`metadata()`/`field().metadata(key)`. Unlike
- * `applyVisible`/`applyVisibleAsync` (`columns-schema/rules.ts`), nothing here is consumed by the
- * table engine; it exists purely to be read back by the consumer's own code (e.g. a custom
- * `with-*()` feature). See `docs/2-columns/reference/column-metadata.md`.
+ * Consumer-defined, non-participating side channel for column data — nothing here is consumed
+ * by the table engine; it exists purely to be read back by the consumer's own code. See
+ * `docs/2-columns/reference/column-metadata.md`.
  */
 
 /**
@@ -24,24 +22,22 @@ export function createColumnMetaKey<T>(): ColumnMetaKey<T> {
 }
 
 /**
- * Registers a metadata value for one column under `key`, called inside a `columnSchema()`
- * body alongside `applyVisible`/`applyVisibleAsync`. `logic` is a plain value or a closure
- * over the same `ColumnRuleContext<TRow>` those rules read — both resolve the same way,
- * discriminated at wiring time (`engine/columns-schema/wiring.ts`).
+ * Registers a metadata value for one column under `key`, called inside a
+ * `columnSchema()` body alongside `applyVisible()`/`applyVisibleAsync()`.
  *
- * Single-writer: a second `metadata()` call for the same `(column, key)` pair throws at
- * resolve time (`resolve.ts`'s `assertMetadataKeysAreUnique`) — no reducer/combine story.
- *
- * Erases `T` to `unknown` at the recording site, same rationale as `metadataAsync()` below:
- * `key`/`logic` are only ever read back together, still at their original type, inside
- * `wiring.ts`.
+ * @remarks
+ * `logic` is a plain value or a closure over `ColumnRuleContext<TRow>` —
+ * both resolve the same way, at wiring time. A second call for the same
+ * `(column, key)` pair throws (single-writer, no reducer/combine story).
  */
 export function metadata<TRow, K extends string, T>(
   path: ColumnHandle<TRow, K>,
   key: ColumnMetaKey<T>,
   logic: NoInfer<T> | ((ctx: ColumnRuleContext<TRow>) => NoInfer<T>)
 ): void {
-  const recorder = assertPathIsCurrent(path);
+  const recorder = recorderOf(path);
+  // `T` erases to `unknown` here — `key`/`logic` are read back together, still at their
+  // original type, inside `wiring.ts`. Same rationale as `metadataAsync()`'s erasure below.
   recorder.record({
     kind: 'metadata',
     columnId: path.id,
@@ -68,7 +64,7 @@ export function metadataAsync<TRow, K extends string, TParams, TResult, T>(
     onError: (error: unknown) => T;
   }
 ): void {
-  const recorder = assertPathIsCurrent(path);
+  const recorder = recorderOf(path);
   recorder.record({
     kind: 'metadata-async',
     columnId: path.id,

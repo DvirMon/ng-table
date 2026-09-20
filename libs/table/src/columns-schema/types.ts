@@ -70,10 +70,14 @@ export interface MetadataAsyncRule<TRow, TParams = unknown, TResult = unknown, T
   readonly columnId: string;
   readonly key: ColumnMetaKey<T>;
   readonly params: (ctx: ColumnRuleContext<TRow>) => TParams | undefined;
-  readonly factory: (
-    params: Signal<TParams | undefined>
-  ) => ResourceRef<TResult | undefined>;
-  readonly onSuccess: (result: TResult) => T;
+  // Method-shorthand syntax (not `readonly factory: (…) => …` properties) deliberately, so
+  // `TParams`/`TResult`/`T` check bivariantly here — this member is reached only through
+  // `PathRecorder.record(rule: TRule)`, where `TRule` is `ColumnRule<TRow>`, whose
+  // `MetadataAsyncRule` member is erased to its `<unknown, unknown, unknown>` default.
+  // Property-typed functions would reject a concretely-typed `factory`/`onSuccess` under
+  // strict contravariance. Same shape and same reason as `GroupingAsyncRule`.
+  factory(params: Signal<TParams | undefined>): ResourceRef<TResult | undefined>;
+  onSuccess(result: TResult): T;
   readonly onError: (error: unknown) => T;
 }
 

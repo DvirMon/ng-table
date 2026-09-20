@@ -1,23 +1,13 @@
-import type { MetadataAsyncRule, MetadataRule } from '../columns-schema/types';
-
 /** @internal */
 export const PATH_RECORDER: unique symbol = Symbol('PATH_RECORDER');
 
-// Generic on `TRule` — a session is homogeneous, one rule family per session, instantiated
-// differently at different call sites (`ColumnRule<TRow>` for columns, `AnyGroupingRule<TRow>`
-// for grouping). `MetadataRule`/`MetadataAsyncRule` stay in the union so columns' own
-// contextually-typed `metadata()`/`applyVisibleAsync()` calls check directly against their own
-// instantiated types, with no erasing cast at that call site — the `| TRule` arm is what a
-// non-column session (e.g. grouping) actually records through.
 /**
  * Internal recorder every declare-phase call writes into. One instance per schema-fn execution.
  * @internal
  */
 export interface PathRecorder<TRow, TRule> {
   /** Records one rule into this session for later resolution by the owning feature/schema. */
-  record<TParams = unknown, TResult = unknown, T = unknown>(
-    rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T> | TRule
-  ): void;
+  record(rule: TRule): void;
 }
 
 /** A path-proxy handle carrying its owning recorder — every recorder-backed handle satisfies
@@ -31,8 +21,8 @@ export interface RecordedHandle<TRow, TRule> {
 
 /**
  * Recorder session for one schema-fn execution. Tracks whether the fn's synchronous run has
- * finished, so `assertPathIsCurrent` can reject a handle stashed and reused after the fact
- * (e.g. inside a later async callback).
+ * finished, so `record()` can reject a handle stashed and reused after the fact (e.g. inside a
+ * later async callback).
  */
 export function createRecorderSession<TRow, TRule>(): {
   recorder: PathRecorder<TRow, TRule>;
@@ -45,16 +35,9 @@ export function createRecorderSession<TRow, TRule>(): {
 
   return {
     recorder: {
-      record<TParams, TResult, T>(
-        rule: MetadataRule<TRow, T> | MetadataAsyncRule<TRow, TParams, TResult, T> | TRule
-      ): void {
+      record(rule: TRule): void {
         assertOpen();
-        // Sole generic-erasure boundary (mirrors create-table.ts's documented composition
-        // boundary): `TParams`/`TResult`/`T` only ever round-trip through the rule's own `key`
-        // object identity downstream, never re-derived from this array's static `TRule` type,
-        // so collapsing them here is sound in practice even though TS can't prove it
-        // structurally at this one storage step.
-        rules.push(rule as unknown as TRule);
+        rules.push(rule);
       },
     },
     rules,
@@ -76,14 +59,12 @@ export function createRecorderSession<TRow, TRule>(): {
 }
 
 /**
- * Rejects a handle used after the recorder session that produced it has closed. Every
- * declare-phase apply/record function must call this before recording.
+ * The recorder a handle was fabricated against. `record()` itself rejects a handle used after
+ * its session closed, so the open-check stays in one place and this is a plain accessor.
  */
-export function assertPathIsCurrent<TRow, TRule>(
+export function recorderOf<TRow, TRule>(
   handle: RecordedHandle<TRow, TRule>
 ): PathRecorder<TRow, TRule> {
-  // Recorder.record() itself throws if the session already closed — routing through it here
-  // keeps the "current" check in one place.
   return handle[PATH_RECORDER];
 }
 

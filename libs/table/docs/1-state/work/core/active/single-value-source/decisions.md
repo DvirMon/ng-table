@@ -63,6 +63,18 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   which is the exact class of bug this migration exists to close, so threading columns into the
   pipeline walk is not optional.
 
+- **#111 — extract one runner or two? One. Reading B.**
+  The recording form's runner has real duplication to collapse: `runColumnsSchemaFn`
+  (`columns-schema/schema.ts:36-44`) and `runGroupingSchemaFn` (`with-grouping/schema.ts:38-46`)
+  are the same five statements, and sorting (#100, G69) is a third caller. The declaring form's
+  would have exactly one caller — `buildFilterModel` — since `buildFiltersPath` already shares
+  `createPathProxy` and `keyRules` is six lines. Its second caller is `stageSchema` (ADR-0020,
+  #102), which is unbuilt and is its own epic. Reading A was rejected on
+  `general-mechanism-over-enumerated-cases`' own caveat — a general mechanism nobody extends is
+  cost without payoff. Reading C was rejected because it leaves the recording body duplicated,
+  which is the one piece of real duplication in the file set. `engine/filters/build.ts` is
+  untouched by #111; #102 reopens it.
+
 ---
 
 ## Dependency ranking
@@ -75,7 +87,7 @@ without A's artifact. Presentation order below is not an edge.
 | | Node | Class |
 |---|---|---|
 | **M1** | Decouple `schema/path-proxy.ts` from `columns-schema/types` — `PathRecorder<TRule>`, drop the baked `MetadataRule`/`MetadataAsyncRule` arms, rename `assertPathIsCurrent` → `recorderOf` | behaviour-preserving |
-| **M2** | Shared runners — `runRecordedSchema`, `runDeclaredSchema`, `keyDeclarations` in `schema/run-schema.ts`; rewire columns, grouping, filtering | behaviour-preserving |
+| **M2** | Shared recording runner — `runRecordedSchema` in `schema/run.ts`; rewire columns and grouping. The declaring form keeps `buildFiltersPath` / `keyRules` in `engine/filters/build.ts` until `stageSchema` (ADR-0020) is a second caller — #111 reading B, see "Questions settled" | behaviour-preserving |
 | **M3** | Shared `assertDeclarationsAreKnown` in `schema/validate.ts`; `assertRuleColumnIdsAreKnown` becomes a call into it | behaviour-preserving |
 | **V1** | ADR-0014 wrap in `sortRows` — `column.accessor` through `readAccessor`, consumer `sortFn` guarded (pre-existing bug, independent of everything else) | bug fix |
 | **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor` | behaviour change |
@@ -132,9 +144,11 @@ The M/V/K/S list above predates the schema-plumbing session of 2026-09-20 (recor
 in [`grouping-config-simplification/2-decisions.md`](../../../grouping/active/grouping-config-simplification/2-decisions.md),
 registered as **G60–G68**). Three corrections to the list, all published on the issues:
 
-- **M2 is two runners, not one** (G62). The recording form and the declaring form each get one;
-  they share the path proxy, the handle and the recorder session. Converging filtering onto the
-  void form was rejected — its criterion type is inferred from the return type.
+- **M2 is two authoring forms, not one runner** (G62). The recording form and the declaring form
+  each stay permanent; they share the path proxy, the handle and the recorder session. Converging
+  filtering onto the void form was rejected — its criterion type is inferred from the return
+  type. Which forms get an *extracted* runner in this slice is #111's own reading question — one
+  runner, reading B, see "Questions settled while sequencing".
 - **K2 absorbs `GroupingLevel.key` → `columnId` and retires `ColumnId<TRow>`** (G60), and changes
   `applyGroupKey`'s extractor input to the accessor's output (G68). The rename is not separable:
   while the field stays typed `ColumnId<TRow>` the new name would promise declared-id space while

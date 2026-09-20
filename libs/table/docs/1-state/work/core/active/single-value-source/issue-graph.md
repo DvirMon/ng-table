@@ -8,12 +8,12 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 
 | # | Title | State | Depends on | Blocks |
 |---|---|---|---|---|
-| [#111](https://github.com/DvirMon/ng-table/issues/111) | Decouple the schema path mechanism from the columns schema | 🟡 OPEN | — | #114, #115, #100 |
-| [#112](https://github.com/DvirMon/ng-table/issues/112) | `sortRows` calls accessor and `sortFn` unwrapped, escaping ADR-0014 | 🟡 OPEN | — | #100 |
+| [#111](https://github.com/DvirMon/ng-table/issues/111) | Decouple the schema path mechanism from the columns schema | 🔵 IN PROGRESS | — | #114, #115, #100 |
+| [#112](https://github.com/DvirMon/ng-table/issues/112) | `sortRows` calls accessor and `sortFn` unwrapped, escaping ADR-0014 | ✅ CLOSED 09-20 | — | #100 (cleared) |
 | [#113](https://github.com/DvirMon/ng-table/issues/113) | The declared column-id union reaches a feature's config | 🟡 OPEN | — | #114, #115, #100 |
 | [#114](https://github.com/DvirMon/ng-table/issues/114) | Grouping reads the accessor; levels and aggregates key by column id | 🟡 OPEN | #111, #113 | #117 |
 | [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | 🟡 OPEN | #111, #113 | #117 |
-| [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN | #111, #112, #113 | — |
+| [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN | #111, #113 | — |
 | [#116](https://github.com/DvirMon/ng-table/issues/116) | ADR for the schema-declaration surface — keying, authoring forms, resolver naming | 🟡 OPEN | — | — |
 | [#117](https://github.com/DvirMon/ng-table/issues/117) | Rule contexts resolve declared columns — `valueOf`, `criterionOf`, `stateOf` | 🟡 OPEN | #114, #115 | — |
 
@@ -32,28 +32,30 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 #111 ──────────┐
    (mechanism) │
 #112 ──────────┼──► #100  (sorting schema + config)
-   (ADR-0014)  │
+   ✅ closed   │
 #113 ──────────┘
    (id union)
 ```
 
 ## Summary
 
-- **Parallel-safe:** `#111`, `#112`, `#113`, `#116` — no edge between them. `#112` touches only
-  `with-sorting.ts`; `#111` only the schema mechanism; `#113` only the generic plumbing and its
-  generated overloads; `#116` is docs and blocks nothing mechanically.
+- **Parallel-safe:** `#111`, `#113`, `#116` — no edge between them. `#111` touches only the schema
+  mechanism; `#113` only the generic plumbing and its generated overloads; `#116` is docs and
+  blocks nothing mechanically. `#112` was a fourth until it closed on 2026-09-20 — it touched only
+  `with-sorting.ts`.
 - **Also parallel-safe once their blockers close:** `#114`, `#115`, `#100` — they share blockers
   but nothing with each other, and they touch disjoint engines.
 - **Sequenced:** `#111 → #114/#115/#100` gated on the shared construction check — and for
   `#100`, also on the recording runner that its new schema fn calls;
   `#113 → #114/#115/#100` gated on the literal id union (and on the types-spec guard inside
-  `#113` that proves the union did not silently widen); `#112 → #100` gated on the comparator
-  call sites, which both change; `#114/#115 → #117` gated on the features actually reading the
-  accessor — a resolver over accessor values is meaningless before that.
-- **Current frontier:** `#111`, `#112`, `#113`, `#116` — `#100` left it on 2026-09-20. `#112` is
-  the cheapest and is a standalone bug fix; `#113` is the riskiest and gates five of the eight,
-  so starting it early is worth more than finishing it fast; `#116` can land any time and is
-  what the rest cite.
+  `#113` that proves the union did not silently widen); `#112 → #100` was gated on the comparator
+  call sites, which both change — **cleared**, `#112` shipped as `94e8050`;
+  `#114/#115 → #117` gated on the features actually reading the accessor — a resolver over
+  accessor values is meaningless before that.
+- **Current frontier:** `#111` (in progress), `#113`, `#116`. `#100` left it on 2026-09-20 and
+  `#112` closed the same day. `#113` is the riskiest and now gates **everything still unplanned**
+  — `#114`, `#115`, `#100` directly and `#117` through them — so starting it early is worth more
+  than finishing it fast; `#116` can land any time and is what the rest cite.
 - **`#117` is additive by construction.** No existing `when` predicate migrates into it —
   `cluster.key` is already accessor-resolved after `#114`, and plain model fields stay directly
   readable. It exists for the carrier-column case that has no spelling, which is why it is a
@@ -74,8 +76,11 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
   resolver with no second form, and there is no keyed `columns` record to design.
 - **`#115` does not rename filtering's context method.** The `valueOf` → `criterionOf` rename is
   `#117`'s; `#115`'s "public surface unchanged" claim is only true with that scoped out.
-- **`#111` extracts two runners, not one** — one per authoring form (G62). The forms share the
-  path proxy, the handle and the recorder session; only the runner splits.
+- **`#111` extracts one runner, not two** — the recording form's (**G70**, 2026-09-20). Both
+  authoring forms stay permanent (G62); what changed is that only one of them gets an extracted
+  runner in this slice. The declaring form's body stays in `engine/filters/build.ts` until
+  ADR-0020's `stageSchema` is a second caller, which is `#102`'s epic. The forms still share the
+  path proxy, the handle and the recorder session.
 
 ## Not in this epic
 
@@ -99,6 +104,10 @@ as D10/D11 in
 [`../../../grouping/active/grouping-config-simplification/2-decisions.md`](../../../grouping/active/grouping-config-simplification/2-decisions.md)
 — neither is covered by `decisions.md`'s M/V/K/S node list, which predates that session.
 Titles and states pulled from `gh issue view` on 2026-09-20; `#100`'s `#111` edge added the
-same day when `withSorting()` gained a schema fn (G69). Related docs:
+same day when `withSorting()` gained a schema fn (G69). States re-verified against
+`gh issue list` on 2026-09-20 after `#112` closed (`94e8050`) and `#111` entered
+implementation. GitHub's native `blockedBy`/`blocking` fields are empty on every node —
+these edges live in the issue bodies' **Blocked by** sections and in this file, nowhere else.
+Related docs:
 [ADR-0024](../../../../adr/0024-single-value-source-accessor.md),
 [`docs/decisions/grouping.md`](../../../../decisions/grouping.md) G53–G59.

@@ -6,6 +6,7 @@ import type {
   ColumnsSchemaFn,
 } from '../../columns-schema/types';
 import type { ColumnDefInput } from '../../api/types';
+import { assertDeclarationsAreKnown } from '../../schema/validate';
 
 /** Compile phase: turns author-facing schema input into a validated flat `ColumnRule[]`. */
 
@@ -19,27 +20,20 @@ function assertRuleColumnIdsAreKnown<TRow, TId extends string>(
   rules: readonly ColumnRule<TRow>[],
   columns: ColumnDefInput<TRow, TId>[]
 ): void {
-  const knownColumnIds = new Set<string>(columns.map((column) => column.id));
-  for (const rule of rules) {
-    if (!knownColumnIds.has(rule.columnId)) {
-      throw new Error(
-        `[columnsSchema] Unknown column id "${rule.columnId}" — no column with ` +
-          'this id exists in the `columns` array.'
-      );
-    }
-  }
+  assertDeclarationsAreKnown(
+    rules.map((rule) => rule.columnId),
+    columns.map((column) => column.id),
+    'columnsSchema'
+  );
 }
 
-/**
- * `metadata()` is single-writer only (no reducer — see
- * `docs/2-columns/reference/column-metadata.md`), so two calls targeting the same
- * `(columnId, key)` pair is an authoring error, not a case to combine. Keys are compared by
- * object identity, matching `createColumnMetaKey()`'s identity-is-the-key design.
- *
- * `VISIBLE` (`engine/columns.ts`) is exempted: `applyVisible()`/`applyVisibleAsync()`
- * (`columns-schema/rules.ts`) are allowed to target the same column multiple times, AND-combined
- * by `foldColumnRules` — the one deliberate multi-writer key in the table.
- */
+// `metadata()` is single-writer only (no reducer) — two calls targeting the same
+// `(columnId, key)` pair is an authoring error, not a case to combine. Keys compare by object
+// identity, matching `createColumnMetaKey()`'s identity-is-the-key design.
+//
+// `VISIBLE` (`engine/columns.ts`) is exempted: `applyVisible()`/`applyVisibleAsync()` are
+// allowed to target the same column multiple times, AND-combined by `foldColumnRules` — the
+// one deliberate multi-writer key in the table.
 function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): void {
   const seenKeysByColumnId = new Map<string, Set<unknown>>();
   for (const rule of rules) {
@@ -60,13 +54,13 @@ function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): 
 /**
  * Normalizes `columns` + an optional `columnsSchema` (inline fn or a
  * standalone `columnSchema()` value) into a resolved column list plus the
- * flat rule set `wireColumnsSchemaAsync` wires up. Validates every rule's
- * `columnId` exists in `columns`, throwing synchronously — this is the one
- * place both `columns` and the schema are available together.
+ * flat rule set `wireColumnsSchemaAsync` wires up.
  *
- * Tier 1 has no static/seed rules to fold into initial column state
- * (`applyVisible`/`applyVisibleAsync` are both reactive/async-only per the
- * ownership model), so `columns` is returned unchanged.
+ * @remarks
+ * Validates every rule's `columnId` exists in `columns`, throwing
+ * synchronously — this is the one place both `columns` and the schema are
+ * available together. Tier 1 has no static/seed rules to fold into initial
+ * column state, so `columns` is returned unchanged.
  */
 export function resolveColumnsConfig<TRow, TId extends string>(
   columns: ColumnDefInput<TRow, TId>[],
