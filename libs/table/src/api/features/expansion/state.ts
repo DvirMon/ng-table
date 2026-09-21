@@ -22,11 +22,17 @@ export interface ExpansionStoreOptions {
   onExpanded?: (ids: readonly RowId[]) => void;
 }
 
+/** The full symmetric diff of one `changed` write — every id added or removed together. */
+export interface ExpansionChange {
+  readonly added: readonly RowId[];
+  readonly removed: readonly RowId[];
+}
+
 export interface ExpansionStore {
   readonly expanded: Signal<ReadonlySet<RowId>>;
-  readonly changed: Observable<RowId>;
-  /** The only writer of the signal. Emits once per id whose membership changed — added or
-   *  removed. */
+  readonly changed: Observable<ExpansionChange>;
+  /** The only writer of the signal. Emits once per write, carrying every id whose
+   *  membership changed — added and removed together. */
   setExpanded(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Prunes via `pruneByIds()` (ADR-0006). Never touches `everExpanded` — the feature owns it. */
@@ -37,7 +43,7 @@ export interface ExpansionStore {
 
 export function createExpansionStore(options: ExpansionStoreOptions = {}): ExpansionStore {
   const expandedSignal = signal<ReadonlySet<RowId>>(new Set(options.initial ?? []));
-  const changedSource = new Subject<RowId>();
+  const changedSource = new Subject<ExpansionChange>();
 
   function setExpanded(ids: readonly RowId[], writeOptions?: ExpansionWriteOptions): void {
     const current = expandedSignal();
@@ -65,8 +71,9 @@ export function createExpansionStore(options: ExpansionStoreOptions = {}): Expan
     if (writeOptions?.emitEvent === false) {
       return;
     }
-    added.forEach((id) => changedSource.next(id));
-    removed.forEach((id) => changedSource.next(id));
+    if (added.length > 0 || removed.length > 0) {
+      changedSource.next({ added, removed });
+    }
   }
 
   function toggle(id: RowId, writeOptions?: ExpansionWriteOptions): void {

@@ -39,6 +39,9 @@ export {
 } from './api/features/with-filtering/matchers';
 export { withExpansion } from './api/features/with-expansion';
 export type { WithExpansionConfig } from './api/features/with-expansion';
+export { withTree } from './api/features/with-tree';
+export type { WithTreeConfig, TreeMembers } from './api/features/with-tree';
+export type { ExpansionChange, ExpansionWriteOptions } from './api/features/expansion/state';
 export { withRowEdit } from './api/features/with-row-edit';
 export type { WithRowEditConfig, RowEditMembers } from './api/features/with-row-edit';
 export { withOptimistic } from './api/features/with-optimistic';

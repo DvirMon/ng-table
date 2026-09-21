@@ -29,6 +29,7 @@ cross-references still resolve.
 | **AUD** | [`archive/with-expansion/expansion-state-audit.md`](../1-state/work/expansion/archive/with-expansion/expansion-state-audit.md) — the cross-library bulk-verb audit |
 | **PTS** | [`active/panel-tree-split/1-decisions.md`](../1-state/work/expansion/active/panel-tree-split/1-decisions.md) — #101, the ADR-0012 split |
 | **PTS spec** | [`active/panel-tree-split/2-spec.md`](../1-state/work/expansion/active/panel-tree-split/2-spec.md) — the written contract for #101 |
+| **PTS discovery** | [`active/panel-tree-split/discovery-emission-shape.md`](../1-state/work/expansion/active/panel-tree-split/discovery-emission-shape.md) — cross-library expand/collapse emission-shape survey, #124 |
 
 ## Decisions
 
@@ -36,7 +37,7 @@ cross-references still resolve.
 |---|---|---|---|---|
 | E1 | `childrenAccessor` is a configurable accessor defaulting to `row.children`, not a cast | 08-07 | shipped · default dropped by E6 | WE |
 | E2 | No `manual` config — it would toggle no behavior | 08-07 | standing | WE |
-| E3 | `expandAll`/`collapseAll` emit `rowExpanded` once per affected id; no separate bulk event | 09-06 | shipped | AUD |
+| E3 | `expandAll`/`collapseAll` emit `rowExpanded` once per affected id; no separate bulk event | 09-06 | shipped · `withExpansion()`'s public surface stayed E3-shaped via an adapter over E18 until #121; superseded by E19 | AUD |
 | E4 | Stale restored ids are kept, not dropped — staleness is caller-owned (selection D8 verbatim) | 09-08 | standing | AUD |
 | E5 | `withTree()` accepts real-row parents only — every tree node is an entry in the flat `data()`; no `getDataPath`, since invented parents are `withGrouping()`'s mechanism | 09-20 | accepted, not built | PTS D1 |
 | E6 | `childrenAccessor` is required on `withTree()`; the `row.children` fallback is dropped, which closes G6 as impossible rather than fixed | 09-20 | accepted, not built · required half amended by E13 | PTS D2 |
@@ -50,7 +51,9 @@ cross-references still resolve.
 | E14 | `initial` ships with the split, seeded in `createExpansionStore()` | 09-20 | accepted, not built | PTS D10 |
 | E15 | `withTree()` has no declared levels and never gains them — a declared-axis hierarchy is `withGrouping()`; `isExpandable` is the only row-selection knob | 09-20 | standing | PTS D11 |
 | E16 | A throwing `childrenAccessor` degrades to "no children" and reports once per evaluation (ADR-0014), never propagates | 09-20 | accepted, not built | PTS D12 |
-| E17 | One emission rule for every write: once per id in the symmetric difference of the old and new open sets — generalizes E3 across `toggle`/`expand`/`collapse`/`set` | 09-20 | accepted, not built | PTS spec |
+| E17 | One emission rule for every write: once per id in the symmetric difference of the old and new open sets — generalizes E3 across `toggle`/`expand`/`collapse`/`set` | 09-20 | accepted, not built · superseded by E18 | PTS spec |
+| E18 | `changed` emits once per write, not once per id — payload is the full symmetric difference as `{ added, removed }` (`ExpansionChange`), matching `SelectionChange`. Resolves #124: 8/8 surveyed libraries (AG Grid, TanStack, MUI X, rc-table, PrimeReact, PrimeNG, Angular CDK) emit at most one event per batch action; CDK's `SelectionModel.changed` is the direct precedent | 09-20 | shipped in `createExpansionStore()`, landed ahead of #119 after #118 closed without it | PTS discovery |
+| E19 | `table.expansion.changed` exposes `ExpansionChange` directly — no per-id adapter. Matches `table.tree.changed` and `SelectionChange`; the `mergeMap`-to-`RowId` shim that preserved E3's contract is dropped, absorbed into the one breaking change #121 already causes (D6/E10) | 09-21 | accepted, not built — pinned in #121's acceptance criteria | PTS spec |
 
 ## Still open
 
@@ -62,12 +65,13 @@ cross-references still resolve.
   `tree()`. Revisit if a consumer asks for an explicit denominator input.
 - **`ReadonlySet<RowId>` narrowing** on both slices (today `Signal<Set<RowId>>`)
   — aligns with `withSelection()`, confirm at slicing time.
-- **E3/E17's per-id emission reconsidered against `SelectionChange`** — both
-  decisions settled on `Observable<RowId>` (one event per id), but
-  `withSelection()` carries the identical batch-write problem via a single
-  `SelectionChange { added, removed }` diff event instead. Filed as
-  [#124](https://github.com/DvirMon/ng-table/issues/124), pending a discovery
-  doc on comparable libraries' expand/collapse event shapes.
+- ~~E3/E17's per-id emission reconsidered against `SelectionChange`~~ —
+  resolved by E18. [#124](https://github.com/DvirMon/ng-table/issues/124) is
+  folded into #118's store shape rather than a separate migration, since
+  `createExpansionStore()` has not shipped yet.
+- ~~Does `withExpansion()` expose `ExpansionChange` directly once #121
+  narrows it, or keep adapting back to per-id `RowId`?~~ — resolved by E19:
+  exposes it directly, no adapter.
 
 ## Maintaining this log
 

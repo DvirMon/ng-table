@@ -1,5 +1,5 @@
 import { computed, signal, type Signal } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { from, mergeMap, type Observable } from 'rxjs';
 import { mapNodes, type RenderNode, type RenderNodeTransform } from '../../engine/render-stages';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
 import { createTableFeature } from '../create-table-feature';
@@ -199,7 +199,11 @@ function buildExpansionSpec<TRow>(
     members: {
       expandedRows: computed(() => new Set(store.expanded())),
       everExpanded: everExpanded.asReadonly(),
-      rowExpanded: store.changed,
+      // Adapts the shared store's once-per-write `changed` back to the per-id stream this
+      // member has always emitted, keeping its public shape unchanged.
+      rowExpanded: store.changed.pipe(
+        mergeMap((change) => from([...change.added, ...change.removed]))
+      ),
       toggleExpanded,
       expandAll,
       collapseAll,
