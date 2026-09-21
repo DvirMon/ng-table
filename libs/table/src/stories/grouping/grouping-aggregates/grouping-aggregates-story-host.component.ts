@@ -1,7 +1,7 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { createTable, patchRow, withGrouping } from '../../../index';
+import { applyAggregate, createTable, patchRow, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
+import { groupingConfig, BASE_GROUPING_LEVELS, sumAmount } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import { GroupingAggregatesToolbarComponent } from './grouping-aggregates-toolbar.component';
@@ -13,12 +13,13 @@ const BREAKABLE_ROW_AMOUNT =
   GROUPING_ROWS_MOCK.find((row) => row.id === BREAKABLE_ROW_ID)?.amount ?? 0;
 
 /**
- * Group aggregates — `aggregateFn`
+ * Group aggregates — `applyAggregate`
  *
- * `aggregateFn` is a **column** option, not a `withGrouping()` one: the column says how to
- * summarise a set of rows, and grouping is what supplies the sets. Every header at every depth
- * gets one, computed over that cluster's own leaves — so a parent total is the sum of its whole
- * subtree, not of the headers under it.
+ * Aggregation is a grouping declaration, keyed by declared column id like every other data
+ * concern a `schema` records — not a column option. That is what lets `amount` carry a total
+ * with no row field of its own to compute it from. Every header at every depth gets one,
+ * computed over that cluster's own leaves — so a parent total is the sum of its whole subtree,
+ * not of the headers under it.
  *
  * The toolbar poisons one row so `sumAmount` throws on it. Per ADR-0014 the table stays up: that
  * one column's aggregate falls back to `undefined` for the affected groups, and the failure is
@@ -37,7 +38,10 @@ export class GroupingAggregatesStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initial: BASE_GROUPING_LEVELS })
+    withGrouping({
+      initial: BASE_GROUPING_LEVELS,
+      schema: (path) => applyAggregate(path.amount, sumAmount),
+    })
   );
 
   protected readonly visibleColumns = computed(() =>

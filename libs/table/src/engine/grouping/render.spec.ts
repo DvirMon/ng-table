@@ -1,37 +1,15 @@
 import type { ColumnDef, GroupWhen } from '../../api/types';
 import type { RenderNode } from '../render-stages';
+import { orderColumns as columns, orders, type Order } from './grouping.mock';
 import { buildGroupRenderRows } from './render';
-
-interface Order {
-  id: number;
-  region: string;
-  category: string;
-}
-
-const orders: Order[] = [
-  { id: 1, region: 'US', category: 'Electronics' },
-  { id: 2, region: 'EU', category: 'Electronics' },
-  { id: 3, region: 'US', category: 'Books' },
-  { id: 4, region: 'US', category: 'Electronics' },
-  { id: 5, region: 'EU', category: 'Books' },
-];
-
-function column(id: string): ColumnDef<Order> {
-  return {
-    id,
-    accessor: (row: Order) => row[id as keyof Order],
-    visible: true,
-    order: 0,
-    label: id,
-  };
-}
-
-const columns: ColumnDef<Order>[] = [column('id'), column('region'), column('category')];
 
 interface OrderWithAmount extends Order {
   amount: number;
 }
 
+// `id` is not constrained to `keyof OrderWithAmount` — a synthetic id like 'avgAmount' (no
+// matching row field) is a valid aggregate-only/carrier column (ADR-0024); its accessor is
+// never read by aggregation, only its declared id is.
 function orderWithAmountColumn(id: string): ColumnDef<OrderWithAmount> {
   return {
     id,
@@ -42,12 +20,10 @@ function orderWithAmountColumn(id: string): ColumnDef<OrderWithAmount> {
   };
 }
 
-function averageAggregateColumn(id: string): ColumnDef<OrderWithAmount> {
-  return {
-    ...orderWithAmountColumn(id),
-    aggregateFn: (rows: OrderWithAmount[]) =>
-      rows.reduce((sum, row) => sum + row.amount, 0) / rows.length,
-  };
+/** `aggregateByColumn` entry — averages `amount` across a cluster's own leaves. Aggregation is
+ *  an opts-level map (`ClusterOpts.aggregateByColumn`), not a `ColumnDef` field. */
+function averageAggregateFn(rows: OrderWithAmount[]): number {
+  return rows.reduce((sum, row) => sum + row.amount, 0) / rows.length;
 }
 
 function toSeedRenderRows<TRow extends { id: number }>(rows: TRow[]): RenderNode<TRow>[] {
@@ -167,11 +143,16 @@ describe('buildGroupRenderRows', () => {
       orderWithAmountColumn('id'),
       orderWithAmountColumn('region'),
       orderWithAmountColumn('category'),
-      averageAggregateColumn('amount'),
+      orderWithAmountColumn('amount'),
     ];
+    const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
+      ['amount', averageAggregateFn],
+    ]);
     const seed = toSeedRenderRows(rows);
 
-    const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns);
+    const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns, {
+      aggregateByColumn,
+    });
 
     const usHeader = collectGroupHeaders(result).find(
       (row) => row.groupKey?.columnId === 'region' && row.groupKey.value === 'US'
@@ -215,7 +196,7 @@ describe('buildGroupRenderRows', () => {
       expect(headers.map((row) => row.groupKey?.value)).toEqual(['domestic', 'intl']);
     });
 
-    it("label resolves explicit -> a matching column's label -> the raw field name (D7a)", () => {
+    it("label resolves explicit -> a matching column's label (D7a)", () => {
       const seed = toSeedRenderRows(orders);
 
       const explicit = buildGroupRenderRows(seed, ['region'], columns, {
@@ -224,24 +205,33 @@ describe('buildGroupRenderRows', () => {
       expect(explicit.find((row) => row.kind === 'group')?.groupKey?.label).toBe('Sales Region');
 
       // No explicit label: falls back to the matching column's own `label` ('region', per the
-      // `column()` fixture helper above).
+      // shared `orderColumn()` fixture in `grouping.mock.ts`).
       const columnFallback = buildGroupRenderRows(seed, ['region'], columns);
       expect(columnFallback.find((row) => row.kind === 'group')?.groupKey?.label).toBe('region');
+    });
 
-      // Neither an explicit label nor a matching column: falls back to the raw field name.
-      const rawKeyFallback = buildGroupRenderRows(seed, ['nope'], columns);
-      expect(rawKeyFallback.find((row) => row.kind === 'group')?.groupKey?.label).toBe('nope');
+    it('a level naming no column degrades to the raw id and reports once (ADR-0014)', () => {
+      const seed = toSeedRenderRows(orders);
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+      try {
+        // `resolveGroupLabel` cannot receive a construction/writer-invalid id under ADR-0024 —
+        // this simulates the one runtime path that still reaches it: a column removed via
+        // `setColumns()` after its level was applied. Runtime, data-dependent, so it degrades
+        // (falls back to the raw id) and reports, rather than throwing.
+        const result = buildGroupRenderRows(seed, ['nope'], columns);
+        expect(result.find((row) => row.kind === 'group')?.groupKey?.label).toBe('nope');
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy.mock.calls[0][0]).toMatch(/No column declares id "nope"/);
+      } finally {
+        errorSpy.mockRestore();
+      }
     });
   });
 
   describe('a throwing aggregateFn (ADR-0014)', () => {
-    function throwingAggregateColumn(id: string): ColumnDef<OrderWithAmount> {
-      return {
-        ...orderWithAmountColumn(id),
-        aggregateFn: (): number => {
-          throw new Error('boom');
-        },
-      };
+    function throwingAggregateFn(): number {
+      throw new Error('boom');
     }
 
     it("leaves the failed group's aggregate undefined while the table state still computes for every group", () => {
@@ -255,11 +245,16 @@ describe('buildGroupRenderRows', () => {
           orderWithAmountColumn('id'),
           orderWithAmountColumn('region'),
           orderWithAmountColumn('category'),
-          throwingAggregateColumn('amount'),
+          orderWithAmountColumn('amount'),
         ];
+        const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
+          ['amount', throwingAggregateFn],
+        ]);
         const seed = toSeedRenderRows(rows);
 
-        const result = buildGroupRenderRows(seed, ['region'], amountColumns);
+        const result = buildGroupRenderRows(seed, ['region'], amountColumns, {
+          aggregateByColumn,
+        });
 
         const headers = result.filter((row) => row.kind === 'group');
         expect(headers).toHaveLength(2);
@@ -281,13 +276,18 @@ describe('buildGroupRenderRows', () => {
           orderWithAmountColumn('id'),
           orderWithAmountColumn('region'),
           orderWithAmountColumn('category'),
-          throwingAggregateColumn('amount'),
+          orderWithAmountColumn('amount'),
         ];
+        const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
+          ['amount', throwingAggregateFn],
+        ]);
         const seed = toSeedRenderRows(rows);
 
         // Two levels of grouping produce five headers (2 region + 3 region>category) — every
         // one of them hits the throwing aggregateFn independently.
-        const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns);
+        const result = buildGroupRenderRows(seed, ['region', 'category'], amountColumns, {
+          aggregateByColumn,
+        });
 
         expect(collectGroupHeaders(result)).toHaveLength(5);
         expect(reportSpy).toHaveBeenCalledTimes(1);
@@ -307,12 +307,18 @@ describe('buildGroupRenderRows', () => {
           orderWithAmountColumn('id'),
           orderWithAmountColumn('region'),
           orderWithAmountColumn('category'),
-          throwingAggregateColumn('amount'),
-          averageAggregateColumn('avgAmount'),
+          orderWithAmountColumn('amount'),
+          orderWithAmountColumn('avgAmount'),
         ];
+        const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
+          ['amount', throwingAggregateFn],
+          ['avgAmount', averageAggregateFn],
+        ]);
         const seed = toSeedRenderRows(rows);
 
-        const result = buildGroupRenderRows(seed, ['region'], amountColumns);
+        const result = buildGroupRenderRows(seed, ['region'], amountColumns, {
+          aggregateByColumn,
+        });
 
         const header = result.find((row) => row.kind === 'group')!;
         expect(header.aggregates?.['amount']).toBeUndefined();

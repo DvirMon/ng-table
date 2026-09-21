@@ -19,11 +19,12 @@ export default meta;
 type Story = StoryObj<GroupingAggregatesStoryHostComponent>;
 
 /**
- * Group aggregates — `aggregateFn`
+ * Group aggregates — `applyAggregate`
  *
- * Declared on the **column**, not on `withGrouping()`. The column knows how to summarise a set
- * of rows; grouping is what supplies the sets. Every header at every depth gets one, computed
- * over that cluster's own leaves — so a parent total is the sum of its whole subtree.
+ * Declared through `withGrouping({ schema })`, keyed by declared column id like every other data
+ * concern — not a column option. That is what lets a column with no row field of its own, like
+ * this story's `amount` total, carry a summary value. Every header at every depth gets one,
+ * computed over that cluster's own leaves — so a parent total is the sum of its whole subtree.
  *
  * Aggregates are post-filter by construction: `filter` precedes `group` in the pipeline.
  *

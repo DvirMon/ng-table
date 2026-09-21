@@ -9,7 +9,7 @@ import {
   type RowId,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import { dealFilters, plainGroupingConfig, SELECTION_GROUPING_LEVELS } from '../fixtures/schema';
+import { dealFilters, groupingConfig, SELECTION_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { readRepCriterion, repFilterNode } from '../fixtures/utils';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
@@ -36,7 +36,7 @@ export class GroupingSelectionStoryHostComponent {
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
-    plainGroupingConfig,
+    groupingConfig,
     withGrouping({ initial: SELECTION_GROUPING_LEVELS }),
     withSelection(),
     withFiltering({ schema: dealFilters })

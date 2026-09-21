@@ -1,7 +1,7 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
 import { applyGrouping, createTable, withGrouping, type GroupKey } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import { plainGroupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
+import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import { GroupingWhenToolbarComponent } from './grouping-when-toolbar.component';
@@ -41,7 +41,7 @@ export class GroupingWhenStoryHostComponent {
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
   protected readonly table = createTable(
     this.data,
-    plainGroupingConfig,
+    groupingConfig,
     withGrouping({
       initial: BASE_GROUPING_LEVELS,
       when: (cluster) => !this.keepBlankRegionsFlat() || isPresentKey(cluster.key),

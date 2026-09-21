@@ -1,18 +1,22 @@
-import type { ColumnDefInput, ColumnId, TableConfig } from '../../../api/types';
+import type { ColumnDefInput, TableConfig } from '../../../api/types';
 import { contains } from '../../../api/features/with-filtering/rules';
 import type { FiltersPath } from '../../../api/features/with-filtering/types';
 import type { DealRow } from './types';
 
 /**
- * Sum of `amount` over a cluster's own leaves, at every depth (D9) — so a parent total is the
- * sum of its subtree, which is TanStack's blank-at-depth-0 bug not happening.
+ * Sums `amount` over a cluster's own leaves, at every depth, so a parent total is its subtree's
+ * sum.
  *
- * Rejects a negative amount rather than summing it. `engine/grouping/render.ts` calls this inside
- * an ADR-0014 wrap, so one bad record blanks that column's aggregate for the affected groups and
- * reports once per column per evaluation — it never takes the table down.
- * `grouping-aggregates/`'s "Make one row's amount unsummable" control injects such a record.
+ * @remarks
+ * Note: throws on a negative amount rather than summing it, to exercise the aggregate-failure
+ * degrade path in `grouping-aggregates/`'s "Make one row's amount unsummable" control.
+ *
+ * @example
+ * ```ts
+ * withGrouping({ schema: (path) => applyAggregate(path.amount, sumAmount) })
+ * ```
  */
-function sumAmount(rows: DealRow[]): number {
+export function sumAmount(rows: DealRow[]): number {
   return rows.reduce((total, row) => {
     if (row.amount < 0) {
       throw new Error(
@@ -23,63 +27,53 @@ function sumAmount(rows: DealRow[]): number {
   }, 0);
 }
 
-/** One column list for every grouping story — they differ in which features they compose, not in
- * what the table holds. `owner` is the one column whose row field is an object, so it carries the
- * `accessor` that turns it into the value a cell renders; every other column falls back to the
- * default `row[id]`. Grouping no longer reads a column's `accessor` at all (D7 — a level's value
- * comes straight off the row field, or through `applyGroupKey` (D9)), so this list needs no
- * literal-id inference and takes a plain `ColumnDefInput<DealRow>[]` annotation. */
-const dealColumns: ColumnDefInput<DealRow>[] = [
-  { id: 'region', label: 'Region' },
-  { id: 'category', label: 'Category' },
-  { id: 'rep', label: 'Rep' },
-  { id: 'amount', label: 'Amount' },
-  { id: 'closedAt', label: 'Closed' },
-  { id: 'owner', label: 'Owner', accessor: (row) => row.owner.name },
-];
-
-/** The same list with `amount` carrying `sumAmount`. Derived rather than written twice — two
- * hand-maintained copies of one column list is a silent-drift bug the compiler won't catch. */
-const dealColumnsWithTotals: ColumnDefInput<DealRow>[] = dealColumns.map((column) =>
-  column.id === 'amount' ? { ...column, aggregateFn: sumAmount } : column
-);
+// One column list for every grouping story — they differ in which features they compose, not in
+// what the table holds. `owner` is the one column whose row field is an object, so it carries the
+// `accessor` that turns it into the value a cell renders; every other column falls back to the
+// default `row[id]`. Grouping reads a level's value off that resolved accessor output (ADR-0024),
+// which is what makes `owner` groupable by name at all. No array-level annotation: each `id` is
+// individually `as const`, and the list closes with `satisfies` rather than a type annotation —
+// an annotation would widen every id to `string` and turn every story's `path.<id>` access into
+// an untyped index signature.
+const dealColumns = [
+  { id: 'region' as const, label: 'Region' },
+  { id: 'category' as const, label: 'Category' },
+  { id: 'rep' as const, label: 'Rep' },
+  { id: 'amount' as const, label: 'Amount' },
+  { id: 'closedAt' as const, label: 'Closed' },
+  { id: 'owner' as const, label: 'Owner', accessor: (row: DealRow) => row.owner.name },
+] satisfies ColumnDefInput<DealRow>[];
 
 /** Base column order, in declaration order — what `groupedColumnMode: 'keep'` restores and what
  * `'move-to-front'` re-ranks against. */
 export const DEAL_COLUMN_IDS: string[] = dealColumns.map((column) => column.id);
 
-/** Group headers carry a per-subtree `amount` total. The config for every story whose canvas
- * shows one — `grouping-aggregates/` owns that lesson, the rest inherit it incidentally. */
-export const groupingConfig: TableConfig<DealRow> = {
-  trackBy: 'id',
-  columns: dealColumnsWithTotals,
-};
-
-/** No `aggregateFn` anywhere — group headers carry value and count only. The config for the
- * stories whose lesson is not aggregation, so nothing on their canvas is scenery. */
-export const plainGroupingConfig: TableConfig<DealRow> = {
+/** The config for every grouping story. No `TableConfig<DealRow>` annotation — that would default
+ * `TId` to `string` and erase `dealColumns`' literal ids the same way an annotation on
+ * `dealColumns` itself would; `satisfies` checks the shape without widening it. */
+export const groupingConfig = {
   trackBy: 'id',
   columns: dealColumns,
-};
+} satisfies TableConfig<DealRow>;
 
 /** Two levels — enough to show a parent total that is the sum of its subtree without burying the
  * baseline in nesting. */
-export const BASE_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
+export const BASE_GROUPING_LEVELS = ['region' as const, 'category' as const];
 
-/** Three levels, so collapsing a parent visibly hides a whole subtree (D11). */
-export const COLLAPSIBLE_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category', 'rep'];
+/** Three levels, so collapsing a parent visibly hides a whole subtree. */
+export const COLLAPSIBLE_GROUPING_LEVELS = [
+  'region' as const,
+  'category' as const,
+  'rep' as const,
+];
 
 /** What `grouping-collapsible/`'s Regroup control swaps to — the same three columns, re-nested, so
  * every group id changes and no previous collapse state can match. */
-export const RENESTED_GROUPING_LEVELS: ColumnId<DealRow>[] = ['category', 'region', 'rep'];
+export const RENESTED_GROUPING_LEVELS = ['category' as const, 'region' as const, 'rep' as const];
 
 /** Two levels — enough for an *ancestor* group to exist, which is what separates a cascade that
  * only reaches descendants from one that is also said to reach parents. */
-export const SELECTION_GROUPING_LEVELS: ColumnId<DealRow>[] = ['region', 'category'];
-
-/** A level naming a field no `DealRow` carries, and no column declares. `grouping-keys/`'s third
- * `label` resolution step — explicit → a column whose id matches → the raw field name (D7a). */
-export const MISSING_GROUPING_LEVEL = 'territory';
+export const SELECTION_GROUPING_LEVELS = ['region' as const, 'category' as const];
 
 /** Backs `grouping-order/`'s `external-list` comparator — a caller-supplied ranking, the
  * shape a saved report or a pinned-priority list would take. Values absent from it sort last. */

@@ -50,17 +50,17 @@ own surface; three compose it with exactly one more feature.
 
 **`Basic` is the one to copy.** Its host composes `withGrouping({ initial })` and nothing else, so
 nothing in its source is another lesson's setup — no predicate it does not need, no second feature,
-and no `aggregateFn`, because a baseline carrying scenery is how a reader mis-attributes an option
-to the wrong place.
+and no `applyAggregate`, because a baseline carrying scenery is how a reader mis-attributes an
+option to the wrong place.
 
 Each story composes the fewest features its lesson needs. Where a second feature does appear —
 `withSorting()` in `Order`, `withExpansion()` in `Collapsible`, `withFiltering()` in `Group
 selection` — the page says what it is there to make visible.
 
-Shared across all of them: `fixtures/schema.ts` (one column list, two configs — with and without
-aggregates — and the grouping levels that do differ per story), `fixtures/http.ts` (the intercepted
-round trips), `grouping-story.pipes.ts` (one pure pipe per formatting concern, so no host formats
-in a method) and `grouping-story.css`. Those are at the bottom of this page, once.
+Shared across all of them: `fixtures/schema.ts` (one column list, one `groupingConfig`, and the
+grouping levels that do differ per story), `fixtures/http.ts` (the intercepted round trips),
+`grouping-story.pipes.ts` (one pure pipe per formatting concern, so no host formats in a method)
+and `grouping-story.css`. Those are at the bottom of this page, once.
 
 ---
 
@@ -70,8 +70,9 @@ in a method) and `grouping-story.css`. Those are at the bottom of this page, onc
 deliberately no `withExpansion()`, because a chevron with nothing to expand is a control that does
 nothing. Array order is nesting order.
 
-Group headers carry value and count. No `amount` total, because totals are `aggregateFn`'s lesson
-and it has its own story below; scenery on a baseline is how a reader mis-attributes an option.
+Group headers carry value and count. No `amount` total, because totals are the `Aggregates`
+story's lesson (`applyAggregate`) and it has its own story below; scenery on a baseline is how a
+reader mis-attributes an option.
 
 The tab strip toggles a column as a level; the pills below reorder and remove them. One control per
 column, one boolean state, so adding a duplicate level is unreachable from the UI rather than a
@@ -169,14 +170,16 @@ because they answer adjacent questions a reader could otherwise conflate — not
 is large on its own.
 
 `Sales Region` carries an explicit `initial` label and wins over its column's own. `Closed` has
-none, so it falls back to the `closedAt` column's own label. The canvas button adds a third
-level, `territory` — a field no row declares and no column names — whose header falls back all
-the way to the raw field name: explicit → matching column → raw field name, the full three-tier
-resolution in one render.
+none, so it falls back to the `closedAt` column's own label — two tiers, both visible in one
+render. Every level names a declared column (ADR-0024); there is no longer a third, raw-field-name
+fallback for one that doesn't.
 
 `applyGroupKey` buckets `closedAt` into a `YYYY-MM` string, so twelve distinct timestamps
 collapse into five month groups. Turning it off in Controls groups on the exact `Date` instead —
-the engine never coarsens a key on its own.
+the engine never coarsens a key on its own. The extractor receives the column's own accessor
+output, not the raw row field — for `closedAt`'s plain accessor the two are the same value, which
+is why this reads as a no-op story for it, but a derived-accessor column would receive that
+computed value instead.
 
 <Canvas of={KeysStories.Keys} />
 
@@ -212,9 +215,10 @@ the engine never coarsens a key on its own.
 
 ## Aggregates — totals at every depth
 
-`aggregateFn` is a **column** option, not a `withGrouping()` one: the column knows how to
-summarise a set of rows, and grouping is what supplies the sets. This is the one story whose
-column list carries one.
+Aggregation is a grouping declaration, keyed by declared column id like every other data concern
+a `schema` records — not a column option. `applyAggregate(path.amount, sumAmount)` is what lets
+`amount` carry a total, and the same mechanism works on a column with no row field of its own to
+compute it from.
 
 A parent total is the sum of its own leaves, not of the headers beneath it — so there is no
 blank-at-depth-0 hole. Aggregates are post-filter by construction, since `filter` precedes `group`

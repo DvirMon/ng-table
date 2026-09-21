@@ -5,22 +5,10 @@
     <em>calls itself</em>. Every header below shows both, as <code>label: value</code>.
   </p>
 
-  <div class="story-host__toolbar">
-    <button
-      type="button"
-      [attr.aria-pressed]="groupedByTerritory()"
-      (click)="toggleTerritoryLevel()"
-    >
-      {{ groupedByTerritory() ? 'Remove' : 'Add' }} an undeclared field ("territory") as a level
-    </button>
-  </div>
-
   <p class="grouping-story__notice">
     <strong>Sales Region</strong> carries an explicit <code>initial</code> label — it wins even
     though a <code>region</code> column exists with its own label ("Region"). <strong>Closed</strong>
-    has none, so it falls back to the matching <code>closedAt</code> column's own label. Add the
-    third level above and its header falls back all the way to the raw field name,
-    <code>territory</code> — no column declares it, and nothing else does either.
+    has none, so it falls back to the matching <code>closedAt</code> column's own label.
   </p>
 
   <p class="grouping-story__notice">

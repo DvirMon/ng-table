@@ -45,7 +45,6 @@ export { withOptimistic } from './api/features/with-optimistic';
 export type { OptimisticMembers } from './api/features/with-optimistic';
 export { withGrouping } from './api/features/with-grouping';
 export type { WithGroupingConfig, GroupingMembers } from './api/features/with-grouping';
-export type { ColumnId } from './api/types';
 export { withSelection } from './api/features/with-selection';
 export type {
   WithSelectionConfig,
@@ -70,10 +69,17 @@ export { columnSchema } from './columns-schema/schema';
 export { applySortNulls, applyVisible, applyVisibleAsync } from './columns-schema/rules';
 export type { SortNullsOpts } from './columns-schema/rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './columns-schema/metadata';
-export { applyGrouping, applyGroupingAsync, applyGroupKey, applyGroupOrder } from './api/features/with-grouping/schema';
+export {
+  applyAggregate,
+  applyGrouping,
+  applyGroupingAsync,
+  applyGroupKey,
+  applyGroupOrder,
+} from './api/features/with-grouping/schema';
 export type { GroupingAsyncOpts } from './api/features/with-grouping/schema';
 export type {
   AnyGroupingRule,
+  GroupAggregateRule,
   GroupingAsyncRule,
   GroupingLevel,
   GroupingRule,

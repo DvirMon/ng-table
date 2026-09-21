@@ -27,9 +27,7 @@ type Story = StoryObj<GroupingKeysStoryHostComponent>;
  * clusters *on*; an `initial` entry's `label` decides what its header *calls itself*.
  *
  * `Sales Region`'s explicit `initial` label wins over its column's own. `Closed` has none, so it
- * falls back to the `closedAt` column's own label. Add the `territory` level — a field no row
- * declares and no column names — and its header falls back all the way to the raw field name,
- * the third and final tier (D7a).
+ * falls back to the `closedAt` column's own label.
  *
  * `bucketClosedAtByMonth` toggles `applyGroupKey`: on, twelve distinct timestamps collapse into
  * five month buckets; off, the engine groups on the exact `Date` instead — it never coarsens a

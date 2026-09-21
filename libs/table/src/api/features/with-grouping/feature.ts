@@ -1,11 +1,12 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { clusterRows } from '../../../engine/grouping/pipeline';
-import { buildGroupRenderRows } from '../../../engine/grouping/render';
+import { buildGroupRenderRows, reportOrphanedGroupingColumn } from '../../../engine/grouping/render';
 import { collectAppliedLevels, collectGroupIds, rowsBeneathGroup } from '../../../engine/grouping/queries';
 import type { ClusterOpts } from '../../../engine/grouping/clusters';
 import {
   buildAsyncGroupingRuleEntry,
   buildGroupingRuleEntries,
+  collectAggregates,
   collectGroupKeys,
   collectGroupOrder,
   collectGroupPredicates,
@@ -14,14 +15,14 @@ import {
   maskGroupingLevels,
   type GroupingRuleEntry,
 } from '../../../engine/grouping/rules';
-import type { Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
+import type { ColumnIdOf, Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
+import { assertDeclarationsAreKnown } from '../../../schema/validate';
 import { runGroupingSchemaFn } from './schema';
 import type { GroupingLevel, GroupingRule, GroupingSchemaFn } from './types';
 import { createTableFeature } from '../../create-table-feature';
 import type {
   ColumnDef,
-  ColumnId,
   DerivedDict,
   GroupingUpdater,
   GroupWhen,
@@ -30,33 +31,28 @@ import type {
   TableStore,
 } from '../../types';
 
-/** The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. */
-type GroupingInput<In> = Pick<TableStore<RowOf<In>>, 'columns' | 'rows'>;
+// The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`.
+type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnIdOf<In>>, 'columns' | 'rows'>;
 
-export interface WithGroupingConfig<TRow> {
-  /** The declared grouping levels, outermost first — array order *is* nesting order. Seeds the
-   * writable `grouping` view; rules gate these levels but can never add one. A bare string (not a
-   * `ColumnsPath`-checked field) or a `GroupingLevel` object carrying its own `label` (D9). A
-   * level names a row field, which may or may not have a matching column (D7) — a level naming a
-   * field no row actually carries degrades to one `undefined`-keyed cluster rather than throwing
-   * (matches `schema`'s own runtime contract). */
-  initial?: (ColumnId<TRow> | GroupingLevel<TRow>)[];
+export interface WithGroupingConfig<TRow, TId extends string = string> {
+  /** Declared grouping levels, outermost first — array order is nesting order. A bare column id
+   * or a `GroupingLevel` carrying its own `label`. Rules may gate a level off, never add one; an
+   * unknown id throws at construction. */
+  initial?: (TId | GroupingLevel<TId>)[];
   /** Table-wide admission — judged at every active level. A cluster returning `false` renders its
-   * rows flat at the parent's depth: no header, no group id, no aggregates. Throws: the cluster is
-   * admitted, reported once per column per evaluation. */
+   * rows flat at the parent's depth: no header, no group id, no aggregates. A throwing `when`
+   * still admits the cluster, reported once per column per evaluation. */
   when?: GroupWhen<TRow>;
-  /** Declarative per-field rules — the single declarative entry. Records by side effect; returns
-   * nothing. Call order carries no meaning — nesting order comes from `initial`. Path is keyed by
-   * row field (`keyof TRow`), not declared column id — grouping partitions data, not a display
-   * concept (D7, `2-decisions.md`). */
-  schema?: GroupingSchemaFn<TRow>;
+  /** Declarative per-column rules, recorded by side effect (returns nothing). Call order carries
+   * no meaning — nesting order comes from `initial`. `path` is keyed by declared column id, the
+   * same space `columns` declares. */
+  schema?: GroupingSchemaFn<TRow, TId>;
 }
 
 export interface GroupingMembers<TRow> {
-  /** Reads the *applied* levels — the declared prefix with at least one admitted cluster (D5);
-   * a level `when` rejects entirely is absent here even while it stays declared. Writes the
-   * *declared* set via `.update()`, so a temporarily gated-off level survives a round-trip
-   * instead of being silently dropped by it. */
+  /** Reads the *applied* levels — the declared prefix with at least one admitted cluster; a level
+   * `when` rejects entirely is absent here even while it stays declared. Writes the *declared*
+   * set via `.update()`, so a gated-off level survives a round-trip instead of being dropped. */
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;
   /** Leaf rows beneath a group header, at any depth — post-filter by construction, since
    * `filter` precedes `group` in `PIPELINE_ORDER`. Resolved by `group.id`, so a header from an
@@ -67,47 +63,47 @@ export interface GroupingMembers<TRow> {
    * derives from the cluster tree, not `renderRows()`. `[]` when ungrouped. Feeds
    * `expandAll(table.groupIds())`. */
   readonly groupIds: Signal<RowId[]>;
-  /** Current *applied* grouping levels (D5) as `ColumnDef`s, ordered outermost first — the
-   * inverse of `isGroupedBy`. A level naming no known column is omitted here (no `ColumnDef` to
-   * report) even while applied; a level `when` rejects entirely is omitted too. `[]` when
-   * ungrouped. */
+  /** Current *applied* grouping levels as `ColumnDef`s, outermost first — the inverse of
+   * `isGroupedBy`. A level `when` rejects entirely is omitted here. If a level's column was
+   * removed via `setColumns()` after being applied, it's also omitted and reported once per
+   * evaluation. `[]` when ungrouped. */
   readonly groupingLevels: Signal<ColumnDef<TRow>[]>;
-  /** O(1) membership check for one column against the *applied* levels (D5), backed by a set
-   * derived alongside `groupingLevels` — a toggle row over N columns stays O(N). `false` for an
-   * unknown column id or a level `when` rejects entirely, never a throw. */
+  /** O(1) membership check for one column against the *applied* levels, backed by a set derived
+   * alongside `groupingLevels` — a toggle row over N columns stays O(N). `false` for an unknown
+   * column id or a level `when` rejects entirely, never a throw. */
   readonly isGroupedBy: (columnId: string) => boolean;
 }
 
-/**
- * Splits `initial` into the plain `string[]` of keys grouping state carries (D9 — a level object
- * is never written to writable state; see `2-decisions.md`) and each level's own `label`, if any.
- */
-function normalizeGroupingLevels<TRow>(
-  levels: readonly (ColumnId<TRow> | GroupingLevel<TRow>)[]
-): { keys: string[]; labelByKey: Map<string, string> } {
-  const keys: string[] = [];
-  const labelByKey = new Map<string, string>();
+function normalizeGroupingLevels<TId extends string>(
+  levels: readonly (TId | GroupingLevel<TId>)[]
+): { columnIds: string[]; labelByColumnId: Map<string, string> } {
+  const columnIds: string[] = [];
+  const labelByColumnId = new Map<string, string>();
   for (const level of levels) {
     if (typeof level === 'string') {
-      keys.push(level);
+      columnIds.push(level);
     } else {
-      keys.push(level.key);
-      if (level.label) labelByKey.set(level.key, level.label);
+      columnIds.push(level.columnId);
+      if (level.label) labelByColumnId.set(level.columnId, level.label);
     }
   }
-  return { keys, labelByKey };
+  return { columnIds, labelByColumnId };
 }
 
-/**
- * The factory body: builds the feature spec from the store slice it reads plus its resolved
- * config. Shared by both `withGrouping()` overloads via the generic `factory` below.
- */
-function buildGroupingSpec<TRow>(
-  input: Pick<TableStore<TRow>, 'columns' | 'rows'>,
-  config: WithGroupingConfig<TRow>
+// Shared by both `withGrouping()` overloads via the generic `factory` below.
+function buildGroupingSpec<TRow, TId extends string>(
+  input: Pick<TableStore<TRow, TId>, 'columns' | 'rows'>,
+  config: WithGroupingConfig<TRow, TId>
 ): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
-  const { keys: initial, labelByKey } = normalizeGroupingLevels<TRow>(config.initial ?? []);
-  const rules = config.schema ? [...runGroupingSchemaFn<TRow>(config.schema)] : [];
+  const { columnIds: initial, labelByColumnId } = normalizeGroupingLevels<TId>(
+    config.initial ?? []
+  );
+  const rules = config.schema ? [...runGroupingSchemaFn<TRow, TId>(config.schema)] : [];
+  assertDeclarationsAreKnown(
+    [...initial, ...rules.map((rule) => rule.columnId)],
+    input.columns().map((column) => column.id),
+    'withGrouping'
+  );
   const emptyRule = rules.find(
     (rule): rule is GroupingRule<TRow> => isGroupingRule(rule) && !rule.enable && !rule.when
   );
@@ -130,47 +126,75 @@ function buildGroupingSpec<TRow>(
     }
   }
   // Declared: masked by `enable` only. Feeds clustering itself — never the render-admission
-  // result, or `stages.group` would need the render tree it's about to build (D5).
+  // result, or `stages.group` would need the render tree it's about to build.
   const grouping = computed(() => maskGroupingLevels(baseGrouping(), ruleEntries));
 
   const columnWhen = collectGroupPredicates(rules);
   const groupOrderByColumn = collectGroupOrder(rules);
   const extractValueByColumn = collectGroupKeys(rules);
+  const aggregateByColumn = collectAggregates(rules);
 
   const clusterOpts: ClusterOpts<TRow> = {
     groupOrderByColumn: groupOrderByColumn.size > 0 ? groupOrderByColumn : undefined,
     when: config.when,
     columnWhen: columnWhen.size > 0 ? columnWhen : undefined,
     extractValueByColumn: extractValueByColumn.size > 0 ? extractValueByColumn : undefined,
-    labelByColumn: labelByKey.size > 0 ? labelByKey : undefined,
+    labelByColumn: labelByColumnId.size > 0 ? labelByColumnId : undefined,
+    aggregateByColumn: aggregateByColumn.size > 0 ? aggregateByColumn : undefined,
   };
 
-  // Applied (D5): declared, filtered to the prefix that actually admitted at least one cluster.
+  // Applied: declared, filtered to the prefix that actually admitted at least one cluster.
   // Read-only derivation off the same tree `clusterRows` builds — never feeds clustering itself,
   // so there is no cycle with `grouping` above.
   const appliedGrouping = computed(() =>
-    collectAppliedLevels(input.rows(), grouping(), clusterOpts)
+    collectAppliedLevels(input.rows(), grouping(), input.columns(), clusterOpts)
   );
 
   // `table.grouping` reads applied, writes declared — a gated-off/unadmitted level is never
-  // silently dropped by a round-trip through `.update()` (D5).
+  // silently dropped by a round-trip through `.update()`.
   const groupingView = createWritableView<string[], GroupingUpdater<TRow>>(
     () => appliedGrouping(),
-    (updater) => baseGrouping.update(updater)
+    (updater) => {
+      const next = updater(baseGrouping());
+      assertDeclarationsAreKnown(
+        next,
+        input.columns().map((column) => column.id),
+        'withGrouping'
+      );
+      baseGrouping.set(next);
+    }
   );
 
   const rowsOf = (group: RenderRow<TRow>): readonly TRow[] =>
-    rowsBeneathGroup(input.rows(), grouping(), group.id, clusterOpts);
+    rowsBeneathGroup(input.rows(), grouping(), input.columns(), group.id, clusterOpts);
 
-  const groupIds = computed(() => collectGroupIds(input.rows(), grouping(), clusterOpts));
+  const groupIds = computed(() =>
+    collectGroupIds(input.rows(), grouping(), input.columns(), clusterOpts)
+  );
 
   const groupingLevels = computed(() => {
     const columnById = new Map<string, ColumnDef<TRow>>(
       input.columns().map((c) => [c.id, c])
     );
-    return appliedGrouping()
-      .map((id) => columnById.get(id))
-      .filter((column): column is ColumnDef<TRow> => column !== undefined);
+    const levels: ColumnDef<TRow>[] = [];
+    const reported = new Set<string>();
+    for (const id of appliedGrouping()) {
+      const column = columnById.get(id);
+      if (!column) {
+        // Runtime, data-dependent: the id was valid when applied, but setColumns() can remove
+        // a column while it's still an active grouping level. Not the construction/writer
+        // contract assertDeclarationsAreKnown enforces, so this degrades rather than throws
+        // (ADR-0014) — omit the level and report once per evaluation.
+        reportOrphanedGroupingColumn(
+          id,
+          'Omitting it from groupingLevels() for this evaluation.',
+          reported
+        );
+        continue;
+      }
+      levels.push(column);
+    }
+    return levels;
   });
   const groupedIds = computed(() => new Set(appliedGrouping()));
   const isGroupedBy = (columnId: string): boolean => groupedIds().has(columnId);
@@ -178,7 +202,7 @@ function buildGroupingSpec<TRow>(
   return {
     members: { grouping: groupingView, rowsOf, groupIds, groupingLevels, isGroupedBy },
     stages: {
-      group: (rows) => clusterRows(rows, grouping(), clusterOpts),
+      group: (rows) => clusterRows(rows, grouping(), input.columns(), clusterOpts),
     },
     renderStages: {
       group: (rows) => buildGroupRenderRows(rows, grouping(), input.columns(), clusterOpts),
@@ -187,24 +211,30 @@ function buildGroupingSpec<TRow>(
 }
 
 /**
- * Adds row-field grouping to a `createTable()`. Reads only `columns`/`rows` off the store handed
- * in, with zero knowledge of expansion. Claims the `'group'` pipeline and render stages
- * (`engine/grouping/pipeline.ts`'s `clusterRows`, `engine/grouping/render.ts`'s
- * `buildGroupRenderRows`). `table.grouping` reads `initial`
- * masked by `schema`, then filtered to the levels `when` actually admitted (D5) — writes still
- * target the unfiltered declared set. See the decisions doc. Per-column `applyGroupOrder` rules
- * order cluster siblings. `schema`'s `path` is keyed by `keyof TRow` (D7), not a declared column
- * id — grouping partitions data, and a field with no display column is nameable too.
+ * Adds row-field grouping to a `createTable()`, with zero knowledge of expansion.
+ *
+ * @remarks
+ * Claims the `'group'` pipeline and render stages. `table.grouping` reads the applied
+ * (post-`when`) levels but writes the full declared set, so a gated-off level survives a
+ * round-trip. `schema`'s `path` and `initial` both key by declared column id.
+ *
+ * @example
+ * ```ts
+ * withGrouping({
+ *   initial: ['region'],
+ *   schema: (path) => applyAggregate(path.amount, sum),
+ * })
+ * ```
  */
 export function withGrouping<In extends GroupingInput<In>>(
-  config?: WithGroupingConfig<RowOf<In>>
+  config?: WithGroupingConfig<RowOf<In>, ColumnIdOf<In>>
 ): Feature<In, GroupingMembers<RowOf<In>>>;
 export function withGrouping<In extends GroupingInput<In>, D extends DerivedDict>(
-  config: WithGroupingConfig<RowOf<In>> | undefined,
+  config: WithGroupingConfig<RowOf<In>, ColumnIdOf<In>> | undefined,
   compute: Feature<NoInfer<In> & GroupingMembers<RowOf<In>>, D>
 ): Feature<In, GroupingMembers<RowOf<In>> & D>;
 export function withGrouping(
-  config: WithGroupingConfig<any> = {},
+  config: WithGroupingConfig<any, any> = {},
   compute?: Feature<any, any>
 ): Feature<any, any> {
   const factory = <In extends GroupingInput<In>>(

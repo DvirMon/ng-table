@@ -1,26 +1,14 @@
-import type { ClusterSummary, GroupSummary, GroupWhen } from '../../api/types';
+import type { ClusterSummary, ColumnDef, GroupSummary, GroupWhen } from '../../api/types';
 import {
   admitClusters,
   buildClusterNodes,
   buildClusters,
+  readGroupValue,
   sortClusters,
   type ClusterNode,
 } from './clusters';
+import { orderColumns, orders, type Order } from './grouping.mock';
 import { clusterRows } from './pipeline';
-
-interface Order {
-  id: number;
-  region: string;
-  category: string;
-}
-
-const orders: Order[] = [
-  { id: 1, region: 'US', category: 'Electronics' },
-  { id: 2, region: 'EU', category: 'Electronics' },
-  { id: 3, region: 'US', category: 'Books' },
-  { id: 4, region: 'US', category: 'Electronics' },
-  { id: 5, region: 'EU', category: 'Books' },
-];
 
 describe('buildClusters', () => {
   it('produces the right node shape for a 2-level input', () => {
@@ -162,11 +150,14 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
         { id: 1, meta: { tag: 'a' } },
         { id: 2, meta: { tag: 'b' } },
       ];
+      const columns: ColumnDef<MetaRow>[] = [
+        { id: 'meta', accessor: (row) => row.meta, visible: true, order: 0, label: 'meta' },
+      ];
       const extractValueByColumn = new Map<string, (fieldValue: unknown) => unknown>([
         ['meta', (fieldValue) => (fieldValue as { tag: string }).tag],
       ]);
 
-      buildClusterNodes<MetaRow>(rows, ['meta'], extractValueByColumn);
+      buildClusterNodes<MetaRow>(rows, ['meta'], columns, extractValueByColumn);
 
       expect(reportSpy).not.toHaveBeenCalled();
     } finally {
@@ -181,8 +172,11 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
         { id: 1, value: null },
         { id: 2, value: undefined },
       ];
+      const columns: ColumnDef<NullableRow>[] = [
+        { id: 'value', accessor: (row) => row.value, visible: true, order: 0, label: 'value' },
+      ];
 
-      buildClusterNodes<NullableRow>(rows, ['value']);
+      buildClusterNodes<NullableRow>(rows, ['value'], columns);
 
       expect(reportSpy).not.toHaveBeenCalled();
     } finally {
@@ -197,8 +191,11 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
         { id: 1, createdAt: new Date('2024-01-01') },
         { id: 2, createdAt: new Date('2024-01-02') },
       ];
+      const columns: ColumnDef<DateRow>[] = [
+        { id: 'createdAt', accessor: (row) => row.createdAt, visible: true, order: 0, label: 'createdAt' },
+      ];
 
-      buildClusterNodes<DateRow>(rows, ['createdAt']);
+      buildClusterNodes<DateRow>(rows, ['createdAt'], columns);
 
       expect(reportSpy).not.toHaveBeenCalled();
     } finally {
@@ -549,7 +546,7 @@ describe('admission-aware ordering (sortClusters, per-column)', () => {
     const dissolvedFirst = (a: GroupSummary<Order>, b: GroupSummary<Order>): number =>
       Number(a.admitted) - Number(b.admitted);
 
-    const result = clusterRows(orders, ['region'], {
+    const result = clusterRows(orders, ['region'], orderColumns, {
       when,
       groupOrderByColumn: new Map([['region', dissolvedFirst]]),
     });
@@ -567,12 +564,199 @@ describe('admission-aware ordering (sortClusters, per-column)', () => {
     ];
     const dissolveEverything = (): boolean => false;
 
-    const result = clusterRows(localOrders, ['region', 'category'], {
+    const result = clusterRows(localOrders, ['region', 'category'], orderColumns, {
       when: dissolveEverything,
     });
 
     // Re-clustering by category would group the two Books rows together ([1, 3, 2]). Flat
     // bucket order (no re-cluster once dissolved) keeps original insertion order instead.
     expect(result.map((row) => row.id)).toEqual([1, 2, 3]);
+  });
+});
+
+describe('buildClusterNodes — derived-accessor column (Step 6, AC #1)', () => {
+  interface Sale {
+    id: number;
+    amount: number;
+  }
+
+  function tierColumn(): ColumnDef<Sale> {
+    return {
+      id: 'tier',
+      accessor: (row) => (row.amount > 100 ? 'high' : 'low'),
+      visible: true,
+      order: 0,
+      label: 'tier',
+    };
+  }
+
+  it('groups by a derived accessor into distinct clusters, not one undefined cluster', () => {
+    const rows: Sale[] = [
+      { id: 1, amount: 50 },
+      { id: 2, amount: 150 },
+      { id: 3, amount: 80 },
+      { id: 4, amount: 200 },
+    ];
+
+    const nodes = buildClusterNodes<Sale>(rows, ['tier'], [tierColumn()]);
+
+    expect(nodes.map((node) => node.value).sort()).toEqual(['high', 'low']);
+    expect(nodes.some((node) => node.value === undefined)).toBe(false);
+    const high = nodes.find((node) => node.value === 'high')!;
+    expect(high.items.map((row) => row.id).sort()).toEqual([2, 4]);
+  });
+});
+
+describe('buildClusterNodes — a carrier column is groupable (Step 6, AC #2, G54)', () => {
+  interface RowWithMeta {
+    id: number;
+    meta: { region: string };
+  }
+
+  it('partitions by an accessor whose id matches no row field, regardless of visible', () => {
+    const rows: RowWithMeta[] = [
+      { id: 1, meta: { region: 'US' } },
+      { id: 2, meta: { region: 'EU' } },
+      { id: 3, meta: { region: 'US' } },
+    ];
+    const columns: ColumnDef<RowWithMeta>[] = [
+      {
+        id: 'region',
+        accessor: (row) => row.meta.region,
+        visible: false,
+        order: 0,
+        label: 'region',
+      },
+    ];
+
+    const nodes = buildClusterNodes<RowWithMeta>(rows, ['region'], columns);
+
+    expect(nodes.map((node) => node.value).sort()).toEqual(['EU', 'US']);
+    const us = nodes.find((node) => node.value === 'US')!;
+    expect(us.items.map((row) => row.id).sort()).toEqual([1, 3]);
+    const eu = nodes.find((node) => node.value === 'EU')!;
+    expect(eu.items.map((row) => row.id)).toEqual([2]);
+  });
+});
+
+describe('applyGroupKey receives the accessor output (Step 6, AC #8, G68)', () => {
+  it("a plain column's extractor receives the raw field value — the default accessor is (row) => row[id]", () => {
+    interface Row {
+      id: number;
+      region: string;
+    }
+    const rows: Row[] = [{ id: 1, region: 'US' }];
+    const captured: unknown[] = [];
+    const columns: ColumnDef<Row>[] = [
+      { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'region' },
+    ];
+    const extractValueByColumn = new Map<string, (fieldValue: unknown) => unknown>([
+      [
+        'region',
+        (value) => {
+          captured.push(value);
+          return value;
+        },
+      ],
+    ]);
+
+    buildClusterNodes<Row>(rows, ['region'], columns, extractValueByColumn);
+
+    expect(captured).toEqual(['US']);
+  });
+
+  it("a derived column's extractor receives the accessor's output, never row[columnId] — which does not exist for a derived column", () => {
+    interface Sale {
+      id: number;
+      amount: number;
+    }
+    const rows: Sale[] = [{ id: 1, amount: 150 }];
+    const captured: unknown[] = [];
+    const columns: ColumnDef<Sale>[] = [
+      {
+        id: 'tier',
+        accessor: (row) => (row.amount > 100 ? 'high' : 'low'),
+        visible: true,
+        order: 0,
+        label: 'tier',
+      },
+    ];
+    const extractValueByColumn = new Map<string, (fieldValue: unknown) => unknown>([
+      [
+        'tier',
+        (value) => {
+          captured.push(value);
+          return value;
+        },
+      ],
+    ]);
+
+    const nodes = buildClusterNodes<Sale>(rows, ['tier'], columns, extractValueByColumn);
+
+    // Capturing the extractor's own argument, not just the resulting key — 'tier' does not
+    // exist on Sale, so a wrongly-wired read of row['tier'] would hand the extractor
+    // `undefined`, and an assertion on the cluster key alone could still pass by accident.
+    expect(captured).toEqual(['high']);
+    expect(nodes[0].value).toBe('high');
+  });
+});
+
+describe('a throwing accessor degrades and dedupes through readGroupValue (Step 6, ADR-0014)', () => {
+  it('clusters everything under one undefined cluster and reports once across the whole walk, not once per row', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      interface Row {
+        id: number;
+      }
+      const rows: Row[] = [{ id: 1 }, { id: 2 }, { id: 3 }];
+      const columns: ColumnDef<Row>[] = [
+        {
+          id: 'region',
+          accessor: () => {
+            throw new Error('boom');
+          },
+          visible: true,
+          order: 0,
+          label: 'region',
+        },
+      ];
+
+      const nodes = buildClusterNodes<Row>(rows, ['region'], columns);
+
+      expect(nodes).toHaveLength(1);
+      expect(nodes[0].value).toBeUndefined();
+      expect(nodes[0].items.map((row) => row.id).sort()).toEqual([1, 2, 3]);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      errorSpy.mockRestore();
+    }
+  });
+
+  it('readGroupValue itself degrades to undefined for a throwing accessor and dedupes via the shared reportedColumns set', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      interface Row {
+        id: number;
+      }
+      const column: ColumnDef<Row> = {
+        id: 'region',
+        accessor: () => {
+          throw new Error('boom');
+        },
+        visible: true,
+        order: 0,
+        label: 'region',
+      };
+      const columnById = new Map([['region', column]]);
+      const reported = new Set<string>();
+
+      expect(readGroupValue({ id: 1 }, 'region', columnById, reported)).toBeUndefined();
+      expect(readGroupValue({ id: 2 }, 'region', columnById, reported)).toBeUndefined();
+      expect(readGroupValue({ id: 3 }, 'region', columnById, reported)).toBeUndefined();
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

@@ -1,4 +1,4 @@
-import type { RowId } from '../../api/types';
+import type { ColumnDef, RowId } from '../../api/types';
 import {
   admitClusters,
   buildClusterNodes,
@@ -38,21 +38,22 @@ function findClusterByPath<T>(
 export function rowsBeneathGroup<TRow>(
   rows: TRow[],
   grouping: readonly string[],
+  columns: ColumnDef<TRow>[],
   groupId: RowId,
   opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn'>
 ): TRow[] {
   if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, grouping, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn);
   const node = findClusterByPath(nodes, '', groupId);
   return node ? flattenLeaves([node]) : [];
 }
 
-/** Every node's id, depth-first, regardless of `expandedRows` — unlike `render.ts`'s
- * `emitGroupRows`, which only descends into an expanded node's children. Reuses
- * `buildGroupPath`/`toGroupId` so the id format can never drift from what a header actually
- * renders. */
+// Every node's id, depth-first, regardless of `expandedRows` — unlike `render.ts`'s
+// `emitGroupRows`, which only descends into an expanded node's children. Reuses
+// `buildGroupPath`/`toGroupId` so the id format can never drift from what a header actually
+// renders.
 function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string): RowId[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) return [];
@@ -68,12 +69,13 @@ function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string):
 export function collectGroupIds<TRow>(
   rows: TRow[],
   grouping: readonly string[],
+  columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
 ): RowId[] {
   if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, grouping, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn);
   const admitted = admitClusters(
     nodes,
     opts?.when,
@@ -88,24 +90,24 @@ export function collectGroupIds<TRow>(
 }
 
 /**
- * D5's "applied" reading — the prefix of `declaredLevels` whose clusters actually admitted at
- * least one node, counting only clusters reached through an admitted ancestor chain (a rejected
- * node's children are never themselves judged by `admitClusters`, so they cannot count). Partial
- * admission at a level (some clusters kept, some dissolved) still counts that level as applied;
- * only *total* rejection at a level drops it, and every level beneath an unreached one is
- * unreachable too, hence the early stop rather than a per-level independent check. `[]` when
- * `declaredLevels` is empty. Backs `withGrouping()`'s public `grouping()`/`groupingLevels()`/
- * `isGroupedBy()` reads; `declaredLevels` itself still owns clustering, `groupIds` and `rowsOf`.
+ * The prefix of `declaredLevels` whose clusters actually admitted at least one node.
+ *
+ * @remarks
+ * Partial admission at a level still counts it as applied; only total rejection drops it and
+ * everything beneath, since an unreached level is never itself judged. Backs `withGrouping()`'s
+ * `grouping()`/`groupingLevels()`/`isGroupedBy()` reads — `declaredLevels` itself still owns
+ * clustering, `groupIds` and `rowsOf`. `[]` when `declaredLevels` is empty.
  */
 export function collectAppliedLevels<TRow>(
   rows: TRow[],
   declaredLevels: readonly string[],
+  columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
 ): string[] {
   if (declaredLevels.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, declaredLevels, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(rows, declaredLevels, columns, opts?.extractValueByColumn);
   const admitted = admitClusters(nodes, opts?.when, (items) => items, new Set(), opts?.columnWhen);
 
   const applied: string[] = [];

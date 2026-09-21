@@ -1,9 +1,8 @@
 <div class="story-host">
   <p class="story-host__hint">
-    <code>aggregateFn</code> is declared on the <strong>column</strong>, not on
-    <code>withGrouping()</code> — the column knows how to summarise a set of rows, and grouping
-    is what supplies the sets. Here <code>amount</code> carries a sum, so every header at every
-    depth shows one.
+    <code>applyAggregate</code> is a grouping declaration, keyed by declared column id like every
+    other <code>schema</code> concern — not a column option. Here <code>amount</code> carries a
+    sum, so every header at every depth shows one.
   </p>
 
   <ngp-grouping-aggregates-toolbar

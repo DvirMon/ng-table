@@ -14,8 +14,12 @@ import {
 } from '../../../table.mock';
 import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import { setColumns } from '../../../mutations/update-columns';
-import { setGroupLevels } from '../../../mutations/update-grouping';
-import { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema';
+import {
+  addGroupLevel,
+  reorderGroupLevels,
+  setGroupLevels,
+} from '../../../mutations/update-grouping';
+import { applyAggregate, applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema';
 import type { GroupingHandle } from './types';
 import type { WritableView } from '../../../engine/writable-view';
 import { filter } from '../with-filtering/rules';
@@ -29,40 +33,59 @@ import { withSelection } from '../with-selection';
 import { withSorting, type SortingMembers } from '../with-sorting';
 import type {
   ColumnDef,
-  ColumnId,
   GroupingUpdater,
   RenderRow,
   RowId,
   TableStore,
 } from '../../types';
 
-// Grouping reads row fields directly, never a column's `accessor` (D7) — no literal-id
-// inference is needed here, so a plain `ColumnDef<GroupingMockRow>[]` annotation is enough.
-function makeColumns(): ColumnDef<GroupingMockRow>[] {
+// Grouping is now keyed by declared column id space (ADR-0024) — `path.<id>` in every `schema`
+// callback below is dot-notation, which needs the literal id union, not `string`. No return-type
+// annotation + `id: '…' as const` + `satisfies` keeps it literal (`create-table.spec.ts:20-36`);
+// an annotated `ColumnDef<GroupingMockRow>[]` return type would widen every id to `string` and
+// turn every `path.<id>` access into an index-signature access (TS4111).
+function makeColumns() {
   return [
     {
-      id: 'region',
-      accessor: (row) => row.region,
+      id: 'region' as const,
+      accessor: (row: GroupingMockRow) => row.region,
       visible: true,
       order: 0,
       label: 'Region',
     },
     {
-      id: 'category',
-      accessor: (row) => row.category,
+      id: 'category' as const,
+      accessor: (row: GroupingMockRow) => row.category,
       visible: true,
       order: 1,
       label: 'Category',
     },
     {
-      id: 'amount',
-      accessor: (row) => row.amount,
+      id: 'amount' as const,
+      accessor: (row: GroupingMockRow) => row.amount,
       visible: true,
       order: 2,
       label: 'Amount',
-      aggregateFn: (rows) => rows.reduce((sum, row) => sum + row.amount, 0) / rows.length,
     },
-  ];
+  ] satisfies ColumnDef<GroupingMockRow>[];
+}
+
+/** Average `amount` across a cluster's own leaves — declared via `applyAggregate` in `schema`
+ * now that `ColumnDef` no longer carries `aggregateFn` (Step 4). */
+const avgAmount = (rows: GroupingMockRow[]): number =>
+  rows.reduce((sum, row) => sum + row.amount, 0) / rows.length;
+
+/** `makeColumns()`'s declared-id union, named once so a helper's return-type annotation doesn't
+ * have to spell it out. */
+type MockColumnId = 'region' | 'category' | 'amount';
+
+/** Widened on purpose (explicit `ColumnDef<GroupingMockRow>[]` return type, no `as const`) — the
+ * "unknown column ids throw" cases below need a `TId` of plain `string` so an out-of-union id
+ * compiles at all, to prove the *runtime* check rather than relying on the compile-time rejection
+ * `makeColumns()`'s literal ids already give a real caller for free. Mirrors
+ * `create-table.types.spec.ts`'s `makeWidenedColumns()`. */
+function makeWidenedColumns(): ColumnDef<GroupingMockRow>[] {
+  return makeColumns();
 }
 
 /** `[kind, depth, id-if-a-row]` per render row — the shape shared by the `groupOrder` ordering
@@ -163,7 +186,10 @@ describe('withGrouping', () => {
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
+        withGrouping({
+          initial: ['region', 'category'],
+          schema: (path) => applyAggregate(path.amount, avgAmount),
+        })
       )
     );
 
@@ -229,7 +255,10 @@ describe('withGrouping', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withFiltering({ schema: excludeAmount300 }),
-        withGrouping({ initial: ['region', 'category'] })
+        withGrouping({
+          initial: ['region', 'category'],
+          schema: (path) => applyAggregate(path.amount, avgAmount),
+        })
       )
     );
 
@@ -274,47 +303,6 @@ describe('withGrouping', () => {
 
     const rowIds = store.rows().map((row) => (row as GroupingMockRow).id);
     expect(rowIds).toEqual([4, 5, 6, 1, 3]);
-  });
-
-  it('initial naming a field no row carries degrades to one phantom cluster, never a throw (D7)', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['not-a-column'] })
-      )
-    );
-
-    expect(store.grouping()).toEqual(['not-a-column']);
-    expect(store.renderRows().filter((row) => row.kind === 'group')).toHaveLength(1);
-  });
-
-  it('an unknown level passed to setGroupLevels does not throw — it degrades to one phantom cluster per parent, never dropped (D7)', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping()
-      )
-    );
-
-    expect(() =>
-      store.grouping.update(setGroupLevels(['region', 'not-a-column']))
-    ).not.toThrow();
-
-    // The raw level list is stored as given — resolution against known columns happens at
-    // pipeline/render read time, not at write time.
-    expect(store.grouping()).toEqual(['region', 'not-a-column']);
-
-    // 'not-a-column' names no row field, so every row shares the same `undefined` value at that
-    // level — one uninformative phantom cluster per region, but still rendered (D7: an unknown
-    // field degrades to a phantom cluster, it is never silently dropped).
-    const rows = store.renderRows();
-    const headerRows = rows.filter((row) => row.kind === 'group');
-    expect(headerRows).toHaveLength(4); // 2 region headers + 1 phantom child each
-    expect(headerRows.filter((row) => row.depth === 0)).toHaveLength(2); // US, EU
-    expect(headerRows.filter((row) => row.depth === 1)).toHaveLength(2); // phantom 'not-a-column' cluster per region
-    expect(rows.every((row) => row.kind !== 'row' || row.depth === 2)).toBe(true); // every leaf nested one level deeper
   });
 
   it('groupOrder omitted preserves first-occurrence cluster order (regression, unchanged from issue #7)', () => {
@@ -525,7 +513,10 @@ describe('withGrouping', () => {
       createTable(
         data,
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] })
+        withGrouping({
+          initial: ['region', 'category'],
+          schema: (path) => applyAggregate(path.amount, avgAmount),
+        })
       )
     );
 
@@ -609,6 +600,137 @@ describe('withGrouping', () => {
     const rows = store.renderRows();
     expect(rows.every((row) => row.kind === 'row')).toBe(true);
     expect(rows.every((row) => row.parentId === undefined)).toBe(true);
+  });
+});
+
+describe('unknown column ids throw (AC #4)', () => {
+  it('an unknown id in initial throws at construction, naming both withGrouping and the id', () => {
+    // `makeWidenedColumns()`, not `makeColumns()` — a literal-id `columns` array would reject
+    // 'nope' at compile time (see `feature.types.spec.ts`); this proves the *runtime* check a
+    // dynamically-built `columns` array (TId widened to `string`) still needs.
+    expect(() =>
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
+          withGrouping({ initial: ['nope'] })
+        )
+      )
+    ).toThrow(/\[withGrouping\].*"nope"/);
+  });
+
+  it('an unknown id declared through schema (applyGrouping) throws the same way as initial', () => {
+    expect(() =>
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
+          withGrouping({
+            initial: ['region'],
+            schema: (path) => applyGrouping(path['nope'], { enable: () => true }),
+          })
+        )
+      )
+    ).toThrow(/\[withGrouping\].*"nope"/);
+  });
+
+  it('applyAggregate on an undeclared id throws the same construction-time check — it rides Step 1, not a second one (G59)', () => {
+    expect(() =>
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
+          withGrouping({
+            initial: ['region'],
+            schema: (path) => applyAggregate(path['nope'], (rows) => rows.length),
+          })
+        )
+      )
+    ).toThrow(/\[withGrouping\].*"nope"/);
+  });
+
+  it("the writer half: table.grouping.update(addGroupLevel('nope')) throws, naming the unknown id", () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    expect(() => store.grouping.update(addGroupLevel('nope'))).toThrow(/\[withGrouping\].*"nope"/);
+  });
+
+  it('reorderGroupLevels with out-of-range indices stays a no-op, never a throw — only unknown ids throw', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region', 'category'] })
+      )
+    );
+
+    expect(() => store.grouping.update(reorderGroupLevels(9, 12))).not.toThrow();
+    expect(store.grouping()).toEqual(['region', 'category']); // out-of-range indices: unchanged
+  });
+
+  it("a level naming a column added by setColumns() is writable — the writer reads columns() at write time, not at construction", () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        {
+          trackBy: mockGroupingTrackBy,
+          columns: makeWidenedColumns().filter((column) => column.id !== 'category'),
+        },
+        withGrouping({ initial: ['region'] })
+      )
+    );
+
+    // 'category' is not a column yet — the writer would throw if it tried now.
+    expect(() => store.grouping.update(addGroupLevel('category'))).toThrow(
+      /\[withGrouping\].*"category"/
+    );
+
+    store.columns.update(setColumns(makeWidenedColumns()));
+
+    // Same id, now a real column — the writer re-reads columns() live and accepts it.
+    expect(() => store.grouping.update(addGroupLevel('category'))).not.toThrow();
+    expect(store.grouping()).toEqual(['region', 'category']);
+  });
+});
+
+describe('applyAggregate over a derived-accessor column (AC #6)', () => {
+  it('aggregates a column whose value comes from an accessor, not a raw row field', () => {
+    const columns = [
+      ...makeColumns(),
+      {
+        id: 'amountDoubled' as const,
+        accessor: (row: GroupingMockRow) => row.amount * 2,
+        visible: true,
+        order: 3,
+        label: 'Amount x2',
+      },
+    ] satisfies ColumnDef<GroupingMockRow>[];
+
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns },
+        withGrouping({
+          initial: ['region'],
+          schema: (path) =>
+            applyAggregate(path.amountDoubled, (rows) =>
+              rows.reduce((sum, row) => sum + row.amount * 2, 0)
+            ),
+        })
+      )
+    );
+
+    const usHeader = store
+      .renderRows()
+      .find((row) => row.kind === 'group' && row.groupKey?.value === 'US')!;
+    // US leaves: 100, 300, 50 -> doubled sum = 900.
+    expect(usHeader.aggregates?.['amountDoubled']).toBe(900);
   });
 });
 
@@ -904,38 +1026,36 @@ describe('groupingLevels (#81)', () => {
     expect(store.groupingLevels()).toEqual([]);
   });
 
-  it('dropped level (D4/D7): a level naming no known column has no ColumnDef, but isGroupedBy still agrees with what renderRows() actually emits', () => {
-    const store = inContext(() =>
+  it('is total for every applied level (AC #5) — a level a when rejects entirely still stays absent (D5)', () => {
+    const admitted = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] })
+        withGrouping({ initial: ['region', 'category'] })
       )
     );
 
-    store.grouping.update(setGroupLevels(['region', 'ghost']));
-    TestBed.tick();
+    // Every applied level resolves to a real ColumnDef — an unknown id can no longer reach this
+    // point at all, it would have thrown at construction or at the writer (AC #4).
+    expect(admitted.groupingLevels()).toHaveLength(2);
+    expect(admitted.groupingLevels().every((column) => column !== undefined)).toBe(true);
 
-    // groupingLevels() can only report a ColumnDef for a real column — 'ghost' has none, so it's
-    // absent here even though it is still an active grouping level.
-    expect(store.groupingLevels().map((column) => column.id)).toEqual(['region']);
-    // isGroupedBy agrees with what actually renders below, not with groupingLevels()'s
-    // column-only view: 'ghost' produces a real (if uninformative) header per region, so it
-    // reads as grouped.
-    expect(store.isGroupedBy('ghost')).toBe(true);
-
-    // Agreement with the pipeline: "ghost" still clusters — one phantom header per region
-    // (every row in a region shares the same `undefined` "ghost" value), it is never dropped
-    // (D7). Depth 0 = region headers, depth 1 = the phantom "ghost" cluster nested under each.
-    const headerRows = store.renderRows().filter((row) => row.kind === 'group');
-    expect(headerRows.filter((row) => row.depth === 0).map((row) => row.id).sort()).toEqual(
-      [EU_HEADER_ID, US_HEADER_ID].sort()
+    const rejected = inContext(() =>
+      createTable(
+        signal<GroupWhenMockRow[]>(mockGroupWhenRows),
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        // Largest cluster is 2 rows, so a threshold of 3 rejects every cluster.
+        withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 3 })
+      )
     );
-    expect(headerRows.filter((row) => row.depth === 1)).toHaveLength(2); // phantom "ghost" cluster per region
-    expect(store.groupIds().sort()).toEqual(headerRows.map((row) => row.id).sort());
+
+    // Totality is about *applied* levels — it does not resurrect one that never admitted a
+    // single cluster. Step 5's deletion of the silent-drop path must not read as removing this
+    // applied/declared distinction too.
+    expect(rejected.groupingLevels()).toEqual([]);
   });
 
-  it('reactivity: a computed() reading groupingLevels recomputes after grouping.update and after a level column is removed via setColumns', () => {
+  it('reactivity: a computed() reading groupingLevels recomputes after grouping.update', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -950,10 +1070,39 @@ describe('groupingLevels (#81)', () => {
     store.grouping.update(setGroupLevels(['region', 'category']));
     TestBed.tick();
     expect(levelIds()).toEqual(['region', 'category']);
+  });
 
-    store.columns.update(setColumns(makeColumns().filter((column) => column.id !== 'region')));
-    TestBed.tick();
-    expect(levelIds()).toEqual(['category']);
+  // `groupingLevels()`'s totality (AC #5) is only ever re-checked from the `grouping` writer's
+  // side (AC #4) — a `columns` write does not re-validate the already-declared grouping array.
+  // Removing a still-active level's column via `setColumns()` (a very ordinary column-picker
+  // interaction) is therefore a runtime, data-dependent condition, not a construction/writer
+  // contract violation — it degrades (omits the orphaned level) and reports once, rather than
+  // throwing (ADR-0014).
+  it('removing an active level\'s column via setColumns() degrades and reports, never throws', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region', 'category'] })
+      )
+    );
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      // Explicit `: boolean` return type — an inferred type predicate here would narrow the
+      // filtered array's `TId` away from the store's declared union, which `setColumns()`'s
+      // updater type then rejects as a mismatch rather than a subset.
+      const isNotRegion = (column: ColumnDef<GroupingMockRow, MockColumnId>): boolean =>
+        column.id !== 'region';
+      store.columns.update(setColumns(makeColumns().filter(isNotRegion)));
+      TestBed.tick();
+
+      expect(store.groupingLevels().map((column) => column.id)).toEqual(['category']);
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy.mock.calls[0][0]).toMatch(/No column declares id "region"/);
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 
   it('overlay-decided levels: reflects an async rule masking a declared level, including while still pending', () => {
@@ -1603,7 +1752,7 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: [{ key: 'region' }] })
+          withGrouping({ initial: [{ columnId: 'region' }] })
         )
       );
 
@@ -1615,7 +1764,7 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['region', { key: 'category' }] })
+          withGrouping({ initial: ['region', { columnId: 'category' }] })
         )
       );
 
@@ -1627,7 +1776,7 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: [{ key: 'region', label: 'Sales Region' }] })
+          withGrouping({ initial: [{ columnId: 'region', label: 'Sales Region' }] })
         )
       );
 
@@ -1640,7 +1789,7 @@ describe('grouping declarative sugar (#26)', () => {
         createTable(
           signal<GroupingMockRow[]>(mockGroupingRows),
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: [{ key: 'region' }] })
+          withGrouping({ initial: [{ columnId: 'region' }] })
         )
       );
 
@@ -1812,25 +1961,19 @@ describe('grouping declarative sugar (#26)', () => {
     expect(store.grouping()).toEqual(['category']);
   });
 
-  it('grouping by a real row field with no declared column works — the case D7 exists for', () => {
+  it('grouping by a real row field with no declared column now throws (ADR-0024 superseded the old D7 no-guard behavior)', () => {
     // `id` is never registered as a column (`makeColumns()` only declares
-    // region/category/amount) — D7 reads a grouping level straight off the row, with no
-    // column-existence guard, so the level is active anyway.
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['id'] })
+    // region/category/amount) — grouping is keyed by declared column id space now, not by any
+    // row field, so an undeclared field throws the same as a genuinely unknown one (AC #4).
+    expect(() =>
+      inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
+          withGrouping({ initial: ['id'] })
+        )
       )
-    );
-
-    expect(store.grouping()).toEqual(['id']);
-    // No `ColumnDef` names 'id', so it can't appear in the column-shaped projection — still
-    // correct, since `id` is an active level regardless (proven above).
-    expect(store.groupingLevels()).toEqual([]);
-
-    const headers = store.renderRows().filter((row) => row.kind === 'group');
-    expect(headers.length).toBe(new Set(mockGroupingRows.map((row) => row.id)).size);
+    ).toThrow(/\[withGrouping\].*"id"/);
   });
 
   it('no rules configured: renderRows() is unaffected by the mask — regression for initial + updater writes', () => {
@@ -1854,20 +1997,24 @@ describe('grouping declarative sugar (#26)', () => {
   });
 });
 
-function groupWhenColumns(
-  aggregateFn?: (rows: GroupWhenMockRow[]) => unknown
-): ColumnDef<GroupWhenMockRow>[] {
+// See `makeColumns()`'s header comment — same reason this drops its return-type annotation.
+function groupWhenColumns() {
   return [
-    { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'Region' },
     {
-      id: 'amount',
-      accessor: (row) => row.amount,
+      id: 'region' as const,
+      accessor: (row: GroupWhenMockRow) => row.region,
+      visible: true,
+      order: 0,
+      label: 'Region',
+    },
+    {
+      id: 'amount' as const,
+      accessor: (row: GroupWhenMockRow) => row.amount,
       visible: true,
       order: 1,
       label: 'Amount',
-      ...(aggregateFn ? { aggregateFn } : {}),
     },
-  ];
+  ] satisfies ColumnDef<GroupWhenMockRow>[];
 }
 
 const EU_GROUP_ID = 'group:>region:string:EU';
@@ -2049,8 +2196,12 @@ describe('when (#85 table-wide admission)', () => {
       const store = inContext(() =>
         createTable(
           signal<GroupWhenMockRow[]>(mockGroupWhenRows),
-          { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns(throwingAggregateFn) },
-          withGrouping({ initial: ['region'], when: (c) => c.rows.length >= 2 })
+          { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+          withGrouping({
+            initial: ['region'],
+            when: (c) => c.rows.length >= 2,
+            schema: (path) => applyAggregate(path.amount, throwingAggregateFn),
+          })
         )
       );
 
@@ -2259,33 +2410,24 @@ describe('types', () => {
     });
   });
 
-  // `ColumnId<TRow>` is `Extract<keyof TRow, string> | (string & {})` (`api/types.ts`, D14): the
-  // `string & {}` arm keeps editor autocomplete on `initial` while leaving any string
-  // assignable — `initial` names a level with no runtime existence guard either way (D7, the
-  // "grouping by a real row field" case above). `schema`'s `path`, by contrast, is keyed by
-  // `keyof TRow` and rejects a genuinely unknown field at the call site, below.
   it('recovers the row type from the slot — config is row-typed with no explicit type argument', () => {
     expectTypeOf<Parameters<typeof withGrouping<TableStore<GroupingMockRow>>>[0]>().toEqualTypeOf<
       WithGroupingConfig<GroupingMockRow> | undefined
     >();
-    expectTypeOf<keyof GroupingMockRow & string>().toMatchTypeOf<ColumnId<GroupingMockRow>>();
   });
 
-  it('a field not on the row is a compile error, never a runtime throw (D7)', () => {
-    withGrouping<TableStore<GroupingMockRow>>({
-      schema: (path) => {
-        // @ts-expect-error 'notAField' is not a key of GroupingMockRow.
-        applyGrouping(path.notAField, { enable: () => true });
-      },
-    });
-  });
+  // Column-id typo rejection (both in `initial` and in `schema`'s `path`) is now covered by
+  // `feature.types.spec.ts` against a `createTable()` with real declared columns — grouping is
+  // keyed by declared column id space (ADR-0024), not by `keyof TRow`, so a generic
+  // `TableStore<TRow>` with no literal columns (as used above) can no longer exercise that
+  // rejection: its column-id type falls back to `string`.
 });
 
 describe('collapse state across a sort', () => {
   // Group ids are built from the cluster's value, not its position (`queries.spec.ts`, "same ids
   // after a row reorder"), read here through the composed store — the only place a sort's effect
   // on collapse state is observable.
-  function setup(): TableStore<GroupingMockRow> &
+  function setup(): TableStore<GroupingMockRow, MockColumnId> &
     GroupingMembers<GroupingMockRow> &
     ExpansionMembers &
     SortingMembers {
@@ -2331,8 +2473,8 @@ describe('writes target rows; clustering re-derives', () => {
   // Nothing below names a group id: every write targets rows, and the clustering re-derives.
   // See the story lesson audit's D8.
   function setup(
-    initial: ColumnId<GroupingMockRow>[] = ['region', 'category']
-  ): TableStore<GroupingMockRow> & GroupingMembers<GroupingMockRow> {
+    initial: MockColumnId[] = ['region', 'category']
+  ): TableStore<GroupingMockRow, MockColumnId> & GroupingMembers<GroupingMockRow> {
     return inContext(() =>
       createTable(
         signal<GroupingMockRow[]>([...mockGroupingRows]),

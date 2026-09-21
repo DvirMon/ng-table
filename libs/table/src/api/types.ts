@@ -45,8 +45,8 @@ export interface RenderRow<TRow> {
   readonly index: number;
 
   // The field, value and resolved label a `group` row was clustered on, so a header can render
-  // itself without parsing anything back out of the composite `id`. `label` resolves explicit ->
-  // a column whose id matches `columnId` -> the raw field name. Set only for `kind: 'group'`.
+  // itself without parsing anything back out of the composite `id`. `label` resolves explicit,
+  // else falls back to the matching column's own `label`. Set only for `kind: 'group'`.
   readonly groupKey?: { columnId: string; value: unknown; label: string };
 
   // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
@@ -90,7 +90,6 @@ export interface ColumnDef<TRow = unknown, TId extends string = string> {
   // Feature-contributed fields, populated when the corresponding feature is registered.
   sortFn?: (a: TRow, b: TRow) => number;
   enableSorting?: boolean;
-  aggregateFn?: (rows: TRow[]) => unknown;
 
   // Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity — never
   // interpreted by the engine. Read via `readColumnMeta()`, written via `metadata()`
@@ -99,14 +98,10 @@ export interface ColumnDef<TRow = unknown, TId extends string = string> {
 }
 
 /**
- * Author-facing column shape, accepted by `createTable()`'s `columns` config and
- * `setColumns()`. `accessor`/`visible`/`order`/`label` are optional here and resolved to a
- * full `ColumnDef` at store construction — `accessor` defaults to `(row) => row[id]`,
- * `visible` defaults to `true`, `order` defaults to the column's index in the array,
- * `label` defaults to `id`. Only `id` is required. The resolved store state
- * (`store.columns()`) is always a full `ColumnDef[]`. `TId` defaults to `string` so every
- * existing reference compiles untouched; `createTable()`'s overloads infer the literal union
- * declared in `columns` (ADR-0019).
+ * Author-facing column shape accepted by `createTable()`'s `columns` config and
+ * `setColumns()`. Only `id` is required; `accessor` defaults to `(row) => row[id]`, `visible`
+ * to `true`, `order` to the array index, `label` to `id` — resolved to a full `ColumnDef` at
+ * construction. `TId` defaults to `string` so existing references compile untouched.
  */
 export type ColumnDefInput<TRow = unknown, TId extends string = string> = Pick<
   ColumnDef<TRow, TId>,
@@ -114,16 +109,9 @@ export type ColumnDefInput<TRow = unknown, TId extends string = string> = Pick<
 > &
   Partial<Omit<ColumnDef<TRow, TId>, 'id'>>;
 
-/**
- * Known row keys autocomplete; any other string still compiles, so derived columns
- * (`accessor`-only, no matching `keyof TRow`) and columns added later via `setColumns()` stay
- * expressible.
- */
-export type ColumnId<TRow> = Extract<keyof TRow, string> | (string & {});
-
 export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
 
-/** A group's raw clustering value, opaque to consumers. See `withGrouping()`'s decisions doc. */
+/** A group's raw clustering value, opaque to consumers. */
 export type GroupKey = unknown;
 
 /** What `when` judges: a built cluster's own contents, before admission is decided. */

@@ -2,6 +2,7 @@ import { computed, linkedSignal, type ResourceStatus, type Signal } from '@angul
 import type { GroupOrder, GroupWhen } from '../../api/types';
 import type {
   AnyGroupingRule,
+  GroupAggregateRule,
   GroupingAsyncRule,
   GroupingRule,
   GroupKeyRule,
@@ -34,6 +35,12 @@ export function isGroupKeyRule<TRow>(
   rule: AnyGroupingRule<TRow>
 ): rule is GroupKeyRule<TRow> {
   return rule.kind === 'grouping-key';
+}
+
+export function isGroupAggregateRule<TRow>(
+  rule: AnyGroupingRule<TRow>
+): rule is GroupAggregateRule<TRow> {
+  return rule.kind === 'grouping-aggregate';
 }
 
 /**
@@ -97,19 +104,13 @@ export function buildAsyncGroupingRuleEntry<TRow>(
 }
 
 /**
- * Masks the declared level order by each level's rule result. `levels` owns which columns group
- * and in what nesting order; a rule only switches one of them off. A rule naming a column
- * `levels` does not contain is inert — it can never introduce a level, matching how a `when`
- * predicate, a `GroupOrderRule`, or a `GroupKeyRule` on an inactive column is a no-op.
+ * Masks the declared level order by each level's rule result.
  *
- * A pending entry (`result() === undefined`) makes the whole set abstain: `levels` passes
- * through unmasked, so a table holds its declared grouping rather than flashing ungrouped while
- * a rule resolves. A `when`-only rule declares no `enable` and never reaches here.
- *
- * Deliberately does NOT AND-combine same-column entries the way `engine/columns.ts`'s
- * `foldColumnRules` does for `VISIBLE`. Last write wins for a duplicate `columnId`, matching
- * `collectGroupPredicates`/`collectGroupOrder`/`collectGroupKeys` (undocumented edge case, not
- * validated).
+ * @remarks
+ * A rule only switches a level off — it can never introduce one; naming a column not present in
+ * `levels` is inert. A pending entry (`result() === undefined`) makes the whole set abstain, so
+ * `levels` passes through unmasked rather than flashing ungrouped. Last write wins for a
+ * duplicate `columnId`, not AND-combined.
  */
 export function maskGroupingLevels(
   levels: readonly string[],
@@ -160,9 +161,9 @@ export function collectGroupOrder<TRow>(
 }
 
 /**
- * Static per-field value extractors (D7/D9), collected off the same `rules` array from
+ * Static per-field value extractors, collected off the same `rules` array from
  * `applyGroupKey`'s `GroupKeyRule` declarations. `engine/grouping/clusters.ts`'s
- * `readGroupFieldValue` reads a field's raw value off the row and passes it through the matching
+ * `readGroupValue` reads a column's accessor output and passes it through the matching
  * extractor, if any — the fold never runs a rule callback itself. Last write wins for a
  * duplicate `columnId` (same undocumented edge case as the two collectors above).
  */
@@ -176,4 +177,21 @@ export function collectGroupKeys<TRow>(
     }
   }
   return extractors;
+}
+
+/**
+ * Static per-column aggregate fns, collected off the same `rules` array from
+ * `applyAggregate`'s `GroupAggregateRule` declarations. Last write wins for a duplicate
+ * `columnId` (same undocumented edge case as the collectors above).
+ */
+export function collectAggregates<TRow>(
+  rules: readonly AnyGroupingRule<TRow>[]
+): Map<string, (rows: TRow[]) => unknown> {
+  const aggregates = new Map<string, (rows: TRow[]) => unknown>();
+  for (const rule of rules) {
+    if (isGroupAggregateRule(rule)) {
+      aggregates.set(rule.columnId, rule.aggregateFn);
+    }
+  }
+  return aggregates;
 }

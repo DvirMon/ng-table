@@ -1,5 +1,5 @@
 import type { Resource, Signal } from '@angular/core';
-import type { ColumnId, GroupOrder, GroupWhen } from '../../types';
+import type { GroupOrder, GroupWhen } from '../../types';
 import { PATH_RECORDER, type PathRecorder } from '../../../schema/path-proxy';
 
 /**
@@ -55,23 +55,33 @@ export interface GroupKeyRule<TRow = unknown> {
   readonly extractValue: (fieldValue: unknown) => unknown;
 }
 
+/** One `applyAggregate(path.x, aggregateFn)` declaration — computes one
+ * summary value per cluster per column, over that cluster's own leaves at
+ * every depth. */
+export interface GroupAggregateRule<TRow = unknown> {
+  readonly kind: 'grouping-aggregate';
+  readonly columnId: string;
+  readonly aggregateFn: (rows: TRow[]) => unknown;
+}
+
 export type AnyGroupingRule<TRow = unknown> =
   | GroupingRule<TRow>
   | GroupingAsyncRule<TRow>
   | GroupOrderRule<TRow>
-  | GroupKeyRule<TRow>;
+  | GroupKeyRule<TRow>
+  | GroupAggregateRule<TRow>;
 
-/** One `initial` entry — static level config: which field, and its display label.
- * Resolves explicit `label` -> a column whose id matches `key` -> the raw field name. */
-export interface GroupingLevel<TRow> {
-  readonly key: ColumnId<TRow>;
+/** One `initial` entry — static level config: which column, and its display label.
+ * Resolves explicit `label`, else falls back to the matching column's own `label`. */
+export interface GroupingLevel<TId extends string = string> {
+  readonly columnId: TId;
   readonly label?: string;
 }
 
 /**
- * Handle fabricated by `GroupingPath`'s `get` trap for one row field — NOT a `ColumnHandle`.
- * Same recorder shape (`schema/path-proxy.ts` is key-space agnostic, shared with columns) but a
- * distinct type: a grouping schema fn never sees a declared column id.
+ * Handle fabricated by `GroupingPath`'s `get` trap for one declared column id — NOT a
+ * `ColumnHandle`. Same recorder shape (`schema/path-proxy.ts` is key-space agnostic, shared with
+ * columns) but a distinct type: it records `AnyGroupingRule`, not `ColumnRule`.
  */
 export interface GroupingHandle<TRow, K extends string = string> {
   readonly id: K;
@@ -81,13 +91,14 @@ export interface GroupingHandle<TRow, K extends string = string> {
 
 /**
  * Structural `path` proxy for a grouping schema fn — a property access fabricates a
- * `GroupingHandle` per row field. Keyed by `Extract<keyof TRow, string>`, not a declared column
- * id, since grouping partitions data and the identifier should name the thing being partitioned.
- * Same shape `FiltersPath<TRow>` already uses.
+ * `GroupingHandle` per declared column id. Mirrors `ColumnsPath<TRow, TId>`
+ * (`columns-schema/types.ts`), keying grouping by the same declared-id space columns use.
  */
-export type GroupingPath<TRow> = {
-  readonly [K in Extract<keyof TRow, string>]: GroupingHandle<TRow, K>;
+export type GroupingPath<TRow, TId extends string = string> = {
+  readonly [K in TId]: GroupingHandle<TRow, K>;
 };
 
 /** Schema fn passed as `WithGroupingConfig.schema`. */
-export type GroupingSchemaFn<TRow> = (path: GroupingPath<TRow>) => void;
+export type GroupingSchemaFn<TRow, TId extends string = string> = (
+  path: GroupingPath<TRow, TId>
+) => void;

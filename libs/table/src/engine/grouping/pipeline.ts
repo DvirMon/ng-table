@@ -1,3 +1,4 @@
+import type { ColumnDef } from '../../api/types';
 import { admitClusters, buildClusterNodes, flattenLeaves, sortClusters, type ClusterOpts } from './clusters';
 
 /**
@@ -8,12 +9,13 @@ import { admitClusters, buildClusterNodes, flattenLeaves, sortClusters, type Clu
 export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
+  columns: ColumnDef<TRow>[],
   opts?: ClusterOpts<TRow>
 ): TRow[] {
   if (grouping.length === 0) {
     return rows;
   }
-  const nodes = buildClusterNodes(rows, grouping, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn);
   const admitted = admitClusters(
     nodes,
     opts?.when,

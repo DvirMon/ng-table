@@ -1,10 +1,12 @@
 import type {
   ClusterSummary,
+  ColumnDef,
   GroupOrder,
   GroupSummary,
   GroupWhen,
   RowId,
 } from '../../api/types';
+import { readAccessor } from '../cells';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
@@ -23,17 +25,19 @@ export interface ClusterOpts<TRow> {
   readonly when?: GroupWhen<TRow>;
   /** Per-column admission, AND'd with `when`. A columnId with no active level is inert. */
   readonly columnWhen?: ReadonlyMap<string, GroupWhen<TRow>>;
-  /** Per-field value extractors (D7) — `row[levelKey]` runs through the matching entry, if any,
-   * before it becomes a cluster's group key. Absent entries read the raw field value. */
+  /** Per-field value extractors — the accessor's output runs through the matching entry, if
+   * any, before it becomes a cluster's group key. Absent entries read the raw accessor value. */
   readonly extractValueByColumn?: ReadonlyMap<string, (fieldValue: unknown) => unknown>;
-  /** Per-field explicit group-header labels (D7a). Resolution beyond this map (falling back to
-   * a matching column's own label, then the raw field name) happens in `render.ts`'s
-   * `emitGroupRows`. */
+  /** Per-field explicit group-header labels. Resolution beyond this map (falling back to a
+   * matching column's own label) happens in `render.ts`'s `emitGroupRows`. */
   readonly labelByColumn?: ReadonlyMap<string, string>;
+  /** Per-column aggregate fns. A columnId with no active level is inert, matching
+   * `groupOrderByColumn`. */
+  readonly aggregateByColumn?: ReadonlyMap<string, (rows: TRow[]) => unknown>;
 }
 
-/** Distinguishes `1` from `"1"` and normalizes `Date` — plain `String(value)` would collide the
- * first and stringify the second inconsistently across engines. */
+// Distinguishes `1` from `"1"` and normalizes `Date` — plain `String(value)` would collide the
+// first and stringify the second inconsistently across engines.
 function toGroupKey(value: unknown): string {
   if (value === null) return 'null';
   if (value === undefined) return 'undefined';
@@ -113,29 +117,36 @@ export function buildClusters<T>(
   }));
 }
 
-/** The raw field value at `key` on `row`, run through `extractValueByColumn`'s matching extractor
- * when one is declared (D7). `row` is read by bracket access, not a column's `accessor` — a
- * grouping level names a row field, not a column. */
-export function readGroupFieldValue<TRow>(
+/** The column's accessor output for `columnId` on `row`, run through `extractValueByColumn`'s
+ * matching extractor when one is declared — the extractor receives the accessor's output, never
+ * the raw row. An unknown `columnId` reads `undefined`. */
+export function readGroupValue<TRow>(
   row: TRow,
-  key: string,
-  extractValueByColumn?: ReadonlyMap<string, (fieldValue: unknown) => unknown>
+  columnId: string,
+  columnById: ReadonlyMap<string, ColumnDef<TRow>>,
+  reportedColumns: Set<string>,
+  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>
 ): unknown {
-  const raw = (row as Record<string, unknown>)[key];
-  const extractValue = extractValueByColumn?.get(key);
+  const column = columnById.get(columnId);
+  const raw = column ? readAccessor(column, row, reportedColumns) : undefined;
+  const extractValue = extractValueByColumn?.get(columnId);
   return extractValue ? extractValue(raw) : raw;
 }
 
 /** Shared by `pipeline.ts`'s `clusterRows` and `queries.ts`'s `rowsBeneathGroup`/`collectGroupIds`/
  * `collectAppliedLevels` — all cluster a raw `TRow[]` by the same resolved levels via the same
- * field-value extraction; only what the caller does with the resulting tree differs. */
+ * accessor read; only what the caller does with the resulting tree differs. Builds the column-id
+ * map and the accessor-throw report set once per call. */
 export function buildClusterNodes<TRow>(
   rows: TRow[],
   levels: readonly string[],
-  extractValueByColumn?: ReadonlyMap<string, (fieldValue: unknown) => unknown>
+  columns: ColumnDef<TRow>[],
+  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>
 ): ClusterNode<TRow>[] {
-  return buildClusters(rows, levels, (row, key) =>
-    readGroupFieldValue(row, key, extractValueByColumn)
+  const columnById = new Map(columns.map((column) => [column.id, column]));
+  const reportedColumns = new Set<string>();
+  return buildClusters(rows, levels, (row, columnId) =>
+    readGroupValue(row, columnId, columnById, reportedColumns, extractValueByColumn)
   );
 }
 
@@ -148,9 +159,9 @@ function reportGroupWhenError(columnId: string): void {
   );
 }
 
-/** One predicate's vote on one cluster — `undefined` predicate is vacuously admitting (no floor
- * from that side). A throw admits (ADR-0014's visible fallback) and reports once per column per
- * `reportedColumns` set. */
+// One predicate's vote on one cluster — `undefined` predicate is vacuously admitting (no floor
+// from that side). A throw admits (ADR-0014's visible fallback) and reports once per column per
+// `reportedColumns` set.
 function evaluateGroupWhen<TRow>(
   predicate: GroupWhen<TRow> | undefined,
   summary: ClusterSummary<TRow>,
@@ -231,7 +242,7 @@ function reportGroupOrderError(): void {
  * own `columnId` (every node in one list shares one, per `buildClusters`'s invariant). `toRows`
  * bridges `T` (raw `TRow` for the pipeline stage, a render-row wrapper for the render stage) to
  * `GroupSummary.rows`. `reported` is shared across the whole recursive walk for one caller's
- * evaluation. See `withGrouping()`'s decisions doc.
+ * evaluation.
  */
 export function sortClusters<T, TRow>(
   nodes: ClusterNode<T>[],
@@ -251,11 +262,11 @@ export function sortClusters<T, TRow>(
   }));
 }
 
-/** Stable partition — admitted siblings in first-occurrence order, then dissolved siblings in
- * first-occurrence order — the default sibling order for any level with no comparator of its
- * own. Recurses so the same rule applies at every depth, but returns `nodes` itself, and each
- * untouched node itself, when nothing in the subtree is dissolved: reference-preserving, which
- * is load-bearing for "composing `withGrouping()` with no extra config changes nothing". */
+// Stable partition — admitted siblings in first-occurrence order, then dissolved siblings in
+// first-occurrence order — the default sibling order for any level with no comparator of its
+// own. Recurses so the same rule applies at every depth, but returns `nodes` itself, and each
+// untouched node itself, when nothing in the subtree is dissolved: reference-preserving, which
+// is load-bearing for "composing `withGrouping()` with no extra config changes nothing".
 function partitionAndRecurse<T, TRow>(
   nodes: ClusterNode<T>[],
   groupOrderByColumn: ReadonlyMap<string, GroupOrder<TRow>> | undefined,
