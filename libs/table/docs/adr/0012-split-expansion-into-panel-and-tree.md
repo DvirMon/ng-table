@@ -1,6 +1,6 @@
 # ADR-0012 — Split `withExpansion()` into a detail-panel feature and a `withTree()` feature
 
-**Status:** proposed
+**Status:** accepted
 **Date:** 2026-09-03
 **Related:** [ADR-0011](0011-chained-render-stages.md) (supplies the render stage `withTree()`
 claims), [ADR-0006](0006-row-id-state-reconciliation.md) (`onRowsRemoved` pruning),
@@ -86,7 +86,8 @@ so it takes AG Grid's split.
    members, no render stage, no `childrenAccessor`. It keeps the existing exported name because
    panel expansion is the common case and the name reads correctly for it.
 2. **`withTree()` is new** and owns everything tree-specific: `childrenAccessor`, `isExpandable`,
-   `depth`, and the `'tree'` render stage from ADR-0011.
+   and the `'tree'` render stage from ADR-0011. `depth` itself is engine-owned since ADR-0023 —
+   derived by `flattenVisible`'s walk from a node's position, not stamped by any feature's stage.
 3. **Shared open-id machinery is extracted to `createExpansionStore()`** — a factory, **not a
    feature**, following the `api/features/editing-state.ts` precedent (D37/A2): `withOptimistic()`
    and `withRowEdit()` each call `createEditingStore()`, so neither reads the other's signal and
@@ -96,14 +97,26 @@ so it takes AG Grid's split.
 4. **Both features declare `onRowsRemoved`** and prune their id sets via `pruneByIds()`, per
    ADR-0006. This is the substantive reason panel state lives in the store at all rather than in a
    consumer's own `Set`.
-5. **Group collapse delegates to `withExpansion()`**, not `withTree()`. `features/expansion.md`'s
+5. ~~**Group collapse delegates to `withExpansion()`**, not `withTree()`. `features/expansion.md`'s
    "dual use" note — group ids sharing the `expandedRows` set — stops being a hack: a collapsed
-   group is open-id tracking with no row synthesis, which is exactly the panel feature's job.
-6. **[G6](../1-state/work/row-editing/active/with-row-editing/5-gaps.md) is `withTree()`'s to fix.** Nested children
+   group is open-id tracking with no row synthesis, which is exactly the panel feature's job.~~
+   **Reversed.** The panel declares no `renderStages` and no `expandedRows` contribution
+   (D8/E12) — it is deliberately invisible to the flatten walk, so it cannot carry collapse
+   state for anything the walk renders. Group collapse delegates to **`withTree()`** instead:
+   `createTable(config, withGrouping(schema), withTree())`. `features/expansion.md`'s "dual
+   use" note is retired, not resolved as originally framed here — see
+   [`2-spec.md` §Grouping](../1-state/work/expansion/active/panel-tree-split/2-spec.md).
+6. ~~**[G6](../1-state/work/row-editing/active/with-row-editing/5-gaps.md) is `withTree()`'s to fix.** Nested children
    get `data` but no `sourceIndex` (`indexById` is built from top-level `data()` only), so
    `ngp-table-row-field.resolve.ts` returns `null` and edits silently no-op on them. Under
    ADR-0011 this is a property of the `'tree'` render stage, and G6 is neither invalid nor a
-   state-layer overreach into UI — it is a correctness bug in a feature nothing currently composes.
+   state-layer overreach into UI — it is a correctness bug in a feature nothing currently composes.~~
+   **Superseded — closed as impossible, not fixed.** `withTree()` ships real-row parents only
+   (E5): every tree node, at any depth, is already an entry in `data()`, so `indexById` resolves
+   a `sourceIndex` for it by construction. There is no invented-parent case left for a render
+   stage to stamp, and `sourceIndex` was never something a render stage stamps in the first
+   place. See [`2-spec.md` §Further Notes, "G6 is closed as impossible, not
+   fixed"](../1-state/work/expansion/active/panel-tree-split/2-spec.md).
 
 ## Alternatives considered
 
@@ -113,7 +126,7 @@ so it takes AG Grid's split.
 | Keep `withExpansion()` as tree, name the new one `withRowDetail()` | Rejected in discussion. Panel expansion is the far more common consumer need; the widely-understood reading of "expansion" is the panel, and tree tables are the specialist case that deserves the explicit name |
 | Drop the tree feature entirely; support only flat data + consumer panels | Considered and rejected — tree-grid is a stated goal. Also inconsistent to keep the recursive flatten in the codebase while declaring the contract panel-only: that leaves a feature rendering children it cannot edit |
 | Leave panel state entirely to the consumer (CDK's approach — no feature at all) | Loses `onRowsRemoved` pruning (ADR-0006), so deleting an open row orphans its id, and loses `data-*` wiring on the row directive. This is the weakest part of the case for a panel feature, but pruning alone earns it |
-| Share one `createExpansionStore()` instance between both features (the editing-state pattern verbatim) | Editing shares one store so the two features see each other's state. Here a tree-expanded row and an open detail panel are semantically different states that should not collide in one set — so each feature gets its own instance, which is simpler and still order-independent |
+| Share one `createExpansionStore()` instance between both features (the editing-state pattern verbatim) | Editing shares one store so the two features see each other's state. Here a tree-expanded row and an open detail panel are semantically different states that should not collide in one set — so each feature gets its own instance. What actually prevents the two states from colliding on render is the **union `flattenVisible` reads**, not instance separation: the panel declares no `renderStages` and no `expandedRows` contribution at all (D8/E12), so it has nothing to contribute to that union regardless of how many store instances exist. Separate instances keep the two id sets from overwriting each other's writes; the union contract is what keeps an open panel from revealing rows |
 
 ## Consequences
 
@@ -139,8 +152,8 @@ so it takes AG Grid's split.
   first, then this, then G6 nearly falls out.
 
 **Verification plan**
-- Composing `[withExpansion(), withGrouping()]` constructs without throwing — the case that is
-  impossible today.
+- Composing `[withGrouping(), withTree()]` constructs without throwing, in either argument
+  order — the collapsible-grouping composition this ADR settles on.
 - Composing `[withExpansion(), withTree()]` constructs without throwing (no `claimMember()`
   collision between the two id sets).
 - `withExpansion()` alone declares no render stage: `renderRows()` is 1:1 with `rows()` and every

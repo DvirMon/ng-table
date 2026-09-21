@@ -10,8 +10,13 @@ audience: developers
 
 **Read this before changing anything about expansion or tree.** It is the
 complete list of decisions taken about this capability, one line each, oldest
-first. The contract itself — what expansion does today — is
-[`1-state/features/expansion.md`](../1-state/features/expansion.md).
+first. The contract itself — what each feature does today — split across two
+specs since #121: [`1-state/features/expansion.md`](../1-state/features/expansion.md)
+(the panel) and [`1-state/features/tree.md`](../1-state/features/tree.md) (the
+tree-grid). This log still covers both — `docs/status.md`'s generator looks a
+capability's log up by filename, so `tree`'s row currently renders no
+Decisions link there; its history stays here under `capability: expansion`
+until/unless that's revisited.
 
 This log **restates nothing**. Every row links to the record that holds the
 rationale, the counter-arguments and the rejected alternatives. If a row needs
@@ -37,23 +42,23 @@ cross-references still resolve.
 |---|---|---|---|---|
 | E1 | `childrenAccessor` is a configurable accessor defaulting to `row.children`, not a cast | 08-07 | shipped · default dropped by E6 | WE |
 | E2 | No `manual` config — it would toggle no behavior | 08-07 | standing | WE |
-| E3 | `expandAll`/`collapseAll` emit `rowExpanded` once per affected id; no separate bulk event | 09-06 | shipped · `withExpansion()`'s public surface stayed E3-shaped via an adapter over E18 until #121; superseded by E19 | AUD |
+| E3 | `expandAll`/`collapseAll` emit `rowExpanded` once per affected id; no separate bulk event | 09-06 | shipped · `withExpansion()`'s public surface stayed E3-shaped via an adapter over E18 until #121 landed; superseded by E19 | AUD |
 | E4 | Stale restored ids are kept, not dropped — staleness is caller-owned (selection D8 verbatim) | 09-08 | standing | AUD |
-| E5 | `withTree()` accepts real-row parents only — every tree node is an entry in the flat `data()`; no `getDataPath`, since invented parents are `withGrouping()`'s mechanism | 09-20 | accepted, not built | PTS D1 |
-| E6 | `childrenAccessor` is required on `withTree()`; the `row.children` fallback is dropped, which closes G6 as impossible rather than fixed | 09-20 | accepted, not built · required half amended by E13 | PTS D2 |
-| E7 | `everExpanded` is panel-only — the shared store stops at open-id machinery, `withExpansion()` adds it on top | 09-20 | accepted, not built | PTS D3 |
-| E8 | `setExpanded(ids)` is the store's general write; `expandAll(ids)`/`collapseAll()` are removed as store verbs, and `withTree()` keeps `expandAll()` for the discovery walk only | 09-20 | accepted, not built · amended by E11 | PTS D4 |
-| E9 | `expansionState` tri-state is a `withTree()` member and ships with it; the panel side computes the equivalent in one line | 09-20 | accepted, not built | PTS D5 |
-| E10 | Both features ship as ADR-0015 slices (`table.expansion`, `table.tree`) inside #101, rather than flat prefixed members superseded by #50 | 09-20 | accepted, not built | PTS D6 |
-| E11 | `setExpanded` is internal; the public surface is `toggle`/`expand`/`collapse`/`set`, with an omitted `ids` meaning all — `expandAll`/`collapseAll` disappear as names | 09-20 | accepted, not built | PTS D7 |
-| E12 | `withGrouping()` is static; collapsible group headers come from composing `withTree()`, and `withExpansion()` contributes nothing to render visibility — reverses ADR-0012 Decision 5 and closes the union collision | 09-20 | accepted, not built | PTS D8 |
-| E13 | `childrenAccessor` is optional with no fallback — omitted means collapse-only, and `withTree()` claims the `'tree'` stage only when an accessor is given | 09-20 | accepted, not built | PTS D9 |
-| E14 | `initial` ships with the split, seeded in `createExpansionStore()` | 09-20 | accepted, not built | PTS D10 |
-| E15 | `withTree()` has no declared levels and never gains them — a declared-axis hierarchy is `withGrouping()`; `isExpandable` is the only row-selection knob | 09-20 | standing | PTS D11 |
-| E16 | A throwing `childrenAccessor` degrades to "no children" and reports once per evaluation (ADR-0014), never propagates | 09-20 | accepted, not built | PTS D12 |
-| E17 | One emission rule for every write: once per id in the symmetric difference of the old and new open sets — generalizes E3 across `toggle`/`expand`/`collapse`/`set` | 09-20 | accepted, not built · superseded by E18 | PTS spec |
+| E5 | `withTree()` accepts real-row parents only — every tree node is an entry in the flat `data()`; no `getDataPath`, since invented parents are `withGrouping()`'s mechanism | 09-20 | shipped in `with-tree.ts` (#119) | PTS D1 |
+| E6 | `childrenAccessor` is required on `withTree()`; the `row.children` fallback is dropped, which closes G6 as impossible rather than fixed | 09-20 | shipped in `with-tree.ts` (#119) · required half amended by E13 | PTS D2 |
+| E7 | `everExpanded` is panel-only — the shared store stops at open-id machinery, `withExpansion()` adds it on top | 09-20 | shipped in `with-expansion.ts` (#121) | PTS D3 |
+| E8 | `setExpanded(ids)` is the store's general write; `expandAll(ids)`/`collapseAll()` are removed as store verbs, and `withTree()` keeps `expandAll()` for the discovery walk only | 09-20 | shipped · amended by E11 | PTS D4 |
+| E9 | `expansionState` tri-state is a `withTree()` member and ships with it; the panel side computes the equivalent in one line | 09-20 | shipped in `with-tree.ts` (#119) | PTS D5 |
+| E10 | Both features ship as ADR-0015 slices (`table.expansion`, `table.tree`) inside #101, rather than flat prefixed members superseded by #50 | 09-20 | shipped — `with-tree.ts` (#119) and `with-expansion.ts` (#121) | PTS D6 |
+| E11 | `setExpanded` is internal; the public surface is `toggle`/`expand`/`collapse`/`set`, with an omitted `ids` meaning all — `expandAll`/`collapseAll` disappear as names | 09-20 | shipped | PTS D7 |
+| E12 | `withGrouping()` is static; collapsible group headers come from composing `withTree()`, and `withExpansion()` contributes nothing to render visibility — reverses ADR-0012 Decision 5 and closes the union collision | 09-20 | shipped in `with-expansion.ts` (#121) | PTS D8 |
+| E13 | `childrenAccessor` is optional with no fallback — omitted means collapse-only, and `withTree()` claims the `'tree'` stage only when an accessor is given | 09-20 | shipped in `with-tree.ts` (#119) | PTS D9 |
+| E14 | `initial` ships with the split, seeded in `createExpansionStore()` | 09-20 | shipped | PTS D10 |
+| E15 | `withTree()` has no declared levels and never gains them — a declared-axis hierarchy is `withGrouping()`; `isExpandable` is the only row-selection knob | 09-20 | standing · shipped in `with-tree.ts` (#119) | PTS D11 |
+| E16 | A throwing `childrenAccessor` degrades to "no children" and reports once per evaluation (ADR-0014), never propagates | 09-20 | shipped in `with-tree.ts` (#119) — the panel has no `childrenAccessor` to degrade | PTS D12 |
+| E17 | One emission rule for every write: once per id in the symmetric difference of the old and new open sets — generalizes E3 across `toggle`/`expand`/`collapse`/`set` | 09-20 | superseded by E18 | PTS spec |
 | E18 | `changed` emits once per write, not once per id — payload is the full symmetric difference as `{ added, removed }` (`ExpansionChange`), matching `SelectionChange`. Resolves #124: 8/8 surveyed libraries (AG Grid, TanStack, MUI X, rc-table, PrimeReact, PrimeNG, Angular CDK) emit at most one event per batch action; CDK's `SelectionModel.changed` is the direct precedent | 09-20 | shipped in `createExpansionStore()`, landed ahead of #119 after #118 closed without it | PTS discovery |
-| E19 | `table.expansion.changed` exposes `ExpansionChange` directly — no per-id adapter. Matches `table.tree.changed` and `SelectionChange`; the `mergeMap`-to-`RowId` shim that preserved E3's contract is dropped, absorbed into the one breaking change #121 already causes (D6/E10) | 09-21 | accepted, not built — pinned in #121's acceptance criteria | PTS spec |
+| E19 | `table.expansion.changed` exposes `ExpansionChange` directly — no per-id adapter. Matches `table.tree.changed` and `SelectionChange`; the `mergeMap`-to-`RowId` shim that preserved E3's contract is dropped, absorbed into the one breaking change #121 already causes (D6/E10) | 09-21 | shipped in `with-expansion.ts` (#121) | PTS spec |
 
 ## Still open
 
@@ -63,8 +68,10 @@ cross-references still resolve.
   not discoverable from an accessor, so the denominator is empty. A toolbar
   wanting tri-state over group headers computes it from `groupIds()` and
   `tree()`. Revisit if a consumer asks for an explicit denominator input.
-- **`ReadonlySet<RowId>` narrowing** on both slices (today `Signal<Set<RowId>>`)
-  — aligns with `withSelection()`, confirm at slicing time.
+- ~~**`ReadonlySet<RowId>` narrowing** on both slices (today `Signal<Set<RowId>>`)
+  — aligns with `withSelection()`, confirm at slicing time.~~ — resolved: both
+  `ExpansionSlice` and `TreeSlice` call signatures return `ReadonlySet<RowId>`
+  as shipped (#119, #121).
 - ~~E3/E17's per-id emission reconsidered against `SelectionChange`~~ —
   resolved by E18. [#124](https://github.com/DvirMon/ng-table/issues/124) is
   folded into #118's store shape rather than a separate migration, since

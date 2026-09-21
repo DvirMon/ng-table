@@ -38,7 +38,8 @@ A slice is a callable and a call returns exactly one value. The rule for what th
 | `editing` | `ReadonlySet<RowId>` (`open`) | 1 — already shipped |
 | `sorting` | `SortRule[]` | 1 — `sortDirections`, `sortChanged` become properties |
 | `selection` | `ReadonlySet<RowId>` | 1 — `selectionChanged` becomes a property |
-| `expansion` | `Set<RowId>` | 1 — `everExpanded`, `rowExpanded` become properties |
+| `expansion` | `ReadonlySet<RowId>` | 1 — `everExpanded`, `changed` become properties (panel — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
+| `tree` | `ReadonlySet<RowId>` | 1 — `changed`, `state` become properties (tree-grid — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
 | `filtering` | *(not callable)* | 3 — `columnFilters`/`globalFilter` are peers |
 
 ## `withComputed()` block placement

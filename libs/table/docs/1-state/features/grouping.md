@@ -183,7 +183,8 @@ sort changes.
 ## Render layer — `renderRows`
 
 `withGrouping()` claims the `'group'` render stage ([ADR-0011](../../adr/0011-chained-render-stages.md);
-`withExpansion()` claims `'tree'`, leaving `'group'` free). It walks the clustered `rows()`,
+`withTree()` claims `'tree'` when composed with a `childrenAccessor`, leaving `'group'` free).
+It walks the clustered `rows()`,
 inserts a `kind: 'group'` header at each cluster boundary with `id` synthesized as
 `group:${columnId}:${value}`, computes `aggregates` over that cluster's leaves, and stamps every
 header and leaf with its parent's id — emitting the full tree **unconditionally**.
@@ -200,9 +201,12 @@ pure `TRow[]`, unaffected by grouping or collapse. Template and virtual-scroll c
 Collapsing a group omits its descendants through the **engine-owned `'prune'` render stage**
 ([ADR-0017](../../adr/0017-engine-owned-descendant-prune.md)), which unions every composed
 feature's `expandedRows`. `withGrouping()` reads no expansion state at all and composes in any
-argument order (G23). The header itself always still renders.
+argument order (G23). The header itself always still renders. Collapsible grouping is
+`createTable(config, withGrouping(schema), withTree())` — `withExpansion()` (the detail panel)
+declares no `expandedRows` contribution at all and cannot drive group collapse
+([ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md)).
 
-Without `withExpansion()` composed, everything renders flat and expanded — valid standalone use.
+Without `withTree()` composed, everything renders flat and expanded — valid standalone use.
 
 `rowsOf(group)` stays correct under collapse: it re-derives the cluster tree from `rows()`
 (pipeline output) rather than scanning `renderRows()` (G20).

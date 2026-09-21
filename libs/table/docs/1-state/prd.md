@@ -59,7 +59,7 @@ This PRD covers the **state layer only** — the four already-drilled features (
 20. As an end user, I want to group rows by a single column, so that I can see my data organized into collapsible categories.
 21. As an end user, I want each group to show an aggregated summary per column, so that I get at-a-glance totals without manual calculation.
 22. As a design-system consumer, I want to supply a custom `aggregateFn` per column, so that I control exactly how group summaries are computed.
-23. ~~As a design-system consumer, I want `withGrouping()` to require `withExpansion()` at compile time~~ — **withdrawn 2026-07-31.** `withGrouping()` composes standalone for static grouping and reads `expandedRows` as a lazy guarded read, typed only when `withExpansion()` precedes it.
+23. ~~As a design-system consumer, I want `withGrouping()` to require `withExpansion()` at compile time~~ — **withdrawn 2026-07-31**, and further corrected by #121 (ADR-0012): `withGrouping()` composes standalone for static grouping, reads no expansion state at all, and never has a compile-time dependency on either expansion feature. Collapsible grouping is an opt-in runtime composition, `createTable(config, withGrouping(schema), withTree())` — never `withExpansion()`, which declares no `expandedRows` contribution and cannot drive group collapse.
 24. As a design-system consumer, I want `withGrouping({ manual: true })`, so that I can delegate grouping to my server while the store still fires `groupChanged`.
 25. As a design-system consumer, I want `setGrouping()` / `clearGrouping()`, so that I can drive the active group-by column programmatically.
 
@@ -70,7 +70,7 @@ This PRD covers the **state layer only** — the four already-drilled features (
 28. As a design-system consumer, I want `toggleExpanded()`, `expandAll()`, and `collapseAll()`, so that I can control expansion state programmatically (e.g. a "collapse all" toolbar action).
 29. As a design-system consumer, I want a `rowExpanded` event fired on every expand/collapse change, so that I can lazy-load a row's children on first expand.
 30. As a design-system consumer, I want `withExpansion()` to have zero compile-time dependencies beyond the global `trackBy`, so that I can use expansion independently of grouping, sorting, or filtering.
-31. As a design-system consumer, I want group-row collapse/expand state to reuse the same `expandedRows` set as row expansion (no separate state in `withGrouping()`), so that the mental model for "expanded" stays single and consistent across the table.
+31. As a design-system consumer, I want group-row collapse/expand state to reuse the same `expandedRows` union as `withTree()`'s row expansion (no separate state in `withGrouping()`), so that the mental model for "expanded" stays single and consistent across the table. `withExpansion()` (the detail panel) is deliberately excluded from that union (D8/E12) — an open panel must never change which rows render.
 
 **Filtering**
 
