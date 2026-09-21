@@ -186,10 +186,10 @@ export type RowUpdater<TRow> = (
  * program against — it never references engine types, so swapping the internal
  * state-management implementation is not a breaking change.
  */
-export interface TableStore<TRow> {
+export interface TableStore<TRow, TId extends string = string> {
   /** Read: the folded, rule-applied column list. Write: `.update(updater)` — e.g.
    * `table.columns.update(reorderColumns(ids))`. */
-  readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
+  readonly columns: WritableView<ColumnDef<TRow, TId>[], ColumnsUpdater<TRow, TId>>;
   readonly rows: Signal<TRow[]>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly trackBy: TrackByFn<TRow>;

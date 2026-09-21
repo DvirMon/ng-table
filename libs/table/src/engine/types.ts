@@ -25,14 +25,14 @@ export interface TableEngineConfig<TRow> {
 // Currently held only by the internally-spliced column-schema wiring — consumer feature
 // factories instead receive the accumulating store typed as `Feature<In, Out>`'s `In`.
 /** The engine handle internal features receive. */
-export interface TableCore<TRow> {
+export interface TableCore<TRow, TId extends string = string> {
   /** Read: the folded, rule-applied columns. Write: `.update()` targets `baseColumns`, never the fold. */
-  readonly columns: WritableView<ColumnDef<TRow>[], ColumnsUpdater<TRow>>;
+  readonly columns: WritableView<ColumnDef<TRow, TId>[], ColumnsUpdater<TRow, TId>>;
   /**
    * Engine-internal only — the pre-fold declared columns `columns` overlays rules onto;
    * read-only here so a rule never observes its own output.
    */
-  readonly baseColumns: Signal<ColumnDef<TRow>[]>;
+  readonly baseColumns: Signal<ColumnDef<TRow, TId>[]>;
   // Lazy `computed` reading the stage registry at evaluation time; the registry is complete
   // before any consumer can read it, so this and `renderRows` below are safe to close over
   // during composition.
@@ -95,6 +95,16 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
 // `RowOf` still infers through it.
 export type Shape = { rows: Signal<readonly unknown[]> };
 export type RowOf<S> = S extends { rows: Signal<readonly (infer R)[]> } ? R : never;
+
+/** Recovers the declared column-id union from a store shape, mirroring `RowOf`. Falls back to
+ * `string` when the shape has no `columns` member — a test double, or `Shape` itself (ADR-0019). */
+// Both `any`s are `infer`/wildcard slots, not `unknown`: `Updater`'s contravariant `columns`
+// param and `ColumnDef`'s contravariant `accessor` param both reject `unknown` in this position.
+export type ColumnIdOf<S> = S extends {
+  columns: WritableView<ColumnDef<any, infer I>[], any>;
+}
+  ? I
+  : string;
 
 /** A composable feature: a function of the store built so far. Row type recovered as `RowOf<In>`. */
 export interface Feature<In extends Shape, Out extends object> {
