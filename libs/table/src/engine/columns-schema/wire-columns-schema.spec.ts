@@ -36,10 +36,9 @@ function makeColumns() {
 
 // Mirrors `table.store.spec.ts` / `with-sorting.spec.ts` — builds a live store instance inside
 // an injection context. Generic over `TId` (not fixed to `TableConfig<Row>`'s default `string`)
-// so a caller's literal `columns` still contextually types its `columnsSchema` callback — the
-// returned store itself stays erased to `string` (ADR-0019's amendment: `TId` never reaches
-// `TableStore`).
-function makeStore<TId extends string = string>(cfg: TableConfig<Row, TId>): TableStore<Row> {
+// so a caller's literal `columns` still contextually types its `columnsSchema` callback, and the
+// returned store now carries that same `TId` (#113).
+function makeStore<TId extends string = string>(cfg: TableConfig<Row, TId>): TableStore<Row, TId> {
   return TestBed.runInInjectionContext(() =>
     createTable(signal<Row[]>([]), cfg)
   );
@@ -315,7 +314,12 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'id')?.visible).toBe(true);
 
     expect(() => {
-      store.columns.update(setColumns([{ id: 'status', visible: true }]));
+      // `TId` explicit: the array itself only names a subset of the declared ids —
+      // dropping/re-adding columns is this test's whole point — so it can't be inferred
+      // from the argument the way `makeColumns()`'s call sites can (#113).
+      store.columns.update(
+        setColumns<Row, 'name' | 'status' | 'id'>([{ id: 'status', visible: true }])
+      );
       TestBed.tick();
     }).not.toThrow();
 
@@ -325,7 +329,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
     // `id` rejoins the list — its rule picks back up on the next evaluation, no re-registration.
     store.columns.update(
-      setColumns([
+      setColumns<Row, 'name' | 'status' | 'id'>([
         { id: 'status', visible: true },
         { id: 'id', accessor: (row: Row) => row.id, visible: false },
       ])

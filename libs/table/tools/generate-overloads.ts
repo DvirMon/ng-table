@@ -56,11 +56,10 @@ const CREATE_TABLE: OverloadSpec = {
     "import type { Feature } from '../engine/types';",
     "import type { TableConfig, TableDataInput, TableStore } from './types';",
   ],
-  // `TId` is inferred from `config` (both `columns` and `columnsSchema` sit on that one
-  // argument, ADR-0019) but never reaches the accumulation base — no feature or the returned
-  // `TableStore` names a column id any more (D7: grouping moved to row-keyed paths).
+  // `TId` flows from `config.columns` into every slot's `In` and into the return type
+  // (ADR-0019's amendment).
   baseGenerics: ['TRow', 'TId extends string'],
-  base: 'TableStore<TRow>',
+  base: 'TableStore<TRow, TId>',
   leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow, TId>'],
   includeZeroFeature: true,
   renderReturn: (base, featureCount) =>

@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { SORT_NULLS } from '../../engine/columns';
 import { readAccessor } from '../../engine/cells';
-import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
+import type { ColumnIdOf, Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { readColumnMeta } from '../../columns-schema/metadata';
 import type { SortNullsOpts } from '../../columns-schema/rules';
 import { createTableFeature } from '../create-table-feature';
@@ -16,7 +16,9 @@ export interface WithSortingConfig {
 /** The store slice this feature reads, row-typed. F-bounded: `In extends SortingInput<In>`
  * gives the factory `input.columns(): ColumnDef<RowOf<In>>[]` with no cast. `& Shape` is the
  * bootstrap `RowOf<In>` needs, not a read: this feature touches only `columns`. */
-type SortingInput<In> = Pick<TableStore<RowOf<In>>, 'columns'> & Shape;
+// Recovers `TId` via `ColumnIdOf<In>` instead of defaulting to `string` — otherwise `In`'s real
+// column-id union can't round-trip through this pick (#113).
+type SortingInput<In> = Pick<TableStore<RowOf<In>, ColumnIdOf<In>>, 'columns'> & Shape;
 
 export interface SortingMembers {
   readonly sorting: Signal<SortRule[]>;
@@ -175,8 +177,10 @@ function sortRows<TRow>(
   });
 }
 
-function buildSortingSpec<TRow>(
-  input: Pick<TableStore<TRow>, 'columns'>,
+// `TId` is never read in the body — it exists only so `input`'s type matches whatever id union
+// the caller's `SortingInput<In>` resolved to (#113).
+function buildSortingSpec<TRow, TId extends string = string>(
+  input: Pick<TableStore<TRow, TId>, 'columns'>,
   config: WithSortingConfig
 ): TableFeatureSpec<TRow, SortingMembers> {
   const manual = config.manual ?? false;
