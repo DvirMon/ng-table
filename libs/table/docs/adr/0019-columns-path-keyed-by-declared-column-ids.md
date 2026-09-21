@@ -159,3 +159,8 @@ where that field was never declared as a column — a bug class invisible today.
    feature's schema fn needed. `columnsSchema` sits on the same argument as `columns`, so the
    surviving decision never exercises this path. Kept as the record that it does work, should a
    future surface need it.
+
+   **That future surface shipped.** The recovery this spike tested is `ColumnIdOf<S>` in
+   `engine/types.ts`, threaded into every `createTable()` feature slot via `TableStore<TRow, TId>`
+   and asserted in `api/create-table.types.spec.ts`, under
+   [#113](https://github.com/DvirMon/ng-table/issues/113).

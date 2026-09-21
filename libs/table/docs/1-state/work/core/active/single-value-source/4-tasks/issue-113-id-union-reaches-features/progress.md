@@ -1,14 +1,14 @@
 # Implementation Progress — the declared column-id union reaches a feature's config
 
 **Issue:** [#113](https://github.com/DvirMon/ng-table/issues/113)
-**Status:** 0 / 4 complete
+**Status:** 4 / 4 complete
 
 | Step | Title | Status | PR |
 |---|---|---|---|
-| 1 | `TId` survives on the store shape | ⬚ pending | — |
-| 2 | The generator carries `TId` into every slot | ⬚ pending | — |
-| 3 | The literal-union guard | ⬚ pending | — |
-| 4 | Record the escape-hatch decision | ⬚ pending | — |
+| 1 | `TId` survives on the store shape | ✅ done | — |
+| 2 | The generator carries `TId` into every slot | ✅ done | — |
+| 3 | The literal-union guard | ✅ done | — |
+| 4 | Record the escape-hatch decision | ✅ done | — |
 
 ## Graph
 

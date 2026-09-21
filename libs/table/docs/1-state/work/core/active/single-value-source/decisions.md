@@ -63,6 +63,27 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   which is the exact class of bug this migration exists to close, so threading columns into the
   pipeline walk is not optional.
 
+- **The arity escape hatch — does it carry the union or drop it? It carries it, and
+  `composeFeatures()` needed no change.** `ComposeFeaturesOverloads` is generic in
+  `In extends Shape`, and `In` is bound at the call site to the concrete
+  `TableStore<TRow, TId> & O1 & …` the enclosing `createTable()` slot supplies. `ColumnIdOf<In>`
+  recovers structurally off that intersection, so the union survives the composite without the
+  generator ever naming `TId` there. Evidence: case 4 of
+  [`api/create-table.types.spec.ts`](../../../../../../src/api/create-table.types.spec.ts)
+  (#113 Step 3) — a column-naming probe inside a `composeFeatures()` bundle, asserting both the
+  literal union and the typo rejection. **Reopens if:** a composite must name a column without
+  an enclosing `createTable()` call to bind `In` — no such caller exists today. That would need
+  `TRow`/`TId` added to `COMPOSE_FEATURES`'s `baseGenerics` in `tools/generate-overloads.ts`, a
+  materially bigger change. See [#113](https://github.com/DvirMon/ng-table/issues/113).
+
+- **Does `ColumnIdOf` join the public barrel? No — matches `RowOf`'s existing precedent.**
+  Neither is exported from `index.ts`. Both are engine-internal recovery types: a call site
+  never names them, TypeScript recovers `In`'s row/id union structurally at the point of use
+  (as `create-table.types.spec.ts` itself does). A third-party author writing an F-bounded
+  feature in `with-sorting.ts`'s own style would need one exported — but none of `Shape`,
+  `Feature`, or `RowOf` are exported today either, so that gap predates #113 and is not this
+  issue's to close.
+
 - **#111 — extract one runner or two? One. Reading B.**
   The recording form's runner has real duplication to collapse: `runColumnsSchemaFn`
   (`columns-schema/schema.ts:36-44`) and `runGroupingSchemaFn` (`with-grouping/schema.ts:38-46`)
@@ -195,9 +216,9 @@ owed — is docs and blocks nothing mechanically.
   becomes an index signature with no error (`api/create-table.spec.ts:20-24`). This migration
   spreads that hazard from one config property to every feature schema. Mitigation is a
   `*.types.spec.ts` guard asserting the union is literal, not `string`, before K2 depends on it.
-- **`compose-features.overloads.ts` has no `TRow` and no `TId`** (`:11-21`). K1 must decide
-  whether the arity escape hatch carries the union or drops it; dropping it means a composed
-  feature cannot name a column.
+- **`compose-features.overloads.ts` has no `TRow` and no `TId`** (`:11-21`) — **settled, see
+  "Questions settled while sequencing"**: it carries the union structurally, with no generator
+  change, and #113 Step 3's case 4 is the evidence.
 - **Two walks, one value.** V2 must make `clusterRows` and `buildGroupRenderRows` resolve
   identically. A test asserting the pipeline tree and the render tree agree on a derived-accessor
   column is the acceptance gate for V2, not a nice-to-have.
@@ -216,4 +237,6 @@ owed — is docs and blocks nothing mechanically.
 - `npm run llms:check` clean.
 - A spec proving pipeline and render walks agree on a derived-accessor column (V2).
 - A spec proving a declaration naming an undeclared column id throws at construction (M3).
-- A `*.types.spec.ts` proving the column-id union is literal, not widened to `string` (K1).
+- A `*.types.spec.ts` proving the column-id union is literal, not widened to `string` (K1) —
+  **satisfied**: [`api/create-table.types.spec.ts`](../../../../../../src/api/create-table.types.spec.ts)
+  (#113 Step 3).
