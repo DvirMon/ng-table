@@ -26,6 +26,7 @@ against `libs/table/src` as of 2026-09-20 (post-#107/#108). Spec: [`2-spec.md`](
 | D10/E14 | `initial` ships here, seeded in the factory |
 | D11/E15 | `withTree()` has no levels API, ever |
 | D12/E16 | A throwing `childrenAccessor` degrades to "no children", reported once per evaluation, in production too |
+| E18 | `changed` emits once per write (`{ added, removed }`), not once per id — supersedes E3/E17, no paired D-number (decided via discovery, not the original grill) |
 
 G6 needs no fix: `indexById` is built from `config.data()`, and under D1/D2 every tree node
 is an entry there.
@@ -63,11 +64,16 @@ export interface ExpansionStoreOptions {
   onExpanded?: (ids: readonly RowId[]) => void;
 }
 
+export interface ExpansionChange {
+  readonly added: readonly RowId[];
+  readonly removed: readonly RowId[];
+}
+
 export interface ExpansionStore {
   readonly expanded: Signal<ReadonlySet<RowId>>;
-  readonly changed: Observable<RowId>;
-  /** The only writer of the signal. Emits once per id whose membership changed — added or
-   *  removed — which is what preserves E3 across all four public verbs. */
+  readonly changed: Observable<ExpansionChange>;
+  /** The only writer of the signal. Emits once per write, carrying every id whose
+   *  membership changed — added and removed together (E18, supersedes E3/E17). */
   setExpanded(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Prunes via `pruneByIds()` (ADR-0006). Never touches `everExpanded` — the feature owns it. */
@@ -93,7 +99,7 @@ export interface WithExpansionConfig {
 export interface ExpansionSlice {
   (): ReadonlySet<RowId>;
   readonly everExpanded: Signal<ReadonlySet<RowId>>;
-  readonly changed: Observable<RowId>;
+  readonly changed: Observable<ExpansionChange>;
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Omitted `ids`: every row in `rows()`. */
   expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
@@ -128,7 +134,7 @@ export interface WithTreeConfig<TRow> {
 
 export interface TreeSlice {
   (): ReadonlySet<RowId>;
-  readonly changed: Observable<RowId>;
+  readonly changed: Observable<ExpansionChange>;
   /** `'all'` when every expandable row is open, `'none'` when none is (including "nothing is
    *  expandable"), `'some'` otherwise. Reflects the row tree only — a collapse-only instance
    *  reads `'none'`, since group ids are not discoverable from an accessor. */
@@ -170,9 +176,19 @@ compose.
 
 ### Emission
 
-`setExpanded(next)` emits once per id in the symmetric difference of `expanded()` and
-`next`. That single rule reproduces all three of today's behaviors: `toggle` emits the one
-id, `expand(ids)` emits only newly opened ids, `collapse()` emits every previously open id.
+`setExpanded(next)` emits **once per write, not once per id** (E18, supersedes E3/E17). The
+event carries the full symmetric difference of `expanded()` and `next` as one
+`ExpansionChange { added, removed }` — matching `SelectionChange`. `toggle` emits one event
+with a single id in `added` or `removed`; `expand(ids)` emits the newly opened ids in
+`added`; `collapse()` emits every previously open id in `removed`.
+
+Cross-library survey (`discovery-emission-shape.md`): 8/8 surveyed libraries (TanStack, AG
+Grid, MUI X, PrimeNG, PrimeReact, rc-table/antd, Angular CDK) emit at most one event per
+batch action — none fan out per row id. AG Grid's `expandAll()` goes furthest, bypassing its
+own per-row `rowGroupOpened` path entirely for a batch. Angular CDK's `SelectionModel.changed`
+is the direct `{ added, removed }` precedent, in the same framework this repo targets, and it
+derives its own per-node `expandedChange` from the diff rather than the reverse — so a
+per-row consumer here loses nothing by dropping the old per-id `Observable<RowId>`.
 
 ### `everExpanded`
 

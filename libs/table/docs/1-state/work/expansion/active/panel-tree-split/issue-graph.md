@@ -13,15 +13,21 @@ ADR-0015 slices.
 | [#120](https://github.com/DvirMon/ng-table/issues/120) | Collapsible grouping composes `withTree()`; grouping spec decoupled | 🟡 OPEN | #119 | #121 |
 | [#121](https://github.com/DvirMon/ng-table/issues/121) | `withExpansion()` narrows to the detail panel and ships as a slice | 🟡 OPEN | #120 | #122 |
 | [#122](https://github.com/DvirMon/ng-table/issues/122) | Reconcile the expansion docs and ADR-0012 with the split | 🟡 OPEN | #121 | — |
-| [#124](https://github.com/DvirMon/ng-table/issues/124) | Reconsider per-id emission (E3/E17) against `SelectionChange`'s `{ added, removed }` shape | 🟡 OPEN, `needs:triage` | — (off-chain) | none — parked |
+| [#124](https://github.com/DvirMon/ng-table/issues/124) | Reconsider per-id emission (E3/E17) against `SelectionChange`'s `{ added, removed }` shape | ✅ RESOLVED — `discovery-emission-shape.md`, decided as E18 | — | #118 (folded in, design only) |
 
 ## Graph
 
 ```
-#118 ──► #119 ──► #120 ──► #121 ──► #122
-store     tree    grouping  panel     docs
-          feature migrates  narrows   + ADRs
+#124 ──► #118 ──► #119 ──► #120 ──► #121 ──► #122
+diff      store     tree    grouping  panel     docs
+shape     feature   feature migrates  narrows   + ADRs
+resolved
 ```
+
+#124 is resolved at the design level (E18) and adds no separate execution
+step — `createExpansionStore()` hasn't shipped, so #118 simply builds
+`changed: Observable<ExpansionChange>` from the start instead of
+`Observable<RowId>`. The chain below is otherwise unchanged.
 
 A single chain — no parallel-safe pair. Each edge is a real artifact
 dependency, not presentation order:
@@ -50,7 +56,7 @@ dependency, not presentation order:
 
 | # | rung | why |
 |---|---|---|
-| #118 | `ready-for-agent` | one new file + a behavior-preserving rewire; the emission rule and full type surface are in `3-architecture.md` |
+| #118 | `ready-for-agent` | one new file + a behavior-preserving rewire; the emission rule (now E18's `{ added, removed }` diff, not per-id) and full type surface are in `3-architecture.md` |
 | #119 | `needs:tasks` | high — new feature seam, stage relocation, discovery walk, tri-state, ADR-0014 guard |
 | #120 | `ready-for-agent` | broad but mechanical; every site enumerated in the call-site checklist |
 | #121 | `needs:tasks` | high — removing the union contribution is an interaction between the feature contract and the flatten walk |

@@ -227,14 +227,14 @@ Two slices, one claimed member key each:
 ```ts
 table.expansion()                 // ReadonlySet<RowId> — open panels
 table.expansion.everExpanded()    // ReadonlySet<RowId> — additive, never pruned
-table.expansion.changed           // Observable<RowId>
+table.expansion.changed           // Observable<ExpansionChange> — { added, removed }, once per write (E18)
 table.expansion.toggle(id, opts?)
 table.expansion.expand(ids?, opts?)     // omitted ids = every row in rows()
 table.expansion.collapse(ids?, opts?)   // omitted ids = all currently open
 table.expansion.set(ids, opts?)         // atomic replace — the restore path
 
 table.tree()                      // ReadonlySet<RowId> — expanded parents
-table.tree.changed                // Observable<RowId>
+table.tree.changed                // Observable<ExpansionChange> — same shape as table.expansion.changed
 table.tree.toggle/expand/collapse/set
 table.tree.state()                // 'all' | 'some' | 'none'
 ```
@@ -325,7 +325,7 @@ dedupe. Reported in production too, not dev-only (D12/E16).
 | `table.expandAll(ids)` | `table.tree.expand(ids)` |
 | `table.collapseAll()` | `table.tree.collapse()` / `table.expansion.collapse()` |
 | `table.everExpanded()` | `table.expansion.everExpanded()` |
-| `table.rowExpanded` | `table.expansion.changed` / `table.tree.changed` |
+| `table.rowExpanded` (per-id) | `table.expansion.changed` / `table.tree.changed` (`{ added, removed }`, once per write, E18) |
 | `withGrouping()` + `withExpansion()` for collapse | `withGrouping()` + `withTree()` |
 
 No in-repo consumer composes the tree path; the one in-repo consumer is the collapsible
@@ -350,7 +350,7 @@ why the two features arrive already sliced ahead of #50 (D6/E10).
   grouping alone renders every group open.
 - **`1-state/prd.md`** user stories 10, 23 and 31 carry the superseded "`withGrouping()`
   requires `withExpansion()` at compile time" framing — corrected in the same pass.
-- **`docs/decisions/expansion.md`** — E5–E16 move from `accepted, not built` to `shipped` as
+- **`docs/decisions/expansion.md`** — E5–E18 move from `accepted, not built` to `shipped` as
   their slices land.
 
 ## Testing Decisions
