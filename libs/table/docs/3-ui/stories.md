@@ -117,7 +117,7 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `filtering/filtering-story.css` | Filtering-specific styling — filter row, active markers, chip summary, notices |
 | `grouping/fixtures/types.ts` | `DealRow` (`region` nullable **and** optional so `null`/`undefined`/`''` all exist), `DealOwner` (the object-valued level), `DealPage` |
 | `grouping/fixtures/mock.ts` | `GROUPING_ROWS_MOCK` — three nesting levels, a single-row group, a row carrying `children`, the three blank keys, a `Date` and an object column |
-| `grouping/fixtures/schema.ts` | Two table configs over one column list — `groupingConfig` (its `amount` column carries `sumAmount`) and `plainGroupingConfig` (no `aggregateFn` anywhere), the second derived from the first so the column list is written once. Plus the per-story level constants, `sumAmount` (the `aggregateFn` that **throws** on a negative, which `grouping-aggregates/` injects), `EXTERNAL_GROUP_ORDER`, `MISSING_GROUPING_LEVEL`, and `dealFilters` |
+| `grouping/fixtures/schema.ts` | One column list, one `groupingConfig`, no array-level type annotation (an annotation would widen every declared id to `string` and defeat every story's `path.<id>` autocomplete — ADR-0024). Plus the per-story level constants, `sumAmount` (the aggregate fn that **throws** on a negative, declared via `withGrouping({ schema: (path) => applyAggregate(path.amount, sumAmount) })` in `grouping-aggregates/`, not carried by a column), `EXTERNAL_GROUP_ORDER`, and `dealFilters` |
 | `grouping/fixtures/utils.ts` | `formatValue`/`formatAmount`/`isBlankGroupValue` — value-to-text for the places that need a string in TypeScript rather than in a template (the `groupOrder` comparator and its external-rank lookup) |
 | `grouping/grouping-story.pipes.ts` | `dealAmount`/`dealDate`/`isBlankGroup`/`groupRowCount` — one pure pipe per formatting concern, so the grouping templates branch with `@switch` and hold no method calls of their own |
 | `grouping/fixtures/http.ts` | `createGroupedRowsResource()` and `createGroupingPreferenceResource()` (`httpResource`-based, 2026-09-16) — the refetch and async-grouping-rule sources; `toErrorMessage()` replaces the old `normalizeError`/`isMessageBody` pair |
@@ -504,19 +504,22 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   `withSorting()` on top of `withFiltering()` and is where selection-under-filter is measured —
   see `0-product/filtering.md` §5 F-S1; it lives under `selection/` because selection surviving
   row churn, not the filtering itself, is what the story proves.
-- **`grouping/` — eight hosts, one per lesson in the public grouping API.** The split axis is
+- **`grouping/` — nine hosts, one per lesson in the public grouping API.** The split axis is
   *what a reader came to learn*, not what the table is: `grouping-basic/` (`initial` as the
   declared-level array, and writing levels through `table.grouping`), `grouping-when/` (cluster
   admission — the table-wide `when` AND-combined with a per-column one off an `applyGrouping`
-  rule), `grouping-aggregates/` (`aggregateFn` as a **column** option, and its ADR-0014 degrade
-  path under a control that poisons one record), `grouping-async-rule/` (`applyGroupingAsync`
-  over a real intercepted request — pending, resolved and failed), `grouping-order/`
-  (`applyGroupOrder` — sibling order at one level, including the silent no-op on a column that
-  is not currently a level; composes `withSorting()` bare and trailing so the header order has a
-  row sort to contrast against), `grouping-columns/` (`groupedColumnMode` — what becomes of a column
-  once it is a level), `grouping-collapsible/` (the navigable outline: `withExpansion()`, a real
-  `<button>` chevron carrying `aria-expanded`, and collapse state under regrouping and refetch),
-  and `grouping-selection/` (a group checkbox built from one `rowsOf()` call).
+  rule), `grouping-keys/` (`applyGroupKey` — what a level clusters *on* — plus `initial`'s
+  `label` — what its header *calls itself*, two tiers), `grouping-aggregates/` (`applyAggregate`
+  as a grouping declaration keyed by column id, **not** a column option, and its ADR-0014
+  degrade path under a control that poisons one record), `grouping-async-rule/`
+  (`applyGroupingAsync` over a real intercepted request — pending, resolved and failed),
+  `grouping-order/` (`applyGroupOrder` — sibling order at one level, including the silent no-op
+  on a column that is not currently a level; composes `withSorting()` bare and trailing so the
+  header order has a row sort to contrast against), `grouping-columns/` (`groupedColumnMode` —
+  what becomes of a column once it is a level), `grouping-collapsible/` (the navigable outline:
+  `withExpansion()`, a real `<button>` chevron carrying `aria-expanded`, and collapse state under
+  regrouping and refetch), and `grouping-selection/` (a group checkbox built from one `rowsOf()`
+  call).
 
   **One story, one lesson** (2026-09-19, `work/grouping-stories/3-lesson-audit.md`). The previous
   split was by what the table *is* — `grouping-static/` as "the grouped table as its own product"

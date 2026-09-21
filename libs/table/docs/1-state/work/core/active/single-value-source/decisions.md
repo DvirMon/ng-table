@@ -84,6 +84,29 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   `Feature`, or `RowOf` are exported today either, so that gap predates #113 and is not this
   issue's to close.
 
+- **#114 — does an unknown grouping column id throw on the writer too, or only at
+  construction? Both paths, one rule.** `table.grouping` is writable, and the barrel ships four
+  updaters (`mutations/update-grouping.ts`). `addGroupLevel('territory')` is a runtime write the
+  constructor never sees, so a construction-only check leaves an id with no column reachable in
+  `appliedGrouping()` — exactly the case `groupingLevels()`'s total read (V4) requires cannot
+  arise. Rejected alternatives: **engine-drops-silently** (reopens the exact silent-drop bug
+  ADR-0024 exists to close, one level removed); **degrade-and-report** (treats a plainly wrong
+  updater call the same as a runtime data condition it is not — the id is wrong at the moment the
+  call is made, not depending on what data later arrives); **keep the filter** (the option V4
+  itself deletes, and keeping it would leave two ways to read the same list disagree). Index
+  bounds on `reorderGroupLevels` are unaffected — that check is about *shape* (`string[]` array
+  bounds), not about *identity* (declared column ids), so it keeps degrading. Registered as
+  [G71](../../../../decisions/grouping.md).
+
+- **#114 — found while writing the public-surface spec: does `groupingLevels()`'s totality
+  survive a `columns` write? No, and that's a second, separate ruling.** G71's writer check only
+  guards `table.grouping`'s own updater; `setColumns()` removing a column that's still an active
+  grouping level reaches `groupingLevels()` through no check at all. Classified as runtime,
+  data-dependent (per `.claude/rules/classify-errors-construction-vs-runtime.md`) rather than a
+  construction/wiring violation, so it degrades and reports rather than throwing — matching every
+  other consumer-callback failure this feature already wraps (ADR-0014). Registered as
+  [G72](../../../../decisions/grouping.md).
+
 - **#111 — extract one runner or two? One. Reading B.**
   The recording form's runner has real duplication to collapse: `runColumnsSchemaFn`
   (`columns-schema/schema.ts:36-44`) and `runGroupingSchemaFn` (`with-grouping/schema.ts:38-46`)
@@ -105,23 +128,23 @@ without A's artifact. Presentation order below is not an edge.
 
 ### Nodes
 
-| | Node | Class |
-|---|---|---|
-| **M1** | Decouple `schema/path-proxy.ts` from `columns-schema/types` — `PathRecorder<TRule>`, drop the baked `MetadataRule`/`MetadataAsyncRule` arms, rename `assertPathIsCurrent` → `recorderOf` | behaviour-preserving |
-| **M2** | Shared recording runner — `runRecordedSchema` in `schema/run.ts`; rewire columns and grouping. The declaring form keeps `buildFiltersPath` / `keyRules` in `engine/filters/build.ts` until `stageSchema` (ADR-0020) is a second caller — #111 reading B, see "Questions settled" | behaviour-preserving |
-| **M3** | Shared `assertDeclarationsAreKnown` in `schema/validate.ts`; `assertRuleColumnIdsAreKnown` becomes a call into it | behaviour-preserving |
-| **V1** | ADR-0014 wrap in `sortRows` — `column.accessor` through `readAccessor`, consumer `sortFn` guarded (pre-existing bug, independent of everything else) | bug fix |
-| **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor` | behaviour change |
-| **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor` | behaviour change |
-| **V4** | Delete `resolveGroupLabel`'s raw-key fallback; `groupingLevels`' filter becomes total | behaviour change |
-| **K1** | `TId` reaches feature configs — un-erase on `Shape`/`TableStore`/`TableCore`, regenerate `create-table.overloads.ts`, decide `compose-features.overloads.ts` | API change |
-| **K2** | Grouping declarations key by column id | API change |
-| **K3** | Filtering declarations key by column id | API change |
-| **K4** | `applyAggregate` by column id (G58), validated at construction (G59) — replaces #100's row-field version | API change |
-| **S1** | `withSorting()` gains a schema fn (recording form); `sortFn` / `enableSorting` move off `ColumnDef` into `applySortFn` / `applySortable`, and `applySortNulls` moves out of `columnsSchema` (#100 Rule A + G69) | API change |
-| **S2** | Supersede D2's wording (#100 Q4); close #100 | docs |
-| **D1** | Stories + fixtures | migration |
-| **D2** | Docs — `1-state/features/{grouping,filtering,sorting}.md`, ADR-0019 amendment line, `llms.txt` regen | docs |
+| | Node | Class | Status |
+|---|---|---|---|
+| **M1** | Decouple `schema/path-proxy.ts` from `columns-schema/types` — `PathRecorder<TRule>`, drop the baked `MetadataRule`/`MetadataAsyncRule` arms, rename `assertPathIsCurrent` → `recorderOf` | behaviour-preserving | done (#111) |
+| **M2** | Shared recording runner — `runRecordedSchema` in `schema/run.ts`; rewire columns and grouping. The declaring form keeps `buildFiltersPath` / `keyRules` in `engine/filters/build.ts` until `stageSchema` (ADR-0020) is a second caller — #111 reading B, see "Questions settled" | behaviour-preserving | done (#111) |
+| **M3** | Shared `assertDeclarationsAreKnown` in `schema/validate.ts`; `assertRuleColumnIdsAreKnown` becomes a call into it | behaviour-preserving | done (#111) |
+| **V1** | ADR-0014 wrap in `sortRows` — `column.accessor` through `readAccessor`, consumer `sortFn` guarded (pre-existing bug, independent of everything else) | bug fix | done (#112) |
+| **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor` | behaviour change | ✅ done (#114) |
+| **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor` | behaviour change | pending (#115) |
+| **V4** | Delete `resolveGroupLabel`'s raw-key fallback; `groupingLevels`' filter becomes total | behaviour change | ✅ done (#114) |
+| **K1** | `TId` reaches feature configs — un-erase on `Shape`/`TableStore`/`TableCore`, regenerate `create-table.overloads.ts`, decide `compose-features.overloads.ts` | API change | done (#113) |
+| **K2** | Grouping declarations key by column id | API change | ✅ done (#114) |
+| **K3** | Filtering declarations key by column id | API change | pending (#115) |
+| **K4** | `applyAggregate` by column id (G58), validated at construction (G59) — replaces #100's row-field version | API change | ✅ done (#114) |
+| **S1** | `withSorting()` gains a schema fn (recording form); `sortFn` / `enableSorting` move off `ColumnDef` into `applySortFn` / `applySortable`, and `applySortNulls` moves out of `columnsSchema` (#100 Rule A + G69) | API change | pending (#100) |
+| **S2** | Supersede D2's wording (#100 Q4); close #100 | docs | pending (#100) |
+| **D1** | Stories + fixtures | migration | grouping's slice done (#114); filtering/sorting slices pending #115/#100 |
+| **D2** | Docs — `1-state/features/{grouping,filtering,sorting}.md`, ADR-0019 amendment line, `llms.txt` regen | docs | grouping's slice done (#114); filtering/sorting slices pending #115/#100 |
 
 ### Graph
 

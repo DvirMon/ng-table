@@ -82,23 +82,23 @@ older cross-references still resolve.
 | G41 | #100 is sliced — this decision set covers `aggregateFn` only | 09-19 | scope | AGG |
 | G42 | Aggregation stays a grouping-owned concept — no `withAggregation()` feature | 09-19 | accepted, unbuilt | AGG |
 | G43 | `applyAggregate` is declared through `GroupingPath`, row-field keyed | 09-19 | **superseded by G58** — its premise (an accessor-only value can never be aggregated) no longer holds | AGG |
-| G44 | `ColumnDef.aggregateFn` is deleted outright, not deprecated-and-kept | 09-19 | accepted, unbuilt | AGG |
+| G44 | `ColumnDef.aggregateFn` is deleted outright, not deprecated-and-kept | 09-19 | shipped | AGG |
 | G45 | `applyAggregate` does not validate its field against declared columns | 09-19 | **superseded by G59** — under a column-keyed path there is a set to validate against | AGG |
-| G46 | Sequencing: #100's `aggregateFn` slice lands before #47, which lands before #45 | 09-19 | **open** | AGG |
+| G46 | Sequencing: #100's `aggregateFn` slice lands before #47, which lands before #45 | 09-19 | **open** — #114 reorders this: #47 assumes `ColumnDef`-declared `aggregateFn`, which no longer exists (deleted by G44); #47 is not re-sequenced here | AGG |
 | G47 | One story, one lesson — five mixed hosts become eight single-lesson hosts | 09-19 | shipped | ST D1 |
 | G48 | ADR-0014's retrofit shipped: three grouping wrap sites, each with a named fallback | 09-19 | shipped | ST D3 |
 | G49 | `grouping-crud`'s facts move to specs; the story is removed | 09-19 | shipped | ST D8 |
 | G50 | The empty-rule guard widens — a field carrying only `applyGroupKey` is legal | 09-19 | shipped | ST D9 |
 | G51 | A pending rule holds its own last resolved boolean; only a never-resolved rule abstains the set | 09-19 | shipped | ST D11 |
 | G52 | Per-story keep/strip/remove calls — rolled up here rather than itemized | 09-19 | shipped | ST D2, D4–D7, D10 |
-| G53 | Grouping reads values through `readAccessor(column, row)`, not raw `row[key]` — supersedes CS D7's row-field keying | 09-20 | accepted, unbuilt | SVS |
-| G54 | Grouping by an undisplayed value needs a carrier column (`visible: false`) — reverses CS D7's rejection of data-carrier columns | 09-20 | accepted, unbuilt | SVS |
-| G55 | `resolveGroupLabel`'s raw-field-name fallback (CS D7a) is deleted — every level now has a column | 09-20 | accepted, unbuilt | SVS |
+| G53 | Grouping reads values through `readAccessor(column, row)`, not raw `row[key]` — supersedes CS D7's row-field keying | 09-20 | shipped | SVS |
+| G54 | Grouping by an undisplayed value needs a carrier column (`visible: false`) — reverses CS D7's rejection of data-carrier columns | 09-20 | shipped | SVS |
+| G55 | `resolveGroupLabel`'s raw-field-name fallback (CS D7a) is deleted — every level now has a column | 09-20 | shipped | SVS |
 | G56 | No non-data gate, no display-column kind — this library is headless, so a checkbox or action cell is consumer markup, never a column | 09-20 | closed, nothing to build | SVS |
-| G57 | ADR-0024's protection is a construction throw when a declaration names an undeclared column id; an accessor yielding `undefined` for every row degrades to one visibly-labelled group | 09-20 | accepted, unbuilt | SVS |
-| G58 | `applyAggregate` keys by declared column id like every other data concern — supersedes G43; an accessor-derived value is now aggregatable | 09-20 | accepted, unbuilt | SVS |
-| G59 | `applyAggregate` validates its column id at construction, via the same check as every other declaration (G57) — supersedes G45 | 09-20 | accepted, unbuilt | SVS |
-| G60 | `GroupingLevel.key` → `columnId`, and `ColumnId<TRow>` is retired — lands with ADR-0024's re-keying, never alone, because the name is honest only once the type moves | 09-20 | accepted, unbuilt | CS D10 |
+| G57 | ADR-0024's protection is a construction throw when a declaration names an undeclared column id; an accessor yielding `undefined` for every row degrades to one visibly-labelled group | 09-20 | shipped | SVS |
+| G58 | `applyAggregate` keys by declared column id like every other data concern — supersedes G43; an accessor-derived value is now aggregatable | 09-20 | shipped | SVS |
+| G59 | `applyAggregate` validates its column id at construction, via the same check as every other declaration (G57) — supersedes G45 | 09-20 | shipped | SVS |
+| G60 | `GroupingLevel.key` → `columnId`, and `ColumnId<TRow>` is retired — lands with ADR-0024's re-keying, never alone, because the name is honest only once the type moves | 09-20 | shipped | CS D10 |
 | G61 | One shared mechanism, **per-feature** schema entries — a single `TableConfig.schema` is rejected, since `applyGrouping` could then be declared with no `withGrouping()` composed. Originally written as four entries; sorting gained one the same day (G69), so the count is not the rule | 09-20 | accepted, unbuilt | CS D11a |
 | G62 | Two authoring forms, permanently — recording (returns `void`) and declaring (returns an object); converging filtering onto the void form erases its criterion type | 09-20 | accepted, unbuilt | CS D11c |
 | G63 | Three resolver **registers**, one name each — `valueOf` (what the data says), `criterionOf` (what the user asked for, filtering's existing `valueOf` renamed), `stateOf` (how the column is configured); a path resolves to a different kind of thing in each | 09-20 | accepted, unbuilt | CS D11d |
@@ -106,9 +106,11 @@ older cross-references still resolve.
 | G65 | Two resolver tiers: one reading another **declaration** is bound to the schema and takes only a path (`criterionOf`, `stateOf`); one reading **data** takes a path and a subject (`valueOf(path, row)`), because a column-keyed path names a cross-section, not an instance | 09-20 | accepted, unbuilt | CS D11d |
 | G66 | No consumer callback in any of the four schemas has exactly one row as its subject — so a bound one-argument value resolver has nowhere to attach; the evidence for G65 | 09-20 | finding | CS D11d |
 | G67 | The resolver lives on a context object, never as a `ClusterSummary` member — an own `valueOf` on a value object the library sorts hijacks the language's coercion hook | 09-20 | accepted, unbuilt | CS D11d |
-| G68 | `applyGroupKey`'s extractor receives the accessor's output, not `TRow[K]` — forced by G60's re-keying | 09-20 | accepted, unbuilt | CS D11d |
+| G68 | `applyGroupKey`'s extractor receives the accessor's output, not `TRow[K]` — forced by G60's re-keying | 09-20 | shipped | CS D11d |
 | G69 | `withSorting()` gains a schema fn in the recording form — **reverses D11a's "sorting has no schema of its own"**; `applySortNulls` moves out of `columnsSchema` and joins `applySortable` / `applySortFn` there. Listed here only because it amends G61; the decision itself is sorting's, as [SO21](sorting.md) | 09-20 | accepted, unbuilt | [#100](https://github.com/DvirMon/ng-table/issues/100) |
 | G70 | One extracted runner, not two — the recording form's body is shared (`schema/run.ts`); the declaring form's stays in `engine/filters/build.ts` until ADR-0020's `stageSchema` is its second caller. Does not narrow G62: both authoring forms remain permanent | 09-20 | accepted | [#111](https://github.com/DvirMon/ng-table/issues/111), [workspace decisions](../1-state/work/core/active/single-value-source/decisions.md) |
+| G71 | A grouping level naming no declared column throws on **both** paths — at construction and on `table.grouping`'s writer. One rule, since the writer is the only other way an unknown id can reach the applied levels, and `groupingLevels()`'s total read relies on that. Index bounds on `reorderGroupLevels` still degrade | 09-21 | shipped | [#114](https://github.com/DvirMon/ng-table/issues/114), [workspace decisions](../1-state/work/core/active/single-value-source/decisions.md) |
+| G72 | Removing a still-applied level's column via `setColumns()` is a runtime, data-dependent condition, not a construction/writer contract violation — `groupingLevels()` omits the orphaned level and the render layer falls back to the raw id as its label, each reporting once (ADR-0014), rather than throwing. Found while writing #114's public-surface spec; not itself gated by G71 | 09-21 | shipped | [#114](https://github.com/DvirMon/ng-table/issues/114) |
 
 All dates are 2026.
 

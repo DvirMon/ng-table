@@ -50,7 +50,7 @@ An opt-in declarative layer, `columnsSchema`, can drive `visible`/`order` reacti
 
 | Owned by | Examples | Overridable from template? |
 |---|---|---|
-| Store (logical — drives behavior) | `id`, `accessor`, `visible`, `order`, `sortFn`, `enableSorting`, `filterFn`, `enableFiltering`, `aggregateFn` | No |
+| Store (logical — drives behavior) | `id`, `accessor`, `visible`, `order`, `sortFn`, `enableSorting`, `filterFn`, `enableFiltering` | No |
 | Directive (presentation — drives appearance only) | `width`, header label / custom header + cell templates | Yes, local only |
 
 **Rule of thumb:** if a property affects *what data flows through the pipeline or how it's computed*, it's store-owned with no override. If it only affects *how something looks/renders in this particular template usage*, it's a directive-local input.

@@ -11,7 +11,7 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 | [#111](https://github.com/DvirMon/ng-table/issues/111) | Decouple the schema path mechanism from the columns schema | ✅ CLOSED 09-20 (`a9e437b`) | — | #114, #115, #100 |
 | [#112](https://github.com/DvirMon/ng-table/issues/112) | `sortRows` calls accessor and `sortFn` unwrapped, escaping ADR-0014 | ✅ CLOSED 09-20 | — | #100 (cleared) |
 | [#113](https://github.com/DvirMon/ng-table/issues/113) | The declared column-id union reaches a feature's config | 🟡 OPEN — steps 1-4 implemented, pending `/ship` | — | #114, #115, #100 |
-| [#114](https://github.com/DvirMon/ng-table/issues/114) | Grouping reads the accessor; levels and aggregates key by column id | 🟡 OPEN | #111 (cleared), #113 (implemented) | #117 |
+| [#114](https://github.com/DvirMon/ng-table/issues/114) | Grouping reads the accessor; levels and aggregates key by column id | 🟡 OPEN — steps 1-9 implemented, pending `/ship` | #111 (cleared), #113 (implemented) | #117 (cleared on this side; #117 still waits on #115) |
 | [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | 🟡 OPEN | #111 (cleared), #113 (implemented) | #117 |
 | [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN | #111 (cleared), #113 (implemented) | — |
 | [#116](https://github.com/DvirMon/ng-table/issues/116) | ADR for the schema-declaration surface — keying, authoring forms, resolver naming | 🟡 OPEN | — | — |
@@ -54,18 +54,22 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
   call sites, which both change — **cleared**, `#112` shipped as `94e8050`;
   `#114/#115 → #117` gated on the features actually reading the accessor — a resolver over
   accessor values is meaningless before that.
-- **Current frontier:** `#113`, `#116`. `#100` left it on 2026-09-20, `#112` closed the same day,
-  and `#111` closed the same day too (`a9e437b`). `#113` is the riskiest and now gates
-  **everything still unplanned** — `#114`, `#115`, `#100` directly and `#117` through them — so
+- **Current frontier:** `#113`, `#116`, `#114`. `#100` left it on 2026-09-20, `#112` closed the
+  same day, and `#111` closed the same day too (`a9e437b`). `#113` is the riskiest and now gates
+  **everything still unplanned** — `#115`, `#100` directly and `#117` through them — so
   starting it early is worth more than finishing it fast; `#116` can land any time and is what the
-  rest cite.
-- **`#113` is implemented, not yet shipped.** All four of its own task-plan steps landed:
-  `TableStore<TRow, TId>` carries the declared id union into every feature slot,
-  `create-table.overloads.ts` was regenerated, `api/create-table.types.spec.ts` proves the union
-  stays literal (not widened to `string`) and proves the arity escape hatch
-  (`composeFeatures()`) carries it too with no generator change. `#114`, `#115` and `#100` are no
-  longer gated on the id union existing — only on `#113` actually merging. The issue itself
-  stays open until `/ship`'s PR goes green on CI, per this repo's issue-tracker convention.
+  rest cite; `#114` is implemented and waits on `/ship` alongside `#113`.
+- **`#113` and `#114` are both implemented, not yet shipped.** `#113`: `TableStore<TRow, TId>`
+  carries the declared id union into every feature slot, `create-table.overloads.ts` was
+  regenerated, `api/create-table.types.spec.ts` proves the union stays literal (not widened to
+  `string`) and proves the arity escape hatch (`composeFeatures()`) carries it too with no
+  generator change. `#114`: all nine of its own task-plan steps landed — grouping validates
+  declared column ids at construction and on `table.grouping`'s writer (G71), both cluster walks
+  read the column's `accessor`, the grouping surface re-keys to `TId`, `applyAggregate` replaces
+  `ColumnDef.aggregateFn`, the raw-name label tier and the `groupingLevels()` filter are gone, and
+  a plain `setColumns()` orphaning an active level degrades rather than throws (G72). `#115` is no
+  longer gated on the id union existing — only on `#113` actually merging. Both issues stay open
+  until `/ship`'s PR goes green on CI, per this repo's issue-tracker convention.
 - **`#117` is additive by construction.** No existing `when` predicate migrates into it —
   `cluster.key` is already accessor-resolved after `#114`, and plain model fields stay directly
   readable. It exists for the carrier-column case that has no spelling, which is why it is a

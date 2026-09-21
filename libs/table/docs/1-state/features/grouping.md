@@ -1,11 +1,11 @@
 ---
 title: State Layer Reference — withGrouping()
 type: architecture
-version: 2.0
-date: 2026-09-20
+version: 2.1
+date: 2026-09-21
 capability: grouping
 spec: drilled
-code: partial
+code: shipped
 audience: developers
 parent: ../architecture.md
 ---
@@ -13,11 +13,10 @@ parent: ../architecture.md
 # withGrouping()
 
 **Decision history: [`decisions/grouping.md`](../../decisions/grouping.md).** That log is the
-first thing to read before changing anything here — it carries all 52 decisions, what superseded
-what, and the six still open. This file is the contract only: what grouping does today.
+first thing to read before changing anything here — it carries every decision, what superseded
+what, and what is still open. This file is the contract only: what grouping does today.
 
-`code: partial` is deliberate. The feature ships, but aggregation's declaration site is
-mid-migration (G42–G45) and `manual: true` is structurally blocked (G16).
+`manual: true` (server-side grouping) stays out of scope — see "Not in scope" below.
 
 ## What it does
 
@@ -31,25 +30,27 @@ row sort are decoupled by construction (G5). No `effect()` anywhere in the featu
 
 ## Public surface
 
-Verified against `src/api/features/with-grouping/` on 2026-09-20.
+Verified against `src/api/features/with-grouping/` on 2026-09-21.
 
 ```ts
-interface WithGroupingConfig<TRow> {
+interface WithGroupingConfig<TRow, TId extends string = string> {
   // Declared levels, outermost first — array order IS nesting order (G32).
-  // A level names a ROW FIELD, which may have no matching column (G36).
-  initial?: (ColumnId<TRow> | GroupingLevel<TRow>)[];
+  // Every id is validated against `columns` at construction (ADR-0024) — an
+  // unknown id throws, it never silently degrades.
+  initial?: (TId | GroupingLevel<TId>)[];
 
   // Table-wide admission, judged at every active level. AND'd with any per-column `when`.
   when?: GroupWhen<TRow>;
 
   // The single declarative entry. Records by side effect; returns nothing.
   // Call order carries no meaning — nesting comes from `initial` alone (G33).
-  schema?: GroupingSchemaFn<TRow>;
+  // Path is keyed by declared column id, the same space `columns` declares (ADR-0024).
+  schema?: GroupingSchemaFn<TRow, TId>;
 }
 
-interface GroupingLevel<TRow> {
-  readonly key: ColumnId<TRow>;
-  readonly label?: string;          // resolves: explicit -> matching column's label -> raw key
+interface GroupingLevel<TId extends string = string> {
+  readonly columnId: TId;
+  readonly label?: string;          // resolves: explicit -> matching column's own label
 }
 
 interface GroupingMembers<TRow> {
@@ -65,14 +66,19 @@ interface GroupingMembers<TRow> {
 **There is no `rules` member.** The rules-array layer was removed; `schema` is the only
 declarative entry.
 
-**Grouping never reads a column's `accessor`.** A level's value comes from the row field named by
-the level, optionally transformed by `applyGroupKey` (G36). This is the single most common wrong
-assumption about this feature — a column and the group it sits under can legitimately disagree,
-and nothing checks that they don't.
+**`ColumnId<TRow>` no longer exists.** Every id-shaped slot in this feature — `initial`, a
+`GroupingLevel`, `schema`'s `path` — is the declared column-id union (`TId`), recovered from
+`createTable()`'s `columns` argument, not a loose `keyof TRow | string`.
+
+**Grouping reads every value through the column's `accessor`** — `readAccessor(column, row)`,
+the same single value source cells and sorting read (ADR-0024). A level's value is never a raw
+`row[key]` bracket read. This reverses the feature's original design (D7): a column and the group
+it sits under can no longer legitimately disagree, because grouping partitions on the same value
+the cell renders.
 
 ### Declarators — one per concern (G39)
 
-Each is declared inside `schema`, against a `GroupingPath` keyed by `keyof TRow`:
+Each is declared inside `schema`, against a `GroupingPath` keyed by declared column id:
 
 | Declarator | Concern |
 |---|---|
@@ -80,9 +86,14 @@ Each is declared inside `schema`, against a `GroupingPath` keyed by `keyof TRow`
 | `applyGroupingAsync(path.x, { params, factory, onSuccess, onError })` | activation from a resource |
 | `applyGroupKey(path.x, extractValue)` | key derivation — must return a primitive |
 | `applyGroupOrder(path.x, cmp)` | sibling order at that level |
+| `applyAggregate(path.x, aggregateFn)` | one summary value per cluster per column |
 
 `applyGrouping` declaring neither `enable` nor `when` throws at construction. A second
-`applyGroupKey` on one field is a duplicate registration and throws.
+`applyGroupKey` on one column is a duplicate registration and throws.
+
+**`applyGroupKey`'s extractor receives the column's `accessor` output, not the raw row.** A
+column whose accessor already computes the group-relevant value needs no `applyGroupKey` at all;
+one like `closedAt: Date` still needs one to key a month out of what the accessor returns.
 
 ### Write surface
 
@@ -91,6 +102,32 @@ Each is declared inside `schema`, against a `GroupingPath` keyed by `keyof TRow`
 
 State stays `string[]`, so it round-trips through `JSON.stringify` (G39). Labels are a registry
 lookup off `initial`, never part of the state.
+
+### Unknown column ids throw — one rule, two construction-time paths
+
+A declaration naming an id absent from `columns` throws, naming both the declaring surface
+(`[withGrouping]`) and the offending id — whether the id came from `initial`, from a `schema`
+rule (any declarator, including `applyAggregate`), or from `table.grouping.update(updater)`'s
+resulting array. The writer runs the updater, validates its result, then commits — so
+`addGroupLevel('nope')` throws exactly like an unknown id in `initial` would. This is deliberate:
+without it, `groupingLevels()` would need to silently drop an orphaned level again (see below).
+
+**Index bounds still degrade.** `reorderGroupLevels` with an out-of-range index is a no-op, not a
+throw — only an *unknown column id* throws; a bad index is not that.
+
+**One runtime exception: a column removed later via `setColumns()`.** The throw above only fires
+at the two write paths it guards; a `columns` write does not re-validate the grouping array
+already in place. Removing a still-active level's column (an ordinary column-picker interaction)
+is therefore a runtime, data-dependent condition, not a construction/writer contract violation —
+`groupingLevels()` omits the orphaned level and the render layer falls back to the raw id as its
+label, each reporting once via `console.error` (ADR-0014), rather than throwing.
+
+### Carrier columns
+
+A value the table groups by but never renders is declared as a column with `visible: false` and
+an `accessor` — `{ id: 'region', accessor: (row) => row.meta.region, visible: false }`. Grouping
+partitions on it like any other declared column. `visible` is not enforced by the library; a
+consumer filters it out of its own column list for rendering.
 
 ### Declared vs. applied (G37)
 
@@ -172,20 +209,22 @@ Without `withExpansion()` composed, everything renders flat and expanded — val
 
 ## Aggregation
 
-Per-column `aggregateFn(rows)` computes one summary value per group per column, recomputed
-reactively when membership changes. Two invariants make depth mechanical:
+`applyAggregate(path.x, aggregateFn)` declares one summary value per group per declared column,
+recomputed reactively when membership changes. Aggregation is a grouping declaration, keyed by
+declared column id like every other data concern `schema` records — **not** a `ColumnDef` option.
+`ColumnDef.aggregateFn` does not exist. This is what lets a column with no row field of its own —
+a carrier column, or one whose accessor derives its value — carry a total: `computeAggregates`
+reads purely from the declared `aggregateByColumn` map, never from the column's own shape.
+
+Two invariants make depth mechanical:
 
 1. **Aggregates always compute over a cluster's own leaf rows** — never over a descendant's
    already-computed aggregate.
 2. **Ordering compares siblings within a parent** — not globally across depths.
 
 A throwing `aggregateFn` yields `undefined` for that column only; the group still renders. All
-three grouping callbacks wrap per callback, never per row, and report once per evaluation
+grouping callbacks wrap per callback, never per row, and report once per evaluation
 ([ADR-0014](../../adr/0014-runtime-error-policy.md)).
-
-> **Migration in flight (G42–G45).** `aggregateFn` moves off `ColumnDef` to `applyAggregate`
-> declared through `GroupingPath`. Accepted, not built. `ColumnDef.aggregateFn` is deleted
-> outright when it lands, not deprecated.
 
 ## Group selection
 
@@ -210,13 +249,14 @@ In descending order of how badly this goes wrong without them.
 
 | ADR | What it constrains |
 |---|---|
+| [0024](../../adr/0024-single-value-source-accessor.md) | The column `accessor` is the single value source; grouping's schema and `initial` key by declared column id, same space `columnsSchema` uses |
 | [0017](../../adr/0017-engine-owned-descendant-prune.md) | Collapse is engine-owned. Grouping emits unconditionally and reads no expansion state |
-| [0021](../../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md) | Grouping's schema names **row fields**; `columnsSchema` names **declared column ids** |
 | [0018](../../adr/0018-when-vs-enable-predicate-naming.md) | `when` vs `enable` — grouping is the only feature carrying both predicates |
 | [0011](../../adr/0011-chained-render-stages.md) | The `'group'` render stage claim; `RenderStages` derives from `RENDER_ORDER` |
 | [0014](../../adr/0014-runtime-error-policy.md) | Consumer callbacks degrade and report; they never throw |
-| [0019](../../adr/0019-columns-path-keyed-by-declared-column-ids.md) | What G36 amended — grouping is no longer its motivating consumer |
+| [0019](../../adr/0019-columns-path-keyed-by-declared-column-ids.md) | `ColumnsPath`-style keying by declared ids — grouping is now one of its consumers, per ADR-0024's amendment |
 | [0022](../../adr/0022-render-row-cell-values.md) | `buildGroupCells` spreads `aggregates` into column-id-keyed `cells` |
+| [0021](../../adr/0021-column-concerns-and-data-concerns-are-separate-surfaces.md) | Superseded for grouping by ADR-0024 — kept for its still-standing capability test on other surfaces |
 | [0012](../../adr/0012-split-expansion-into-panel-and-tree.md), [0006](../../adr/0006-row-id-state-reconciliation.md) | Background: stage allocation, and group ids as synthetic `RowId`s |
 
 ## Not in scope

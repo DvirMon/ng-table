@@ -71,9 +71,11 @@ interface ColumnDef<TRow = unknown> {
   // Feature-contributed fields (populated when the relevant feature is registered)
   sortFn?: (a: TRow, b: TRow) => number;
   enableSorting?: boolean;             // default true
-  aggregateFn?: (rows: TRow[]) => unknown;
   filterFn?: (value: unknown, filterValue: unknown) => boolean;
   enableFiltering?: boolean;           // default true
+
+  // `aggregateFn` no longer lives here — it moved to `applyAggregate(path.x, aggregateFn)`,
+  // declared through `withGrouping({ schema })` (#114). See `features/grouping.md`.
 }
 ```
 
@@ -157,7 +159,8 @@ and [ADR-0022](../adr/0022-render-row-cell-values.md).
 Other features read `columns` directly rather than declaring a compile-time feature dependency on it (since it's core config, always present, not an optional feature):
 
 - `withSorting()` — reads `sortFn`, `enableSorting`
-- `withGrouping()` — reads `aggregateFn`
+- `withGrouping()` — reads `accessor` (ADR-0024); `aggregateFn` is declared through
+  `withGrouping({ schema })`'s own `applyAggregate`, not read off the column (#114)
 - `withFiltering()` — reads `filterFn`, `enableFiltering`
 
 > **Note (retroactive fix):** Earlier drafts described `withSorting()`/`withGrouping()` as having a "compile-time dependency on `withColumns()`." Since `columns` was subsequently decided to be core config rather than an opt-in feature, this has been corrected — those features simply read the core `columns` config; there is no feature dependency to declare.

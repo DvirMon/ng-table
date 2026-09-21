@@ -164,3 +164,8 @@ where that field was never declared as a column — a bug class invisible today.
    `engine/types.ts`, threaded into every `createTable()` feature slot via `TableStore<TRow, TId>`
    and asserted in `api/create-table.types.spec.ts`, under
    [#113](https://github.com/DvirMon/ng-table/issues/113).
+
+   **Grouping is now a consumer of this keying.** `withGrouping()`'s `initial`, `GroupingLevel`
+   and `schema` path all key by the declared column-id union recovered via `ColumnIdOf`, under
+   [#114](https://github.com/DvirMon/ng-table/issues/114). `ColumnId<TRow>` — the type that let a
+   grouping level name either a declared column or an arbitrary row field — is retired.

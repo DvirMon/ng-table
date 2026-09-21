@@ -39,8 +39,8 @@ A person perceives four things, and does not care which layer produces them:
 4. Groups can nest, and I can change what nests inside what.
 
 The codebase splits this across a `'group'` pipeline stage, a `'group'` render stage, an optional
-`withExpansion()`, and `ColumnDef.aggregateFn`. That split is invisible to the person using the
-table and is ignored here.
+`withExpansion()`, and `applyAggregate` declared through `withGrouping({ schema })`. That split is
+invisible to the person using the table and is ignored here.
 
 Two modes, genuinely different products:
 
@@ -70,7 +70,7 @@ disposition each get their own story rather than crowding onto the baseline one:
 |---|---|---|
 | [`grouping-basic/`](../../src/stories/grouping/grouping-basic/) | `withGrouping({ initial })` alone — no second feature, no schema, no predicate | Headers carrying value and count at every depth; a tab strip that toggles a column as a level and pills that reorder and remove them; `stickyHeaders` |
 | [`grouping-when/`](../../src/stories/grouping/grouping-when/) | `withGrouping({ initial, when })` + a per-column `applyGrouping({ when })` | Group **admission** — a table-wide `when` AND-combined with a per-column one; a toggle that keeps blank-region rows flat instead of clustering them; an editable minimum-size threshold on `category`; a rejected cluster's rows staying flat at the parent's depth |
-| [`grouping-aggregates/`](../../src/stories/grouping/grouping-aggregates/) | `withGrouping({ initial })` with a column `aggregateFn` | The only canvas showing group totals: `amount` summed at every depth; a control that patches one row to a negative so `sumAmount` throws, and only the affected groups' totals go blank, per ADR-0014 |
+| [`grouping-aggregates/`](../../src/stories/grouping/grouping-aggregates/) | `withGrouping({ initial, schema })` declaring `applyAggregate(path.amount, sumAmount)` | The only canvas showing group totals: `amount` summed at every depth; a control that patches one row to a negative so `sumAmount` throws, and only the affected groups' totals go blank, per ADR-0014 |
 | [`grouping-async-rule/`](../../src/stories/grouping/grouping-async-rule/) | `withGrouping()` with an `applyGroupingAsync()`-shaped rule | A grouping level decided by the server over a real intercepted request: the pending window holding the last explicit grouping, the resolved set replacing it outright, and `onError` resolving to `[]` — grouped by nothing, distinct from abstaining |
 | [`grouping-order/`](../../src/stories/grouping/grouping-order/) | `withGrouping()` with a `groupOrder` comparator, composed with `withSorting()` | Deliberate misuse, not example code: `groupOrder` across five modes including a throwing comparator and a level naming no column; a sortable header that contrasts group order against row sort — headers move under `first-occurrence`, hold under every comparator mode |
 | [`grouping-columns/`](../../src/stories/grouping/grouping-columns/) | `withGrouping()` + `toggleColumnVisibility`/`reorderColumns` | `groupedColumnMode` as consumer code over the public column updaters, rendering all three peer dispositions — `keep` / `hide` / `move-to-front` |
@@ -159,7 +159,7 @@ every peer that renders a count also ships (P6), default on. The "cannot be comp
 unreachable rather than undemonstrated — `rowsOf()` returns an array or nothing at all.
 
 **Design status:** covered — the count is `rowsOf(group).length` (D16), needing no new state; it
-exists whether or not any column defines an `aggregateFn`. See
+exists whether or not the grouping declares an `applyAggregate` for any column. See
 [`research-grouping-ux-capabilities.md`](../1-state/work/grouping/archive/with-grouping/research-grouping-ux-capabilities.md).
 
 ## 1.3 — See a summary for each group — ✅ covered
@@ -185,13 +185,14 @@ exists whether or not any column defines an `aggregateFn`. See
   than a missing one, because a wrong number gets used.
 
 **Covered by:** [`grouping-aggregates/`](../../src/stories/grouping/grouping-aggregates/) — the
-only canvas that composes an `aggregateFn`, carrying both the happy path and the failure. `amount`
-carries an `aggregateFn` and its total renders on the header row at every depth, so a region's
-total is the sum of its subtree; every column without an `aggregateFn` renders an empty cell
-rather than a zero. *Break one group's summary* demonstrates the stated failure behavior: a
-throwing `aggregateFn` leaves only the affected group's total empty. No story on this canvas
-composes `withFiltering()`, so the third criterion — the summary reflecting filtered rows — is
-an argument from `PIPELINE_ORDER` (`filter` precedes `group`), not something on screen; see F-G1.
+only canvas that declares an `applyAggregate`, carrying both the happy path and the failure.
+`amount` gets `applyAggregate(path.amount, sumAmount)` through `withGrouping({ schema })` and its
+total renders on the header row at every depth, so a region's total is the sum of its subtree;
+every column with no declared aggregate renders an empty cell rather than a zero. *Break one
+group's summary* demonstrates the stated failure behavior: a throwing `aggregateFn` leaves only
+the affected group's total empty. No story on this canvas composes `withFiltering()`, so the
+third criterion — the summary reflecting filtered rows — is an argument from `PIPELINE_ORDER`
+(`filter` precedes `group`), not something on screen; see F-G1.
 
 **Design status:** covered — D9 fixes aggregates to leaf rows at every depth; per-group aggregation
 failure falls back per ADR-0014 ([#45](https://github.com/DvirMon/ng-table/issues/45)), reported once
@@ -461,8 +462,8 @@ are the visible order, ◀ ▶ re-nest through `reorderGroupLevels` and the data
 resetting, and × removes a level including a middle one with the levels either side left correctly
 nested. [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) runs three
 levels deep and its Regroup swaps the outer two. Summaries staying correct across a re-nesting
-(D9's leaf-rows-at-every-depth aggregation) is no longer on either canvas — neither composes an
-`aggregateFn` — and is argued rather than demonstrated; see 1.3. Failure: re-toggling a column
+(D9's leaf-rows-at-every-depth aggregation) is no longer on either canvas — neither declares an
+`applyAggregate` — and is argued rather than demonstrated; see 1.3. Failure: re-toggling a column
 that is already a level in [`grouping-basic/`](../../src/stories/grouping/grouping-basic/) is a
 no-op — `addGroupLevel` refuses the duplicate.
 
@@ -807,7 +808,7 @@ group headers exactly where they were. Also counted as 3.3's fourth criterion, n
 **Covered by:** [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) for the
 first criterion's counts half: "rep contains" narrows the rows, and every count follows the
 surviving rows. It is the only grouping story that composes `withFiltering()`, and it no longer
-composes an `aggregateFn` — the summaries half of the first criterion is not on this canvas.
+declares an `applyAggregate` — the summaries half of the first criterion is not on this canvas.
 
 **Why it is 🟡:** on two counts now, not one. The first criterion's summaries half is an argument
 from `PIPELINE_ORDER` (`filter` precedes `group`, so a summary can only ever see post-filter rows)
@@ -1073,8 +1074,9 @@ registry) rather than against memory.
 
 ### 9.1 Aggregation and totals — **state**, and it is not the same feature as grouping
 
-`ColumnDef.aggregateFn` is typed, public, and read by nobody. Three capabilities need it and two of
-them do not involve grouping at all:
+`applyAggregate` is grouping-owned infrastructure — declared through `withGrouping({ schema })`,
+read by nothing outside grouping's own render stage. Three capabilities need an aggregation
+primitive and two of them do not involve grouping at all:
 
 - **Grand total row** — a whole-table summary. D9 scopes it out of `withGrouping()`, correctly, and
   nothing else claims it.
