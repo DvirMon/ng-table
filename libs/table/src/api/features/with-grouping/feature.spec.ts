@@ -26,11 +26,11 @@ import { filter } from '../with-filtering/rules';
 import type { FiltersPath } from '../with-filtering/types';
 import { createTable } from '../../create-table';
 import { withComputed } from '../with-computed';
-import { withExpansion, type ExpansionMembers } from '../with-expansion';
 import { withFiltering } from '../with-filtering';
 import { withGrouping, type GroupingMembers, type WithGroupingConfig } from './feature';
 import { withSelection } from '../with-selection';
-import { withSorting, type SortingMembers } from '../with-sorting';
+import { withSorting } from '../with-sorting';
+import { withTree } from '../with-tree';
 import type {
   ColumnDef,
   GroupingUpdater,
@@ -899,6 +899,31 @@ describe('rowsOf', () => {
     expect(store.selectionStateOf(ids)).toBe('none');
     expect(store.selectedRows().size).toBe(0);
   });
+
+  // Moved up from the (now-deleted) `collapse/expand (#25)` block — its subject is `rowsOf()`'s
+  // collapse-independence, grouping's own API and the D17 regression it guards, so it stays;
+  // it composes `withTree()` only to produce a collapsed state to be about. See
+  // `.claude/rules/spec-files-assert-own-domain-only.md`.
+  it('rowsOf() on a collapsed group still returns the full leaf set, not [] (D17 regression)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({ initial: ['region'] }),
+        withTree()
+      )
+    );
+
+    // Header captured while collapsed (default: nothing toggled).
+    const collapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    expect(store.rowsOf(collapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+
+    // Same resolution holds for a header captured after an expand/collapse round-trip.
+    store.tree.toggle(US_HEADER_ID);
+    store.tree.toggle(US_HEADER_ID);
+    const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
+    expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
+  });
 });
 
 const EU_HEADER_ID = 'group:>region:string:EU';
@@ -959,44 +984,6 @@ describe('groupIds', () => {
     );
 
     expect(store.groupIds()).toEqual([]);
-  });
-
-  it('collapse-independent: collapsing a group via toggleExpanded does not remove its id', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] }),
-        withExpansion()
-      )
-    );
-
-    // withExpansion() starts every group collapsed by default — groupIds() must already see
-    // every header before anything is toggled, and must keep seeing them after collapseAll().
-    expect(store.groupIds().sort()).toEqual(
-      [
-        US_HEADER_ID,
-        US_ELECTRONICS_HEADER_ID,
-        US_FURNITURE_HEADER_ID,
-        EU_HEADER_ID,
-        EU_ELECTRONICS_HEADER_ID,
-        EU_FURNITURE_HEADER_ID,
-      ].sort()
-    );
-
-    store.toggleExpanded(US_HEADER_ID);
-    store.collapseAll();
-
-    expect(store.groupIds().sort()).toEqual(
-      [
-        US_HEADER_ID,
-        US_ELECTRONICS_HEADER_ID,
-        US_FURNITURE_HEADER_ID,
-        EU_HEADER_ID,
-        EU_ELECTRONICS_HEADER_ID,
-        EU_FURNITURE_HEADER_ID,
-      ].sort()
-    );
   });
 });
 
@@ -1205,7 +1192,7 @@ describe('groupingLevels/isGroupedBy composition order (#81)', () => {
 });
 
 describe('collapse/expand (#25)', () => {
-  it('no withExpansion() composed: every cluster renders flat and fully expanded (regression, unchanged from #7)', () => {
+  it('no expansion feature composed at all: every cluster renders flat and fully expanded, no collapse verb exists on the store, and isExpanded is unstamped', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -1217,102 +1204,16 @@ describe('collapse/expand (#25)', () => {
     const rows = store.renderRows();
     expect(rows.filter((row) => row.kind === 'group')).toHaveLength(2); // US, EU
     expect(rows.filter((row) => row.kind === 'row')).toHaveLength(6); // every source row present
+
+    // No collapse verb exists at all — no tree feature and no expansion feature is composed.
+    expect('tree' in store).toBe(false);
+    expect('expansion' in store).toBe(false);
+
+    // Unstamped, not stamped false — C4's undefined-for-no-feature contract.
+    expect(rows.every((row) => row.isExpanded === undefined)).toBe(true);
   });
 
-  it('withExpansion() composed, nothing toggled: every group renders collapsed by default — descendants omitted', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] }),
-        withExpansion()
-      )
-    );
-
-    const rows = store.renderRows();
-    // Only the two depth-0 headers render — no category headers, no leaves.
-    expect(rows).toHaveLength(2);
-    expect(rows.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
-  });
-
-  it('toggleExpanded(headerId) reveals that header\'s descendants; sibling headers stay collapsed', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] }),
-        withExpansion()
-      )
-    );
-
-    store.toggleExpanded(US_HEADER_ID);
-
-    const rows = store.renderRows();
-    const usLeafIds = rows
-      .filter((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'US')
-      .map((row) => (row.data as GroupingMockRow).id);
-    expect(usLeafIds.sort()).toEqual([1, 2, 3]);
-    // EU was never toggled — still just its header, no leaves.
-    expect(rows.some((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'EU')).toBe(
-      false
-    );
-  });
-
-  it('two-level grouping, expand outer only: the outer header\'s own child headers appear, but their leaves stay hidden until individually toggled', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] }),
-        withExpansion()
-      )
-    );
-
-    store.toggleExpanded(US_HEADER_ID);
-
-    const rows = store.renderRows();
-    expect(findHeader(rows, US_ELECTRONICS_HEADER_ID)).toBeDefined();
-    expect(findHeader(rows, US_FURNITURE_HEADER_ID)).toBeDefined();
-    // Neither inner category header was itself toggled — no leaves anywhere yet.
-    expect(rows.filter((row) => row.kind === 'row')).toHaveLength(0);
-    // EU was never toggled — not even its own category headers appear.
-    expect(findHeader(rows, EU_HEADER_ID)).toBeDefined();
-    expect(rows.some((row) => row.kind === 'group' && row.id.toString().startsWith(EU_HEADER_ID + '>'))).toBe(
-      false
-    );
-  });
-
-  it('argument order does not affect collapse behaviour', () => {
-    const groupingFirst = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] }),
-        withExpansion()
-      )
-    );
-    groupingFirst.toggleExpanded(US_HEADER_ID);
-    const groupingFirstShape = groupingFirst
-      .renderRows()
-      .map((row) => [String(row.id), row.depth]);
-
-    const expansionFirst = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withExpansion(),
-        withGrouping({ initial: ['region'] })
-      )
-    );
-    expansionFirst.toggleExpanded(US_HEADER_ID);
-    const expansionFirstShape = expansionFirst
-      .renderRows()
-      .map((row) => [String(row.id), row.depth]);
-
-    expect(expansionFirstShape).toEqual(groupingFirstShape);
-  });
-
-  it('composing withGrouping() without withExpansion() never throws or warns, at construction or on renderRows()', () => {
+  it('composing withGrouping() on its own throws and warns nothing, at construction or on renderRows()', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
@@ -1331,158 +1232,6 @@ describe('collapse/expand (#25)', () => {
       warnSpy.mockRestore();
       errorSpy.mockRestore();
     }
-  });
-
-  it('rowsOf() on a collapsed group still returns the full leaf set, not [] (D17 regression)', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] }),
-        withExpansion()
-      )
-    );
-
-    // Header captured while collapsed (default: nothing toggled).
-    const collapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
-    expect(store.rowsOf(collapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
-
-    // Same resolution holds for a header captured after an expand/collapse round-trip.
-    store.toggleExpanded(US_HEADER_ID);
-    store.toggleExpanded(US_HEADER_ID);
-    const reCollapsedHeader = findHeader(store.renderRows(), US_HEADER_ID)!;
-    expect(store.rowsOf(reCollapsedHeader).map((row) => row.id).sort()).toEqual([1, 2, 3]);
-  });
-
-  it('a collapsed group nested inside a collapsed group stays hidden when only the outer one opens', () => {
-    const store = inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>(mockGroupingRows),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region', 'category'] }),
-        withExpansion()
-      )
-    );
-
-    const outerHeader = store
-      .renderRows()
-      .find((row) => row.kind === 'group' && row.depth === 0 && row.groupKey?.value === 'US')!;
-
-    store.toggleExpanded(outerHeader.id);
-
-    const rows = store.renderRows();
-    const innerHeaders = rows.filter((row) => row.kind === 'group' && row.parentId === outerHeader.id);
-
-    // The outer header's own children (the category headers) are revealed once it opens...
-    expect(innerHeaders).toHaveLength(2); // Electronics, Furniture
-
-    // ...but neither inner header was itself toggled, so anything nested beneath either of them
-    // stays hidden — the transitive hidden-accumulator case (ADR-0017 decision 8).
-    const innerHeaderIds = innerHeaders.map((row) => row.id);
-    const revealedUnderInner = rows.filter(
-      (row) => row.parentId !== undefined && innerHeaderIds.includes(row.parentId)
-    );
-    expect(revealedUnderInner).toHaveLength(0);
-  });
-
-  describe('either order (D25)', () => {
-    it('expansion composed first: nothing toggled shows two depth-0 headers; toggling US reveals its leaves, EU stays collapsed', () => {
-      const store = inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withExpansion(),
-          withGrouping({ initial: ['region'] })
-        )
-      );
-
-      const collapsed = store.renderRows();
-      expect(collapsed).toHaveLength(2);
-      expect(collapsed.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
-
-      store.toggleExpanded(US_HEADER_ID);
-
-      expect(toShape(store.renderRows())).toEqual([
-        ['group', 0, undefined], // US
-        ['row', 1, 1],
-        ['row', 1, 2],
-        ['row', 1, 3],
-        ['group', 0, undefined], // EU, never toggled
-      ]);
-    });
-
-    it('grouping composed first: identical shape to expansion-first, both before and after toggling US', () => {
-      const store = inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping({ initial: ['region'] }),
-          withExpansion()
-        )
-      );
-
-      const collapsed = store.renderRows();
-      expect(collapsed).toHaveLength(2);
-      expect(collapsed.every((row) => row.kind === 'group' && row.depth === 0)).toBe(true);
-
-      store.toggleExpanded(US_HEADER_ID);
-
-      expect(toShape(store.renderRows())).toEqual([
-        ['group', 0, undefined], // US
-        ['row', 1, 1],
-        ['row', 1, 2],
-        ['row', 1, 3],
-        ['group', 0, undefined], // EU, never toggled
-      ]);
-    });
-
-    // -----------------------------------------------------------------------------------
-    // Type-level half. The vitest executor does NOT typecheck `expectTypeOf`/
-    // `@ts-expect-error` — inert at runtime, only enforced by
-    // `tsc -p libs/table/tsconfig.spec.json --noEmit`.
-    // -----------------------------------------------------------------------------------
-    it('a trailing derive on grouping sees expandedRows only when expansion is composed first (D25 — types stricter than runtime)', () => {
-      // Expansion first: grouping's trailing block sees expandedRows off the accumulated `In`.
-      inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withExpansion(),
-          withGrouping(
-            { initial: ['region'] },
-            withComputed((s) => {
-              expectTypeOf(s.expandedRows).toEqualTypeOf<Signal<Set<RowId>>>();
-              return {};
-            })
-          )
-        )
-      );
-
-      // Grouping first: the same read is a compile error — this slot's `In` doesn't carry
-      // ExpansionMembers yet. The runtime store does have `expandedRows` once expansion
-      // composes after (any deferred read off the shared object, e.g. a trailing
-      // `withComputed()` block, would see it) — this restriction is type-level only.
-      // `withGrouping()` itself no longer performs such a read at all (#99) — grouping's own
-      // render stage has zero knowledge of expansion; `engine/flatten.ts`'s `flattenVisible`
-      // walk governs collapse/expand visibility regardless of argument order (ADR-0017,
-      // ADR-0023).
-      inContext(() =>
-        createTable(
-          signal<GroupingMockRow[]>(mockGroupingRows),
-          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-          withGrouping(
-            { initial: ['region'] },
-            withComputed((s) => {
-              // @ts-expect-error — expandedRows is declared by withExpansion(), composed after
-              // grouping in this order (D25).
-              expectTypeOf(s.expandedRows).toEqualTypeOf<Signal<Set<RowId>>>();
-              return {};
-            })
-          ),
-          withExpansion()
-        )
-      );
-    });
   });
 });
 
@@ -2423,52 +2172,6 @@ describe('types', () => {
   // rejection: its column-id type falls back to `string`.
 });
 
-describe('collapse state across a sort', () => {
-  // Group ids are built from the cluster's value, not its position (`queries.spec.ts`, "same ids
-  // after a row reorder"), read here through the composed store — the only place a sort's effect
-  // on collapse state is observable.
-  function setup(): TableStore<GroupingMockRow, MockColumnId> &
-    GroupingMembers<GroupingMockRow> &
-    ExpansionMembers &
-    SortingMembers {
-    return inContext(() =>
-      createTable(
-        signal<GroupingMockRow[]>([...mockGroupingRows]),
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] }),
-        withExpansion(),
-        withSorting()
-      )
-    );
-  }
-
-  it('a sort change leaves expandedRows untouched', () => {
-    const store = setup();
-
-    store.toggleExpanded(US_HEADER_ID);
-    const expandedBefore = [...store.expandedRows()].sort();
-
-    store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
-    TestBed.tick();
-
-    expect([...store.expandedRows()].sort()).toEqual(expandedBefore);
-  });
-
-  it('an expanded group is still expanded, and a collapsed sibling still collapsed, after the sort', () => {
-    const store = setup();
-
-    store.toggleExpanded(US_HEADER_ID);
-    store.setSorting([{ columnId: 'amount', direction: 'desc' }]);
-    TestBed.tick();
-
-    const rows = store.renderRows();
-    expect(findHeader(rows, US_HEADER_ID)).toBeDefined();
-    // The opened group's own leaves are on screen; no other group's are.
-    const visibleIds = rows.filter((row) => row.kind === 'row').map((row) => row.id).sort();
-    expect(visibleIds).toEqual([1, 2, 3]);
-  });
-});
-
 describe('writes target rows; clustering re-derives', () => {
   // Nothing below names a group id: every write targets rows, and the clustering re-derives.
   // See the story lesson audit's D8.
@@ -2558,28 +2261,3 @@ describe('writes target rows; clustering re-derives', () => {
   });
 });
 
-describe('collapse state across a row replacement', () => {
-  // A refetch replaces every row with a freshly-constructed object carrying the same id. Same
-  // ids and new object identities must still yield the same group ids, so expansion state keeps
-  // matching. See the story lesson audit's D6.
-  it('replacing every row object with an equal-id copy leaves expandedRows untouched', () => {
-    const data = signal<GroupingMockRow[]>([...mockGroupingRows]);
-    const store = inContext(() =>
-      createTable(
-        data,
-        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
-        withGrouping({ initial: ['region'] }),
-        withExpansion()
-      )
-    );
-
-    store.toggleExpanded(US_HEADER_ID);
-    const expandedBefore = [...store.expandedRows()].sort();
-
-    data.set(mockGroupingRows.map((row) => ({ ...row })));
-    TestBed.tick();
-
-    expect([...store.expandedRows()].sort()).toEqual(expandedBefore);
-    expect(findHeader(store.renderRows(), US_HEADER_ID)).toBeDefined();
-  });
-});

@@ -49,7 +49,7 @@ describe('collectGroupIds — stability across a row reorder', () => {
   // The fact `grouping-collapsible/`'s sort toggles rest on: a group id is built from the
   // cluster's own value (`buildGroupPath`), never from its position, so re-sorting the rows
   // underneath cannot make an id drift. That is what lets `expandedRows` survive a sort —
-  // withExpansion never hears about the sort, it just keeps matching the same ids.
+  // withTree never hears about the sort, it just keeps matching the same ids.
   const resorted: Order[] = [...orders].reverse();
 
   it('the same ids come back after the rows are reordered', () => {

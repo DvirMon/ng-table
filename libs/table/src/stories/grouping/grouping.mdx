@@ -54,7 +54,7 @@ and no `applyAggregate`, because a baseline carrying scenery is how a reader mis
 option to the wrong place.
 
 Each story composes the fewest features its lesson needs. Where a second feature does appear —
-`withSorting()` in `Order`, `withExpansion()` in `Collapsible`, `withFiltering()` in `Group
+`withSorting()` in `Order`, `withTree()` in `Collapsible`, `withFiltering()` in `Group
 selection` — the page says what it is there to make visible.
 
 Shared across all of them: `fixtures/schema.ts` (one column list, one `groupingConfig`, and the
@@ -67,7 +67,7 @@ and `grouping-story.css`. Those are at the bottom of this page, once.
 ## Basic — the whole feature, with nothing else on
 
 `withGrouping({ initial })` and nothing else: no schema, no predicate, no second feature — and
-deliberately no `withExpansion()`, because a chevron with nothing to expand is a control that does
+deliberately no `withTree()`, because a chevron with nothing to expand is a control that does
 nothing. Array order is nesting order.
 
 Group headers carry value and count. No `amount` total, because totals are the `Aggregates`
@@ -419,13 +419,13 @@ carries `visible` and `order` and leaves the reading to whoever renders it, whic
 
 ## Collapsible — the navigable outline
 
-`withGrouping()` + `withExpansion()`, and nothing else: a real `<button>` chevron carrying
+`withGrouping()` + `withTree()`, and nothing else: a real `<button>` chevron carrying
 `aria-expanded`, the whole header row as hit area, and subtree collapse. A deal carrying `children`
 renders a second, separately-keyed chevron from the `'tree'` stage.
 
-Expand All is the reason `groupIds()` exists. `expandAll()` on its own discovers data rows through
+Expand All is the reason `groupIds()` exists. `tree.expand()` on its own discovers data rows through
 `childrenAccessor` and cannot reach a group header, so the outline needs
-`expandAll(table.groupIds())` — and `groupIds()` derives from the cluster tree rather than from
+`tree.expand(table.groupIds())` — and `groupIds()` derives from the cluster tree rather than from
 `renderRows()`, so it finds every header at every depth no matter what is collapsed right now.
 
 Group headers and data rows both read `row.isExpanded` — `flattenVisible()` stamps it on every

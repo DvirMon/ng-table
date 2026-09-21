@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { createTable, setGroupLevels, withExpansion, withGrouping } from '../../../index';
+import { createTable, setGroupLevels, withGrouping, withTree } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupedRowsResource, toErrorMessage } from '../fixtures/http';
 import {
@@ -14,13 +14,15 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
 /**
  * Collapsible grouping, navigable outline
  *
- * `withGrouping()` + `withExpansion()`, and nothing else — collapse or expand any group header to
- * explore the hierarchy.
+ * `withGrouping()` + `withTree()`, and nothing else — collapse or expand any group header to
+ * explore the hierarchy. The `childrenAccessor` is passed explicitly: the fixture nests deal
+ * line items under one deal (`DealRow.children`), and `withTree()` has no `row.children`
+ * fallback.
  *
- * Expand All passes `table.groupIds()` explicitly. `expandAll()` alone only discovers real data
- * rows via `childrenAccessor` and cannot reach a group header, which is the reason `groupIds()`
- * exists: it derives from the cluster tree rather than from `renderRows()`, so it finds every
- * header at every depth regardless of what is currently collapsed.
+ * Expand All passes `table.groupIds()` explicitly. `tree.expand()` alone only discovers real
+ * data rows via `childrenAccessor` and cannot reach a group header, which is the reason
+ * `groupIds()` exists: it derives from the cluster tree rather than from `renderRows()`, so it
+ * finds every header at every depth regardless of what is currently collapsed.
  *
  * Group headers and data rows both read `row.isExpanded` — `flattenVisible()` stamps it on
  * every render row once a composed feature contributes the expansion slot.
@@ -56,7 +58,7 @@ export class GroupingCollapsibleStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({ initial: COLLAPSIBLE_GROUPING_LEVELS }),
-    withExpansion()
+    withTree({ childrenAccessor: (row) => row.children })
   );
 
   protected readonly visibleColumns = computed(() =>
@@ -80,11 +82,11 @@ export class GroupingCollapsibleStoryHostComponent {
   );
 
   protected expandAllGroups(): void {
-    this.table.expandAll(this.table.groupIds());
+    this.table.tree.expand(this.table.groupIds());
   }
 
   protected collapseAllGroups(): void {
-    this.table.collapseAll();
+    this.table.tree.collapse();
   }
 
   protected refetchRows(): void {
