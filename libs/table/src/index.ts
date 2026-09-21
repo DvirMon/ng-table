@@ -38,7 +38,7 @@ export {
   isInRange,
 } from './api/features/with-filtering/matchers';
 export { withExpansion } from './api/features/with-expansion';
-export type { WithExpansionConfig } from './api/features/with-expansion';
+export type { WithExpansionConfig, ExpansionMembers } from './api/features/with-expansion';
 export { withTree } from './api/features/with-tree';
 export type { WithTreeConfig, TreeMembers } from './api/features/with-tree';
 export type { ExpansionChange, ExpansionWriteOptions } from './api/features/expansion/state';

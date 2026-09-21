@@ -69,8 +69,8 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
 
   /**
    * Ids this feature currently considers expanded, exposed read-only for `flattenVisible`.
-   * Unlike every other slot, contributions from multiple features accumulate rather than
-   * single-claim. See ADR-0012.
+   * This slot accumulates by design rather than single-claim — `withTree()` is its only
+   * contributor today. See ADR-0012.
    */
   expandedRows?: Signal<ReadonlySet<RowId>>;
 

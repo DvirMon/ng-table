@@ -52,9 +52,9 @@ export interface RenderRow<TRow> {
   // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
   readonly aggregates?: Record<string, unknown>;
 
-  // Derived by `flattenVisible`'s walk: `undefined` unless a feature contributed to the
-  // unioned `expandedRows` slot *and* this row has children — a table with no expansion
-  // feature composed never stamps this, even on a row that has children.
+  // Derived by `flattenVisible`'s walk: `undefined` unless `withTree()` contributed to the
+  // `expandedRows` slot *and* this row has children — a table with no tree feature composed
+  // never stamps this, even on a row that has children.
   readonly isExpanded?: boolean;
 
   // Derived by `flattenVisible`'s walk from the node's `children`, unless a stage overrides it
