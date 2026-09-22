@@ -2,23 +2,33 @@ import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { SORT_NULLS } from '../../engine/columns';
 import { readAccessor } from '../../engine/cells';
-import type { ColumnIdOf, Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
+import type { ColumnValuesOf, Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types';
 import { readColumnMeta } from '../../columns-schema/metadata';
 import type { SortNullsOpts } from '../../columns-schema/rules';
 import { createTableFeature } from '../create-table-feature';
-import type { ColumnDef, DerivedDict, SortDirection, SortRule, TableStore } from '../types';
+import type {
+  ColumnDef,
+  ColumnValueMap,
+  DerivedDict,
+  SortDirection,
+  SortRule,
+  TableStore,
+} from '../types';
 
 export interface WithSortingConfig {
   manual?: boolean;
   multi?: boolean;
 }
 
-/** The store slice this feature reads, row-typed. F-bounded: `In extends SortingInput<In>`
- * gives the factory `input.columns(): ColumnDef<RowOf<In>>[]` with no cast. `& Shape` is the
- * bootstrap `RowOf<In>` needs, not a read: this feature touches only `columns`. */
-// Recovers `TId` via `ColumnIdOf<In>` instead of defaulting to `string` — otherwise `In`'s real
-// column-id union can't round-trip through this pick (#113).
-type SortingInput<In> = Pick<TableStore<RowOf<In>, ColumnIdOf<In>>, 'columns'> & Shape;
+// The store slice this feature reads, row-typed. F-bounded: `In extends SortingInput<In>`
+// gives the factory `input.columns(): ColumnDef<RowOf<In>>[]` with no cast. `& Shape` is the
+// bootstrap `RowOf<In>` needs, not a read: this feature touches only `columns`.
+//
+// Recovers the value map via `ColumnValuesOf<In>` rather than `Record<ColumnIdOf<In>, unknown>`
+// — the latter circularly self-references under this F-bounded `In`, because it derives from
+// `In.columns` through an extra `keyof Record<...>` indirection. `ColumnValuesOf<In>` reads
+// `In`'s own `__columnValues` phantom directly, with no circularity.
+type SortingInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns'> & Shape;
 
 export interface SortingMembers {
   readonly sorting: Signal<SortRule[]>;
@@ -74,10 +84,10 @@ function detectComparator<TRow>(
   if (typeof sample === 'number') {
     return (a, b) => (accessor(a) as number) - (accessor(b) as number);
   }
-  // String(), not `.toString()` on the raw value — the spec's fallback is
-  // locale string compare via `.toString()`, but individual rows can still hold
-  // null/undefined even when the detection sample above found a non-null value
-  // elsewhere in the column; String() handles that without throwing.
+  // String(), not `.toString()`, on the raw value — the spec's fallback is
+  // locale compare via `.toString()`, but rows can still hold null/undefined
+  // even when the detection sample found a non-null value elsewhere in the
+  // column; String() handles that without throwing.
   return (a, b) =>
     String(accessor(a)).localeCompare(String(accessor(b)));
 }
@@ -86,7 +96,7 @@ function readSortNulls<TRow>(column: ColumnDef<TRow>): SortNullsOpts | undefined
   return readColumnMeta(column, SORT_NULLS);
 }
 
-/** `null`/`undefined` are always empty; `''` only counts if the column opts in. */
+// `null`/`undefined` are always empty; `''` only counts if the column opts in.
 function isEmpty<TRow>(value: unknown, column: ColumnDef<TRow>): boolean {
   if (value == null) {
     return true;
@@ -107,7 +117,7 @@ function reportComparatorError(columnId: string): void {
   );
 }
 
-// Note: a throwing comparator degrades to `0` (treated as equal) rather than failing the
+// A throwing comparator degrades to `0` (treated as equal) rather than failing the
 // whole sort (ADR-0014). Reports once per column per evaluation via the shared
 // `reportedColumns` set.
 function guardCompare<TRow>(
@@ -177,10 +187,10 @@ function sortRows<TRow>(
   });
 }
 
-// `TId` is never read in the body — it exists only so `input`'s type matches whatever id union
-// the caller's `SortingInput<In>` resolved to (#113).
-function buildSortingSpec<TRow, TId extends string = string>(
-  input: Pick<TableStore<TRow, TId>, 'columns'>,
+// `TValues` is never read in the body — it exists only so `input`'s type matches whatever
+// value map the caller's `SortingInput<In>` resolved to.
+function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>(
+  input: Pick<TableStore<TRow, TValues>, 'columns'>,
   config: WithSortingConfig
 ): TableFeatureSpec<TRow, SortingMembers> {
   const manual = config.manual ?? false;

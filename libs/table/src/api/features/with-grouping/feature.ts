@@ -15,7 +15,7 @@ import {
   maskGroupingLevels,
   type GroupingRuleEntry,
 } from '../../../engine/grouping/rules';
-import type { ColumnIdOf, Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
+import type { ColumnIdOf, ColumnValuesOf, Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
 import { assertDeclarationsAreKnown } from '../../../schema/validate';
 import { runGroupingSchemaFn } from './schema';
@@ -23,6 +23,8 @@ import type { GroupingLevel, GroupingRule, GroupingSchemaFn } from './types';
 import { createTableFeature } from '../../create-table-feature';
 import type {
   ColumnDef,
+  ColumnIdIn,
+  ColumnValueMap,
   DerivedDict,
   GroupingUpdater,
   GroupWhen,
@@ -31,8 +33,12 @@ import type {
   TableStore,
 } from '../../types';
 
-// The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`.
-type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnIdOf<In>>, 'columns' | 'rows'>;
+// The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. Recovers
+// the value map via `ColumnValuesOf<In>` rather than `Record<ColumnIdOf<In>, unknown>` — the
+// latter circularly self-references under `withGrouping`'s F-bounded `In`, because it derives
+// from `In.columns` through an extra `keyof Record<...>` indirection. `ColumnValuesOf<In>` reads
+// `In`'s own `__columnValues` phantom directly, with no circularity.
+type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows'>;
 
 export interface WithGroupingConfig<TRow, TId extends string = string> {
   /** Declared grouping levels, outermost first — array order is nesting order. A bare column id
@@ -90,15 +96,19 @@ function normalizeGroupingLevels<TId extends string>(
   return { columnIds, labelByColumnId };
 }
 
-// Shared by both `withGrouping()` overloads via the generic `factory` below.
-function buildGroupingSpec<TRow, TId extends string>(
-  input: Pick<TableStore<TRow, TId>, 'columns' | 'rows'>,
-  config: WithGroupingConfig<TRow, TId>
+// Shared by both `withGrouping()` overloads via the generic `factory` below. Generic in
+// `TValues` (matching `TableStore`'s value-map parameter directly, no `Record<>` wrapping —
+// see `GroupingInput<In>`), with `TId` recovered as `ColumnIdIn<TValues>`.
+function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
+  input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows'>,
+  config: WithGroupingConfig<TRow, ColumnIdIn<TValues>>
 ): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
-  const { columnIds: initial, labelByColumnId } = normalizeGroupingLevels<TId>(
+  const { columnIds: initial, labelByColumnId } = normalizeGroupingLevels<ColumnIdIn<TValues>>(
     config.initial ?? []
   );
-  const rules = config.schema ? [...runGroupingSchemaFn<TRow, TId>(config.schema)] : [];
+  const rules = config.schema
+    ? [...runGroupingSchemaFn<TRow, ColumnIdIn<TValues>>(config.schema)]
+    : [];
   assertDeclarationsAreKnown(
     [...initial, ...rules.map((rule) => rule.columnId)],
     input.columns().map((column) => column.id),

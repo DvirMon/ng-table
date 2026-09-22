@@ -2175,9 +2175,10 @@ describe('types', () => {
 describe('writes target rows; clustering re-derives', () => {
   // Nothing below names a group id: every write targets rows, and the clustering re-derives.
   // See the story lesson audit's D8.
-  function setup(
-    initial: MockColumnId[] = ['region', 'category']
-  ): TableStore<GroupingMockRow, MockColumnId> & GroupingMembers<GroupingMockRow> {
+  // No return-type annotation: `TableStore<GroupingMockRow, MockColumnId>` named the id union
+  // directly, pre-#125; the store's second parameter is the value map now, and inferring off
+  // the `createTable()` call below carries the same literal ids with no re-spelling needed.
+  function setup(initial: MockColumnId[] = ['region', 'category']) {
     return inContext(() =>
       createTable(
         signal<GroupingMockRow[]>([...mockGroupingRows]),

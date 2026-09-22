@@ -303,9 +303,10 @@ describe('withRowEdit', () => {
 
   it('mode flip leaves a single open row alone — already valid under single mode', () => {
     const isMultiple = signal(true);
+    const data = signal(makeRows());
     const store = inContext(() =>
       createTable(
-        signal(makeRows()),
+        data,
         { trackBy: 'id', columns: makeColumns() },
         withRowEdit({ multiple: isMultiple })
       )

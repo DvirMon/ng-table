@@ -119,6 +119,77 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   which is the one piece of real duplication in the file set. `engine/filters/build.ts` is
   untouched by #111; #102 reopens it.
 
+- **#115 — what types a rule's cell once `path` keys by column id? A column value map, and it
+  is a new node ahead of K3/V3.** Found while planning #115: every filter rule reads its
+  criterion type off `TRow[K]`, which does not exist once `K` is a declared column id. The
+  obvious patch — `K extends keyof TRow ? TRow[K] : unknown` — is a **guess**, and it lies for
+  exactly the case ADR-0024 exists to close: `{ id: 'owner', accessor: (r) => r.owner.name }`
+  over a row whose `owner` is an object infers the object, not `string`. A map derived from the
+  declared columns is not a guess — with no declared `accessor` the engine's documented default
+  *is* `(row) => row[id]`, so the field-type arm is exact rather than a fallback. Rejected:
+  **uniform `unknown`** (honest, but regresses `StateOf<S>` and every consumer of it across the
+  public surface — the one thing #115 promises not to touch); **object-keyed columns** (map is
+  free and can never degrade, but reopens column order and breaks `setColumns`,
+  `reorderColumns` and every story). The gap is mechanism-wide, not filtering's —
+  `applyGroupKey`, `applyAggregate`, `ClusterSummary.key`, `RenderRow.cells` and all of #117's
+  resolvers are `unknown` for the same reason. Registered below as **K0**, filed as #125. Prior
+  art: [`discovery-column-value-typing.md`](discovery-column-value-typing.md).
+
+- **K0 — two things the capture mechanism had open, both settled.** **`const` type parameters
+  do not help a hoisted array.** TS 5.0 states the limit verbatim: the modifier "only affects
+  inference of object, array and primitive expressions that were written within the call", so
+  `const cols = [...]` widens before `createTable` ever sees it — which is why the capture point
+  moves inside a `createColumns([...])` call, where the literal *is* written within the call.
+  **A `readonly` constraint does not conflict with `ColumnsUpdater`'s mutable write path**,
+  because the map rides in a phantom slot, never in `columns`' own type — `setColumns` and
+  `reorderColumns` are untouched. Also a correction to the framing: a **tuple is not required**.
+  `TCols[number]` resolves over an array-of-union, and declaration order is irrelevant to a value
+  map; the only requirement is that element types stay un-widened. The helper is named
+  `createColumns()` — `create*` is the barrel's established prefix (`createTable`,
+  `createTableFeature`, `createColumnMetaKey`, `createRow`) and `define*` appears nowhere in it;
+  the name also leaves room to resolve `ColumnDefInput` → `ColumnDef` defaults, assign `order`,
+  or reject duplicate ids at declaration time with no rename. Sources:
+  [`discovery-column-value-typing.md`](discovery-column-value-typing.md).
+
+- **K0 — `createColumns` is curried: `createColumns<TRow>()([...])`.** TypeScript has no partial
+  type-argument inference, so a single `createColumns<TRow, const TCols>(columns)` call cannot
+  take `TRow` explicitly and still infer `TCols` — supplying one type argument makes the second
+  fall back to its default rather than inferring. The extra `()` also buys contextual typing of
+  every accessor param for free: `accessor: (row) => row.owner.name` needs no annotation, because
+  `TRow` is already bound by the time the array is checked. Rejected alternatives: **inferring
+  `TRow` from an annotated accessor param** (an all-defaulted column list — no column declares an
+  accessor — then infers `TRow = unknown`); **dropping `TRow` entirely** (an unannotated accessor
+  param silently becomes `any`). Registered while implementing #125.
+
+- **K0 — `TCols` on the config, `TValues` on the store.** `TableConfig` takes the column
+  declaration because that is what a call site can infer; `TableStore` carries the derived value
+  map because that is what downstream code reads. Deriving at the config boundary is what keeps
+  #113's id-union inference working for a plain array — a `TValues`-on-the-config shape has
+  nothing to infer from, since TypeScript cannot infer `T` from a `keyof T` position, so every
+  un-helped array would fall back to the constraint and silently lose the literal union #113
+  shipped. Registered while implementing #125.
+
+- **K0 — the plan's `Files` lists undercounted the fallout; found by typechecking the whole repo,
+  not just the touched files.** Re-keying `TableStore`'s second parameter from an id union to a
+  value map broke every non-generated, two-argument `TableStore<TRow, TId>` reference in the
+  repo, and the step plan named only one (`create-table.spec.ts`'s `withReversibleSort` probe).
+  Also broke: `engine/slots.ts`'s `CORE_MEMBER_KEYS` exhaustiveness check (a new `TableStore` key,
+  `__columnValues`, needed adding to the claimed-keys list); `with-sorting.ts` and
+  `with-grouping/feature.ts`'s internal `TableStore<TRow, TId>` usages; four spec-only sites
+  (`wire-columns-schema.spec.ts`'s `makeStore` helper, `with-tree.spec.ts` and
+  `with-grouping/feature.spec.ts`'s `setup()` helpers, and one `with-row-edit.spec.ts` call whose
+  `TRow` inference depended on whether `signal(...)` was hoisted to a `const` first). First
+  attempt at `with-sorting.ts`/`with-grouping/feature.ts` wrapped the recovered id union as
+  `Record<TId, unknown>`; that satisfied the new `ColumnValueMap` constraint in isolation but
+  **circularly self-referenced** under each feature's F-bounded `In extends SortingInput<In>` /
+  `In extends GroupingInput<In>` — the extra `keyof Record<...>` indirection couldn't resolve
+  against `In`'s own `columns` field. Fixed with `ColumnValuesOf<In>` (the same recovery type
+  `ColumnValuesOf<S>` introduced for this node) instead: no wrapping, no circularity, and a more
+  direct reading of "recover the value map off the accumulating store" than the `Record`
+  workaround was. None of this changed any feature's public config surface or runtime behavior —
+  every fix is type-only plumbing or a test-file re-spelling. Full detail:
+  [issue-125's `progress.md`](4-tasks/issue-125-column-value-map/progress.md).
+
 ---
 
 ## Dependency ranking
@@ -137,6 +208,7 @@ without A's artifact. Presentation order below is not an edge.
 | **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor` | behaviour change | ✅ done (#114) |
 | **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor` | behaviour change | pending (#115) |
 | **V4** | Delete `resolveGroupLabel`'s raw-key fallback; `groupingLevels`' filter becomes total | behaviour change | ✅ done (#114) |
+| **K0** | The column **value** map — `createColumns()` captures declared ids and accessor return types, `ColumnValues<TRow, TCols>` derives the map, a phantom carrier puts it on `TableStore`, regenerate `create-table.overloads.ts`. Mechanism only: no consumer reads it in this node. Numbered below K1 because it is the same keying channel carried one step further — it *depends on* K1's shipped plumbing | API change | ✅ done (#125) |
 | **K1** | `TId` reaches feature configs — un-erase on `Shape`/`TableStore`/`TableCore`, regenerate `create-table.overloads.ts`, decide `compose-features.overloads.ts` | API change | done (#113) |
 | **K2** | Grouping declarations key by column id | API change | ✅ done (#114) |
 | **K3** | Filtering declarations key by column id | API change | pending (#115) |
@@ -155,22 +227,33 @@ S1  (was independent — now downstream of M3, since sorting declares
 
 M1 ─► M2 ─► M3
               │
-K1 ────────────┼──► K2 ─► V2 ─► V4
-               │     │
-               ├──► K3 ─► V3
-               │
-               └──► K4
+K1 ────────────┼──► K2 ─► V2 ─► V4      ✅ shipped on the erased union —
+   │           │                           the retrofit onto K0 is a follow-up node
+   │           ├──► K4                   ✅
+   │           │
+   └─► K0 ─────┴──┬──► K3 ─► V3
+                  │
+                  └──► S1
 
 {K2,K3,K4,V2,V3,V4,S1} ─► D1 ─► D2 ─► S2
 ```
 
 **Parallel-safe:** `[V1, M1, K1]` at the start — V1 touches only `with-sorting.ts`, M1 and K1
-touch disjoint files. S1 left this set on 2026-09-20. Then `[K2, K3, K4]` once M3 and K1 both land.
+touch disjoint files. S1 left this set on 2026-09-20. Then `[K2, K4]` once M3 and K1 both land;
+K3 left that set on 2026-09-21 — it additionally waits on K0.
 
-**Dependency chain (longest):** `M1 → M2 → M3 → K2 → V2 → V4 → D1 → D2 → S2`.
+**Dependency chain (longest):** `M1 → M2 → M3 → K2 → V2 → V4 → D1 → D2 → S2`. K0 adds a second
+chain of its own, `K1 → K0 → K3 → V3 → D1 → D2 → S2`, which is shorter but is the one now
+gating everything unshipped.
 
 **Frontier discipline:** K2/K3/K4 share only the validator from M3 and the id union from K1 —
-they do not depend on each other. V2 and V3 likewise touch disjoint engines.
+they do not depend on each other. V2 and V3 likewise touch disjoint engines. K0 is the one
+exception: K3 and S1 both read its map, so neither can be written against `unknown` first
+without being written twice.
+
+**K0 does not gate what already shipped.** K2/V2/V4/K4 landed on the erased union, and the
+retrofit that moves grouping onto the map is its **own follow-up node**, not part of K0 — K0
+adds the map and nothing reads it.
 
 ### The one hard sequencing constraint
 
@@ -249,6 +332,11 @@ owed — is docs and blocks nothing mechanically.
   (`engine/columns.ts` only ever writes it); the story hosts filter themselves. A carrier column
   therefore renders in any consumer that does not filter. Out of scope here, but G54 rests on it
   — worth its own issue.
+- **K0 makes the correct spelling the shortest one; it does not make the wrong one illegal.** A
+  plain widened `columns` array still compiles and still degrades the map to an index signature.
+  The types-spec guard is what catches that, not the compiler — a deliberate trade against the
+  object-keyed declaration, which could never degrade but costs column order. See "Questions
+  settled while sequencing".
 
 ---
 
@@ -263,3 +351,10 @@ owed — is docs and blocks nothing mechanically.
 - A `*.types.spec.ts` proving the column-id union is literal, not widened to `string` (K1) —
   **satisfied**: [`api/create-table.types.spec.ts`](../../../../../../src/api/create-table.types.spec.ts)
   (#113 Step 3).
+- A `*.types.spec.ts` proving the **value map** resolves a declared `accessor`'s return type, a
+  defaulted column's own field type, and rejects a typo'd column id (K0) — **satisfied**, across
+  two files: [`api/create-columns.types.spec.ts`](../../../../../../src/api/create-columns.types.spec.ts)
+  (the derivation, against `ColumnValues<>` directly, no `createTable()` call) and
+  [`api/create-table.types.spec.ts`](../../../../../../src/api/create-table.types.spec.ts) (the
+  carriage — the map surviving `TableConfig`, the generated overloads and the composed store;
+  extends the same file K1's guard above lives in, rather than a second file) (#125).

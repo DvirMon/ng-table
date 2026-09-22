@@ -3,7 +3,13 @@
 // `npm run table:overloads:check` fails if this file has drifted.
 
 import type { Feature } from '../engine/types';
-import type { TableConfig, TableDataInput, TableStore } from './types';
+import type {
+  ColumnDefInput,
+  ColumnValues,
+  TableConfig,
+  TableDataInput,
+  TableStore,
+} from './types';
 
 /**
  * Call signatures for `createTable()` — one per feature-slot count, 0 to 15.
@@ -11,52 +17,61 @@ import type { TableConfig, TableDataInput, TableStore } from './types';
  * its predecessors and the return type is the full intersection.
  */
 export interface CreateTableOverloads {
-  <TRow, TId extends string>(
+  <TRow, TCols extends readonly ColumnDefInput<TRow, string>[]>(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-  ): TableStore<TRow, TId>;
-  <TRow, TId extends string, O1 extends object>(
-    data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-  ): TableStore<TRow, TId> & O1;
-  <TRow, TId extends string, O1 extends object, O2 extends object>(
-    data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-  ): TableStore<TRow, TId> & O1 & O2;
+    config: TableConfig<TRow, TCols>,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>>;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
+    O1 extends object,
+  >(
+    data: TableDataInput<TRow>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1;
+  <
+    TRow,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
+    O1 extends object,
+    O2 extends object,
+  >(
+    data: TableDataInput<TRow>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2;
+  <
+    TRow,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-  ): TableStore<TRow, TId> & O1 & O2 & O3;
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
     O4 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4;
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -64,16 +79,19 @@ export interface CreateTableOverloads {
     O5 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5;
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -82,17 +100,23 @@ export interface CreateTableOverloads {
     O6 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6;
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -102,18 +126,34 @@ export interface CreateTableOverloads {
     O7 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7;
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
+    O1 &
+    O2 &
+    O3 &
+    O4 &
+    O5 &
+    O6 &
+    O7;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -124,19 +164,46 @@ export interface CreateTableOverloads {
     O8 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8;
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
+    O1 &
+    O2 &
+    O3 &
+    O4 &
+    O5 &
+    O6 &
+    O7 &
+    O8;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -148,23 +215,59 @@ export interface CreateTableOverloads {
     O9 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9;
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
+    O1 &
+    O2 &
+    O3 &
+    O4 &
+    O5 &
+    O6 &
+    O7 &
+    O8 &
+    O9;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -177,27 +280,73 @@ export interface CreateTableOverloads {
     O10 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
     f10: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9,
       O10
     >,
-  ): TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10;
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
+    O1 &
+    O2 &
+    O3 &
+    O4 &
+    O5 &
+    O6 &
+    O7 &
+    O8 &
+    O9 &
+    O10;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -211,28 +360,74 @@ export interface CreateTableOverloads {
     O11 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
     f10: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9,
       O10
     >,
     f11: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9 &
+        O10,
       O11
     >,
-  ): TableStore<TRow, TId> &
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
     O1 &
     O2 &
     O3 &
@@ -246,7 +441,7 @@ export interface CreateTableOverloads {
     O11;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -261,29 +456,75 @@ export interface CreateTableOverloads {
     O12 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
     f10: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9,
       O10
     >,
     f11: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9 &
+        O10,
       O11
     >,
     f12: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -297,7 +538,7 @@ export interface CreateTableOverloads {
         O11,
       O12
     >,
-  ): TableStore<TRow, TId> &
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
     O1 &
     O2 &
     O3 &
@@ -312,7 +553,7 @@ export interface CreateTableOverloads {
     O12;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -328,29 +569,75 @@ export interface CreateTableOverloads {
     O13 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
     f10: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9,
       O10
     >,
     f11: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9 &
+        O10,
       O11
     >,
     f12: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -365,7 +652,7 @@ export interface CreateTableOverloads {
       O12
     >,
     f13: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -380,7 +667,7 @@ export interface CreateTableOverloads {
         O12,
       O13
     >,
-  ): TableStore<TRow, TId> &
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
     O1 &
     O2 &
     O3 &
@@ -396,7 +683,7 @@ export interface CreateTableOverloads {
     O13;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -413,29 +700,75 @@ export interface CreateTableOverloads {
     O14 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
     f10: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9,
       O10
     >,
     f11: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9 &
+        O10,
       O11
     >,
     f12: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -450,7 +783,7 @@ export interface CreateTableOverloads {
       O12
     >,
     f13: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -466,7 +799,7 @@ export interface CreateTableOverloads {
       O13
     >,
     f14: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -482,7 +815,7 @@ export interface CreateTableOverloads {
         O13,
       O14
     >,
-  ): TableStore<TRow, TId> &
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
     O1 &
     O2 &
     O3 &
@@ -499,7 +832,7 @@ export interface CreateTableOverloads {
     O14;
   <
     TRow,
-    TId extends string,
+    TCols extends readonly ColumnDefInput<TRow, string>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -517,29 +850,75 @@ export interface CreateTableOverloads {
     O15 extends object,
   >(
     data: TableDataInput<TRow>,
-    config: TableConfig<TRow, TId>,
-    f1: Feature<TableStore<TRow, TId>, O1>,
-    f2: Feature<TableStore<TRow, TId> & O1, O2>,
-    f3: Feature<TableStore<TRow, TId> & O1 & O2, O3>,
-    f4: Feature<TableStore<TRow, TId> & O1 & O2 & O3, O4>,
-    f5: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4, O5>,
-    f6: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5, O6>,
-    f7: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6, O7>,
-    f8: Feature<TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7, O8>,
+    config: TableConfig<TRow, TCols>,
+    f1: Feature<TableStore<TRow, ColumnValues<TRow, TCols>>, O1>,
+    f2: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1, O2>,
+    f3: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2, O3>,
+    f4: Feature<TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3, O4>,
+    f5: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4,
+      O5
+    >,
+    f6: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5,
+      O6
+    >,
+    f7: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6,
+      O7
+    >,
+    f8: Feature<
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7,
+      O8
+    >,
     f9: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8,
       O9
     >,
     f10: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9,
       O10
     >,
     f11: Feature<
-      TableStore<TRow, TId> & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10,
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
+        O1 &
+        O2 &
+        O3 &
+        O4 &
+        O5 &
+        O6 &
+        O7 &
+        O8 &
+        O9 &
+        O10,
       O11
     >,
     f12: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -554,7 +933,7 @@ export interface CreateTableOverloads {
       O12
     >,
     f13: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -570,7 +949,7 @@ export interface CreateTableOverloads {
       O13
     >,
     f14: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -587,7 +966,7 @@ export interface CreateTableOverloads {
       O14
     >,
     f15: Feature<
-      TableStore<TRow, TId> &
+      TableStore<TRow, ColumnValues<TRow, TCols>> &
         O1 &
         O2 &
         O3 &
@@ -604,7 +983,7 @@ export interface CreateTableOverloads {
         O14,
       O15
     >,
-  ): TableStore<TRow, TId> &
+  ): TableStore<TRow, ColumnValues<TRow, TCols>> &
     O1 &
     O2 &
     O3 &

@@ -54,13 +54,13 @@ const CREATE_TABLE: OverloadSpec = {
   outputFile: join(LIB_ROOT, 'src', 'api', 'create-table.overloads.ts'),
   imports: [
     "import type { Feature } from '../engine/types';",
-    "import type { TableConfig, TableDataInput, TableStore } from './types';",
+    "import type { ColumnDefInput, ColumnValues, TableConfig, TableDataInput, TableStore } from './types';",
   ],
-  // `TId` flows from `config.columns` into every slot's `In` and into the return type
-  // (ADR-0019's amendment).
-  baseGenerics: ['TRow', 'TId extends string'],
-  base: 'TableStore<TRow, TId>',
-  leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow, TId>'],
+  // The declared column array flows from `config.columns` into every slot's `In` and into
+  // the return type, derived into the id → value map via `ColumnValues`.
+  baseGenerics: ['TRow', 'TCols extends readonly ColumnDefInput<TRow, string>[]'],
+  base: 'TableStore<TRow, ColumnValues<TRow, TCols>>',
+  leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow, TCols>'],
   includeZeroFeature: true,
   renderReturn: (base, featureCount) =>
     [base, ...contributions(featureCount)].join(' & '),

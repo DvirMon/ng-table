@@ -10,12 +10,13 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
 |---|---|---|---|---|
 | [#111](https://github.com/DvirMon/ng-table/issues/111) | Decouple the schema path mechanism from the columns schema | ✅ CLOSED 09-20 (`a9e437b`) | — | #114, #115, #100 |
 | [#112](https://github.com/DvirMon/ng-table/issues/112) | `sortRows` calls accessor and `sortFn` unwrapped, escaping ADR-0014 | ✅ CLOSED 09-20 | — | #100 (cleared) |
-| [#113](https://github.com/DvirMon/ng-table/issues/113) | The declared column-id union reaches a feature's config | 🟡 OPEN — steps 1-4 implemented, pending `/ship` | — | #114, #115, #100 |
+| [#113](https://github.com/DvirMon/ng-table/issues/113) | The declared column-id union reaches a feature's config | 🟡 OPEN — steps 1-4 implemented, pending `/ship` | — | #114, #115, #100, #125 |
+| [#125](https://github.com/DvirMon/ng-table/issues/125) | The declared column's **value type** reaches a feature's schema — `createColumns()` + `ColumnValues<>` | 🟡 OPEN — steps 1-6 implemented, pending `/ship` | #113 (implemented) | #115, #100, grouping retrofit |
 | [#114](https://github.com/DvirMon/ng-table/issues/114) | Grouping reads the accessor; levels and aggregates key by column id | 🟡 OPEN — steps 1-9 implemented, pending `/ship` | #111 (cleared), #113 (implemented) | #117 (cleared on this side; #117 still waits on #115) |
-| [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | 🟡 OPEN | #111 (cleared), #113 (implemented) | #117 |
-| [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN | #111 (cleared), #113 (implemented) | — |
+| [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | 🟡 OPEN — back on the frontier since 2026-09-21 (`#125` implemented) | #111 (cleared), #113 (implemented), #125 (implemented) | #117 |
+| [#100](https://github.com/DvirMon/ng-table/issues/100) | Per-column sorting config moves off `ColumnDef` into `withSorting()` | 🟡 OPEN — back on the frontier since 2026-09-21 (`#125` implemented) | #111 (cleared), #113 (implemented), #125 (implemented) | — |
 | [#116](https://github.com/DvirMon/ng-table/issues/116) | ADR for the schema-declaration surface — keying, authoring forms, resolver naming | 🟡 OPEN | — | — |
-| [#117](https://github.com/DvirMon/ng-table/issues/117) | Rule contexts resolve declared columns — `valueOf`, `criterionOf`, `stateOf` | 🟡 OPEN | #114, #115 | — |
+| [#117](https://github.com/DvirMon/ng-table/issues/117) | Rule contexts resolve declared columns — `valueOf`, `criterionOf`, `stateOf` | 🟡 OPEN | #114, #115 (and #125 transitively — its resolvers return `unknown` until the value map lands, but the edge runs through #115, not direct) | — |
 
 ## Graph
 
@@ -26,14 +27,17 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
    ✅ closed   ├──► #114  (grouping + aggregates) ──┐
 #113 ──────────┤                                    │
    (id union)  │                                    ├──► #117  (resolvers)
-               ├──► #115  (filtering) ──────────────┘
-#111 ──────────┘
-   ✅ closed
+               │                                    │
+               └──► #125 ──┬──► #115  (filtering) ──┘
+                (value map)│     ▲
+                           │     └── #111 ✅ closed
+                           │
+                           └──► grouping retrofit  (follow-up, not filed)
 
 #111 ──────────┐
    ✅ closed   │
-#112 ──────────┼──► #100  (sorting schema + config)
-   ✅ closed   │
+#112 ──────────┼──► #125 ──► #100  (sorting schema + config)
+   ✅ closed   │  (value map)
 #113 ──────────┘
    (id union)
 ```
@@ -45,7 +49,9 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
   `#112` were both in this set until they closed on 2026-09-20 — `#112` touched only
   `with-sorting.ts`, `#111` only the schema mechanism.
 - **Also parallel-safe once their blockers close:** `#114`, `#115`, `#100` — they share blockers
-  but nothing with each other, and they touch disjoint engines.
+  but nothing with each other, and they touch disjoint engines. `#115` and `#100` gained a
+  shared blocker on 2026-09-21 (`#125`), and lost it the same day when `#125`'s six steps landed;
+  they stay parallel-safe *with each other*.
 - **Sequenced:** `#111 → #114/#115/#100` was gated on the shared construction check — and for
   `#100`, also on the recording runner that its new schema fn calls — **cleared**, `#111` shipped
   as `a9e437b`;
@@ -54,11 +60,27 @@ column id ([ADR-0024](../../../../adr/0024-single-value-source-accessor.md)).
   call sites, which both change — **cleared**, `#112` shipped as `94e8050`;
   `#114/#115 → #117` gated on the features actually reading the accessor — a resolver over
   accessor values is meaningless before that.
-- **Current frontier:** `#113`, `#116`, `#114`. `#100` left it on 2026-09-20, `#112` closed the
-  same day, and `#111` closed the same day too (`a9e437b`). `#113` is the riskiest and now gates
-  **everything still unplanned** — `#115`, `#100` directly and `#117` through them — so
-  starting it early is worth more than finishing it fast; `#116` can land any time and is what the
-  rest cite; `#114` is implemented and waits on `/ship` alongside `#113`.
+- **The type channel was the gap, and no table vendor closes it.** `#113` carried the declared
+  **id** union into a feature's config; the **value** behind each id stayed `unknown`, because
+  `ColumnDef.accessor` returns `unknown` and the array erases per-element types. That is what
+  `#125` adds. Prior art says nobody has it: TanStack's `TValue` reaches `cell`/`footer`/`meta`
+  only — `filterFn`/`sortingFn`/`aggregationFn` are `<TData>`-only and `Row.getValue<TValue>(columnId)`
+  is an unchecked caller assertion; AG Grid's `TValue` is hand-annotated, never inferred. Every
+  library that *does* deliver a declared-key → value map switched its declaration to an object
+  keyed by the id — rejected here, it costs column order. Evidence, with pinned versions and
+  URLs: [`discovery-column-value-typing.md`](discovery-column-value-typing.md).
+- **Current frontier:** `#113`, `#116`, `#125`, `#114`, `#115`, `#100`. `#115` and `#100` briefly
+  left it on 2026-09-21 when `#125` was ranked ahead of them — planning against `unknown` means
+  planning twice — and rejoined the same day once `#125`'s six steps implemented the value map,
+  pending `/ship`. `#112` closed 2026-09-20, `#111` closed the same day too (`a9e437b`).
+  `#113` is the riskiest and still gates **everything unplanned**, now one hop further out —
+  `#125` directly, `#115`/`#100` through it, `#117` through those — so starting it early is
+  worth more than finishing it fast; `#116` can land any time and is what the rest cite; `#114`
+  is implemented and waits on `/ship` alongside `#113` and `#125`.
+- **The grouping retrofit — moving grouping from the erased id union onto the value map,
+  unfiled — is unblocked as of 2026-09-21.** It was `#125`'s other dependent (`decisions.md`'s
+  "K0 does not gate what already shipped" — `#114` landed on the erased union, and the retrofit
+  is its own follow-up node); now that `#125` is implemented, filing it is no longer premature.
 - **`#113` and `#114` are both implemented, not yet shipped.** `#113`: `TableStore<TRow, TId>`
   carries the declared id union into every feature slot, `create-table.overloads.ts` was
   regenerated, `api/create-table.types.spec.ts` proves the union stays literal (not widened to
@@ -122,6 +144,16 @@ same day when `withSorting()` gained a schema fn (G69). States re-verified again
 `gh issue list` on 2026-09-20 after `#112` closed (`94e8050`) and again after `#111` closed
 (`a9e437b`) via `/ship`. GitHub's native `blockedBy`/`blocking` fields are empty on every node —
 these edges live in the issue bodies' **Blocked by** sections and in this file, nowhere else.
+`#125` and its edges into `#115`/`#100` were added 2026-09-21 from the design pass that ranked
+the column value map as **K0** in [`decisions.md`](decisions.md); its prior art is cited to
+[`discovery-column-value-typing.md`](discovery-column-value-typing.md), not restated here.
+Filed and reconciled the same day: `#125` carries the `110/column-value-map` slice marker and is
+`#110`'s ninth native sub-issue, `#115` and `#100` each gained a `#125` line in their **Blocked
+by** sections, and `#117`/`#114` carry comments recording what the map does and does not change
+for them — `#114` shipped on the erased union, so its retrofit stays a follow-up node.
+`#125`'s six-step task plan implemented the same day (2026-09-21); `#115`/`#100` are back on the
+frontier and the grouping retrofit is unblocked. See [`decisions.md`](decisions.md)'s K0 row and
+"Questions settled while sequencing" for what implementing it settled.
 Related docs:
 [ADR-0024](../../../../adr/0024-single-value-source-accessor.md),
 [`docs/decisions/grouping.md`](../../../../decisions/grouping.md) G53–G59.

@@ -5,7 +5,7 @@ import { createColumnMetaKey, metadata, readColumnMeta } from '../../columns-sch
 import { applyVisible, applyVisibleAsync } from '../../columns-schema/rules';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
-import type { ColumnDef, TableConfig, TableStore } from '../../api/types';
+import type { ColumnDef, ColumnDefInput, ColumnValues, TableConfig, TableStore } from '../../api/types';
 
 interface Row {
   id: string;
@@ -35,10 +35,12 @@ function makeColumns() {
 }
 
 // Mirrors `table.store.spec.ts` / `with-sorting.spec.ts` — builds a live store instance inside
-// an injection context. Generic over `TId` (not fixed to `TableConfig<Row>`'s default `string`)
-// so a caller's literal `columns` still contextually types its `columnsSchema` callback, and the
-// returned store now carries that same `TId` (#113).
-function makeStore<TId extends string = string>(cfg: TableConfig<Row, TId>): TableStore<Row, TId> {
+// an injection context. Generic over `TCols` (not fixed to `TableConfig<Row>`'s default) so a
+// caller's literal `columns` still contextually types its `columnsSchema` callback, and the
+// returned store now carries the derived value map (#113, re-keyed for #125).
+function makeStore<TCols extends readonly ColumnDefInput<Row, string>[]>(
+  cfg: TableConfig<Row, TCols>
+): TableStore<Row, ColumnValues<Row, TCols>> {
   return TestBed.runInInjectionContext(() =>
     createTable(signal<Row[]>([]), cfg)
   );

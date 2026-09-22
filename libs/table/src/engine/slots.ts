@@ -26,6 +26,7 @@ export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
   'value',
   'renderRows',
   'indexById',
+  '__columnValues',
 ]);
 
 /** The owner name core members are registered under, for collision messages. */

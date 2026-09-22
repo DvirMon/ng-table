@@ -2,7 +2,9 @@ import type { Signal } from '@angular/core';
 import type {
   ColumnDef,
   ColumnDefInput,
+  ColumnIdIn,
   ColumnsUpdater,
+  ColumnValueMap,
   RenderRow,
   RowId,
   RowUpdater,
@@ -25,14 +27,17 @@ export interface TableEngineConfig<TRow> {
 // Currently held only by the internally-spliced column-schema wiring — consumer feature
 // factories instead receive the accumulating store typed as `Feature<In, Out>`'s `In`.
 /** The engine handle internal features receive. */
-export interface TableCore<TRow, TId extends string = string> {
+export interface TableCore<TRow, TValues extends ColumnValueMap = ColumnValueMap> {
   /** Read: the folded, rule-applied columns. Write: `.update()` targets `baseColumns`, never the fold. */
-  readonly columns: WritableView<ColumnDef<TRow, TId>[], ColumnsUpdater<TRow, TId>>;
+  readonly columns: WritableView<
+    ColumnDef<TRow, ColumnIdIn<TValues>>[],
+    ColumnsUpdater<TRow, ColumnIdIn<TValues>>
+  >;
   /**
    * Engine-internal only — the pre-fold declared columns `columns` overlays rules onto;
    * read-only here so a rule never observes its own output.
    */
-  readonly baseColumns: Signal<ColumnDef<TRow, TId>[]>;
+  readonly baseColumns: Signal<ColumnDef<TRow, ColumnIdIn<TValues>>[]>;
   // Lazy `computed` reading the stage registry at evaluation time; the registry is complete
   // before any consumer can read it, so this and `renderRows` below are safe to close over
   // during composition.
@@ -44,6 +49,12 @@ export interface TableCore<TRow, TId extends string = string> {
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
   /** Read: the consumer's row data, never copied. Write: `.update()` writes through, resolving `trackBy` for id-based updaters. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
+
+  /** Phantom. `TValues` is otherwise unrecoverable: `columns` carries only
+   * `keyof TValues & string`, and nothing infers a map from a `keyof`. Read by
+   * `ColumnValuesOf<S>`. Precedent: `FilterRule.__criterion` / `__row`
+   * (`engine/filters/types.ts:61-73`). */
+  readonly __columnValues?: TValues;
 }
 
 /**
@@ -105,6 +116,15 @@ export type ColumnIdOf<S> = S extends {
 }
   ? I
   : string;
+
+/** Recovers the declared column-value map off the `__columnValues` phantom, mirroring
+ * `ColumnIdOf`. Falls back to `ColumnValueMap` (not `never`) so a partial store or test
+ * double still behaves like the default `string` id space. */
+export type ColumnValuesOf<S> = S extends { readonly __columnValues?: infer V }
+  ? V extends ColumnValueMap
+    ? V
+    : ColumnValueMap
+  : ColumnValueMap;
 
 /** A composable feature: a function of the store built so far. Row type recovered as `RowOf<In>`. */
 export interface Feature<In extends Shape, Out extends object> {

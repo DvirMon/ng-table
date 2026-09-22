@@ -109,6 +109,27 @@ export type ColumnDefInput<TRow = unknown, TId extends string = string> = Pick<
 > &
   Partial<Omit<ColumnDef<TRow, TId>, 'id'>>;
 
+/** The declared column-id → value map a table's columns derive. */
+export type ColumnValueMap = Record<string, unknown>;
+
+/** The declared column-id union carried by a value map. `Record<string, unknown>` — the
+ * default — yields `string`, which is exactly the pre-#125 behaviour. */
+export type ColumnIdIn<TValues extends ColumnValueMap> = keyof TValues & string;
+
+/** Maps each declared column id to the value behind it: a declared `accessor`'s return
+ * type, else `TRow[id]` — exact, not a guess, because the engine's documented default
+ * accessor *is* `(row) => row[id]`. */
+export type ColumnValues<
+  TRow,
+  TCols extends readonly ColumnDefInput<any, string>[],
+> = {
+  [C in TCols[number] as C['id']]: C extends { accessor: (row: any) => infer V }
+    ? V
+    : C['id'] extends keyof TRow
+      ? TRow[C['id']]
+      : unknown;
+};
+
 export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
 
 /** A group's raw clustering value, opaque to consumers. */
@@ -142,10 +163,22 @@ export type ReadonlyStore<S> = {
   readonly [K in keyof S]: S[K] extends WritableView<infer T, any> ? Signal<T> : S[K];
 };
 
-export interface TableConfig<TRow, TId extends string = string> {
+/**
+ * `TCols` is what a call site can infer, `TValues` is what downstream reads. Deriving at the
+ * config boundary is what keeps a plain array's id union inferring correctly — `TValues`
+ * cannot appear here because nothing infers a map from a `keyof` position, so a
+ * `TValues`-on-the-config shape would give every un-helped array nothing to infer from and
+ * silently fall back to the constraint, losing the literal union.
+ */
+export interface TableConfig<
+  TRow,
+  TCols extends readonly ColumnDefInput<TRow, string>[] = readonly ColumnDefInput<TRow, string>[],
+> {
   trackBy: TrackByConfig<TRow>;
-  columns: ColumnDefInput<TRow, TId>[];
-  columnsSchema?: ColumnsSchemaFn<TRow, TId> | ColumnSchema<TRow>;
+  columns: TCols;
+  columnsSchema?:
+    | ColumnsSchemaFn<TRow, ColumnIdIn<ColumnValues<TRow, TCols>>>
+    | ColumnSchema<TRow>;
   injector?: Injector;
 }
 
@@ -174,10 +207,13 @@ export type RowUpdater<TRow> = (
  * program against — it never references engine types, so swapping the internal
  * state-management implementation is not a breaking change.
  */
-export interface TableStore<TRow, TId extends string = string> {
+export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMap> {
   /** Read: the folded, rule-applied column list. Write: `.update(updater)` — e.g.
    * `table.columns.update(reorderColumns(ids))`. */
-  readonly columns: WritableView<ColumnDef<TRow, TId>[], ColumnsUpdater<TRow, TId>>;
+  readonly columns: WritableView<
+    ColumnDef<TRow, ColumnIdIn<TValues>>[],
+    ColumnsUpdater<TRow, ColumnIdIn<TValues>>
+  >;
   readonly rows: Signal<TRow[]>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly trackBy: TrackByFn<TRow>;
@@ -194,4 +230,10 @@ export interface TableStore<TRow, TId extends string = string> {
   /** Read: the row data — the consumer's own signal, single source of truth. Write:
    * `.update(updater)` — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
+
+  /** Phantom. `TValues` is otherwise unrecoverable: `columns` carries only
+   * `keyof TValues & string`, and nothing infers a map from a `keyof`. Read by
+   * `ColumnValuesOf<S>`. Precedent: `FilterRule.__criterion` / `__row`
+   * (`engine/filters/types.ts:61-73`). */
+  readonly __columnValues?: TValues;
 }

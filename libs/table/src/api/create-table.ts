@@ -40,8 +40,10 @@ export const createTable = (<TRow>(
   // Resolves `columns` + optional `columnsSchema` (inline fn or a standalone
   // `columnSchema()` value) into the initial column list plus the flat reactive/async
   // rule set `wireColumnsSchemaAsync` wires up.
+  // `config.columns` is readonly; `resolveColumnsConfig` wants a mutable array, so it's
+  // spread here rather than widening that function's own signature.
   const { columns, rules } = resolveColumnsConfig(
-    config.columns,
+    [...config.columns],
     config.columnsSchema
   );
 

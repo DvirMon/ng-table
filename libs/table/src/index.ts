@@ -5,6 +5,7 @@
 // that justified it — the filters surface now folds into `withFiltering`'s own feature folder,
 // so this file is once again the only one defining the public surface.
 export * from './api/create-table';
+export * from './api/create-columns';
 export * from './api/types';
 export * from './directives/table.tokens';
 export * from './directives/ngp-table.directive';

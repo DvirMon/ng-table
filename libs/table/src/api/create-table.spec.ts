@@ -8,7 +8,14 @@ import { withComputed } from './features/with-computed';
 import { columnSchema } from '../columns-schema/schema';
 import { applyVisible } from '../columns-schema/rules';
 import type { Feature, RowOf, Shape } from '../engine/types';
-import type { ColumnDef, ReadonlyStore, RenderRow, RowId, TableStore } from './types';
+import type {
+  ColumnDef,
+  ColumnValueMap,
+  ReadonlyStore,
+  RenderRow,
+  RowId,
+  TableStore,
+} from './types';
 
 interface Row {
   id: string;
@@ -54,12 +61,12 @@ function makeStore(
  * while `toggled` is on — used to prove `renderRows()` recomputes downstream of the pipeline
  * when a feature's own state changes, not just when the consumer's `data` signal re-emits.
  * Built with `createTableFeature()` per this step's scope: shipped `with-*` features aren't
- * converted to the one-argument factory shape until #38–#40. `TId` is generic (not fixed to
- * `string`) only so this feature stays assignable to any `createTable()` slot's inferred id
- * union (#113); the factory itself never reads it.
+ * converted to the one-argument factory shape until #38–#40. `TValues` is generic (not fixed
+ * to `ColumnValueMap`) only so this feature stays assignable to any `createTable()` slot's
+ * inferred value map (#113); the factory itself never reads it.
  */
-function withReversibleSort<TId extends string = string>(): Feature<
-  TableStore<Row, TId>,
+function withReversibleSort<TValues extends ColumnValueMap = ColumnValueMap>(): Feature<
+  TableStore<Row, TValues>,
   { reversed: Signal<boolean>; toggleReverse(): void }
 > {
   return createTableFeature(() => {

@@ -922,10 +922,11 @@ describe('withTree', () => {
     describe('collapse state across a sort', () => {
       // Group ids are built from the cluster's value, not its position, read here through the
       // composed store — the only place a sort's effect on collapse state is observable.
-      function setup(): TableStore<GroupingMockRow, 'region' | 'category'> &
-        GroupingMembers<GroupingMockRow> &
-        TreeMembers &
-        SortingMembers {
+      // No return-type annotation: the pre-#125 `TableStore<GroupingMockRow, 'region' |
+      // 'category'>` spelling named the id union directly, which the store's second
+      // parameter no longer accepts (it's the value map since #125) — inferring off the
+      // `createTable()` call below carries the same literal ids with no re-spelling needed.
+      function setup() {
         return inContext(() =>
           createTable(
             signal<GroupingMockRow[]>([...mockGroupingRows]),
