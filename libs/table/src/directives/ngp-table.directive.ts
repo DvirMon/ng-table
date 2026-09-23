@@ -3,7 +3,6 @@ import {
   computed,
   Directive,
   effect,
-  ElementRef,
   inject,
   input,
   Injector,
@@ -33,7 +32,6 @@ export class NgpTableDirective<TRow = unknown> {
   readonly ariaRowCount: Signal<number> = computed(() => this.ngpTable().totalRowCount());
   readonly ariaColCount: Signal<number> = computed(() => this.ngpTable().columns().length);
 
-  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
 
   // FLIP row-reorder animation (docs/3-ui/directives/row-animation.md). Keyed by `RowId` so
@@ -41,6 +39,11 @@ export class NgpTableDirective<TRow = unknown> {
   private readonly rowFlipOffsets = signal(new Map<RowId, number>());
   private readonly rowFlipPlaying = signal(false);
   private previousRowTops = new Map<RowId, number>();
+
+  // Row elements, keyed by id instead of DOM position — `animate.leave` keeps a leaving `<tr>`
+  // in the DOM past its removal from `renderRows()`, which would otherwise shift index-paired
+  // lookups for every row after it.
+  private readonly rowElements = new Map<RowId, HTMLElement>();
 
   constructor() {
     effect(() => {
@@ -91,14 +94,27 @@ export class NgpTableDirective<TRow = unknown> {
     return this.rowFlipPlaying();
   }
 
+  /** Called by `ngpTableRow` on construction; always overwrites. */
+  registerRowElement(rowId: RowId, element: HTMLElement): void {
+    this.rowElements.set(rowId, element);
+  }
+
+  /**
+   * Called by `ngpTableRow` on destroy. Only removes the entry when `element` is still the
+   * currently-registered one for `rowId` — a re-entering row with the same id may already have
+   * registered its own element before the leaving instance is destroyed.
+   */
+  unregisterRowElement(rowId: RowId, element: HTMLElement): void {
+    if (this.rowElements.get(rowId) === element) {
+      this.rowElements.delete(rowId);
+    }
+  }
+
   private captureRowTops(rowIds: readonly RowId[]): Map<RowId, number> {
     const tops = new Map<RowId, number>();
-    // `[ngpTableRow]` is a directive input binding, never reflected as a DOM attribute —
-    // query `data-row-kind` instead, which `ngpTableRow` always writes via `[attr.*]`.
-    const rowElements = this.host.nativeElement.querySelectorAll<HTMLElement>('[data-row-kind]');
-    rowElements.forEach((element, index) => {
-      const rowId = rowIds[index];
-      if (rowId !== undefined) {
+    rowIds.forEach((rowId) => {
+      const element = this.rowElements.get(rowId);
+      if (element !== undefined) {
         tops.set(rowId, element.offsetTop);
       }
     });

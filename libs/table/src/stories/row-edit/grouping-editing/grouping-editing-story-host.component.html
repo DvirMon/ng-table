@@ -4,7 +4,12 @@
     category dropdown. A row with no category yet renders flat, no header — pick a value and it
     moves under that category's header on the same write, creating the header if it has never
     been picked before. The row glides into place under its new group header rather than
-    popping there.
+    popping there, and a new header fades in the first time a category is picked.
+  </p>
+
+  <p class="story-host__hint">
+    Sort by <strong>name</strong>: rows reorder inside each group, while
+    <code>applyGroupOrder</code> keeps the headers alphabetical.
   </p>
 
   <p class="story-host__hint">No category yet: <strong>{{ ungroupedRowCount() }}</strong></p>
@@ -12,13 +17,28 @@
   <table class="story-host__table grouping-story__table" [ngpTable]="table">
     <thead>
       <tr>
-        <th class="story-host__cell">name</th>
+        <th class="story-host__cell" [attr.aria-sort]="nameSortAria()">
+          <button type="button" class="story-host__sort-button" (click)="table.toggleSort('name')">
+            name
+            @switch (table.sortDirections().get('name')) {
+              @case ('asc') {
+                ▲
+              }
+              @case ('desc') {
+                ▼
+              }
+              @default {
+                ↕
+              }
+            }
+          </button>
+        </th>
         <th class="story-host__cell">category</th>
       </tr>
     </thead>
     <tbody>
       @for (row of table.renderRows(); track row.id) {
-        <tr [ngpTableRow]="row">
+        <tr [ngpTableRow]="row" animate.enter="row-enter" animate.leave="row-leave">
           @if (row.kind === 'group') {
             <td class="story-host__cell grouping-story__cell--label" colspan="2">
               <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>

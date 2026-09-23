@@ -1,7 +1,7 @@
 ---
 title: UI Layer — Row Reorder Animation (ngpTableRow FLIP)
 type: architecture
-version: 0.3
+version: 0.4
 date: 2026-09-23
 capability: row-animation
 spec: drilled
@@ -173,14 +173,55 @@ what makes it *visible*, not what makes it *work*.
 Not imported by the directive or `index.ts` — a consumer opts in with a normal import, or
 ignores it and writes their own rule against the same `.ngp-table-row--flip` class.
 
+## Enter and exit
+
+**Consumer-owned, not a library API (D1).** `ngpTableRow` ships no enter/exit support — no
+directive input, no class, no attribute. A row appearing (a first-time category header) or
+disappearing (the last row leaving a category) is structure, and structure is the consumer
+template's job, the same attribute-only invariant the rest of this library follows. Angular
+already ships the primitive for this: `animate.enter`/`animate.leave` directly on the `@for`
+row's `<tr>`, no library involvement.
+
+```html
+<tr [ngpTableRow]="row"
+    animate.enter="row-enter"
+    animate.leave="row-leave">
+```
+
+```css
+.row-enter {
+  animation: row-fade-in 200ms ease-out;
+}
+@keyframes row-fade-in {
+  from { opacity: 0; }
+}
+.row-leave {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}
+```
+
+`animate.enter` also fires on first render, so every row fades in on initial load, not just on
+a later insert.
+
+**Snap limitation (D2), documented not fixed:** `animate.leave` keeps the leaving `<tr>` in the
+DOM until its own animation finishes. Rows below it get no glide for that interval — they only
+snap up once the element is actually removed. The FLIP row registry (below) stops a lingering
+leaving row from corrupting *other* rows' measured positions while it's still present, but it
+does not give the leaving row's old slot a glide of its own; that's the documented tradeoff of
+letting the browser finish the leave animation before touching layout.
+
 ## What's directly portable from the demo prototype
 
 The measurement/timing logic is pure signal + DOM-read code, no structural DOM dependency —
 this is what `ngpTable` now runs:
 
-- Capture row positions by querying `[data-row-kind]` elements under the table host, keyed by
-  `RenderRow.id` (index-zipped against `renderRows()`, since DOM order matches array order for
-  an attribute-only, non-reordering directive).
+- Capture row positions by `RowId` lookup through a registry, not a DOM query paired by array
+  index — `ngpTableRow` registers its own element with the parent `ngpTable` on construct and
+  unregisters on destroy (guarded so a leaving row's cleanup can't clobber a same-id row that
+  re-entered before the leave animation finished). This is what lets a leaving row — still
+  present in the DOM mid `animate.leave`, but no longer in `renderRows()` — get skipped instead
+  of shifting the measured positions of every row after it (D2).
 - Trigger on `ngpTable().renderRows()` change via `effect()`, read positions inside
   `afterNextRender()` (not `queueMicrotask()` — that raced Angular's actual DOM commit and
   corrupted deltas; see prototype history).
@@ -197,9 +238,6 @@ through the existing `NGP_TABLE_STORE` injection token.
 - [ ] Row-hold during editing (OQ-3 in `docs/1-state/features/with-row-edit.md`'s sorting ×
       editing story) is a related but separate concern — this animation plays even when a row
       is mid-edit; it does not itself prevent an open row from moving.
-- [ ] Enter/exit: rows that appear/disappear (new group headers, a row leaving the last member
-      of a category, collapse/expand) get no transition today. Enter could be a
-      directive-owned state attribute; exit needs the consumer's `animate.leave`.
 - [ ] Adding, removing, or reordering a group level changes every header's id
       (`buildGroupPath()`, `engine/grouping/clusters.ts:72-78`), so headers can't glide across
       a level change.

@@ -4,8 +4,10 @@ import type { GroupKey } from '../../../api/types';
 import { createTable } from '../../../api/create-table';
 import { withGrouping } from '../../../api/features/with-grouping';
 import { applyGroupOrder } from '../../../api/features/with-grouping/schema';
+import { withSorting } from '../../../api/features/with-sorting';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
+import { toAriaSort } from '../fixtures/utils';
 import { NullableSelectFieldDirective } from './nullable-select-field.directive';
 import { CATEGORY_OPTIONS, GROUP_EDIT_ROWS_MOCK } from './grouping-editing.mock';
 import {
@@ -26,7 +28,12 @@ function hasCategory(key: GroupKey): boolean {
  * category yet renders flat — no header, depth 0. Picking a value commits the instant it's
  * chosen (no Save step), and the row moves under that category's header on the same write — a
  * fresh header if that category has never been picked before. `ngpTable`/`ngpTableRow` drive the
- * FLIP glide, so the row animates into its new group instead of jumping there.
+ * FLIP glide, so the row animates into its new group instead of jumping there, and
+ * `animate.enter`/`animate.leave` fade a header in or out as it's created or emptied.
+ *
+ * `applyGroupOrder` keeps headers alphabetical. Sorting by name reorders rows inside each group
+ * and never moves a header — without the comparator, headers would follow the sort's
+ * first occurrence.
  */
 @Component({
   selector: 'ngp-grouping-editing-story-host',
@@ -49,10 +56,14 @@ export class GroupingEditingStoryHostComponent {
       schema: (path) => {
         applyGroupOrder(path['category'], compareCategoryGroups);
       },
-    })
+    }),
+    withSorting()
   );
   protected readonly rows = form(this.data, groupEditRowsSchema);
   protected readonly categoryOptions = CATEGORY_OPTIONS;
+  protected readonly nameSortAria = computed(() =>
+    toAriaSort(this.table.sortDirections().get('name'))
+  );
 
   /** Rows still sitting flat at depth 0 — the count a person watches drop to 0 as they pick a
    * category for each one. */
