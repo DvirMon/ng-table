@@ -14,7 +14,7 @@
 
   <p class="story-host__hint">No category yet: <strong>{{ ungroupedRowCount() }}</strong></p>
 
-  <table class="story-host__table grouping-story__table" [ngpTable]="table">
+  <table class="story-host__table grouping-story__table" [ngpTable]="table" ngpTableRowAnimation>
     <thead>
       <tr>
         <th class="story-host__cell" [attr.aria-sort]="nameSortAria()">
@@ -38,7 +38,11 @@
     </thead>
     <tbody>
       @for (row of table.renderRows(); track row.id) {
-        <tr [ngpTableRow]="row" animate.enter="row-enter" animate.leave="row-leave">
+        <tr
+          [ngpTableRow]="row"
+          animate.enter="ngp-table-row--enter"
+          animate.leave="ngp-table-row--leave"
+        >
           @if (row.kind === 'group') {
             <td class="story-host__cell grouping-story__cell--label" colspan="2">
               <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>

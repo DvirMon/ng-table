@@ -1,6 +1,6 @@
-@import '../../../row-flip.css';
+@import '../../../row-animation.css';
 
-/* Row-flip needs separate borders — collapsed borders don't follow a `transform`. */
+/* Row animation needs separate borders — collapsed borders don't follow a `transform`. */
 .story-host__table {
   border-collapse: separate;
   border-spacing: 0;

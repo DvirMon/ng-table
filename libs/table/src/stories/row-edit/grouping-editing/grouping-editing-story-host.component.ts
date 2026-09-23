@@ -6,6 +6,7 @@ import { withGrouping } from '../../../api/features/with-grouping';
 import { applyGroupOrder } from '../../../api/features/with-grouping/schema';
 import { withSorting } from '../../../api/features/with-sorting';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
+import { NgpTableRowAnimationDirective } from '../../../directives/ngp-table-row-animation.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { toAriaSort } from '../fixtures/utils';
 import { NullableSelectFieldDirective } from './nullable-select-field.directive';
@@ -27,7 +28,7 @@ function hasCategory(key: GroupKey): boolean {
  * `withGrouping({ initial: ['category'], when })` plus a live category dropdown. A row with no
  * category yet renders flat — no header, depth 0. Picking a value commits the instant it's
  * chosen (no Save step), and the row moves under that category's header on the same write — a
- * fresh header if that category has never been picked before. `ngpTable`/`ngpTableRow` drive the
+ * fresh header if that category has never been picked before. `ngpTableRowAnimation` drives the
  * FLIP glide, so the row animates into its new group instead of jumping there, and
  * `animate.enter`/`animate.leave` fade a header in or out as it's created or emptied.
  *
@@ -37,7 +38,13 @@ function hasCategory(key: GroupKey): boolean {
  */
 @Component({
   selector: 'ngp-grouping-editing-story-host',
-  imports: [FormField, NgpTableDirective, NgpTableRowDirective, NullableSelectFieldDirective],
+  imports: [
+    FormField,
+    NgpTableDirective,
+    NgpTableRowAnimationDirective,
+    NgpTableRowDirective,
+    NullableSelectFieldDirective,
+  ],
   templateUrl: './grouping-editing-story-host.component.html',
   styleUrls: [
     '../../styles/story-host.css',

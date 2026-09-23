@@ -1,9 +1,0 @@
-/* Opt-in only — not imported by any directive or index.ts. See
-   docs/3-ui/directives/row-animation.md. `ngpTableRow` writes `transform` and this class
-   directly (verified mechanism, same as the `table-demo` prototype) — importing this file
-   only adds the transition; the transform itself always applies.
-   Consumer tables using this must also set `border-collapse: separate; border-spacing: 0;`
-   — collapsed borders don't follow a transform. */
-.ngp-table-row--flip {
-  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-}

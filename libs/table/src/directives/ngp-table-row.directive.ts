@@ -10,10 +10,14 @@ import {
   type Signal,
 } from '@angular/core';
 
-import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
+import { NGP_TABLE_ROW, NGP_TABLE_ROW_ANIMATION } from './table.tokens';
 import type { RenderRow, RowId } from '../api/types';
 
-// Dual-tag selector, role set unconditionally regardless of host tag.
+// Dual-tag selector, role set unconditionally regardless of host tag. FLIP move animation is
+// opt-in via `ngpTableRowAnimation` on the host table (ngp-table-row-animation.directive.ts):
+// offset reaches CSS via the `--ngp-table-row-flip-offset` custom property, gliding state via
+// the `data-row-flipping` presence attribute — no inline `transform`, no bound class
+// (ADR-0026). Without it, both are `null`/absent.
 @Directive({
   selector: 'tr[ngpTableRow], div[ngpTableRow]',
   providers: [{ provide: NGP_TABLE_ROW, useExisting: NgpTableRowDirective }],
@@ -24,11 +28,8 @@ import type { RenderRow, RowId } from '../api/types';
     // aria-rowindex is 1-based per WAI-ARIA; `ngpTableRow().index` is the 0-based array position.
     '[attr.aria-rowindex]': 'ngpTableRow().index + 1',
     '[attr.aria-expanded]': 'ngpTableRow().isExpanded ?? null',
-    // FLIP row-reorder animation — same mechanism verified in the `table-demo` prototype:
-    // transform written directly on the row (not via a `var()`-indirected custom property),
-    // transition gated by a class the consumer's own CSS defines. See row-animation.md.
-    '[style.transform]': 'flipTransform()',
-    '[class.ngp-table-row--flip]': 'isFlipping()',
+    '[style.--ngp-table-row-flip-offset]': 'flipOffsetStyle()',
+    '[attr.data-row-flipping]': 'isFlipping() ? "" : null',
   },
 })
 export class NgpTableRowDirective<TRow = unknown> {
@@ -37,31 +38,39 @@ export class NgpTableRowDirective<TRow = unknown> {
   readonly rowId: Signal<RowId> = computed(() => this.ngpTableRow().id);
   readonly isGroupHeader: Signal<boolean> = computed(() => this.ngpTableRow().kind === 'group');
 
-  // Optional: absent when `ngpTableRow` is used outside an `ngpTable`-hosted table.
-  private readonly parentTable = inject(NGP_TABLE_STORE, { optional: true });
+  // Optional: absent when the host table has no `ngpTableRowAnimation` directive.
+  private readonly rowAnimation = inject(NGP_TABLE_ROW_ANIMATION, { optional: true });
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly flipOffset: Signal<number> = computed(
-    () => this.parentTable?.flipOffsetFor(this.rowId()) ?? 0,
+    () => this.rowAnimation?.flipOffsetFor(this.rowId()) ?? 0,
   );
-  readonly flipTransform: Signal<string> = computed(() => {
+  /**
+   * The FLIP offset as a CSS length for `--ngp-table-row-flip-offset`. `null` when there's no
+   * animation directive on the host, or the offset is exactly 0 — no jitter threshold; browsers
+   * no-op an imperceptible transform.
+   */
+  readonly flipOffsetStyle: Signal<string | null> = computed(() => {
     const offset = this.flipOffset();
-    return offset !== 0 ? `translateY(${offset}px)` : '';
+    return offset !== 0 ? `${offset}px` : null;
   });
-  readonly isFlipping: Signal<boolean> = computed(() => this.parentTable?.isRowFlipping() ?? false);
+  readonly isFlipping: Signal<boolean> = computed(
+    () => this.rowAnimation?.isRowFlipping() ?? false,
+  );
 
   constructor() {
     const element = this.host.nativeElement;
 
     // `rowId()` reads the required `ngpTableRow` input, unset until after construction — defer
-    // via `effect()` (matches `ngp-table.directive.ts`'s own constructor pattern). `@for` tracks
-    // by row id, so this instance's id never changes and the effect runs exactly once.
+    // via `effect()`.
+    // `@for` tracks by row id, so this instance's id never changes and the effect runs exactly
+    // once.
     effect(() => {
-      this.parentTable?.registerRowElement(this.rowId(), element);
+      this.rowAnimation?.registerRowElement(this.rowId(), element);
     });
 
     inject(DestroyRef).onDestroy(() => {
-      this.parentTable?.unregisterRowElement(this.rowId(), element);
+      this.rowAnimation?.unregisterRowElement(this.rowId(), element);
     });
   }
 }

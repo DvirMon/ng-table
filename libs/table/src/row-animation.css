@@ -1,0 +1,59 @@
+/* Opt-in only — not imported by any directive or index.ts. See
+   docs/3-ui/directives/row-animation.md. Requires the `ngpTableRowAnimation` directive on the
+   table; without it, `ngpTableRow` writes neither `--ngp-table-row-flip-offset` nor
+   `data-row-flipping`, so these rules select nothing.
+   Consumer tables using this must also set `border-collapse: separate; border-spacing: 0;`
+   — collapsed borders don't follow a transform. */
+@layer ngp-table {
+  [data-row-animation] [data-row-kind] {
+    transform: translateY(var(--ngp-table-row-flip-offset, 0));
+  }
+
+  [data-row-flipping] {
+    transition: transform var(--ngp-table-row-flip-duration, 300ms)
+      var(--ngp-table-row-flip-easing, cubic-bezier(0.4, 0, 0.2, 1));
+  }
+
+  /* Pass these class names to Angular's `animate.enter` / `animate.leave` — the library never
+     binds them itself. */
+  .ngp-table-row--enter {
+    animation: ngp-table-row-fade-in 200ms ease-out;
+  }
+  @keyframes ngp-table-row-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /* Shrinks the leaving row to zero height while it fades, so the rows below close the gap
+     through layout at the same time. `font-size`, not `line-height`: a cell's
+     `line-height: normal` can't be transitioned but scales with it. Descendants too — a nested
+     element (e.g. a group count pill) may set its own font-size, padding and border. */
+  .ngp-table-row--leave {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+  }
+  .ngp-table-row--leave > td,
+  .ngp-table-row--leave > td * {
+    padding-block: 0;
+    border-block-width: 0;
+    font-size: 0;
+    transition:
+      padding-block 200ms ease-in,
+      border-block-width 200ms ease-in,
+      font-size 200ms ease-in;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-row-flipping] {
+      transition: none;
+    }
+    .ngp-table-row--enter,
+    .ngp-table-row--leave,
+    .ngp-table-row--leave > td,
+    .ngp-table-row--leave > td * {
+      animation: none;
+      transition: none;
+    }
+  }
+}

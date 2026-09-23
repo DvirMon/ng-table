@@ -4,6 +4,7 @@ import { discardEdit, releaseEdit, revertEdit } from '../../../mutations/optimis
 import { beginEdit, endEdit } from '../../../mutations/row-edit-mutations';
 import type { RowId } from '../../../api/types';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
+import { NgpTableRowAnimationDirective } from '../../../directives/ngp-table-row-animation.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { NgpTableRowFieldDirective } from '../../../directives/ngp-table-row-field.directive';
 import { NullableTextFieldDirective } from './nullable-text-field.directive';
@@ -32,6 +33,7 @@ import { withRowEdit } from '../../../api/features/with-row-edit';
   imports: [
     FormField,
     NgpTableDirective,
+    NgpTableRowAnimationDirective,
     NgpTableRowDirective,
     NgpTableRowFieldDirective,
     NullableTextFieldDirective,

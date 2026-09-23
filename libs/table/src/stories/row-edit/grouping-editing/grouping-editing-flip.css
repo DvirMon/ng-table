@@ -1,35 +1,7 @@
-@import '../../../row-flip.css';
+@import '../../../row-animation.css';
 
-/* Row-flip needs separate borders — collapsed borders don't follow a `transform`. */
+/* Row animation needs separate borders — collapsed borders don't follow a `transform`. */
 .story-host__table {
   border-collapse: separate;
   border-spacing: 0;
-}
-
-.row-enter {
-  animation: row-fade-in 200ms ease-out;
-}
-@keyframes row-fade-in {
-  from {
-    opacity: 0;
-  }
-}
-.row-leave {
-  opacity: 0;
-  transition: opacity 200ms ease-in;
-}
-
-/* Shrink the leaving row to zero height while it fades, so the rows below close the gap
-   through layout at the same time — FLIP measured before this class landed. `font-size`, not
-   `line-height`: the cells' `line-height: normal` can't be transitioned but scales with it.
-   Descendants too — the group count pill sets its own font-size, padding and border. */
-.row-leave > td,
-.row-leave > td * {
-  padding-block: 0;
-  border-block-width: 0;
-  font-size: 0;
-  transition:
-    padding-block 200ms ease-in,
-    border-block-width 200ms ease-in,
-    font-size 200ms ease-in;
 }

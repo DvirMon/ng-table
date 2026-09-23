@@ -1,15 +1,13 @@
 // Public API of the table. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are
-// phases of one domain and have no barrels of their own, so anything under them not listed here
-// is internal (mirrors Angular Signal Forms' `public_api.ts`). `filters/` was a second domain
-// with its own barrel until R50 (ADR-0004, 2026-09 amendment) closed the standalone trajectory
-// that justified it — the filters surface now folds into `withFiltering`'s own feature folder,
-// so this file is once again the only one defining the public surface.
+// phases of one domain with no barrels of their own — anything not listed here is internal
+// (mirrors Angular Signal Forms' `public_api.ts`). See ADR-0004.
 export * from './api/create-table';
 export * from './api/create-columns';
 export * from './api/types';
 export * from './directives/table.tokens';
 export * from './directives/ngp-table.directive';
 export * from './directives/ngp-table-row.directive';
+export * from './directives/ngp-table-row-animation.directive';
 export * from './directives/ngp-table-header-cell.directive';
 export * from './directives/ngp-table-cell.directive';
 export * from './api/features/with-sorting';
