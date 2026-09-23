@@ -1,0 +1,42 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    <code>withGrouping({{ '{' }} initial: ['category'], when {{ '}' }})</code> composed with a live
+    category dropdown. A row with no category yet renders flat, no header — pick a value and it
+    moves under that category's header on the same write, creating the header if it has never
+    been picked before. The row glides into place under its new group header rather than
+    popping there.
+  </p>
+
+  <p class="story-host__hint">No category yet: <strong>{{ ungroupedRowCount() }}</strong></p>
+
+  <table class="story-host__table grouping-story__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        <th class="story-host__cell">name</th>
+        <th class="story-host__cell">category</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [ngpTableRow]="row">
+          @if (row.kind === 'group') {
+            <td class="story-host__cell grouping-story__cell--label" colspan="2">
+              <span class="grouping-story__group-label">{{ row.groupKey?.value }}</span>
+              <span class="grouping-story__count">{{ table.rowsOf(row).length }}</span>
+            </td>
+          } @else if (row.sourceIndex !== undefined) {
+            <td class="story-host__cell grouping-story__cell--label">{{ row.cells['name'] }}</td>
+            <td class="story-host__cell">
+              <select [formField]="rows[row.sourceIndex].category" ngpNullableSelectField>
+                <option value="">no category yet</option>
+                @for (category of categoryOptions; track category) {
+                  <option [value]="category">{{ category }}</option>
+                }
+              </select>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

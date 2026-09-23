@@ -1,8 +1,8 @@
 ---
 title: UI Layer — Row Reorder Animation (ngpTableRow FLIP)
 type: architecture
-version: 0.2
-date: 2026-09-01
+version: 0.3
+date: 2026-09-23
 capability: row-animation
 spec: drilled
 code: shipped
@@ -21,6 +21,11 @@ DS engine; that prototype's mechanism is what shipped here — an earlier draft 
 proposed a different (CSS custom-property + `data-*` attribute) contract that was never
 implemented and turned out not to work when tried, see "Rejected: custom-property indirection"
 below.
+
+Grouping reshuffles (row moves triggered by `withGrouping()`) are covered by this same
+mechanism, no new API needed — it's already keyed on `renderRows()`, which animates any row
+whose id survives a change regardless of what caused it. See
+[the discovery doc](../work/row-animation/discovery-ag-grid-group-animation.md).
 
 This extends the `ngpTableRow` contract specced in [`core.md`](core.md); read that file first for the
 directive's base inputs and DI wiring.
@@ -192,3 +197,12 @@ through the existing `NGP_TABLE_STORE` injection token.
 - [ ] Row-hold during editing (OQ-3 in `docs/1-state/features/with-row-edit.md`'s sorting ×
       editing story) is a related but separate concern — this animation plays even when a row
       is mid-edit; it does not itself prevent an open row from moving.
+- [ ] Enter/exit: rows that appear/disappear (new group headers, a row leaving the last member
+      of a category, collapse/expand) get no transition today. Enter could be a
+      directive-owned state attribute; exit needs the consumer's `animate.leave`.
+- [ ] Adding, removing, or reordering a group level changes every header's id
+      (`buildGroupPath()`, `engine/grouping/clusters.ts:72-78`), so headers can't glide across
+      a level change.
+- [ ] Interruption: `offsetTop` ignores `transform`; a second change mid-glide may snap the row
+      instead of re-animating smoothly from its current visual position. Unverified — not yet
+      tested.
