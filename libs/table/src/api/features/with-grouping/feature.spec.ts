@@ -415,6 +415,35 @@ describe('withGrouping', () => {
     expect(sortedClusterOrder).toEqual(unsortedClusterOrder);
   });
 
+  it('applyGroupOrder pins header order across a sort on a non-grouped column (G5)', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<GroupingMockRow[]>(mockGroupingRows),
+        { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+        withGrouping({
+          initial: ['region'],
+          schema: (path) => {
+            applyGroupOrder(path.region, (a, b) => String(b.key).localeCompare(String(a.key)));
+          },
+        }),
+        withSorting()
+      )
+    );
+    const headerKeys = (): unknown[] =>
+      store
+        .renderRows()
+        .filter((row) => row.kind === 'group')
+        .map((row) => row.groupKey?.value);
+
+    expect(headerKeys()).toEqual(['US', 'EU']);
+
+    // amount asc puts EU's id 5 (10) first — without the comparator, first-occurrence would
+    // flip the headers to EU, US.
+    store.setSorting([{ columnId: 'amount', direction: 'asc' }]);
+
+    expect(headerKeys()).toEqual(['US', 'EU']);
+  });
+
   it('a throwing groupOrder falls back to stable order instead of throwing through renderRows()', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
@@ -1789,6 +1818,39 @@ describe('when (#85 table-wide admission)', () => {
       ['row', 0, 4], // null region — flat, no header
       ['row', 0, 5], // undefined region — flat, no header
     ]);
+  });
+
+  // The live-editing scenario: a row with no group value yet sits flat (no header). Patching its
+  // grouped field to a value that has never appeared in the data before must both admit it and
+  // create that header on the same write — no separate "create the group" step exists.
+  it('a row edited from blank to a brand-new value moves immediately from flat into a freshly created header', () => {
+    const data = signal<GroupWhenMockRow[]>([...mockGroupWhenRows]);
+    const store = inContext(() =>
+      createTable(
+        data,
+        { trackBy: mockGroupWhenTrackBy, columns: groupWhenColumns() },
+        withGrouping({ initial: ['region'], when: (c) => c.key != null })
+      )
+    );
+    const APAC_GROUP_ID = 'group:>region:string:APAC';
+
+    // Row 5 starts with no region — flat, depth 0, no header for it anywhere.
+    expect(store.groupIds()).not.toContain(APAC_GROUP_ID);
+    expect(
+      store
+        .renderRows()
+        .find((row) => row.kind === 'row' && (row.data as GroupWhenMockRow).id === 5)?.depth
+    ).toBe(0);
+
+    // Same write a dropdown-driven cell editor performs: patch the row's grouped field.
+    store.value.update(patchRow<GroupWhenMockRow>(5, { region: 'APAC' }));
+    TestBed.tick();
+
+    const apacHeader = store
+      .renderRows()
+      .find((row) => row.kind === 'group' && row.id === APAC_GROUP_ID);
+    expect(apacHeader).toBeDefined();
+    expect(store.rowsOf(apacHeader!).map((row) => row.id)).toEqual([5]);
   });
 
   it('a size-threshold when dissolves single-row clusters and keeps the rest (OQ-6)', () => {
