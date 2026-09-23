@@ -1,3 +1,4 @@
+import type { SortDirection } from '../../../api/types';
 import type { EditRow } from './types';
 
 const SAVE_LATENCY_MS = 700;
@@ -46,5 +47,20 @@ export function containFocusTab(event: KeyboardEvent, container: HTMLElement): v
   } else if (!event.shiftKey && active === last) {
     event.preventDefault();
     first.focus();
+  }
+}
+
+type AriaSort = 'ascending' | 'descending' | 'none';
+
+/** Maps a column's sort direction to `[attr.aria-sort]` — `undefined` (never sorted by this
+ * column) reads the same as an explicit `'none'`. */
+export function toAriaSort(direction: SortDirection | undefined): AriaSort {
+  switch (direction) {
+    case 'asc':
+      return 'ascending';
+    case 'desc':
+      return 'descending';
+    default:
+      return 'none';
   }
 }

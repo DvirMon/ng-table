@@ -8,12 +8,12 @@ import {
   revertEdit,
   swapRowId,
 } from '../../../mutations/optimistic-mutations';
-import type { RowId, SortDirection } from '../../../api/types';
+import type { RowId } from '../../../api/types';
 import { FocusNewRowDirective } from '../ui/focus-new-row.directive';
 import { CommitCounterComponent } from '../ui/commit-counter.component';
 import { LiveTableToolbarComponent } from './live-table-toolbar.component';
 import { EDIT_ROWS_MOCK, DEPT_OPTIONS } from '../fixtures/mock';
-import { rowLabel } from '../fixtures/utils';
+import { rowLabel, toAriaSort } from '../fixtures/utils';
 import { injectRowEditApi, type RowEditRequestOptions } from '../fixtures/http';
 import { createLocalUndoSlot } from '../ui/local-undo-slot';
 import { createRowFlags } from '../ui/row-flags';
@@ -27,21 +27,6 @@ import { watchFieldCommits } from './field-commit-watcher';
 import type { EditableField, FieldCommit } from './live-table.types';
 
 const EDITABLE_FIELDS: readonly EditableField[] = ['name', 'dept'];
-
-type AriaSort = 'ascending' | 'descending' | 'none';
-
-/** Maps a column's sort direction to `[attr.aria-sort]` — `undefined` (never sorted by this
- * column) reads the same as an explicit `'none'`. */
-function toAriaSort(direction: SortDirection | undefined): AriaSort {
-  switch (direction) {
-    case 'asc':
-      return 'ascending';
-    case 'desc':
-      return 'descending';
-    default:
-      return 'none';
-  }
-}
 
 /**
  * Live table, no edit session
