@@ -8,6 +8,7 @@ import * as GatedBulkStories from './gated-bulk-optimistic/gated-bulk-optimistic
 import * as FormWriteStories from './form-write-mutations/form-write-mutations.stories';
 import * as ExternalWriteStories from './external-write/external-write.stories';
 import * as SortingEditingStories from './sorting-editing/sorting-editing.stories';
+import * as GroupingEditingStories from './grouping-editing/grouping-editing.stories';
 import liveBaseClass from './live-table/live-table-story-host.component.ts?raw';
 import liveBaseTemplate from './live-table/live-table-story-host.component.html?raw';
 import liveBaseStyles from './live-table/live-table-story-host.component.css?raw';
@@ -46,6 +47,10 @@ import sortingEditingSchema from './sorting-editing/sorting-editing.schema.ts?ra
 import sortingEditingStyles from './sorting-editing/sorting-editing-flip.css?raw';
 import sortingEditingToolbarClass from './sorting-editing/sorting-editing-toolbar.component.ts?raw';
 import sortingEditingToolbarTemplate from './sorting-editing/sorting-editing-toolbar.component.html?raw';
+import groupingEditingClass from './grouping-editing/grouping-editing-story-host.component.ts?raw';
+import groupingEditingTemplate from './grouping-editing/grouping-editing-story-host.component.html?raw';
+import groupingEditingSchema from './grouping-editing/grouping-editing.schema.ts?raw';
+import groupingEditingDirective from './grouping-editing/nullable-select-field.directive.ts?raw';
 import rowSchema from './fixtures/schema.ts?raw';
 import rowHttp from './fixtures/http.ts?raw';
 import sharedStyles from '../styles/story-host.css?raw';
@@ -55,13 +60,15 @@ import '../styles/code-tabs.css';
 
 # Row Editing
 
-Nine stories along two axes: whether an edit session is **gated** (a button opens the row) or
+Ten stories along two axes: whether an edit session is **gated** (a button opens the row) or
 **live** (focus delimits it), and whether a save is **optimistic** (the row closes before the
 round trip settles) or **pessimistic** (it waits). Each combination is a fixed-mode host rather
-than a toggle, because the mode is decided at construction.
+than a toggle, because the mode is decided at construction. The last two, Sorting × Editing and
+Grouping × Editing, sit outside that grid — each composes editing with a second feature to show a
+cross-feature interaction, not a session/save mode.
 
-Shared: `fixtures/schema.ts` and `fixtures/http.ts`, at the bottom of this page. Three hosts bring
-their own stylesheet or schema, shown in their own tabs.
+Shared: `fixtures/schema.ts` and `fixtures/http.ts`, at the bottom of this page. Several hosts
+bring their own stylesheet or schema, shown in their own tabs.
 
 ---
 
@@ -549,7 +556,60 @@ the happy path, so it is a control rather than a second canvas.
 
 ---
 
-## Shared across the nine
+## Grouping × Editing
+
+<Canvas of={GroupingEditingStories.GroupingAndEditing} />
+
+`withGrouping({ initial: ['category'], when })` composed with a live category dropdown, backed by
+`nullable-select-field.directive.ts` — the `<select>` counterpart to Sorting × Editing's
+`NullableTextFieldDirective`, since `category: string | null` hits the same native-`[formField]`
+gap. A row with no category yet renders flat; picking a value commits instantly and the row moves
+under that category's header on the same write, creating the header if it has never been picked
+before.
+
+`applyGroupOrder(path['category'], compareCategoryGroups)` keeps the headers alphabetical, with the
+uncategorized rows on top. Without it, headers keep first-occurrence order, so re-categorizing
+the row that introduced a category, or sorting by **name** (`withSorting()`), would reshuffle
+them. With it, a sort only reorders rows inside each group.
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-grouping-editing-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-grouping-editing-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-grouping-editing-source" />
+      grouping-editing.schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="row-edit-grouping-editing-source" />
+      nullable-select-field.directive.ts
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={groupingEditingClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingEditingTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingEditingSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={groupingEditingDirective} language="tsx" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Shared across the ten
 
 <div className="code-tabs">
   <div className="code-tabs-list">
