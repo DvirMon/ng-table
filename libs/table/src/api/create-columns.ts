@@ -56,7 +56,8 @@ export function createColumns<TRow>(
   build?: (col: ColumnBuilder<TRow>) => readonly ColumnDecl<TRow, string, unknown>[],
   schema?: ColumnsSchemaFn<TRow, string> | ColumnSchema<TRow>
 ): unknown {
-  if (build === undefined) {
+  const isCurriedForm = build === undefined;
+  if (isCurriedForm) {
     return <const TCols extends readonly ColumnDefInput<TRow, string>[]>(columns: TCols): TCols =>
       columns;
   }
@@ -65,14 +66,20 @@ export function createColumns<TRow>(
   void data;
 
   const columns = build(createColumnBuilder<TRow>());
-  const rules: readonly ColumnRule<TRow>[] =
-    schema === undefined
-      ? []
-      : typeof schema === 'function'
-        ? columnSchema(schema).rules
-        : schema.rules;
+  const rules = resolveColumnRules(schema);
 
   return { columns, rules };
+}
+
+function resolveColumnRules<TRow>(
+  schema: ColumnsSchemaFn<TRow, string> | ColumnSchema<TRow> | undefined
+): readonly ColumnRule<TRow>[] {
+  if (schema === undefined) {
+    return [];
+  }
+
+  const isSchemaFn = typeof schema === 'function';
+  return isSchemaFn ? columnSchema(schema).rules : schema.rules;
 }
 
 function createColumnBuilder<TRow>(): ColumnBuilder<TRow> {

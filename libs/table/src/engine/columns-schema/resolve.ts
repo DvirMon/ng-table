@@ -5,10 +5,8 @@ import type {
   ColumnSchema,
   ColumnsSchemaFn,
 } from '../../columns-schema/types';
-import type { ColumnDefInput } from '../../api/types';
+import type { ColumnDecl, ColumnDefInput, ColumnSet } from '../../api/types';
 import { assertDeclarationsAreKnown } from '../../schema/validate';
-
-/** Compile phase: turns author-facing schema input into a validated flat `ColumnRule[]`. */
 
 function isColumnSchema<TRow, TId extends string>(
   value: ColumnsSchemaFn<TRow, TId> | ColumnSchema<TRow>
@@ -52,15 +50,13 @@ function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): 
 }
 
 /**
- * Normalizes `columns` + an optional `columnsSchema` (inline fn or a
- * standalone `columnSchema()` value) into a resolved column list plus the
+ * Normalizes `columns` plus an optional `columnsSchema` into a resolved column list and the
  * flat rule set `wireColumnsSchemaAsync` wires up.
  *
  * @remarks
- * Validates every rule's `columnId` exists in `columns`, throwing
- * synchronously — this is the one place both `columns` and the schema are
- * available together. Tier 1 has no static/seed rules to fold into initial
- * column state, so `columns` is returned unchanged.
+ * Validates every rule's `columnId` exists in `columns`, throwing synchronously — this is
+ * the one place both are available together. Tier 1 has no static/seed rules to fold into
+ * initial column state, so `columns` is returned unchanged.
  */
 export function resolveColumnsConfig<TRow, TId extends string>(
   columns: ColumnDefInput<TRow, TId>[],
@@ -75,4 +71,29 @@ export function resolveColumnsConfig<TRow, TId extends string>(
   assertMetadataKeysAreUnique(resolvedSchema.rules);
 
   return { columns, rules: resolvedSchema.rules };
+}
+
+/**
+ * Normalizes `TableConfig.columns` intake — a plain array or a `createColumns()` `ColumnSet`
+ * — into the one shape `resolveColumnsConfig` validates.
+ *
+ * @remarks
+ * A plain array carries no rules — `columnsSchema` is not a config property. A `ColumnSet`'s
+ * rules are already resolved by `createColumns()`, so they're wrapped rather than re-derived;
+ * this branch never reads `columnsSchema` or the set's `data`.
+ */
+export function resolveColumnsIntake<TRow>(
+  columnsInput:
+    | readonly ColumnDefInput<TRow, string>[]
+    | ColumnSet<TRow, readonly ColumnDecl<TRow, string, unknown>[]>
+): { columns: ColumnDefInput<TRow, string>[]; rules: readonly ColumnRule<TRow>[] } {
+  if (Array.isArray(columnsInput)) {
+    return resolveColumnsConfig([...columnsInput]);
+  }
+
+  // Note: `Array.isArray` narrows the array arm but can't exclude the readonly-array union
+  // member from the `else` arm here — `ReadonlyArray` isn't assignable to the `any[]`
+  // predicate it guards on, so TS can't prove the array case impossible.
+  const set = columnsInput as ColumnSet<TRow, readonly ColumnDecl<TRow, string, unknown>[]>;
+  return resolveColumnsConfig([...set.columns], { kind: 'column-schema', rules: set.rules });
 }

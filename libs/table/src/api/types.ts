@@ -1,10 +1,5 @@
 import type { Injector, Signal, WritableSignal } from '@angular/core';
-import type {
-  ColumnMetaKey,
-  ColumnRule,
-  ColumnSchema,
-  ColumnsSchemaFn,
-} from '../columns-schema/types';
+import type { ColumnMetaKey, ColumnRule } from '../columns-schema/types';
 import type { Feature } from '../engine/types';
 import type { WritableView } from '../engine/writable-view';
 
@@ -66,8 +61,9 @@ export interface RenderRow<TRow> {
    * `undefined` for a top-level row. Opaque: never parse it apart. */
   readonly parentId?: RowId;
 
-  /** The resolved value per column, keyed by declared column id. Ignores column visibility
-   * and order (ADR-0022) — values are raw, format with a pipe. */
+  // See docs/adr/0022-render-row-cell-values.md.
+  /** The resolved value per column, keyed by declared column id. Values are raw and ignore
+   * column visibility/order — format with a pipe. */
   readonly cells: Readonly<Record<string, unknown>>;
 }
 
@@ -205,16 +201,13 @@ export type ReadonlyStore<S> = {
 // the config boundary keeps a plain array's id union inferring correctly — nothing infers a
 // map from a `keyof` position, so a `TValues`-on-config shape would fall back to the
 // constraint and lose the literal union.
-/** Config accepted by `createTable()`: columns, trackBy, and optional schema/injector. */
+/** Config accepted by `createTable()`: columns, trackBy, and optional injector. */
 export interface TableConfig<
   TRow,
   TCols extends readonly ColumnDefInput<TRow, string>[] = readonly ColumnDefInput<TRow, string>[],
 > {
   trackBy: TrackByConfig<TRow>;
-  columns: TCols;
-  columnsSchema?:
-    | ColumnsSchemaFn<TRow, ColumnIdIn<ColumnValues<TRow, TCols>>>
-    | ColumnSchema<TRow>;
+  columns: TCols | ColumnSet<TRow, TCols & readonly ColumnDecl<TRow, string, unknown>[]>;
   injector?: Injector;
 }
 
@@ -264,7 +257,8 @@ export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMa
 
   // Precedent: `FilterRule.__criterion` / `__row` (`engine/filters/types.ts`) use the same
   // phantom-property pattern.
-  /** Phantom — `TValues` is otherwise unrecoverable: `columns` carries only `keyof TValues &
-   * string`, and nothing infers a map from a `keyof`. Read by `ColumnValuesOf<S>`. */
+  //
+  // Note: `TValues` is otherwise unrecoverable — `columns` carries only `keyof TValues &
+  // string`, and nothing infers a map from a `keyof`. Phantom, read by `ColumnValuesOf<S>`.
   readonly __columnValues?: TValues;
 }

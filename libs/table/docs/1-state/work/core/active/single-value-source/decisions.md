@@ -900,3 +900,31 @@ numbering continues the 2026-09-24 R-series.
   ever produces the declared string id, so the brand is structurally
   excluded rather than merely absent by convention. Case:
   `create-columns.types.spec.ts` case 12 (#130).
+
+---
+
+## `/implement #131` ruling (2026-09-24)
+
+### Settled
+
+- **R14 — `columnsSchema` is removed from `createTable` in #131, not #139.
+  A column set is the only schema intake; the array intake stays, rule-free,
+  until #139.** User ruling. There is no in-repo caller worth a compatibility
+  window (only 3 specs read `columnsSchema`, all moved in #131's Step 3), and
+  splitting the deletion this way leaves exactly one source of schema rules
+  during the migration window instead of two. Amends D11's *sequencing*
+  only — D11's end state (`{ trackBy, columns: ColumnSet, injector? }`, no
+  array intake, no separate schema property) is unchanged — and narrows the
+  #131/#139 boundary: #131 now also deletes `columnsSchema`; #139 is left
+  with only the array-intake deletion. `TableConfig.columns` shipped as
+  `TCols | ColumnSet<TRow, TCols & readonly ColumnDecl<TRow, string,
+  unknown>[]>` (Step 1's shape 1 — it passed both probes on the first try, so
+  shape 2's wider `TCols` constraint on `TableConfig` was never needed); the
+  generated `create-table.overloads.ts` needed no change as a consequence
+  (Step 2: "no diff — shape 1"). Probe result (Step 5, case 15): a
+  `ColumnSet<OtherRow, ...>` passed as `columns` to a `createTable(data,
+  {...})` typed over `Row` does fail to compile, but TypeScript anchors the
+  error on the `data` argument (TS2345, missing property) rather than on
+  `columns` — inference resolves `TRow` off `columns` first, then checks
+  `data` against `TableDataInput<TRow>` and fails there. Recorded as observed
+  behavior; Step 1's types were not adjusted to relocate the error.

@@ -274,3 +274,202 @@ describe('ColumnValuesOf — case 8: carriage through composeFeatures', () => {
     });
   });
 });
+
+// --- #131 step 5: carriage proofs, cases 9-15 ------------------------------
+//
+// Cases 9-15 own **carriage**: that ColumnValuesOf survives the createTable() config boundary,
+// the generated overloads (Step 2) and a composed slot, for a *set*-built table (the col()
+// builder from #130) — not derivation itself, which create-columns.types.spec.ts already
+// proves (`.claude/rules/spec-files-assert-own-domain-only.md`). Also pins the scope amendment:
+// `columnsSchema` is gone from `TableConfig` (Step 4).
+
+// One object-valued field (`owner`), matching create-columns.types.spec.ts's own DealRow — the
+// case ColumnValues's accessor arm exists for, so case 9 can tell "carried the accessor's own
+// return type through the store" apart from "flattened to the field type" without re-proving
+// derivation itself.
+interface CarriageRow {
+  id: string;
+  status: string;
+  owner: { name: string; email: string };
+}
+
+// A real function, not `declare const` — hoisted below, so it is evaluated for real when this
+// module loads under `nx test`, same reasoning as create-columns.types.spec.ts's own `deals`.
+// createColumns() never reads it at runtime (`void data`, create-columns.ts) — only its type
+// matters.
+const carriageData = (): readonly CarriageRow[] | undefined => undefined;
+
+// `declare const` is fine here, unlike `carriageData` above — every reference to this one lives
+// inside a `typecheckOnly` closure, which is never called, so no runtime binding is required.
+declare const carriageTableData: TableDataInput<CarriageRow>;
+
+// Hoisted to module scope, deliberately — an inline set inside expectTypeOf would only prove
+// createColumns()'s own call-expression type is literal, which #130 already proved. `owner`
+// declares an accessor returning `row.owner.name` (`string`), differing from its own field type
+// (`{ name; email }`) — case 9's accessor arm. `status` declares none, so it defaults to
+// `TRow['status']` — case 9's defaulted arm.
+const carriageSet = createColumns(carriageData, (col) => [
+  col('owner', { accessor: (row) => row.owner.name }),
+  col('status'),
+]);
+
+// A second row type, for case 15's mismatch probe — deliberately unrelated to CarriageRow/Row.
+interface OtherRow {
+  id: string;
+  color: string;
+}
+
+const otherRowData = (): readonly OtherRow[] | undefined => undefined;
+
+// Hoisted, same reasoning as carriageSet above.
+const otherRowSet = createColumns(otherRowData, (col) => [col('color')]);
+
+describe('ColumnValuesOf / TableConfig — carriage proofs (#131, step 5)', () => {
+  it('case 9: the map comes back off a set-built table store', () => {
+    typecheckOnly(() => {
+      const table = createTable(carriageTableData, { trackBy: 'id', columns: carriageSet });
+
+      // Whole-map shape, not member by member — same reasoning as case 5.
+      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
+        owner: string;
+        status: string;
+      }>();
+    });
+  });
+
+  it('case 10: the same map survives a composed slot', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        carriageTableData,
+        { trackBy: 'id', columns: carriageSet },
+        // withComputed() has no column-id surface of its own — same filler as case 4/8, keeps
+        // this case about carriage through composeFeatures, not about a second feature's config.
+        composeFeatures(
+          withComputed(() => ({})),
+          withProbe({
+            schema: (path) => {
+              path.status;
+            },
+          })
+        )
+      );
+
+      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
+        owner: string;
+        status: string;
+      }>();
+    });
+  });
+
+  it('case 11: a typo inside a composed slot is rejected, correct usage beside it', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        carriageTableData,
+        { trackBy: 'id', columns: carriageSet },
+        composeFeatures(
+          withComputed(() => ({})),
+          withProbe({
+            schema: (path) => {
+              // Positive, right beside the typo below: 'status' was declared.
+              path.status;
+              // @ts-expect-error — 'statuss' was never declared in columns
+              path.statuss;
+            },
+          })
+        )
+      );
+
+      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
+        owner: string;
+        status: string;
+      }>();
+    });
+  });
+
+  it('case 12: a typo at a direct slot is rejected, correct usage beside it', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        carriageTableData,
+        { trackBy: 'id', columns: carriageSet },
+        withProbe({
+          schema: (path) => {
+            path.status;
+            // @ts-expect-error — 'statuss' was never declared in columns
+            path.statuss;
+          },
+        })
+      );
+
+      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
+        owner: string;
+        status: string;
+      }>();
+    });
+  });
+
+  it('case 13: the array form still yields the exact literal id-keyed map', () => {
+    typecheckOnly(() => {
+      // capturedValueColumns is a plain array (createColumns<Row>()'s curried form), never a
+      // ColumnSet — this guards the array arm of TableConfig's `TCols | ColumnSet<...>` union
+      // (Step 1) against having widened it once a second union member exists to match against.
+      const table = createTable(data, { trackBy: 'id', columns: capturedValueColumns });
+
+      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
+        name: number;
+        status: string;
+      }>();
+    });
+  });
+
+  it('case 14: columnsSchema is rejected as an excess property, array and set form alike', () => {
+    typecheckOnly(() => {
+      createTable(data, {
+        trackBy: 'id',
+        columns: makeColumns(),
+        // @ts-expect-error — columnsSchema was removed from TableConfig (Step 4)
+        columnsSchema: {},
+      });
+
+      // Positive, beside it: the array form alone, with no columnsSchema, is legal.
+      const arrayTable = createTable(data, { trackBy: 'id', columns: makeColumns() });
+      expectTypeOf<ColumnIdOf<typeof arrayTable>>().toEqualTypeOf<'name' | 'status'>();
+
+      createTable(carriageTableData, {
+        trackBy: 'id',
+        columns: carriageSet,
+        // @ts-expect-error — columnsSchema was removed from TableConfig (Step 4)
+        columnsSchema: {},
+      });
+
+      // Positive, beside it: the set form alone, with no columnsSchema, is legal.
+      const setTable = createTable(carriageTableData, { trackBy: 'id', columns: carriageSet });
+      expectTypeOf<ColumnValuesOf<typeof setTable>>().toEqualTypeOf<{
+        owner: string;
+        status: string;
+      }>();
+    });
+  });
+
+  it('case 15: a ColumnSet built for a different row type', () => {
+    typecheckOnly(() => {
+      // Observed (design brief P5e): this DOES error, but TS anchors the mismatch on the
+      // call's `data` argument, not on `columns` — `otherRowSet` is `ColumnSet<OtherRow, ...>`,
+      // TRow infers as OtherRow from `columns`, and `data` (`TableDataInput<Row>`) is then the
+      // argument that fails to satisfy `TableDataInput<OtherRow>`. Placing `@ts-expect-error`
+      // on the `columns` line itself leaves it unused — this is not a case where Step 1's types
+      // need tightening, the mismatch is already caught, just reported at a different argument.
+      // @ts-expect-error — see above: the reported error is on this line, at `data`
+      createTable(data, {
+        trackBy: 'id',
+        columns: otherRowSet,
+      });
+
+      // Positive, beside it: a ColumnSet built for the same row type as `data` is legal.
+      const table = createTable(carriageTableData, { trackBy: 'id', columns: carriageSet });
+      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
+        owner: string;
+        status: string;
+      }>();
+    });
+  });
+});

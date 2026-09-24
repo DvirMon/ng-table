@@ -3,6 +3,8 @@ import { TestBed } from '@angular/core/testing';
 import { columnSchema } from '../../columns-schema/schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from '../../columns-schema/metadata';
 import { visible, visibleAsync } from '../../columns-schema/rules';
+import type { ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
+import { createColumns } from '../../api/create-columns';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
 import type { ColumnDef, ColumnDefInput, ColumnValues, TableConfig, TableStore } from '../../api/types';
@@ -32,6 +34,18 @@ function makeColumns() {
       label: 'status',
     },
   ] satisfies ColumnDef<Row>[];
+}
+
+// Mirrors `makeColumns()`'s two columns, via `createColumns()`, for the many call sites below
+// that need a schema. `data` is never read by `createColumns()` — it exists only to bind
+// `TRow` — so a call site reached through `makeStore()` (which builds its own row signal
+// internally) passes a fresh one; the two call sites that build `createTable()` directly
+// instead reuse their own `data` const, per the step's data-witness note.
+function makeColumnSet(
+  data: () => readonly Row[] | undefined,
+  schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>
+) {
+  return createColumns(data, (col) => [col('name'), col('status')], schema);
 }
 
 // Mirrors `table.store.spec.ts` / `with-sorting.spec.ts` — builds a live store instance inside
@@ -85,7 +99,7 @@ function makeControllableResource<TResult>(): {
   };
 }
 
-describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => {
+describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
   it('is a zero-cost no-op when no columnsSchema is configured (legacy path)', () => {
     const store = makeStore({ trackBy: 'id', columns: makeColumns() });
 
@@ -98,10 +112,9 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const role = signal<'admin' | 'guest'>('guest');
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visible(path.status, { when: () => role() === 'admin' });
-      },
+      }),
     });
 
     TestBed.tick();
@@ -117,11 +130,10 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const isFeatureEnabled = signal(true);
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visible(path.status, { when: () => hasPermission() });
         visible(path.status, { when: () => isFeatureEnabled() });
-      },
+      }),
     });
 
     TestBed.tick();
@@ -142,8 +154,9 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     });
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: sharedSchema,
+      // The standalone `columnSchema()` value passes straight through as `createColumns()`'s
+      // third argument — this is the one case in this file exercising that form.
+      columns: makeColumnSet(signal<Row[]>([]), sharedSchema),
     });
 
     TestBed.tick();
@@ -156,15 +169,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const control = makeControllableResource<boolean>();
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
           onError: () => false,
         });
-      },
+      }),
     });
 
     TestBed.tick();
@@ -180,15 +192,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const control = makeControllableResource<boolean>();
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
           onError: () => false,
         });
-      },
+      }),
     });
 
     control.resolve(true);
@@ -208,15 +219,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const control = makeControllableResource<boolean>();
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
           onError: () => false,
         });
-      },
+      }),
     });
 
     control.reject(new Error('first'));
@@ -235,10 +245,9 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   it('D2: an imperative visibility toggle loses to a rule governing the same column', () => {
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visible(path.status, { when: () => true });
-      },
+      }),
     });
 
     TestBed.tick();
@@ -255,10 +264,9 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const role = signal<'admin' | 'guest'>('guest');
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visible(path.status, { when: () => role() === 'admin' });
-      },
+      }),
     });
 
     TestBed.tick();
@@ -291,24 +299,19 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     // `setColumns` call drops it from the *active* list (rule goes inert, no error), and a
     // further `setColumns` call re-adds it by the same id (rule re-applies with no
     // re-registration) — which is what D9's fold-time id lookup actually provides.
-    const initialColumns = [
-      ...makeColumns(),
-      {
-        id: 'id' as const,
-        accessor: (row: Row) => row.id,
-        visible: false,
-        order: 2,
-        label: 'id',
-      },
-    ] satisfies ColumnDef<Row>[];
-
+    // `col('id')` needs no explicit `visible: false` seed — `foldColumnRules` (`engine/columns.ts`)
+    // fully replaces (never ANDs) a column's `visible` once a `VISIBLE`-keyed rule targets it,
+    // and this test's `id` rule always resolves `true`, so the seed can never surface.
     const store = makeStore({
       trackBy: 'id',
-      columns: initialColumns,
-      columnsSchema: (path) => {
-        visible(path.name, { when: () => false });
-        visible(path.id, { when: () => true });
-      },
+      columns: createColumns(
+        signal<Row[]>([]),
+        (col) => [col('name'), col('status'), col('id')],
+        (path) => {
+          visible(path.name, { when: () => false });
+          visible(path.id, { when: () => true });
+        }
+      ),
     });
 
     TestBed.tick();
@@ -345,15 +348,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     const control = makeControllableResource<boolean>();
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
           onError: () => false,
         });
-      },
+      }),
     });
 
     control.resolve(false);
@@ -376,15 +378,14 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   it('D8: a rule reading ctx.columns() resolves against base state, never its own rule result', () => {
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         // Would form a cycle if `ctx.columns()` resolved to the derived `columns` (which this
         // very rule contributes to) instead of `baseColumns`.
         visible(path.status, {
           when: (ctx) =>
             !(ctx.columns().find((c) => c.id === 'status')?.visible ?? true),
         });
-      },
+      }),
     });
 
     expect(() => TestBed.tick()).not.toThrow();
@@ -402,34 +403,33 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
   });
 
   it('throws synchronously at store construction for an unknown columnId', () => {
+    const data = signal<Row[]>([]);
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(signal<Row[]>([]), {
+        createTable(data, {
           trackBy: 'id',
-          columns: makeColumns(),
-          columnsSchema: (path) => {
+          columns: makeColumnSet(data, (path) => {
             // `missing` isn't `keyof Row` — cast to force the runtime path
             // resolveColumnsConfig()'s unknown-columnId check guards.
             visible(
               (path as unknown as { missing: (typeof path)['name'] }).missing,
               { when: () => true }
             );
-          },
+          }),
         })
       )
     ).toThrow(/Unknown column id "missing"/);
   });
 });
 
-describe('metadata() (via createTable columnsSchema wiring)', () => {
+describe('metadata() (via a column set’s schema)', () => {
   it('resolves a static value onto the matching column', () => {
     const KEY = createColumnMetaKey<string>();
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         metadata(path.status, KEY, 'admin-only');
-      },
+      }),
     });
 
     TestBed.tick();
@@ -442,12 +442,11 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
     const role = signal<'admin' | 'guest'>('guest');
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         metadata(path.status, KEY, () =>
           role() === 'admin' ? 'full-access' : 'read-only'
         );
-      },
+      }),
     });
 
     TestBed.tick();
@@ -466,10 +465,9 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
     const KEY = createColumnMetaKey<string>();
     const store = makeStore({
       trackBy: 'id',
-      columns: makeColumns(),
-      columnsSchema: (path) => {
+      columns: makeColumnSet(signal<Row[]>([]), (path) => {
         metadata(path.status, KEY, 'x');
-      },
+      }),
     });
 
     TestBed.tick();
@@ -479,16 +477,16 @@ describe('metadata() (via createTable columnsSchema wiring)', () => {
 
   it('throws synchronously at store construction on a duplicate (column, key) registration', () => {
     const KEY = createColumnMetaKey<string>();
+    const data = signal<Row[]>([]);
 
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(signal<Row[]>([]), {
+        createTable(data, {
           trackBy: 'id',
-          columns: makeColumns(),
-          columnsSchema: (path) => {
+          columns: makeColumnSet(data, (path) => {
             metadata(path.status, KEY, 'a');
             metadata(path.status, KEY, 'b');
-          },
+          }),
         })
       )
     ).toThrow(/Duplicate metadata\(\) registration/);

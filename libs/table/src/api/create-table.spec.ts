@@ -1,12 +1,14 @@
 import { computed, Injector, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
+import { createColumns } from './create-columns';
 import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
 import { columnSchema } from '../columns-schema/schema';
 import { visible } from '../columns-schema/rules';
+import type { ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
 import type { Feature, RowOf, Shape } from '../engine/types';
 import type {
   ColumnDef,
@@ -42,6 +44,16 @@ function makeColumns() {
       label: 'status',
     },
   ] satisfies ColumnDef<Row>[];
+}
+
+// Mirrors `makeColumns()`'s two columns, via `createColumns()`, for the call sites that need
+// a schema — `columns:` takes the resulting set instead of an array plus the old
+// `columnsSchema` config property.
+function makeColumnSet(
+  data: () => readonly Row[] | undefined,
+  schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>
+) {
+  return createColumns(data, (col) => [col('name'), col('status')], schema);
 }
 
 // Builds a live store instance the same way a component field does — inside an injection
@@ -210,14 +222,14 @@ describe('createTable', () => {
     expect(store.rows()).toEqual([]);
   });
 
-  it('applies an inline columnsSchema function via visible', () => {
+  it('applies an inline schema function via visible (via a column set’s schema)', () => {
+    const data = signal<Row[]>([]);
     const store = TestBed.runInInjectionContext(() =>
-      createTable(signal<Row[]>([]), {
+      createTable(data, {
         trackBy: 'id',
-        columns: makeColumns(),
-        columnsSchema: (path) => {
+        columns: makeColumnSet(data, (path) => {
           visible(path.status, { when: () => false });
-        },
+        }),
       })
     );
 
@@ -226,22 +238,41 @@ describe('createTable', () => {
     );
   });
 
-  it('applies a standalone columnSchema() value via visible', () => {
+  it('applies a standalone columnSchema() value via visible (via a column set’s schema)', () => {
     const hideStatus = columnSchema<Row, 'name' | 'status'>((path) => {
       visible(path.status, { when: () => false });
     });
 
+    const data = signal<Row[]>([]);
     const store = TestBed.runInInjectionContext(() =>
-      createTable(signal<Row[]>([]), {
+      createTable(data, {
         trackBy: 'id',
-        columns: makeColumns(),
-        columnsSchema: hideStatus,
+        columns: makeColumnSet(data, hideStatus),
       })
     );
 
     expect(store.columns().find((column) => column.id === 'status')?.visible).toBe(
       false
     );
+  });
+
+  it('throws at createTable(), not at createColumns(), for a set’s schema naming an undeclared column id', () => {
+    const data = signal<Row[]>([]);
+    // Wider `TId` than the set actually declares — `columnSchema()`'s compiled `ColumnSchema<Row>`
+    // erases `TId`, so `createColumns()` accepts it and records the "bogus" rule with no
+    // validation of its own; only `resolveColumnsConfig()`, reached from `createTable()`, checks
+    // rule ids against declared columns.
+    const badSchema = columnSchema<Row, 'name' | 'status' | 'bogus'>((path) => {
+      visible(path.bogus, { when: () => true });
+    });
+
+    const badSet = createColumns(data, (col) => [col('name'), col('status')], badSchema);
+
+    expect(() =>
+      TestBed.runInInjectionContext(() =>
+        createTable(data, { trackBy: 'id', columns: badSet })
+      )
+    ).toThrow(/Unknown column id "bogus"/);
   });
 
   it('composes two synthetic features where the second reads the first’s member', () => {

@@ -1,32 +1,30 @@
 import { Injector, inject, runInInjectionContext } from '@angular/core';
 import { composeTable } from '../engine/compose-table';
 import {
-  resolveColumnsConfig,
+  resolveColumnsIntake,
   wireColumnsSchemaAsync,
 } from '../engine/columns-schema';
 import type { CreateTableOverloads } from './create-table.overloads';
 import type { AnyTableFeature, TableConfig, TableDataInput, TableStore } from './types';
 
 /**
- * Creates the design system's table state layer and returns a live store **instance** —
- * call it at the component field level with the row data in hand:
+ * Creates the table's state layer and returns a live store instance.
  *
+ * @remarks
+ * Must run in an Angular injection context (a field initializer or constructor), or pass
+ * `config.injector` for use outside one (services, tests). The instance is owned by that
+ * context — a component field is torn down with the component. There is no DI token to
+ * provide or inject; consumers hold the returned instance directly.
+ *
+ * `config` is structural, evaluated once — like `form()`'s single `rootCompile`. Only
+ * `data` — the consumer's own signal — is reactive; the pipeline reads it directly, with no
+ * internal copy. Row writes go through `table.value.update(...)`.
+ *
+ * @example
  * ```ts
  * protected readonly data  = signal(people);
  * protected readonly table = createTable(this.data, { trackBy: 'id', columns }, withSorting());
  * ```
- *
- * Must run inside an Angular injection context (a component/directive field initializer or
- * `constructor`), unless `config.injector` is passed as an escape hatch for use outside a
- * context (services, tests). The instance is owned by that context: a component field ⇒
- * component-scoped, torn down with the component. There is no DI token to provide or inject;
- * consumers hold the returned instance directly.
- *
- * `config` is structural — evaluated once, exactly like `form()`'s single `rootCompile`. Only
- * `data` is reactive: the consumer's `WritableSignal<TRow[]>` is the single source of truth,
- * and the pipeline's `rows` `computed()` reads it directly — no internal copy. Row writes go
- * through the returned store's `value` member (`table.value.update(insertRow(...))`) rather
- * than a setter on `data` itself.
  */
 export const createTable = (<TRow>(
   data: TableDataInput<TRow>,
@@ -37,15 +35,11 @@ export const createTable = (<TRow>(
   // asserts we're in one (or the caller supplied their own — the outside-context path).
   const injector = config.injector ?? inject(Injector);
 
-  // Resolves `columns` + optional `columnsSchema` (inline fn or a standalone
-  // `columnSchema()` value) into the initial column list plus the flat reactive/async
-  // rule set `wireColumnsSchemaAsync` wires up.
-  // `config.columns` is readonly; `resolveColumnsConfig` wants a mutable array, so it's
-  // spread here rather than widening that function's own signature.
-  const { columns, rules } = resolveColumnsConfig(
-    [...config.columns],
-    config.columnsSchema
-  );
+  // `config.columns` is either a plain array or a `ColumnSet` from `createColumns()`.
+  // A `ColumnSet` carries its own rules, already resolved via `columnSchema()`; a plain
+  // array carries none — schema rules are `createColumns()`'s to declare, not a separate
+  // config property, so the array branch yields an empty rule set.
+  const { columns, rules } = resolveColumnsIntake(config.columns);
 
   // The composition runs under the owner's injection context so feature `setup` hooks
   // can create `effect()` / `resource()`, and `onDestroy` hooks reach its `DestroyRef`.

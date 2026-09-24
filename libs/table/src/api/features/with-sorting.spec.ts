@@ -2,6 +2,8 @@ import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { sortNulls } from '../../columns-schema/rules';
+import type { ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { withComputed } from './with-computed';
 import { withSorting, type SortingMembers } from './with-sorting';
@@ -355,6 +357,17 @@ describe('withSorting', () => {
       ] satisfies ColumnDef<NullableRow>[];
     }
 
+    // Mirrors `makeNullableColumns()`'s three columns, via `createColumns()`, for the two
+    // call sites in this block that need a schema. `id`s match `NullableRow`'s own field
+    // names, so the builder's default `(row) => row[id]` accessor already reproduces
+    // `makeNullableColumns()`'s explicit ones — no `accessor` opt needed.
+    function makeColumnSet(
+      data: () => readonly NullableRow[] | undefined,
+      schema?: ColumnsSchemaFn<NullableRow, 'age' | 'joined' | 'note'> | ColumnSchema<NullableRow>
+    ) {
+      return createColumns(data, (col) => [col('age'), col('joined'), col('note')], schema);
+    }
+
     it('sorts a nullable Date column without throwing', () => {
       const rows: NullableRow[] = [
         { id: 'r1', age: 1, joined: new Date('2024-01-01'), note: 'a' },
@@ -448,15 +461,15 @@ describe('withSorting', () => {
       // '' sorts before 'apple' and 'banana' as a normal string.
       expect(defaultStore.rows().map((row) => row.id)).toEqual(['r2', 'r3', 'r1']);
 
+      const optedInData = signal<NullableRow[]>(rows);
       const optedInStore = inContext(() =>
         createTable(
-          signal<NullableRow[]>(rows),
+          optedInData,
           {
             trackBy: 'id',
-            columns: makeNullableColumns(),
-            columnsSchema: (path) => {
+            columns: makeColumnSet(optedInData, (path) => {
               sortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
-            },
+            }),
           },
           withSorting()
         )
@@ -498,15 +511,15 @@ describe('withSorting', () => {
     });
 
     it('throws at resolve time when sortNulls is registered twice on one column', () => {
+      const data = signal<NullableRow[]>([]);
       expect(() =>
         inContext(() =>
-          createTable(signal<NullableRow[]>([]), {
+          createTable(data, {
             trackBy: 'id',
-            columns: makeNullableColumns(),
-            columnsSchema: (path) => {
+            columns: makeColumnSet(data, (path) => {
               sortNulls(path.note, { order: 'first' });
               sortNulls(path.note, { order: 'last' });
-            },
+            }),
           })
         )
       ).toThrow(/Duplicate metadata\(\) registration/);

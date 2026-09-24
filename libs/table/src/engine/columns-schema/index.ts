@@ -1,2 +1,2 @@
 export { wireColumnsSchemaAsync } from './wire-columns-schema';
-export { resolveColumnsConfig } from './resolve';
+export { resolveColumnsConfig, resolveColumnsIntake } from './resolve';
