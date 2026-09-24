@@ -51,12 +51,22 @@
       "executor": "@nx/angular:unit-test",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
-        "watch": false
+        "watch": false,
+        "exclude": ["**/*.bench.spec.ts"]
       },
       "configurations": {
         "coverage": {
           "coverage": true
         }
+      }
+    },
+    "bench": {
+      "executor": "@nx/angular:unit-test",
+      "cache": false,
+      "options": {
+        "watch": false,
+        "browsers": ["ChromiumHeadless"],
+        "include": ["**/*.bench.spec.ts"]
       }
     },
     "storybook": {
