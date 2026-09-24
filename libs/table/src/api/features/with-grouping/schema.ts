@@ -64,6 +64,12 @@ export function applyGrouping<TRow, K extends string>(
   });
 }
 
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+// Flagged per #133: this bare name sits beside the grouping store member `table.grouping` — no
+// compile collision (module export vs. store property), but worth a second look if it reads
+// badly in the barrel.
+export { applyGrouping as grouping };
+
 /**
  * Declares the key-derivation for one grouping level.
  *
@@ -81,6 +87,9 @@ export function applyGroupKey<TRow, K extends string>(
     extractValue,
   });
 }
+
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applyGroupKey as groupKey };
 
 /**
  * Resource-backed grouping declaration — the rule owns fetching/re-querying.
@@ -118,6 +127,9 @@ export function applyGroupingAsync<TRow, K extends string, TParams, TResult>(
   recorderOf<TRow, AnyGroupingRule<TRow>>(path).record(rule);
 }
 
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applyGroupingAsync as groupingAsync };
+
 /**
  * Declares the sibling-ordering comparator for one grouping level.
  *
@@ -137,6 +149,9 @@ export function applyGroupOrder<TRow, K extends string>(
   });
 }
 
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applyGroupOrder as groupOrder };
+
 /**
  * Declares one column's aggregate — a summary value computed per cluster,
  * over that cluster's own leaves at every depth. Positional, like
@@ -153,3 +168,6 @@ export function applyAggregate<TRow, K extends string>(
     aggregateFn,
   });
 }
+
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applyAggregate as aggregate };

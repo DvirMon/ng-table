@@ -19,6 +19,9 @@ export function applyVisible<TRow, K extends string>(
   metadata(path, VISIBLE, visible.when);
 }
 
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applyVisible as visible };
+
 /**
  * Async show/hide rule. On loader error, `onError` decides the resulting `visible` —
  * required, since silently holding the last-resolved value on an unhandled error can leave a
@@ -42,6 +45,9 @@ export function applyVisibleAsync<TRow, K extends string, TParams, TResult>(
   metadataAsync(path, VISIBLE, opts);
 }
 
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applyVisibleAsync as visibleAsync };
+
 export interface SortNullsOpts {
   /** Which end empty values land on regardless of sort direction. Default `'last'`. */
   order?: 'first' | 'last';
@@ -61,3 +67,6 @@ export function applySortNulls<TRow, K extends string>(
 ): void {
   metadata(path, SORT_NULLS, opts);
 }
+
+// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
+export { applySortNulls as sortNulls };
