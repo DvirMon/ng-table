@@ -939,3 +939,27 @@ numbering continues the 2026-09-24 R-series.
   `columns` — inference resolves `TRow` off `columns` first, then checks
   `data` against `TableDataInput<TRow>` and fails there. Recorded as observed
   behavior; Step 1's types were not adjusted to relocate the error.
+
+---
+
+## `/implement #139` ruling (2026-09-25)
+
+### Settled
+
+- **R17 — the compile step folds into the intake; `engine/columns-schema/resolve.ts`
+  is deleted outright, not slimmed to a pass-through.** `createTable` now
+  unpacks `config.columns` directly (`const { columns, rules } =
+  config.columns;`); `TableConfig.columns` takes a `ColumnSet<TRow, TCols>`
+  only, no array union arm. This settles the shaping question N3/#139 left
+  open ("what the compile step becomes"). Reasoning: after #132 moved
+  `assertRuleColumnIdsAreKnown` and `assertMetadataKeysAreUnique` into
+  `createColumns`, `resolveColumnsConfig` had nothing left to do —
+  it only ever turned a schema fn into rules, and a `ColumnSet` already
+  carries resolved rules. Rejected: a slim `resolveColumnsConfig(set)`
+  kept as a pass-through — it would have had no state or reasoning of its
+  own, exactly the shape `general-mechanism-over-enumerated-cases`' own
+  caveat warns against keeping. `isColumnSchema` and `resolveColumnsIntake`
+  are deleted alongside it. `ColumnDefInput` is unaffected — it survives as
+  the engine's resolved-input shape (`TableEngineConfig.columns`,
+  `setColumns`, `ColumnValues`'s constraint), never part of this deletion.
+  Shaping ruling made 2026-09-24, recorded here on landing.

@@ -8,7 +8,7 @@ import { noData } from '../../table.mock';
 import { createColumns } from '../../api/create-columns';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
-import type { ColumnDefInput, ColumnValues, TableConfig, TableStore } from '../../api/types';
+import type { ColumnDecl, ColumnValues, TableConfig, TableStore } from '../../api/types';
 
 interface Row {
   id: string;
@@ -39,7 +39,7 @@ function makeColumnSet(
 // an injection context. Generic over `TCols` (not fixed to `TableConfig<Row>`'s default) so a
 // caller's literal `columns` still contextually types its `columnsSchema` callback, and the
 // returned store now carries the derived value map (#113, re-keyed for #125).
-function makeStore<TCols extends readonly ColumnDefInput<Row, string>[]>(
+function makeStore<TCols extends readonly ColumnDecl<Row, string, unknown>[]>(
   cfg: TableConfig<Row, TCols>
 ): TableStore<Row, ColumnValues<Row, TCols>> {
   return TestBed.runInInjectionContext(() =>

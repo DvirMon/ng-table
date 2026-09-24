@@ -3,8 +3,8 @@ import type { ColumnMetaKey } from '../columns-schema/types';
 import type { ColumnDef, ColumnDefInput } from '../api/types';
 
 // `ColumnMetaKey` is type-only and `columns-schema/types.ts` has no import back into
-// `engine/`, so this reverse (engine -> columns-schema) edge doesn't close a cycle — it's just
-// the one place `engine/` needs a `columns-schema/` type to describe what it's folding.
+// `engine/`, so this reverse (engine -> columns-schema) edge doesn't close a cycle — it's the
+// one place `engine/` needs a `columns-schema/` type to describe what it's folding.
 
 // Angular's global dev-mode flag. Declared locally because `tsconfig.lib.json` sets
 // `"types": []`, so no ambient declaration is in scope. Module-scoped, so it cannot
@@ -12,19 +12,18 @@ import type { ColumnDef, ColumnDefInput } from '../api/types';
 declare const ngDevMode: boolean | undefined;
 
 // Narrows `unknown` to an indexable object before a default accessor reads `def.id` off it —
-// `TRow` is unconstrained here, so nothing guarantees `row` is actually object-shaped.
+// `TRow` is unconstrained here, so nothing guarantees `row` is object-shaped.
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
 /**
- * Throws on a duplicate column id — two columns colliding on `id` would
- * corrupt a keyed record like `RenderRow.cells`. Deterministic and
- * construction-time, so it throws.
+ * Throws on a duplicate column id.
  *
  * @remarks
- * Dev-only: the `ngDevMode` gate lives inside this function, not at any
- * call site.
+ * Two columns colliding on `id` would corrupt a keyed record like `RenderRow.cells` —
+ * deterministic and construction-time, so it throws. Dev-only: the `ngDevMode` gate lives
+ * inside this function, not at any call site.
  *
  * @param label Names the declaring surface in the thrown message.
  */
@@ -51,12 +50,11 @@ export function assertUniqueColumnIds<TRow>(
  * the author-facing `ColumnDefInput[]` was.
  *
  * @remarks
- * Note: throws on a duplicate `id` in dev mode — two columns sharing an id would collide in
- * `RenderRow.cells`, a record keyed by id. `label` names the calling surface (`createTable`,
- * `setColumns`) and flows into the thrown message.
+ * Throws on a duplicate `id` in dev mode — see `assertUniqueColumnIds`. `label` names the
+ * calling surface (`createTable`, `setColumns`) and flows into the thrown message.
  */
 export function resolveColumnDefs<TRow>(
-  defs: ColumnDefInput<TRow>[],
+  defs: readonly ColumnDefInput<TRow>[],
   label: string
 ): ColumnDef<TRow>[] {
   assertUniqueColumnIds(defs, label);
@@ -104,20 +102,17 @@ export function toggleColumnVisible<TRow>(
 }
 
 /**
- * Internal metadata key `visible()`/`visibleAsync()` (`columns-schema/rules.ts`) write
- * to — never exported, so consumers can't read or collide with it via `readColumnMeta()`.
- * `foldColumnRules` special-cases it: unlike every other metadata key (single-writer, enforced
- * by `resolve.ts`), multiple entries targeting `VISIBLE` on the same column are allowed and
- * AND-combined.
+ * Internal metadata key `visible()`/`visibleAsync()` (`columns-schema/rules.ts`) write to —
+ * never exported, so consumers can't read or collide with it via `readColumnMeta()`. See
+ * `foldColumnRules` for its AND-combining special case.
  */
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
  * Internal metadata key `sortNulls()` (`columns-schema/rules.ts`) writes to — the per-column
  * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
- * writer: two `sortNulls()` calls on the same column throw at resolve time, so it needs no
- * special case in `foldColumnRules` — it flows through the generic `meta` map like any consumer
- * key.
+ * writer: two `sortNulls()` calls on the same column throw at resolve time, so it flows through
+ * `foldColumnRules`'s generic `meta` map like any consumer key, with no special case.
  */
 export const SORT_NULLS: ColumnMetaKey<{
   readonly order?: 'first' | 'last';
@@ -148,9 +143,10 @@ export type ColumnRuleRegistry<TRow = unknown> = readonly ColumnRuleEntry<TRow>[
  * @remarks
  * `VISIBLE`-keyed entries on the same column are ANDed together (an
  * undefined result contributes nothing, so the base `visible` stands);
- * every other key is single-writer (enforced by `resolve.ts`) and lands
- * in `column.meta`. An entry naming an unknown `columnId` is skipped; a
- * column with no registered rules passes through unchanged.
+ * every other key is single-writer (enforced by `createColumns`'s
+ * `assertMetadataKeysAreUnique`) and lands in `column.meta`. An entry
+ * naming an unknown `columnId` is skipped; a column with no registered
+ * rules passes through unchanged.
  */
 export function foldColumnRules<TRow>(
   columns: ColumnDef<TRow>[],

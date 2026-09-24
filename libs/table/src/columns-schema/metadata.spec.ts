@@ -1,8 +1,6 @@
 import { columnSchema } from './schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from './metadata';
 import type { ColumnsPath } from './types';
-import { resolveColumnsConfig } from '../engine/columns-schema';
-import type { ColumnDefInput } from '../api/types';
 
 interface Row {
   id: string;
@@ -12,12 +10,6 @@ interface Row {
 
 // The declared column-id union these specs exercise — not `keyof Row` (ADR-0019).
 type MockColumnId = 'name' | 'status';
-
-// No `ColumnDefInput<Row>[]` return annotation — that would widen `id` to `string` and turn
-// `ColumnsPath` into an index signature.
-function makeColumns() {
-  return [{ id: 'name' as const }, { id: 'status' as const }] satisfies ColumnDefInput<Row>[];
-}
 
 describe('createColumnMetaKey', () => {
   it('mints a distinct key on every call, even for the same T', () => {
@@ -85,32 +77,5 @@ describe('readColumnMeta', () => {
     const KEY = createColumnMetaKey<string>();
     const column = { meta: new Map([[KEY, 'value']]) } as never;
     expect(readColumnMeta(column, KEY)).toBe('value');
-  });
-});
-
-describe('resolveColumnsConfig — duplicate metadata registration', () => {
-  it('allows the same key on two different columns', () => {
-    const columns = makeColumns();
-    const KEY = createColumnMetaKey<string>();
-
-    const resolved = resolveColumnsConfig(columns, (path) => {
-      metadata(path.status, KEY, 'a');
-      metadata(path.name, KEY, 'b');
-    });
-
-    expect(resolved.rules).toHaveLength(2);
-  });
-
-  it('allows two different keys on the same column', () => {
-    const columns = makeColumns();
-    const keyA = createColumnMetaKey<string>();
-    const keyB = createColumnMetaKey<string>();
-
-    const resolved = resolveColumnsConfig(columns, (path) => {
-      metadata(path.status, keyA, 'a');
-      metadata(path.status, keyB, 'b');
-    });
-
-    expect(resolved.rules).toHaveLength(2);
   });
 });

@@ -734,7 +734,10 @@ describe('unknown column ids throw (AC #4)', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         {
           trackBy: mockGroupingTrackBy,
-          columns: makeWidenedColumns().columns.filter((column) => column.id !== 'category'),
+          columns: {
+            columns: makeWidenedColumns().columns.filter((column) => column.id !== 'category'),
+            rules: makeWidenedColumns().rules,
+          },
         },
         withGrouping({ initial: ['region'] })
       )

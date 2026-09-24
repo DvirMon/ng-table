@@ -19,7 +19,7 @@ import type { WritableView } from './writable-view';
 
 /** Core config `composeTable()` needs. Resolved by `createTable()` from the public config. */
 export interface TableEngineConfig<TRow> {
-  columns: ColumnDefInput<TRow>[];
+  columns: readonly ColumnDefInput<TRow>[];
   trackBy: TrackByConfig<TRow>;
   data: TableDataInput<TRow>;
 }

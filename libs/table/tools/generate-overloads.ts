@@ -4,8 +4,8 @@
  * `src/api/features/compose-features.overloads.ts`.
  *
  * Run: `npm run table:overloads` (`-- --dry-run` prints, `-- --check` fails on drift).
- * Arity and the accumulation rule come from D27: slot k is typed against the
- * base ∩ every preceding slot's contribution, so argument order governs member visibility.
+ * Slot k is typed against the base intersected with every preceding slot's contribution,
+ * so argument order governs member visibility.
  *
  * Output is run through Prettier with the repo's own config, so `prettier --write` over the
  * emitted files is a no-op and the drift check never fights the formatter.
@@ -19,28 +19,22 @@ const LIB_ROOT = resolve(import.meta.dirname, '..');
 const REPO_ROOT = resolve(LIB_ROOT, '..', '..');
 const GENERATOR_PATH = 'libs/table/tools/generate-overloads.ts';
 
-/** D27: 15 feature slots. A 16th argument matches no overload — that is the intended error. */
+// 15 feature slots. A 16th argument matches no overload — that is the intended error.
 const ARITY = 15;
 
 interface OverloadSpec {
-  /** Name of the emitted call-signature interface. */
   name: string;
-  /** JSDoc lines emitted above the interface, without the `*` prefixes. */
+  // JSDoc lines emitted above the interface — no `*` prefix; `renderOverloads` adds it.
   doc: string[];
-  /** Absolute path of the file it is emitted to. */
   outputFile: string;
-  /** Import lines the emitted file needs. */
   imports: string[];
-  /** Generic parameters carrying the accumulation base, e.g. `['TRow', 'TId extends string']`
-   * or `['In extends Shape']`. */
+  // e.g. `['TRow', 'TId extends string']` (createTable) or `['In extends Shape']`
+  // (composeFeatures) — the accumulation base's own generics.
   baseGenerics: string[];
-  /** The type every slot's `In` and the return type accumulate onto. */
+  // The type every slot's `In` and the return type accumulate onto.
   base: string;
-  /** Parameters emitted before the feature slots. */
   leadingParams: string[];
-  /** Whether a zero-feature signature is emitted. */
   includeZeroFeature: boolean;
-  /** Builds the return type from the base and the contributions of `featureCount` slots. */
   renderReturn: (base: string, featureCount: number) => string;
 }
 
@@ -54,11 +48,11 @@ const CREATE_TABLE: OverloadSpec = {
   outputFile: join(LIB_ROOT, 'src', 'api', 'create-table.overloads.ts'),
   imports: [
     "import type { Feature } from '../engine/types';",
-    "import type { ColumnDefInput, ColumnValues, TableConfig, TableDataInput, TableStore } from './types';",
+    "import type { ColumnDecl, ColumnValues, TableConfig, TableDataInput, TableStore } from './types';",
   ],
   // The declared column array flows from `config.columns` into every slot's `In` and into
   // the return type, derived into the id → value map via `ColumnValues`.
-  baseGenerics: ['TRow', 'TCols extends readonly ColumnDefInput<TRow, string>[]'],
+  baseGenerics: ['TRow', 'TCols extends readonly ColumnDecl<TRow, string, unknown>[]'],
   base: 'TableStore<TRow, ColumnValues<TRow, TCols>>',
   leadingParams: ['data: TableDataInput<TRow>', 'config: TableConfig<TRow, TCols>'],
   includeZeroFeature: true,
@@ -94,12 +88,12 @@ function toHref(absolutePath: string): string {
   return relative(REPO_ROOT, absolutePath).split('\\').join(posix.sep);
 }
 
-/** `['O1', ..., 'On']` — one contribution type parameter per feature slot. */
+// Returns `['O1', ..., 'On']` — one contribution type parameter per feature slot.
 function contributions(count: number): string[] {
   return Array.from({ length: count }, (_, index) => `O${index + 1}`);
 }
 
-/** The `In` of slot k: the base intersected with every preceding slot's contribution. */
+// The `In` of slot k: the base intersected with every preceding slot's contribution.
 function renderSlotInput(base: string, slot: number): string {
   return [base, ...contributions(slot - 1)].join(' & ');
 }
@@ -152,7 +146,7 @@ function renderOverloads(spec: OverloadSpec): string {
   ].join('\n');
 }
 
-/** Emitted source, formatted with the repo's Prettier config for the output file's path. */
+// Formatted with the repo's Prettier config resolved for the output file's own path.
 async function renderFormatted(spec: OverloadSpec): Promise<string> {
   const options = await resolveConfig(spec.outputFile);
   return format(renderOverloads(spec), {

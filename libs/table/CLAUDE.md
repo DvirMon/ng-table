@@ -96,7 +96,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `engine/slots.ts` | `SlotRegistry` — every single-occupancy collision message lives here. Claims pipeline stages, render stages, **and member keys** (ADR-0007): two features declaring the same member throw at construction rather than silently overwriting via `Object.assign` |
 | `engine/types.ts` | `Feature<In, Out>`, `Shape`, `RowOf`, `TableCore`, `TableFeatureSpec`, `TableEngineConfig` — the feature contract |
 | `engine/writable-view.ts` | `createWritableView()` / `WritableView<T, Updater>` — the `() => T` read + `.update(updater)` write shape backing `table.value`/`table.columns`/`table.editing` (D30). Used by `engine/core.ts` (`value`, `columns`) and `api/features/editing-state.ts` (`editing`, declared by whichever editing feature is composed — always exactly one) |
-| `engine/columns-schema/` | Always-composed internal step (ADR-0010), not a consumer `with*()` plugin — `createTable()` passes it to `composeTable()`'s `internalFeatures` parameter, which folds before consumer features and labels collisions `internal feature N`, so it never shifts a consumer's own position — `resolve.ts` (compile — `resolveColumnsConfig()`) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`) |
+| `engine/columns-schema/` | Always-composed internal step (ADR-0010), not a consumer `with*()` plugin — `createTable()` passes it to `composeTable()`'s `internalFeatures` parameter, which folds before consumer features and labels collisions `internal feature N`, so it never shifts a consumer's own position — `wiring.ts` (run) → `wire-columns-schema.ts` (declare — `wireColumnsSchemaAsync()`). No separate compile step: `createTable()`'s intake unpacks the `ColumnSet` directly |
 | `directives/` | `ngp-table.directive.ts`, `ngp-table-row.directive.ts`, `table.tokens.ts` |
 | `*.spec.ts` | Unit tests; always live colocated with the source file |
 | `tools/generate-overloads.ts` | Regenerates the two `*.overloads.ts` files (arity 15). `npm run table:overloads`; `npm run table:overloads:check` fails on drift |
@@ -105,7 +105,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 Naming: the folder supplies the domain, so files inside drop the `table.` prefix
 (`engine/pipeline.ts`, not `engine/table.pipeline.ts`; `engine/filters/types.ts`, not
 `engine/filters/filters.types.ts`). The compile-phase entry point is named for its verb, not
-its domain — `engine/filters/build.ts`, mirroring `engine/columns-schema/resolve.ts`.
+its domain — `engine/filters/build.ts`.
 Kebab-case, not Angular's internal snake_case — `.claude/rules/file-organization.md` governs.
 
 **`api/types.ts` ↔ `engine/types.ts` is a deliberate type-only import cycle.** Both sides must

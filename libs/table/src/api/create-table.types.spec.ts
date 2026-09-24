@@ -4,9 +4,10 @@ import { createTable } from './create-table';
 import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
-import type { ColumnDef, TableDataInput } from './types';
+import type { ColumnDecl, ColumnSet, TableDataInput } from './types';
 import type { ColumnsPath } from '../columns-schema/types';
 import type { ColumnIdOf, ColumnValuesOf, RowOf, Shape } from '../engine/types';
+import { noData } from '../table.mock';
 
 /**
  * Compile-time seam for what a `createTable()` call returns, at the type level: `ColumnIdOf<S>`
@@ -30,48 +31,41 @@ interface Row {
   status: string;
 }
 
-// No `ColumnDef<Row>[]` return annotation — that would widen `id` to `string` and turn
-// `ColumnIdOf` into its `string` fallback (ADR-0019). Cases 1 and 4 rely on this staying
-// unannotated; a future reader "fixing" it to a declared return type would silently disarm both.
+// No return-type annotation — that would widen `TCols` to its `ColumnDecl<Row, string,
+// unknown>[]` constraint and turn `ColumnIdOf` into its `string` fallback (ADR-0019). Cases 1
+// and 4 rely on this staying unannotated; a future reader "fixing" it to a declared return type
+// would silently disarm both. `columns:` now takes only what `createColumns()` returns — the
+// plain-array intake this function used to build directly is gone (#139).
 function makeColumns() {
-  return [
-    {
-      id: 'name' as const,
-      accessor: (row: Row) => row.name,
-      visible: true,
-      order: 0,
-      label: 'name',
-    },
-    {
-      id: 'status' as const,
-      accessor: (row: Row) => row.status,
-      visible: true,
-      order: 1,
-      label: 'status',
-    },
-  ] satisfies ColumnDef<Row>[];
+  return createColumns(noData<Row>(), (col) => [col('name'), col('status')]);
 }
 
-// Annotated `: ColumnDef<Row>[]` — deliberately, unlike `makeColumns()` above. This is the
-// widening failure mode itself: the annotation erases each `id` to `string` before it ever
-// reaches `createTable()`. Case 3 pins the resulting behaviour rather than guarding against it.
-function makeWidenedColumns(): ColumnDef<Row>[] {
-  return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-    { id: 'status', accessor: (row) => row.status, visible: true, order: 1, label: 'status' },
-  ];
+// Annotated return type — deliberately, unlike `makeColumns()` above. This is the widening
+// failure mode itself: the annotation erases each column id to `string` before it ever reaches
+// `createTable()`. Case 3 pins the resulting behaviour rather than guarding against it.
+function makeWidenedColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [col('name'), col('status')]);
 }
 
-// Hoisted, captured via `createColumns()` — the value-map counterpart to `makeColumns()` above.
-// `name` declares an accessor returning `number` (`row.name.length`, not `TRow['name']`, which
-// is `string`) so cases 5-8 below can tell "carried through" apart from "flattened to the
-// defaulted arm" without changing `Row`'s own shape. `status` declares none, so it defaults to
-// `TRow['status']`. No return-type annotation, same reason as `makeColumns()`: annotating would
-// widen `id` to `string` before `createColumns()` ever sees it. The arm-selection logic itself —
-// which shape a column resolves to — is `create-columns.types.spec.ts`'s, asserted directly
-// against `ColumnValues<>` with no `createTable()` call; this file only proves the map's
-// carriage through `TableConfig`, the generated overloads and the composed store.
-const capturedValueColumns = createColumns<Row>()([
+// Hoisted, via `createColumns()`'s data-first form — the value-map counterpart to
+// `makeColumns()` above. `name` declares an accessor returning `number` (`row.name.length`, not
+// `TRow['name']`, which is `string`) so cases 5-8 below can tell "carried through" apart from
+// "flattened to the defaulted arm" without changing `Row`'s own shape. `status` declares none,
+// so it defaults to `TRow['status']`. No return-type annotation, same reason as `makeColumns()`.
+// The arm-selection logic itself — which shape a column resolves to — is
+// `create-columns.types.spec.ts`'s, asserted directly against `ColumnValues<>` with no
+// `createTable()` call; this file only proves the map's carriage through `TableConfig`, the
+// generated overloads and the composed store.
+const capturedValueColumns = createColumns(noData<Row>(), (col) => [
+  col('name', { accessor: (row) => row.name.length }),
+  col('status'),
+]);
+
+// The plain-array intake #139 removed, held onto only so case 13 has something concrete to
+// reject: `createColumns<Row>()`'s curried capture form still exists (superseded, not deleted),
+// but its return is `TCols` directly — never a `ColumnSet` — so it can no longer satisfy
+// `TableConfig.columns`.
+const rejectedArrayColumns = createColumns<Row>()([
   { id: 'name', accessor: (row) => row.name.length },
   { id: 'status' },
 ]);
@@ -407,33 +401,21 @@ describe('ColumnValuesOf / TableConfig — carriage proofs (#131, step 5)', () =
     });
   });
 
-  it('case 13: the array form still yields the exact literal id-keyed map', () => {
+  it('case 13: the array form is a compile error', () => {
     typecheckOnly(() => {
-      // capturedValueColumns is a plain array (createColumns<Row>()'s curried form), never a
-      // ColumnSet — this guards the array arm of TableConfig's `TCols | ColumnSet<...>` union
-      // (Step 1) against having widened it once a second union member exists to match against.
-      const table = createTable(data, { trackBy: 'id', columns: capturedValueColumns });
-
-      expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
-        name: number;
-        status: string;
-      }>();
+      // Kept in its own `it`, isolated from the surrounding cases: `@ts-expect-error` is
+      // satisfied by *any* error on the next line, so this stays a standalone call rather
+      // than living inside one whose other properties could fail for an unrelated reason.
+      createTable(data, {
+        trackBy: 'id',
+        // @ts-expect-error — TableConfig.columns takes a ColumnSet only (#139)
+        columns: rejectedArrayColumns,
+      });
     });
   });
 
-  it('case 14: columnsSchema is rejected as an excess property, array and set form alike', () => {
+  it('case 14: columnsSchema is rejected as an excess property on the set form', () => {
     typecheckOnly(() => {
-      createTable(data, {
-        trackBy: 'id',
-        columns: makeColumns(),
-        // @ts-expect-error — columnsSchema was removed from TableConfig (Step 4)
-        columnsSchema: {},
-      });
-
-      // Positive, beside it: the array form alone, with no columnsSchema, is legal.
-      const arrayTable = createTable(data, { trackBy: 'id', columns: makeColumns() });
-      expectTypeOf<ColumnIdOf<typeof arrayTable>>().toEqualTypeOf<'name' | 'status'>();
-
       createTable(carriageTableData, {
         trackBy: 'id',
         columns: carriageSet,
@@ -452,15 +434,13 @@ describe('ColumnValuesOf / TableConfig — carriage proofs (#131, step 5)', () =
 
   it('case 15: a ColumnSet built for a different row type', () => {
     typecheckOnly(() => {
-      // Observed (design brief P5e): this DOES error, but TS anchors the mismatch on the
-      // call's `data` argument, not on `columns` — `otherRowSet` is `ColumnSet<OtherRow, ...>`,
-      // TRow infers as OtherRow from `columns`, and `data` (`TableDataInput<Row>`) is then the
-      // argument that fails to satisfy `TableDataInput<OtherRow>`. Placing `@ts-expect-error`
-      // on the `columns` line itself leaves it unused — this is not a case where Step 1's types
-      // need tightening, the mismatch is already caught, just reported at a different argument.
-      // @ts-expect-error — see above: the reported error is on this line, at `data`
+      // `otherRowSet` is `ColumnSet<OtherRow, ...>`. With `columns` typed as `ColumnSet<TRow,
+      // TCols>` only (#139) — nothing else left for TS to also try matching against — it
+      // anchors the row-type mismatch directly on `columns` now, not on `data` as it used to
+      // (design brief P5e's "observed" workaround no longer applies).
       createTable(data, {
         trackBy: 'id',
+        // @ts-expect-error — otherRowSet was built for OtherRow, not Row
         columns: otherRowSet,
       });
 

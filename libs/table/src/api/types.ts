@@ -198,16 +198,20 @@ export type ReadonlyStore<S> = {
 };
 
 // Note: `TCols` is what a call site infers; `TValues` is what downstream reads. Deriving at
-// the config boundary keeps a plain array's id union inferring correctly — nothing infers a
-// map from a `keyof` position, so a `TValues`-on-config shape would fall back to the
+// the config boundary keeps a `ColumnSet`'s declared id union inferring correctly — nothing
+// infers a map from a `keyof` position, so a `TValues`-on-config shape would fall back to the
 // constraint and lose the literal union.
 /** Config accepted by `createTable()`: columns, trackBy, and optional injector. */
 export interface TableConfig<
   TRow,
-  TCols extends readonly ColumnDefInput<TRow, string>[] = readonly ColumnDefInput<TRow, string>[],
+  TCols extends readonly ColumnDecl<TRow, string, unknown>[] = readonly ColumnDecl<
+    TRow,
+    string,
+    unknown
+  >[],
 > {
   trackBy: TrackByConfig<TRow>;
-  columns: TCols | ColumnSet<TRow, TCols & readonly ColumnDecl<TRow, string, unknown>[]>;
+  columns: ColumnSet<TRow, TCols>;
   injector?: Injector;
 }
 

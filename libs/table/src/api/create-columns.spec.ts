@@ -161,6 +161,18 @@ describe('createColumns', () => {
 
       expect(result.rules).toEqual([]);
     });
+
+    it('accepts a standalone columnSchema() value directly', () => {
+      const schema = columnSchema(schemaBody);
+
+      const result = createColumns(
+        vi.fn(() => mockRows),
+        (col) => [col('amount')],
+        schema
+      );
+
+      expect(result.rules).toBe(schema.rules);
+    });
   });
 
   describe('construction checks', () => {
@@ -194,6 +206,37 @@ describe('createColumns', () => {
         '[createColumns] Duplicate metadata() registration for column "amount" — ' +
           'call metadata() at most once per key per column; metadata has no reducer/combine.'
       );
+    });
+
+    it('does not throw when the same ColumnMetaKey targets two different columns', () => {
+      const KEY = createColumnMetaKey<string>();
+
+      const result = createColumns(
+        vi.fn(() => mockRows),
+        (col) => [col('name'), col('amount')],
+        (path) => {
+          metadata(path.name, KEY, 'a');
+          metadata(path.amount, KEY, 'b');
+        }
+      );
+
+      expect(result.rules).toHaveLength(2);
+    });
+
+    it('does not throw when two different keys target the same column', () => {
+      const keyA = createColumnMetaKey<string>();
+      const keyB = createColumnMetaKey<string>();
+
+      const result = createColumns(
+        vi.fn(() => mockRows),
+        (col) => [col('amount')],
+        (path) => {
+          metadata(path.amount, keyA, 'a');
+          metadata(path.amount, keyB, 'b');
+        }
+      );
+
+      expect(result.rules).toHaveLength(2);
     });
 
     it('throws when two columns share an id', () => {

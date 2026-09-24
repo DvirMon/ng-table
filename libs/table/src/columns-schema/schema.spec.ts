@@ -1,8 +1,6 @@
 import { columnSchema } from './schema';
 import { visible, visibleAsync } from './rules';
 import type { ColumnHandle, ColumnsPath } from './types';
-import type { ColumnDefInput } from '../api/types';
-import { resolveColumnsConfig } from '../engine/columns-schema';
 
 interface Row {
   id: string;
@@ -12,12 +10,6 @@ interface Row {
 
 // The declared column-id union these specs exercise — not `keyof Row` (ADR-0019).
 type MockColumnId = 'name' | 'status';
-
-// No `ColumnDefInput<Row>[]` return annotation — that would widen `id` to `string` and turn
-// `ColumnsPath` into an index signature.
-function makeColumns() {
-  return [{ id: 'name' as const }, { id: 'status' as const }] satisfies ColumnDefInput<Row>[];
-}
 
 describe('columnSchema', () => {
   it('records a visible rule for the targeted column', () => {
@@ -94,38 +86,5 @@ describe('columnSchema', () => {
       visible(firstHandle as ColumnHandle<Row>, { when: () => true })
     ).toThrow();
     expect(second.rules).toHaveLength(1);
-  });
-});
-
-describe('resolveColumnsConfig', () => {
-  it('passes columns through unchanged and returns an empty rule list when no schema is given', () => {
-    const columns = makeColumns();
-
-    const resolved = resolveColumnsConfig(columns);
-
-    expect(resolved.columns).toBe(columns);
-    expect(resolved.rules).toEqual([]);
-  });
-
-  it('normalizes an inline schema fn through the same recorder path as columnSchema()', () => {
-    const columns = makeColumns();
-
-    const resolved = resolveColumnsConfig(columns, (path) => {
-      visible(path.status, { when: () => false });
-    });
-
-    expect(resolved.rules).toHaveLength(1);
-    expect(resolved.rules[0]).toMatchObject({ columnId: 'status' });
-  });
-
-  it('accepts a standalone columnSchema() value directly', () => {
-    const columns = makeColumns();
-    const schema = columnSchema<Row, MockColumnId>((path) => {
-      visible(path.name, { when: () => true });
-    });
-
-    const resolved = resolveColumnsConfig(columns, schema);
-
-    expect(resolved.rules).toBe(schema.rules);
   });
 });

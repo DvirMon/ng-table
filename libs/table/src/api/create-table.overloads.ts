@@ -4,7 +4,7 @@
 
 import type { Feature } from '../engine/types';
 import type {
-  ColumnDefInput,
+  ColumnDecl,
   ColumnValues,
   TableConfig,
   TableDataInput,
@@ -17,13 +17,13 @@ import type {
  * its predecessors and the return type is the full intersection.
  */
 export interface CreateTableOverloads {
-  <TRow, TCols extends readonly ColumnDefInput<TRow, string>[]>(
+  <TRow, TCols extends readonly ColumnDecl<TRow, string, unknown>[]>(
     data: TableDataInput<TRow>,
     config: TableConfig<TRow, TCols>,
   ): TableStore<TRow, ColumnValues<TRow, TCols>>;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
   >(
     data: TableDataInput<TRow>,
@@ -32,7 +32,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
   >(
@@ -43,7 +43,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -56,7 +56,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -71,7 +71,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -91,7 +91,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -116,7 +116,7 @@ export interface CreateTableOverloads {
   ): TableStore<TRow, ColumnValues<TRow, TCols>> & O1 & O2 & O3 & O4 & O5 & O6;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -153,7 +153,7 @@ export interface CreateTableOverloads {
     O7;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -203,7 +203,7 @@ export interface CreateTableOverloads {
     O8;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -267,7 +267,7 @@ export interface CreateTableOverloads {
     O9;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -346,7 +346,7 @@ export interface CreateTableOverloads {
     O10;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -441,7 +441,7 @@ export interface CreateTableOverloads {
     O11;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -553,7 +553,7 @@ export interface CreateTableOverloads {
     O12;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -683,7 +683,7 @@ export interface CreateTableOverloads {
     O13;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
@@ -832,7 +832,7 @@ export interface CreateTableOverloads {
     O14;
   <
     TRow,
-    TCols extends readonly ColumnDefInput<TRow, string>[],
+    TCols extends readonly ColumnDecl<TRow, string, unknown>[],
     O1 extends object,
     O2 extends object,
     O3 extends object,
