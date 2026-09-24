@@ -23,12 +23,12 @@ shipped.
 |---|---|---|---|---|---|---|---|
 | `column-pinning` | — | drafted | none | — | — | — | [state](1-state/features/column-pinning.md) |
 | `column-sizing` | — | drafted | none | stub | none | — | [state](1-state/features/column-sizing.md) · [ui](3-ui/directives/resizing.md) |
-| `columns` | — | — | — | drafted | none | — | [ui](3-ui/directives/columns.md) |
+| `columns` | [log](decisions/columns.md) | — | — | drafted | none | — | [ui](3-ui/directives/columns.md) |
 | `core` | — | — | — | drilled | partial | — | [ui](3-ui/directives/core.md) |
 | `drag-drop` | — | stub | none | stub | none | — | [state](1-state/features/drag-drop.md) · [ui](3-ui/directives/drag-drop.md) |
-| `expansion` | [log](decisions/expansion.md) | drilled | partial | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
+| `expansion` | [log](decisions/expansion.md) | drilled | shipped | drilled | none | — | [state](1-state/features/expansion.md) · [ui](3-ui/directives/expansion.md) |
 | `filtering` | — | drilled | shipped | — | — | [✅](0-product/filtering.md) | [state](1-state/features/filtering.md) · [product](0-product/filtering.md) |
-| `grouping` | [log](decisions/grouping.md) | drilled | partial | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
+| `grouping` | [log](decisions/grouping.md) | drilled | shipped | stub | none | [✅](0-product/grouping.md) | [state](1-state/features/grouping.md) · [ui](3-ui/directives/grouping.md) · [product](0-product/grouping.md) |
 | `infinite-scroll` | — | stub | none | — | — | — | [state](1-state/features/infinite-scroll.md) |
 | `pagination` | — | stub | none | — | — | — | [state](1-state/features/pagination.md) |
 | `row-animation` | — | — | — | drilled | shipped | — | [ui](3-ui/directives/row-animation.md) |
@@ -36,6 +36,7 @@ shipped.
 | `selection` | — | drilled | partial | stub | none | [✅](0-product/selection.md) | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) · [product](0-product/selection.md) |
 | `sorting` | [log](decisions/sorting.md) | drilled | shipped | drafted | none | [✅](0-product/sorting.md) | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) · [product](0-product/sorting.md) |
 | `state-persistence` | — | drafted | none | — | — | — | [state](1-state/state-persistence.md) |
+| `tree` | — | drilled | shipped | — | — | — | [state](1-state/features/tree.md) |
 | `virtual-scroll` | — | drafted | none | — | — | — | [state](1-state/features/virtual-scroll.md) |
 
 `—` — that layer has no doc for this capability.

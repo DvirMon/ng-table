@@ -189,3 +189,43 @@ opposite conclusion. Reporting and rethrowing keeps the failure loud.
 
 This is the one runtime-class callback in the library that does not degrade. The rule above stands
 as written — it is not softened to "usually"; this is its single, justified exception.
+
+## Amendment (2026-09-24): construction checks are dev-only
+
+**This ADR never took a position on dev vs. production.** It argued *throw vs.
+degrade*, and every line above is about which of the two a failure gets. The
+question of whether a construction check still runs in a production build was
+not asked, and its absence was read as a ruling. It was not one.
+
+**Construction-time checks are gated to dev builds and stripped from
+production.** They are developer errors: they fire on first render, every run,
+before any data, so a check has already done its job by the time an app ships.
+Wrapping them in `ngDevMode` matches Angular's own practice and matches this
+ADR's own reason for throwing — *"it cannot ship accidentally"* — which is a
+statement about when the check fires, not about which build runs it.
+
+**Runtime reporting is untouched.** *"Always reported, not dev-only"* stands
+exactly as written for every consumer callback. Nothing in the fallback table
+or the reporting rules changes.
+
+**Where the gates live.** Each construction check gates `ngDevMode` inside its
+own body, never at a call site: `assertUniqueColumnIds` (`engine/columns.ts`),
+`assertRuleColumnIdsAreKnown` and `assertMetadataKeysAreUnique`
+(`api/create-columns.ts`). `libs/table/CLAUDE.md`'s Errors bullet states the
+same rule for the next check that gets added.
+
+**Why this is not the rejected "throw in dev, degrade in production"
+alternative.** That one is about *runtime* callbacks, and it was rejected
+because dev and production would take **different code paths through the
+pipeline** — the behavior under test would not be the behavior shipped. A
+construction check has no second path: it either runs and throws, or does not
+run. The wiring it validates is identical in both builds, and a failure it
+would have caught has already been caught in dev, before the production build
+exists.
+
+**Accepted risk, stated and taken.** Once columns stop being static — a
+server-sent or user-saved layout, [#127](https://github.com/DvirMon/ng-table/issues/127)
+— an unknown column id is no longer guaranteed to appear in dev, so a dev-only
+check can miss a real production failure. No carve-out was taken for checks
+whose ids can arrive at runtime. #127's grill should reopen this line rather
+than assume it was decided with that case in view.

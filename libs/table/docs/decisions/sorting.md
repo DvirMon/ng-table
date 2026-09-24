@@ -67,6 +67,7 @@ date, an issue's timestamp.
 | SO22 | Three declarators, not one option bag — a column needing only null placement must not have to name a comparator slot (grouping's G39, same reason) | 09-20 | accepted, unbuilt | #100 |
 | SO23 | Sorting reads values through the ADR-0014-wrapped `readAccessor`, and a comparator reaches a carrier column via `ctx.valueOf(path.x, row)` — a data resolver, so it takes the row | 09-20 | accepted, unbuilt | SVS · CS D11d |
 | SO24 | `sortRows` calls `column.accessor` and a consumer `sortFn` **unwrapped**, escaping ADR-0014 — a pre-existing bug, fixed on its own rather than folded into the migration | 09-20 | shipped | SVS |
+| SO25 | Schema rule functions drop the `apply` prefix and are named for the constraint they assert: `sortNulls`, `sortFn`, `sortable` | 09-22 | `sortNulls` shipped `ce13765` (#136) · `sortFn`/`sortable` accepted, unbuilt — pending #100's S1 (they don't exist yet; `column.sortFn`/`column.enableSorting` are still the old `ColumnDef` fields) | [ADR-0025](../adr/0025-schema-rule-functions-are-bare-named.md) |
 
 All dates are 2026.
 

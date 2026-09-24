@@ -1,18 +1,62 @@
 # ADR-0019 — `ColumnsPath` is keyed by declared column ids, not row keys
 
 **Status:** accepted 2026-09-18; **amended 2026-09-18** (scope narrowed); **re-amended 2026-09-20**
-— that narrowing is reversed by [ADR-0024](0024-single-value-source-accessor.md). The decision core
-has stood through both. Read
-[Amendment 2026-09-20](#amendment-2026-09-20--narrowing-reversed-every-schema-fn-names-columns)
-first; the
+(that narrowing reversed by [ADR-0024](0024-single-value-source-accessor.md)); **amended again
+2026-09-25** (keying source moves from `TableConfig.columns` to the `createColumns()` call). The
+decision core has stood through all three. Read
+[Amendment 2026-09-25](#amendment-2026-09-25--keyed-from-the-declaring-call) first; the
+[2026-09-20 amendment](#amendment-2026-09-20--narrowing-reversed-every-schema-fn-names-columns)
+and the
 [2026-09-18 amendment](#amendment-2026-09-18--scope-narrowed-to-the-column-schema-fn-superseded-2026-09-20)
-is kept as history only.
-**Related:** [ADR-0004](0004-table-source-layout.md) (layout by contract boundary), [ADR-0010](0010-no-angular-lifecycle-names-on-engine-concepts.md) (columns-schema is an internal step). Affected surface: `schema/column-schema.types.ts`, every `apply*` rule that takes a `ColumnHandle`.
+are kept as history only.
+**Related:** [ADR-0004](0004-table-source-layout.md) (layout by contract boundary), [ADR-0010](0010-no-angular-lifecycle-names-on-engine-concepts.md) (columns-schema is an internal step). Affected surface: `schema/column-schema.types.ts`, every schema rule (renamed from `apply*` — [ADR-0025](0025-schema-rule-functions-are-bare-named.md)) that takes a `ColumnHandle`.
 
 **Scope note:** this ADR owns one decision — how `ColumnsPath` is keyed. The `WithGroupingConfig`
 reshape that motivated it is one feature's config and lives in
 [`../1-state/work/grouping/active/grouping-config-simplification/`](../1-state/work/grouping/active/grouping-config-simplification/1-plan-config-simplification.md),
 not here.
+
+## Amendment 2026-09-25 — keyed from the declaring call
+
+**Read this before anything below it, including the 2026-09-20 amendment, which it supersedes on
+where the keying comes from (not on what it reverses).**
+
+`ColumnsPath` is now keyed from `createColumns(data, build, schema)`, not from
+`TableConfig.columns`. The builder mints each `ColumnDecl` inside that one call — spec D3 — and
+the schema function is its own third, positional argument on the same call, not a sibling
+property on `TableConfig`. `TableConfig.columnsSchema` no longer exists (spec D11, R14): a column
+set is the only schema intake, so there is no second `columns`-adjacent property left to key
+from.
+
+**Consequence 1, restated as a structural guarantee, with two probe-guarded limits.** Consequence
+1 originally read: "literal inference is required, and its absence is silent." That was true of
+`TableConfig.columns` because nothing stopped a widened array from reaching it. It is no longer
+just something the config shape happened to allow — the ids and the schema now come from the same
+call, and `createColumns`'s builder only ever captures a literal `id` for a segment written
+directly inside that call (D3). A widened id cannot reach `ColumnsPath` through the sanctioned
+spelling (`col(id, opts)` inside the builder array), because there is no path from a
+widened-elsewhere value into the builder's own type-parameter capture.
+
+Two limits stay outside that guarantee, and neither is caught by the type system — both are
+guarded by `create-columns.types.spec.ts` instead:
+
+- A spread variant that overrides `id` still widens to `string`: `{ ...col('amount'), id: 'total'
+  }` types `id` as `string` (R11).
+- `col.from(decl, opts)` with `id` omitted also widens to `string`, even though the runtime value
+  still carries `decl`'s original id (R10). `col.from` with an explicit `id` override does capture
+  the literal, per R10.
+
+So: the keying source (one call, not a config pairing) is structural; whether every *spelling*
+that reaches that call stays literal is still a probe-guarded property, not a compiler-enforced
+one.
+
+See D1/D3/D11 in
+[`2-spec.md`](../1-state/work/core/active/single-value-source/2-spec.md) and R10/R11/R14 in
+[`decisions.md`](../1-state/work/core/active/single-value-source/decisions.md), plus
+[#129](https://github.com/DvirMon/ng-table/issues/129).
+
+The "What still stands" sentence below — "Key `ColumnsPath` by the literal ids declared in
+`TableConfig.columns`" — predates this amendment; the keying source it names has moved here.
 
 ## Amendment 2026-09-20 — narrowing reversed, every schema fn names columns
 

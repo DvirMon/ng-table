@@ -361,7 +361,7 @@ introducing a parallel set.
 | `src/api/create-table.ts` | Intake at `:45-48` — unpack a `ColumnSet`; drop the readonly spread and the stale comment at `:40-44` |
 | `src/api/create-table.overloads.ts` | **Regenerate only.** `npm run table:overloads` |
 | `tools/generate-overloads.ts` | The `TCols` constraint string, one place |
-| `src/engine/columns-schema/resolve.ts` | Move `assertRuleColumnIdsAreKnown` (`:19-28`) and `assertMetadataKeysAreUnique` (`:37-52`) out; `resolveColumnsConfig` (`:65-78`) consumes a `ColumnSet` |
+| `src/engine/columns-schema/resolve.ts` | **Deleted (#139)** — `assertRuleColumnIdsAreKnown` and `assertMetadataKeysAreUnique` moved into `createColumns` (#132); `resolveColumnsConfig` had nothing left to do once a `ColumnSet` already carries resolved rules, so the intake unpacks the set directly instead |
 | `src/schema/validate.ts` | R7's `ngDevMode` wrap around the body; E12's message edit (`:17-18`) |
 | `src/engine/columns.ts` | `assertUniqueColumnIds` (`:27-37`) gains a `label` parameter. `resolveColumnDefs`'s accessor default (`:56-57`) and `order` default (`:59`) stay |
 | `src/mutations/update-columns.ts` | `setColumns` (`:14-18`) narrows its input |
@@ -437,8 +437,13 @@ compatibility window), re-checked.
 4. **What does `resolveColumnsConfig` become** once both
    asserts move out? It may collapse into the `createTable`
    intake, or absorb set-unpacking. Shaping, not a decision.
-5. **Where do the decision rows go?** See below — this is
-   the one that blocks archiving, not implementation.
+   **Answered — see decisions.md R17.** It collapses into the
+   intake; `resolve.ts` is deleted outright (#139), and
+   `createTable` unpacks the `ColumnSet` directly.
+5. **Where do the decision rows go?**
+   **Answered — see decisions.md R15.** A new
+   `docs/decisions/columns.md`, not `core.md` and not
+   distributed. See "Where the rows go" below.
 6. **Does the brand survive `Readonly`/`Pick` in the value
    map derivation?** `ColumnValues` maps over `TCols[number]`
    with an `as` key remap; the brand member rides along. Verify
@@ -454,23 +459,18 @@ compatibility window), re-checked.
 
 ## Where the rows go
 
-`state.json`'s `capabilityLogPath` is
-`libs/table/docs/decisions/grouping.md`. **That is the
-grouping log, and this is core/columns work.** There is no
-`docs/decisions/core.md` or `columns.md`. Three of these
-decisions already have grouping rows because they touch
-grouping (`G73`–`G76`), and the rename has rows owed in both
-`grouping.md` and `sorting.md` per ADR-0025 — but the
-column-declaration decisions themselves have no home.
-
-`libs/table/CLAUDE.md`'s rule is explicit: **a work folder
-may not move to `archive/` until every decision in it is
-registered in its capability's log.** So either a
-core/columns log is created (and `capabilityLogPath` points
-at it), or the rows are distributed across the existing logs
-by capability. That is a call for the user, not for this
-document — **no rows were added to `grouping.md` by this
-spec or this architecture doc.**
+The rows live in `docs/decisions/columns.md` (R15,
+2026-09-25). `state.json`'s `capabilityLogPath` now points
+there. `columns` and `core` were both already-registered
+capabilities in `docs/status.md` showing `—` in the Decisions
+column; `core.md` would have shipped empty, since none of
+this workspace's decisions touch the
+`ngpTable`/`ngpTableRow` store-connection layer. `G73`–`G76`
+in `grouping.md` and the ADR-0025 rename rows owed to
+`grouping.md`/`sorting.md` are unaffected and stay where they
+are — `columns.md` cross-references them rather than
+duplicating. Full rationale: decisions.md's "`/grill-with-docs`
+issue-141 ruling (2026-09-25)" section.
 
 ---
 
