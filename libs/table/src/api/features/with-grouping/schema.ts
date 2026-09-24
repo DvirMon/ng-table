@@ -49,7 +49,7 @@ export function runGroupingSchemaFn<TRow, TId extends string>(
  * declares a `when`-only rule that contributes no activation. Call order
  * carries no meaning; nesting order comes from `initial`.
  */
-export function applyGrouping<TRow, K extends string>(
+export function grouping<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
   opts: {
     enable?: () => boolean | undefined;
@@ -64,12 +64,6 @@ export function applyGrouping<TRow, K extends string>(
   });
 }
 
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-// Flagged per #133: this bare name sits beside the grouping store member `table.grouping` — no
-// compile collision (module export vs. store property), but worth a second look if it reads
-// badly in the barrel.
-export { applyGrouping as grouping };
-
 /**
  * Declares the key-derivation for one grouping level.
  *
@@ -77,7 +71,7 @@ export { applyGrouping as grouping };
  * `extractValue` receives the column's own `accessor` output, not the raw row field. Note: it
  * must return a primitive — the engine does not normalize, stringify, or deep-compare keys.
  */
-export function applyGroupKey<TRow, K extends string>(
+export function groupKey<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
   extractValue: (value: unknown) => unknown
 ): void {
@@ -87,9 +81,6 @@ export function applyGroupKey<TRow, K extends string>(
     extractValue,
   });
 }
-
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applyGroupKey as groupKey };
 
 /**
  * Resource-backed grouping declaration — the rule owns fetching/re-querying.
@@ -111,7 +102,7 @@ export interface GroupingAsyncOpts<TRow, K extends string, TParams, TResult> {
  * Admission for this column follows the resource's own lifecycle — `onSuccess`/`onError`
  * resolve pending/settled states to an explicit boolean; `when` gates it further.
  */
-export function applyGroupingAsync<TRow, K extends string, TParams, TResult>(
+export function groupingAsync<TRow, K extends string, TParams, TResult>(
   path: GroupingHandle<TRow, K>,
   opts: GroupingAsyncOpts<TRow, K, TParams, TResult>
 ): void {
@@ -127,9 +118,6 @@ export function applyGroupingAsync<TRow, K extends string, TParams, TResult>(
   recorderOf<TRow, AnyGroupingRule<TRow>>(path).record(rule);
 }
 
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applyGroupingAsync as groupingAsync };
-
 /**
  * Declares the sibling-ordering comparator for one grouping level.
  *
@@ -138,7 +126,7 @@ export { applyGroupingAsync as groupingAsync };
  * deactivates a level, unlike `grouping`. The comparator receives `GroupSummary`
  * (post-admission), so it can place a dissolved cluster's rows anywhere among siblings.
  */
-export function applyGroupOrder<TRow, K extends string>(
+export function groupOrder<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
   comparator: GroupOrder<TRow>
 ): void {
@@ -149,16 +137,13 @@ export function applyGroupOrder<TRow, K extends string>(
   });
 }
 
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applyGroupOrder as groupOrder };
-
 /**
  * Declares one column's aggregate — a summary value computed per cluster,
  * over that cluster's own leaves at every depth. Positional, like
  * `groupOrder`/`groupKey` — one concern, no options bag. Never
  * activates a level: a rule on a column with no active level is inert.
  */
-export function applyAggregate<TRow, K extends string>(
+export function aggregate<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
   aggregateFn: (rows: TRow[]) => unknown
 ): void {
@@ -168,6 +153,3 @@ export function applyAggregate<TRow, K extends string>(
     aggregateFn,
   });
 }
-
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applyAggregate as aggregate };

@@ -68,23 +68,11 @@ export { createTableFeature } from './api/create-table-feature';
 export { withComputed } from './api/features/with-computed';
 export { composeFeatures } from './api/features/compose-features';
 export { columnSchema } from './columns-schema/schema';
-export {
-  applySortNulls,
-  applyVisible,
-  applyVisibleAsync,
-  sortNulls,
-  visible,
-  visibleAsync,
-} from './columns-schema/rules';
+export { sortNulls, visible, visibleAsync } from './columns-schema/rules';
 export type { SortNullsOpts } from './columns-schema/rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './columns-schema/metadata';
 export {
   aggregate,
-  applyAggregate,
-  applyGrouping,
-  applyGroupingAsync,
-  applyGroupKey,
-  applyGroupOrder,
   grouping,
   groupingAsync,
   groupKey,

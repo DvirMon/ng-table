@@ -75,7 +75,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `api/features/compose-features.ts` | `composeFeatures(...features)` — collapses N features into one `createTable()` slot, the arity escape hatch. Inner features fold against a per-composite `SlotRegistry` and merge into one spec; collisions are labelled `composeFeatures inner feature N` |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `op`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, each building its own instance. Composing both explicitly is a duplicate `editing` member claim and throws (ADR-0007), in either argument order |
 | `columns-schema/schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
-| `columns-schema/rules.ts` | `applyVisible()` / `applyVisibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
+| `columns-schema/rules.ts` | `visible()` / `visibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
 | `columns-schema/metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
 | `columns-schema/types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
 | `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
@@ -136,7 +136,7 @@ for **`api/features/with-filtering/types.ts` ↔ `engine/filters/types.ts`**: `F
   `enable` is reserved for the narrow case where one rule object must carry two orthogonal
   predicates — one data-driven, one external-state-driven — that cannot share a name; there, the
   external-state one becomes `enable` and `when` is freed for the data-driven one (grouping's
-  `applyGrouping({ enable?, when })` is the only feature with this shape today — `enable` is
+  `grouping({ enable?, when })` is the only feature with this shape today — `enable` is
   optional; a rule with no activation opinion omits it rather than abstaining the whole set).
 
 - **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md)).

@@ -12,15 +12,12 @@ import type { ColumnHandle, ColumnRuleContext } from './types';
  * (`VISIBLE` is exempted from `metadata()`'s single-writer rule — see
  * `docs/2-columns/reference/column-metadata.md`).
  */
-export function applyVisible<TRow, K extends string>(
+export function visible<TRow, K extends string>(
   path: ColumnHandle<TRow, K>,
   visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean }
 ): void {
   metadata(path, VISIBLE, visible.when);
 }
-
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applyVisible as visible };
 
 /**
  * Async show/hide rule. On loader error, `onError` decides the resulting `visible` —
@@ -38,15 +35,12 @@ export interface VisibleAsyncOpts<TRow, TParams, TResult> {
  * Convenience wrapper over `metadataAsync()` writing to `VISIBLE` — the resource-backed
  * counterpart to `visible()` above.
  */
-export function applyVisibleAsync<TRow, K extends string, TParams, TResult>(
+export function visibleAsync<TRow, K extends string, TParams, TResult>(
   path: ColumnHandle<TRow, K>,
   opts: VisibleAsyncOpts<TRow, TParams, TResult>
 ): void {
   metadataAsync(path, VISIBLE, opts);
 }
-
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applyVisibleAsync as visibleAsync };
 
 export interface SortNullsOpts {
   /** Which end empty values land on regardless of sort direction. Default `'last'`. */
@@ -61,12 +55,9 @@ export interface SortNullsOpts {
  * `visible()` above. Single-writer, unlike `VISIBLE` — a second `sortNulls()` call
  * on the same column throws at resolve time.
  */
-export function applySortNulls<TRow, K extends string>(
+export function sortNulls<TRow, K extends string>(
   path: ColumnHandle<TRow, K>,
   opts: SortNullsOpts
 ): void {
   metadata(path, SORT_NULLS, opts);
 }
-
-// ADR-0025: bare name, same function. Both names stay exported until the migration contracts.
-export { applySortNulls as sortNulls };
