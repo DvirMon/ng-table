@@ -192,8 +192,9 @@ export type ColumnDefInput<TRow = unknown> = Pick<ColumnDef<TRow>, 'id'> &
 
 Only `id` is required; every other `ColumnDef` field is optional. `resolveColumnDefs()`
 (`api/create-table.ts`) defaults the three that used to be required: `accessor ?? (row) =>
-row[id]`, `visible ?? true`, `order ?? index` (array position). `TableConfig.columns` and
-`TableStore.setColumns()` both take `ColumnDefInput<TRow>[]`; the resolved store state
+row[id]`, `visible ?? true`, `order ?? index` (array position). `setColumns()` takes the
+narrower `ColumnWrite<TRow, TId>[]` — `id` plus optional `accessor`/`visible`/`label`, no
+`order` or `meta` (see `../1-state/columns.md`); the resolved store state
 (`store.columns()`) is always a full `ColumnDef<TRow>[]`. No requirement that every `keyof TRow`
 have an entry; no support for columns outside `keyof TRow` (derived columns) in this first
 pass — see Open Questions.

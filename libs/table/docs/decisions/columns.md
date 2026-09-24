@@ -45,7 +45,7 @@ which this log does not cover.
 | COL8 | `accessor` stays on `col()`; it does not move into the columns schema — the schema's recording form is typed `(path) => void`, a side effect with no type representation, so a registered accessor would make `ColumnValues` fall back to `TRow[id]`, exactly the case ADR-0024 exists to close | 09-22 | shipped `9033e6e` (#130) | WS "accessor stays on col()", `discovery-accessor-placement.md` |
 | COL9 | `assertRuleColumnIdsAreKnown` and `assertMetadataKeysAreUnique` move into `createColumns`; `assertUniqueColumnIds` is added there too while staying on the write path; all three gate `ngDevMode` inside their own body, never at a call site | 09-22 | shipped `398d2c4` (#132) | WS "N2" |
 | COL10 | Correction to G65/G66's Signal Forms comparison: its schema path also names a type-level slot (`keyof TModel`), the same cross-section shape as `ColumnsPath` — only its field tree names instances. The two-tier resolver rule itself stands, on G66's own inventory evidence, not the contrast | 09-22 | finding — recorded in grouping's log, not duplicated here | [grouping.md G75](grouping.md), `discovery-dynamic-field-schema.md` |
-| COL11 | `setColumns()` takes a narrowed `{ id } & Partial<{ accessor, visible, label }>` — the same four fields `col()` takes; it cannot add a column and cannot write `order`/`meta` — structural, matching Angular Signal Forms having no add/remove-field API either | 09-22 | accepted, unbuilt | WS "N6" |
+| COL11 | `setColumns()` takes a narrowed `{ id } & Partial<{ accessor, visible, label }>` — the same four fields `col()` takes; it cannot add a column and cannot write `order`/`meta` — structural, matching Angular Signal Forms having no add/remove-field API either | 09-22 | shipped `74e29a2` (#140) | WS "N6" |
 | COL12 | `createColumns`'s row witness is typed `() => readonly TRow[] \| undefined`, not `TableDataInput<TRow>` — one inline union member covers a `WritableSignal`, a plain `Signal`, a resource's pre-load value, and a bare store method, with no conditional type | 09-22 | shipped `9033e6e` (#130) | WS "row witness" |
 | COL13 | The `ColumnDecl` brand is a type-only, **required** `unique symbol` member, never assigned at runtime — settled against a nine-library survey; `createColumns` never needs to ask "is this mine?" of an `unknown` value | 09-22 | shipped `9033e6e` (#130) | WS "brand", `discovery-nominal-branding.md` |
 | COL14 | `col()` does not bake the default accessor — `resolveColumnDefs` keeps resolving `def.accessor ?? ((row) => row[def.id])`, so a re-declared id still resolves against its new field | 09-22 | shipped | WS "default accessor" |
@@ -79,7 +79,6 @@ All dates are 2026.
 - **COL24** — the code half shipped in `398d2c4` (#132); the ADR-0014 amendment
   documenting it is written but uncommitted (#141's own Step 3); flip to a plain
   `shipped` once #141 lands.
-- **COL11** — `setColumns()`'s narrowed input shape is designed, not built.
 - **COL17 / COL19** — the ordered-id slice, #128, including whether it gets a `stateOf` reader.
 - **COL20 / COL23** — owed edits to #116 and #117 respectively.
 - **COL4's caveat** — the order-slice O(rows × columns) cost is arithmetic over a verified

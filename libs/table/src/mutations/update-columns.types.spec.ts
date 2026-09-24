@@ -25,6 +25,7 @@ interface Row {
 
 declare const data: TableDataInput<Row>;
 
+// No return annotation on purpose: case 3 needs the literal id union inferred from `col()`.
 function makeColumns() {
   return createColumns(noData<Row>(), (col) => [col('id'), col('name'), col('status')]);
 }

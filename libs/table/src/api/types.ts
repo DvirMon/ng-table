@@ -83,25 +83,22 @@ export interface ColumnDef<TRow = unknown, TId extends string = string> {
   meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
 }
 
-/** Sparse column declaration the engine's own resolvers (`resolveColumnDefs`) accept. Only
- * `id` is required — `accessor`, `visible`, `order` and `label` default to `(row) => row[id]`,
- * `true`, the array index, and `id`; resolved to a full `ColumnDef` at construction.
- * `setColumns()` takes the narrower `ColumnWrite` instead — `order` and `meta` aren't writable
- * on that path. */
+/** Sparse column shape that `resolveColumnDefs` resolves to a full `ColumnDef`. Only `id` is
+ * required — `accessor`, `visible`, `order` and `label` default to `(row) => row[id]`, `true`,
+ * the array index, and `id`. */
 export type ColumnDefInput<TRow = unknown, TId extends string = string> = Pick<
   ColumnDef<TRow, TId>,
   'id'
 > &
   Partial<Omit<ColumnDef<TRow, TId>, 'id'>>;
 
-/** Fields `setColumns()` may write per column: `id` plus optional `accessor`/`visible`/`label`
- * — the same four `col()` accepts. `order` and `meta` are unreachable on this path; `id` is
- * checked against the table's declared column-id union. */
-export type ColumnWrite<TRow, TId extends string = string> = Pick<
+/** One column in a `setColumns()` write — the same fields `col()` accepts. */
+export type ColumnWrite<TRow = unknown, TId extends string = string> = Pick<
   ColumnDef<TRow, TId>,
   'id'
 > &
-  Partial<Pick<ColumnDef<TRow, TId>, 'accessor' | 'visible' | 'label'>>;
+  Presentation &
+  Partial<Pick<ColumnDef<TRow, TId>, 'accessor'>>;
 
 // Type-only, never assigned at runtime: `createColumns()` receives declarations only from its
 // own `col()` builder, so nothing needs to ask "is this mine?" of an unknown value.

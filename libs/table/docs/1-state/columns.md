@@ -58,7 +58,7 @@ Not registered via a `withColumns()` feature — always present as core config, 
 Single source of truth: mutable flags live directly on each `ColumnDef`. No separate `columnOrder[]` / `columnVisibility{}` slices.
 
 The **resolved** state (`store.columns()`, always a full `ColumnDef[]`) and the **author-facing
-input** (`ColumnDefInput<TRow>`, what `columns`/`setColumns()` accept) are two related types — only
+input** (`ColumnDefInput<TRow>`, what the engine's resolver accepts) are two related types — only
 `id` is required on the input, everything else is optional and defaulted at resolution:
 
 ```ts
@@ -79,7 +79,7 @@ interface ColumnDef<TRow = unknown> {
 }
 ```
 
-`ColumnDefInput<TRow>` — what `columns` and `setColumns()` actually accept — is the same shape with
+`ColumnDefInput<TRow>` — what the engine's resolver accepts — is the same shape with
 `accessor`/`visible`/`order` optional (only `id` required); `resolveColumnDefs()` (`api/create-table.ts`)
 fills the defaults in once at resolution, so `store.columns()` is always the full `ColumnDef` above:
 

@@ -5,7 +5,7 @@ import { reorderColumns, setColumns, toggleColumnVisibility } from './update-col
 import type { ColumnDef, ColumnsUpdater } from '../api/types';
 
 describe('setColumns', () => {
-  it('replaces the full column list, ignoring the previous one', () => {
+  it('replaces the full column list, dropping the columns a shorter list omits', () => {
     const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = setColumns<MockRow>([{ id: 'name' }])(columns);
@@ -13,7 +13,7 @@ describe('setColumns', () => {
     expect(result.map((column) => column.id)).toEqual(['name']);
   });
 
-  it('resolves sparse ColumnDefInputs to full ColumnDefs (mirrors engine/columns.spec.ts)', () => {
+  it('resolves a sparse ColumnWrite to a full ColumnDef (mirrors engine/columns.spec.ts)', () => {
     const [column] = setColumns<MockRow>([{ id: 'name' }])([]);
 
     expect(column.visible).toBe(true);
@@ -22,7 +22,7 @@ describe('setColumns', () => {
     expect(column.accessor({ id: 1, name: 'Ann' })).toBe('Ann');
   });
 
-  it('an edit by id applies', () => {
+  it('applies an edit to the column with the given id', () => {
     const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = setColumns<MockRow>([
@@ -33,14 +33,6 @@ describe('setColumns', () => {
     const edited = result.find((column) => column.id === 'name');
     expect(edited?.label).toBe('Full name');
     expect(edited?.visible).toBe(false);
-  });
-
-  it('a shorter list drops the columns it omits', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
-
-    const result = setColumns<MockRow>([{ id: 'id' }])(columns);
-
-    expect(result.map((column) => column.id)).toEqual(['id']);
   });
 });
 
