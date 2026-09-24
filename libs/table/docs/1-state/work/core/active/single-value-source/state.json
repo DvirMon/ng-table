@@ -39,6 +39,6 @@
     141
   ],
   "createdAt": "2026-09-20T00:00:00Z",
-  "updatedAt": "2026-09-25T00:00:00Z",
-  "capabilityLogPath": "libs/table/docs/decisions/grouping.md"
+  "updatedAt": "2026-09-25T13:00:00Z",
+  "capabilityLogPath": "libs/table/docs/decisions/columns.md"
 }

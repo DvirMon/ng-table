@@ -22,7 +22,7 @@ fits a tracer bullet, so both are sequenced
 | [#136](https://github.com/DvirMon/ng-table/issues/136) | ADR-0025 rename, contract: delete the `apply*` exports | ✅ CLOSED 09-24 (ce13765) | #134, #135 (cleared) | #141 |
 | [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures | ✅ CLOSED 09-25 (b6209bc) | #131 (cleared) | #139, #140 |
 | [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs | ✅ CLOSED 09-24 (6af4cc7) | #131 (cleared) | #139 |
-| [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | 🟡 OPEN | #132 (cleared), #137 (cleared), #138 (cleared) | — |
+| [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | ✅ CLOSED 09-24 (1704cfd) | #132 (cleared), #137 (cleared), #138 (cleared) | — |
 | [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented | 🟡 OPEN | #137 (cleared) | #141 |
 | [#141](https://github.com/DvirMon/ng-table/issues/141) | Docs, ADR-0019 amendment, CLAUDE.md invariant, decision rows, `llms` | 🟡 OPEN | #136 (cleared), #140 | — |
 
@@ -31,7 +31,7 @@ fits a tracer bullet, so both are sequenced
 ```
 #130[✅] ──► #131[✅] ──┬──► #132[✅] ────────┐
                     │                   │
-                    ├──► #137[✅] ──┬───┼──► #139
+                    ├──► #137[✅] ──┬───┼──► #139[✅]
                     │               │   │
                     └──► #138[✅] ──┴───┘
                                     │
@@ -59,15 +59,15 @@ fits a tracer bullet, so both are sequenced
   fixtures are `#137`'s. `{#134, #135} → #136`, same
   expand–contract reason. `{#136, #140} → #141` — the docs pass
   describes both final surfaces.
-- **Current frontier:** **#139**, **#140**. `#130` and `#132`
-  closed 2026-09-24 (via another concurrent run — no commit sha
+- **Current frontier:** **#140**. `#130` and `#132` closed
+  2026-09-24 (via another concurrent run — no commit sha
   captured by this workspace). `#137` shipped and closed
-  2026-09-25 (b6209bc). With `#132`, `#137` and `#138` all
-  closed, `#139`'s every blocker is cleared, so it is now
-  frontier. `#140`'s one blocker `#137` is cleared, so it too is
-  now frontier. The rename chain (`#133 → {#134, #135} → #136`)
-  shipped and closed end to end; `#141` is not yet frontier — it
-  still waits on `#140`.
+  2026-09-25 (b6209bc). `#139` shipped and closed 2026-09-24/25
+  (1704cfd) — its every blocker (`#132`, `#137`, `#138`) was
+  cleared. `#140`'s one blocker `#137` is cleared, so it remains
+  frontier on its own. The rename chain (`#133 → {#134, #135} →
+  #136`) shipped and closed end to end; `#141` is not yet
+  frontier — it still waits on `#140`.
 
 ## Source
 
@@ -84,7 +84,9 @@ pulled from `gh issue view` on 2026-09-24; states refreshed
 after `/ship` pushed 6af4cc7 — `#138` closed. Refreshed again
 2026-09-25 after `/ship` pushed b6209bc — `#137` closed; the
 same read found `#130` and `#132` already closed by a concurrent
-run this workspace had not yet recorded. Related docs:
+run this workspace had not yet recorded. Refreshed again
+2026-09-25 after `/ship` pushed 1704cfd/0754f32 — `#139` closed.
+Related docs:
 [`2-spec.md`](2-spec.md), [`3-architecture.md`](3-architecture.md),
 [`decisions.md`](decisions.md),
 [`conflicts-vs-unshipped.md`](conflicts-vs-unshipped.md).
