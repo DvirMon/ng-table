@@ -581,6 +581,8 @@ exists in the `columns` array"; after D11 there is no such
 array. The label parameter names the *declaring* surface, not
 the source of truth, so no call site fixes this. One string
 edit, inside the same step as D14/D16.
+**Shipped (2026-09-24, #132).** Message is now: `` `[${label}] Unknown column id
+"${id}" — no declared column has this id.` ``
 
 ### Naming
 

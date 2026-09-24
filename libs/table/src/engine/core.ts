@@ -21,9 +21,8 @@ export interface TableCoreHandle<TRow> {
   readonly stages: PipelineStages<TRow>;
   readonly renderStages: RenderStages<TRow>;
   readonly columnRules: ColumnRuleEntry<TRow>[];
-  // Additively populated by `composeTable()`'s fold, one entry per feature declaring
-  // `TableFeatureSpec.expandedRows` — accumulating, not single-claimed. Unioned below and fed
-  // into `flattenVisible`.
+  /** Additively populated by `composeTable()`'s fold — one entry per feature declaring
+   * `expandedRows`. Unioned below and fed into `flattenVisible`. */
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
 }
 
@@ -38,7 +37,9 @@ export function createTableCore<TRow>(
   // Normalized once at construction so there's zero branching at render/comparison time.
   const trackBy = normalizeTrackBy(config.trackBy);
 
-  const baseColumns = signal<ColumnDef<TRow>[]>(resolveColumnDefs(config.columns));
+  const baseColumns = signal<ColumnDef<TRow>[]>(
+    resolveColumnDefs(config.columns, 'createTable')
+  );
   const columnRules: ColumnRuleEntry<TRow>[] = [];
   const columns = computed(() => foldColumnRules(baseColumns(), columnRules));
 

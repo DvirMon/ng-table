@@ -14,7 +14,7 @@ import type { ColumnDef, ColumnDefInput, ColumnsUpdater } from '../api/types';
 export function setColumns<TRow, TId extends string = string>(
   defs: ColumnDefInput<TRow, TId>[]
 ): ColumnsUpdater<TRow, TId> {
-  return () => resolveColumnDefs(defs) as ColumnDef<TRow, TId>[];
+  return () => resolveColumnDefs(defs, 'setColumns') as ColumnDef<TRow, TId>[];
 }
 
 /** Rewrites column order from an id sequence. Ids absent from the list keep their current order. */

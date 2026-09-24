@@ -128,20 +128,4 @@ describe('resolveColumnsConfig', () => {
 
     expect(resolved.rules).toBe(schema.rules);
   });
-
-  it('throws for an unknown columnId recorded via a real path handle', () => {
-    interface WithExtra extends Row {
-      extra: string;
-    }
-    const columns = makeColumns() as unknown as ColumnDefInput<
-      WithExtra,
-      'name' | 'status' | 'extra'
-    >[];
-
-    expect(() =>
-      resolveColumnsConfig<WithExtra, 'name' | 'status' | 'extra'>(columns, (path) => {
-        visible(path.extra, { when: () => true });
-      })
-    ).toThrow(/Unknown column id "extra"/);
-  });
 });

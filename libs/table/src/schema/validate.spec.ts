@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { assertDeclarationsAreKnown } from './validate';
+import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
+import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from './validate';
 
 describe('assertDeclarationsAreKnown', () => {
   it('throws and names the declaring surface when an id is unknown', () => {
@@ -8,13 +9,15 @@ describe('assertDeclarationsAreKnown', () => {
     ).toThrow(/^\[withGrouping\] Unknown column id "region"/);
   });
 
-  it('keeps the columns caller message unchanged (regression gate)', () => {
-    expect(() =>
-      assertDeclarationsAreKnown(['region'], ['name', 'status'], 'columnsSchema')
-    ).toThrow(
-      '[columnsSchema] Unknown column id "region" — no column with ' +
-        'this id exists in the `columns` array.'
-    );
+  it('matches on label and id, and no longer mentions a `columns` array (regression gate)', () => {
+    let message = '';
+    try {
+      assertDeclarationsAreKnown(['region'], ['name', 'status'], 'columnsSchema');
+    } catch (error) {
+      message = (error as Error).message;
+    }
+    expect(message).toMatch(/^\[columnsSchema\] Unknown column id "region"/);
+    expect(message).not.toMatch(/columns` array/);
   });
 
   it('does not throw when every declared id is known, including a duplicate', () => {
@@ -32,5 +35,31 @@ describe('assertDeclarationsAreKnown', () => {
     expect(() =>
       assertDeclarationsAreKnown([], new Set(['name']), 'withGrouping')
     ).not.toThrow();
+  });
+});
+
+describe('G76: construction check is dev-only, writer check is not', () => {
+  it('assertDeclarationsAreKnown does not throw on an unknown id when ngDevMode is false', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      expect(() =>
+        assertDeclarationsAreKnown(['nope'], ['name', 'status'], 'withGrouping')
+      ).not.toThrow();
+    } finally {
+      setNgDevMode(previous);
+    }
+  });
+
+  it('assertWrittenIdsAreKnown still throws on an unknown id when ngDevMode is false', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      expect(() =>
+        assertWrittenIdsAreKnown(['nope'], ['name', 'status'], 'withGrouping')
+      ).toThrow(/^\[withGrouping\] Unknown column id "nope"/);
+    } finally {
+      setNgDevMode(previous);
+    }
   });
 });

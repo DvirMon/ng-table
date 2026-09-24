@@ -256,25 +256,6 @@ describe('createTable', () => {
     );
   });
 
-  it('throws at createTable(), not at createColumns(), for a set’s schema naming an undeclared column id', () => {
-    const data = signal<Row[]>([]);
-    // Wider `TId` than the set actually declares — `columnSchema()`'s compiled `ColumnSchema<Row>`
-    // erases `TId`, so `createColumns()` accepts it and records the "bogus" rule with no
-    // validation of its own; only `resolveColumnsConfig()`, reached from `createTable()`, checks
-    // rule ids against declared columns.
-    const badSchema = columnSchema<Row, 'name' | 'status' | 'bogus'>((path) => {
-      visible(path.bogus, { when: () => true });
-    });
-
-    const badSet = createColumns(data, (col) => [col('name'), col('status')], badSchema);
-
-    expect(() =>
-      TestBed.runInInjectionContext(() =>
-        createTable(data, { trackBy: 'id', columns: badSet })
-      )
-    ).toThrow(/Unknown column id "bogus"/);
-  });
-
   it('composes two synthetic features where the second reads the first’s member', () => {
     const withCount = createTableFeature(() => ({
       members: { count: signal(2).asReadonly() },

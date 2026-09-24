@@ -89,18 +89,6 @@ describe('readColumnMeta', () => {
 });
 
 describe('resolveColumnsConfig — duplicate metadata registration', () => {
-  it('throws when the same (column, key) pair is registered twice', () => {
-    const columns = makeColumns();
-    const KEY = createColumnMetaKey<string>();
-
-    expect(() =>
-      resolveColumnsConfig(columns, (path) => {
-        metadata(path.status, KEY, 'a');
-        metadata(path.status, KEY, 'b');
-      })
-    ).toThrow(/Duplicate metadata\(\) registration/);
-  });
-
   it('allows the same key on two different columns', () => {
     const columns = makeColumns();
     const KEY = createColumnMetaKey<string>();

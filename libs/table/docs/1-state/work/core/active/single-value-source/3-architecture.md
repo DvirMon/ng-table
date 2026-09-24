@@ -156,10 +156,13 @@ blocked on `createTable`, not on `createColumns`.
 Callers of the shared body today: `resolve.ts:23` only (the
 grouping/filtering/sorting callers named in its doc comment
 at `:5-6` are prospective — re-grep before assuming).
-**R8 consequence:** gating this body makes grouping's
-*construction* check dev-only. Grouping's *writer*-path throw
-lives elsewhere and must stay ungated — verify that before
-landing R7's wrap.
+**R8 consequence, as shipped (#132):** grouping's construction
+and writer throws shared this one body, so "the writer throw
+lives elsewhere" was false at HEAD — the split had to be made
+structural first. `schema/validate.ts` now exports two
+functions: a dev-gated `assertDeclarationsAreKnown`
+(construction) and an ungated `assertWrittenIdsAreKnown`
+(writer), and grouping's writer calls the latter directly.
 
 ### Runtime write path
 

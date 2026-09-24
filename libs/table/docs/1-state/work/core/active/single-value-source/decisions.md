@@ -373,7 +373,7 @@ declaring a column's presentation, accessor and rules, replacing the curried
 |---|---|---|---|
 | **N4** | `col()`'s option set — what `Presentation` carries (`label`/`visible`, and whether `order`, `meta` or feature fields stay) | core | open |
 | **N1** | `ColumnSet` runtime shape — `{ columns, rules }`, and whether it carries the `data` reference | core | open |
-| **N2** | Where the throws live — duplicate ids and unknown rule ids move from `resolveColumnDefs`/`resolveColumnsConfig` into `createColumns`; plus the dev-gating axis | dependent (N1) | open |
+| **N2** | Where the throws live — duplicate ids and unknown rule ids move from `resolveColumnDefs`/`resolveColumnsConfig` into `createColumns`; plus the dev-gating axis | dependent (N1) | resolved — shipped #132 |
 | **N3** | `createTable` intake — `resolveColumnsConfig` consumes a `ColumnSet`; whether a plain `ColumnDefInput[]` stays accepted for one release | dependent (N1) | open |
 | **N5** | `ColumnSet` reuse — one declaration shared by two live tables, and the async-rule / injection-context consequence | dependent (N1, N2) | open |
 | **N6** | Runtime write path — `setColumns` / `ColumnsUpdater` against a statically-derived value map | dependent (N4, N1) | open |
@@ -559,6 +559,12 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   construction throw is not a violation of it — but the next reader will need that said out loud,
   or a gated throw reads as a bug. An unknown rule id or a duplicate `metadata()` registration
   now passes silently in a production build.
+  **Shipped (2026-09-24, #132).** All three checks now gate inside their own body
+  (`assertUniqueColumnIds` in `engine/columns.ts`, `assertRuleColumnIdsAreKnown` and
+  `assertMetadataKeysAreUnique` in `api/create-columns.ts`), never at a call site — R7 applied to
+  the two checks that don't share `schema/validate.ts`'s body. No `docs/decisions/core.md` or
+  `columns.md` exists to carry this row permanently; see "Where the rows go" in
+  [`3-architecture.md`](3-architecture.md#where-the-rows-go) — unresolved, a call for the user.
 
 - **Correction to G65/G66's supporting comparison — the decision stands, the contrast does not.**
   [`discovery-dynamic-field-schema.md`](discovery-dynamic-field-schema.md) verified against
@@ -814,6 +820,11 @@ of the rulings themselves:
   (2026-09-24)**. Source:
   [`conflicts-vs-unshipped.md`](conflicts-vs-unshipped.md) E2, plus ADR-0014
   read in full.
+  **Shipped (2026-09-24, #132).** The wrap landed in `schema/validate.ts`'s shared body as
+  planned; the two checks that don't share that body (`assertUniqueColumnIds`,
+  `assertMetadataKeysAreUnique`) each gate inside their own body instead — same rule (one gate,
+  in the body, never at a call site), applied per-check where there's no shared body to put it
+  in once.
 
 - **R8 — R7's dev-only rule reaches G71's construction half only; the writer
   path keeps throwing in production.** *The G71 revisit R7 obliged.* R7 rests

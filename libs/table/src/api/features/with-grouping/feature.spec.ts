@@ -14,6 +14,7 @@ import {
 } from '../../../table.mock';
 import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import { setColumns } from '../../../mutations/update-columns';
+import { getNgDevMode, setNgDevMode } from '../../../ng-dev-mode.testing';
 import {
   addGroupLevel,
   reorderGroupLevels,
@@ -688,6 +689,44 @@ describe('unknown column ids throw (AC #4)', () => {
     );
 
     expect(() => store.grouping.update(addGroupLevel('nope'))).toThrow(/\[withGrouping\].*"nope"/);
+  });
+
+  it('G76: construction is dev-only — withGrouping({ initial: [\'nope\'] }) builds without throwing when ngDevMode is false', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<GroupingMockRow[]>(mockGroupingRows),
+            { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
+            withGrouping({ initial: ['nope'] })
+          )
+        )
+      ).not.toThrow();
+    } finally {
+      setNgDevMode(previous);
+    }
+  });
+
+  it('G76: the writer still throws on an unknown level when ngDevMode is false', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial: ['region'] })
+        )
+      );
+
+      expect(() => store.grouping.update(addGroupLevel('nope'))).toThrow(
+        /\[withGrouping\].*"nope"/
+      );
+    } finally {
+      setNgDevMode(previous);
+    }
   });
 
   it('reorderGroupLevels with out-of-range indices stays a no-op, never a throw — only unknown ids throw', () => {

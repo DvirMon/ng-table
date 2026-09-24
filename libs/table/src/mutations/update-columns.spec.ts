@@ -6,7 +6,7 @@ import type { ColumnDef, ColumnsUpdater } from '../api/types';
 
 describe('setColumns', () => {
   it('replaces the full column list, ignoring the previous one', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = setColumns<MockRow>([{ id: 'name' }])(columns);
 
@@ -25,7 +25,7 @@ describe('setColumns', () => {
 
 describe('reorderColumns', () => {
   it('re-assigns order per the given id sequence', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = reorderColumns<MockRow>(['name', 'id'])(columns);
 
@@ -36,7 +36,7 @@ describe('reorderColumns', () => {
   });
 
   it('leaves ids absent from the list at their current order', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = reorderColumns<MockRow>(['name'])(columns);
 
@@ -46,7 +46,7 @@ describe('reorderColumns', () => {
 
 describe('toggleColumnVisibility', () => {
   it('flips visible for the named column', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = toggleColumnVisibility<MockRow>('name')(columns);
 
@@ -55,7 +55,7 @@ describe('toggleColumnVisibility', () => {
   });
 
   it('calling it twice returns to the original value', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
     const applyTwice = (updater: ColumnsUpdater<MockRow>, cols: ColumnDef<MockRow>[]) =>
       updater(updater(cols));
 
@@ -65,7 +65,7 @@ describe('toggleColumnVisibility', () => {
   });
 
   it('is a no-op for an unknown id', () => {
-    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
 
     const result = toggleColumnVisibility<MockRow>('nope')(columns);
 

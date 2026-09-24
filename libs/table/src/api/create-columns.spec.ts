@@ -1,6 +1,8 @@
 import { createColumns } from './create-columns';
 import { columnSchema } from '../columns-schema/schema';
 import { createColumnMetaKey, metadata } from '../columns-schema/metadata';
+import { visible } from '../columns-schema/rules';
+import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
 import type { ColumnsSchemaFn } from '../columns-schema/types';
 
 interface Row {
@@ -108,7 +110,9 @@ describe('createColumns', () => {
 
           expect(relabeled.id).toBe(original.id);
 
-          return [original, relabeled];
+          // Only `relabeled` is returned — `original` shares its id, and `createColumns()`
+          // now throws on a duplicate column id at construction (this step's own check).
+          return [relabeled];
         }
       );
     });
@@ -156,6 +160,89 @@ describe('createColumns', () => {
       );
 
       expect(result.rules).toEqual([]);
+    });
+  });
+
+  describe('construction checks', () => {
+    it('throws when a schema rule names a column id that was never declared', () => {
+      const KEY = createColumnMetaKey<string>();
+      // Wider `TId` than the built set actually declares — `columnSchema()`'s compiled
+      // `ColumnSchema<Row>` erases `TId`, so `createColumns()` accepts it and only its own
+      // rule-id check catches the undeclared id (`create-table.spec.ts:261-267`'s trick).
+      const badSchema = columnSchema<Row, 'amount' | 'bogus'>((path) => {
+        metadata(path.bogus, KEY, 'x');
+      });
+
+      expect(() =>
+        createColumns(vi.fn(() => mockRows), (col) => [col('amount')], badSchema)
+      ).toThrow('[createColumns] Unknown column id "bogus" — no declared column has this id.');
+    });
+
+    it('throws when metadata() is registered twice for the same column and key', () => {
+      const KEY = createColumnMetaKey<string>();
+
+      expect(() =>
+        createColumns(
+          vi.fn(() => mockRows),
+          (col) => [col('amount')],
+          (path) => {
+            metadata(path.amount, KEY, 'a');
+            metadata(path.amount, KEY, 'b');
+          }
+        )
+      ).toThrow(
+        '[createColumns] Duplicate metadata() registration for column "amount" — ' +
+          'call metadata() at most once per key per column; metadata has no reducer/combine.'
+      );
+    });
+
+    it('throws when two columns share an id', () => {
+      expect(() =>
+        createColumns(vi.fn(() => mockRows), (col) => [col('name'), col('name')])
+      ).toThrow(
+        '[createColumns] Duplicate column id provided: "name" — ensure all column ids are unique.'
+      );
+    });
+
+    it('does not throw when visible() targets the same column twice — the one AND-combined exemption', () => {
+      expect(() =>
+        createColumns(
+          vi.fn(() => mockRows),
+          (col) => [col('amount')],
+          (path) => {
+            visible(path.amount, { when: () => true });
+            visible(path.amount, { when: () => false });
+          }
+        )
+      ).not.toThrow();
+    });
+
+    it('ngDevMode = false strips all three checks — bad declarations return a set without throwing', () => {
+      const previous = getNgDevMode();
+      try {
+        setNgDevMode(false);
+
+        const KEY = createColumnMetaKey<string>();
+        const badSchema = columnSchema<Row, 'amount' | 'bogus'>((path) => {
+          metadata(path.bogus, KEY, 'x');
+          metadata(path.amount, KEY, 'y');
+          metadata(path.amount, KEY, 'z');
+        });
+
+        let result: { columns: readonly unknown[]; rules: readonly unknown[] } | undefined;
+        expect(() => {
+          result = createColumns(
+            vi.fn(() => mockRows),
+            (col) => [col('name'), col('name'), col('amount')],
+            badSchema
+          );
+        }).not.toThrow();
+
+        expect(result?.columns).toHaveLength(3);
+        expect(result?.rules).toHaveLength(3);
+      } finally {
+        setNgDevMode(previous);
+      }
     });
   });
 });

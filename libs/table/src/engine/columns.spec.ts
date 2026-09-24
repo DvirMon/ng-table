@@ -1,6 +1,7 @@
 import { signal } from '@angular/core';
 import { describe, expect, it } from 'vitest';
 import type { ColumnMetaKey } from '../columns-schema/types';
+import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
 import {
   applyColumnOrder,
   foldColumnRules,
@@ -11,17 +12,6 @@ import {
   type ColumnRuleEntry,
 } from './columns';
 
-// `columns.ts` reads the bare identifier `ngDevMode`, which resolves through the global object
-// at runtime. `@angular/core` already ambient-declares `ngDevMode` as `const`, so it can't be
-// redeclared with `var` to surface it on `globalThis`'s type — this narrow, test-local cast is
-// the only way to flip the flag without editing the ambient declaration.
-function getNgDevMode(): boolean | undefined {
-  return (globalThis as Record<string, unknown>)['ngDevMode'] as boolean | undefined;
-}
-function setNgDevMode(value: boolean | undefined): void {
-  (globalThis as Record<string, unknown>)['ngDevMode'] = value;
-}
-
 interface Person {
   id: number;
   name: string;
@@ -29,7 +19,7 @@ interface Person {
 
 describe('resolveColumnDefs', () => {
   it('fills every optional field from the id and index', () => {
-    const [column] = resolveColumnDefs<Person>([{ id: 'name' }]);
+    const [column] = resolveColumnDefs<Person>([{ id: 'name' }], 'createTable');
 
     expect(column.visible).toBe(true);
     expect(column.order).toBe(0);
@@ -38,24 +28,36 @@ describe('resolveColumnDefs', () => {
   });
 
   it('defaults order to the array index', () => {
-    const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }]);
+    const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable');
 
     expect(columns.map((column) => column.order)).toEqual([0, 1]);
   });
 
   it('keeps explicitly provided values', () => {
-    const [column] = resolveColumnDefs<Person>([
-      { id: 'name', visible: false, order: 7, label: 'Full name' },
-    ]);
+    const [column] = resolveColumnDefs<Person>(
+      [{ id: 'name', visible: false, order: 7, label: 'Full name' }],
+      'createTable'
+    );
 
     expect(column).toMatchObject({ visible: false, order: 7, label: 'Full name' });
   });
 
   it('throws with the exact D10 message when two columns share an id', () => {
     expect(() =>
-      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }])
+      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }], 'createTable')
     ).toThrow(
       '[createTable] Duplicate column id provided: "name" — ensure all column ids are unique.'
+    );
+  });
+
+  it('still throws from the runtime write path when called with the setColumns label', () => {
+    // `setColumns` (`mutations/update-columns.ts`) calls `resolveColumnDefs(defs, 'setColumns')`
+    // directly — this is that same call, proving the duplicate-id check still guards the
+    // runtime write path, not just `createColumns()`'s construction-time check.
+    expect(() =>
+      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }], 'setColumns')
+    ).toThrow(
+      '[setColumns] Duplicate column id provided: "name" — ensure all column ids are unique.'
     );
   });
 
@@ -63,16 +65,19 @@ describe('resolveColumnDefs', () => {
     const sharedAccessor = (row: Person): unknown => row.name;
 
     expect(() =>
-      resolveColumnDefs<Person>([
-        { id: 'name', accessor: sharedAccessor },
-        { id: 'fullName', accessor: sharedAccessor },
-      ])
+      resolveColumnDefs<Person>(
+        [
+          { id: 'name', accessor: sharedAccessor },
+          { id: 'fullName', accessor: sharedAccessor },
+        ],
+        'createTable'
+      )
     ).not.toThrow();
   });
 
   it('does not throw for a list with no duplicates', () => {
     expect(() =>
-      resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }])
+      resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable')
     ).not.toThrow();
   });
 
@@ -83,10 +88,13 @@ describe('resolveColumnDefs', () => {
 
       let columns: ReturnType<typeof resolveColumnDefs<Person>> = [];
       expect(() => {
-        columns = resolveColumnDefs<Person>([
-          { id: 'name', label: 'First label' },
-          { id: 'name', label: 'Second label' },
-        ]);
+        columns = resolveColumnDefs<Person>(
+          [
+            { id: 'name', label: 'First label' },
+            { id: 'name', label: 'Second label' },
+          ],
+          'createTable'
+        );
       }).not.toThrow();
 
       expect(columns).toHaveLength(2);
@@ -102,7 +110,7 @@ describe('resolveColumnDefs', () => {
 });
 
 describe('applyColumnOrder', () => {
-  const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }]);
+  const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable');
 
   it('rewrites order from the id list', () => {
     const reordered = applyColumnOrder(columns, ['name', 'id']);
@@ -126,7 +134,7 @@ describe('applyColumnOrder', () => {
 });
 
 describe('column visibility', () => {
-  const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }]);
+  const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable');
 
   it('toggles only the named column', () => {
     const next = toggleColumnVisible(columns, 'name');
@@ -147,7 +155,7 @@ describe('column visibility', () => {
 });
 
 describe('foldColumnRules', () => {
-  const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }]);
+  const columns = resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable');
 
   function visibleRule(columnId: string, value: boolean | undefined): ColumnRuleEntry<Person> {
     return { columnId, key: VISIBLE, result: signal(value).asReadonly() };

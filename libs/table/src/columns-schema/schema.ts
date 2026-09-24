@@ -26,7 +26,7 @@ export function buildColumnsPath<TRow, TId extends string, TRule = ColumnRule<TR
 /**
  * Thin wrapper over `runRecordedSchema()`, fixing the columns key space via
  * `buildColumnsPath`. Shared by `columnSchema()` and
- * `resolveColumnsConfig()`'s inline-fn normalization, so both paths compile
+ * `createColumns()`'s inline-fn normalization, so both paths compile
  * to the same internal `ColumnRule[]` shape.
  */
 export function runColumnsSchemaFn<TRow, TId extends string, TRule = ColumnRule<TRow>>(
@@ -44,7 +44,7 @@ export function runColumnsSchemaFn<TRow, TId extends string, TRule = ColumnRule<
  * @remarks
  * No injection context here, so `apply*` calls only record rules; the store wires the actual
  * reactivity at construction (`wireColumnsSchemaAsync`). Does not validate `columnId`s against
- * a `columns` array — that check happens in `resolveColumnsConfig()` once this schema is
+ * a `columns` array — that check happens in `createColumns()` once this schema is
  * attached.
  */
 export function columnSchema<TRow, TId extends string = string>(

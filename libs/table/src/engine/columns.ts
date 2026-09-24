@@ -6,11 +6,6 @@ import type { ColumnDef, ColumnDefInput } from '../api/types';
 // `engine/`, so this reverse (engine -> columns-schema) edge doesn't close a cycle — it's just
 // the one place `engine/` needs a `columns-schema/` type to describe what it's folding.
 
-/**
- * Pure `ColumnDef[]` transforms. No signals, no Angular — the store's column methods are thin
- * `signal.update()` wrappers around these, so column behavior is testable without a live store.
- */
-
 // Angular's global dev-mode flag. Declared locally because `tsconfig.lib.json` sets
 // `"types": []`, so no ambient declaration is in scope. Module-scoped, so it cannot
 // collide with another file's declaration.
@@ -22,14 +17,28 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-// Guards against two columns silently colliding on `id`, e.g. in a keyed record like
-// `RenderRow.cells`. Deterministic and construction-time, so it throws (ADR-0014).
-function assertUniqueColumnIds<TRow>(defs: ColumnDefInput<TRow>[]): void {
+/**
+ * Throws on a duplicate column id — two columns colliding on `id` would
+ * corrupt a keyed record like `RenderRow.cells`. Deterministic and
+ * construction-time, so it throws.
+ *
+ * @remarks
+ * Dev-only: the `ngDevMode` gate lives inside this function, not at any
+ * call site.
+ *
+ * @param label Names the declaring surface in the thrown message.
+ */
+export function assertUniqueColumnIds<TRow>(
+  defs: readonly ColumnDefInput<TRow>[],
+  label: string
+): void {
+  if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
+
   const seen = new Set<string>();
   for (const def of defs) {
     if (seen.has(def.id)) {
       throw new Error(
-        `[createTable] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`
+        `[${label}] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`
       );
     }
     seen.add(def.id);
@@ -43,14 +52,14 @@ function assertUniqueColumnIds<TRow>(defs: ColumnDefInput<TRow>[]): void {
  *
  * @remarks
  * Note: throws on a duplicate `id` in dev mode — two columns sharing an id would collide in
- * `RenderRow.cells`, a record keyed by id.
+ * `RenderRow.cells`, a record keyed by id. `label` names the calling surface (`createTable`,
+ * `setColumns`) and flows into the thrown message.
  */
 export function resolveColumnDefs<TRow>(
-  defs: ColumnDefInput<TRow>[]
+  defs: ColumnDefInput<TRow>[],
+  label: string
 ): ColumnDef<TRow>[] {
-  if (typeof ngDevMode === 'undefined' || ngDevMode) {
-    assertUniqueColumnIds(defs);
-  }
+  assertUniqueColumnIds(defs, label);
   return defs.map((def, index) => ({
     ...def,
     accessor:
@@ -133,12 +142,15 @@ export interface ColumnRuleEntry<TRow = unknown> {
 export type ColumnRuleRegistry<TRow = unknown> = readonly ColumnRuleEntry<TRow>[];
 
 /**
- * Folds registered rules onto `columns` — the single resolution path for both `visible` and
- * consumer metadata, grouped by `(columnId, key)`. `VISIBLE`-keyed entries on the same column
- * are ANDed together; a group with no *defined* result yet contributes nothing, so the base
- * column's `visible` stands. Every other key is single-writer (guaranteed by `resolve.ts`) and
- * lands in `column.meta`. Entries whose `columnId` isn't in `columns` are silently skipped.
- * Columns with no registered rules pass through by identity.
+ * Folds registered rules onto `columns` — the single resolution path for
+ * both `visible` and consumer metadata, grouped by `(columnId, key)`.
+ *
+ * @remarks
+ * `VISIBLE`-keyed entries on the same column are ANDed together (an
+ * undefined result contributes nothing, so the base `visible` stands);
+ * every other key is single-writer (enforced by `resolve.ts`) and lands
+ * in `column.meta`. An entry naming an unknown `columnId` is skipped; a
+ * column with no registered rules passes through unchanged.
  */
 export function foldColumnRules<TRow>(
   columns: ColumnDef<TRow>[],

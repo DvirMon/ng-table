@@ -17,7 +17,7 @@ import {
 } from '../../../engine/grouping/rules';
 import type { ColumnIdOf, ColumnValuesOf, Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
-import { assertDeclarationsAreKnown } from '../../../schema/validate';
+import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from '../../../schema/validate';
 import { runGroupingSchemaFn } from './schema';
 import type { GroupingLevel, GroupingRule, GroupingSchemaFn } from './types';
 import { createTableFeature } from '../../create-table-feature';
@@ -166,7 +166,7 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
     () => appliedGrouping(),
     (updater) => {
       const next = updater(baseGrouping());
-      assertDeclarationsAreKnown(
+      assertWrittenIdsAreKnown(
         next,
         input.columns().map((column) => column.id),
         'withGrouping'

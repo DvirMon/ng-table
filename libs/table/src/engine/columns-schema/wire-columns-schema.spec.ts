@@ -291,8 +291,8 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
   });
 
   it("D9: replacing the column list leaves a dropped column's rule inert, and the rule reactivates once its column rejoins the list", () => {
-    // `resolveColumnsConfig` validates every rule's `columnId` against the *construction-time*
-    // `columns` array and throws synchronously for an unknown id (`resolve.ts`,
+    // `createColumns()` validates every rule's `columnId` against the *construction-time*
+    // `columns` array and throws synchronously for an unknown id (`create-columns.ts`,
     // `assertRuleColumnIdsAreKnown`) — a rule cannot be declared for a column that has never
     // existed. So "a rule applies on a newly added column" (D9 / user story 13) is exercised
     // here as: the column exists at construction (satisfying that eager check), a later
@@ -402,24 +402,6 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(false);
   });
 
-  it('throws synchronously at store construction for an unknown columnId', () => {
-    const data = signal<Row[]>([]);
-    expect(() =>
-      TestBed.runInInjectionContext(() =>
-        createTable(data, {
-          trackBy: 'id',
-          columns: makeColumnSet(data, (path) => {
-            // `missing` isn't `keyof Row` — cast to force the runtime path
-            // resolveColumnsConfig()'s unknown-columnId check guards.
-            visible(
-              (path as unknown as { missing: (typeof path)['name'] }).missing,
-              { when: () => true }
-            );
-          }),
-        })
-      )
-    ).toThrow(/Unknown column id "missing"/);
-  });
 });
 
 describe('metadata() (via a column set’s schema)', () => {
@@ -475,20 +457,4 @@ describe('metadata() (via a column set’s schema)', () => {
     expect(readColumnMeta(name as never, KEY)).toBeUndefined();
   });
 
-  it('throws synchronously at store construction on a duplicate (column, key) registration', () => {
-    const KEY = createColumnMetaKey<string>();
-    const data = signal<Row[]>([]);
-
-    expect(() =>
-      TestBed.runInInjectionContext(() =>
-        createTable(data, {
-          trackBy: 'id',
-          columns: makeColumnSet(data, (path) => {
-            metadata(path.status, KEY, 'a');
-            metadata(path.status, KEY, 'b');
-          }),
-        })
-      )
-    ).toThrow(/Duplicate metadata\(\) registration/);
-  });
 });

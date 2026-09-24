@@ -510,21 +510,6 @@ describe('withSorting', () => {
       expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
     });
 
-    it('throws at resolve time when sortNulls is registered twice on one column', () => {
-      const data = signal<NullableRow[]>([]);
-      expect(() =>
-        inContext(() =>
-          createTable(data, {
-            trackBy: 'id',
-            columns: makeColumnSet(data, (path) => {
-              sortNulls(path.note, { order: 'first' });
-              sortNulls(path.note, { order: 'last' });
-            }),
-          })
-        )
-      ).toThrow(/Duplicate metadata\(\) registration/);
-    });
-
     it('a multi-column sort falls through when the higher-priority column is all empty', () => {
       const rows: NullableRow[] = [
         { id: 'r1', age: 3, joined: null, note: null },

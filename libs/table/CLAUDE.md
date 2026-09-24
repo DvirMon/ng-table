@@ -80,7 +80,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `columns-schema/types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
 | `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
 | `schema/run.ts` | `runRecordedSchema(buildPath, fn)` — the one body behind every **recording-form** schema fn (`columnSchema()`, `withGrouping()`, `withSorting()`). The declaring form (filtering) keeps its own body in `engine/filters/build.ts` until ADR-0020's `stageSchema` is a second caller (#111 reading B) |
-| `schema/validate.ts` | `assertDeclarationsAreKnown(declaredIds, knownIds, label)` — the one construction-time check that a declared identifier names a real column, shared by every schema form. `label` names the declaring surface in the message |
+| `schema/validate.ts` | Two exports, one throwing body. `assertDeclarationsAreKnown(declaredIds, knownIds, label)` — construction-time, dev-gated (`ngDevMode`), the gate lives in this function's own body. `assertWrittenIdsAreKnown(ids, knownIds, label)` — ungated, for ids that arrive at runtime (a writer path, a saved layout); it holds the loop and the only `throw`, and `assertDeclarationsAreKnown` calls it once the gate passes. `label` names the declaring surface in the message |
 | `mutations/update-columns.ts` | `setColumns`/`reorderColumns`/`toggleColumnVisibility` updater factories, consumed via `table.columns.update(updater)` (D30) — writes always target `baseColumns` internally, never the derived fold |
 | `mutations/optimistic-mutations.ts` | `captureEdit`/`releaseEdit`/`revertEdit`/`discardEdit`/`removeEdit`/`patchEdit` — the rollback and capture-composing verbs, meaningful under either editing feature |
 | `mutations/row-edit-mutations.ts` | `beginEdit`/`endEdit`/`clearEdit` — the edit-session verbs; no-ops without `withRowEdit()` |
@@ -149,6 +149,11 @@ for **`api/features/with-filtering/types.ts` ↔ `engine/filters/types.ts`**: `F
   **Not enforced by types.** Some call sites predate this policy, so the absence of a wrap in
   existing code is never precedent for leaving the next one unwrapped — check the ADR, not the
   neighbouring code.
+  A **construction check** is dev-only, stripped from production (ADR-0014 amendment); each
+  gates `ngDevMode` inside its own body, never at a call site (`schema/validate.ts`,
+  `api/create-columns.ts`, `engine/columns.ts`'s `assertUniqueColumnIds`). A check whose ids can
+  first arrive at runtime — grouping's writer on `table.grouping`, not its construction — stays
+  ungated instead, since gating it would let a bad write reach production silently (G76).
 
 ## Docs structure — three streams, permanent vs. episodic
 
