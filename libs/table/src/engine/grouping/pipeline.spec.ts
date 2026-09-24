@@ -1,4 +1,7 @@
-import type { ColumnDef } from '../../api/types';
+import { createColumns } from '../../api/create-columns';
+import type { ColumnBuilder } from '../../api/types';
+import { noData } from '../../table.mock';
+import { resolveColumnDefs } from '../columns';
 import type { RenderNode } from '../render-stages';
 import { orderColumns as columns, orders } from './grouping.mock';
 import { clusterRows } from './pipeline';
@@ -56,15 +59,14 @@ describe('the two-walks gate — clusterRows and buildGroupRenderRows agree (Ste
     amount: number;
   }
 
-  const salesColumns: ColumnDef<Sale>[] = [
-    {
-      id: 'tier',
-      accessor: (row) => (row.amount > 100 ? 'high' : 'low'),
-      visible: true,
-      order: 0,
-      label: 'tier',
-    },
-  ];
+  function tierColumn(col: ColumnBuilder<Sale>) {
+    return col('tier', { accessor: (row) => (row.amount > 100 ? 'high' : 'low') });
+  }
+
+  const salesColumns = resolveColumnDefs(
+    [...createColumns(noData<Sale>(), (col) => [tierColumn(col)]).columns],
+    'pipeline.spec'
+  );
 
   const sales: Sale[] = [
     { id: 1, amount: 50 },

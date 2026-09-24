@@ -1,4 +1,7 @@
-import type { ColumnDef, GroupWhen } from '../../api/types';
+import { createColumns } from '../../api/create-columns';
+import type { ColumnBuilder, ColumnDef, GroupWhen } from '../../api/types';
+import { noData } from '../../table.mock';
+import { resolveColumnDefs } from '../columns';
 import type { RenderNode } from '../render-stages';
 import { orderColumns as columns, orders, type Order } from './grouping.mock';
 import { buildGroupRenderRows } from './render';
@@ -10,14 +13,21 @@ interface OrderWithAmount extends Order {
 // `id` is not constrained to `keyof OrderWithAmount` — a synthetic id like 'avgAmount' (no
 // matching row field) is a valid aggregate-only/carrier column (ADR-0024); its accessor is
 // never read by aggregation, only its declared id is.
-function orderWithAmountColumn(id: string): ColumnDef<OrderWithAmount> {
-  return {
-    id,
-    accessor: (row: OrderWithAmount) => row[id as keyof OrderWithAmount],
-    visible: true,
-    order: 0,
-    label: id,
-  };
+function orderWithAmountColumn(col: ColumnBuilder<OrderWithAmount>, id: string) {
+  return col(id, { accessor: (row) => row[id as keyof OrderWithAmount] });
+}
+
+/** Declares `amountColumns` for a given id list — every call site below just varies the ids. */
+function makeAmountColumns(ids: string[]): ColumnDef<OrderWithAmount>[] {
+  return resolveColumnDefs(
+    [
+      ...createColumns(
+        noData<OrderWithAmount>(),
+        (col) => ids.map((id) => orderWithAmountColumn(col, id))
+      ).columns,
+    ],
+    'render.spec'
+  );
 }
 
 /** `aggregateByColumn` entry — averages `amount` across a cluster's own leaves. Aggregation is
@@ -139,12 +149,7 @@ describe('buildGroupRenderRows', () => {
       { id: 3, region: 'US', category: 'Books', amount: 100 },
       { id: 4, region: 'EU', category: 'Electronics', amount: 5 },
     ];
-    const amountColumns: ColumnDef<OrderWithAmount>[] = [
-      orderWithAmountColumn('id'),
-      orderWithAmountColumn('region'),
-      orderWithAmountColumn('category'),
-      orderWithAmountColumn('amount'),
-    ];
+    const amountColumns = makeAmountColumns(['id', 'region', 'category', 'amount']);
     const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
       ['amount', averageAggregateFn],
     ]);
@@ -241,12 +246,7 @@ describe('buildGroupRenderRows', () => {
           { id: 1, region: 'US', category: 'Electronics', amount: 10 },
           { id: 2, region: 'EU', category: 'Electronics', amount: 20 },
         ];
-        const amountColumns: ColumnDef<OrderWithAmount>[] = [
-          orderWithAmountColumn('id'),
-          orderWithAmountColumn('region'),
-          orderWithAmountColumn('category'),
-          orderWithAmountColumn('amount'),
-        ];
+        const amountColumns = makeAmountColumns(['id', 'region', 'category', 'amount']);
         const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
           ['amount', throwingAggregateFn],
         ]);
@@ -272,12 +272,7 @@ describe('buildGroupRenderRows', () => {
           { id: 2, region: 'US', category: 'Books', amount: 20 },
           { id: 3, region: 'EU', category: 'Electronics', amount: 30 },
         ];
-        const amountColumns: ColumnDef<OrderWithAmount>[] = [
-          orderWithAmountColumn('id'),
-          orderWithAmountColumn('region'),
-          orderWithAmountColumn('category'),
-          orderWithAmountColumn('amount'),
-        ];
+        const amountColumns = makeAmountColumns(['id', 'region', 'category', 'amount']);
         const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
           ['amount', throwingAggregateFn],
         ]);
@@ -303,13 +298,13 @@ describe('buildGroupRenderRows', () => {
           { id: 1, region: 'US', category: 'Electronics', amount: 10 },
           { id: 2, region: 'US', category: 'Electronics', amount: 20 },
         ];
-        const amountColumns: ColumnDef<OrderWithAmount>[] = [
-          orderWithAmountColumn('id'),
-          orderWithAmountColumn('region'),
-          orderWithAmountColumn('category'),
-          orderWithAmountColumn('amount'),
-          orderWithAmountColumn('avgAmount'),
-        ];
+        const amountColumns = makeAmountColumns([
+          'id',
+          'region',
+          'category',
+          'amount',
+          'avgAmount',
+        ]);
         const aggregateByColumn = new Map<string, (rows: OrderWithAmount[]) => unknown>([
           ['amount', throwingAggregateFn],
           ['avgAmount', averageAggregateFn],

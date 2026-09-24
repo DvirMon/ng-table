@@ -6,6 +6,7 @@ import {
   type PendingOp,
   type RowRestorePoint,
 } from '../api/features/editing/state';
+import { createColumns } from '../api/create-columns';
 import { createTable } from '../api/create-table';
 import { withRowEdit } from '../api/features/with-row-edit';
 import {
@@ -19,8 +20,14 @@ import {
 } from './optimistic-mutations';
 import { patchRow } from './row-mutations';
 import { beginEdit, createRow, endEdit } from './row-edit-mutations';
-import type { ColumnDef, RowId } from '../api/types';
-import { createMockTableStoreWithEditing, mockRows, mockTrackBy, type MockRow } from '../table.mock';
+import type { RowId } from '../api/types';
+import {
+  createMockTableStoreWithEditing,
+  mockRows,
+  mockTrackBy,
+  noData,
+  type MockRow,
+} from '../table.mock';
 
 type Person = MockRow;
 
@@ -547,8 +554,8 @@ describe('swapRowId', () => {
   });
 
   describe('composed with withRowEdit (real store, real ADR-0006 reconciliation effect)', () => {
-    function makeColumns(): ColumnDef<Person>[] {
-      return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];
+    function makeColumns() {
+      return createColumns(noData<Person>(), (col) => [col('name')]);
     }
 
     function makeStore() {
@@ -696,7 +703,7 @@ describe('unconfirmed (D54)', () => {
         data,
         {
           trackBy: 'id',
-          columns: [{ id: 'name', accessor: (row: Person) => row.name, visible: true, order: 0, label: 'name' }],
+          columns: createColumns(data, (col) => [col('name')]),
         },
         withRowEdit()
       )

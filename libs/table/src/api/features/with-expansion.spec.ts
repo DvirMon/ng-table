@@ -2,8 +2,10 @@ import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { removeRow } from '../../mutations/row-mutations';
+import { noData } from '../../table.mock';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
-import type { ColumnDef, RowId, TableStore } from '../types';
+import type { ColumnDecl, ColumnSet, RowId, TableStore } from '../types';
 import { withComputed } from './with-computed';
 import {
   withExpansion,
@@ -20,10 +22,9 @@ interface Row {
   name: string;
 }
 
-function makeColumns(): ColumnDef<Row>[] {
-  return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-  ];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [col('name')]);
 }
 
 function makeRows(): Row[] {
@@ -354,10 +355,8 @@ describe('withExpansion', () => {
       children?: TreeRow[];
     }
 
-    function makeTreeColumns(): ColumnDef<TreeRow>[] {
-      return [
-        { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-      ];
+    function makeTreeColumns(): ColumnSet<TreeRow, readonly ColumnDecl<TreeRow, string, unknown>[]> {
+      return createColumns(noData<TreeRow>(), (col) => [col('name')]);
     }
 
     function makeTreeRows(): TreeRow[] {

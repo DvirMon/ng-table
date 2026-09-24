@@ -1,14 +1,16 @@
 import { computed, signal, type Signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
+import { mockRows, mockTrackBy, noData, type MockRow } from '../../table.mock';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { createTableFeature } from '../create-table-feature';
 import { withComputed } from './with-computed';
-import type { AnyTableFeature, ColumnDefInput, TableStore } from '../types';
+import type { AnyTableFeature, ColumnDecl, ColumnSet, TableStore } from '../types';
 import type { Feature, TableFeatureSpec } from '../../engine/types';
 
-function makeColumns(): ColumnDefInput<MockRow>[] {
-  return [{ id: 'name' }];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]> {
+  return createColumns(noData<MockRow>(), (col) => [col('name')]);
 }
 
 /** Overload set for `makeStore`, mirroring `createTable`'s own per-arity typing (`CreateTableOverloads`)
@@ -31,7 +33,10 @@ interface MakeStore {
  * bridges the same way internally. `MakeStore` is what callers type against. */
 type CreateTableVariadic = (
   data: WritableSignal<MockRow[]>,
-  config: { trackBy: typeof mockTrackBy; columns: ColumnDefInput<MockRow>[] },
+  config: {
+    trackBy: typeof mockTrackBy;
+    columns: ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]>;
+  },
   ...features: AnyTableFeature[]
 ) => TableStore<MockRow>;
 

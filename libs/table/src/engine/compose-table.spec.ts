@@ -5,10 +5,12 @@ import {
   signal,
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { createColumns } from '../api/create-columns';
+import { noData } from '../table.mock';
 import { composeTable, type InternalFeature } from './compose-table';
 import { CORE_MEMBER_KEYS } from './slots';
 import type { TableEngineConfig } from './types';
-import type { AnyTableFeature, ColumnDefInput, RowId } from '../api/types';
+import type { AnyTableFeature, RowId } from '../api/types';
 
 interface Row {
   id: string;
@@ -16,7 +18,9 @@ interface Row {
   age: number;
 }
 
-const columns: ColumnDefInput<Row>[] = [{ id: 'name' }, { id: 'age' }];
+const columns = [
+  ...createColumns(noData<Row>(), (col) => [col('name'), col('age')]).columns,
+];
 
 function makeRows(): Row[] {
   return [

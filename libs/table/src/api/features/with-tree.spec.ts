@@ -2,10 +2,16 @@ import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf, vi } from 'vitest';
 import { removeRow } from '../../mutations/row-mutations';
-import { mockGroupingRows, mockGroupingTrackBy, type GroupingMockRow } from '../../table.mock';
+import {
+  mockGroupingRows,
+  mockGroupingTrackBy,
+  noData,
+  type GroupingMockRow,
+} from '../../table.mock';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { createTableFeature } from '../create-table-feature';
-import type { ColumnDef, RenderRow, RowId, TableStore } from '../types';
+import type { ColumnDecl, ColumnSet, RenderRow, RowId, TableStore } from '../types';
 import { withComputed } from './with-computed';
 import { withGrouping, type GroupingMembers } from './with-grouping';
 import { withSorting, type SortingMembers } from './with-sorting';
@@ -23,10 +29,9 @@ interface CustomChildrenRow {
   nested?: CustomChildrenRow[];
 }
 
-function makeColumns(): ColumnDef<Row>[] {
-  return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-  ];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [col('name')]);
 }
 
 // Small tree: r1 has two children (c1, c1 has a grandchild g1); r2 is a leaf.
@@ -58,26 +63,16 @@ function inContext<T>(build: () => T): T {
 // explicitly.
 const childrenAccessor = (row: Row): Row[] | undefined => row.children;
 
-// See `with-grouping/feature.spec.ts`'s `makeColumns()` header comment — same reason this drops
-// its return-type annotation: an annotated `ColumnDef<GroupingMockRow>[]` return type would widen
-// every id to `string` and turn every `path.<id>` access into an index-signature access (TS4111).
-function makeGroupingColumns() {
-  return [
-    {
-      id: 'region' as const,
-      accessor: (row: GroupingMockRow) => row.region,
-      visible: true,
-      order: 0,
-      label: 'Region',
-    },
-    {
-      id: 'category' as const,
-      accessor: (row: GroupingMockRow) => row.category,
-      visible: true,
-      order: 1,
-      label: 'Category',
-    },
-  ] satisfies ColumnDef<GroupingMockRow>[];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file; group header ids are
+// built from runtime string literals, not from this set's declared id type.
+function makeGroupingColumns(): ColumnSet<
+  GroupingMockRow,
+  readonly ColumnDecl<GroupingMockRow, string, unknown>[]
+> {
+  return createColumns(noData<GroupingMockRow>(), (col) => [
+    col('region', { label: 'Region' }),
+    col('category', { label: 'Category' }),
+  ]);
 }
 
 /** Finds a `kind: 'group'` render row by id. Brought over from `with-grouping/feature.spec.ts`
@@ -399,9 +394,9 @@ describe('withTree', () => {
       { id: 'a', name: 'A' },
       { id: 'b', name: 'B' },
     ];
-    const columns: ColumnDef<FlatRow>[] = [
-      { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-    ];
+    const columns = createColumns(noData<FlatRow>(), (col) => [
+      col('name'),
+    ]);
 
     const store = inContext(() =>
       createTable(
@@ -482,9 +477,9 @@ describe('withTree', () => {
         nested: [{ id: 'n1', name: 'Nested Child' }],
       },
     ];
-    const columns: ColumnDef<CustomChildrenRow>[] = [
-      { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-    ];
+    const columns = createColumns(noData<CustomChildrenRow>(), (col) => [
+      col('name'),
+    ]);
 
     const store = inContext(() =>
       createTable(
@@ -581,9 +576,9 @@ describe('withTree', () => {
       { id: 'p1', region: 'US', children: [{ id: 'c1', region: 'US' }] },
       { id: 'p2', region: 'EU' },
     ];
-    const columns: ColumnDef<GroupableRow>[] = [
-      { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'region' },
-    ];
+    const columns = createColumns(noData<GroupableRow>(), (col) => [
+      col('region', { label: 'region' }),
+    ]);
     const groupableAccessor = (row: GroupableRow): GroupableRow[] | undefined => row.children;
 
     // Compile-time-legal order: withGrouping() must precede withTree() for the group stage to
@@ -1045,9 +1040,9 @@ describe('withTree', () => {
         { id: 'a', name: 'A' },
         { id: 'b', name: 'B' },
       ];
-      const columns: ColumnDef<FlatRow>[] = [
-        { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-      ];
+      const columns = createColumns(noData<FlatRow>(), (col) => [
+        col('name'),
+      ]);
 
       const store = inContext(() =>
         createTable(

@@ -62,6 +62,11 @@ export const mockRows: MockRow[] = [
 
 export const mockTrackBy: TrackByFn<MockRow> = (row) => row.id;
 
+/** `count` distinct `MockRow`s, ids `0…count-1` — sized fixtures for benchmarks. */
+export function createMockRows(count: number): MockRow[] {
+  return Array.from({ length: count }, (_, index) => ({ id: index, name: `Row ${index}` }));
+}
+
 export interface GroupingMockRow {
   id: number;
   region: string;
@@ -199,4 +204,10 @@ export function createMockTableStoreWithEditing<TRow>(
     unconfirmed: computed(() => state().unconfirmed),
     draft: createDraftRows(() => data(), () => editing(), trackBy, () => indexById()),
   };
+}
+
+/** `createColumns()`'s `data` param is a type witness only, never read — this satisfies
+ * that signature without a real signal. */
+export function noData<TRow>(): () => readonly TRow[] | undefined {
+  return () => undefined;
 }

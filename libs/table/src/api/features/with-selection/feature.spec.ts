@@ -2,17 +2,17 @@ import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { removeRow } from '../../../mutations/row-mutations';
-import { mockRows, mockTrackBy, type MockRow } from '../../../table.mock';
+import { mockRows, mockTrackBy, noData, type MockRow } from '../../../table.mock';
+import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { withComputed } from '../with-computed';
 import { withSelection, type SelectionChange, type SelectionMembers } from './feature';
 import { withSorting } from '../with-sorting';
-import type { ColumnDef, RowId, TableStore } from '../../types';
+import type { ColumnDecl, ColumnSet, RowId, TableStore } from '../../types';
 
-function makeColumns(): ColumnDef<MockRow>[] {
-  return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-  ];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]> {
+  return createColumns(noData<MockRow>(), (col) => [col('name')]);
 }
 
 /** Runs a `createTable()` build inside an Angular injection context. */

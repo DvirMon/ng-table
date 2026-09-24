@@ -3,11 +3,12 @@ import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
 import { sortNulls } from '../../columns-schema/rules';
 import type { ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
+import { noData } from '../../table.mock';
 import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { withComputed } from './with-computed';
 import { withSorting, type SortingMembers } from './with-sorting';
-import type { ColumnDef, SortRule, TableStore } from '../types';
+import type { ColumnDecl, ColumnDef, ColumnSet, SortRule, TableStore } from '../types';
 
 interface Row {
   id: string;
@@ -17,43 +18,24 @@ interface Row {
   status: string;
 }
 
+/** Declares this file's four sortable columns. `overrides` may set `sortFn`/`enableSorting` —
+ * fields `col()`'s `opts` doesn't type — spread onto the declaration afterward; the engine
+ * resolves them from the plain object regardless of what `col()` itself typed.
+ *
+ * @remarks
+ * Widened `TId` (plain `string`, not a literal union) — nothing in this file reads `path.<id>`
+ * off these columns (unlike `makeNullableColumns()` below, which stays unannotated for exactly
+ * that reason), so `TableStore<Row>`'s default `ColumnValueMap` costs nothing here.
+ */
 function makeColumns(
   overrides: Partial<Record<string, Partial<ColumnDef<Row>>>> = {}
-): ColumnDef<Row>[] {
-  return [
-    {
-      id: 'name',
-      accessor: (row) => row.name,
-      visible: true,
-      order: 0,
-      label: 'name',
-      ...overrides['name'],
-    },
-    {
-      id: 'age',
-      accessor: (row) => row.age,
-      visible: true,
-      order: 1,
-      label: 'age',
-      ...overrides['age'],
-    },
-    {
-      id: 'joined',
-      accessor: (row) => row.joined,
-      visible: true,
-      order: 2,
-      label: 'joined',
-      ...overrides['joined'],
-    },
-    {
-      id: 'status',
-      accessor: (row) => row.status,
-      visible: true,
-      order: 3,
-      label: 'status',
-      ...overrides['status'],
-    },
-  ];
+): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [
+    { ...col('name'), ...overrides['name'] },
+    { ...col('age'), ...overrides['age'] },
+    { ...col('joined'), ...overrides['joined'] },
+    { ...col('status'), ...overrides['status'] },
+  ]);
 }
 
 function makeRows(): Row[] {
@@ -328,40 +310,10 @@ describe('withSorting', () => {
       note: string | null;
     }
 
-    // No `ColumnDef<NullableRow>[]` return annotation — a couple of these tests attach a
-    // `columnsSchema` alongside these columns, and a wide annotation would widen `id` to
-    // `string`, turning that schema's `ColumnsPath` into an index signature (ADR-0019).
-    function makeNullableColumns() {
-      return [
-        {
-          id: 'age' as const,
-          accessor: (row: NullableRow) => row.age,
-          visible: true,
-          order: 0,
-          label: 'age',
-        },
-        {
-          id: 'joined' as const,
-          accessor: (row: NullableRow) => row.joined,
-          visible: true,
-          order: 1,
-          label: 'joined',
-        },
-        {
-          id: 'note' as const,
-          accessor: (row: NullableRow) => row.note,
-          visible: true,
-          order: 2,
-          label: 'note',
-        },
-      ] satisfies ColumnDef<NullableRow>[];
-    }
-
-    // Mirrors `makeNullableColumns()`'s three columns, via `createColumns()`, for the two
-    // call sites in this block that need a schema. `id`s match `NullableRow`'s own field
-    // names, so the builder's default `(row) => row[id]` accessor already reproduces
-    // `makeNullableColumns()`'s explicit ones — no `accessor` opt needed.
-    function makeColumnSet(
+    // `id`s match `NullableRow`'s own field names, so the builder's default
+    // `(row) => row[id]` accessor already reproduces the old explicit ones — no `accessor`
+    // opt needed.
+    function makeNullableColumns(
       data: () => readonly NullableRow[] | undefined,
       schema?: ColumnsSchemaFn<NullableRow, 'age' | 'joined' | 'note'> | ColumnSchema<NullableRow>
     ) {
@@ -374,12 +326,9 @@ describe('withSorting', () => {
         { id: 'r2', age: 2, joined: null, note: 'b' },
         { id: 'r3', age: 3, joined: new Date('2022-01-01'), note: 'c' },
       ];
+      const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(
-          signal<NullableRow[]>(rows),
-          { trackBy: 'id', columns: makeNullableColumns() },
-          withSorting()
-        )
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
       );
 
       expect(() => store.toggleSort('joined')).not.toThrow();
@@ -392,12 +341,9 @@ describe('withSorting', () => {
         { id: 'r2', age: undefined, joined: null, note: 'b' },
         { id: 'r3', age: 3, joined: null, note: 'c' },
       ];
+      const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(
-          signal<NullableRow[]>(rows),
-          { trackBy: 'id', columns: makeNullableColumns() },
-          withSorting()
-        )
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
       );
 
       store.toggleSort('age'); // asc
@@ -413,12 +359,9 @@ describe('withSorting', () => {
         { id: 'r2', age: undefined, joined: null, note: 'b' },
         { id: 'r3', age: 1, joined: null, note: 'c' },
       ];
+      const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(
-          signal<NullableRow[]>(rows),
-          { trackBy: 'id', columns: makeNullableColumns() },
-          withSorting()
-        )
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
       );
 
       store.toggleSort('age');
@@ -431,12 +374,9 @@ describe('withSorting', () => {
         { id: 'r2', age: 2, joined: null, note: null },
         { id: 'r3', age: 3, joined: null, note: 'apple' },
       ];
+      const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
-        createTable(
-          signal<NullableRow[]>(rows),
-          { trackBy: 'id', columns: makeNullableColumns() },
-          withSorting()
-        )
+        createTable(data, { trackBy: 'id', columns: makeNullableColumns(data) }, withSorting())
       );
 
       store.toggleSort('note');
@@ -450,10 +390,11 @@ describe('withSorting', () => {
         { id: 'r3', age: 3, joined: null, note: 'apple' },
       ];
 
+      const defaultData = signal<NullableRow[]>(rows);
       const defaultStore = inContext(() =>
         createTable(
-          signal<NullableRow[]>(rows),
-          { trackBy: 'id', columns: makeNullableColumns() },
+          defaultData,
+          { trackBy: 'id', columns: makeNullableColumns(defaultData) },
           withSorting()
         )
       );
@@ -467,7 +408,7 @@ describe('withSorting', () => {
           optedInData,
           {
             trackBy: 'id',
-            columns: makeColumnSet(optedInData, (path) => {
+            columns: makeNullableColumns(optedInData, (path) => {
               sortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
             }),
           },
@@ -485,22 +426,21 @@ describe('withSorting', () => {
         { id: 'r2', age: undefined, joined: null, note: 'b' },
         { id: 'r3', age: 1, joined: null, note: 'c' },
       ];
+      const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
         createTable(
-          signal<NullableRow[]>(rows),
+          data,
           {
             trackBy: 'id',
-            columns: [
+            columns: createColumns(data, (col) => [
               {
-                id: 'age',
-                accessor: (row) => row.age,
-                visible: true,
-                order: 0,
-                label: 'age',
-                sortFn: (a, b) => (a.age as number) - (b.age as number),
+                ...col('age'),
+                sortFn: (a: NullableRow, b: NullableRow) =>
+                  (a.age as number) - (b.age as number),
               },
-              ...makeNullableColumns().slice(1),
-            ],
+              col('joined'),
+              col('note'),
+            ]),
           },
           withSorting()
         )
@@ -516,10 +456,11 @@ describe('withSorting', () => {
         { id: 'r2', age: 1, joined: null, note: null },
         { id: 'r3', age: 2, joined: null, note: null },
       ];
+      const data = signal<NullableRow[]>(rows);
       const store = inContext(() =>
         createTable(
-          signal<NullableRow[]>(rows),
-          { trackBy: 'id', columns: makeNullableColumns() },
+          data,
+          { trackBy: 'id', columns: makeNullableColumns(data) },
           withSorting({ multi: true })
         )
       );

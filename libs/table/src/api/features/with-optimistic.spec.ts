@@ -1,11 +1,13 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
+import { noData } from '../../table.mock';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { captureEdit, releaseEdit, revertEdit } from '../../mutations/optimistic-mutations';
 import { patchRow, removeRow } from '../../mutations/row-mutations';
 import type { WritableView } from '../../engine/writable-view';
-import type { ColumnDef, RowId, TableStore } from '../types';
+import type { ColumnDecl, ColumnSet, RowId, TableStore } from '../types';
 import type { EditingUpdater } from './editing/state';
 import { withComputed } from './with-computed';
 import { withOptimistic, type OptimisticMembers } from './with-optimistic';
@@ -16,8 +18,9 @@ interface Row {
   name: string;
 }
 
-function makeColumns(): ColumnDef<Row>[] {
-  return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [col('name')]);
 }
 
 function makeRows(): Row[] {

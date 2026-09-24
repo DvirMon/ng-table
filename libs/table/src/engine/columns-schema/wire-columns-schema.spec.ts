@@ -4,10 +4,11 @@ import { columnSchema } from '../../columns-schema/schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from '../../columns-schema/metadata';
 import { visible, visibleAsync } from '../../columns-schema/rules';
 import type { ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
+import { noData } from '../../table.mock';
 import { createColumns } from '../../api/create-columns';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
-import type { ColumnDef, ColumnDefInput, ColumnValues, TableConfig, TableStore } from '../../api/types';
+import type { ColumnDefInput, ColumnValues, TableConfig, TableStore } from '../../api/types';
 
 interface Row {
   id: string;
@@ -15,25 +16,11 @@ interface Row {
   status: string;
 }
 
-// No `ColumnDef<Row>[]` return annotation — that would widen `id` to `string` and turn
-// `ColumnsPath` into an index signature (ADR-0019).
 function makeColumns() {
-  return [
-    {
-      id: 'name' as const,
-      accessor: (row: Row) => row.name,
-      visible: true,
-      order: 0,
-      label: 'name',
-    },
-    {
-      id: 'status' as const,
-      accessor: (row: Row) => row.status,
-      visible: true,
-      order: 1,
-      label: 'status',
-    },
-  ] satisfies ColumnDef<Row>[];
+  return createColumns(noData<Row>(), (col) => [
+    col('name'),
+    col('status'),
+  ]);
 }
 
 // Mirrors `makeColumns()`'s two columns, via `createColumns()`, for the many call sites below

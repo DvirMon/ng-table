@@ -1,4 +1,6 @@
 import { signal } from '@angular/core';
+import { createColumns } from '../api/create-columns';
+import { noData } from '../table.mock';
 import { createTableCore } from './core';
 import type { RenderRow, RowId } from '../api/types';
 import type { RenderNodeTransform } from './render-stages';
@@ -8,7 +10,9 @@ interface Row {
   name: string;
 }
 
-const columns = [{ id: 'name' }];
+const columns = [
+  ...createColumns(noData<Row>(), (col) => [col('name')]).columns,
+];
 
 function makeRows(): Row[] {
   return [
@@ -71,8 +75,10 @@ describe('createTableCore — cells on data rows (ADR-0022)', () => {
   it('stamps a cells entry per column in columns(), keyed by accessor output, including a hidden column', () => {
     const { renderRows } = createTableCore<Row>({
       columns: [
-        { id: 'name' },
-        { id: 'shout', visible: false, accessor: (row: Row) => row.name.toUpperCase() },
+        ...createColumns(noData<Row>(), (col) => [
+          col('name'),
+          col('shout', { visible: false, accessor: (row) => row.name.toUpperCase() }),
+        ]).columns,
       ],
       trackBy: 'id',
       data: signal(makeRows()),
@@ -119,13 +125,14 @@ describe('createTableCore — cells on data rows (ADR-0022)', () => {
     try {
       const { renderRows } = createTableCore<Row>({
         columns: [
-          { id: 'name' },
-          {
-            id: 'bad',
-            accessor: () => {
-              throw new Error('boom');
-            },
-          },
+          ...createColumns(noData<Row>(), (col) => [
+            col('name'),
+            col('bad', {
+              accessor: () => {
+                throw new Error('boom');
+              },
+            }),
+          ]).columns,
         ],
         trackBy: 'id',
         data: signal(makeRows()),
@@ -229,7 +236,9 @@ describe('createTableCore — expandedRows union (ADR-0017)', () => {
     }
     const rows: TreeRow[] = [{ id: 'p1' }, { id: 'c1' }, { id: 'p2' }, { id: 'c2' }];
     const { renderRows, renderStages, expandedSources } = createTableCore<TreeRow>({
-      columns: [{ id: 'id' }],
+      columns: [
+        ...createColumns(noData<TreeRow>(), (col) => [col('id')]).columns,
+      ],
       trackBy: 'id',
       data: signal(rows),
     });

@@ -1,15 +1,19 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { mockRows, mockTrackBy, type MockRow } from '../../../table.mock';
+import { mockRows, mockTrackBy, noData, type MockRow } from '../../../table.mock';
+import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { filter } from '../with-filtering/rules';
 import { selectAllIds } from './utils';
 import { withFiltering } from '../with-filtering';
 import { withSelection } from './feature';
-import type { ColumnDef, TableStore } from '../../types';
+import type { ColumnDecl, ColumnSet, TableStore } from '../../types';
 
-function makeColumns(): ColumnDef<MockRow>[] {
-  return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];
+// Widened `TId` — `makeFilteredStore()` below returns the bare `TableStore<MockRow>`, and
+// nothing here reads a declared column id off `path`, so the literal id `col()` would
+// otherwise preserve buys nothing and only breaks that fixed return type.
+function makeColumns(): ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]> {
+  return createColumns(noData<MockRow>(), (col) => [col('name')]);
 }
 
 /** Runs a `createTable()` build inside an Angular injection context. */

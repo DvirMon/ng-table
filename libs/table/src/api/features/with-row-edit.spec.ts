@@ -9,8 +9,10 @@ import {
   removeEdit,
   revertEdit,
 } from '../../mutations/optimistic-mutations';
+import { noData } from '../../table.mock';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
-import type { ColumnDef, TableStore } from '../types';
+import type { ColumnDecl, ColumnSet, TableStore } from '../types';
 import { withComputed } from './with-computed';
 import type { OptimisticMembers } from './with-optimistic';
 import { withRowEdit, type RowEditMembers } from './with-row-edit';
@@ -20,8 +22,9 @@ interface Row {
   name: string;
 }
 
-function makeColumns(): ColumnDef<Row>[] {
-  return [{ id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' }];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [col('name')]);
 }
 
 function makeRows(): Row[] {

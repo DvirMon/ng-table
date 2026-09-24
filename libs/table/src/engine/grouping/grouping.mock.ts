@@ -1,4 +1,7 @@
-import type { ColumnDef } from '../../api/types';
+import { createColumns } from '../../api/create-columns';
+import type { ColumnBuilder, ColumnDef } from '../../api/types';
+import { noData } from '../../table.mock';
+import { resolveColumnDefs } from '../columns';
 
 export interface Order {
   id: number;
@@ -14,12 +17,20 @@ export const orders: Order[] = [
   { id: 5, region: 'EU', category: 'Books' },
 ];
 
-export function orderColumn<K extends keyof Order & string>(id: K): ColumnDef<Order> {
-  return { id, accessor: (row: Order) => row[id], visible: true, order: 0, label: id };
+/**
+ * Declares one `Order` column by id, for use inside `createColumns()`'s builder callback.
+ */
+export function orderColumn<K extends keyof Order & string>(col: ColumnBuilder<Order>, id: K) {
+  return col(id);
 }
 
-export const orderColumns: ColumnDef<Order>[] = [
-  orderColumn('id'),
-  orderColumn('region'),
-  orderColumn('category'),
-];
+export const orderColumns: ColumnDef<Order>[] = resolveColumnDefs(
+  [
+    ...createColumns(noData<Order>(), (col) => [
+      orderColumn(col, 'id'),
+      orderColumn(col, 'region'),
+      orderColumn(col, 'category'),
+    ]).columns,
+  ],
+  'grouping.mock'
+);

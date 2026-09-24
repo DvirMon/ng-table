@@ -1,11 +1,13 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
+import { noData } from '../../../table.mock';
+import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { contains, equals, filter } from './rules';
 import { withComputed } from '../with-computed';
 import { withFiltering } from './feature';
-import type { ColumnDef, TableStore } from '../../types';
+import type { ColumnValues, TableStore } from '../../types';
 
 interface Row {
   id: string;
@@ -14,12 +16,15 @@ interface Row {
   category: string;
 }
 
-function makeColumns(): ColumnDef<Row>[] {
-  return [
-    { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'name' },
-    { id: 'status', accessor: (row) => row.status, visible: true, order: 1, label: 'status' },
-    { id: 'category', accessor: (row) => row.category, visible: true, order: 2, label: 'category' },
-  ];
+// No return-type annotation — `path.<id>` is read throughout this file via `withFiltering()`'s
+// `schema`, and an explicit `ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]>` would
+// widen `id` to `string`, breaking that literal `ColumnsPath` access (ADR-0019).
+function makeColumns() {
+  return createColumns(noData<Row>(), (col) => [
+    col('name'),
+    col('status'),
+    col('category'),
+  ]);
 }
 
 function makeRows(): Row[] {
@@ -34,6 +39,11 @@ function makeRows(): Row[] {
 function inContext<T>(build: () => T): T {
   return TestBed.runInInjectionContext(build);
 }
+
+/** The exact store `createTable(data, { columns: makeColumns() })` composes, before any
+ * feature — `makeColumns()`'s declared columns carry literal ids, so this is stronger than the
+ * default `TableStore<Row>` the "recovered exactly" type assertions below compare against. */
+type RowStore = TableStore<Row, ColumnValues<Row, ReturnType<typeof makeColumns>['columns']>>;
 
 describe('withFiltering', () => {
   it('composes into createTable() with Row inferred from the data slot', () => {
@@ -419,7 +429,7 @@ describe('withFiltering', () => {
         createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withFiltering())
       );
 
-      expectTypeOf(store).toEqualTypeOf<TableStore<Row>>();
+      expectTypeOf(store).toEqualTypeOf<RowStore>();
       expectTypeOf(store).not.toBeAny();
 
       const manualStore = inContext(() =>
@@ -430,7 +440,7 @@ describe('withFiltering', () => {
         )
       );
 
-      expectTypeOf(manualStore).toEqualTypeOf<TableStore<Row>>();
+      expectTypeOf(manualStore).toEqualTypeOf<RowStore>();
       expectTypeOf(manualStore).not.toBeAny();
     });
 

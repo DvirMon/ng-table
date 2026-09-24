@@ -11,12 +11,14 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import { VISIBLE } from '../../engine/columns';
 import type { Feature, Shape, TableFeatureSpec } from '../../engine/types';
-import { mockRows, mockTrackBy, type MockRow } from '../../table.mock';
+import { mockRows, mockTrackBy, noData, type MockRow } from '../../table.mock';
+import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { createTableFeature } from '../create-table-feature';
 import type {
   AnyTableFeature,
-  ColumnDefInput,
+  ColumnDecl,
+  ColumnSet,
   ReadonlyStore,
   RowId,
   TableStore,
@@ -31,8 +33,9 @@ type WithC = { c: Signal<string> };
 type WithZ = { z: Signal<number> };
 type NoMembers = Record<never, never>;
 
-function makeColumns(): ColumnDefInput<MockRow>[] {
-  return [{ id: 'name' }, { id: 'id' }];
+// Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
+function makeColumns(): ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]> {
+  return createColumns(noData<MockRow>(), (col) => [col('name'), col('id')]);
 }
 
 /** Collision messages are matched by `displayName`, so every fixture below carries one. */
@@ -68,7 +71,7 @@ type CreateTableVariadic = (
   data: WritableSignal<MockRow[]>,
   config: {
     trackBy: typeof mockTrackBy;
-    columns: ColumnDefInput<MockRow>[];
+    columns: ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]>;
     injector?: Injector;
   },
   ...features: AnyTableFeature[]

@@ -10,8 +10,10 @@ import { columnSchema } from '../columns-schema/schema';
 import { visible } from '../columns-schema/rules';
 import type { ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
 import type { Feature, RowOf, Shape } from '../engine/types';
+import { noData } from '../table.mock';
 import type {
-  ColumnDef,
+  ColumnDecl,
+  ColumnSet,
   ColumnValueMap,
   ReadonlyStore,
   RenderRow,
@@ -25,25 +27,14 @@ interface Row {
   status: string;
 }
 
-// No `ColumnDef<Row>[]` return annotation — that would widen `id` to `string` and turn
-// `ColumnsPath` into an index signature (ADR-0019).
-function makeColumns() {
-  return [
-    {
-      id: 'name' as const,
-      accessor: (row: Row) => row.name,
-      visible: true,
-      order: 0,
-      label: 'name',
-    },
-    {
-      id: 'status' as const,
-      accessor: (row: Row) => row.status,
-      visible: true,
-      order: 1,
-      label: 'status',
-    },
-  ] satisfies ColumnDef<Row>[];
+// Widened `TId` (plain `string`, not a literal union) — nothing in this file's Row-based tests
+// reads `path.<id>` off these columns (the schema tests below use `makeColumnSet()` instead),
+// so `TableStore<Row>`'s default `ColumnValueMap` stays the exact type `makeStore()` composes.
+function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [
+    col('name'),
+    col('status'),
+  ]);
 }
 
 // Mirrors `makeColumns()`'s two columns, via `createColumns()`, for the call sites that need
@@ -60,7 +51,7 @@ function makeColumnSet(
 // context, with a data signal, calling the positional `createTable(data, config, ...features)`
 // form. Columns tests pass no rows; row tests seed rows via the `data` param.
 function makeStore(
-  columns: ColumnDef<Row>[] = makeColumns(),
+  columns: ReturnType<typeof makeColumns> = makeColumns(),
   data: Row[] = []
 ): TableStore<Row> {
   return TestBed.runInInjectionContext(() =>
@@ -363,7 +354,11 @@ describe('createTable', () => {
       status: 'paid' | 'open';
     }
 
-    const invoiceColumns = [{ id: 'total' }];
+    // Widened `TId` — `withA()`/`withB()` below are fixed to `TableStore<Invoice>`'s default
+    // `ColumnValueMap`, and nothing here reads `path.total`, so the literal id `col()` would
+    // otherwise preserve buys nothing and only breaks that fixed-type composition.
+    const invoiceColumns: ColumnSet<Invoice, readonly ColumnDecl<Invoice, string, unknown>[]> =
+      createColumns(noData<Invoice>(), (col) => [col('total')]);
 
     function withA(): Feature<TableStore<Invoice>, { a: Signal<number> }> {
       return createTableFeature(() => ({ members: { a: signal(1).asReadonly() } }));

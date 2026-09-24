@@ -8,6 +8,7 @@ import {
   mockGroupWhenTrackBy,
   mockRepRows,
   mockRepTrackBy,
+  noData,
   type GroupingMockRow,
   type GroupWhenMockRow,
   type RepMockRow,
@@ -25,6 +26,7 @@ import type { GroupingHandle } from './types';
 import type { WritableView } from '../../../engine/writable-view';
 import { filter } from '../with-filtering/rules';
 import type { FiltersPath } from '../with-filtering/types';
+import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { withComputed } from '../with-computed';
 import { withFiltering } from '../with-filtering';
@@ -33,7 +35,8 @@ import { withSelection } from '../with-selection';
 import { withSorting } from '../with-sorting';
 import { withTree } from '../with-tree';
 import type {
-  ColumnDef,
+  ColumnDecl,
+  ColumnSet,
   GroupingUpdater,
   RenderRow,
   RowId,
@@ -41,34 +44,14 @@ import type {
 } from '../../types';
 
 // Grouping is now keyed by declared column id space (ADR-0024) — `path.<id>` in every `schema`
-// callback below is dot-notation, which needs the literal id union, not `string`. No return-type
-// annotation + `id: '…' as const` + `satisfies` keeps it literal (`create-table.spec.ts:20-36`);
-// an annotated `ColumnDef<GroupingMockRow>[]` return type would widen every id to `string` and
-// turn every `path.<id>` access into an index-signature access (TS4111).
+// callback below is dot-notation, which needs the literal id union, not `string`. `col(id)`
+// preserves that literal on its own, no `as const`/`satisfies` needed.
 function makeColumns() {
-  return [
-    {
-      id: 'region' as const,
-      accessor: (row: GroupingMockRow) => row.region,
-      visible: true,
-      order: 0,
-      label: 'Region',
-    },
-    {
-      id: 'category' as const,
-      accessor: (row: GroupingMockRow) => row.category,
-      visible: true,
-      order: 1,
-      label: 'Category',
-    },
-    {
-      id: 'amount' as const,
-      accessor: (row: GroupingMockRow) => row.amount,
-      visible: true,
-      order: 2,
-      label: 'Amount',
-    },
-  ] satisfies ColumnDef<GroupingMockRow>[];
+  return createColumns(noData<GroupingMockRow>(), (col) => [
+    col('region', { label: 'Region' }),
+    col('category', { label: 'Category' }),
+    col('amount', { label: 'Amount' }),
+  ]);
 }
 
 /** Average `amount` across a cluster's own leaves — declared via `aggregate` in `schema`
@@ -80,12 +63,15 @@ const avgAmount = (rows: GroupingMockRow[]): number =>
  * have to spell it out. */
 type MockColumnId = 'region' | 'category' | 'amount';
 
-/** Widened on purpose (explicit `ColumnDef<GroupingMockRow>[]` return type, no `as const`) — the
- * "unknown column ids throw" cases below need a `TId` of plain `string` so an out-of-union id
- * compiles at all, to prove the *runtime* check rather than relying on the compile-time rejection
- * `makeColumns()`'s literal ids already give a real caller for free. Mirrors
- * `create-table.types.spec.ts`'s `makeWidenedColumns()`. */
-function makeWidenedColumns(): ColumnDef<GroupingMockRow>[] {
+/** Widened on purpose (explicit `TId` of plain `string`, no literal union) — the
+ * "unknown column ids throw" cases below need an out-of-union id to compile at all, to prove
+ * the *runtime* check rather than relying on the compile-time rejection `makeColumns()`'s
+ * literal ids already give a real caller for free. Mirrors `create-table.types.spec.ts`'s
+ * `makeWidenedColumns()`. */
+function makeWidenedColumns(): ColumnSet<
+  GroupingMockRow,
+  readonly ColumnDecl<GroupingMockRow, string, unknown>[]
+> {
   return makeColumns();
 }
 
@@ -748,7 +734,7 @@ describe('unknown column ids throw (AC #4)', () => {
         signal<GroupingMockRow[]>(mockGroupingRows),
         {
           trackBy: mockGroupingTrackBy,
-          columns: makeWidenedColumns().filter((column) => column.id !== 'category'),
+          columns: makeWidenedColumns().columns.filter((column) => column.id !== 'category'),
         },
         withGrouping({ initial: ['region'] })
       )
@@ -759,7 +745,7 @@ describe('unknown column ids throw (AC #4)', () => {
       /\[withGrouping\].*"category"/
     );
 
-    store.columns.update(setColumns(makeWidenedColumns()));
+    store.columns.update(setColumns([...makeWidenedColumns().columns]));
 
     // Same id, now a real column — the writer re-reads columns() live and accepts it.
     expect(() => store.grouping.update(addGroupLevel('category'))).not.toThrow();
@@ -769,16 +755,10 @@ describe('unknown column ids throw (AC #4)', () => {
 
 describe('aggregate over a derived-accessor column (AC #6)', () => {
   it('aggregates a column whose value comes from an accessor, not a raw row field', () => {
-    const columns = [
-      ...makeColumns(),
-      {
-        id: 'amountDoubled' as const,
-        accessor: (row: GroupingMockRow) => row.amount * 2,
-        visible: true,
-        order: 3,
-        label: 'Amount x2',
-      },
-    ] satisfies ColumnDef<GroupingMockRow>[];
+    const columns = createColumns(noData<GroupingMockRow>(), (col) => [
+      ...makeColumns().columns,
+      col('amountDoubled', { label: 'Amount x2', accessor: (row) => row.amount * 2 }),
+    ]);
 
     const store = inContext(() =>
       createTable(
@@ -1147,9 +1127,9 @@ describe('groupingLevels (#81)', () => {
       // Explicit `: boolean` return type — an inferred type predicate here would narrow the
       // filtered array's `TId` away from the store's declared union, which `setColumns()`'s
       // updater type then rejects as a mismatch rather than a subset.
-      const isNotRegion = (column: ColumnDef<GroupingMockRow, MockColumnId>): boolean =>
+      const isNotRegion = (column: ColumnDecl<GroupingMockRow, MockColumnId, unknown>): boolean =>
         column.id !== 'region';
-      store.columns.update(setColumns(makeColumns().filter(isNotRegion)));
+      store.columns.update(setColumns([...makeColumns().columns.filter(isNotRegion)]));
       TestBed.tick();
 
       expect(store.groupingLevels().map((column) => column.id)).toEqual(['category']);
@@ -1814,24 +1794,11 @@ describe('grouping declarative sugar (#26)', () => {
   });
 });
 
-// See `makeColumns()`'s header comment — same reason this drops its return-type annotation.
 function groupWhenColumns() {
-  return [
-    {
-      id: 'region' as const,
-      accessor: (row: GroupWhenMockRow) => row.region,
-      visible: true,
-      order: 0,
-      label: 'Region',
-    },
-    {
-      id: 'amount' as const,
-      accessor: (row: GroupWhenMockRow) => row.amount,
-      visible: true,
-      order: 1,
-      label: 'Amount',
-    },
-  ] satisfies ColumnDef<GroupWhenMockRow>[];
+  return createColumns(noData<GroupWhenMockRow>(), (col) => [
+    col('region', { label: 'Region' }),
+    col('amount', { label: 'Amount' }),
+  ]);
 }
 
 const EU_GROUP_ID = 'group:>region:string:EU';
@@ -2141,11 +2108,11 @@ describe('when (#85 table-wide admission)', () => {
   });
 });
 
-function repColumns(): ColumnDef<RepMockRow>[] {
-  return [
-    { id: 'region', accessor: (row) => row.region, visible: true, order: 0, label: 'Region' },
-    { id: 'rep', accessor: (row) => row.rep, visible: true, order: 1, label: 'Rep' },
-  ];
+function repColumns() {
+  return createColumns(noData<RepMockRow>(), (col) => [
+    col('region', { label: 'Region' }),
+    col('rep', { label: 'Rep' }),
+  ]);
 }
 
 describe('when Q1 through the public surface (#85)', () => {

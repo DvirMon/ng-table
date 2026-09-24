@@ -1,17 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
+import { createColumns } from '../api/create-columns';
 import type { ColumnDef } from '../api/types';
+import { noData } from '../table.mock';
 import { buildDataCells, buildGroupCells, readAccessor } from './cells';
+import { resolveColumnDefs } from './columns';
 
 interface Row {
   id: number;
   name: string;
 }
 
-function makeColumn(
-  id: string,
-  accessor: (row: Row) => unknown
-): ColumnDef<Row> {
-  return { id, accessor, visible: true, order: 0, label: id };
+function makeColumn(id: string, accessor: (row: Row) => unknown): ColumnDef<Row> {
+  const [column] = resolveColumnDefs(
+    [...createColumns(noData<Row>(), (col) => [col(id, { accessor })]).columns],
+    'cells.spec'
+  );
+  return column;
 }
 
 describe('readAccessor', () => {

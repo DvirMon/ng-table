@@ -1,4 +1,13 @@
-import type { ClusterSummary, ColumnDef, GroupSummary, GroupWhen } from '../../api/types';
+import { createColumns } from '../../api/create-columns';
+import type {
+  ClusterSummary,
+  ColumnBuilder,
+  ColumnDef,
+  GroupSummary,
+  GroupWhen,
+} from '../../api/types';
+import { noData } from '../../table.mock';
+import { resolveColumnDefs } from '../columns';
 import {
   admitClusters,
   buildClusterNodes,
@@ -580,14 +589,8 @@ describe('buildClusterNodes — derived-accessor column (Step 6, AC #1)', () => 
     amount: number;
   }
 
-  function tierColumn(): ColumnDef<Sale> {
-    return {
-      id: 'tier',
-      accessor: (row) => (row.amount > 100 ? 'high' : 'low'),
-      visible: true,
-      order: 0,
-      label: 'tier',
-    };
+  function tierColumn(col: ColumnBuilder<Sale>) {
+    return col('tier', { accessor: (row) => (row.amount > 100 ? 'high' : 'low') });
   }
 
   it('groups by a derived accessor into distinct clusters, not one undefined cluster', () => {
@@ -598,7 +601,14 @@ describe('buildClusterNodes — derived-accessor column (Step 6, AC #1)', () => 
       { id: 4, amount: 200 },
     ];
 
-    const nodes = buildClusterNodes<Sale>(rows, ['tier'], [tierColumn()]);
+    const nodes = buildClusterNodes<Sale>(
+      rows,
+      ['tier'],
+      resolveColumnDefs(
+        [...createColumns(noData<Sale>(), (col) => [tierColumn(col)]).columns],
+        'clusters.spec'
+      )
+    );
 
     expect(nodes.map((node) => node.value).sort()).toEqual(['high', 'low']);
     expect(nodes.some((node) => node.value === undefined)).toBe(false);

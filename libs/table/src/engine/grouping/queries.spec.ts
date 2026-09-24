@@ -1,4 +1,7 @@
-import type { ColumnDef } from '../../api/types';
+import { createColumns } from '../../api/create-columns';
+import type { ColumnBuilder } from '../../api/types';
+import { noData } from '../../table.mock';
+import { resolveColumnDefs } from '../columns';
 import { orderColumns as columns, orders, type Order } from './grouping.mock';
 import { collectAppliedLevels, collectGroupIds, rowsBeneathGroup } from './queries';
 
@@ -77,15 +80,14 @@ describe('the three readers resolve levels through the accessor (Step 6, case 6)
     amount: number;
   }
 
-  const salesColumns: ColumnDef<Sale>[] = [
-    {
-      id: 'tier',
-      accessor: (row) => (row.amount > 100 ? 'high' : 'low'),
-      visible: true,
-      order: 0,
-      label: 'tier',
-    },
-  ];
+  function tierColumn(col: ColumnBuilder<Sale>) {
+    return col('tier', { accessor: (row) => (row.amount > 100 ? 'high' : 'low') });
+  }
+
+  const salesColumns = resolveColumnDefs(
+    [...createColumns(noData<Sale>(), (col) => [tierColumn(col)]).columns],
+    'queries.spec'
+  );
 
   const sales: Sale[] = [
     { id: 1, amount: 50 },
