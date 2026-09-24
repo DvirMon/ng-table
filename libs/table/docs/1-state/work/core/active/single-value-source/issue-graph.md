@@ -21,8 +21,8 @@ fits a tracer bullet, so both are sequenced
 | [#135](https://github.com/DvirMon/ng-table/issues/135) | ADR-0025 rename, migrate: specs, story hosts, fixtures | ✅ CLOSED 09-24 (1eaad97) | #133 (cleared) | #136 |
 | [#136](https://github.com/DvirMon/ng-table/issues/136) | ADR-0025 rename, contract: delete the `apply*` exports | ✅ CLOSED 09-24 (ce13765) | #134, #135 (cleared) | #141 |
 | [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures | 🟡 OPEN | #131 (cleared) | #139, #140 |
-| [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs | 🟡 OPEN | #131 (cleared) | #139 |
-| [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | 🟡 OPEN | #132, #137, #138 | — |
+| [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs | ✅ CLOSED 09-24 (6af4cc7) | #131 (cleared) | #139 |
+| [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | 🟡 OPEN | #132, #137, #138 (cleared) | — |
 | [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented | 🟡 OPEN | #137 | #141 |
 | [#141](https://github.com/DvirMon/ng-table/issues/141) | Docs, ADR-0019 amendment, CLAUDE.md invariant, decision rows, `llms` | 🟡 OPEN | #136 (cleared), #140 | — |
 
@@ -33,7 +33,7 @@ fits a tracer bullet, so both are sequenced
                 │                   │
                 ├──► #137 ──┬───────┼──► #139
                 │           │       │
-                └──► #138 ──┴───────┘
+                └──► #138[✅] ──┴───────┘
                             │
                             └──► #140 ──┐
                                         │
@@ -59,11 +59,14 @@ fits a tracer bullet, so both are sequenced
   fixtures are `#137`'s. `{#134, #135} → #136`, same
   expand–contract reason. `{#136, #140} → #141` — the docs pass
   describes both final surfaces.
-- **Current frontier:** **#130**, **#132**, **#137**, **#138**.
+- **Current frontier:** **#130**, **#132**, **#137**.
   `#131` shipped and closed 2026-09-24 (918551f), clearing its
-  edge into all three dependents at once. The rename chain
-  (`#133 → {#134, #135} → #136`) shipped and closed end to end;
-  `#141` is not yet frontier — it still waits on `#140`.
+  edge into all three dependents at once. `#138` shipped and
+  closed 2026-09-24 (6af4cc7), clearing its edge into `#139` —
+  `#139` is not yet frontier, since `#132` and `#137` are still
+  open. The rename chain (`#133 → {#134, #135} → #136`) shipped
+  and closed end to end; `#141` is not yet frontier — it still
+  waits on `#140`.
 
 ## Source
 
@@ -76,7 +79,8 @@ gate is the fixtures, not the deletions). Titles and states
 pulled from `gh issue view` on 2026-09-24; states refreshed
 2026-09-24 after `/ship` pushed 9033e6e — `#133`/`#134`/`#135`/
 `#136` closed. Refreshed again 2026-09-24 after `/ship` pushed
-918551f/ec341b1 — `#131` closed. Related docs:
+918551f/ec341b1 — `#131` closed. Refreshed again 2026-09-24
+after `/ship` pushed 6af4cc7 — `#138` closed. Related docs:
 [`2-spec.md`](2-spec.md), [`3-architecture.md`](3-architecture.md),
 [`decisions.md`](decisions.md),
 [`conflicts-vs-unshipped.md`](conflicts-vs-unshipped.md).
