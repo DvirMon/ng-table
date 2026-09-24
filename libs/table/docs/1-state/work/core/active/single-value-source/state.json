@@ -24,9 +24,21 @@
     125,
     127,
     128,
-    129
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135,
+    136,
+    137,
+    138,
+    139,
+    140,
+    141
   ],
   "createdAt": "2026-09-20T00:00:00Z",
-  "updatedAt": "2026-09-24T00:00:00Z",
+  "updatedAt": "2026-09-24T14:43:43Z",
   "capabilityLogPath": "libs/table/docs/decisions/grouping.md"
 }
