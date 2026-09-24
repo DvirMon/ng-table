@@ -1,7 +1,7 @@
 # Implementation Progress — `createTable` accepts a `ColumnSet` beside the array (expand)
 
 **Issue:** [#131](https://github.com/DvirMon/ng-table/issues/131)
-**Status:** 6 / 6 complete
+**Status:** 6 / 6 complete — shipped 918551f
 
 | Step | Title | Status | PR |
 |---|---|---|---|
