@@ -4,14 +4,32 @@ import { By } from '@angular/platform-browser';
 
 import { NgpTableDirective } from './ngp-table.directive';
 import { NgpTableRowAnimationDirective } from './ngp-table-row-animation.directive';
-import { NgpTableRowDirective } from './ngp-table-row.directive';
 import { createMockTableStore } from '../table.mock';
 import type { RenderRow, RowId, TableStore } from '../api/types';
 
+// jsdom computes no layout and implements no Web Animations: `offsetTop` is pinned, and
+// `animate()` is a stub whose calls are the observable FLIP.
 function rowElementAt(top: number): HTMLElement {
   const element = document.createElement('tr');
   Object.defineProperty(element, 'offsetTop', { value: top, configurable: true });
+  Object.defineProperty(element, 'animate', { value: vi.fn() });
   return element;
+}
+
+function moveTo(element: HTMLElement, top: number): void {
+  Object.defineProperty(element, 'offsetTop', { value: top, configurable: true });
+}
+
+function animatedKeyframesOf(element: HTMLElement): Keyframe[][] {
+  return vi.mocked(element.animate).mock.calls.map(([keyframes]) => keyframes as Keyframe[]);
+}
+
+function glideFrom(delta: number): Keyframe[] {
+  return [{ transform: `translateY(${delta}px)` }, { transform: 'none' }];
+}
+
+function stubReducedMotion(prefersReducedMotion: boolean): void {
+  vi.stubGlobal('matchMedia', () => ({ matches: prefersReducedMotion }));
 }
 
 function mockRenderRow(id: RowId, index: number): RenderRow<unknown> {
@@ -57,6 +75,9 @@ function setup(): {
 }
 
 describe('NgpTableRowAnimationDirective — row-position measurement (FLIP)', () => {
+  beforeEach(() => stubReducedMotion(false));
+  afterEach(() => vi.unstubAllGlobals());
+
   it('does not let a DOM element still registered for a row no longer in renderRows() shift the measured tops of the rows after it', () => {
     const { directive, renderRows } = setup();
 
@@ -70,14 +91,29 @@ describe('NgpTableRowAnimationDirective — row-position measurement (FLIP)', ()
     renderRows.set([mockRenderRow('a', 0), mockRenderRow('b', 1), mockRenderRow('c', 2)]);
     tick(); // baseline capture: previousRowTops = {a:0, b:40, c:80}; first run, no deltas
 
-    Object.defineProperty(rowB, 'offsetTop', { value: -1000, configurable: true });
-    Object.defineProperty(rowC, 'offsetTop', { value: 40, configurable: true });
-
+    moveTo(rowB, -1000);
+    moveTo(rowC, 40);
     renderRows.set([mockRenderRow('a', 0), mockRenderRow('c', 1)]);
     tick();
 
-    expect(directive.flipOffsetFor('a')).toBe(0); // unmoved
-    expect(directive.flipOffsetFor('c')).toBe(40);
+    expect(animatedKeyframesOf(rowA)).toEqual([]); // unmoved
+    expect(animatedKeyframesOf(rowC)).toEqual([glideFrom(40)]);
+  });
+
+  it('moves rows without animating when the user prefers reduced motion', () => {
+    stubReducedMotion(true);
+    const { directive, renderRows } = setup();
+
+    const rowA = rowElementAt(0);
+    directive.registerRowElement('a', rowA);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    moveTo(rowA, 30);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    expect(animatedKeyframesOf(rowA)).toEqual([]);
   });
 
   it('skips a row id with no registered element instead of misattributing a neighboring one', () => {
@@ -89,12 +125,11 @@ describe('NgpTableRowAnimationDirective — row-position measurement (FLIP)', ()
     renderRows.set([mockRenderRow('a', 0), mockRenderRow('b', 1)]);
     tick();
 
-    Object.defineProperty(rowA, 'offsetTop', { value: 50, configurable: true });
+    moveTo(rowA, 50);
     renderRows.set([mockRenderRow('a', 0), mockRenderRow('b', 1)]);
     tick();
 
-    expect(directive.flipOffsetFor('a')).toBe(-50);
-    expect(directive.flipOffsetFor('b')).toBe(0);
+    expect(animatedKeyframesOf(rowA)).toEqual([glideFrom(-50)]);
   });
 
   it('unregisterRowElement is a no-op when the given element is no longer the current one for that id', () => {
@@ -112,35 +147,6 @@ describe('NgpTableRowAnimationDirective — row-position measurement (FLIP)', ()
     renderRows.set([mockRenderRow('a', 0)]);
     tick();
 
-    expect(directive.flipOffsetFor('a')).toBe(-10);
-  });
-});
-
-@Component({
-  imports: [NgpTableDirective, NgpTableRowDirective],
-  template: `
-    <table [ngpTable]="store">
-      <tr [ngpTableRow]="row"></tr>
-    </table>
-  `,
-})
-class HostWithoutAnimationComponent {
-  store!: TableStore<unknown>;
-  row!: RenderRow<unknown>;
-}
-
-describe('NgpTableRowDirective — no ngpTableRowAnimation on the host', () => {
-  it('binds no data-row-flipping attribute and no --ngp-table-row-flip-offset style when the host table has no NgpTableRowAnimationDirective', () => {
-    const { store } = createControllableStore();
-    TestBed.configureTestingModule({ imports: [HostWithoutAnimationComponent] });
-    const fixture = TestBed.createComponent(HostWithoutAnimationComponent);
-    fixture.componentInstance.store = store;
-    fixture.componentInstance.row = mockRenderRow('a', 0);
-    fixture.detectChanges();
-
-    const rowElement = fixture.debugElement.query(By.css('tr')).nativeElement as HTMLElement;
-
-    expect(rowElement.getAttribute('data-row-flipping')).toBeNull();
-    expect(rowElement.style.getPropertyValue('--ngp-table-row-flip-offset')).toBe('');
+    expect(animatedKeyframesOf(newElement)).toEqual([glideFrom(-10)]);
   });
 });

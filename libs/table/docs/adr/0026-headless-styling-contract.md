@@ -136,3 +136,53 @@ Material-style optional stylesheets.
   an ADR recording its form and exceptions (output properties
   are an exception to "no library values in CSS"; none exist
   yet, but row animation will ship them).
+
+## Amendment 2026-09-23 — row FLIP animates in the directive
+
+The row reorder (FLIP) move is now played by
+`ngpTableRowAnimation` through the Web Animations API
+(`element.animate()`), not by a consumer CSS transition over
+an offset custom property. A CSS transition needs the
+inverted position to render before the play; the two ways to
+guarantee that (a double `requestAnimationFrame`, or a
+deferred `afterNextRender` plus a forced style read) were a
+guess and an extra render respectively. `animate()` takes the
+start position as its first keyframe. Rationale:
+`docs/3-ui/directives/row-animation.md`, "Why Web
+Animations".
+
+What changes for this capability only:
+
+- **Removed:** the output property
+  `--ngp-table-row-flip-offset` (and the directive's
+  `flipOffsetFor()`). The Consequences bullet naming it as the
+  offset carrier, and the note that row animation "will ship"
+  output properties, no longer hold — no output property ships.
+- **Removed:** the input tokens
+  `--ngp-table-row-flip-duration` /
+  `--ngp-table-row-flip-easing`. Timing is the directive input
+  `flipTiming: KeyframeAnimationOptions` (default
+  `{ duration: 300, easing: 'cubic-bezier(0.4, 0, 0.2, 1)' }`),
+  passed straight to `animate()`. **An explicit exception to
+  "values as CSS custom properties"**, for this directive only:
+  Web Animations takes timing in JS, so CSS variables would
+  only be read back with `getComputedStyle` and parsed.
+- **Removed:** the state attribute `data-row-flipping`. No
+  state attribute is exposed while rows move — dropped as
+  unused; it can return, under this ADR's `data-*` rule, when a
+  consumer needs it.
+- **Lost for consumers:** replacing the move with their own
+  CSS transition, reading the per-row offset, and styling a
+  row while it moves.
+- **Reduced motion** for the move is honoured in the directive
+  (`matchMedia`); the preset's media query covers only the
+  enter/leave classes. `row-animation.css` ships no FLIP rules.
+
+Unchanged: the Decision's principle — state as `data-*`
+attributes, values as CSS custom properties, no bound classes,
+opt-in stylesheets per capability — still governs every other
+capability, and would govern any state this directive exposes
+later. `animate()` is not
+treated as an inline style (it does not write the `style`
+attribute); that reading is the premise of this amendment and
+is not verified against the Web Animations spec text.

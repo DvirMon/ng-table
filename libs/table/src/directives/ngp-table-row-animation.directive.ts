@@ -1,10 +1,15 @@
-import { afterRenderEffect, Directive, inject, signal } from '@angular/core';
+import { afterRenderEffect, Directive, inject, input, untracked } from '@angular/core';
 
 import { NGP_TABLE_ROW_ANIMATION, NGP_TABLE_STORE } from './table.tokens';
-import type { RowId } from '../api/types';
+import type { RenderRow, RowId } from '../api/types';
+
+const DEFAULT_FLIP_TIMING: KeyframeAnimationOptions = {
+  duration: 300,
+  easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+};
 
 // Dual-tag selector, matches `ngpTable`'s pattern. Opt-in: without this directive on the host,
-// `ngpTableRow` measures/binds nothing (docs/3-ui/directives/row-animation.md).
+// `ngpTableRow` registers nothing (docs/3-ui/directives/row-animation.md).
 @Directive({
   selector: 'table[ngpTableRowAnimation], div[ngpTableRowAnimation]',
   providers: [
@@ -15,13 +20,13 @@ import type { RowId } from '../api/types';
   },
 })
 export class NgpTableRowAnimationDirective<TRow = unknown> {
+  /** Duration, easing and any other Web Animations timing for a row's move. */
+  readonly flipTiming = input<KeyframeAnimationOptions>(DEFAULT_FLIP_TIMING);
+
   // Required: this directive is meaningless without `ngpTable` on the same host element.
   private readonly parentTable = inject(NGP_TABLE_STORE);
 
-  // FLIP row-reorder animation (docs/3-ui/directives/row-animation.md). Keyed by `RowId` so
-  // `ngpTableRow` can look its own offset up regardless of where it landed in the DOM.
-  private readonly rowFlipOffsets = signal(new Map<RowId, number>());
-  private readonly rowFlipPlaying = signal(false);
+  // FLIP row-reorder animation (docs/3-ui/directives/row-animation.md), keyed by `RowId`.
   private previousRowTops = new Map<RowId, number>();
 
   // Row elements, keyed by id instead of DOM position — `animate.leave` keeps a leaving `<tr>`
@@ -30,52 +35,24 @@ export class NgpTableRowAnimationDirective<TRow = unknown> {
   private readonly rowElements = new Map<RowId, HTMLElement>();
 
   constructor() {
-    // Re-runs only when `renderRows()` changes, after the DOM reflects it. `read`, not
-    // `mixedReadWrite`: this hook reads layout and writes signals only — never the DOM.
+    // Re-runs only when `renderRows()` changes, after the DOM reflects it. The invert is the
+    // first keyframe, so it never has to render on its own; a later `animate()` on the same
+    // element overrides an earlier one, so a reorder mid-glide needs no cancel.
     afterRenderEffect({
-      read: (onCleanup) => {
-        const renderRows = this.parentTable.ngpTable().renderRows();
-        const newTops = this.captureRowTops(renderRows.map((row) => row.id));
-
-        const deltas = new Map<RowId, number>();
-        newTops.forEach((newTop, rowId) => {
-          const oldTop = this.previousRowTops.get(rowId);
-          if (oldTop !== undefined && oldTop !== newTop) {
-            deltas.set(rowId, oldTop - newTop);
-          }
-        });
-        this.previousRowTops = newTops;
-
-        if (deltas.size === 0) {
+      earlyRead: () => this.measureMoves(this.parentTable.ngpTable().renderRows()),
+      write: (moves) => {
+        const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReducedMotion) {
           return;
         }
-
-        // Invert: jump to the old position with no transition...
-        this.rowFlipPlaying.set(false);
-        this.rowFlipOffsets.set(deltas);
-
-        // ...then play: next frame, clear the offset and enable the transition so the row
-        // glides from its old spot to its new (real) one. Cancelled if the rows change again
-        // before it fires, or on destroy, so a stale play never clears a newer invert.
-        let frame = requestAnimationFrame(() => {
-          frame = requestAnimationFrame(() => {
-            this.rowFlipPlaying.set(true);
-            this.rowFlipOffsets.set(new Map());
-          });
-        });
-        onCleanup(() => cancelAnimationFrame(frame));
+        const timing = untracked(this.flipTiming);
+        moves().forEach((delta, rowId) =>
+          this.rowElements
+            .get(rowId)
+            ?.animate([{ transform: `translateY(${delta}px)` }, { transform: 'none' }], timing),
+        );
       },
     });
-  }
-
-  /** The row's current FLIP offset in pixels, or 0 if none is pending. */
-  flipOffsetFor(rowId: RowId): number {
-    return this.rowFlipOffsets().get(rowId) ?? 0;
-  }
-
-  /** Whether a FLIP transition is currently playing. */
-  isRowFlipping(): boolean {
-    return this.rowFlipPlaying();
   }
 
   /**
@@ -100,6 +77,21 @@ export class NgpTableRowAnimationDirective<TRow = unknown> {
     if (this.rowElements.get(rowId) === element) {
       this.rowElements.delete(rowId);
     }
+  }
+
+  // Each moved row's offset from its old position (`oldTop - newTop`). DOM reads only.
+  private measureMoves(renderRows: readonly RenderRow<unknown>[]): Map<RowId, number> {
+    const newTops = this.captureRowTops(renderRows.map((row) => row.id));
+
+    const moves = new Map<RowId, number>();
+    newTops.forEach((newTop, rowId) => {
+      const oldTop = this.previousRowTops.get(rowId);
+      if (oldTop !== undefined && oldTop !== newTop) {
+        moves.set(rowId, oldTop - newTop);
+      }
+    });
+    this.previousRowTops = newTops;
+    return moves;
   }
 
   private captureRowTops(rowIds: readonly RowId[]): Map<RowId, number> {

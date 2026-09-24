@@ -1,18 +1,10 @@
 /* Opt-in only — not imported by any directive or index.ts. See
-   docs/3-ui/directives/row-animation.md. Requires the `ngpTableRowAnimation` directive on the
-   table; without it, `ngpTableRow` writes neither `--ngp-table-row-flip-offset` nor
-   `data-row-flipping`, so these rules select nothing.
-   Consumer tables using this must also set `border-collapse: separate; border-spacing: 0;`
-   — collapsed borders don't follow a transform. */
+   docs/3-ui/directives/row-animation.md. The FLIP move needs no stylesheet: the
+   `ngpTableRowAnimation` directive animates rows itself (Web Animations API), timed by its
+   `flipTiming` input. This file ships the enter/leave classes only.
+   Consumer tables using row animation must also set `border-collapse: separate;
+   border-spacing: 0;` — collapsed borders don't follow a transform. */
 @layer ngp-table {
-  [data-row-animation] [data-row-kind] {
-    transform: translateY(var(--ngp-table-row-flip-offset, 0));
-  }
-
-  [data-row-flipping] {
-    transition: transform var(--ngp-table-row-flip-duration, 300ms)
-      var(--ngp-table-row-flip-easing, cubic-bezier(0.4, 0, 0.2, 1));
-  }
 
   /* Pass these class names to Angular's `animate.enter` / `animate.leave` — the library never
      binds them itself. */
@@ -44,10 +36,8 @@
       font-size 200ms ease-in;
   }
 
+  /* The FLIP move honours this too, in the directive (`matchMedia`). */
   @media (prefers-reduced-motion: reduce) {
-    [data-row-flipping] {
-      transition: none;
-    }
     .ngp-table-row--enter,
     .ngp-table-row--leave,
     .ngp-table-row--leave > td,
