@@ -417,12 +417,20 @@ compatibility window), re-checked.
    probed. The types spec settles it. If it does not, the
    sanctioned-variant API still stands on the stated-rule
    argument, but the severity claim needs correcting.
+   **Answered — see decisions.md R10.** An explicit `id`
+   override captures the literal; an omitted one widens to
+   `string`. No correction to decision 15.
 2. **Does `{ ...col('x'), id: 'y' }` actually widen?**
    Reasoned from TypeScript's rules, not probed. Same spec
    case settles it. Called out on #129's own acceptance list.
+   **Answered — see decisions.md R11.** Yes, it widens to
+   `string`. No correction to decision 15.
 3. **Does `ColumnSet` need a row carrier?** If `TRow` is
    recoverable off `TCols`, drop the phantom. Prefer the
    simplest signature that passes the probes.
+   **Answered — see decisions.md R12.** No — `TRow` recovers
+   directly off `ColumnSet<TRow, TCols>`'s own generic
+   parameter. No phantom added.
 4. **What does `resolveColumnsConfig` become** once both
    asserts move out? It may collapse into the `createTable`
    intake, or absorb set-unpacking. Shaping, not a decision.
@@ -432,6 +440,8 @@ compatibility window), re-checked.
    map derivation?** `ColumnValues` maps over `TCols[number]`
    with an `as` key remap; the brand member rides along. Verify
    it does not leak into any public read.
+   **Answered — see decisions.md R13.** No leak — `keyof` of
+   the value map is the declared id union only.
 7. **Deferred, recorded, not this ticket:** a rule applied to
    every column — the "one schema standing for every key"
    shape the comparable framework has and this library does

@@ -1,15 +1,17 @@
 import type { Injector, Signal, WritableSignal } from '@angular/core';
-import type { ColumnMetaKey, ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
+import type {
+  ColumnMetaKey,
+  ColumnRule,
+  ColumnSchema,
+  ColumnsSchemaFn,
+} from '../columns-schema/types';
 import type { Feature } from '../engine/types';
 import type { WritableView } from '../engine/writable-view';
 
 export type RowId = string | number;
 
-/**
- * Reactive row-data source handed to `createTable(data, ...)`. The consumer's
- * `WritableSignal<TRow[]>` is the single source of truth — the pipeline reads it directly via
- * `computed()`, there is no internal copy to fall out of sync.
- */
+/** Reactive row-data source for `createTable(data, ...)`; the pipeline reads the consumer's
+ * signal directly — sole source of truth, no internal copy. */
 export type TableDataInput<TRow> = WritableSignal<TRow[]>;
 
 export type SortDirection = 'asc' | 'desc';
@@ -23,60 +25,49 @@ export type TrackByFn<TRow> = (row: TRow) => RowId;
 
 export type TrackByConfig<TRow> = keyof TRow | TrackByFn<TRow>;
 
-/**
- * Render-layer row: `rows()`'s pipeline output flattened for template/virtual-scroll
- * consumption. `kind: 'group'` rows are synthetic — no `TRow` backs them, hence `data: null`
- * — introduced by `withGrouping()`'s `'group'` render stage.
- */
+/** Discriminates a `RenderRow` as sourced from `TRow` data (`'row'`) or synthesized by a
+ * feature, e.g. `withGrouping()`'s group header (`'group'`). */
 export type RowKind = 'row' | 'group';
 
 export interface RenderRow<TRow> {
   readonly id: RowId;
 
-  // `depth` is 0 for a normal `kind: 'row'`, and increments for each level of nesting.
+  /** Nesting depth — `0` for a top-level `kind: 'row'`, +1 per level. */
   readonly depth: number;
   readonly kind: RowKind;
+
+  /** The source `TRow`, or `null` for a synthetic `kind: 'group'` row. */
   readonly data: TRow | null;
 
-  // Position in the final `renderRows()` array, assigned centrally after the whole
-  // `RENDER_ORDER` stage chain runs (`engine/core.ts`) — never set by a stage itself. Feeds
-  // `aria-rowindex` on `ngpTableRow`, since a `<div>`-hosted grid loses the free DOM-order
-  // inference native `<table>` gives for free.
+  /** Position in the final `renderRows()` array, assigned once the whole render-stage chain
+   * runs. Feeds `aria-rowindex` on `ngpTableRow`. */
   readonly index: number;
 
-  // The field, value and resolved label a `group` row was clustered on, so a header can render
-  // itself without parsing anything back out of the composite `id`. `label` resolves explicit,
-  // else falls back to the matching column's own `label`. Set only for `kind: 'group'`.
+  /** The field, value and resolved label a `group` row was clustered on, so a header can
+   * render without parsing the composite `id`. Set only for `kind: 'group'`. */
   readonly groupKey?: { columnId: string; value: unknown; label: string };
 
-  // `aggregates` holds data for a `group` row's template, e.g. output of `withAggregation()`.
+  /** Data for a `group` row's template, e.g. output of `withAggregation()`. */
   readonly aggregates?: Record<string, unknown>;
 
-  // Derived by `flattenVisible`'s walk: `undefined` unless `withTree()` contributed to the
-  // `expandedRows` slot *and* this row has children — a table with no tree feature composed
-  // never stamps this, even on a row that has children.
+  /** Whether an expanded row is open. `undefined` unless a tree feature is composed and this
+   * row has children. */
   readonly isExpanded?: boolean;
 
-  // Derived by `flattenVisible`'s walk from the node's `children`, unless a stage overrides it
-  // via `RenderNode.hasChildren` (e.g. a lazy row whose children haven't loaded yet).
+  /** Whether this row has children, per the tree. May be overridden by a stage for a lazily-
+   * loaded row. */
   readonly hasChildren?: boolean;
 
-  // Index into `data()` for the `TRow` this render row was built from, resolved by trackBy
-  // id (`engine/core.ts`). `undefined` for synthesized rows (`kind: 'group'`, or any row a
-  // render stage fabricates) — there is no `data()` entry to point to.
+  /** Index into `data()` for the `TRow` this row was built from. `undefined` for synthesized
+   * rows (`kind: 'group'` or any fabricated row). */
   readonly sourceIndex?: number;
 
-  // The id of the render row this one was synthesized beneath — the group header for a cluster
-  // member, the parent row for a tree child. Derived by `flattenVisible`'s walk from the node
-  // tree's own nesting; `undefined` on a top-level row and whenever nothing nests. Opaque:
-  // never parsed back apart, since a group id's separators differ from a tree id's.
+  /** The id of the render row this one nests beneath — a group header or tree parent.
+   * `undefined` for a top-level row. Opaque: never parse it apart. */
   readonly parentId?: RowId;
 
-  // The resolved value per column, keyed by declared column id — `accessor` output for a
-  // `kind: 'row'`, the group's own aggregates for a `kind: 'group'`. Stamped centrally in
-  // `engine/core.ts` after the whole RENDER_ORDER chain runs, alongside `index`/`sourceIndex`
-  // (ADR-0011). Does not follow column visibility or order: the consumer's own visible-column
-  // loop still decides what renders (ADR-0022). Values are raw — format with a pipe.
+  /** The resolved value per column, keyed by declared column id. Ignores column visibility
+   * and order (ADR-0022) — values are raw, format with a pipe. */
   readonly cells: Readonly<Record<string, unknown>>;
 }
 
@@ -91,43 +82,90 @@ export interface ColumnDef<TRow = unknown, TId extends string = string> {
   sortFn?: (a: TRow, b: TRow) => number;
   enableSorting?: boolean;
 
-  // Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity — never
-  // interpreted by the engine. Read via `readColumnMeta()`, written via `metadata()`
-  // (`columns-schema/metadata.ts`).
+  /** Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity; never read
+   * by the engine. Read via `readColumnMeta()`, written via `metadata()`. */
   meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
 }
 
-/**
- * Author-facing column shape accepted by `createTable()`'s `columns` config and
- * `setColumns()`. Only `id` is required; `accessor` defaults to `(row) => row[id]`, `visible`
- * to `true`, `order` to the array index, `label` to `id` — resolved to a full `ColumnDef` at
- * construction. `TId` defaults to `string` so existing references compile untouched.
- */
+/** Author-facing column shape for `createTable()`'s `columns` config and `setColumns()`. Only
+ * `id` is required — `accessor`, `visible`, `order` and `label` default to `(row) => row[id]`,
+ * `true`, the array index, and `id`; resolved to a full `ColumnDef` at construction. */
 export type ColumnDefInput<TRow = unknown, TId extends string = string> = Pick<
   ColumnDef<TRow, TId>,
   'id'
 > &
   Partial<Omit<ColumnDef<TRow, TId>, 'id'>>;
 
+// Type-only, never assigned at runtime: `createColumns()` receives declarations only from its
+// own `col()` builder, so nothing needs to ask "is this mine?" of an unknown value.
+declare const COLUMN_DECL: unique symbol;
+
+/** A single column declaration minted by `createColumns()`'s `col()` builder. Not hand-built —
+ * the brand member has no runtime counterpart. */
+export interface ColumnDecl<TRow, K extends string, V> {
+  readonly [COLUMN_DECL]: true;
+  readonly id: K;
+  readonly label?: string;
+  readonly visible?: boolean;
+  readonly accessor?: (row: TRow) => V;
+}
+
+/** Presentation-only column options — no id, no value source. */
+export interface Presentation {
+  readonly label?: string;
+  readonly visible?: boolean;
+}
+
+/** Builder handed to `createColumns(data, build)`'s `build` callback. */
+export interface ColumnBuilder<TRow> {
+  <K extends string, V>(
+    id: K,
+    opts: Presentation & { accessor: (row: TRow) => V }
+  ): ColumnDecl<TRow, K, V>;
+  <K extends string>(
+    id: K,
+    opts?: Presentation
+  ): ColumnDecl<TRow, K, K extends keyof TRow ? TRow[K] : unknown>;
+  /** Re-declares `decl` under a new id/accessor/presentation. Returns a fresh declaration —
+   * `decl` itself is untouched. */
+  from<K extends string, V>(
+    decl: ColumnDecl<TRow, string, unknown>,
+    opts: Presentation & { id?: K; accessor?: (row: TRow) => V }
+  ): ColumnDecl<TRow, K, V>;
+}
+
+/** `createColumns()`'s return: the declared columns plus any rules their schema recorded. */
+export interface ColumnSet<
+  TRow,
+  TCols extends readonly ColumnDecl<TRow, string, unknown>[],
+> {
+  readonly columns: TCols;
+  readonly rules: readonly ColumnRule<TRow>[];
+}
+
 /** The declared column-id → value map a table's columns derive. */
 export type ColumnValueMap = Record<string, unknown>;
 
-/** The declared column-id union carried by a value map. `Record<string, unknown>` — the
- * default — yields `string`, which is exactly the pre-#125 behaviour. */
+/** The declared column-id union carried by a value map — `string` for the default
+ * `Record<string, unknown>`. */
 export type ColumnIdIn<TValues extends ColumnValueMap> = keyof TValues & string;
 
-/** Maps each declared column id to the value behind it: a declared `accessor`'s return
- * type, else `TRow[id]` — exact, not a guess, because the engine's documented default
- * accessor *is* `(row) => row[id]`. */
+// Note: the `ColumnDecl` arm must run first — `ColumnDecl.accessor` is optional, so the
+// plain-accessor arm below would otherwise match an accessor-less `ColumnDecl` and fall through
+// to `TRow[id]`, losing the `V` resolved at the `col()` call site.
+/** Maps each declared column id to its resolved value type: a `ColumnDecl`'s own `V`, else an
+ * inferred `accessor` return, else `TRow[id]` (the engine's documented default accessor). */
 export type ColumnValues<
   TRow,
   TCols extends readonly ColumnDefInput<any, string>[],
 > = {
-  [C in TCols[number] as C['id']]: C extends { accessor: (row: any) => infer V }
+  [C in TCols[number] as C['id']]: C extends ColumnDecl<any, string, infer V>
     ? V
-    : C['id'] extends keyof TRow
-      ? TRow[C['id']]
-      : unknown;
+    : C extends { accessor: (row: any) => infer V }
+      ? V
+      : C['id'] extends keyof TRow
+        ? TRow[C['id']]
+        : unknown;
 };
 
 export type GroupingUpdater<TRow> = (grouping: string[]) => string[];
@@ -142,34 +180,32 @@ export interface ClusterSummary<TRow> {
   readonly rows: readonly TRow[];
 }
 
-/** What `groupOrder` compares: the same cluster, after admission is decided. `admitted: false`
- * ⇒ this cluster emits flat, no header. */
+/** A cluster after admission is decided. `admitted: false` ⇒ it emits flat, with no header. */
 export interface GroupSummary<TRow> extends ClusterSummary<TRow> {
   readonly admitted: boolean;
 }
 
 export type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
-/** What `groupOrder` compares: two siblings from the same level, after admission is
- * decided. `admitted: false` ⇒ that cluster emits flat, no header. */
+/** Compares two sibling clusters from the same level, after admission is decided — see
+ * `GroupSummary.admitted`. */
 export type GroupOrder<TRow> = (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
 
 export type DerivedDict = Record<string, Signal<unknown>>;
 
+// Note: the `any` below is an `infer` slot, not a constraint slot — it does not widen the
+// result. Mutating methods are statically indistinguishable from queries, so they stay.
 /** The derive block's parameter — every `WritableView` loses `.update`; everything else
- * passes through. Mutating methods are statically indistinguishable from queries and stay.
- * The `any` below is an `infer` slot, not a constraint slot — it does not widen the result. */
+ * passes through unchanged. */
 export type ReadonlyStore<S> = {
   readonly [K in keyof S]: S[K] extends WritableView<infer T, any> ? Signal<T> : S[K];
 };
 
-/**
- * `TCols` is what a call site can infer, `TValues` is what downstream reads. Deriving at the
- * config boundary is what keeps a plain array's id union inferring correctly — `TValues`
- * cannot appear here because nothing infers a map from a `keyof` position, so a
- * `TValues`-on-the-config shape would give every un-helped array nothing to infer from and
- * silently fall back to the constraint, losing the literal union.
- */
+// Note: `TCols` is what a call site infers; `TValues` is what downstream reads. Deriving at
+// the config boundary keeps a plain array's id union inferring correctly — nothing infers a
+// map from a `keyof` position, so a `TValues`-on-config shape would fall back to the
+// constraint and lose the literal union.
+/** Config accepted by `createTable()`: columns, trackBy, and optional schema/injector. */
 export interface TableConfig<
   TRow,
   TCols extends readonly ColumnDefInput<TRow, string>[] = readonly ColumnDefInput<TRow, string>[],
@@ -183,30 +219,25 @@ export interface TableConfig<
 }
 
 // The erased element type the engine folds at runtime — a dynamic-length list, not a
-// per-position generic. Consumers never name this: `createTable()`'s per-arity overloads
-// (Step 2) type each feature argument's `In`/`Out` individually.
+// per-position generic. Consumers never name this; `createTable()`'s per-arity overloads type
+// each feature argument's `In`/`Out` individually.
 export type AnyTableFeature = Feature<any, any>;
 
 export type ColumnsUpdater<TRow, TId extends string = string> = (
   columns: ColumnDef<TRow, TId>[]
 ) => ColumnDef<TRow, TId>[];
 
-/**
- * Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` so id-based
- * updaters (`removeRow`, `patchRow`) can resolve identity without needing a store reference
- * themselves — keeps them tree-shakeable and unit-testable standalone. The raw-lambda form
- * `rows => rows.filter(...)` satisfies this type too; it just ignores `ctx`.
- */
+/** Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` so id-based
+ * updaters (`removeRow`, `patchRow`) can resolve identity without a store reference. A raw
+ * lambda `rows => rows.filter(...)` also satisfies this type — it just ignores `ctx`. */
 export type RowUpdater<TRow> = (
   rows: TRow[],
   ctx: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
 ) => TRow[];
 
-/**
- * Public surface of a store returned by `createTable()`. This is the contract consumers
- * program against — it never references engine types, so swapping the internal
- * state-management implementation is not a breaking change.
- */
+/** Public surface of a store returned by `createTable()` — the contract consumers program
+ * against. Never references engine types, so swapping the internal implementation is not a
+ * breaking change. */
 export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMap> {
   /** Read: the folded, rule-applied column list. Write: `.update(updater)` — e.g.
    * `table.columns.update(reorderColumns(ids))`. */
@@ -222,18 +253,18 @@ export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMa
    * and editing features. */
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
 
-  // Total row count feeding `aria-rowcount` on `ngpTable` — distinct from
-  // `renderRows().length` once virtualization/pagination renders fewer rows than exist.
-  // Equals `rows().length` until a virtualization feature overrides it.
+  /** Row count feeding `aria-rowcount` on `ngpTable`; distinct from `renderRows().length`
+   * under virtualization/pagination. Equals `rows().length` until a virtualization feature
+   * overrides it. */
   readonly totalRowCount: Signal<number>;
 
   /** Read: the row data — the consumer's own signal, single source of truth. Write:
    * `.update(updater)` — e.g. `table.value.update(insertRow(row, { at: 0 }))`. */
   readonly value: WritableView<TRow[], RowUpdater<TRow>>;
 
-  /** Phantom. `TValues` is otherwise unrecoverable: `columns` carries only
-   * `keyof TValues & string`, and nothing infers a map from a `keyof`. Read by
-   * `ColumnValuesOf<S>`. Precedent: `FilterRule.__criterion` / `__row`
-   * (`engine/filters/types.ts:61-73`). */
+  // Precedent: `FilterRule.__criterion` / `__row` (`engine/filters/types.ts`) use the same
+  // phantom-property pattern.
+  /** Phantom — `TValues` is otherwise unrecoverable: `columns` carries only `keyof TValues &
+   * string`, and nothing infers a map from a `keyof`. Read by `ColumnValuesOf<S>`. */
   readonly __columnValues?: TValues;
 }

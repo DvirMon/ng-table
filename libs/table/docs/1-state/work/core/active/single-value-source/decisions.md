@@ -831,3 +831,72 @@ of the rulings themselves:
   behaviors per path, and says so. Registered as
   [G76](../../../../decisions/grouping.md). Source:
   [`conflicts-vs-unshipped.md`](conflicts-vs-unshipped.md) E2, via R7.
+
+---
+
+## `/to-tasks #130` rulings (2026-09-24)
+
+Raised while planning [#130](https://github.com/DvirMon/ng-table/issues/130);
+numbering continues the 2026-09-24 R-series.
+
+### Settled
+
+- **R9 — `createColumns` is data-first only; the builder-first form is
+  dropped.** `createColumns(data, build, schema?)` is the one call form. At
+  runtime both forms can arrive as `(fn, fn)` — `(data, build)` versus
+  `(build, schemaFn)` — and `data` is never invoked, so the implementation
+  cannot tell them apart without either a heuristic (counting
+  `args[0].length`) or a runtime brand, which contradicts the type-only
+  `ColumnDecl` brand (D7). Builder-first's inline-inside-`createTable` case
+  (P5d) is covered by writing data-first inline. Its one real case — a
+  module-level shared declaration with no data in scope, the five
+  `src/stories/*/fixtures/schema.ts` files — must now pass a row-typed data
+  witness; how the fixtures do that is
+  [#138](https://github.com/DvirMon/ng-table/issues/138)'s to settle.
+  Amends spec D1 and the design brief's builder-first rows (P5b, P5c, P5d).
+  The old curried `createColumns<TRow>()` zero-argument form coexists until
+  #138 rewrites its callers. Rejected: **one name with arity dispatch**
+  (a heuristic that misreads an empty `() => []` builder beside a schema fn);
+  **a separate name** (`defineColumns(build, schema?)`) — no ambiguity, but a
+  second entry point kept only for the fixtures.
+
+- **R10 — `col.from` captures an explicit `id` override, but not an omitted
+  one (open question 1, settled by probe).** `col.from(decl, { id: 'total' })`
+  types the result's `id` as the literal `'total'` — `K` is inferred from the
+  object-literal `id` property supplied at the call, matching decision 15's
+  assumption. `col.from(decl, { label: '…' })` with `id` omitted has no
+  inference source for `K` — `decl`'s own id arrives as `ColumnDecl<TRow,
+  string, unknown>` in `from`'s parameter type, so its literal is not visible
+  to recover — and `K` falls back to its `string` constraint. So the runtime
+  value still carries `decl`'s original id, but the *type* of an
+  id-omitting `from` call widens to `string` rather than staying literal.
+  Decision 15's severity claim needs no correction: the sanctioned variant
+  path (`col.from` with an explicit `id`) captures exactly as assumed.
+  Case: `create-columns.types.spec.ts` case 13 (#130).
+
+- **R11 — spreading a `ColumnDecl` and overriding `id` widens to `string`,
+  confirming decision 15's severity claim (open question 2, settled by
+  probe).** `{ ...col('amount'), id: 'total' }` placed in the columns array
+  types `id` as `string`: the array element's contextual type comes from
+  `TCols`'s constraint (`ColumnDecl<TRow, string, unknown>`), which supplies
+  no literal for the trailing `id: 'total'` property to narrow against. This
+  is TypeScript's ordinary widening, not a bug — decision 15 stands as
+  written, no correction owed. Case: `create-columns.types.spec.ts` case 14
+  (#130).
+
+- **R12 — `ColumnSet` needs no row-carrier phantom (open question 3, settled
+  by probe).** `TRow` recovers cleanly off `typeof dealColumns` via
+  `... extends ColumnSet<infer R, any> ? R : never`, resolving to `DealRow`.
+  `ColumnSet<TRow, TCols>` already carries `TRow` as a real, non-erased
+  generic parameter on the interface, so there is nothing to recover a
+  phantom for. Step 1 shipped `ColumnSet` with no phantom on this
+  assumption; this confirms it. Case: `create-columns.types.spec.ts` case 11
+  (#130).
+
+- **R13 — the `ColumnDecl` brand never leaks into `ColumnValues` (open
+  question 6, settled by probe).** `keyof ColumnValues<DealRow, typeof
+  dealColumns.columns>` is exactly the declared id union — no `[COLUMN_DECL]`
+  symbol key appears. `ColumnValues` remaps keys via `as C['id']`, which only
+  ever produces the declared string id, so the brand is structurally
+  excluded rather than merely absent by convention. Case:
+  `create-columns.types.spec.ts` case 12 (#130).
