@@ -9,9 +9,24 @@
   "stack": "angular",
   "isComplex": true,
   "decisionsPath": "libs/table/docs/1-state/work/core/active/single-value-source/decisions.md",
-  "specPath": null,
-  "architecturePath": "libs/table/docs/1-state/architecture.md",
-  "githubIssues": [110, 111, 112, 113, 114, 115, 116, 117, 100, 125],
+  "specPath": "libs/table/docs/1-state/work/core/active/single-value-source/2-spec.md",
+  "architecturePath": "libs/table/docs/1-state/work/core/active/single-value-source/3-architecture.md",
+  "githubIssues": [
+    110,
+    111,
+    112,
+    113,
+    114,
+    115,
+    116,
+    117,
+    100,
+    125,
+    127,
+    128,
+    129
+  ],
   "createdAt": "2026-09-20T00:00:00Z",
-  "updatedAt": "2026-09-21T12:00:00Z"
+  "updatedAt": "2026-09-24T00:00:00Z",
+  "capabilityLogPath": "libs/table/docs/decisions/grouping.md"
 }
