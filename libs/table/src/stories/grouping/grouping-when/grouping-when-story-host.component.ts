@@ -1,5 +1,5 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { applyGrouping, createTable, withGrouping, type GroupKey } from '../../../index';
+import { createTable, grouping, withGrouping, type GroupKey } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -16,7 +16,7 @@ function isPresentKey(key: GroupKey): boolean {
  * Cluster admission — `when`
  *
  * Two predicates, AND-combined. The table-wide `when` is judged at every active level; the
- * per-column one comes off an `applyGrouping` rule and judges its own column only.
+ * per-column one comes off a `grouping` rule and judges its own column only.
  *
  * A rejected cluster is not hidden — its rows render flat at the parent's depth, with no header,
  * no group id and no aggregates. Rejecting at level 1 therefore takes those rows out of level 2
@@ -49,7 +49,7 @@ export class GroupingWhenStoryHostComponent {
       // predicate for 'category'. Reading the signals inside the predicate, rather than
       // rebuilding the rule, is what makes the toggle reactive.
       schema: (path) =>
-        applyGrouping(path.category, {
+        grouping(path.category, {
           when: (cluster) =>
             !this.applyMinCategorySize() ||
             cluster.rows.length >= this.minCategoryRowCountValue(),

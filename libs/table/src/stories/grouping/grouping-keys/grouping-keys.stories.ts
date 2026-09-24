@@ -21,15 +21,15 @@ export default meta;
 type Story = StoryObj<GroupingKeysStoryHostComponent>;
 
 /**
- * Key derivation and label naming — `applyGroupKey` + `label` (D9)
+ * Key derivation and label naming — `groupKey` + `label` (D9)
  *
- * Two declarators, one lesson: `applyGroupKey(path.closedAt, extractValue)` decides what a level
+ * Two declarators, one lesson: `groupKey(path.closedAt, extractValue)` decides what a level
  * clusters *on*; an `initial` entry's `label` decides what its header *calls itself*.
  *
  * `Sales Region`'s explicit `initial` label wins over its column's own. `Closed` has none, so it
  * falls back to the `closedAt` column's own label.
  *
- * `bucketClosedAtByMonth` toggles `applyGroupKey`: on, twelve distinct timestamps collapse into
+ * `bucketClosedAtByMonth` toggles `groupKey`: on, twelve distinct timestamps collapse into
  * five month buckets; off, the engine groups on the exact `Date` instead — it never coarsens a
  * key on its own (D7).
  */

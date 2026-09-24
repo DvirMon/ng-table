@@ -1,5 +1,5 @@
 import { columnSchema } from './schema';
-import { applyVisible, applyVisibleAsync } from './rules';
+import { visible, visibleAsync } from './rules';
 import type { ColumnHandle, ColumnsPath } from './types';
 import type { ColumnDefInput } from '../api/types';
 import { resolveColumnsConfig } from '../engine/columns-schema';
@@ -20,9 +20,9 @@ function makeColumns() {
 }
 
 describe('columnSchema', () => {
-  it('records an applyVisible rule for the targeted column', () => {
+  it('records a visible rule for the targeted column', () => {
     const schema = columnSchema<Row, MockColumnId>((path) => {
-      applyVisible(path.status, { when: () => false });
+      visible(path.status, { when: () => false });
     });
 
     expect(schema.kind).toBe('column-schema');
@@ -35,8 +35,8 @@ describe('columnSchema', () => {
 
   it('records multiple rules across different columns in call order', () => {
     const schema = columnSchema<Row, MockColumnId>((path) => {
-      applyVisible(path.status, { when: () => true });
-      applyVisible(path.name, { when: () => false });
+      visible(path.status, { when: () => true });
+      visible(path.name, { when: () => false });
     });
 
     expect(schema.rules.map((rule) => rule.columnId)).toEqual([
@@ -45,9 +45,9 @@ describe('columnSchema', () => {
     ]);
   });
 
-  it('records an applyVisibleAsync rule', () => {
+  it('records a visibleAsync rule', () => {
     const schema = columnSchema<Row, MockColumnId>((path) => {
-      applyVisibleAsync(path.status, {
+      visibleAsync(path.status, {
         params: () => 'role',
         factory: () =>
           ({
@@ -74,7 +74,7 @@ describe('columnSchema', () => {
 
     expect(stashedPath).toBeDefined();
     expect(() => {
-      applyVisible((stashedPath as ColumnsPath<Row, MockColumnId>).status, {
+      visible((stashedPath as ColumnsPath<Row, MockColumnId>).status, {
         when: () => true,
       });
     }).toThrow(/outside its schema function/);
@@ -87,11 +87,11 @@ describe('columnSchema', () => {
     });
 
     const second = columnSchema<Row, MockColumnId>((path) => {
-      applyVisible(path.status, { when: () => true });
+      visible(path.status, { when: () => true });
     });
 
     expect(() =>
-      applyVisible(firstHandle as ColumnHandle<Row>, { when: () => true })
+      visible(firstHandle as ColumnHandle<Row>, { when: () => true })
     ).toThrow();
     expect(second.rules).toHaveLength(1);
   });
@@ -111,7 +111,7 @@ describe('resolveColumnsConfig', () => {
     const columns = makeColumns();
 
     const resolved = resolveColumnsConfig(columns, (path) => {
-      applyVisible(path.status, { when: () => false });
+      visible(path.status, { when: () => false });
     });
 
     expect(resolved.rules).toHaveLength(1);
@@ -121,7 +121,7 @@ describe('resolveColumnsConfig', () => {
   it('accepts a standalone columnSchema() value directly', () => {
     const columns = makeColumns();
     const schema = columnSchema<Row, MockColumnId>((path) => {
-      applyVisible(path.name, { when: () => true });
+      visible(path.name, { when: () => true });
     });
 
     const resolved = resolveColumnsConfig(columns, schema);
@@ -140,7 +140,7 @@ describe('resolveColumnsConfig', () => {
 
     expect(() =>
       resolveColumnsConfig<WithExtra, 'name' | 'status' | 'extra'>(columns, (path) => {
-        applyVisible(path.extra, { when: () => true });
+        visible(path.extra, { when: () => true });
       })
     ).toThrow(/Unknown column id "extra"/);
   });

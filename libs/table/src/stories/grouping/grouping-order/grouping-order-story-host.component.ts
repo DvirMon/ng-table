@@ -1,8 +1,8 @@
 import { Component, computed, input, signal } from '@angular/core';
 import {
   addGroupLevel,
-  applyGroupOrder,
   createTable,
+  groupOrder,
   removeGroupLevel,
   setGroupLevels,
   withGrouping,
@@ -29,7 +29,7 @@ function externalRank(key: unknown): number {
 }
 
 /**
- * Sibling order — `applyGroupOrder`
+ * Sibling order — `groupOrder`
  *
  * Orders group *headers* among their siblings at one level. Not the rows inside a group, not
  * which groups exist (`when`), not which columns are levels (`initial`). `withSorting()` is
@@ -39,8 +39,8 @@ function externalRank(key: unknown): number {
  * while scanning the rows. A comparator receives `GroupSummary`, not a row, which is what makes
  * ordering by a cluster's size or by a caller's own ranking ordinary code.
  *
- * `applyGroupOrder` never activates or deactivates a level: on a column that is not currently a
- * level it is a silent no-op. That is the split from `applyGrouping`.
+ * `groupOrder` never activates or deactivates a level: on a column that is not currently a
+ * level it is a silent no-op. That is the split from `grouping`.
  */
 @Component({
   selector: 'ngp-grouping-order-story-host',
@@ -84,11 +84,11 @@ export class GroupingOrderStoryHostComponent {
     withGrouping({
       initial: BASE_GROUPING_LEVELS,
       schema: (path) => {
-        applyGroupOrder(path.region, this.compareGroups);
-        applyGroupOrder(path.category, this.compareGroups);
+        groupOrder(path.region, this.compareGroups);
+        groupOrder(path.category, this.compareGroups);
         // Declared for a field that is not a level right now. Never activates one — this line is
-        // inert until `rep` is added below, which is the whole difference from `applyGrouping`.
-        applyGroupOrder(path.rep, this.compareGroups);
+        // inert until `rep` is added below, which is the whole difference from `grouping`.
+        groupOrder(path.rep, this.compareGroups);
       },
     }),
     withSorting()

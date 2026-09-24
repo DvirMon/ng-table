@@ -1,6 +1,6 @@
 import { Component, computed, input, signal } from '@angular/core';
 import type { HttpResourceRef } from '@angular/common/http';
-import { applyGroupingAsync, createTable, withGrouping } from '../../../index';
+import { createTable, groupingAsync, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupingPreferenceResource, type GroupingPreference } from '../fixtures/http';
 import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
@@ -10,7 +10,7 @@ import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 /**
  * Server-decided grouping level
  *
- * An `applyGroupingAsync()`-shaped column rule lets the server choose the grouping level.
+ * A `groupingAsync()`-shaped column rule lets the server choose the grouping level.
  * While unresolved, the table holds the last explicit grouping; once resolved, it replaces
  * the level set outright.
  *
@@ -39,7 +39,7 @@ export class GroupingAsyncRuleStoryHostComponent {
     withGrouping({
       initial: BASE_GROUPING_LEVELS,
       schema: (path) =>
-        applyGroupingAsync(path.rep, {
+        groupingAsync(path.rep, {
           params: () => ({ forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }),
           factory: (params) => {
             const ref = createGroupingPreferenceResource(params);

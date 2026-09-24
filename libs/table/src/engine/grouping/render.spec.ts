@@ -181,7 +181,7 @@ describe('buildGroupRenderRows', () => {
     expect(collectLeafRows(result)).toHaveLength(5);
   });
 
-  describe('applyGroupKey and label resolution (D9)', () => {
+  describe('groupKey and label resolution (D9)', () => {
     it("runs a level's raw field value through its extractValue extractor before it becomes the group key", () => {
       const seed = toSeedRenderRows(orders);
       const bucketByRegion = new Map<string, (fieldValue: unknown) => unknown>([

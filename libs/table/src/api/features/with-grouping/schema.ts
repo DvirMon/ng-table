@@ -135,7 +135,7 @@ export { applyGroupingAsync as groupingAsync };
  *
  * @remarks
  * Note: a rule on a column with no active level is a silent no-op — this never activates or
- * deactivates a level, unlike `applyGrouping`. The comparator receives `GroupSummary`
+ * deactivates a level, unlike `grouping`. The comparator receives `GroupSummary`
  * (post-admission), so it can place a dissolved cluster's rows anywhere among siblings.
  */
 export function applyGroupOrder<TRow, K extends string>(
@@ -155,7 +155,7 @@ export { applyGroupOrder as groupOrder };
 /**
  * Declares one column's aggregate — a summary value computed per cluster,
  * over that cluster's own leaves at every depth. Positional, like
- * `applyGroupOrder`/`applyGroupKey` — one concern, no options bag. Never
+ * `groupOrder`/`groupKey` — one concern, no options bag. Never
  * activates a level: a rule on a column with no active level is inert.
  */
 export function applyAggregate<TRow, K extends string>(

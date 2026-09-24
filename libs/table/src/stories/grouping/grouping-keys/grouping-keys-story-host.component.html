@@ -1,6 +1,6 @@
 <div class="story-host">
   <p class="story-host__hint">
-    Two declarators, one lesson: <code>applyGroupKey</code> decides what a level clusters
+    Two declarators, one lesson: <code>groupKey</code> decides what a level clusters
     <em>on</em>; an <code>initial</code> entry's <code>label</code> decides what its header
     <em>calls itself</em>. Every header below shows both, as <code>label: value</code>.
   </p>
@@ -12,7 +12,7 @@
   </p>
 
   <p class="grouping-story__notice">
-    <code>applyGroupKey</code> buckets <code>closedAt</code> into a <code>YYYY-MM</code> string.
+    <code>groupKey</code> buckets <code>closedAt</code> into a <code>YYYY-MM</code> string.
     Twelve distinct timestamps collapse into <strong>{{ table.groupIds().length }}</strong> group
     ids. Turn the toggle off in Controls and the engine groups on the exact <code>Date</code>
     instead — it never coarsens a key on its own (D7).

@@ -1,6 +1,6 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import { createTable } from '../../create-table';
-import { applyGroupKey, applyGrouping } from './schema';
+import { groupKey, grouping } from './schema';
 import { withGrouping } from './feature';
 import type { WritableView } from '../../../engine/writable-view';
 import type { ColumnDef, GroupingUpdater, TableDataInput } from '../../types';
@@ -8,7 +8,7 @@ import type { ColumnDef, GroupingUpdater, TableDataInput } from '../../types';
 /**
  * Compile-time half of Step 7 (#114) — `initial`'s string shorthand, the `key` -> `columnId`
  * rename, a typo in `initial`, and `schema`'s `path` being keyed by declared column id (G68's
- * `applyGroupKey` extractor is `unknown`, at the type level as well as runtime). **`nx run
+ * `groupKey` extractor is `unknown`, at the type level as well as runtime). **`nx run
  * shared-table:typecheck-spec` is what enforces this file** — the runner executes
  * `expectTypeOf` and `@ts-expect-error` without typechecking either.
  *
@@ -122,7 +122,7 @@ describe('initial — a typo is rejected', () => {
   });
 });
 
-describe("schema's path is keyed by declared column id; applyGroupKey's extractor is unknown (G68)", () => {
+describe("schema's path is keyed by declared column id; groupKey's extractor is unknown (G68)", () => {
   it('path.<declaredId> autocompletes, a typo is rejected, and the extractor parameter is unknown', () => {
     typecheckOnly(() => {
       const table = createTable(
@@ -131,15 +131,15 @@ describe("schema's path is keyed by declared column id; applyGroupKey's extracto
         withGrouping({
           initial: ['region'],
           schema: (path) => {
-            applyGrouping(path.region, { enable: () => true });
+            grouping(path.region, { enable: () => true });
 
-            applyGroupKey(path.region, (value) => {
+            groupKey(path.region, (value) => {
               expectTypeOf(value).toEqualTypeOf<unknown>();
               return String(value);
             });
 
             // @ts-expect-error — 'regionn' was never declared in columns.
-            applyGrouping(path.regionn, { enable: () => true });
+            grouping(path.regionn, { enable: () => true });
           },
         })
       );

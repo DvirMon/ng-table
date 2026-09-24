@@ -24,7 +24,7 @@ export default meta;
 type Story = StoryObj<GroupingOrderStoryHostComponent>;
 
 /**
- * Sibling order — `applyGroupOrder`
+ * Sibling order — `groupOrder`
  *
  * The order group **headers** appear among their siblings at one level. Not the rows inside a
  * group (`withSorting()`), not which groups exist (`when`), not which columns are levels
@@ -38,7 +38,7 @@ type Story = StoryObj<GroupingOrderStoryHostComponent>;
  * sibling pair and the table stays up, falling back to first-occurrence order and reporting once
  * per evaluation (ADR-0014).
  *
- * A comparator is also declared for `Rep`, which is not a level by default — `applyGroupOrder`
+ * A comparator is also declared for `Rep`, which is not a level by default — `groupOrder`
  * never activates one, so that declaration is inert until the canvas button adds it.
  *
  * Composes `withSorting()` bare and trailing so the header order has a row sort to contrast

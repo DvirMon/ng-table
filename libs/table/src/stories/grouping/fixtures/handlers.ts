@@ -12,9 +12,9 @@ async function simulateNetwork(request: Request): Promise<{ forceFailure: boolea
   return { forceFailure: request.headers.get('x-force-failure') === 'true' };
 }
 
-/** A deep copy, so every response hands back rows the client has never seen before. Returning the
- * module-level fixture array would make `grouping-collapsible/`'s "collapse state survives a
- * refetch" check vacuous — the rows would be the same objects it already had. */
+/** Deep-copies so every response returns fresh row objects; returning the module-level fixture
+ * directly would make `grouping-collapsible/`'s "collapse state survives a refetch" check
+ * vacuous — same objects every time. */
 function toFreshRow(row: DealRow): DealRow {
   const children = row.children?.map(toFreshRow);
   return { ...row, closedAt: new Date(row.closedAt), ...(children ? { children } : {}) };
@@ -22,9 +22,8 @@ function toFreshRow(row: DealRow): DealRow {
 
 /**
  * Stand-in server for the grouping stories. Read-only — grouping never mutates server-side.
- * Behaviour is driven by the request headers the story hosts set from their Storybook
- * `forceFailure`/`latencyMs` args, so a failure or a slow response is a genuine intercepted
- * round trip rather than a fake `await`.
+ * Behaviour follows the request headers the story hosts set from their Storybook
+ * `forceFailure`/`latencyMs` args — a genuine intercepted round trip, not a fake `await`.
  */
 export const groupingHandlers = [
   /** The refetch `grouping-collapsible/` races collapse state against. */
@@ -38,9 +37,9 @@ export const groupingHandlers = [
     return HttpResponse.json({ rows, total: rows.length });
   }),
 
-  /** Backs `grouping-async-rule/`'s `applyGroupingAsync()` rule: whether `rep` is an active grouping
+  /** Backs `grouping-async-rule/`'s `groupingAsync()` rule: whether `rep` is an active grouping
    * level is a server decision the table waits on. A forced failure is what makes the rule's
-   * required `onError` produce an explicit boolean instead of abstaining (D13/D15). */
+   * required `onError` produce an explicit boolean instead of abstaining. */
   http.get('/api/grouping-preference', async ({ request }) => {
     const { forceFailure } = await simulateNetwork(request);
     if (forceFailure) {

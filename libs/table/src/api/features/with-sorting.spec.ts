@@ -1,7 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { applySortNulls } from '../../columns-schema/rules';
+import { sortNulls } from '../../columns-schema/rules';
 import { createTable } from '../create-table';
 import { withComputed } from './with-computed';
 import { withSorting, type SortingMembers } from './with-sorting';
@@ -455,7 +455,7 @@ describe('withSorting', () => {
             trackBy: 'id',
             columns: makeNullableColumns(),
             columnsSchema: (path) => {
-              applySortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
+              sortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
             },
           },
           withSorting()
@@ -497,15 +497,15 @@ describe('withSorting', () => {
       expect(store.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
     });
 
-    it('throws at resolve time when applySortNulls is registered twice on one column', () => {
+    it('throws at resolve time when sortNulls is registered twice on one column', () => {
       expect(() =>
         inContext(() =>
           createTable(signal<NullableRow[]>([]), {
             trackBy: 'id',
             columns: makeNullableColumns(),
             columnsSchema: (path) => {
-              applySortNulls(path.note, { order: 'first' });
-              applySortNulls(path.note, { order: 'last' });
+              sortNulls(path.note, { order: 'first' });
+              sortNulls(path.note, { order: 'last' });
             },
           })
         )

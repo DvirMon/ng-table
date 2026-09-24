@@ -19,7 +19,7 @@ import {
   reorderGroupLevels,
   setGroupLevels,
 } from '../../../mutations/update-grouping';
-import { applyAggregate, applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema';
+import { aggregate, grouping, groupingAsync, groupOrder } from './schema';
 import type { GroupingHandle } from './types';
 import type { WritableView } from '../../../engine/writable-view';
 import { filter } from '../with-filtering/rules';
@@ -70,7 +70,7 @@ function makeColumns() {
   ] satisfies ColumnDef<GroupingMockRow>[];
 }
 
-/** Average `amount` across a cluster's own leaves — declared via `applyAggregate` in `schema`
+/** Average `amount` across a cluster's own leaves — declared via `aggregate` in `schema`
  * now that `ColumnDef` no longer carries `aggregateFn` (Step 4). */
 const avgAmount = (rows: GroupingMockRow[]): number =>
   rows.reduce((sum, row) => sum + row.amount, 0) / rows.length;
@@ -188,7 +188,7 @@ describe('withGrouping', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          schema: (path) => applyAggregate(path.amount, avgAmount),
+          schema: (path) => aggregate(path.amount, avgAmount),
         })
       )
     );
@@ -257,7 +257,7 @@ describe('withGrouping', () => {
         withFiltering({ schema: excludeAmount300 }),
         withGrouping({
           initial: ['region', 'category'],
-          schema: (path) => applyAggregate(path.amount, avgAmount),
+          schema: (path) => aggregate(path.amount, avgAmount),
         })
       )
     );
@@ -281,7 +281,7 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region'],
           schema: (path) =>
-            applyGroupOrder(path.region, (a, b) => b.rows.length - a.rows.length),
+            groupOrder(path.region, (a, b) => b.rows.length - a.rows.length),
         })
       )
     );
@@ -329,7 +329,7 @@ describe('withGrouping', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          schema: (path) => applyGroupOrder(path.category, (a, b) => b.rows.length - a.rows.length),
+          schema: (path) => groupOrder(path.category, (a, b) => b.rows.length - a.rows.length),
         })
       )
     );
@@ -367,7 +367,7 @@ describe('withGrouping', () => {
           // `path.region`, never to `path.category` — category never has a comparator, so it
           // stays on the stable admission-partition default at every depth.
           schema: (path) =>
-            applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key))),
+            groupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key))),
         })
       )
     );
@@ -415,7 +415,7 @@ describe('withGrouping', () => {
     expect(sortedClusterOrder).toEqual(unsortedClusterOrder);
   });
 
-  it('applyGroupOrder pins header order across a sort on a non-grouped column (G5)', () => {
+  it('groupOrder pins header order across a sort on a non-grouped column (G5)', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -423,7 +423,7 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region'],
           schema: (path) => {
-            applyGroupOrder(path.region, (a, b) => String(b.key).localeCompare(String(a.key)));
+            groupOrder(path.region, (a, b) => String(b.key).localeCompare(String(a.key)));
           },
         }),
         withSorting()
@@ -454,7 +454,7 @@ describe('withGrouping', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) =>
-              applyGroupOrder(path.region, () => {
+              groupOrder(path.region, () => {
                 throw new Error('boom');
               }),
           })
@@ -482,8 +482,8 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region', 'category'],
           schema: (path) => {
-            applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)));
-            applyGroupOrder(path.category, (a, b) => b.rows.length - a.rows.length);
+            groupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)));
+            groupOrder(path.category, (a, b) => b.rows.length - a.rows.length);
           },
         })
       )
@@ -511,7 +511,7 @@ describe('withGrouping', () => {
     ]);
   });
 
-  it('applyGroupOrder on a column with no active level is a silent no-op — no reordering, no throw', () => {
+  it('groupOrder on a column with no active level is a silent no-op — no reordering, no throw', () => {
     const store = inContext(() =>
       createTable(
         signal<GroupingMockRow[]>(mockGroupingRows),
@@ -519,9 +519,9 @@ describe('withGrouping', () => {
         withGrouping({
           initial: ['region'],
           schema: (path) =>
-            // 'amount' is never grouped by (not in `initial`, never named by `applyGrouping`) —
+            // 'amount' is never grouped by (not in `initial`, never named by `grouping`) —
             // this comparator has no active level to attach to and must never run.
-            applyGroupOrder(path.amount, (a, b) => String(b.key).localeCompare(String(a.key))),
+            groupOrder(path.amount, (a, b) => String(b.key).localeCompare(String(a.key))),
         })
       )
     );
@@ -544,7 +544,7 @@ describe('withGrouping', () => {
         { trackBy: mockGroupingTrackBy, columns: makeColumns() },
         withGrouping({
           initial: ['region', 'category'],
-          schema: (path) => applyAggregate(path.amount, avgAmount),
+          schema: (path) => aggregate(path.amount, avgAmount),
         })
       )
     );
@@ -648,7 +648,7 @@ describe('unknown column ids throw (AC #4)', () => {
     ).toThrow(/\[withGrouping\].*"nope"/);
   });
 
-  it('an unknown id declared through schema (applyGrouping) throws the same way as initial', () => {
+  it('an unknown id declared through schema (grouping) throws the same way as initial', () => {
     expect(() =>
       inContext(() =>
         createTable(
@@ -656,14 +656,14 @@ describe('unknown column ids throw (AC #4)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
           withGrouping({
             initial: ['region'],
-            schema: (path) => applyGrouping(path['nope'], { enable: () => true }),
+            schema: (path) => grouping(path['nope'], { enable: () => true }),
           })
         )
       )
     ).toThrow(/\[withGrouping\].*"nope"/);
   });
 
-  it('applyAggregate on an undeclared id throws the same construction-time check — it rides Step 1, not a second one (G59)', () => {
+  it('aggregate on an undeclared id throws the same construction-time check — it rides Step 1, not a second one (G59)', () => {
     expect(() =>
       inContext(() =>
         createTable(
@@ -671,7 +671,7 @@ describe('unknown column ids throw (AC #4)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeWidenedColumns() },
           withGrouping({
             initial: ['region'],
-            schema: (path) => applyAggregate(path['nope'], (rows) => rows.length),
+            schema: (path) => aggregate(path['nope'], (rows) => rows.length),
           })
         )
       )
@@ -728,7 +728,7 @@ describe('unknown column ids throw (AC #4)', () => {
   });
 });
 
-describe('applyAggregate over a derived-accessor column (AC #6)', () => {
+describe('aggregate over a derived-accessor column (AC #6)', () => {
   it('aggregates a column whose value comes from an accessor, not a raw row field', () => {
     const columns = [
       ...makeColumns(),
@@ -748,7 +748,7 @@ describe('applyAggregate over a derived-accessor column (AC #6)', () => {
         withGrouping({
           initial: ['region'],
           schema: (path) =>
-            applyAggregate(path.amountDoubled, (rows) =>
+            aggregate(path.amountDoubled, (rows) =>
               rows.reduce((sum, row) => sum + row.amount * 2, 0)
             ),
         })
@@ -1309,7 +1309,7 @@ describe('pipeline order (story 22)', () => {
 /**
  * Minimal controllable `Resource` test double — mirrors `engine/grouping-rules.spec.ts`'s
  * `makeControllableResource`/`makeAsyncRule` (Step 3), reused here for public-surface
- * (`schema`-recorded `applyGroupingAsync`) coverage rather than inventing a second harness. Only
+ * (`schema`-recorded `groupingAsync`) coverage rather than inventing a second harness. Only
  * the subset `buildAsyncGroupingRuleEntry` actually reads (`status`, `value`, `error`).
  */
 function makeControllableResource<TResult>(): {
@@ -1340,7 +1340,7 @@ function applyAsyncGroupingRule(
   control: { resource: Resource<unknown> },
   onError: (error: unknown) => boolean = () => false
 ): void {
-  applyGroupingAsync(path, {
+  groupingAsync(path, {
     params: () => 'p',
     factory: () => control.resource,
     onSuccess: (result) => Boolean(result),
@@ -1349,8 +1349,8 @@ function applyAsyncGroupingRule(
 }
 
 describe('grouping declarative sugar (#26)', () => {
-  // `applyGroupingAsync` without `onError` is a `@ts-expect-error` compile-time case, already
-  // covered by `schema.spec.ts` (Step 3, "applyGroupingAsync without onError is a compile
+  // `groupingAsync` without `onError` is a `@ts-expect-error` compile-time case, already
+  // covered by `schema.spec.ts` (Step 3, "groupingAsync without onError is a compile
   // error") — not duplicated here.
 
   describe('enable masks the declared array: no-introduce / hold / off', () => {
@@ -1365,7 +1365,7 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => true });
+              grouping(path.category, { enable: () => true });
             },
           })
         )
@@ -1382,7 +1382,7 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.region, { enable: () => undefined });
+              grouping(path.region, { enable: () => undefined });
             },
           })
         )
@@ -1399,7 +1399,7 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.region, { enable: () => false });
+              grouping(path.region, { enable: () => false });
             },
           })
         )
@@ -1422,8 +1422,8 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region', 'category'],
             schema: (path) => {
-              applyGrouping(path.region, { enable: () => regionActive() });
-              applyGrouping(path.category, { enable: () => categoryActive() });
+              grouping(path.region, { enable: () => regionActive() });
+              grouping(path.category, { enable: () => categoryActive() });
             },
           })
         )
@@ -1441,8 +1441,8 @@ describe('grouping declarative sugar (#26)', () => {
             initial: ['region', 'category'],
             // Deliberately recorded in the opposite order to `initial`.
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => true });
-              applyGrouping(path.region, { enable: () => true });
+              grouping(path.category, { enable: () => true });
+              grouping(path.region, { enable: () => true });
             },
           })
         )
@@ -1459,8 +1459,8 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region', 'category'],
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => true });
-              applyGrouping(path.region, { enable: () => false });
+              grouping(path.category, { enable: () => true });
+              grouping(path.region, { enable: () => false });
             },
           })
         )
@@ -1482,7 +1482,7 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => categoryActive() });
+              grouping(path.category, { enable: () => categoryActive() });
             },
           })
         )
@@ -1503,7 +1503,7 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => undefined });
+              grouping(path.category, { enable: () => undefined });
             },
           })
         )
@@ -1515,7 +1515,7 @@ describe('grouping declarative sugar (#26)', () => {
           { trackBy: mockGroupingTrackBy, columns: makeColumns() },
           withGrouping({
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => undefined });
+              grouping(path.category, { enable: () => undefined });
             },
           })
         )
@@ -1585,7 +1585,7 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region'],
             schema: (path) => {
-              applyGrouping(path.category, { enable: () => undefined });
+              grouping(path.category, { enable: () => undefined });
             },
           })
         )
@@ -1602,8 +1602,8 @@ describe('grouping declarative sugar (#26)', () => {
           withGrouping({
             initial: ['region', 'category'],
             schema: (path) => {
-              applyGrouping(path.region, { enable: () => true });
-              applyGrouping(path.category, { enable: () => false });
+              grouping(path.region, { enable: () => true });
+              grouping(path.category, { enable: () => false });
             },
           })
         )
@@ -1649,8 +1649,8 @@ describe('grouping declarative sugar (#26)', () => {
             withGrouping({
               initial: ['region', 'category'],
               schema: (path) => {
-                applyGrouping(path.region, { enable: () => true });
-                applyGrouping(path.category, {
+                grouping(path.region, { enable: () => true });
+                grouping(path.category, {
                   enable: () => {
                     throw new Error('boom');
                   },
@@ -1683,13 +1683,13 @@ describe('grouping declarative sugar (#26)', () => {
             withGrouping({
               initial: ['region'],
               schema: (path) => {
-                applyGrouping(path.category, {});
+                grouping(path.category, {});
               },
             })
           )
         )
       ).toThrow(
-        "[withGrouping] applyGrouping on field 'category' declares neither enable nor when."
+        "[withGrouping] grouping on field 'category' declares neither enable nor when."
       );
     });
   });
@@ -1703,8 +1703,8 @@ describe('grouping declarative sugar (#26)', () => {
           initial: ['region', 'category'],
           schema: (path) => {
             // `when`-only: contributes no entry, so it can never mask `region` off.
-            applyGrouping(path.region, { when: () => true });
-            applyGrouping(path.category, { enable: () => false });
+            grouping(path.region, { when: () => true });
+            grouping(path.category, { enable: () => false });
           },
         })
       )
@@ -1724,7 +1724,7 @@ describe('grouping declarative sugar (#26)', () => {
         withGrouping({
           initial: ['region'],
           schema: (path) => {
-            applyGrouping(path.region, { enable: () => true });
+            grouping(path.region, { enable: () => true });
           },
         })
       )
@@ -2011,7 +2011,7 @@ describe('when (#85 table-wide admission)', () => {
           withGrouping({
             initial: ['region'],
             when: (c) => c.rows.length >= 2,
-            schema: (path) => applyAggregate(path.amount, throwingAggregateFn),
+            schema: (path) => aggregate(path.amount, throwingAggregateFn),
           })
         )
       );
@@ -2054,7 +2054,7 @@ describe('when (#85 table-wide admission)', () => {
           initial: ['region'],
           when: (c) => c.rows.length >= 2,
           schema: (path) =>
-            applyGroupOrder(path.region, (a, b) => Number(a.admitted) - Number(b.admitted)),
+            groupOrder(path.region, (a, b) => Number(a.admitted) - Number(b.admitted)),
         })
       )
     );
@@ -2217,7 +2217,7 @@ describe('types', () => {
     // @ts-expect-error — the either/or first positional is gone (#84); a schema fn belongs in
     // `config.schema`.
     withGrouping((path) => {
-      applyGrouping(path.region, { enable: () => true });
+      grouping(path.region, { enable: () => true });
     });
   });
 

@@ -10,7 +10,7 @@ import type {
 /**
  * Run phase: turns compiled `ColumnRule`s into `ColumnRuleEntry` values the engine folds onto
  * `baseColumns` (`foldColumnRules`) — one path for both consumer `metadata()` and
- * `applyVisible`/`applyVisibleAsync` (convenience wrappers over the same primitive, see
+ * `visible`/`visibleAsync` (convenience wrappers over the same primitive, see
  * `columns-schema/rules.ts`). Async entries construct a `resource()`, which requires an injection
  * context — every function here must be called from inside one (the engine guarantees that by
  * running `composeTable()` under the owner's).
@@ -29,7 +29,7 @@ export function isMetadataAsyncRule<TRow>(
 }
 
 /**
- * One `ColumnRuleEntry` per `metadata()`/`applyVisible()` call. `logic` resolves as a reactive
+ * One `ColumnRuleEntry` per `metadata()`/`visible()` call. `logic` resolves as a reactive
  * closure or a plain value — both wrapped in the same `computed()` so the fold in
  * `engine/columns.ts` doesn't need to know which. Grouping/combining by `(columnId, key)`
  * happens in `foldColumnRules`, not here.

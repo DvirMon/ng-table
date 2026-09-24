@@ -3,7 +3,7 @@ import { form, FormField } from '@angular/forms/signals';
 import type { GroupKey } from '../../../api/types';
 import { createTable } from '../../../api/create-table';
 import { withGrouping } from '../../../api/features/with-grouping';
-import { applyGroupOrder } from '../../../api/features/with-grouping/schema';
+import { groupOrder } from '../../../api/features/with-grouping/schema';
 import { withSorting } from '../../../api/features/with-sorting';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowAnimationDirective } from '../../../directives/ngp-table-row-animation.directive';
@@ -32,7 +32,7 @@ function hasCategory(key: GroupKey): boolean {
  * FLIP glide, so the row animates into its new group instead of jumping there, and
  * `animate.enter`/`animate.leave` fade a header in or out as it's created or emptied.
  *
- * `applyGroupOrder` keeps headers alphabetical. Sorting by name reorders rows inside each group
+ * `groupOrder` keeps headers alphabetical. Sorting by name reorders rows inside each group
  * and never moves a header — without the comparator, headers would follow the sort's
  * first occurrence.
  */
@@ -61,7 +61,7 @@ export class GroupingEditingStoryHostComponent {
       initial: ['category'],
       when: (cluster) => hasCategory(cluster.key),
       schema: (path) => {
-        applyGroupOrder(path['category'], compareCategoryGroups);
+        groupOrder(path['category'], compareCategoryGroups);
       },
     }),
     withSorting()

@@ -78,7 +78,7 @@ export class SortingEditingStoryHostComponent {
     );
   }
 
-  /** Adds a row with a `null` `dueDate` — demonstrates the shipped `applySortNulls()` default
+  /** Adds a row with a `null` `dueDate` — demonstrates the shipped `sortNulls()` default
    * (S-2): stable, direction-independent placement regardless of which way `dueDate` is sorted. */
   protected addRowWithBlankDueDate(): void {
     const id = crypto.randomUUID();

@@ -1,5 +1,5 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { applyGroupKey, createTable, withGrouping } from '../../../index';
+import { createTable, groupKey, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -12,9 +12,9 @@ function monthOf(date: Date): string {
 }
 
 /**
- * Key derivation and label naming — `applyGroupKey` + `initial`'s `label` (D9)
+ * Key derivation and label naming — `groupKey` + `initial`'s `label` (D9)
  *
- * Two declarators, one lesson: `applyGroupKey` decides what a level clusters *on*; an `initial`
+ * Two declarators, one lesson: `groupKey` decides what a level clusters *on*; an `initial`
  * entry's `label` decides what its header *calls itself*. Both resolve independently of one
  * another, and both are visible in one render.
  *
@@ -41,7 +41,7 @@ export class GroupingKeysStoryHostComponent {
       // it reactive without recreating the table (same shape as `grouping-when`'s predicates).
       // `value` arrives as `unknown` (Step 3); narrow with `isDateValue` rather than a cast.
       schema: (path) =>
-        applyGroupKey(path.closedAt, (value) =>
+        groupKey(path.closedAt, (value) =>
           this.bucketClosedAtByMonth() && this.isDateValue(value) ? monthOf(value) : value
         ),
     })

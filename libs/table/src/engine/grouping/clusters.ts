@@ -45,7 +45,7 @@ function toGroupKey(value: unknown): string {
   return `${typeof value}:${String(value)}`;
 }
 
-// True when `value` (post-`applyGroupKey`) has no dedicated `toGroupKey` branch and would
+// True when `value` (post-`groupKey`) has no dedicated `toGroupKey` branch and would
 // collapse every distinct instance into one `"object:[object Object]"` bucket. `null`/
 // `undefined`/`Date` each get their own branch and are not reportable.
 function isCollapsingGroupValue(value: unknown): boolean {
@@ -53,14 +53,14 @@ function isCollapsingGroupValue(value: unknown): boolean {
 }
 
 // Extends ADR-0014's throw-must-be-visible reasoning to a silent collapse. Reported once per
-// field per `buildClusters` call tree — declaring `applyGroupKey` on the field is the fix,
+// field per `buildClusters` call tree — declaring `groupKey` on the field is the fix,
 // which is what makes this actionable rather than merely noisy.
 function reportNonPrimitiveGroupValue(columnId: string): void {
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[withGrouping] field "${columnId}" groups on a non-primitive value — every distinct ` +
-      'object collapses into one group. Declare applyGroupKey on that field to key the group ' +
+      'object collapses into one group. Declare groupKey on that field to key the group ' +
       'on a primitive.'
   );
 }

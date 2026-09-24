@@ -13,7 +13,7 @@ import type { DealRow } from './types';
  *
  * @example
  * ```ts
- * withGrouping({ schema: (path) => applyAggregate(path.amount, sumAmount) })
+ * withGrouping({ schema: (path) => aggregate(path.amount, sumAmount) })
  * ```
  */
 export function sumAmount(rows: DealRow[]): number {

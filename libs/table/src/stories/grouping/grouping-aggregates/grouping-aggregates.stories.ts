@@ -19,7 +19,7 @@ export default meta;
 type Story = StoryObj<GroupingAggregatesStoryHostComponent>;
 
 /**
- * Group aggregates — `applyAggregate`
+ * Group aggregates — `aggregate`
  *
  * Declared through `withGrouping({ schema })`, keyed by declared column id like every other data
  * concern — not a column option. That is what lets a column with no row field of its own, like

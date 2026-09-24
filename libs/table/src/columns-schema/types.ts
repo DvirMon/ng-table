@@ -63,7 +63,7 @@ export interface MetadataRule<TRow, T = unknown> {
 // resource construction (`factory(params)`) must happen once at wiring time, not on every fold.
 /**
  * Resource-backed counterpart to `MetadataRule`. Not part of the public `metadata()` surface —
- * used internally by `applyVisibleAsync()` (`columns-schema/rules.ts`).
+ * used internally by `visibleAsync()` (`columns-schema/rules.ts`).
  */
 export interface MetadataAsyncRule<TRow, TParams = unknown, TResult = unknown, T = unknown> {
   readonly kind: 'metadata-async';

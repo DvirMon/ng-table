@@ -2,7 +2,7 @@ import { signal, type ResourceRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { columnSchema } from '../../columns-schema/schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from '../../columns-schema/metadata';
-import { applyVisible, applyVisibleAsync } from '../../columns-schema/rules';
+import { visible, visibleAsync } from '../../columns-schema/rules';
 import { createTable } from '../../api/create-table';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../../mutations/update-columns';
 import type { ColumnDef, ColumnDefInput, ColumnValues, TableConfig, TableStore } from '../../api/types';
@@ -94,13 +94,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(true);
   });
 
-  it('applies a reactive applyVisible rule when its signal changes', () => {
+  it('applies a reactive visible rule when its signal changes', () => {
     const role = signal<'admin' | 'guest'>('guest');
     const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisible(path.status, { when: () => role() === 'admin' });
+        visible(path.status, { when: () => role() === 'admin' });
       },
     });
 
@@ -112,15 +112,15 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(true);
   });
 
-  it('combines multiple applyVisible rules on the same column via the `and` reducer', () => {
+  it('combines multiple visible rules on the same column via the `and` reducer', () => {
     const hasPermission = signal(true);
     const isFeatureEnabled = signal(true);
     const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisible(path.status, { when: () => hasPermission() });
-        applyVisible(path.status, { when: () => isFeatureEnabled() });
+        visible(path.status, { when: () => hasPermission() });
+        visible(path.status, { when: () => isFeatureEnabled() });
       },
     });
 
@@ -138,7 +138,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
 
   it('accepts a standalone columnSchema() value identically to an inline schemaFn', () => {
     const sharedSchema = columnSchema<Row, 'name' | 'status'>((path) => {
-      applyVisible(path.status, { when: () => false });
+      visible(path.status, { when: () => false });
     });
     const store = makeStore({
       trackBy: 'id',
@@ -152,13 +152,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     );
   });
 
-  it('applyVisibleAsync sets visible via onSuccess when the resource resolves', () => {
+  it('visibleAsync sets visible via onSuccess when the resource resolves', () => {
     const control = makeControllableResource<boolean>();
     const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisibleAsync(path.status, {
+        visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
@@ -176,13 +176,13 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(false);
   });
 
-  it('applyVisibleAsync applies onError on failure when provided', () => {
+  it('visibleAsync applies onError on failure when provided', () => {
     const control = makeControllableResource<boolean>();
     const store = makeStore({
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisibleAsync(path.status, {
+        visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
@@ -200,7 +200,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(false);
   });
 
-  it('applyVisibleAsync applies onError again on a second consecutive failure', () => {
+  it('visibleAsync applies onError again on a second consecutive failure', () => {
     // `onError` is now required (D5/D11) — the old "no onError" case is impossible to construct.
     // This replaces it, asserting the *with*-onError behavior stays correct across repeated
     // error/success cycles rather than just the single resolve-then-reject the existing
@@ -210,7 +210,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisibleAsync(path.status, {
+        visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
@@ -237,7 +237,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisible(path.status, { when: () => true });
+        visible(path.status, { when: () => true });
       },
     });
 
@@ -257,7 +257,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisible(path.status, { when: () => role() === 'admin' });
+        visible(path.status, { when: () => role() === 'admin' });
       },
     });
 
@@ -306,8 +306,8 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       trackBy: 'id',
       columns: initialColumns,
       columnsSchema: (path) => {
-        applyVisible(path.name, { when: () => false });
-        applyVisible(path.id, { when: () => true });
+        visible(path.name, { when: () => false });
+        visible(path.id, { when: () => true });
       },
     });
 
@@ -347,7 +347,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       trackBy: 'id',
       columns: makeColumns(),
       columnsSchema: (path) => {
-        applyVisibleAsync(path.status, {
+        visibleAsync(path.status, {
           params: () => 'role',
           factory: (): ResourceRef<boolean | undefined> => control.resourceRef,
           onSuccess: (result) => result,
@@ -380,7 +380,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
       columnsSchema: (path) => {
         // Would form a cycle if `ctx.columns()` resolved to the derived `columns` (which this
         // very rule contributes to) instead of `baseColumns`.
-        applyVisible(path.status, {
+        visible(path.status, {
           when: (ctx) =>
             !(ctx.columns().find((c) => c.id === 'status')?.visible ?? true),
         });
@@ -410,7 +410,7 @@ describe('wireColumnsSchemaAsync (via createTable columnsSchema wiring)', () => 
           columnsSchema: (path) => {
             // `missing` isn't `keyof Row` — cast to force the runtime path
             // resolveColumnsConfig()'s unknown-columnId check guards.
-            applyVisible(
+            visible(
               (path as unknown as { missing: (typeof path)['name'] }).missing,
               { when: () => true }
             );

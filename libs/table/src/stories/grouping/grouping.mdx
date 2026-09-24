@@ -50,7 +50,7 @@ own surface; three compose it with exactly one more feature.
 
 **`Basic` is the one to copy.** Its host composes `withGrouping({ initial })` and nothing else, so
 nothing in its source is another lesson's setup — no predicate it does not need, no second feature,
-and no `applyAggregate`, because a baseline carrying scenery is how a reader mis-attributes an
+and no `aggregate`, because a baseline carrying scenery is how a reader mis-attributes an
 option to the wrong place.
 
 Each story composes the fewest features its lesson needs. Where a second feature does appear —
@@ -71,7 +71,7 @@ deliberately no `withTree()`, because a chevron with nothing to expand is a cont
 nothing. Array order is nesting order.
 
 Group headers carry value and count. No `amount` total, because totals are the `Aggregates`
-story's lesson (`applyAggregate`) and it has its own story below; scenery on a baseline is how a
+story's lesson (`aggregate`) and it has its own story below; scenery on a baseline is how a
 reader mis-attributes an option.
 
 The tab strip toggles a column as a level; the pills below reorder and remove them. One control per
@@ -113,7 +113,7 @@ no-op to explain. Every write is an updater on `table.grouping`.
 ## When — which clusters survive
 
 Two predicates, AND-combined: the table-wide `when`, judged at every active level, and a
-per-column one off an `applyGrouping` rule, judged for its own column only.
+per-column one off a `grouping` rule, judged for its own column only.
 
 A rejected cluster is **not hidden**. Its rows render flat at the parent's depth with no header,
 no group id and no aggregates — which is why rejecting at level 1 also takes those rows out of
@@ -164,7 +164,7 @@ reactive without reconstructing the table.
 
 ## Keys — what a level clusters on, and what its header calls itself
 
-Two declarators, one lesson: `applyGroupKey` decides the group **key** a level clusters on;
+Two declarators, one lesson: `groupKey` decides the group **key** a level clusters on;
 an `initial` entry's `label` decides what its header **calls itself**. Bundled in one story
 because they answer adjacent questions a reader could otherwise conflate — not because either
 is large on its own.
@@ -174,7 +174,7 @@ none, so it falls back to the `closedAt` column's own label — two tiers, both 
 render. Every level names a declared column (ADR-0024); there is no longer a third, raw-field-name
 fallback for one that doesn't.
 
-`applyGroupKey` buckets `closedAt` into a `YYYY-MM` string, so twelve distinct timestamps
+`groupKey` buckets `closedAt` into a `YYYY-MM` string, so twelve distinct timestamps
 collapse into five month groups. Turning it off in Controls groups on the exact `Date` instead —
 the engine never coarsens a key on its own. The extractor receives the column's own accessor
 output, not the raw row field — for `closedAt`'s plain accessor the two are the same value, which
@@ -216,7 +216,7 @@ computed value instead.
 ## Aggregates — totals at every depth
 
 Aggregation is a grouping declaration, keyed by declared column id like every other data concern
-a `schema` records — not a column option. `applyAggregate(path.amount, sumAmount)` is what lets
+a `schema` records — not a column option. `aggregate(path.amount, sumAmount)` is what lets
 `amount` carry a total, and the same mechanism works on a column with no row field of its own to
 compute it from.
 
@@ -270,7 +270,7 @@ evaluation rather than once per group, with every other column untouched.
 
 ## Async Rule — a level decided by the server
 
-One grouping level over a real intercepted request, through an `applyGroupingAsync()`-shaped column
+One grouping level over a real intercepted request, through an `groupingAsync()`-shaped column
 rule. The point is the *pending* window, which is otherwise invisible: while the rule is unresolved
 the whole rule set abstains and the table holds the grouping it was given, rather than flashing
 ungrouped and back. On resolution the level set becomes the rule's — a resolved rule overrides the
@@ -315,7 +315,7 @@ rather than a second canvas.
 
 ## Order — which sibling comes first
 
-`applyGroupOrder` orders group **headers** among their siblings at one level. Not the rows inside a
+`groupOrder` orders group **headers** among their siblings at one level. Not the rows inside a
 group, which is `withSorting()`. Not which groups exist, which is `when`. Not which columns are
 levels, which is `initial`.
 
@@ -332,8 +332,8 @@ evaluation. The fallback *is* first-occurrence, so headers follow the row sort a
 comparator that throws pins nothing.
 
 A comparator is also declared for `Rep`, which is not a level by default. It is inert until the
-canvas button adds it — **`applyGroupOrder` never activates a level**, which is the whole split
-from `applyGrouping`.
+canvas button adds it — **`groupOrder` never activates a level**, which is the whole split
+from `grouping`.
 
 This story also composes `withSorting()`, bare and trailing, because the header order is only
 legible next to the row sort it is not. Under `first-occurrence` a header click moves the

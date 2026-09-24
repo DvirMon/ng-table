@@ -23,7 +23,7 @@ export function createColumnMetaKey<T>(): ColumnMetaKey<T> {
 
 /**
  * Registers a metadata value for one column under `key`, called inside a
- * `columnSchema()` body alongside `applyVisible()`/`applyVisibleAsync()`.
+ * `columnSchema()` body alongside `visible()`/`visibleAsync()`.
  *
  * @remarks
  * `logic` is a plain value or a closure over `ColumnRuleContext<TRow>` —
@@ -50,7 +50,7 @@ export function metadata<TRow, K extends string, T>(
  * Resource-backed counterpart to `metadata()` — records a `MetadataAsyncRule` instead of a
  * plain `MetadataRule`. Not exported from `index.ts`: consumer metadata has no async story
  * yet (see `docs/2-columns/reference/column-metadata.md`), this exists solely so
- * `applyVisibleAsync()` (`columns-schema/rules.ts`) can write to the internal `VISIBLE` key
+ * `visibleAsync()` (`columns-schema/rules.ts`) can write to the internal `VISIBLE` key
  * through the same recorder `metadata()` uses.
  * @internal
  */

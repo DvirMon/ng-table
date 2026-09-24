@@ -8,7 +8,7 @@ import type { ColumnHandle, ColumnRuleContext } from './types';
  * — set `visible` directly on the `columns` array literal instead.
  *
  * Convenience wrapper over `metadata()` writing to the internal `VISIBLE` key
- * (`engine/columns.ts`). Multiple `applyVisible()` calls on the same column AND-combine
+ * (`engine/columns.ts`). Multiple `visible()` calls on the same column AND-combine
  * (`VISIBLE` is exempted from `metadata()`'s single-writer rule — see
  * `docs/2-columns/reference/column-metadata.md`).
  */
@@ -36,7 +36,7 @@ export interface VisibleAsyncOpts<TRow, TParams, TResult> {
 
 /**
  * Convenience wrapper over `metadataAsync()` writing to `VISIBLE` — the resource-backed
- * counterpart to `applyVisible()` above.
+ * counterpart to `visible()` above.
  */
 export function applyVisibleAsync<TRow, K extends string, TParams, TResult>(
   path: ColumnHandle<TRow, K>,
@@ -58,7 +58,7 @@ export interface SortNullsOpts {
 /**
  * Per-column override of `withSorting()`'s null/empty placement. Convenience wrapper over
  * `metadata()` writing to the internal `SORT_NULLS` key (`engine/columns.ts`), mirroring
- * `applyVisible()` above. Single-writer, unlike `VISIBLE` — a second `applySortNulls()` call
+ * `visible()` above. Single-writer, unlike `VISIBLE` — a second `sortNulls()` call
  * on the same column throws at resolve time.
  */
 export function applySortNulls<TRow, K extends string>(

@@ -567,7 +567,7 @@ gap. A row with no category yet renders flat; picking a value commits instantly 
 under that category's header on the same write, creating the header if it has never been picked
 before.
 
-`applyGroupOrder(path['category'], compareCategoryGroups)` keeps the headers alphabetical, with the
+`groupOrder(path['category'], compareCategoryGroups)` keeps the headers alphabetical, with the
 uncategorized rows on top. Without it, headers keep first-occurrence order, so re-categorizing
 the row that introduced a category, or sorting by **name** (`withSorting()`), would reshuffle
 them. With it, a sort only reorders rows inside each group.

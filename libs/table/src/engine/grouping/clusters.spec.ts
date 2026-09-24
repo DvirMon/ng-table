@@ -69,7 +69,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
     createdAt: Date;
   }
 
-  it('fires once for an object-valued grouping field, naming the field and applyGroupKey', () => {
+  it('fires once for an object-valued grouping field, naming the field and groupKey', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const rows: MetaRow[] = [
@@ -82,7 +82,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
       expect(reportSpy).toHaveBeenCalledTimes(1);
       const message = reportSpy.mock.calls[0][0] as string;
       expect(message).toContain('meta');
-      expect(message).toContain('applyGroupKey');
+      expect(message).toContain('groupKey');
     } finally {
       reportSpy.mockRestore();
     }
@@ -143,7 +143,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
     }
   });
 
-  it('stays quiet when a declared applyGroupKey reduces the field to a primitive, driven through buildClusterNodes', () => {
+  it('stays quiet when a declared groupKey reduces the field to a primitive, driven through buildClusterNodes', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
       const rows: MetaRow[] = [
@@ -639,7 +639,7 @@ describe('buildClusterNodes — a carrier column is groupable (Step 6, AC #2, G5
   });
 });
 
-describe('applyGroupKey receives the accessor output (Step 6, AC #8, G68)', () => {
+describe('groupKey receives the accessor output (Step 6, AC #8, G68)', () => {
   it("a plain column's extractor receives the raw field value — the default accessor is (row) => row[id]", () => {
     interface Row {
       id: number;

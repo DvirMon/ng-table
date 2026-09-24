@@ -1,8 +1,8 @@
 import {
-  applyAggregate,
-  applyGroupKey,
-  applyGrouping,
-  applyGroupingAsync,
+  aggregate,
+  groupKey,
+  grouping,
+  groupingAsync,
   runGroupingSchemaFn,
 } from './schema';
 import type { GroupingPath } from './types';
@@ -13,11 +13,11 @@ import type { GroupingMockRow } from '../../../table.mock';
 // explicitly so `path.<id>` is a real property, not an index-signature fallback.
 type MockColumnId = 'region' | 'category' | 'amount';
 
-describe('applyGrouping / applyGroupingAsync', () => {
-  it('records rules in call order across multiple applyGrouping calls', () => {
+describe('grouping / groupingAsync', () => {
+  it('records rules in call order across multiple grouping calls', () => {
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGrouping(path.region, { enable: () => true });
-      applyGrouping(path.category, { enable: () => true });
+      grouping(path.region, { enable: () => true });
+      grouping(path.category, { enable: () => true });
     });
 
     expect(rules.map((rule) => rule.columnId)).toEqual(['region', 'category']);
@@ -28,7 +28,7 @@ describe('applyGrouping / applyGroupingAsync', () => {
   it('records a when passed via opts onto the resulting grouping rule', () => {
     const when = (): boolean => true;
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGrouping(path.region, { enable: () => true, when });
+      grouping(path.region, { enable: () => true, when });
     });
 
     expect(rules[0]).toMatchObject({ kind: 'grouping', columnId: 'region', when });
@@ -36,7 +36,7 @@ describe('applyGrouping / applyGroupingAsync', () => {
 
   it('leaves when undefined when opts does not supply one', () => {
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGrouping(path.region, { enable: () => true });
+      grouping(path.region, { enable: () => true });
     });
 
     expect(rules[0]).toMatchObject({ when: undefined });
@@ -45,7 +45,7 @@ describe('applyGrouping / applyGroupingAsync', () => {
   it('omitting enable compiles and records it as undefined — a when-only rule', () => {
     const when = (): boolean => true;
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGrouping(path.region, { when });
+      grouping(path.region, { when });
     });
 
     expect(rules[0]).toMatchObject({
@@ -61,7 +61,7 @@ describe('applyGrouping / applyGroupingAsync', () => {
     // output, not a typed row field, so it must narrow/coerce itself.
     const extractValue = (value: unknown): string => String(value).toUpperCase();
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGroupKey(path.region, extractValue);
+      groupKey(path.region, extractValue);
     });
 
     expect(rules[0]).toMatchObject({
@@ -74,7 +74,7 @@ describe('applyGrouping / applyGroupingAsync', () => {
   it('records a grouping-aggregate rule carrying its aggregateFn', () => {
     const aggregateFn = (rows: GroupingMockRow[]): number => rows.length;
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyAggregate(path.amount, aggregateFn);
+      aggregate(path.amount, aggregateFn);
     });
 
     expect(rules[0]).toMatchObject({
@@ -84,11 +84,11 @@ describe('applyGrouping / applyGroupingAsync', () => {
     });
   });
 
-  it('applyGroupingAsync without onError is a compile error', () => {
+  it('groupingAsync without onError is a compile error', () => {
     runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
       // @ts-expect-error — `onError` is required (D13/D15): an errored resource must produce an
       // explicit boolean, never silent abstention.
-      applyGroupingAsync(path.region, {
+      groupingAsync(path.region, {
         params: () => 'US',
         factory: () =>
           ({
@@ -101,9 +101,9 @@ describe('applyGrouping / applyGroupingAsync', () => {
     });
   });
 
-  it('records an applyGroupingAsync rule with all required options', () => {
+  it('records a groupingAsync rule with all required options', () => {
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGroupingAsync(path.region, {
+      groupingAsync(path.region, {
         params: () => 'US',
         factory: () =>
           ({
@@ -120,10 +120,10 @@ describe('applyGrouping / applyGroupingAsync', () => {
     expect(rules[0]).toMatchObject({ kind: 'grouping-async', columnId: 'region' });
   });
 
-  it('records a when passed via applyGroupingAsync opts onto the resulting rule', () => {
+  it('records a when passed via groupingAsync opts onto the resulting rule', () => {
     const when = (): boolean => true;
     const rules = runGroupingSchemaFn<GroupingMockRow, MockColumnId>((path) => {
-      applyGroupingAsync(path.region, {
+      groupingAsync(path.region, {
         params: () => 'US',
         factory: () =>
           ({
@@ -148,7 +148,7 @@ describe('applyGrouping / applyGroupingAsync', () => {
 
     expect(stashedPath).toBeDefined();
     expect(() => {
-      applyGrouping((stashedPath as GroupingPath<GroupingMockRow, MockColumnId>).region, {
+      grouping((stashedPath as GroupingPath<GroupingMockRow, MockColumnId>).region, {
         enable: () => true,
       });
     }).toThrow(/outside its schema function/);

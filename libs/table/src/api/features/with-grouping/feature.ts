@@ -119,7 +119,7 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
   );
   if (emptyRule) {
     throw new Error(
-      `[withGrouping] applyGrouping on field '${emptyRule.columnId}' declares neither enable nor when.`
+      `[withGrouping] grouping on field '${emptyRule.columnId}' declares neither enable nor when.`
     );
   }
 
@@ -232,7 +232,7 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
  * ```ts
  * withGrouping({
  *   initial: ['region'],
- *   schema: (path) => applyAggregate(path.amount, sum),
+ *   schema: (path) => aggregate(path.amount, sum),
  * })
  * ```
  */

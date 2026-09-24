@@ -16,7 +16,7 @@ function keyRules<TRow>(declared: Record<string, AnyRule>): FilterRuleRecord<TRo
 
 // Structural `path` proxy handed to a schema fn — fabricates a `FilterHandle` per string
 // property, via the same Proxy+cache mechanism columns/grouping use. No recorder session here,
-// deliberately: unlike `applyVisible`/`applyGrouping` (imperative calls that must be collected
+// deliberately: unlike `visible`/`grouping` (imperative calls that must be collected
 // as a side effect while the schema fn runs), every filter rule builder is a pure function that
 // immediately returns its own record — the schema fn's own returned object *is* the full
 // declaration, so there is nothing a session would need to collect.

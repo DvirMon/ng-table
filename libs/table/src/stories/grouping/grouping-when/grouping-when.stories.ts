@@ -29,7 +29,7 @@ type Story = StoryObj<GroupingWhenStoryHostComponent>;
  *
  * Which clusters survive, decided by two predicates that AND together: the table-wide
  * `WithGroupingConfig.when`, judged at every active level, and a per-column `when` off an
- * `applyGrouping` rule, judged for its own column only.
+ * `grouping` rule, judged for its own column only.
  *
  * A rejected cluster is not hidden. Its rows render flat at the parent's depth — no header, no
  * group id, no aggregates — so rejecting at level 1 also takes those rows out of level 2.

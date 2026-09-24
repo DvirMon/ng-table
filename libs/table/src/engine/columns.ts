@@ -95,7 +95,7 @@ export function toggleColumnVisible<TRow>(
 }
 
 /**
- * Internal metadata key `applyVisible()`/`applyVisibleAsync()` (`columns-schema/rules.ts`) write
+ * Internal metadata key `visible()`/`visibleAsync()` (`columns-schema/rules.ts`) write
  * to — never exported, so consumers can't read or collide with it via `readColumnMeta()`.
  * `foldColumnRules` special-cases it: unlike every other metadata key (single-writer, enforced
  * by `resolve.ts`), multiple entries targeting `VISIBLE` on the same column are allowed and
@@ -104,9 +104,9 @@ export function toggleColumnVisible<TRow>(
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
- * Internal metadata key `applySortNulls()` (`columns-schema/rules.ts`) writes to — the per-column
+ * Internal metadata key `sortNulls()` (`columns-schema/rules.ts`) writes to — the per-column
  * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
- * writer: two `applySortNulls()` calls on the same column throw at resolve time, so it needs no
+ * writer: two `sortNulls()` calls on the same column throw at resolve time, so it needs no
  * special case in `foldColumnRules` — it flows through the generic `meta` map like any consumer
  * key.
  */

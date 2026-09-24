@@ -162,7 +162,7 @@ export function collectGroupOrder<TRow>(
 
 /**
  * Static per-field value extractors, collected off the same `rules` array from
- * `applyGroupKey`'s `GroupKeyRule` declarations. `engine/grouping/clusters.ts`'s
+ * `groupKey`'s `GroupKeyRule` declarations. `engine/grouping/clusters.ts`'s
  * `readGroupValue` reads a column's accessor output and passes it through the matching
  * extractor, if any — the fold never runs a rule callback itself. Last write wins for a
  * duplicate `columnId` (same undocumented edge case as the two collectors above).
@@ -181,7 +181,7 @@ export function collectGroupKeys<TRow>(
 
 /**
  * Static per-column aggregate fns, collected off the same `rules` array from
- * `applyAggregate`'s `GroupAggregateRule` declarations. Last write wins for a duplicate
+ * `aggregate`'s `GroupAggregateRule` declarations. Last write wins for a duplicate
  * `columnId` (same undocumented edge case as the collectors above).
  */
 export function collectAggregates<TRow>(

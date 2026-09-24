@@ -150,7 +150,7 @@ export interface GroupSummary<TRow> extends ClusterSummary<TRow> {
 
 export type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
-/** What `applyGroupOrder` compares: two siblings from the same level, after admission is
+/** What `groupOrder` compares: two siblings from the same level, after admission is
  * decided. `admitted: false` ⇒ that cluster emits flat, no header. */
 export type GroupOrder<TRow> = (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;
 

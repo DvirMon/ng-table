@@ -1,5 +1,5 @@
 import { Component, computed, input, signal } from '@angular/core';
-import { applyAggregate, createTable, patchRow, withGrouping } from '../../../index';
+import { aggregate, createTable, patchRow, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig, BASE_GROUPING_LEVELS, sumAmount } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
@@ -13,7 +13,7 @@ const BREAKABLE_ROW_AMOUNT =
   GROUPING_ROWS_MOCK.find((row) => row.id === BREAKABLE_ROW_ID)?.amount ?? 0;
 
 /**
- * Group aggregates — `applyAggregate`
+ * Group aggregates — `aggregate`
  *
  * Aggregation is a grouping declaration, keyed by declared column id like every other data
  * concern a `schema` records — not a column option. That is what lets `amount` carry a total
@@ -40,7 +40,7 @@ export class GroupingAggregatesStoryHostComponent {
     groupingConfig,
     withGrouping({
       initial: BASE_GROUPING_LEVELS,
-      schema: (path) => applyAggregate(path.amount, sumAmount),
+      schema: (path) => aggregate(path.amount, sumAmount),
     })
   );
 

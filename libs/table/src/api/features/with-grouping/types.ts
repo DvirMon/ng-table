@@ -3,7 +3,7 @@ import type { GroupOrder, GroupWhen } from '../../types';
 import { PATH_RECORDER, type PathRecorder } from '../../../schema/path-proxy';
 
 /**
- * One `applyGrouping()` declaration — `enable` contributes level activation,
+ * One `grouping()` declaration — `enable` contributes level activation,
  * `when` gates per-column admission. See field docs for the abstain-vs-inactive distinction.
  */
 export interface GroupingRule<TRow = unknown> {
@@ -38,7 +38,7 @@ export interface GroupingAsyncRule<TRow = unknown, TParams = unknown, TResult = 
   readonly when?: GroupWhen<TRow>;
 }
 
-/** One field's `applyGroupOrder(path.x, cmp)` declaration — never activates/deactivates a
+/** One field's `groupOrder(path.x, cmp)` declaration — never activates/deactivates a
  * level, only orders that level's siblings once active. */
 export interface GroupOrderRule<TRow = unknown> {
   readonly kind: 'group-order';
@@ -46,7 +46,7 @@ export interface GroupOrderRule<TRow = unknown> {
   readonly comparator: GroupOrder<TRow>;
 }
 
-/** One `applyGroupKey(path.x, extractValue)` declaration — key derivation only, never
+/** One `groupKey(path.x, extractValue)` declaration — key derivation only, never
  * activation/ordering. The engine does not defensively normalize, stringify or deep-compare
  * keys — the extractor must return a primitive. */
 export interface GroupKeyRule<TRow = unknown> {
@@ -55,7 +55,7 @@ export interface GroupKeyRule<TRow = unknown> {
   readonly extractValue: (fieldValue: unknown) => unknown;
 }
 
-/** One `applyAggregate(path.x, aggregateFn)` declaration — computes one
+/** One `aggregate(path.x, aggregateFn)` declaration — computes one
  * summary value per cluster per column, over that cluster's own leaves at
  * every depth. */
 export interface GroupAggregateRule<TRow = unknown> {

@@ -8,7 +8,7 @@ export interface GroupedRowsRequestOptions {
 }
 
 /** Whether `rep` is an active grouping level — the server's answer, awaited by the
- * `applyGroupingAsync()` rule in `grouping-async-rule/`. */
+ * `groupingAsync()` rule in `grouping-async-rule/`. */
 export interface GroupingPreference {
   readonly groupByRep: boolean;
 }

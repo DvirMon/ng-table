@@ -6,7 +6,7 @@ import { createTableFeature } from './create-table-feature';
 import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
 import { columnSchema } from '../columns-schema/schema';
-import { applyVisible } from '../columns-schema/rules';
+import { visible } from '../columns-schema/rules';
 import type { Feature, RowOf, Shape } from '../engine/types';
 import type {
   ColumnDef,
@@ -210,13 +210,13 @@ describe('createTable', () => {
     expect(store.rows()).toEqual([]);
   });
 
-  it('applies an inline columnsSchema function via applyVisible', () => {
+  it('applies an inline columnsSchema function via visible', () => {
     const store = TestBed.runInInjectionContext(() =>
       createTable(signal<Row[]>([]), {
         trackBy: 'id',
         columns: makeColumns(),
         columnsSchema: (path) => {
-          applyVisible(path.status, { when: () => false });
+          visible(path.status, { when: () => false });
         },
       })
     );
@@ -226,9 +226,9 @@ describe('createTable', () => {
     );
   });
 
-  it('applies a standalone columnSchema() value via applyVisible', () => {
+  it('applies a standalone columnSchema() value via visible', () => {
     const hideStatus = columnSchema<Row, 'name' | 'status'>((path) => {
-      applyVisible(path.status, { when: () => false });
+      visible(path.status, { when: () => false });
     });
 
     const store = TestBed.runInInjectionContext(() =>

@@ -31,7 +31,7 @@ function assertRuleColumnIdsAreKnown<TRow, TId extends string>(
 // `(columnId, key)` pair is an authoring error, not a case to combine. Keys compare by object
 // identity, matching `createColumnMetaKey()`'s identity-is-the-key design.
 //
-// `VISIBLE` (`engine/columns.ts`) is exempted: `applyVisible()`/`applyVisibleAsync()` are
+// `VISIBLE` (`engine/columns.ts`) is exempted: `visible()`/`visibleAsync()` are
 // allowed to target the same column multiple times, AND-combined by `foldColumnRules` — the
 // one deliberate multi-writer key in the table.
 function assertMetadataKeysAreUnique<TRow>(rules: readonly ColumnRule<TRow>[]): void {
