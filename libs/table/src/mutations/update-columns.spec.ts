@@ -21,6 +21,27 @@ describe('setColumns', () => {
     expect(column.label).toBe('name');
     expect(column.accessor({ id: 1, name: 'Ann' })).toBe('Ann');
   });
+
+  it('an edit by id applies', () => {
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
+
+    const result = setColumns<MockRow>([
+      { id: 'id' },
+      { id: 'name', label: 'Full name', visible: false },
+    ])(columns);
+
+    const edited = result.find((column) => column.id === 'name');
+    expect(edited?.label).toBe('Full name');
+    expect(edited?.visible).toBe(false);
+  });
+
+  it('a shorter list drops the columns it omits', () => {
+    const columns = resolveColumnDefs<MockRow>([{ id: 'id' }, { id: 'name' }], 'test');
+
+    const result = setColumns<MockRow>([{ id: 'id' }])(columns);
+
+    expect(result.map((column) => column.id)).toEqual(['id']);
+  });
 });
 
 describe('reorderColumns', () => {

@@ -93,12 +93,25 @@ type ColumnDefInput<TRow> = Pick<ColumnDef<TRow>, 'id'> & Partial<Omit<ColumnDef
 
 | Method | Description |
 |---|---|
-| `setColumns(defs: ColumnDefInput[])` | Replace the full column list — `accessor`/`visible`/`order` optional, resolved the same as `columns` at registration |
+| `setColumns(defs: { id, accessor?, visible?, label? }[])` | Replace the full column list by id — `order` and `meta` are not writable through this path |
 | `updateColumns(updater: (columns: ColumnDef[]) => ColumnDef[])` | Derive the next column list from the current one — the `.update()` counterpart to `setColumns()`'s `.set()`. This is also the method `columnsSchema`'s store-owned reactive/async rules call under the hood (see `../2-columns/reference/ownership-model.md`'s snapshot-diff patcher). |
 | `reorderColumns(ids: string[])` | Re-assign `order` per the given id sequence |
 | `toggleColumnVisibility(id: string)` | Flip a column's `visible` flag |
 
 Columns are runtime-mutable — this was a deliberate choice over static/immutable columns.
+
+**`setColumns()` resets column order until #128 lands.** `setColumns()` cannot write `order` —
+it derives purely from array position, the same as initial `columns` registration — so every
+call resets every column to its declaration-array order, and a user's dragged order is lost.
+This is recoverable: the app already owns the id list it dragged into, so re-apply
+`reorderColumns(ids)` immediately after the write. That is the interim spelling until the
+column-order slice ([#128](https://github.com/DvirMon/ng-table/issues/128)) ships its own
+ordered-id state.
+
+```ts
+table.columns.update(setColumns([{ id: 'name' }, { id: 'status', visible: false }]));
+table.columns.update(reorderColumns(draggedColumnIds)); // re-apply the user's order
+```
 
 ## Declarative Column Schemas — `columnsSchema`
 
