@@ -1,12 +1,18 @@
 import { applyEach, apply, debounce, schema, validate } from '@angular/forms/signals';
-import type { ColumnDefInput, TableConfig } from '../../../api/types';
+import { createColumns } from '../../../api/create-columns';
+import type { TableConfig } from '../../../api/types';
 import type { EditRow } from './types';
 
-const columns: ColumnDefInput<EditRow>[] = [{ id: 'name' }, { id: 'dept' }];
+// `createColumns()`'s data witness is never read (`void data`, create-columns.ts) — only its
+// type binds `TRow` for the builder below.
+const editData = (): readonly EditRow[] | undefined => undefined;
+
+const columns = createColumns(editData, (col) => [col('name'), col('dept')]);
 
 export const editTableConfig: TableConfig<EditRow> = { trackBy: 'id', columns };
 
-// Shared commit-boundary schema (D24): text commits on blur, select commits immediately.
+/** Text commits on blur, select commits immediately — the shared commit-boundary schema
+ * (`docs/decisions/row-editing.md`, RE14). */
 export const editRowsSchema = schema<EditRow[]>((path) =>
   applyEach(path, (row) => {
     debounce(row.name, 'blur');
@@ -15,9 +21,8 @@ export const editRowsSchema = schema<EditRow[]>((path) =>
 );
 
 /**
- * `editRowsSchema` plus a real `name` uniqueness rule — for the hosts that let a person copy a
- * row (`duplicateRow()`) and so can produce a collision. A warning only, never blocking Save:
- * this mirrors the copy-me hosts' prior behavior, which flagged but never enforced.
+ * `editRowsSchema` plus a `name` uniqueness rule, for hosts whose `duplicateRow()` can produce
+ * a collision. Warns only, never blocks Save — mirrors prior copy-row behavior.
  */
 export const editRowsWithUniqueNameSchema = schema<EditRow[]>((path) => {
   apply(path, editRowsSchema);

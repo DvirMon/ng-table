@@ -1,4 +1,5 @@
-import type { ColumnDefInput, TableConfig } from '../../../api/types';
+import { createColumns } from '../../../api/create-columns';
+import type { TableConfig } from '../../../api/types';
 import { contains } from '../../../api/features/with-filtering/rules';
 import type { FiltersPath } from '../../../api/features/with-filtering/types';
 import type { DealRow } from './types';
@@ -8,12 +9,15 @@ import type { DealRow } from './types';
  * sum.
  *
  * @remarks
- * Note: throws on a negative amount rather than summing it, to exercise the aggregate-failure
+ * Throws on a negative amount rather than summing it, to exercise the aggregate-failure
  * degrade path in `grouping-aggregates/`'s "Make one row's amount unsummable" control.
  *
  * @example
  * ```ts
- * withGrouping({ schema: (path) => aggregate(path.amount, sumAmount) })
+ * withGrouping({
+ *   levels: ['region'],
+ *   schema: (path) => aggregate(path.amount, sumAmount),
+ * });
  * ```
  */
 export function sumAmount(rows: DealRow[]): number {
@@ -27,33 +31,36 @@ export function sumAmount(rows: DealRow[]): number {
   }, 0);
 }
 
-// One column list for every grouping story — they differ in which features they compose, not in
-// what the table holds. `owner` is the one column whose row field is an object, so it carries the
-// `accessor` that turns it into the value a cell renders; every other column falls back to the
-// default `row[id]`. Grouping reads a level's value off that resolved accessor output (ADR-0024),
-// which is what makes `owner` groupable by name at all. No array-level annotation: each `id` is
-// individually `as const`, and the list closes with `satisfies` rather than a type annotation —
-// an annotation would widen every id to `string` and turn every story's `path.<id>` access into
-// an untyped index signature.
-const dealColumns = [
-  { id: 'region' as const, label: 'Region' },
-  { id: 'category' as const, label: 'Category' },
-  { id: 'rep' as const, label: 'Rep' },
-  { id: 'amount' as const, label: 'Amount' },
-  { id: 'closedAt' as const, label: 'Closed' },
-  { id: 'owner' as const, label: 'Owner', accessor: (row: DealRow) => row.owner.name },
-] satisfies ColumnDefInput<DealRow>[];
+// `createColumns()`'s data witness is never read (`void data`, create-columns.ts) — only its
+// type binds `TRow` for the builder below.
+const dealData = (): readonly DealRow[] | undefined => undefined;
+
+// One column set for every grouping story — they differ in composed features, not table
+// contents. `owner`'s row field is an object, so it needs the `accessor` to produce a cell
+// value; every other column falls back to the default `row[id]`. Grouping reads a level's value
+// off that resolved accessor output (ADR-0024) — the reason `owner` groups by name at all.
+// Hoisted to a module-level const so each `col()` call's literal id survives
+// (`create-columns.types.spec.ts`'s case 1) instead of widening to `string` when read back off
+// the const.
+const dealColumnSet = createColumns(dealData, (col) => [
+  col('region', { label: 'Region' }),
+  col('category', { label: 'Category' }),
+  col('rep', { label: 'Rep' }),
+  col('amount', { label: 'Amount' }),
+  col('closedAt', { label: 'Closed' }),
+  col('owner', { label: 'Owner', accessor: (row) => row.owner.name }),
+]);
 
 /** Base column order, in declaration order — what `groupedColumnMode: 'keep'` restores and what
  * `'move-to-front'` re-ranks against. */
-export const DEAL_COLUMN_IDS: string[] = dealColumns.map((column) => column.id);
+export const DEAL_COLUMN_IDS: string[] = dealColumnSet.columns.map((column) => column.id);
 
-/** The config for every grouping story. No `TableConfig<DealRow>` annotation — that would default
- * `TId` to `string` and erase `dealColumns`' literal ids the same way an annotation on
- * `dealColumns` itself would; `satisfies` checks the shape without widening it. */
+/** The config for every grouping story. */
+// No `TableConfig<DealRow>` annotation — that would default `columns` to the wide union and lose
+// `dealColumnSet`'s literal ids; `satisfies` checks the shape without widening it.
 export const groupingConfig = {
   trackBy: 'id',
-  columns: dealColumns,
+  columns: dealColumnSet,
 } satisfies TableConfig<DealRow>;
 
 /** Two levels — enough to show a parent total that is the sum of its subtree without burying the
@@ -71,8 +78,8 @@ export const COLLAPSIBLE_GROUPING_LEVELS = [
  * every group id changes and no previous collapse state can match. */
 export const RENESTED_GROUPING_LEVELS = ['category' as const, 'region' as const, 'rep' as const];
 
-/** Two levels — enough for an *ancestor* group to exist, which is what separates a cascade that
- * only reaches descendants from one that is also said to reach parents. */
+/** Two levels — enough for an *ancestor* group to exist, distinguishing a cascade that reaches
+ * only descendants from one that also reaches parents. */
 export const SELECTION_GROUPING_LEVELS = ['region' as const, 'category' as const];
 
 /** Backs `grouping-order/`'s `external-list` comparator — a caller-supplied ranking, the

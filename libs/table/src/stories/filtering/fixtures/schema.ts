@@ -1,25 +1,30 @@
-import type { ColumnDefInput, TableConfig } from '../../../api/types';
+import { createColumns } from '../../../api/create-columns';
+import type { TableConfig } from '../../../api/types';
 import type { InvoiceRow } from './types';
 
-/** Every column the client story renders — `note` is the nullable one, `tags` the array one. */
-const clientColumns: ColumnDefInput<InvoiceRow>[] = [
-  { id: 'id', label: 'Invoice' },
-  { id: 'customer', label: 'Customer' },
-  { id: 'status', label: 'Status' },
-  { id: 'amount', label: 'Amount' },
-  { id: 'issuedAt', label: 'Issued' },
-  { id: 'tags', label: 'Tags' },
-  { id: 'note', label: 'Note' },
-];
+// `createColumns()`'s data witness is never read (`void data`, create-columns.ts) — only its
+// type binds `TRow` for the builder below.
+const invoiceData = (): readonly InvoiceRow[] | undefined => undefined;
 
-/** The server and selection stories filter on a subset, so they render one too. */
-const narrowColumns: ColumnDefInput<InvoiceRow>[] = [
-  { id: 'id', label: 'Invoice' },
-  { id: 'customer', label: 'Customer' },
-  { id: 'status', label: 'Status' },
-  { id: 'amount', label: 'Amount' },
-  { id: 'tags', label: 'Tags' },
-];
+// Every column the client story renders — `note` is the nullable one, `tags` the array one.
+const clientColumns = createColumns(invoiceData, (col) => [
+  col('id', { label: 'Invoice' }),
+  col('customer', { label: 'Customer' }),
+  col('status', { label: 'Status' }),
+  col('amount', { label: 'Amount' }),
+  col('issuedAt', { label: 'Issued' }),
+  col('tags', { label: 'Tags' }),
+  col('note', { label: 'Note' }),
+]);
+
+// The server and selection stories filter on a subset, so they render one too.
+const narrowColumns = createColumns(invoiceData, (col) => [
+  col('id', { label: 'Invoice' }),
+  col('customer', { label: 'Customer' }),
+  col('status', { label: 'Status' }),
+  col('amount', { label: 'Amount' }),
+  col('tags', { label: 'Tags' }),
+]);
 
 /** Consumed by `client-filtering/`, which composes `withFiltering({ schema: clientInvoiceFilters })` —
  * the table owns the model directly. */

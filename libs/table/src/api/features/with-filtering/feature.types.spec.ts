@@ -1,4 +1,5 @@
 import { describe, expectTypeOf, it } from 'vitest';
+import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { withFiltering } from './feature';
 import {
@@ -13,7 +14,7 @@ import {
 } from './rules';
 import type { DateRangeCriterion, RangeCriterion } from './rules';
 import type { Filters, FiltersPath } from './types';
-import type { ColumnDef, TableDataInput } from '../../types';
+import type { TableDataInput } from '../../types';
 
 /**
  * Compile-time seam for `withFiltering()`'s `schema` config, composed into a real
@@ -53,7 +54,21 @@ interface Ticket {
 
 declare const ticketPath: FiltersPath<Ticket>;
 declare const data: TableDataInput<Invoice>;
-declare const columns: ColumnDef<Invoice>[];
+
+// A real function, not `declare const` — `createColumns()` never reads it at runtime
+// (`void data`, create-columns.ts), only its type binds `TRow`.
+const invoiceData = (): readonly Invoice[] | undefined => undefined;
+
+// Only the fields exercised below — this file's `columns` is a `createTable()` config slot, not
+// a subject under test in its own right; derivation is `create-columns.types.spec.ts`'s.
+const columns = createColumns(invoiceData, (col) => [
+  col('status'),
+  col('amount'),
+  col('dueDate'),
+  col('customer'),
+  col('notes'),
+  col('tags'),
+]);
 
 describe('withFiltering — each rule infers exactly through StateOf', () => {
   it('equals infers TRow[K] | null', () => {
