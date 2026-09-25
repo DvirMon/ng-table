@@ -298,6 +298,21 @@ line up with js-framework-benchmark `05_swap1k` [S18].
 | percent dropped rAF frames | delta > 1.5 × median interval, first frame excluded | report | report | report | report | [S7]; headless pacing unverified |
 | regression vs stored baseline | median of the 5 newest compatible baselines | report at > 15 % | same | same | same | [S35]; gate only on a dedicated runner [S37] |
 
+**Plain host was detached (fixed 2026-09-25).** `TestBed.createComponent` removes every earlier
+root (`[id^=root]`) before adding its own, so mounting the animated host detached the plain one:
+every plain sample measured a table that never laid out or painted, and the paired overhead
+charged the whole reorder's style + layout to the directive (226 ms at N=1000). The bench now
+re-attaches the plain host and asserts both are connected. Both variants also force layout
+(`document.documentElement.offsetHeight`) inside the timed tick, so layout lands in
+`overheadTickMs` for both. Overheads before this fix are not comparable with later runs.
+
+**Timing gates use the fastest sample (changed 2026-09-25).** The N=1000 gates now check
+`overheadMinMs` and `reorderFrameMinMs` (minimum of the 10 measured samples) instead of the
+median; the table reports both. Load from other processes only adds time — the same code swung
+~5× between two runs (plain tick 215 ms vs 38 ms) while the page itself was lean (6 CSS rules,
+~4000 elements) — so the minimum is the closest estimate of the real cost. Thresholds (16.7 ms,
+50 ms) are unchanged.
+
 **Row counts**
 
 - 100 is a paged table.

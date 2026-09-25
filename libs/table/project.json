@@ -66,7 +66,19 @@
       "options": {
         "watch": false,
         "browsers": ["ChromiumHeadless"],
-        "include": ["**/*.bench.spec.ts"]
+        "tsConfig": "libs/table/tsconfig.bench.json",
+        "include": ["**/*.bench.spec.ts"],
+        "exclude": ["**/*.trace.bench.spec.ts"]
+      }
+    },
+    "bench-trace": {
+      "executor": "@nx/angular:unit-test",
+      "cache": false,
+      "options": {
+        "watch": false,
+        "browsers": ["ChromiumHeadless"],
+        "tsConfig": "libs/table/tsconfig.bench.json",
+        "include": ["**/*.trace.bench.spec.ts"]
       }
     },
     "storybook": {

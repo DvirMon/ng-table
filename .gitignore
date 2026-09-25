@@ -62,3 +62,7 @@ handoffs/
 
 # vitest attachment output (screenshots etc. from failed/inspected runs)
 .vitest-attachments/
+
+# benchmark output (npm run table:bench)
+bench.log
+bench-trace.json

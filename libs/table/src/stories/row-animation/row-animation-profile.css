@@ -1,0 +1,11 @@
+/* Listed after story-host.css so it wins. Row animation needs separate borders — collapsed
+   borders are drawn by the table and don't follow a row's `transform`. */
+.story-host__table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* The table's background stays put; each row carries its own so the whole row visibly moves. */
+.story-host__table tr {
+  background: #1f2937;
+}
