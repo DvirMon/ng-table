@@ -91,8 +91,8 @@ in `TableConfig.columns`. That core has survived both amendments; only its reach
 **The general rule, now inverted.** The 2026-09-18 amendment deferred a cross-cutting rule to its
 own ADR: *"a schema fn on `TableConfig` names columns; a schema fn on a feature's config names row
 fields."* That ADR was never written, and the rule is now simply **every schema fn names declared
-columns**. It is still owed its own ADR — D11 carries the reasoning meanwhile and explicitly does
-not claim it.
+columns**. Written as [ADR-0027](0027-schema-declaration-surface.md) (2026-09-25), which also
+states the authoring-form and resolver-naming rules D11 carried alongside it.
 
 ## Amendment 2026-09-18 — scope narrowed to the column schema fn *(superseded 2026-09-20)*
 

@@ -1,9 +1,11 @@
 # ADR-0025 — Schema rule functions are bare-named, not `apply`-prefixed
 
 **Status:** accepted — decided 2026-09-22.
-**Related:** [ADR-0018](0018-when-vs-enable-predicate-naming.md) (predicate naming precedent), [ADR-0024](0024-single-value-source-accessor.md), [ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md), [issue #100](https://github.com/DvirMon/ng-table/issues/100), and `.claude/rules/declarative-naming.md`.
+**Related:** [ADR-0018](0018-when-vs-enable-predicate-naming.md) (predicate naming precedent), [ADR-0024](0024-single-value-source-accessor.md), [ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md), [ADR-0027](0027-schema-declaration-surface.md) (reader-naming addendum, 2026-09-25), [issue #100](https://github.com/DvirMon/ng-table/issues/100), and `.claude/rules/declarative-naming.md`.
 
 Every function that registers a declaration into a schema is named for the constraint it asserts, with no `apply` prefix. Ten functions are affected: `applyVisible` → `visible`, `applyVisibleAsync` → `visibleAsync`, `applySortNulls` → `sortNulls`, `applyGrouping` → `grouping`, `applyGroupingAsync` → `groupingAsync`, `applyGroupKey` → `groupKey`, `applyGroupOrder` → `groupOrder`, `applyAggregate` → `aggregate`, `applySortFn` → `sortFn`, and `applySortable` → `sortable`.
+
+**A function that *reads* a declaration, rather than registering one, ends in `Of`** — `valueOf`, `criterionOf`, `stateOf` ([ADR-0027](0027-schema-declaration-surface.md)). The two rules are complementary, not competing: a registrar asserts a constraint and is bare-named; a resolver answers a question about an existing declaration and is named for what it returns, suffixed `Of`. Added 2026-09-25 so both naming rules for the schema-declaration surface live in one file.
 
 This is not a new convention — it is already shipped in filtering's eight rules: `anyOf`, `contains`, `equals`, `filter`, `hasAny`, `hasNone`, `inDateRange`, `inRange`. The eight `apply*` functions across columns, grouping and sorting are the deviation, not the proposal. `.claude/rules/declarative-naming.md` already states the rule: a function returning a boolean takes an `is*`/`has*` prefix (predicate), while a bare name is reserved for a function that *does* something — explicitly, "a declaration rule that registers a filter." That is exactly what these ten functions are. Angular Signal Forms names its schema rules `required`, `min`, `max` — the constraint, not the verb that applies it.
 

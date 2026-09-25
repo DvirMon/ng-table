@@ -8,7 +8,9 @@ path-vocabulary rule is superseded here; its capability test stands),
 column id, the keying this ADR describes),
 [ADR-0014](0014-runtime-error-policy.md) (every read goes through the wrapped `readAccessor`),
 [ADR-0022](0022-render-row-cell-values.md) (`cells` already ignores visibility, so a carrier
-column costs no extra per-row work)
+column costs no extra per-row work), [ADR-0027](0027-schema-declaration-surface.md) (formalizes
+the keying rule this ADR establishes into a general cross-cutting rule, and adds the authoring-form
+and resolver-naming rules)
 
 **Source:** design session 2026-09-20. Prior art:
 [`../2-columns/work/column-id-identity/`](../2-columns/work/column-id-identity/) — two discovery
