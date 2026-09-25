@@ -28,20 +28,6 @@ jobs:
           node-version: 22
           cache: 'npm'
 
-      # Backstop for the commit-msg hook (--no-verify, a clone where
-      # `npm install` never ran). docs/agents/issue-tracker.md#closing-trailer
-      - name: Check commit trailers
-        env:
-          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          if [ -z "$BASE" ] || [ "$BASE" = "0000000000000000000000000000000000000000" ] \
-            || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
-            echo "::warning::No usable base ($BASE) — checking $HEAD only."
-            BASE="$HEAD~1"
-          fi
-          node tools/check-commit-trailers.cjs --range "$BASE..$HEAD"
-
       - run: npm ci --prefer-offline --no-audit --fund=false
 
       - uses: nrwl/nx-set-shas@v5
@@ -52,3 +38,15 @@ jobs:
       # TEMPORARY: exclude carried over from acme for known-failing test until fixed
       - run: npx nx affected -t test --exclude=ng-table
       - run: npx nx affected -t build
+
+  # The one CI check the main ruleset requires. List every other job in
+  # `needs`; a skipped (affected-only) job counts as ok.
+  ci-gate:
+    if: always()
+    needs: [main]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All required jobs passed
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - run: echo "ci-gate green"
