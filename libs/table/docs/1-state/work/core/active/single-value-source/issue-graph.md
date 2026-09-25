@@ -20,7 +20,7 @@ fits a tracer bullet, so both are sequenced
 | [#134](https://github.com/DvirMon/ng-table/issues/134) | ADR-0025 rename, migrate: library source | ✅ CLOSED 09-24 (1eaad97) | #133 (cleared) | #136 |
 | [#135](https://github.com/DvirMon/ng-table/issues/135) | ADR-0025 rename, migrate: specs, story hosts, fixtures | ✅ CLOSED 09-24 (1eaad97) | #133 (cleared) | #136 |
 | [#136](https://github.com/DvirMon/ng-table/issues/136) | ADR-0025 rename, contract: delete the `apply*` exports | ✅ CLOSED 09-24 (ce13765) | #134, #135 (cleared) | #141 |
-| [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures | ✅ CLOSED 09-25 (b6209bc) | #131 (cleared) | #139, #140 |
+| [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures | ✅ CLOSED 09-24 (b6209bc) | #131 (cleared) | #139, #140 |
 | [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs | ✅ CLOSED 09-24 (6af4cc7) | #131 (cleared) | #139 |
 | [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | ✅ CLOSED 09-24 (1704cfd) | #132 (cleared), #137 (cleared), #138 (cleared) | — |
 | [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented | ✅ CLOSED 09-25 (74e29a2, 786e067) | #137 (cleared) | #141 |
@@ -96,6 +96,22 @@ Refreshed again 2026-09-25 after `/ship` pushed 74e29a2/786e067
 — `#140` closed; `#141` is now frontier.
 Refreshed again 2026-09-25 after `/ship` pushed 782f443 — `#141`
 closed; every node in this graph is now closed.
+Refreshed again 2026-09-25 after `/ship` shipped `#116` (c81990a)
+— `#116` has no row in this graph (outside its node set, per the
+Summary). A full tracker re-read at that point also corrected
+`#137` and `#140`'s closed dates from a previously-recorded 09-25
+to their actual `closedAt` of 09-24; every other row already
+matched. No edges or Summary bullets changed.
+Refreshed again 2026-09-25 after `/ship` pushed `4ee0406` (trailer
+mode, "Ships: #117") — `#117` has no row in this graph (outside
+its node set, per the Summary), so this refresh does not add one;
+`#117` stays whatever state the tracker independently reports,
+and per that repo's trailer mode it reads OPEN pending CI, not
+closed at push time. A fresh full tracker read taken at that point
+re-corrected `#140`'s closed date, this time from 09-24 to its
+actual `closedAt` of 09-25 (the prior correction above had it
+backwards); every other row already matched. No edges or Summary
+bullets changed.
 Related docs:
 [`2-spec.md`](2-spec.md), [`3-architecture.md`](3-architecture.md),
 [`decisions.md`](decisions.md),
