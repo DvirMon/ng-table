@@ -33,11 +33,11 @@ row sort are decoupled by construction (G5). No `effect()` anywhere in the featu
 Verified against `src/api/features/with-grouping/` on 2026-09-21.
 
 ```ts
-interface WithGroupingConfig<TRow, TId extends string = string> {
+interface WithGroupingConfig<TRow, TValues extends ColumnValueMap = ColumnValueMap> {
   // Declared levels, outermost first — array order IS nesting order (G32).
   // Every id is validated against `columns` at construction (ADR-0024) — an
   // unknown id throws, it never silently degrades.
-  initial?: (TId | GroupingLevel<TId>)[];
+  initial?: (ColumnIdIn<TValues> | GroupingLevel<ColumnIdIn<TValues>>)[];
 
   // Table-wide admission, judged at every active level. AND'd with any per-column `when`.
   when?: GroupWhen<TRow>;
@@ -45,7 +45,7 @@ interface WithGroupingConfig<TRow, TId extends string = string> {
   // The single declarative entry. Records by side effect; returns nothing.
   // Call order carries no meaning — nesting comes from `initial` alone (G33).
   // Path is keyed by declared column id, the same space `columns` declares (ADR-0024).
-  schema?: GroupingSchemaFn<TRow, TId>;
+  schema?: GroupingSchemaFn<TRow, TValues>;
 }
 
 interface GroupingLevel<TId extends string = string> {
@@ -156,6 +156,15 @@ so a `when`-only rule can never mask or abstain.
 Every built cluster renders as a group unless a `when` predicate rejects it. A rejected cluster's
 rows exit the grouping tree entirely — no header, no group id, no aggregates — and render flat at
 the parent's depth. They do not re-enter at a deeper level (G22).
+
+`when`'s second parameter, `ctx: ValueOfContext<TRow>`, resolves a *different* declared column's
+accessor value for one row — `ctx.valueOf(path.margin, cluster.rows[0])` — the unbound-tier
+resolver from [ADR-0027 Rule 3](../../adr/0027-schema-declaration-surface.md#rule-3--resolvers-come-in-two-tiers-and-the-tier-decides-the-arity).
+`ClusterSummary` still carries only `columnId`/`key`/`rows` — the resolver lives on `ctx`,
+never on the summary. A `when` written before `ctx` existed keeps typechecking and behaving
+identically (additive widening, not a migration). Naming an undeclared column id through
+`ctx.valueOf` throws `[withGrouping] Unknown column id "…"`, dev-gated, at the same construction
+check `initial`/`schema` already use — not a separate one.
 
 Three facts the signature does not state: dissolution happens **after** ordering, so a comparator's
 position for a dissolved cluster is where its flat rows land; with no comparator the default is a

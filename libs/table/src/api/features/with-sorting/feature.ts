@@ -1,6 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { Subject, type Observable } from 'rxjs';
 import { readAccessor } from '../../../engine/cells';
+import { buildValueOfContext, type ValueOfContext } from '../../../engine/resolvers';
 import type { ColumnValuesOf, Feature, RowOf, Shape, TableFeatureSpec } from '../../../engine/types';
 import { assertDeclarationsAreKnown } from '../../../schema/validate';
 import { createTableFeature } from '../../create-table-feature';
@@ -147,13 +148,13 @@ function reportComparatorError(columnId: string): void {
 // A throwing comparator degrades to `0` (equal) rather than failing the whole sort
 // (ADR-0014); reports once per column per evaluation via `reportedColumns`.
 function guardCompare<TRow>(
-  compare: (a: TRow, b: TRow) => number,
+  compare: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number,
   columnId: string,
   reportedColumns: Set<string>
-): (a: TRow, b: TRow) => number {
-  return (a: TRow, b: TRow): number => {
+): (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number {
+  return (a: TRow, b: TRow, ctx: ValueOfContext<TRow>): number => {
     try {
-      return compare(a, b);
+      return compare(a, b, ctx);
     } catch {
       if (!reportedColumns.has(columnId)) {
         reportedColumns.add(columnId);
@@ -189,7 +190,8 @@ function sortRows<TRow>(
   rules: SortRule[],
   columns: ColumnDef<TRow>[],
   nullsByColumn: ReadonlyMap<string, SortNullsOpts>,
-  compareByColumn: ReadonlyMap<string, (a: TRow, b: TRow) => number>
+  compareByColumn: ReadonlyMap<string, (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number>,
+  knownIds: ReadonlySet<string>
 ): TRow[] {
   if (rules.length === 0) {
     return rows;
@@ -197,6 +199,7 @@ function sortRows<TRow>(
   const columnById = new Map(columns.map((column) => [column.id, column]));
   const reportedAccessorColumns = new Set<string>();
   const reportedComparatorColumns = new Set<string>();
+  const ctx = buildValueOfContext<TRow>(() => columns, knownIds, 'withSorting');
   const comparators = rules.flatMap((rule) => {
     const column = columnById.get(rule.columnId);
     if (!column) {
@@ -220,7 +223,7 @@ function sortRows<TRow>(
         // NOT multiplied by `sign` — placement stays on the same end regardless of direction.
         return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
       }
-      return sign * compare(a, b);
+      return sign * compare(a, b, ctx);
     }];
   });
 
@@ -247,15 +250,21 @@ function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>
   const declaredRules = config.schema
     ? runSortingSchemaFn<TRow, TValues>(config.schema)
     : [];
+  // Fixed at this factory's own construction time, reused below by `sortRows`'s resolver
+  // guard — never rebuilt from a later, live `input.columns()` read.
+  const knownIds = new Set(input.columns().map((column) => column.id));
   assertDeclarationsAreKnown(
     declaredRules.map((rule) => rule.columnId),
-    input.columns().map((column) => column.id),
+    knownIds,
     'withSorting'
   );
   assertNoDuplicateRuleKinds(declaredRules);
 
   const nullsByColumn = new Map<string, SortNullsOpts>();
-  const compareByColumn = new Map<string, (a: TRow, b: TRow) => number>();
+  const compareByColumn = new Map<
+    string,
+    (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number
+  >();
   const enableByColumn = new Map<string, () => boolean>();
   for (const rule of declaredRules) {
     if (rule.kind === 'sort-nulls') {
@@ -303,7 +312,7 @@ function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>
       sort: (rows) =>
         manual
           ? rows
-          : sortRows(rows, sorting(), input.columns(), nullsByColumn, compareByColumn),
+          : sortRows(rows, sorting(), input.columns(), nullsByColumn, compareByColumn, knownIds),
     },
   };
 }

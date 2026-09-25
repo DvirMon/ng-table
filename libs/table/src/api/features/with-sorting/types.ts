@@ -1,5 +1,6 @@
 import type { ColumnIdIn, ColumnValueMap } from '../../types';
 import { PATH_RECORDER, type PathRecorder } from '../../../schema/path-proxy';
+import type { ValueOfContext } from '../../../engine/resolvers';
 
 /** One `sortNulls(path.x, opts)` declaration — this column's null/empty placement
  *  override, independent of sort direction and the comparator. */
@@ -14,7 +15,7 @@ export interface SortNullsRule {
 export interface SortFnRule<TRow = unknown> {
   readonly kind: 'sort-fn';
   readonly columnId: string;
-  readonly comparator: (a: TRow, b: TRow) => number;
+  readonly comparator: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number;
 }
 
 /** One `sortable(path.x, { enable })` declaration — a gate deciding whether the

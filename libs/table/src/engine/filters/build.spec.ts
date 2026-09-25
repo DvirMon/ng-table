@@ -553,7 +553,7 @@ describe('buildFilterModel — when gating', () => {
     const filters = build((path) => ({
       category: equals(path.category),
       subCategory: equals(path.subCategory, {
-        when: ({ valueOf }) => valueOf(path.category) !== null,
+        when: ({ criterionOf }) => criterionOf(path.category) !== null,
       }),
     }));
     filters.subCategory().value.set('widgets');
@@ -564,7 +564,7 @@ describe('buildFilterModel — when gating', () => {
     const filters = build((path) => ({
       category: equals(path.category),
       subCategory: equals(path.subCategory, {
-        when: ({ valueOf }) => valueOf(path.category) !== null,
+        when: ({ criterionOf }) => criterionOf(path.category) !== null,
       }),
     }));
     filters.subCategory().value.set('widgets');
@@ -581,7 +581,7 @@ describe('buildFilterModel — when gating', () => {
     const filters = build((path) => ({
       category: equals(path.category),
       subCategory: equals(path.subCategory, {
-        when: ({ valueOf }) => valueOf(path.category) !== null,
+        when: ({ criterionOf }) => criterionOf(path.category) !== null,
       }),
     }));
     const subCategory = filters.subCategory();
@@ -702,7 +702,7 @@ describe('buildFilterModel — matcher()', () => {
     const filters = build((path) => ({
       category: equals(path.category),
       subCategory: equals(path.subCategory, {
-        when: ({ valueOf }) => valueOf(path.category) !== null,
+        when: ({ criterionOf }) => criterionOf(path.category) !== null,
       }),
     }));
     filters.subCategory().value.set('widgets');

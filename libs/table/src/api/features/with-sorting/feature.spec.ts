@@ -1,6 +1,7 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
+import { buildValueOfContext } from '../../../engine/resolvers';
 import { noData } from '../../../table.mock';
 import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
@@ -770,6 +771,98 @@ describe('withSorting', () => {
       // 'note's own empty row (r2) still lands first via the shared null-placement opt.
       store.toggleSort('note');
       expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r1', 'r3']);
+    });
+  });
+
+  // Issue #117: a sortFn comparator now optionally receives a third `ctx: ValueOfContext<TRow>`
+  // param, resolving any declared column's accessor value for a given row — its own column or a
+  // different one. `ctx.valueOf` naming an undeclared id is covered by a dedicated describe
+  // block below instead of through a full store: `guardCompare` (`with-sorting/feature.ts`)
+  // wraps every comparator call in a try/catch (ADR-0014 degrade to `0`), so a throw from inside
+  // a comparator run through `store.rows()` is never observable as a raw throw — only calling
+  // `ctx.valueOf` directly can prove the underlying guard fires.
+  describe('ctx.valueOf (Issue #117 Step 7)', () => {
+    it("a sortFn comparator reading ctx.valueOf(path.age, a)/(path.age, b) for its own column sorts by the resolved value", () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting({
+            schema: (path) =>
+              sortFn(path['age'], (a, b, ctx) => {
+                const aAge = ctx.valueOf(path['age'], a) as number;
+                const bAge = ctx.valueOf(path['age'], b) as number;
+                return aAge - bAge;
+              }),
+          })
+        )
+      );
+
+      store.toggleSort('age');
+
+      expect(store.rows().map((row) => row.age)).toEqual([25, 30, 40]);
+    });
+
+    it("a sortFn declared on one column but reading ctx.valueOf for a different column sorts by that other column's resolved value", () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting({
+            schema: (path) =>
+              sortFn(path['name'], (a, b, ctx) => {
+                const aAge = ctx.valueOf(path['age'], a) as number;
+                const bAge = ctx.valueOf(path['age'], b) as number;
+                return aAge - bAge;
+              }),
+          })
+        )
+      );
+
+      store.toggleSort('name');
+
+      // makeRows(): Charlie/40, Ann/25, Bob/30 — ordered here by age asc via ctx.valueOf(path.age,
+      // ...), not by name, proving the comparator resolved a different column than the one it
+      // was declared on.
+      expect(store.rows().map((row) => row.name)).toEqual(['Ann', 'Bob', 'Charlie']);
+    });
+
+    it('a 2-argument sortFn comparator (no ctx param) on a numeric column still sorts correctly — existing-shape regression', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting({
+            schema: (path) => sortFn(path['age'], (a, b) => b.age - a.age), // reversed
+          })
+        )
+      );
+
+      store.toggleSort('age');
+
+      expect(store.rows().map((row) => row.age)).toEqual([40, 30, 25]);
+    });
+  });
+
+  describe('ctx.valueOf resolver guard (Issue #117 Step 7, via engine/resolvers.ts)', () => {
+    it('an unknown column id thrown from ctx.valueOf names both withSorting and the id', () => {
+      const columns: ColumnDef<Row>[] = [
+        { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'Name' },
+      ];
+      const ctx = buildValueOfContext<Row>(() => columns, new Set(['name']), 'withSorting');
+
+      expect(() => ctx.valueOf({ id: 'nope' }, makeRows()[0])).toThrow(
+        /\[withSorting\].*"nope"/
+      );
+    });
+
+    it('a declared column id resolves the accessor value, not a throw', () => {
+      const columns: ColumnDef<Row>[] = [
+        { id: 'name', accessor: (row) => row.name, visible: true, order: 0, label: 'Name' },
+      ];
+      const ctx = buildValueOfContext<Row>(() => columns, new Set(['name']), 'withSorting');
+
+      expect(ctx.valueOf({ id: 'name' }, makeRows()[0])).toBe('Charlie');
     });
   });
 

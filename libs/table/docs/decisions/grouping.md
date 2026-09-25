@@ -13,9 +13,9 @@ of decisions taken about this capability, one line each, oldest first. The
 contract itself — what grouping does today — is
 [`1-state/features/grouping.md`](../1-state/features/grouping.md).
 
-This log **restates nothing**. Every row links to the record that holds the
-rationale, the counter-arguments and the rejected alternatives. If a row needs
-a second line, that second line belongs in the linked record.
+This log **restates nothing**. Every row links to the record holding the
+rationale, counter-arguments and rejected alternatives. If a row needs a
+second line, it belongs in that record instead.
 
 **Numbering is this log's own (`G1…Gn`) and is never reused from a source
 folder.** Grouping accumulated four separate decision logs each numbered from
@@ -116,6 +116,7 @@ older cross-references still resolve.
 | G74 | Schema rule functions drop the `apply` prefix and are named for the constraint they assert: `grouping`, `groupingAsync`, `groupKey`, `groupOrder`, `aggregate` | 09-22 | shipped `ce13765` (#136) | [ADR-0025](../adr/0025-schema-rule-functions-are-bare-named.md) |
 | G75 | Correction to G65/G66's supporting comparison, not to the decision: Signal Forms' *schema path* names a type-level slot (`keyof TModel`, arrays collapsed to one `DYNAMIC` builder) — the same cross-section shape as `ColumnsPath`; only its *field tree* names instances. G65's two-tier rule stands on G66's own inventory evidence, not on the contrast | 09-22 | finding | [discovery](../1-state/work/core/active/single-value-source/discovery-dynamic-field-schema.md) |
 | G76 | G71's two paths split under [ADR-0014](../adr/0014-runtime-error-policy.md)'s 2026-09-24 amendment: the **construction**-path throw becomes dev-only and is stripped from production, while the **writer**-path throw on `table.grouping` stays live in production — an id reaching the writer comes from a user action or a saved layout and may never appear in dev, so the amendment's "already done its job by the time you ship" reasoning does not reach it. The split is now structural, not just gated identically: `schema/validate.ts` exports a dev-gated `assertDeclarationsAreKnown` (construction) and an ungated `assertWrittenIdsAreKnown` (writer), and grouping's writer calls the latter directly | 09-24 | shipped | [ADR-0014](../adr/0014-runtime-error-policy.md), [#132](https://github.com/DvirMon/ng-table/issues/132), [workspace decisions](../1-state/work/core/active/single-value-source/decisions.md) |
+| G77 | `engine/resolvers.ts` holds the shared `valueOf(path, row)` resolver (`ValueOfHandle`, `ValueOfContext`, `buildValueOfContext`) — one file, feature-agnostic, imported by both `withGrouping()`'s `when`/`columnWhen` and `withSorting()`'s `sortFn`, never importing from `api/features/*`. Its construction-time guard on an undeclared id reuses each calling feature's **own already-computed** `knownIds` set (the same one passed to that feature's existing `assertDeclarationsAreKnown` call) rather than building a second list — same for `stateOf`'s guard in `wire-columns-schema.ts`, against `createColumns`'s own known-id set | 09-25 | shipped | [SDS](../adr/0027-schema-declaration-surface.md), [#117](https://github.com/DvirMon/ng-table/issues/117), [workspace decisions](../1-state/work/core/active/single-value-source/decisions.md) |
 
 All dates are 2026.
 

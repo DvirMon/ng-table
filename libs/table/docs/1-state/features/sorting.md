@@ -92,6 +92,15 @@ needs null placement never has to name a comparator slot:
 - **`sortFn(path.x, compare)`** — this column's own comparator. If omitted,
   the store falls back to built-in auto-detection (string/number/date
   comparison) — no auto-detection logic beyond this was specified.
+  `compare`'s optional third parameter, `ctx: ValueOfContext<TRow>`, resolves
+  a *different* declared column's accessor value for one row —
+  `ctx.valueOf(path.total, a)` — the unbound-tier resolver from
+  [ADR-0027 Rule 3](../adr/0027-schema-declaration-surface.md#rule-3--resolvers-come-in-two-tiers-and-the-tier-decides-the-arity).
+  A two-argument `compare` written before `ctx` existed keeps typechecking and
+  sorting identically (additive widening, not a migration). Naming an
+  undeclared column id through `ctx.valueOf` throws `[withSorting] Unknown
+  column id "…"`, dev-gated, at the same construction check `schema` already
+  uses — not a separate one.
 - **`sortable(path.x, { enable })`** — whether the column responds to
   `toggleSort()`. A column with no `sortable` rule is sortable by default.
   `enable` is read live at `toggleSort()` call time, never cached.

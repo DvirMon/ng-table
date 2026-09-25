@@ -59,6 +59,31 @@ function readColumnMeta<T>(column: ColumnDef<unknown>, key: ColumnMetaKey<T>): T
 - `readColumnMeta(column, KEY)` reads a registered value back off a resolved `ColumnDef`.
   Returns `undefined` if nothing was registered for that `(column, key)` pair.
 
+### `ctx.stateOf(path)` — reading one other column's config (#117)
+
+`ColumnRuleContext<TRow>` gained a second member alongside `columns`:
+
+```ts
+interface ColumnRuleContext<TRow> {
+  readonly columns: () => ColumnDef<TRow>[];
+  stateOf<K extends string>(
+    handle: ColumnHandle<TRow, K, unknown>
+  ): Pick<ColumnDef<TRow>, 'visible' | 'label' | 'meta'>;
+}
+```
+
+`stateOf(path.other)` is the bound-tier resolver from
+[ADR-0027 Rule 3](../../adr/0027-schema-declaration-surface.md#rule-3--resolvers-come-in-two-tiers-and-the-tier-decides-the-arity)
+for "how is this column configured?" — it reads a declaration, not data, so it takes only a path,
+no subject. It replaces a `ctx.columns().find((c) => c.id === 'other')` string-keyed lookup with a
+typed, path-checked read. No `order` field — `ColumnDef.order` is a separate concern this resolver
+does not expose. `columns` is unchanged and stays available for anything reading the raw array
+(counting, filtering across every column) rather than one other column's state. Resolves against
+`baseColumns`, same as `columns` — never the derived, folded `columns` signal, for the same
+cycle-avoidance reason. Naming an undeclared column id through `stateOf` throws
+`[createColumns] Unknown column id "…"`, dev-gated, at the same construction check `metadata`'s
+own column ids already use — not a separate one.
+
 ## Deliberate scope cut: single-writer only (except the internal `VISIBLE` key)
 
 `metadata()` has **no reducer** for consumer keys. Two `metadata()` calls targeting the same

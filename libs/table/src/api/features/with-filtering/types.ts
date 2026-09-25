@@ -91,12 +91,11 @@ export type Filters<TRow, TState extends Record<string, unknown>> = (() => Filte
 };
 
 /**
- * Structural `path` proxy handed to a filters schema function — a property access fabricates
- * a `FilterHandle` per declared column id, typed to that column's resolved value. Inline
- * schemas (`withFiltering({ schema })`) infer `TValues` from the composed columns; a schema
+ * Structural `path` proxy for a filters schema function — a property access fabricates a
+ * `FilterHandle` per declared column id, typed to that column's resolved value. An inline
+ * schema (`withFiltering({ schema })`) infers `TValues` from the composed columns; a schema
  * written as its own variable spells it explicitly:
- * `FiltersPath<Row, ColumnValues<Row, typeof set.columns>>`. See
- * `docs/1-state/features/filtering.md`'s State section.
+ * `FiltersPath<Row, ColumnValues<Row, typeof set.columns>>`. See `docs/1-state/features/filtering.md`.
  */
 export type FiltersPath<TRow, TValues extends ColumnValueMap> = {
   readonly [K in ColumnIdIn<TValues>]: FilterHandle<TRow, K, TValues[K]>;

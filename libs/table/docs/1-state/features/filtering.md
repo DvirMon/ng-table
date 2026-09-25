@@ -129,7 +129,7 @@ withFiltering({
     ]),
 
     subCategory: equals(path.subCategory, {
-      when: ({ valueOf }) => valueOf(path.category) !== null,  // gated: only narrows once a category is chosen
+      when: ({ criterionOf }) => criterionOf(path.category) !== null,  // gated: only narrows once a category is chosen
     }),
 
     tags: filter(path.tags, (cell, c: { include: string[]; exclude: string[] }) =>
@@ -247,20 +247,25 @@ interface FilterOptions<TSource = unknown, TRow = unknown> {
 
 ```ts
 subCategory: equals(path.subCategory, {
-  when: ({ valueOf }) => valueOf(path.category) !== null,   // only applies once a category is chosen
+  when: ({ criterionOf }) => criterionOf(path.category) !== null,   // only applies once a category is chosen
 }),
 ```
 
 `when` returns `boolean`, not a tri-state — filtering has no async rule that would need a pending
 state (R53). Gated off, `criterion()` and `isActive()` go dark (`criterion()` reads `undefined`,
 as if the filter were empty); `value` and `reset` are unaffected — the stored value survives being
-gated off and reappears once the condition is true again. `when`'s `valueOf` reads any other
+gated off and reappears once the condition is true again. `when`'s `criterionOf` reads any other
 filter's current value, including one declared later in the same schema — gating resolves in a
 second pass, once every node exists, so declaration order never matters.
 
-**`valueOf` keeps its name here.** #115 loosened `FilterValueOfContext.valueOf`'s generic to
-match the column-id-keyed `FilterHandle`, but did not touch the method's name — renaming it to
-`criterionOf` (matching the `*Of` reader-naming rule, ADR-0025) is #117's.
+**`valueOf` was renamed to `criterionOf` (#117).** #115 loosened
+`FilterValueOfContext.valueOf`'s generic to match the column-id-keyed `FilterHandle`, but did not
+touch the method's name. #117 introduced a second, *unbound*-tier `valueOf(path, row)` resolver
+for grouping's `when` and sorting's `sortFn` (see [grouping.md](grouping.md#group-admission-when),
+[sorting.md](sorting.md#per-column-configuration--withsortingschema)) — a name collision with
+this *bound*-tier "what did the user ask for?" resolver, per
+[ADR-0027 Rule 3](../../adr/0027-schema-declaration-surface.md#rule-3--resolvers-come-in-two-tiers-and-the-tier-decides-the-arity).
+`FilterValueOfContext.valueOf` is renamed to `criterionOf`, gone rather than deprecated.
 
 **Superseded:** the array-schema era's `applyWhen(path, condition, children)` — a separate node
 kind wrapping a whole group of rules — is gone. `when` is a per-rule option instead, which is

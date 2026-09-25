@@ -23,15 +23,15 @@ export interface FilterGroupChild<TCell = unknown, TCriterion = unknown> {
 }
 
 /**
- * Context `FilterOptions.when` reads other filters' current criterion values through, not row
- * data.
+ * Context `FilterOptions.when` reads other filters' current criterion values through
+ * `criterionOf`, not row data.
  * @internal
  */
 export interface FilterValueOfContext<TRow> {
   // Untyped per-path (`unknown`): the criterion shape behind a path depends on which rule
   // registered it, which this context has no way to recover statically.
   /** Generic in the handle's own id — a handle from any row/value type is accepted. */
-  valueOf<K extends string = string>(path: FilterHandle<unknown, K, unknown>): unknown;
+  criterionOf<K extends string = string>(path: FilterHandle<unknown, K, unknown>): unknown;
 }
 
 // `kind: 'group'` (anyOf) carries `children` instead of using `predicate`/`paths` directly —
@@ -56,7 +56,7 @@ export interface FilterRuleRecord<TRow, TCell = unknown, TCriterion = unknown> {
 }
 
 // `__row` exists because `TRow` is otherwise unrecoverable: `FilterRuleRecord<TRow>` mentions
-// it only in the optional `condition`, whose `valueOf` is generic in its own handle, so
+// it only in the optional `condition`, whose `criterionOf` is generic in its own handle, so
 // nothing else distinguishes two rules built from different rows.
 /**
  * A rule's static inference channel — phantom `__criterion`/`__row` members read by `StateOf`.

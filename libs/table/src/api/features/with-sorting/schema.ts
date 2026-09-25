@@ -5,6 +5,7 @@ import {
   type PathRecorder,
 } from '../../../schema/path-proxy';
 import { runRecordedSchema } from '../../../schema/run';
+import type { ValueOfContext } from '../../../engine/resolvers';
 import type { ColumnValueMap } from '../../types';
 import type {
   AnySortingRule,
@@ -64,11 +65,12 @@ export function sortNulls<TRow>(path: SortingHandle<TRow>, opts: SortNullsOpts):
  * @remarks
  * Standard `Array.prototype.sort` semantics: negative if `a` precedes `b`,
  * positive if after, `0` if equal. A throwing comparator degrades to `0` for
- * that comparison and reports once per column per evaluation (ADR-0014).
+ * that comparison and reports once per column per evaluation.
  */
+// See docs/adr/0014-runtime-error-policy.md.
 export function sortFn<TRow>(
   path: SortingHandle<TRow>,
-  compare: (a: TRow, b: TRow) => number
+  compare: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number
 ): void {
   recorderOf<TRow, AnySortingRule<TRow>>(path).record({
     kind: 'sort-fn',
@@ -81,10 +83,11 @@ export function sortFn<TRow>(
  * Declares this column's sortability gate.
  *
  * @remarks
- * `enable` reads no row data, unlike grouping's paired `when`/`enable`
- * (ADR-0018). A throw degrades to `true` (still sortable) and reports once
- * per column per evaluation (ADR-0014).
+ * `enable` reads no row data, unlike grouping's paired `when`/`enable`. A throw degrades to
+ * `true` (still sortable) and reports once per column per evaluation.
  */
+// Naming: docs/adr/0018-when-vs-enable-predicate-naming.md.
+// Degrade-on-throw: docs/adr/0014-runtime-error-policy.md.
 export function sortable<TRow>(path: SortingHandle<TRow>, opts: SortableOpts): void {
   recorderOf<TRow, AnySortingRule<TRow>>(path).record({
     kind: 'sortable',

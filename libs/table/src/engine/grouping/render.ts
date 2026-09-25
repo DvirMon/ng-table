@@ -12,8 +12,8 @@ import {
 } from './clusters';
 
 // Narrows a render row's `data` from `TRow | null` to `TRow` — true for every item the `'group'`
-// render stage sees, since it runs first in `RENDER_ORDER` and only ever receives the plain 1:1
-// seed (no `kind: 'group'` header exists yet to carry a `null`).
+// render stage sees, since it runs first in `RENDER_ORDER` and only receives the plain 1:1
+// seed (no `kind: 'group'` header yet exists to carry a `null`).
 function isRowData<TRow>(data: TRow | null): data is TRow {
   return data !== null;
 }
@@ -27,12 +27,19 @@ function reportAggregateError(columnId: string): void {
   );
 }
 
-// A construction-time-valid level can still lose its column later — `setColumns()` is not
-// gated by the same check `initial`/`schema`/`table.grouping`'s writer go through (ADR-0024
-// only re-validates on a grouping write). Runtime, data-dependent, so it degrades and reports
-// (ADR-0014), it does not throw. Shared by every caller that hits this one condition —
-// `groupingLevels()` (`with-grouping/feature.ts`) and `resolveGroupLabel` below — so the
-// message and its dedup live in one place.
+/**
+ * Reports once per column when a grouping level's column no longer exists in `columns` —
+ * shared by `groupingLevels()` and `resolveGroupLabel` so the message and dedup live in one
+ * place.
+ *
+ * @remarks
+ * A level valid when declared can lose its column later via `setColumns()`; this degrades
+ * and reports rather than throwing.
+ *
+ * @param consequence Appended to the message — names what the caller falls back to.
+ */
+// `setColumns()` isn't re-validated the way a grouping write is: docs/adr/0024.
+// Degrade-on-throw: docs/adr/0014-runtime-error-policy.md.
 export function reportOrphanedGroupingColumn(
   columnId: string,
   consequence: string,
@@ -52,7 +59,7 @@ export function reportOrphanedGroupingColumn(
 
 // Per-cluster aggregate row: `rows` is always a cluster's own leaves. A throwing
 // `aggregateFn` falls back to `undefined` for that column only; `reportedColumns` is shared
-// across one `buildGroupRenderRows` call so the console.error dedupes to once per column across
+// across one `buildGroupRenderRows` call so `console.error` dedupes once per column across
 // every group visited, not once per group.
 function computeAggregates<TRow>(
   rows: TRow[],
@@ -80,8 +87,7 @@ function computeAggregates<TRow>(
 // Explicit `labelByColumn` entry -> the column's own label. Every level names a real column at
 // the point it was declared or written (ADR-0024); a miss here means its column was removed
 // later via `setColumns()`. Falls back to the raw id, reported once per column per evaluation
-// via `reportedLabels` — a runtime, data-dependent condition, so it degrades rather than
-// throws (ADR-0014).
+// via `reportedLabels` — degrades rather than throws (ADR-0014).
 function resolveGroupLabel<TRow>(
   columnId: string,
   columnById: ReadonlyMap<string, ColumnDef<TRow>>,
@@ -105,10 +111,10 @@ function resolveGroupLabel<TRow>(
 }
 
 // Depth-first header + leaf walk over a `buildClusters` tree. Returns one `kind: 'group'` header
-// per admitted node, nesting its children beneath it. A node with `admitted: false` inlines its
+// per admitted node, nesting children beneath it. A node with `admitted: false` inlines its
 // `items` at the parent's level instead — no header, no recursion into `children`. Collapse/
-// expand visibility is not this function's concern: `flattenVisible` decides what renders from
-// the nested tree this produces.
+// expand visibility isn't this function's concern: `flattenVisible` decides what renders from
+// the tree it produces.
 function buildGroupNodes<TRow>(
   nodes: ClusterNode<RenderNode<TRow>>[],
   parentPath: string,
@@ -182,7 +188,16 @@ export function buildGroupRenderRows<TRow>(
   });
   const toRows = (items: RenderNode<TRow>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);
-  const admitted = admitClusters(nodes, opts?.when, toRows, new Set(), opts?.columnWhen);
+  const admitted = admitClusters(
+    nodes,
+    opts?.when,
+    toRows,
+    new Set(),
+    opts?.columnWhen,
+    () => columns,
+    opts?.knownIds ?? new Set(columns.map((column) => column.id)),
+    opts?.label ?? 'withGrouping'
+  );
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, toRows, { done: false });
   return buildGroupNodes(
     ordered,

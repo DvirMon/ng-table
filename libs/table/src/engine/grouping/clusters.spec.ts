@@ -8,6 +8,7 @@ import type {
 } from '../../api/types';
 import { noData } from '../../table.mock';
 import { resolveColumnDefs } from '../columns';
+import { buildValueOfContext } from '../resolvers';
 import {
   admitClusters,
   buildClusterNodes,
@@ -18,6 +19,12 @@ import {
 } from './clusters';
 import { orderColumns, orders, type Order } from './grouping.mock';
 import { clusterRows } from './pipeline';
+
+// `admitClusters` grew a required resolver guard (`columns`/`knownIds`/`label`) once `when`
+// started receiving a `ctx: ValueOfContext<TRow>` (Step 6/7) — every direct call below must now
+// pass them. Centralized here so a future signature change updates one place, not eight.
+const orderColumnsGetter = (): ColumnDef<Order>[] => orderColumns;
+const orderKnownIds = new Set(orderColumns.map((column) => column.id));
 
 describe('buildClusters', () => {
   it('produces the right node shape for a 2-level input', () => {
@@ -386,7 +393,16 @@ describe('admitClusters (#85 table-wide admission)', () => {
       row[columnId as keyof Order]
     );
 
-    const result = admitClusters(nodes, undefined, (items) => items, new Set());
+    const result = admitClusters(
+      nodes,
+      undefined,
+      (items) => items,
+      new Set(),
+      undefined,
+      orderColumnsGetter,
+      orderKnownIds,
+      'withGrouping'
+    );
 
     expect(result).toBe(nodes);
     expect(result[0].children).toBe(nodes[0].children);
@@ -398,7 +414,16 @@ describe('admitClusters (#85 table-wide admission)', () => {
     );
     const when = (c: ClusterSummary<Order>): boolean => c.key !== 'EU';
 
-    const result = admitClusters(nodes, when, (items) => items, new Set());
+    const result = admitClusters(
+      nodes,
+      when,
+      (items) => items,
+      new Set(),
+      undefined,
+      orderColumnsGetter,
+      orderKnownIds,
+      'withGrouping'
+    );
 
     expect(result).toHaveLength(nodes.length);
     const originalEu = nodes.find((node) => node.value === 'EU')!;
@@ -419,7 +444,16 @@ describe('admitClusters (#85 table-wide admission)', () => {
       return false;
     };
 
-    admitClusters(nodes, rejectEverything, (items) => items, new Set());
+    admitClusters(
+      nodes,
+      rejectEverything,
+      (items) => items,
+      new Set(),
+      undefined,
+      orderColumnsGetter,
+      orderKnownIds,
+      'withGrouping'
+    );
 
     // US and EU are each judged once at 'region' — since both are rejected, 'category' (the
     // deeper level nested under each) is never reached.
@@ -437,7 +471,16 @@ describe('admitClusters (#85 table-wide admission)', () => {
         throw new Error('boom');
       };
 
-      const result = admitClusters(nodes, throwingWhen, (items) => items, new Set());
+      const result = admitClusters(
+        nodes,
+        throwingWhen,
+        (items) => items,
+        new Set(),
+        undefined,
+        orderColumnsGetter,
+        orderKnownIds,
+        'withGrouping'
+      );
 
       // Every node at every level (2 region clusters + 4 category clusters) hit the throw
       // independently, yet all are admitted.
@@ -461,7 +504,16 @@ describe('admitClusters (#86 per-column admission)', () => {
       ['region', (c: ClusterSummary<Order>) => c.key !== 'EU'],
     ]);
 
-    const result = admitClusters(nodes, undefined, (items) => items, new Set(), columnWhen);
+    const result = admitClusters(
+      nodes,
+      undefined,
+      (items) => items,
+      new Set(),
+      columnWhen,
+      orderColumnsGetter,
+      orderKnownIds,
+      'withGrouping'
+    );
 
     const us = result.find((node) => node.value === 'US')!;
     const eu = result.find((node) => node.value === 'EU')!;
@@ -478,7 +530,16 @@ describe('admitClusters (#86 per-column admission)', () => {
       ['region', (c: ClusterSummary<Order>) => c.key !== 'EU'],
     ]);
 
-    const result = admitClusters(nodes, when, (items) => items, new Set(), columnWhen);
+    const result = admitClusters(
+      nodes,
+      when,
+      (items) => items,
+      new Set(),
+      columnWhen,
+      orderColumnsGetter,
+      orderKnownIds,
+      'withGrouping'
+    );
 
     const us = result.find((node) => node.value === 'US')!;
     const eu = result.find((node) => node.value === 'EU')!;
@@ -498,7 +559,16 @@ describe('admitClusters (#86 per-column admission)', () => {
       };
       const columnWhen = new Map<string, GroupWhen<Order>>([['region', throwingColumnWhen]]);
 
-      const result = admitClusters(nodes, when, (items) => items, new Set(), columnWhen);
+      const result = admitClusters(
+        nodes,
+        when,
+        (items) => items,
+        new Set(),
+        columnWhen,
+        orderColumnsGetter,
+        orderKnownIds,
+        'withGrouping'
+      );
 
       // The per-column vote defaults to admit (true) on throw, but AND'd with the table-wide
       // `false` the cluster is still dissolved overall.
@@ -517,7 +587,16 @@ describe('admitClusters (#86 per-column admission)', () => {
     // 'category' names no active level here (the only level clustered is 'region').
     const columnWhen = new Map<string, GroupWhen<Order>>([['category', () => false]]);
 
-    const result = admitClusters(nodes, undefined, (items) => items, new Set(), columnWhen);
+    const result = admitClusters(
+      nodes,
+      undefined,
+      (items) => items,
+      new Set(),
+      columnWhen,
+      orderColumnsGetter,
+      orderKnownIds,
+      'withGrouping'
+    );
 
     expect(result.every((node) => node.admitted)).toBe(true);
     expect(result.map((node) => node.value)).toEqual(nodes.map((node) => node.value));
@@ -768,5 +847,27 @@ describe('a throwing accessor degrades and dedupes through readGroupValue (Step 
     } finally {
       errorSpy.mockRestore();
     }
+  });
+});
+
+// `admitClusters`'s own `when`/`columnWhen` evaluation (`evaluateGroupWhen`) wraps every
+// predicate call in a try/catch for ADR-0014's runtime-degrade path — so a `when` that calls
+// `ctx.valueOf()` with an unknown id, run through `admitClusters`, is swallowed into the same
+// "admit + report" fallback as any other throwing predicate, never observable as a raw throw.
+// `buildValueOfContext`'s own construction-class throw (Issue #117 Step 6) is therefore only
+// directly observable by calling the resulting `ctx.valueOf()` itself, as below — this is
+// `engine/resolvers.ts`'s own behavior exercised through grouping's own call site
+// (`buildValueOfContext`, imported by `clusters.ts`), not a fourth spec file for resolvers.ts.
+describe('ctx.valueOf resolver guard (Issue #117 Step 7, via engine/resolvers.ts)', () => {
+  it('an unknown column id thrown from ctx.valueOf names both withGrouping and the id', () => {
+    const ctx = buildValueOfContext<Order>(orderColumnsGetter, orderKnownIds, 'withGrouping');
+
+    expect(() => ctx.valueOf({ id: 'nope' }, orders[0])).toThrow(/\[withGrouping\].*"nope"/);
+  });
+
+  it('a declared column id resolves the accessor value, not a throw', () => {
+    const ctx = buildValueOfContext<Order>(orderColumnsGetter, orderKnownIds, 'withGrouping');
+
+    expect(ctx.valueOf({ id: 'region' }, orders[0])).toBe('US');
   });
 });

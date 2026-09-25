@@ -7,6 +7,7 @@ import type {
   RowId,
 } from '../../api/types';
 import { readAccessor } from '../cells';
+import { buildValueOfContext, type ValueOfContext } from '../resolvers';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
@@ -34,6 +35,13 @@ export interface ClusterOpts<TRow> {
   /** Per-column aggregate fns. A columnId with no active level is inert, matching
    * `groupOrderByColumn`. */
   readonly aggregateByColumn?: ReadonlyMap<string, (rows: TRow[]) => unknown>;
+  /** The declaring feature's fixed, construction-time declared-id set — passed to
+   * `admitClusters`'s resolver guard for `when`/`columnWhen`. Omitted only by call sites that
+   * predate the guard (this file's own spec suite); falls back there to `columns`'s own live
+   * ids, which never rejects an id those callers themselves supplied. */
+  readonly knownIds?: ReadonlySet<string>;
+  /** Names the declaring feature in a guard failure's thrown message. Paired with `knownIds`. */
+  readonly label?: string;
 }
 
 // Distinguishes `1` from `"1"` and normalizes `Date` — plain `String(value)` would collide the
@@ -166,13 +174,14 @@ function evaluateGroupWhen<TRow>(
   predicate: GroupWhen<TRow> | undefined,
   summary: ClusterSummary<TRow>,
   columnId: string,
-  reportedColumns: Set<string>
+  reportedColumns: Set<string>,
+  ctx: ValueOfContext<TRow>
 ): boolean {
   if (!predicate) {
     return true;
   }
   try {
-    return predicate(summary);
+    return predicate(summary, ctx);
   } catch {
     if (!reportedColumns.has(columnId)) {
       reportedColumns.add(columnId);
@@ -194,7 +203,11 @@ export function admitClusters<T, TRow>(
   when: GroupWhen<TRow> | undefined,
   toRows: (items: T[]) => TRow[],
   reportedColumns: Set<string>,
-  columnWhen?: ReadonlyMap<string, GroupWhen<TRow>>
+  columnWhen: ReadonlyMap<string, GroupWhen<TRow>> | undefined,
+  columns: () => readonly ColumnDef<TRow>[],
+  knownIds: ReadonlySet<string>,
+  label: string,
+  ctx: ValueOfContext<TRow> = buildValueOfContext(columns, knownIds, label)
 ): ClusterNode<T>[] {
   if (!when && !columnWhen?.size) {
     return nodes;
@@ -205,16 +218,33 @@ export function admitClusters<T, TRow>(
       key: node.value,
       rows: toRows(node.items),
     };
-    const admittedByTable = evaluateGroupWhen(when, summary, node.columnId, reportedColumns);
+    const admittedByTable = evaluateGroupWhen(
+      when,
+      summary,
+      node.columnId,
+      reportedColumns,
+      ctx
+    );
     const admittedByColumn = evaluateGroupWhen(
       columnWhen?.get(node.columnId),
       summary,
       node.columnId,
-      reportedColumns
+      reportedColumns,
+      ctx
     );
     const admitted = admittedByTable && admittedByColumn;
     const children = admitted
-      ? admitClusters(node.children, when, toRows, reportedColumns, columnWhen)
+      ? admitClusters(
+          node.children,
+          when,
+          toRows,
+          reportedColumns,
+          columnWhen,
+          columns,
+          knownIds,
+          label,
+          ctx
+        )
       : node.children;
     return { ...node, admitted, children };
   });

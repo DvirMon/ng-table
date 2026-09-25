@@ -1,5 +1,5 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupOrder, GroupWhen } from '../../types';
+import type { ColumnValueMap, GroupOrder, GroupWhen } from '../../types';
 import {
   createPathProxy,
   PATH_RECORDER,
@@ -18,12 +18,12 @@ import type {
 // Builds the structural `path` proxy for a grouping schema fn — the `get` trap fabricates a
 // `GroupingHandle` for any string property, never reading real row data. Shares the
 // Proxy+recorder mechanism with `columns-schema/schema.ts`; imports nothing from it.
-function buildGroupingPath<TRow, TId extends string>(
+function buildGroupingPath<TRow, TValues extends ColumnValueMap>(
   recorder: PathRecorder<TRow, AnyGroupingRule<TRow>>
-): GroupingPath<TRow, TId> {
+): GroupingPath<TRow, TValues> {
   return createPathProxy(
     (id): GroupingHandle<TRow> => ({ id, [PATH_RECORDER]: recorder })
-  ) as GroupingPath<TRow, TId>;
+  ) as GroupingPath<TRow, TValues>;
 }
 
 /**
@@ -31,11 +31,11 @@ function buildGroupingPath<TRow, TId extends string>(
  * the rules it recorded. Shares its body with `columns-schema/schema.ts`'s `runColumnsSchemaFn`
  * via `runRecordedSchema`, keyed by declared column id.
  */
-export function runGroupingSchemaFn<TRow, TId extends string>(
-  fn: GroupingSchemaFn<TRow, TId>
+export function runGroupingSchemaFn<TRow, TValues extends ColumnValueMap>(
+  fn: GroupingSchemaFn<TRow, TValues>
 ): readonly AnyGroupingRule<TRow>[] {
-  return runRecordedSchema<TRow, AnyGroupingRule<TRow>, GroupingPath<TRow, TId>>(
-    (recorder) => buildGroupingPath<TRow, TId>(recorder),
+  return runRecordedSchema<TRow, AnyGroupingRule<TRow>, GroupingPath<TRow, TValues>>(
+    (recorder) => buildGroupingPath<TRow, TValues>(recorder),
     fn
   );
 }

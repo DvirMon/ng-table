@@ -35,6 +35,7 @@ import { withSelection } from '../with-selection';
 import { withSorting } from '../with-sorting';
 import { withTree } from '../with-tree';
 import type {
+  ClusterSummary,
   ColumnDecl,
   ColumnSet,
   ColumnValues,
@@ -2111,6 +2112,99 @@ describe('when (#85 table-wide admission)', () => {
       ['row', 2, 5],
       ['row', 2, 6],
     ]);
+  });
+
+  // Issue #117: `when` now receives a second `ctx: ValueOfContext<TRow>` param, resolving any
+  // declared column's accessor value for a given row — including a carrier column whose id
+  // matches no row field. The three cases below exercise that alongside the pre-#117 1-argument
+  // shape and `ClusterSummary`'s own structure; `ctx.valueOf` naming an undeclared id is covered
+  // by `clusters.spec.ts`'s "ctx.valueOf resolver guard" describe block instead — `admitClusters`
+  // wraps every `when` call in a try/catch (ADR-0014 degrade), so a throw from inside a `when`
+  // callback run through this feature's own `renderRows()` is never observable as a raw throw;
+  // only calling `ctx.valueOf` directly (as that file does) can prove the underlying guard fires.
+  describe('ctx.valueOf (Issue #117 Step 7)', () => {
+    it('a when reading ctx.valueOf(path.margin, cluster.rows[0]) for a derived-accessor carrier column admits/rejects clusters by its resolved value', () => {
+      let marginHandle!: GroupingHandle<GroupingMockRow, 'margin'>;
+      const columns = createColumns(noData<GroupingMockRow>(), (col) => [
+        ...makeColumns().columns,
+        // Carrier column: 'margin' matches no GroupingMockRow field — its only value comes
+        // from the accessor, proving ctx.valueOf resolves through the accessor, not row[id].
+        col('margin', { label: 'Margin', accessor: (row) => row.amount - 60 }),
+      ]);
+
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns },
+          withGrouping({
+            initial: ['region'],
+            // `schema` runs synchronously at construction, before `when` is ever invoked, so
+            // capturing `path.margin` here for `when` to close over is safe — no rule is
+            // recorded by the bare property read itself.
+            schema: (path) => {
+              marginHandle = path.margin;
+            },
+            when: (cluster, ctx) => (ctx.valueOf(marginHandle, cluster.rows[0]) as number) > 0,
+          })
+        )
+      );
+
+      // US's first leaf (id 1, amount 100) has margin 40 > 0 -> admitted.
+      // EU's first leaf (id 4, amount 20) has margin -40 <= 0 -> rejected.
+      const groupIds = store
+        .renderRows()
+        .filter((row) => row.kind === 'group')
+        .map((row) => row.id);
+      expect(groupIds).toEqual(['group:>region:string:US']);
+
+      // A rejected cluster still renders flat, its rows never dropped.
+      const euLeafIds = store
+        .renderRows()
+        .filter((row) => row.kind === 'row' && (row.data as GroupingMockRow).region === 'EU')
+        .map((row) => (row.data as GroupingMockRow).id);
+      expect(euLeafIds.sort()).toEqual([4, 5, 6]);
+    });
+
+    it('ClusterSummary passed to when has exactly columnId/key/rows — no fourth key', () => {
+      let capturedKeys: string[] = [];
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({
+            initial: ['region'],
+            when: (cluster) => {
+              capturedKeys = Object.keys(cluster).sort();
+              return true;
+            },
+          })
+        )
+      );
+
+      store.renderRows(); // triggers evaluation
+
+      expect(capturedKeys).toEqual(['columnId', 'key', 'rows']);
+    });
+
+    it('a when written as a 1-argument function (no ctx param) still admits/rejects identically — existing-shape regression', () => {
+      const oneArgWhen = (cluster: ClusterSummary<GroupingMockRow>): boolean =>
+        cluster.key === 'US';
+
+      const store = inContext(() =>
+        createTable(
+          signal<GroupingMockRow[]>(mockGroupingRows),
+          { trackBy: mockGroupingTrackBy, columns: makeColumns() },
+          withGrouping({ initial: ['region'], when: oneArgWhen })
+        )
+      );
+
+      const groupIds = store
+        .renderRows()
+        .filter((row) => row.kind === 'group')
+        .map((row) => row.id);
+
+      expect(groupIds).toEqual(['group:>region:string:US']);
+    });
   });
 });
 

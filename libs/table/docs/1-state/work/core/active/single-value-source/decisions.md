@@ -299,7 +299,7 @@ registered as **G60–G68**). Three corrections to the list, all published on th
   configured. `equals` is the one rule where a criterion and a cell share a type — `inRange`'s is
   `{ min, max }` against a `number` cell — which is why the names cannot collapse. The evidence is an inventory of every consumer callback across all four schemas —
   none has exactly one row as its subject (G66), so a bound one-argument value resolver has
-  nowhere to attach anywhere in the mechanism.
+  nowhere to attach in the mechanism.
 
   The resolver therefore lives on a context argument, never on `ClusterSummary` (G67), which stays
   `{ columnId, key, rows }`. Two independent reasons: the tier rule already passes the subject in,
@@ -311,6 +311,13 @@ registered as **G60–G68**). Three corrections to the list, all published on th
 
 [#116](https://github.com/DvirMon/ng-table/issues/116) — the cross-cutting ADR that D11 says is
 owed — is docs and blocks nothing mechanically.
+
+**R1 shipped.** All nine steps landed —
+[`4-tasks/issue-117-rule-context-resolvers/`](4-tasks/issue-117-rule-context-resolvers/) —
+`engine/resolvers.ts`'s shared `valueOf`, grouping's `when`/sorting's `sortFn` reading it,
+filtering's `criterionOf` rename, `stateOf` on `ColumnRuleContext`, and the shared construction
+guard (G77). Recorded in `decisions/grouping.md` as G63, G65, G67 (already `shipped` ahead of the
+code, per ADR-0027) and the new G77.
 
 ---
 
@@ -939,6 +946,41 @@ numbering continues the 2026-09-24 R-series.
   `columns` — inference resolves `TRow` off `columns` first, then checks
   `data` against `TableDataInput<TRow>` and fails there. Recorded as observed
   behavior; Step 1's types were not adjusted to relocate the error.
+
+---
+
+## `/grill-with-docs` issue-141 ruling (2026-09-25)
+
+### Settled
+
+- **R15 — the 16 column-declaration decisions + 4 rulings go into a new
+  `docs/decisions/columns.md`, not `core.md` and not distributed across the
+  existing logs.** `docs/status.md` already lists both `columns` and `core`
+  as registered capabilities (backed by `docs/3-ui/directives/columns.md`
+  and `docs/3-ui/directives/core.md`), both showing `—` in the Decisions
+  column — not yet consolidated. So this fills an existing gap rather than
+  inventing a new grouping. `core.md`'s actual scope is the store-connection
+  / `ngpTable`/`ngpTableRow` directive layer, and none of this workspace's
+  16 decisions touch it — they are all about `createColumns()`/`ColumnSet`/
+  `col()`/the `ColumnDecl` brand, i.e. the `columns` capability. A `core.md`
+  log would ship empty. `capabilityLogPath` moves from `grouping.md` to the
+  new `columns.md`. The `G73`–`G76` rows already in `grouping.md`, and the
+  ADR-0025 rename rows owed to both `grouping.md` and `sorting.md`, are
+  unaffected and stay where they are — this ruling only concerns the
+  previously homeless column-declaration decisions. User's call, asked
+  directly; three options presented, this one picked.
+
+- **R16 — #141's "column-order window documented in consumer-facing docs"
+  item becomes a verification of #140's doc, not a fresh write.** #141's
+  acceptance criteria and #140's acceptance criteria both name the same
+  obligation almost verbatim. #140 blocks #141, so by the time #141 is
+  worked, #140's doc should already exist. If #140's doc is missing or
+  incomplete when #141 is worked, that is a defect in #140 to flag, not
+  something for #141 to silently patch over. Rejected: #141 writing it
+  again regardless (risks two versions of the same paragraph drifting
+  apart), and dropping the item from #141 outright (leaves no verification
+  step on the ticket that is actually building the wider docs slice).
+  User's call, asked directly.
 
 ---
 

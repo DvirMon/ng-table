@@ -5,6 +5,7 @@ import type {
 } from '../../columns-schema/types';
 import type { ColumnRuleEntry } from '../columns';
 import type { TableFeatureSpec } from '../types';
+import { assertDeclarationsAreKnown } from '../../schema/validate';
 import {
   buildAsyncMetadataEntry,
   buildMetadataEntries,
@@ -13,20 +14,14 @@ import {
 } from './wiring';
 
 /**
- * Feature that turns compiled reactive/async column-schema rules into `ColumnRuleEntry`
- * values the engine folds onto `baseColumns` (`foldColumnRules`) — declares, never mutates
- * the store.
+ * Compiles column-schema rules into `ColumnRuleEntry` values the engine folds onto
+ * `baseColumns`. Declares only — never mutates the store directly.
  *
- * Entries are built at feature-factory time, not inside `setup`: `composeTable()`'s
- * `foldFeatures()` reads `spec.columnRules` synchronously right after this factory returns,
- * before any `setup` hook runs, so an async rule's `resource()` (built here) must already
- * exist by then. This is safe because `createTable()` already wraps the whole
- * `composeTable()` call in `runInInjectionContext()`.
- *
- * With an empty `rules` list (the legacy no-`columnsSchema` path), both filters produce empty
- * arrays: zero entries, and the feature contributes no members at all.
- *
- * Auto-composed by `createTable()`, unlike every other `with-*()` feature.
+ * @remarks
+ * Built synchronously at factory time, not inside `setup`: `composeTable()` reads
+ * `spec.columnRules` right after the factory returns, so an async rule's `resource()` must
+ * already exist (safe — `createTable()` wraps the call in `runInInjectionContext()`).
+ * Auto-composed by `createTable()`, unlike other `with-*()` features.
  */
 export function wireColumnsSchemaAsync<TRow>(
   rules: readonly ColumnRule<TRow>[]
@@ -35,9 +30,26 @@ export function wireColumnsSchemaAsync<TRow>(
   const metadataAsyncRules = rules.filter(isMetadataAsyncRule);
 
   return (core: ColumnsSchemaStore<TRow>): TableFeatureSpec<TRow> => {
+    // Fixed at this factory's construction time — the same list `createColumns()`'s
+    // `assertRuleColumnIdsAreKnown` validated `rules` against. Never rebuilt from a later,
+    // live `core.baseColumns()` read; that's `stateOf`'s lookup below, which is what lets
+    // a column removed via `setColumns()` degrade instead of throw.
+    const knownIds = new Set(core.baseColumns().map((column) => column.id));
+
     // Resolves to `baseColumns`, never the derived `columns` — see `ColumnRuleContext`'s doc
     // comment for why.
-    const ctx: ColumnRuleContext<TRow> = { columns: () => core.baseColumns() };
+    const ctx: ColumnRuleContext<TRow> = {
+      columns: () => core.baseColumns(),
+      stateOf(handle) {
+        assertDeclarationsAreKnown([handle.id], knownIds, 'createColumns');
+        const column = core.baseColumns().find((c) => c.id === handle.id);
+        return {
+          visible: column?.visible ?? true,
+          label: column?.label ?? handle.id,
+          meta: column?.meta,
+        };
+      },
+    };
 
     const columnRules: ColumnRuleEntry<TRow>[] = [
       ...buildMetadataEntries(ctx, metadataRules),

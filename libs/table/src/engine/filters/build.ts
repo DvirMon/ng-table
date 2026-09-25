@@ -1,4 +1,4 @@
-import { buildValueOfContext, type FiltersInternal } from './evaluator';
+import { buildCriterionOfContext, type FiltersInternal } from './evaluator';
 import { buildFilterState, buildFiltersObject, gateByCondition } from './state';
 import type { AnyRule, FilterHandle, FilterRuleRecord, FilterValueOfContext, StateOf } from './types';
 import type { Filters, FiltersPath, FilterNode } from '../../api/features/with-filtering/types';
@@ -95,7 +95,7 @@ export function buildFilterModel<
   // Second pass: a `when` condition may read any filter's value, including one declared after
   // it — gate only once every node exists.
   if (pendingGates.length > 0) {
-    const ctx = buildValueOfContext<TRow>(internal);
+    const ctx = buildCriterionOfContext<TRow>(internal);
     for (const { key, when } of pendingGates) {
       const base = nodesByKey.get(key);
       if (base) {

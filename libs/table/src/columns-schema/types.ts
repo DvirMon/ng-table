@@ -4,18 +4,24 @@ import { PATH_RECORDER, type PathRecorder } from '../schema/path-proxy';
 
 // Resolves to `baseColumns`, never the derived `columns` — rules observe declared and
 // imperatively-updated column state, never another rule's own output. Reading `columns` here
-// would close the `columns → ruleResults → params → resource → ruleResults` cycle.
+// would close the `columns → ruleResults → params → resource → ruleResults` cycle. `stateOf`
+// resolves the same way.
 /** Read-only reactive context handed to a rule's `when`/`params` callback. */
 export interface ColumnRuleContext<TRow> {
   readonly columns: () => ColumnDef<TRow>[];
+  /** Another column's current declared state, named by handle instead of a string-keyed lookup. */
+  stateOf<K extends string>(
+    handle: ColumnHandle<TRow, K, unknown>
+  ): Pick<ColumnDef<TRow>, 'visible' | 'label' | 'meta'>;
 }
 
 /**
  * Structural proxy — the `get` trap fabricates a `ColumnHandle<TRow, K, TRule>` for any string
- * property accessed; typing is 100% compile-time. Keyed by `TId`, the literal ids declared in
- * `TableConfig.columns` — not `keyof TRow` — so a derived column (id absent from `TRow`) is
- * nameable too (ADR-0019).
+ * property accessed; typing is purely compile-time. Keyed by `TId` — the ids declared in
+ * `TableConfig.columns`, not `keyof TRow` — so a derived column (id absent from `TRow`) is
+ * nameable too.
  */
+// docs/adr/0019-columns-path-keyed-by-declared-column-ids.md
 export type ColumnsPath<TRow, TId extends string, TRule = ColumnRule<TRow>> = {
   readonly [K in TId]: ColumnHandle<TRow, K, TRule>;
 };
@@ -38,8 +44,8 @@ export interface ColumnSchema<TRow> {
 
 /**
  * Unique typed key for a consumer-registered column metadata entry — object identity is the
- * actual key; `_type` is a phantom carrier so `T` flows through `metadata()`/`readColumnMeta()`
- * at compile time only.
+ * key; `_type` is a phantom carrier so `T` flows through `metadata()`/`readColumnMeta()` at
+ * compile time only.
  */
 export interface ColumnMetaKey<T> {
   readonly kind: 'column-meta-key';
@@ -70,12 +76,12 @@ export interface MetadataAsyncRule<TRow, TParams = unknown, TResult = unknown, T
   readonly columnId: string;
   readonly key: ColumnMetaKey<T>;
   readonly params: (ctx: ColumnRuleContext<TRow>) => TParams | undefined;
-  // Method-shorthand syntax (not `readonly factory: (…) => …` properties) deliberately, so
-  // `TParams`/`TResult`/`T` check bivariantly here — this member is reached only through
-  // `PathRecorder.record(rule: TRule)`, where `TRule` is `ColumnRule<TRow>`, whose
-  // `MetadataAsyncRule` member is erased to its `<unknown, unknown, unknown>` default.
-  // Property-typed functions would reject a concretely-typed `factory`/`onSuccess` under
-  // strict contravariance. Same shape and same reason as `GroupingAsyncRule`.
+  // Method-shorthand syntax (not `readonly factory: (…) => …`) so `TParams`/`TResult`/`T`
+  // check bivariantly — this member is reached only through `PathRecorder.record(rule: TRule)`,
+  // where `TRule` is `ColumnRule<TRow>`, whose `MetadataAsyncRule` member erases to its
+  // `<unknown, unknown, unknown>` default. Property-typed functions would reject a
+  // concretely-typed `factory`/`onSuccess` under strict contravariance. Same shape and reason
+  // as `GroupingAsyncRule`.
   factory(params: Signal<TParams | undefined>): ResourceRef<TResult | undefined>;
   onSuccess(result: TResult): T;
   readonly onError: (error: unknown) => T;

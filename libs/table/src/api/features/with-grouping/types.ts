@@ -1,5 +1,5 @@
 import type { Resource, Signal } from '@angular/core';
-import type { GroupOrder, GroupWhen } from '../../types';
+import type { ColumnIdIn, ColumnValueMap, GroupOrder, GroupWhen } from '../../types';
 import { PATH_RECORDER, type PathRecorder } from '../../../schema/path-proxy';
 
 /**
@@ -83,22 +83,25 @@ export interface GroupingLevel<TId extends string = string> {
  * `ColumnHandle`. Same recorder shape (`schema/path-proxy.ts` is key-space agnostic, shared with
  * columns) but a distinct type: it records `AnyGroupingRule`, not `ColumnRule`.
  */
-export interface GroupingHandle<TRow, K extends string = string> {
+export interface GroupingHandle<TRow, K extends string = string, V = unknown> {
   readonly id: K;
+  /** @internal phantom — the column's resolved value type. */
+  readonly __value?: V;
   /** @internal */
   readonly [PATH_RECORDER]: PathRecorder<TRow, AnyGroupingRule<TRow>>;
 }
 
 /**
  * Structural `path` proxy for a grouping schema fn — a property access fabricates a
- * `GroupingHandle` per declared column id. Mirrors `ColumnsPath<TRow, TId>`
- * (`columns-schema/types.ts`), keying grouping by the same declared-id space columns use.
+ * `GroupingHandle` per declared column id, typed to that column's resolved value. Mirrors
+ * `ColumnsPath<TRow, TId>` (`columns-schema/types.ts`), keying grouping by the same declared-id
+ * space columns use.
  */
-export type GroupingPath<TRow, TId extends string = string> = {
-  readonly [K in TId]: GroupingHandle<TRow, K>;
+export type GroupingPath<TRow, TValues extends ColumnValueMap> = {
+  readonly [K in ColumnIdIn<TValues>]: GroupingHandle<TRow, K, TValues[K]>;
 };
 
 /** Schema fn passed as `WithGroupingConfig.schema`. */
-export type GroupingSchemaFn<TRow, TId extends string = string> = (
-  path: GroupingPath<TRow, TId>
+export type GroupingSchemaFn<TRow, TValues extends ColumnValueMap> = (
+  path: GroupingPath<TRow, TValues>
 ) => void;

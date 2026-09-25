@@ -1,5 +1,6 @@
 import type { Injector, Signal, WritableSignal } from '@angular/core';
 import type { ColumnMetaKey, ColumnRule } from '../columns-schema/types';
+import type { ValueOfContext } from '../engine/resolvers';
 import type { Feature } from '../engine/types';
 import type { WritableView } from '../engine/writable-view';
 
@@ -185,7 +186,10 @@ export interface GroupSummary<TRow> extends ClusterSummary<TRow> {
   readonly admitted: boolean;
 }
 
-export type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
+export type GroupWhen<TRow> = (
+  cluster: ClusterSummary<TRow>,
+  ctx: ValueOfContext<TRow>
+) => boolean;
 
 /** Compares two sibling clusters from the same level, after admission is decided — see
  * `GroupSummary.admitted`. */

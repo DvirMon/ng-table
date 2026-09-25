@@ -13,11 +13,11 @@ export interface FiltersInternal<TRow> {
   readonly columns: () => readonly ColumnDef<TRow>[];
 }
 
-export function buildValueOfContext<TRow>(internal: FiltersInternal<TRow>): FilterValueOfContext<TRow> {
-  // Annotated so `valueOf` takes its generic signature contextually. The lookup is by
+export function buildCriterionOfContext<TRow>(internal: FiltersInternal<TRow>): FilterValueOfContext<TRow> {
+  // Annotated so `criterionOf` takes its generic signature contextually. The lookup is by
   // `handle.id` alone, so the handle's row type is irrelevant here.
   const context: FilterValueOfContext<TRow> = {
-    valueOf(handle) {
+    criterionOf(handle) {
       const key = internal.pathToKey.get(handle.id);
       const node = key !== undefined ? internal.nodesByKey.get(key) : undefined;
       return node?.value();
@@ -150,7 +150,7 @@ export function createFilterEvaluatorFrom<TRow>(
         continue;
       }
       const when = record.options?.when;
-      const isGatedOff = when && !when(buildValueOfContext<TRow>(internal));
+      const isGatedOff = when && !when(buildCriterionOfContext<TRow>(internal));
       if (isGatedOff) {
         continue;
       }

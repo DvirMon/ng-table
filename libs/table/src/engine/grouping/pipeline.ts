@@ -21,7 +21,10 @@ export function clusterRows<TRow>(
     opts?.when,
     (items) => items,
     new Set(),
-    opts?.columnWhen
+    opts?.columnWhen,
+    () => columns,
+    opts?.knownIds ?? new Set(columns.map((column) => column.id)),
+    opts?.label ?? 'withGrouping'
   );
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
     done: false,

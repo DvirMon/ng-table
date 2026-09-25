@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { columnSchema } from '../../columns-schema/schema';
 import { createColumnMetaKey, metadata, readColumnMeta } from '../../columns-schema/metadata';
 import { visible, visibleAsync } from '../../columns-schema/rules';
-import type { ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
+import type { ColumnHandle, ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
 import { noData } from '../../table.mock';
 import { createColumns } from '../../api/create-columns';
 import { createTable } from '../../api/create-table';
@@ -389,6 +389,89 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
     expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(false);
   });
 
+  // Issue #117: `ColumnRuleContext.stateOf(handle)` reads another column's current `{ visible,
+  // label, meta }` by handle instead of a manual `ctx.columns().find(...)` lookup.
+  describe('stateOf (Issue #117 Step 7)', () => {
+    it("reads another column's { visible, label, meta } from base declared state, with parity to an equivalent hand-written ctx.columns().find(...) rule", () => {
+      // `stateOf` resolves against `baseColumns`, never the derived `columns` (same as
+      // `ctx.columns()`, see the D8 test above and `ColumnRuleContext`'s own doc comment) — so
+      // this exercises an imperative base-state write (`toggleColumnVisibility`), not a second
+      // rule's own computed result, which `stateOf` would never observe anyway.
+      const schemaViaStateOf: ColumnsSchemaFn<Row, 'name' | 'status'> = (path) => {
+        visible(path.status, { when: (ctx) => ctx.stateOf(path.name).visible });
+      };
+      const schemaViaFind: ColumnsSchemaFn<Row, 'name' | 'status'> = (path) => {
+        visible(path.status, {
+          when: (ctx) => ctx.columns().find((c) => c.id === 'name')?.visible ?? true,
+        });
+      };
+
+      const viaStateOf = makeStore({
+        trackBy: 'id',
+        columns: makeColumnSet(signal<Row[]>([]), schemaViaStateOf),
+      });
+      const viaFind = makeStore({
+        trackBy: 'id',
+        columns: makeColumnSet(signal<Row[]>([]), schemaViaFind),
+      });
+
+      expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(true);
+      expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(
+        viaFind.columns().find((c) => c.id === 'status')?.visible
+      );
+
+      viaStateOf.columns.update(toggleColumnVisibility('name'));
+      viaFind.columns.update(toggleColumnVisibility('name'));
+
+      expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(false);
+      expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(
+        viaFind.columns().find((c) => c.id === 'status')?.visible
+      );
+    });
+
+    it("returns an object with no order key", () => {
+      let captured: unknown;
+      const store = makeStore({
+        trackBy: 'id',
+        columns: makeColumnSet(signal<Row[]>([]), (path) => {
+          visible(path.status, {
+            when: (ctx) => {
+              captured = ctx.stateOf(path.name);
+              return true;
+            },
+          });
+        }),
+      });
+
+      // `columns()` is a lazily-evaluated computed — reading it is what runs the `when`
+      // closure and captures `stateOf`'s return value; `TestBed.tick()` alone does not.
+      store.columns();
+
+      expect(captured).toBeDefined();
+      expect(Object.keys(captured as object).sort()).toEqual(['label', 'meta', 'visible']);
+      expect('order' in (captured as object)).toBe(false);
+    });
+
+    it('naming an undeclared column id throws, naming createColumns and the id', () => {
+      const store = makeStore({
+        trackBy: 'id',
+        columns: makeColumnSet(signal<Row[]>([]), (path) => {
+          visible(path.status, {
+            when: (ctx) => {
+              // 'nope' is not a declared column id — cast mirrors this file's other test
+              // doubles (e.g. makeControllableResource's ResourceRef cast) for a fake handle
+              // whose id alone is what stateOf() actually reads.
+              ctx.stateOf({ id: 'nope' } as unknown as ColumnHandle<Row, 'nope', unknown>);
+              return true;
+            },
+          });
+        }),
+      });
+
+      // Reading `columns()` is what evaluates the rule's `computed()` and runs `stateOf`.
+      expect(() => store.columns()).toThrow(/\[createColumns\].*"nope"/);
+    });
+  });
 });
 
 describe('metadata() (via a column set’s schema)', () => {

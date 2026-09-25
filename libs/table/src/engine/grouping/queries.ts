@@ -81,7 +81,10 @@ export function collectGroupIds<TRow>(
     opts?.when,
     (items) => items,
     new Set(),
-    opts?.columnWhen
+    opts?.columnWhen,
+    () => columns,
+    opts?.knownIds ?? new Set(columns.map((column) => column.id)),
+    opts?.label ?? 'withGrouping'
   );
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
     done: false,
@@ -108,7 +111,16 @@ export function collectAppliedLevels<TRow>(
     return [];
   }
   const nodes = buildClusterNodes(rows, declaredLevels, columns, opts?.extractValueByColumn);
-  const admitted = admitClusters(nodes, opts?.when, (items) => items, new Set(), opts?.columnWhen);
+  const admitted = admitClusters(
+    nodes,
+    opts?.when,
+    (items) => items,
+    new Set(),
+    opts?.columnWhen,
+    () => columns,
+    opts?.knownIds ?? new Set(columns.map((column) => column.id)),
+    opts?.label ?? 'withGrouping'
+  );
 
   const applied: string[] = [];
   let frontier = admitted;

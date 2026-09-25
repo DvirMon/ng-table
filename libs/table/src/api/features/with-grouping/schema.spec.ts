@@ -8,10 +8,15 @@ import {
 import type { GroupingPath } from './types';
 import type { GroupingMockRow } from '../../../table.mock';
 
-// `runGroupingSchemaFn`'s `TId` has no default (Step 3 dropped the old
-// `Extract<keyof TRow, string>` default) — every call below supplies the declared-id union
-// explicitly so `path.<id>` is a real property, not an index-signature fallback.
-type MockColumnId = 'region' | 'category' | 'amount';
+// `runGroupingSchemaFn`'s second parameter is `TValues extends ColumnValueMap` (#117's
+// `GroupingHandle` value-typing, mirroring `with-sorting`'s `SortingPath<TRow, TValues>`) — a
+// value map, not a bare id union, so every call below supplies the declared columns' value
+// types explicitly and `path.<id>` is a real property, not an index-signature fallback.
+type MockColumnId = {
+  region: string;
+  category: string;
+  amount: number;
+};
 
 describe('grouping / groupingAsync', () => {
   it('records rules in call order across multiple grouping calls', () => {
