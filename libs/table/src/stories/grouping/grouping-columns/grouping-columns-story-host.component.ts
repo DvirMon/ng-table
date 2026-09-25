@@ -1,19 +1,13 @@
-import { Component, computed, effect, input, signal, untracked } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import {
   addGroupLevel,
   createTable,
   removeGroupLevel,
-  reorderColumns,
   setGroupLevels,
-  toggleColumnVisibility,
   withGrouping,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import {
-  DEAL_COLUMN_IDS,
-  groupingConfig,
-  BASE_GROUPING_LEVELS,
-} from '../fixtures/schema';
+import { groupingConfig, BASE_GROUPING_LEVELS } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
 import type { GroupedColumnMode } from './grouping-columns.types';
@@ -22,11 +16,11 @@ import type { GroupedColumnMode } from './grouping-columns.types';
  * What happens to a column once it becomes a level
  *
  * Grouping by a column does not decide whether that column keeps its place in the table — the
- * library takes no position, so the disposition is consumer code over the public column
- * updaters, `toggleColumnVisibility` and `reorderColumns`.
+ * library takes no position, so the disposition is consumer code.
  *
  * Three dispositions: keep it where it is, hide it because the group header already says its
- * value, or move it to the front so the levels read left to right.
+ * value, or move it to the front so the levels read left to right. Each is a view over
+ * `table.columns()`, never a write to it, so the user's own column layout is left untouched.
  */
 @Component({
   selector: 'ngp-grouping-columns-story-host',
@@ -45,25 +39,34 @@ export class GroupingColumnsStoryHostComponent {
     withGrouping({ initial: BASE_GROUPING_LEVELS })
   );
 
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
+  /** The table's own column layout — what the user sees before any disposition. */
+  protected readonly layoutColumns = computed(() => this.table.renderColumns());
 
-  /** Columns currently hidden because they are levels — rendered so `hide` reads as a disposition
-   * rather than as columns going missing. */
-  protected readonly hiddenColumnLabels = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => !column.visible)
-      .map((column) => column.label)
-  );
+  /** The layout with the chosen disposition applied — what the table renders. */
+  protected readonly displayColumns = computed(() => {
+    const mode = this.groupedColumnMode();
+    const levels = this.table.grouping();
+    const columns = this.layoutColumns();
 
-  constructor() {
-    effect(() => this.syncGroupedColumnMode());
-  }
+    if (mode === 'hide') {
+      return columns.filter((column) => !levels.includes(column.id));
+    }
+    if (mode === 'move-to-front') {
+      const leading = levels.flatMap((id) => columns.filter((column) => column.id === id));
+      const rest = columns.filter((column) => !levels.includes(column.id));
+      return [...leading, ...rest];
+    }
+    return columns;
+  });
+
+  /** Columns `hide` took out of the rendered set — shown so it reads as a disposition rather
+   * than as columns going missing. */
+  protected readonly hiddenColumnLabels = computed(() => {
+    const displayedIds = new Set(this.displayColumns().map((column) => column.id));
+    return this.layoutColumns()
+      .filter((column) => !displayedIds.has(column.id))
+      .map((column) => column.label);
+  });
 
   protected toggleGroupByColumn(columnId: string): void {
     if (this.table.isGroupedBy(columnId)) {
@@ -75,32 +78,5 @@ export class GroupingColumnsStoryHostComponent {
 
   protected resetLevels(): void {
     this.table.grouping.update(setGroupLevels<DealRow>(BASE_GROUPING_LEVELS));
-  }
-
-  /**
-   * Applies the chosen disposition over the public column updaters. Reads only the two signals
-   * that decide the target state; the column list is read and written inside `untracked()`, so
-   * the effect never re-triggers off its own write.
-   */
-  private syncGroupedColumnMode(): void {
-    const mode = this.groupedColumnMode();
-    const grouping = this.table.grouping();
-
-    untracked(() => {
-      const shouldHideGroupedColumns = mode === 'hide';
-      for (const column of this.table.columns()) {
-        const isGroupedColumn = this.table.isGroupedBy(column.id);
-        const shouldBeVisible = !(shouldHideGroupedColumns && isGroupedColumn);
-        if (column.visible !== shouldBeVisible) {
-          this.table.columns.update(toggleColumnVisibility(column.id));
-        }
-      }
-
-      const shouldMoveGroupedToFront = mode === 'move-to-front';
-      const orderedIds = shouldMoveGroupedToFront
-        ? [...grouping, ...DEAL_COLUMN_IDS.filter((id) => !grouping.includes(id))]
-        : DEAL_COLUMN_IDS;
-      this.table.columns.update(reorderColumns(orderedIds));
-    });
   }
 }

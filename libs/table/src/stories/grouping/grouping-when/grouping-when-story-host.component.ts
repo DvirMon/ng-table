@@ -60,14 +60,6 @@ export class GroupingWhenStoryHostComponent {
     })
   );
 
-  /** @internal not a Storybook control — derived column order for the header row. */
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
-
   /** @internal not a Storybook control.
    * Rows the pipeline produced that no header claims — the flat runs a rejected cluster leaves
    * behind, counted so the opt-out is legible without counting rows by eye. */

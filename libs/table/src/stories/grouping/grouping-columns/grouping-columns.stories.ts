@@ -28,10 +28,10 @@ type Story = StoryObj<GroupingColumnsStoryHostComponent>;
  *
  * `withGrouping()` does not touch the column list. Whether a grouped column keeps its place,
  * disappears because the header already says its value, or moves to the front so the levels read
- * left to right, is consumer code over `toggleColumnVisibility` and `reorderColumns`.
+ * left to right, is consumer code — a `computed()` over `table.columns()` and `table.grouping()`.
  *
- * Switch `groupedColumnMode`, then toggle a column in the tab strip. `hide` sets
- * `visible: false` — the column stays in `table.columns()`, so the disposition reverses cleanly
- * when the level comes off.
+ * Switch `groupedColumnMode`, then toggle a column in the tab strip. The disposition only shapes
+ * what is rendered; `table.columns()` is never written, so the user's own layout survives every
+ * mode switch and the disposition reverses cleanly when the level comes off.
  */
 export const Columns: Story = {};

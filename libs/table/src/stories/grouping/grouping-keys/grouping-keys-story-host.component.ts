@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { createTable, groupKey, withGrouping } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { groupingConfig } from '../fixtures/schema';
@@ -45,13 +45,6 @@ export class GroupingKeysStoryHostComponent {
           this.bucketClosedAtByMonth() && this.isDateValue(value) ? monthOf(value) : value
         ),
     })
-  );
-
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
   );
 
   protected isDateValue(value: unknown): value is Date {

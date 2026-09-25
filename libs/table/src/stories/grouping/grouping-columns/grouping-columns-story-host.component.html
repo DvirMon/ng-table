@@ -1,9 +1,9 @@
 <div class="story-host">
   <p class="story-host__hint">
     Grouping by a column says nothing about where that column belongs in the table.
-    <code>withGrouping()</code> takes no position, so the disposition is consumer code over
-    <code>toggleColumnVisibility</code> and <code>reorderColumns</code>. Switch
-    <strong>groupedColumnMode</strong> in Controls, then toggle a column below.
+    <code>withGrouping()</code> takes no position, so the disposition is consumer code — a
+    <code>computed()</code> over <code>table.columns()</code> and <code>table.grouping()</code>.
+    Switch <strong>groupedColumnMode</strong> in Controls, then toggle a column below.
   </p>
 
   <div class="story-host__toolbar">
@@ -11,7 +11,7 @@
   </div>
 
   <div class="grouping-story__tabs" role="group" aria-label="Group by column">
-    @for (column of visibleColumns(); track column.id) {
+    @for (column of layoutColumns(); track column.id) {
       <button
         type="button"
         class="grouping-story__tab"
@@ -26,22 +26,22 @@
   @if (hiddenColumnLabels().length > 0) {
     <p class="grouping-story__notice">
       Hidden because they are levels: <strong>{{ hiddenColumnLabels().join(', ') }}</strong>. The
-      column is still in <code>table.columns()</code> carrying <code>visible: false</code> — the
-      disposition is a flag, not a removal, so toggling the level back restores it.
+      column is untouched in <code>table.columns()</code> — the disposition only filters what is
+      rendered, so toggling the level back restores it.
     </p>
   }
 
   <p class="grouping-story__notice">
     <code>columns()</code> is the folded list, not a render order: it carries
     <code>visible</code> and <code>order</code> and leaves the reading to whoever renders it.
-    That is why <code>move-to-front</code> is a write to <code>order</code> rather than the table
-    re-sorting itself.
+    That is why <code>move-to-front</code> reorders the rendered list rather than writing to
+    <code>order</code> — the user's own layout survives every mode switch.
   </p>
 
   <table class="story-host__table grouping-story__table">
     <thead>
       <tr>
-        @for (column of visibleColumns(); track column.id) {
+        @for (column of displayColumns(); track column.id) {
           <th class="story-host__cell">{{ column.label }}</th>
         }
       </tr>
@@ -50,7 +50,7 @@
       @for (row of table.renderRows(); track row.id) {
         <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
           @if (row.kind === 'group') {
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of displayColumns(); track column.id; let isFirst = $first) {
               <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
                 @if (isFirst) {
                   @if (row.groupKey?.value | isBlankGroup) {
@@ -79,7 +79,7 @@
               </td>
             }
           } @else {
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of displayColumns(); track column.id; let isFirst = $first) {
               <td
                 class="story-host__cell"
                 [class.grouping-story__cell--label]="isFirst"

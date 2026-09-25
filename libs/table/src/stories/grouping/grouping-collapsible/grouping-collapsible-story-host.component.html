@@ -47,7 +47,7 @@
   <table class="story-host__table grouping-story__table">
     <thead>
       <tr>
-        @for (column of visibleColumns(); track column.id) {
+        @for (column of table.renderColumns(); track column.id) {
           <th class="story-host__cell">
             {{ column.label }}
             @if (table.isGroupedBy(column.id)) {
@@ -65,7 +65,7 @@
             [attr.data-depth]="row.depth"
             (click)="table.tree.toggle(row.id)"
           >
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td
                 class="story-host__cell"
                 [class.grouping-story__cell--label]="isFirst"
@@ -96,7 +96,7 @@
           </tr>
         } @else {
           <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td
                 class="story-host__cell"
                 [class.grouping-story__cell--label]="isFirst"

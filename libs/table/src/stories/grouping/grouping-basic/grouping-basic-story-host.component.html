@@ -11,7 +11,7 @@
   </div>
 
   <div class="grouping-story__tabs" role="group" aria-label="Group by column">
-    @for (column of visibleColumns(); track column.id) {
+    @for (column of table.renderColumns(); track column.id) {
       <button
         type="button"
         class="grouping-story__tab"
@@ -75,7 +75,7 @@
   >
     <thead>
       <tr>
-        @for (column of visibleColumns(); track column.id) {
+        @for (column of table.renderColumns(); track column.id) {
           <th class="story-host__cell">{{ column.label }}</th>
         }
       </tr>
@@ -84,7 +84,7 @@
       @for (row of table.renderRows(); track row.id) {
         <tr [attr.data-row-kind]="row.kind" [attr.data-depth]="row.depth">
           @if (row.kind === 'group') {
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td class="story-host__cell" [class.grouping-story__cell--label]="isFirst">
                 @if (isFirst) {
                   @if (row.groupKey?.value | isBlankGroup) {
@@ -113,7 +113,7 @@
               </td>
             }
           } @else {
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td
                 class="story-host__cell"
                 [class.grouping-story__cell--label]="isFirst"

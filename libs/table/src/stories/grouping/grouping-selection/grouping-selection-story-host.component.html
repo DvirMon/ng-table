@@ -47,7 +47,7 @@
     <thead>
       <tr>
         <th class="story-host__cell"><span class="sr-only">select</span></th>
-        @for (column of visibleColumns(); track column.id) {
+        @for (column of table.renderColumns(); track column.id) {
           <th class="story-host__cell">{{ column.label }}</th>
         }
       </tr>
@@ -72,7 +72,7 @@
                 (change)="onToggleGroupSelection(row)"
               />
             </td>
-            @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+            @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
               <td
                 class="story-host__cell"
                 [class.grouping-story__cell--label]="isFirst"
@@ -104,7 +104,7 @@
                   (change)="onToggleRowSelection(row.id)"
                 />
               </td>
-              @for (column of visibleColumns(); track column.id; let isFirst = $first) {
+              @for (column of table.renderColumns(); track column.id; let isFirst = $first) {
                 <td
                   class="story-host__cell"
                   [class.grouping-story__cell--label]="isFirst"

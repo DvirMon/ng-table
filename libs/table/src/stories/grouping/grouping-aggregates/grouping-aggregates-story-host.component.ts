@@ -44,13 +44,6 @@ export class GroupingAggregatesStoryHostComponent {
     })
   );
 
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
-
   /** Read off the data, not a flag — the failure is data-dependent (ADR-0014). */
   protected readonly isSummaryBroken = computed(() =>
     this.data().some((row) => row.amount < 0)

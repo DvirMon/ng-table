@@ -45,7 +45,7 @@
             (change)="toggleAllVisibleRows()"
           />
         </th>
-        @for (column of table.columns(); track column.id) {
+        @for (column of table.renderColumns(); track column.id) {
           @let direction = table.sortDirections().get(column.id);
           <th
             class="story-host__cell"

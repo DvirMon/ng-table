@@ -53,7 +53,7 @@
   <table class="story-host__table" [ngpTable]="table">
     <thead>
       <tr>
-        @for (column of table.columns(); track column.id) {
+        @for (column of table.renderColumns(); track column.id) {
           <th class="story-host__cell">{{ column.label }}</th>
         }
       </tr>

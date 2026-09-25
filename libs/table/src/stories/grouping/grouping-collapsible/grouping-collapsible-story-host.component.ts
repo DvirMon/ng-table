@@ -61,13 +61,6 @@ export class GroupingCollapsibleStoryHostComponent {
     withTree({ childrenAccessor: (row) => row.children })
   );
 
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
-
   protected readonly isRefetching = computed(() => this.rowsPage.isLoading());
   protected readonly refetchError = computed(() => {
     const error = this.rowsPage.error();

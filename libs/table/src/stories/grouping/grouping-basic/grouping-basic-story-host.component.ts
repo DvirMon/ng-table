@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import {
   addGroupLevel,
   createTable,
@@ -36,15 +36,6 @@ export class GroupingBasicStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({ initial: BASE_GROUPING_LEVELS })
-  );
-
-  /** `columns()` is the folded list, not a render order — it carries `visible`/`order` and leaves
-   * the reading to whoever renders it. */
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
   );
 
   /** One control per column, one boolean state: grouped or not. The two writes stay separate

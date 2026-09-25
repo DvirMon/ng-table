@@ -96,14 +96,6 @@ export class GroupingOrderStoryHostComponent {
     withSorting()
   );
 
-  /** @internal not a Storybook control — derived column order for the header row. */
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
-
   /** @internal not a Storybook control — readout, not a knob. */
   protected readonly isRepGrouped = computed(() => this.table.isGroupedBy('rep'));
 

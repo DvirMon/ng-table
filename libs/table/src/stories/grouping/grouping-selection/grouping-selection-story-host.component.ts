@@ -42,13 +42,6 @@ export class GroupingSelectionStoryHostComponent {
     withFiltering({ schema: dealFilters })
   );
 
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
-
   protected readonly repFilter = computed(() => readRepCriterion(this.table.filters));
 
   protected readonly isGrouped = computed(() => this.table.grouping().length > 0);

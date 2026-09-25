@@ -52,13 +52,6 @@ export class GroupingAsyncRuleStoryHostComponent {
     })
   );
 
-  protected readonly visibleColumns = computed(() =>
-    this.table
-      .columns()
-      .filter((column) => column.visible)
-      .sort((a, b) => a.order - b.order)
-  );
-
   protected readonly asyncRuleStatus = computed(() => this.asyncRuleResource?.status() ?? 'idle');
 
   protected readonly isGroupingRulePending = computed(
