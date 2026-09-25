@@ -59,3 +59,6 @@ handoffs/
 # tsc --incremental caches (tsconfig points these at dist/out-tsc; CLI overrides land in-tree)
 *.tsbuildinfo
 *.tsbuildinfo.*
+
+# vitest attachment output (screenshots etc. from failed/inspected runs)
+.vitest-attachments/
