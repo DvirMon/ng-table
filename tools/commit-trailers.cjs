@@ -1,33 +1,45 @@
-// Issue-reference trailers for commit messages. Shared by the commit-msg
-// hook, the CI trailer check, and close-linked-issue-on-ci-green.yml, so
-// all three read a message the same way. Contract:
-// docs/agents/issue-tracker.md#closing-trailer.
+// Commit-message and PR-title rules. Shared by the commit-msg hook and
+// pr-conventions.yml, so both read a message the same way. Contract:
+// docs/agents/issue-tracker.md#issue-references.
 
-const TRAILER_LINE = /^(Ships|Refs):[ \t]*(.+?)[ \t]*$/gim;
+// "<emoji> <type>(<scope>)!: <subject>" — emoji required, scope optional.
+// Types: @commitlint/config-conventional's list.
+const TYPES = [
+  'feat', 'fix', 'refactor', 'perf', 'test', 'docs',
+  'chore', 'build', 'ci', 'style', 'revert',
+];
+const HEADER = new RegExp(
+  `^(\\p{Extended_Pictographic}[\\u{FE0F}\\u{200D}\\p{Extended_Pictographic}]*) ` +
+  `(${TYPES.join('|')})(?:\\(([a-z0-9][a-z0-9/._-]*)\\))?(!)?: (\\S.*)$`,
+  'u',
+);
+const PR_ISSUE_SUFFIX = / \(#\d+\)$/;
+
+const TRAILER_LINE = /^(Ships|Refs|Epic):[ \t]*(.+?)[ \t]*$/gim;
 const ISSUE_LIST = /^#\d+(?:[ \t]*,[ \t]*#\d+)*$/;
 
-// Same verbs GitHub acts on at push time. Matched anywhere in the message,
-// because that is where GitHub matches them.
+// Same verbs GitHub acts on. Matched anywhere in the message, because that
+// is where GitHub matches them. Closing belongs in the PR body only.
 const GITHUB_CLOSING_KEYWORD =
   /\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\b:?[ \t]+(?:[\w.-]+\/[\w.-]+)?#\d+/gi;
-
-const TYPES_NEEDING_TRAILER = new Set([
-  'feat', 'fix', 'refactor', 'ref', 'perf', 'test', 'docs',
-]);
 
 function toIssueNumbers(value) {
   return value.split(',').map((part) => Number(part.trim().slice(1)));
 }
 
 /**
- * @returns {{ ships: number[], refs: number[], refsNone: boolean,
- *   malformed: string[] }}
+ * @returns {{ refs: number[], refsNone: boolean, epic: number[],
+ *   ships: string[], malformed: string[] }}
  */
 function parseTrailers(message) {
-  const result = { ships: [], refs: [], refsNone: false, malformed: [] };
+  const result = { refs: [], refsNone: false, epic: [], ships: [], malformed: [] };
   for (const [line, key, value] of (message ?? '').matchAll(TRAILER_LINE)) {
-    const isShips = key.toLowerCase() === 'ships';
-    const isRefsNone = !isShips && value.toLowerCase() === 'none';
+    const name = key.toLowerCase();
+    if (name === 'ships') {
+      result.ships.push(line.trim());
+      continue;
+    }
+    const isRefsNone = name === 'refs' && value.toLowerCase() === 'none';
     if (isRefsNone) {
       result.refsNone = true;
       continue;
@@ -36,7 +48,7 @@ function parseTrailers(message) {
       result.malformed.push(line.trim());
       continue;
     }
-    const target = isShips ? result.ships : result.refs;
+    const target = name === 'epic' ? result.epic : result.refs;
     for (const n of toIssueNumbers(value)) {
       if (!target.includes(n)) target.push(n);
     }
@@ -50,17 +62,24 @@ function findGithubClosingKeywords(message) {
   );
 }
 
-// Tolerates a leading emoji and a scope: "✅ test(table/x)!: ..." -> "test".
-function commitType(subject) {
-  const match = /^[^A-Za-z]*([a-z]+)(?:\([^)]*\))?!?:/.exec(subject ?? '');
-  return match ? match[1] : null;
+/** @returns {{ emoji: string, type: string, scope?: string } | null} */
+function parseHeader(subject) {
+  const match = HEADER.exec(subject ?? '');
+  if (!match) return null;
+  const [, emoji, type, scope] = match;
+  return { emoji, type, scope };
 }
 
-function isExemptSubject(subject) {
-  const isMerge = /^Merge\b/.test(subject);
-  const isRevert = /^Revert\b/.test(subject);
-  const isAutosquash = /^(?:fixup|squash|amend)!/.test(subject);
-  return isMerge || isRevert || isAutosquash;
+// Kept for callers that only need the type: "✅ test(table/x)!: ..." -> "test".
+function commitType(subject) {
+  return parseHeader(subject)?.type ?? null;
+}
+
+function headerProblem(subject, what) {
+  return (
+    `${what} "${subject}" must match "<emoji> <type>(<scope>): <subject>" ` +
+    `— types: ${TYPES.join(', ')}. See the atomic-commit skill.`
+  );
 }
 
 /**
@@ -76,41 +95,63 @@ function lintMessage(message, opts = {}) {
     : allLines;
   const cleaned = lines.join('\n');
   const subject = lines.find((line) => line.trim() !== '') ?? '';
-  if (isExemptSubject(subject)) return [];
 
   const problems = [];
+  const isAutosquash = /^(?:fixup|squash|amend)!/.test(subject);
+  if (isAutosquash) {
+    problems.push(
+      `"${subject}" is an unsquashed autosquash commit — fold it with ` +
+      '`git rebase -i --autosquash` before opening the PR.',
+    );
+    return problems;
+  }
+
+  const hasValidHeader = parseHeader(subject) !== null;
+  if (!hasValidHeader) problems.push(headerProblem(subject, 'Subject'));
+
   for (const keyword of findGithubClosingKeywords(cleaned)) {
     problems.push(
-      `GitHub closing keyword "${keyword}" closes the issue at push ` +
-      'time, before CI. Use a "Ships: #N" trailer line instead.',
+      `Closing keyword "${keyword}" in a commit. Commits carry ` +
+      '"Refs: #N"; "Closes #N" belongs in the PR body.',
     );
   }
 
   const trailers = parseTrailers(cleaned);
+  for (const line of trailers.ships) {
+    problems.push(
+      `"${line}" is retired. Use "Refs: #N"; the PR body carries "Closes #N".`,
+    );
+  }
   for (const line of trailers.malformed) {
     problems.push(
-      `Malformed trailer "${line}". Expected "Ships: #1, #2", ` +
-      '"Refs: #3" or "Refs: none".',
+      `Malformed trailer "${line}". Expected "Refs: #1, #2", ` +
+      '"Refs: none" or "Epic: #3".',
     );
   }
 
-  const type = commitType(subject);
-  const hasIssueTrailer =
-    trailers.ships.length > 0 || trailers.refs.length > 0 ||
-    trailers.refsNone;
-  const needsTrailer = TYPES_NEEDING_TRAILER.has(type);
-  if (needsTrailer && !hasIssueTrailer) {
+  const hasRefs = trailers.refs.length > 0 || trailers.refsNone;
+  if (!hasRefs) {
     problems.push(
-      `"${type}" commits need a trailer line: "Ships: #N" (completes ` +
-      'the issue), "Refs: #N" (part of it) or "Refs: none".',
+      'Every commit needs a trailer line "Refs: #N" (the issue it belongs ' +
+      'to) or "Refs: none".',
     );
   }
   return problems;
 }
 
+/** PR title: the commit header rule, optionally suffixed with " (#N)". */
+function lintTitle(title) {
+  const withoutIssue = (title ?? '').replace(PR_ISSUE_SUFFIX, '');
+  const hasValidHeader = parseHeader(withoutIssue) !== null;
+  return hasValidHeader ? [] : [headerProblem(title, 'PR title')];
+}
+
 module.exports = {
+  TYPES,
   parseTrailers,
+  parseHeader,
   findGithubClosingKeywords,
   commitType,
   lintMessage,
+  lintTitle,
 };
