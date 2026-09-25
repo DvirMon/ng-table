@@ -50,8 +50,8 @@ until the data or the criterion changes.
 The blast radius is not "filtering breaks." It is **the entire table goes blank**, from one null
 in one record in one column.
 
-[R27](../1-state/work/with-filtering/design-options-hybrid-api.md) makes this concrete rather than
-theoretical: shipped matchers guard their own nulls, but `filter(path, predicate)` hands the
+[R27](../1-state/work/with-filtering/design-options-hybrid-api.md) makes this concrete: shipped
+matchers guard their own nulls, but `filter(path, predicate)` hands the
 consumer an unguarded cell by design, so that it stays possible to write a filter that *matches*
 nulls. Custom predicates are therefore the likeliest thing in the library to throw. The sharper
 source is the criterion side — R21 leaves persistence to the consumer as
@@ -81,6 +81,7 @@ Per-callback fallback, chosen so the failure is *visible* rather than *silent*:
 | `sortFn` | that column's sort does not apply; row order falls back to input order | same reasoning — visibly unsorted beats silently mis-sorted |
 | `accessor` | the cell reads `undefined` | one cell degrades, not the row and not the table |
 | `aggregateFn` | that aggregate reads `undefined` | the group still renders |
+| `sortable`'s `enable` | the column is treated as sortable | still-sortable is the visible direction — a column that silently stopped responding to clicks is the harder failure to notice; see the 2026-09-25 amendment (#100) |
 | a derived signal (`withComputed()`) | **none — reported, then rethrown** | no fallback is distinguishable from a working derivation; see the 2026-09 amendment |
 
 Two properties of the reporting, both load-bearing:
@@ -187,15 +188,14 @@ the value matters. `classify-errors-construction-vs-runtime` puts it as "hiding 
 unrecoverable direction"; here the *fallback* is what hides, so the same reasoning lands on the
 opposite conclusion. Reporting and rethrowing keeps the failure loud.
 
-This is the one runtime-class callback in the library that does not degrade. The rule above stands
-as written — it is not softened to "usually"; this is its single, justified exception.
+The rule above stands as written for this, the one runtime-class callback in the library that
+does not degrade — it is not softened to "usually"; this is its single, justified exception.
 
 ## Amendment (2026-09-24): construction checks are dev-only
 
-**This ADR never took a position on dev vs. production.** It argued *throw vs.
-degrade*, and every line above is about which of the two a failure gets. The
-question of whether a construction check still runs in a production build was
-not asked, and its absence was read as a ruling. It was not one.
+**This ADR never took a position on dev vs. production** — it argued *throw
+vs. degrade*. Whether a construction check still runs in a production build
+was never asked; its absence was read as a ruling. It was not one.
 
 **Construction-time checks are gated to dev builds and stripped from
 production.** They are developer errors: they fire on first render, every run,
@@ -229,3 +229,12 @@ server-sent or user-saved layout, [#127](https://github.com/DvirMon/ng-table/iss
 check can miss a real production failure. No carve-out was taken for checks
 whose ids can arrive at runtime. #127's grill should reopen this line rather
 than assume it was decided with that case in view.
+
+## Amendment (2026-09-25, #100): `sortable`'s `enable`
+
+`withSorting()`'s `sortable(path, { enable })` (SO28, `docs/decisions/sorting.md`)
+is a fifth degrading runtime callback, added to the fallback table above. It is
+read live inside `toggleSort()`, never cached, so a throw is scoped to the call
+it happened on rather than poisoning the feature's state. Fallback and
+rationale are the table row above; reported once per column per evaluation,
+same floor as `reportComparatorError`.

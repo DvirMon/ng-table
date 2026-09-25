@@ -35,15 +35,14 @@ interface SortingState {
 
 - **Sort state:** an ordered array of rules; earlier entries take priority. In single-column mode (the default) the array holds at most one rule.
 - **Toggle cycle (three-state):** clicking a column cycles `ascending → descending → unsorted`. Reaching "unsorted" removes that column's rule from the array.
-- **Adding columns (`multi: false`, default):** clicking a column replaces the sort — the array becomes just that column's rule at `ascending`. Clicking the same (sole) column again continues the three-state cycle; clicking a *different* column replaces the sort with that column instead of accumulating.
-- **Adding columns (`multi: true`):** additive — any click adds/updates that column's rule in the array, no modifier key required. Order in the array is determined by click sequence (first clicked = first priority).
+- **Adding columns:** replace (default) or accumulate by click sequence, gated by the `multi` config option — see "`multi` Contract" below.
 - **Direction representation:** string enum `'asc' | 'desc'` (not boolean, not numeric) — chosen for readability, TanStack-style.
 
 ## Methods
 
 | Method | Description |
 |---|---|
-| `toggleSort(columnId: string)` | Advances the column through the three-state cycle; single-column replace or multi-column accumulate depending on the `multi` config option (see below); no-ops if the column has `enableSorting: false` |
+| `toggleSort(columnId: string)` | Advances the column through the three-state cycle; single-column replace or multi-column accumulate depending on the `multi` config option (see below); no-ops if the column's `sortable({ enable })` rule currently returns `false` |
 | `setSorting(rules: SortRule[])` | Programmatically replace the full sort state |
 | `clearSorting()` | Clears all sort rules |
 
@@ -69,42 +68,59 @@ When `manual: true`:
 - A `sortChanged` event fires. The consumer wires their own `effect()` to react to the new sort state and writes freshly server-sorted data into their own `data` signal.
 - No loader abstraction exists inside the store — this pattern is consistent across all `manual`-capable features.
 
-## Comparator Logic
+## Per-column configuration — `withSorting({ schema })`
 
-Per-column custom comparator, TanStack-style:
+All per-column sorting behavior — null/empty placement, a custom comparator,
+whether a column is sortable at all — comes from `withSorting()`'s own
+`schema`, never from `ColumnDef` (`docs/decisions/sorting.md` SO19/SO21/SO22).
+`path` is keyed by declared column id, the same space `columns` declares; an
+unknown id throws at construction with `withSorting` in the message.
 
 ```ts
-interface ColumnDef {
-  sortFn?: (a: Row, b: Row) => number;
-  enableSorting?: boolean; // default true
+withSorting({
+  schema: (path) => {
+    sortNulls(path.deletedAt, { order: 'last' });
+    sortFn(path.amount, (a, b) => a - b);
+    sortable(path.id, { enable: () => false });
+  },
+})
+```
+
+Three declarators, not one options object (SO22/SO27) — a column that only
+needs null placement never has to name a comparator slot:
+
+- **`sortFn(path.x, compare)`** — this column's own comparator. If omitted,
+  the store falls back to built-in auto-detection (string/number/date
+  comparison) — no auto-detection logic beyond this was specified.
+- **`sortable(path.x, { enable })`** — whether the column responds to
+  `toggleSort()`. A column with no `sortable` rule is sortable by default.
+  `enable` is read live at `toggleSort()` call time, never cached.
+- **`sortNulls(path.x, { order?, emptyString? })`** — see "Null / Empty Value
+  Ordering" below.
+
+A second declarator of the **same kind** on one column throws at construction
+(SO29, extending SO15's `sortNulls`-only check to all three); different kinds
+on one column are fine. Reuse across columns goes through the
+`sortingSchema<Row>(fn)` identity helper (SO26) — it exists only so the
+handle's type infers, and does nothing at runtime:
+
+```ts
+const money = sortingSchema<Row>((col) => sortNulls(col, { order: 'last' }));
+// ...
+schema: (path) => {
+  money(path.total);
+  money(path.balance);
 }
 ```
 
-- If `sortFn` is supplied on the column def, it's used directly.
-- If omitted, the store falls back to built-in auto-detection (string/number/date comparison) — no auto-detection logic beyond this was specified.
-- `enableSorting: false` makes `toggleSort` a no-op for that column (default `true`).
-- Runtime failures degrade rather than crash the table
-  ([ADR-0014](../adr/0014-runtime-error-policy.md)): a column whose
-  `accessor` throws sorts that row as empty for this evaluation; a
-  `sortFn` (or the built-in comparator) that throws leaves the
-  affected comparison unordered, so the column's sort falls back to
-  input order rather than the whole table breaking. Both report once
-  per column per evaluation via `console.error`.
-
-### Per-column override — not available for one release (R1)
-
-Until #100/S1 ships, a column cannot be given its own compare function and
-cannot be made un-sortable. `ColumnDef` keeps `sortFn` and `enableSorting` as
-declared fields, but `col()` (`createColumns()`'s builder) does not expose
-either one, so no column declared today can actually set them — both survive
-as permanently-`undefined`.
-
-Nothing fails to compile: every column silently falls to the auto-detected
-comparator above, and `enableSorting !== false` is vacuously true, so the
-no-op guard stays dormant — there is no consumer-supplied value for it to
-act on yet. Full ruling:
-[R1](../work/core/active/single-value-source/decisions.md) in the workspace
-decisions log.
+Runtime failures degrade rather than crash the table
+([ADR-0014](../adr/0014-runtime-error-policy.md)): a column whose
+`accessor` throws sorts that row as empty for this evaluation; a
+`sortFn` (or the built-in comparator) that throws leaves the
+affected comparison unordered, so the column's sort falls back to
+input order; a `sortable` `enable` that throws is treated as
+sortable. All three report once per column per evaluation via
+`console.error`.
 
 ## Null / Empty Value Ordering — shipped
 
@@ -121,11 +137,11 @@ is overridden, no escape hatch).
 
 - `null` / `undefined` are always empty. `""` is a real value, not empty, by default.
 - Default placement: `nulls: 'last'` (SQL / AG Grid convention).
-- Per-column override: `sortNulls(path, { order?, emptyString? })` (`schema/column-rules.ts`),
-  a declarative rule mirroring `visible()` — writes to the internal `SORT_NULLS` metadata
-  key (`engine/columns.ts`). Single-writer: two `sortNulls()` calls on one column throw at
-  resolve time. `emptyString: 'is-empty'` opts `""` into the empty branch for that column.
-- Requires `createColumns()`'s schema argument to override; a table that omits it gets the
+- Per-column override: `sortNulls(path, { order?, emptyString? })`, declared through
+  `withSorting({ schema })` (`api/features/with-sorting/schema.ts`). Single-writer: two
+  `sortNulls()` calls on one column throw at construction (SO15, extended to all three
+  declarators by SO29). `emptyString: 'is-empty'` opts `""` into the empty branch for that column.
+- Requires `withSorting({ schema })` to override; a table that omits `schema` gets the
   default (`'last'`, `""` not empty) and cannot override per column — acceptable because the
   default alone already fixes the crash and the direction flip for every table.
 - No table-wide `withSorting({ nulls })` default — not proposed; add later if a real table wants
@@ -140,10 +156,9 @@ empty strings.
 The unresolved scenarios below (S1–S9) exist because a blank row's landing spot mattered — the
 user was filling it in and needed to not lose it. Product **OQ-3**
 (`docs/0-product/row-editing.md` §5, S-1) decided the edited row **holds its display position for
-the whole gated edit session** — the row no longer moves while it's being worked on, so null
-ordering only needs to make empties land somewhere stable and predictable, not solve "don't lose
-the row I'm typing in." That dependency is real, not a convenience: if OQ-3's row-hold is ever
-dropped, S1–S9 come back into scope.
+the whole gated edit session**, so null ordering only needs to make empties land somewhere stable
+and predictable, not solve "don't lose the row I'm typing in." That dependency is real, not a
+convenience: if OQ-3's row-hold is ever dropped, S1–S9 come back into scope.
 
 ### Unresolved scenarios — recorded 2026-08-12, still parked
 
@@ -197,15 +212,16 @@ than them — S3 and S7 in particular may make some of them moot.
 
 Null ordering does **not** solve the editable blank-row problem on its own — it only makes the
 empty row's landing spot *stable and configurable*. Holding the row still while the user types is
-resolved separately (OQ-3, `docs/0-product/row-editing.md` §5, S-1 — the edited row holds its
-display position for the whole gated edit session) rather than by a sort-stage exemption. The two
-are independent controls and should not be conflated: `sortNulls` decides where empties
-land when nothing is being edited; the edit-session row-hold decides whether the row moves at
-all while it is.
+OQ-3's job (see above), not a sort-stage exemption. The two are independent controls and should
+not be conflated: `sortNulls` decides where empties land when nothing is being edited; the
+edit-session row-hold decides whether the row moves at all while it is.
 
 ## Compile-Time Dependencies
 
-None as a separate feature. Reads `sortFn` / `enableSorting` from the core `columns` config directly (see `columns.md`; retroactively corrected from an earlier "depends on `withColumns()`" framing).
+None as a separate feature. Reads `columns` from the core config for the value map `schema`'s
+`path` is keyed against (see `columns.md`), and for `accessor`/`id` at sort time — no per-column
+sorting config lives on `ColumnDef` any more (retroactively corrected from an earlier "depends on
+`withColumns()`" framing, and from "reads `sortFn`/`enableSorting` off columns").
 
 ## Events Owned
 

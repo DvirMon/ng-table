@@ -1,14 +1,13 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { sortNulls } from '../../columns-schema/rules';
-import type { ColumnSchema, ColumnsSchemaFn } from '../../columns-schema/types';
-import { noData } from '../../table.mock';
-import { createColumns } from '../create-columns';
-import { createTable } from '../create-table';
-import { withComputed } from './with-computed';
-import { withSorting, type SortingMembers } from './with-sorting';
-import type { ColumnDecl, ColumnDef, ColumnSet, SortRule, TableStore } from '../types';
+import { noData } from '../../../table.mock';
+import { createColumns } from '../../create-columns';
+import { createTable } from '../../create-table';
+import { withComputed } from '../with-computed';
+import { sortable, sortFn, sortingSchema, sortNulls } from './schema';
+import { withSorting, type SortingMembers } from './feature';
+import type { ColumnDecl, ColumnDef, ColumnSet, SortRule, TableStore } from '../../types';
 
 interface Row {
   id: string;
@@ -18,14 +17,17 @@ interface Row {
   status: string;
 }
 
-/** Declares this file's four sortable columns. `overrides` may set `sortFn`/`enableSorting` —
- * fields `col()`'s `opts` doesn't type — spread onto the declaration afterward; the engine
- * resolves them from the plain object regardless of what `col()` itself typed.
+/** Declares this file's four sortable columns. `overrides` may set `accessor` — the one
+ * `ColumnDef` field `col()`'s `opts` doesn't need spelling out per column here — spread onto
+ * the declaration afterward. `sortFn`/`enableSorting` no longer exist on `ColumnDef` (Step 3);
+ * that behavior is declared through `withSorting({ schema })` instead — see `sortFn`/`sortable`
+ * imported from `./schema` below.
  *
  * @remarks
  * Widened `TId` (plain `string`, not a literal union) — nothing in this file reads `path.<id>`
- * off these columns (unlike `makeNullableColumns()` below, which stays unannotated for exactly
- * that reason), so `TableStore<Row>`'s default `ColumnValueMap` costs nothing here.
+ * off these columns in a way that needs the literal union (the `schema` proxy accepts any
+ * string key against a widened id space), so `TableStore<Row>`'s default `ColumnValueMap`
+ * costs nothing here.
  */
 function makeColumns(
   overrides: Partial<Record<string, Partial<ColumnDef<Row>>>> = {}
@@ -44,6 +46,23 @@ function makeRows(): Row[] {
     { id: 'r2', name: 'Ann', age: 25, joined: new Date('2022-01-15'), status: 'inactive' },
     { id: 'r3', name: 'Bob', age: 30, joined: new Date('2023-06-10'), status: 'active' },
   ];
+}
+
+interface NullableRow {
+  id: string;
+  age: number | undefined;
+  joined: Date | null;
+  note: string | null;
+}
+
+// `id`s match `NullableRow`'s own field names, so the builder's default
+// `(row) => row[id]` accessor already reproduces the old explicit ones — no `accessor`
+// opt needed. No `schema` parameter — a nullable column's per-column sort rules (`sortNulls`,
+// `sortFn`) are declared through `withSorting({ schema })` now, not through `createColumns()`'s
+// own schema argument (Step 4 moved `sortNulls` off `columns-schema/rules.ts`). Hoisted to file
+// scope so both `describe('null ordering', ...)` and `describe('schema', ...)` share it.
+function makeNullableColumns(data: () => readonly NullableRow[] | undefined) {
+  return createColumns(data, (col) => [col('age'), col('joined'), col('note')]);
 }
 
 /** Runs `build` inside an Angular injection context — `createTable()` requires one unless
@@ -121,12 +140,12 @@ describe('withSorting', () => {
     ]);
   });
 
-  it('enableSorting: false makes toggleSort() a no-op for that column', () => {
+  it('sortable({ enable: () => false }) makes toggleSort() a no-op for that column', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>([]),
-        { trackBy: 'id', columns: makeColumns({ status: { enableSorting: false } }) },
-        withSorting()
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting({ schema: (path) => sortable(path['status'], { enable: () => false }) })
       )
     );
 
@@ -177,13 +196,10 @@ describe('withSorting', () => {
     const store = inContext(() =>
       createTable(
         signal<Row[]>(makeRows()),
-        {
-          trackBy: 'id',
-          columns: makeColumns({
-            name: { sortFn: (a, b) => b.name.localeCompare(a.name) }, // reversed
-          }),
-        },
-        withSorting()
+        { trackBy: 'id', columns: makeColumns() },
+        withSorting({
+          schema: (path) => sortFn(path['name'], (a, b) => b.name.localeCompare(a.name)), // reversed
+        })
       )
     );
 
@@ -303,23 +319,6 @@ describe('withSorting', () => {
   });
 
   describe('null ordering', () => {
-    interface NullableRow {
-      id: string;
-      age: number | undefined;
-      joined: Date | null;
-      note: string | null;
-    }
-
-    // `id`s match `NullableRow`'s own field names, so the builder's default
-    // `(row) => row[id]` accessor already reproduces the old explicit ones — no `accessor`
-    // opt needed.
-    function makeNullableColumns(
-      data: () => readonly NullableRow[] | undefined,
-      schema?: ColumnsSchemaFn<NullableRow, 'age' | 'joined' | 'note'> | ColumnSchema<NullableRow>
-    ) {
-      return createColumns(data, (col) => [col('age'), col('joined'), col('note')], schema);
-    }
-
     it('sorts a nullable Date column without throwing', () => {
       const rows: NullableRow[] = [
         { id: 'r1', age: 1, joined: new Date('2024-01-01'), note: 'a' },
@@ -406,16 +405,12 @@ describe('withSorting', () => {
       const optedInStore = inContext(() =>
         createTable(
           optedInData,
-          {
-            trackBy: 'id',
-            columns: makeNullableColumns(optedInData, (path) => {
-              sortNulls(path.note, { order: 'last', emptyString: 'is-empty' });
-            }),
-          },
-          withSorting()
+          { trackBy: 'id', columns: makeNullableColumns(optedInData) },
+          withSorting({
+            schema: (path) => sortNulls(path['note'], { order: 'last', emptyString: 'is-empty' }),
+          })
         )
       );
-      TestBed.tick();
       optedInStore.toggleSort('note');
       expect(optedInStore.rows().map((row) => row.id)).toEqual(['r3', 'r1', 'r2']);
     });
@@ -430,19 +425,11 @@ describe('withSorting', () => {
       const store = inContext(() =>
         createTable(
           data,
-          {
-            trackBy: 'id',
-            columns: createColumns(data, (col) => [
-              {
-                ...col('age'),
-                sortFn: (a: NullableRow, b: NullableRow) =>
-                  (a.age as number) - (b.age as number),
-              },
-              col('joined'),
-              col('note'),
-            ]),
-          },
-          withSorting()
+          { trackBy: 'id', columns: makeNullableColumns(data) },
+          withSorting({
+            schema: (path) =>
+              sortFn(path['age'], (a, b) => (a.age as number) - (b.age as number)),
+          })
         )
       );
 
@@ -544,17 +531,13 @@ describe('withSorting', () => {
         const store = inContext(() =>
           createTable(
             signal<Row[]>(rows),
-            {
-              trackBy: 'id',
-              columns: makeColumns({
-                name: {
-                  sortFn: () => {
-                    throw new Error('boom');
-                  },
-                },
-              }),
-            },
-            withSorting()
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({
+              schema: (path) =>
+                sortFn(path['name'], () => {
+                  throw new Error('boom');
+                }),
+            })
           )
         );
 
@@ -571,17 +554,13 @@ describe('withSorting', () => {
         const store = inContext(() =>
           createTable(
             signal<Row[]>(makeRows()),
-            {
-              trackBy: 'id',
-              columns: makeColumns({
-                name: {
-                  sortFn: () => {
-                    throw new Error('boom');
-                  },
-                },
-              }),
-            },
-            withSorting()
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({
+              schema: (path) =>
+                sortFn(path['name'], () => {
+                  throw new Error('boom');
+                }),
+            })
           )
         );
 
@@ -608,14 +587,15 @@ describe('withSorting', () => {
                     throw new Error('boom-accessor');
                   },
                 },
-                age: {
-                  sortFn: () => {
-                    throw new Error('boom-comparator');
-                  },
-                },
               }),
             },
-            withSorting({ multi: true })
+            withSorting({
+              multi: true,
+              schema: (path) =>
+                sortFn(path['age'], () => {
+                  throw new Error('boom-comparator');
+                }),
+            })
           )
         );
 
@@ -630,6 +610,166 @@ describe('withSorting', () => {
       } finally {
         errorSpy.mockRestore();
       }
+    });
+  });
+
+  describe('schema', () => {
+    it('a sortFn, sortNulls, or sortable naming an undeclared column id throws at construction, naming withSorting — one construction-time check regardless of rule kind', () => {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>([]),
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({ schema: (path) => sortFn(path['nope'], () => 0) })
+          )
+        )
+      ).toThrow(/\[withSorting\].*"nope"/);
+
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>([]),
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({ schema: (path) => sortNulls(path['nope'], { order: 'last' }) })
+          )
+        )
+      ).toThrow(/\[withSorting\].*"nope"/);
+
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>([]),
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({ schema: (path) => sortable(path['nope'], { enable: () => true }) })
+          )
+        )
+      ).toThrow(/\[withSorting\].*"nope"/);
+    });
+
+    it('two sortFn declarations on the same column throw', () => {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>([]),
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({
+              schema: (path) => {
+                sortFn(path['name'], () => 0);
+                sortFn(path['name'], () => 0);
+              },
+            })
+          )
+        )
+      ).toThrow(/\[withSorting\] sort-fn declared twice on column 'name'/);
+    });
+
+    it('sortFn and sortNulls on the same column compose without throwing', () => {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>([]),
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({
+              schema: (path) => {
+                sortFn(path['name'], () => 0);
+                sortNulls(path['name'], { order: 'first' });
+              },
+            })
+          )
+        )
+      ).not.toThrow();
+    });
+
+    it('sortable backed by a signal: toggling it off makes toggleSort a no-op, toggling it on restores sorting', () => {
+      const enabled = signal(true);
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>([]),
+          { trackBy: 'id', columns: makeColumns() },
+          withSorting({ schema: (path) => sortable(path['name'], { enable: () => enabled() }) })
+        )
+      );
+
+      store.toggleSort('name');
+      expect(store.sorting()).toEqual([{ columnId: 'name', direction: 'asc' }]);
+
+      enabled.set(false);
+      store.toggleSort('name'); // would cycle to 'desc' if it weren't gated
+      expect(store.sorting()).toEqual([{ columnId: 'name', direction: 'asc' }]);
+
+      enabled.set(true);
+      store.toggleSort('name');
+      expect(store.sorting()).toEqual([{ columnId: 'name', direction: 'desc' }]);
+    });
+
+    it('a column with no sortable rule is sortable by default', () => {
+      const store = inContext(() =>
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withSorting())
+      );
+
+      store.toggleSort('name');
+      expect(store.sorting()).toEqual([{ columnId: 'name', direction: 'asc' }]);
+    });
+
+    it('a throwing enable degrades to sortable and reports once for that click', () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<Row[]>([]),
+            { trackBy: 'id', columns: makeColumns() },
+            withSorting({
+              schema: (path) =>
+                sortable(path['name'], {
+                  enable: () => {
+                    throw new Error('boom');
+                  },
+                }),
+            })
+          )
+        );
+
+        store.toggleSort('name');
+
+        expect(store.sorting()).toEqual([{ columnId: 'name', direction: 'asc' }]);
+        expect(errorSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        errorSpy.mockRestore();
+      }
+    });
+
+    it('sortingSchema declares one rule on two columns; both share its comparator and null placement', () => {
+      const rows: NullableRow[] = [
+        { id: 'r1', age: 1, joined: new Date('2024-01-01'), note: 'z' },
+        { id: 'r2', age: undefined, joined: new Date('2023-01-01'), note: null },
+        { id: 'r3', age: 5, joined: new Date('2022-01-01'), note: 'a' },
+      ];
+      const byAgeNullsFirst = sortingSchema<NullableRow>((column) => {
+        sortFn(column, (a, b) => (a.age ?? 0) - (b.age ?? 0));
+        sortNulls(column, { order: 'first' });
+      });
+      const data = signal<NullableRow[]>(rows);
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: 'id', columns: makeNullableColumns(data) },
+          withSorting({
+            schema: (path) => {
+              byAgeNullsFirst(path['age']);
+              byAgeNullsFirst(path['note']);
+            },
+          })
+        )
+      );
+
+      store.toggleSort('age');
+      expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r1', 'r3']);
+
+      // Sorting by 'note' produces the SAME order as 'age' — proving the shared rule's
+      // age-based comparator (not a note-based, alphabetical one) governs both columns, and
+      // 'note's own empty row (r2) still lands first via the shared null-placement opt.
+      store.toggleSort('note');
+      expect(store.rows().map((row) => row.id)).toEqual(['r2', 'r1', 'r3']);
     });
   });
 

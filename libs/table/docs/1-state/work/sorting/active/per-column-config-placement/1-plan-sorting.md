@@ -7,6 +7,13 @@ audience: developers
 issue: https://github.com/DvirMon/ng-table/issues/100
 ---
 
+> **Superseded 2026-09-25.** #100 shipped from the `single-value-source` epic workspace instead
+> of this plan — see
+> [`docs/1-state/work/core/active/single-value-source/`](../../../core/active/single-value-source/)
+> and `docs/decisions/sorting.md` SO19/21/22/25–29 for the ruling actually taken (three bare-named
+> declarators — `sortNulls`/`sortFn`/`sortable` — plus a `sortingSchema<Row>(fn)` reuse helper).
+> Kept here for its own analysis, not rewritten.
+
 # #100 — sorting: move per-column config to `withSorting({ sortable, schema })`
 
 ## Context

@@ -13,9 +13,9 @@ of decisions taken about this capability, one line each, oldest first. The
 contract itself — what sorting does today — is
 [`1-state/features/sorting.md`](../1-state/features/sorting.md).
 
-This log **restates nothing**. Every row links to the record that holds the
-rationale, the counter-arguments and the rejected alternatives. If a row needs
-a second line, that second line belongs in the linked record.
+This log **restates nothing**. Every row links to the record holding the
+rationale, counter-arguments and rejected alternatives. If a row needs a
+second line, it belongs in that record instead.
 
 **Numbering is this log's own (`SO1…SOn`) and is never reused from a source
 record.** The obvious prefix `S` is taken: the sorting contract already uses
@@ -58,16 +58,20 @@ date, an issue's timestamp.
 | SO13 | The null fix applies to a consumer `sortFn` too — no escape hatch. A `sortFn` that deliberately orders nulls is overridden | 08-27 | shipped | NULL |
 | SO14 | The per-column override is a **declarative rule**, not a `ColumnDef.nulls` field — chosen so that moving ownership later does not churn `ColumnDef` | 08-27 | shipped · its home moves in SO21 | NULL |
 | SO15 | `applySortNulls` is single-writer — a second call on one column throws at resolve time, unlike `VISIBLE`'s AND-combine exemption | 08-27 | shipped | NULL |
-| SO16 | Accepted limitation: overrides require a columns schema; a table passing a plain array gets the default and cannot override per column — acceptable because the *default* carries the fix | 08-27 | standing | NULL |
+| SO16 | Accepted limitation: overrides require a columns schema; a table passing a plain array gets the default and cannot override per column — acceptable because the *default* carries the fix | 08-27 | **superseded by SO21** | NULL |
 | SO17 | No table-wide `withSorting({ nulls })` — add only if a real table wants `'first'` everywhere | 08-27 | **open** | NULL |
 | SO18 | Per-column feature-config placement is library-wide policy, not sorting's to settle alone — spun out to #100. Registered in grouping's log as **G24** | 09-16 | scope | #100 |
-| SO19 | Rule A: per-column feature config lives on the feature. `sortFn` and `enableSorting` are deleted from `ColumnDef` outright, not deprecated-and-kept — 0 production authors each | 09-20 | accepted, unbuilt | #100 |
+| SO19 | Rule A: per-column feature config lives on the feature. `sortFn` and `enableSorting` are deleted from `ColumnDef` outright, not deprecated-and-kept — 0 production authors each | 09-20 | shipped | #100 |
 | SO20 | `applySortNulls` stays in `columnsSchema` — it reads no row data, so ADR-0021's capability test makes it a column concern | 09-20 | **superseded by SO21**, same day | #100 Q2 |
-| SO21 | `withSorting()` gains a schema fn in the recording form, and `applySortNulls` moves into it beside `applySortable` and `applySortFn` — supersedes SO20 and reverses CS D11a's "sorting has no schema of its own" | 09-20 | accepted, unbuilt | #100 · CS D11a |
-| SO22 | Three declarators, not one option bag — a column needing only null placement must not have to name a comparator slot (grouping's G39, same reason) | 09-20 | accepted, unbuilt | #100 |
-| SO23 | Sorting reads values through the ADR-0014-wrapped `readAccessor`, and a comparator reaches a carrier column via `ctx.valueOf(path.x, row)` — a data resolver, so it takes the row | 09-20 | accepted, unbuilt | SVS · CS D11d |
+| SO21 | `withSorting()` gains a schema fn in the recording form, and `applySortNulls` moves into it beside `applySortable` and `applySortFn` — supersedes SO20 and reverses CS D11a's "sorting has no schema of its own" | 09-20 | shipped | #100 · CS D11a |
+| SO22 | Three declarators, not one option bag — a column needing only null placement must not have to name a comparator slot (grouping's G39, same reason) | 09-20 | shipped | #100 |
+| SO23 | Sorting reads values through the ADR-0014-wrapped `readAccessor`, and a comparator reaches a carrier column via `ctx.valueOf(path.x, row)` — a data resolver, so it takes the row | 09-20 | shipped | SVS · CS D11d |
 | SO24 | `sortRows` calls `column.accessor` and a consumer `sortFn` **unwrapped**, escaping ADR-0014 — a pre-existing bug, fixed on its own rather than folded into the migration | 09-20 | shipped | SVS |
-| SO25 | Schema rule functions drop the `apply` prefix and are named for the constraint they assert: `sortNulls`, `sortFn`, `sortable` | 09-22 | `sortNulls` shipped `ce13765` (#136) · `sortFn`/`sortable` accepted, unbuilt — pending #100's S1 (they don't exist yet; `column.sortFn`/`column.enableSorting` are still the old `ColumnDef` fields) | [ADR-0025](../adr/0025-schema-rule-functions-are-bare-named.md) |
+| SO25 | Schema rule functions drop the `apply` prefix and are named for the constraint they assert: `sortNulls`, `sortFn`, `sortable` | 09-22 | shipped | [ADR-0025](../adr/0025-schema-rule-functions-are-bare-named.md) |
+| SO26 | Reuse across columns goes through a `sortingSchema<Row>(fn)` identity helper, typing-only — it exists so the handle's type is inferred, and does nothing at runtime. No `apply()`: on a flat, non-recursive path `apply(path.x, fn)` is just `fn(path.x)` | 09-25 | shipped | #100 · this workspace |
+| SO27 | A single `sorting(path, { enable, compare, nulls })` options object was considered and rejected — it would reverse SO22 and the ADR-0025 bare names, and depart from grouping's split (G39). SO22 stands | 09-25 | shipped | #100 · this workspace |
+| SO28 | `sortable` defaults to on — a column with no `sortable` rule is sortable. `{ enable }` is read live at `toggleSort()` call time, never cached; a throwing `enable` degrades to sortable and reports once per column per evaluation (ADR-0014) | 09-25 | shipped | #100 · this workspace |
+| SO29 | A duplicate declarator of the same kind on one column throws at construction — extends SO15 (`sortNulls`-only) to all three declarators. Different kinds on one column are fine | 09-25 | shipped | #100 · this workspace |
 
 All dates are 2026.
 

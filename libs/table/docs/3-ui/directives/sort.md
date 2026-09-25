@@ -25,9 +25,9 @@ Opt-in directive on `<th>` that reflects sort state via `aria-sort` **and now ow
 
 **Prior decision (last session):** `ngpTableSort` was display-only (`aria-sort` binding only); the consumer's own `<button>` called `store.toggleSort(col.id)` directly via `(click)`. That was the right call *at the time* because the call was a single trivial forward — no per-click context needed, and routing it through the directive would have been indirection with no payoff.
 
-**What changed:** modifier-key detection is genuine per-activation logic — reading `event.shiftKey`/`ctrlKey`/`metaKey` (mapped from a configurable choice of which key means "accumulate") and translating that into `{ accumulate: boolean }`. This is exactly the kind of interaction logic directives exist to own. If it stayed in the consumer's template as `(click)="store.toggleSort(col.id, { accumulate: $event.shiftKey })"`, the modifier-key choice would be hardcoded per call site — the "configurable modifier key" user story couldn't be satisfied without either duplicating a config lookup in every consumer's template or centralizing it in the directive. Centralizing it is the directive's job.
+**What changed:** modifier-key detection is genuine per-activation logic — reading `event.shiftKey`/`ctrlKey`/`metaKey` (mapped from a configurable choice of which key means "accumulate") and translating that into `{ accumulate: boolean }`. This is exactly the kind of interaction logic directives exist to own. If it stayed in the consumer's template as `(click)="store.toggleSort(col.id, { accumulate: $event.shiftKey })"`, the modifier-key choice would be hardcoded per call site — the "configurable modifier key" user story would need either a duplicated config lookup in every consumer's template, or centralizing it in the directive.
 
-**Not a return to the earlier-rejected antipattern:** the previously-rejected version had the directive guessing whether a bubbled click "really" came from an interactive child (`event.target.closest('button')`) to decide *whether* to act at all. This version doesn't guess anything — the button is the sole clickable content inside the `<th>` (per the locked button-inside-header markup), so a bubbled click reliably means "the button was activated." The directive isn't inferring intent, just reading modifier flags off an event it's genuinely meant to own.
+**Not a return to the earlier-rejected antipattern:** the previously-rejected version had the directive guessing whether a bubbled click "really" came from an interactive child (`event.target.closest('button')`) to decide *whether* to act at all. This version doesn't guess anything — the button is the sole clickable content inside the `<th>` (per the locked button-inside-header markup), so a bubbled click reliably means "the button was activated." The directive just reads modifier flags off an event it's genuinely meant to own.
 
 ---
 
@@ -55,12 +55,16 @@ export class NgpTableSortDirective {
 
   private readonly isSortable = computed(() => {
     const col = this.store.columns().find(c => c.id === this.column.columnId());
-    // `enableSorting` is optional and opt-*out*: only an explicit `false` disables.
-    return !!col && col.enableSorting !== false;
+    // ⚠️ `col.enableSorting` no longer exists (#100 — `ColumnDef` carries no feature config).
+    // A column's `sortable({ enable })` rule is private to `withSorting()`'s closure — there is
+    // no public member exposing it today (see #100's Non-Goals: no `isSortable(columnId)`
+    // member was in scope). This directive cannot resolve per-column sortability until one
+    // ships. Tracked as a new open item for this spec, not silently papered over.
+    return !!col;
   });
 
   readonly ariaSort = computed(() => {
-    if (!this.isSortable()) return null; // enableSorting:false → no aria-sort at all
+    if (!this.isSortable()) return null; // unknown column id → no aria-sort at all
     // No `sortDirectionFor()` helper on the store — `sorting` is the raw SortRule[].
     const rule = this.store.sorting().find(r => r.columnId === this.column.columnId());
     return rule?.direction === 'asc' ? 'ascending'
@@ -97,7 +101,12 @@ export class NgpTableSortDirective {
 
 **Reading the modifier off the triggering event, never inferred after the fact:** `onActivate` reads `event.shiftKey`/`ctrlKey`/`metaKey` directly from whichever event fired it (`MouseEvent` for click, `KeyboardEvent` for the keydown handlers) — there's no separate "was a modifier held recently" state tracked across events.
 
-**Disabled columns:** the `enableSorting` guard now runs at the directive level (`onActivate` returns early) in addition to the store's own internal guard (`with-sorting.md` — `toggleSort` no-ops on disabled columns regardless of caller). Belt-and-suspenders, not a new source of truth — the store's guard remains authoritative if this directive-level check is ever bypassed by a future custom trigger.
+**Disabled columns:** as of #100, the store's own `toggleSort` still no-ops on a column whose
+`sortable({ enable })` rule returns `false` (`features/sorting.md`) — that guard is authoritative
+regardless of caller. The directive-level `isSortable` guard above cannot mirror it today (no
+public member exposes `enable`'s current value), so a disabled column's header currently still
+looks and behaves sortable at the directive layer even though clicking it does nothing at the
+store layer. Belt-and-suspenders is not available until that gap closes.
 
 ---
 
@@ -110,9 +119,9 @@ This file specs a per-activation modifier key. The **implemented** `api/features
 | `toggleSort(columnId, { accumulate })` | `toggleSort(columnId)` — single argument |
 | Accumulation decided **per click**, from the modifier | Accumulation decided **once at construction**: `withSorting({ multi: true })` |
 | `store.sortDirectionFor(id)` (v0.1 of this file) | No such helper — read `store.sorting(): Signal<SortRule[]>` |
-| `col.sortable` (v0.1 of this file) | `col.enableSorting?: boolean`, opt-*out* (only explicit `false` disables) |
+| `col.sortable` (v0.1 of this file) | No `ColumnDef` field at all (as of #100) — sortability is a `sortable({ enable })` rule declared through `withSorting({ schema })`, private to the feature |
 
-The last two rows are corrected inline above. The first two are a **genuine open state-layer change this UI decision requires** — `toggleSort` must grow an options argument and `multi` must move from construction config to per-call, or this directive design can't be built. Not yet ticketed.
+The first two rows are a **genuine open state-layer change this UI decision requires** — `toggleSort` must grow an options argument and `multi` must move from construction config to per-call, or this directive design can't be built. Not yet ticketed. The third row is a second, newer gap (#100): there is no public member this directive can read to mirror a column's current `sortable` state.
 
 ---
 

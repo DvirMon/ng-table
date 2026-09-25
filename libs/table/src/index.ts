@@ -68,9 +68,16 @@ export { createTableFeature } from './api/create-table-feature';
 export { withComputed } from './api/features/with-computed';
 export { composeFeatures } from './api/features/compose-features';
 export { columnSchema } from './columns-schema/schema';
-export { sortNulls, visible, visibleAsync } from './columns-schema/rules';
-export type { SortNullsOpts } from './columns-schema/rules';
+export { visible, visibleAsync } from './columns-schema/rules';
 export { createColumnMetaKey, metadata, readColumnMeta } from './columns-schema/metadata';
+export { sortNulls, sortFn, sortable, sortingSchema } from './api/features/with-sorting/schema';
+export type {
+  SortingHandle,
+  SortingPath,
+  SortingSchemaFn,
+  SortNullsOpts,
+  SortableOpts,
+} from './api/features/with-sorting/types';
 export {
   aggregate,
   grouping,

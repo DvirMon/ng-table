@@ -12,28 +12,36 @@ parent: ../architecture.md
 
 **Each seeds an opt-in store feature; dead unless that feature is composed.** The runtime
 *state* (active sort direction, active filter value) stays store-owned. Ship last. Read
-[Ownership model](ownership-model.md) first — as of 2026-07-25, this tier splits along the same
-line as Tier 1/2: functions duplicating an existing `ColumnDef` field (`sortFn`, `enableSorting`,
-`filterFn`, `enableFiltering`, `aggregateFn`) are **reactive/async only**, static goes on the array
-literal instead; functions with no `ColumnDef` equivalent (`applyDefaultSort`, `applyGroup` — the
-seeded state lives entirely in `withSorting()`/`withGrouping()`, not on the column) **keep their
-static seed input**, same as `applyPinned` in Tier 2.
+[Ownership model](ownership-model.md) first — as of 2026-07-25, this tier split functions
+duplicating an existing `ColumnDef` field (`filterFn`, `enableFiltering`, `aggregateFn`) as
+**reactive/async only**, static goes on the array literal instead; functions with no `ColumnDef`
+equivalent (`applyDefaultSort`, `applyGroup` — the seeded state lives entirely in
+`withSorting()`/`withGrouping()`, not on the column) **keep their static seed input**, same as
+`applyPinned` in Tier 2. **Sorting no longer fits this split at all** — as of #100,
+`ColumnDef` carries no feature config, so `sortFn`/`enableSorting` are not "an existing field to
+duplicate reactively" any more; see the Sorting section below.
 
-> **Dead without the feature.** `sortFn(path, {when})` (not yet available — #100) does nothing
-> unless `withSorting()` is
-> composed as a positional argument to `createTable()`. Whether that mismatch is a compile error or a silent no-op is an open decision below.
+> **Dead without the feature.** A rule declared through a feature's `schema` does nothing unless
+> that feature (e.g. `withSorting()`) is composed as a positional argument to `createTable()` — an
+> unknown/undeclared column id throws at construction instead (ADR-0014, `assertDeclarationsAreKnown`).
 
-## Sorting — feeds [`withSorting()`](../../1-state/features/sorting.md)
+## Sorting — superseded by #100's shipped surface
+
+**This section described a speculative, never-implemented API.** [#100](https://github.com/DvirMon/ng-table/issues/100)
+shipped the actual per-column sorting surface as `withSorting({ schema })`, with three bare-named
+declarators (`docs/decisions/sorting.md` SO19/21/22/25):
 
 ```ts
-applyEnableSorting<TRow, K>(path, enabled: { when: (ctx) => boolean }): void;   // reactive only — static: array `enableSorting` field
-sortFn<TRow, K>(path, sortFn: { when: (ctx) => (a: TRow, b: TRow) => number }): void;   // not yet available — #100. reactive only — static: array `sortFn` field
-applyDefaultSort<TRow, K>(path, sort: { direction: 'asc' | 'desc'; index?: number }): void;   // seed — no ColumnDef equivalent, static stays
+sortNulls<TRow>(path, opts: { order?: 'first' | 'last'; emptyString?: 'is-empty' }): void;
+sortFn<TRow>(path, compare: (a: TRow, b: TRow) => number): void;   // positional comparator, not `{ when }`
+sortable<TRow>(path, opts: { enable: () => boolean }): void;
 ```
 
-- `applyDefaultSort` seeds `withSorting()`'s initial sort state (multi-column order via `index`) —
-  there's no array field for "default sort direction," so this keeps its static form.
-- **AG-Grid analog:** `sort` / `sortType` / `sortIndex`; `sortSvc.updateColSort`.
+None of the three duplicate a `ColumnDef` field — `ColumnDef` carries no feature config at all as
+of #100 (superseding this doc's "static goes on the array literal instead" framing for sorting).
+Reuse across columns goes through `sortingSchema<Row>(fn)`, not an `apply(path, schema)`
+archetype (see the Open Questions note below, and SO26). See
+[`1-state/features/sorting.md`](../../1-state/features/sorting.md) for the full contract.
 
 ## Filtering — feeds [`withFiltering()`](../../1-state/features/filtering.md)
 
@@ -73,8 +81,9 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
 
 | Function | Static? | Seeds / duplicates | AG-Grid analog |
 |---|---|---|---|
-| `applyEnableSorting` / `sortFn` (not yet available — #100) / `applyAggregateFn` | ❌ reactive/async only | duplicates `ColumnDef` field — array literal for static | `sortType`, `aggFunc` |
-| `applyDefaultSort` | ✅ seed keeps static | no `ColumnDef` field — seeds `withSorting()` state | `sort` / `sortIndex` |
+| `sortNulls` / `sortFn` / `sortable` (shipped — #100, `withSorting({ schema })`) | n/a — no `ColumnDef` field to duplicate | superseded, see above | `sortType` |
+| `applyAggregateFn` | ❌ reactive/async only | duplicates `ColumnDef` field — array literal for static | `aggFunc` |
+| `applyDefaultSort` (still speculative, unbuilt — product's OQ-sort-4) | ✅ seed keeps static | no `ColumnDef` field — seeds `withSorting()`'s initial sort state | `sort` / `sortIndex` |
 | `applyEnableFiltering` / `applyFilterFn` | ❌ reactive/async only | duplicates `ColumnDef` field — array literal for static | `filter` + filter model |
 | `applyGroup` | ✅ static seed + reactive `{when}` | no `ColumnDef` field — seeds/toggles `withGrouping()` state | `rowGroup` / `rowGroupIndex` |
 

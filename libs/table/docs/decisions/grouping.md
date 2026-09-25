@@ -41,7 +41,7 @@ older cross-references still resolve.
 | | Decision | Date | Status | Record |
 |---|---|---|---|---|
 | G1 | Write surface is `table.grouping.update(updater)`, never bare setters | 09-10 | shipped | WG D1 |
-| G2 | Grouping state lives on the feature, never on `ColumnDef` | 09-10 | shipped · reaffirmed by G26 | WG D2 |
+| G2 | Grouping state lives on the feature, never on `ColumnDef` | 09-10 | shipped · reaffirmed by G26 · its stated rationale (which static fields `ColumnDef` carries) is superseded by #100 Q4 — `ColumnDef` now carries no feature config at all | WG D2 |
 | G3 | State shape is `grouping: string[]`, ordered, index 0 outermost | 09-10 | shipped | WG D3 |
 | G4 | Group ordering compares group *contents*, not keys | 09-10 | shipped · placement moved by G21 | WG D4 |
 | G5 | Group order and row sort stay fully decoupled — no shared state | 09-10 | shipped | WG D5 |

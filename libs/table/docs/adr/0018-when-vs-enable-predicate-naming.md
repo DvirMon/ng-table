@@ -20,3 +20,12 @@ Table-wide `WithGroupingConfig.groupWhen` renames to `when` (unifies with per-co
 - `applyVisible({ when: ... })` and `FilterOptions.when` are unaffected — each has only one conditional, so plain `when` was always correct.
 - Renaming table-wide `groupWhen` → `when` on `WithGroupingConfig` breaks #85's already-merged public API. Accepted: pre-1.0, single in-repo consumer, no deprecation window.
 - Type and helper function names (`GroupWhen<TRow>`, `evaluateGroupWhen`, `reportGroupWhenError`, fixtures) keep their existing names — only field/parameter identifiers renamed.
+
+## Amendment — 2026-09-25 (#100)
+
+`enable` may appear alone, with no paired `when`, when the gate reads no row
+data. `sortable(path, { enable })` (`withSorting()`, SO28 in
+`docs/decisions/sorting.md`) is the first rule of this shape: sortability is
+external-state-driven only, with no data-driven admission counterpart to
+disambiguate from. The deciding question is whether the predicate reads
+row/cluster data (`when`) or not (`enable`) — not whether the rule has both.

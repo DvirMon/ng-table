@@ -1,5 +1,5 @@
 import type { ResourceRef, Signal } from '@angular/core';
-import { SORT_NULLS, VISIBLE } from '../engine/columns';
+import { VISIBLE } from '../engine/columns';
 import { metadata, metadataAsync } from './metadata';
 import type { ColumnHandle, ColumnRuleContext } from './types';
 
@@ -40,24 +40,4 @@ export function visibleAsync<TRow, K extends string, TParams, TResult>(
   opts: VisibleAsyncOpts<TRow, TParams, TResult>
 ): void {
   metadataAsync(path, VISIBLE, opts);
-}
-
-export interface SortNullsOpts {
-  /** Which end empty values land on regardless of sort direction. Default `'last'`. */
-  order?: 'first' | 'last';
-  /** Opt `''` into the empty branch. By default `''` sorts as a normal string value. */
-  emptyString?: 'is-empty';
-}
-
-/**
- * Per-column override of `withSorting()`'s null/empty placement. Convenience wrapper over
- * `metadata()` writing to the internal `SORT_NULLS` key (`engine/columns.ts`), mirroring
- * `visible()` above. Single-writer, unlike `VISIBLE` — a second `sortNulls()` call
- * on the same column throws at resolve time.
- */
-export function sortNulls<TRow, K extends string>(
-  path: ColumnHandle<TRow, K>,
-  opts: SortNullsOpts
-): void {
-  metadata(path, SORT_NULLS, opts);
 }
