@@ -8,6 +8,8 @@
 - `progress.md` in this folder — earlier work log
 - `handoffs/handoff-row-animation-bench.md` (gitignored, local) — the step-by-step debugging
   timeline
+- `libs/table/docs/work/correctness-pass/findings-schema-mutations-directives.md` — § F5 and the
+  clean-check note on the directive
 
 ## Commits (oldest first)
 
@@ -43,6 +45,16 @@
 - Conclusion: the measurement design, not the directive → rebuild as `apps/table-bench`
   (production build, fresh page per variant, 95 % CI, pass / fail / unsure). Plan written, not
   executed.
+
+## Open items
+
+- **F5 — row registration leaks on `track $index`** (from the 2026-09-24 correctness audit,
+  `libs/table/docs/work/correctness-pass/findings-schema-mutations-directives.md` § F5).
+  `NgpTableRowDirective` registers its element in an `effect()` with no `onCleanup`; with a
+  consumer `@for` tracked by `$index`, deleting a middle row leaves stale entries in
+  `rowElements` for the table's lifetime (retention only — stale ids are never read). Fix:
+  unregister the previous id in `onCleanup`. Not addressed by `400ed22` or the benchmark plan.
+- **Production benchmark** — plan at `active/production-benchmark/`, not executed.
 
 ## Uncommitted on purpose
 

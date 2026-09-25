@@ -1,0 +1,7 @@
+{
+  "extends": "./tsconfig.spec.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "../../dist/out-tsc/shared-table-bench.tsbuildinfo"
+  },
+  "include": ["src/**/*.bench.spec.ts", "src/**/*.d.ts"]
+}
