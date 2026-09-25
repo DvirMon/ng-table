@@ -1,0 +1,63 @@
+# Keep auto-merge PRs rebased on main so they don't stall as "behind"
+# (the ruleset requires branches to be up to date).
+# REST `update-branch` only MERGES main into the head branch — that would
+# create merge commits, so this rebases with git and force-pushes with lease.
+# Needs secret: PIPELINE_TOKEN (fine-grained PAT: contents + pull requests
+# read/write; add "workflows" if PR branches touch .github/workflows).
+# Pushes with GITHUB_TOKEN would not re-trigger CI on the PR.
+# Skip this workflow when the repo has a merge queue (org-owned repos only).
+# Pin actions by SHA at install.
+name: Rebase behind PRs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: rebase-behind-prs
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rebase:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.PIPELINE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.PIPELINE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Rebase auto-merge PRs that are behind main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          MARKER='<!-- rebase-behind-prs:conflict -->'
+
+          gh pr list --base main --state open \
+            --json number,headRefName,isCrossRepository,autoMergeRequest \
+            --jq '.[] | select(.autoMergeRequest != null and .isCrossRepository == false) | "\(.number) \(.headRefName)"' |
+          while read -r number branch; do
+            git fetch origin main "$branch"
+            old=$(git rev-parse "origin/$branch")
+
+            if git merge-base --is-ancestor origin/main "$old"; then
+              echo "#$number up to date"
+              continue
+            fi
+
+            git switch --force-create "$branch" "$old"
+            if git rebase origin/main; then
+              git push --force-with-lease="$branch:$old" origin "$branch"
+              echo "#$number rebased"
+            else
+              git rebase --abort
+              gh pr comment "$number" --body "$MARKER
+          Rebase onto \`main\` has conflicts — resolve locally and re-run \`/ship\`." || true
+              echo "#$number conflicts"
+            fi
+          done

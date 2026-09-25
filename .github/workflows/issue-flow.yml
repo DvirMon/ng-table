@@ -1,0 +1,143 @@
+# On issue close:
+#  1. unblock — comment "Unblocked → /to-tasks #M" on every issue whose last
+#     open blocker just closed (native issue dependencies REST API).
+#  2. archive — when the closed issue was its epic's last open sub-issue,
+#     move the epic workspace active/ → archive/ on a chore branch and open
+#     an auto-merge PR.
+# Needs secret: PIPELINE_TOKEN (fine-grained PAT: contents, pull requests,
+# issues = read/write). GITHUB_TOKEN pushes would not trigger CI on the PR.
+# Pin actions by SHA at install.
+name: Issue flow
+
+on:
+  issues:
+    types: [closed]
+
+concurrency:
+  group: issue-flow
+  cancel-in-progress: false
+
+jobs:
+  unblock:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    outputs:
+      epic: ${{ steps.epic.outputs.epic }}
+    steps:
+      - name: Comment on unblocked issues
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const closed = context.payload.issue.number;
+            const MARKER = '<!-- issue-flow:unblocked -->';
+
+            const blocking = await github.paginate(
+              'GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocking',
+              { owner, repo, issue_number: closed },
+            );
+
+            for (const issue of blocking.filter((i) => i.state === 'open')) {
+              const blockers = await github.paginate(
+                'GET /repos/{owner}/{repo}/issues/{issue_number}/dependencies/blocked_by',
+                { owner, repo, issue_number: issue.number },
+              );
+              const hasOpenBlocker = blockers.some((b) => b.state === 'open');
+              if (hasOpenBlocker) continue;
+
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: issue.number,
+              });
+              const alreadyNotified = comments.some((c) => c.body?.includes(MARKER));
+              if (alreadyNotified) continue;
+
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issue.number,
+                body: `${MARKER}\nUnblocked by #${closed} → \`/to-tasks #${issue.number}\``,
+              });
+            }
+
+      - name: Detect completed epic
+        id: epic
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            let parent;
+            try {
+              ({ data: parent } = await github.request(
+                'GET /repos/{owner}/{repo}/issues/{issue_number}/parent',
+                { owner, repo, issue_number: context.payload.issue.number },
+              ));
+            } catch (error) {
+              if (error.status === 404) return; // not a sub-issue
+              throw error;
+            }
+            const summary = parent.sub_issues_summary;
+            const isEpicComplete = summary && summary.total > 0 && summary.completed === summary.total;
+            if (isEpicComplete) core.setOutput('epic', String(parent.number));
+
+  archive:
+    needs: unblock
+    if: needs.unblock.outputs.epic != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      EPIC: ${{ needs.unblock.outputs.epic }}
+      GH_TOKEN: ${{ secrets.PIPELINE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.PIPELINE_TOKEN }}
+          fetch-depth: 0
+
+      - name: Move epic workspace to archive
+        id: move
+        run: |
+          # Workspace = the active/<slug>/state.json whose githubIssues lists the epic.
+          state=$(git ls-files 'libs/*/docs/*/work/*/active/*/state.json' | while read -r f; do
+            jq -e --argjson n "$EPIC" '.githubIssues | index($n) != null' "$f" >/dev/null 2>&1 && echo "$f"
+          done | head -n1)
+          if [ -z "$state" ]; then
+            echo "No active workspace lists #$EPIC — nothing to archive."
+            exit 0
+          fi
+
+          src=$(dirname "$state")
+          slug=$(basename "$src")
+          dst=$(printf '%s' "$src" | sed 's@/active/@/archive/@')
+          branch="chore/$slug-archive"
+
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null; then
+            echo "Branch $branch already exists — skipping."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          mkdir -p "$(dirname "$dst")"
+          git mv "$src" "$dst"
+
+          # Repair path fields and links that pointed into the active folder.
+          git grep -lF "$src" -- '*.md' '*.json' | xargs -r sed -i "s@$src@$dst@g"
+          git grep -lF "active/$slug" -- '*.md' '*.json' | xargs -r sed -i "s@active/$slug@archive/$slug@g"
+          git add -A
+
+          git commit -m "🎨 chore(docs): archive $slug workspace" -m "Refs: #$EPIC"
+          git push -u origin "$branch"
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "slug=$slug" >> "$GITHUB_OUTPUT"
+
+      - name: Open auto-merge PR
+        if: steps.move.outputs.branch != ''
+        env:
+          BRANCH: ${{ steps.move.outputs.branch }}
+          SLUG: ${{ steps.move.outputs.slug }}
+        run: |
+          url=$(gh pr create --head "$BRANCH" \
+            --title "🎨 chore(docs): archive $SLUG workspace (#$EPIC)" \
+            --body "$(printf '## Summary\n\n- Every sub-issue of #%s is closed; move its workspace to archive/.\n\nCloses #%s\n' "$EPIC" "$EPIC")")
+          gh pr merge "$url" --auto --rebase
