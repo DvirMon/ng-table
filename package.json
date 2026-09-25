@@ -11,6 +11,8 @@
     "prepare": "git config core.hooksPath .githooks",
     "commits:check": "node tools/check-commit-trailers.cjs --range",
     "start": "npx nx serve ng-table",
+    "lint": "npx nx run-many -t lint",
+    "table:lint": "npx nx run shared-table:lint",
     "table:sb": "npx nx run shared-table:storybook",
     "table:build-storybook": "npx nx run shared-table:build-storybook",
     "table:bench": "powershell -NoProfile -Command \"npx nx run shared-table:bench 2>&1 | Tee-Object -FilePath bench.log\"",
