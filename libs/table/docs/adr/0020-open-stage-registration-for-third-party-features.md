@@ -8,9 +8,10 @@ outright, not merely reclassified — the parent-before-child emission invariant
 built `preservesEmissionOrder` around no longer exists), [ADR-0007](0007-feature-member-claims.md)
 (construction-time collision precedent), [ADR-0012](0012-split-expansion-into-panel-and-tree.md)
 (`withTree()`/`withExpansion()` split — see the flagged item under `'expand'` below),
-[ADR-0021](0021-column-concerns-and-data-concerns-are-separate-surfaces.md) (a third-party feature
-declaring a schema names **row fields**, not columns — the column path belongs to
-`TableConfig.columnsSchema` alone)
+[ADR-0021](0021-column-concerns-and-data-concerns-are-separate-surfaces.md) (its capability
+test stands; its path-vocabulary rule does not — per
+[ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md)'s Amendment 2026-09-20, **every
+schema fn names declared columns**, a third-party feature's included)
 
 **Source:** discovery findings —
 [`discovery-open-stage-registration.md`](../1-state/work/feature-authoring/discovery-open-stage-registration.md)
@@ -29,53 +30,43 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 
 ## Decision
 
-1. **A feature declares stage placement by anchor, not by position.**
+1. **A feature declares stage placement by anchor, using a schema with a bare-named `stage` rule.**
+
+   All four shipped stage-declaring features refactor to a uniform recording-form DSL
+   (ADR-0027 Rule 2: every schema form is recorded when a member has a name but no UI-bound state):
 
    ```ts
-   interface StageDeclaration<TRow> {
-     readonly name: string;              // claimed via SlotRegistry, throws on collision
-     readonly after?: StageAnchor;        // exactly one of after/before, else throw at construction
-     readonly before?: StageAnchor;
-     readonly run: RowTransform<TRow>;
-   }
+   // claim a built-in anchor (no name; all features using this stage set record it)
+   renderStages: stageSchema((s) => {
+     stage(s.tree, { run: buildTreeStage(...) });
+   }),
+
+   // declare a new stage relative to an anchor (name + placement; third-party feature)
+   renderStages: stageSchema((s) => {
+     stage(s.tree, { name: 'pin', placement: 'after', run: hoistPinned(...) });
+   }),
+
+   // pipeline layer, same rule and schema body
+   stages: stageSchema((s) => {
+     stage(s.sort, { run: (rows) => sortRows(rows, ...) });
+   }),
    ```
 
-   The engine topologically resolves declared stages against a fixed set of built-in
-   anchors. An unknown anchor, a cycle, or an ambiguous tie throws at construction,
-   naming both parties — the same bargain ADR-0007 and ADR-0012's `claimMember()`
-   already strike for member claims.
+   `s` is a typed proxy over the stage-name registry interface (Decision 3); `s.tre` is a
+   compile error. The engine topologically resolves declared stages. Unknown anchor, cycle,
+   duplicate claim/name, or ambiguous tie — all throw at construction (dev-only, each gate
+   gates `ngDevMode` inside its own body). Both parties are named; ties receive an edge-fix hint.
+   Ambiguous-tie production fallback: deterministic name-sort, never documented.
 
 2. **Anchor set:**
    - Pipeline: `'filter'`, `'sort'`.
-   - Render: `'group'`, `'tree'`. **No post-flatten anchor exists.** `'paginate'` left
-     `RENDER_ORDER` unclaimed (#106) and `'prune'` was deleted outright, along with the
-     emission-order invariant it existed to protect (ADR-0023). There is deliberately no
-     reserved name standing in for "after the tree is flattened" — whether to add one is
-     [#102](https://github.com/DvirMon/ng-table/issues/102)'s call, not restored here by
-     default.
-
-   `'expand'` (pipeline) is **removed**, not kept as a reserved anchor. It is unclaimed
-   today (`withExpansion()` declares only `renderStages.tree`, no pipeline stage), and
-   its intended job — injecting child rows — is already handled structurally by the
-   render `'tree'` stage. Keeping it would teach a third-party author the wrong phase
-   for exactly the case the two-layer split (pipeline vs. render) exists to route into
-   render.
-
-   > **⚑ Open item — flag before accepting.** This conclusion was reasoned against
-   > today's `withExpansion()` shape. [Issue #101](https://github.com/DvirMon/ng-table/issues/101)
-   > (ADR-0012) splits it into `withExpansion()` (detail panel, no render stage) and a
-   > new `withTree()` (owns `childrenAccessor`, `depth`, the `'tree'` render stage).
-   > Under that split, pipeline `'expand'` is still unclaimed by either feature, so the
-   > removal call does not change — but this was not verified against a panel-shaped
-   > second consumer of "expand" semantics, and #101 was not open when the discovery
-   > ran. Re-confirm against #101's final shape before this ADR moves to `accepted`.
-
-   *(D3 — `preservesEmissionOrder: boolean` — dropped 2026-09-20, ADR-0023. It existed
-   to let a stage declaration promise it would not break the parent-before-child
-   emission invariant `'prune'` relied on. That invariant is gone with `'prune'`: a
-   nested child cannot be emitted above its own parent in a tree-shaped IR, so there is
-   no emission order left for a stage to preserve or a flag for its author to get
-   wrong.)*
+   - Render: `'group'`, `'tree'`.
+   - **`'expand'` (pipeline) is removed.** Confirmed after #101 (#119 `withTree()`, #121
+     `withExpansion()`): no feature claims it; child rows are structurally injected by render
+     `'tree'`. Keeping it misleads a third-party author to use the wrong phase.
+   - **No post-flatten anchor in v1.** `'paginate'` (#106) and `'prune'` (ADR-0023) left no
+     unclaimed post-flatten slot. Pagination owns its own flat-layer decision (#102).
+   - `'group'` (pipeline) stays fixed — it orders `table.rows()`; render re-clusters identically.
 
 3. **The stage-name registry is a TypeScript `interface`, not a derived `const` array
    union**, mirroring MUI X's `GridPipeProcessingLookup`. A third-party package
@@ -88,35 +79,31 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
    > generated `*.overloads.ts`) was not checked here — MUI proves the pattern works in
    > a plain TS package, nothing was verified against this repo's own tooling.
 
-4. **Two invariants the engine checks at evaluation time** (not construction, since
-   they are data-dependent): row-id uniqueness, and real-row id containment (output's
-   non-synthesized ids are a subset of input's). Violations degrade + report once per
-   stage per evaluation (ADR-0014's policy), never throw at runtime.
-   *(Parent-before-child emission order dropped from this list with D3, same reason —
-   ADR-0023.)*
+4. **Runtime invariants** (data-dependent, stage evaluation): row-id uniqueness and
+   real-row id containment (output's non-synthesized ids ⊆ input's). Violations degrade +
+   report once per stage per evaluation, in production too (ADR-0014 Decision). Never throw.
 
-   > **⚑ Open item.** The runtime error-policy citation ("throw at construction,
-   > degrade at runtime, report in production too") is read from this library's
-   > `CLAUDE.md` restatement, not verified against
-   > [ADR-0014](0014-runtime-error-policy.md)'s Decision section directly. Confirm
-   > before relying on it here.
+5. **Construction-checked declarable:** `synthesizesRows: boolean` (a `true` stage cannot
+   anchor before `'group'`). Row-count direction (`'preserves' | 'may-shrink' | 'may-grow'`)
+   is dropped — its only check was "may-grow cannot sit after `'paginate'`", which no longer
+   exists (Decision 2).
 
-5. **Two invariants are declarable only, checked positionally at construction, not
-   inferred:** `synthesizesRows: boolean` (a `true` stage cannot anchor before
-   `'group'`) and a row-count-direction declaration (`'preserves' | 'may-shrink' |
-   'may-grow'`) — a `'may-grow'` stage cannot sit after `'paginate'`.
+6. **DI-based placement override (`provideTableStages()`) is deferred.** When added, it
+   must be an edit function (`(order) => order`). Placement knowledge belongs with the
+   feature author; a consumer-facing config surface should not replicate it. Revisit when
+   a feature ships as a versioned package that another team consumes and cannot edit.
 
-   > **⚑ Open item.** This clause anchors against `'paginate'`, which is no longer in
-   > `RENDER_ORDER` (#106) and has no successor (decision 2 above). Re-derive this
-   > check once [#102](https://github.com/DvirMon/ng-table/issues/102) settles whether
-   > a post-flatten anchor exists at all — do not restore `'paginate'` as its target
-   > without that decision.
+## Amendment (2026-09-25)
 
-6. **DI-based placement override (`provideTableStages()`) is deferred**, and when
-   added, must be an edit function over the already-resolved order
-   (`(order) => order`), never a replacement array or the definition site. Placement
-   knowledge belongs with the feature author, who knows a stage's ordering
-   constraints; a consumer-facing config surface only knows it wants the feature.
+**Scope:** ADR-0020's premise survived; all three resolving decisions (Q1–Q3) landed on the core mechanism (anchors + registry interface + no post-flatten v1). Amendments record them and close open items.
+
+**Shape authoring:** Recording-form DSL via `stageSchema(fn)` + bare-named `stage` rule (Decision 1), per ADR-0027 Rule 2. Unifies all four shipped features and third-party declarations. Object form `renderStages: { tree: fn }` removed; four features refactor (withSorting, withFiltering, withGrouping, withTree).
+
+**Anchor set & checks:** Confirmed `'expand'` unclaimed (ADR-0012's #119/#121 split); removed. No post-flatten anchor in v1 (pagination owns #102). Construction checks (unknown anchor, cycle, duplicate, tie, `synthesizesRows` before `'group'`) are dev-only, each gates `ngDevMode` inside its own body (ADR-0014's 2026-09-24 amendment). Ambiguous tie names both stages + edge-fix hint. Production fallback: deterministic name-sort.
+
+**Invariants:** Decision 4's runtime check claim verified against ADR-0014's Decision section directly — reported in production too, once per stage per evaluation, never thrown. Decision 5's row-count direction dropped (no post-`'paginate'` anchor). Decision 6 stays deferred; Q4 revisit trigger recorded.
+
+**Remaining open:** whether interface declaration merging survives this repo's build (work item 4).
 
 ## Alternatives considered
 
@@ -150,33 +137,21 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 ## Consequences
 
 **Gained**
-- Third-party features can add a pipeline or render stage without a library release,
-  positioned relative to fixed anchors, with construction-time errors naming both
-  parties on any conflict.
-- Stage names for third-party stages stay statically checked via interface
-  augmentation rather than degrading to `string`.
+- Third-party features (consumer's own teams) add pipeline/render stages positioned relative to
+  fixed anchors, with construction-time errors naming both parties on any conflict.
+- Stage names for third-party stages stay checked via interface augmentation rather than `string`.
 
-**Cost**
-- The stage-key set is no longer a single closed `const`-derived union for the
-  *extension* surface — built-in stages are unaffected, but a third-party name's
-  compile-time safety moves from "impossible to declare wrong" to "throws at
-  construction if wrong." This is a real trade, not a strict improvement: per
-  `architecture.md`'s own standard, a general mechanism no consumer ever extends is
-  cost without payoff, and no shipped consumer requests this today (candidate list is
-  from `pagination.md`'s gap analysis, not from a request).
-- Topological resolution introduces a debuggable-but-nonlocal failure mode: a cycle
-  across independently-authored features produces an error not local to any one
-  feature.
-- Touches both fold sites (`engine/compose-table.ts`, `api/features/compose-features.ts`)
-  and the `*.overloads.ts` generators. No line-level migration estimate exists yet.
+**Cost & flag**
+- Topological resolution introduces debuggable-but-nonlocal cycles across independently-authored
+  features.
+- CLAUDE.md's `schema/run.ts` row is contradictory: it says the declaring form keeps its own body
+  "until ADR-0020's `stageSchema` is a second caller", but `stageSchema` is the recording form.
+  Correct it when the engine work lands.
+- Whether interface declaration merging survives this repo's build + barrel + `tools/generate-overloads.ts`
+  (work item 4) determines whether stage names stay literals or widen to `name: string` (fallback).
 
-## Not yet verified before this ADR is accepted
+## Open before acceptance
 
-- The two flagged open items above (`'expand'` vs. #101/`withTree()`; interface
-  declaration merging through this repo's build).
-- Whether removing pipeline `'group'`'s current effect (limited to `table.rows()`
-  ordering, per the render layer's independent re-clustering) is confirmed by a test
-  run, not just by reading `grouping.ts` — no probe was run.
-- Which of the two current repo copies (`acme`, `ng-table`) is canonical before this
-  mechanism is implemented anywhere — they agree today but nothing states which one
-  future work edits.
+- Compile probe (work item 4): whether interface declaration merging on the stage-name
+  registries survives this repo's build, barrel, and `tools/generate-overloads.ts`.
+  Fallback if it fails: `name: string` literal union widens to a bare string.
