@@ -62,10 +62,17 @@ interface BenchHost {
   readonly data: WritableSignal<MockRow[]>;
 }
 
+// Hoisted so `template:` below holds a plain identifier, not an inline `${ROWS_TEMPLATE}`
+// interpolation — the angular-eslint template extractor reads a decorator's `template`
+// property from raw source text, and a literal `${ROWS_TEMPLATE}` in that text reads as an
+// unescaped `{`, which it mistakes for an unterminated ICU expansion.
+const ANIMATED_BENCH_TEMPLATE = `<table class="bench-table" [ngpTable]="table" ngpTableRowAnimation>${ROWS_TEMPLATE}</table>`;
+const PLAIN_BENCH_TEMPLATE = `<table class="bench-table" [ngpTable]="table">${ROWS_TEMPLATE}</table>`;
+
 @Component({
   selector: 'ngp-flip-bench-animated',
   imports: [NgpTableDirective, NgpTableRowAnimationDirective, NgpTableRowDirective],
-  template: `<table class="bench-table" [ngpTable]="table" ngpTableRowAnimation>${ROWS_TEMPLATE}</table>`,
+  template: ANIMATED_BENCH_TEMPLATE,
   styles: BENCH_STYLES,
 })
 class AnimatedBenchHost implements BenchHost {
@@ -76,7 +83,7 @@ class AnimatedBenchHost implements BenchHost {
 @Component({
   selector: 'ngp-flip-bench-plain',
   imports: [NgpTableDirective, NgpTableRowDirective],
-  template: `<table class="bench-table" [ngpTable]="table">${ROWS_TEMPLATE}</table>`,
+  template: PLAIN_BENCH_TEMPLATE,
   styles: BENCH_STYLES,
 })
 class PlainBenchHost implements BenchHost {
