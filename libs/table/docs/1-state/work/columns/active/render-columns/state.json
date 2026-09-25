@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "runId": "render-columns-2026-09-25T00:00:00Z",
+  "slug": "render-columns",
+  "ticketRef": "142",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/142",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/1-state/work/columns/active/render-columns",
+  "stack": "angular",
+  "isComplex": false,
+  "decisionsPath": "libs/table/docs/1-state/work/columns/active/render-columns/1-decisions.md",
+  "specPath": "libs/table/docs/1-state/work/columns/active/render-columns/2-spec.md",
+  "architecturePath": null,
+  "githubIssues": [142, 143, 144, 145],
+  "createdAt": "2026-09-25T00:00:00Z",
+  "updatedAt": "2026-09-25T16:45:00Z",
+  "capabilityLogPath": "libs/table/docs/decisions/columns.md"
+}
