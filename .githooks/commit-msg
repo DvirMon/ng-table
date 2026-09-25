@@ -1,5 +1,5 @@
 #!/bin/sh
-# Rejects commit messages without an issue trailer, or with a GitHub
-# closing keyword. Contract: docs/agents/issue-tracker.md#closing-trailer
+# Rejects commit messages that break the header or trailer rules.
+# Contract: docs/agents/issue-tracker.md#issue-references
 exec node "$(git rev-parse --show-toplevel)/tools/check-commit-trailers.cjs" \
   --file "$1"
