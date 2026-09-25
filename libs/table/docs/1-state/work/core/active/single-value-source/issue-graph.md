@@ -23,8 +23,8 @@ fits a tracer bullet, so both are sequenced
 | [#137](https://github.com/DvirMon/ng-table/issues/137) | Migrate declarations: specs, mocks, fixtures | ✅ CLOSED 09-25 (b6209bc) | #131 (cleared) | #139, #140 |
 | [#138](https://github.com/DvirMon/ng-table/issues/138) | Migrate declarations: story hosts and type specs | ✅ CLOSED 09-24 (6af4cc7) | #131 (cleared) | #139 |
 | [#139](https://github.com/DvirMon/ng-table/issues/139) | Contract: delete the array intake | ✅ CLOSED 09-24 (1704cfd) | #132 (cleared), #137 (cleared), #138 (cleared) | — |
-| [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented | 🟡 OPEN | #137 (cleared) | #141 |
-| [#141](https://github.com/DvirMon/ng-table/issues/141) | Docs, ADR-0019 amendment, CLAUDE.md invariant, decision rows, `llms` | 🟡 OPEN | #136 (cleared), #140 | — |
+| [#140](https://github.com/DvirMon/ng-table/issues/140) | `setColumns` narrows its input; the order window is documented | ✅ CLOSED 09-25 (74e29a2, 786e067) | #137 (cleared) | #141 |
+| [#141](https://github.com/DvirMon/ng-table/issues/141) | Docs, ADR-0019 amendment, CLAUDE.md invariant, decision rows, `llms` | ✅ CLOSED 09-25 (782f443) | #136 (cleared), #140 (cleared) | — |
 
 ## Graph
 
@@ -35,9 +35,9 @@ fits a tracer bullet, so both are sequenced
                     │               │   │
                     └──► #138[✅] ──┴───┘
                                     │
-                                    └──► #140 ──┐
+                                    └──► #140[✅] ┐
                                                 │
-#133[✅] ──┬──► #134[✅] ──┐                     ├──► #141
+#133[✅] ──┬──► #134[✅] ──┐                     ├──► #141[✅]
            └──► #135[✅] ──┴──► #136[✅]────────┘
 ```
 
@@ -59,15 +59,21 @@ fits a tracer bullet, so both are sequenced
   fixtures are `#137`'s. `{#134, #135} → #136`, same
   expand–contract reason. `{#136, #140} → #141` — the docs pass
   describes both final surfaces.
-- **Current frontier:** **#140**. `#130` and `#132` closed
-  2026-09-24 (via another concurrent run — no commit sha
-  captured by this workspace). `#137` shipped and closed
-  2026-09-25 (b6209bc). `#139` shipped and closed 2026-09-24/25
-  (1704cfd) — its every blocker (`#132`, `#137`, `#138`) was
-  cleared. `#140`'s one blocker `#137` is cleared, so it remains
-  frontier on its own. The rename chain (`#133 → {#134, #135} →
-  #136`) shipped and closed end to end; `#141` is not yet
-  frontier — it still waits on `#140`.
+- **Current frontier:** none — every node in this graph (`#130`
+  through `#141`) is closed. `#141` shipped and closed 2026-09-25
+  (782f443), its last two blockers (`#136`, `#140`) already
+  cleared. Earlier: `#130` and `#132` closed 2026-09-24 (via
+  another concurrent run — no commit sha captured by this
+  workspace). `#137` shipped and closed 2026-09-25 (b6209bc).
+  `#139` shipped and closed 2026-09-24/25 (1704cfd) — its every
+  blocker (`#132`, `#137`, `#138`) was cleared. `#140` shipped and
+  closed 2026-09-25 (74e29a2, 786e067). Both wide refactors this
+  epic sequenced — the 57-site declaration migration and the
+  37-file ADR-0025 rename — are fully shipped; nothing in this
+  workspace's tracked node set remains open. The epic (`#129`)
+  itself, and issues outside this graph's node set (`#100`,
+  `#110`, `#115`–`#117`, `#127`, `#128`), are unaffected by this
+  graph and stay whatever state the tracker independently reports.
 
 ## Source
 
@@ -86,6 +92,10 @@ after `/ship` pushed 6af4cc7 — `#138` closed. Refreshed again
 same read found `#130` and `#132` already closed by a concurrent
 run this workspace had not yet recorded. Refreshed again
 2026-09-25 after `/ship` pushed 1704cfd/0754f32 — `#139` closed.
+Refreshed again 2026-09-25 after `/ship` pushed 74e29a2/786e067
+— `#140` closed; `#141` is now frontier.
+Refreshed again 2026-09-25 after `/ship` pushed 782f443 — `#141`
+closed; every node in this graph is now closed.
 Related docs:
 [`2-spec.md`](2-spec.md), [`3-architecture.md`](3-architecture.md),
 [`decisions.md`](decisions.md),
