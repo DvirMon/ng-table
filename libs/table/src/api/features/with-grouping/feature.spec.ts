@@ -37,6 +37,7 @@ import { withTree } from '../with-tree';
 import type {
   ColumnDecl,
   ColumnSet,
+  ColumnValues,
   GroupingUpdater,
   RenderRow,
   RowId,
@@ -91,7 +92,9 @@ function inContext<T>(build: () => T): T {
 
 /** Drops id 2 (US > Electronics, amount 300) — shared so stores that must be provably identical
  * (pipeline-order argument swap) reuse one schema instead of two independently-constant ones. */
-const excludeAmount300 = (path: FiltersPath<GroupingMockRow>) => ({
+const excludeAmount300 = (
+  path: FiltersPath<GroupingMockRow, ColumnValues<GroupingMockRow, ReturnType<typeof makeColumns>['columns']>>
+) => ({
   amount: filter(path.amount, (cell) => cell !== 300, { emptyValue: null, isEmpty: () => false }),
 });
 

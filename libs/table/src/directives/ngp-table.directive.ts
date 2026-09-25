@@ -1,7 +1,7 @@
 import { computed, Directive, input, type InputSignal, type Signal } from '@angular/core';
 
 import { NGP_TABLE_STORE } from './table.tokens';
-import type { TableStore } from '../api/types';
+import type { ColumnValueMap, TableStore } from '../api/types';
 
 // Dual-tag selector, native `<table>` and `<div>` grid share one directive. `role` is set
 // unconditionally, even on native `<table>` — an explicit role matching the implicit native
@@ -15,8 +15,9 @@ import type { TableStore } from '../api/types';
     '[attr.aria-colcount]': 'ariaColCount()',
   },
 })
-export class NgpTableDirective<TRow = unknown> {
-  readonly ngpTable: InputSignal<TableStore<TRow>> = input.required<TableStore<TRow>>();
+export class NgpTableDirective<TRow = unknown, TValues extends ColumnValueMap = ColumnValueMap> {
+  readonly ngpTable: InputSignal<TableStore<TRow, TValues>> =
+    input.required<TableStore<TRow, TValues>>();
 
   readonly ariaRowCount: Signal<number> = computed(() => this.ngpTable().totalRowCount());
   readonly ariaColCount: Signal<number> = computed(() => this.ngpTable().columns().length);

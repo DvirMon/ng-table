@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withFiltering()
 type: architecture
-version: 4.0
-date: 2026-09-17
+version: 5.0
+date: 2026-09-25
 capability: filtering
 spec: drilled
 code: shipped
@@ -22,9 +22,9 @@ mode, where the criteria drive the request that produces the data instead).
 ```ts
 readonly table = createTable(
   this.data,
-  config,
+  { trackBy: 'id', columns },
   withFiltering({
-    schema: (path: FiltersPath<Invoice>) => ({
+    schema: (path: FiltersPath<Row, ColumnValues<Row, typeof columns.columns>>) => ({
       status: equals(path.status),
       amount: inRange(path.amount, { source: () => bounds() }),
       search: contains(path.customer),
@@ -37,7 +37,22 @@ table.filters.status().value.set('open');
 ```
 
 `TRow` is inferred from the table's own row data — `RowOf<In>`, recovered from the enclosing
-`createTable()` config, never annotated at the call site.
+`createTable()` config, never annotated at the call site. **`path` itself must still be annotated
+explicitly**, even written inline: `withFiltering` resolves its `schema` callback's parameter
+type against one of its four overloads before the surrounding `createTable()` call has supplied
+`In`, so an unannotated `path` silently falls back to the wide `ColumnValueMap` and every
+criterion reads back as `unknown` — it does not error. Spell it
+`FiltersPath<Row, ColumnValues<Row, typeof columns.columns>>`, off the same `columns` the table
+composes.
+
+**`path` keys by declared column id, not row field, and reads through the accessor** (#115,
+[ADR-0024](../../adr/0024-single-value-source-accessor.md)). `path.status` above is a handle onto
+the column declared `id: 'status'` in `columns`; the value a criterion narrows against is whatever
+that column's `accessor` resolves per row — the same value the cell displays, not necessarily
+`row.status`. A carrier column (`visible: false`, declared for its accessor alone) is filterable
+like any other. Naming a column id that is not declared throws at construction (see
+[Errors](#errors)); a column present at construction but later removed by `setColumns()` degrades
+at evaluation time (see [Semantics](#semantics)).
 
 There is one feature, one call, one member. There is no standalone `createFilters()` and no
 separate filter object to wire up — that split existed for one release
@@ -48,25 +63,27 @@ this file.
 ## Signature
 
 ```ts
-export interface WithFilteringConfig<TRow, S extends Record<string, AnyRule> = {}> {
+export interface WithFilteringConfig<TRow, TValues extends ColumnValueMap, S extends Record<string, AnyRule> = {}> {
   /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
    * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
   manual?: boolean;
   /** Declares the owned filter model, exposed as `filters`. Built once at construction; its
    * criteria narrow the pipeline's `filter` stage through `matcher()`. */
-  schema?: (path: FiltersPath<TRow>) => S;
+  schema?: (path: FiltersPath<TRow, TValues>) => S;
 }
 
 export interface FilteringMembers<TRow, TState extends Record<string, unknown>> {
   readonly filters: Filters<TRow, TState>;
 }
 
-export function withFiltering<In extends Shape>(
-  config?: WithFilteringConfig<RowOf<In>, {}> & { schema?: undefined }
+export function withFiltering<In extends FilteringInput<In>>(
+  config?: WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, {}> & { schema?: undefined }
 ): Feature<In, {}>;
 
-export function withFiltering<In extends Shape, S extends Record<string, AnyRule>>(
-  config: WithFilteringConfig<RowOf<In>, S> & { schema: (path: FiltersPath<RowOf<In>>) => S }
+export function withFiltering<In extends FilteringInput<In>, S extends Record<string, AnyRule>>(
+  config: WithFilteringConfig<RowOf<In>, ColumnValuesOf<In>, S> & {
+    schema: (path: FiltersPath<RowOf<In>, ColumnValuesOf<In>>) => S;
+  }
 ): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>>>;
 ```
 
@@ -79,9 +96,17 @@ composition seam every feature shares — not filtering-specific, see `architect
   arguments composes only to keep the `filter` pipeline stage a documented no-op; there is no
   reason to write it.
 - `TRow` comes from the table (`RowOf<In>`), not a generic the caller supplies.
+- **`FilteringInput<In>` widens the feature's own input to `Pick<TableStore<RowOf<In>,
+  ColumnValuesOf<In>>, 'columns' | 'rows'>`** (#115) — filtering reads `columns` to resolve
+  accessors and to check declared ids at construction, the same shape `withGrouping()` already
+  takes. `TValues` (`ColumnValuesOf<In>`) is the declared column-value map `createColumns()`
+  derives; it is recovered from `In`, never a type parameter a caller writes.
 - **The criterion map is inferred from the schema's returned object.** `StateOf<S>` folds one
   entry per declared filter or `anyOf` group, keyed **verbatim** by the object's own property
-  names — see [Keys](#keys). It is never a type parameter a caller writes.
+  names — see [Keys](#keys). It is never a type parameter a caller writes. A rule's own criterion
+  type now comes off the column's resolved value in `TValues`, not off `TRow[K]` — `equals(path.owner)`
+  over a column declared `accessor: (r) => r.owner.name` infers `string | null`, matching what the
+  cell displays, not the row's raw `owner` object.
 
 ## The schema
 
@@ -91,7 +116,7 @@ literal**, keyed by whatever property names the consumer chooses:
 
 ```ts
 withFiltering({
-  schema: (path: FiltersPath<Invoice>) => ({
+  schema: (path: FiltersPath<Row, ColumnValues<Row, typeof columns.columns>>) => ({
     status: equals(path.status),
     isArchived: equals(path.isArchived),
     amount: inRange(path.amount, { source: () => bounds() }),
@@ -183,7 +208,7 @@ single-occupancy rule for member keys and pipeline stages (R5):
 
 ```ts
 withFiltering({
-  schema: (path) => ({
+  schema: (path: FiltersPath<Row, ColumnValues<Row, typeof columns.columns>>) => ({
     included: hasAny(path.tags),
     excluded: hasNone(path.tags),   // ✗ throws — one path, two filters
   }),
@@ -232,6 +257,10 @@ as if the filter were empty); `value` and `reset` are unaffected — the stored 
 gated off and reappears once the condition is true again. `when`'s `valueOf` reads any other
 filter's current value, including one declared later in the same schema — gating resolves in a
 second pass, once every node exists, so declaration order never matters.
+
+**`valueOf` keeps its name here.** #115 loosened `FilterValueOfContext.valueOf`'s generic to
+match the column-id-keyed `FilterHandle`, but did not touch the method's name — renaming it to
+`criterionOf` (matching the `*Of` reader-naming rule, ADR-0025) is #117's.
 
 **Superseded:** the array-schema era's `applyWhen(path, condition, children)` — a separate node
 kind wrapping a whole group of rules — is gone. `when` is a per-rule option instead, which is
@@ -369,7 +398,7 @@ readonly table = createTable(
   this.data,
   { trackBy: 'id', columns },
   withFiltering({
-    schema: (path: FiltersPath<Invoice>) => ({
+    schema: (path: FiltersPath<Row, ColumnValues<Row, typeof columns.columns>>) => ({
       status: equals(path.status, { emptyValue: '' }),
       customer: contains(path.customer),
       amount: inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE }),
@@ -484,8 +513,11 @@ instance. The feature calls it once per pipeline pass, so each pass reports inde
 
 Per [ADR-0014](../../adr/0014-runtime-error-policy.md).
 
-**Construction throws** — a duplicate filter on one path (R5), an `anyOf` with no children.
-Deterministic, fires before data flows, no sane degraded reading:
+**Construction throws** — a duplicate filter on one path (R5), an `anyOf` with no children, and,
+as of #115, a schema naming a column id that is not declared in `columns`. Deterministic, fires
+before data flows, no sane degraded reading; the unknown-id check is dev-gated inside its own
+body (`assertDeclarationsAreKnown`, `schema/validate.ts`), matching every other construction
+check in this library:
 
 > `[withFiltering] The schema function must return its rules as an object literal. A body that
 > calls rules as statements declares nothing — return an object: (path) => ({ status:
@@ -497,6 +529,8 @@ Deterministic, fires before data flows, no sane degraded reading:
 > a given path — two keys may not target one path. Combine with filter() over a compound
 > criterion instead.`
 
+> `[withFiltering] Unknown column id "territory" — no declared column has this id.`
+
 **Runtime never throws.** A predicate that throws drops *that filter* for the rest of the
 evaluation; other filters still narrow and the table still renders. Reported once per filter per
 evaluation — not per row — with the filter key and the offending cell, in production as well as
@@ -504,6 +538,14 @@ dev. Wrapped per filter, never per row: per-row catching yields an inconsistent 
 rows tested, some skipped) and puts a `try` in the hot loop. The catch unit is the same whether
 the term came from `table.filters().matcher()` or a hand-written predicate elsewhere in the
 pipeline — one term, one report, by key.
+
+**A column present at construction but later removed by `setColumns()` degrades the same way**
+(#115, same runtime classification as grouping's G72). That filter stops narrowing for the rest
+of the evaluation it's first missing in, reported once per key per evaluation — other filters are
+unaffected:
+
+> `[withFiltering] The filter "territory" targets column "territory", which is not in the current
+> columns. This filter does not narrow for this evaluation.`
 
 **"For the rest of the evaluation" is literal.** The predicate answers row by row, so rows it
 already answered for keep that filter's narrowing; only rows from the throwing one onward skip
@@ -612,6 +654,12 @@ Recorded in [design-options-hybrid-api.md](../work/filtering/archive/with-filter
   local `filter` stage."
 - **R26** — executed. The superseded imperative implementation (`setColumnFilter()` etc.) no
   longer exists; anything still naming those five members is stale.
+- **#115** — `path` re-keys from row field to declared column id and reads through the accessor,
+  the same move grouping made under ADR-0024. `WithFilteringConfig` and `FiltersPath` both gain a
+  required `TValues`; `withFiltering`'s own input widens to also read `columns` (`FilteringInput<In>`,
+  mirroring `GroupingInput`). Recorded in [`columns.md`](../decisions/columns.md) — see that log
+  for the rulings this shipped alongside (`TValues` required, no default; a `ColumnValuesOfSet<>`
+  alias deferred; a removed column's runtime classification).
 
 **Superseding [ADR-0016](../../adr/0016-filtering-takes-a-predicate-list.md).** That ADR's
 `predicates: () => readonly ((row: TRow) => boolean)[]` config field, and its claim that server

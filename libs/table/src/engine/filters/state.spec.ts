@@ -3,10 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { debounce, form } from '@angular/forms/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildFilterModel } from './build';
+import { resolveColumnDefs } from '../columns';
+import { createColumns } from '../../api/create-columns';
 import { contains, equals, inRange } from '../../api/features/with-filtering/rules';
 import { equalsCriterion } from './state';
+import { noData } from '../../table.mock';
 import type { AnyRule } from './types';
 import type { FiltersPath } from '../../api/features/with-filtering/types';
+import type { ColumnDef, ColumnValues } from '../../api/types';
 
 interface Invoice {
   status: string | null;
@@ -20,10 +24,28 @@ type RangeCriterion = { min: number | null; max: number | null };
 
 const EMPTY_RANGE: RangeCriterion = { min: null, max: null };
 
+// The fixture's columns, declared once — `buildFilterModel` takes a columns *getter*
+// (`table.columns` is writable), so `path.<id>` resolves against this resolved
+// `ColumnDef[]`, not a bare field-name union.
+const invoiceColumnSet = createColumns(noData<Invoice>(), (col) => [
+  col('status'),
+  col('amount'),
+  col('customer'),
+]);
+
+type InvoiceValues = ColumnValues<Invoice, typeof invoiceColumnSet.columns>;
+
+const invoiceColumns: readonly ColumnDef<Invoice>[] = resolveColumnDefs(
+  [...invoiceColumnSet.columns],
+  'state.spec',
+);
+
 /** `buildFilterModel` needs no injection context — `state.ts` builds only `signal`/`computed`/
  *  `linkedSignal`, none of which require one. */
-function build<S extends Record<string, AnyRule>>(schema: (path: FiltersPath<Invoice>) => S) {
-  return buildFilterModel<Invoice, S>(schema);
+function build<S extends Record<string, AnyRule>>(
+  schema: (path: FiltersPath<Invoice, InvoiceValues>) => S,
+) {
+  return buildFilterModel<Invoice, InvoiceValues, S>(schema, () => invoiceColumns);
 }
 
 function buildInvoiceFilters(source?: () => RangeCriterion) {
@@ -31,7 +53,10 @@ function buildInvoiceFilters(source?: () => RangeCriterion) {
     // `equals`'s generic inference collapses to `unknown` here without the explicit
     // arguments — a TS quirk in reverse-mapped-type inference over an object-literal schema,
     // reproduced with `contains`/`inRange` unaffected (they carry no `const TEmpty` param).
-    status: equals<Invoice, 'status', never>(path.status),
+    // `V` (the cell's resolved value type) is now a real, non-defaulted param since Step 2's
+    // `ColumnValues`-driven `FilterHandle` — it must be spelled alongside `TEmpty`, or `TEmpty`
+    // is mistaken for it.
+    status: equals<Invoice, 'status', string | null, never>(path.status),
     amount: inRange(path.amount, source ? { source } : undefined),
     customer: contains(path.customer),
   }));

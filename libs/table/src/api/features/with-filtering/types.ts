@@ -1,5 +1,6 @@
 import type { WritableSignal } from '@angular/core';
 import type { FilterHandle, FilterValueOfContext } from '../../../engine/filters/types';
+import type { ColumnIdIn, ColumnValueMap } from '../../types';
 
 // This file ↔ `engine/filters/types.ts` is a deliberate type-only import cycle, same shape as
 // `api/types.ts` ↔ `engine/types.ts` (ADR-0004): `FilterOptions.when` reads through the
@@ -91,8 +92,12 @@ export type Filters<TRow, TState extends Record<string, unknown>> = (() => Filte
 
 /**
  * Structural `path` proxy handed to a filters schema function — a property access fabricates
- * a `FilterHandle` per key. See `docs/1-state/features/filtering.md`'s State section.
+ * a `FilterHandle` per declared column id, typed to that column's resolved value. Inline
+ * schemas (`withFiltering({ schema })`) infer `TValues` from the composed columns; a schema
+ * written as its own variable spells it explicitly:
+ * `FiltersPath<Row, ColumnValues<Row, typeof set.columns>>`. See
+ * `docs/1-state/features/filtering.md`'s State section.
  */
-export type FiltersPath<TRow> = {
-  readonly [K in Extract<keyof TRow, string>]: FilterHandle<TRow, K>;
+export type FiltersPath<TRow, TValues extends ColumnValueMap> = {
+  readonly [K in ColumnIdIn<TValues>]: FilterHandle<TRow, K, TValues[K]>;
 };

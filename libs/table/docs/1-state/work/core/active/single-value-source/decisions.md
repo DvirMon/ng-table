@@ -206,17 +206,17 @@ without A's artifact. Presentation order below is not an edge.
 | **M3** | Shared `assertDeclarationsAreKnown` in `schema/validate.ts`; `assertRuleColumnIdsAreKnown` becomes a call into it | behaviour-preserving | done (#111) |
 | **V1** | ADR-0014 wrap in `sortRows` — `column.accessor` through `readAccessor`, consumer `sortFn` guarded (pre-existing bug, independent of everything else) | bug fix | done (#112) |
 | **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor` | behaviour change | ✅ done (#114) |
-| **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor` | behaviour change | pending (#115) |
+| **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor` | behaviour change | ✅ done (#115) |
 | **V4** | Delete `resolveGroupLabel`'s raw-key fallback; `groupingLevels`' filter becomes total | behaviour change | ✅ done (#114) |
 | **K0** | The column **value** map — `createColumns()` captures declared ids and accessor return types, `ColumnValues<TRow, TCols>` derives the map, a phantom carrier puts it on `TableStore`, regenerate `create-table.overloads.ts`. Mechanism only: no consumer reads it in this node. Numbered below K1 because it is the same keying channel carried one step further — it *depends on* K1's shipped plumbing | API change | ✅ done (#125) |
 | **K1** | `TId` reaches feature configs — un-erase on `Shape`/`TableStore`/`TableCore`, regenerate `create-table.overloads.ts`, decide `compose-features.overloads.ts` | API change | done (#113) |
 | **K2** | Grouping declarations key by column id | API change | ✅ done (#114) |
-| **K3** | Filtering declarations key by column id | API change | pending (#115) |
+| **K3** | Filtering declarations key by column id | API change | ✅ done (#115) |
 | **K4** | `applyAggregate` by column id (G58), validated at construction (G59) — replaces #100's row-field version | API change | ✅ done (#114) |
 | **S1** | `withSorting()` gains a schema fn (recording form); `sortFn` / `enableSorting` move off `ColumnDef` into `applySortFn` / `applySortable`, and `applySortNulls` moves out of `columnsSchema` (#100 Rule A + G69) | API change | pending (#100) |
 | **S2** | Supersede D2's wording (#100 Q4); close #100 | docs | pending (#100) |
-| **D1** | Stories + fixtures | migration | grouping's slice done (#114); filtering/sorting slices pending #115/#100 |
-| **D2** | Docs — `1-state/features/{grouping,filtering,sorting}.md`, ADR-0019 amendment line, `llms.txt` regen | docs | grouping's slice done (#114); filtering/sorting slices pending #115/#100 |
+| **D1** | Stories + fixtures | migration | grouping's slice done (#114); filtering's slice ✅ done (#115); sorting's slice pending #100 |
+| **D2** | Docs — `1-state/features/{grouping,filtering,sorting}.md`, ADR-0019 amendment line, `llms.txt` regen | docs | grouping's slice done (#114); filtering's slice ✅ done (#115); sorting's slice pending #100 |
 
 ### Graph
 
@@ -379,7 +379,7 @@ declaring a column's presentation, accessor and rules, replacing the curried
 | **N6** | Runtime write path — `setColumns` / `ColumnsUpdater` against a statically-derived value map | dependent (N4, N1) | open |
 | **N7** | Migration order — 5 inline `columns: [`, ~20 spec factories, 5 story fixtures, every story host, both `*.types.spec.ts` | dependent (N3) | open |
 | **N8** | ADR-0019 amendment + retiring the curried-`createColumns` rows (K0 here, G73 in the log) | dependent (N1, N2, N3) | open |
-| **N9** | `FiltersPath` / `SortingPath` key by `ColumnIdIn<ColumnValuesOf<In>>` when #115 and #100 land | independent leaf | open |
+| **N9** | `FiltersPath` / `SortingPath` key by `ColumnIdIn<ColumnValuesOf<In>>` when #115 and #100 land | independent leaf | half done — `FiltersPath` ✅ (#115); `SortingPath` pending #100 |
 
 ### Graph
 

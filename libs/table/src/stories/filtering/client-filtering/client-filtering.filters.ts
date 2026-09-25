@@ -1,7 +1,9 @@
 import { signal } from '@angular/core';
 import { anyOf, contains, filter, inDateRange, inRange } from '../../../api/features/with-filtering/rules';
 import type { FiltersPath } from '../../../api/features/with-filtering/types';
+import type { ColumnValues } from '../../../api/types';
 import type { StateOf } from '../../../engine/filters/types';
+import { clientColumns } from '../fixtures/schema';
 import type { InvoiceRow, RangeCriterion, TagCriterion } from '../fixtures/types';
 import {
   EMPTY_TAG_CRITERION,
@@ -29,7 +31,9 @@ function matchesTagCriterionUnlessBroken(cell: string[], criterion: TagCriterion
 /** Declares the client-filtering criterion schema the table owns directly. The `path`
  * annotation is the point — it fixes `S` so `ClientCriteria` below derives from this function
  * rather than restating its shape. */
-export const clientInvoiceFilters = (path: FiltersPath<InvoiceRow>) => ({
+export const clientInvoiceFilters = (
+  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof clientColumns.columns>>
+) => ({
   status: filter(path.status, matchesStatus, { emptyValue: '' }),
   customer: contains(path.customer),
   amount: inRange(path.amount, { source: () => DEFAULT_AMOUNT_RANGE }),

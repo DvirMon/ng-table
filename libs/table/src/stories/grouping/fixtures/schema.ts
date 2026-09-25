@@ -1,5 +1,5 @@
 import { createColumns } from '../../../api/create-columns';
-import type { TableConfig } from '../../../api/types';
+import type { ColumnValues, TableConfig } from '../../../api/types';
 import { contains } from '../../../api/features/with-filtering/rules';
 import type { FiltersPath } from '../../../api/features/with-filtering/types';
 import type { DealRow } from './types';
@@ -88,4 +88,6 @@ export const EXTERNAL_GROUP_ORDER: readonly string[] = ['South', 'Midwest', 'Nor
 
 /** One text criterion over `rep`, used only by `grouping-selection/` — enough to move a
  * selected row out of view, and to show counts and summaries following the visible rows. */
-export const dealFilters = (path: FiltersPath<DealRow>) => ({ rep: contains(path.rep) });
+export const dealFilters = (
+  path: FiltersPath<DealRow, ColumnValues<DealRow, typeof dealColumnSet.columns>>
+) => ({ rep: contains(path.rep) });

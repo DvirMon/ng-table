@@ -1,11 +1,16 @@
-import type { FilterHandle, FilterRuleRecord, FilterValueOfContext } from './types';
+import type { FilterRuleRecord, FilterValueOfContext } from './types';
 import type { FilterNode } from '../../api/features/with-filtering/types';
+import type { ColumnDef } from '../../api/types';
+import { readAccessor } from '../cells';
 import { pathsOf } from './validate';
 
 export interface FiltersInternal<TRow> {
   readonly records: readonly FilterRuleRecord<TRow>[];
   readonly nodesByKey: ReadonlyMap<string, FilterNode<unknown>>;
   readonly pathToKey: ReadonlyMap<string, string>;
+  /** A getter, not a snapshot — `table.columns` is writable, so an evaluator built later in the
+   *  table's lifetime must see the current list, not the one at schema-build time. */
+  readonly columns: () => readonly ColumnDef<TRow>[];
 }
 
 export function buildValueOfContext<TRow>(internal: FiltersInternal<TRow>): FilterValueOfContext<TRow> {
@@ -21,9 +26,13 @@ export function buildValueOfContext<TRow>(internal: FiltersInternal<TRow>): Filt
   return context;
 }
 
-function reportFilterError<TRow>(record: FilterRuleRecord<TRow>, row: TRow): void {
+function reportFilterError<TRow>(
+  record: FilterRuleRecord<TRow>,
+  row: TRow,
+  readCell: (columnId: string, row: TRow) => unknown
+): void {
   const [firstPath] = pathsOf(record);
-  const cell = firstPath !== undefined ? (row as Record<string, unknown>)[firstPath] : undefined;
+  const cell = firstPath !== undefined ? readCell(firstPath, row) : undefined;
   // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
@@ -33,22 +42,32 @@ function reportFilterError<TRow>(record: FilterRuleRecord<TRow>, row: TRow): voi
   );
 }
 
+// A removed column is runtime, data-dependent — same classification as grouping's G72 for a
+// level's column disappearing via `setColumns()`. Degrade, don't throw (ADR-0014).
+function reportMissingColumnError<TRow>(record: FilterRuleRecord<TRow>, columnId: string): void {
+  // eslint-disable-next-line no-console -- ADR-0014: floor reporting mechanism, no existing
+  // runtime-degradation logging abstraction to reuse in this codebase yet.
+  console.error(
+    `[withFiltering] The filter "${record.key}" targets column "${columnId}", which is not in ` +
+      'the current columns. This filter does not narrow for this evaluation.',
+    { key: record.key, columnId }
+  );
+}
+
 // One record's own predicate against one row — `'error'` on a throwing predicate, never
-// propagated further. `'group'` (anyOf) ORs its children against the shared criterion.
-// `row as Record<string, unknown>` is a generic-erasure read, not a validated cast — every
-// path here was recorded from a real `keyof TRow` access.
+// propagated further. `'group'` (anyOf) ORs its children against the shared criterion. Cells
+// come from `readCell`, the ADR-0014-wrapped `readAccessor` — never a direct row read.
 function evaluateRecord<TRow>(
   record: FilterRuleRecord<TRow>,
   criterion: unknown,
-  row: TRow
+  row: TRow,
+  readCell: (columnId: string, row: TRow) => unknown
 ): boolean | 'error' {
-  const rowRecord = row as Record<string, unknown>;
-
   if (record.children) {
     let sawError = false;
     for (const child of record.children) {
       try {
-        if (child.predicate(rowRecord[child.path], criterion)) {
+        if (child.predicate(readCell(child.path, row), criterion)) {
           return true;
         }
       } catch {
@@ -60,7 +79,7 @@ function evaluateRecord<TRow>(
 
   const [path] = record.paths;
   try {
-    return record.predicate(rowRecord[path], criterion);
+    return record.predicate(readCell(path, row), criterion);
   } catch {
     return 'error';
   }
@@ -87,12 +106,39 @@ export function createFilterEvaluatorFrom<TRow>(
 ): FilterEvaluator<TRow> {
   const reportedKeys = new Set<string>();
   const droppedKeys = new Set<string>();
+  const reportedColumns = new Set<string>();
+
+  // Built once per evaluator instance (= one evaluation), never per row — `internal.columns()`
+  // is re-read fresh here so a later evaluation sees a `setColumns()` write in between.
+  const columnById = new Map<string, ColumnDef<TRow>>();
+  for (const column of internal.columns()) {
+    columnById.set(column.id, column);
+  }
+
+  function readCell(columnId: string, row: TRow): unknown {
+    const column = columnById.get(columnId);
+    return column ? readAccessor(column, row, reportedColumns) : undefined;
+  }
 
   let narrowingRecordsMemo: { record: FilterRuleRecord<TRow>; criterion: unknown }[] | undefined;
 
-  // The records that narrow this pass: node present, condition met, criterion non-empty.
-  // Criterion state is constant across one evaluation, so this resolves once per instance
-  // rather than once per row.
+  function reportOnce(record: FilterRuleRecord<TRow>, row: TRow): void {
+    if (!reportedKeys.has(record.key)) {
+      reportedKeys.add(record.key);
+      reportFilterError(record, row, readCell);
+    }
+  }
+
+  function reportMissingColumnOnce(record: FilterRuleRecord<TRow>, columnId: string): void {
+    if (!reportedKeys.has(record.key)) {
+      reportedKeys.add(record.key);
+      reportMissingColumnError(record, columnId);
+    }
+  }
+
+  // The records that narrow this pass: node present, condition met, criterion non-empty,
+  // column still present. Criterion state is constant across one evaluation, so this resolves
+  // once per instance rather than once per row.
   function narrowingRecords(): { record: FilterRuleRecord<TRow>; criterion: unknown }[] {
     if (narrowingRecordsMemo !== undefined) {
       return narrowingRecordsMemo;
@@ -112,17 +158,16 @@ export function createFilterEvaluatorFrom<TRow>(
       if (criterion === undefined) {
         continue; // empty criterion — skip, never a candidate for a throw
       }
+      const missingPath = pathsOf(record).find((path) => !columnById.has(path));
+      if (missingPath !== undefined) {
+        droppedKeys.add(record.key);
+        reportMissingColumnOnce(record, missingPath);
+        continue; // degrade: a removed column never narrows for this evaluation
+      }
       narrowing.push({ record, criterion });
     }
     narrowingRecordsMemo = narrowing;
     return narrowing;
-  }
-
-  function reportOnce(record: FilterRuleRecord<TRow>, row: TRow): void {
-    if (!reportedKeys.has(record.key)) {
-      reportedKeys.add(record.key);
-      reportFilterError(record, row);
-    }
   }
 
   return {
@@ -131,7 +176,7 @@ export function createFilterEvaluatorFrom<TRow>(
         if (droppedKeys.has(record.key)) {
           continue;
         }
-        const result = evaluateRecord(record, criterion, row);
+        const result = evaluateRecord(record, criterion, row, readCell);
         if (result === 'error') {
           droppedKeys.add(record.key);
           reportOnce(record, row);

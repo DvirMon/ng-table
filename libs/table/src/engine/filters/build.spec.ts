@@ -2,6 +2,8 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { buildFilterModel } from './build';
+import { resolveColumnDefs } from '../columns';
+import { createColumns } from '../../api/create-columns';
 import {
   anyOf,
   contains,
@@ -13,8 +15,10 @@ import {
   inRange,
 } from '../../api/features/with-filtering/rules';
 import { hasAnyOf, hasNoneOf } from '../../api/features/with-filtering/matchers';
+import { noData } from '../../table.mock';
 import type { AnyRule } from './types';
 import type { FiltersPath } from '../../api/features/with-filtering/types';
+import type { ColumnBuilder, ColumnDecl, ColumnDef, ColumnValues } from '../../api/types';
 
 interface Invoice {
   status: string;
@@ -26,6 +30,7 @@ interface Invoice {
   tags: string[];
   category: string | null;
   subCategory: string;
+  owner: { name: string };
 }
 
 function invoice(overrides: Partial<Invoice> = {}): Invoice {
@@ -39,16 +44,68 @@ function invoice(overrides: Partial<Invoice> = {}): Invoice {
     tags: [],
     category: null,
     subCategory: '',
+    owner: { name: 'Ada' },
     ...overrides,
   };
 }
 
+// The fixture's columns, declared once — `buildFilterModel` takes a columns *getter*
+// (`table.columns` is writable), so every spec's schema resolves `path.<id>` against this
+// resolved `ColumnDef[]`, not a bare field-name union.
+const invoiceColumnSet = createColumns(noData<Invoice>(), (col) => [
+  col('status'),
+  col('amount'),
+  col('dueDate'),
+  col('customer'),
+  col('notes'),
+  col('tags'),
+  col('category'),
+  col('subCategory'),
+  col('isArchived'),
+]);
+
+type InvoiceValues = ColumnValues<Invoice, typeof invoiceColumnSet.columns>;
+
+const invoiceColumns: readonly ColumnDef<Invoice>[] = resolveColumnDefs(
+  [...invoiceColumnSet.columns],
+  'build.spec',
+);
+
 /** `buildFilterModel` needs no injection context — `state.ts` builds only `signal`/`computed`/
  *  `linkedSignal`, none of which require one. */
 function build<S extends Record<string, AnyRule>>(
-  schema: (path: FiltersPath<Invoice>) => S,
+  schema: (path: FiltersPath<Invoice, InvoiceValues>) => S,
 ) {
-  return buildFilterModel<Invoice, S>(schema);
+  return buildFilterModel<Invoice, InvoiceValues, S>(schema, () => invoiceColumns);
+}
+
+/**
+ * For the handful of cases needing a column set the shared fixture doesn't carry (a derived
+ * accessor, a carrier column, a column that later disappears) — declares its own columns via
+ * `createColumns()` and exposes `removeColumn` so a test can simulate `table.columns`'s
+ * writability between `buildFilterModel`'s construction and a later `matcher()` call.
+ */
+function buildWithColumns<
+  TCols extends readonly ColumnDecl<Invoice, string, unknown>[],
+  S extends Record<string, AnyRule>,
+>(
+  declare: (col: ColumnBuilder<Invoice>) => TCols,
+  schema: (path: FiltersPath<Invoice, ColumnValues<Invoice, TCols>>) => S,
+) {
+  let columns = resolveColumnDefs(
+    [...createColumns(noData<Invoice>(), declare).columns],
+    'build.spec',
+  );
+  const filters = buildFilterModel<Invoice, ColumnValues<Invoice, TCols>, S>(
+    schema,
+    () => columns,
+  );
+  return {
+    filters,
+    removeColumn: (id: string): void => {
+      columns = columns.filter((column) => column.id !== id);
+    },
+  };
 }
 
 describe('buildFilterModel — schema declaration', () => {
@@ -113,23 +170,25 @@ describe('buildFilterModel — one filter per path', () => {
 describe('buildFilterModel — schema must return an object literal (R40)', () => {
   it('throws, naming the object form, when the schema calls rules as statements and returns nothing', () => {
     expect(() =>
-      buildFilterModel<Invoice, Record<string, AnyRule>>(
+      buildFilterModel<Invoice, InvoiceValues, Record<string, AnyRule>>(
         // @ts-expect-error — a schema returning `void` fails `S extends Record<string,
         // AnyRule>`; asserting the runtime backstop for an untyped caller, same pattern as
         // the anyOf-without-rules test below.
         (path) => {
           equals(path.status);
         },
+        () => invoiceColumns,
       ),
     ).toThrow('return its rules as an object literal');
   });
 
   it('throws, naming the object form, when the schema returns an array (the pre-#90 shape)', () => {
     expect(() =>
-      buildFilterModel<Invoice, Record<string, AnyRule>>(
+      buildFilterModel<Invoice, InvoiceValues, Record<string, AnyRule>>(
         // @ts-expect-error — an array schema was rejected as a type once #76 landed; asserting
         // the runtime backstop for an untyped caller reaching this from JS.
         (path) => [equals(path.status)],
+        () => invoiceColumns,
       ),
     ).toThrow('return its rules as an object literal');
   });
@@ -718,18 +777,21 @@ describe('buildFilterModel — matcher()', () => {
       auditedBy: string;
     }
 
-    // `equals<TRow, K>` is pinned explicitly here (not left inferred, as a real schema always
-    // writes it) — `buildFilterModel` infers `TRow` from this call's own arrow function rather
-    // than from a fixed `data` slot the way `withFiltering`+`createTable` does, and that leaves
-    // `equals`'s `TEmpty` default undischarged, which makes `expectTypeOf(...).toEqualTypeOf`
+    // `equals<TRow, K, V>` is pinned explicitly here (not left inferred, as a real schema
+    // always writes it) — `buildFilterModel` infers `TRow` from this call's own arrow function
+    // rather than from a fixed `data` slot the way `withFiltering`+`createTable` does, and that
+    // leaves `equals`'s `TEmpty` default undischarged, which makes `expectTypeOf(...).toEqualTypeOf`
     // report a spurious mismatch even though the resolved type is correct (assignability holds).
+    // `V` must be spelled too (Step 2's `ColumnValues`-driven `FilterHandle` made it a real,
+    // non-defaulted param) — a 2-arg `equals<Invoice, 'status'>` now pins `V` to `unknown`
+    // instead of leaving it inferred, which is not what this block intends.
     // The consumer-representative inference path — schema inferred with no explicit type args,
     // composed through `withFiltering`+`createTable` — is what `with-filtering.types.spec.ts`
     // asserts; this block only re-confirms the same shapes have a runtime-observable half.
     function buildTypedFilters() {
       return build((path) => ({
-        status: equals<Invoice, 'status'>(path.status),
-        category: equals<Invoice, 'category'>(path.category),
+        status: equals<Invoice, 'status', string>(path.status),
+        category: equals<Invoice, 'category', string | null>(path.category),
       }));
     }
 
@@ -770,5 +832,108 @@ describe('buildFilterModel — matcher()', () => {
         rows.filter(filters().matcher()).map((row) => row.customer),
       ).toEqual(['Acme', 'Initech']);
     });
+  });
+});
+
+describe('buildFilterModel — accessor & columns integration (Step 4, #115)', () => {
+  it("equals() on a derived accessor matches the accessor's resolved cell, not the raw field", () => {
+    const { filters } = buildWithColumns(
+      (col) => [col('owner', { accessor: (row) => row.owner.name })],
+      (path) => ({ owner: equals(path.owner) }),
+    );
+    filters.owner().value.set('Ada');
+    const matches = filters().matcher();
+
+    expect(matches(invoice({ owner: { name: 'Ada' } }))).toBe(true);
+    expect(matches(invoice({ owner: { name: 'Bea' } }))).toBe(false);
+  });
+
+  it('a carrier column (visible: false) with a derived accessor still filters', () => {
+    const { filters } = buildWithColumns(
+      (col) => [col('total', { visible: false, accessor: (row) => row.amount * 2 })],
+      (path) => ({ total: equals(path.total) }),
+    );
+    filters.total().value.set(200);
+    const matches = filters().matcher();
+
+    expect(matches(invoice({ amount: 100 }))).toBe(true);
+    expect(matches(invoice({ amount: 50 }))).toBe(false);
+  });
+
+  it('a throwing accessor degrades to a missing cell; the predicate still evaluates and narrows, reporting once per evaluation under [createTable]', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { filters } = buildWithColumns(
+        (col) => [
+          col('status'),
+          col('notes', {
+            accessor: (): string => {
+              throw new Error('boom');
+            },
+          }),
+        ],
+        (path) => ({
+          status: equals(path.status),
+          notes: filter(
+            path.notes,
+            (cell: string, wantsMissingCell: boolean) => wantsMissingCell === (cell == null),
+            { emptyValue: false, isEmpty: () => false },
+          ),
+        }),
+      );
+      filters.status().value.set('open');
+      filters.notes().value.set(true);
+
+      const matches = filters().matcher();
+      expect(matches(invoice({ status: 'open' }))).toBe(true);
+      expect(matches(invoice({ status: 'open' }))).toBe(true);
+      expect(matches(invoice({ status: 'closed' }))).toBe(false);
+
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+      expect(String(reportSpy.mock.calls[0]?.[0])).toContain('[createTable]');
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('a removed column stops narrowing, reports once per evaluation, and other filters still narrow', () => {
+    const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { filters, removeColumn } = buildWithColumns(
+        (col) => [col('status'), col('category')],
+        (path) => ({ status: equals(path.status), category: equals(path.category) }),
+      );
+      filters.status().value.set('open');
+      filters.category().value.set('widgets');
+
+      removeColumn('category');
+
+      const matches = filters().matcher();
+      expect(matches(invoice({ status: 'open', category: 'anything-else' }))).toBe(true);
+      expect(matches(invoice({ status: 'open', category: 'anything-else' }))).toBe(true);
+      expect(matches(invoice({ status: 'closed', category: 'widgets' }))).toBe(false);
+
+      expect(reportSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      reportSpy.mockRestore();
+    }
+  });
+
+  it('anyOf reads both accessors when every child column is derived', () => {
+    const { filters } = buildWithColumns(
+      (col) => [
+        col('ownerName', { accessor: (row) => row.owner.name }),
+        col('customerUpper', { accessor: (row) => row.customer.toUpperCase() }),
+      ],
+      (path) => ({
+        search: anyOf([contains(path.ownerName), contains(path.customerUpper)]),
+      }),
+    );
+    filters.search().value.set('acme');
+    const matches = filters().matcher();
+
+    expect(matches(invoice({ owner: { name: 'Acme Rep' }, customer: 'Globex' }))).toBe(true);
+    expect(matches(invoice({ owner: { name: 'Nobody' }, customer: 'Acme Corp' }))).toBe(true);
+    expect(matches(invoice({ owner: { name: 'Nobody' }, customer: 'Globex' }))).toBe(false);
   });
 });

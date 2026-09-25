@@ -1,6 +1,9 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
+import { composeFeatures } from '../compose-features';
+import { withGrouping } from '../with-grouping/feature';
+import { withSorting } from '../with-sorting';
 import { withFiltering } from './feature';
 import {
   anyOf,
@@ -14,7 +17,7 @@ import {
 } from './rules';
 import type { DateRangeCriterion, RangeCriterion } from './rules';
 import type { Filters, FiltersPath } from './types';
-import type { TableDataInput } from '../../types';
+import type { ColumnValues, TableDataInput } from '../../types';
 
 /**
  * Compile-time seam for `withFiltering()`'s `schema` config, composed into a real
@@ -29,6 +32,18 @@ import type { TableDataInput } from '../../types';
  * `TEmpty` default undischarged for `expectTypeOf(...).toEqualTypeOf(...)`, which reported a
  * spurious mismatch (`Actual: unknown`) even though assignability held. Calling `createTable`
  * directly, the same way a consumer does, does not hit this.
+ *
+ * `FiltersPath<TRow, TValues>` (Step 1) takes `TValues` explicitly — no default. Every schema
+ * below spells it out via `ColumnValues<TRow, typeof set.columns>` (`types.ts`'s `FiltersPath`
+ * doc comment) rather than leaving `path` unannotated: an unannotated `path` inside
+ * `withFiltering({ schema })` does still compile (`withFiltering` has four overloads, and TS
+ * resolves the object literal against one before the surrounding `createTable()` call supplies
+ * `In`), but it resolves `TValues` to the fallback `ColumnValueMap`, not the real map — every
+ * criterion silently reads back as `unknown` instead of its column's type. `InvoiceValues`/
+ * `AccessorValues` below are that explicit spelling, shared by every case built off `columns`/
+ * `accessorColumns` respectively — including the "inline" schemas, which stay inline (written
+ * directly in the `withFiltering({ schema })` call) while still carrying the explicit type; only
+ * the schema-as-its-own-variable case (below) differs by being hoisted to a named `const` first.
  */
 
 /** Typechecks its argument and never calls it — several bodies here throw at construction. */
@@ -52,7 +67,6 @@ interface Ticket {
   subject: string;
 }
 
-declare const ticketPath: FiltersPath<Ticket>;
 declare const data: TableDataInput<Invoice>;
 
 // A real function, not `declare const` — `createColumns()` never reads it at runtime
@@ -70,6 +84,15 @@ const columns = createColumns(invoiceData, (col) => [
   col('tags'),
 ]);
 
+/** `FiltersPath<Invoice, ...>`'s explicit `TValues` — every `Invoice`-based case below. */
+type InvoiceValues = ColumnValues<Invoice, typeof columns.columns>;
+
+// Ticket's own column set, so `ticketPath` spells `TValues` the same explicit way, rather than
+// a hand-written object-literal map.
+const ticketData = (): readonly Ticket[] | undefined => undefined;
+const ticketColumns = createColumns(ticketData, (col) => [col('subject')]);
+declare const ticketPath: FiltersPath<Ticket, ColumnValues<Ticket, typeof ticketColumns.columns>>;
+
 describe('withFiltering — each rule infers exactly through StateOf', () => {
   it('equals infers TRow[K] | null', () => {
     typecheckOnly(() => {
@@ -77,7 +100,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             status: equals(path.status),
           }),
         }),
@@ -94,7 +117,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             search: contains(path.customer),
           }),
         }),
@@ -109,7 +132,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             amount: inRange(path.amount),
           }),
         }),
@@ -126,7 +149,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             dueDate: inDateRange(path.dueDate),
           }),
         }),
@@ -143,7 +166,9 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({ tags: hasAny(path.tags) }),
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+            tags: hasAny(path.tags),
+          }),
         }),
       );
       expectTypeOf(table.filters.tags().value()).toEqualTypeOf<
@@ -158,7 +183,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             tags: hasNone(path.tags),
           }),
         }),
@@ -180,7 +205,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             tags: filter(path.tags, (cell: string[], criterion: TagQuery) =>
               criterion.mode === 'all'
                 ? criterion.include.every((tag) => cell.includes(tag))
@@ -200,7 +225,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             search: anyOf([contains(path.customer), contains(path.notes)]),
           }),
         }),
@@ -217,7 +242,7 @@ describe('withFiltering — the schema object keys are the state keys, verbatim'
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             customerSearch: contains(path.customer),
           }),
         }),
@@ -229,19 +254,46 @@ describe('withFiltering — the schema object keys are the state keys, verbatim'
   });
 });
 
-describe('withFiltering — path completes on the table row keys only', () => {
-  it('rejects a key not on the row', () => {
+describe('withFiltering — a misspelled path id is rejected', () => {
+  it('rejects it inline', () => {
     typecheckOnly(() => {
       createTable(
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
-            // @ts-expect-error — `bogus` is not a key of Invoice, so `path.bogus` does not exist.
-            bogus: equals(path.bogus),
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+            // @ts-expect-error — 'custmer' is not a declared column id (typo for 'customer').
+            search: contains(path.custmer),
           }),
         }),
       );
+    });
+  });
+
+  it('rejects it in a schema written as its own variable', () => {
+    typecheckOnly(() => {
+      // Hoisted to its own `const`, unlike every inline case above — still spells `TValues`
+      // explicitly the same way (`types.ts`'s `FiltersPath` doc comment).
+      const schema = (path: FiltersPath<Invoice, InvoiceValues>) => ({
+        // @ts-expect-error — 'custmer' is not a declared column id (typo for 'customer').
+        search: contains(path.custmer),
+      });
+
+      createTable(data, { trackBy: 'customer', columns }, withFiltering({ schema }));
+    });
+  });
+});
+
+describe("withFiltering — FiltersPath's TValues is required (Step 1)", () => {
+  it('rejects the one-argument form', () => {
+    typecheckOnly(() => {
+      function acceptsOneArgPath(
+        // @ts-expect-error — FiltersPath takes two type arguments; TValues has no default.
+        // Giving TValues a default would make this line stop erroring — exactly what
+        // Acceptance Check 3 pins against.
+        _path: FiltersPath<Invoice>,
+      ): void {}
+      void acceptsOneArgPath;
     });
   });
 });
@@ -253,7 +305,7 @@ describe('withFiltering — anyOf preserves its homogeneity checks', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             search: anyOf([
               contains(path.customer),
               // @ts-expect-error — the group borrows its row type from the first child as well
@@ -273,7 +325,7 @@ describe('withFiltering — anyOf preserves its homogeneity checks', () => {
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             // @ts-expect-error — the group owns one criterion signal, borrowed from its first
             // child; a range child would silently receive the `contains` string and match every
             // row.
@@ -292,7 +344,7 @@ describe('withFiltering — table.filters is typed Filters<Invoice, StateOf<S>>'
         data,
         { trackBy: 'customer', columns },
         withFiltering({
-          schema: (path: FiltersPath<Invoice>) => ({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
             status: equals(path.status),
             search: contains(path.customer),
           }),
@@ -314,6 +366,189 @@ describe('withFiltering — table.filters is typed Filters<Invoice, StateOf<S>>'
       );
       // @ts-expect-error — no `schema` means the feature contributes no `filters` member.
       table.filters;
+    });
+  });
+});
+
+// --- Step 6 additions: StateOf<S> off an accessor-typed column ------------------------------
+//
+// `AccessorRow` mirrors `create-table.types.spec.ts`'s `CarriageRow` shape: an accessor column
+// whose resolved type differs from its own row field, so a case can tell "derived through
+// StateOf off the accessor" apart from "flattened to the row field type". `owner` and `roles`
+// each declare an accessor; `status` declares none, so it defaults to `AccessorRow['status']`.
+
+interface Owner {
+  name: string;
+  email: string;
+}
+
+interface Role {
+  id: string;
+  label: string;
+}
+
+type Status = 'draft' | 'paid' | 'overdue';
+
+interface AccessorRow {
+  id: string;
+  owner: Owner;
+  status: Status;
+  roles: Role[];
+}
+
+declare const accessorTableData: TableDataInput<AccessorRow>;
+
+// A real function, not `declare const` — same reasoning as `invoiceData` above.
+const accessorRowData = (): readonly AccessorRow[] | undefined => undefined;
+
+const accessorColumns = createColumns(accessorRowData, (col) => [
+  col('owner', { accessor: (row) => row.owner.name }),
+  col('status'),
+  col('roles', { accessor: (row) => row.roles.map((role) => role.id) }),
+]);
+
+/** `FiltersPath<AccessorRow, ...>`'s explicit `TValues` — every accessor case below. */
+type AccessorValues = ColumnValues<AccessorRow, typeof accessorColumns.columns>;
+
+describe('withFiltering — StateOf<S> reads the accessor, not the row field', () => {
+  it('an accessor-typed criterion narrows to the accessor return type', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        accessorTableData,
+        { trackBy: 'id', columns: accessorColumns },
+        withFiltering({
+          schema: (path: FiltersPath<AccessorRow, AccessorValues>) => ({
+            owner: equals(path.owner),
+          }),
+        }),
+      );
+      // `string | null` — the accessor's own return type, not `Owner | null` (the row's `owner`
+      // field). Fails if Step 1's `V` phantom on `FilterHandle` is reverted to `unknown`
+      // (Acceptance Check 2).
+      expectTypeOf(table.filters.owner().value()).toEqualTypeOf<string | null>();
+    });
+  });
+
+  it('a defaulted column keeps its field type', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        accessorTableData,
+        { trackBy: 'id', columns: accessorColumns },
+        withFiltering({
+          schema: (path: FiltersPath<AccessorRow, AccessorValues>) => ({
+            status: equals(path.status),
+          }),
+        }),
+      );
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<Status | null>();
+    });
+  });
+
+  it('hasAny over an array-valued accessor infers the accessor element type', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        accessorTableData,
+        { trackBy: 'id', columns: accessorColumns },
+        withFiltering({
+          schema: (path: FiltersPath<AccessorRow, AccessorValues>) => ({
+            roles: hasAny(path.roles),
+          }),
+        }),
+      );
+      // The accessor maps to `string[]` (role ids) — not the row's own `Role[]` field. `ItemOf`
+      // reads off the accessor's resolved element type.
+      expectTypeOf(table.filters.roles().value()).toEqualTypeOf<readonly string[]>();
+    });
+  });
+});
+
+// --- Step 6 additions: composition with withGrouping / withSorting --------------------------
+
+describe('withFiltering — composes with withGrouping and withSorting, in either order', () => {
+  it('withFiltering before withGrouping: both members are typed', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        data,
+        { trackBy: 'customer', columns },
+        withFiltering({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+            status: equals(path.status),
+          }),
+        }),
+        withGrouping(),
+      );
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<string | null>();
+      expectTypeOf(table.grouping()).toEqualTypeOf<string[]>();
+    });
+  });
+
+  it('withGrouping before withFiltering: both members are typed', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        data,
+        { trackBy: 'customer', columns },
+        withGrouping(),
+        withFiltering({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+            status: equals(path.status),
+          }),
+        }),
+      );
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<string | null>();
+      expectTypeOf(table.grouping()).toEqualTypeOf<string[]>();
+    });
+  });
+
+  it('withFiltering before withSorting: both members are typed', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        data,
+        { trackBy: 'customer', columns },
+        withFiltering({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+            status: equals(path.status),
+          }),
+        }),
+        withSorting(),
+      );
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<string | null>();
+      table.toggleSort('status');
+    });
+  });
+
+  it('withSorting before withFiltering: both members are typed', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        data,
+        { trackBy: 'customer', columns },
+        withSorting(),
+        withFiltering({
+          schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+            status: equals(path.status),
+          }),
+        }),
+      );
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<string | null>();
+      table.toggleSort('status');
+    });
+  });
+
+  it('composeFeatures(withFiltering, withGrouping): both members are typed', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        data,
+        { trackBy: 'customer', columns },
+        composeFeatures(
+          withFiltering({
+            schema: (path: FiltersPath<Invoice, InvoiceValues>) => ({
+              status: equals(path.status),
+            }),
+          }),
+          withGrouping(),
+        ),
+      );
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<string | null>();
+      expectTypeOf(table.grouping()).toEqualTypeOf<string[]>();
     });
   });
 });

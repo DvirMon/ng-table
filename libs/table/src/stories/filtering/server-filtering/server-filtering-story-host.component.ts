@@ -5,12 +5,12 @@ import { createTable } from '../../../api/create-table';
 import { createTableFeature } from '../../../api/create-table-feature';
 import { withFiltering } from '../../../api/features/with-filtering';
 import type { FilteringMembers } from '../../../api/features/with-filtering';
-import type { TableStore } from '../../../api/types';
+import type { ColumnValues, TableStore } from '../../../api/types';
 import { NgpTableDirective } from '../../../directives/ngp-table.directive';
 import { NgpTableRowDirective } from '../../../directives/ngp-table-row.directive';
 import { injectInvoiceApi } from '../fixtures/http';
 import { STATUS_OPTIONS, TAG_OPTIONS } from '../fixtures/mock';
-import { serverInvoiceConfig } from '../fixtures/schema';
+import { narrowColumns, serverInvoiceConfig } from '../fixtures/schema';
 import type { InvoicePage, InvoiceRow, RangeCriterion } from '../fixtures/types';
 import { isRangeCriterion, isStringArray } from '../fixtures/utils';
 import { serverDefaultAmount, serverInvoiceFilters } from './server-filtering.filters';
@@ -94,7 +94,10 @@ export class ServerFilteringStoryHostComponent {
    * no-construction-cycle proof. Same reasoning is why `totalRowCount` below reaches
    * `serverTotal` through an extra `computed()` layer rather than the field reference directly.
    */
-  protected readonly table: TableStore<InvoiceRow> &
+  protected readonly table: TableStore<
+    InvoiceRow,
+    ColumnValues<InvoiceRow, typeof narrowColumns.columns>
+  > &
     FilteringMembers<InvoiceRow, ServerCriteria> = createTable(
     linkedSignal((): InvoiceRow[] => this.lastPage().rows),
     serverInvoiceConfig,

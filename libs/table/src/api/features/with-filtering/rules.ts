@@ -71,10 +71,17 @@ function resolveEmptiness(
   };
 }
 
-export function equals<TRow, K extends Extract<keyof TRow, string>, const TEmpty = never>(
-  path: FilterHandle<TRow, K>,
-  options?: FilterOptions<TRow[K] | null | TEmpty, TRow> & { readonly emptyValue?: TEmpty }
-): FilterRule<TRow[K] | null | TEmpty, TRow> {
+/**
+ * Declares an exact-equality filter rule against `path`'s resolved value.
+ *
+ * @remarks
+ * Empty by default at `null`/`undefined`; `options.emptyValue` widens what counts as empty,
+ * `options.isEmpty` replaces the check outright.
+ */
+export function equals<TRow, K extends string, V, const TEmpty = never>(
+  path: FilterHandle<TRow, K, V>,
+  options?: FilterOptions<V | null | TEmpty, TRow> & { readonly emptyValue?: TEmpty }
+): FilterRule<V | null | TEmpty, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => v == null,
     emptyValue: null,
@@ -86,11 +93,18 @@ export function equals<TRow, K extends Extract<keyof TRow, string>, const TEmpty
     isEmpty,
     emptyValue,
     options: options as FilterOptions<unknown> | undefined,
-  } satisfies Omit<FilterRuleRecord<TRow>, 'key'> as FilterRule<TRow[K] | null | TEmpty, TRow>;
+  } satisfies Omit<FilterRuleRecord<TRow>, 'key'> as FilterRule<V | null | TEmpty, TRow>;
 }
 
-export function contains<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
+/**
+ * Declares a case-insensitive substring filter rule against `path`'s string value.
+ *
+ * @remarks
+ * Empty by default at the empty string; `options.emptyValue`/`options.isEmpty` override per
+ * `FilterOptions`.
+ */
+export function contains<TRow, K extends string, V>(
+  path: FilterHandle<TRow, K, V>,
   options?: FilterOptions<string, TRow>
 ): FilterRule<string, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
@@ -107,8 +121,16 @@ export function contains<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies Omit<FilterRuleRecord<TRow>, 'key'> as FilterRule<string, TRow>;
 }
 
-export function inRange<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
+/**
+ * Declares a numeric range filter rule against `path`'s value — inclusive bounds, either side
+ * `null` for unbounded.
+ *
+ * @remarks
+ * Empty by default when both bounds are `null`; `options.emptyValue`/`options.isEmpty`
+ * override per `FilterOptions`.
+ */
+export function inRange<TRow, K extends string, V>(
+  path: FilterHandle<TRow, K, V>,
   options?: FilterOptions<RangeCriterion, TRow>
 ): FilterRule<RangeCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
@@ -125,8 +147,16 @@ export function inRange<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies Omit<FilterRuleRecord<TRow>, 'key'> as FilterRule<RangeCriterion, TRow>;
 }
 
-export function inDateRange<TRow, K extends Extract<keyof TRow, string>>(
-  path: FilterHandle<TRow, K>,
+/**
+ * Declares a date range filter rule against `path`'s value — inclusive bounds, either side
+ * `null` for unbounded.
+ *
+ * @remarks
+ * Empty by default when both bounds are `null`; `options.emptyValue`/`options.isEmpty`
+ * override per `FilterOptions`.
+ */
+export function inDateRange<TRow, K extends string, V>(
+  path: FilterHandle<TRow, K, V>,
   options?: FilterOptions<DateRangeCriterion, TRow>
 ): FilterRule<DateRangeCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
@@ -143,8 +173,16 @@ export function inDateRange<TRow, K extends Extract<keyof TRow, string>>(
   } satisfies Omit<FilterRuleRecord<TRow>, 'key'> as FilterRule<DateRangeCriterion, TRow>;
 }
 
-export function hasAny<TRow, K extends Extract<keyof TRow, string>, TItem = ItemOf<TRow[K]>>(
-  path: FilterHandle<TRow, K>,
+/**
+ * Declares a filter rule matching when `path`'s array value shares at least one element with
+ * the criterion.
+ *
+ * @remarks
+ * Empty by default at an empty criterion array; `options.emptyValue`/`options.isEmpty`
+ * override per `FilterOptions`.
+ */
+export function hasAny<TRow, K extends string, V, TItem = ItemOf<V>>(
+  path: FilterHandle<TRow, K, V>,
   options?: FilterOptions<readonly TItem[], TRow>
 ): FilterRule<readonly TItem[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
@@ -161,8 +199,16 @@ export function hasAny<TRow, K extends Extract<keyof TRow, string>, TItem = Item
   } satisfies Omit<FilterRuleRecord<TRow>, 'key'> as FilterRule<readonly TItem[], TRow>;
 }
 
-export function hasNone<TRow, K extends Extract<keyof TRow, string>, TItem = ItemOf<TRow[K]>>(
-  path: FilterHandle<TRow, K>,
+/**
+ * Declares a filter rule matching when `path`'s array value shares no element with the
+ * criterion.
+ *
+ * @remarks
+ * Empty by default at an empty criterion array; `options.emptyValue`/`options.isEmpty`
+ * override per `FilterOptions`.
+ */
+export function hasNone<TRow, K extends string, V, TItem = ItemOf<V>>(
+  path: FilterHandle<TRow, K, V>,
   options?: FilterOptions<readonly TItem[], TRow>
 ): FilterRule<readonly TItem[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
@@ -191,9 +237,9 @@ export function hasNone<TRow, K extends Extract<keyof TRow, string>, TItem = Ite
  * Emptiness isn't inferable for an arbitrary criterion, so `isEmpty`/`emptyValue` opt in to
  * the named rules' skip-when-empty behavior. With neither, this filter is never empty.
  */
-export function filter<TRow, K extends Extract<keyof TRow, string>, TCriterion>(
-  path: FilterHandle<TRow, K>,
-  predicate: (cell: TRow[K], criterion: TCriterion) => boolean,
+export function filter<TRow, K extends string, V, TCriterion>(
+  path: FilterHandle<TRow, K, V>,
+  predicate: (cell: V, criterion: TCriterion) => boolean,
   options?: FilterOptions<TCriterion, TRow>
 ): FilterRule<TCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {

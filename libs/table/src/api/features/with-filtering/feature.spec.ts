@@ -4,10 +4,10 @@ import { expectTypeOf } from 'vitest';
 import { noData } from '../../../table.mock';
 import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
-import { contains, equals, filter } from './rules';
+import { anyOf, contains, equals, filter } from './rules';
 import { withComputed } from '../with-computed';
 import { withFiltering } from './feature';
-import type { ColumnValues, TableStore } from '../../types';
+import type { ColumnDecl, ColumnSet, ColumnValues, TableStore } from '../../types';
 
 interface Row {
   id: string;
@@ -44,6 +44,31 @@ function inContext<T>(build: () => T): T {
  * feature — `makeColumns()`'s declared columns carry literal ids, so this is stronger than the
  * default `TableStore<Row>` the "recovered exactly" type assertions below compare against. */
 type RowStore = TableStore<Row, ColumnValues<Row, ReturnType<typeof makeColumns>['columns']>>;
+
+/** Widened on purpose (explicit `TId` of plain `string`, no literal union) — the "unknown
+ * column id" cases below need an out-of-union id to compile at all, to prove the *runtime*
+ * check rather than relying on the compile-time rejection `makeColumns()`'s literal ids already
+ * give a real caller for free. Mirrors `with-grouping/feature.spec.ts`'s
+ * `makeWidenedColumns()`. */
+function makeWidenedColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return makeColumns();
+}
+
+/** A row shape with no `doubled`/`total` field of its own — the derived-accessor and
+ * carrier-column cases below can only narrow by reading the column's resolved cell through the
+ * pipeline, never by accident against a same-named raw field. */
+interface AccessorRow {
+  id: string;
+  amount: number;
+}
+
+function makeAccessorRows(): AccessorRow[] {
+  return [
+    { id: 'a1', amount: 50 },
+    { id: 'a2', amount: 100 },
+    { id: 'a3', amount: 150 },
+  ];
+}
 
 describe('withFiltering', () => {
   it('composes into createTable() with Row inferred from the data slot', () => {
@@ -414,6 +439,92 @@ describe('withFiltering', () => {
 
       expect(store.filters.status().value()).toBe(null);
       expect(store.filters.category().value()).toBe('b');
+    });
+  });
+
+  describe('construction — unknown column ids (#115)', () => {
+    it('a single rule naming an undeclared column id throws, naming withFiltering and the id', () => {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            { trackBy: 'id', columns: makeWidenedColumns() },
+            withFiltering({ schema: (path) => ({ territory: equals(path['territory']) }) })
+          )
+        )
+      ).toThrow(/\[withFiltering\].*"territory"/);
+    });
+
+    it('an anyOf child naming an undeclared column id throws the same way', () => {
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            { trackBy: 'id', columns: makeWidenedColumns() },
+            withFiltering({
+              schema: (path) => ({
+                search: anyOf([contains(path['name']), contains(path['territory'])]),
+              }),
+            })
+          )
+        )
+      ).toThrow(/\[withFiltering\].*"territory"/);
+    });
+  });
+
+  describe('derived accessors & carrier columns (#115)', () => {
+    it("rows() narrows by a derived accessor's resolved output, not a same-named raw field", () => {
+      const columns = createColumns(noData<AccessorRow>(), (col) => [
+        col('doubled', { accessor: (row) => row.amount * 2 }),
+      ]);
+      const store = inContext(() =>
+        createTable(
+          signal<AccessorRow[]>(makeAccessorRows()),
+          { trackBy: 'id', columns },
+          withFiltering({ schema: (path) => ({ doubled: equals(path.doubled) }) })
+        )
+      );
+
+      store.filters.doubled().value.set(200);
+
+      expect(store.rows().map((row) => row.id)).toEqual(['a2']);
+    });
+
+    it('a carrier column (visible: false) still narrows rows()', () => {
+      const columns = createColumns(noData<AccessorRow>(), (col) => [
+        col('total', { visible: false, accessor: (row) => row.amount * 2 }),
+      ]);
+      const store = inContext(() =>
+        createTable(
+          signal<AccessorRow[]>(makeAccessorRows()),
+          { trackBy: 'id', columns },
+          withFiltering({ schema: (path) => ({ total: equals(path.total) }) })
+        )
+      );
+
+      store.filters.total().value.set(300);
+
+      expect(store.rows().map((row) => row.id)).toEqual(['a3']);
+    });
+  });
+
+  describe('anyOf across multiple columns (#115)', () => {
+    it('folds two columns into one declaration, matching on either', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<Row[]>(makeRows()),
+          { trackBy: 'id', columns: makeColumns() },
+          withFiltering({
+            schema: (path) => ({ search: anyOf([contains(path.name), contains(path.status)]) }),
+          })
+        )
+      );
+
+      store.filters.search().value.set('Ann');
+      expect(store.rows().map((row) => row.id)).toEqual(['r1']);
+
+      store.filters.search().value.set('closed');
+      expect(store.rows().map((row) => row.id)).toEqual(['r2']);
     });
   });
 

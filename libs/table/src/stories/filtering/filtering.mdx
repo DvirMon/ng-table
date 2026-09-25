@@ -36,8 +36,8 @@ page.
 The table owns the model: `withFiltering({ schema: clientInvoiceFilters })` builds `filters` at
 construction, and its criteria narrow the `filter` stage directly — no separate object outside the
 table, no composing step for the host to get wrong. `clientInvoiceFilters` is a hoisted `const`
-annotated `(path: FiltersPath<InvoiceRow>)` — it composes by spread, with no `filterSchema()`
-helper needed. The same schema shape is what `Server` re-serializes into a request instead of
+annotated `(path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof clientColumns.columns>>)`
+— it composes by spread, with no `filterSchema()` helper needed. The same schema shape is what `Server` re-serializes into a request instead of
 narrowing locally.
 
 One filter may target one path, so the `tags` column's include and exclude halves are a single

@@ -162,10 +162,13 @@ story is handed — the same category as the `createTable()` call it feeds, and 
 away. Fixtures keep the rows, the option lists, the table config and the form schema; each host
 gets its own hoisted `<story>.filters.ts` (`client-filtering.filters.ts`,
 `server-filtering.filters.ts`, `filtering-selection.filters.ts`, `grouping/fixtures/schema.ts`'s
-`dealFilters`), a `const` annotated `(path: FiltersPath<Row>) => ({ … })` passed straight into
-`withFiltering({ schema })` inside the host's `createTable()` call. Nothing to annotate beyond
-`path`: the row type comes from the table (`RowOf<In>`) and every criterion type is inferred from
-the schema's own rule calls.
+`dealFilters`), a `const` annotated
+`(path: FiltersPath<Row, ColumnValues<Row, typeof set.columns>>) => ({ … })` passed straight into
+`withFiltering({ schema })` inside the host's `createTable()` call. `path` keys by declared column
+id (#115) — the second `FiltersPath` argument is the declared column-value map, spelled off the
+fixture's own `ColumnSet` (`typeof clientColumns.columns`, `typeof dealColumnSet.columns`, …); the
+row type still comes from the table (`RowOf<In>`) and every criterion type is inferred from the
+schema's own rule calls.
 
 **Transport decision (2026-09-05):** the five save/delete story hosts use `inject(HttpClient)`
 via `injectRowEditApi()`, Observable-based (`.subscribe()`, not `firstValueFrom`) — not TanStack

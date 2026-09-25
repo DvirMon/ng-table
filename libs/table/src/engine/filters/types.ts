@@ -7,11 +7,10 @@ import type { FilterOptions } from '../../api/features/with-filtering/types';
  * Structural handle fabricated per path property access.
  * @internal
  */
-export interface FilterHandle<
-  TRow,
-  K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>
-> {
+export interface FilterHandle<TRow, K extends string = string, V = unknown> {
   readonly id: K;
+  /** @internal phantom — the column's resolved value type. */
+  readonly __value?: V;
 }
 
 /**
@@ -31,10 +30,8 @@ export interface FilterGroupChild<TCell = unknown, TCriterion = unknown> {
 export interface FilterValueOfContext<TRow> {
   // Untyped per-path (`unknown`): the criterion shape behind a path depends on which rule
   // registered it, which this context has no way to recover statically.
-  /** Generic in the handle: `TRow` is the default only, and a handle from any row is accepted. */
-  valueOf<R = TRow, K extends Extract<keyof R, string> = Extract<keyof R, string>>(
-    path: FilterHandle<R, K>
-  ): unknown;
+  /** Generic in the handle's own id — a handle from any row/value type is accepted. */
+  valueOf<K extends string = string>(path: FilterHandle<unknown, K, unknown>): unknown;
 }
 
 // `kind: 'group'` (anyOf) carries `children` instead of using `predicate`/`paths` directly —

@@ -9,11 +9,12 @@ import { withFiltering } from '../with-filtering';
 import { withSelection } from './feature';
 import type { ColumnDecl, ColumnSet, TableStore } from '../../types';
 
-// Widened `TId` — `makeFilteredStore()` below returns the bare `TableStore<MockRow>`, and
-// nothing here reads a declared column id off `path`, so the literal id `col()` would
-// otherwise preserve buys nothing and only breaks that fixed return type.
+// Widened `TId` — `makeFilteredStore()` below returns the bare `TableStore<MockRow>`, so the
+// literal id `col()` would otherwise preserve buys nothing and only breaks that fixed return
+// type. `id` must be declared too — filtering is now column-id-keyed (#115), and
+// `makeFilteredStore()`'s schema below targets `path['id']`.
 function makeColumns(): ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, unknown>[]> {
-  return createColumns(noData<MockRow>(), (col) => [col('name')]);
+  return createColumns(noData<MockRow>(), (col) => [col('id'), col('name')]);
 }
 
 /** Runs a `createTable()` build inside an Angular injection context. */
@@ -31,7 +32,7 @@ function makeFilteredStore(): TableStore<MockRow> {
         // emptyValue-equality check `filter()` would otherwise apply, which would treat the
         // initial value (equal to `emptyValue`) as empty and never narrow at all.
         schema: (path) => ({
-          isRowOne: filter(path.id, (cell) => cell === 1, { emptyValue: null, isEmpty: () => false }),
+          isRowOne: filter(path['id'], (cell) => cell === 1, { emptyValue: null, isEmpty: () => false }),
         }),
       })
     )

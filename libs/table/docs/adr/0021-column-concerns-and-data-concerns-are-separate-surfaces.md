@@ -4,12 +4,14 @@
 [ADR-0024](0024-single-value-source-accessor.md) (2026-09-20); the capability test stands
 **Date:** 2026-09-18
 
-> **Read ADR-0024 before acting on the "Path vocabulary follows the surface" section below.**
-> Its row for a feature's config — "path names row fields (`Extract<keyof TRow, string>`)" — no
-> longer holds. Since the column `accessor` is now the single value source, a feature reads a
-> value *through* its column and therefore keys by declared column id. The Decision's own test —
-> a capability belongs to the column surface if it needs nothing from the row data, to a feature
-> if it reads rows — is unaffected, as is everything in "Applying the test".
+> **Read [ADR-0027](0027-schema-declaration-surface.md) before acting on the "Path vocabulary
+> follows the surface" section below.** Its row for a feature's config — "path names row fields
+> (`Extract<keyof TRow, string>`)" — no longer holds. Since the column `accessor` is now the
+> single value source (ADR-0024), a feature reads a value *through* its column and therefore keys
+> by declared column id, the same vocabulary `columnsSchema` always used — ADR-0027 states this as
+> the general rule and reconciles it explicitly. The Decision's own test — a capability belongs to
+> the column surface if it needs nothing from the row data, to a feature if it reads rows — is
+> unaffected, as is everything in "Applying the test".
 **Related:** [ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md) (narrowed by this ADR
 to `columnsSchema` only), [ADR-0020](0020-open-stage-registration-for-third-party-features.md)
 (third-party feature authors are bound by the rule below),
@@ -126,4 +128,14 @@ does not. A new capability that splits this way is following the rule, not bendi
    needed a dedicated grid option plus per-region renderer instantiation to reconcile exactly that
    pair. This library's grouping uses the spanning-row shape. Unresolved, and it belongs to
    whatever ADR covers the pinned render model — not to this one.
+
+## Amendment (2026-09-25, #115)
+
+**Consequences' "Filtering was already correct" no longer holds.** `FiltersPath<TRow>` needing no
+change was true only until [ADR-0024](0024-single-value-source-accessor.md) required every
+column-scoped path proxy to key by declared column id and read through the accessor, not a raw row
+field. #115 moved `FiltersPath<TRow>` to `FiltersPath<TRow, TValues>` — the same column-id keying
+grouping's `GroupingPath` already had — closing the gap this ADR's original text described as
+already closed. `docs/decisions/columns.md` records the shipped rulings (`TValues` required, no
+default; a filter whose column is later removed by `setColumns()` degrades at runtime).
 </content>
