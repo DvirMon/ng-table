@@ -1,16 +1,17 @@
 ---
-title: Architecture — Column Schema DX (`columnsSchema`) — Hub
+title: Architecture — Column Schema DX (createColumns's schema argument) — Hub
 type: architecture
 version: 0.3
 date: 2026-07-24
-status: partially implemented — schema wiring, `metadata()`/`applyVisible`/`applyVisibleAsync` (Tier 1) shipped; Tier 2/3 and the generic per-key reducer core are still spec only (see [column-metadata.md](reference/column-metadata.md))
+status: partially implemented — schema wiring, `metadata()`/`visible`/`visibleAsync` (Tier 1) shipped via `createColumns`'s schema argument; Tier 2/3 and the generic per-key reducer core are still spec only (see [column-metadata.md](reference/column-metadata.md))
 audience: developers
 parent: ../1-state/architecture.md
 ---
 
-# Architecture — Column Schema DX (`columnsSchema`)
+# Architecture — Column Schema DX (createColumns's schema argument)
 
-Hub/index for the `columnsSchema` design. Cross-cutting decisions, grounding, core types, and
+Hub/index for the schema-argument design (`createColumns`'s third argument, not a sibling
+`TableConfig` field — see Decisions below). Cross-cutting decisions, grounding, core types, and
 store wiring live here; per-concern detail is split into [`2-columns/reference/`](reference/) (the
 same per-file split `1-state/architecture.md` uses for state features).
 
@@ -19,16 +20,16 @@ same per-file split `1-state/architecture.md` uses for state features).
 | Doc | Covers |
 |---|---|
 | [2-columns/reference/ownership-model.md](reference/ownership-model.md) | The seed-vs-rule contract, three input shapes (static / reactive / async), store-owns-reactivity law, snapshot-diff patcher. **Read first.** |
-| [2-columns/reference/tier-1-intrinsic.md](reference/tier-1-intrinsic.md) | `applyVisible` (+Async), `applyOrder` — column-owned, no store feature. First-impl scope. |
+| [2-columns/reference/tier-1-intrinsic.md](reference/tier-1-intrinsic.md) | `visible` (+Async), `applyOrder` (never shipped — order dropped from the schema, see [columns.md COL4](../decisions/columns.md)) — column-owned, no store feature. First-impl scope. |
 | [2-columns/reference/tier-2-layout.md](reference/tier-2-layout.md) | `applyWidth`, `applyFlex` — column-owned sizing. `applyPinned` — seeds a new `withColumnPinning()` store feature, not a column field. The real gaps. |
-| [2-columns/reference/tier-3-feature-config.md](reference/tier-3-feature-config.md) | `applyEnableSorting`, `applySortFn`, `applyDefaultSort`, `applyEnableFiltering`, `applyFilterFn`, `applyGroup`, `applyAggregateFn` — seed opt-in store features. |
-| [2-columns/reference/data-derived.md](reference/data-derived.md) | **REJECTED** — data-derived column set (from row keys). Kept for historical record only; `columnsSchema` alone covers the DX need. |
+| [2-columns/reference/tier-3-feature-config.md](reference/tier-3-feature-config.md) | `applyEnableSorting`, `sortFn` (not yet available — #100), `applyDefaultSort`, `applyEnableFiltering`, `applyFilterFn`, `applyGroup`, `applyAggregateFn` — seed opt-in store features. |
+| [2-columns/reference/data-derived.md](reference/data-derived.md) | **REJECTED** — data-derived column set (from row keys). Kept for historical record only; `createColumns`'s schema argument alone covers the DX need. |
 | [2-columns/reference/signal-forms-techniques.md](reference/signal-forms-techniques.md) | Seven techniques mined from Signal Forms source — metadata+reducer, reducer-vs-reject, `{ when }`, `applyEach`, `apply`/`schema`, `assertPathIsCurrent`, `NoInfer`. Two are open decisions. |
 | [2-columns/reference/column-metadata.md](reference/column-metadata.md) | **Implemented.** `createColumnMetaKey`/`metadata`/`readColumnMeta` — consumer-facing, non-participating column side channel. Not the same as this table's internal metadata+reducer core sketched in signal-forms-techniques.md §1. |
 
 ## Executive Summary
 
-Specs a new, opt-in `columnsSchema` on `createTable()`, modeled deliberately on Angular's **Signal
+Specs a new, opt-in schema argument on `createColumns()`, modeled deliberately on Angular's **Signal
 Forms** API (`form(model, schemaFn)`, `disabled(path, {when})`, `validateAsync(path, {params,
 factory, onSuccess})`). The schema is provided **at the `createTable()` level** — an inline
 `schemaFn` receiving a typed `path` proxy, alongside the existing plain-array `columns` config. It
@@ -54,43 +55,50 @@ doc is the result of that design conversation.
 
 ## Decisions (settled, not open for relitigation)
 
-- **Full slice, sync + async.** `applyVisible`, `applyOrder`, and `applyVisibleAsync` are all
-  in scope for the first implementation. Other `ColumnDef` fields get the same `apply*` treatment
-  later — see the tier files.
+- **Full slice, sync + async.** `visible`, `applyOrder`, and `visibleAsync` are all
+  in scope for the first implementation. Other `ColumnDef` fields get the same rule-function
+  treatment later — see the tier files.
 - **Additive, not a replacement — a new sibling field, not a widened one.** `columns` is
   `ColumnDefInput<TRow>[]` (only `id` required — shipped 2026-07-25, `table-demo.store.ts` and
   every existing `table.store.spec.ts` case stay untouched). The schema is a **separate, optional**
-  `columnsSchema` config field. No union on `columns`, no `Array.isArray()` discriminant — a
-  cleaner split than an overloaded `columns` field.
-- **Schema at the `createTable()` level, mirroring `form(model, schemaFn)`.** The `columns` array is
-  the "model"; `columnsSchema` is the `schemaFn` — both live on the config object (second arg of
-  `createTable(data, config, ...features)`):
+  schema argument of `createColumns`, not a config field. No union on `columns`, no
+  `Array.isArray()` discriminant — a cleaner split than an overloaded `columns` field.
+- **Schema as `createColumns`'s third argument, mirroring `form(model, schemaFn)`.** The builder
+  array is the "model"; the schema fn is `createColumns`'s third, optional argument
+  (`createColumns(data, build, schema?)`) — not a sibling field on the `createTable()` config
+  object:
 
   ```ts
   createTable(
     data,
     {
       trackBy: 'id',
-      columns: [{ id: 'name' }, { id: 'status' }, { id: 'price' }],  // base — plain array, unchanged
-      columnsSchema: (path) => {                                      // inline schema fn
-        applyVisible(path.status, { when: () => role() === 'admin' });
-        applyOrder(path.price, 0);
-      },
+      columns: createColumns(
+        data,
+        (col) => [col('name'), col('status'), col('price')],
+        (path) => {
+          visible(path.status, { when: () => role() === 'admin' });
+        },
+      ),
     },
     withSorting(),
   );
   ```
 
-  `columnsSchema` receives a typed `path` proxy (one property per `keyof TRow`) used only to layer
-  `apply*` rules on top; it does not redefine shape.
-- **Standalone `columnSchema<TRow>(fn)` for reuse.** `columnsSchema` accepts **either** an inline fn
-  **or** a standalone `columnSchema<TRow>(fn)` value — the same duality as `form()` accepting an
-  inline fn or a `schema()` value. The standalone form lets a consumer define a column schema once and
-  share it across tables. It is the secondary path — not hidden/internal, just not the headline.
+  The schema fn receives a typed `path` proxy (one property per declared column id) used only to
+  layer rules on top; it does not redefine shape. (`applyOrder` never shipped — order dropped
+  from the schema entirely, see [columns.md COL4](../decisions/columns.md).)
+- **Standalone `columnSchema<TRow>(fn)` for reuse.** The schema argument accepts **either** an
+  inline fn **or** a standalone `columnSchema<TRow>(fn)` value — the same duality as `form()`
+  accepting an inline fn or a `schema()` value. The standalone form lets a consumer define a
+  column schema once and share it across tables. It is the secondary path — not hidden/internal,
+  just not the headline.
 
   ```ts
-  const adminCols = columnSchema<Product>((path) => { applyVisible(path.price, { when: () => isAdmin() }); });
-  createTable(data, { trackBy: 'id', columns, columnsSchema: adminCols }, withSorting());
+  const adminSchema = columnSchema<Product>((path) => {
+    visible(path.price, { when: () => isAdmin() });
+  });
+  createColumns(data, (col) => [col('name'), col('price')], adminSchema);
   ```
 - **Store owns the async resource lifecycle for `apply*Async`-configured columns.** A deliberate,
   scoped reversal of "reactivity lives in the consumer" (recorded in `1-state/columns.md`) — but
@@ -103,21 +111,21 @@ doc is the result of that design conversation.
   The generic per-key reducer this decision describes is **not implemented** — shipped code
   (`assertMetadataKeysAreUnique` in `engine/columns-schema/resolve.ts`) throws
   synchronously on a duplicate `metadata()` registration for the same `(columnId, key)`. The one
-  exception is the internal `VISIBLE` key: multiple `applyVisible`/`applyVisibleAsync` calls on
+  exception is the internal `VISIBLE` key: multiple `visible`/`visibleAsync` calls on
   the same column id are hardcoded AND-combined in `foldColumnRules` (`engine/columns.ts`), not
   driven by a general per-key reducer table. See
   [column-metadata.md](reference/column-metadata.md) for the full implemented-vs-spec
   breakdown.
 - **`apply*Async` has an optional `onError`**, mirroring `validateAsync`'s `onError` — lets a
   consumer choose the fallback on request failure instead of freezing at the last-resolved value.
-- **Which variant to use — `applyVisible` vs. `applyVisibleAsync` — is about who owns the value at
+- **Which variant to use — `visible` vs. `visibleAsync` — is about who owns the value at
   runtime, not whether it happened to be fetched.** Backported from D13
   ([`work/with-grouping/2-decisions.md`](../1-state/work/with-grouping/2-decisions.md),
   [`work/with-grouping/3-spec.md`](../1-state/work/with-grouping/3-spec.md)), which names the same
-  criterion for `applyGrouping`/`applyGroupingAsync` (shipped, issue #26); this file described the
+  criterion for `grouping`/`groupingAsync` (shipped, issue #26); this file described the
   two as counterparts without ever stating when to choose which.
 
-  | | `applyVisible` (sync/reactive) | `applyVisibleAsync` (resource-backed) |
+  | | `visible` (sync/reactive) | `visibleAsync` (resource-backed) |
   |---|---|---|
   | Use when | the value is settled by the time it matters, however it was obtained | the server owns it at runtime and it can change; the rule must re-query |
   | Owns fetching | consumer | the rule (`params`/`factory`) |
@@ -126,13 +134,13 @@ doc is the result of that design conversation.
 
   A value fetched once at init and closed over (e.g. `linkedSignal(() => prefs.value()?.canSeeCol
   ?? …)` read inside `{ when }`) is the sync case, not the async one — it is async only in *how*
-  it was obtained, and `applyVisible`'s `{ when }` already runs reactively off that signal.
-  `applyVisibleAsync` is strictly heavier and is for the case that must re-query: default to
-  `applyVisible`, reach for `applyVisibleAsync` only when the rule itself must own re-fetching.
+  it was obtained, and `visible`'s `{ when }` already runs reactively off that signal.
+  `visibleAsync` is strictly heavier and is for the case that must re-query: default to
+  `visible`, reach for `visibleAsync` only when the rule itself must own re-fetching.
 - **Data-derived column set — rejected 2026-07-31.** A `createColumns(data, schemaFn)` overload
   deriving columns from row-data keys at runtime was proposed and rejected — never a dependency of
-  `columnsSchema`, and a later variant (`createColumns(baseColumns, schemaFn)` wrapping the existing
-  `columns` array) was independently rejected too: it reintroduces the union/`Array.isArray()`
+  the schema argument, and a later variant (`createColumns(baseColumns, schemaFn)` wrapping the
+  existing `columns` array) was independently rejected too: it reintroduces the union/`Array.isArray()`
   discriminant the sibling-field design above avoids, and can't carry async/reactive rules since it
   wouldn't run inside `createTable()`'s store-construction DI context. See
   [data-derived.md](reference/data-derived.md) (kept for historical record only).
@@ -140,7 +148,7 @@ doc is the result of that design conversation.
   reactivity.** The reactive form uses `{ when }` (not a bare function). Full contract in
   [ownership-model.md](reference/ownership-model.md).
 
-  > **Revision (2026-07-24):** reverses an earlier position that made `applyVisible`'s function form
+  > **Revision (2026-07-24):** reverses an earlier position that made `visible`'s function form
   > snapshot-once/eager. The store owns the reactive `effect()` at construction, so the reactive
   > shape is now genuinely live, matching Signal Forms' `disabled(path, {when})`. Static behavior is
   > still reachable — pass a resolved value, not `{ when }`.
@@ -162,8 +170,9 @@ doc is the result of that design conversation.
   scope's `DestroyRef`.
 - Signal Forms API shapes confirmed against `node_modules/@angular/forms/types/signals.d.ts` (Angular
   21.2.9): `form(model, schemaFn)`, `schema<T>(fn)`, `apply(path, schema)`, `applyWhen(...)`,
-  `validateAsync(path, {params, factory, onSuccess, onError})`. `columnsSchema` borrows the
-  `model + schemaFn` shape and the async rule shape; it does **not** borrow `apply`/`applyWhen`/
+  `validateAsync(path, {params, factory, onSuccess, onError})`. `createColumns`'s schema argument
+  borrows the `model + schemaFn` shape and the async rule shape; it does **not** borrow
+  `apply`/`applyWhen`/
   `schema` composability in the first pass (revisit per
   [techniques §5](reference/signal-forms-techniques.md#5--applypath-schema--schema-reuse--defer--revisits-no-composability)).
 - Signal Forms **internals** confirmed against fetched `angular/angular` source: the schema-path
@@ -182,7 +191,7 @@ doc is the result of that design conversation.
 
 ### `ColumnDefInput<TRow>` — shipped 2026-07-25
 
-Implemented ahead of `columnsSchema` itself, in `api/types.ts`/`api/create-table.ts` — this is the
+Implemented ahead of the schema argument itself, in `api/types.ts`/`api/create-table.ts` — this is the
 real type, not a spec placeholder:
 
 ```ts
@@ -219,32 +228,28 @@ export interface ColumnHandle<TRow, K extends Extract<keyof TRow, string> = Extr
 }
 ```
 
-Full `apply*` signatures live in the tier files. `ColumnRuleContext<TRow>` and the sync/async rule
+Full rule signatures live in the tier files. `ColumnRuleContext<TRow>` and the sync/async rule
 types live in `schema/column-rules.ts` (see [File layout](#file-layout-for-the-implementation-session)).
 
-### Config surface
+### Config surface — shipped shape
+
+There is no sibling schema field on `TableConfig`. The schema is folded into `columns` itself,
+as `createColumns`'s third argument:
 
 ```ts
-export type ColumnsSchemaFn<TRow> = (path: ColumnsPath<TRow>) => void;
-
-/** Opaque, compiled form of a schema fn — the standalone-reuse value. */
-export interface ColumnSchema<TRow> {
-  readonly kind: 'column-schema';
-  readonly rules: readonly ColumnRule<TRow>[];
-}
-
-export interface TableConfig<TRow> {
+export interface TableConfig<TRow, TCols extends readonly ColumnDecl<TRow, string, unknown>[]> {
   trackBy: TrackByConfig<TRow>;
-  columns: ColumnDefInput<TRow>[];                              // shipped 2026-07-25 — was ColumnDef<TRow>[]
-  columnsSchema?: ColumnsSchemaFn<TRow> | ColumnSchema<TRow>;   // optional sibling
-  injector?: Injector;                                          // outside an injection context
+  columns: ColumnSet<TRow, TCols>;   // from createColumns(data, build, schema?)
+  injector?: Injector;               // outside an injection context
 }
 // Features are trailing positional arguments, not a config key (#33):
 //   createTable(data, config, withSorting(), withGrouping())
 ```
 
-`columns` keeps its own type — no union with `columnsSchema`, no `Array.isArray()` discriminant.
-`columnsSchema` is purely additive on top of it.
+`ColumnSet<TRow, TCols>` is the plain `{ columns, rules }` value `createColumns()` returns — see
+[columns.md COL2](../decisions/columns.md). `columnSchema(fn)` still exists as the standalone-reuse
+helper for the schema argument, but there is no separate `ColumnsSchemaFn`/`ColumnSchema` pair on
+`TableConfig` — both were folded into `createColumns()`'s own resolution.
 
 ### `columnSchema()` — the standalone helper
 
@@ -253,15 +258,15 @@ export function columnSchema<TRow>(fn: ColumnsSchemaFn<TRow>): ColumnSchema<TRow
 ```
 
 Runs `fn` once, eagerly, at call time (module scope — no injection context; DI-requiring work is
-deferred to store construction), recording its `apply*` calls into a `ColumnSchema<TRow>` value.
+deferred to store construction), recording its rule calls into a `ColumnSchema<TRow>` value.
 Validates and throws synchronously so a bad schema fails at module load:
 
-- every recorded rule's `columnId` exists in `columns` (unknown-id check, done at store
-  construction where both are available);
+- every recorded rule's `columnId` exists in `columns` (unknown-id check, done inside
+  `createColumns()` where both are available);
 - the conflict checks in Decisions (subject to the reducer reconsideration).
 
-Inline `columnsSchema: (path) => {...}` and `columnsSchema: columnSchema(fn)` compile to the same
-internal `ColumnSchema<TRow>` — the store normalizes an inline fn by running it through the same
+Inline `(path) => {...}` and a standalone `columnSchema(fn)` value compile to the same internal
+`ColumnSchema<TRow>` — `createColumns()` normalizes an inline fn by running it through the same
 recorder. Adopt `assertPathIsCurrent` (reject a `path.x` used outside the running fn) and `NoInfer`
 on rule args — see [techniques §6–7](reference/signal-forms-techniques.md#6--assertpathiscurrent--guard-stale-path-handles--adopt).
 
@@ -269,7 +274,7 @@ on rule args — see [techniques §6–7](reference/signal-forms-techniques.md#6
 
 ## Feature Catalog
 
-Full `apply*` set, grouped **by ownership** — *not* by end-user value. The tier axis answers "does
+Full rule set, grouped **by ownership** — *not* by end-user value. The tier axis answers "does
 the column schema own this concern, or is it seeding config for a store feature that owns it?" This
 traces the store-owned vs column-owned line the whole architecture is built on
 (`overview.md`).
@@ -289,15 +294,23 @@ snapshot-diff patcher) applies uniformly across all three tiers.
 
 ---
 
-## Wiring into `createTable()`
+## Wiring into `createTable()` — as originally designed
 
-`createTable(data, config, ...features)` reads `config` once at construction; `columns` /
-`columnsSchema` are read off it (see ADR-0002). `buildStoreClass()` gains one resolution step ahead
-of `withState`, and one new composed feature (`wireColumnsSchemaAsync`) always spliced into
-`coreFeature` right after the existing `withMethods` block:
+This section describes the wiring as first specced (schema as a sibling config field on
+`TableConfig`, resolved by a standalone `resolveColumnsConfig()` step). The compile step it describes has
+since folded into `createColumns()` itself and `resolve.ts` is deleted (#139) — the schema
+argument is resolved before `createTable()` ever sees `config.columns`, which is already a
+`ColumnSet`. For the current internal wiring, `libs/table/CLAUDE.md`'s `engine/columns-schema/`
+row is the source of truth; kept here for the historical resolution shape the design reasoned
+from:
 
-- No `columnsSchema` → `resolveColumnsConfig()` passes `columns` through unchanged, `asyncRules: []`.
-- `columnsSchema` present (inline fn or `columnSchema()` value) → normalize to `ColumnSchema<TRow>`,
+`createTable(data, config, ...features)` reads `config` once at construction; `columns`
+(a `ColumnSet`, already schema-resolved) is read off it (see ADR-0002). `buildStoreClass()` gains
+one resolution step ahead of `withState`, and one new composed feature (`wireColumnsSchemaAsync`)
+always spliced into `coreFeature` right after the existing `withMethods` block:
+
+- No schema rules → `columns` passes through unchanged, `asyncRules: []`.
+- Schema rules present (inline fn or `columnSchema()` value) → normalize to `ColumnSchema<TRow>`,
   validate `columnId`s against `columns`, then: sync rules (static seeds) resolve into the initial
   `columns` array seeded into `withState` (last-rule-wins per field, unless the reducer decision
   changes this); reactive + async rules are handed to `wireColumnsSchemaAsync`.
@@ -315,15 +328,19 @@ feature holding the engine handle, never a consumer slot (ADR-0010).
 
 ## File layout (for the implementation session)
 
+This table is the original implementation-session plan; the file layout it proposed has since
+been reshaped by the `createColumns()` grill. For the actual current layout, see
+`libs/table/CLAUDE.md`'s code-layout table. Kept here for the historical planning record only.
+
 | File | Concern |
 |---|---|
-| `api/types.ts` (edit) | Add optional `columnsSchema?: ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>` to `TableConfig`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25. |
+| `api/types.ts` (edit) | Add an optional schema argument, typed `ColumnsSchemaFn<TRow> \| ColumnSchema<TRow>`, to `createColumns()`. `ColumnDefInput<TRow>` and `resolveColumnDefs()` already shipped 2026-07-25. |
 | `schema/column-schema.types.ts` (new) | `ColumnsPath`, `ColumnHandle`, `COLUMN_RECORDER` (internal), `ColumnSchemaRecorder` (internal), `ColumnsSchemaFn`, `ColumnSchema`. (`ColumnDefInput` stays in `api/types.ts`.) |
-| `schema/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all `apply*` functions (Tier 1 first). Landing spot for every future tier. |
+| `schema/column-rules.ts` (new) | `SyncColumnRule`, `AsyncColumnRule`, `ColumnRule`, `ColumnRuleContext`, `AsyncColumnRuleContext`, and all rule functions (Tier 1 first). Landing spot for every future tier. |
 | `schema/column-schema.ts` (new) | `columnSchema()` (standalone helper), `buildColumnsPath()` (the `Proxy`), `assertPathIsCurrent`, the shared recorder that both inline fns and `columnSchema()` run through, unknown-id + conflict validation. |
-| `engine/columns-schema/` (new) | `resolveColumnsConfig()` (normalize inline fn / `columnSchema()` value → `ColumnSchema`, sync/static resolution) and `wireColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only. |
-| `api/create-table.ts` (edit) | Call `resolveColumnsConfig(config.columns, config.columnsSchema)`; splice `wireColumnsSchemaAsync(rules)` into `coreFeature`. |
-| `index.ts` (edit) | Barrel-export the public `apply*` + `columnSchema` + public types. **Not** `COLUMN_RECORDER` / `ColumnSchemaRecorder` — internal only. |
+| `engine/columns-schema/` (new) | Normalizes the inline fn / `columnSchema()` value into a `ColumnSchema`, sync/static resolution, and `wireColumnsSchemaAsync()` (the `withHooks` feature). All DI/reactivity code lives here only. |
+| `api/create-table.ts` (edit) | Resolve `createColumns()`'s schema argument into `config.columns`; splice `wireColumnsSchemaAsync(rules)` into `coreFeature`. |
+| `index.ts` (edit) | Barrel-export the public rule functions + `columnSchema` + public types. **Not** `COLUMN_RECORDER` / `ColumnSchemaRecorder` — internal only. |
 | `column-schema.spec.ts`, `wire-columns-schema.spec.ts` (new) | Resolution + validation + conflict handling; reactive + async wiring via `TestBed` + a controllable `resource()` loader (mirrors `table.store.spec.ts`'s `TestBed.inject(Store)` pattern). |
 
 ---
@@ -331,8 +348,8 @@ feature holding the engine handle, never a consumer slot (ADR-0010).
 ## `1-state/columns.md` changes — applied 2026-07-25
 
 Applied ahead of implementation (docs can lead code for a spec-only feature): Executive Summary
-pointer, `columnsSchema` registration variant, new "Declarative Column Schemas" section, and the
-Pattern A / Pattern B split of the async section. Also resolved that file's stale width open
+pointer, a declarative-schema registration variant, new "Declarative Column Schemas" section, and
+the Pattern A / Pattern B split of the async section. Also resolved that file's stale width open
 question there, consistent with [tier-2-layout.md](reference/tier-2-layout.md)'s
 sizing-vs-pinning ownership split above.
 
@@ -342,10 +359,10 @@ sizing-vs-pinning ownership split above.
 
 Feature-local open questions live in each tier / companion file. Cross-cutting ones:
 
-- [x] **~~`applyVisible`'s function form is snapshot-once, not reactive.~~** RESOLVED 2026-07-24 —
+- [x] **~~`visible`'s function form is snapshot-once, not reactive.~~** RESOLVED 2026-07-24 —
   superseded by the [ownership model](reference/ownership-model.md); reactive `{ when }` is live.
-- [x] **~~Metadata+reducer core vs bespoke `apply*`.~~** RESOLVED 2026-07-25 — hybrid: bespoke
-  typed `apply*` public surface, one generic `applyMeta`+reducer core internally. See
+- [x] **~~Metadata+reducer core vs bespoke rule functions.~~** RESOLVED 2026-07-25 — hybrid: bespoke
+  typed rule-function public surface, one generic `applyMeta`+reducer core internally. See
   [techniques §1](reference/signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid).
 - [x] **~~Reducer-combine vs build-time rejection.~~** RESOLVED 2026-07-25 — reducer-combine, see
   [techniques §2](reference/signal-forms-techniques.md#2--reducers-replace-conflict-rejection--decided-2026-07-25--reducer-combine-reverses-the-earlier-settled-decision).
@@ -354,12 +371,12 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
   `accessor: (row: TRow) => unknown` in [api/types.ts](../../src/api/types.ts:24-26) are not
   `keyof TRow`-constrained, so `{ id: 'actions', accessor: (row) => row }` works with zero code
   change. The actual gap was narrower: the schema `path` proxy is typed 100% off `keyof TRow`
-  (ownership-model.md), so `applyVisible(path.actions, ...)` etc. couldn't target a derived column.
-  Fix: `columnsSchema<TRow, ExtraCols>((path) => ...)` — consumer declares an `ExtraCols` interface
-  (e.g. `{ actions: unknown }`), path proxy types over `TRow & ExtraCols`. Column *creation* stays
-  array-only (schema is reactive/async-only, never a membership source per ownership-model.md); the
-  generic only widens what the existing `apply*` functions can type-check against — no new
-  `applyAction`/`applyCustom*` functions.
+  (ownership-model.md), so `visible(path.actions, ...)` etc. couldn't target a derived column.
+  Fix: a schema fn typed `<TRow, ExtraCols>((path) => ...)` — consumer declares an `ExtraCols`
+  interface (e.g. `{ actions: unknown }`), path proxy types over `TRow & ExtraCols`. Column
+  *creation* stays builder-only (schema is reactive/async-only, never a membership source per
+  ownership-model.md); the generic only widens what the existing rule functions can
+  type-check against — no new `applyAction`/`applyCustom*` functions.
 - [x] **~~Column order under the data overload.~~** MOOT — overload rejected 2026-07-31, see
   [data-derived.md](reference/data-derived.md).
 - [x] **~~Tier 2 sizing state ownership.~~** RESOLVED 2026-07-25 — column-owned seed by default,
@@ -368,7 +385,7 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 - [x] **~~Tier 2 reactive `applyWidth`/`applyPinned` demand.~~** RESOLVED 2026-07-31 — static-only,
   consumer template/CSS owns width. See [tier-2-layout.md](reference/tier-2-layout.md#open-questions-tier-2).
 - [x] **~~Tier 3 feature-absent handling.~~** RESOLVED 2026-07-31 — compile error (threads feature
-  presence into `columnsSchema`/`columnSchema()` generic). See
+  presence into the schema fn's / `columnSchema()`'s generic). See
   [tier-3-feature-config.md](reference/tier-3-feature-config.md#open-questions-tier-3).
 - [x] **~~Tier 3 reusable archetypes (`apply(path, schema)` composability).~~** RESOLVED 2026-07-31 —
   deferred, no confirmed use case yet.
@@ -387,7 +404,7 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 - [x] ~~Resolve the two ⚠️ open decisions (§1 metadata core, §2 reducer vs reject).~~ Already
   resolved 2026-07-25 (see Open Questions above) — stale item, removed as blocker.
 - [ ] Optional follow-up once shipped: replace the manual `effect()` + `resource()` pattern in
-  `apps/demo/src/app/table-demo/table-demo.ts` with `applyVisibleAsync`, as a live Pattern B
+  `apps/demo/src/app/table-demo/table-demo.ts` with `visibleAsync`, as a live Pattern B
   illustration.
 
 ---
@@ -399,7 +416,7 @@ Feature-local open questions live in each tier / companion file. Cross-cutting o
 ## Competitive position
 
 **Verdict: ahead** — a declarative, async-resolved, multi-writer column-visibility rule system
-(`applyVisible` / `applyVisibleAsync`, AND-combined) exists in none of TanStack, AG Grid, Material
+(`visible` / `visibleAsync`, AND-combined) exists in none of TanStack, AG Grid, Material
 React Table or PrimeNG.
 
 Full reasoning: [gap-analysis.md](../1-state/work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

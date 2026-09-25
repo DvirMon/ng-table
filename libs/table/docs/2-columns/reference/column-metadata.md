@@ -17,10 +17,10 @@ Angular Signal Forms' `createMetadataKey()` / `metadata()` / `field().metadata(k
 ## Not the same thing as `signal-forms-techniques.md` §1's *generic per-key reducer*
 
 [signal-forms-techniques.md §1](signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid)
-sketches an *internal* generic `metadata()` + reducer core, where every `apply*` (`applyVisible`,
+sketches an *internal* generic `metadata()` + reducer core, where every rule function (`visible`,
 `applyWidth`, ...) routes through this mechanism and each key declares its own reducer
 (`and`/`or`/`min`/`max`/...). That generic-reducer system is still **not implemented** — only
-one key was actually wired up this way: `applyVisible`/`applyVisibleAsync` now call this doc's
+one key was actually wired up this way: `visible`/`visibleAsync` now call this doc's
 `metadata()`/`metadataAsync()` targeting the internal `VISIBLE` key (`engine/columns.ts`), with
 AND-combine hardcoded for that one key in `foldColumnRules`, not a general per-key reducer
 table. `applyWidth`/`applyFlex`/`applyPinned` etc. are untouched — still plain seed fields, not
@@ -29,7 +29,7 @@ generic reducer core landed":
 
 | | §1's generic reducer core | This doc's mechanism |
 |---|---|---|
-| Who calls it | Every `apply*` would route through it | Consumer code directly, plus `applyVisible`/`applyVisibleAsync` (→ `VISIBLE`) |
+| Who calls it | Every rule function would route through it | Consumer code directly, plus `visible`/`visibleAsync` (→ `VISIBLE`) |
 | Engine involvement | Would drive every `ColumnDef` field the engine reads (`visible`, `width`, ...) | Only `visible`, via the one `VISIBLE`-key exemption; everything else lands in `ColumnDef.meta` and the engine never looks at it again |
 | Conflict handling | Per-key declared reducer (`and`/`or`/`min`/`max`/...) | Single-writer by default — a second registration for the same `(column, key)` throws; `VISIBLE` is the sole hardcoded AND-combine exception |
 | Status | Drafted, not implemented | Implemented (including the `VISIBLE` wrapper) |
@@ -51,8 +51,8 @@ function readColumnMeta<T>(column: ColumnDef<unknown>, key: ColumnMetaKey<T>): T
 - `createColumnMetaKey<T>()` mints a key whose **object identity** is the actual key — call it
   once per logical key and share the returned value (module-level constant), the same as Signal
   Forms' `createMetadataKey()`.
-- `metadata(path.col, KEY, logic)` is called inside a `columnSchema()` / inline `columnsSchema`
-  fn, alongside `applyVisible`/`applyVisibleAsync`. `logic` is either a plain value or a closure
+- `metadata(path.col, KEY, logic)` is called inside a `columnSchema()` / inline schema
+  fn, alongside `visible`/`visibleAsync`. `logic` is either a plain value or a closure
   over the same `ColumnRuleContext<TRow>` those two rules read (`ctx.columns()` — reactive,
   resolves to `baseColumns`, never the derived `columns`, same D8 rationale). Both forms are
   supported and resolved the same way — a plain value doesn't need wrapping.
@@ -72,18 +72,18 @@ multi-writer need surfaces — the fix is adding a reducer to `ColumnMetaKey` it
 `MetadataReducer`-shaped extension §1 describes, not a redesign of the recording/resolution
 path.
 
-The one existing exception is `VISIBLE`, the unexported internal key `applyVisible()`/
-`applyVisibleAsync()` (`schema/column-rules.ts`) write to — see "Column visibility is now a
+The one existing exception is `VISIBLE`, the unexported internal key `visible()`/
+`visibleAsync()` (`schema/column-rules.ts`) write to — see "Column visibility is now a
 `metadata()` convenience wrapper" below. It's exempted from the single-writer check
-(`resolve.ts`) and AND-combined instead (`engine/columns.ts`'s `foldColumnRules`), because
-multiple `applyVisible()` calls on one column has always been legal and combines that way.
+and AND-combined instead (`engine/columns.ts`'s `foldColumnRules`), because
+multiple `visible()` calls on one column has always been legal and combines that way.
 This is the table's one deliberate multi-writer key, mirroring how Signal Forms' `required()`/
 `minLength()` sit on top of its own internal metadata + reducer core while consumer
 `metadata()` stays single-writer.
 
 ## Column visibility is now a `metadata()` convenience wrapper
 
-`applyVisible(path, { when })` and `applyVisibleAsync(path, opts)` (`schema/column-rules.ts`) are
+`visible(path, { when })` and `visibleAsync(path, opts)` (`schema/column-rules.ts`) are
 no longer a separately-resolved rule kind — they're convenience wrappers that call
 `metadata(path, VISIBLE, when)` (sync) / an internal `metadataAsync(path, VISIBLE, opts)`
 (resource-backed) under the hood, where `VISIBLE: ColumnMetaKey<boolean>` lives in
@@ -124,11 +124,11 @@ out for metadata.
 
 ## Wiring — one recorder → resolve → wiring → fold path, no `visible`/`meta` split
 
-`metadata()` records a `MetadataRule<TRow>` (`kind: 'metadata'`); `applyVisible`/
-`applyVisibleAsync` record the same `MetadataRule` (sync) or a `MetadataAsyncRule<TRow>`
+`metadata()` records a `MetadataRule<TRow>` (`kind: 'metadata'`); `visible`/
+`visibleAsync` record the same `MetadataRule` (sync) or a `MetadataAsyncRule<TRow>`
 (`kind: 'metadata-async'`, resource-backed) — all three go onto the same
 `ColumnSchemaRecorder` (`schema/column-schema.types.ts`'s `ColumnRule` union).
-`resolveColumnsConfig()` (`engine/columns-schema/resolve.ts`) validates every rule
+`createColumns()`'s resolution validates every rule
 the same way (`columnId` known, plus the single-writer check, `VISIBLE`-exempted).
 `wireColumnsSchemaAsync` (`engine/columns-schema/wire-columns-schema.ts`) builds a
 `ColumnRuleEntry<TRow>` — `{ columnId, key, result }`, one shape, no discriminant — per rule

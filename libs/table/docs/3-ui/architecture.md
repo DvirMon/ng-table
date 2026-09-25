@@ -35,7 +35,7 @@ The full UI-layer surface is now enumerated (2026-08-07) — every state-layer f
 | Reference | Status |
 |---|---|
 | [`3-ui/directives/core.md`](directives/core.md) — `ngpTable`, `ngpTableRow`, `ngpTableCell`, store connection pattern. **Revised 2026-07-31:** `createTable()` now returns a live store *instance*, not a class, so `provideTableStore()` is gone — the instance enters via a required `[ngpTable]` input and `NgpTableDirective` self-provides under `NGP_TABLE_STORE`. | ✅ Drilled |
-| [`3-ui/directives/columns.md`](directives/columns.md) — `ngpTableColumn`, column identity, store-vs-directive override boundary. **Revised 2026-07-31:** synced to the real `ColumnDefInput`/`ColumnDef` shape and the opt-in `columnsSchema` layer. | ✅ Drilled |
+| [`3-ui/directives/columns.md`](directives/columns.md) — `ngpTableColumn`, column identity, store-vs-directive override boundary. **Revised 2026-07-31:** synced to the real `ColumnDefInput`/`ColumnDef` shape and the opt-in schema-argument layer. | ✅ Drilled |
 
 ## Features — Drilled
 

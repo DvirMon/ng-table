@@ -15,7 +15,7 @@ audience: developers
 
 `ngpTableColumn` resolves a template-referenced column id against the store's column config, and is the boundary directive between store-owned data contract and directive-local presentation overrides.
 
-**Revised 2026-07-31** to sync with `createTable()`, `ColumnDefInput` and `columnsSchema` — see "Where Column Definitions Live" below.
+**Revised 2026-07-31** to sync with `createTable()`, `ColumnDefInput` and the schema argument — see "Where Column Definitions Live" below.
 
 **Not implemented.** No `NgpTableColumnDirective` exists in `src/directives/`, and nothing is exported for it from `index.ts`. Every directive that names it as a dependency (`sort.md`, `resizing.md`) is blocked on this file shipping first.
 
@@ -27,24 +27,32 @@ audience: developers
 
 `columns` is core config on `createTable()` (locked in `1-state/architecture.md` — required on every call, like `trackBy`), not a template-scattered definition and not a separate opt-in feature.
 
-Authored as `ColumnDefInput<TRow>[]` — only `id` is required; `accessor` / `visible` / `order` are resolved at store construction (`accessor` defaults to `(row) => row[id]`, `visible` to `true`, `order` to array index). `store.columns()` is always a fully resolved `ColumnDef<TRow>[]`.
+Authored via `createColumns(data, build, schema?)` — only `id` is required on each `col()`;
+`accessor` / `visible` / `order` are resolved at store construction (`accessor` defaults to
+`(row) => row[id]`, `visible` to `true`, `order` to builder-array index). `store.columns()` is
+always a fully resolved `ColumnDef<TRow>[]`.
 
 ```ts
 createTable(
   data,
   {
     trackBy: 'id',
-    columns: [
-      { id: 'name' },                                  // accessor/visible/order defaulted
-      { id: 'status', enableSorting: true },
-      { id: 'fullName', accessor: (row) => `${row.first} ${row.last}` },
-    ],
+    columns: createColumns(data, (col) => [
+      col('name'),                                        // accessor/visible/order defaulted
+      col('status', { enableSorting: true }),
+      col('fullName', { accessor: (row) => `${row.first} ${row.last}` }),
+    ]),
   },
   withSorting(),
 );
 ```
 
-An opt-in declarative layer, `columnsSchema`, can drive `visible`/`order` reactively on top of this config (`applyVisible(path.status, { when: … })`) — see `../2-columns/architecture.md`. It writes through the store's own `updateColumns()`, so from the UI layer's point of view nothing changes: schema-driven columns arrive through `store.columns()` exactly like statically-configured ones.
+An opt-in declarative layer, the schema argument of `createColumns`, can drive `visible`
+reactively on top of this config (`visible(path.status, { when: … })`) — see
+`../2-columns/architecture.md`. It writes through the store's own `updateColumns()`, so from the
+UI layer's point of view nothing changes: schema-driven columns arrive through `store.columns()`
+exactly like statically-configured ones. (`order` is no longer schema-drivable at all — dropped
+entirely, see [columns.md COL4](../../decisions/columns.md).)
 
 ## The Override Boundary
 
@@ -80,7 +88,7 @@ export class NgpTableColumnDirective {
 </th>
 ```
 
-A template override never writes back to the store — `accessor`, `visible`, `order`, sortability, and `sortFn` stay locked to the store (or to its `columnsSchema` rules) regardless of any local override present.
+A template override never writes back to the store — `accessor`, `visible`, `order`, sortability, and `sortFn` stay locked to the store (or to its schema rules) regardless of any local override present.
 
 ---
 

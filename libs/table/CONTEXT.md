@@ -34,8 +34,9 @@ the concept exists here only to name what a carrier column is not.
 Every feature that has per-column configuration owns exactly one, and they all
 share the same path vocabulary and the same plumbing. There is no second
 spelling: a feature does not also accept a keyed record of the same settings.
-`columnsSchema` is the column surface's own entry, not a shared dumping ground
-— it carries no feature's config.
+`createColumns`'s schema argument (`createColumns(data, build, schema)`) is
+the column surface's own entry, not a shared dumping ground — it carries no
+other feature's config.
 
 **Resolver** — a method a rule callback uses to reach something it was not
 handed. Every resolver names a path; what differs is the **register** it reads

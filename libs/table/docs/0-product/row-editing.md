@@ -348,7 +348,7 @@ was never designed to fix.
 - On commit it moves to its sorted position, visibly — it does not silently teleport off screen.
 - If it lands off screen, I am told where it went and can jump to it.
 
-**Coverage:** ❌. The comparator half is now fixed — `applySortNulls()` gives a blank row a
+**Coverage:** ❌. The comparator half is now fixed — `sortNulls()` gives a blank row a
 predictable, direction-stable placement (§5, S-2). What remains is holding the row's on-screen
 position for the duration of the fill (OQ-3's row-hold), which is designed but not implemented.
 Tagged to sorting in §4, but listed here because the person meets it during Add.
@@ -597,7 +597,7 @@ is worth re-reading D20/D24 before implementing.
 > As someone who just added a blank row to a sorted table, I want it in a predictable place, and in
 > the same place regardless of which way the column is sorted.
 
-**Shipped** — `applySortNulls()` (`schema/column-rules.ts`), wired into `withSorting()`. Empties
+**Shipped** — `sortNulls()` (`schema/column-rules.ts`), wired into `withSorting()`. Empties
 resolve before the comparator and **outside** the direction multiplication, which closes the crash
 on nullable date columns and the direction-flip together. Default `'last'`; `""` stays a real value
 unless a column opts it into the empty branch (`emptyString: 'is-empty'`); per-column override is a
@@ -728,7 +728,7 @@ linked work-folder decision, not here.
   the scroll/flash on it is a UI-layer directive, shipping with the G1/G9/G10 effort.
 - **Is the commit boundary the field or the row, in gated mode?** Resolved: the row, for the
   open session's lifetime (Edit until Save/Cancel); live mode stays field-level. Sorting-owned
-  (§5 S-1), unblocked now that `applySortNulls()` shipped. Reasoning: D24/D25 in
+  (§5 S-1), unblocked now that `sortNulls()` shipped. Reasoning: D24/D25 in
   [`with-row-editing/2-decisions.md`](../1-state/work/row-editing/active/with-row-editing/2-decisions.md).
 - **When a slow save fails on a row being re-edited, who wins?** Resolved: the consumer's,
   entirely — the library takes no position, documents the hazard, and exposes `pending()` so it's

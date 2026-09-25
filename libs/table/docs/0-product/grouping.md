@@ -39,7 +39,7 @@ A person perceives four things, and does not care which layer produces them:
 4. Groups can nest, and I can change what nests inside what.
 
 The codebase splits this across a `'group'` pipeline stage, a `'group'` render stage, an optional
-`withExpansion()`, and `applyAggregate` declared through `withGrouping({ schema })`. That split is
+`withExpansion()`, and `aggregate` declared through `withGrouping({ schema })`. That split is
 invisible to the person using the table and is ignored here.
 
 Two modes, genuinely different products:
@@ -69,9 +69,9 @@ disposition each get their own story rather than crowding onto the baseline one:
 | Story | Composes | What it demonstrates |
 |---|---|---|
 | [`grouping-basic/`](../../src/stories/grouping/grouping-basic/) | `withGrouping({ initial })` alone — no second feature, no schema, no predicate | Headers carrying value and count at every depth; a tab strip that toggles a column as a level and pills that reorder and remove them; `stickyHeaders` |
-| [`grouping-when/`](../../src/stories/grouping/grouping-when/) | `withGrouping({ initial, when })` + a per-column `applyGrouping({ when })` | Group **admission** — a table-wide `when` AND-combined with a per-column one; a toggle that keeps blank-region rows flat instead of clustering them; an editable minimum-size threshold on `category`; a rejected cluster's rows staying flat at the parent's depth |
-| [`grouping-aggregates/`](../../src/stories/grouping/grouping-aggregates/) | `withGrouping({ initial, schema })` declaring `applyAggregate(path.amount, sumAmount)` | The only canvas showing group totals: `amount` summed at every depth; a control that patches one row to a negative so `sumAmount` throws, and only the affected groups' totals go blank, per ADR-0014 |
-| [`grouping-async-rule/`](../../src/stories/grouping/grouping-async-rule/) | `withGrouping()` with an `applyGroupingAsync()`-shaped rule | A grouping level decided by the server over a real intercepted request: the pending window holding the last explicit grouping, the resolved set replacing it outright, and `onError` resolving to `[]` — grouped by nothing, distinct from abstaining |
+| [`grouping-when/`](../../src/stories/grouping/grouping-when/) | `withGrouping({ initial, when })` + a per-column `grouping({ when })` | Group **admission** — a table-wide `when` AND-combined with a per-column one; a toggle that keeps blank-region rows flat instead of clustering them; an editable minimum-size threshold on `category`; a rejected cluster's rows staying flat at the parent's depth |
+| [`grouping-aggregates/`](../../src/stories/grouping/grouping-aggregates/) | `withGrouping({ initial, schema })` declaring `aggregate(path.amount, sumAmount)` | The only canvas showing group totals: `amount` summed at every depth; a control that patches one row to a negative so `sumAmount` throws, and only the affected groups' totals go blank, per ADR-0014 |
+| [`grouping-async-rule/`](../../src/stories/grouping/grouping-async-rule/) | `withGrouping()` with a `groupingAsync()`-shaped rule | A grouping level decided by the server over a real intercepted request: the pending window holding the last explicit grouping, the resolved set replacing it outright, and `onError` resolving to `[]` — grouped by nothing, distinct from abstaining |
 | [`grouping-order/`](../../src/stories/grouping/grouping-order/) | `withGrouping()` with a `groupOrder` comparator, composed with `withSorting()` | Deliberate misuse, not example code: `groupOrder` across five modes including a throwing comparator and a level naming no column; a sortable header that contrasts group order against row sort — headers move under `first-occurrence`, hold under every comparator mode |
 | [`grouping-columns/`](../../src/stories/grouping/grouping-columns/) | `withGrouping()` + `toggleColumnVisibility`/`reorderColumns` | `groupedColumnMode` as consumer code over the public column updaters, rendering all three peer dispositions — `keep` / `hide` / `move-to-front` |
 | [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | `withGrouping()` + `withExpansion()` | A real `<button>` chevron with `aria-expanded`, the whole header row as hit area, subtree collapse, and two attacks on the collapse state — Refetch with freshly-constructed rows and a Regroup that changes every id at once. A deal carrying `children` renders a second, separately-keyed chevron from the `'tree'` stage |
@@ -159,7 +159,7 @@ every peer that renders a count also ships (P6), default on. The "cannot be comp
 unreachable rather than undemonstrated — `rowsOf()` returns an array or nothing at all.
 
 **Design status:** covered — the count is `rowsOf(group).length` (D16), needing no new state; it
-exists whether or not the grouping declares an `applyAggregate` for any column. See
+exists whether or not the grouping declares an `aggregate` for any column. See
 [`research-grouping-ux-capabilities.md`](../1-state/work/grouping/archive/with-grouping/research-grouping-ux-capabilities.md).
 
 ## 1.3 — See a summary for each group — ✅ covered
@@ -185,8 +185,8 @@ exists whether or not the grouping declares an `applyAggregate` for any column. 
   than a missing one, because a wrong number gets used.
 
 **Covered by:** [`grouping-aggregates/`](../../src/stories/grouping/grouping-aggregates/) — the
-only canvas that declares an `applyAggregate`, carrying both the happy path and the failure.
-`amount` gets `applyAggregate(path.amount, sumAmount)` through `withGrouping({ schema })` and its
+only canvas that declares an `aggregate`, carrying both the happy path and the failure.
+`amount` gets `aggregate(path.amount, sumAmount)` through `withGrouping({ schema })` and its
 total renders on the header row at every depth, so a region's total is the sum of its subtree;
 every column with no declared aggregate renders an empty cell rather than a zero. *Break one
 group's summary* demonstrates the stated failure behavior: a throwing `aggregateFn` leaves only
@@ -463,7 +463,7 @@ resetting, and × removes a level including a middle one with the levels either 
 nested. [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) runs three
 levels deep and its Regroup swaps the outer two. Summaries staying correct across a re-nesting
 (D9's leaf-rows-at-every-depth aggregation) is no longer on either canvas — neither declares an
-`applyAggregate` — and is argued rather than demonstrated; see 1.3. Failure: re-toggling a column
+`aggregate` — and is argued rather than demonstrated; see 1.3. Failure: re-toggling a column
 that is already a level in [`grouping-basic/`](../../src/stories/grouping/grouping-basic/) is a
 no-op — `addGroupLevel` refuses the duplicate.
 
@@ -577,7 +577,7 @@ lever; no decision picks the library's own answer for missing/empty group values
 [`research-grouping-ux-capabilities.md`](../1-state/work/grouping/archive/with-grouping/research-grouping-ux-capabilities.md).
 Raised as **OQ-5**.
 
-## 4.2 — A grouped column whose values are not text — 🟡 partly covered *(`applyGroupKey` owns extraction; no story declares one)*
+## 4.2 — A grouped column whose values are not text — 🟡 partly covered *(`groupKey` owns extraction; no story declares one)*
 
 > As someone grouping by assignee where each assignee is an object with a name and an id, I want
 > to see the names.
@@ -596,21 +596,21 @@ Raised as **OQ-5**.
 
 **Covered by:** the mechanism, not a story. **Grouping does not read a column's `accessor`** — D7
 settled that a grouping level names a *row field*, read by bracket access
-(`engine/grouping/clusters.ts`, `readGroupFieldValue`). `applyGroupKey` is the supported path for
-bucketing: `applyGroupKey(path.owner, (o) => o.name)` fixes the group key, and an `initial` entry's
+(`engine/grouping/clusters.ts`, `readGroupFieldValue`). `groupKey` is the supported path for
+bucketing: `groupKey(path.owner, (o) => o.name)` fixes the group key, and an `initial` entry's
 own `label` fixes the header, resolving explicit → a column whose id matches the field → the raw
 field name (D7a, D9). `Date` and number levels need neither — `toGroupKey` tags the key with its
 `typeof`, so `1` and `"1"` do not collide.
 
-**Why it is 🟡:** no story declares `applyGroupKey` for an object-valued level. The shared
+**Why it is 🟡:** no story declares `groupKey` for an object-valued level. The shared
 fixture's `owner` column carries an `accessor` for its *cells* only, so grouping by Owner today
 lands every row in one `object:[object Object]` bucket — the criterion's stated failure,
 happening, unreported under ADR-0014. The contract exists and is unit-tested
 (`with-grouping/schema.spec.ts`); the person's experience of it does not.
 
-**Design status — gap narrowed.** `applyGroupKey` + `initial`'s `label` (D7a, D9) answer the label
+**Design status — gap narrowed.** `groupKey` + `initial`'s `label` (D7a, D9) answer the label
 and bucketing halves. What remains: nothing detects an object key that survived without an
-`applyGroupKey`, so the merge is silent. See [#80](https://github.com/DvirMon/ng-table/issues/80).
+`groupKey`, so the merge is silent. See [#80](https://github.com/DvirMon/ng-table/issues/80).
 Raised as **OQ-5** with 4.1 — one decision.
 
 ## 4.3 — A group with exactly one row in it — ✅ covered *(stated 2026-09-19 — OQ-6)*
@@ -776,7 +776,7 @@ deferred as a UI-layer convenience (`2-decisions.md:269-271`); AG Grid needed a 
 `grouping-selection/` while `withSorting()` was pulled from other canvases is not a reversal of
 this convention — see `3-lesson-audit.md:187-189`: a feature stays composed only where it makes an
 otherwise-invisible outcome visible, and here *which thing moved* is the entire content of
-`applyGroupOrder`. See
+`groupOrder`. See
 [`research-grouping-community-pain.md`](../1-state/work/grouping/archive/with-grouping/research-grouping-community-pain.md).
 
 ### S-G2 — Sorting rows inside a group — ✅ covered
@@ -808,7 +808,7 @@ group headers exactly where they were. Also counted as 3.3's fourth criterion, n
 **Covered by:** [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) for the
 first criterion's counts half: "rep contains" narrows the rows, and every count follows the
 surviving rows. It is the only grouping story that composes `withFiltering()`, and it no longer
-declares an `applyAggregate` — the summaries half of the first criterion is not on this canvas.
+declares an `aggregate` — the summaries half of the first criterion is not on this canvas.
 
 **Why it is 🟡:** on two counts now, not one. The first criterion's summaries half is an argument
 from `PIPELINE_ORDER` (`filter` precedes `group`, so a summary can only ever see post-filter rows)
@@ -1074,7 +1074,7 @@ registry) rather than against memory.
 
 ### 9.1 Aggregation and totals — **state**, and it is not the same feature as grouping
 
-`applyAggregate` is grouping-owned infrastructure — declared through `withGrouping({ schema })`,
+`aggregate` is grouping-owned infrastructure — declared through `withGrouping({ schema })`,
 read by nothing outside grouping's own render stage. Three capabilities need an aggregation
 primitive and two of them do not involve grouping at all:
 

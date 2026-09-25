@@ -15,7 +15,8 @@ parent: ../architecture.md
 ## Executive Summary
 
 Runtime-resizable per-column width as a state slice. **Only exists when width is
-resizable** — static width stays column-owned (a `columnsSchema` seed plus consumer CSS),
+resizable** — static width stays column-owned (a `createColumns` schema-argument seed plus
+consumer CSS),
 per the ownership resolution in
 [2-columns/reference/tier-2-layout.md](../../2-columns/reference/tier-2-layout.md#open-questions-tier-2)
 (2026-07-25): *"Static, non-resizable width stays on the column def / CSS; there is no

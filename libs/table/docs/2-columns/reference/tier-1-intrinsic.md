@@ -14,15 +14,15 @@ parent: ../architecture.md
 column, always, with a default. The column schema exists to manage them. This is the first-impl
 scope. Read [Ownership model](ownership-model.md) first — every function below is seed-or-rule.
 
-## `applyVisible` — show / hide (reactive/async only — static goes on the array)
+## `visible` — show / hide (reactive/async only — static goes on `col()`)
 
 ```ts
-export function applyVisible<TRow, K extends Extract<keyof TRow, string>>(
+export function visible<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K>,
   visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean }
 ): void;
 
-export function applyVisibleAsync<TRow, K extends Extract<keyof TRow, string>, TParams, TResult>(
+export function visibleAsync<TRow, K extends Extract<keyof TRow, string>, TParams, TResult>(
   path: ColumnHandle<TRow, K>,
   opts: {
     params: (ctx: ColumnRuleContext<TRow>) => TParams | undefined;
@@ -34,8 +34,8 @@ export function applyVisibleAsync<TRow, K extends Extract<keyof TRow, string>, T
 ```
 
 - **Concern:** column `visible` state — whether the column renders.
-- **Default / static override:** `visible: true`, set directly on the array (`{ id: 'x', visible:
-  false }`) — not through the schema. `applyVisible` only exists for the reactive case.
+- **Default / static override:** `visible: true`, set directly on `col()` (`col('x', { visible:
+  false })`) — not through the schema. `visible` only exists for the reactive case.
 - **AG-Grid analog:** `hide` field + `_setColsVisible` (visibility can't change membership/order, so
   it skips the full rebuild).
 - **Async semantics:** mirrors Signal Forms' `validateAsync` (`params` / `factory` / `onSuccess` /
@@ -43,13 +43,30 @@ export function applyVisibleAsync<TRow, K extends Extract<keyof TRow, string>, T
   `updateColumns()`, same path as `onSuccess`. Omit `onError` → the column holds its last-resolved
   `visible` (documented, not a silent failure).
 
+## Carrier columns — a value the table reads but never renders
+
+`visible: false`, combined with an `accessor`, declares a **carrier column**: a value grouping,
+filtering or sorting reads without ever rendering a cell for it.
+
+```ts
+col('ownerName', { accessor: (r) => r.owner.name, visible: false })
+```
+
+See [ADR-0024](../../adr/0024-single-value-source-accessor.md). Other docs that mention a carrier
+column link here instead of re-explaining it.
+
+**The `visible` caveat.** The library does not enforce `visible`. A hidden column still runs its
+accessor and still contributes to `RenderRow.cells` — nothing internal skips it. The consumer's own
+template is what filters cells on `visible` (spec D13); `visible: false` is a rendering hint the
+template must honor, not a guarantee the engine withholds the value.
+
 ## `accessor` — the value contract ✅ decided 2026-09-19
 
 `(row: TRow) => unknown` — the single derivation from a row to that column's value. Defaults to
 `(row) => row[id]` in `resolveColumnDefs()`, same optionality posture as `visible`/`order`/
 `label`.
 
-- **Array-only and static.** No `applyAccessor` in `columnsSchema` — same ownership call as
+- **Builder-only and static.** No `applyAccessor` in the schema — same ownership call as
   `label` and the removed `applyOrder`: no reactive or async case has surfaced. Revisit only if a
   real case demands deriving a value from something other than the row itself (an accessor that
   reads external reactive state), which no consumer has needed yet.
@@ -76,35 +93,35 @@ export function applyVisibleAsync<TRow, K extends Extract<keyof TRow, string>, T
   `ngDevMode` (ADR-0022, D10). Two columns sharing an `accessor` under *different* ids stays legal
   — the supported way to show one field twice.
 - **`accessor` is not in the grouping path.** A grouping level names a row field and reads it by
-  bracket access; value narrowing there is the rule's own `applyGroupKey` (D9), not the column's
+  bracket access; value narrowing there is the rule's own `groupKey` (D9), not the column's
   `accessor`. Grouping and cell values are separate vocabularies (ADR-0021).
 
 ## `label` — array-only, static ✅ decided 2026-08-03
 
-Column header text. Same ownership call as `applyOrder`: no `apply*` in the schema. `label:
-string` on `ColumnDef`/`ColumnDefInput` (array-only, static, defaults to `id` if unset — same
-optionality posture as `accessor`/`visible`/`order` in `resolveColumnDefs()`). No reactive/async
-case has surfaced yet — revisit only if a real i18n/locale-switch demand shows up (would then
-follow `applyVisible`'s reactive-only precedent, same reasoning as
-[ownership-model.md](ownership-model.md)).
+Column header text. Same ownership call as `applyOrder`: no rule function in the schema. `label:
+string` on `col()` (builder-only, static, defaults to `id` if unset — same optionality posture as
+`accessor`/`visible`/`order` in `resolveColumnDefs()`). No reactive/async case has surfaced yet —
+revisit only if a real i18n/locale-switch demand shows up (would then follow `visible`'s
+reactive-only precedent, same reasoning as [ownership-model.md](ownership-model.md)).
 
 ## `applyOrder` — removed ✅ decided 2026-07-25
 
-**Dropped from `columnsSchema` entirely.** Order has no static role in the schema (static goes on
-the array — `{ id, order }`, or is left to the array-index default) and no credible reactive/async
-role ever surfaced — [the open question below](#open-questions-tier-1) that used to sit here is now
-answered by elimination. Order stays 100% core config: array-index default (`resolveColumnDefs()` in
-`api/create-table.ts`) + runtime mutation only via `reorderColumns()` (drag-drop, or any future
-pinning-driven reposition). See [ownership-model.md](ownership-model.md#columnsschema-is-reactiveasync-only--decided-2026-07-25).
+**Dropped from the schema entirely.** Order has no static role in the schema (static goes on
+`col()` — `col(id, { ... })`'s array position, per [columns.md COL4](../../decisions/columns.md))
+and no credible reactive/async role ever surfaced — [the open question
+below](#open-questions-tier-1) that used to sit here is now answered by elimination. Order stays
+100% core config: builder-array-index default (`resolveColumnDefs()` in `api/create-table.ts`) +
+runtime mutation only via `reorderColumns()` (drag-drop, or any future pinning-driven reposition).
+See [ownership-model.md](ownership-model.md#columnsschema-is-reactiveasync-only--decided-2026-07-25).
 
 ## Summary
 
 | Function | Concern | AG-Grid analog | Static override | Reactive/async |
 |---|---|---|---|---|
-| `applyVisible` (+`applyVisibleAsync`) | show / hide | `hide`, `_setColsVisible` | array `visible` field, default `true` | ✅ schema |
-| ~~`applyOrder`~~ | display order | `colsList` reorder | array `order` field / array-index default | ❌ removed — no schema path |
-| ~~`applyAccessor`~~ | row → value derivation | `valueGetter` | array `accessor` field, default `(row) => row[id]` | ❌ no schema path — array-only, static |
-| ~~`applyLabel`~~ | header text | `headerName` | array `label` field, default `id` | ❌ no schema path — array-only, static |
+| `visible` (+`visibleAsync`) | show / hide | `hide`, `_setColsVisible` | `col()` `visible` field, default `true` | ✅ schema |
+| ~~`applyOrder`~~ | display order | `colsList` reorder | builder-array position / index default | ❌ removed — no schema path |
+| ~~`applyAccessor`~~ | row → value derivation | `valueGetter` | `col()` `accessor` field, default `(row) => row[id]` | ❌ no schema path — builder-only, static |
+| ~~`applyLabel`~~ | header text | `headerName` | `col()` `label` field, default `id` | ❌ no schema path — builder-only, static |
 
 ## Open questions (Tier 1)
 

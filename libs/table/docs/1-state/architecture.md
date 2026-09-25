@@ -80,16 +80,16 @@ that general mechanisms can be layered on them.
 | Reference | Status |
 |---|---|
 | [`columns`](columns.md) — column definitions, runtime-mutable order/visibility | ✅ Drilled |
-| [`columnsSchema`](../2-columns/architecture.md) — declarative column schema DX (`apply*` rules) layered on `columns` core config; detail in [`2-columns/reference/`](../2-columns/reference/) | 📝 Spec only |
+| [`createColumns`'s schema argument](../2-columns/architecture.md) — declarative column schema DX (bare-named rules, e.g. `visible`/`sortNulls`/`grouping`) layered on `columns` core config; detail in [`2-columns/reference/`](../2-columns/reference/) | 📝 Spec only |
 
-`columnsSchema` can seed the initial state of the two not-yet-drilled `withColumnPinning()` / `withColumnSizing()` features below (via `applyPinned` / `applyWidth`+`applyFlex`) — see [2-columns/reference/tier-2-layout.md](../2-columns/reference/tier-2-layout.md).
+`createColumns`'s schema argument can seed the initial state of the two not-yet-drilled `withColumnPinning()` / `withColumnSizing()` features below (via `applyPinned` / `applyWidth`+`applyFlex`) — see [2-columns/reference/tier-2-layout.md](../2-columns/reference/tier-2-layout.md).
 
 ## Features — Drilled
 
 | Feature | Reference | Summary |
 |---|---|---|
 | `withSorting()` | [with-sorting.md](features/sorting.md) | Multi-column, three-state toggle, additive by click order |
-| `withGrouping()` | [with-grouping.md](features/grouping.md) | Single-level, `applyAggregate` declared through `schema`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
+| `withGrouping()` | [with-grouping.md](features/grouping.md) | Single-level, `aggregate` declared through `schema`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
 | `withExpansion()` | [with-expansion.md](features/expansion.md) | Multi-expand, hierarchical/tree-capable, standalone (no dependencies) |
 | `withFiltering()` | [with-filtering.md](features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](work/with-filtering/design-options-hybrid-api.md) |
 | `withSelection()` | [with-selection.md](features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
@@ -101,8 +101,8 @@ that general mechanisms can be layered on them.
 | `withPagination()` | [with-pagination.md](features/pagination.md) | `{ pageIndex, pageSize, totalRows }` |
 | `withInfiniteScroll()` | [with-infinite-scroll.md](features/infinite-scroll.md) | `{ hasMore, isLoading }` |
 | `withDragDrop()` | [with-drag-drop.md](features/drag-drop.md) | `{ dragState }` |
-| `withColumnPinning()` | not yet started | `{ columnPinning: { left: string[]; right: string[] } }` — TanStack-modeled, plus start/center/end region derivation. Seedable via `columnsSchema`'s `applyPinned`. |
-| `withColumnSizing()` | not yet started | Per-column resizable width/flex state, only when sizing is runtime-resizable (static width stays column-owned CSS). Seedable via `columnsSchema`'s `applyWidth`/`applyFlex`. |
+| `withColumnPinning()` | not yet started | `{ columnPinning: { left: string[]; right: string[] } }` — TanStack-modeled, plus start/center/end region derivation. Seedable via `createColumns`'s schema argument's `applyPinned`. |
+| `withColumnSizing()` | not yet started | Per-column resizable width/flex state, only when sizing is runtime-resizable (static width stays column-owned CSS). Seedable via `createColumns`'s schema argument's `applyWidth`/`applyFlex`. |
 | `withVirtualScroll()` | [with-virtual-scroll.md](features/virtual-scroll.md) | Windowed rendering over `renderRows()`; no dependency on grouping/expansion — added 2026-07-31 alongside the `renderRows` render-layer design |
 
 ---

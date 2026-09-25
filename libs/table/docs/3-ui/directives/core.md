@@ -49,7 +49,7 @@ export class ProductsComponent {
   protected readonly data = signal(products);
   protected readonly table = createTable(
     this.data,
-    { trackBy: 'id', columns: [{ id: 'name' }, { id: 'status' }] },
+    { trackBy: 'id', columns: createColumns(this.data, (col) => [col('name'), col('status')]) },
     withSorting(),
   );
 }

@@ -91,6 +91,21 @@ interface ColumnDef {
   input order rather than the whole table breaking. Both report once
   per column per evaluation via `console.error`.
 
+### Per-column override — not available for one release (R1)
+
+Until #100/S1 ships, a column cannot be given its own compare function and
+cannot be made un-sortable. `ColumnDef` keeps `sortFn` and `enableSorting` as
+declared fields, but `col()` (`createColumns()`'s builder) does not expose
+either one, so no column declared today can actually set them — both survive
+as permanently-`undefined`.
+
+Nothing fails to compile: every column silently falls to the auto-detected
+comparator above, and `enableSorting !== false` is vacuously true, so the
+no-op guard stays dormant — there is no consumer-supplied value for it to
+act on yet. Full ruling:
+[R1](../work/core/active/single-value-source/decisions.md) in the workspace
+decisions log.
+
 ## Null / Empty Value Ordering — shipped
 
 Full decision record: `docs/1-state/work/sorting-null-ordering/1-handoff.md`.
@@ -106,11 +121,11 @@ is overridden, no escape hatch).
 
 - `null` / `undefined` are always empty. `""` is a real value, not empty, by default.
 - Default placement: `nulls: 'last'` (SQL / AG Grid convention).
-- Per-column override: `applySortNulls(path, { order?, emptyString? })` (`schema/column-rules.ts`),
-  a declarative rule mirroring `applyVisible()` — writes to the internal `SORT_NULLS` metadata
-  key (`engine/columns.ts`). Single-writer: two `applySortNulls()` calls on one column throw at
+- Per-column override: `sortNulls(path, { order?, emptyString? })` (`schema/column-rules.ts`),
+  a declarative rule mirroring `visible()` — writes to the internal `SORT_NULLS` metadata
+  key (`engine/columns.ts`). Single-writer: two `sortNulls()` calls on one column throw at
   resolve time. `emptyString: 'is-empty'` opts `""` into the empty branch for that column.
-- Requires `withColumnsSchema()` to override; a table passing a plain columns array gets the
+- Requires `createColumns()`'s schema argument to override; a table that omits it gets the
   default (`'last'`, `""` not empty) and cannot override per column — acceptable because the
   default alone already fixes the crash and the direction flip for every table.
 - No table-wide `withSorting({ nulls })` default — not proposed; add later if a real table wants
@@ -184,7 +199,7 @@ Null ordering does **not** solve the editable blank-row problem on its own — i
 empty row's landing spot *stable and configurable*. Holding the row still while the user types is
 resolved separately (OQ-3, `docs/0-product/row-editing.md` §5, S-1 — the edited row holds its
 display position for the whole gated edit session) rather than by a sort-stage exemption. The two
-are independent controls and should not be conflated: `applySortNulls` decides where empties
+are independent controls and should not be conflated: `sortNulls` decides where empties
 land when nothing is being edited; the edit-session row-hold decides whether the row moves at
 all while it is.
 
@@ -199,8 +214,8 @@ None as a separate feature. Reads `sortFn` / `enableSorting` from the core `colu
 ## Open Questions
 
 - [ ] Auto-detection fallback logic (string/number/date) needs precise algorithm definition before implementation — not yet specced in detail.
-- [x] **`nulls` default** — settled `'last'`, via `applySortNulls({ order })` per column. See "Shipped behavior" above.
-- [x] **Does `""` count as null?** Settled: no, by default. Opt in per column with `applySortNulls({ emptyString: 'is-empty' })`.
+- [x] **`nulls` default** — settled `'last'`, via `sortNulls({ order })` per column. See "Shipped behavior" above.
+- [x] **Does `""` count as null?** Settled: no, by default. Opt in per column with `sortNulls({ emptyString: 'is-empty' })`.
 - [ ] **Table-wide default?** Not proposed — `withSorting({ nulls })` covering every column may be worth it if a real table wants `'first'` everywhere. Add later; one config field plus a `nullsOrderFor` fallback.
 - [x] **Does the null-order fix apply to consumer `sortFn`?** Settled: yes, no escape hatch. Add one if a consumer asks.
 - [ ] Visual indicator for multi-sort priority (e.g. numbered badges on headers) is a UI-layer concern, deferred to the directive spec.
@@ -211,7 +226,7 @@ None as a separate feature. Reads `sortFn` / `enableSorting` from the core `colu
 
 **Verdict: on par** — the sort model itself (ordered rule array, three-state toggle, per-column
 comparator, `manual`) matches all four; null ordering is **ahead** of them, since the `nulls: 'last'`
-default and per-column `applySortNulls` are a deliberate contract where all four leave the behavior
+default and per-column `sortNulls` are a deliberate contract where all four leave the behavior
 silent or undefined.
 
 Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).

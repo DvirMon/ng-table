@@ -8,7 +8,7 @@ status: >
   no sorting UI layer (`ngpTableSort` is `spec: drafted, code: none`) and no dedicated sorting
   story: every demo of sorting is filed under another feature's Storybook title (Grouping, Row
   Editing, Selection), and five shipped capabilities — `multi: true`, `manual: true`, a custom
-  `sortFn`, `enableSorting: false`, any `applySortNulls()` override — are demonstrated nowhere, only
+  `sortFn`, `enableSorting: false`, any `sortNulls()` override — are demonstrated nowhere, only
   unit-tested. One story (4.1) names an actual bug, not a gap: a throwing `sortFn` blanks the whole
   table today, contradicting the runtime-error policy that names its own fallback (ADR-0014).
   Written after `features/sorting.md` (`spec: drilled`, code shipped) and `3-ui/directives/sort.md`
@@ -40,7 +40,7 @@ derives API from this document, not the reverse.
 > exists nowhere in code, and a fourth,
 > [`work/sorting/active/per-column-config-placement/1-plan-sorting.md`](../1-state/work/sorting/active/per-column-config-placement/1-plan-sorting.md)
 > (approved shape, dated today, **not implemented**), deletes the shipped `ColumnDef.sortFn`/
-> `enableSorting`/`applySortNulls()` surface entirely in favor of a fifth shape. This document
+> `enableSorting`/`sortNulls()` surface entirely in favor of a fifth shape. This document
 > writes every story against the **capability**, never against whichever of the four API spellings
 > happens to be current — see §6 and §8.1 S4 for what that means for whoever reads this next.
 
@@ -96,7 +96,7 @@ names or `.mdx` wrappers, per
 | [`selection/filtering-selection/`](../../src/stories/selection/filtering-selection/) | Selection | `withFiltering()` + `withSelection()` + `withSorting()` | Sorting reorders rows and changes no selection ([`selection.md:339`](selection.md)). |
 
 **Five shipped capabilities are demonstrated in none of the four:** `multi: true`, `manual: true`,
-a custom `sortFn`, `enableSorting: false`, and any `applySortNulls()` override. All five are
+a custom `sortFn`, `enableSorting: false`, and any `sortNulls()` override. All five are
 covered only by `with-sorting.spec.ts` (27 tests) — real, but invisible to a person, and invisible
 to anyone evaluating the library from its stories.
 
@@ -306,7 +306,7 @@ null `dueDate` ship in the fixture, and a toolbar button adds a third live, so b
 placement and its direction-independence are on canvas.
 
 **Design status: covered — ahead of every surveyed competitor.** D-S8/D-S9/D-S10,
-`applySortNulls()`. This is an **eleven-year-old, cross-library, still-unmet request**: AG Grid was
+`sortNulls()`. This is an **eleven-year-old, cross-library, still-unmet request**: AG Grid was
 asked in 2015 ("can you change it that the null value always stays at the bottom?"), again in 2022,
 again in 2023 (tracked internally as **AG-4861**, staff answer: "there's no way to implement this
 behaviour with AG Grid besides using your own custom comparator") — still no declarative option as
@@ -469,7 +469,7 @@ the dead header, and `grouping.md` says so explicitly.
 (OQ-3 — hold the edited row's position for the gated session) but **not implemented**;
 `sorting-editing/` renders the violation on canvas deliberately, as the demonstration of the gap
 rather than a hidden one. S-2 (✅ covered), a blank/empty value sorts somewhere predictable —
-`applySortNulls()`, the same mechanism as §3.1 above, "tagged to sorting because sorting is what
+`sortNulls()`, the same mechanism as §3.1 above, "tagged to sorting because sorting is what
 must change." `row-editing.md` §2.2 (❌ not covered), finding the row just added under an active
 sort — the comparator half is fixed by S-2, the row-hold half is OQ-3; row-editing keeps the mark
 because the person meets this during Add, not during an existing edit.
@@ -593,7 +593,7 @@ once a real consumer asks for `'first'` everywhere.
 **OQ-sort-7 — Which per-column config surface is current? — open, and actively drifting.**
 *Recommendation:* this document deliberately writes every story against the *capability*
 ("a column can opt out of sorting," "a column can override where blanks land"), never against
-`ColumnDef.sortFn`/`enableSorting`/`applySortNulls()` by name — because a fourth, **approved but
+`ColumnDef.sortFn`/`enableSorting`/`sortNulls()` by name — because a fourth, **approved but
 unimplemented** plan
 ([`1-plan-sorting.md`](../1-state/work/sorting/active/per-column-config-placement/1-plan-sorting.md),
 dated 2026-09-17) deletes all three in favor of `withSorting({ sortable, schema })` +
@@ -625,7 +625,7 @@ Owned by `1-state/features/sorting.md` and `1-state/work/sorting/`.
 | S1 | A throwing `sortFn` blanks the table instead of degrading | 4.1 | `with-sorting.ts:123` calls `compare()` unwrapped. ADR-0014 names the fallback in its own policy table; the code doesn't implement it. **OQ-sort-5** |
 | S2 | No initial/default sort — a table cannot open already sorted | 2.4 | `sorting` always initializes to `[]`. `sorting?: SortRule[]` exists only inside the larger, unshipped persistence spec. **OQ-sort-4** |
 | S3 | `toggleSort()` has no per-call options argument | 2.2, §6 | `sort.md`'s `{ accumulate }` design is unbuildable against the shipped signature. Named as open and unticketed in `3-ui/architecture.md`. **OQ-sort-2** |
-| S4 | Three incompatible per-column config surfaces exist across the docs, none of which fully agree with shipped code | §6 note, all of §1–4 by extension | Shipped: `ColumnDef.sortFn`/`enableSorting` + `applySortNulls()`. Approved-not-built: `withSorting({ sortable, schema })` + `applySorting()`. Undocumented-and-unbuilt: `applyEnableSorting`/`applySortFn`/`applyDefaultSort`. **OQ-sort-7** |
+| S4 | Three incompatible per-column config surfaces exist across the docs, none of which fully agree with shipped code | §6 note, all of §1–4 by extension | Shipped: `ColumnDef.sortFn`/`enableSorting` + `sortNulls()`. Approved-not-built: `withSorting({ sortable, schema })` + `applySorting()`. Undocumented-and-unbuilt: `applyEnableSorting`/`applySortFn`/`applyDefaultSort`. **OQ-sort-7** |
 | S5 | No table-wide `nulls` default | — | Explicitly "not proposed" in `features/sorting.md`. **OQ-sort-6** |
 | S6 | `features/sorting.md` still lists the auto-detect algorithm as an open question | — | It shipped (`detectComparator`, `with-sorting.ts:62-80`). Documentation-only fix. |
 | S7 | Two broken links inside `features/sorting.md` itself (null-ordering handoff, gap-analysis) | — | Both files exist, at different paths than written. Documentation-only fix. |
@@ -638,7 +638,7 @@ story.
 | # | Gap | Story | Note |
 |---|---|---|---|
 | U1 | `ngpTableSort` doesn't exist | 2.1, 3.4, §6 | `spec: drafted, code: none`. Every affordance below is hand-rolled per consumer today. Blocked on **OQ-sort-2**. |
-| U2 | No dedicated sorting story exists anywhere | all of §1–4 | Every sorting demo is filed under Grouping, Row Editing, or Selection's Storybook title. Five shipped capabilities (`multi`, `manual`, custom `sortFn`, `enableSorting: false`, any `applySortNulls()` override) are demonstrated in none of them. |
+| U2 | No dedicated sorting story exists anywhere | all of §1–4 | Every sorting demo is filed under Grouping, Row Editing, or Selection's Storybook title. Five shipped capabilities (`multi`, `manual`, custom `sortFn`, `enableSorting: false`, any `sortNulls()` override) are demonstrated in none of them. |
 | U3 | No multi-sort priority indicator, component or recipe | 2.2 | Elevated from "low stakes" to load-bearing in three docs — once accumulation requires a deliberate gesture, the badge is the only confirmation it registered. **OQ-sort-3** |
 | U4 | No active-sort visibility convention (glyph, `aria-sort` wiring) | 2.1 | Recipe exists ad hoc in two stories; no shared component or documented pattern. **OQ-sort-1** |
 | U5 | No server-mode sort loading-state recipe | 4.3 | No story composes `withSorting({ manual: true })` at all. |
@@ -710,12 +710,12 @@ not mistaken for missing stories.
 - **Whether sorting reads `columns` as core config rather than depending on `withColumns()`
   (D-S19).** A retroactively-corrected framing across three docs; a wiring detail invisible to
   anyone using the table.
-- **`applySortNulls()`'s single-writer enforcement (D-S12) and its schema-only availability
+- **`sortNulls()`'s single-writer enforcement (D-S12) and its schema-only availability
   (D-S13).** The *effect* — a per-column override existing at all — is product-visible and already
   credited in §3.1; the mechanism enforcing "only one rule per column" is a construction-time
   developer error, not something a person sorting a table ever perceives.
 - **The internal `SORT_NULLS` metadata key and its storage in `engine/columns.ts`.** Pure
-  implementation detail behind `applySortNulls()`.
+  implementation detail behind `sortNulls()`.
 - **Which of the three competing per-column config API spellings eventually ships (§6, §8.1 S4).**
   This *will* eventually become product-visible in the sense that it decides which capability lands
   when — but the spelling itself (`ColumnDef.sortFn` vs. `applySorting()` vs. a third proposal) is

@@ -135,7 +135,7 @@ D24's commit boundary rather than by pipeline exemption. See
 **Related concern, not a mutation concern — closed:** where a *blank* row lands under an active
 sort is decided by how the comparator treats `""`/`null`. That position used to flip with sort
 direction; the null-ordering contract shipped 2026-08-27 (`nulls: 'last'` by default, `''`
-treated as a real value unless opted out via `applySortNulls`), so a blank row now holds a
+treated as a real value unless opted out via `sortNulls`), so a blank row now holds a
 predictable position in both directions. See
 [`features/sorting.md`](./features/sorting.md) ("Null / Empty Value Ordering").
 

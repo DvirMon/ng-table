@@ -67,6 +67,6 @@ Two of the five original items are now answered by decisions taken since.
       [ADR-0022](../../adr/0022-render-row-cell-values.md): `RenderRow.cells` is column-id-keyed
       and `buildGroupCells` spreads `aggregates` into it.
 - [x] ~~Group label content~~ — answered by G36 and G39. The group value comes from the **row
-      field**, never the column's `accessor`, optionally through `applyGroupKey`. The label
+      field**, never the column's `accessor`, optionally through `groupKey`. The label
       resolves explicit `label` on the `initial` entry → a matching column's label → the raw
       field name, and arrives on `RenderRow.groupKey` already resolved.

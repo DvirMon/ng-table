@@ -12,29 +12,32 @@ parent: ../1-state/architecture.md
 
 ## Executive Summary
 
-`columns` is **core configuration** on `createTable()` — not an opt-in feature. Every table requires it, the same way `trackBy` is required. Column definitions are static config declared upfront, but the *state* derived from them (visibility, order) is runtime-mutable. A second, opt-in declarative way to configure columns — `columnsSchema` — layers on top of this core config; see `../2-columns/architecture.md`.
+`columns` is **core configuration** on `createTable()` — not an opt-in feature. Every table requires it, the same way `trackBy` is required. It is built via `createColumns(data, build, schema?)` — there is no plain-array form (#139). Declarations are static, but the *state* derived from them (visibility, order) is runtime-mutable. `createColumns`'s optional third argument, `schema`, layers a declarative rule DX on top of the same call; see `../2-columns/architecture.md`.
 
 ## Registration
 
-`columns` accepts `ColumnDefInput<TRow>[]` — only `id` is required. `accessor`/`visible`/`order` are
-optional and resolved at store construction (see State Shape below):
+`columns` is a `ColumnSet<TRow, TCols>`, returned by `createColumns(data, build, schema?)`.
+`build` receives a `col()` builder; only `id` is required — `label`/`visible`/`accessor` are
+optional and resolved at store construction (see State Shape below). `order` is not a `col()`
+option at all — it derives from the builder array's own position.
 
 ```ts
 createTable(
   data,
-  { trackBy: 'id', columns: [{ id: 'name' }, { id: 'status' }] },  // accessor/visible/order all defaulted
+  { trackBy: 'id', columns: createColumns(data, (col) => [col('name'), col('status')]) },
+  // label/accessor/visible all defaulted; order follows array position
   /* withSorting(), withGrouping(), etc. */
 );
 
-// Override only what needs it — e.g. a computed accessor or a non-default initial order.
+// Override only what needs it — e.g. a computed accessor or non-default visibility.
 createTable(
   data,
   {
     trackBy: 'id',
-    columns: [
-      { id: 'fullName', accessor: (row) => `${row.first} ${row.last}` },
-      { id: 'status', visible: false },
-    ],
+    columns: createColumns(data, (col) => [
+      col('fullName', { accessor: (row) => `${row.first} ${row.last}` }),
+      col('status', { visible: false }),
+    ]),
   },
   /* ...features */
 );
@@ -44,8 +47,11 @@ createTable(
   data,
   {
     trackBy: 'id',
-    columns: [{ id: 'name' }, { id: 'status' }],
-    columnsSchema: (path) => { applyVisible(path.status, { when: () => role() === 'admin' }); },
+    columns: createColumns(
+      data,
+      (col) => [col('name'), col('status')],
+      (path) => { visible(path.status, { when: () => role() === 'admin' }); },
+    ),
   },
   /* ...features */
 );
@@ -57,9 +63,9 @@ Not registered via a `withColumns()` feature — always present as core config, 
 
 Single source of truth: mutable flags live directly on each `ColumnDef`. No separate `columnOrder[]` / `columnVisibility{}` slices.
 
-The **resolved** state (`store.columns()`, always a full `ColumnDef[]`) and the **author-facing
-input** (`ColumnDefInput<TRow>`, what the engine's resolver accepts) are two related types — only
-`id` is required on the input, everything else is optional and defaulted at resolution:
+The **resolved** state (`store.columns()`, always a full `ColumnDef[]`) and the **declared
+input** (`ColumnDecl<TRow, K, V>`, what `col()` mints) are two related shapes — only `id` is
+required on the declaration, everything else is optional and defaulted at resolution:
 
 ```ts
 interface ColumnDef<TRow = unknown> {
@@ -74,14 +80,15 @@ interface ColumnDef<TRow = unknown> {
   filterFn?: (value: unknown, filterValue: unknown) => boolean;
   enableFiltering?: boolean;           // default true
 
-  // `aggregateFn` no longer lives here — it moved to `applyAggregate(path.x, aggregateFn)`,
+  // `aggregateFn` no longer lives here — it moved to `aggregate(path.x, aggregateFn)`,
   // declared through `withGrouping({ schema })` (#114). See `features/grouping.md`.
 }
 ```
 
 `ColumnDefInput<TRow>` — what the engine's resolver accepts — is the same shape with
-`accessor`/`visible`/`order` optional (only `id` required); `resolveColumnDefs()` (`api/create-table.ts`)
-fills the defaults in once at resolution, so `store.columns()` is always the full `ColumnDef` above:
+`accessor`/`visible`/`order`/`label` optional (only `id` required); a `ColumnDecl` from `col()`
+satisfies it structurally. `resolveColumnDefs()` (`engine/core.ts`) fills the defaults in once
+at resolution, so `store.columns()` is always the full `ColumnDef` above:
 
 ```ts
 type ColumnDefInput<TRow> = Pick<ColumnDef<TRow>, 'id'> & Partial<Omit<ColumnDef<TRow>, 'id'>>;
@@ -93,8 +100,8 @@ type ColumnDefInput<TRow> = Pick<ColumnDef<TRow>, 'id'> & Partial<Omit<ColumnDef
 
 | Method | Description |
 |---|---|
-| `setColumns(defs: { id, accessor?, visible?, label? }[])` | Replace the full column list by id — `order` and `meta` are not writable through this path |
-| `updateColumns(updater: (columns: ColumnDef[]) => ColumnDef[])` | Derive the next column list from the current one — the `.update()` counterpart to `setColumns()`'s `.set()`. This is also the method `columnsSchema`'s store-owned reactive/async rules call under the hood (see `../2-columns/reference/ownership-model.md`'s snapshot-diff patcher). |
+| `setColumns(defs: readonly ColumnWrite<TRow, TId>[])` | Replace the full column list by id — `ColumnWrite` is `{ id, label?, visible?, accessor? }`; `order` and `meta` are not writable through this path |
+| `updateColumns(updater: (columns: ColumnDef[]) => ColumnDef[])` | Derive the next column list from the current one — the `.update()` counterpart to `setColumns()`'s `.set()`. This is also the method `createColumns`'s schema-argument store-owned reactive/async rules call under the hood (see `../2-columns/reference/ownership-model.md`'s snapshot-diff patcher). |
 | `reorderColumns(ids: string[])` | Re-assign `order` per the given id sequence |
 | `toggleColumnVisibility(id: string)` | Flip a column's `visible` flag |
 
@@ -113,22 +120,23 @@ table.columns.update(setColumns([{ id: 'name' }, { id: 'status', visible: false 
 table.columns.update(reorderColumns(draggedColumnIds)); // re-apply the user's order
 ```
 
-## Declarative Column Schemas — `columnsSchema`
+## Declarative Column Schemas — `createColumns`'s schema argument
 
 An opt-in declarative layer on top of the core `columns` config, modeled on Angular Signal Forms
-(`form(model, schemaFn)`). A `columnsSchema` fn receives a typed `path` proxy and layers `apply*`
-rules (visibility, order, and — per tier — sizing/pinning/sort/filter/group seeds) onto columns
-instead of hand-rolled `effect()` + `updateColumns()` wiring. Full design: `../2-columns/architecture.md`
-and the per-concern detail in `../2-columns/reference/`.
+(`form(model, schemaFn)`). The `schema` fn passed as `createColumns(data, build, schema)`'s third
+argument receives a typed `path` proxy and layers bare-named rules (`visible`, `sortNulls`,
+`grouping`, and — per tier — sizing/pinning/group seeds) onto columns instead of hand-rolled
+`effect()` + `updateColumns()` wiring. Full design: `../2-columns/architecture.md` and the
+per-concern detail in `../2-columns/reference/`.
 
 ## Async / Permission-Driven Column Changes
 
-Two patterns, depending on whether `columnsSchema` is used:
+Two patterns, depending on whether `createColumns`'s schema argument is used:
 
 **Pattern A (default, always available)** — reactivity to async sources (e.g. a permission check
 resolving from an HTTP call) belongs in the **consumer**, not the store. The store does not accept
-a reactive/async columns input on the plain `columns` array — columns remain plain,
-store-mutation-based state (see Executive Summary above). The recommended pattern is
+a reactive/async `columns` input — columns remain plain, store-mutation-based state (see
+Executive Summary above). The recommended pattern is
 an `effect()` in the consuming component that reacts to an async source (e.g. Angular `resource()`)
 and calls `updateColumns()`:
 
@@ -146,15 +154,15 @@ effect(() => {
 
 See `apps/demo/src/app/table-demo/` in the acme monorepo for a working illustration of this pattern.
 
-**Pattern B (opt-in, via `columnsSchema`)** — `applyVisibleAsync` moves this `effect()` +
-`resource()` + `updateColumns()` wiring into the store instead (a scoped exception to the
-consumer-owns-reactivity default above). See
-`../2-columns/reference/tier-1-intrinsic.md` (`applyVisibleAsync`) and
+**Pattern B (opt-in, via `createColumns`'s schema argument)** — `visibleAsync` moves this
+`effect()` + `resource()` + `updateColumns()` wiring into the store instead (a scoped exception
+to the consumer-owns-reactivity default above). See
+`../2-columns/reference/tier-1-intrinsic.md` (`visibleAsync`) and
 `../2-columns/reference/ownership-model.md`. Pattern A stays the default here.
 
 ## Accessor Contract
 
-`accessor: (row) => value` is **optional, function-only** on the author-facing `ColumnDefInput` —
+`accessor: (row) => value` is **optional, function-only** on `col()`'s declared input —
 defaults to `(row) => row[id]`. Most columns are a straight key read and need no explicit accessor;
 supply one only for computed/derived values (`fullName`, a formatted price, a nested path). Still no
 string-key shorthand (unlike `trackBy`) — an explicit accessor, when provided, is always a function.
@@ -173,7 +181,7 @@ Other features read `columns` directly rather than declaring a compile-time feat
 
 - `withSorting()` — reads `sortFn`, `enableSorting`
 - `withGrouping()` — reads `accessor` (ADR-0024); `aggregateFn` is declared through
-  `withGrouping({ schema })`'s own `applyAggregate`, not read off the column (#114)
+  `withGrouping({ schema })`'s own `aggregate`, not read off the column (#114)
 - `withFiltering()` — reads `filterFn`, `enableFiltering`
 
 > **Note (retroactive fix):** Earlier drafts described `withSorting()`/`withGrouping()` as having a "compile-time dependency on `withColumns()`." Since `columns` was subsequently decided to be core config rather than an opt-in feature, this has been corrected — those features simply read the core `columns` config; there is no feature dependency to declare.
@@ -193,8 +201,8 @@ Other features read `columns` directly rather than declaring a compile-time feat
 
 ## Competitive position
 
-**Verdict: ahead** on visibility — `toggleColumnVisibility` plus `columnsSchema`'s declarative,
-async-resolved, multi-writer `applyVisible`/`applyVisibleAsync` rules exist in none of the four.
+**Verdict: ahead** on visibility — `toggleColumnVisibility` plus `createColumns`'s declarative,
+async-resolved, multi-writer `visible`/`visibleAsync` rules exist in none of the four.
 
 **Verdict: missing** on sizing and pinning — all four ship both in core, and neither is implemented
 here (see [features/column-sizing.md](./features/column-sizing.md) and

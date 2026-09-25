@@ -67,15 +67,16 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. Lists filtering's rules, matchers and public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) explicitly, same as every other feature — `filters/` was a second domain with its own barrel until R50 (ADR-0004, 2026-09 #93 amendment) closed the standalone trajectory that justified it |
 | `api/features/with-filtering/` | `feature.ts` (declare — `withFiltering()`), `rules.ts`, `matchers.ts`, public `types.ts`. Its own `index.ts` re-exports only `feature.ts` — a resolution convenience, not a second barrel |
 | `engine/filters/` | `build.ts` (compile — `buildFilterModel()`), `state.ts`/`evaluator.ts` (run), `validate.ts`, internal `types.ts`. Nothing here is reachable from `src/index.ts`; a consumer reaches the model through `withFiltering`'s `schema` config |
-| `api/types.ts` | Public and internal type definitions: `ColumnDef`, `RenderRow`, `TableStore` interface |
+| `api/types.ts` | Public and internal type definitions: `ColumnDef` (the resolved/internal shape), `RenderRow`, `TableStore` interface. The declaration side — `ColumnDecl`, `ColumnSet`, `ColumnBuilder` — lives here too but is consumed through `createColumns()`, see its own row below |
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
+| `api/create-columns.ts` | `createColumns(data, build, schema?)` — declares a table's columns, and optionally their column-schema rules, in one call. `build` returns `ColumnDecl[]` via the `col()`/`col.from()` builder; the result is a `ColumnSet`. Runs the construction-time checks (`assertUniqueColumnIds`, `assertRuleColumnIdsAreKnown`, `assertMetadataKeysAreUnique`), each dev-gated in its own body. A curried `createColumns<TRow>()([...])` overload survives only for existing callers — "do not add new callers" |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
 | `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withSelection()`, `withGrouping()`, `withFiltering()`, `withOptimistic()`, `withRowEdit()`, `withComputed()`. One file each |
 | `api/features/with-computed.ts` | `withComputed(block)` — library-declared derived state as a feature. The block is validated at construction (it must return signals; a throw while declaring throws) and every returned signal is rewrapped to report its member key and rethrow at evaluation (ADR-0014). Both checks live here, never in the fold |
 | `api/features/compose-features.ts` | `composeFeatures(...features)` — collapses N features into one `createTable()` slot, the arity escape hatch. Inner features fold against a per-composite `SlotRegistry` and merge into one spec; collisions are labelled `composeFeatures inner feature N` |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `op`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, each building its own instance. Composing both explicitly is a duplicate `editing` member claim and throws (ADR-0007), in either argument order |
-| `columns-schema/schema.ts` | `columnSchema()` and the `ColumnsPath` proxy |
-| `columns-schema/rules.ts` | `visible()` / `visibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
+| `columns-schema/schema.ts` | `columnSchema()` and the `ColumnsPath` proxy (`buildColumnsPath()`). Reaches consumers through `createColumns()`'s `schema` argument — `columnSchema()` is the standalone reuse form, an inline `(path) => void` compiles through the same `runColumnsSchemaFn()` |
+| `columns-schema/rules.ts` | `visible()` / `visibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged. `sortNulls()` lives here too, writing the unexported `SORT_NULLS` key — G69 (`docs/decisions/grouping.md`) proposes moving it to `withSorting()`'s own schema, accepted but unbuilt |
 | `columns-schema/metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
 | `columns-schema/types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
 | `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
@@ -278,6 +279,12 @@ D>`. A block declaring `stages`/`renderStages`/`columnRules`, or a member key th
 already declared, throws at construction.
 
 Rules:
+- **`Feature<In, Out>` stays callable.** A feature slot sees the column ids from a
+  context-sensitive `columns` argument only because the feature is a function type. A generic
+  feature returning a plain object is resolved before `TCols` is inferred, and the id union
+  reaching every slot collapses. Probe:
+  [`design-create-columns.md`](docs/1-state/work/core/active/single-value-source/design-create-columns.md)
+  P1j.
 - Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
   `PipelineStages` derives from it, so there is no second list to keep in sync.
 - Add a render stage by editing `RENDER_ORDER` in `engine/render-stages.ts` — nothing else.

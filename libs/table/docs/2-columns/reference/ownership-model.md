@@ -1,5 +1,5 @@
 ---
-title: Columns Schema — Ownership Model (every `apply*`)
+title: Columns Schema — Ownership Model (every rule function)
 type: architecture
 version: 0.1
 date: 2026-07-24
@@ -10,13 +10,13 @@ parent: ../architecture.md
 
 # Columns Schema — Ownership Model
 
-The contract every `apply*` function obeys, regardless of tier. Read this before any tier file.
+The contract every rule function obeys, regardless of tier. Read this before any tier file.
 
-## `columnsSchema` is reactive/async only ✅ decided 2026-07-25
+## The schema is reactive/async only ✅ decided 2026-07-25
 
-**Static column config never goes through `columnsSchema` — it goes on the `columns` array
-(`ColumnDefInput<TRow>`, only `id` required, `accessor`/`visible`/`order` default and are set
-directly as object literals).** `columnsSchema`'s entire value proposition is the wiring it gives —
+**Static column config never goes through the schema — it goes on `col()` in the builder array
+(only `id` required, `accessor`/`visible`/`order` default and are set directly as options).** The
+schema argument's entire value proposition is the wiring it gives —
 `effect()`/`resource()`/store-owned `updateColumns()` calls — over something that changes. A static
 value gets none of that: same outcome, same resolution timing as a literal on the array, just paid
 for with a function call, a path-proxy lookup, and an import. Routing statics through the rules
@@ -28,7 +28,7 @@ Confirmed with the array already this terse (defaults ship in `api/create-table.
 `resolveColumnDefs()`), there's even less reason for the schema to also carry statics — the cheap
 path already exists.
 
-**Consequence for `applyOrder` (Tier 1):** removed from `columnsSchema` entirely — see
+**Consequence for `applyOrder` (Tier 1):** removed from the schema entirely — see
 [tier-1-intrinsic.md](tier-1-intrinsic.md). No credible reactive or async case for column order ever
 surfaced (Tier 1's own open question flagged this before the narrowing); order stays 100% core
 config — array-index default + `reorderColumns()` mutation, same as today, no schema involvement.
@@ -42,18 +42,18 @@ config — array-index default + `reorderColumns()` mutation, same as today, no 
 - **Rule** — a store-owned reactive/async binding that calls `updateColumns()` when its source
   changes.
 
-A single `apply*` call is *either* a seed (only for properties with no `ColumnDef`/array home, e.g.
+A single rule call is *either* a seed (only for properties with no `ColumnDef`/`col()` home, e.g.
 pinning) or a rule (reactive/async on a `ColumnDef` field), decided by which property it targets.
 
 ## One law: the store always owns reactivity
 
-Every `apply*` accepts up to two input shapes (narrowed from three — static dropped, see above),
-all routing to the same store-owned patcher:
+Every rule function accepts up to two input shapes (narrowed from three — static dropped, see
+above), all routing to the same store-owned patcher:
 
 | Input shape | Wiring | Example |
 |---|---|---|
-| **reactive** `{ when: () => T }` | store `effect()` → `updateColumns()` on change (live) | `applyVisible(path.status, { when: () => role() === 'admin' })` |
-| **async** `{ params, factory, onSuccess, onError }` | store `resource()` + `effect()` → `updateColumns()` | `applyVisibleAsync(path.status, {...})` |
+| **reactive** `{ when: () => T }` | store `effect()` → `updateColumns()` on change (live) | `visible(path.status, { when: () => role() === 'admin' })` |
+| **async** `{ params, factory, onSuccess, onError }` | store `resource()` + `effect()` → `updateColumns()` | `visibleAsync(path.status, {...})` |
 
 > **`{ when }` object form, not a bare function.** Signal Forms deprecated passing a raw function to
 > `hidden`/`disabled` (`packages/forms/signals/src/api/rules/hidden.ts:45-50`) precisely because the

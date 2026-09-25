@@ -82,17 +82,17 @@ Each is declared inside `schema`, against a `GroupingPath` keyed by declared col
 
 | Declarator | Concern |
 |---|---|
-| `applyGrouping(path.x, { enable?, when? })` | activation and per-column admission |
-| `applyGroupingAsync(path.x, { params, factory, onSuccess, onError })` | activation from a resource |
-| `applyGroupKey(path.x, extractValue)` | key derivation — must return a primitive |
-| `applyGroupOrder(path.x, cmp)` | sibling order at that level |
-| `applyAggregate(path.x, aggregateFn)` | one summary value per cluster per column |
+| `grouping(path.x, { enable?, when? })` | activation and per-column admission |
+| `groupingAsync(path.x, { params, factory, onSuccess, onError })` | activation from a resource |
+| `groupKey(path.x, extractValue)` | key derivation — must return a primitive |
+| `groupOrder(path.x, cmp)` | sibling order at that level |
+| `aggregate(path.x, aggregateFn)` | one summary value per cluster per column |
 
-`applyGrouping` declaring neither `enable` nor `when` throws at construction. A second
-`applyGroupKey` on one column is a duplicate registration and throws.
+`grouping` declaring neither `enable` nor `when` throws at construction. A second
+`groupKey` on one column is a duplicate registration and throws.
 
-**`applyGroupKey`'s extractor receives the column's `accessor` output, not the raw row.** A
-column whose accessor already computes the group-relevant value needs no `applyGroupKey` at all;
+**`groupKey`'s extractor receives the column's `accessor` output, not the raw row.** A
+column whose accessor already computes the group-relevant value needs no `groupKey` at all;
 one like `closedAt: Date` still needs one to key a month out of what the accessor returns.
 
 ### Write surface
@@ -107,7 +107,7 @@ lookup off `initial`, never part of the state.
 
 A declaration naming an id absent from `columns` throws, naming both the declaring surface
 (`[withGrouping]`) and the offending id — whether the id came from `initial`, from a `schema`
-rule (any declarator, including `applyAggregate`), or from `table.grouping.update(updater)`'s
+rule (any declarator, including `aggregate`), or from `table.grouping.update(updater)`'s
 resulting array. The writer runs the updater, validates its result, then commits — so
 `addGroupLevel('nope')` throws exactly like an unknown id in `initial` would. This is deliberate:
 without it, `groupingLevels()` would need to silently drop an orphaned level again (see below).
@@ -177,7 +177,7 @@ always receives post-filter rows.
 
 **A row sort does move group headers.** The `'group'` render stage re-clusters the *sorted* rows,
 so with no comparator supplied, first-occurrence group order follows the sort. Rows within a group
-stay contiguous. G5's decoupling is `applyGroupOrder`-only — supply one to pin group order across
+stay contiguous. G5's decoupling is `groupOrder`-only — supply one to pin group order across
 sort changes.
 
 ## Render layer — `renderRows`
@@ -213,7 +213,7 @@ Without `withTree()` composed, everything renders flat and expanded — valid st
 
 ## Aggregation
 
-`applyAggregate(path.x, aggregateFn)` declares one summary value per group per declared column,
+`aggregate(path.x, aggregateFn)` declares one summary value per group per declared column,
 recomputed reactively when membership changes. Aggregation is a grouping declaration, keyed by
 declared column id like every other data concern `schema` records — **not** a `ColumnDef` option.
 `ColumnDef.aggregateFn` does not exist. This is what lets a column with no row field of its own —
@@ -253,7 +253,7 @@ In descending order of how badly this goes wrong without them.
 
 | ADR | What it constrains |
 |---|---|
-| [0024](../../adr/0024-single-value-source-accessor.md) | The column `accessor` is the single value source; grouping's schema and `initial` key by declared column id, same space `columnsSchema` uses |
+| [0024](../../adr/0024-single-value-source-accessor.md) | The column `accessor` is the single value source; grouping's schema and `initial` key by declared column id, same space `createColumns`'s schema argument uses |
 | [0017](../../adr/0017-engine-owned-descendant-prune.md) | Collapse is engine-owned. Grouping emits unconditionally and reads no expansion state |
 | [0018](../../adr/0018-when-vs-enable-predicate-naming.md) | `when` vs `enable` — grouping is the only feature carrying both predicates |
 | [0011](../../adr/0011-chained-render-stages.md) | The `'group'` render stage claim; `RenderStages` derives from `RENDER_ORDER` |

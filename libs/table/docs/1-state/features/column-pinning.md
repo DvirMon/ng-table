@@ -20,8 +20,8 @@ settled 2026-07-25 in
 fetched TanStack source: pinning is logic state (`columnPinning: { left, right }` plus
 region derivation), not per-column geometry. AG Grid keeps `pinned` on the column def
 because its column model is centralized internally either way; this table follows TanStack.
-`columnsSchema`'s `applyPinned` therefore **seeds this feature's initial state** and writes
-nothing onto `ColumnDef`.
+`createColumns`'s schema argument's `applyPinned` therefore **seeds this feature's initial
+state** and writes nothing onto `ColumnDef`.
 
 The feature answers one question — *which rail is this column in, and where in it?* Sticky
 positioning, offsets, rail shadows and horizontal scroll are UI layer.

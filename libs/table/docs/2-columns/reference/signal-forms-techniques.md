@@ -11,7 +11,7 @@ parent: ../architecture.md
 # Signal Forms Techniques to Adopt
 
 Seven techniques mined from fetched `angular/angular` Signal Forms source
-(`packages/forms/signals/src/`), each portable to `columnsSchema`. Two (§1, §2) are
+(`packages/forms/signals/src/`), each portable to the schema argument. Two (§1, §2) are
 **architectural and reverse a settled decision** — written as open decisions. The rest (§3, §6, §7)
 are cheap correctness/ergonomic wins to adopt regardless; §4, §5 are power features to defer.
 
@@ -72,7 +72,7 @@ no property in Tier 1–3 keeps throw-on-conflict.
 
 `hidden(path, { when: fn })` — and Signal Forms **deprecated passing a raw function**
 (`api/rules/hidden.ts:45-50`) because the `boolean | fn` overload is ambiguous. The early
-`applyVisible(path, boolean | fn)` draft had exactly that ambiguity. Adopt `{ when }` for the
+`visible(path, boolean | fn)` draft had exactly that ambiguity. Adopt `{ when }` for the
 reactive shape, bare `boolean`/value for static — no overload guessing. Already reflected in the
 [Ownership model](ownership-model.md) and tier files.
 
