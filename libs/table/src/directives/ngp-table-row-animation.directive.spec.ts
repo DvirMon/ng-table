@@ -7,17 +7,25 @@ import { NgpTableRowAnimationDirective } from './ngp-table-row-animation.directi
 import { createMockTableStore } from '../table.mock';
 import type { RenderRow, RowId, TableStore } from '../api/types';
 
-// jsdom computes no layout and implements no Web Animations: `offsetTop` is pinned, and
-// `animate()` is a stub whose calls are the observable FLIP.
+const ROW_HEIGHT = 40;
+
+// jsdom computes no layout and implements no Web Animations: `offsetTop` and the drawn rect are
+// pinned (page not scrolled, so both share one origin), and `animate()` is a stub whose calls
+// are the observable FLIP.
 function rowElementAt(top: number): HTMLElement {
   const element = document.createElement('tr');
-  Object.defineProperty(element, 'offsetTop', { value: top, configurable: true });
   Object.defineProperty(element, 'animate', { value: vi.fn() });
+  moveTo(element, top);
   return element;
 }
 
 function moveTo(element: HTMLElement, top: number): void {
+  const rect = { top, bottom: top + ROW_HEIGHT };
   Object.defineProperty(element, 'offsetTop', { value: top, configurable: true });
+  Object.defineProperty(element, 'getBoundingClientRect', {
+    value: () => rect,
+    configurable: true,
+  });
 }
 
 function animatedKeyframesOf(element: HTMLElement): Keyframe[][] {
@@ -26,6 +34,10 @@ function animatedKeyframesOf(element: HTMLElement): Keyframe[][] {
 
 function glideFrom(delta: number): Keyframe[] {
   return [{ transform: `translateY(${delta}px)` }, { transform: 'none' }];
+}
+
+function glideBetween(fromOffset: number, toOffset: number): Keyframe[] {
+  return [{ transform: `translateY(${fromOffset}px)` }, { transform: `translateY(${toOffset}px)` }];
 }
 
 function stubReducedMotion(prefersReducedMotion: boolean): void {
@@ -130,6 +142,70 @@ describe('NgpTableRowAnimationDirective — row-position measurement (FLIP)', ()
     tick();
 
     expect(animatedKeyframesOf(rowA)).toEqual([glideFrom(-50)]);
+  });
+
+  it('does not animate a row that is off screen both before and after its move', () => {
+    const { directive, renderRows } = setup();
+    const offScreenTop = window.innerHeight + 1000;
+
+    const rowA = rowElementAt(offScreenTop + 500);
+    directive.registerRowElement('a', rowA);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    moveTo(rowA, offScreenTop);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    expect(animatedKeyframesOf(rowA)).toEqual([]);
+  });
+
+  it('slides a row arriving from far below in from the bottom screen edge', () => {
+    const { directive, renderRows } = setup();
+
+    const rowA = rowElementAt(window.innerHeight + 5000);
+    directive.registerRowElement('a', rowA);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    moveTo(rowA, 100);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    expect(animatedKeyframesOf(rowA)).toEqual([glideFrom(window.innerHeight - 100)]);
+  });
+
+  it('slides a row arriving from far above in from the top screen edge', () => {
+    const { directive, renderRows } = setup();
+
+    const rowA = rowElementAt(-5000);
+    directive.registerRowElement('a', rowA);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    moveTo(rowA, 100);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    expect(animatedKeyframesOf(rowA)).toEqual([glideFrom(-(100 + ROW_HEIGHT))]);
+  });
+
+  it('slides a row leaving far below out to the bottom screen edge', () => {
+    const { directive, renderRows } = setup();
+    const offScreenTop = window.innerHeight + 1000;
+
+    const rowA = rowElementAt(100);
+    directive.registerRowElement('a', rowA);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    moveTo(rowA, offScreenTop);
+    renderRows.set([mockRenderRow('a', 0)]);
+    tick();
+
+    expect(animatedKeyframesOf(rowA)).toEqual([
+      glideBetween(100 - offScreenTop, window.innerHeight - offScreenTop),
+    ]);
   });
 
   it('unregisterRowElement is a no-op when the given element is no longer the current one for that id', () => {

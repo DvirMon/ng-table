@@ -8,6 +8,48 @@ const DEFAULT_FLIP_TIMING: KeyframeAnimationOptions = {
   easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
 };
 
+// One row's glide, as `translateY` offsets from its new layout slot.
+interface RowGlide {
+  fromOffset: number;
+  toOffset: number;
+}
+
+// A row glides only if it is on screen at either end of its move; one off screen at both ends
+// jumps. A far end off screen is replaced by the nearest screen edge, so a row arriving from far
+// away slides in from that edge, and a leaving row slides out to it, at the normal duration —
+// instead of crossing thousands of pixels in one frame. The window is the viewport, not a scroll
+// container: a row the container clips still counts as on screen. `getBoundingClientRect()`
+// includes an in-flight transform, so a reorder mid-glide starts from where the row is drawn.
+function planGlide(
+  element: HTMLElement,
+  delta: number,
+  viewportHeight: number,
+): RowGlide | undefined {
+  const { top, bottom } = element.getBoundingClientRect();
+  const isOnScreenAfter = bottom >= 0 && top <= viewportHeight;
+  const isOnScreenBefore = bottom + delta >= 0 && top + delta <= viewportHeight;
+  const isOnScreenThroughout = isOnScreenAfter && isOnScreenBefore;
+  if (isOnScreenThroughout) {
+    return { fromOffset: delta, toOffset: 0 };
+  }
+  if (isOnScreenAfter) {
+    const isArrivingFromBelow = delta > 0;
+    const edgeOffset = isArrivingFromBelow ? viewportHeight - top : -bottom;
+    return { fromOffset: edgeOffset, toOffset: 0 };
+  }
+  if (isOnScreenBefore) {
+    const isLeavingDownward = top > viewportHeight;
+    const edgeOffset = isLeavingDownward ? viewportHeight - top : -bottom;
+    return { fromOffset: delta, toOffset: edgeOffset };
+  }
+  return undefined;
+}
+
+function toTransform(offset: number): string {
+  const isInLayoutSlot = offset === 0;
+  return isInLayoutSlot ? 'none' : `translateY(${offset}px)`;
+}
+
 // Dual-tag selector, matches `ngpTable`'s pattern. Opt-in: without this directive on the host,
 // `ngpTableRow` registers nothing (docs/3-ui/directives/row-animation.md).
 @Directive({
@@ -46,10 +88,13 @@ export class NgpTableRowAnimationDirective<TRow = unknown> {
           return;
         }
         const timing = untracked(this.flipTiming);
-        moves().forEach((delta, rowId) =>
+        moves().forEach(({ fromOffset, toOffset }, rowId) =>
           this.rowElements
             .get(rowId)
-            ?.animate([{ transform: `translateY(${delta}px)` }, { transform: 'none' }], timing),
+            ?.animate(
+              [{ transform: toTransform(fromOffset) }, { transform: toTransform(toOffset) }],
+              timing,
+            ),
         );
       },
     });
@@ -79,15 +124,24 @@ export class NgpTableRowAnimationDirective<TRow = unknown> {
     }
   }
 
-  // Each moved row's offset from its old position (`oldTop - newTop`). DOM reads only.
-  private measureMoves(renderRows: readonly RenderRow<unknown>[]): Map<RowId, number> {
+  // Each moved row's glide, for rows on screen at either end of the move. DOM reads only.
+  private measureMoves(renderRows: readonly RenderRow<unknown>[]): Map<RowId, RowGlide> {
     const newTops = this.captureRowTops(renderRows.map((row) => row.id));
 
-    const moves = new Map<RowId, number>();
+    // Read once per pass: inside an iframe it may re-check the parent's layout on every read.
+    const viewportHeight = window.innerHeight;
+    const moves = new Map<RowId, RowGlide>();
     newTops.forEach((newTop, rowId) => {
       const oldTop = this.previousRowTops.get(rowId);
-      if (oldTop !== undefined && oldTop !== newTop) {
-        moves.set(rowId, oldTop - newTop);
+      const element = this.rowElements.get(rowId);
+      const hasMovedRegisteredRow =
+        oldTop !== undefined && element !== undefined && oldTop !== newTop;
+      if (!hasMovedRegisteredRow) {
+        return;
+      }
+      const glide = planGlide(element, oldTop - newTop, viewportHeight);
+      if (glide !== undefined) {
+        moves.set(rowId, glide);
       }
     });
     this.previousRowTops = newTops;

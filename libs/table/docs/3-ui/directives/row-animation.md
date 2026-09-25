@@ -1,8 +1,8 @@
 ---
 title: UI Layer — Row Reorder Animation (ngpTableRowAnimation FLIP)
 type: architecture
-version: 0.6
-date: 2026-09-23
+version: 0.8
+date: 2026-09-25
 capability: row-animation
 spec: drilled
 code: shipped
@@ -57,7 +57,9 @@ rule in `CLAUDE.md`. It injects `NGP_TABLE_STORE` (required) to read `renderRows
 one `afterRenderEffect`, re-run only when `renderRows()` changes, after the DOM reflects it:
 
 1. **`earlyRead`** — `measureMoves()`: measure every registered row element's `offsetTop` and
-   return each moved row's delta `oldTop - newTop` as a `Map<RowId, number>`. DOM reads only.
+   plan each moved row's glide with `planGlide()` → `{ fromOffset, toOffset }`, clamping an
+   off-screen end to the nearest screen edge and dropping rows off screen at both ends (see
+   **Off-screen rows** below). DOM reads only.
 2. **`write`** — skip entirely under `matchMedia('(prefers-reduced-motion: reduce)')`; otherwise
    call `element.animate()` on each moved row with inline keyframes `translateY(<delta>px)` →
    `none` and the `flipTiming` options. FLIP's invert is the first keyframe and its play is the
@@ -65,6 +67,24 @@ one `afterRenderEffect`, re-run only when `renderRows()` changes, after the DOM 
 
 No `requestAnimationFrame`, no nested `afterNextRender`, no forced style read, no signal of
 its own.
+
+**Off-screen rows.** `planGlide()` checks each moved row's `getBoundingClientRect()` against
+the window viewport at both ends of the move:
+
+- **On screen at both ends** — the exact glide, from `oldTop - newTop` to `none`.
+- **Arriving** (off before, on after) — starts just outside the edge it came from (from below:
+  `innerHeight − top`; from above: `−bottom`) and slides in at the normal duration.
+- **Leaving** (on before, off after) — glides from its old position to just past the edge it
+  leaves through, then snaps to its real slot (`fill: none`, off screen, so invisible).
+- **Off screen at both ends** — including one that would only pass across the screen — jumps.
+
+Decided 2026-09-24 (skip), refined 2026-09-25 (clamp): a large sort or reverse moved visible
+rows ~24,000px in 300ms, which read as a jump with no visible glide; clamping keeps every
+visible glide screen-sized, and skipping caps `animate()` calls at about two screenfuls (the
+benchmark measured ~42ms per 1,000). Caveats: the check uses the window, not a scroll
+container, so a row the container clips still animates (one wasted animation, never a missed
+glide); and `getBoundingClientRect()` includes an in-flight transform, so a reorder mid-glide
+checks where the row is drawn, not its layout slot.
 
 **Timing.** `flipTiming = input<KeyframeAnimationOptions>({ duration: 300, easing:
 'cubic-bezier(0.4, 0, 0.2, 1)' })`, passed straight to `animate()`. Read untracked in the
