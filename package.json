@@ -8,6 +8,8 @@
     "node": ">=22.6"
   },
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "commits:check": "node tools/check-commit-trailers.cjs --range",
     "start": "npx nx serve ng-table",
     "table:sb": "npx nx run shared-table:storybook",
     "table:build-storybook": "npx nx run shared-table:build-storybook",

@@ -22,3 +22,5 @@ Acceptance checks on an Angular project cite `nx run <project>:typecheck` (ngc, 
 ### Issue tracker
 
 Issues live in GitHub Issues. `/ship` pushes straight to `main` (no PR) — see `docs/agents/issue-tracker.md`.
+
+Commit messages reference issues with trailer lines — `Ships: #N` (completes), `Refs: #N` (partial) — never a GitHub closing keyword (`Closes #N`, `Fixes #N`), which closes the issue at push time, before CI. The `commit-msg` hook and CI reject both mistakes.

@@ -1,0 +1,5 @@
+#!/bin/sh
+# Rejects commit messages without an issue trailer, or with a GitHub
+# closing keyword. Contract: docs/agents/issue-tracker.md#closing-trailer
+exec node "$(git rev-parse --show-toplevel)/tools/check-commit-trailers.cjs" \
+  --file "$1"
