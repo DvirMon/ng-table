@@ -77,7 +77,9 @@ export class GroupingOrderStoryHostComponent {
     return 0;
   };
 
+  /** @internal not a Storybook control — story-canvas row source. */
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
+  /** @internal not a Storybook control — the table instance the template renders. */
   protected readonly table = createTable(
     this.data,
     groupingConfig,
@@ -94,6 +96,7 @@ export class GroupingOrderStoryHostComponent {
     withSorting()
   );
 
+  /** @internal not a Storybook control — derived column order for the header row. */
   protected readonly visibleColumns = computed(() =>
     this.table
       .columns()
@@ -101,9 +104,11 @@ export class GroupingOrderStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
+  /** @internal not a Storybook control — readout, not a knob. */
   protected readonly isRepGrouped = computed(() => this.table.isGroupedBy('rep'));
 
-  /** The caller-supplied ranking, rendered so `external-list` reads as data rather than as a
+  /** @internal not a Storybook control.
+   * The caller-supplied ranking, rendered so `external-list` reads as data rather than as a
    * comparator nobody can see. */
   protected readonly externalOrder = EXTERNAL_GROUP_ORDER;
 

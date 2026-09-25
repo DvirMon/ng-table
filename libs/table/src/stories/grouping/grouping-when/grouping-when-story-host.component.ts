@@ -34,11 +34,14 @@ export class GroupingWhenStoryHostComponent {
   readonly applyMinCategorySize = input(false);
   readonly minCategoryRowCount = input(2);
 
-  /** Resets from the `minCategoryRowCount` arg but stays writable from the toolbar's own number
+  /** @internal not a Storybook control.
+   * Resets from the `minCategoryRowCount` arg but stays writable from the toolbar's own number
    * input — a story-canvas edit, not a Storybook Controls edit. */
   protected readonly minCategoryRowCountValue = linkedSignal(() => this.minCategoryRowCount());
 
+  /** @internal not a Storybook control — story-canvas row source. */
   protected readonly data = signal<DealRow[]>(GROUPING_ROWS_MOCK);
+  /** @internal not a Storybook control — the table instance the template renders. */
   protected readonly table = createTable(
     this.data,
     groupingConfig,
@@ -57,6 +60,7 @@ export class GroupingWhenStoryHostComponent {
     })
   );
 
+  /** @internal not a Storybook control — derived column order for the header row. */
   protected readonly visibleColumns = computed(() =>
     this.table
       .columns()
@@ -64,7 +68,8 @@ export class GroupingWhenStoryHostComponent {
       .sort((a, b) => a.order - b.order)
   );
 
-  /** Rows the pipeline produced that no header claims — the flat runs a rejected cluster leaves
+  /** @internal not a Storybook control.
+   * Rows the pipeline produced that no header claims — the flat runs a rejected cluster leaves
    * behind, counted so the opt-out is legible without counting rows by eye. */
   protected readonly flatRowCount = computed(
     () => this.table.renderRows().filter((row) => row.kind === 'row' && row.depth === 0).length
