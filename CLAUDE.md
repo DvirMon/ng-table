@@ -21,6 +21,6 @@ Acceptance checks on an Angular project cite `nx run <project>:typecheck` (ngc, 
 
 ### Issue tracker
 
-Issues live in GitHub Issues. `/ship` pushes straight to `main` (no PR) — see `docs/agents/issue-tracker.md`.
+Issues live in GitHub Issues. Every change reaches `main` through a PR, one issue = one branch = one PR, rebase-merged — never a direct push, never a merge commit. `/ship` opens the PR with auto-merge on. See `docs/agents/issue-tracker.md#issue-references`.
 
-Commit messages reference issues with trailer lines — `Ships: #N` (completes), `Refs: #N` (partial) — never a GitHub closing keyword (`Closes #N`, `Fixes #N`), which closes the issue at push time, before CI. The `commit-msg` hook and CI reject both mistakes.
+Commits: emoji conventional header plus a `Refs: #N` (or `Refs: none`) trailer; `Closes #N` belongs in the PR body, never a commit. The `.githooks/` hooks and the `pr-conventions` check reject violations.
