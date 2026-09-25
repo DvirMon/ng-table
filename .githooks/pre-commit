@@ -1,0 +1,12 @@
+#!/bin/sh
+# Reject commits on the default branch. Detached HEAD (mid-rebase) is allowed.
+branch=$(git symbolic-ref --short -q HEAD) || exit 0
+default=$(git symbolic-ref --short -q refs/remotes/origin/HEAD 2>/dev/null | sed 's@^origin/@@')
+
+for protected in main master $default; do
+  if [ "$branch" = "$protected" ]; then
+    echo "✋ Commit on '$branch' rejected — the default branch changes only through PRs." >&2
+    echo "   Start a branch: git switch -c <type>/<issue#>-<slug>" >&2
+    exit 1
+  fi
+done
