@@ -17,50 +17,36 @@ Infer the repo from `git remote -v` — `gh` does this automatically when run in
 
 **PRs as a request surface: no.** _(Set to `yes` if this repo treats external PRs as feature requests; `/triage` reads this flag.)_
 
-## Ship mode
+## Issue references
 
-**Direct push to default branch: yes.** This repo pushes straight to `main` instead of going
-through a PR; `/ship` reads this flag.
+Every change reaches `main` through a PR, rebase-merged — no direct pushes, no merge
+commits. Issues close when that PR merges.
 
-`/ship` pushes the current commit(s) straight to `main` — no branch, no PR. The closing
-trailer (below) must already be present in a pushed commit message — `/ship` checks for this
-and stops rather than rewriting commit history if it's missing.
+- **Commits** carry a `Refs: #N` trailer (`Refs: none` when there is no issue; an
+  optional `Epic: #M`). Never a closing keyword (`close[sd]`, `fix(e[sd])`,
+  `resolve[sd]`) and never the retired `Ships:` trailer.
+- **Headers** are emoji conventional: `<emoji> <type>(<scope>): <subject>` — types and
+  emoji in the `atomic-commit` skill.
+- **PR body** carries the closing reference: `Closes #N` for an issue the PR completes,
+  `Refs #N` for one it only partly delivers. Planning PRs (`docs/<slug>`) use
+  `Refs #<epic>` and close nothing.
+- **Branches**: `<type>/<issue#>-<slug>`, or `docs/<slug>` / `chore/<slug>` —
+  `tools/validate-branch-name.mjs`.
 
-## Closing trailer
+Enforced by `tools/commit-trailers.cjs` in three places: the `.githooks/` hooks (enabled by
+`npm install` via the `prepare` script — `commit-msg`, plus `pre-commit`/`pre-push`
+rejecting `main`), and `.github/workflows/pr-conventions.yml` on every PR, which cannot be
+skipped with `--no-verify`.
 
-**Closing trailer: `Ships: #N`.** **Partial trailer: `Refs: #N`.**
-
-Skills that write or check a closing reference (`/implement`, `/ship`, `code-review`) read these
-two values; a repo without this section uses `Closes #N`.
-
-- `Ships: #N` — this commit completes issue N. Several issues: `Ships: #1, #2`.
-- `Refs: #N` — this commit is part of issue N but does not complete it.
-- One trailer per line, the whole line, nothing else on it.
-
-**Never write a GitHub closing keyword** (`close[sd]`, `fix(e[sd])`, `resolve[sd]` before
-`#N`) anywhere in a commit message — not in the subject, not in prose. GitHub acts on those at
-push time, before CI runs. `Ships:` is not a GitHub keyword, so only
-`.github/workflows/close-linked-issue-on-ci-green.yml` closes the issue, once CI passes.
-
-Enforced twice by `tools/commit-trailers.cjs`: the `commit-msg` hook in `.githooks/` (enabled
-by `npm install` via the `prepare` script) and a CI step on every push.
-
-**Check command: `node tools/check-commit-trailers.cjs --range <base>..<head>`.** Exits non-zero
-and prints one line per problem; `/ship` runs it over the commits it is about to push.
-
-- `feat`, `fix`, `refactor`/`ref`, `perf`, `test`, `docs` commits need a `Ships:` or `Refs:`
-  trailer. Other types (`chore`, `ci`, `build`, `style`, `revert`) and merge commits don't.
-- A commit that genuinely has no issue: add `Refs: none`.
+**Check command: `node tools/check-commit-trailers.cjs --range <base>..<head>`**
+(`--title "<PR title>"` for a title). Exits non-zero with one line per problem.
 
 ### Epics
 
-An epic is any issue with native GitHub sub-issues. The same workflow:
-
-- refuses to close an epic named in `Ships:` while it still has open sub-issues, and comments
-  which ones;
-- closes an epic once its last sub-issue closes, unless the epic's own body still has
-  unchecked `- [ ]` boxes — then it comments and adds the `ready-to-close` label instead;
-- reopens an epic it closed itself when one of its sub-issues is reopened.
+An epic is any issue with native GitHub sub-issues. When its last sub-issue closes,
+`.github/workflows/issue-flow.yml` opens an auto-merge PR that archives the epic's workspace
+and carries `Closes #<epic>`. The same workflow comments `Unblocked → /to-tasks #M` on
+issues whose last blocker closed.
 
 ## When a skill says "publish to the issue tracker"
 
