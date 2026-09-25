@@ -68,6 +68,17 @@ export function resolveColumnDefs<TRow>(
   }));
 }
 
+/**
+ * Filters to visible columns and sorts them into render order — the column-side twin of
+ * `renderRows`. Stable sort: ties keep declaration order. Never mutates `columns` or its
+ * elements.
+ */
+export function selectRenderColumns<TRow>(columns: ColumnDef<TRow>[]): ColumnDef<TRow>[] {
+  return columns
+    .filter((column) => column.visible === true)
+    .sort((a, b) => a.order - b.order);
+}
+
 /** Rewrites `order` from the given id list. Columns absent from `ids` keep their current order. */
 export function applyColumnOrder<TRow>(
   columns: ColumnDef<TRow>[],
@@ -109,17 +120,6 @@ export function toggleColumnVisible<TRow>(
 export const VISIBLE: ColumnMetaKey<boolean> = { kind: 'column-meta-key' };
 
 /**
- * Internal metadata key `sortNulls()` (`columns-schema/rules.ts`) writes to — the per-column
- * null-ordering override consumed by `withSorting()`'s `sortRows`. Unlike `VISIBLE`, single-
- * writer: two `sortNulls()` calls on the same column throw at resolve time, so it flows through
- * `foldColumnRules`'s generic `meta` map like any consumer key, with no special case.
- */
-export const SORT_NULLS: ColumnMetaKey<{
-  readonly order?: 'first' | 'last';
-  readonly emptyString?: 'is-empty';
-}> = { kind: 'column-meta-key' };
-
-/**
  * One rule's contribution to the fold: which column and metadata key it targets, and a live
  * signal of its current result. `undefined` means the rule hasn't resolved (e.g. an async rule
  * before first resolution) and contributes nothing.
@@ -141,12 +141,10 @@ export type ColumnRuleRegistry<TRow = unknown> = readonly ColumnRuleEntry<TRow>[
  * both `visible` and consumer metadata, grouped by `(columnId, key)`.
  *
  * @remarks
- * `VISIBLE`-keyed entries on the same column are ANDed together (an
- * undefined result contributes nothing, so the base `visible` stands);
- * every other key is single-writer (enforced by `createColumns`'s
- * `assertMetadataKeysAreUnique`) and lands in `column.meta`. An entry
- * naming an unknown `columnId` is skipped; a column with no registered
- * rules passes through unchanged.
+ * `VISIBLE` entries AND together per column (unresolved contributes
+ * nothing, so base `visible` stands); every other key is single-writer,
+ * landing in `column.meta`. Unknown `columnId`s and ruleless columns pass
+ * through unchanged.
  */
 export function foldColumnRules<TRow>(
   columns: ColumnDef<TRow>[],

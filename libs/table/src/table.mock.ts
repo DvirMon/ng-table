@@ -17,6 +17,7 @@ export function createMockTableStore(): TableStore<unknown> {
     columns: createWritableView<ColumnDef<unknown>[], never>(() => [], () => undefined),
     rows: signal<unknown[]>([]),
     renderRows: signal<RenderRow<unknown>[]>([]),
+    renderColumns: signal<ColumnDef<unknown>[]>([]),
     totalRowCount: signal(0),
     trackBy: () => 'stub-id',
     indexById: signal(new Map<RowId, number>()),
@@ -74,10 +75,10 @@ export interface GroupingMockRow {
   amount: number;
 }
 
-/** Deliberately unequal cluster sizes per (region, category) — `US > Electronics` has 2 rows,
- * every other leaf cluster has 1, so a parent average computed from its children's already-
- * computed averages (125) differs from the true leaf-level average (150) for `region: 'US'`.
- * See with-grouping Step 5 plan, "depth-correctness case." */
+// Unequal cluster sizes per (region, category): `US > Electronics` has 2 rows, every other
+// leaf has 1, so a parent average computed from children's averages (125) differs from the
+// true leaf-level average (150) for `region: 'US'`. See with-grouping Step 5 plan,
+// "depth-correctness case."
 export const mockGroupingRows: GroupingMockRow[] = [
   { id: 1, region: 'US', category: 'Electronics', amount: 100 },
   { id: 2, region: 'US', category: 'Electronics', amount: 300 },
@@ -95,9 +96,9 @@ export interface GroupWhenMockRow {
   amount: number;
 }
 
-/** Two US rows, one EU, one `null` region, one `undefined` region — the two JS "blank"
- * representations coexist so a `when` predicate can be exercised against both without two
- * separate fixtures. See `withGrouping()`'s `when` tests. */
+// Two US rows, one EU, one `null` region, one `undefined` region — both JS "blank" values
+// coexist so a `when` predicate can be tested against each without two fixtures. See
+// `withGrouping()`'s `when` tests.
 export const mockGroupWhenRows: GroupWhenMockRow[] = [
   { id: 1, region: 'US', amount: 100 },
   { id: 2, region: 'US', amount: 300 },
@@ -114,8 +115,8 @@ export interface RepMockRow {
   rep: string;
 }
 
-/** Two-level (region → rep) fixture for `withGrouping()`'s `when`-predicate Q1 test — a null-region row must escape the
- * grouping tree entirely rather than re-clustering under a `rep` header. */
+// Two-level (region -> rep) fixture for `withGrouping()`'s `when`-predicate Q1 test: a
+// null-region row must escape the tree entirely, not re-cluster under a `rep` header.
 export const mockRepRows: RepMockRow[] = [
   { id: 1, region: 'US', rep: 'Alice' },
   { id: 2, region: 'US', rep: 'Bob' },
@@ -124,17 +125,18 @@ export const mockRepRows: RepMockRow[] = [
 
 export const mockRepTrackBy: TrackByFn<RepMockRow> = (row) => row.id;
 
-/** Mirrors `engine/core.ts`'s `indexById` derivation, for the mock stores below — they don't
- * compose the real engine, so they build the map by hand off their own `data` signal. */
+// Mirrors `engine/core.ts`'s `indexById` derivation for the mock stores below, which don't
+// compose the real engine and build the map by hand off their own `data` signal.
 function mockIndexById<TRow>(rows: TRow[], trackBy: TrackByFn<TRow>): ReadonlyMap<RowId, number> {
   const map = new Map<RowId, number>();
   rows.forEach((row, index) => map.set(trackBy(row), index));
   return map;
 }
 
+// See docs/decisions/row-editing.md (D30) for the updater-through-`value` contract.
 /**
  * Minimal store stub carrying a real writable `value` view, for testing updater factories
- * through `table.value.update(...)` (D30) — not a full `composeTable()` instance.
+ * through `table.value.update(...)` — not a full `composeTable()` instance.
  */
 export function createMockTableStoreWithData<TRow>(
   rows: TRow[],
@@ -146,6 +148,7 @@ export function createMockTableStoreWithData<TRow>(
     columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
+    renderColumns: signal<ColumnDef<TRow>[]>([]),
     totalRowCount: signal(rows.length),
     indexById,
     trackBy,
@@ -192,6 +195,7 @@ export function createMockTableStoreWithEditing<TRow>(
     columns: createWritableView<ColumnDef<TRow>[], never>(() => [], () => undefined),
     rows: signal<TRow[]>(rows),
     renderRows: signal<RenderRow<TRow>[]>([]),
+    renderColumns: signal<ColumnDef<TRow>[]>([]),
     totalRowCount: signal(rows.length),
     indexById,
     trackBy,

@@ -74,10 +74,6 @@ export interface ColumnDef<TRow = unknown, TId extends string = string> {
   order: number;
   label: string;
 
-  // Feature-contributed fields, populated when the corresponding feature is registered.
-  sortFn?: (a: TRow, b: TRow) => number;
-  enableSorting?: boolean;
-
   /** Consumer-registered side-channel data, keyed by `ColumnMetaKey<T>` identity; never read
    * by the engine. Read via `readColumnMeta()`, written via `metadata()`. */
   meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
@@ -252,6 +248,8 @@ export interface TableStore<TRow, TValues extends ColumnValueMap = ColumnValueMa
   >;
   readonly rows: Signal<TRow[]>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
+  /** The visible columns of `columns()`, in render order. */
+  readonly renderColumns: Signal<ColumnDef<TRow, ColumnIdIn<TValues>>[]>;
   readonly trackBy: TrackByFn<TRow>;
 
   /** Maps a row's trackBy id to its position in `data()`; read-only. Feeds `RowUpdater` ctx

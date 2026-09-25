@@ -44,6 +44,8 @@ export interface TableCore<TRow, TValues extends ColumnValueMap = ColumnValueMap
   readonly rows: Signal<TRow[]>;
   /** The render-layer output every render stage chain produced, `index`/`sourceIndex` already stamped. */
   readonly renderRows: Signal<RenderRow<TRow>[]>;
+  /** The visible columns of `columns`, in render order. */
+  readonly renderColumns: Signal<ColumnDef<TRow, ColumnIdIn<TValues>>[]>;
   readonly trackBy: TrackByFn<TRow>;
   /** Maps a row's trackBy id to its position in `data()`. Feeds the removal-reconciliation diff. */
   readonly indexById: Signal<ReadonlyMap<RowId, number>>;
@@ -78,10 +80,10 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
    */
   renderStages?: RenderStages<TRow>;
 
+  // Accumulates rather than single-claim; why: docs/adr/0012-split-expansion-into-panel-and-tree.md.
   /**
-   * Ids this feature currently considers expanded, exposed read-only for `flattenVisible`.
-   * This slot accumulates by design rather than single-claim — `withTree()` is its only
-   * contributor today. See ADR-0012.
+   * Ids this feature considers expanded, exposed read-only for `flattenVisible`. Accumulates
+   * by design — `withTree()` is its only contributor today.
    */
   expandedRows?: Signal<ReadonlySet<RowId>>;
 
@@ -108,9 +110,10 @@ export type Shape = { rows: Signal<readonly unknown[]> };
 export type RowOf<S> = S extends { rows: Signal<readonly (infer R)[]> } ? R : never;
 
 /** Recovers the declared column-id union from a store shape, mirroring `RowOf`. Falls back to
- * `string` when the shape has no `columns` member — a test double, or `Shape` itself (ADR-0019). */
-// Both `any`s are `infer`/wildcard slots, not `unknown`: `Updater`'s contravariant `columns`
-// param and `ColumnDef`'s contravariant `accessor` param both reject `unknown` in this position.
+ * `string` when the shape has no `columns` member — a test double, or `Shape` itself. */
+// Both `any`s are infer/wildcard slots, not `unknown`: `Updater`'s contravariant `columns` param
+// and `ColumnDef`'s contravariant `accessor` param both reject `unknown` here. `Shape` fallback:
+// docs/adr/0019-columns-path-keyed-by-declared-column-ids.md.
 export type ColumnIdOf<S> = S extends {
   columns: WritableView<ColumnDef<any, infer I>[], any>;
 }

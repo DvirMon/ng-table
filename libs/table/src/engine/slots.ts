@@ -25,6 +25,7 @@ export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
   'trackBy',
   'value',
   'renderRows',
+  'renderColumns',
   'indexById',
   '__columnValues',
 ]);
@@ -51,11 +52,9 @@ export function describeInnerFeature(position: number, displayName?: string): st
   return displayName ? `${base} (${displayName})` : base;
 }
 
-/**
- * Tracks which feature claimed each single-occupancy slot, so a collision can name both sides.
- * Under the previous `@ngrx/signals` engine features injected behavior by mutating a shared
- * slot, and a second claimant silently won by array order.
- */
+/** Tracks which feature claimed each single-occupancy slot, so a collision can name both sides. */
+// docs/adr/0003-in-house-table-store-engine.md: the prior engine let a second claimant
+// silently win by array order.
 export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
   private readonly ownerByRenderStage = new Map<RenderStage, string>();

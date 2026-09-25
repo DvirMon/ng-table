@@ -17,9 +17,9 @@ interface FeatureHooks {
 export type InternalFeature<TRow> = (core: TableCore<TRow>) => TableFeatureSpec<TRow>;
 
 /**
- * A feature paired with the claimant label its collision messages use, and a thunk that
- * already knows which argument to call it with. Pre-binding here is what lets `foldFeatures`
- * run one loop body for both consumer and internal features instead of branching on kind.
+ * A feature paired with its collision-message label and a thunk pre-bound to its call
+ * argument — lets `foldFeatures` run one loop body for both consumer and internal features,
+ * no branching on kind.
  */
 interface LabeledFeature<TRow> {
   readonly run: () => TableFeatureSpec<TRow>;
@@ -66,17 +66,19 @@ function createBaseStore<TRow>(
     trackBy: handle.core.trackBy,
     value: handle.core.value,
     renderRows: handle.renderRows,
+    renderColumns: handle.renderColumns,
     totalRowCount,
     indexById: handle.core.indexById,
   };
 }
 
 /**
- * Calls every feature's pre-bound thunk in array order, registering what each one declares.
- * Members are merged into `store` as they arrive, which is what makes the feature-to-feature
- * seam order-dependent at factory time and complete afterwards: `store` is one shared
- * reference, so a feature that captures it and reads lazily (a method, a `computed()`, a
- * stage) sees every later feature too, not just the ones folded so far.
+ * Calls every feature's pre-bound thunk in array order and registers what each declares.
+ *
+ * @remarks
+ * Members merge into `store` as they arrive — order-dependent at factory time, complete
+ * afterwards. `store` is one shared reference, so a feature reading it lazily (a method,
+ * `computed()`, a stage) sees every later feature too.
  */
 function foldFeatures<TRow>(
   features: readonly LabeledFeature<TRow>[],
@@ -142,16 +144,13 @@ function foldFeatures<TRow>(
 }
 
 /**
- * Composes the table's state layer from a core config plus an ordered feature list, and
- * returns a live store **instance** — no class, no DI token. Features declare what they
- * contribute (`members`, `stages`, `renderStages`, hooks); this function is the only place
- * that wires those declarations together.
+ * Composes the table's state layer from a core config and an ordered feature list into a
+ * live store instance — no class, no DI token.
  *
- * `internalFeatures` are engine-supplied (e.g. the column-schema wiring) and fold first, so a
- * consumer feature's position in `features` is what its collision messages name.
- *
- * Must run inside an Angular injection context: `setup` hooks create `effect()` /
- * `resource()`, and `onDestroy` hooks register on the ambient `DestroyRef`.
+ * @remarks
+ * `internalFeatures` fold first, so a consumer feature's position in `features` is what
+ * collision messages name. Must run inside an Angular injection context — `setup` hooks
+ * create `effect()`/`resource()`, `onDestroy` hooks register on the ambient `DestroyRef`.
  */
 export function composeTable<TRow>(
   config: TableEngineConfig<TRow>,

@@ -8,6 +8,7 @@ import { composeFeatures } from './features/compose-features';
 import { withComputed } from './features/with-computed';
 import { columnSchema } from '../columns-schema/schema';
 import { visible } from '../columns-schema/rules';
+import { reorderColumns, setColumns, toggleColumnVisibility } from '../mutations/update-columns';
 import type { ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
 import type { Feature, RowOf, Shape } from '../engine/types';
 import { noData } from '../table.mock';
@@ -45,6 +46,20 @@ function makeColumnSet(
   schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>
 ) {
   return createColumns(data, (col) => [col('name'), col('status')], schema);
+}
+
+// A third, hidden column with explicit `order` — lets the `renderColumns()` tests below
+// distinguish "excluded because hidden" from "excluded because absent", and assert render
+// order against a value that isn't just declaration order.
+// `col()`'s `Presentation` options carry no `order` — order defaults to declaration index
+// (`resolveColumnDefs`). Declaring the hidden column first still lets "in render order" assert
+// something beyond alphabetical/id order: `name` (index 1) then `id` (index 2).
+function makeRenderColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
+  return createColumns(noData<Row>(), (col) => [
+    col('status', { visible: false }),
+    col('name'),
+    col('id'),
+  ]);
 }
 
 // Builds a live store instance the same way a component field does — inside an injection
@@ -339,6 +354,88 @@ describe('createTable', () => {
     expect(Object.keys(withInert).sort()).toEqual(
       Object.keys(withoutInert).sort()
     );
+  });
+
+  describe('renderColumns', () => {
+    it('excludes hidden columns', () => {
+      const store = makeStore(makeRenderColumns());
+
+      expect(store.renderColumns().map((column) => column.id)).not.toContain('status');
+    });
+
+    it('is in render order', () => {
+      const store = makeStore(makeRenderColumns());
+
+      expect(store.renderColumns().map((column) => column.id)).toEqual(['name', 'id']);
+    });
+
+    it('updates after toggleColumnVisibility', () => {
+      const store = makeStore();
+
+      expect(store.renderColumns().map((column) => column.id)).toContain('name');
+
+      store.columns.update(toggleColumnVisibility('name'));
+
+      expect(store.renderColumns().map((column) => column.id)).not.toContain('name');
+    });
+
+    it('updates after reorderColumns', () => {
+      const store = makeStore();
+
+      expect(store.renderColumns().map((column) => column.id)).toEqual(['name', 'status']);
+
+      store.columns.update(reorderColumns(['status', 'name']));
+
+      expect(store.renderColumns().map((column) => column.id)).toEqual(['status', 'name']);
+    });
+
+    it('updates after setColumns()', () => {
+      const store = makeStore();
+
+      store.columns.update(setColumns([{ id: 'name' }]));
+
+      expect(store.renderColumns().map((column) => column.id)).toEqual(['name']);
+    });
+
+    it('updates after a visible() schema rule changes', () => {
+      const role = signal<'admin' | 'guest'>('guest');
+      const data = signal<Row[]>([]);
+      const store = TestBed.runInInjectionContext(() =>
+        createTable(data, {
+          trackBy: 'id',
+          columns: makeColumnSet(data, (path) => {
+            visible(path.status, { when: () => role() === 'admin' });
+          }),
+        })
+      );
+
+      expect(store.renderColumns().map((column) => column.id)).not.toContain('status');
+
+      role.set('admin');
+      TestBed.tick();
+
+      expect(store.renderColumns().map((column) => column.id)).toContain('status');
+    });
+
+    it('never reorders columns() when read', () => {
+      const store = makeStore(makeRenderColumns());
+      const before = store.columns().map((column) => column.id);
+
+      store.renderColumns();
+
+      expect(store.columns().map((column) => column.id)).toEqual(before);
+    });
+
+    it('each element is the same columns() element (same id/label)', () => {
+      const store = makeStore(makeRenderColumns());
+      const columnsById = new Map(store.columns().map((column) => [column.id, column]));
+
+      for (const column of store.renderColumns()) {
+        const match = columnsById.get(column.id);
+        expect(match).toBeDefined();
+        expect(column.label).toBe(match?.label);
+      }
+    });
   });
 
   // ---------------------------------------------------------------------------------------

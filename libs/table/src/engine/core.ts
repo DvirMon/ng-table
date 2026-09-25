@@ -1,7 +1,12 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { ColumnDef, RenderRow, RowId } from '../api/types';
 import { buildDataCells, buildGroupCells } from './cells';
-import { foldColumnRules, resolveColumnDefs, type ColumnRuleEntry } from './columns';
+import {
+  foldColumnRules,
+  resolveColumnDefs,
+  selectRenderColumns,
+  type ColumnRuleEntry,
+} from './columns';
 import { flattenVisible } from './flatten';
 import { runPipeline, type PipelineStages } from './pipeline';
 import { runRenderStages, type RenderStages } from './render-stages';
@@ -10,14 +15,14 @@ import type { TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
 
 /**
- * What `composeTable()` gets back from core construction. `stages`, `renderStages`, and
- * `columnRules` are handed out as mutable registries rather than store members — the
- * `rows` / `renderRows` / `columns` computeds read them at *evaluation* time, so features
- * registering during the fold are visible by the time a consumer first reads any of them.
+ * `composeTable()`'s return from core construction. `stages`, `renderStages` and
+ * `columnRules` are mutable registries read at evaluation time, so a feature registering
+ * mid-fold is visible before any consumer reads them.
  */
 export interface TableCoreHandle<TRow> {
   readonly core: TableCore<TRow>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
+  readonly renderColumns: Signal<ColumnDef<TRow>[]>;
   readonly stages: PipelineStages<TRow>;
   readonly renderStages: RenderStages<TRow>;
   readonly columnRules: ColumnRuleEntry<TRow>[];
@@ -42,6 +47,7 @@ export function createTableCore<TRow>(
   );
   const columnRules: ColumnRuleEntry<TRow>[] = [];
   const columns = computed(() => foldColumnRules(baseColumns(), columnRules));
+  const renderColumns = computed(() => selectRenderColumns(columns()));
 
   const stages: PipelineStages<TRow> = {};
   const renderStages: RenderStages<TRow> = {};
@@ -114,6 +120,7 @@ export function createTableCore<TRow>(
     baseColumns: baseColumns.asReadonly(),
     rows,
     renderRows,
+    renderColumns,
     trackBy,
     indexById,
     value: createWritableView(
@@ -126,6 +133,7 @@ export function createTableCore<TRow>(
   return {
     core,
     renderRows,
+    renderColumns,
     stages,
     renderStages,
     columnRules,

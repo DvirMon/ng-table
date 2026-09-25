@@ -73,15 +73,13 @@ interface ColumnDef<TRow = unknown> {
   accessor: (row: TRow) => unknown;   // function only — no string shorthand
   visible: boolean;                    // mutated by toggleColumnVisibility()
   order: number;                       // mutated by reorderColumns()
+  label: string;
+  meta?: ReadonlyMap<ColumnMetaKey<unknown>, unknown>;
 
-  // Feature-contributed fields (populated when the relevant feature is registered)
-  sortFn?: (a: TRow, b: TRow) => number;
-  enableSorting?: boolean;             // default true
-  filterFn?: (value: unknown, filterValue: unknown) => boolean;
-  enableFiltering?: boolean;           // default true
-
-  // `aggregateFn` no longer lives here — it moved to `aggregate(path.x, aggregateFn)`,
-  // declared through `withGrouping({ schema })` (#114). See `features/grouping.md`.
+  // No feature-contributed fields — as of #100, `ColumnDef` carries no per-feature config at
+  // all. `sortFn`/`enableSorting` moved to `withSorting({ schema })` (`sortFn`/`sortable`);
+  // `aggregateFn` moved to `aggregate(path.x, aggregateFn)` via `withGrouping({ schema })` (#114).
+  // See `features/sorting.md` and `features/grouping.md`.
 }
 ```
 
@@ -94,7 +92,7 @@ at resolution, so `store.columns()` is always the full `ColumnDef` above:
 type ColumnDefInput<TRow> = Pick<ColumnDef<TRow>, 'id'> & Partial<Omit<ColumnDef<TRow>, 'id'>>;
 ```
 
-**Rejected alternative:** separate `columns[]` + `columnOrder[]` + `columnVisibility{}` slices — would have preserved "reset to default" capability, but that was explicitly ruled out as unneeded. Single-source-of-truth on the def itself was chosen for simplicity.
+**Rejected alternative:** separate `columns[]` + `columnOrder[]` + `columnVisibility{}` slices — would have preserved "reset to default," ruled out as unneeded. Single-source-of-truth on the def itself was chosen for simplicity.
 
 ## Methods
 
@@ -105,7 +103,7 @@ type ColumnDefInput<TRow> = Pick<ColumnDef<TRow>, 'id'> & Partial<Omit<ColumnDef
 | `reorderColumns(ids: string[])` | Re-assign `order` per the given id sequence |
 | `toggleColumnVisibility(id: string)` | Flip a column's `visible` flag |
 
-Columns are runtime-mutable — this was a deliberate choice over static/immutable columns.
+Columns are runtime-mutable — a deliberate choice over static/immutable columns.
 
 **`setColumns()` resets column order until #128 lands.** `setColumns()` cannot write `order` —
 it derives purely from array position, the same as initial `columns` registration — so every
@@ -118,6 +116,31 @@ ordered-id state.
 ```ts
 table.columns.update(setColumns([{ id: 'name' }, { id: 'status', visible: false }]));
 table.columns.update(reorderColumns(draggedColumnIds)); // re-apply the user's order
+```
+
+## `renderColumns` — the render-ready projection
+
+`table.renderColumns()` is a read-only `Signal<ColumnDef[]>` holding the *visible* columns in
+*render order* — the column-side twin of `renderRows` ([#142](https://github.com/DvirMon/ng-table/issues/142)). `store.columns()` stays
+unfiltered/unsorted (declaration order, every column including hidden ones); `renderColumns()` is
+what a template loop should actually iterate.
+
+- Excludes every column with `visible: false` (including one hidden by a `visible()`/`visibleAsync()`
+  schema rule).
+- Sorted into render order; columns tied on order keep their declaration order (stable).
+- Updates automatically after `toggleColumnVisibility`, `reorderColumns`, `setColumns()`, or a
+  `visible()`/`visibleAsync()` schema rule changing — it's a `computed` over the same folded
+  `columns()` those all write through.
+- Reading it never mutates or reorders `store.columns()` — the sort runs on a fresh array.
+- Each element is the same `ColumnDef` `columns()` returns (same `id`/`label`); `id` is typed as
+  the declared id union, same as `columns()`.
+- Engine-claimed, non-overridable core member (`CORE_MEMBER_KEYS`, ADR-0007) — a feature declaring
+  `renderColumns` throws at construction.
+
+```ts
+@for (col of table.renderColumns(); track col.id) {
+  <th [ngpTableColumn]="col.id">{{ col.label }}</th>
+}
 ```
 
 ## Declarative Column Schemas — `createColumns`'s schema argument
@@ -136,9 +159,9 @@ Two patterns, depending on whether `createColumns`'s schema argument is used:
 **Pattern A (default, always available)** — reactivity to async sources (e.g. a permission check
 resolving from an HTTP call) belongs in the **consumer**, not the store. The store does not accept
 a reactive/async `columns` input — columns remain plain, store-mutation-based state (see
-Executive Summary above). The recommended pattern is
-an `effect()` in the consuming component that reacts to an async source (e.g. Angular `resource()`)
-and calls `updateColumns()`:
+Executive Summary above). Recommended pattern:
+an `effect()` in the consuming component reacting to an async source (e.g. Angular `resource()`)
+that calls `updateColumns()`:
 
 ```ts
 const permission = resource({ loader: () => checkColumnPermission() });
@@ -165,8 +188,7 @@ to the consumer-owns-reactivity default above). See
 `accessor: (row) => value` is **optional, function-only** on `col()`'s declared input —
 defaults to `(row) => row[id]`. Most columns are a straight key read and need no explicit accessor;
 supply one only for computed/derived values (`fullName`, a formatted price, a nested path). Still no
-string-key shorthand (unlike `trackBy`) — an explicit accessor, when provided, is always a function.
-The resolved `ColumnDef` (`store.columns()`) always has `accessor` populated, default or explicit.
+string-key shorthand, unlike `trackBy`. The resolved `ColumnDef` (`store.columns()`) always has `accessor` populated, default or explicit.
 
 `accessor` is the write side of a column's value; `store.renderRows()[i].cells[columnId]` is the
 read side — the resolved value, stamped centrally per render row. A `kind: 'group'` row's `cells`
@@ -179,12 +201,14 @@ and [ADR-0022](../adr/0022-render-row-cell-values.md).
 
 Other features read `columns` directly rather than declaring a compile-time feature dependency on it (since it's core config, always present, not an optional feature):
 
-- `withSorting()` — reads `sortFn`, `enableSorting`
+- `withSorting()` — reads `accessor`/`id` (ADR-0024); `sortFn`/`sortable`/`sortNulls` are declared
+  through `withSorting({ schema })`'s own declarators, not read off the column (#100)
 - `withGrouping()` — reads `accessor` (ADR-0024); `aggregateFn` is declared through
   `withGrouping({ schema })`'s own `aggregate`, not read off the column (#114)
-- `withFiltering()` — reads `filterFn`, `enableFiltering`
+- `withFiltering()` — reads `accessor`; filter predicates are consumer-owned, outside the table
+  (ADR-0016) — `filterFn`/`enableFiltering` never existed on `ColumnDef`
 
-> **Note (retroactive fix):** Earlier drafts described `withSorting()`/`withGrouping()` as having a "compile-time dependency on `withColumns()`." Since `columns` was subsequently decided to be core config rather than an opt-in feature, this has been corrected — those features simply read the core `columns` config; there is no feature dependency to declare.
+> **Note (retroactive fix):** Earlier drafts described `withSorting()`/`withGrouping()` as having a "compile-time dependency on `withColumns()`." Since `columns` is core config, not an opt-in feature, this is corrected: those features read the core `columns` config directly — there is no feature dependency to declare.
 
 ## Open Questions
 

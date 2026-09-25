@@ -71,12 +71,13 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
 | `api/create-columns.ts` | `createColumns(data, build, schema?)` — declares a table's columns, and optionally their column-schema rules, in one call. `build` returns `ColumnDecl[]` via the `col()`/`col.from()` builder; the result is a `ColumnSet`. Runs the construction-time checks (`assertUniqueColumnIds`, `assertRuleColumnIdsAreKnown`, `assertMetadataKeysAreUnique`), each dev-gated in its own body. A curried `createColumns<TRow>()([...])` overload survives only for existing callers — "do not add new callers" |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
-| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withTree()`, `withSelection()`, `withGrouping()`, `withFiltering()`, `withOptimistic()`, `withRowEdit()`, `withComputed()`. One file each |
+| `api/features/with-*.ts` | Feature plugins: `withExpansion()`, `withTree()`, `withOptimistic()`, `withRowEdit()`, `withComputed()`. One file each. `withSorting()`, `withGrouping()`, `withFiltering()`, `withSelection()` each live in their own `with-*/` folder instead — see those rows below |
+| `api/features/with-sorting/` | `feature.ts` (declare — `withSorting()`), `schema.ts` (the three declarators — `sortNulls`, `sortFn`, `sortable` — plus the `sortingSchema<Row>(fn)` reuse helper), public `types.ts`. Its own `index.ts` re-exports only `feature.ts` — a resolution convenience, not a second barrel |
 | `api/features/with-computed.ts` | `withComputed(block)` — library-declared derived state as a feature. The block is validated at construction (it must return signals; a throw while declaring throws) and every returned signal is rewrapped to report its member key and rethrow at evaluation (ADR-0014). Both checks live here, never in the fold |
 | `api/features/compose-features.ts` | `composeFeatures(...features)` — collapses N features into one `createTable()` slot, the arity escape hatch. Inner features fold against a per-composite `SlotRegistry` and merge into one spec; collisions are labelled `composeFeatures inner feature N` |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `op`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, each building its own instance. Composing both explicitly is a duplicate `editing` member claim and throws (ADR-0007), in either argument order |
 | `columns-schema/schema.ts` | `columnSchema()` and the `ColumnsPath` proxy (`buildColumnsPath()`). Reaches consumers through `createColumns()`'s `schema` argument — `columnSchema()` is the standalone reuse form, an inline `(path) => void` compiles through the same `runColumnsSchemaFn()` |
-| `columns-schema/rules.ts` | `visible()` / `visibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged. `sortNulls()` lives here too, writing the unexported `SORT_NULLS` key — G69 (`docs/decisions/grouping.md`) proposes moving it to `withSorting()`'s own schema, accepted but unbuilt |
+| `columns-schema/rules.ts` | `visible()` / `visibleAsync()` — convenience wrappers over `metadata()`/internal `metadataAsync()` targeting the unexported `VISIBLE` key (`engine/columns.ts`); public signatures unchanged |
 | `columns-schema/metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
 | `columns-schema/types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
 | `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
@@ -132,13 +133,14 @@ for **`api/features/with-filtering/types.ts` ↔ `engine/filters/types.ts`**: `F
 
 - **Type narrowing:** Use `as const` on discriminators (`data-row-kind: 'header' | 'body' as const`); never use bare `as` assertions. Type guards preferred over assertions.
 
-- **`when` vs `enable` on a rule's predicates** ([ADR-0018](docs/adr/0018-when-vs-enable-predicate-naming.md)):
-  `when` is the default name for any dynamically-toggled conditional, data- or state-driven alike.
-  `enable` is reserved for the narrow case where one rule object must carry two orthogonal
-  predicates — one data-driven, one external-state-driven — that cannot share a name; there, the
-  external-state one becomes `enable` and `when` is freed for the data-driven one (grouping's
-  `grouping({ enable?, when })` is the only feature with this shape today — `enable` is
-  optional; a rule with no activation opinion omits it rather than abstaining the whole set).
+- **`when` vs `enable` on a rule's predicates** ([ADR-0018](docs/adr/0018-when-vs-enable-predicate-naming.md),
+  amended 2026-09-25 for #100): `when` is the default name for a data-driven conditional — one
+  that reads row/cluster data. `enable` names a gate that reads no row data — it does not require
+  a paired `when` on the same rule. Two shapes exist today: grouping's `grouping({ enable?, when
+  })` carries both orthogonal predicates on one rule (the original narrow case — `enable` is
+  optional there; a rule with no activation opinion omits it rather than abstaining the whole
+  set), and sorting's `sortable({ enable })` carries `enable` alone, with no `when` counterpart at
+  all — sortability has no data-driven admission concept to disambiguate from.
 
 - **Errors: throw at construction, degrade at runtime** ([ADR-0014](docs/adr/0014-runtime-error-policy.md)).
   Wiring errors — slot/member collisions, duplicate registration, a `trackBy` naming no field —
@@ -316,7 +318,7 @@ Rules:
 - The factory's single parameter is the store itself, and the feature-to-feature seam: the core
   members plus earlier features' members at factory time, all features' members when read later
   (the store is one shared reference, so a deferred read sees every later feature). Core members
-  (`columns`, `rows`, `trackBy`, `value`, `renderRows`, `indexById`, `totalRowCount`) are
+  (`columns`, `rows`, `trackBy`, `value`, `renderRows`, `renderColumns`, `indexById`, `totalRowCount`) are
   concrete before the fold starts, so a factory may read them. All but `totalRowCount` are
   claimed by the engine — declaring one in `members` throws (ADR-0005 keeps `totalRowCount`
   overridable for virtualization/pagination). The two editing features are each built on their own

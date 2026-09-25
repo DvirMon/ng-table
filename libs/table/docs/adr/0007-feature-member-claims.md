@@ -92,9 +92,9 @@ extended the claim mechanism in three ways a feature author hits directly.
 
 **The engine pre-claims its own core members.** `composeTable()` builds the base store before the
 fold and calls `registry.claimCoreMembers()` first, so `columns`, `rows`, `trackBy`, `value`,
-`renderRows` and `indexById` (`CORE_MEMBER_KEYS`, `engine/slots.ts`) are already claimed under the
-owner name `core` when the first feature runs. A feature declaring one collides at construction
-like any other member clash instead of silently shadowing the engine's own:
+`renderRows`, `renderColumns` and `indexById` (`CORE_MEMBER_KEYS`, `engine/slots.ts`) are already
+claimed under the owner name `core` when the first feature runs. A feature declaring one collides
+at construction like any other member clash instead of silently shadowing the engine's own:
 
 ```
 [createTable] core and feature 2 (withSelection) both provide the "rows" store member. Only one feature may provide each member.

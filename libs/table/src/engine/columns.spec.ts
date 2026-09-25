@@ -6,6 +6,7 @@ import {
   applyColumnOrder,
   foldColumnRules,
   resolveColumnDefs,
+  selectRenderColumns,
   setColumnVisible,
   toggleColumnVisible,
   VISIBLE,
@@ -151,6 +152,45 @@ describe('column visibility', () => {
 
   it('is a no-op for an unknown id', () => {
     expect(toggleColumnVisible(columns, 'nope')).toEqual(columns);
+  });
+});
+
+describe('selectRenderColumns', () => {
+  it('returns [] when every column is hidden', () => {
+    const columns = resolveColumnDefs<Person>(
+      [{ id: 'id', visible: false }, { id: 'name', visible: false }],
+      'createTable'
+    );
+
+    expect(selectRenderColumns(columns)).toEqual([]);
+  });
+
+  it('keeps declaration order for columns with equal order (stable sort)', () => {
+    const columns = resolveColumnDefs<Person>(
+      [{ id: 'id', order: 0 }, { id: 'name', order: 0 }],
+      'createTable'
+    );
+
+    expect(selectRenderColumns(columns).map((column) => column.id)).toEqual([
+      'id',
+      'name',
+    ]);
+  });
+
+  it('does not mutate the input array or its elements', () => {
+    const columns = resolveColumnDefs<Person>(
+      [{ id: 'id', order: 1 }, { id: 'name', order: 0 }],
+      'createTable'
+    );
+    const snapshot = [...columns];
+    const elements = columns.slice();
+
+    selectRenderColumns(columns);
+
+    expect(columns).toEqual(snapshot);
+    columns.forEach((column, index) => {
+      expect(column).toBe(elements[index]);
+    });
   });
 });
 

@@ -39,13 +39,17 @@ createTable(
     trackBy: 'id',
     columns: createColumns(data, (col) => [
       col('name'),                                        // accessor/visible/order defaulted
-      col('status', { enableSorting: true }),
+      col('status'),
       col('fullName', { accessor: (row) => `${row.first} ${row.last}` }),
     ]),
   },
-  withSorting(),
+  withSorting({ schema: (path) => sortable(path.status, { enable: () => false }) }),
 );
 ```
+
+Per-column sorting config (`sortNulls`/`sortFn`/`sortable`) is never a `col()` option — it's
+declared through `withSorting({ schema })`, not `ColumnDef` at all (#100). `col()`'s `opts` only
+ever types `accessor`/`visible`/`order`/`label`.
 
 An opt-in declarative layer, the schema argument of `createColumns`, can drive `visible`
 reactively on top of this config (`visible(path.status, { when: … })`) — see
@@ -58,12 +62,12 @@ entirely, see [columns.md COL4](../../decisions/columns.md).)
 
 | Owned by | Examples | Overridable from template? |
 |---|---|---|
-| Store (logical — drives behavior) | `id`, `accessor`, `visible`, `order`, `sortFn`, `enableSorting`, `filterFn`, `enableFiltering` | No |
+| Store (logical — drives behavior) | `id`, `accessor`, `visible`, `order`, `label`, `meta` — `ColumnDef` carries no per-feature config at all (#100); sorting/filtering/grouping behavior is declared through each feature's own `schema` | No |
 | Directive (presentation — drives appearance only) | `width`, header label / custom header + cell templates | Yes, local only |
 
 **Rule of thumb:** if a property affects *what data flows through the pipeline or how it's computed*, it's store-owned with no override. If it only affects *how something looks/renders in this particular template usage*, it's a directive-local input.
 
-Note the current `ColumnDef` carries **no presentation fields at all** — no `width`, no `label`. So today every presentation property is directive-only, with no store-side fallback to fall back *to*; the "store's copy is an unused default" framing from v0.1 describes fields that were never implemented. See Open Questions.
+Note the current `ColumnDef` carries **no presentation fields at all** — no `width`, no `label`. So today every presentation property is directive-only, with no store-side fallback; the "store's copy is an unused default" framing from v0.1 describes fields that were never implemented. See Open Questions.
 
 ```ts
 @Directive({ selector: '[ngpTableColumn]' })
@@ -98,21 +102,13 @@ Columns are rendered via native `@for` over the store's columns, per `overview.m
 
 The consumer's own template holds the `createTable()` instance directly (it's a component field), so it reads `table.columns()` — it does not go through `NGP_TABLE_STORE`; that token exists for *directives* nested inside the table (see `core.md`).
 
-**`store.columns()` is unfiltered and unsorted** — it holds every column in author order, including `visible: false` ones. Presentation order and visibility are the template's job:
-
-```ts
-protected readonly visibleColumns = computed(() =>
-  this.table.columns()
-    .filter((col) => col.visible)
-    .sort((a, b) => a.order - b.order)
-);
-```
+**`store.columns()` is unfiltered and unsorted** — it holds every column in author order, including `visible: false` ones. Presentation order and visibility are the store's job, not the template's: `table.renderColumns()` is the visible columns in render order, the column-side twin of `renderRows` ([#142](https://github.com/DvirMon/ng-table/issues/142)). A template renders straight from it — no filter, no sort:
 
 ```html
 <table [ngpTable]="table">
   <thead>
     <tr>   <!-- header row carries no ngpTableRow — it has no RenderRow, see core.md -->
-      @for (col of visibleColumns(); track col.id) {
+      @for (col of table.renderColumns(); track col.id) {
         <th [ngpTableColumn]="col.id">…</th>
       }
     </tr>
@@ -120,10 +116,12 @@ protected readonly visibleColumns = computed(() =>
 </table>
 ```
 
+`table.columns()` stays useful on its own — declaration-order, unfiltered — for anything that needs every column regardless of visibility (a column-visibility settings panel, say). Per the signal-plumbing convention, a component either calls `table.renderColumns()` directly in its template or wraps it in its own `computed()` to shape it further (e.g. hiding/reordering grouped columns); it never assigns the signal reference to a field.
+
 ---
 
 ## Open Questions
 
 - [ ] Custom header/cell template mechanism (`ngpColumnHeader`-style `@ContentChild`) shown above as illustrative — exact API (input vs. structural template ref, naming) not yet finalized.
 - [ ] **Presentation fields on `ColumnDef`** — `width` and a header `label` are referenced throughout this file but exist nowhere in `api/types.ts`. Decide: keep presentation strictly directive-local (status quo, template must supply labels itself), or add optional presentation fields to `ColumnDefInput` so a column can carry its own default label/width. Blocks `resizing.md`, which needs to know whether `[ngpColumnWidth]` overrides a store value or *is* the only value.
-- [ ] **Should the DS ship the visible/order derivation?** Every consumer writing the same `filter(visible).sort(order)` computed is a papercut; a store-side `visibleColumns` computed or a UI-layer helper would remove it. Not decided — see `1-state/columns.md`.
+- [x] **Should the DS ship the visible/order derivation?** Yes — `table.renderColumns()`, shipped in [#142](https://github.com/DvirMon/ng-table/issues/142)/[#143](https://github.com/DvirMon/ng-table/issues/143). See `1-state/columns.md`.
