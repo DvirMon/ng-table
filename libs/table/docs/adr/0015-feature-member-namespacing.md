@@ -1,6 +1,8 @@
 # ADR-0015 — A feature exposes one callable slice, keyed by state concern
 
-**Status:** accepted — decided 2026-09-13, unimplemented
+**Status:** accepted — decided 2026-09-13, unimplemented except `expansion`/`tree`
+(shipped ahead of schedule alongside [ADR-0012](0012-split-expansion-into-panel-and-tree.md)'s
+split); the remaining four slices (`sorting`, `selection`, `filtering`, `grouping`) are pending #50
 **Related:** [ADR-0007](0007-feature-member-claims.md) (rejected namespacing as a collision fix —
 this reopens it on different grounds, now that collisions throw at construction), [ADR-0003](0003-in-house-table-store-engine.md)
 (the feature contract). Research: [`research-callable-slice-shape.md`](../1-state/work/feature-member-namespacing/research-callable-slice-shape.md)
@@ -41,6 +43,11 @@ A slice is a callable and a call returns exactly one value. The rule for what th
 | `expansion` | `ReadonlySet<RowId>` | 1 — `everExpanded`, `changed` become properties (panel — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
 | `tree` | `ReadonlySet<RowId>` | 1 — `changed`, `state` become properties (tree-grid — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
 | `filtering` | *(not callable)* | 3 — `columnFilters`/`globalFilter` are peers |
+
+`expansion` and `tree` arrive already split onto their own slices ahead of the rest of this
+ADR — the panel/tree split (#118, #119, #121) lands them alongside ADR-0012's split so the
+breaking rename happens once, not twice; #50 slices the remaining four features (`sorting`,
+`selection`, `filtering`, `grouping`) separately.
 
 ## `withComputed()` block placement
 

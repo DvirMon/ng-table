@@ -89,8 +89,9 @@ that general mechanisms can be layered on them.
 | Feature | Reference | Summary |
 |---|---|---|
 | `withSorting()` | [with-sorting.md](features/sorting.md) | Multi-column, three-state toggle, additive by click order |
-| `withGrouping()` | [with-grouping.md](features/grouping.md) | Single-level, `aggregate` declared through `schema`; collapse via `withExpansion()` when composed (optional, not required — revised 2026-07-31) |
-| `withExpansion()` | [with-expansion.md](features/expansion.md) | Multi-expand, hierarchical/tree-capable, standalone (no dependencies) |
+| `withGrouping()` | [with-grouping.md](features/grouping.md) | Single-level, `aggregate` declared through `schema`; collapse via `withTree()` when composed (optional, not required — revised 2026-07-31, re-pointed from `withExpansion()` to `withTree()` by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md)) |
+| `withExpansion()` | [with-expansion.md](features/expansion.md) | Detail panel — open/closed id tracking only, no row synthesis, standalone (no dependencies). Split from the tree-grid case by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) |
+| `withTree()` | [with-tree.md](features/tree.md) | Tree-grid — real row tree, expanding a parent reveals its children as rows sharing the same columns, at any depth; real-row parents only. Claims the `'tree'` render stage only when a `childrenAccessor` is supplied; omitted gives the collapse-only instance `withGrouping()` composes. Split from the detail-panel case by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) |
 | `withFiltering()` | [with-filtering.md](features/filtering.md) | ⚠️ Superseded (2026-09-09) — imperative `setColumnFilter()`/`setGlobalFilter()` design walked back mid-grill; redirected to a standalone `createFilters()` primitive, see [work/with-filtering/design-options-hybrid-api.md](work/with-filtering/design-options-hybrid-api.md) |
 | `withSelection()` | [with-selection.md](features/selection.md) | Flat id set, no scope concept (D1); single-select is a rule on the write verbs via `enableMultiRowSelection`, never stored mode state (D2); standalone (no dependencies) |
 
@@ -103,24 +104,27 @@ that general mechanisms can be layered on them.
 | `withDragDrop()` | [with-drag-drop.md](features/drag-drop.md) | `{ dragState }` |
 | `withColumnPinning()` | not yet started | `{ columnPinning: { left: string[]; right: string[] } }` — TanStack-modeled, plus start/center/end region derivation. Seedable via `createColumns`'s schema argument's `applyPinned`. |
 | `withColumnSizing()` | not yet started | Per-column resizable width/flex state, only when sizing is runtime-resizable (static width stays column-owned CSS). Seedable via `createColumns`'s schema argument's `applyWidth`/`applyFlex`. |
-| `withVirtualScroll()` | [with-virtual-scroll.md](features/virtual-scroll.md) | Windowed rendering over `renderRows()`; no dependency on grouping/expansion — added 2026-07-31 alongside the `renderRows` render-layer design |
+| `withVirtualScroll()` | [with-virtual-scroll.md](features/virtual-scroll.md) | Windowed rendering over `renderRows()`; no dependency on grouping/expansion/tree — added 2026-07-31 alongside the `renderRows` render-layer design |
 
 ---
 
 ## Compile-Time Dependency Graph (current)
 
 ```
-withGrouping()      ──optionally composes with──▶  withExpansion()  (runtime-detected, not compile-time — revised 2026-07-31)
-withVirtualScroll() ──reads──▶                      renderRows() only — no dependency on withGrouping()/withExpansion()
+withGrouping()      ──optionally composes with──▶  withTree()       (runtime-detected, not compile-time — revised 2026-07-31, re-pointed by ADR-0012)
+withVirtualScroll() ──reads──▶                      renderRows() only — no dependency on withGrouping()/withExpansion()/withTree()
 withSorting()       ──reads──▶                      columns (core config, not a feature dependency)
 withGrouping()      ──reads──▶                      columns (core config, not a feature dependency)
 withFiltering()     ──reads──▶                      columns (core config, not a feature dependency)
 withExpansion()     ──requires──▶                   (none — standalone, only global trackBy)
+withTree()          ──requires──▶                   (none — standalone, only global trackBy)
 ```
 
 > **Retroactive correction:** Earlier session notes described `withSorting()` and `withGrouping()` as having a "compile-time dependency on `withColumns()`." Since then, `columns` was decided to be **core config** (required on every `createTable()` call, like `trackBy`) rather than an opt-in `signalStoreFeature`. There is therefore no feature dependency to declare — these features simply read the always-present `columns` config. See `columns.md` for detail.
 
 > **Revision 2026-07-31:** `withGrouping()`'s dependency on `withExpansion()` was downgraded from a compile-time `type<>` requirement to an optional runtime composition — `withGrouping()` now works standalone (static, non-collapsible groups). See `with-grouping.md`, "Compile-Time Dependencies" and "Render Layer," and `with-expansion.md`, "Dual Use." This was driven by introducing the `renderRows`/`RenderRow<TRow>` render-layer signal, researched against TanStack Table / MUI X DataGrid / AG Grid's row-model designs (see `with-grouping.md`, "Prior art").
+
+> **Revision 2026-09 ([ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md)):** `withExpansion()` split into the detail-panel feature (`withExpansion()`, no `expandedRows` contribution, cannot drive collapse) and the tree-grid feature (`withTree()`, owns `childrenAccessor`/`isExpandable`/the `'tree'` render stage). The optional runtime composition above re-points from `withExpansion()` to `withTree()` — `withGrouping()` never reads either feature's state directly (see "Types are stricter than runtime" below).
 
 ## Composition: argument order sets member visibility, not execution order
 
@@ -150,8 +154,11 @@ changes what runs when.
 **3. Types are stricter than runtime.** The store is one shared object reference, so a read
 deferred into a computed or a method sees every feature, including ones declared later. The type
 of slot N, however, is the base store plus only the preceding slots — a trailing `withComputed()`
-block reading `s.expandedRows` off the accumulated `In` type is typed only when `withExpansion()`
-precedes it, even though the runtime store would have the member either way (D25). `withGrouping()`
+block reading `s.expandedRows` off the accumulated `In` type is typed only when `withTree()`
+precedes it (it is the only feature contributing to `expandedRows` since
+[ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) — `withExpansion()`, the detail
+panel, declares no `expandedRows` contribution at all), even though the runtime store would have
+the member either way (D25). `withGrouping()`
 was the worked example for this rule before #99/ADR-0017: it used to read `composed['expandedRows']`
 as a lazy guarded read inside its group render stage. That read is gone — `withGrouping()` now
 composes with zero knowledge of expansion, in any argument order, and collapse/expand visibility

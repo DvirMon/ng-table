@@ -144,10 +144,9 @@ so it takes AG Grid's split.
   to `withTree()`. No in-repo consumer does — no story composes `withExpansion()` — but it is a
   public `index.ts` export, so it is a breaking change on paper.
 - `features/expansion.md` splits into two specs; `features/grouping.md`'s delegation note
-  re-points at the panel feature. `docs/1-state/prd.md` still carries the superseded
-  "`withGrouping()` requires `withExpansion()` at compile time" framing in user stories 10, 23 and
-  31 — already downgraded to optional runtime composition on 2026-07-31 — and should be corrected
-  in the same pass.
+  re-points at `withTree()`, not the panel. `docs/1-state/prd.md`'s user stories 10, 23 and 31
+  carried the superseded "`withGrouping()` requires `withExpansion()` at compile time" framing —
+  already downgraded to optional runtime composition on 2026-07-31 — corrected in the same pass.
 - Ordering: this ADR depends on ADR-0011 for the `'tree'` render stage. Sequence is ADR-0011
   first, then this, then G6 nearly falls out.
 

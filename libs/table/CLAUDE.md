@@ -71,7 +71,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `api/create-table.ts` | The `createTable()` factory only — resolves config, composes, wires the data effect |
 | `api/create-columns.ts` | `createColumns(data, build, schema?)` — declares a table's columns, and optionally their column-schema rules, in one call. `build` returns `ColumnDecl[]` via the `col()`/`col.from()` builder; the result is a `ColumnSet`. Runs the construction-time checks (`assertUniqueColumnIds`, `assertRuleColumnIdsAreKnown`, `assertMetadataKeysAreUnique`), each dev-gated in its own body. A curried `createColumns<TRow>()([...])` overload survives only for existing callers — "do not add new callers" |
 | `api/create-table.overloads.ts` | **Generated** — `CreateTableOverloads`, the 16 call signatures typing `createTable()`, one per arity 0-15. Never hand-edit; fix `tools/generate-overloads.ts` and run `npm run table:overloads` |
-| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withSelection()`, `withGrouping()`, `withFiltering()`, `withOptimistic()`, `withRowEdit()`, `withComputed()`. One file each |
+| `api/features/with-*.ts` | Feature plugins: `withSorting()`, `withExpansion()`, `withTree()`, `withSelection()`, `withGrouping()`, `withFiltering()`, `withOptimistic()`, `withRowEdit()`, `withComputed()`. One file each |
 | `api/features/with-computed.ts` | `withComputed(block)` — library-declared derived state as a feature. The block is validated at construction (it must return signals; a throw while declaring throws) and every returned signal is rewrapped to report its member key and rethrow at evaluation (ADR-0014). Both checks live here, never in the fold |
 | `api/features/compose-features.ts` | `composeFeatures(...features)` — collapses N features into one `createTable()` slot, the arity escape hatch. Inner features fold against a per-composite `SlotRegistry` and merge into one spec; collisions are labelled `composeFeatures inner feature N` |
 | `api/features/editing-state.ts` | The editing state model — `RowRestorePoint` (value + position + `op`), `EditingState`/`EditingUpdater`, `pendingIds()`, and `createEditingStore()`. **Not a feature**: `withOptimistic()` and `withRowEdit()` each call the factory, each building its own instance. Composing both explicitly is a duplicate `editing` member claim and throws (ADR-0007), in either argument order |
@@ -295,14 +295,15 @@ Rules:
   children in `RenderNode.children` via `mapNodes`, never emit them as following siblings.
 - A second feature claiming the same `stages` key, the same `renderStages` key, or the same
   **member key** (ADR-0007), **throws at construction**. Render stages are per-named-stage
-  collision, not whole-layer (ADR-0011) — `withExpansion()` claims `'tree'`, leaving
+  collision, not whole-layer (ADR-0011) — `withTree()` claims `'tree'`, leaving
   `'group'` free for `withGrouping()`. Neither `'paginate'` nor `'prune'` is a reserved stage
   name — both left `RENDER_ORDER` unclaimed (#106, #107); there is deliberately no anchor today
   for "after the tree is flattened" (ADR-0020), and a future pagination feature's render-stage
   question is undecided, not pre-answered by either name.
-  [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) covers splitting
-  `withExpansion()` into a detail-panel feature plus a `withTree()` claiming `'tree'` — read it,
-  and its current status, before touching `renderStages` or `withExpansion()`.
+  [ADR-0012](docs/adr/0012-split-expansion-into-panel-and-tree.md) split `withExpansion()` into
+  the detail-panel feature (open/closed id tracking only, no render stage) and `withTree()`
+  (owns `childrenAccessor`/`isExpandable` and claims `'tree'`) — read it before touching
+  `renderStages`, `withExpansion()`, or `withTree()`.
 - **If your feature stores `RowId`s, declare `onRowsRemoved`** ([ADR-0006](docs/adr/0006-row-id-state-reconciliation.md)).
   The engine diffs `indexById` and announces ids that left `data`; the feature prunes its own
   state with `pruneByIds()` (`engine/rows.ts`). Not enforced by the type system — forget it and
@@ -325,8 +326,10 @@ Rules:
   every preceding slot's contribution, so reading a later feature's member is a compile error
   even though the runtime store would have it (D25 — types are stricter than runtime). Pipeline
   execution order is fixed and does not follow argument order. A trailing `withComputed()` block
-  reading `s.expandedRows` off the accumulated `In` is typed only when `withExpansion()` precedes
-  it, though the runtime store would have the member either way — features that do read `composed`
+  reading `s.expandedRows` off the accumulated `In` is typed only when `withTree()` precedes
+  it (the only feature contributing to `expandedRows` since ADR-0012 — `withExpansion()`, the
+  detail panel, contributes nothing to it), though the runtime store would have the member
+  either way — features that do read `composed`
   should write the compile-time-legal order. `withGrouping()` is no longer such an example: it read
   `composed['expandedRows']` as a lazy guarded read inside its group render stage until #99/
   ADR-0017 moved collapse/expand visibility out of feature code entirely — first into an

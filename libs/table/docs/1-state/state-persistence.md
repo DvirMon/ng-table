@@ -246,20 +246,34 @@ speculative one. These are the acceptance tests, not a wishlist.
   Still open here only as a scheduling question — when the slice actually lands, not whether it
   will.
 - [x] **Is expansion persisted?** Resolved 2026-09-07 — **yes, as a slice**, and the slice
-  mechanism above is the *only* restore path expansion gets. `withExpansion()` contributes
-  `{ key: 'expansion', read: () => [...expandedRows()], write: (ids) => … }`; it deliberately
-  ships **no** `initialAsync` config, because a per-feature async restore violates rule 1
-  (a second write path) and cannot satisfy rule 2 (each feature's resource resolves on its own
-  clock, so cross-feature atomicity is unachievable per-feature). A separate, non-persistence
-  `initial?: readonly RowId[]` construction seed exists for synchronously-available
-  state; it is not part of this mechanism. See
-  [features/expansion.md](./features/expansion.md#initial-state-and-persistence).
+  mechanism above is the *only* restore path expansion gets. The restore verb is each
+  feature's own `.set(ids, options?)` — an atomic replace of the whole open-id set, never a
+  per-id write — so `write()` in the slice below is always `(ids) => table.<slot>.set(ids, {
+  emitEvent: false })`, never a loop over individual toggles. This is what keeps a
+  multi-id restore inside rule 2's one transaction (`set()` fires at most one `changed` event
+  for the whole batch, not one per id).
 
-  Still open, and shared with selection: the stale-id hazard. `expandedRows` holds `RowId`s and a
-  restored id may no longer exist in `data`; ADR-0006's prune runs on removal, so an id whose row
-  never arrives is never pruned. Drop-unknown-at-apply breaks async data that arrives later;
-  keep-unknown matches how synthetic `group:*` ids already live in that Set. Decide once, for
-  both features.
+  **Split by [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md) into two
+  independent slices, one per feature, each claimed under its own `key`:**
+  - `withExpansion()` (the detail panel) contributes
+    `{ key: 'expansion', read: () => [...expansion()], write: (ids) => table.expansion.set(ids, { emitEvent: false }) }`.
+    See [features/expansion.md](./features/expansion.md#initial-state-and-persistence).
+  - `withTree()` (the tree-grid) contributes the equivalent slice under `key: 'tree'`,
+    `read: () => [...tree()]`, `write: (ids) => table.tree.set(ids, { emitEvent: false })`. See
+    [features/tree.md](./features/tree.md).
+
+  Both deliberately ship **no** `initialAsync` config, because a per-feature async restore
+  violates rule 1 (a second write path) and cannot satisfy rule 2 (each feature's resource
+  resolves on its own clock, so cross-feature atomicity is unachievable per-feature). A
+  separate, non-persistence `initial?: readonly RowId[]` construction seed exists on both
+  features for synchronously-available state; it is not part of this mechanism.
+
+  Still open, and shared with selection: the stale-id hazard. Both features' open-id sets hold
+  `RowId`s and a restored id may no longer exist in `data`; ADR-0006's prune runs on removal, so
+  an id whose row never arrives is never pruned. Drop-unknown-at-apply breaks async data that
+  arrives later; keep-unknown matches how synthetic `group:*` ids already live in `withTree()`'s
+  set when composed under `withGrouping()`. Decide once, for all three id-keyed features
+  (expansion, tree, selection).
 - [ ] **Migration policy beyond "discard".** Rule 7 discards an unknown version. A
   `migrate?: (unknown) => TableSnapshot | null` escape hatch would let consumers upgrade
   their own stored payloads, but invites exactly the field-probing rule 7 forbids.
