@@ -64,12 +64,18 @@ describe('buildGroupRenderRows', () => {
     expect(result.every((row) => row.kind === 'row')).toBe(true);
   });
 
-  it("throws when grouping receives a row whose data is already null — the 'group' render stage must run first in RENDER_ORDER", () => {
+  it("throws when grouping receives a row whose data is already null — render anchor 'group' must run before any stage that synthesizes rows", () => {
     const seed: RenderNode<Order>[] = [{ id: 'synthetic', kind: 'group', data: null, children: [] }];
 
-    expect(() => buildGroupRenderRows(seed, ['region'], columns)).toThrow(
-      /must run first in RENDER_ORDER/
-    );
+    let message = '';
+    try {
+      buildGroupRenderRows(seed, ['region'], columns);
+    } catch (error) {
+      message = error instanceof Error ? error.message : String(error);
+    }
+
+    expect(message).toMatch(/must run before any stage that synthesizes rows/);
+    expect(message).not.toMatch(/RENDER_ORDER/);
   });
 
   it('one level: one group header per distinct value, holding its member rows as children', () => {
