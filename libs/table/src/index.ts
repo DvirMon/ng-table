@@ -1,6 +1,10 @@
 // Public API of the table. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are
 // phases of one domain with no barrels of their own — anything not listed here is internal
-// (mirrors Angular Signal Forms' `public_api.ts`). See ADR-0004.
+// (mirrors Angular Signal Forms' `public_api.ts`). `engine/` exports only the feature-author
+// surface listed below (`TableFeatureSpec`, `Feature`, `Shape`, `RowOf`, `WritableView`,
+// `createWritableView`, `pruneByIds`, `resolveIndex`, `RenderNode`, `mapNodes`,
+// `ColumnRuleEntry`, `ColumnRuleRegistry`) — everything else in `engine/` stays internal.
+// See ADR-0004.
 export * from './api/create-table';
 export * from './api/create-columns';
 export * from './api/types';
@@ -127,3 +131,10 @@ export type {
   ColumnsPath,
   ColumnsSchemaFn,
 } from './columns-schema/types';
+export type { TableFeatureSpec, Feature, Shape, RowOf } from './engine/types';
+export type { WritableView } from './engine/writable-view';
+export { createWritableView } from './engine/writable-view';
+export { pruneByIds, resolveIndex } from './engine/rows';
+export type { RenderNode } from './engine/render-stages';
+export { mapNodes } from './engine/render-stages';
+export type { ColumnRuleEntry, ColumnRuleRegistry } from './engine/columns';
