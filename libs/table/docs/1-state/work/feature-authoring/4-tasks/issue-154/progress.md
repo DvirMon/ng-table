@@ -27,7 +27,7 @@ Dependency: 1,2,3 → 4 → 5 → 6 → {7, 8, 9} → 10; 11 depends on 1, 2, 3,
 | 1 | Stage authoring surface (stageSchema + stage) | ✅ done |
 | 2 | Pipeline anchors + registry | ✅ done |
 | 3 | Render-stage anchors + registry | ✅ done |
-| 4 | TableFeatureSpec retype | ⬚ pending |
+| 4 | TableFeatureSpec retype | ✅ done |
 | 5 | core.ts + compose-table.ts fold | ⬚ pending |
 | 6 | compose-features.ts fold | ⬚ pending |
 | 7 | Refactor withSorting + withFiltering | ⬚ pending |
