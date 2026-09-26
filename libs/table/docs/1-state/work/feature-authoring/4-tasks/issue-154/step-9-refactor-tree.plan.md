@@ -6,7 +6,23 @@ depends_on: [6]
 files:
   - libs/table/src/api/features/with-tree.ts (edit)
   - libs/table/src/api/features/with-tree.spec.ts (edit)
+  - libs/table/src/api/create-table.spec.ts (edit)
 ---
+
+> **Plan amendment (post-step-6):** step 6's report surfaced two
+> generic `createTableFeature()` test fixtures in
+> `api/create-table.spec.ts` (lines ~90/98, ~311) —
+> `withReversibleSort`'s `stages: { sort: ... }` and
+> `withStagingBlock`'s `stages: { sort: ... }` — still on the
+> object form. Neither belongs to any shipped `with-*` feature
+> (they're inline test-only fixtures for the core
+> `createTableFeature()` mechanism itself), so no step 1-8 file
+> list named them, and left unfixed they would keep
+> `typecheck-spec` red past this step. Since step 9 is this
+> plan's own designated closing step (the one expected to bring
+> typecheck green again), its scope now also covers converting
+> both fixtures to `stage()`/`stageSchema()` form, byte-identical
+> `it` bodies/assertions otherwise.
 # Step 9 — Refactor withTree
 
 This step converts `withTree`'s conditional render-stage claim
