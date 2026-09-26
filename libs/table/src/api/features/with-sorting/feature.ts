@@ -3,6 +3,8 @@ import { Subject, type Observable } from 'rxjs';
 import { readAccessor } from '../../../engine/cells';
 import { buildValueOfContext, type ValueOfContext } from '../../../engine/resolvers';
 import type { ColumnValuesOf, Feature, RowOf, Shape, TableFeatureSpec } from '../../../engine/types';
+import { stageSchema } from '../../../schema/stage-schema';
+import { stage } from '../../../schema/stage-rules';
 import { assertDeclarationsAreKnown } from '../../../schema/validate';
 import { createTableFeature } from '../../create-table-feature';
 import { runSortingSchemaFn } from './schema';
@@ -308,12 +310,14 @@ function buildSortingSpec<TRow, TValues extends ColumnValueMap = ColumnValueMap>
       setSorting: applySorting,
       clearSorting: () => applySorting([]),
     },
-    stages: {
-      sort: (rows) =>
-        manual
-          ? rows
-          : sortRows(rows, sorting(), input.columns(), nullsByColumn, compareByColumn, knownIds),
-    },
+    stages: stageSchema<TRow>('pipeline', (s) => {
+      stage(s.sort, {
+        run: (rows) =>
+          manual
+            ? rows
+            : sortRows(rows, sorting(), input.columns(), nullsByColumn, compareByColumn, knownIds),
+      });
+    }),
   };
 }
 
