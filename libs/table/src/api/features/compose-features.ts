@@ -1,9 +1,14 @@
 import { computed, type Signal } from '@angular/core';
 import type { ColumnRuleEntry } from '../../engine/columns';
-import { PIPELINE_ORDER, type PipelineStages } from '../../engine/pipeline';
-import { RENDER_ORDER, type RenderStages } from '../../engine/render-stages';
+import type { PipelineStage, PipelineStages, RowTransform } from '../../engine/pipeline';
+import type {
+  RenderNodeTransform,
+  RenderStage,
+  RenderStages,
+} from '../../engine/render-stages';
 import { describeInnerFeature, SlotRegistry } from '../../engine/slots';
 import type { TableFeatureSpec } from '../../engine/types';
+import type { StageRule } from '../../schema/stage-rules';
 import type { AnyTableFeature, RowId } from '../types';
 import type { ComposeFeaturesOverloads } from './compose-features.overloads';
 
@@ -28,13 +33,15 @@ function claimInnerStages<TRow>(
   if (!spec.stages) {
     return;
   }
-  for (const stage of PIPELINE_ORDER) {
-    const transform = spec.stages[stage];
-    if (!transform) {
+  for (const rule of spec.stages) {
+    // Declare form (`name` + `placement`): resolving/executing it is issue #155's concern —
+    // no shipped feature in this issue produces one, same scope boundary as the outer fold.
+    if ('name' in rule) {
       continue;
     }
-    registry.claimStage(stage, label);
-    into[stage] = transform;
+    const anchor = rule.anchor as PipelineStage;
+    registry.claimStage(anchor, label);
+    into[anchor] = rule.run;
   }
 }
 
@@ -48,14 +55,28 @@ function claimInnerRenderStages<TRow>(
   if (!spec.renderStages) {
     return;
   }
-  for (const stage of RENDER_ORDER) {
-    const transform = spec.renderStages[stage];
-    if (!transform) {
+  for (const rule of spec.renderStages) {
+    if ('name' in rule) {
       continue;
     }
-    registry.claimRenderStage(stage, label);
-    into[stage] = transform;
+    const anchor = rule.anchor as RenderStage;
+    registry.claimRenderStage(anchor, label);
+    into[anchor] = rule.run;
   }
+}
+
+/**
+ * Converts an accumulated keyed stage map back into claim-form `StageRule[]` entries, one per
+ * occupied anchor — this is what lets the outer fold's registry (`engine/compose-table.ts`)
+ * still see the composite's inner claims and name a cross-boundary collision.
+ */
+function toStageRules<TAnchor extends string, TTransform>(
+  stages: Partial<Record<TAnchor, TTransform>>
+): StageRule<TTransform>[] {
+  return (Object.keys(stages) as TAnchor[]).map((anchor) => ({
+    anchor,
+    run: stages[anchor] as TTransform,
+  }));
 }
 
 /**
@@ -131,8 +152,10 @@ function foldInnerFeatures(
 
   return {
     members,
-    ...(hasStages ? { stages } : {}),
-    ...(hasRenderStages ? { renderStages } : {}),
+    ...(hasStages ? { stages: toStageRules<PipelineStage, RowTransform<unknown>>(stages) } : {}),
+    ...(hasRenderStages
+      ? { renderStages: toStageRules<RenderStage, RenderNodeTransform<unknown>>(renderStages) }
+      : {}),
     ...(hasColumnRules ? { columnRules } : {}),
     // The outer contract holds one `expandedRows` signal per feature, so N inner contributors
     // union into one composite signal here — the outer fold only ever sees a single slot to push.

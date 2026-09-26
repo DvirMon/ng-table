@@ -11,6 +11,8 @@ import { TestBed } from '@angular/core/testing';
 import { describe, expect, it } from 'vitest';
 import { VISIBLE } from '../../engine/columns';
 import type { Feature, Shape, TableFeatureSpec } from '../../engine/types';
+import { stage } from '../../schema/stage-rules';
+import { stageSchema } from '../../schema/stage-schema';
 import { mockRows, mockTrackBy, noData, type MockRow } from '../../table.mock';
 import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
@@ -201,7 +203,11 @@ function fFilterFirstTwo(displayName = 'fFilterFirstTwo'): Feature<Store, NoMemb
   return named(
     displayName,
     createTableFeature(
-      (): TableFeatureSpec<MockRow, NoMembers> => ({ stages: { filter: (rows) => rows.slice(0, 2) } })
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        stages: stageSchema<MockRow>('pipeline', (s) =>
+          stage(s.filter, { run: (rows) => rows.slice(0, 2) })
+        ),
+      })
     )
   );
 }
@@ -211,7 +217,11 @@ function fSortByNameDesc(): Feature<Store, NoMembers> {
     'fSortByNameDesc',
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
-        stages: { sort: (rows) => [...rows].sort((left, right) => right.name.localeCompare(left.name)) },
+        stages: stageSchema<MockRow>('pipeline', (s) =>
+          stage(s.sort, {
+            run: (rows) => [...rows].sort((left, right) => right.name.localeCompare(left.name)),
+          })
+        ),
       })
     )
   );
@@ -221,7 +231,9 @@ function fGroupRenderStage(displayName: string): Feature<Store, NoMembers> {
   return named(
     displayName,
     createTableFeature(
-      (): TableFeatureSpec<MockRow, NoMembers> => ({ renderStages: { group: (rows) => rows } })
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        renderStages: stageSchema<MockRow>('render', (s) => stage(s.group, { run: (rows) => rows })),
+      })
     )
   );
 }
@@ -245,19 +257,21 @@ function fParentsSecondRow(displayName: string): Feature<Store, NoMembers> {
     displayName,
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
-        renderStages: {
-          tree: (nodes) => {
-            const byId = new Map(nodes.map((node) => [node.id, node]));
-            const row1 = byId.get(1);
-            const row2 = byId.get(2);
-            if (!row1 || !row2) {
-              throw new Error('expected seeded nodes 1/2 to be present');
-            }
-            return nodes
-              .filter((node) => node.id !== 2)
-              .map((node) => (node.id === 1 ? { ...row1, children: [row2] } : node));
-          },
-        },
+        renderStages: stageSchema<MockRow>('render', (s) =>
+          stage(s.tree, {
+            run: (nodes) => {
+              const byId = new Map(nodes.map((node) => [node.id, node]));
+              const row1 = byId.get(1);
+              const row2 = byId.get(2);
+              if (!row1 || !row2) {
+                throw new Error('expected seeded nodes 1/2 to be present');
+              }
+              return nodes
+                .filter((node) => node.id !== 2)
+                .map((node) => (node.id === 1 ? { ...row1, children: [row2] } : node));
+            },
+          })
+        ),
       })
     )
   );
@@ -424,6 +438,19 @@ describe('composeFeatures', () => {
       );
     });
 
+    it('case 10b — a cross-boundary collision on a pipeline stage is named by the outer registry', () => {
+      const attempt = () =>
+        makeStore(
+          signal([...mockRows]),
+          fFilterFirstTwo('fOuterFilter'),
+          composeFeatures(fFilterFirstTwo())
+        );
+
+      expect(attempt).toThrow(
+        /feature 1 \(fOuterFilter\) and feature 2 \(composeFeatures\) both provide the "filter" pipeline stage/
+      );
+    });
+
     it('case 11 — an inner feature’s own construction error propagates unwrapped', () => {
       const attempt = () => makeStore(signal([...mockRows]), composeFeatures(fThrows()));
 
@@ -432,10 +459,10 @@ describe('composeFeatures', () => {
   });
 
   describe('merge', () => {
-    it('case 12 — stages from two inner features both apply, in PIPELINE_ORDER not inner order', () => {
+    it('case 12 — stages from two inner features both apply, in anchor order not inner order', () => {
       const data = signal([...mockRows]);
 
-      // Inner order is sort-then-filter; `PIPELINE_ORDER` runs filter first, so the first two
+      // Inner order is sort-then-filter; `PIPELINE_ANCHORS` runs filter first, so the first two
       // rows survive and are then reversed. Sort-first would have yielded ['Cid', 'Bea'].
       const store = makeStore(data, composeFeatures(fSortByNameDesc(), fFilterFirstTwo()));
 
