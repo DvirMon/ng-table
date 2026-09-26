@@ -74,10 +74,14 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
    literal rather than widening to a bare `string`. Built-in anchor names are
    unaffected — they keep today's closed union.
 
-   > **⚑ Open item.** Whether declaration merging on an exported `interface` survives
-   > this repo's build and public-API extraction (`index.ts` barrel, `ngc`, the
-   > generated `*.overloads.ts`) was not checked here — MUI proves the pattern works in
-   > a plain TS package, nothing was verified against this repo's own tooling.
+   > **Resolved 2026-09-26 (#153): merging works; the `name: string` fallback is not
+   > needed.** A compile probe augmented a stand-in registry via
+   > `declare module '@ngp/table'` and checked it through `ngc`, the `index.ts` barrel
+   > (which re-exports the interface via `export type { … }`), and a real `createTable()`
+   > call through the generated overloads — the merged literal was accepted, a missing
+   > one rejected, and the literal member type survived. Run twice: against source (the
+   > in-repo `@ngp/table` alias points at `src/`) and against `ngc`-emitted `.d.ts`,
+   > the latter being what a third-party consumer sees. Both passed.
 
 4. **Runtime invariants** (data-dependent, stage evaluation): row-id uniqueness and
    real-row id containment (output's non-synthesized ids ⊆ input's). Violations degrade +
@@ -103,7 +107,7 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 
 **Invariants:** Decision 4's runtime check claim verified against ADR-0014's Decision section directly — reported in production too, once per stage per evaluation, never thrown. Decision 5's row-count direction dropped (no post-`'paginate'` anchor). Decision 6 stays deferred; Q4 revisit trigger recorded.
 
-**Remaining open:** whether interface declaration merging survives this repo's build (work item 4).
+**Remaining open:** none — declaration merging survives this repo's build (work item 4, closed by #153; see Decision 3).
 
 ## Alternatives considered
 
@@ -147,11 +151,9 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 - CLAUDE.md's `schema/run.ts` row is contradictory: it says the declaring form keeps its own body
   "until ADR-0020's `stageSchema` is a second caller", but `stageSchema` is the recording form.
   Correct it when the engine work lands.
-- Whether interface declaration merging survives this repo's build + barrel + `tools/generate-overloads.ts`
-  (work item 4) determines whether stage names stay literals or widen to `name: string` (fallback).
+- Interface declaration merging survives this repo's build + barrel + `tools/generate-overloads.ts`
+  (work item 4, #153), so third-party stage names stay literals; the `name: string` fallback is unused.
 
 ## Open before acceptance
 
-- Compile probe (work item 4): whether interface declaration merging on the stage-name
-  registries survives this repo's build, barrel, and `tools/generate-overloads.ts`.
-  Fallback if it fails: `name: string` literal union widens to a bare string.
+None. The compile probe (work item 4) resolved 2026-09-26 in #153 — merging holds; see Decision 3.
