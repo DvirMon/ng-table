@@ -16,27 +16,21 @@ interface FeatureHooks {
 /** Engine-supplied features receive the core handle — never a consumer `Feature`. */
 export type InternalFeature<TRow> = (core: TableCore<TRow>) => TableFeatureSpec<TRow>;
 
-/**
- * A feature paired with its collision-message label and a thunk pre-bound to its call
- * argument — lets `foldFeatures` run one loop body for both consumer and internal features,
- * no branching on kind.
- */
+// A feature paired with its collision-message label and a thunk pre-bound to its call
+// argument — lets `foldFeatures` run one loop body for both consumer and internal features,
+// no branching on kind.
 interface LabeledFeature<TRow> {
   readonly run: () => TableFeatureSpec<TRow>;
   readonly label: string;
 }
 
-/**
- * The store while it is still being folded onto: the core members are already concrete, and
- * feature members arrive as unknown keys.
- */
+// The store while it is still being folded onto: the core members are already concrete, and
+// feature members arrive as unknown keys.
 type FoldingStore<TRow> = TableStore<TRow> & Record<string, unknown>;
 
-/**
- * Pairs each feature with its 1-based positional label and pre-binds the argument it will be
- * called with — `call` closes over the store for consumer features, the engine core for
- * internal ones — so the fold loop never needs to know which kind it is running.
- */
+// Pairs each feature with its 1-based positional label and pre-binds the argument it will be
+// called with — `call` closes over the store for consumer features, the engine core for
+// internal ones — so the fold loop never needs to know which kind it is running.
 function labelFeatures<TRow, TFeature>(
   features: readonly TFeature[],
   describe: (position: number, displayName?: string) => string,
@@ -49,10 +43,8 @@ function labelFeatures<TRow, TFeature>(
   }));
 }
 
-/**
- * Builds the core half of the store before any feature runs, so a feature factory already
- * sees `renderRows` and `totalRowCount` on the store it is handed.
- */
+// Builds the core half of the store before any feature runs, so a feature factory already
+// sees `renderRows` and `totalRowCount` on the store it is handed.
 function createBaseStore<TRow>(
   handle: TableCoreHandle<TRow>
 ): FoldingStore<TRow> {
@@ -72,14 +64,10 @@ function createBaseStore<TRow>(
   };
 }
 
-/**
- * Calls every feature's pre-bound thunk in array order and registers what each declares.
- *
- * @remarks
- * Members merge into `store` as they arrive — order-dependent at factory time, complete
- * afterwards. `store` is one shared reference, so a feature reading it lazily (a method,
- * `computed()`, a stage) sees every later feature too.
- */
+// Calls every feature's pre-bound thunk in array order and registers what each declares.
+// Members merge into `store` as they arrive — order-dependent at factory time, complete
+// afterwards. `store` is one shared reference, so a feature reading it lazily (a method,
+// `computed()`, a stage) sees every later feature too.
 function foldFeatures<TRow>(
   features: readonly LabeledFeature<TRow>[],
   store: FoldingStore<TRow>,
