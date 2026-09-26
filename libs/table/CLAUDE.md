@@ -81,7 +81,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 | `columns-schema/metadata.ts` | `createColumnMetaKey()` / `metadata()` / `readColumnMeta()` — consumer-facing, non-participating column side channel, plus internal `metadataAsync()` (used only by `rules.ts`). Not the internal metadata+reducer core sketched in `docs/2-columns/reference/signal-forms-techniques.md` §1 |
 | `columns-schema/types.ts` | `ColumnHandle`, `ColumnRule`, `ColumnSchema`, `ColumnsSchemaStore`, `ColumnMetaKey`, `MetadataRule`, `MetadataAsyncRule` |
 | `schema/path-proxy.ts` | The key-space-agnostic declare-phase mechanism — `createPathProxy()`, `createRecorderSession()`, `recorderOf()`, `PathRecorder`, `RecordedHandle`. Imports nothing from any consumer (#111); `PathRecorder.record(rule: TRule)` is generic in the rule family, one family per session |
-| `schema/run.ts` | `runRecordedSchema(buildPath, fn)` — the one body behind every **recording-form** schema fn (`columnSchema()`, `withGrouping()`, `withSorting()`). The declaring form (filtering) keeps its own body in `engine/filters/build.ts` until ADR-0020's `stageSchema` is a second caller (#111 reading B) |
+| `schema/run.ts` | `runRecordedSchema(buildPath, fn)` — the one body behind every **recording-form** schema fn (`columnSchema()`, `withGrouping()`, `withSorting()`, and now `stageSchema()` — ADR-0020, #154). The declaring form (filtering) keeps its own separate body in `engine/filters/build.ts`; `stageSchema()` is a second recording-form caller of `runRecordedSchema()` directly, never a caller of filtering's declaring body |
 | `schema/validate.ts` | Two exports, one throwing body. `assertDeclarationsAreKnown(declaredIds, knownIds, label)` — construction-time, dev-gated (`ngDevMode`), the gate lives in this function's own body. `assertWrittenIdsAreKnown(ids, knownIds, label)` — ungated, for ids that arrive at runtime (a writer path, a saved layout); it holds the loop and the only `throw`, and `assertDeclarationsAreKnown` calls it once the gate passes. `label` names the declaring surface in the message |
 | `mutations/update-columns.ts` | `setColumns`/`reorderColumns`/`toggleColumnVisibility` updater factories, consumed via `table.columns.update(updater)` (D30) — writes always target `baseColumns` internally, never the derived fold |
 | `mutations/optimistic-mutations.ts` | `captureEdit`/`releaseEdit`/`revertEdit`/`discardEdit`/`removeEdit`/`patchEdit` — the rollback and capture-composing verbs, meaningful under either editing feature |
@@ -287,11 +287,16 @@ Rules:
   reaching every slot collapses. Probe:
   [`design-create-columns.md`](docs/1-state/work/core/active/single-value-source/design-create-columns.md)
   P1j.
-- Add a pipeline stage by editing `PIPELINE_ORDER` in `engine/pipeline.ts` — nothing else.
-  `PipelineStages` derives from it, so there is no second list to keep in sync.
-- Add a render stage by editing `RENDER_ORDER` in `engine/render-stages.ts` — nothing else.
-  `RenderStages` derives from it, same invariant as `PipelineStages`. `RENDER_ORDER` is exactly
-  "the stages a feature may claim" — `['group', 'tree']` today, no exclusion list beside it
+- A **built-in, claimable** pipeline slot is added by editing `PIPELINE_ANCHORS` in
+  `engine/pipeline.ts`; a render slot the same way via `RENDER_ANCHORS` in
+  `engine/render-stages.ts` (ADR-0020, #154 — renamed from `PIPELINE_ORDER`/`RENDER_ORDER`).
+  `PipelineStage`/`RenderStage` no longer derive solely from these arrays — each is
+  `keyof <Layer>StageRegistry & string`, keyed off the exported `PipelineStageRegistry`/
+  `RenderStageRegistry` interfaces. A **new** stage name (one no built-in claims) is added by a
+  consumer team's own `declare module` merge into that registry, not by editing this file — the
+  type exists; execution of a declared stage lands in #155, not yet wired end-to-end.
+  `RENDER_ANCHORS` is exactly "the built-in stages a feature may claim" — `['group', 'tree']`
+  today, no exclusion list beside it
   (ADR-0023 deleted the one entry that wasn't claimable, `'prune'`; see the render-stage seam
   paragraph below). A stage receives and returns `RenderNode<TRow>[]`, not flat rows — nest
   children in `RenderNode.children` via `mapNodes`, never emit them as following siblings.
