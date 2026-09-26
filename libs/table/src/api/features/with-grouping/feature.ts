@@ -21,6 +21,8 @@ import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from '../../../s
 import { runGroupingSchemaFn } from './schema';
 import type { GroupingLevel, GroupingRule, GroupingSchemaFn } from './types';
 import { createTableFeature } from '../../create-table-feature';
+import { stageSchema } from '../../../schema/stage-schema';
+import { stage } from '../../../schema/stage-rules';
 import type {
   ColumnDef,
   ColumnIdIn,
@@ -141,7 +143,8 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
     }
   }
   // Declared: masked by `enable` only. Feeds clustering itself — never the render-admission
-  // result, or `stages.group` would need the render tree it's about to build.
+  // result, or the pipeline `'group'` stage claim would need the render tree it's about to
+  // build.
   const grouping = computed(() => maskGroupingLevels(baseGrouping(), ruleEntries));
 
   const columnWhen = collectGroupPredicates(rules);
@@ -218,12 +221,16 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
 
   return {
     members: { grouping: groupingView, rowsOf, groupIds, groupingLevels, isGroupedBy },
-    stages: {
-      group: (rows) => clusterRows(rows, grouping(), input.columns(), clusterOpts),
-    },
-    renderStages: {
-      group: (rows) => buildGroupRenderRows(rows, grouping(), input.columns(), clusterOpts),
-    },
+    stages: stageSchema('pipeline', (s) => {
+      stage(s.group, {
+        run: (rows) => clusterRows(rows, grouping(), input.columns(), clusterOpts),
+      });
+    }),
+    renderStages: stageSchema('render', (s) => {
+      stage(s.group, {
+        run: (rows) => buildGroupRenderRows(rows, grouping(), input.columns(), clusterOpts),
+      });
+    }),
   };
 }
 

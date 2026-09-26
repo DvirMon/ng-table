@@ -12,8 +12,8 @@ import {
 } from './clusters';
 
 // Narrows a render row's `data` from `TRow | null` to `TRow` — true for every item the `'group'`
-// render stage sees, since it runs first in `RENDER_ORDER` and only receives the plain 1:1
-// seed (no `kind: 'group'` header yet exists to carry a `null`).
+// render anchor sees, since it must run before any stage that synthesizes rows and only
+// receives the plain 1:1 seed (no `kind: 'group'` header yet exists to carry a `null`).
 function isRowData<TRow>(data: TRow | null): data is TRow {
   return data !== null;
 }
@@ -161,10 +161,11 @@ function buildGroupNodes<TRow>(
 }
 
 /**
- * The `'group'` render stage (`RENDER_ORDER`, `engine/render-stages.ts`) — runs first, so its
- * input is always the plain 1:1 seed from `buildDefaultRenderNodes`, every `item.data` a real
- * `TRow`. Reuses `buildClusters` for the same tree the pipeline `group` stage builds, so header
- * insertion and `computeAggregates` read from one tree, never two divergent walks.
+ * The `'group'` render anchor (`engine/render-stages.ts`) must run before any stage that
+ * synthesizes rows, so its input is always the plain 1:1 seed from `buildDefaultRenderNodes`,
+ * every `item.data` a real `TRow`. Reuses `buildClusters` for the same tree the pipeline `group`
+ * stage builds, so header insertion and `computeAggregates` read from one tree, never two
+ * divergent walks.
  */
 export function buildGroupRenderRows<TRow>(
   rows: readonly RenderNode<TRow>[],
@@ -180,8 +181,8 @@ export function buildGroupRenderRows<TRow>(
   const nodes = buildClusters([...rows], grouping, (item, columnId) => {
     if (!isRowData(item.data)) {
       throw new Error(
-        "[withGrouping] buildGroupRenderRows received a row with null data — the 'group' render " +
-          "stage must run first in RENDER_ORDER, before anything can synthesize a null-data row."
+        '[withGrouping] buildGroupRenderRows received a row with null data — render anchor ' +
+          "'group' must run before any stage that synthesizes rows."
       );
     }
     return readGroupValue(item.data, columnId, columnById, reportedColumns, opts?.extractValueByColumn);
