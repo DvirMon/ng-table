@@ -12,9 +12,10 @@ import type {
   TrackByConfig,
   TrackByFn,
 } from '../api/types';
+import type { StageRule } from '../schema/stage-rules';
 import type { ColumnRuleRegistry } from './columns';
-import type { PipelineStages } from './pipeline';
-import type { RenderStages } from './render-stages';
+import type { RowTransform } from './pipeline';
+import type { RenderNodeTransform } from './render-stages';
 import type { WritableView } from './writable-view';
 
 /** Core config `composeTable()` needs. Resolved by `createTable()` from the public config. */
@@ -69,16 +70,16 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
 
   /**
    * Pure row transforms, folded in the fixed pipeline order (`engine/pipeline.ts`), never in
-   * `features` array order. Two features claiming the same key throws.
+   * `features` array order. Two features claiming the same anchor throws.
    */
-  stages?: PipelineStages<TRow>;
+  stages?: readonly StageRule<RowTransform<TRow>>[];
 
   /**
    * Render-node transforms over the pipeline output. Folded in the fixed order in
-   * `engine/render-stages.ts` (`RENDER_ORDER`), never `features` array order. Two features
-   * claiming the same key throws.
+   * `engine/render-stages.ts` (`RENDER_ANCHORS`), never `features` array order. Two features
+   * claiming the same anchor throws.
    */
-  renderStages?: RenderStages<TRow>;
+  renderStages?: readonly StageRule<RenderNodeTransform<TRow>>[];
 
   // Accumulates rather than single-claim; why: docs/adr/0012-split-expansion-into-panel-and-tree.md.
   /**
