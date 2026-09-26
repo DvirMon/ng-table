@@ -1,6 +1,6 @@
 // Note: the only barrel. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` have
 // none, so anything not exported here is internal. From `engine/`, only the feature-author
-// surface at the bottom of this file is public.
+// surface (the `./engine/*` exports) is public.
 // libs/table/docs/adr/0004-table-source-layout.md
 export * from './api/create-table';
 export * from './api/create-columns';
@@ -129,9 +129,9 @@ export type {
   ColumnsSchemaFn,
 } from './columns-schema/types';
 export type { TableFeatureSpec, Feature, Shape, RowOf } from './engine/types';
-export type { WritableView } from './engine/writable-view';
 export { createWritableView } from './engine/writable-view';
+export type { WritableView } from './engine/writable-view';
 export { pruneByIds, resolveIndex } from './engine/rows';
-export type { RenderNode } from './engine/render-stages';
 export { mapNodes } from './engine/render-stages';
+export type { RenderNode } from './engine/render-stages';
 export type { ColumnRuleEntry, ColumnRuleRegistry } from './engine/columns';
