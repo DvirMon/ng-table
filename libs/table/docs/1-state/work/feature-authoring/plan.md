@@ -276,7 +276,7 @@ Acceptance: `nx run shared-table:typecheck` clean.
   `RENDER_ORDER` — nothing else" invariant is restated; `renderStages: { tree: fn }` object form
   is gone).
 
-### 4. Compile probe (spike, throwaway) — depends on 3
+### 4. Compile probe (spike, throwaway) — depends on 3 — ✅ done (#153: merging works, no fallback)
 A scratch `.ts` in a consumer app doing
 `declare module '@ngp/table' { interface RenderStageRegistry { pin: true } }`; verify `ngc` +
 barrel + `tools/generate-overloads.ts` accept it. Record the result in ADR-0020 (its second open
