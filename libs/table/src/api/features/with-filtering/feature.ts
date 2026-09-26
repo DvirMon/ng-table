@@ -2,6 +2,8 @@ import { buildFilterModel } from '../../../engine/filters/build';
 import type { AnyRule, StateOf } from '../../../engine/filters/types';
 import type { Filters, FiltersPath } from './types';
 import type { ColumnValuesOf, Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
+import { stageSchema } from '../../../schema/stage-schema';
+import { stage } from '../../../schema/stage-rules';
 import { createTableFeature } from '../../create-table-feature';
 import type { ColumnValueMap, DerivedDict, TableStore } from '../../types';
 
@@ -88,17 +90,19 @@ function buildFilteringSpec<TRow, TValues extends ColumnValueMap>(
 
   return {
     members: filters ? { filters } : {},
-    stages: {
-      filter: (rows) => {
-        const shouldSkipFiltering = manual || !filters;
-        if (shouldSkipFiltering) {
-          return rows;
-        }
-        // One matcher per stage evaluation, not per row — it carries its own
-        // error-dedup scope and memoized narrowing set.
-        const matcher = filters().matcher();
-        return rows.filter(matcher);
-      },
-    },
+    stages: stageSchema<TRow>('pipeline', (s) => {
+      stage(s.filter, {
+        run: (rows) => {
+          const shouldSkipFiltering = manual || !filters;
+          if (shouldSkipFiltering) {
+            return rows;
+          }
+          // One matcher per stage evaluation, not per row — it carries its own
+          // error-dedup scope and memoized narrowing set.
+          const matcher = filters().matcher();
+          return rows.filter(matcher);
+        },
+      });
+    }),
   };
 }

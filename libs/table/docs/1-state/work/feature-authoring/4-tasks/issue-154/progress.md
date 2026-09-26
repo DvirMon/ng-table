@@ -30,7 +30,7 @@ Dependency: 1,2,3 → 4 → 5 → 6 → {7, 8, 9} → 10; 11 depends on 1, 2, 3,
 | 4 | TableFeatureSpec retype | ✅ done |
 | 5 | core.ts + compose-table.ts fold | ✅ done |
 | 6 | compose-features.ts fold | ✅ done |
-| 7 | Refactor withSorting + withFiltering | ⬚ pending |
+| 7 | Refactor withSorting + withFiltering | ✅ done |
 | 8 | Refactor withGrouping | ⬚ pending |
 | 9 | Refactor withTree | ⬚ pending |
 | 10 | Barrel export | ⬚ pending |
