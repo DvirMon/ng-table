@@ -1,8 +1,8 @@
 import { computed, DestroyRef, effect, inject } from '@angular/core';
 import type { AnyTableFeature, RowId, TableStore } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
-import { PIPELINE_ORDER } from './pipeline';
-import { RENDER_ORDER } from './render-stages';
+import type { PipelineStage } from './pipeline';
+import type { RenderStage } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
@@ -92,24 +92,26 @@ function foldFeatures<TRow>(
     const spec: TableFeatureSpec<TRow> = run();
 
     if (spec.stages) {
-      for (const stage of PIPELINE_ORDER) {
-        const transform = spec.stages[stage];
-        if (!transform) {
+      for (const rule of spec.stages) {
+        // Declare form (`name` + `placement`): resolving/executing it is issue #155's
+        // concern — no shipped feature in this issue produces one.
+        if ('name' in rule) {
           continue;
         }
-        registry.claimStage(stage, label);
-        handle.stages[stage] = transform;
+        const anchor = rule.anchor as PipelineStage;
+        registry.claimStage(anchor, label);
+        handle.stages[anchor] = rule.run;
       }
     }
 
     if (spec.renderStages) {
-      for (const stage of RENDER_ORDER) {
-        const transform = spec.renderStages[stage];
-        if (!transform) {
+      for (const rule of spec.renderStages) {
+        if ('name' in rule) {
           continue;
         }
-        registry.claimRenderStage(stage, label);
-        handle.renderStages[stage] = transform;
+        const anchor = rule.anchor as RenderStage;
+        registry.claimRenderStage(anchor, label);
+        handle.renderStages[anchor] = rule.run;
       }
     }
 
