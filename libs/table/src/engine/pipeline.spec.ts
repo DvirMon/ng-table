@@ -1,20 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { PIPELINE_ORDER, runPipeline, type PipelineStages } from './pipeline';
+import { PIPELINE_ANCHORS, runPipeline, type PipelineStages } from './pipeline';
 
 describe('runPipeline', () => {
-  it('runs stages in PIPELINE_ORDER regardless of registration order', () => {
+  it('runs stages in PIPELINE_ANCHORS regardless of registration order', () => {
     const trace: string[] = [];
     // Registered in reverse of the fixed order, to prove insertion order is irrelevant.
     const stages: PipelineStages<string> = {};
-    stages.expand = (rows) => (trace.push('expand'), rows);
     stages.sort = (rows) => (trace.push('sort'), rows);
     stages.group = (rows) => (trace.push('group'), rows);
     stages.filter = (rows) => (trace.push('filter'), rows);
 
     runPipeline(['a'], stages);
 
-    expect(trace).toEqual(['filter', 'group', 'sort', 'expand']);
-    expect(trace).toEqual([...PIPELINE_ORDER]);
+    expect(trace).toEqual(['filter', 'group', 'sort']);
+    expect(trace).toEqual([...PIPELINE_ANCHORS]);
   });
 
   it('threads each stage output into the next', () => {
