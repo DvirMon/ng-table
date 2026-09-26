@@ -8,6 +8,8 @@ import {
   noData,
   type GroupingMockRow,
 } from '../../table.mock';
+import { stage } from '../../schema/stage-rules';
+import { stageSchema } from '../../schema/stage-schema';
 import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { createTableFeature } from '../create-table-feature';
@@ -107,7 +109,9 @@ const EU_FURNITURE_HEADER_ID = 'group:>region:string:EU>category:string:Furnitur
 // 'tree' unconditionally today and stops in #121, which would make this file fail on an
 // unrelated issue, and it would be asserting the panel's domain from the tree's own spec.
 const claimsTreeStage = createTableFeature(() => ({
-  renderStages: { tree: (nodes) => nodes },
+  renderStages: stageSchema('render', (s) => {
+    stage(s.tree, { run: (nodes) => nodes });
+  }),
 }));
 
 describe('withTree', () => {
@@ -583,7 +587,7 @@ describe('withTree', () => {
 
     // Compile-time-legal order: withGrouping() must precede withTree() for the group stage to
     // have produced headers the tree stage then descends through. Render order is fixed
-    // (RENDER_ORDER = ['group', 'tree']) regardless.
+    // (RENDER_ANCHORS = ['group', 'tree']) regardless.
     const store = inContext(() =>
       createTable(
         signal<GroupableRow[]>(rows),
