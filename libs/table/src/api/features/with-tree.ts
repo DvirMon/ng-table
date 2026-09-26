@@ -2,6 +2,8 @@ import { computed, type Signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { mapNodes, type RenderNode, type RenderNodeTransform } from '../../engine/render-stages';
 import type { Feature, RowOf, TableFeatureSpec } from '../../engine/types';
+import { stage } from '../../schema/stage-rules';
+import { stageSchema } from '../../schema/stage-schema';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict, RowId, TableStore, TrackByFn } from '../types';
 import {
@@ -253,7 +255,9 @@ function buildTreeSpec<TRow>(
     // Claimed only when an accessor was supplied — a collapse-only instance leaves the
     // single-claim stage free for a future claimant.
     renderStages: config.childrenAccessor
-      ? { tree: buildTreeStage(input.trackBy, config) }
+      ? stageSchema<TRow>('render', (s) => {
+          stage(s.tree, { run: buildTreeStage(input.trackBy, config) });
+        })
       : undefined,
     // Contributed unconditionally, accessor or not: a collapse-only instance is exactly what
     // hides a group header's members, and the walk needs a defined set to do it.

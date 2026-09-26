@@ -11,6 +11,8 @@ import { visible } from '../columns-schema/rules';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../mutations/update-columns';
 import type { ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
 import type { Feature, RowOf, Shape } from '../engine/types';
+import { stage } from '../schema/stage-rules';
+import { stageSchema } from '../schema/stage-schema';
 import { noData } from '../table.mock';
 import type {
   ColumnDecl,
@@ -94,9 +96,9 @@ function withReversibleSort<TValues extends ColumnValueMap = ColumnValueMap>(): 
         reversed: reversed.asReadonly(),
         toggleReverse: () => reversed.update((value) => !value),
       },
-      stages: {
-        sort: (rows) => (reversed() ? [...rows].reverse() : rows),
-      },
+      stages: stageSchema<Row>('pipeline', (s) => {
+        stage(s.sort, { run: (rows) => (reversed() ? [...rows].reverse() : rows) });
+      }),
     };
   });
 }
@@ -308,7 +310,11 @@ describe('createTable', () => {
   it('rejects a derive block that declares pipeline behaviour, naming what it declared', () => {
     const withStagingBlock = createTableFeature(
       () => ({ members: { count: 3 } }),
-      () => ({ stages: { sort: (rows) => rows } })
+      () => ({
+        stages: stageSchema('pipeline', (s) => {
+          stage(s.sort, { run: (rows) => rows });
+        }),
+      })
     );
 
     expect(() =>
