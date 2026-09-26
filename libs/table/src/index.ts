@@ -1,10 +1,7 @@
-// Public API of the table. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` are
-// phases of one domain with no barrels of their own — anything not listed here is internal
-// (mirrors Angular Signal Forms' `public_api.ts`). `engine/` exports only the feature-author
-// surface listed below (`TableFeatureSpec`, `Feature`, `Shape`, `RowOf`, `WritableView`,
-// `createWritableView`, `pruneByIds`, `resolveIndex`, `RenderNode`, `mapNodes`,
-// `ColumnRuleEntry`, `ColumnRuleRegistry`) — everything else in `engine/` stays internal.
-// See ADR-0004.
+// Note: the only barrel. `api/`, `schema/`, `mutations/`, `engine/` and `directives/` have
+// none, so anything not exported here is internal. From `engine/`, only the feature-author
+// surface at the bottom of this file is public.
+// libs/table/docs/adr/0004-table-source-layout.md
 export * from './api/create-table';
 export * from './api/create-columns';
 export * from './api/types';
