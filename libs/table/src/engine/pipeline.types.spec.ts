@@ -1,4 +1,8 @@
-import { expectTypeOf } from 'vitest';
+import { describe, expectTypeOf, it } from 'vitest';
 import type { PipelineStage } from './pipeline';
 
-expectTypeOf<PipelineStage>().toEqualTypeOf<'filter' | 'group' | 'sort'>();
+describe('PipelineStage — registry-derived key type', () => {
+  it('equals the literal union of the registered anchors', () => {
+    expectTypeOf<PipelineStage>().toEqualTypeOf<'filter' | 'group' | 'sort'>();
+  });
+});
