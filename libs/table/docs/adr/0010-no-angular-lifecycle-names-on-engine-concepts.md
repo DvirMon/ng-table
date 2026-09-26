@@ -101,3 +101,9 @@ primitive that does exactly what the name says.
 - Full table spec suite passes.
 - `git diff main -- apps/demo` empty — no consumer-visible change (neither renamed symbol was
   ever part of the public `index.ts` barrel).
+
+## Amendment (2026-09-26, #152): `engine/` exports the feature-author surface
+
+Decision 2's premise "nothing here is exported" narrowed: `engine/` now exports only the
+feature-author surface `index.ts` lists (#102); `wireColumnsSchemaAsync` and the rest of
+`engine/columns-schema/` stay non-exported, so the relocation still holds.
