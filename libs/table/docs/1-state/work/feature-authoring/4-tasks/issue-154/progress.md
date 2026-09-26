@@ -33,5 +33,5 @@ Dependency: 1,2,3 → 4 → 5 → 6 → {7, 8, 9} → 10; 11 depends on 1, 2, 3,
 | 7 | Refactor withSorting + withFiltering | ✅ done |
 | 8 | Refactor withGrouping | ✅ done |
 | 9 | Refactor withTree | ✅ done |
-| 10 | Barrel export | ⬚ pending |
+| 10 | Barrel export | ✅ done |
 | 11 | CLAUDE.md doc fix | ⬚ pending |
