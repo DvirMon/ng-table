@@ -12,7 +12,6 @@ import type { StageRule } from '../../schema/stage-rules';
 import type { AnyTableFeature, RowId } from '../types';
 import type { ComposeFeaturesOverloads } from './compose-features.overloads';
 
-/** Runs every callback in `callbacks`, in order, forwarding whatever arguments it is called with. */
 function runInOrder<Args extends unknown[]>(
   callbacks: readonly ((...args: Args) => void)[]
 ): (...args: Args) => void {
@@ -23,7 +22,6 @@ function runInOrder<Args extends unknown[]>(
   };
 }
 
-/** Claims and accumulates one inner feature's `stages` against `registry`, labeled `label`. */
 function claimInnerStages<TRow>(
   spec: TableFeatureSpec<TRow>,
   label: string,
@@ -45,7 +43,6 @@ function claimInnerStages<TRow>(
   }
 }
 
-/** Claims and accumulates one inner feature's `renderStages` against `registry`, labeled `label`. */
 function claimInnerRenderStages<TRow>(
   spec: TableFeatureSpec<TRow>,
   label: string,
@@ -65,11 +62,9 @@ function claimInnerRenderStages<TRow>(
   }
 }
 
-/**
- * Converts an accumulated keyed stage map back into claim-form `StageRule[]` entries, one per
- * occupied anchor — this is what lets the outer fold's registry (`engine/compose-table.ts`)
- * still see the composite's inner claims and name a cross-boundary collision.
- */
+// Converts an accumulated keyed stage map back into claim-form `StageRule[]` entries, one per
+// occupied anchor — this is what lets the outer fold's registry (`engine/compose-table.ts`)
+// still see the composite's inner claims and name a cross-boundary collision.
 function toStageRules<TAnchor extends string, TTransform>(
   stages: Partial<Record<TAnchor, TTransform>>
 ): StageRule<TTransform>[] {
@@ -79,11 +74,9 @@ function toStageRules<TAnchor extends string, TTransform>(
   }));
 }
 
-/**
- * Folds `features` into a single spec, the same way the engine's own fold does, but against a
- * private registry so only inner-vs-inner collisions surface here — the outer fold claims the
- * merged result again, which is what names a cross-boundary collision.
- */
+// Folds `features` into a single spec, the same way the engine's own fold does, but against a
+// private registry so only inner-vs-inner collisions surface here — the outer fold claims the
+// merged result again, which is what names a cross-boundary collision.
 function foldInnerFeatures(
   features: readonly AnyTableFeature[],
   input: Record<string, unknown>
