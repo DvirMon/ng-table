@@ -6,6 +6,11 @@ import {
 } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { createColumns } from '../api/create-columns';
+import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
+import type { RowTransform } from './pipeline';
+import type { StageRule } from '../schema/stage-rules';
+import { stageSchema } from '../schema/stage-schema';
+import { stage } from '../schema/stage-rules';
 import { noData } from '../table.mock';
 import { composeTable, type InternalFeature } from './compose-table';
 import { CORE_MEMBER_KEYS } from './slots';
@@ -21,6 +26,19 @@ interface Row {
 const columns = [
   ...createColumns(noData<Row>(), (col) => [col('name'), col('age')]).columns,
 ];
+
+/**
+ * Casts a `Row`-typed claim-rule array down to `AnyTableFeature`'s erased `RowOf<any>`
+ * (`unknown`) — the same static/dynamic seam `composeWithRows` already crosses for the
+ * feature list itself (ADR-0003). Needed only where a rule's `run` reads concrete `Row`
+ * fields (e.g. `row.name`); a rule that only touches generic node shape infers `unknown`
+ * on its own and needs no cast.
+ */
+function asStages(
+  rules: readonly StageRule<RowTransform<Row>>[]
+): readonly StageRule<RowTransform<unknown>>[] {
+  return rules as unknown as readonly StageRule<RowTransform<unknown>>[];
+}
 
 function makeRows(): Row[] {
   return [
@@ -62,14 +80,18 @@ function compose(
 
 /** Records a stage transform that tags each row's name, so fold order is observable. */
 function taggingStage(
-  stage: 'filter' | 'group' | 'sort' | 'expand',
+  anchor: 'filter' | 'group' | 'sort',
   tag: string
 ): AnyTableFeature {
   return () => ({
-    stages: {
-      [stage]: (rows: Row[]) =>
-        rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
-    },
+    stages: asStages(
+      stageSchema<Row>('pipeline', (s) =>
+        stage(s[anchor], {
+          run: (rows: Row[]) =>
+            rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
+        })
+      )
+    ),
   });
 }
 
@@ -103,20 +125,19 @@ describe('composeTable', () => {
     expect(store['beta']).toBe(2);
   });
 
-  it('folds stages in fixed pipeline order regardless of features array order', () => {
+  it('folds claimed stages in fixed anchor order regardless of features array order', () => {
     const store = composeWithRows(
       [{ id: 'r1', name: 'Ann', age: 25 }],
       [
-        taggingStage('expand', '-expand'),
         taggingStage('sort', '-sort'),
-        taggingStage('filter', '-filter'),
         taggingStage('group', '-group'),
+        taggingStage('filter', '-filter'),
       ]
     );
 
     const [row] = (store['rows'] as () => Row[])();
 
-    expect(row.name).toBe('Ann-filter-group-sort-expand');
+    expect(row.name).toBe('Ann-filter-group-sort');
   });
 
   it('1:1-wraps rows into render rows when no feature provides a render stage', () => {
@@ -150,9 +171,11 @@ describe('composeTable', () => {
   // through `hasChildren` instead.
   it('lets a feature claim a render stage', () => {
     const withHasChildrenOverride: AnyTableFeature = () => ({
-      renderStages: {
-        tree: (rows) => rows.map((row) => ({ ...row, hasChildren: true })),
-      },
+      renderStages: stageSchema('render', (s) =>
+        stage(s.tree, {
+          run: (rows) => rows.map((row) => ({ ...row, hasChildren: true })),
+        })
+      ),
     });
 
     const store = composeWithRows(makeRows(), [withHasChildrenOverride]);
@@ -161,20 +184,36 @@ describe('composeTable', () => {
     expect(first.hasChildren).toBe(true);
   });
 
-  it('throws when two features claim the same pipeline stage', () => {
+  it('throws when two features claim the same pipeline anchor', () => {
     expect(() =>
       compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])
-    ).toThrow(/feature 1 and feature 2 both provide the "sort" pipeline stage/);
+    ).toThrow(
+      '[createTable] feature 1 and feature 2 both provide the "sort" pipeline stage. Only one feature may provide each stage.'
+    );
   });
 
-  it('throws when two features claim the same render stage', () => {
+  it('throws when two features claim the same render anchor', () => {
     const withTreeStage: AnyTableFeature = () => ({
-      renderStages: { tree: (rows) => rows },
+      renderStages: stageSchema('render', (s) => stage(s.tree, { run: (rows) => rows })),
     });
 
     expect(() => compose([withTreeStage, withTreeStage])).toThrow(
-      /feature 1 and feature 2 both provide the "tree" render stage/
+      '[createTable] feature 1 and feature 2 both provide the "tree" render stage. Only one feature may provide each render stage.'
     );
+  });
+
+  it('still throws the full duplicate-claim message when ngDevMode is false (ungated)', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      expect(() =>
+        compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])
+      ).toThrow(
+        '[createTable] feature 1 and feature 2 both provide the "sort" pipeline stage. Only one feature may provide each stage.'
+      );
+    } finally {
+      setNgDevMode(previous);
+    }
   });
 
   describe('expandedRows contributions (ADR-0017)', () => {
@@ -197,17 +236,19 @@ describe('composeTable', () => {
       // depth/parentId from a node's position in the tree, so nesting via `children` is the only
       // way to make one row's visibility depend on another row's expandedRows membership.
       const withTreeChild: AnyTableFeature = () => ({
-        renderStages: {
-          tree: (nodes) => {
-            const byId = new Map(nodes.map((node) => [node.id, node]));
-            const r1 = byId.get('r1');
-            const r2 = byId.get('r2');
-            if (!r1 || !r2) {
-              throw new Error('expected seeded nodes r1/r2 to be present');
-            }
-            return [{ ...r1, children: [r2] }];
-          },
-        },
+        renderStages: stageSchema('render', (s) =>
+          stage(s.tree, {
+            run: (nodes) => {
+              const byId = new Map(nodes.map((node) => [node.id, node]));
+              const r1 = byId.get('r1');
+              const r2 = byId.get('r2');
+              if (!r1 || !r2) {
+                throw new Error('expected seeded nodes r1/r2 to be present');
+              }
+              return [{ ...r1, children: [r2] }];
+            },
+          })
+        ),
       });
       // 'r1' lives on the FIRST-folded contributor, an unrelated id on the second. If the fold
       // regressed into keeping only the most-recently-folded contributor (the exact "fixed it
@@ -232,26 +273,30 @@ describe('composeTable', () => {
     });
   });
 
-  it('composes render stages in RENDER_ORDER regardless of features array order', () => {
+  it('composes render stages in RENDER_ANCHORS order regardless of registration order', () => {
     const withGroupStage: AnyTableFeature = () => ({
-      renderStages: {
-        group: (nodes) => [
-          { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
-        ],
-      },
+      renderStages: stageSchema('render', (s) =>
+        stage(s.group, {
+          run: (nodes) => [
+            { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
+          ],
+        })
+      ),
     });
     // Tags only the 'group'-kind node — a node that exists solely because 'group' already ran.
-    // If RENDER_ORDER were not fixed (e.g. array order leaked into execution order), the
+    // If RENDER_ANCHORS were not fixed (e.g. array order leaked into execution order), the
     // reversed composition would run 'tree' before any group header exists to tag, and this
     // assertion would catch it — a transform that touched every node regardless of kind would
     // commute with 'group' and prove nothing about order.
     const withTreeStage: AnyTableFeature = () => ({
-      renderStages: {
-        tree: (nodes) =>
-          nodes.map((node) =>
-            node.kind === 'group' ? { ...node, aggregates: { touched: true } } : node
-          ),
-      },
+      renderStages: stageSchema('render', (s) =>
+        stage(s.tree, {
+          run: (nodes) =>
+            nodes.map((node) =>
+              node.kind === 'group' ? { ...node, aggregates: { touched: true } } : node
+            ),
+        })
+      ),
     });
 
     const forward = composeWithRows(makeRows(), [withGroupStage, withTreeStage]);
@@ -298,27 +343,52 @@ describe('composeTable', () => {
     ]);
   });
 
-  it('assigns a contiguous 0-based index after a chain that both inserts and drops rows', () => {
+  it('runs both render claims a feature records in one stageSchema call (group + tree)', () => {
     const withGroupAndDrop: AnyTableFeature = () => ({
-      renderStages: {
-        group: (nodes) => [
-          { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
-        ],
+      renderStages: stageSchema('render', (s) => {
+        stage(s.group, {
+          run: (nodes) => [
+            { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
+          ],
+        });
         // Drops 'r1' from the header's children (not the top-level array — after 'group' runs,
         // the top level holds only the header itself).
-        tree: (nodes) =>
-          nodes.map((node) =>
-            node.kind === 'group'
-              ? { ...node, children: node.children.filter((child) => child.id !== 'r1') }
-              : node
-          ),
-      },
+        stage(s.tree, {
+          run: (nodes) =>
+            nodes.map((node) =>
+              node.kind === 'group'
+                ? { ...node, children: node.children.filter((child) => child.id !== 'r1') }
+                : node
+            ),
+        });
+      }),
     });
 
     const store = composeWithRows(makeRows(), [withGroupAndDrop]);
-    const rows = (store['renderRows'] as () => { index: number }[])();
+    const rows = (store['renderRows'] as () => { index: number; kind: string }[])();
 
+    // Dropping either claimed stage from the fold would fail these: losing 'group' drops the
+    // group-header node (length 1, no 'group'-kind row); losing 'tree' leaves 'r1' present.
     expect(rows.map((row) => row.index)).toEqual([0, 1]);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ kind: 'group' });
+  });
+
+  it('lets one feature claim the "group" anchor in both stages and renderStages (mirrors withGrouping)', () => {
+    const withGrouping: AnyTableFeature = () => ({
+      stages: asStages(
+        stageSchema<Row>('pipeline', (s) => stage(s.group, { run: (rows: Row[]) => rows }))
+      ),
+      renderStages: stageSchema('render', (s) =>
+        stage(s.group, {
+          run: (nodes) => [
+            { id: 'group-1', kind: 'group' as const, data: null, children: nodes },
+          ],
+        })
+      ),
+    });
+
+    expect(() => composeWithRows(makeRows(), [withGrouping])).not.toThrow();
   });
 
   it('throws when two features claim the same store member (ADR-0007)', () => {
