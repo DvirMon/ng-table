@@ -55,7 +55,7 @@ src/
   columns-schema/ ← column schema DSL: columnSchema(), metadata, visibility rules
   schema/         ← the shared declare-phase mechanism, key-space agnostic
   mutations/      ← row and column mutation verbs
-  engine/         ← the runtime; nothing here is exported
+  engine/         ← the runtime; exports only the feature-author surface listed in index.ts
   directives/     ← UI layer
   table.mock.ts   ← shared test fixtures
 tools/            ← repo-side utilities, OUTSIDE src/ so they stay out of the published build
@@ -64,7 +64,7 @@ docs/             ← this library's own docs (see "Docs structure" below)
 
 | File | Purpose |
 |---|---|
-| `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. Lists filtering's rules, matchers and public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) explicitly, same as every other feature — `filters/` was a second domain with its own barrel until R50 (ADR-0004, 2026-09 #93 amendment) closed the standalone trajectory that justified it |
+| `index.ts` | Public API. `api/`, `schema/`, `mutations/`, `engine/`, `directives/` deliberately have **no** barrels — if it isn't listed here it's internal. Lists filtering's rules, matchers and public types (`Filters`, `FilterNode`, `FilterOptions`, `FiltersPath`) explicitly, same as every other feature — `filters/` was a second domain with its own barrel until R50 (ADR-0004, 2026-09 #93 amendment) closed the standalone trajectory that justified it. From `engine/`, lists exactly the feature-author surface: `TableFeatureSpec`, `Feature`, `Shape`, `RowOf` (`engine/types.ts`); `WritableView`, `createWritableView` (`engine/writable-view.ts`); `pruneByIds`, `resolveIndex` (`engine/rows.ts`); `RenderNode`, `mapNodes` (`engine/render-stages.ts`); `ColumnRuleEntry`, `ColumnRuleRegistry` (`engine/columns.ts`) — everything else in `engine/` stays internal |
 | `api/features/with-filtering/` | `feature.ts` (declare — `withFiltering()`), `rules.ts`, `matchers.ts`, public `types.ts`. Its own `index.ts` re-exports only `feature.ts` — a resolution convenience, not a second barrel |
 | `engine/filters/` | `build.ts` (compile — `buildFilterModel()`), `state.ts`/`evaluator.ts` (run), `validate.ts`, internal `types.ts`. Nothing here is reachable from `src/index.ts`; a consumer reaches the model through `withFiltering`'s `schema` config |
 | `api/types.ts` | Public and internal type definitions: `ColumnDef` (the resolved/internal shape), `RenderRow`, `TableStore` interface. The declaration side — `ColumnDecl`, `ColumnSet`, `ColumnBuilder` — lives here too but is consumed through `createColumns()`, see its own row below |
