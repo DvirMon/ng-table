@@ -3,7 +3,7 @@
 **Issue:** #154
 **Branch:** feat/154-stage-rule-claims
 **Worktree:** C:\Users\dmena\git\ng-table\.claude\worktrees\feat-154-stage-rule-claims
-**Status:** 0 / 11 complete
+**Status:** 11 / 11 complete
 
 ## Graph
 
@@ -34,4 +34,4 @@ Dependency: 1,2,3 → 4 → 5 → 6 → {7, 8, 9} → 10; 11 depends on 1, 2, 3,
 | 8 | Refactor withGrouping | ✅ done |
 | 9 | Refactor withTree | ✅ done |
 | 10 | Barrel export | ✅ done |
-| 11 | CLAUDE.md doc fix | ⬚ pending |
+| 11 | CLAUDE.md doc fix | ✅ done |
