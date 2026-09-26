@@ -71,7 +71,8 @@ export function flattenVisible<TRow>(
 ): FlatRenderRow<TRow>[];
 ```
 
-`RenderNode` and `RenderNodeTransform` are engine-internal, never exported from `index.ts`. The
+`RenderNode` and `RenderNodeTransform` are engine-internal, never exported from `index.ts` (see the
+2026-09-26 amendment: `RenderNode` is now public for feature authors). The
 public contract does not move: `createTable()` still takes flat `data`, `renderRows()` still
 returns flat `RenderRow<TRow>[]` with the same fields.
 
@@ -174,3 +175,12 @@ relocating or policing it.
 - ADR-0020 D2's anchor set loses `'paginate'` and `'prune'` both, leaving no post-flatten anchor
   at all — whether to reintroduce one deliberately, once pagination is actually built, is #102's
   call (flagged there, not answered here).
+
+## Amendment (2026-09-26, #152): `RenderNode` and `mapNodes` are public for feature authors
+
+`RenderNode` (type) and `mapNodes` are now exported from `index.ts` as part of the
+feature-author surface (#102, `docs/1-state/work/feature-authoring/2-spec.md` § Exports): a
+render stage written outside the library receives and returns `RenderNode<TRow>[]` and nests
+children through `mapNodes`, so it cannot be written without them. `RenderNodeTransform` stays
+engine-internal. The consumer contract is unchanged: `createTable()` still takes flat `data`,
+`renderRows()` still returns flat `RenderRow<TRow>[]`.
