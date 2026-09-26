@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RENDER_ORDER, mapNodes, runRenderStages } from './render-stages';
+import { mapNodes, runRenderStages } from './render-stages';
 import type { RenderNode, RenderStages } from './render-stages';
 
 type Row = { id: string };
@@ -15,7 +15,7 @@ function node(id: string, overrides: Partial<RenderNode<Row>> = {}): RenderNode<
 }
 
 describe('runRenderStages', () => {
-  it('runs stages in RENDER_ORDER regardless of registration order', () => {
+  it('runs stages in RENDER_ANCHORS regardless of registration order', () => {
     const trace: string[] = [];
     // Registered in reverse of the fixed order, to prove insertion order is irrelevant.
     const stages: RenderStages<Row> = {};
@@ -24,7 +24,7 @@ describe('runRenderStages', () => {
 
     runRenderStages([node('a')], stages);
 
-    expect(trace).toEqual([...RENDER_ORDER]);
+    expect(trace).toEqual(['group', 'tree']);
   });
 
   it('threads each stage output into the next', () => {

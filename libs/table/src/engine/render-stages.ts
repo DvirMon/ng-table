@@ -16,12 +16,17 @@ export interface RenderNode<TRow>
 }
 
 /**
- * Fixed render-layer execution order, independent of `features` array order — `RenderStages`
- * derives from it.
+ * Fixed render-layer execution order, independent of `features` array order.
  */
-export const RENDER_ORDER = ['group', 'tree'] as const;
+export const RENDER_ANCHORS = ['group', 'tree'] as const;
 
-export type RenderStage = (typeof RENDER_ORDER)[number];
+/** The claimable render-stage names. `RenderStage` derives from its keys. */
+export interface RenderStageRegistry {
+  group: true;
+  tree: true;
+}
+
+export type RenderStage = keyof RenderStageRegistry & string;
 
 export type RenderNodeTransform<TRow> = (
   nodes: readonly RenderNode<TRow>[]
@@ -49,13 +54,13 @@ export function mapNodes<TRow>(
 }
 
 /**
- * Folds render nodes through every registered stage, in fixed `RENDER_ORDER`.
+ * Folds render nodes through every registered stage, in fixed `RENDER_ANCHORS` order.
  */
 export function runRenderStages<TRow>(
   nodes: readonly RenderNode<TRow>[],
   stages: RenderStages<TRow>
 ): readonly RenderNode<TRow>[] {
-  return RENDER_ORDER.reduce<readonly RenderNode<TRow>[]>(
+  return RENDER_ANCHORS.reduce<readonly RenderNode<TRow>[]>(
     (current, stage) => stages[stage]?.(current) ?? current,
     nodes
   );
