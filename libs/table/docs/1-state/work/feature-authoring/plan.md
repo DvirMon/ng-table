@@ -230,6 +230,8 @@ author to declare the order on their own stage by anchoring on the other stage's
 `provideTableStages((order) => order)` stays deferred. **Revisit trigger:** a feature ships as
 a versioned package that another team consumes and cannot edit.
 
+**Q5 (decided 2026-09-26, issue #155 grill): pipeline `'group'` anchor rejection is a runtime dev-throw, distinct from unknown-anchor.** `s.group` compiles — it is a claimable built-in pipeline stage (`withGrouping()` already claims it via `stage(s.group, { run })`). A third party writing `stage(s.group, { name, placement, ... })` therefore cannot be rejected at compile time. The construction-check matrix (see Checks) gets one more path: an anchor that is known/claimed but excluded from the anchor set (`'group'` on the pipeline layer) throws a distinct message — naming the anchoring feature and the target stage, and stating the stage is not anchor-eligible — never reusing the "unknown anchor" message. Confirms Q2's existing dev-only duplicate-claim check already covers issue #155's second open question; no further change there.
+
 **No capability decisions log (2026-09-26).** `state.json`'s `capabilityLogPath` is `null`:
 stage registration is an engine-wide feature contract (pipeline + render stages, any
 feature), owned by no single capability's `docs/decisions/<capability>.md`. This file and
