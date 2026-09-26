@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "runId": "feature-authoring-2026-09-26T11:10:39Z",
+  "slug": "feature-authoring",
+  "ticketRef": "102",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/102",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/1-state/work/feature-authoring",
+  "stack": "angular",
+  "isComplex": null,
+  "decisionsPath": "libs/table/docs/1-state/work/feature-authoring/plan.md",
+  "capabilityLogPath": null,
+  "specPath": null,
+  "architecturePath": null,
+  "githubIssues": [],
+  "createdAt": "2026-09-26T11:10:39Z",
+  "updatedAt": "2026-09-26T11:10:39Z"
+}

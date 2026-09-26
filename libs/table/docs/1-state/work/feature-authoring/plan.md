@@ -230,6 +230,11 @@ author to declare the order on their own stage by anchoring on the other stage's
 `provideTableStages((order) => order)` stays deferred. **Revisit trigger:** a feature ships as
 a versioned package that another team consumes and cannot edit.
 
+**No capability decisions log (2026-09-26).** `state.json`'s `capabilityLogPath` is `null`:
+stage registration is an engine-wide feature contract (pipeline + render stages, any
+feature), owned by no single capability's `docs/decisions/<capability>.md`. This file and
+ADR-0020 are the decision record.
+
 ## Work items
 
 Ordered by dependency. 1 and 2 are parallel-safe; 3 gates 4–6.
