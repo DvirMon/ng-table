@@ -191,8 +191,8 @@ export function withFeature<In extends Shape>(config: FeatureConfig = {}) {
 
 `createTableFeature` (exported from `index.ts`) is the public authoring entry point.
 `createTableFeature(factory, derive)` plumbs a trailing derive block, called with `In & Out`; a
-block declaring `stages`/`renderStages`/`columnRules`, or a member the feature already declared,
-throws at construction.
+block declaring any pipeline-behavior key (`PIPELINE_BEHAVIOR_KEYS` in
+`api/create-table-feature.ts`), or a member the feature already declared, throws at construction.
 
 Rules:
 - **`Feature<In, Out>` stays callable** — a plain-object-returning feature resolves before `TCols`
