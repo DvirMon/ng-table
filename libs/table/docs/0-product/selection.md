@@ -601,6 +601,31 @@ flat-ids stance (D13). X-G1 is marked ✅ as the consumer recipe D16 calls for, 
 `grouping-selection/`. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §4.
 
+## Owned by tree *(unbuilt — #163)*
+
+### S-T1 — "Select all" includes children — ❌ not covered
+
+> As someone who ticked "select all" on a task tree, I want the subtasks selected too, including
+> ones under a closed task.
+
+**Acceptance criteria**
+
+- "Select all" includes every row in the tree, open or closed; only rows the filter removed are
+  left out.
+- The selected count agrees with the table's row count.
+
+**Failure behavior**
+
+- Opening or closing a parent never changes what "select all" selected.
+
+**Covered by:** nothing. Today children are not rows, so they are never selected.
+
+**Design status:** decided — D11 (#163 work folder
+[`1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md)).
+**Whether selecting a parent selects its children stays open** — [`tree.md`](tree.md) OQ-1
+(recommendation: no cascade in state, matching D13; the recipe is
+`select([id, ...table.tree.descendantsOf(id)])`).
+
 ## Owned by selection *(built, blocked on bulk write verbs)*
 
 ### X-1 — Bulk delete and bulk edit need a selection source

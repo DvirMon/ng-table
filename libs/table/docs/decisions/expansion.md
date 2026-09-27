@@ -35,30 +35,48 @@ cross-references still resolve.
 | **PTS** | [`active/panel-tree-split/1-decisions.md`](../1-state/work/expansion/active/panel-tree-split/1-decisions.md) — #101, the ADR-0012 split |
 | **PTS spec** | [`active/panel-tree-split/2-spec.md`](../1-state/work/expansion/active/panel-tree-split/2-spec.md) — the written contract for #101 |
 | **PTS discovery** | [`active/panel-tree-split/discovery-emission-shape.md`](../1-state/work/expansion/active/panel-tree-split/discovery-emission-shape.md) — cross-library expand/collapse emission-shape survey, #124 |
+| **TFD** | [`active/tree-flat-data/1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md) — #163, tree from flat data |
 
 ## Decisions
 
 | | Decision | Date | Status | Record |
 |---|---|---|---|---|
-| E1 | `childrenAccessor` is a configurable accessor defaulting to `row.children`, not a cast | 08-07 | shipped · default dropped by E6 | WE |
+| E1 | `childrenAccessor` is a configurable accessor defaulting to `row.children`, not a cast | 08-07 | shipped · default dropped by E6 · superseded by E20 | WE |
 | E2 | No `manual` config — it would toggle no behavior | 08-07 | standing | WE |
 | E3 | `expandAll`/`collapseAll` emit `rowExpanded` once per affected id; no separate bulk event | 09-06 | shipped · `withExpansion()`'s public surface stayed E3-shaped via an adapter over E18 until #121 landed; superseded by E19 | AUD |
 | E4 | Stale restored ids are kept, not dropped — staleness is caller-owned (selection D8 verbatim) | 09-08 | standing | AUD |
 | E5 | `withTree()` accepts real-row parents only — every tree node is an entry in the flat `data()`; no `getDataPath`, since invented parents are `withGrouping()`'s mechanism | 09-20 | shipped in `with-tree.ts` (#119) | PTS D1 |
-| E6 | `childrenAccessor` is required on `withTree()`; the `row.children` fallback is dropped, which closes G6 as impossible rather than fixed | 09-20 | shipped in `with-tree.ts` (#119) · required half amended by E13 | PTS D2 |
+| E6 | `childrenAccessor` is required on `withTree()`; the `row.children` fallback is dropped, which closes G6 as impossible rather than fixed | 09-20 | shipped in `with-tree.ts` (#119) · required half amended by E13 · superseded by E20 | PTS D2 |
 | E7 | `everExpanded` is panel-only — the shared store stops at open-id machinery, `withExpansion()` adds it on top | 09-20 | shipped in `with-expansion.ts` (#121) | PTS D3 |
 | E8 | `setExpanded(ids)` is the store's general write; `expandAll(ids)`/`collapseAll()` are removed as store verbs, and `withTree()` keeps `expandAll()` for the discovery walk only | 09-20 | shipped · amended by E11 | PTS D4 |
 | E9 | `expansionState` tri-state is a `withTree()` member and ships with it; the panel side computes the equivalent in one line | 09-20 | shipped in `with-tree.ts` (#119) | PTS D5 |
 | E10 | Both features ship as ADR-0015 slices (`table.expansion`, `table.tree`) inside #101, rather than flat prefixed members superseded by #50 | 09-20 | shipped — `with-tree.ts` (#119) and `with-expansion.ts` (#121) | PTS D6 |
 | E11 | `setExpanded` is internal; the public surface is `toggle`/`expand`/`collapse`/`set`, with an omitted `ids` meaning all — `expandAll`/`collapseAll` disappear as names | 09-20 | shipped | PTS D7 |
 | E12 | `withGrouping()` is static; collapsible group headers come from composing `withTree()`, and `withExpansion()` contributes nothing to render visibility — reverses ADR-0012 Decision 5 and closes the union collision | 09-20 | shipped in `with-expansion.ts` (#121) | PTS D8 |
-| E13 | `childrenAccessor` is optional with no fallback — omitted means collapse-only, and `withTree()` claims the `'tree'` stage only when an accessor is given | 09-20 | shipped in `with-tree.ts` (#119) | PTS D9 |
+| E13 | `childrenAccessor` is optional with no fallback — omitted means collapse-only, and `withTree()` claims the `'tree'` stage only when an accessor is given | 09-20 | shipped in `with-tree.ts` (#119) · superseded by E20 | PTS D9 |
 | E14 | `initial` ships with the split, seeded in `createExpansionStore()` | 09-20 | shipped | PTS D10 |
 | E15 | `withTree()` has no declared levels and never gains them — a declared-axis hierarchy is `withGrouping()`; `isExpandable` is the only row-selection knob | 09-20 | standing · shipped in `with-tree.ts` (#119) | PTS D11 |
 | E16 | A throwing `childrenAccessor` degrades to "no children" and reports once per evaluation (ADR-0014), never propagates | 09-20 | shipped in `with-tree.ts` (#119) — the panel has no `childrenAccessor` to degrade | PTS D12 |
 | E17 | One emission rule for every write: once per id in the symmetric difference of the old and new open sets — generalizes E3 across `toggle`/`expand`/`collapse`/`set` | 09-20 | superseded by E18 | PTS spec |
 | E18 | `changed` emits once per write, not once per id — payload is the full symmetric difference as `{ added, removed }` (`ExpansionChange`), matching `SelectionChange`. Resolves #124: 8/8 surveyed libraries (AG Grid, TanStack, MUI X, rc-table, PrimeReact, PrimeNG, Angular CDK) emit at most one event per batch action; CDK's `SelectionModel.changed` is the direct precedent | 09-20 | shipped in `createExpansionStore()`, landed ahead of #119 after #118 closed without it | PTS discovery |
 | E19 | `table.expansion.changed` exposes `ExpansionChange` directly — no per-id adapter. Matches `table.tree.changed` and `SelectionChange`; the `mergeMap`-to-`RowId` shim that preserved E3's contract is dropped, absorbed into the one breaking change #121 already causes (D6/E10) | 09-21 | shipped in `with-expansion.ts` (#121) | PTS spec |
+| E20 | `childrenAccessor` is replaced by `parentId: (row) => RowId \| null \| undefined` — the tree nests flat `data()` rows by parent id; `null`/`undefined` is a root; omitted stays collapse-only (E13) | 09-27 | decided (#163) | TFD D1 |
+| E21 | `childrenAccessor` is removed outright — no deprecation window, no exported flatten helper; nested-to-flat conversion is consumer data prep, shown as a doc snippet | 09-27 | decided (#163) | TFD D3 |
+| E22 | A broken parent link — throwing `parentId`, self-parent, cycle, or a parent id absent from `data()` — degrades the row to root with its subtree intact, reported once per evaluation (ADR-0014); never hidden | 09-27 | decided (#163) | TFD D4 |
+| E23 | Filtering a tree keeps matches plus their ancestors as context; boolean `includeDescendants` also keeps a matched row's descendants. Filtering never orphans a row | 09-27 | decided (#163) | TFD D5 |
+| E24 | `withTree()` contributes a parent-link engine slot; the `filter` stage reads it to keep ancestors — no feature reads another's state; `includeDescendants` lives on `withFiltering()` | 09-27 | decided (#163) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD D6 |
+| E25 | `tree.expand()` (no ids) and `tree.state` scan the filtered view by default; boolean `includeHidden` scans all of `data()` — same shape as `selectAllIds()` | 09-27 | decided (#163) | TFD D8 |
+| E26 | Default `hasChildren` counts children in the filtered view — a parent whose children are all filtered out renders no toggle; `isExpandable` still overrides | 09-27 | decided (#163) | TFD D9 |
+| E27 | Every tree node counts as a row — `totalRowCount` and `selectAllIds()` include children, collapsed or not; only filtered-out rows are excluded | 09-27 | decided (#163) | TFD D11 |
+| E28 | `table.tree.descendantsOf(id)` is a read-only query; removing a parent never cascades — a consumer composes `removeRows([id, ...descendantsOf(id)])`, leftover children degrade to root (E22) | 09-27 | decided (#163) | TFD D12 |
+| E29 | Grouping with a `parentId` tree groups roots only; subtrees follow their root, never split by descendants' own values. Flat grouping = omit `parentId` | 09-27 | decided (#163) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD D13 |
+| E30 | A group header's row count includes every node in the group, descendants too — matches `totalRowCount` and group select-all | 09-27 | decided (#163) | TFD D14 |
+| E31 | Group `aggregateFn` receives every node in the group, descendants included; roll-up vs own-value parents is the consumer's call inside `aggregateFn` — no new mechanism | 09-27 | decided (#163) | TFD D15 |
+| E32 | While a filter is active, context rows render expanded — a visibility rule only; the open set is not written, `changed` does not fire, and clearing the filter restores the person's own state | 09-27 | decided (#163) · superseded by E35 | TFD D16 |
+| E33 | Toggling a revealed context row collapses it via a per-filter collapsed set, separate from the open set; the set resets when the filter changes or clears | 09-27 | decided (#163) · superseded by E35 | TFD D17 |
+| E34 | `RenderRow.isContextRow` flags a context row; `ngpTableRow` exposes it as presence attribute `data-context-row` (ADR-0026 rule 1) — styling is the consumer's | 09-27 | decided (#163) · directive amended by E36 | TFD D18 |
+| E35 | Filter reveal is a derived visibility source (never writes the open set); `revealContextRow` row predicate on `withTree()` picks which context rows reveal (default all, `() => false` off); a closed revealed row is remembered only while it stays a context row; `table.tree` exposes `contextRowIds()`, `parentOf()`, `descendantsOf()` — every library-only fact is readable, every policy can be switched off | 09-27 | decided (#163) | TFD D20 |
+| E36 | `data-context-row` is bound by a new `ngpTableTreeRow` feature directive, not core `ngpTableRow` (optional field → feature directive); wider tree UI is a separate issue | 09-27 | decided (#163) | TFD D21 |
 
 ## Still open
 

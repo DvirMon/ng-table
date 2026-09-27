@@ -831,6 +831,74 @@ operation from row filtering; the aggregation contract should not make it imposs
 [`research-grouping-ux-capabilities.md`](../1-state/work/grouping/archive/with-grouping/research-grouping-ux-capabilities.md)
 (AG Grid's `groupAggFiltering`, MUI X open request).
 
+## Owned by tree *(unbuilt — #163)*
+
+With a `parentId` tree (`withTree({ parentId })`), grouping has to see the hierarchy. The `group`
+stage reads `withTree()`'s parent-link slot ([ADR-0028](../adr/0028-tree-parent-link-slot.md)).
+Collapsible groups (`withTree()` with no `parentId`) are unchanged. Tree-side stories live in
+[`tree.md`](tree.md).
+
+### G-T1 — Grouping never splits a family — ❌ not covered
+
+> As someone grouping a task list by status, I want each subtask to stay under its task, even
+> when its own status differs.
+
+**Acceptance criteria**
+
+- Only top-level rows are placed into groups; each branch follows its root, whatever its own
+  values.
+- Grouping every row by its own value is still possible: compose `withGrouping()` without
+  `parentId`.
+
+**Failure behavior**
+
+- A row whose parent link is broken is grouped as a top-level row by its own value (tree.md 4.1).
+
+**Covered by:** nothing. Under flat data today's clustering would place each child by its own
+value, away from its parent.
+
+**Design status:** decided — D13 (#163 work folder
+[`1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md)). No surveyed
+library splits a child from its parent; products offer per-row grouping only as an opt-in flat
+mode.
+
+### G-T2 — A group's count includes every row in it — ❌ not covered
+
+> As someone reading "Active (12)", I want 12 to be the rows I'd select by ticking that group.
+
+**Acceptance criteria**
+
+- A group's count includes descendants, open or closed.
+- Selecting a group selects the number the count shows.
+
+**Failure behavior**
+
+- The count never changes when I open or close a parent inside the group.
+
+**Covered by:** nothing.
+
+**Design status:** decided — D14. Wrike, the only product that documents it, counts top-level
+rows only; AG Grid and MUI X count all descendants.
+
+### G-T3 — A group total that matches my data model — ❌ not covered
+
+> As someone summing budgets per region, I want a total that doesn't double-count a parent whose
+> amount is already its teams' sum, and doesn't drop one whose amount is its own.
+
+**Acceptance criteria**
+
+- `aggregateFn` receives every row in the group, descendants too.
+- Whether a parent's value is its own or a roll-up is the page's call, inside `aggregateFn`.
+
+**Failure behavior**
+
+- A throwing `aggregateFn` degrades per ADR-0014, as today.
+
+**Covered by:** nothing. The shipped fixture's `d4` (42000 = 25000 + 17000) is a roll-up and
+would double-count; #163 changes it so parents carry their own amounts.
+
+**Design status:** decided — D15. No new mechanism.
+
 ## Owned by pagination and virtual scroll *(pagination unbuilt; virtual scroll drafted)*
 
 ### P-G1 — A group that straddles a page boundary — ❌ not covered *(forward-looking)*

@@ -505,6 +505,57 @@ the read-side count lands. Tracked at [`selection.md`](selection.md) §2.5 and
 [`0-product/selection.md`](selection.md) §2.5/§8.1 (S1). See
 [`research-filter-community-pain.md`](../1-state/work/filtering/archive/with-filtering/research-filter-community-pain.md). **OQ-2**.
 
+## Owned by tree *(unbuilt — #163)*
+
+Both stories need filtering to change: the `filter` stage has to see the hierarchy. It reads
+`withTree()`'s parent-link slot ([ADR-0028](../adr/0028-tree-parent-link-slot.md)), so neither
+feature reads the other's state. The tree-side stories (reveal, context-row marking) live in
+[`tree.md`](tree.md) §2.
+
+### F-T1 — A matching child keeps its path — ❌ not covered
+
+> As someone who searched a team tree for "Alice", I want to see Alice under Engineering, not
+> Alice floating alone, and not nothing because Engineering itself didn't match.
+
+**Acceptance criteria**
+
+- A row that matches is shown together with every ancestor it has, up to the top level.
+- Ancestors kept only for that reason are context rows ([`tree.md`](tree.md) §6), and a page can
+  style them differently.
+- The row count and "select all" include context rows, because they are on screen.
+
+**Failure behavior**
+
+- Filtering never orphans a row: a match never appears without its parent.
+- A broken parent link degrades to the top level (tree.md 4.1), never hides the match.
+
+**Covered by:** nothing. Today the filter sees top-level rows only: a parent that fails hides
+children that match.
+
+**Design status:** decided — D5, D6, ADR-0028 (#163 work folder
+[`1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md)). All six
+surveyed libraries keep a match's ancestors; it is the default in four.
+
+### F-T2 — Show a matched parent's whole branch — ❌ not covered
+
+> As someone who searched for a category, I want everything in it, not only the items whose own
+> names also match.
+
+**Acceptance criteria**
+
+- An opt-in flag on `withFiltering()`, `includeDescendants`, also keeps every descendant of a
+  matching row.
+- Off by default: a matched parent shows only the children that match on their own.
+
+**Failure behavior**
+
+- Turning the flag on never removes a row the default would show.
+
+**Covered by:** nothing.
+
+**Design status:** decided — D5. The request that keeps coming back (seven trackers, 2013–2025);
+on by default in AG Grid and PrimeNG, not available in MUI or Kendo.
+
 ## Owned by pagination *(unbuilt)*
 
 ### F-P1 — A page total reflects what's actually shown — ❌ not covered *(pagination does not exist)*

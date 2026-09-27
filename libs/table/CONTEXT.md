@@ -25,6 +25,9 @@ header and the column beneath it unable to disagree.
 (`visible: false`). How a table groups, sorts or filters by something it does not
 display. It is an ordinary column in every other respect.
 
+**Context row** — a row shown only because one of its descendants matched the
+filter. It gives the match its place in the tree; it did not match itself.
+
 **Display column** — a column object standing in for a rendered thing with no
 value: a selection checkbox, a row-actions cell, an expand toggle. **This
 library has none.** It is headless, so those are markup the consumer writes;
