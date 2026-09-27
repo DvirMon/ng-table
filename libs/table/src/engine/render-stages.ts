@@ -1,4 +1,5 @@
 import type { RenderRow } from '../api/types';
+import type { ResolvedStage } from './stage-order';
 
 /** Engine-internal render IR. Never exported from `index.ts`. `depth`, `parentId`,
  *  `index`, `sourceIndex` and `cells` are all derived or stamped later — a node states
@@ -33,13 +34,6 @@ export type RenderNodeTransform<TRow> = (
 ) => readonly RenderNode<TRow>[];
 
 /**
- * The render-node transforms a feature may declare via `TableFeatureSpec.renderStages` — two
- * features claiming the same stage throws (`SlotRegistry`). Internal wiring only, not part of
- * the public `TableStore<TRow>` contract.
- */
-export type RenderStages<TRow> = Partial<Record<RenderStage, RenderNodeTransform<TRow>>>;
-
-/**
  * Post-order walk: `fn` sees a node whose `children` are already mapped, and its return
  * value is used as-is — never re-descended. The engine owns this recursion so a stage
  * cannot forget to reach nodes nested under another stage's output. See ADR-0023.
@@ -53,15 +47,14 @@ export function mapNodes<TRow>(
   );
 }
 
-/**
- * Folds render nodes through every registered stage, in fixed `RENDER_ANCHORS` order.
- */
+/** Folds render nodes through the resolved stage order — `resolveStageOrder` already fixed
+ *  both the built-in anchor positions and any declared stage's slot; this just runs the list. */
 export function runRenderStages<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  stages: RenderStages<TRow>
+  stages: readonly ResolvedStage<RenderNodeTransform<TRow>>[]
 ): readonly RenderNode<TRow>[] {
-  return RENDER_ANCHORS.reduce<readonly RenderNode<TRow>[]>(
-    (current, stage) => stages[stage]?.(current) ?? current,
+  return stages.reduce<readonly RenderNode<TRow>[]>(
+    (current, stage) => stage.run(current),
     nodes
   );
 }

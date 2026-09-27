@@ -95,6 +95,71 @@ function taggingStage(
   });
 }
 
+/** Declares a new pipeline stage `name`, anchored on `anchor` at `placement`, tagging each
+ * row's name the same way `taggingStage` does — makes a declared stage's resolved position
+ * observable through the pipeline output (#155 step 2, seam D). */
+function declaredPipelineStage(
+  anchor: 'filter' | 'group' | 'sort',
+  name: string,
+  placement: 'before' | 'after',
+  tag: string
+): AnyTableFeature {
+  return () => ({
+    stages: asStages(
+      stageSchema<Row>('pipeline', (s) =>
+        stage(s[anchor], {
+          name,
+          placement,
+          run: (rows: Row[]) =>
+            rows.map((row) => ({ ...row, name: `${row.name}${tag}` })),
+        })
+      )
+    ),
+  });
+}
+
+/** Reads the running `trail` a render fixture has appended to so far. */
+function trailOf(node: { aggregates?: Record<string, unknown> }): string {
+  return (node.aggregates?.['trail'] as string | undefined) ?? '';
+}
+
+/** Claims a render anchor and appends `tag` to every node's `aggregates.trail` — the render
+ * layer's equivalent of `taggingStage`, used to make a declared render stage's resolved
+ * position observable (#155 step 2, seams B/C/E). */
+function renderTaggingStage(anchor: 'group' | 'tree', tag: string): AnyTableFeature {
+  return () => ({
+    renderStages: stageSchema('render', (s) =>
+      stage(s[anchor], {
+        run: (nodes) =>
+          nodes.map((node) => ({
+            ...node,
+            aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}${tag}` },
+          })),
+      })
+    ),
+  });
+}
+
+/** Declares a render stage named `pin`, anchored on `'tree'` at `placement`. Its `run`
+ * both reverses node order (proves the resolved position actually runs — seam A) and
+ * appends `'pin>'` to `aggregates.trail` (proves relative order against a `'tree'`
+ * claimant — seams B/C/F). */
+function pinningStage(placement: 'before' | 'after'): AnyTableFeature {
+  return () => ({
+    renderStages: stageSchema('render', (s) =>
+      stage(s.tree, {
+        name: 'pin',
+        placement,
+        run: (nodes) =>
+          [...nodes].reverse().map((node) => ({
+            ...node,
+            aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}pin>` },
+          })),
+      })
+    ),
+  });
+}
+
 describe('composeTable', () => {
   it('resolves sparse column defs into full ColumnDefs', () => {
     const store = compose([]);
@@ -389,6 +454,79 @@ describe('composeTable', () => {
     });
 
     expect(() => composeWithRows(makeRows(), [withGrouping])).not.toThrow();
+  });
+
+  // #155 step 2 — runs a declared stage at its `resolveStageOrder`-resolved position instead
+  // of dropping it (the fold's `if ('name' in rule) continue`). See
+  // step-2-run-resolved-order.test-plan.md seams A-D, F.
+  describe('declared stages (#155)', () => {
+    it('runs a declared render stage placed after an unclaimed anchor', () => {
+      const store = composeWithRows(makeRows(), [pinningStage('after')]);
+
+      const ids = (store['renderRows'] as () => { id: string }[])().map(
+        (row) => row.id
+      );
+
+      expect(ids).toEqual(['r2', 'r1']);
+    });
+
+    it('runs a declared stage after the anchor it is placed after', () => {
+      const store = composeWithRows(makeRows(), [
+        renderTaggingStage('tree', 'tree>'),
+        pinningStage('after'),
+      ]);
+
+      const rows = (
+        store['renderRows'] as () => { aggregates?: Record<string, unknown> }[]
+      )();
+
+      for (const row of rows) {
+        expect(trailOf(row)).toBe('tree>pin>');
+      }
+    });
+
+    it('runs a declared stage before the anchor it is placed before', () => {
+      const store = composeWithRows(makeRows(), [
+        renderTaggingStage('tree', 'tree>'),
+        pinningStage('before'),
+      ]);
+
+      const rows = (
+        store['renderRows'] as () => { aggregates?: Record<string, unknown> }[]
+      )();
+
+      for (const row of rows) {
+        expect(trailOf(row)).toBe('pin>tree>');
+      }
+    });
+
+    it('runs a declared pipeline stage after the anchor it is placed after', () => {
+      const store = composeWithRows(
+        [{ id: 'r1', name: 'Ann', age: 25 }],
+        [
+          taggingStage('sort', '-sort'),
+          declaredPipelineStage('sort', 'audit', 'after', '-audit'),
+        ]
+      );
+
+      const [row] = (store['rows'] as () => Row[])();
+
+      expect(row.name).toBe('Ann-sort-audit');
+    });
+
+    it('throws naming both features when two declare the same stage name', () => {
+      let thrown: unknown;
+      try {
+        compose([pinningStage('after'), pinningStage('after')]);
+      } catch (error) {
+        thrown = error;
+      }
+
+      const message = thrown instanceof Error ? thrown.message : '';
+      expect(message).toContain('feature 1');
+      expect(message).toContain('feature 2');
+      expect(message).toContain('"pin"');
+    });
   });
 
   it('throws when two features claim the same store member (ADR-0007)', () => {

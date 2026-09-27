@@ -1,5 +1,5 @@
 import { describe, it } from 'vitest';
-import type { RenderNode, RenderStages } from './render-stages';
+import type { RenderStage } from './render-stages';
 
 /**
  * Compile-time seam: `RenderStage` stays a closed union derived from `RenderStageRegistry` — an
@@ -13,13 +13,11 @@ function typecheckOnly(assertions: () => void): void {
   void assertions;
 }
 
-type Row = { id: string };
-
 describe('RenderStage — closed union', () => {
-  it('rejects a key not declared in RenderStageRegistry', () => {
+  it('rejects a value not declared in RenderStageRegistry', () => {
     typecheckOnly(() => {
       // @ts-expect-error — 'pinned' is not a member of RenderStageRegistry
-      const bad: RenderStages<Row> = { pinned: (n: readonly RenderNode<Row>[]) => n };
+      const bad: RenderStage = 'pinned';
       void bad;
     });
   });
