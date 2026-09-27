@@ -2,12 +2,14 @@
 step: 4
 type: code
 commit: feat
-depends_on: [2]
+depends_on: [2, 3]
 files:
   - libs/table/src/schema/stage-schema.ts
   - libs/table/src/schema/stage-rules.ts
   - libs/table/src/schema/stage-schema.types.spec.ts (new)
   - libs/table/src/engine/pipeline.types.spec.ts
+  - libs/table/src/engine/compose-table.spec.ts
+  - libs/table/src/api/features/compose-features.spec.ts
 ---
 # Step 4 — Declared names typed to the registries
 

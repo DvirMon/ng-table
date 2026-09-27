@@ -8,12 +8,15 @@
 ## Graph
 
 ```
-Step 1 ──► Step 2 ──┬──► Step 3
-                    ├──► Step 4
+Step 1 ──► Step 2 ──┬──► Step 3 ──► Step 4
                     └──► Step 5
 ```
 
-Parallel-safe: [3, 4, 5] after 2 · Dependency: 1 → 2 → {3, 4, 5}
+Parallel-safe: [3, 5] after 2 · Dependency: 1 → 2 → 3 → 4
+
+Edge 3 → 4 added by /implement: both edit
+`compose-table.spec.ts` (step 4's pointer comment in step 2's
+fixtures).
 
 ## Steps
 
