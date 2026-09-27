@@ -277,6 +277,56 @@ function fParentsSecondRow(displayName: string): Feature<Store, NoMembers> {
   );
 }
 
+/** Reads the running `trail` a render fixture has appended to so far — mirrors
+ * `compose-table.spec.ts`'s helper of the same name (#155 step 2, seam E). */
+function trailOf(node: { aggregates?: Record<string, unknown> }): string {
+  return (node.aggregates?.['trail'] as string | undefined) ?? '';
+}
+
+/** Claims the outer `'tree'` render anchor, appending `'tree>'` to every node's
+ * `aggregates.trail` — the outer claimant seam E's declared stage must run after. */
+function fTreeTrail(displayName: string): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        renderStages: stageSchema<MockRow>('render', (s) =>
+          stage(s.tree, {
+            run: (nodes) =>
+              nodes.map((node) => ({
+                ...node,
+                aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}tree>` },
+              })),
+          })
+        ),
+      })
+    )
+  );
+}
+
+/** Declares a render stage named `'pin'`, anchored `after` `'tree'`, inside a composite —
+ * appends `'pin>'` to `aggregates.trail` (#155 step 2, seam E). */
+function fPinAfterTree(displayName: string): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        renderStages: stageSchema<MockRow>('render', (s) =>
+          stage(s.tree, {
+            name: 'pin',
+            placement: 'after',
+            run: (nodes) =>
+              nodes.map((node) => ({
+                ...node,
+                aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}pin>` },
+              })),
+          })
+        ),
+      })
+    )
+  );
+}
+
 function fExpandedRows(ids: readonly RowId[], displayName: string): Feature<Store, NoMembers> {
   return named(
     displayName,
@@ -528,6 +578,26 @@ describe('composeFeatures', () => {
       );
 
       expect(store.renderRows().map((row) => row.id)).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('declared stages (#155)', () => {
+    it('case 20 — a declared stage inside a composite runs in resolved order', () => {
+      const data = signal([...mockRows]);
+
+      expect(() =>
+        makeStore(data, fTreeTrail('fOuterTree'), composeFeatures(fPinAfterTree('fPin')))
+      ).not.toThrow();
+
+      const store = makeStore(
+        signal([...mockRows]),
+        fTreeTrail('fOuterTree'),
+        composeFeatures(fPinAfterTree('fPin'))
+      );
+
+      for (const row of store.renderRows()) {
+        expect(trailOf(row as { aggregates?: Record<string, unknown> })).toBe('tree>pin>');
+      }
     });
   });
 

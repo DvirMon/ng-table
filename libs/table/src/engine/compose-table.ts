@@ -1,10 +1,11 @@
 import { computed, DestroyRef, effect, inject } from '@angular/core';
 import type { AnyTableFeature, RowId, TableStore } from '../api/types';
 import { createTableCore, type TableCoreHandle } from './core';
-import type { PipelineStage } from './pipeline';
-import type { RenderStage } from './render-stages';
+import type { PipelineStage, RowTransform } from './pipeline';
+import type { RenderNodeTransform, RenderStage } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
+import { resolveStageOrder, type LabelledStageRule } from './stage-order';
 import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
 
 interface FeatureHooks {
@@ -75,31 +76,29 @@ function foldFeatures<TRow>(
   registry: SlotRegistry
 ): FeatureHooks {
   const hooks: FeatureHooks = { setup: [], onDestroy: [], onRowsRemoved: [] };
+  const pipelineRules: LabelledStageRule<RowTransform<TRow>>[] = [];
+  const renderRules: LabelledStageRule<RenderNodeTransform<TRow>>[] = [];
 
   for (const { run, label } of features) {
     const spec: TableFeatureSpec<TRow> = run();
 
     if (spec.stages) {
       for (const rule of spec.stages) {
-        // Declare form (`name` + `placement`): resolving/executing it is issue #155's
-        // concern — no shipped feature in this issue produces one.
-        if ('name' in rule) {
-          continue;
+        // Claim form (no `name`) occupies a built-in anchor's own slot — collision detection
+        // stays here. Declare form is resolved, alongside every claim, once below.
+        if (!('name' in rule)) {
+          registry.claimStage(rule.anchor as PipelineStage, label);
         }
-        const anchor = rule.anchor as PipelineStage;
-        registry.claimStage(anchor, label);
-        handle.stages[anchor] = rule.run;
+        pipelineRules.push({ label, rule });
       }
     }
 
     if (spec.renderStages) {
       for (const rule of spec.renderStages) {
-        if ('name' in rule) {
-          continue;
+        if (!('name' in rule)) {
+          registry.claimRenderStage(rule.anchor as RenderStage, label);
         }
-        const anchor = rule.anchor as RenderStage;
-        registry.claimRenderStage(anchor, label);
-        handle.renderStages[anchor] = rule.run;
+        renderRules.push({ label, rule });
       }
     }
 
@@ -129,6 +128,11 @@ function foldFeatures<TRow>(
       hooks.onRowsRemoved.push(spec.onRowsRemoved);
     }
   }
+
+  // Resolved once per layer, after every feature has folded — a declared stage's final
+  // position can depend on any anchor, claimed or declared, regardless of fold order.
+  handle.stages.push(...resolveStageOrder('pipeline', pipelineRules));
+  handle.renderStages.push(...resolveStageOrder('render', renderRules));
 
   return hooks;
 }

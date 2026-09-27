@@ -1,6 +1,8 @@
+import type { ResolvedStage } from './stage-order';
+
 /**
  * Fixed execution order, independent of the `features` array order. This array is the single
- * source of truth: `PipelineStages` is derived from `PipelineStageRegistry`, so a stage that
+ * source of truth: `PipelineStage` is derived from `PipelineStageRegistry`, so a stage that
  * exists in the type is guaranteed to be executed, and adding one is a one-line edit here.
  */
 export const PIPELINE_ANCHORS = ['filter', 'group', 'sort'] as const;
@@ -26,20 +28,11 @@ export const PIPELINE_ANCHOR_ELIGIBLE = ['filter', 'sort'] as const;
 
 export type RowTransform<TRow> = (rows: TRow[]) => TRow[];
 
-/**
- * The row transforms a feature may **declare** via `TableFeatureSpec.stages`. Two features
- * declaring the same stage is a composition error — see `SlotRegistry`.
- * Not part of the public `TableStore<TRow>` contract — internal wiring only.
- */
-export type PipelineStages<TRow> = Partial<Record<PipelineStage, RowTransform<TRow>>>;
-
-/** Folds rows through whichever stages are registered, always in `PIPELINE_ANCHORS`. */
+/** Folds rows through the resolved stage order — `resolveStageOrder` already fixed both the
+ *  built-in anchor positions and any declared stage's slot; this just runs the list. */
 export function runPipeline<TRow>(
   rows: TRow[],
-  stages: PipelineStages<TRow>
+  stages: readonly ResolvedStage<RowTransform<TRow>>[]
 ): TRow[] {
-  return PIPELINE_ANCHORS.reduce(
-    (current, stage) => stages[stage]?.(current) ?? current,
-    rows
-  );
+  return stages.reduce((current, stage) => stage.run(current), rows);
 }

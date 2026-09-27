@@ -8,9 +8,10 @@ import {
   type ColumnRuleEntry,
 } from './columns';
 import { flattenVisible } from './flatten';
-import { runPipeline, type PipelineStages } from './pipeline';
-import { runRenderStages, type RenderStages } from './render-stages';
+import { runPipeline, type RowTransform } from './pipeline';
+import { runRenderStages, type RenderNodeTransform } from './render-stages';
 import { buildDefaultRenderNodes, normalizeTrackBy } from './rows';
+import type { ResolvedStage } from './stage-order';
 import type { TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
 
@@ -23,8 +24,8 @@ export interface TableCoreHandle<TRow> {
   readonly core: TableCore<TRow>;
   readonly renderRows: Signal<RenderRow<TRow>[]>;
   readonly renderColumns: Signal<ColumnDef<TRow>[]>;
-  readonly stages: PipelineStages<TRow>;
-  readonly renderStages: RenderStages<TRow>;
+  readonly stages: ResolvedStage<RowTransform<TRow>>[];
+  readonly renderStages: ResolvedStage<RenderNodeTransform<TRow>>[];
   readonly columnRules: ColumnRuleEntry<TRow>[];
   /** Additively populated by `composeTable()`'s fold — one entry per feature declaring
    * `expandedRows`. Unioned below and fed into `flattenVisible`. */
@@ -49,8 +50,8 @@ export function createTableCore<TRow>(
   const columns = computed(() => foldColumnRules(baseColumns(), columnRules));
   const renderColumns = computed(() => selectRenderColumns(columns()));
 
-  const stages: PipelineStages<TRow> = {};
-  const renderStages: RenderStages<TRow> = {};
+  const stages: ResolvedStage<RowTransform<TRow>>[] = [];
+  const renderStages: ResolvedStage<RenderNodeTransform<TRow>>[] = [];
   const expandedSources: Signal<ReadonlySet<RowId>>[] = [];
   // Always runs first, never replaced — the `RenderNode[]` seed every render stage chain
   // starts from.
