@@ -183,7 +183,18 @@ describe('resolveStageOrder', () => {
           declare('withA', 'a', 'group', 'after'),
           declare('withB', 'b', 'tree', 'before'),
         ],
-        [/^\[createTable\]/, /"a"/, /"b"/, /anchor one on the other/],
+        [/^\[createTable\]/, /"a"/, /"b"/, /withA/, /withB/, /anchor one on the other/],
+      ],
+      [
+        'N: tie in one gap, same anchor and placement',
+        'render',
+        [
+          claim('withGroup', 'group'),
+          claim('withTree', 'tree'),
+          declare('withA', 'a', 'tree', 'after'),
+          declare('withB', 'b', 'tree', 'after'),
+        ],
+        [/^\[createTable\]/, /"a"/, /"b"/, /withA/, /withB/, /anchor one on the other/],
       ],
       [
         'Q: synthesizesRows before render group',
