@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runPipeline } from './pipeline';
 import type { ResolvedStage } from './stage-order';
+import type { StageContext } from './types';
 
 describe('runPipeline', () => {
   it('folds stages in list order', () => {
@@ -11,7 +12,7 @@ describe('runPipeline', () => {
       { name: 'sort', run: (rows) => (trace.push('sort'), rows) },
     ];
 
-    runPipeline(['a'], stages);
+    runPipeline(['a'], stages, {});
 
     expect(trace).toEqual(['filter', 'group', 'sort']);
   });
@@ -22,12 +23,27 @@ describe('runPipeline', () => {
       { name: 'sort', run: (rows) => [...rows].sort((a, b) => b - a) },
     ];
 
-    expect(runPipeline([3, 1, 2], stages)).toEqual([3, 2]);
+    expect(runPipeline([3, 1, 2], stages, {})).toEqual([3, 2]);
   });
 
   it('is a pass-through with no stages registered', () => {
     const rows = [1, 2, 3];
 
-    expect(runPipeline(rows, [])).toBe(rows);
+    expect(runPipeline(rows, [], {})).toBe(rows);
+  });
+
+  it('hands the same context to every pipeline stage', () => {
+    const seen: StageContext<string>[] = [];
+    const ctx: StageContext<string> = { parentOf: () => null };
+    const stages: ResolvedStage<(rows: string[], ctx: StageContext<string>) => string[]>[] = [
+      { name: 'filter', run: (rows, ctx) => (seen.push(ctx), rows) },
+      { name: 'sort', run: (rows, ctx) => (seen.push(ctx), rows) },
+    ];
+
+    runPipeline(['a'], stages, ctx);
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(ctx);
+    expect(seen[1]).toBe(ctx);
   });
 });

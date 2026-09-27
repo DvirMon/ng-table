@@ -1,5 +1,8 @@
-import { describe, it } from 'vitest';
-import type { RenderStage } from './render-stages';
+import { describe, expectTypeOf, it } from 'vitest';
+import type { RenderNodeTransform, RenderStage } from './render-stages';
+import type { StageContext } from './types';
+
+type Row = { id: string };
 
 /**
  * Compile-time seam: `RenderStage` stays a closed union derived from `RenderStageRegistry` — an
@@ -20,5 +23,11 @@ describe('RenderStage — closed union', () => {
       const bad: RenderStage = 'pinned';
       void bad;
     });
+  });
+});
+
+describe('RenderNodeTransform — ctx parameter carries TRow, not the node', () => {
+  it('types the second argument as StageContext<TRow>, where TRow is the row data', () => {
+    expectTypeOf<Parameters<RenderNodeTransform<Row>>[1]>().toEqualTypeOf<StageContext<Row>>();
   });
 });

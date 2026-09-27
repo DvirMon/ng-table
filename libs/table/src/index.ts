@@ -128,7 +128,7 @@ export type {
   ColumnsPath,
   ColumnsSchemaFn,
 } from './columns-schema/types';
-export type { TableFeatureSpec, Feature, Shape, RowOf } from './engine/types';
+export type { TableFeatureSpec, Feature, Shape, RowOf, StageContext } from './engine/types';
 export { createWritableView } from './engine/writable-view';
 export type { WritableView } from './engine/writable-view';
 export { pruneByIds, resolveIndex } from './engine/rows';

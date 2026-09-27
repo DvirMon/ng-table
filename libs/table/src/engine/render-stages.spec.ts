@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mapNodes, runRenderStages } from './render-stages';
 import type { RenderNode, RenderNodeTransform } from './render-stages';
 import type { ResolvedStage } from './stage-order';
+import type { StageContext } from './types';
 
 type Row = { id: string };
 
@@ -23,7 +24,7 @@ describe('runRenderStages', () => {
       { name: 'tree', run: (nodes) => (trace.push('tree'), nodes) },
     ];
 
-    runRenderStages([node('a')], stages);
+    runRenderStages([node('a')], stages, {});
 
     expect(trace).toEqual(['group', 'tree']);
   });
@@ -35,13 +36,28 @@ describe('runRenderStages', () => {
     ];
     const nodes = [node('a'), node('b'), node('c')];
 
-    expect(runRenderStages(nodes, stages).map((n) => n.id)).toEqual(['c', 'a']);
+    expect(runRenderStages(nodes, stages, {}).map((n) => n.id)).toEqual(['c', 'a']);
   });
 
   it('is a pass-through with no stages registered, returning the input reference', () => {
     const nodes = [node('a')];
 
-    expect(runRenderStages(nodes, [])).toBe(nodes);
+    expect(runRenderStages(nodes, [], {})).toBe(nodes);
+  });
+
+  it('hands the same context to every render stage', () => {
+    const seen: StageContext<Row>[] = [];
+    const ctx: StageContext<Row> = { parentOf: () => null };
+    const stages: ResolvedStage<RenderNodeTransform<Row>>[] = [
+      { name: 'group', run: (nodes, ctx) => (seen.push(ctx), nodes) },
+      { name: 'tree', run: (nodes, ctx) => (seen.push(ctx), nodes) },
+    ];
+
+    runRenderStages([node('a')], stages, ctx);
+
+    expect(seen).toHaveLength(2);
+    expect(seen[0]).toBe(ctx);
+    expect(seen[1]).toBe(ctx);
   });
 });
 
@@ -86,7 +102,7 @@ describe('mapNodes reach (via runRenderStages)', () => {
       },
     ];
 
-    const result = runRenderStages([node('seed')], stages);
+    const result = runRenderStages([node('seed')], stages, {});
 
     expect(result[0].aggregates).toEqual({ label: 'leaf' });
     expect(result[0].children[0].aggregates).toEqual({ label: 'leaf' });

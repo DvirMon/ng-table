@@ -1,4 +1,5 @@
 import type { ResolvedStage } from './stage-order';
+import type { StageContext } from './types';
 
 /** Built-in pipeline anchors in execution order, fixed regardless of feature argument order. */
 export const PIPELINE_ANCHORS = ['filter', 'group', 'sort'] as const;
@@ -21,12 +22,13 @@ export type PipelineStage = keyof PipelineStageRegistry & string;
  */
 export const PIPELINE_ANCHOR_ELIGIBLE = ['filter', 'sort'] as const;
 
-export type RowTransform<TRow> = (rows: TRow[]) => TRow[];
+export type RowTransform<TRow> = (rows: TRow[], ctx: StageContext<TRow>) => TRow[];
 
 /** Runs rows through each stage in the order `resolveStageOrder` produced. */
 export function runPipeline<TRow>(
   rows: TRow[],
-  stages: readonly ResolvedStage<RowTransform<TRow>>[]
+  stages: readonly ResolvedStage<RowTransform<TRow>>[],
+  ctx: StageContext<TRow>
 ): TRow[] {
-  return stages.reduce((current, stage) => stage.run(current), rows);
+  return stages.reduce((current, stage) => stage.run(current, ctx), rows);
 }
