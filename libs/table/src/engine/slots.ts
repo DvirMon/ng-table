@@ -65,7 +65,7 @@ export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
   private readonly ownerByRenderStage = new Map<RenderStage, string>();
   private readonly ownerByMember = new Map<string, string>();
-  private readonly ownerByParentLink = new Map<'parentLink', string>();
+  private parentLinkOwner: string | undefined;
 
   private claim<TKey>(
     owners: Map<TKey, string>,
@@ -132,14 +132,15 @@ export class SlotRegistry {
   claimParentLink(feature: string): void {
     // Note: an unchecked duplicate silently nests every row by whichever feature folded last —
     // quieter than a stage clash, so no `ngDevMode` bypass, same as `claimMember`.
-    this.claim(
-      this.ownerByParentLink,
-      'parentLink',
-      feature,
-      (currentOwner, claimant) =>
-        `[createTable] ${currentOwner} and ${claimant} both provide the parent link. ` +
-        'Only one feature may provide a parent link.'
-    );
+    const currentOwner = this.parentLinkOwner;
+    const isAlreadyClaimed = currentOwner !== undefined;
+    if (isAlreadyClaimed) {
+      throw new Error(
+        `[createTable] ${currentOwner} and ${feature} both provide the parent link. ` +
+          'Only one feature may provide a parent link.'
+      );
+    }
+    this.parentLinkOwner = feature;
   }
 
   /** Claims every non-overridable core member, so a feature redeclaring one throws, not shadows. */

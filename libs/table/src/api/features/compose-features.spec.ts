@@ -673,14 +673,6 @@ describe('composeFeatures', () => {
     });
 
     it('case 24 — a composite without a parentLink leaves the key absent, so an outer link is not a clash', () => {
-      expect(() =>
-        makeStore(
-          signal([...mockRows]),
-          fParentLink('fOuterLink'),
-          composeFeatures(fKeepsLinkedRows('fInnerFilter'))
-        )
-      ).not.toThrow();
-
       const store = makeStore(
         signal([...mockRows]),
         fParentLink('fOuterLink'),

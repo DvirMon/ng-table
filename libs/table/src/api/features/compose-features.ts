@@ -3,7 +3,7 @@ import type { ColumnRuleEntry } from '../../engine/columns';
 import type { PipelineStage, RowTransform } from '../../engine/pipeline';
 import type { RenderNodeTransform, RenderStage } from '../../engine/render-stages';
 import { describeInnerFeature, SlotRegistry } from '../../engine/slots';
-import type { TableFeatureSpec } from '../../engine/types';
+import type { ParentLink, TableFeatureSpec } from '../../engine/types';
 import type { StageRule } from '../../schema/stage-rules';
 import type { AnyTableFeature, RowId } from '../types';
 import type { ComposeFeaturesOverloads } from './compose-features.overloads';
@@ -74,7 +74,7 @@ function foldInnerFeatures(
   const renderStages: StageRule<RenderNodeTransform<unknown>>[] = [];
   const columnRules: ColumnRuleEntry<unknown>[] = [];
   const expandedRowsSignals: Signal<ReadonlySet<RowId>>[] = [];
-  let parentLink: ((row: unknown) => RowId | null) | undefined;
+  let parentLink: ParentLink<unknown> | undefined;
   const setups: (() => void)[] = [];
   const onDestroys: (() => void)[] = [];
   const onRowsRemoveds: ((ids: readonly RowId[]) => void)[] = [];
