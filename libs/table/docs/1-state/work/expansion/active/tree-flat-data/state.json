@@ -10,9 +10,9 @@
   "isComplex": true,
   "decisionsPath": "libs/table/docs/1-state/work/expansion/active/tree-flat-data/1-decisions.md",
   "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
-  "specPath": null,
-  "architecturePath": null,
+  "specPath": "libs/table/docs/1-state/work/expansion/active/tree-flat-data/2-spec.md",
+  "architecturePath": "libs/table/docs/1-state/work/expansion/active/tree-flat-data/3-architecture.md",
   "githubIssues": [],
   "createdAt": "2026-09-27T00:00:00Z",
-  "updatedAt": "2026-09-27T12:00:00Z"
+  "updatedAt": "2026-09-27T18:00:00Z"
 }

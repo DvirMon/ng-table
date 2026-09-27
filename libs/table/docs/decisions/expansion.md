@@ -36,6 +36,7 @@ cross-references still resolve.
 | **PTS spec** | [`active/panel-tree-split/2-spec.md`](../1-state/work/expansion/active/panel-tree-split/2-spec.md) — the written contract for #101 |
 | **PTS discovery** | [`active/panel-tree-split/discovery-emission-shape.md`](../1-state/work/expansion/active/panel-tree-split/discovery-emission-shape.md) — cross-library expand/collapse emission-shape survey, #124 |
 | **TFD** | [`active/tree-flat-data/1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md) — #163, tree from flat data |
+| **TFD arch** | [`active/tree-flat-data/3-architecture.md`](../1-state/work/expansion/active/tree-flat-data/3-architecture.md) — #163 architecture |
 
 ## Decisions
 
@@ -77,6 +78,7 @@ cross-references still resolve.
 | E34 | `RenderRow.isContextRow` flags a context row; `ngpTableRow` exposes it as presence attribute `data-context-row` (ADR-0026 rule 1) — styling is the consumer's | 09-27 | decided (#163) · directive amended by E36 | TFD D18 |
 | E35 | Filter reveal is a derived visibility source (never writes the open set); `revealContextRow` row predicate on `withTree()` picks which context rows reveal (default all, `() => false` off); a closed revealed row is remembered only while it stays a context row; `table.tree` exposes `contextRowIds()`, `parentOf()`, `descendantsOf()` — every library-only fact is readable, every policy can be switched off | 09-27 | decided (#163) | TFD D20 |
 | E36 | `data-context-row` is bound by a new `ngpTableTreeRow` feature directive, not core `ngpTableRow` (optional field → feature directive); wider tree UI is a separate issue | 09-27 | decided (#163) | TFD D21 |
+| E37 | Context-row ids are an accumulating engine slot contributed by `withFiltering()` (the only feature that knows what matched); core stamps `RenderRow.isContextRow` and `withTree()` reads it for reveal — no feature reads another's state | 09-27 | decided (#163) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD arch A2 |
 
 ## Still open
 
