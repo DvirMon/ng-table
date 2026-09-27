@@ -57,7 +57,7 @@ export function createTableCore<TRow>(
   // starts from.
   const seedRenderNodes = buildDefaultRenderNodes(trackBy);
 
-  const rows = computed(() => runPipeline(config.data(), stages));
+  const rows = computed(() => runPipeline(config.data(), stages, {}));
 
   // Unions every contributed `expandedRows` set for `flattenVisible`. `undefined` when zero
   // features contributed the slot (a no-op — everything stays open); a defined — possibly
@@ -99,7 +99,7 @@ export function createTableCore<TRow>(
     const byId = indexById();
     const resolvedColumns = columns();
     const reportedColumns = new Set<string>();
-    const tree = runRenderStages(seedRenderNodes(rows()), renderStages);
+    const tree = runRenderStages(seedRenderNodes(rows()), renderStages, {});
     return flattenVisible(tree, expanded()).map((row, index) => {
       const isSynthesizedRow = row.data === null;
       return {

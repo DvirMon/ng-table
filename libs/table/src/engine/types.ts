@@ -25,6 +25,14 @@ export interface TableEngineConfig<TRow> {
   data: TableDataInput<TRow>;
 }
 
+/**
+ * Shared context every pipeline and render stage receives as its second argument. Resolving
+ * `parentOf` from a feature is a later step — this step only threads the slot through.
+ */
+export type StageContext<TRow> = {
+  readonly parentOf?: (row: TRow) => RowId | null;
+};
+
 // Currently held only by the internally-spliced column-schema wiring — consumer feature
 // factories instead receive the accumulating store typed as `Feature<In, Out>`'s `In`.
 /** The engine handle internal features receive. */

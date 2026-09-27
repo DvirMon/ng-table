@@ -1,5 +1,6 @@
 import type { RenderRow } from '../api/types';
 import type { ResolvedStage } from './stage-order';
+import type { StageContext } from './types';
 
 /** Engine-internal render IR. Never exported from `index.ts`. `depth`, `parentId`,
  *  `index`, `sourceIndex` and `cells` are all derived or stamped later — a node states
@@ -31,7 +32,8 @@ export interface RenderStageRegistry {
 export type RenderStage = keyof RenderStageRegistry & string;
 
 export type RenderNodeTransform<TRow> = (
-  nodes: readonly RenderNode<TRow>[]
+  nodes: readonly RenderNode<TRow>[],
+  ctx: StageContext<TRow>
 ) => readonly RenderNode<TRow>[];
 
 /**
@@ -51,10 +53,11 @@ export function mapNodes<TRow>(
 /** Runs render nodes through each stage in the order `resolveStageOrder` produced. */
 export function runRenderStages<TRow>(
   nodes: readonly RenderNode<TRow>[],
-  stages: readonly ResolvedStage<RenderNodeTransform<TRow>>[]
+  stages: readonly ResolvedStage<RenderNodeTransform<TRow>>[],
+  ctx: StageContext<TRow>
 ): readonly RenderNode<TRow>[] {
   return stages.reduce<readonly RenderNode<TRow>[]>(
-    (current, stage) => stage.run(current),
+    (current, stage) => stage.run(current, ctx),
     nodes
   );
 }

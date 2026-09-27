@@ -3,7 +3,7 @@
 **Issue:** #166
 **Branch:** feat/166-stage-context-parent-link
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-166-stage-context-parent-link
-**Status:** 0 / 3 complete
+**Status:** 1 / 3 complete
 
 ## Graph
 
@@ -17,6 +17,6 @@ Parallel-safe: none · Dependency: 1 → 2 → 3
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Stage context through both runners | ⬚ pending |
+| 1 | Stage context through both runners | ✅ done |
 | 2 | `parentLink` slot, claimed once | ⬚ pending |
 | 3 | parentLink through composeFeatures() and derive blocks | ⬚ pending |
