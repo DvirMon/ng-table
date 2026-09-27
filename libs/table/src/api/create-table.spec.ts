@@ -10,7 +10,7 @@ import { columnSchema } from '../columns-schema/schema';
 import { visible } from '../columns-schema/rules';
 import { reorderColumns, setColumns, toggleColumnVisibility } from '../mutations/update-columns';
 import type { ColumnSchema, ColumnsSchemaFn } from '../columns-schema/types';
-import type { Feature, RowOf, Shape } from '../engine/types';
+import type { Feature, RowOf, Shape, TableFeatureSpec } from '../engine/types';
 import { stage } from '../schema/stage-rules';
 import { stageSchema } from '../schema/stage-schema';
 import { noData } from '../table.mock';
@@ -326,6 +326,57 @@ describe('createTable', () => {
         )
       )
     ).toThrow(/may only contribute members, but it declared stages/);
+  });
+
+  it('rejects a derive block that declares a parentLink, naming it', () => {
+    const withLinkingBlock = createTableFeature(
+      () => ({ members: { count: 3 } }),
+      () => ({ parentLink: () => null })
+    );
+
+    expect(() =>
+      TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Row[]>([]),
+          { trackBy: 'id', columns: makeColumns() },
+          withLinkingBlock
+        )
+      )
+    ).toThrow(/may only contribute members, but it declared parentLink/);
+  });
+
+  it('keeps the feature’s own parentLink when it has a derive block', () => {
+    const data: Row[] = [
+      { id: 'r1', name: 'Ann', status: 'active' },
+      { id: 'r2', name: 'Bo', status: 'active' },
+    ];
+
+    const withLinkAndDerive = createTableFeature(
+      (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
+        parentLink: (row) => (row.id === 'r2' ? 'r1' : null),
+      }),
+      () => ({ members: { extra: signal(1).asReadonly() } })
+    );
+    const withKeepsLinked = createTableFeature(
+      (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
+        stages: stageSchema<Row>('pipeline', (s) =>
+          stage(s.filter, {
+            run: (rows, ctx) => rows.filter((row) => ctx.parentOf?.(row) != null),
+          })
+        ),
+      })
+    );
+
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(
+        signal<Row[]>(data),
+        { trackBy: 'id', columns: makeColumns() },
+        withLinkAndDerive,
+        withKeepsLinked
+      )
+    );
+
+    expect(store.rows().map((row) => row.id)).toEqual(['r2']);
   });
 
   it('rejects a member key declared by both a feature and its derive block, naming the key', () => {
