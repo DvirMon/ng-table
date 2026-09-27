@@ -4,11 +4,7 @@ import { createPathProxy, PATH_RECORDER, type PathRecorder } from './path-proxy'
 import { runRecordedSchema } from './run';
 import type { StageRule } from './stage-rules';
 
-/**
- * Handle fabricated by a stage path's `get` trap for one anchor — carries the recorder
- * `stage()` writes into. Same `RecordedHandle` shape as `ColumnHandle`/`GroupingHandle`
- * (`schema/path-proxy.ts`), recording `StageRule` instead.
- */
+/** One anchor reached through a `StagePath`; `stage()` records its rule against this handle. */
 export interface StageHandle<TRow, TTransform, TName extends string = string> {
   readonly id: string;
   /** @internal */
@@ -16,11 +12,9 @@ export interface StageHandle<TRow, TTransform, TName extends string = string> {
 }
 
 /**
- * Structural `path` proxy for a stage schema fn. `TAnchor` is the layer's own anchor
- * literal union (`PipelineStage` or `RenderStage`), so a property access on an unknown
- * anchor name is a compile error; a known anchor fabricates its `StageHandle`, carrying
- * the layer's full key union (not just its own key `K`) as `TName` — that union is what
- * `stage()` checks a declared `name` against.
+ * The `path` a `stageSchema()` callback receives: one `StageHandle` per registry key of the
+ * layer, so an unknown anchor is a compile error. Each handle carries the full key union,
+ * which `stage()` checks a declared `name` against.
  */
 export type StagePath<TRow, TTransform, TAnchor extends string> = {
   readonly [K in TAnchor]: StageHandle<TRow, TTransform, TAnchor>;
@@ -35,10 +29,16 @@ function buildStagePath<TRow, TTransform, TAnchor extends string>(
 }
 
 /**
- * Runs a stage schema fn once, synchronously, through a fresh recorder session and returns
- * the `stage()` rules it recorded. `layer` fixes which anchor set and transform shape the
- * path is typed against — pipeline stages transform rows, render stages transform render
- * nodes — resolved by the two overloads below, keyed on the literal.
+ * Records the `stage()` calls a feature makes for one layer and returns them as rules.
+ *
+ * @remarks
+ * Runs `fn` once, synchronously. `'pipeline'` stages transform rows; `'render'` stages
+ * transform `RenderNode`s.
+ *
+ * @example
+ * stages: stageSchema('pipeline', (s) => {
+ *   stage(s.sort, { run: (rows) => [...rows].reverse() });
+ * }),
  */
 export function stageSchema<TRow>(
   layer: 'pipeline',

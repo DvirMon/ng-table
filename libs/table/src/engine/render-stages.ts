@@ -16,12 +16,13 @@ export interface RenderNode<TRow>
   readonly children: readonly RenderNode<TRow>[];
 }
 
-/**
- * Fixed render-layer execution order, independent of `features` array order.
- */
+/** Built-in render anchors in execution order, fixed regardless of feature argument order. */
 export const RENDER_ANCHORS = ['group', 'tree'] as const;
 
-/** The claimable render-stage names. `RenderStage` derives from its keys. */
+/**
+ * Render stage names a feature may claim or declare; extend it via `declare module` merging
+ * to author a new stage.
+ */
 export interface RenderStageRegistry {
   group: true;
   tree: true;
@@ -47,8 +48,7 @@ export function mapNodes<TRow>(
   );
 }
 
-/** Folds render nodes through the resolved stage order — `resolveStageOrder` already fixed
- *  both the built-in anchor positions and any declared stage's slot; this just runs the list. */
+/** Runs render nodes through each stage in the order `resolveStageOrder` produced. */
 export function runRenderStages<TRow>(
   nodes: readonly RenderNode<TRow>[],
   stages: readonly ResolvedStage<RenderNodeTransform<TRow>>[]

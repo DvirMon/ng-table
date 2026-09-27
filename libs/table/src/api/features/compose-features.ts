@@ -150,10 +150,17 @@ function foldInnerFeatures(
 }
 
 /**
- * Collapses N features into one feature occupying a single `createTable()` slot — the arity
- * escape hatch (the type-level cap is not raisable). Inner features see the slots before the
- * composite plus earlier inner features; a following slot sees the whole composite. See
- * `docs/1-state/architecture.md`.
+ * Collapses several features into one `createTable()` argument, the escape hatch for the
+ * type-level 15-feature cap.
+ *
+ * @remarks
+ * Inner features see the arguments before the composite plus earlier inner features; a later
+ * argument sees the whole composite.
+ *
+ * @example
+ * createTable(data, { trackBy: 'id', columns }, composeFeatures(withSelection(), withTree()));
+ *
+ * @see docs/1-state/architecture.md
  */
 export const composeFeatures = ((
   ...features: readonly AnyTableFeature[]

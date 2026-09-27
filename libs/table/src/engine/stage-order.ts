@@ -7,17 +7,13 @@ import type { StageRule } from '../schema/stage-rules';
 // collide with another file's declaration. See `engine/columns.ts`.
 declare const ngDevMode: boolean | undefined;
 
-/**
- * One `stage()` rule paired with the label of the feature that declared it — the label names
- * the offending surface in a thrown construction-check message. Resolution is issue #155's
- * concern; `stageSchema` only records the rules themselves.
- */
+/** One `stage()` rule paired with its declaring feature's label, named in construction errors. */
 export interface LabelledStageRule<TTransform> {
   readonly label: string;
   readonly rule: StageRule<TTransform>;
 }
 
-/** One stage in the resolved order: its final name and the transform to run at that slot. */
+/** One stage in the resolved order: its name and the transform run at that position. */
 export interface ResolvedStage<TTransform> {
   readonly name: string;
   readonly run: TTransform;
@@ -52,10 +48,13 @@ function eligibleBuiltInsFor(layer: Layer): readonly string[] {
 }
 
 /**
- * Turns a layer's claimed and declared stage rules into one ordered list, running every
- * construction check (unknown anchor, non-eligible anchor, cycle, duplicate declared name,
- * ambiguous tie, `synthesizesRows` before render `'group'`). Nothing calls this yet — Step 2
- * wires it into the pipeline and render folds.
+ * Resolves a layer's claimed and declared stage rules into one execution order.
+ *
+ * @remarks
+ * Runs every construction check: unknown or non-eligible anchor, cycle, duplicate declared
+ * name, ambiguous tie, `synthesizesRows` before render `'group'`. Each throws in dev mode;
+ * with `ngDevMode` off, the offending declare is dropped and an ambiguous tie falls back to
+ * name order. Unclaimed built-ins are skipped.
  */
 export function resolveStageOrder<TTransform>(
   layer: Layer,
@@ -90,7 +89,7 @@ export function resolveStageOrder<TTransform>(
 }
 
 // Dedupes declared names against each other and against built-ins. A collision throws in dev
-// mode; off, a duplicate declared name keeps the later declaration (Q10) and a name equal to a
+// mode; off, a duplicate declared name keeps the later declaration and a name equal to a
 // built-in is dropped in favor of the built-in slot.
 function resolveDeclaredNames<TTransform>(
   declares: readonly DeclareEntry<TTransform>[],
@@ -227,7 +226,7 @@ function assemble<TTransform>(
 // Orders the declared stages that fell into one gap. Each declare contributes exactly one
 // "immediately adjacent to" edge (to its anchor's boundary, or to another declared stage in the
 // same gap). Two edges claiming the same slot, or the gap splitting into more than one
-// connected chain, means the graph doesn't fix a relative order — an ambiguous tie (Q6).
+// connected chain, means the graph doesn't fix a relative order — an ambiguous tie.
 function orderGapEntries<TTransform>(
   entries: readonly DeclareEntry<TTransform>[],
   left: string | null,
