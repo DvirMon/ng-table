@@ -229,7 +229,7 @@ or ancestor near "filter" across `docs/0-product` finds only grouping.md:1059.
 | Fixture reviver | `libs/table/src/stories/grouping/fixtures/http.ts:20-38` |
 | E-log rows | `libs/table/docs/decisions/expansion.md:44-63` |
 | G-log rows | `libs/table/docs/decisions/grouping.md:60-65` |
-| TFD D1–D3 | `libs/table/docs/1-state/work/expansion/active/tree-flat-data/1-decisions.md:32-34` |
+| TFD D1–D3 | `libs/table/docs/1-state/work/tree/active/tree-flat-data/1-decisions.md:32-34` |
 | Tree spec E5 / G6 claims | `libs/table/docs/1-state/features/tree.md:72-73`, `:126-130` |
 | ADR-0011 order rationale | `libs/table/docs/adr/0011-chained-render-stages.md:65-68` |
 | ADR-0012 table and D6 | `libs/table/docs/adr/0012-split-expansion-into-panel-and-tree.md:34-37`, `:97-119` |

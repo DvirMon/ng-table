@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "runId": "tree-flat-data-2026-09-27T00:00:00Z",
+  "slug": "tree-flat-data",
+  "ticketRef": "163",
+  "ticketUrl": "https://github.com/DvirMon/ng-table/issues/163",
+  "domainPath": "libs/table",
+  "workspaceRoot": "libs/table/docs/1-state/work/tree/active/tree-flat-data",
+  "stack": "angular",
+  "isComplex": true,
+  "decisionsPath": "libs/table/docs/1-state/work/tree/active/tree-flat-data/1-decisions.md",
+  "capabilityLogPath": "libs/table/docs/decisions/tree.md",
+  "specPath": "libs/table/docs/1-state/work/tree/active/tree-flat-data/2-spec.md",
+  "architecturePath": "libs/table/docs/1-state/work/tree/active/tree-flat-data/3-architecture.md",
+  "githubIssues": [166, 167, 168, 169, 170],
+  "createdAt": "2026-09-27T00:00:00Z",
+  "updatedAt": "2026-09-27T20:00:00Z"
+}

@@ -2,7 +2,7 @@
 
 `withTree()` builds its hierarchy from flat `data()` (E5).
 Source: [#163](https://github.com/DvirMon/ng-table/issues/163).
-Capability log: [`decisions/expansion.md`](../../../../../decisions/expansion.md).
+Capability log: [`decisions/tree.md`](../../../../../decisions/tree.md) (TR-rows; first logged as E20–E37 in `decisions/expansion.md`).
 
 ## Dependency ranking
 
