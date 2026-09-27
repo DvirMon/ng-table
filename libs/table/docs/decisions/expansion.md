@@ -8,15 +8,18 @@ audience: developers
 
 # Expansion — decision history
 
-**Read this before changing anything about expansion or tree.** It is the
-complete list of decisions taken about this capability, one line each, oldest
-first. The contract itself — what each feature does today — split across two
-specs since #121: [`1-state/features/expansion.md`](../1-state/features/expansion.md)
-(the panel) and [`1-state/features/tree.md`](../1-state/features/tree.md) (the
-tree-grid). This log still covers both — `docs/status.md`'s generator looks a
-capability's log up by filename, so `tree`'s row currently renders no
-Decisions link there; its history stays here under `capability: expansion`
-until/unless that's revisited.
+**Read this before changing anything about expansion.** It is the complete
+list of decisions taken about this capability, one line each, oldest first.
+The contract itself — what the panel does today — is
+[`1-state/features/expansion.md`](../1-state/features/expansion.md).
+
+**Tree has its own log since 2026-09-27: [`tree.md`](tree.md).** Until then
+this log covered both the panel and the tree-grid. Its tree-only rows (E5, E6,
+E9, E13, E15, E16, E20–E38) stay here unchanged so existing references
+resolve; each is carried into the tree log as a `TR`-row with its `E`-number
+in **Record**. New tree decisions land there only. This log keeps the shared
+open-id store (`createExpansionStore()`, E8, E10, E11, E14, E17, E18),
+collapsible grouping's composition rule (E12), and the panel.
 
 This log **restates nothing**. Every row links to the record that holds the
 rationale, the counter-arguments and the rejected alternatives. If a row needs
@@ -35,8 +38,8 @@ cross-references still resolve.
 | **PTS** | [`active/panel-tree-split/1-decisions.md`](../1-state/work/expansion/active/panel-tree-split/1-decisions.md) — #101, the ADR-0012 split |
 | **PTS spec** | [`active/panel-tree-split/2-spec.md`](../1-state/work/expansion/active/panel-tree-split/2-spec.md) — the written contract for #101 |
 | **PTS discovery** | [`active/panel-tree-split/discovery-emission-shape.md`](../1-state/work/expansion/active/panel-tree-split/discovery-emission-shape.md) — cross-library expand/collapse emission-shape survey, #124 |
-| **TFD** | [`active/tree-flat-data/1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md) — #163, tree from flat data |
-| **TFD arch** | [`active/tree-flat-data/3-architecture.md`](../1-state/work/expansion/active/tree-flat-data/3-architecture.md) — #163 architecture |
+| **TFD** | [`work/tree/active/tree-flat-data/1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md) — #163, tree from flat data |
+| **TFD arch** | [`work/tree/active/tree-flat-data/3-architecture.md`](../1-state/work/tree/active/tree-flat-data/3-architecture.md) — #163 architecture |
 
 ## Decisions
 
@@ -85,10 +88,8 @@ cross-references still resolve.
 
 - **E5 follow-on** — variable-depth grouping (a path-derived level source) is
   filed against grouping, not expansion, if a consumer ever needs it.
-- **`state()` on a collapse-only `withTree()`** reads `'none'` — group ids are
-  not discoverable from an accessor, so the denominator is empty. A toolbar
-  wanting tri-state over group headers computes it from `groupIds()` and
-  `tree()`. Revisit if a consumer asks for an explicit denominator input.
+- ~~**`state()` on a collapse-only `withTree()`** reads `'none'`~~ — moved to
+  [`tree.md`](tree.md#still-open) with the tree split.
 - ~~**`ReadonlySet<RowId>` narrowing** on both slices (today `Signal<Set<RowId>>`)
   — aligns with `withSelection()`, confirm at slicing time.~~ — resolved: both
   `ExpansionSlice` and `TreeSlice` call signatures return `ReadonlySet<RowId>`

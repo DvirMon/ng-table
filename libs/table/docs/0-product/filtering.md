@@ -533,7 +533,7 @@ feature reads the other's state. The tree-side stories (reveal, context-row mark
 children that match.
 
 **Design status:** decided — D5, D6, ADR-0028 (#163 work folder
-[`1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md)). All six
+[`1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md)). All six
 surveyed libraries keep a match's ancestors; it is the default in four.
 
 ### F-T2 — Show a matched parent's whole branch — ❌ not covered

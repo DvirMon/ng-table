@@ -621,7 +621,7 @@ flat-ids stance (D13). X-G1 is marked ✅ as the consumer recipe D16 calls for, 
 **Covered by:** nothing. Today children are not rows, so they are never selected.
 
 **Design status:** decided — D11 (#163 work folder
-[`1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md)).
+[`1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md)).
 **Whether selecting a parent selects its children stays open** — [`tree.md`](tree.md) OQ-1
 (recommendation: no cascade in state, matching D13; the recipe is
 `select([id, ...table.tree.descendantsOf(id)])`).

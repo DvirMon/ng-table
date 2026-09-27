@@ -858,7 +858,7 @@ Collapsible groups (`withTree()` with no `parentId`) are unchanged. Tree-side st
 value, away from its parent.
 
 **Design status:** decided — D13 (#163 work folder
-[`1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md)). No surveyed
+[`1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md)). No surveyed
 library splits a child from its parent; products offer per-row grouping only as an opt-in flat
 mode.
 

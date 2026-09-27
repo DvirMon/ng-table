@@ -27,8 +27,9 @@ document, not the reverse.
 > [`features/tree.md`](../1-state/features/tree.md) is `spec: drilled`, but it describes a tree
 > built from nested children, and #163 replaces that with a tree built from flat rows. The
 > decisions this doc builds on are D1–D19 in
-> [`tree-flat-data/1-decisions.md`](../1-state/work/expansion/active/tree-flat-data/1-decisions.md),
-> logged as E20–E34 in [`decisions/expansion.md`](../decisions/expansion.md). Where a story below
+> [`tree-flat-data/1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md),
+> logged as TR7–TR21 in [`decisions/tree.md`](../decisions/tree.md) (first registered as E20–E34 in
+> the expansion log). Where a story below
 > needs something those decisions do not give, §8 says so.
 
 ## Scope
@@ -83,11 +84,11 @@ nothing computes and a control nothing renders, so the stories do not draw one. 
 gap into state, UI, or both, and §9 collects the ones that belong to no existing feature.
 
 Competitor and community behavior is cited from five discovery files in the #163 work folder:
-[`discovery-tree-filter-community.md`](../1-state/work/expansion/active/tree-flat-data/discovery-tree-filter-community.md),
-[`discovery-tree-filter-competitors.md`](../1-state/work/expansion/active/tree-flat-data/discovery-tree-filter-competitors.md),
-[`discovery-tree-filter-internal.md`](../1-state/work/expansion/active/tree-flat-data/discovery-tree-filter-internal.md),
-[`discovery-tree-grouping-competitors.md`](../1-state/work/expansion/active/tree-flat-data/discovery-tree-grouping-competitors.md) and
-[`discovery-tree-grouping-products.md`](../1-state/work/expansion/active/tree-flat-data/discovery-tree-grouping-products.md)
+[`discovery-tree-filter-community.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-community.md),
+[`discovery-tree-filter-competitors.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-competitors.md),
+[`discovery-tree-filter-internal.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-internal.md),
+[`discovery-tree-grouping-competitors.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-competitors.md) and
+[`discovery-tree-grouping-products.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-products.md)
 (all read 2026-09-27). Nothing is restated here beyond what a story needs.
 
 ---
@@ -635,10 +636,8 @@ only the minimal `ngpTableTreeRow` directive (D21). The wider tree UI spec is ow
 
 Checked against `docs/status.md` (the generated registry), not against memory.
 
-- **`tree` has no decisions-log link.** Its history lives in
-  [`decisions/expansion.md`](../decisions/expansion.md) under `capability: expansion`, which that
-  log's header notes. A product doc exists now; the registry's "Story research" column for
-  `tree` reads `—` until it is regenerated (`npm run table:status`).
+- ~~**`tree` has no decisions-log link.**~~ Resolved 2026-09-27: tree has its own log,
+  [`decisions/tree.md`](../decisions/tree.md), split out of the expansion log.
 - **Tree UI has no spec.** Indentation, `aria-level` and the row toggle have no directive doc;
   `3-ui/directives/expansion.md` plans parts of it. #163 adds only `ngpTableTreeRow` for
   `data-context-row` (D21); the rest is owned by [#165](https://github.com/DvirMon/ng-table/issues/165). **UI**.
