@@ -27,6 +27,11 @@ commits. Issues close when that PR merges.
   `resolve[sd]`) and never the retired `Ships:` trailer.
 - **Headers** are emoji conventional: `<emoji> <type>(<scope>): <subject>` — types and
   emoji in the `atomic-commit` skill.
+- **Scope** is `<project>[/<domain>]` — project e.g. `table`, `root`, `deps`. The domain is the
+  one the work **belongs to**, not every folder the diff touches: the folder under
+  `libs/table/docs/1-state/work/<domain>/` holding the issue's workspace (e.g.
+  `📚 docs(table/tree): record tree-flat-data decisions`, even when that commit also
+  edits `filtering.md`). No single owning domain → project only (`table`). Never a list.
 - **PR body** carries the closing reference: `Closes #N` for an issue the PR completes,
   `Refs #N` for one it only partly delivers. Planning PRs (`docs/<slug>`) use
   `Refs #<epic>` and close nothing.
