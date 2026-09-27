@@ -30,9 +30,9 @@ export interface TableCoreHandle<TRow> {
   /** Additively populated by `composeTable()`'s fold — one entry per feature declaring
    * `expandedRows`. Unioned below and fed into `flattenVisible`. */
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
-  /** Single-claim, set at most once during `composeTable()`'s fold. A mutable box (not a
-   * reassigned property) so `rows`/`renderRows` can close over it and read it lazily, at
-   * evaluation time rather than fold time — the same trap `expandedSources` laziness guards. */
+  // Note: a box, not a reassigned property, so `rows`/`renderRows` read `value` at evaluation
+  // time. Captured at construction it is always `undefined` — the fold sets it later.
+  /** The contributed parent link, set at most once during `composeTable()`'s fold. */
   readonly parentLink: { value?: (row: TRow) => RowId | null };
 }
 

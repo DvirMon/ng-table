@@ -25,10 +25,7 @@ export interface TableEngineConfig<TRow> {
   data: TableDataInput<TRow>;
 }
 
-/**
- * Shared context every pipeline and render stage receives as its second argument. `parentOf`
- * is `undefined` unless some feature contributes `TableFeatureSpec.parentLink` (ADR-0028).
- */
+/** Every stage's second argument. `parentOf` is `undefined` unless a feature contributes `parentLink`. */
 export type StageContext<TRow> = {
   readonly parentOf?: (row: TRow) => RowId | null;
 };
@@ -96,9 +93,10 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
    */
   expandedRows?: Signal<ReadonlySet<RowId>>;
 
+  // Single-claim; why: docs/adr/0028-tree-parent-link-slot.md.
   /**
-   * The row's parent id, or `null` at the root. Single-claim — a second feature contributing
-   * this throws (ADR-0028). Read by pipeline/render stages through `ctx.parentOf`.
+   * A row's parent id, or `null` for a root row; stages read it as `ctx.parentOf`. A second
+   * feature contributing it throws.
    */
   parentLink?: (row: TRow) => RowId | null;
 
