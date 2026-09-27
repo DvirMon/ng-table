@@ -65,6 +65,7 @@ export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
   private readonly ownerByRenderStage = new Map<RenderStage, string>();
   private readonly ownerByMember = new Map<string, string>();
+  private readonly ownerByParentLink = new Map<'parentLink', string>();
 
   private claim<TKey>(
     owners: Map<TKey, string>,
@@ -124,6 +125,20 @@ export class SlotRegistry {
       (currentOwner, claimant) =>
         `[createTable] ${currentOwner} and ${claimant} both provide the "${key}" ` +
         'store member. Only one feature may provide each member.'
+    );
+  }
+
+  /** Claims the single-occupancy parent-link slot; always throws on a second claim, dev mode or
+   * not, like `claimMember` — a duplicate here silently nests every row by whichever feature
+   * folded last, quieter than a stage clash. */
+  claimParentLink(feature: string): void {
+    this.claim(
+      this.ownerByParentLink,
+      'parentLink',
+      feature,
+      (currentOwner, claimant) =>
+        `[createTable] ${currentOwner} and ${claimant} both provide the parent link. ` +
+        'Only one feature may provide a parent link.'
     );
   }
 

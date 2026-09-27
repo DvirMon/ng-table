@@ -118,6 +118,12 @@ function foldFeatures<TRow>(
       handle.expandedSources.push(spec.expandedRows);
     }
 
+    // Single-claim (ADR-0028) — a second contribution throws, naming both features.
+    if (spec.parentLink) {
+      registry.claimParentLink(label);
+      handle.parentLink.value = spec.parentLink;
+    }
+
     if (spec.setup) {
       hooks.setup.push(spec.setup);
     }

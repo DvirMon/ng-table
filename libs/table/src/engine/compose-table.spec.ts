@@ -40,6 +40,15 @@ function asStages(
   return rules as unknown as readonly StageRule<RowTransform<unknown>>[];
 }
 
+/**
+ * Casts a `Row`-typed `parentLink` down to `AnyTableFeature`'s erased `RowOf<any>`
+ * (`unknown`) — same static/dynamic seam `asStages` crosses above, for the single-claim
+ * `parentLink` slot instead of a stage rule array.
+ */
+function asParentLink(link: (row: Row) => RowId | null): (row: unknown) => RowId | null {
+  return link as unknown as (row: unknown) => RowId | null;
+}
+
 function makeRows(): Row[] {
   return [
     { id: 'r1', name: 'Charlie', age: 40 },
@@ -766,6 +775,108 @@ describe('composeTable', () => {
       ).toThrow(
         /internal feature 1 and feature 1 both provide the "sort" pipeline stage/
       );
+    });
+  });
+
+  describe('parentLink contribution (ADR-0028)', () => {
+    it('leaves ctx.parentOf undefined when no feature contributes a parent link', () => {
+      const withUnlinkedTag: AnyTableFeature = () => ({
+        stages: asStages(
+          stageSchema<Row>('pipeline', (s) =>
+            stage(s.filter, {
+              run: (rows: Row[], ctx) =>
+                rows.map((row) => ({
+                  ...row,
+                  name: ctx.parentOf === undefined ? 'unlinked' : 'linked',
+                })),
+            })
+          )
+        ),
+      });
+
+      const store = composeWithRows(makeRows(), [withUnlinkedTag]);
+
+      expect((store['rows'] as () => Row[])().map((row) => row.name)).toEqual([
+        'unlinked',
+        'unlinked',
+      ]);
+    });
+
+    it('lets a pipeline stage resolve parents via a link another feature contributes', () => {
+      const withParentTag: AnyTableFeature = () => ({
+        stages: asStages(
+          stageSchema<Row>('pipeline', (s) =>
+            stage(s.filter, {
+              run: (rows: Row[], ctx) =>
+                rows.map((row) => ({
+                  ...row,
+                  name: `${row.name}<${ctx.parentOf?.(row) ?? 'root'}`,
+                })),
+            })
+          )
+        ),
+      });
+      const withParentLink: AnyTableFeature = () => ({
+        parentLink: asParentLink((row) => (row.id === 'r2' ? 'r1' : null)),
+      });
+
+      const store = composeWithRows(makeRows(), [withParentTag, withParentLink]);
+
+      expect((store['rows'] as () => Row[])().map((row) => row.name)).toEqual([
+        'Charlie<root',
+        'Ann<r1',
+      ]);
+    });
+
+    it('passes the contributed parent link to render stages too', () => {
+      const withParentAggregate: AnyTableFeature = () => ({
+        renderStages: stageSchema('render', (s) =>
+          stage(s.tree, {
+            run: (nodes, ctx) =>
+              nodes.map((node) => ({
+                ...node,
+                aggregates: { parent: ctx.parentOf?.(node.data) ?? 'none' },
+              })),
+          })
+        ),
+      });
+      const withParentLink: AnyTableFeature = () => ({
+        parentLink: asParentLink((row) => (row.id === 'r2' ? 'r1' : null)),
+      });
+
+      const store = composeWithRows(makeRows(), [withParentAggregate, withParentLink]);
+
+      expect(
+        (store['renderRows'] as () => { aggregates?: Record<string, unknown> }[])().map(
+          (row) => row.aggregates?.['parent']
+        )
+      ).toEqual(['none', 'r1']);
+    });
+
+    it('throws naming both features when two contribute a parent link', () => {
+      const withLinkA: AnyTableFeature = () => ({ parentLink: () => null });
+      const withLinkB: AnyTableFeature = () => ({ parentLink: () => null });
+
+      expect(() => compose([withLinkA, withLinkB])).toThrow(
+        '[createTable] feature 1 and feature 2 both provide the parent link. ' +
+          'Only one feature may provide a parent link.'
+      );
+    });
+
+    it('still throws on a duplicate parent link when ngDevMode is false (ungated, like members)', () => {
+      const previous = getNgDevMode();
+      setNgDevMode(false);
+      try {
+        const withLinkA: AnyTableFeature = () => ({ parentLink: () => null });
+        const withLinkB: AnyTableFeature = () => ({ parentLink: () => null });
+
+        expect(() => compose([withLinkA, withLinkB])).toThrow(
+          '[createTable] feature 1 and feature 2 both provide the parent link. ' +
+            'Only one feature may provide a parent link.'
+        );
+      } finally {
+        setNgDevMode(previous);
+      }
     });
   });
 
