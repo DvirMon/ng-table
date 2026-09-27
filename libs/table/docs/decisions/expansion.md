@@ -79,6 +79,7 @@ cross-references still resolve.
 | E35 | Filter reveal is a derived visibility source (never writes the open set); `revealContextRow` row predicate on `withTree()` picks which context rows reveal (default all, `() => false` off); a closed revealed row is remembered only while it stays a context row; `table.tree` exposes `contextRowIds()`, `parentOf()`, `descendantsOf()` — every library-only fact is readable, every policy can be switched off | 09-27 | decided (#163) | TFD D20 |
 | E36 | `data-context-row` is bound by a new `ngpTableTreeRow` feature directive, not core `ngpTableRow` (optional field → feature directive); wider tree UI is a separate issue | 09-27 | decided (#163) | TFD D21 |
 | E37 | Context-row ids are an accumulating engine slot contributed by `withFiltering()` (the only feature that knows what matched); core stamps `RenderRow.isContextRow` and `withTree()` reads it for reveal — no feature reads another's state | 09-27 | decided (#163) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD arch A2 |
+| E38 | A second `parentLink` claim throws with `ngDevMode` off too, same as a member clash — an unchecked duplicate silently nests every row by whichever feature folded last, with no visible failure | 09-27 | decided (#166) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | #166 step 2 |
 
 ## Still open
 
