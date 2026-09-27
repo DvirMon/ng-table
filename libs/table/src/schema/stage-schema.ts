@@ -9,7 +9,7 @@ import type { StageRule } from './stage-rules';
  * `stage()` writes into. Same `RecordedHandle` shape as `ColumnHandle`/`GroupingHandle`
  * (`schema/path-proxy.ts`), recording `StageRule` instead.
  */
-export interface StageHandle<TRow, TTransform> {
+export interface StageHandle<TRow, TTransform, TName extends string = string> {
   readonly id: string;
   /** @internal */
   readonly [PATH_RECORDER]: PathRecorder<TRow, StageRule<TTransform>>;
@@ -18,17 +18,19 @@ export interface StageHandle<TRow, TTransform> {
 /**
  * Structural `path` proxy for a stage schema fn. `TAnchor` is the layer's own anchor
  * literal union (`PipelineStage` or `RenderStage`), so a property access on an unknown
- * anchor name is a compile error; a known anchor fabricates its `StageHandle`.
+ * anchor name is a compile error; a known anchor fabricates its `StageHandle`, carrying
+ * the layer's full key union (not just its own key `K`) as `TName` — that union is what
+ * `stage()` checks a declared `name` against.
  */
 export type StagePath<TRow, TTransform, TAnchor extends string> = {
-  readonly [K in TAnchor]: StageHandle<TRow, TTransform>;
+  readonly [K in TAnchor]: StageHandle<TRow, TTransform, TAnchor>;
 };
 
 function buildStagePath<TRow, TTransform, TAnchor extends string>(
   recorder: PathRecorder<TRow, StageRule<TTransform>>
 ): StagePath<TRow, TTransform, TAnchor> {
   return createPathProxy(
-    (id): StageHandle<TRow, TTransform> => ({ id, [PATH_RECORDER]: recorder })
+    (id): StageHandle<TRow, TTransform, TAnchor> => ({ id, [PATH_RECORDER]: recorder })
   ) as StagePath<TRow, TTransform, TAnchor>;
 }
 
@@ -37,10 +39,6 @@ function buildStagePath<TRow, TTransform, TAnchor extends string>(
  * the `stage()` rules it recorded. `layer` fixes which anchor set and transform shape the
  * path is typed against — pipeline stages transform rows, render stages transform render
  * nodes — resolved by the two overloads below, keyed on the literal.
- *
- * @remarks
- * Resolving or executing a declared stage (`name` + `placement`) is issue #155's concern;
- * this only records what a schema fn declared.
  */
 export function stageSchema<TRow>(
   layer: 'pipeline',
