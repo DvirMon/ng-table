@@ -1,0 +1,26 @@
+# Implementation Progress — Table: declared stages — anchors, ordering and dev checks
+
+**Issue:** #155
+**Branch:** feat/155-declared-stages
+**Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/docs-feature-authoring-155
+**Status:** 0 / 5 complete
+
+## Graph
+
+```
+Step 1 ──► Step 2 ──┬──► Step 3
+                    ├──► Step 4
+                    └──► Step 5
+```
+
+Parallel-safe: [3, 4, 5] after 2 · Dependency: 1 → 2 → {3, 4, 5}
+
+## Steps
+
+| Step | Title | Status |
+|---|---|---|
+| 1 | The stage order resolver | ⬚ pending |
+| 2 | Run the resolved order | ⬚ pending |
+| 3 | Duplicate stage claim is dev-only | ⬚ pending |
+| 4 | Declared names typed to the registries | ⬚ pending |
+| 5 | Drop stale #155 notes | ⬚ pending |
