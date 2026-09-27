@@ -12,7 +12,7 @@ import { runPipeline, type RowTransform } from './pipeline';
 import { runRenderStages, type RenderNodeTransform } from './render-stages';
 import { buildDefaultRenderNodes, normalizeTrackBy } from './rows';
 import type { ResolvedStage } from './stage-order';
-import type { TableCore, TableEngineConfig } from './types';
+import type { ParentLink, TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
 
 /**
@@ -32,8 +32,10 @@ export interface TableCoreHandle<TRow> {
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
   // Note: a box, not a reassigned property, so `rows`/`renderRows` read `value` at evaluation
   // time. Captured at construction it is always `undefined` — the fold sets it later.
+  // Passed to stages unwrapped: a throwing link degrades to root in the contributor's own
+  // stage (ADR-0014, ADR-0028), which owns the fallback — the engine only hands it over.
   /** The contributed parent link, set at most once during `composeTable()`'s fold. */
-  readonly parentLink: { value?: (row: TRow) => RowId | null };
+  readonly parentLink: { value?: ParentLink<TRow> };
 }
 
 /**
@@ -57,7 +59,7 @@ export function createTableCore<TRow>(
   const stages: ResolvedStage<RowTransform<TRow>>[] = [];
   const renderStages: ResolvedStage<RenderNodeTransform<TRow>>[] = [];
   const expandedSources: Signal<ReadonlySet<RowId>>[] = [];
-  const parentLink: { value?: (row: TRow) => RowId | null } = {};
+  const parentLink: TableCoreHandle<TRow>['parentLink'] = {};
   // Always runs first, never replaced — the `RenderNode[]` seed every render stage chain
   // starts from.
   const seedRenderNodes = buildDefaultRenderNodes(trackBy);

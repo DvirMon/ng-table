@@ -25,9 +25,12 @@ export interface TableEngineConfig<TRow> {
   data: TableDataInput<TRow>;
 }
 
+/** Resolves a row's parent id, or `null` for a root row. */
+export type ParentLink<TRow> = (row: TRow) => RowId | null;
+
 /** Every stage's second argument. `parentOf` is `undefined` unless a feature contributes `parentLink`. */
 export type StageContext<TRow> = {
-  readonly parentOf?: (row: TRow) => RowId | null;
+  readonly parentOf?: ParentLink<TRow>;
 };
 
 // Currently held only by the internally-spliced column-schema wiring — consumer feature
@@ -98,7 +101,7 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
    * A row's parent id, or `null` for a root row; stages read it as `ctx.parentOf`. A second
    * feature contributing it throws.
    */
-  parentLink?: (row: TRow) => RowId | null;
+  parentLink?: ParentLink<TRow>;
 
   /**
    * Rule entries this feature contributes to the `columns` fold. Additive only — not claimed

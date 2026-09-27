@@ -14,7 +14,7 @@ import { stage } from '../schema/stage-rules';
 import { noData } from '../table.mock';
 import { composeTable, type InternalFeature } from './compose-table';
 import { CORE_MEMBER_KEYS } from './slots';
-import type { TableEngineConfig } from './types';
+import type { ParentLink, TableEngineConfig } from './types';
 import type { AnyTableFeature, RowId } from '../api/types';
 
 interface Row {
@@ -45,8 +45,8 @@ function asStages(
  * (`unknown`) — same static/dynamic seam `asStages` crosses above, for the single-claim
  * `parentLink` slot instead of a stage rule array.
  */
-function asParentLink(link: (row: Row) => RowId | null): (row: unknown) => RowId | null {
-  return link as unknown as (row: unknown) => RowId | null;
+function asParentLink(link: ParentLink<Row>): ParentLink<unknown> {
+  return link as unknown as ParentLink<unknown>;
 }
 
 function makeRows(): Row[] {
