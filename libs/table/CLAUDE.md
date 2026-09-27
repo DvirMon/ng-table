@@ -202,8 +202,8 @@ Rules:
   claims a built-in anchor from `PIPELINE_ANCHORS`/`RENDER_ANCHORS` (`engine/pipeline.ts`/
   `engine/render-stages.ts`). A **new** stage name not covered by a built-in anchor is added via a
   consumer's own `declare module` merge into `PipelineStageRegistry`/`RenderStageRegistry` — the
-  type exists (ADR-0020, #154); execution of a declared stage lands in #155, not yet wired
-  end-to-end. Render-stage collision is per-named-stage, not whole-layer (ADR-0011) —
+  type exists (ADR-0020, #154); a declared stage runs at its resolved position. Render-stage
+  collision is per-named-stage, not whole-layer (ADR-0011) —
   `withTree()` claims `'tree'`, leaving `'group'` free for `withGrouping()`. A stage receives and
   returns `RenderNode<TRow>[]`, not flat rows — nest children via `mapNodes`, never as siblings.
 - **A second feature claiming the same stage, or the same member key** (ADR-0007), throws at

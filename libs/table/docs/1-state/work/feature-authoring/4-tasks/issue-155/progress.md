@@ -3,7 +3,7 @@
 **Issue:** #155
 **Branch:** feat/155-declared-stages
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/docs-feature-authoring-155
-**Status:** 2 / 5 complete
+**Status:** 3 / 5 complete
 
 ## Graph
 
@@ -24,6 +24,6 @@ fixtures).
 |---|---|---|
 | 1 | The stage order resolver | ✅ done |
 | 2 | Run the resolved order | ✅ done |
-| 3 | Duplicate stage claim is dev-only | ⬚ pending |
+| 3 | Duplicate stage claim is dev-only | ▶ in progress |
 | 4 | Declared names typed to the registries | ⬚ pending |
-| 5 | Drop stale #155 notes | ⬚ pending |
+| 5 | Drop stale #155 notes | ✅ done |
