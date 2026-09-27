@@ -30,6 +30,10 @@ export interface TableCoreHandle<TRow> {
   /** Additively populated by `composeTable()`'s fold — one entry per feature declaring
    * `expandedRows`. Unioned below and fed into `flattenVisible`. */
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
+  /** Single-claim, set at most once during `composeTable()`'s fold. A mutable box (not a
+   * reassigned property) so `rows`/`renderRows` can close over it and read it lazily, at
+   * evaluation time rather than fold time — the same trap `expandedSources` laziness guards. */
+  readonly parentLink: { value?: (row: TRow) => RowId | null };
 }
 
 /**
@@ -53,11 +57,14 @@ export function createTableCore<TRow>(
   const stages: ResolvedStage<RowTransform<TRow>>[] = [];
   const renderStages: ResolvedStage<RenderNodeTransform<TRow>>[] = [];
   const expandedSources: Signal<ReadonlySet<RowId>>[] = [];
+  const parentLink: { value?: (row: TRow) => RowId | null } = {};
   // Always runs first, never replaced — the `RenderNode[]` seed every render stage chain
   // starts from.
   const seedRenderNodes = buildDefaultRenderNodes(trackBy);
 
-  const rows = computed(() => runPipeline(config.data(), stages, {}));
+  const rows = computed(() =>
+    runPipeline(config.data(), stages, { parentOf: parentLink.value })
+  );
 
   // Unions every contributed `expandedRows` set for `flattenVisible`. `undefined` when zero
   // features contributed the slot (a no-op — everything stays open); a defined — possibly
@@ -99,7 +106,9 @@ export function createTableCore<TRow>(
     const byId = indexById();
     const resolvedColumns = columns();
     const reportedColumns = new Set<string>();
-    const tree = runRenderStages(seedRenderNodes(rows()), renderStages, {});
+    const tree = runRenderStages(seedRenderNodes(rows()), renderStages, {
+      parentOf: parentLink.value,
+    });
     return flattenVisible(tree, expanded()).map((row, index) => {
       const isSynthesizedRow = row.data === null;
       return {
@@ -139,5 +148,6 @@ export function createTableCore<TRow>(
     renderStages,
     columnRules,
     expandedSources,
+    parentLink,
   };
 }
