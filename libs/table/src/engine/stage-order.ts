@@ -98,8 +98,10 @@ function resolveDeclaredNames<TTransform>(
   const declaredByName = new Map<string, DeclareEntry<TTransform>>();
   for (const entry of declares) {
     const existing = declaredByName.get(entry.name);
+    const isAlreadyDeclared = existing !== undefined;
     const collidesWithBuiltIn = builtIns.includes(entry.name);
-    if (existing !== undefined || collidesWithBuiltIn) {
+    const isDuplicateName = isAlreadyDeclared || collidesWithBuiltIn;
+    if (isDuplicateName) {
       assertNoDuplicateDeclaredName(entry.label, existing?.label, entry.name);
       if (collidesWithBuiltIn) continue;
     }
@@ -189,7 +191,11 @@ function bucketByGap<TTransform>(
     if (gap === undefined) continue;
     const entry = validDeclares.get(name)!;
 
-    if (groupIndex !== -1 && entry.synthesizesRows === true && gap <= groupIndex) {
+    const hasGroupBoundary = groupIndex !== -1;
+    const synthesizesRows = entry.synthesizesRows === true;
+    const landsAtOrBeforeGroup = gap <= groupIndex;
+    const synthesizesBeforeGroup = hasGroupBoundary && synthesizesRows && landsAtOrBeforeGroup;
+    if (synthesizesBeforeGroup) {
       assertSynthesizesRowsAfterGroup(entry.label, entry.name);
       continue;
     }
@@ -244,13 +250,15 @@ function orderGapEntries<TTransform>(
 
   function addEdge(from: string, to: string): void {
     const existingOut = outEdge.get(from);
-    if (existingOut !== undefined && existingOut !== to) {
+    const outConflictsWithExisting = existingOut !== undefined && existingOut !== to;
+    if (outConflictsWithExisting) {
       collision ??= [existingOut, to];
     } else {
       outEdge.set(from, to);
     }
     const existingIn = inEdge.get(to);
-    if (existingIn !== undefined && existingIn !== from) {
+    const inConflictsWithExisting = existingIn !== undefined && existingIn !== from;
+    if (inConflictsWithExisting) {
       collision ??= [existingIn, from];
     } else {
       inEdge.set(to, from);
@@ -258,11 +266,15 @@ function orderGapEntries<TTransform>(
   }
 
   for (const entry of entries) {
-    if (entry.anchor === left && entry.placement === 'after') {
+    const anchorsAfterLeftBoundary = entry.anchor === left && entry.placement === 'after';
+    const anchorsBeforeRightBoundary = entry.anchor === right && entry.placement === 'before';
+    const anchorsAfterAnotherEntry = entry.placement === 'after';
+
+    if (anchorsAfterLeftBoundary) {
       addEdge(LEFT_KEY, entry.name);
-    } else if (entry.anchor === right && entry.placement === 'before') {
+    } else if (anchorsBeforeRightBoundary) {
       addEdge(entry.name, RIGHT_KEY);
-    } else if (entry.placement === 'after') {
+    } else if (anchorsAfterAnotherEntry) {
       addEdge(entry.anchor, entry.name);
     } else {
       addEdge(entry.name, entry.anchor);
@@ -272,8 +284,11 @@ function orderGapEntries<TTransform>(
   const parent = new Map<string, string>();
   function find(node: string): string {
     let root = node;
-    while (parent.get(root) !== undefined && parent.get(root) !== root) {
-      root = parent.get(root)!;
+    while (true) {
+      const parentOfRoot = parent.get(root);
+      const hasDifferentParent = parentOfRoot !== undefined && parentOfRoot !== root;
+      if (!hasDifferentParent) break;
+      root = parentOfRoot;
     }
     parent.set(node, root);
     return root;
@@ -291,7 +306,10 @@ function orderGapEntries<TTransform>(
   const componentOf = new Map(names.map((name) => [name, find(name)]));
   const distinctComponents = new Set(componentOf.values());
 
-  if (collision !== null || distinctComponents.size > 1) {
+  const hasEdgeCollision = collision !== null;
+  const hasDisconnectedComponents = distinctComponents.size > 1;
+  const hasAmbiguousOrder = hasEdgeCollision || hasDisconnectedComponents;
+  if (hasAmbiguousOrder) {
     const [nameA, nameB] = collision ?? representativePerComponent(names, componentOf);
     assertNoAmbiguousOrder(nameA, byName.get(nameA)!.label, nameB, byName.get(nameB)!.label);
     return [...entries].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
