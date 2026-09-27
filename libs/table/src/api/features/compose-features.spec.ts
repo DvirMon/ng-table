@@ -249,6 +249,36 @@ function fHidesColumn(columnId: string, displayName: string): Feature<Store, NoM
   );
 }
 
+/** Links row id 2 (Bea) under row id 1 (Ada) — the composable `parentLink` fixture
+ * (#166 step 3, seams A-D). */
+function fParentLink(displayName: string): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        parentLink: (row) => (row.id === 2 ? 1 : null),
+      })
+    )
+  );
+}
+
+/** Keeps only rows `ctx.parentOf` resolves to a non-null id — a dropped link shows as `[]`
+ * instead of passing silently (#166 step 3, seams A-D). */
+function fKeepsLinkedRows(displayName: string): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({
+        stages: stageSchema<MockRow>('pipeline', (s) =>
+          stage(s.filter, {
+            run: (rows, ctx) => rows.filter((row) => ctx.parentOf?.(row) != null),
+          })
+        ),
+      })
+    )
+  );
+}
+
 /** Nests row id 2 under row id 1 via the `'tree'` render stage — mimics a synthesizing
  * feature nesting one row beneath another. `parentId` isn't a settable `RenderNode`
  * field; see ADR-0023. */
@@ -601,6 +631,63 @@ describe('composeFeatures', () => {
       for (const row of store.renderRows()) {
         expect(trailOf(row as { aggregates?: Record<string, unknown> })).toBe('tree>pin>');
       }
+    });
+  });
+
+  describe('parentLink (ADR-0028, #166 step 3)', () => {
+    it('case 21 — an inner parentLink reaches an outer stage through ctx.parentOf', () => {
+      const data = signal([...mockRows]);
+
+      const store = makeStore(
+        data,
+        composeFeatures(fParentLink('fLink')),
+        fKeepsLinkedRows('fOuterFilter')
+      );
+
+      expect(store.rows().map((row) => row.name)).toEqual(['Bea']);
+    });
+
+    it('case 22 — two inner parentLink contributions throw, naming both inner positions', () => {
+      const attempt = () =>
+        makeStore(
+          signal([...mockRows]),
+          composeFeatures(fParentLink('fLinkA'), fParentLink('fLinkB'))
+        );
+
+      expect(attempt).toThrow(
+        /composeFeatures inner feature 1 \(fLinkA\) and composeFeatures inner feature 2 \(fLinkB\) both provide the parent link/
+      );
+    });
+
+    it('case 23 — an inner parentLink clashing with an outer one is named by the outer registry', () => {
+      const attempt = () =>
+        makeStore(
+          signal([...mockRows]),
+          fParentLink('fOuterLink'),
+          composeFeatures(fParentLink('fInnerLink'))
+        );
+
+      expect(attempt).toThrow(
+        /feature 1 \(fOuterLink\) and feature 2 \(composeFeatures\) both provide the parent link/
+      );
+    });
+
+    it('case 24 — a composite without a parentLink leaves the key absent, so an outer link is not a clash', () => {
+      expect(() =>
+        makeStore(
+          signal([...mockRows]),
+          fParentLink('fOuterLink'),
+          composeFeatures(fKeepsLinkedRows('fInnerFilter'))
+        )
+      ).not.toThrow();
+
+      const store = makeStore(
+        signal([...mockRows]),
+        fParentLink('fOuterLink'),
+        composeFeatures(fKeepsLinkedRows('fInnerFilter'))
+      );
+
+      expect(store.rows().map((row) => row.name)).toEqual(['Bea']);
     });
   });
 

@@ -74,6 +74,7 @@ function foldInnerFeatures(
   const renderStages: StageRule<RenderNodeTransform<unknown>>[] = [];
   const columnRules: ColumnRuleEntry<unknown>[] = [];
   const expandedRowsSignals: Signal<ReadonlySet<RowId>>[] = [];
+  let parentLink: ((row: unknown) => RowId | null) | undefined;
   const setups: (() => void)[] = [];
   const onDestroys: (() => void)[] = [];
   const onRowsRemoveds: ((ids: readonly RowId[]) => void)[] = [];
@@ -101,6 +102,12 @@ function foldInnerFeatures(
     if (spec.expandedRows) {
       expandedRowsSignals.push(spec.expandedRows);
     }
+    // Single-claim (ADR-0028) — a second inner contribution throws here, naming both inner
+    // positions, before the outer fold ever sees a merged result to silently pick from.
+    if (spec.parentLink) {
+      registry.claimParentLink(label);
+      parentLink = spec.parentLink;
+    }
     if (spec.setup) {
       setups.push(spec.setup);
     }
@@ -119,6 +126,7 @@ function foldInnerFeatures(
   const hasRenderStages = renderStages.length > 0;
   const hasColumnRules = columnRules.length > 0;
   const hasExpandedRows = expandedRowsSignals.length > 0;
+  const hasParentLink = parentLink !== undefined;
   const hasSetup = setups.length > 0;
   const hasOnDestroy = onDestroys.length > 0;
   const hasOnRowsRemoved = onRowsRemoveds.length > 0;
@@ -143,6 +151,7 @@ function foldInnerFeatures(
           }),
         }
       : {}),
+    ...(hasParentLink ? { parentLink } : {}),
     ...(hasSetup ? { setup: runInOrder(setups) } : {}),
     ...(hasOnDestroy ? { onDestroy: runInOrder(onDestroys) } : {}),
     ...(hasOnRowsRemoved ? { onRowsRemoved: runInOrder(onRowsRemoveds) } : {}),
