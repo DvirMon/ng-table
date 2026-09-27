@@ -232,6 +232,16 @@ a versioned package that another team consumes and cannot edit.
 
 **Q5 (decided 2026-09-26, issue #155 grill): pipeline `'group'` anchor rejection is a runtime dev-throw, distinct from unknown-anchor.** `s.group` compiles — it is a claimable built-in pipeline stage (`withGrouping()` already claims it via `stage(s.group, { run })`). A third party writing `stage(s.group, { name, placement, ... })` therefore cannot be rejected at compile time. The construction-check matrix (see Checks) gets one more path: an anchor that is known/claimed but excluded from the anchor set (`'group'` on the pipeline layer) throws a distinct message — naming the anchoring feature and the target stage, and stating the stage is not anchor-eligible — never reusing the "unknown anchor" message. Confirms Q2's existing dev-only duplicate-claim check already covers issue #155's second open question; no further change there.
 
+**Q6 (decided 2026-09-26, issue #155 /to-tasks): ambiguous tie = any unordered pair of declared stages.** The tie check throws (dev-only) for any two declared stages whose relative order the resolved graph does not fix — not only two on the same anchor and placement. Example: A `after 'group'` and B `before 'tree'` (render) both sit in the group–tree gap with no edge between them, so they throw. Message names both stages and the fix (anchor one on the other). Name-sort stays the production-only fallback.
+
+**Q7 (decided 2026-09-26, issue #155 /to-tasks): a declared `name` is typed to the layer's registry keys.** `stage(handle, { name })` accepts only `keyof PipelineStageRegistry` / `keyof RenderStageRegistry` for the handle's layer, so a team merges its name into the registry (`interface RenderStageRegistry { pin: true }`) before declaring it, and `name: 'pinn'` is a compile error. Implements spec story 6; relies on #153's probe result (merging survives the build).
+
+**Q8 (decided 2026-09-26, issue #155 /to-tasks): production duplicate claim — the later claim wins.** With `ngDevMode` false, two features claiming the same built-in slot don't throw; the later-folded claim runs, the earlier one doesn't. Matches the duplicate-column precedent (`engine/columns.spec.ts`). Member collisions stay ungated.
+
+**Q9 (decided 2026-09-26, issue #155 /to-tasks): placement is a gap, not a bare edge.** `after X` places a stage in the gap right after built-in X and before the next built-in; `before X` in the gap right before X. An unclaimed built-in still bounds its gaps. Two declared stages in the same gap with no edge between them are a tie (Q6); stages in different gaps are ordered by the gaps.
+
+**Q10 (decided 2026-09-26, issue #155 /to-tasks): production fallback for the other construction checks — drop the stage.** With `ngDevMode` false, a declared stage with an unknown or not-anchor-eligible anchor, or on a cycle, doesn't run; built-ins and valid stages run in order, and a cycle never hangs the resolver. A duplicate declared name keeps the later declaration (as Q8). Not documented as behaviour.
+
 **No capability decisions log (2026-09-26).** `state.json`'s `capabilityLogPath` is `null`:
 stage registration is an engine-wide feature contract (pipeline + render stages, any
 feature), owned by no single capability's `docs/decisions/<capability>.md`. This file and
