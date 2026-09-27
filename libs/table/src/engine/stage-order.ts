@@ -292,7 +292,8 @@ function orderGapEntries<TTransform>(
   const distinctComponents = new Set(componentOf.values());
 
   if (collision !== null || distinctComponents.size > 1) {
-    assertNoAmbiguousOrder(collision ?? representativePerComponent(names, componentOf));
+    const [nameA, nameB] = collision ?? representativePerComponent(names, componentOf);
+    assertNoAmbiguousOrder(nameA, byName.get(nameA)!.label, nameB, byName.get(nameB)!.label);
     return [...entries].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   }
 
@@ -375,11 +376,11 @@ function assertNoCycle(names: readonly string[], labels: readonly string[]): voi
   );
 }
 
-function assertNoAmbiguousOrder(names: readonly [string, string]): void {
+function assertNoAmbiguousOrder(nameA: string, labelA: string, nameB: string, labelB: string): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
-  const quoted = names.map((name) => `"${name}"`).join(' and ');
   throw new Error(
-    `[createTable] Declared stages ${quoted} have no fixed relative order — anchor one on the other.`
+    `[createTable] Declared stages "${nameA}" (declared by "${labelA}") and "${nameB}" ` +
+      `(declared by "${labelB}") have no fixed relative order — anchor one on the other.`
   );
 }
 
