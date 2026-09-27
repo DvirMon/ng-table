@@ -17,6 +17,13 @@ export interface PipelineStageRegistry {
 
 export type PipelineStage = keyof PipelineStageRegistry & string;
 
+/**
+ * Built-in pipeline anchors a declared stage may anchor on. `'group'` is deliberately absent —
+ * a declared stage anchoring on it gets its own "not anchor-eligible" message, never treated as
+ * an unknown anchor. See `engine/stage-order.ts`.
+ */
+export const PIPELINE_ANCHOR_ELIGIBLE = ['filter', 'sort'] as const;
+
 export type RowTransform<TRow> = (rows: TRow[]) => TRow[];
 
 /**
