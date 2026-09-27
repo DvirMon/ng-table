@@ -2,6 +2,16 @@ import type { TableStore } from '../api/types';
 import type { PipelineStage } from './pipeline';
 import type { RenderStage } from './render-stages';
 
+// Angular's global dev-mode flag. Declared locally because `tsconfig.lib.json` sets
+// `"types": []`, so no ambient declaration is in scope. Module-scoped, so it cannot
+// collide with another file's declaration. See `engine/stage-order.ts`.
+declare const ngDevMode: boolean | undefined;
+
+/** True once the flag has been explicitly turned off — `undefined` still means "gate on". */
+function isNgDevModeOff(): boolean {
+  return typeof ngDevMode !== 'undefined' && !ngDevMode;
+}
+
 /** The one core member a feature may override. */
 type OverridableCoreKey = 'totalRowCount';
 type ClaimedCoreKey = Exclude<keyof TableStore<unknown>, OverridableCoreKey>;
@@ -74,7 +84,15 @@ export class SlotRegistry {
     owners.set(key, claimant);
   }
 
+  /**
+   * Dev-gated: with `ngDevMode` off, the later claim silently replaces the earlier one instead
+   * of throwing, so the later feature's stage transform runs.
+   */
   claimStage(stage: PipelineStage, feature: string): void {
+    if (isNgDevModeOff()) {
+      this.ownerByStage.set(stage, feature);
+      return;
+    }
     this.claim(
       this.ownerByStage,
       stage,
@@ -85,8 +103,15 @@ export class SlotRegistry {
     );
   }
 
-  /** Named-stage collision — replaces the old whole-layer `claimRenderRows()`. */
+  /**
+   * Named-stage collision — replaces the old whole-layer `claimRenderRows()`. Dev-gated like
+   * `claimStage()`: off, the later claim replaces the earlier one without throwing.
+   */
   claimRenderStage(stage: RenderStage, feature: string): void {
+    if (isNgDevModeOff()) {
+      this.ownerByRenderStage.set(stage, feature);
+      return;
+    }
     this.claim(
       this.ownerByRenderStage,
       stage,

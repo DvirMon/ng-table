@@ -140,6 +140,19 @@ function renderTaggingStage(anchor: 'group' | 'tree', tag: string): AnyTableFeat
   });
 }
 
+/** Claims the `'group'` render anchor and wraps every node under one synthesized group node
+ * tagged `id` — used to make the winning claim observable when two features race for the
+ * same render anchor with `ngDevMode` off (#155 step 3, seam B). */
+function groupWrappingStage(id: string): AnyTableFeature {
+  return () => ({
+    renderStages: stageSchema('render', (s) =>
+      stage(s.group, {
+        run: (nodes) => [{ id, kind: 'group' as const, data: null, children: nodes }],
+      })
+    ),
+  });
+}
+
 /** Declares a render stage named `pin`, anchored on `'tree'` at `placement`. Its `run`
  * both reverses node order (proves the resolved position actually runs — seam A) and
  * appends `'pin>'` to `aggregates.trail` (proves relative order against a `'tree'`
@@ -267,14 +280,49 @@ describe('composeTable', () => {
     );
   });
 
-  it('still throws the full duplicate-claim message when ngDevMode is false (ungated)', () => {
+  it('lets the later pipeline claim win without throwing when ngDevMode is false', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      const store = composeWithRows(
+        [{ id: 'r1', name: 'Ann', age: 25 }],
+        [taggingStage('sort', '-a'), taggingStage('sort', '-b')]
+      );
+
+      const [row] = (store['rows'] as () => Row[])();
+      expect(row.name).toBe('Ann-b');
+    } finally {
+      setNgDevMode(previous);
+    }
+  });
+
+  it('lets the later render claim win without throwing when ngDevMode is false', () => {
+    const previous = getNgDevMode();
+    setNgDevMode(false);
+    try {
+      const store = composeWithRows(makeRows(), [
+        groupWrappingStage('group-a'),
+        groupWrappingStage('group-b'),
+      ]);
+
+      const [first] = (store['renderRows'] as () => { id: string }[])();
+      expect(first.id).toBe('group-b');
+    } finally {
+      setNgDevMode(previous);
+    }
+  });
+
+  it('still throws on a duplicate member claim when ngDevMode is false (members stay ungated)', () => {
     const previous = getNgDevMode();
     setNgDevMode(false);
     try {
       expect(() =>
-        compose([taggingStage('sort', '-a'), taggingStage('sort', '-b')])
+        compose([
+          () => ({ members: { alpha: 1 } }),
+          () => ({ members: { alpha: 2 } }),
+        ])
       ).toThrow(
-        '[createTable] feature 1 and feature 2 both provide the "sort" pipeline stage. Only one feature may provide each stage.'
+        '[createTable] feature 1 and feature 2 both provide the "alpha" store member. Only one feature may provide each member.'
       );
     } finally {
       setNgDevMode(previous);
