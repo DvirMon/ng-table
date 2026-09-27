@@ -102,8 +102,8 @@ function foldInnerFeatures(
     if (spec.expandedRows) {
       expandedRowsSignals.push(spec.expandedRows);
     }
-    // Single-claim (ADR-0028) — a second inner contribution throws here, naming both inner
-    // positions, before the outer fold ever sees a merged result to silently pick from.
+    // Single-claim (ADR-0028). Claimed here so a second inner contributor throws naming both
+    // inner positions — the outer fold only ever sees the merged result.
     if (spec.parentLink) {
       registry.claimParentLink(label);
       parentLink = spec.parentLink;

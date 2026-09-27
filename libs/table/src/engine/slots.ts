@@ -128,10 +128,10 @@ export class SlotRegistry {
     );
   }
 
-  /** Claims the single-occupancy parent-link slot; always throws on a second claim, dev mode or
-   * not, like `claimMember` — a duplicate here silently nests every row by whichever feature
-   * folded last, quieter than a stage clash. */
+  /** Claims the parent-link slot; always throws on a second claim, dev mode or not. */
   claimParentLink(feature: string): void {
+    // Note: an unchecked duplicate silently nests every row by whichever feature folded last —
+    // quieter than a stage clash, so no `ngDevMode` bypass, same as `claimMember`.
     this.claim(
       this.ownerByParentLink,
       'parentLink',

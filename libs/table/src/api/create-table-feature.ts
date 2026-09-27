@@ -69,7 +69,7 @@ const PIPELINE_BEHAVIOR_KEYS = [
 
 /**
  * Combines a feature's spec with its trailing derive block's spec. The block may only
- * contribute members — `stages`/`renderStages`/`columnRules` stay `spec`'s alone, and a block
+ * contribute members — every `PIPELINE_BEHAVIOR_KEYS` entry stays `spec`'s alone, and a block
  * declaring any of them is a construction-time error (a derive block is not pipeline
  * behaviour). Lifecycle hooks chain feature-first, block-second.
  */
