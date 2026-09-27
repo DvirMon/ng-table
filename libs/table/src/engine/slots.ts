@@ -7,21 +7,18 @@ import type { RenderStage } from './render-stages';
 // collide with another file's declaration. See `engine/stage-order.ts`.
 declare const ngDevMode: boolean | undefined;
 
-/** True once the flag has been explicitly turned off — `undefined` still means "gate on". */
+// `undefined` counts as on — only an explicit `false` disables the checks.
 function isNgDevModeOff(): boolean {
   return typeof ngDevMode !== 'undefined' && !ngDevMode;
 }
 
-/** The one core member a feature may override. */
+// The one core member a feature may override.
 type OverridableCoreKey = 'totalRowCount';
 type ClaimedCoreKey = Exclude<keyof TableStore<unknown>, OverridableCoreKey>;
 
-/**
- * Identity, but the parameter type collapses to `never` unless `keys` covers every claimed
- * core member — the completeness check `satisfies` alone cannot express, since it only
- * validates each entry rather than the list as a whole. Add a non-overridable member to
- * `TableStore` without listing it below and this call stops compiling.
- */
+// Note: identity, but the parameter collapses to `never` unless `keys` covers every claimed
+// core member. `satisfies` checks each entry, not the list's completeness. Adding a
+// non-overridable `TableStore` member without listing it below stops this call compiling.
 function exhaustiveCoreMemberKeys<const Keys extends readonly ClaimedCoreKey[]>(
   keys: Exclude<ClaimedCoreKey, Keys[number]> extends never ? Keys : never
 ): Keys {
@@ -40,7 +37,7 @@ export const CORE_MEMBER_KEYS = exhaustiveCoreMemberKeys([
   '__columnValues',
 ]);
 
-/** The owner name core members are registered under, for collision messages. */
+// The owner name core members are registered under, for collision messages.
 const CORE_CLAIMANT = 'core';
 
 /** Names a consumer feature by its 1-based argument position, for collision messages. */
@@ -63,8 +60,7 @@ export function describeInnerFeature(position: number, displayName?: string): st
 }
 
 /** Tracks which feature claimed each single-occupancy slot, so a collision can name both sides. */
-// docs/adr/0003-in-house-table-store-engine.md: the prior engine let a second claimant
-// silently win by array order.
+// docs/adr/0003-in-house-table-store-engine.md
 export class SlotRegistry {
   private readonly ownerByStage = new Map<PipelineStage, string>();
   private readonly ownerByRenderStage = new Map<RenderStage, string>();
@@ -84,10 +80,7 @@ export class SlotRegistry {
     owners.set(key, claimant);
   }
 
-  /**
-   * Dev-gated: with `ngDevMode` off, the later claim silently replaces the earlier one instead
-   * of throwing, so the later feature's stage transform runs.
-   */
+  /** Claims a pipeline stage; with `ngDevMode` off, a second claim replaces the first silently. */
   claimStage(stage: PipelineStage, feature: string): void {
     if (isNgDevModeOff()) {
       this.ownerByStage.set(stage, feature);
@@ -103,10 +96,7 @@ export class SlotRegistry {
     );
   }
 
-  /**
-   * Named-stage collision — replaces the old whole-layer `claimRenderRows()`. Dev-gated like
-   * `claimStage()`: off, the later claim replaces the earlier one without throwing.
-   */
+  /** Claims a render stage; with `ngDevMode` off, a second claim replaces the first silently. */
   claimRenderStage(stage: RenderStage, feature: string): void {
     if (isNgDevModeOff()) {
       this.ownerByRenderStage.set(stage, feature);
@@ -122,13 +112,11 @@ export class SlotRegistry {
     );
   }
 
-  /**
-   * Members are merged with `Object.assign`, so without this the later feature wins silently
-   * and the earlier one's state signal is orphaned — still written by its own closures, read
-   * by nobody. Quieter than a stage collision (which at least produces visibly wrong rows), so
-   * it throws for the same reason the other two do.
-   */
+  /** Claims a store member key; always throws on a second claim, dev mode or not. */
   claimMember(key: string, feature: string): void {
+    // Note: members merge via `Object.assign`, so an unchecked clash lets the later feature win
+    // silently and orphans the earlier one's state signal — written by its closures, read by
+    // nobody — quieter than a stage clash, which at least shows wrong rows.
     this.claim(
       this.ownerByMember,
       key,
@@ -139,10 +127,7 @@ export class SlotRegistry {
     );
   }
 
-  /**
-   * Claims every non-overridable core member, so a feature declaring one collides at
-   * construction like any other member clash rather than shadowing the engine's own.
-   */
+  /** Claims every non-overridable core member, so a feature redeclaring one throws, not shadows. */
   claimCoreMembers(): void {
     for (const key of CORE_MEMBER_KEYS) {
       this.claimMember(key, CORE_CLAIMANT);

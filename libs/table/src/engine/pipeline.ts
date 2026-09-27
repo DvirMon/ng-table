@@ -1,15 +1,11 @@
 import type { ResolvedStage } from './stage-order';
 
-/**
- * Fixed execution order, independent of the `features` array order. This array is the single
- * source of truth: `PipelineStage` is derived from `PipelineStageRegistry`, so a stage that
- * exists in the type is guaranteed to be executed, and adding one is a one-line edit here.
- */
+/** Built-in pipeline anchors in execution order, fixed regardless of feature argument order. */
 export const PIPELINE_ANCHORS = ['filter', 'group', 'sort'] as const;
 
 /**
- * The claimable pipeline stage keys. A team extends this via declaration merging when it
- * needs to author a new stage; `PipelineStage` reads straight off it.
+ * Pipeline stage names a feature may claim or declare; extend it via `declare module` merging
+ * to author a new stage.
  */
 export interface PipelineStageRegistry {
   filter: true;
@@ -20,16 +16,14 @@ export interface PipelineStageRegistry {
 export type PipelineStage = keyof PipelineStageRegistry & string;
 
 /**
- * Built-in pipeline anchors a declared stage may anchor on. `'group'` is deliberately absent —
- * a declared stage anchoring on it gets its own "not anchor-eligible" message, never treated as
- * an unknown anchor. See `engine/stage-order.ts`.
+ * Built-in pipeline anchors a declared stage may anchor on. `'group'` is excluded: anchoring on
+ * it throws "not anchor-eligible", not "unknown anchor".
  */
 export const PIPELINE_ANCHOR_ELIGIBLE = ['filter', 'sort'] as const;
 
 export type RowTransform<TRow> = (rows: TRow[]) => TRow[];
 
-/** Folds rows through the resolved stage order — `resolveStageOrder` already fixed both the
- *  built-in anchor positions and any declared stage's slot; this just runs the list. */
+/** Runs rows through each stage in the order `resolveStageOrder` produced. */
 export function runPipeline<TRow>(
   rows: TRow[],
   stages: readonly ResolvedStage<RowTransform<TRow>>[]
