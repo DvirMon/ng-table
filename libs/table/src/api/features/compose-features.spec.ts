@@ -304,6 +304,9 @@ function fTreeTrail(displayName: string): Feature<Store, NoMembers> {
   );
 }
 
+/** `'pin'` below only typechecks because `../../schema/stage-schema.types.spec.ts` merges it
+ * into `RenderStageRegistry`. */
+
 /** Declares a render stage named `'pin'`, anchored `after` `'tree'`, inside a composite —
  * appends `'pin>'` to `aggregates.trail` (#155 step 2, seam E). */
 function fPinAfterTree(displayName: string): Feature<Store, NoMembers> {

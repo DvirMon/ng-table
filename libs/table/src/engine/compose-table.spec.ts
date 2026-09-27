@@ -7,7 +7,7 @@ import {
 import { TestBed } from '@angular/core/testing';
 import { createColumns } from '../api/create-columns';
 import { getNgDevMode, setNgDevMode } from '../ng-dev-mode.testing';
-import type { RowTransform } from './pipeline';
+import type { PipelineStage, RowTransform } from './pipeline';
 import type { StageRule } from '../schema/stage-rules';
 import { stageSchema } from '../schema/stage-schema';
 import { stage } from '../schema/stage-rules';
@@ -95,12 +95,15 @@ function taggingStage(
   });
 }
 
+/** `'audit'` and `'pin'` below only typecheck because `../schema/stage-schema.types.spec.ts`
+ * merges them into `PipelineStageRegistry`/`RenderStageRegistry`. */
+
 /** Declares a new pipeline stage `name`, anchored on `anchor` at `placement`, tagging each
  * row's name the same way `taggingStage` does — makes a declared stage's resolved position
  * observable through the pipeline output (#155 step 2, seam D). */
 function declaredPipelineStage(
   anchor: 'filter' | 'group' | 'sort',
-  name: string,
+  name: PipelineStage,
   placement: 'before' | 'after',
   tag: string
 ): AnyTableFeature {
