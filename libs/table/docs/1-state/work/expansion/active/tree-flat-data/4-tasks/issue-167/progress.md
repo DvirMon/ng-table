@@ -3,7 +3,7 @@
 **Issue:** #167
 **Branch:** feat/167-flat-tree-nesting
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-167-flat-tree-nesting
-**Status:** 5 / 6 complete
+**Status:** 6 / 6 complete
 
 ## Graph
 
@@ -24,4 +24,4 @@ Parallel-safe: [3, 4] after 2 · Dependency: 1 → 2 → 4 → 5 → 6
 | 3 | tree reads: `parentOf` / `descendantsOf`, and `removeRow(id[])` | ✅ done |
 | 4 | Move the grouping story fixture to flat rows | ✅ done |
 | 5 | Remove `childrenAccessor` | ✅ done |
-| 6 | Docs: flat-data tree contract | ⬚ pending |
+| 6 | Docs: flat-data tree contract | ✅ done |

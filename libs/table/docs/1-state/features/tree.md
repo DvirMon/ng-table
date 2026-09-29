@@ -1,8 +1,8 @@
 ---
 title: State Layer Reference — withTree()
 type: architecture
-version: 1.0
-date: 2026-09-21
+version: 1.1
+date: 2026-09-29
 capability: tree
 spec: drilled
 code: shipped
@@ -21,9 +21,11 @@ is [`withExpansion()`](expansion.md).
 
 Multi-expand, hierarchical row expansion: sub-rows share columns with their parent, unlike a
 detail panel's arbitrary markup. Real-row parents only — no invented parents, no path-derived
-levels (that's `withGrouping()`'s mechanism). Claims the `'tree'` render stage only when a
-`childrenAccessor` is supplied; omitted gives a collapse-only instance (the shape
-`withGrouping()` composes for collapsible groups) that claims no stage at all.
+levels (that's `withGrouping()`'s mechanism). Input is flat: every node, at any depth, is its own
+entry in `data()`, linked to its parent by a declared `parentId` (#167) — there is no nested
+`children` array to build first. Claims the `'tree'` render stage only when `parentId` is
+supplied; omitted gives a collapse-only instance (the shape `withGrouping()` composes for
+collapsible groups) that claims no stage at all.
 
 ## State Shape
 
@@ -38,31 +40,43 @@ interface TreeSlice {
   expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
+  parentOf(id: RowId): RowId | null;
+  descendantsOf(id: RowId): RowId[];
 }
 ```
 
 No `everExpanded` here — that lazy-mount ledger is the panel's alone
 ([`withExpansion()`](expansion.md)).
 
+`parentOf` and `descendantsOf` (#167) are read-only lookups resolved over **all of `data()`**,
+not the pipeline's `rows()` view — a row a filter dropped still counts. `parentOf(id)` returns the
+id's declared parent, or `null` for a root or an id not present in `data()`. `descendantsOf(id)`
+returns every descendant at any depth, depth-first in `data()` order (parent before child),
+never including `id` itself, or `[]` when `id` has none or isn't present. Neither ever reports —
+only the `'tree'` render stage reports broken links. With no `parentId` configured, both are
+unconditionally `null` / `[]`.
+
 ## Config
 
 ```ts
 interface WithTreeConfig<TRow> {
-  childrenAccessor?: (row: TRow) => TRow[] | undefined;
   isExpandable?: (row: TRow) => boolean;
   initial?: readonly RowId[];
+  parentId?: (row: TRow) => RowId | null | undefined;
 }
 ```
 
-`childrenAccessor` reads a row's nested children. **Omitted: collapse-only** — no row tree, no
-`'tree'` render stage claimed, and no `row.children` fallback (E6/E16 — the old default
-`(row) => row.children` is gone; a consumer wanting the tree behavior always passes the
-accessor explicitly).
+`parentId` reads a flat row's declared parent id. `null` and `undefined` both mean root.
+**Omitted: collapse-only** — no row tree, no `'tree'` render stage claimed, and no fallback to a
+conventional field (E6/E16/D1 — there is no default `parentId`; a consumer wanting the tree
+behavior always passes the accessor explicitly). `childrenAccessor` — the old nested-`children`
+path — was removed with no deprecation window (#167, D1/D3); see
+[Migration: nested `children` → flat `parentId`](#migration-nested-children--flat-parentid) below.
 
 `isExpandable` decides whether a row renders the expand toggle independently of whether its
-children are loaded — for lazy-loaded children, where `childrenAccessor` legitimately returns
-`undefined`/`[]` until the row has been opened once. Defaults to "non-empty array from
-`childrenAccessor`".
+children are loaded — for lazy-loaded children, where a row's children legitimately don't exist
+in `data()` yet until the row has been opened once. Defaults to "some other row's `parentId`
+resolves to this row."
 
 `initial` seeds the open set at construction, same contract as `withExpansion()`'s — a plain
 array, read once, emits nothing on `changed`.
@@ -73,22 +87,42 @@ array, read once, emits nothing on `changed`.
   `data()` array — there is no `getDataPath`-style invented-parent support. A tree built from
   paths is filed against `withGrouping()` as a variable-depth level source, never against this
   feature.
-- **Collapse-only shape.** Omit `childrenAccessor` and the feature is pure open/closed id
-  tracking with no row synthesis — no `'tree'` render stage claimed, so it composes freely
-  alongside `withGrouping()`'s `'group'` stage on the same table. This is exactly what
-  collapsible grouping is: `createTable(config, withGrouping(schema), withTree())`.
-- **Discovery walk.** `expand()` with no `ids` walks `childrenAccessor` recursively to collect
-  every expandable row's id (only recursing into rows whose children are already loaded — a
-  lazy row still expands, its own descendants just aren't discoverable until fetched), unioned
-  with any `ids` passed explicitly (e.g. `table.groupIds()` from `withGrouping()`).
+- **Collapse-only shape.** Omit `parentId` and the feature is pure open/closed id tracking with
+  no row synthesis — no `'tree'` render stage claimed, so it composes freely alongside
+  `withGrouping()`'s `'group'` stage on the same table. This is exactly what collapsible grouping
+  is: `createTable(config, withGrouping(schema), withTree())`.
+- **Sibling order follows sort.** The `'tree'` stage nests over its own input order — already
+  pipeline-sorted — so a sibling list at any depth follows the table's active sort, not id order
+  or declaration order.
+- **Composes with grouping.** Group headers (`data === null`) pass through the `'tree'` stage
+  unchanged; nesting happens only inside each header's own member list — a child never crosses
+  into a sibling group. Nesting a child whose parent sits in a different group is out of scope
+  (#170 — roots-only grouping across groups).
+- **Broken-link degrade (D4/D12, ADR-0014).** A self-parent, a parent id absent from `data()`, or
+  a cycle (the first row of the cycle in input order) degrades that row to a root with its own
+  subtree intact — never dropped, never orphaned silently. A throwing `parentId` degrades the same
+  way. Each kind is reported once per evaluation (not once per row), through `console.error`, in
+  production as well as dev — and only by the `'tree'` render stage; `expand()`/`state()`'s own
+  discovery walk (below) degrades identically but never reports, to avoid logging the same data
+  problem twice. Removing a parent from `data()` is not special-cased (D12): its children simply
+  resolve as roots on the next evaluation.
+- **Discovery walk.** `expand()` with no `ids` scans flat `data()` for every row some other row's
+  `parentId` names as parent, unioned with any `ids` passed explicitly (e.g. `table.groupIds()`
+  from `withGrouping()`). Broken links degrade the same way as the render stage but are never
+  reported here.
 - **`state` — tri-state.** `'all'` when every expandable row (per the same discovery walk) is
   open, `'none'` when none is — including "nothing is expandable," which is what a
   collapse-only instance always reads. Answers "are all rows expanded?" without a consumer
   re-walking the tree themselves.
-- **Degrading callbacks (ADR-0014).** A throwing `childrenAccessor` or `isExpandable` is a
-  runtime, data-dependent failure — it degrades rather than throws. The affected row renders
-  without children / without a toggle for that evaluation, and the failure is reported once per
-  evaluation (not once per row), in production as well as dev.
+- **Degrading callbacks (ADR-0014).** A throwing `isExpandable` is a runtime, data-dependent
+  failure — it degrades rather than throws. The affected row renders without a toggle for that
+  evaluation, and the failure is reported once per evaluation (not once per row), in production as
+  well as dev. `parentId` has its own degrade rule, above.
+- **Silent parent link for other stages (ADR-0028).** `withTree({ parentId })` also contributes a
+  total, silent `parentLink` to every pipeline/render stage's context (`ctx.parentOf`) — a throw
+  or `undefined` return maps to `null`, same as the tree stage, but this contribution never
+  reports; only the `'tree'` stage does. This is the seam `withFiltering()` (#168) and
+  `withGrouping()` (#170) read to see the hierarchy without each re-deriving it.
 
 ## Methods
 
@@ -98,10 +132,25 @@ array, read once, emits nothing on `changed`.
 | `table.tree.expand(ids?, options?)` | Adds. Omitted `ids`: every expandable row found by the discovery walk, unioned with what's already open. |
 | `table.tree.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open. |
 | `table.tree.set(ids, options?)` | Atomic replace — the restore path. |
+| `table.tree.parentOf(id)` | Read-only. The id's declared parent, or `null` for a root or an unknown id. Never reports. |
+| `table.tree.descendantsOf(id)` | Read-only. Every descendant at any depth, depth-first in `data()` order, never including `id` itself. Never reports. |
 
 Every write verb takes `options?: ExpansionWriteOptions` (`{ emitEvent?: boolean }`) — see
 `expansion.md`'s [Silent writes](expansion.md#silent-writes-emitevent-false); the shape and
 reasoning are identical.
+
+### Cascade delete
+
+`table.tree` has no delete method of its own — deleting a subtree is one
+`table.value` write built from `descendantsOf` (see
+[Row Mutations](../row-mutations.md#shipped-updaters)):
+
+```ts
+table.value.update(removeRow([id, ...table.tree.descendantsOf(id)]));
+```
+
+Removing only the parent (`removeRow(id)`) is not a cascade — its children stay in `data()` and
+resolve as roots on the next read (D12).
 
 ## Compile-Time Dependencies
 
@@ -112,10 +161,13 @@ separately-keyed `createExpansionStore()` instance, so `claimMember()` never col
 ## Render Layer
 
 Claims the `'tree'` render stage ([ADR-0011](../../adr/0011-chained-render-stages.md)) **only
-when `childrenAccessor` is supplied** — a collapse-only instance leaves the single-claim stage
-free for `withGrouping()`'s `'group'` stage or a future claimant. The stage nests a row's
-children beneath it in the tree IR (`RenderNode.children`); it does not itself decide
-visibility.
+when `parentId` is supplied** — a collapse-only instance leaves the single-claim stage free for
+`withGrouping()`'s `'group'` stage or a future claimant. The stage resolves every row's parent
+over its own input nodes (`engine/tree-links.ts`'s `resolveTreeLinks`) and nests a row's children
+beneath it in the tree IR (`RenderNode.children`); it does not itself decide visibility. It also
+claims the parent link slot ([ADR-0028](../../adr/0028-tree-parent-link-slot.md)) — a second
+feature contributing either the `'tree'` stage or the parent link throws at construction
+(ADR-0007).
 
 **Visibility is `engine/flatten.ts`'s `flattenVisible` walk**, not this stage — it is the only
 place in `src` that reads the unioned `expandedRows` slot and derives `depth`, `parentId`,
@@ -135,10 +187,32 @@ never stamped by a render stage in the first place.
   one emission per write, carrying the whole symmetric difference. Same contract as
   `table.expansion.changed`; see [expansion.md](expansion.md#events-owned).
 
+## Migration: nested `children` → flat `parentId`
+
+`childrenAccessor` was removed with no deprecation window (#167, D1/D3). Every node must be its
+own flat entry in `data()`, carrying its own parent id:
+
+```ts
+// before (removed)
+withTree({ childrenAccessor: (row) => row.children })
+
+// after
+withTree({ parentId: (row) => row.parentId })
+```
+
+```ts
+// before: nested rows
+const rows = [{ id: 'r1', children: [{ id: 'c1' }] }];
+
+// after: flat rows, parent linked by id
+const rows = [
+  { id: 'r1', parentId: null },
+  { id: 'c1', parentId: 'r1' },
+];
+```
+
 ## Open Questions
 
-- [ ] **Cycle guarding on `childrenAccessor`.** A row that reaches itself still overflows;
-  noted on #105 and unchanged here.
 - [ ] **A tree built from paths** (`getDataPath`, invented parents). Filed against grouping as
   a variable-depth level source if a consumer ever needs it, never against `withTree()`.
 - [ ] Precise lazy-load UX contract (e.g. a per-row loading indicator) not addressed.

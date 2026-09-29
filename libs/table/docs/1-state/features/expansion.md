@@ -13,7 +13,7 @@ parent: ../architecture.md
 # withExpansion()
 
 The **detail-panel** feature — open/closed id tracking only, no row synthesis, no render
-stage, no `childrenAccessor`. Split from the tree-grid case by
+stage, no `parentId`. Split from the tree-grid case by
 [ADR-0012](../../adr/0012-split-expansion-into-panel-and-tree.md) (`accepted`); the tree half
 is [`withTree()`](tree.md).
 
@@ -75,8 +75,8 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
   opens. An LRU cap is possible later; deliberately not in v1.
 
 - **No discovery walk.** `expand()` with no `ids` targets every row in `rows()` — the panel has
-  no `childrenAccessor` and no concept of nested data, so "expand everything" is the flat row
-  set, not a tree walk. `withTree()`'s `expand()` differs here (it walks `childrenAccessor`).
+  no `parentId` and no concept of hierarchy, so "expand everything" is the flat row set, not a
+  tree walk. `withTree()`'s `expand()` differs here (it scans flat data for `parentId` links).
 
 ## Methods
 

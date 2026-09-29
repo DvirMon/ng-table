@@ -192,7 +192,7 @@ sort changes.
 ## Render layer — `renderRows`
 
 `withGrouping()` claims the `'group'` render stage ([ADR-0011](../../adr/0011-chained-render-stages.md);
-`withTree()` claims `'tree'` when composed with a `childrenAccessor`, leaving `'group'` free).
+`withTree()` claims `'tree'` when composed with `parentId`, leaving `'group'` free).
 It walks the clustered `rows()`,
 inserts a `kind: 'group'` header at each cluster boundary with `id` synthesized as
 `group:${columnId}:${value}`, computes `aggregates` over that cluster's leaves, and stamps every

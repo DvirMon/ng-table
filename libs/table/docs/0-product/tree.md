@@ -72,10 +72,10 @@ One story shows a tree, read as a host component rather than an `.mdx` wrapper:
 
 | Story | Composes | What it demonstrates |
 |---|---|---|
-| [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | `withGrouping()` + `withTree({ childrenAccessor: row => row.children })` | One parent row (`d4`) with two **nested** children, opened by a row chevron (`table.tree.toggle`), independent of the group chevrons |
+| [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | `withGrouping()` + `withTree({ parentId: row => row.parentId })` | One parent row (`d4`) with two flat children linked by `parentId`, opened by a row chevron (`table.tree.toggle`), independent of the group chevrons |
 
-What no story shows: a tree built from flat rows (#163 builds it), a tree under a filter (no host
-composes `withTree()` with `withFiltering()`), a broken parent link, a lazy parent. The
+What no story shows: a tree under a filter (no host composes `withTree()` with
+`withFiltering()`), a broken parent link, a lazy parent. The
 `grouping-selection/` host composes a filter over the same fixture, but no `'tree'` stage runs
 there, so `d4`'s children never render.
 
@@ -584,15 +584,15 @@ Owned by [`features/tree.md`](../1-state/features/tree.md) unless named.
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| S1 | The tree is built from nested children, not flat rows | 1.1, 3.1, 3.2, E-1 | #163: `parentId`, D1. `tree.md` still describes `childrenAccessor` and wrongly claims G6 is closed |
+| S1 | ~~The tree is built from nested children, not flat rows~~ — closed by #167 | 1.1, 3.1, 3.2, E-1 | `parentId`, D1. `tree.md` now describes `parentId`; `childrenAccessor` removed, no deprecation window |
 | S2 | No parent-link engine slot; filter and group cannot see the hierarchy | F-T1, G-T1 | ADR-0028. Owners: `features/filtering.md`, `features/grouping.md` |
 | S3 | No ancestor retention or `includeDescendants` in the filter stage | F-T1, F-T2 | `features/filtering.md`. D5, D6 |
 | S4 | Grouping clusters children by their own values | G-T1 | `features/grouping.md`. D13 |
 | S5 | No derived reveal, no `revealContextRow`, no closed-while-context memory | 2.1, 2.2 | D20 (supersedes D16, D17) |
-| S6 | No `isContextRow` on `RenderRow`; no `contextRowIds()`/`parentOf()` reads on `table.tree` | 2.3 | D18, D20(d) |
+| S6 | No `isContextRow` on `RenderRow`; no `contextRowIds()` read on `table.tree` — `parentOf()` shipped by #167 | 2.3 | D18, D20(d) |
 | S7 | Default toggle ignores the filter | 2.6 | D9 |
-| S8 | Broken parent links: no degrade, no report | 4.1, 4.2 | D4, ADR-0014 |
-| S9 | No `descendantsOf(id)` | 4.3, OQ-1 | D12 |
+| S8 | ~~Broken parent links: no degrade, no report~~ — closed by #167 | 4.1, 4.2 | D4, ADR-0014 |
+| S9 | ~~No `descendantsOf(id)`~~ — closed by #167 | 4.3, OQ-1 | D12 |
 | S10 | `expand()`/`state` scan without an `includeHidden` option | 1.3 | D8 |
 
 ## 8.2 UI-layer gaps
