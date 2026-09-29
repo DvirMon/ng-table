@@ -42,6 +42,9 @@ export interface TreeSlice {
    * never including `id` itself. `[]` for a leaf or an id not present in `data()`. Never
    * reports (#167). */
   descendantsOf(id: RowId): RowId[];
+  /** Every row a contributor (such as an active filter) retains as context, including rows
+   * hidden under a collapsed parent. Empty when nothing contributes (#169). */
+  readonly contextRowIds: Signal<ReadonlySet<RowId>>;
 }
 
 export interface TreeMembers {

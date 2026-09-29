@@ -1,6 +1,6 @@
 import { computed } from '@angular/core';
 import { resolveTreeLinks, type TreeLinks } from '../../../engine/tree-links';
-import type { Feature, ParentLink, RowOf, TableFeatureSpec } from '../../../engine/types';
+import type { Feature, ParentLink, RowOf, StageContext, TableFeatureSpec } from '../../../engine/types';
 import { stage } from '../../../schema/stage-rules';
 import { stageSchema } from '../../../schema/stage-schema';
 import { createTableFeature } from '../../create-table-feature';
@@ -125,9 +125,12 @@ function collectDescendantIds(
   ]);
 }
 
+const EMPTY_CONTEXT_ROW_IDS: ReadonlySet<RowId> = new Set();
+
 function buildTreeSpec<TRow>(
   input: Pick<TableStore<TRow>, 'rows' | 'trackBy' | 'value'>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
+  ctx: StageContext<TRow>
 ): TableFeatureSpec<TRow, TreeMembers> {
   // No `onExpanded`: `everExpanded` is the panel's member, not the tree's.
   const store = createExpansionStore({ initial: config.initial });
@@ -193,6 +196,8 @@ function buildTreeSpec<TRow>(
     set,
     parentOf,
     descendantsOf,
+    // `ctx` is read inside the computed: `withFiltering()` folds after this factory runs.
+    contextRowIds: computed((): ReadonlySet<RowId> => ctx.contextRows?.() ?? EMPTY_CONTEXT_ROW_IDS),
   });
 
   // Claimed only when `parentId` was supplied — a collapse-only instance leaves the
@@ -246,8 +251,9 @@ export function withTree(
   const config: WithTreeConfig<any> = isDeriveFirst ? {} : configOrDerive;
   const derive = isDeriveFirst ? configOrDerive : maybeDerive;
   const factory = <In extends TreeInput<In>>(
-    input: In
-  ): TableFeatureSpec<RowOf<In>, TreeMembers> => buildTreeSpec(input, config);
+    input: In,
+    ctx: StageContext<RowOf<In>>
+  ): TableFeatureSpec<RowOf<In>, TreeMembers> => buildTreeSpec(input, config, ctx);
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)
     : createTableFeature(factory);
