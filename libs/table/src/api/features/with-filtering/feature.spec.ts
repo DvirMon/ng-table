@@ -6,7 +6,7 @@ import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { anyOf, contains, equals, filter } from './rules';
 import { withComputed } from '../with-computed';
-import { withTree } from '../with-tree';
+import { withTree } from '../with-tree/feature';
 import { withFiltering } from './feature';
 import type { ColumnDecl, ColumnSet, ColumnValues, TableStore } from '../../types';
 

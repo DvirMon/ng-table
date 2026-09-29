@@ -1,8 +1,8 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf, vi } from 'vitest';
-import { removeRow } from '../../mutations/row-mutations';
-import { getNgDevMode, setNgDevMode } from '../../ng-dev-mode.testing';
+import { removeRow } from '../../../mutations/row-mutations';
+import { getNgDevMode, setNgDevMode } from '../../../ng-dev-mode.testing';
 import {
   makeFlatRows,
   mockGroupingRows,
@@ -10,20 +10,21 @@ import {
   noData,
   type FlatRow,
   type GroupingMockRow,
-} from '../../table.mock';
-import { stage } from '../../schema/stage-rules';
-import { stageSchema } from '../../schema/stage-schema';
-import { createColumns } from '../create-columns';
-import { createTable } from '../create-table';
-import { createTableFeature } from '../create-table-feature';
-import type { ColumnDecl, ColumnSet, RenderRow, RowId, TableStore } from '../types';
-import { selectAllIds } from './with-selection/utils';
-import { withComputed } from './with-computed';
-import { withFiltering } from './with-filtering/feature';
-import { contains } from './with-filtering/rules';
-import { withGrouping, type GroupingMembers } from './with-grouping';
-import { withSorting, type SortingMembers } from './with-sorting';
-import { withTree, type ExpansionChange, type TreeMembers, type TreeSlice } from './with-tree';
+} from '../../../table.mock';
+import { stage } from '../../../schema/stage-rules';
+import { stageSchema } from '../../../schema/stage-schema';
+import { createColumns } from '../../create-columns';
+import { createTable } from '../../create-table';
+import { createTableFeature } from '../../create-table-feature';
+import type { ColumnDecl, ColumnSet, RenderRow, RowId, TableStore } from '../../types';
+import { selectAllIds } from '../with-selection/utils';
+import { withComputed } from '../with-computed';
+import { withFiltering } from '../with-filtering/feature';
+import { contains } from '../with-filtering/rules';
+import { withGrouping, type GroupingMembers } from '../with-grouping';
+import { withSorting, type SortingMembers } from '../with-sorting';
+import { withTree } from './feature';
+import type { ExpansionChange, TreeMembers, TreeSlice } from './types';
 
 interface Row {
   id: string;
