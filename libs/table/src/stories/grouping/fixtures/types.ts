@@ -10,7 +10,8 @@ export interface DealOwner {
 /** Fixture row for the grouping stories. `region` → `category` → `rep` are the three grouping
  * levels; `region` is nullable *and* optional so the blank-key cases (`null`, `undefined`, `''`)
  * all exist in the data. `amount` is the aggregated column, `closedAt` a `Date` level, `owner` an
- * object read through an `accessor`, and `children` makes a row expandable alongside grouping. */
+ * object read through an `accessor`, and `parentId` links a flat row to its parent so a deal can
+ * be expandable alongside grouping — `null` means root. */
 export interface DealRow {
   id: RowId;
   region?: string | null;
@@ -19,7 +20,7 @@ export interface DealRow {
   amount: number;
   closedAt: Date;
   owner: DealOwner;
-  children?: DealRow[];
+  parentId: string | null;
 }
 
 /** `GET /api/grouped-rows` response shape. */
