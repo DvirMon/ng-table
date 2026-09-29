@@ -1823,6 +1823,46 @@ describe('withTree', () => {
     });
   });
 
+  // Step 3 (#169): `table.tree.contextRowIds`. Red phase per step-3-context-row-ids.test-plan.md
+  // — `contextRowIds` throws `not implemented`, so both seams are expected to fail.
+  describe('contextRowIds (#169)', () => {
+    it('contextRowIds() holds the context rows of the active filter', () => {
+      // Unannotated so `path.name` keeps its literal id (ADR-0019).
+      const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns },
+          withTree({ parentId: (row) => row.parentId }),
+          withFiltering({ schema: (path) => ({ name: contains(path.name) }) })
+        )
+      );
+
+      store.tree.expand(['r1', 'c1']);
+      store.filters.name().value.set('Grand');
+
+      expect(store.tree.contextRowIds()).toEqual(new Set(['r1', 'c1']));
+    });
+
+    it('contextRowIds() lists a context row that is hidden under a collapsed parent', () => {
+      // Bare contributor, not `withFiltering()` — filtering is another domain.
+      const contributesC1 = createTableFeature((_store: Pick<TableStore<FlatRow>, 'rows'>) => ({
+        contextRows: signal<ReadonlySet<RowId>>(new Set<RowId>(['c1'])),
+      }));
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId }),
+          contributesC1
+        )
+      );
+
+      expect(store.renderRows().map((row) => row.id)).not.toContain('c1');
+      expect(store.tree.contextRowIds()).toEqual(new Set(['c1']));
+    });
+  });
+
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — it is
   // inert at runtime. These are only enforced by `tsc -p libs/table/tsconfig.spec.json
@@ -1845,6 +1885,7 @@ describe('withTree', () => {
       expectTypeOf(store.tree).toMatchTypeOf<TreeSlice>();
       expectTypeOf(store.tree()).toEqualTypeOf<ReadonlySet<RowId>>();
       expectTypeOf(store.tree.state()).toEqualTypeOf<'all' | 'some' | 'none'>();
+      expectTypeOf(store.tree.contextRowIds).toEqualTypeOf<Signal<ReadonlySet<RowId>>>();
     });
 
     it('a trailing withComputed() block reading s.tree adds a typed member — typed only because withTree() precedes it', () => {
