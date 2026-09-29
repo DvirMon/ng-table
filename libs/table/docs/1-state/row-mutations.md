@@ -1,10 +1,11 @@
 ---
 title: State Layer Reference — Row Mutations
 type: architecture
-version: 1.1
-date: 2026-09-09
-status: shipped — issue #12; `moveRow` and selection-gated bulk (`removeRow`/`patchRow`) deferred
-  (D19/D32). `insertRow`/`createRow` widened arity (bulk-add) shipped 2026-09-05.
+version: 1.2
+date: 2026-09-29
+status: shipped — issue #12; `moveRow` and bulk `patchRow` (selection-gated bulk edit) deferred
+  (D19/D32). `insertRow`/`createRow` widened arity (bulk-add) shipped 2026-09-05; `removeRow`
+  widened arity shipped 2026-09-27 with #167.
 audience: developers
 parent: ./architecture.md
 ---
@@ -87,7 +88,7 @@ ignoring `ctx`.
 | Updater | Signature | Notes |
 |---|---|---|
 | `insertRow` | `insertRow(row \| row[], { at?: number })` | splice semantics, never throws — see below. Array overload (D32, shipped 2026-09-05) inserts every row as one contiguous block in one write |
-| `removeRow` | `removeRow(id: RowId)` | filters by `trackBy` |
+| `removeRow` | `removeRow(id: RowId \| RowId[])` | filters by `trackBy`. Array overload (D32, shipped 2026-09-27 with #167) removes every listed id in one write; an id not present is skipped, never throws — pairs with `table.tree.descendantsOf(id)` for a cascade delete, see [`features/tree.md`](./features/tree.md#cascade-delete) |
 | `patchRow` | `patchRow(id: RowId, partial: Partial<TRow>)` | shallow spread over the matched row |
 
 **Why exactly these three** (D19): the bar for shipping an updater is *error-proneness*, not
@@ -193,7 +194,7 @@ actually lives — resolved there as D24/D25.
 |---|---|---|
 | `moveRow(id, to)` | no v1 caller — sorting owns order, `withDragDrop()` is unshipped | no |
 | `batch(...updaters)` | no v1 flow batches two row writes | yes — D32 |
-| bulk `removeRow(id[])` / `patchRow(id[], partial)` | unblocked by `withSelection()` (shipped), not yet built | yes — D32 |
+| bulk `patchRow(id[], partial)` | unblocked by `withSelection()` (shipped), not yet built | yes — D32 |
 
 **Bulk is widened arity plus `batch()`; "bulk" never enters the API** (D32). It is a product
 word for the UI affordance, not an API word. Plural verbs (`removeRows`) were rejected — the
@@ -203,8 +204,14 @@ shape falls out of `RowUpdater` already being whole-array.
 answering the bulk-add question: a consumer opens N new rows in one call
 (`createRow([{ id, row }, …], { at })`, `mutations/row-edit-mutations.ts`) instead of looping N
 single-row `createRow` calls, and it resolves in one `data` write / one `{ snapshots, open }`
-transition, not N. `removeRow`/`patchRow` stay unshipped — they're the bulk-*edit*/bulk-*delete*
-half, unblocked by `withSelection()` (shipped) but not yet built, as tabled above.
+transition, not N. `patchRow`'s array form stays unshipped — the bulk-*edit* half, unblocked by
+`withSelection()` (shipped) but not yet built, as tabled above.
+
+**`removeRow`'s widened arity shipped 2026-09-27 with #167** — the array overload removes every
+listed id in one write, unknown ids skipped. Its first caller is `withTree()`'s cascade delete
+(`removeRow([id, ...table.tree.descendantsOf(id)])`), not `withSelection()`'s bulk-delete
+affordance — that caller still needs `patchRow(id[], partial)` alongside it before "delete
+selected" is fully unblocked, as tabled above.
 
 `batch()` earns its place beyond tidiness: one `data` emission means one pipeline run, one
 `indexById` rebuild, and one undo step, instead of N of each.
