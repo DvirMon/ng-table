@@ -158,8 +158,18 @@ function buildTreeSpec<TRow>(
     store.toggle(id, options);
   }
 
+  // Named ids leave the closed set even when already open, so the reveal shows them open again.
+  function reopenClosedRevealed(ids: readonly RowId[]): void {
+    const reopening = new Set(ids);
+    closedWhileRevealed.update((closed) => {
+      const hasNamedClosedId = [...closed].some((id) => reopening.has(id));
+      return hasNamedClosedId ? new Set([...closed].filter((id) => !reopening.has(id))) : closed;
+    });
+  }
+
   function expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void {
     const target = ids ?? discoverExpandableIds(input.rows(), input.trackBy, config);
+    reopenClosedRevealed(target);
     store.setExpanded([...new Set([...store.expanded(), ...target])], options);
   }
 
@@ -176,6 +186,7 @@ function buildTreeSpec<TRow>(
   }
 
   function set(ids: readonly RowId[], options?: ExpansionWriteOptions): void {
+    reopenClosedRevealed(ids);
     store.setExpanded(ids, options);
   }
 
