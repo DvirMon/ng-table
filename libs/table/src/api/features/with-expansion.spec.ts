@@ -347,12 +347,12 @@ describe('withExpansion', () => {
   });
 
   describe('composed with withTree()', () => {
-    // Only this group needs a row shape with children — the panel itself never reads row
+    // Only this group needs a row shape with a parent link — the panel itself never reads row
     // shape, so every other case above stays on the flat `Row` fixture.
     interface TreeRow {
       id: string;
       name: string;
-      children?: TreeRow[];
+      parentId?: string | null;
     }
 
     function makeTreeColumns(): ColumnSet<TreeRow, readonly ColumnDecl<TreeRow, string, unknown>[]> {
@@ -361,12 +361,11 @@ describe('withExpansion', () => {
 
     function makeTreeRows(): TreeRow[] {
       return [
-        { id: 'r1', name: 'Parent', children: [{ id: 'c1', name: 'Child 1' }] },
+        { id: 'r1', name: 'Parent' },
+        { id: 'c1', name: 'Child 1', parentId: 'r1' },
         { id: 'r2', name: 'Leaf' },
       ];
     }
-
-    const childrenAccessor = (row: TreeRow): TreeRow[] | undefined => row.children;
 
     it('opening a panel never reveals children — only tree.toggle() does — in either argument order (the ADR-0012 correction: the panel contributes nothing to the union, so it cannot collide)', () => {
       const orders = ['expansion-first', 'tree-first'] as const;
@@ -378,12 +377,12 @@ describe('withExpansion', () => {
                 signal<TreeRow[]>(makeTreeRows()),
                 { trackBy: 'id', columns: makeTreeColumns() },
                 withExpansion(),
-                withTree({ childrenAccessor })
+                withTree({ parentId: (row) => row.parentId })
               )
             : createTable(
                 signal<TreeRow[]>(makeTreeRows()),
                 { trackBy: 'id', columns: makeTreeColumns() },
-                withTree({ childrenAccessor }),
+                withTree({ parentId: (row) => row.parentId }),
                 withExpansion()
               )
         );

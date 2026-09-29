@@ -1,6 +1,6 @@
 import { computed, type Signal } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { mapNodes, type RenderNode, type RenderNodeTransform } from '../../engine/render-stages';
+import type { RenderNode, RenderNodeTransform } from '../../engine/render-stages';
 import { resolveTreeLinks, type BrokenLinkKind, type TreeLinks } from '../../engine/tree-links';
 import type { Feature, ParentLink, RowOf, TableFeatureSpec } from '../../engine/types';
 import { stage } from '../../schema/stage-rules';
@@ -16,18 +16,16 @@ import {
 export type { ExpansionChange, ExpansionWriteOptions } from './expansion/state';
 
 export interface WithTreeConfig<TRow> {
-  /** Reads a row's nested children. Omitted: collapse-only — no row tree, and the
-   *  `'tree'` render stage is not claimed. There is no `row.children` fallback. */
-  childrenAccessor?: (row: TRow) => TRow[] | undefined;
   /** Renders the toggle independently of whether children are loaded — lazy children.
-   *  Default: the accessor returned a non-empty array. */
+   *  Default: some other row's `parentId` resolves to this row. */
   isExpandable?: (row: TRow) => boolean;
   /** Seeds the open set at construction. Emits nothing on `changed`. */
   initial?: readonly RowId[];
   /**
    * Reads a flat row's declared parent id. `null` and `undefined` both mean root. Nests flat
-   * rows by parent id instead of `childrenAccessor`; claims the `'tree'` render stage and the
-   * parent link. A throw or an `undefined` return degrade that row to a root.
+   * rows by parent id; claims the `'tree'` render stage and the parent link. Omitted: collapse-
+   * only — no row tree, and the `'tree'` render stage is not claimed. A throw or an `undefined`
+   * return degrade that row to a root.
    *
    * @remarks
    * A self-parent, an absent parent, or a cycle also degrades that row to a root, reported once
@@ -78,8 +76,8 @@ function reportCallbackError(message: string, error: unknown): void {
   console.error(message, error);
 }
 
-// One evaluation-scoped guard, reused for both `childrenAccessor` and `isExpandable`: same
-// try/catch-and-dedupe shape, distinguished only by message and fallback value.
+// One evaluation-scoped try/catch-and-dedupe guard, generic over the callback's message and
+// fallback value.
 function guardCallback<TRow, R>(
   fn: (row: TRow) => R,
   reported: ReportFlag,
@@ -99,12 +97,7 @@ function guardCallback<TRow, R>(
   };
 }
 
-interface TreeCallbacks<TRow> {
-  readChildren: (row: TRow) => TRow[] | undefined;
-  canExpand: (row: TRow) => boolean;
-}
-
-// One guard per evaluation, shared by both `withTree()` nesting strategies: a throwing
+// One guard per evaluation, shared across `withTree()`'s callbacks: a throwing
 // `isExpandable` degrades to `false` and reports once, never per row. See ADR-0014.
 function guardIsExpandable<TRow>(
   config: WithTreeConfig<TRow>
@@ -120,100 +113,6 @@ function guardIsExpandable<TRow>(
       'evaluation.',
     false
   );
-}
-
-// One call per evaluation — per `renderRows()` run, per `expand()` walk, per `state()`
-// read. Each callback gets its own dedupe flag, so a throwing accessor never mutes the
-// `isExpandable` report. Never hoist the flags to module scope: that reports once per
-// process instead of once per evaluation. See ADR-0014.
-function resolveCallbacks<TRow>(config: WithTreeConfig<TRow>): TreeCallbacks<TRow> {
-  const childrenReported: ReportFlag = { done: false };
-
-  const readChildren = config.childrenAccessor
-    ? guardCallback<TRow, TRow[] | undefined>(
-        config.childrenAccessor,
-        childrenReported,
-        '[withTree] childrenAccessor threw. The affected row(s) render without children for ' +
-          'this evaluation.',
-        undefined
-      )
-    : (): TRow[] | undefined => undefined;
-
-  const canExpand =
-    guardIsExpandable(config) ?? ((row: TRow): boolean => hasNonEmptyChildren(readChildren(row)));
-
-  return { readChildren, canExpand };
-}
-
-function hasNonEmptyChildren<TRow>(children: TRow[] | undefined): children is TRow[] {
-  return !!children && children.length > 0;
-}
-
-// Wraps a raw `TRow` child, recursively, as a nested `RenderNode` — the shape `mapNodes`
-// expects, not a sibling to be flattened later.
-function toChildNode<TRow>(
-  row: TRow,
-  trackBy: TrackByFn<TRow>,
-  readChildren: (row: TRow) => TRow[] | undefined,
-  canExpand: (row: TRow) => boolean
-): RenderNode<TRow> {
-  const children = readChildren(row);
-  return {
-    id: trackBy(row),
-    kind: 'row',
-    data: row,
-    hasChildren: canExpand(row),
-    children: hasNonEmptyChildren(children)
-      ? children.map((child) => toChildNode(child, trackBy, readChildren, canExpand))
-      : [],
-  };
-}
-
-// The `'tree'` render stage. Passes a node a preceding stage already synthesized (a
-// `'group'` header, `data === null`) through untouched; for a data-backed node stamps
-// `hasChildren` and nests its children beneath it. Visibility is not this stage's concern —
-// `flattenVisible` hides descendants of an id missing from the unioned `expandedRows` set.
-function buildTreeStage<TRow>(
-  trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
-): RenderNodeTransform<TRow> {
-  return (nodes) => {
-    const { readChildren, canExpand } = resolveCallbacks(config);
-    return mapNodes(nodes, (node) => {
-      if (node.data === null) {
-        return node;
-      }
-      const children = readChildren(node.data);
-      return {
-        ...node,
-        hasChildren: canExpand(node.data),
-        children: hasNonEmptyChildren(children)
-          ? children.map((child) => toChildNode(child, trackBy, readChildren, canExpand))
-          : node.children,
-      };
-    });
-  };
-}
-
-// Collects the id of every expandable row, at any depth. Only recurses into rows whose
-// children are already loaded: a lazy row still expands, but its own descendants cannot be
-// discovered until fetched.
-function collectExpandableRowIds<TRow>(
-  rows: readonly TRow[],
-  trackBy: TrackByFn<TRow>,
-  readChildren: (row: TRow) => TRow[] | undefined,
-  canExpand: (row: TRow) => boolean
-): RowId[] {
-  return rows.flatMap((row) => {
-    if (!canExpand(row)) {
-      return [];
-    }
-    const children = readChildren(row);
-    const nested = hasNonEmptyChildren(children)
-      ? collectExpandableRowIds(children, trackBy, readChildren, canExpand)
-      : [];
-    return [trackBy(row), ...nested];
-  });
 }
 
 // The parent link `withTree({ parentId })` contributes to `ctx.parentOf` for every stage
@@ -406,24 +305,22 @@ function discoverExpandableIdsFlat<TRow>(
   return rows.filter((row) => canExpand(row)).map((row) => trackBy(row));
 }
 
-// One discovery walk, with its own evaluation-scoped report flags. Dispatches to the flat
-// (`parentId`) walk when configured — that walk never reports, unlike this one.
+// Discovers expandable ids when `parentId` is configured; a collapse-only instance (no
+// `parentId`) has no tree structure to discover, so it always finds nothing.
 function discoverExpandableIds<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
   config: WithTreeConfig<TRow>
 ): RowId[] {
-  if (config.parentId) {
-    return discoverExpandableIdsFlat(rows, trackBy, config);
+  if (!config.parentId) {
+    return [];
   }
-  const { readChildren, canExpand } = resolveCallbacks(config);
-  return collectExpandableRowIds(rows, trackBy, readChildren, canExpand);
+  return discoverExpandableIdsFlat(rows, trackBy, config);
 }
 
 // Resolves every row's parent link over all of `value()`, not the pipeline's `rows()` view — a
 // row a filter dropped still counts for `parentOf()` / `descendantsOf()` (#167). `null` when no
-// `parentId` is configured: there is no fallback to `childrenAccessor` or a conventional field
-// (the old `row.children` fallback was removed on purpose, D2/E6).
+// `parentId` is configured — there is no fallback to a conventional field.
 function resolveDataTreeLinks<TRow>(
   input: Pick<TableStore<TRow>, 'value' | 'trackBy'>,
   config: WithTreeConfig<TRow>
@@ -543,23 +440,19 @@ function buildTreeSpec<TRow>(
     descendantsOf,
   });
 
-  // Claimed only when an accessor or `parentId` was supplied — a collapse-only instance leaves
-  // the single-claim stage free for a future claimant.
+  // Claimed only when `parentId` was supplied — a collapse-only instance leaves the
+  // single-claim stage free for a future claimant.
   const renderStages = config.parentId
     ? stageSchema<TRow>('render', (s) => {
         stage(s.tree, { run: buildFlatTreeStage(input.trackBy, config) });
       })
-    : config.childrenAccessor
-      ? stageSchema<TRow>('render', (s) => {
-          stage(s.tree, { run: buildTreeStage(input.trackBy, config) });
-        })
-      : undefined;
+    : undefined;
 
   return {
     members: { tree },
     renderStages,
-    // Contributed unconditionally, accessor or not: a collapse-only instance is exactly what
-    // hides a group header's members, and the walk needs a defined set to do it.
+    // Contributed unconditionally: a collapse-only instance is exactly what hides a group
+    // header's members, and the walk needs a defined set to do it.
     expandedRows: computed(() => store.expanded()),
     // Single-claim (ADR-0028) — only when `parentId` is set; a second contributor throws.
     parentLink: config.parentId ? toSilentParentLink(config.parentId) : undefined,
@@ -574,8 +467,8 @@ function buildTreeSpec<TRow>(
  *
  * @remarks
  * Real-row parents only — no path or levels API. Claims the `'tree'` render stage only when
- * `childrenAccessor` or `parentId` is supplied; omitted gives a collapse-only instance that
- * still hides a collapsed id's descendants without claiming the stage.
+ * `parentId` is supplied; omitted gives a collapse-only instance that still hides a collapsed
+ * id's descendants without claiming the stage.
  */
 export function withTree<In extends TreeInput<In>, D extends DerivedDict>(
   derive: Feature<NoInfer<In> & TreeMembers, D>
