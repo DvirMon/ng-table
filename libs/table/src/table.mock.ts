@@ -215,3 +215,25 @@ export function createMockTableStoreWithEditing<TRow>(
 export function noData<TRow>(): () => readonly TRow[] | undefined {
   return () => undefined;
 }
+
+export interface FlatRow {
+  id: string;
+  name: string;
+  parentId?: string | null;
+}
+
+// Flat parentId-linked mirror of with-tree.spec.ts's own makeRows() nested fixture: the same
+// r1 -> c1 -> g1 / c2, r2 tree, expressed as five flat rows instead of nested `children`
+// arrays. Input order [g1, r1, c1, r2, c2] puts g1 (a forward reference) ahead of its parent
+// c1, and mixes an explicit `parentId: null` root (r1) with an omitted-property root (r2), so
+// both root spellings are exercised. `name` values are chosen so a name-descending sort swaps
+// both the root order and r1's own children order (with-tree.spec.ts seam C, #167).
+export function makeFlatRows(): FlatRow[] {
+  return [
+    { id: 'g1', name: 'G Grandchild', parentId: 'c1' },
+    { id: 'r1', name: 'A Parent', parentId: null },
+    { id: 'c1', name: 'C Child One', parentId: 'r1' },
+    { id: 'r2', name: 'Z Leaf' },
+    { id: 'c2', name: 'D Child Two', parentId: 'r1' },
+  ];
+}
