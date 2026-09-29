@@ -93,14 +93,15 @@ export function resolveTreeLinks<TRow>(
       currentId = effectiveParent.get(currentId) ?? null;
     }
 
-    if (currentId === null || resolved.has(currentId)) {
+    const hasReachedResolvedOrRoot = currentId === null || resolved.has(currentId);
+    if (hasReachedResolvedOrRoot) {
       resolveSafePath(path);
       continue;
     }
 
     // `currentId` repeats a node already in `path` — everything from that position on is the
     // cycle; anything before it is a tail hanging off the cycle and keeps its own link.
-    const cycleStart = positionInPath.get(currentId)!;
+    const cycleStart = positionInPath.get(currentId!)!;
     resolveSafePath(path.slice(0, cycleStart));
 
     const cycleMembers = path.slice(cycleStart);
