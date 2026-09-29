@@ -72,6 +72,10 @@ column.
 | TR23 | `data-context-row` is bound by a new `ngpTableTreeRow` feature directive, not core `ngpTableRow` (optional field → feature directive); wider tree UI is a separate issue | 09-27 | decided (#163) | E36 · TFD D21 |
 | TR24 | Context-row ids are an accumulating engine slot contributed by `withFiltering()` (the only feature that knows what matched); core stamps `RenderRow.isContextRow` and `withTree()` reads it for reveal — no feature reads another's state | 09-27 | decided (#163) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | E37 · TFD arch A2 |
 | TR25 | A second `parentLink` claim throws with `ngDevMode` off too, same as a member clash — an unchecked duplicate silently nests every row by whichever feature folded last, with no visible failure | 09-27 | decided (#166) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | E38 · #166 step 2 |
+| TR26 | Feature factories receive the stage context as a required second argument `(input, ctx)`; `ctx.parentOf` is a lazy getter over the `parentLink` slot, read at call time, never in the factory body — how `withGrouping()` reaches the slot | 09-29 | decided (#170) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD D22 |
+| TR27 | `ctx` is required on the `Feature` call signature, so a composer that forgets to forward it fails to compile; one-argument factories still compile | 09-29 | decided (#170) | TFD D23 |
+| TR28 | Grouping's `ClusterOpts` carries the link as one field, `treeLinks?: { parentOf, trackBy }`, so a half-set pair cannot be written; absent means flat grouping | 09-29 | decided (#170) | TFD D24 |
+| TR29 | Rows inside a group bucket keep input order; the `'tree'` render stage owns hierarchy order | 09-29 | decided (#170) | TFD D25 |
 
 ## Still open
 

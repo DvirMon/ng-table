@@ -3,7 +3,7 @@
 **Issue:** #170
 **Branch:** feat/170-grouping-tree-roots
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-170-grouping-tree-roots
-**Status:** 0 / 6 complete
+**Status:** 1 / 6 complete
 
 ## Graph
 
@@ -19,9 +19,9 @@ Parallel-safe: [1, 2, 6] · Dependency: 2 → 3 → 4 → 5; 1 → 4
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Feature factories receive the stage context | ⬚ pending |
-| 2 | Cluster by root value in the group stages | ⬚ pending |
+| 1 | Feature factories receive the stage context | ▶ in progress |
+| 2 | Cluster by root value in the group stages | ▶ in progress |
 | 3 | Group queries follow the root | ⬚ pending |
 | 4 | Wire the parent link into withGrouping() | ⬚ pending |
 | 5 | Show roots-only grouping in the collapsible story | ⬚ pending |
-| 6 | Record the roots-only grouping contract | ⬚ pending |
+| 6 | Record the roots-only grouping contract | ✅ done |

@@ -96,8 +96,9 @@ array, read once, emits nothing on `changed`.
   or declaration order.
 - **Composes with grouping.** Group headers (`data === null`) pass through the `'tree'` stage
   unchanged; nesting happens only inside each header's own member list — a child never crosses
-  into a sibling group. Nesting a child whose parent sits in a different group is out of scope
-  (#170 — roots-only grouping across groups).
+  into a sibling group. Grouping a tree groups **roots only** (TR16): each level's value is read
+  from the row's root, so a subtree never splits across groups. Group counts, `rowsOf` and
+  `aggregateFn` include descendants; rows keep input order inside a bucket (TR17, TR18, TR29).
 - **Broken-link degrade (D4/D12, ADR-0014).** A self-parent, a parent id absent from `data()`, or
   a cycle (the first row of the cycle in input order) degrades that row to a root with its own
   subtree intact — never dropped, never orphaned silently. A throwing `parentId` degrades the same
@@ -121,8 +122,9 @@ array, read once, emits nothing on `changed`.
 - **Silent parent link for other stages (ADR-0028).** `withTree({ parentId })` also contributes a
   total, silent `parentLink` to every pipeline/render stage's context (`ctx.parentOf`) — a throw
   or `undefined` return maps to `null`, same as the tree stage, but this contribution never
-  reports; only the `'tree'` stage does. This is the seam `withFiltering()` (#168) and
-  `withGrouping()` (#170) read to see the hierarchy without each re-deriving it.
+  reports; only the `'tree'` stage does. This is the seam `withFiltering()` and
+  `withGrouping()` read to see the hierarchy without each re-deriving it. Feature factories
+  receive the same context as their second argument, `(input, ctx)` (TR26).
 
 ## Methods
 

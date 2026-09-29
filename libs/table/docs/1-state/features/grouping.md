@@ -220,6 +220,19 @@ Without `withTree()` composed, everything renders flat and expanded — valid st
 `rowsOf(group)` stays correct under collapse: it re-derives the cluster tree from `rows()`
 (pipeline output) rather than scanning `renderRows()` (G20).
 
+## Grouping a tree — roots only
+
+With `withTree({ parentId })` composed, grouping groups **roots only** (G78, TR16):
+
+- Every level's group value is read from the row's root. A child whose own value differs
+  still renders under its root's header, nested under its parent. Flat per-row grouping means
+  omitting `parentId`.
+- A group's count, `rowsOf(group)`, `groupIds()` admission (`when`) and `aggregateFn`'s rows
+  include every node in the group, descendants too (TR17, TR18).
+- Rows inside a bucket keep input order; the `'tree'` render stage owns hierarchy order (TR29).
+- Broken links degrade to root, as in the tree stage; grouping never reports them — `withTree()`
+  does.
+
 ## Aggregation
 
 `aggregate(path.x, aggregateFn)` declares one summary value per group per declared column,

@@ -67,7 +67,8 @@ D-numbers are `1-decisions.md`; E-numbers the capability log.
   `rowsBeneathGroup(input.rows(), …)`; group count in stories comes from
   `rowsOf(row).length` (`stories/grouping/grouping-story.pipes.ts:41-48`).
 - Changes: with the parent link present, cluster by the **root's** value;
-  descendants join their root's cluster, contiguous after it. Bucket items
+  descendants join their root's cluster, in input order (D25) — the
+  `'tree'` render stage owns hierarchy order. Bucket items
   (hence `aggregateFn` rows and `rowsOf`) then include descendants by
   construction.
 
@@ -170,9 +171,9 @@ includeDescendants?: boolean;
 
 ## Open questions
 
-- **OQ-A1** — A1's `ctx` shape vs. an alternative (engine-resolved
-  `parentOf` injected into the feature factory's `input`). Recommendation:
-  `ctx`, because it keeps stages the only readers and is additive.
+- ~~**OQ-A1**~~ — resolved 2026-09-29 as B2 (D22): the engine passes
+  `ctx` to every feature factory as a required second argument
+  `(input, ctx)`; nothing is injected into `input`.
 - **OQ-A4** — tri-state `includeHidden` surface (above).
 - Product-level opens (OQ-1 selection cascade, OQ-3 pagination, OQ-4 lazy
   indicator, OQ-5 server filtering) stay in `0-product/tree.md`.
