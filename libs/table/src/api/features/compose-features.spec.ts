@@ -371,6 +371,25 @@ function fExpandedRows(ids: readonly RowId[], displayName: string): Feature<Stor
   );
 }
 
+function fContextRows(
+  source: Signal<ReadonlySet<RowId>>,
+  displayName: string
+): Feature<Store, NoMembers> {
+  return named(
+    displayName,
+    createTableFeature(
+      (): TableFeatureSpec<MockRow, NoMembers> => ({ contextRows: source })
+    )
+  );
+}
+
+function contextRowIds(store: Store): readonly RowId[] {
+  return store
+    .renderRows()
+    .filter((row) => row.isContextRow)
+    .map((row) => row.id);
+}
+
 // --- hook fixtures -----------------------------------------------------------------------
 
 function fSetup(label: string, order: string[]): Feature<Store, NoMembers> {
@@ -611,6 +630,43 @@ describe('composeFeatures', () => {
       );
 
       expect(store.renderRows().map((row) => row.id)).toEqual([1, 2, 3]);
+    });
+  });
+
+  describe('contextRows (#168)', () => {
+    it('case 25 — an inner contextRows contribution reaches the outer engine\'s stamping', () => {
+      const store = makeStore(
+        signal([...mockRows]),
+        composeFeatures(fContextRows(signal<ReadonlySet<RowId>>(new Set([2])), 'fContext'))
+      );
+
+      expect(contextRowIds(store)).toEqual([2]);
+    });
+
+    it('case 26 — two inner contextRows contributions union into one composite set', () => {
+      const store = makeStore(
+        signal([...mockRows]),
+        composeFeatures(
+          fContextRows(signal<ReadonlySet<RowId>>(new Set([1])), 'fCtxA'),
+          fContextRows(signal<ReadonlySet<RowId>>(new Set([3])), 'fCtxB')
+        )
+      );
+
+      expect(contextRowIds(store)).toEqual([1, 3]);
+    });
+
+    it('case 27 — the composite contextRows recomputes when an inner source changes', () => {
+      const ctx = signal<ReadonlySet<RowId>>(new Set([2]));
+      const store = makeStore(
+        signal([...mockRows]),
+        composeFeatures(fContextRows(ctx, 'fContext'))
+      );
+
+      expect(contextRowIds(store)).toEqual([2]);
+
+      ctx.set(new Set([3]));
+
+      expect(contextRowIds(store)).toEqual([3]);
     });
   });
 

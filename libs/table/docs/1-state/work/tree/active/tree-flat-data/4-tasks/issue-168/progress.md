@@ -3,7 +3,7 @@
 **Issue:** #168
 **Branch:** feat/168-filter-context-rows
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-168-filter-context-rows
-**Status:** 3 / 7 complete
+**Status:** 4 / 7 complete
 
 ## Graph
 
@@ -22,7 +22,7 @@ Parallel-safe: [1, 3] first · [2, 4, 5] after 1 (4 also after 3) · [6, 7] afte
 | Step | Title | Status |
 |---|---|---|
 | 1 | Context-rows engine slot | ✅ done |
-| 2 | Compose context rows | ▶ in progress |
+| 2 | Compose context rows | ✅ done |
 | 3 | Tree retention helper | ✅ done |
 | 4 | Filter keeps ancestors | ▶ in progress |
 | 5 | Tree-row directive | ✅ done |

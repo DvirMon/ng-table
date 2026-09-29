@@ -379,6 +379,52 @@ describe('createTable', () => {
     expect(store.rows().map((row) => row.id)).toEqual(['r2']);
   });
 
+  it('rejects a derive block that declares contextRows, naming it', () => {
+    const withContextBlock = createTableFeature(
+      () => ({ members: { count: 3 } }),
+      () => ({ contextRows: signal<ReadonlySet<RowId>>(new Set()) })
+    );
+
+    expect(() =>
+      TestBed.runInInjectionContext(() =>
+        createTable(
+          signal<Row[]>([]),
+          { trackBy: 'id', columns: makeColumns() },
+          withContextBlock
+        )
+      )
+    ).toThrow(/may only contribute members, but it declared contextRows/);
+  });
+
+  it('keeps the feature’s own contextRows when it has a derive block', () => {
+    const data: Row[] = [
+      { id: 'r1', name: 'Ann', status: 'active' },
+      { id: 'r2', name: 'Bo', status: 'active' },
+    ];
+
+    const withContextAndDerive = createTableFeature(
+      (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
+        contextRows: signal<ReadonlySet<RowId>>(new Set<RowId>(['r2'])),
+      }),
+      () => ({ members: { extra: signal(1).asReadonly() } })
+    );
+
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(
+        signal<Row[]>(data),
+        { trackBy: 'id', columns: makeColumns() },
+        withContextAndDerive
+      )
+    );
+
+    expect(
+      store
+        .renderRows()
+        .filter((row) => row.isContextRow)
+        .map((row) => row.id)
+    ).toEqual(['r2']);
+  });
+
   it('rejects a member key declared by both a feature and its derive block, naming the key', () => {
     const withCollidingBlock = createTableFeature(
       () => ({ members: { count: 3 } }),

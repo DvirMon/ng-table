@@ -74,6 +74,7 @@ function foldInnerFeatures(
   const renderStages: StageRule<RenderNodeTransform<unknown>>[] = [];
   const columnRules: ColumnRuleEntry<unknown>[] = [];
   const expandedRowsSignals: Signal<ReadonlySet<RowId>>[] = [];
+  const contextRowsSignals: Signal<ReadonlySet<RowId>>[] = [];
   let parentLink: ParentLink<unknown> | undefined;
   const setups: (() => void)[] = [];
   const onDestroys: (() => void)[] = [];
@@ -102,6 +103,9 @@ function foldInnerFeatures(
     if (spec.expandedRows) {
       expandedRowsSignals.push(spec.expandedRows);
     }
+    if (spec.contextRows) {
+      contextRowsSignals.push(spec.contextRows);
+    }
     // Single-claim (ADR-0028). Claimed here so a second inner contributor throws naming both
     // inner positions — the outer fold only ever sees the merged result.
     if (spec.parentLink) {
@@ -126,6 +130,7 @@ function foldInnerFeatures(
   const hasRenderStages = renderStages.length > 0;
   const hasColumnRules = columnRules.length > 0;
   const hasExpandedRows = expandedRowsSignals.length > 0;
+  const hasContextRows = contextRowsSignals.length > 0;
   const hasParentLink = parentLink !== undefined;
   const hasSetup = setups.length > 0;
   const hasOnDestroy = onDestroys.length > 0;
@@ -143,6 +148,20 @@ function foldInnerFeatures(
           expandedRows: computed(() => {
             const union = new Set<RowId>();
             for (const source of expandedRowsSignals) {
+              for (const id of source()) {
+                union.add(id);
+              }
+            }
+            return union;
+          }),
+        }
+      : {}),
+    // Same one-slot-per-feature constraint as `expandedRows`: N inner sets union into one signal.
+    ...(hasContextRows
+      ? {
+          contextRows: computed(() => {
+            const union = new Set<RowId>();
+            for (const source of contextRowsSignals) {
               for (const id of source()) {
                 union.add(id);
               }
