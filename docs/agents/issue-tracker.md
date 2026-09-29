@@ -25,8 +25,22 @@ commits. Issues close when that PR merges.
 - **Commits** carry a `Refs: #N` trailer (`Refs: none` when there is no issue; an
   optional `Epic: #M`). Never a closing keyword (`close[sd]`, `fix(e[sd])`,
   `resolve[sd]`) and never the retired `Ships:` trailer.
-- **Headers** are emoji conventional: `<emoji> <type>(<scope>): <subject>` — types and
-  emoji in the `atomic-commit` skill.
+- **Headers** are emoji conventional: `<emoji> [#<issue> <stage>] <type>(<scope>): <subject>`
+  — types and emoji in the `atomic-commit` skill. Refactors use `ref` (`refactor` is still
+  accepted while the skills catch up).
+- **Story tag** `[#<issue> <stage>]` says where the commit sits in its issue's story, so one
+  PR's commits read as a sequence in `git log --oneline` even when interleaved with other
+  work. Stage: `s<N>` for step N of the plan (`4-tasks/issue-<N>/step-<N>-*.plan.md`),
+  `plan` for the task and test plans, `review` for changes answering review. The tag's issue
+  must also be in `Refs:`. Optional — omit it for `Refs: none` work and for commits that fit
+  no stage.
+
+  ```
+  📚 [#166 plan] docs(table/tree): plan the stage context and parent-link slot
+  ✨ [#166 s1] ref(table/tree): stage context through both runners
+  🎸 [#166 s2] feat(table/tree): add a parentLink slot, claimed once
+  ✨ [#166 review] ref(table/tree): name ParentLink, simplify its slot claim
+  ```
 - **Scope** is `<project>[/<domain>]` — project e.g. `table`, `root`, `deps`. The domain is the
   one the work **belongs to**, not every folder the diff touches: the folder under
   `libs/table/docs/1-state/work/<domain>/` holding the issue's workspace (e.g.
