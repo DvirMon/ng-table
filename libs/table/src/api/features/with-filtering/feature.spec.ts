@@ -1,11 +1,12 @@
 import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf } from 'vitest';
-import { noData } from '../../../table.mock';
+import { makeFlatRows, noData, type FlatRow } from '../../../table.mock';
 import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { anyOf, contains, equals, filter } from './rules';
 import { withComputed } from '../with-computed';
+import { withTree } from '../with-tree';
 import { withFiltering } from './feature';
 import type { ColumnDecl, ColumnSet, ColumnValues, TableStore } from '../../types';
 
@@ -569,6 +570,84 @@ describe('withFiltering', () => {
 
       expectTypeOf(store.visibleCount).toEqualTypeOf<Signal<number>>();
       expectTypeOf<keyof typeof store>().toEqualTypeOf<keyof TableStore<Row> | 'visibleCount'>();
+    });
+  });
+
+  describe('tree retention (#168)', () => {
+    function makeFlatColumns() {
+      return createColumns(noData<FlatRow>(), (col) => [col('name')]);
+    }
+
+    function setup(options: { includeDescendants?: boolean; manual?: boolean } = {}) {
+      return inContext(() =>
+        createTable(
+          signal(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId }),
+          withFiltering({
+            schema: (path) => ({ name: contains(path.name) }),
+            includeDescendants: options.includeDescendants,
+            manual: options.manual,
+          })
+        )
+      );
+    }
+
+    it("keeps a matched row's ancestors, in input order", () => {
+      const store = setup();
+
+      store.filters.name().value.set('Grand');
+
+      expect(store.rows().map((row) => row.id)).toEqual(['g1', 'r1', 'c1']);
+    });
+
+    it('flags retained ancestors as context rows and leaves the match unflagged', () => {
+      const store = setup();
+
+      store.tree.expand(['r1', 'c1']);
+      store.filters.name().value.set('Grand');
+
+      const flagged = store
+        .renderRows()
+        .filter((row) => row.isContextRow)
+        .map((row) => row.id);
+      expect(flagged).toEqual(['r1', 'c1']);
+    });
+
+    it("includeDescendants keeps a matched parent's whole branch", () => {
+      const store = setup({ includeDescendants: true });
+
+      store.filters.name().value.set('Parent');
+
+      expect(store.rows().map((row) => row.id)).toEqual(['g1', 'r1', 'c1', 'c2']);
+    });
+
+    it('drops every context flag once the filter is cleared', () => {
+      const store = setup();
+      const flaggedIds = () =>
+        store
+          .renderRows()
+          .filter((row) => row.isContextRow)
+          .map((row) => row.id);
+
+      store.tree.expand(['r1', 'c1']);
+      store.filters.name().value.set('Grand');
+      expect(flaggedIds()).toEqual(['r1', 'c1']);
+
+      store.filters().reset(null);
+
+      expect(flaggedIds()).toEqual([]);
+      expect(store.rows()).toHaveLength(5);
+    });
+
+    it('runs no tree retention and flags nothing under manual filtering', () => {
+      const store = setup({ manual: true });
+
+      store.tree.expand(['r1', 'c1']);
+      store.filters.name().value.set('Grand');
+
+      expect(store.rows()).toHaveLength(5);
+      expect(store.renderRows().some((row) => row.isContextRow)).toBe(false);
     });
   });
 });
