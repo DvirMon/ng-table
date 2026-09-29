@@ -2,6 +2,7 @@ import { computed, type Signal } from '@angular/core';
 import type { ColumnRuleEntry } from '../../engine/columns';
 import type { PipelineStage, RowTransform } from '../../engine/pipeline';
 import type { RenderNodeTransform, RenderStage } from '../../engine/render-stages';
+import { unionIdSets } from '../../engine/rows';
 import { describeInnerFeature, SlotRegistry } from '../../engine/slots';
 import type { ParentLink, TableFeatureSpec } from '../../engine/types';
 import type { StageRule } from '../../schema/stage-rules';
@@ -145,29 +146,13 @@ function foldInnerFeatures(
     // union into one composite signal here — the outer fold only ever sees a single slot to push.
     ...(hasExpandedRows
       ? {
-          expandedRows: computed(() => {
-            const union = new Set<RowId>();
-            for (const source of expandedRowsSignals) {
-              for (const id of source()) {
-                union.add(id);
-              }
-            }
-            return union;
-          }),
+          expandedRows: computed(() => unionIdSets(expandedRowsSignals)),
         }
       : {}),
     // Same one-slot-per-feature constraint as `expandedRows`: N inner sets union into one signal.
     ...(hasContextRows
       ? {
-          contextRows: computed(() => {
-            const union = new Set<RowId>();
-            for (const source of contextRowsSignals) {
-              for (const id of source()) {
-                union.add(id);
-              }
-            }
-            return union;
-          }),
+          contextRows: computed(() => unionIdSets(contextRowsSignals)),
         }
       : {}),
     ...(hasParentLink ? { parentLink } : {}),

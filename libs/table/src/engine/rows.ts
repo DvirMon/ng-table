@@ -64,6 +64,17 @@ export function diffRemovedIds(
   return removed;
 }
 
+/** Unions the id sets every source yields — the merge behind the accumulating id slots. */
+export function unionIdSets(sources: readonly (() => ReadonlySet<RowId>)[]): Set<RowId> {
+  const union = new Set<RowId>();
+  for (const source of sources) {
+    for (const id of source()) {
+      union.add(id);
+    }
+  }
+  return union;
+}
+
 // `ReadonlySet` has no `get`, `ReadonlyMap` always does — narrows both arms of the union,
 // unlike `instanceof Set`, which TS can't use to exclude `ReadonlySet` from the other arm
 // (it isn't a structural subtype of `Set`, only a supertype of it).

@@ -10,7 +10,7 @@ import {
 import { flattenVisible } from './flatten';
 import { runPipeline, type RowTransform } from './pipeline';
 import { runRenderStages, type RenderNodeTransform } from './render-stages';
-import { buildDefaultRenderNodes, normalizeTrackBy } from './rows';
+import { buildDefaultRenderNodes, normalizeTrackBy, unionIdSets } from './rows';
 import type { ResolvedStage } from './stage-order';
 import type { ParentLink, TableCore, TableEngineConfig } from './types';
 import { createWritableView } from './writable-view';
@@ -81,13 +81,7 @@ export function createTableCore<TRow>(
     if (expandedSources.length === 0) {
       return undefined;
     }
-    const union = new Set<RowId>();
-    for (const source of expandedSources) {
-      for (const id of source()) {
-        union.add(id);
-      }
-    }
-    return union;
+    return unionIdSets(expandedSources);
   });
 
   // Unions every contributed `contextRows` set. `undefined` when no feature contributed (the
@@ -96,13 +90,7 @@ export function createTableCore<TRow>(
     if (contextSources.length === 0) {
       return undefined;
     }
-    const union = new Set<RowId>();
-    for (const source of contextSources) {
-      for (const id of source()) {
-        union.add(id);
-      }
-    }
-    return union;
+    return unionIdSets(contextSources);
   });
 
   // Maps a row's trackBy id to its position in `data()` — the source of `sourceIndex`,
