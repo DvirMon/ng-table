@@ -171,9 +171,16 @@ export function createRootLookup<TRow>(
       rowById.set(id, row);
     }
   }
+  // Note: the accessor calls this once per row per level, so each id's root is walked once.
+  const rootById = new Map<RowId, TRow>();
   return (row) => {
+    const id = treeLinks.trackBy(row);
+    const known = rootById.get(id);
+    if (known !== undefined) {
+      return known;
+    }
     let current = row;
-    let parentId = parentById.get(treeLinks.trackBy(current)) ?? null;
+    let parentId = parentById.get(id) ?? null;
     while (parentId !== null) {
       const parent = rowById.get(parentId);
       if (parent === undefined) {
@@ -182,6 +189,7 @@ export function createRootLookup<TRow>(
       current = parent;
       parentId = parentById.get(parentId) ?? null;
     }
+    rootById.set(id, current);
     return current;
   };
 }
