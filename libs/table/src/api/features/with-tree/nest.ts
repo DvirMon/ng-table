@@ -4,7 +4,7 @@ import type { ParentLink } from '../../../engine/types';
 import type { RowId, TrackByFn } from '../../types';
 import type { WithTreeConfig } from './types';
 
-interface ReportFlag {
+export interface ReportFlag {
   done: boolean;
 }
 
@@ -16,7 +16,7 @@ function reportCallbackError(message: string, error: unknown): void {
 
 // One evaluation-scoped try/catch-and-dedupe guard, generic over the callback's message and
 // fallback value.
-function guardCallback<TRow, R>(
+export function guardCallback<TRow, R>(
   fn: (row: TRow) => R,
   reported: ReportFlag,
   message: string,

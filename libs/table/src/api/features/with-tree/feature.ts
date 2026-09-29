@@ -7,6 +7,7 @@ import { createTableFeature } from '../../create-table-feature';
 import type { DerivedDict, RowId, TableStore, TrackByFn } from '../../types';
 import { createExpansionStore, type ExpansionWriteOptions } from '../expansion/state';
 import { buildFlatTreeStage } from './nest';
+import { buildRevealedIds } from './reveal';
 import type { TreeMembers, TreeSlice, WithTreeConfig } from './types';
 
 // F-bounded so a factory body gets `input.rows(): RowOf<In>[]` with no cast. Includes `value` so
@@ -213,7 +214,12 @@ function buildTreeSpec<TRow>(
     renderStages,
     // Contributed unconditionally: a collapse-only instance is exactly what hides a group
     // header's members, and the walk needs a defined set to do it.
-    expandedRows: computed(() => store.expanded()),
+    // Open set unioned with the revealed context rows; never written back to the open set.
+    expandedRows: computed((): ReadonlySet<RowId> => {
+      const open = store.expanded();
+      const revealed = buildRevealedIds(tree.contextRowIds(), input.rows(), input.trackBy, config);
+      return revealed.size === 0 ? open : new Set([...open, ...revealed]);
+    }),
     // Single-claim (ADR-0028) — only when `parentId` is set; a second contributor throws.
     parentLink: config.parentId ? toSilentParentLink(config.parentId) : undefined,
     onDestroy: () => store.destroy(),

@@ -18,6 +18,9 @@ export interface WithTreeConfig<TRow> {
    * parent, or a cycle all degrade that row to a root (reported once per kind per evaluation).
    */
   parentId?: (row: TRow) => RowId | null | undefined;
+  /** Decides whether a context row (one a filter retains) renders expanded. Default: every
+   *  context row. `() => false` turns reveal off. Never writes the open set. */
+  revealContextRow?: (row: TRow) => boolean;
 }
 
 export interface TreeSlice {
