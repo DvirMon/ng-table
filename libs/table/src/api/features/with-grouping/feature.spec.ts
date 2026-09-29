@@ -8,10 +8,12 @@ import {
   mockGroupWhenTrackBy,
   mockRepRows,
   mockRepTrackBy,
+  mockTaskTreeRows,
   noData,
   type GroupingMockRow,
   type GroupWhenMockRow,
   type RepMockRow,
+  type TaskTreeMockRow,
 } from '../../../table.mock';
 import { insertRow, patchRow, removeRow } from '../../../mutations/row-mutations';
 import { setColumns } from '../../../mutations/update-columns';
@@ -2427,6 +2429,101 @@ describe('writes target rows; clustering re-derives', () => {
     const headerIndex = rendered.findIndex((row) => row.id === EU_ELECTRONICS_HEADER_ID);
     expect(rendered[headerIndex + 1]?.data?.id).toBe(4);
     expect(rendered[headerIndex + 2]?.data?.id).toBe(7);
+  });
+});
+
+describe('parent link (#170)', () => {
+  const OPEN_HEADER_ID = 'group:>status:string:open';
+  const DONE_HEADER_ID = 'group:>status:string:done';
+  const BLOCKED_HEADER_ID = 'group:>status:string:blocked';
+
+  const parentId = (row: TaskTreeMockRow): string | null | undefined => row.parentId;
+
+  function makeTaskColumns() {
+    return createColumns(noData<TaskTreeMockRow>(), (col) => [col('id'), col('status')]);
+  }
+
+  function setup(
+    groupingConfig: WithGroupingConfig<TaskTreeMockRow> = { initial: ['status'] },
+    treeInitial: string[] = []
+  ) {
+    return inContext(() =>
+      createTable(
+        signal<TaskTreeMockRow[]>(mockTaskTreeRows),
+        { trackBy: 'id', columns: makeTaskColumns() },
+        withGrouping(groupingConfig),
+        withTree({ parentId, initial: treeInitial })
+      )
+    );
+  }
+
+  function findTaskHeader(
+    rows: readonly RenderRow<TaskTreeMockRow>[],
+    id: string
+  ): RenderRow<TaskTreeMockRow> | undefined {
+    return rows.find((row) => row.kind === 'group' && row.id === id);
+  }
+
+  it('pipeline group stage clusters by the root value: rows() clusters each subtree with its root', () => {
+    const store = setup();
+
+    expect(store.rows().map((row) => row.id)).toEqual(['t1', 't1a', 't1a1', 't2']);
+  });
+
+  it("render group stage: a child whose own status differs renders under its root's header, nested under its parent", () => {
+    const store = setup({ initial: ['status'] }, [OPEN_HEADER_ID, DONE_HEADER_ID, 't1', 't1a']);
+
+    const shape = store.renderRows().map((row) => [row.kind, row.depth, row.id] as const);
+
+    expect(shape).toEqual([
+      ['group', 0, OPEN_HEADER_ID],
+      ['row', 1, 't1'],
+      ['row', 2, 't1a'],
+      ['row', 3, 't1a1'],
+      ['group', 0, DONE_HEADER_ID],
+      ['row', 1, 't2'],
+    ]);
+    expect(findTaskHeader(store.renderRows(), BLOCKED_HEADER_ID)).toBeUndefined();
+    expect(store.rows().find((row) => row.id === 't1a')?.parentId).toBe('t1');
+  });
+
+  it('rowsOf(group) returns the root and every descendant; its length is the group count', () => {
+    const store = setup({ initial: ['status'] }, [OPEN_HEADER_ID, DONE_HEADER_ID]);
+    const rows = store.renderRows();
+
+    const openRows = store.rowsOf(findTaskHeader(rows, OPEN_HEADER_ID)!);
+    expect(openRows.map((row) => row.id)).toEqual(['t1', 't1a', 't1a1']);
+    expect(openRows).toHaveLength(3);
+    expect(store.rowsOf(findTaskHeader(rows, DONE_HEADER_ID)!).map((row) => row.id)).toEqual([
+      't2',
+    ]);
+  });
+
+  it('groupIds() lists only root-value headers — no header for a descendant-only value', () => {
+    const store = setup();
+
+    expect([...store.groupIds()].sort()).toEqual([DONE_HEADER_ID, OPEN_HEADER_ID].sort());
+    expect(store.groupIds()).not.toContain(BLOCKED_HEADER_ID);
+  });
+
+  it('grouping() applies a level whose root-value cluster passes when only because it includes descendants', () => {
+    const store = setup({ initial: ['status'], when: (cluster) => cluster.rows.length >= 3 });
+
+    expect(store.grouping()).toEqual(['status']);
+  });
+
+  it('withTree({ parentId }) composed before withGrouping() clusters the same way — the parent link is read lazily', () => {
+    const store = inContext(() =>
+      createTable(
+        signal<TaskTreeMockRow[]>(mockTaskTreeRows),
+        { trackBy: 'id', columns: makeTaskColumns() },
+        withTree({ parentId }),
+        withGrouping({ initial: ['status'] })
+      )
+    );
+
+    expect(store.rows().map((row) => row.id)).toEqual(['t1', 't1a', 't1a1', 't2']);
+    expect([...store.groupIds()].sort()).toEqual([DONE_HEADER_ID, OPEN_HEADER_ID].sort());
   });
 });
 

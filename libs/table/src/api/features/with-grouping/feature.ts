@@ -15,7 +15,7 @@ import {
   maskGroupingLevels,
   type GroupingRuleEntry,
 } from '../../../engine/grouping/rules';
-import type { ColumnValuesOf, Feature, RowOf, TableFeatureSpec } from '../../../engine/types';
+import type { ColumnValuesOf, Feature, RowOf, StageContext, TableFeatureSpec } from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
 import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from '../../../schema/validate';
 import { runGroupingSchemaFn } from './schema';
@@ -40,7 +40,7 @@ import type {
 // latter circularly self-references under `withGrouping`'s F-bounded `In`, because it derives
 // from `In.columns` through an extra `keyof Record<...>` indirection. `ColumnValuesOf<In>` reads
 // `In`'s own `__columnValues` phantom directly, with no circularity.
-type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows'>;
+type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows' | 'trackBy'>;
 
 export interface WithGroupingConfig<TRow, TValues extends ColumnValueMap = ColumnValueMap> {
   /** Declared grouping levels, outermost first — array order is nesting order. A bare column id
@@ -102,8 +102,9 @@ function normalizeGroupingLevels<TId extends string>(
 // `TValues` (matching `TableStore`'s value-map parameter directly, no `Record<>` wrapping —
 // see `GroupingInput<In>`), with `TId` recovered as `ColumnIdIn<TValues>`.
 function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
-  input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows'>,
-  config: WithGroupingConfig<TRow, TValues>
+  input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows' | 'trackBy'>,
+  config: WithGroupingConfig<TRow, TValues>,
+  ctx: StageContext<TRow>
 ): TableFeatureSpec<TRow, GroupingMembers<TRow>> {
   const { columnIds: initial, labelByColumnId } = normalizeGroupingLevels<ColumnIdIn<TValues>>(
     config.initial ?? []
@@ -161,6 +162,12 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
     aggregateByColumn: aggregateByColumn.size > 0 ? aggregateByColumn : undefined,
     knownIds: knownColumnIds,
     label: 'withGrouping',
+    // A getter, not a copy: a feature folded after this one contributes `ctx.parentOf` later,
+    // so it resolves on every read, never in the factory body.
+    get treeLinks(): ClusterOpts<TRow>['treeLinks'] {
+      const parentOf = ctx.parentOf;
+      return parentOf ? { parentOf, trackBy: input.trackBy } : undefined;
+    },
   };
 
   // Applied: declared, filtered to the prefix that actually admitted at least one cluster.
@@ -262,8 +269,10 @@ export function withGrouping(
   compute?: Feature<any, any>
 ): Feature<any, any> {
   const factory = <In extends GroupingInput<In>>(
-    input: In
-  ): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> => buildGroupingSpec(input, config);
+    input: In,
+    ctx: StageContext<RowOf<In>>
+  ): TableFeatureSpec<RowOf<In>, GroupingMembers<RowOf<In>>> =>
+    buildGroupingSpec(input, config, ctx);
   const feature: Feature<any, any> = compute
     ? createTableFeature(factory, compute)
     : createTableFeature(factory);
