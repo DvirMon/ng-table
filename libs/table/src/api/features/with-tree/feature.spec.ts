@@ -116,6 +116,16 @@ const claimsTreeStage = createTableFeature(() => ({
   }),
 }));
 
+// Deliberately a bare pipeline-stage claimant, not `withFiltering()` — that's another
+// domain (.claude/rules/spec-files-assert-own-domain-only.md).
+const dropsC1 = createTableFeature((_store: Pick<TableStore<FlatRow>, 'rows'>) => ({
+  stages: stageSchema<FlatRow>('pipeline', (s) =>
+    stage(s.filter, {
+      run: (rowsIn) => rowsIn.filter((row) => row.id !== 'c1'),
+    })
+  ),
+}));
+
 describe('withTree', () => {
   it('toggle(id) flips a row from collapsed to expanded and back', () => {
     const store = inContext(() =>
@@ -1631,6 +1641,43 @@ describe('withTree', () => {
 
       expect(store.tree.state()).toBe('some');
     });
+
+    describe('includeHidden (D8)', () => {
+      // Filtered view: r1 (child c2) is expandable, c1 dropped, g1 a root.
+      // data(): r1 and c1 are expandable.
+      function makeDroppedC1Store() {
+        return inContext(() =>
+          createTable(
+            signal<FlatRow[]>(makeFlatRows()),
+            { trackBy: 'id', columns: makeFlatColumns() },
+            dropsC1,
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+      }
+
+      it('the two variants do not share a result — reading includeHidden first does not change state()', () => {
+        const store = makeDroppedC1Store();
+
+        store.tree.toggle('r1');
+
+        expect(store.tree.state({ includeHidden: true })).toBe('some');
+        expect(store.tree.state()).toBe('all');
+      });
+
+      it('state({ includeHidden: true }) recomputes when a hidden row opens; state() is unaffected', () => {
+        const store = makeDroppedC1Store();
+
+        store.tree.toggle('r1');
+        expect(store.tree.state({ includeHidden: true })).toBe('some');
+        expect(store.tree.state()).toBe('all');
+
+        store.tree.toggle('c1');
+
+        expect(store.tree.state({ includeHidden: true })).toBe('all');
+        expect(store.tree.state()).toBe('all');
+      });
+    });
   });
 
   describe('the ADR-0014 degrade', () => {
@@ -1757,16 +1804,6 @@ describe('withTree', () => {
     });
 
     it('parentOf and descendantsOf read data(), so a row the pipeline dropped still counts', () => {
-      // Deliberately a bare pipeline-stage claimant, not `withFiltering()` — that's another
-      // domain (.claude/rules/spec-files-assert-own-domain-only.md).
-      const dropsC1 = createTableFeature((_store: Pick<TableStore<FlatRow>, 'rows'>) => ({
-        stages: stageSchema<FlatRow>('pipeline', (s) =>
-          stage(s.filter, {
-            run: (rowsIn) => rowsIn.filter((row) => row.id !== 'c1'),
-          })
-        ),
-      }));
-
       const store = inContext(() =>
         createTable(
           signal<FlatRow[]>(makeFlatRows()),
@@ -2161,6 +2198,14 @@ describe('withTree', () => {
       expectTypeOf(store.tree).toMatchTypeOf<TreeSlice>();
       expectTypeOf(store.tree()).toEqualTypeOf<ReadonlySet<RowId>>();
       expectTypeOf(store.tree.state()).toEqualTypeOf<'all' | 'some' | 'none'>();
+      expectTypeOf(store.tree.state).parameter(0).toEqualTypeOf<
+        { includeHidden?: boolean } | undefined
+      >();
+      expectTypeOf(store.tree.state({ includeHidden: true })).toEqualTypeOf<
+        'all' | 'some' | 'none'
+      >();
+      // @ts-expect-error includeHidden is boolean only
+      void (() => store.tree.state({ includeHidden: 'yes' }));
       expectTypeOf(store.tree.contextRowIds).toEqualTypeOf<Signal<ReadonlySet<RowId>>>();
     });
 

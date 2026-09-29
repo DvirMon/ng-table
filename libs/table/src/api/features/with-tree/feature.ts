@@ -1,4 +1,4 @@
-import { computed } from '@angular/core';
+import { computed, type Signal } from '@angular/core';
 import { resolveTreeLinks, type TreeLinks } from '../../../engine/tree-links';
 import type { Feature, ParentLink, RowOf, StageContext, TableFeatureSpec } from '../../../engine/types';
 import { stage } from '../../../schema/stage-rules';
@@ -205,18 +205,29 @@ function buildTreeSpec<TRow>(
     return collectDescendantIds(id, childrenByParent);
   }
 
-  const state = computed<'all' | 'some' | 'none'>(() => {
-    const expandable = discoverExpandableIds(input.rows(), input.trackBy, config);
-    if (expandable.length === 0) {
-      return 'none';
-    }
-    const open = store.expanded();
-    const openCount = expandable.filter((id) => open.has(id)).length;
-    if (openCount === 0) {
-      return 'none';
-    }
-    return openCount === expandable.length ? 'all' : 'some';
-  });
+  function createStateComputed(
+    scanRows: () => readonly TRow[]
+  ): Signal<'all' | 'some' | 'none'> {
+    return computed(() => {
+      const expandable = discoverExpandableIds(scanRows(), input.trackBy, config);
+      if (expandable.length === 0) {
+        return 'none';
+      }
+      const open = store.expanded();
+      const openCount = expandable.filter((id) => open.has(id)).length;
+      if (openCount === 0) {
+        return 'none';
+      }
+      return openCount === expandable.length ? 'all' : 'some';
+    });
+  }
+
+  const filteredViewState = createStateComputed(() => input.rows());
+  const allDataState = createStateComputed(() => input.value());
+
+  function state(options?: { includeHidden?: boolean }): 'all' | 'some' | 'none' {
+    return options?.includeHidden ? allDataState() : filteredViewState();
+  }
 
   const tree: TreeSlice = Object.assign(computed(() => store.expanded()), {
     changed: store.changed,
