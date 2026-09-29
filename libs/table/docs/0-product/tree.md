@@ -161,7 +161,7 @@ emission per write).
 - With nothing expandable, the state reads "none", never "all": a button must not claim
   everything is open when there is nothing to open.
 
-**Covered by:** nothing. `table.tree.state` ships, but no host renders an expand-all control.
+**Covered by:** nothing. `table.tree.state()` ships, but no host renders an expand-all control.
 
 **Design status:** decided — E9 (tri-state), E11, D8 (filtered view by default, `includeHidden`
 for all rows).
@@ -603,7 +603,7 @@ only the minimal `ngpTableTreeRow` directive (D21). The wider tree UI spec is ow
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| U1 | No expand-all / collapse-all control on any canvas | 1.3 | State ships (`tree.state`); nothing renders it |
+| U1 | No expand-all / collapse-all control on any canvas | 1.3 | State ships (`tree.state()`); nothing renders it |
 | U2 | No story for a flat-data tree, a filtered tree, or a broken link | all of §1–§4 | Fixtures (`DealRow.children`, MSW handler, HTTP reviver) are nested and must flatten |
 | U3 | No tree UI spec: indentation, `aria-level`, the row toggle | 1.1, 1.2 | [#165](https://github.com/DvirMon/ng-table/issues/165) (D21). `3-ui/directives/expansion.md` plans parts of it, UI code `none` |
 | U4 | Revealing rows under a filter is not announced to screen readers | 2.1 | Same accepted cost as filtering's U4 |

@@ -35,13 +35,14 @@ collapsible groups) that claims no stage at all.
 interface TreeSlice {
   (): ReadonlySet<RowId>;
   readonly changed: Observable<ExpansionChange>; // { added: RowId[]; removed: RowId[] }
-  readonly state: Signal<'all' | 'some' | 'none'>;
+  state(options?: { includeHidden?: boolean }): 'all' | 'some' | 'none';
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
-  expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
+  expand(ids?: readonly RowId[], options?: TreeWriteOptions): void;
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
   parentOf(id: RowId): RowId | null;
   descendantsOf(id: RowId): RowId[];
+  readonly contextRowIds: Signal<ReadonlySet<RowId>>;
 }
 ```
 
@@ -108,13 +109,14 @@ array, read once, emits nothing on `changed`.
   discovery walk (below) degrades identically but never reports, to avoid logging the same data
   problem twice. Removing a parent from `data()` is not special-cased (D12): its children simply
   resolve as roots on the next evaluation.
-- **Discovery walk.** `expand()` with no `ids` scans flat `data()` for every row some other row's
+- **Discovery walk.** `expand()` with no `ids` scans the filtered view for every row some other row's
   `parentId` names as parent, unioned with any `ids` passed explicitly (e.g. `table.groupIds()`
-  from `withGrouping()`). Broken links degrade the same way as the render stage but are never
+  from `withGrouping()`). `{ includeHidden: true }` scans all of `data()` instead. Broken links degrade the same way as the render stage but are never
   reported here.
 - **`state` — tri-state.** `'all'` when every expandable row (per the same discovery walk) is
   open, `'none'` when none is — including "nothing is expandable," which is what a
-  collapse-only instance always reads. Answers "are all rows expanded?" without a consumer
+  collapse-only instance always reads. Scans the filtered view by default;
+  `state({ includeHidden: true })` scans all of `data()`. Answers "are all rows expanded?" without a consumer
   re-walking the tree themselves.
 - **Degrading callbacks (ADR-0014).** A throwing `isExpandable` is a runtime, data-dependent
   failure — it degrades rather than throws. The affected row renders without a toggle for that
