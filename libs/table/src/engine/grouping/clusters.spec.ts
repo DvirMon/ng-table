@@ -173,7 +173,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
         ['meta', (fieldValue) => (fieldValue as { tag: string }).tag],
       ]);
 
-      buildClusterNodes<MetaRow>(rows, ['meta'], columns, extractValueByColumn);
+      buildClusterNodes<MetaRow>(rows, ['meta'], columns, { extractValueByColumn });
 
       expect(reportSpy).not.toHaveBeenCalled();
     } finally {
@@ -749,7 +749,7 @@ describe('groupKey receives the accessor output (Step 6, AC #8, G68)', () => {
       ],
     ]);
 
-    buildClusterNodes<Row>(rows, ['region'], columns, extractValueByColumn);
+    buildClusterNodes<Row>(rows, ['region'], columns, { extractValueByColumn });
 
     expect(captured).toEqual(['US']);
   });
@@ -780,7 +780,7 @@ describe('groupKey receives the accessor output (Step 6, AC #8, G68)', () => {
       ],
     ]);
 
-    const nodes = buildClusterNodes<Sale>(rows, ['tier'], columns, extractValueByColumn);
+    const nodes = buildClusterNodes<Sale>(rows, ['tier'], columns, { extractValueByColumn });
 
     // Capturing the extractor's own argument, not just the resulting key — 'tier' does not
     // exist on Sale, so a wrongly-wired read of row['tier'] would hand the extractor
