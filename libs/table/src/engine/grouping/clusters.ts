@@ -151,13 +151,24 @@ export function readGroupValue<TRow>(
 }
 
 /**
+ * Returns the row each grouping level reads its value from: the row's tree root within `rows`
+ * when `treeLinks` is set, else the row itself.
+ */
+export function groupSourceOf<TRow>(
+  rows: readonly TRow[],
+  treeLinks: ClusterOpts<TRow>['treeLinks']
+): (row: TRow) => TRow {
+  return treeLinks ? createRootLookup(rows, treeLinks) : (row) => row;
+}
+
+/**
  * Returns a lookup from a row to its tree root within `rows`.
  *
  * @remarks
  * A cycle, self-parent or absent parent ends the walk at that row. A row not in `rows` is its
  * own root.
  */
-export function createRootLookup<TRow>(
+function createRootLookup<TRow>(
   rows: readonly TRow[],
   treeLinks: NonNullable<ClusterOpts<TRow>['treeLinks']>
 ): (row: TRow) => TRow {
@@ -211,10 +222,10 @@ export function buildClusterNodes<TRow>(
   // report set are built once per call.
   const columnById = new Map(columns.map((column) => [column.id, column]));
   const reportedColumns = new Set<string>();
-  const rootOf = opts?.treeLinks ? createRootLookup(rows, opts.treeLinks) : undefined;
+  const sourceOf = groupSourceOf(rows, opts?.treeLinks);
   return buildClusters(rows, levels, (row, columnId) =>
     readGroupValue(
-      rootOf ? rootOf(row) : row,
+      sourceOf(row),
       columnId,
       columnById,
       reportedColumns,
