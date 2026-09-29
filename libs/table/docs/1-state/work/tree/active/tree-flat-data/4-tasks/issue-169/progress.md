@@ -22,8 +22,8 @@ Steps 3–8 all edit `api/features/with-tree/feature.ts`, so they run in order.
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Split with-tree into a folder | ⬚ pending |
-| 2 | Engine read of context rows | ⬚ pending |
+| 1 | Split with-tree into a folder | ✅ done |
+| 2 | Engine read of context rows | ▶ in progress |
 | 3 | table.tree.contextRowIds | ⬚ pending |
 | 4 | Reveal context rows | ⬚ pending |
 | 5 | Close a revealed row | ⬚ pending |

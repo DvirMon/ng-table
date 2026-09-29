@@ -2,7 +2,7 @@ import { describe, expectTypeOf, it } from 'vitest';
 import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { groupKey, grouping } from './schema';
-import { withTree } from '../with-tree';
+import { withTree } from '../with-tree/feature';
 import { withGrouping } from './feature';
 import type { WritableView } from '../../../engine/writable-view';
 import type { GroupingUpdater, TableDataInput } from '../../types';

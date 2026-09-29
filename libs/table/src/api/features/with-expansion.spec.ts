@@ -14,7 +14,7 @@ import {
   type ExpansionSlice,
 } from './with-expansion';
 import { withGrouping } from './with-grouping';
-import { withTree } from './with-tree';
+import { withTree } from './with-tree/feature';
 
 // The panel doesn't read row shape at all — a flat fixture, no `children` field.
 interface Row {

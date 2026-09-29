@@ -35,7 +35,7 @@ import { withFiltering } from '../with-filtering';
 import { withGrouping, type GroupingMembers, type WithGroupingConfig } from './feature';
 import { withSelection } from '../with-selection';
 import { withSorting } from '../with-sorting';
-import { withTree } from '../with-tree';
+import { withTree } from '../with-tree/feature';
 import type {
   ClusterSummary,
   ColumnDecl,
