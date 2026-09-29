@@ -3,6 +3,7 @@ import { computed, Directive, inject, type Signal } from '@angular/core';
 import { NGP_TABLE_ROW } from './table.tokens';
 
 // Presence-only attribute (ADR-0026 rule 1): `""` on a context row, absent otherwise.
+/** Marks a row kept only as an ancestor of a filter match with a `data-context-row` attribute. */
 @Directive({
   selector: 'tr[ngpTableRow][ngpTableTreeRow], div[ngpTableRow][ngpTableTreeRow]',
   host: {

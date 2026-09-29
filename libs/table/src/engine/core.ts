@@ -30,7 +30,8 @@ export interface TableCoreHandle<TRow> {
   /** Additively populated by `composeTable()`'s fold — one entry per feature declaring
    * `expandedRows`. Unioned below and fed into `flattenVisible`. */
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
-  /** One entry per feature declaring `contextRows`. */
+  /** One entry per feature declaring `contextRows`. Unioned below into the
+   * `isContextRow` stamp. */
   readonly contextSources: Signal<ReadonlySet<RowId>>[];
   // Note: a box, not a reassigned property, so `rows`/`renderRows` read `value` at evaluation
   // time. Captured at construction it is always `undefined` — the fold sets it later.

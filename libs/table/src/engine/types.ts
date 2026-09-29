@@ -96,7 +96,8 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
    */
   expandedRows?: Signal<ReadonlySet<RowId>>;
 
-  /** Ids this feature keeps only as context for a matching descendant. Accumulates. */
+  /** Ids kept only as ancestors of a matching descendant, stamped as
+   * `RenderRow.isContextRow`. Accumulates across features. */
   contextRows?: Signal<ReadonlySet<RowId>>;
 
   // Single-claim; why: docs/adr/0028-tree-parent-link-slot.md.
