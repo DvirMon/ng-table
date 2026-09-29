@@ -420,11 +420,11 @@ carries `visible` and `order` and leaves the reading to whoever renders it, whic
 ## Collapsible — the navigable outline
 
 `withGrouping()` + `withTree()`, and nothing else: a real `<button>` chevron carrying
-`aria-expanded`, the whole header row as hit area, and subtree collapse. A deal carrying `children`
-renders a second, separately-keyed chevron from the `'tree'` stage.
+`aria-expanded`, the whole header row as hit area, and subtree collapse. A deal linked to line
+items via `parentId` renders a second, separately-keyed chevron from the `'tree'` stage.
 
 Expand All is the reason `groupIds()` exists. `tree.expand()` on its own discovers data rows through
-`childrenAccessor` and cannot reach a group header, so the outline needs
+`parentId` links and cannot reach a group header, so the outline needs
 `tree.expand(table.groupIds())` — and `groupIds()` derives from the cluster tree rather than from
 `renderRows()`, so it finds every header at every depth no matter what is collapsed right now.
 

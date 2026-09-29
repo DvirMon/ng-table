@@ -38,7 +38,7 @@
 
   <p class="grouping-story__notice">
     Expand All passes <code>table.groupIds()</code> explicitly — <code>tree.expand()</code> on its
-    own discovers data rows through <code>childrenAccessor</code> and cannot reach a group header.
+    own discovers data rows through <code>parentId</code> links and cannot reach a group header.
     <code>groupIds()</code> derives from the cluster tree rather than from
     <code>renderRows()</code>, so it finds every header at every depth no matter what is collapsed
     right now.

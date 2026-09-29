@@ -17,9 +17,8 @@ export interface GroupingPreference {
  * sees it: `toGroupKey` normalizes a `Date` to `date:<time>` and leaves a string as
  * `string:<iso>`, so skipping this would silently change every group id the `closedAt` level
  * produces between the seeded rows and a refetched set. */
-interface DealRowPayload extends Omit<DealRow, 'closedAt' | 'children'> {
+interface DealRowPayload extends Omit<DealRow, 'closedAt'> {
   readonly closedAt: string;
-  readonly children?: DealRowPayload[];
 }
 
 interface DealPagePayload {
@@ -28,13 +27,8 @@ interface DealPagePayload {
 }
 
 function toDealRow(payload: DealRowPayload): DealRow {
-  const { closedAt, children, ...rest } = payload;
-  const revivedChildren = children?.map(toDealRow);
-  return {
-    ...rest,
-    closedAt: new Date(closedAt),
-    ...(revivedChildren ? { children: revivedChildren } : {}),
-  };
+  const { closedAt, ...rest } = payload;
+  return { ...rest, closedAt: new Date(closedAt) };
 }
 
 function isDealPagePayload(value: unknown): value is DealPagePayload {

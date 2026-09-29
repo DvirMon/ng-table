@@ -15,12 +15,11 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
  * Collapsible grouping, navigable outline
  *
  * `withGrouping()` + `withTree()`, and nothing else — collapse or expand any group header to
- * explore the hierarchy. The `childrenAccessor` is passed explicitly: the fixture nests deal
- * line items under one deal (`DealRow.children`), and `withTree()` has no `row.children`
- * fallback.
+ * explore the hierarchy. `parentId` is passed explicitly: the fixture links deal line items to
+ * one deal via `DealRow.parentId`, and `withTree()` nests them by that link.
  *
  * Expand All passes `table.groupIds()` explicitly. `tree.expand()` alone only discovers real
- * data rows via `childrenAccessor` and cannot reach a group header, which is the reason
+ * data rows via `parentId` links and cannot reach a group header, which is the reason
  * `groupIds()` exists: it derives from the cluster tree rather than from `renderRows()`, so it
  * finds every header at every depth regardless of what is currently collapsed.
  *
@@ -58,7 +57,7 @@ export class GroupingCollapsibleStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({ initial: COLLAPSIBLE_GROUPING_LEVELS }),
-    withTree({ childrenAccessor: (row) => row.children })
+    withTree({ parentId: (row) => row.parentId })
   );
 
   protected readonly isRefetching = computed(() => this.rowsPage.isLoading());

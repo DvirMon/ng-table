@@ -16,8 +16,7 @@ async function simulateNetwork(request: Request): Promise<{ forceFailure: boolea
  * directly would make `grouping-collapsible/`'s "collapse state survives a refetch" check
  * vacuous — same objects every time. */
 function toFreshRow(row: DealRow): DealRow {
-  const children = row.children?.map(toFreshRow);
-  return { ...row, closedAt: new Date(row.closedAt), ...(children ? { children } : {}) };
+  return { ...row, closedAt: new Date(row.closedAt) };
 }
 
 /**
