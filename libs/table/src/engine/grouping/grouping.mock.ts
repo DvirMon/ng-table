@@ -34,3 +34,37 @@ export const orderColumns: ColumnDef<Order>[] = resolveColumnDefs(
   ],
   'grouping.mock'
 );
+
+export interface TreeOrder extends Order {
+  parentId: number | null;
+}
+
+export const treeOrders: TreeOrder[] = [
+  { id: 1, parentId: null, region: 'US', category: 'Electronics' },
+  { id: 2, parentId: null, region: 'EU', category: 'Books' },
+  { id: 3, parentId: null, region: 'US', category: 'Books' },
+  { id: 4, parentId: 1, region: 'EU', category: 'Books' },
+  { id: 5, parentId: 4, region: 'EU', category: 'Electronics' },
+];
+
+/** Row 6 and 7 form a cycle (breaks at 6); row 8's parent 99 is absent. */
+export const brokenLinkOrders: TreeOrder[] = [
+  { id: 6, parentId: 7, region: 'EU', category: 'Books' },
+  { id: 8, parentId: 99, region: 'US', category: 'Books' },
+  { id: 7, parentId: 6, region: 'US', category: 'Books' },
+];
+
+export const treeOrderColumns: ColumnDef<TreeOrder>[] = resolveColumnDefs(
+  [
+    ...createColumns(noData<TreeOrder>(), (col) => [
+      col('id'),
+      col('region'),
+      col('category'),
+    ]).columns,
+  ],
+  'grouping.mock'
+);
+
+export const treeOrderLinks = {
+  treeLinks: { parentOf: (r: TreeOrder) => r.parentId, trackBy: (r: TreeOrder) => r.id },
+};

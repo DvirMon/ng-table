@@ -4,6 +4,7 @@ import {
   admitClusters,
   buildClusters,
   buildGroupPath,
+  createRootLookup,
   readGroupValue,
   sortClusters,
   toGroupId,
@@ -178,6 +179,9 @@ export function buildGroupRenderRows<TRow>(
   }
   const columnById = new Map(columns.map((column) => [column.id, column]));
   const reportedColumns = new Set<string>();
+  const rootOf = opts?.treeLinks
+    ? createRootLookup(rows.map((item) => item.data).filter(isRowData), opts.treeLinks)
+    : undefined;
   const nodes = buildClusters([...rows], grouping, (item, columnId) => {
     if (!isRowData(item.data)) {
       throw new Error(
@@ -185,7 +189,8 @@ export function buildGroupRenderRows<TRow>(
           "'group' must run before any stage that synthesizes rows."
       );
     }
-    return readGroupValue(item.data, columnId, columnById, reportedColumns, opts?.extractValueByColumn);
+    const source = rootOf ? rootOf(item.data) : item.data;
+    return readGroupValue(source, columnId, columnById, reportedColumns, opts?.extractValueByColumn);
   });
   const toRows = (items: RenderNode<TRow>[]): TRow[] =>
     items.map((item) => item.data).filter(isRowData);

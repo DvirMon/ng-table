@@ -15,7 +15,7 @@ export function clusterRows<TRow>(
   if (grouping.length === 0) {
     return rows;
   }
-  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn, opts?.treeLinks);
   const admitted = admitClusters(
     nodes,
     opts?.when,
