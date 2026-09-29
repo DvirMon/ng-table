@@ -29,12 +29,6 @@ interface Row {
   children?: Row[];
 }
 
-interface CustomChildrenRow {
-  id: string;
-  name: string;
-  nested?: CustomChildrenRow[];
-}
-
 // Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
 function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
   return createColumns(noData<Row>(), (col) => [col('name')]);
@@ -69,10 +63,6 @@ function makeRows(): Row[] {
 function inContext<T>(build: () => T): T {
   return TestBed.runInInjectionContext(build);
 }
-
-// No `row.children` fallback any more (D2/E6) — every composition below passes this
-// explicitly.
-const childrenAccessor = (row: Row): Row[] | undefined => row.children;
 
 // Widened `TId` (plain `string`) — no `path.<id>` usage in this file; group header ids are
 // built from runtime string literals, not from this set's declared id type.
@@ -126,7 +116,11 @@ const claimsTreeStage = createTableFeature(() => ({
 describe('withTree', () => {
   it('toggle(id) flips a row from collapsed to expanded and back', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     expect(store.tree().has('r1')).toBe(false);
@@ -140,7 +134,11 @@ describe('withTree', () => {
 
   it('expanding row A does not collapse row B (multi-expand)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.toggle('r1');
@@ -152,7 +150,11 @@ describe('withTree', () => {
 
   it('expand() with no ids opens every expandable row at any depth, leaves leaves closed', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.expand();
@@ -167,7 +169,11 @@ describe('withTree', () => {
 
   it('expand(ids) adds exactly those ids, with no isExpandable filter and no discovery recursion', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     // c2 has no children — the default isExpandable would reject it. The synthetic id has no
@@ -182,7 +188,11 @@ describe('withTree', () => {
 
   it('expand(ids) adds to the current set rather than replacing it (regression guard: old expandAll union semantics must not return)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.toggle('r1');
@@ -195,7 +205,11 @@ describe('withTree', () => {
 
   it('collapse(ids) removes exactly those ids and leaves the rest open', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.expand(); // opens r1, c1
@@ -208,7 +222,11 @@ describe('withTree', () => {
 
   it('collapse() with no ids clears everything', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.expand();
@@ -220,7 +238,11 @@ describe('withTree', () => {
 
   it('set(ids) replaces atomically — an open id absent from ids closes in the same write', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.expand(['r1', 'c1']);
@@ -233,7 +255,11 @@ describe('withTree', () => {
 
   it('changed emits once per write — toggle expanding emits { added: [id], removed: [] }', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     const emitted: ExpansionChange[] = [];
@@ -246,7 +272,11 @@ describe('withTree', () => {
 
   it('changed emits once for expand() over a fresh table, added holding every newly opened id', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     const emitted: ExpansionChange[] = [];
@@ -261,7 +291,11 @@ describe('withTree', () => {
 
   it('changed emits once for collapse(), removed holding every previously open id', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.expand();
@@ -277,7 +311,11 @@ describe('withTree', () => {
 
   it('a repeat write that changes nothing emits nothing on changed', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.expand();
@@ -291,7 +329,11 @@ describe('withTree', () => {
 
   it('emitEvent: false suppresses changed on every write verb, tree() still changes', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     const emitted: ExpansionChange[] = [];
@@ -315,7 +357,11 @@ describe('withTree', () => {
 
   it('changed completes when the table is destroyed, so subscribers do not leak', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     let completed = false;
@@ -329,7 +375,11 @@ describe('withTree', () => {
 
   it("renderRows() excludes a row's children when collapsed (default state)", () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     const ids = store.renderRows().map((row) => row.id);
@@ -338,7 +388,11 @@ describe('withTree', () => {
 
   it("renderRows() includes a row's children, at depth + 1, only once that row is expanded", () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.toggle('r1');
@@ -354,7 +408,11 @@ describe('withTree', () => {
 
   it('nested/grandchild case: a depth-2 child only appears once both its ancestors are expanded independently', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     // Only r1 expanded — grandchild g1 (under c1) must not appear yet.
@@ -372,7 +430,11 @@ describe('withTree', () => {
 
   it('hasChildren is true only for rows with a non-empty children array; isExpanded matches tree() membership for a row with children, and is undefined for a childless row (C4)', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.toggle('r1');
@@ -399,23 +461,23 @@ describe('withTree', () => {
   });
 
   it('flat table, withTree() composed, nothing expandable: isExpanded is undefined on every row', () => {
-    interface FlatRow {
+    interface NoParentRow {
       id: string;
       name: string;
     }
-    const flatRows: FlatRow[] = [
+    const flatRows: NoParentRow[] = [
       { id: 'a', name: 'A' },
       { id: 'b', name: 'B' },
     ];
-    const columns = createColumns(noData<FlatRow>(), (col) => [
+    const columns = createColumns(noData<NoParentRow>(), (col) => [
       col('name'),
     ]);
 
     const store = inContext(() =>
       createTable(
-        signal<FlatRow[]>(flatRows),
+        signal<NoParentRow[]>(flatRows),
         { trackBy: 'id', columns },
-        withTree({ childrenAccessor: (): FlatRow[] | undefined => undefined })
+        withTree({ parentId: (): RowId | null | undefined => undefined })
       )
     );
 
@@ -425,44 +487,13 @@ describe('withTree', () => {
     expect(renderRows.every((row) => row.isExpanded === undefined)).toBe(true);
   });
 
-  it("C3 — a row whose accessor returns [] but whose isExpandable returns true renders hasChildren: true so its toggle shows before children load; toggling it adds no rows, and supplying children afterwards nests them at depth + 1", () => {
-    const data = signal<Row[]>([
-      { id: 'lazy', name: 'Lazy parent' }, // children undefined — not fetched yet
-      { id: 'leaf', name: 'Leaf' },
-    ]);
-    const store = inContext(() =>
-      createTable(
-        data,
-        { trackBy: 'id', columns: makeColumns() },
-        withTree({ childrenAccessor, isExpandable: (row) => row.id === 'lazy' })
-      )
-    );
-
-    // Before anything is toggled or loaded: the toggle must already render.
-    const before = store.renderRows();
-    expect(before.map((row) => row.id)).toEqual(['lazy', 'leaf']);
-    expect(before.find((row) => row.id === 'lazy')?.hasChildren).toBe(true);
-
-    // Toggling open with no loaded children adds no rows — childrenAccessor still returns [].
-    store.tree.toggle('lazy');
-    expect(store.renderRows().map((row) => row.id)).toEqual(['lazy', 'leaf']);
-
-    // Children load afterwards — no re-toggle needed, they appear nested at depth + 1.
-    data.update((rows) =>
-      rows.map((row) =>
-        row.id === 'lazy' ? { ...row, children: [{ id: 'lazy-child', name: 'Loaded child' }] } : row
-      )
-    );
-    TestBed.tick();
-
-    const after = store.renderRows();
-    expect(after.map((row) => row.id)).toEqual(['lazy', 'lazy-child', 'leaf']);
-    expect(after.find((row) => row.id === 'lazy-child')?.depth).toBe(1);
-  });
-
   it("a tree child's parentId is its parent row's id, at depth 1 and depth 2; a top-level row's parentId is undefined", () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
     store.tree.toggle('r1');
@@ -482,40 +513,14 @@ describe('withTree', () => {
     expect(r2?.parentId).toBeUndefined();
   });
 
-  it('a custom accessor is honored (row shape where children live under a different key)', () => {
-    const rows: CustomChildrenRow[] = [
-      {
-        id: 'p1',
-        name: 'Parent',
-        nested: [{ id: 'n1', name: 'Nested Child' }],
-      },
-    ];
-    const columns = createColumns(noData<CustomChildrenRow>(), (col) => [
-      col('name'),
-    ]);
-
+  it('removing an expanded row from data clears it from tree(), via either write path (ADR-0006)', () => {
+    const data = signal<FlatRow[]>(makeFlatRows());
     const store = inContext(() =>
       createTable(
-        signal<CustomChildrenRow[]>(rows),
-        { trackBy: 'id', columns },
-        withTree({ childrenAccessor: (row) => row.nested })
+        data,
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
       )
-    );
-
-    expect(store.renderRows().map((row) => row.id)).toEqual(['p1']);
-    expect(store.renderRows()[0]?.hasChildren).toBe(true);
-
-    store.tree.toggle('p1');
-
-    const renderRows = store.renderRows();
-    expect(renderRows.map((row) => row.id)).toEqual(['p1', 'n1']);
-    expect(renderRows.find((row) => row.id === 'n1')?.depth).toBe(1);
-  });
-
-  it('removing an expanded row from data clears it from tree(), via either write path (ADR-0006)', () => {
-    const data = signal(makeRows());
-    const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
     );
 
     // Write path 1: the raw data signal directly.
@@ -538,12 +543,16 @@ describe('withTree', () => {
     expect(store.tree().has('r2')).toBe(false);
   });
 
-  it('composes with zero other features present — createTable(data, config, withTree({ childrenAccessor })) works end-to-end', () => {
+  it('composes with zero other features present — createTable(data, config, withTree({ parentId })) works end-to-end', () => {
     const store = inContext(() =>
-      createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+      createTable(
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId })
+      )
     );
 
-    expect(store.rows().map((row) => row.id)).toEqual(['r1', 'r2']);
+    expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
 
     store.tree.toggle('r1');
     expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'c1', 'c2', 'r2']);
@@ -553,9 +562,9 @@ describe('withTree', () => {
     const emitted: ExpansionChange[] = [];
     const store = inContext(() => {
       const s = createTable(
-        signal<Row[]>(makeRows()),
-        { trackBy: 'id', columns: makeColumns() },
-        withTree({ childrenAccessor, initial: ['r1'] })
+        signal<FlatRow[]>(makeFlatRows()),
+        { trackBy: 'id', columns: makeFlatColumns() },
+        withTree({ parentId: (row) => row.parentId, initial: ['r1'] })
       );
       s.tree.changed.subscribe((change) => emitted.push(change));
       return s;
@@ -579,60 +588,8 @@ describe('withTree', () => {
     expect(store.tree().size).toBe(0);
   });
 
-  it("C1 — mapNodes reaches through group nodes: composing withGrouping() then withTree(), a data row nested under a group header still gets its own children nested (capability the walk didn't have before this migration)", () => {
-    interface GroupableRow {
-      id: string;
-      region: string;
-      children?: GroupableRow[];
-    }
-    const rows: GroupableRow[] = [
-      { id: 'p1', region: 'US', children: [{ id: 'c1', region: 'US' }] },
-      { id: 'p2', region: 'EU' },
-    ];
-    const columns = createColumns(noData<GroupableRow>(), (col) => [
-      col('region', { label: 'region' }),
-    ]);
-    const groupableAccessor = (row: GroupableRow): GroupableRow[] | undefined => row.children;
-
-    // Compile-time-legal order: withGrouping() must precede withTree() for the group stage to
-    // have produced headers the tree stage then descends through. Render order is fixed
-    // (RENDER_ANCHORS = ['group', 'tree']) regardless.
-    const store = inContext(() =>
-      createTable(
-        signal<GroupableRow[]>(rows),
-        { trackBy: 'id', columns },
-        withGrouping({ initial: ['region'] }),
-        withTree({ childrenAccessor: groupableAccessor })
-      )
-    );
-
-    const usHeader = store
-      .renderRows()
-      .find((row) => row.kind === 'group' && row.groupKey?.value === 'US');
-    expect(usHeader).toBeDefined();
-
-    // Expand the group header — p1 appears, stamped by the 'tree' stage reaching through the
-    // group node — but p1's own child is not yet toggled open.
-    store.tree.toggle(usHeader?.id ?? '');
-    const afterGroupExpand = store.renderRows();
-    const p1 = afterGroupExpand.find((row) => row.id === 'p1');
-    expect(p1).toBeDefined();
-    expect(p1?.hasChildren).toBe(true);
-    expect(afterGroupExpand.map((row) => row.id)).not.toContain('c1');
-
-    // Expand p1 itself — c1 nests under it, independent of the group header.
-    store.tree.toggle('p1');
-    const afterRowExpand = store.renderRows();
-    const c1 = afterRowExpand.find((row) => row.id === 'c1');
-    expect(c1).toBeDefined();
-    expect(c1?.depth).toBe(2); // group header depth 0, p1 depth 1, c1 depth 2
-    expect(c1?.parentId).toBe('p1');
-  });
-
   // Step 2 (#167): withTree({ parentId }) nests flat rows via engine/tree-links.ts's
-  // resolveTreeLinks(), instead of a nested childrenAccessor. Seams A-O, red-green order per
-  // step-2-with-tree-parent-id.test-plan.md. `parentId` is type-only in this red phase —
-  // withTree() does not yet nest anything from it, so every seam below is expected to fail.
+  // resolveTreeLinks(). Seams A-O, per step-2-with-tree-parent-id.test-plan.md.
   describe('flat data — parentId (#167)', () => {
     // Shared by the broken-link seams (G, H, I, J, K, L) and O — one row shape, `parentId`
     // read straight off the row unless a seam's own accessor overrides it to throw.
@@ -1127,33 +1084,26 @@ describe('withTree', () => {
   });
 
   describe('collapse-only (D9/E13)', () => {
-    it('withTree() with no accessor composes alongside a stage claimant without throwing; supplying childrenAccessor throws the slot-collision error', () => {
+    it('withTree() with no accessor composes alongside a stage claimant without throwing (the collision itself is covered by seam N with parentId)', () => {
       expect(() =>
         inContext(() =>
           createTable(
-            signal<Row[]>(makeRows()),
-            { trackBy: 'id', columns: makeColumns() },
+            signal<FlatRow[]>(makeFlatRows()),
+            { trackBy: 'id', columns: makeFlatColumns() },
             claimsTreeStage,
             withTree()
           )
         )
       ).not.toThrow();
-
-      expect(() =>
-        inContext(() =>
-          createTable(
-            signal<Row[]>(makeRows()),
-            { trackBy: 'id', columns: makeColumns() },
-            claimsTreeStage,
-            withTree({ childrenAccessor })
-          )
-        )
-      ).toThrow(/feature 1 and feature 2 \(withTree\) both provide the "tree" render stage/);
     });
 
-    it("collapse-only over the r1 -> c1 -> g1 fixture: renderRows() is 1:1 with rows(), every row at depth 0 with hasChildren: false and isExpanded: undefined — no children nested, because no stage ran", () => {
+    it("collapse-only over the flat fixture: renderRows() is 1:1 with rows(), every row at depth 0 with hasChildren: false and isExpanded: undefined — no children nested, because no stage ran", () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree())
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree()
+        )
       );
 
       const renderRows = store.renderRows();
@@ -1190,7 +1140,11 @@ describe('withTree', () => {
 
     it('expand() with no ids on a collapse-only instance is a no-op: the discovery walk finds nothing, tree() stays empty, and changed is silent', () => {
       const store = inContext(() =>
-        createTable(signal<Row[]>(makeRows()), { trackBy: 'id', columns: makeColumns() }, withTree())
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree()
+        )
       );
 
       const emitted: ExpansionChange[] = [];
@@ -1205,11 +1159,10 @@ describe('withTree', () => {
 
   // Migrated from `with-grouping/feature.spec.ts` — descendant visibility is owned by whatever
   // feature contributes the expanded set, never by the clustering itself
-  // (.claude/rules/spec-files-assert-own-domain-only.md). Every fixture here is collapse-only,
-  // no accessor: `mockGroupingRows` has no nested rows, so a `childrenAccessor` would claim the
-  // `'tree'` render stage for no reason. Bare `withTree()` contributes the open set without
-  // claiming the stage — `withGrouping()` runs first in render order, and the flatten walk stops
-  // descending at any id missing from the contributed set.
+  // (.claude/rules/spec-files-assert-own-domain-only.md). Every fixture here is collapse-only:
+  // `mockGroupingRows` has no `parentId` links, so `withTree()` contributes the open set without
+  // claiming the `'tree'` render stage — `withGrouping()` runs first in render order, and the
+  // flatten walk stops descending at any id missing from the contributed set.
   describe('composed with withGrouping()', () => {
     it('collapse-independent: collapsing a group does not remove its id', () => {
       const store = inContext(() =>
@@ -1504,9 +1457,9 @@ describe('withTree', () => {
     it('reads "none" on a fresh table with expandable rows', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({ childrenAccessor })
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
         )
       );
 
@@ -1516,9 +1469,9 @@ describe('withTree', () => {
     it('reads "some" when one of two expandable rows is open', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({ childrenAccessor })
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
         )
       );
 
@@ -1530,9 +1483,9 @@ describe('withTree', () => {
     it('reads "all" after expand() opens every expandable row', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({ childrenAccessor })
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
         )
       );
 
@@ -1542,23 +1495,23 @@ describe('withTree', () => {
     });
 
     it('reads "none", not "all", on a flat table with nothing expandable — the empty denominator is spelled out in TreeSlice.state\'s own doc', () => {
-      interface FlatRow {
+      interface NoParentRow {
         id: string;
         name: string;
       }
-      const flatRows: FlatRow[] = [
+      const flatRows: NoParentRow[] = [
         { id: 'a', name: 'A' },
         { id: 'b', name: 'B' },
       ];
-      const columns = createColumns(noData<FlatRow>(), (col) => [
+      const columns = createColumns(noData<NoParentRow>(), (col) => [
         col('name'),
       ]);
 
       const store = inContext(() =>
         createTable(
-          signal<FlatRow[]>(flatRows),
+          signal<NoParentRow[]>(flatRows),
           { trackBy: 'id', columns },
-          withTree({ childrenAccessor: (): FlatRow[] | undefined => undefined })
+          withTree({ parentId: (): RowId | null | undefined => undefined })
         )
       );
 
@@ -1581,11 +1534,16 @@ describe('withTree', () => {
     });
 
     it('recomputes when data changes — adding an expandable row to a fully-expanded table moves "all" to "some"', () => {
-      const data = signal<Row[]>([
-        { id: 'x1', name: 'X1', children: [{ id: 'x1-child', name: 'Child' }] },
+      const data = signal<FlatRow[]>([
+        { id: 'x1', name: 'X1' },
+        { id: 'x1-child', name: 'Child', parentId: 'x1' },
       ]);
       const store = inContext(() =>
-        createTable(data, { trackBy: 'id', columns: makeColumns() }, withTree({ childrenAccessor }))
+        createTable(
+          data,
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
+        )
       );
 
       store.tree.expand();
@@ -1593,7 +1551,8 @@ describe('withTree', () => {
 
       data.update((rows) => [
         ...rows,
-        { id: 'x2', name: 'X2', children: [{ id: 'x2-child', name: 'Child 2' }] },
+        { id: 'x2', name: 'X2' },
+        { id: 'x2-child', name: 'Child 2', parentId: 'x2' },
       ]);
       TestBed.tick();
 
@@ -1614,56 +1573,13 @@ describe('withTree', () => {
       consoleErrorSpy.mockRestore();
     });
 
-    it('a childrenAccessor that throws for every row still renders — hasChildren: false, no nested children — and reports exactly once across the evaluation', () => {
-      const store = inContext(() =>
-        createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({
-            childrenAccessor: (): Row[] | undefined => {
-              throw new Error('boom');
-            },
-          })
-        )
-      );
-
-      const renderRows = store.renderRows();
-
-      expect(renderRows.map((row) => row.id)).toEqual(['r1', 'r2']);
-      expect(renderRows.every((row) => row.hasChildren === false)).toBe(true);
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('the dedupe flag is scoped to the evaluation, not the process: renderRows(), expand() and state() each report again — a module-level flag would leave this at 1', () => {
-      const store = inContext(() =>
-        createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({
-            childrenAccessor: (): Row[] | undefined => {
-              throw new Error('boom');
-            },
-          })
-        )
-      );
-
-      store.renderRows();
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
-
-      store.tree.expand();
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
-
-      store.tree.state();
-      expect(consoleErrorSpy).toHaveBeenCalledTimes(3);
-    });
-
     it('a throwing isExpandable degrades to false — no toggle renders — and reports once, with its own message', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
           withTree({
-            childrenAccessor,
+            parentId: (row) => row.parentId,
             isExpandable: (): boolean => {
               throw new Error('boom');
             },
@@ -1678,14 +1594,14 @@ describe('withTree', () => {
       expect(consoleErrorSpy.mock.calls[0][0]).toContain('isExpandable');
     });
 
-    it('a childrenAccessor and isExpandable that both throw report twice in one evaluation, once per callback — the per-callback dedupe flags, not a shared one', () => {
+    it('a parentId and isExpandable that both throw report twice in one evaluation, once per callback — the per-callback dedupe flags, not a shared one', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
           withTree({
-            childrenAccessor: (): Row[] | undefined => {
-              throw new Error('children-boom');
+            parentId: (): RowId | null | undefined => {
+              throw new Error('parent-boom');
             },
             isExpandable: (): boolean => {
               throw new Error('expandable-boom');
@@ -1699,13 +1615,13 @@ describe('withTree', () => {
       expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
     });
 
-    it('the default isExpandable produces no second report — with only childrenAccessor supplied and throwing, the count stays at 1 per evaluation', () => {
+    it('the default isExpandable produces no second report — with only parentId supplied and throwing, the count stays at 1 per evaluation', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
           withTree({
-            childrenAccessor: (): Row[] | undefined => {
+            parentId: (): RowId | null | undefined => {
               throw new Error('boom');
             },
           })
@@ -1888,13 +1804,15 @@ describe('withTree', () => {
     it('withTree() alone: composed members are recovered exactly, never widened to any', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({ childrenAccessor })
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
         )
       );
 
-      expectTypeOf<keyof typeof store>().toEqualTypeOf<keyof TableStore<Row> | keyof TreeMembers>();
+      expectTypeOf<keyof typeof store>().toEqualTypeOf<
+        keyof TableStore<FlatRow> | keyof TreeMembers
+      >();
       expectTypeOf(store).not.toBeAny();
       expectTypeOf(store.tree).toMatchTypeOf<TreeSlice>();
       expectTypeOf(store.tree()).toEqualTypeOf<ReadonlySet<RowId>>();
@@ -1904,10 +1822,10 @@ describe('withTree', () => {
     it('a trailing withComputed() block reading s.tree adds a typed member — typed only because withTree() precedes it', () => {
       const store = inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
           withTree(
-            { childrenAccessor },
+            { parentId: (row) => row.parentId },
             withComputed((s) => ({ openTreeCount: computed(() => s.tree().size) }))
           )
         )
@@ -1945,9 +1863,9 @@ describe('withTree', () => {
       // Tree first: grouping's trailing block sees `tree` off the accumulated `In`.
       inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
-          withTree({ childrenAccessor }),
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId }),
           withGrouping(
             {},
             withComputed((s) => {
@@ -1962,8 +1880,8 @@ describe('withTree', () => {
       // `TreeMembers` yet.
       inContext(() =>
         createTable(
-          signal<Row[]>(makeRows()),
-          { trackBy: 'id', columns: makeColumns() },
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
           withGrouping(
             {},
             withComputed((s) => {
@@ -1973,7 +1891,7 @@ describe('withTree', () => {
               return {};
             })
           ),
-          withTree({ childrenAccessor })
+          withTree({ parentId: (row) => row.parentId })
         )
       );
     });
