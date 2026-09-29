@@ -5,12 +5,10 @@ import type {
   GroupSummary,
   GroupWhen,
   RowId,
-  TrackByFn,
 } from '../../api/types';
 import { readAccessor } from '../cells';
 import { buildValueOfContext, type ValueOfContext } from '../resolvers';
-import { resolveTreeLinks } from '../tree-links';
-import type { ParentLink } from '../types';
+import { resolveTreeLinks, type TreeLinkSource } from '../tree-links';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
@@ -47,10 +45,7 @@ export interface ClusterOpts<TRow> {
   readonly label?: string;
   /** Parent link and row identity for flat tree data; when set, every level groups a row by its
    * root's value instead of its own. */
-  readonly treeLinks?: {
-    readonly parentOf: ParentLink<TRow>;
-    readonly trackBy: TrackByFn<TRow>;
-  };
+  readonly treeLinks?: TreeLinkSource<TRow>;
 }
 
 // Distinguishes `1` from `"1"` and normalizes `Date` — plain `String(value)` would collide the
@@ -156,7 +151,7 @@ export function readGroupValue<TRow>(
  */
 export function groupSourceOf<TRow>(
   rows: readonly TRow[],
-  treeLinks: ClusterOpts<TRow>['treeLinks']
+  treeLinks: TreeLinkSource<TRow> | undefined
 ): (row: TRow) => TRow {
   return treeLinks ? createRootLookup(rows, treeLinks) : (row) => row;
 }
@@ -170,7 +165,7 @@ export function groupSourceOf<TRow>(
  */
 function createRootLookup<TRow>(
   rows: readonly TRow[],
-  treeLinks: NonNullable<ClusterOpts<TRow>['treeLinks']>
+  treeLinks: TreeLinkSource<TRow>
 ): (row: TRow) => TRow {
   // Note: walk the resolved `parentById`, never the raw `parentOf` — the raw link loops forever
   // on a cycle.
