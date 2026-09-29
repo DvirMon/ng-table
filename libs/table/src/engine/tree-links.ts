@@ -1,7 +1,7 @@
 import type { RowId, TrackByFn } from '../api/types';
 import type { ParentLink } from './types';
 
-/** Pure parent-link resolution for flat tree data. No signals, no Angular. */
+// Pure parent-link resolution for flat tree data — no signals, no Angular.
 
 /** How a row's declared parent failed to resolve to a usable link. */
 export type BrokenLinkKind = 'self' | 'absent' | 'cycle';
@@ -13,9 +13,12 @@ export interface TreeLinks {
 }
 
 /**
- * Resolves each row's parent over `rows`. A self-parent, a parent id absent from `rows`, or a
- * cycle (broken at the first row of the cycle in input order) maps that row to `null` and files
- * its id under the matching `broken` kind; its own subtree keeps its links.
+ * Resolves each row's parent over `rows`.
+ *
+ * @remarks
+ * A self-parent, an absent parent, or a cycle (broken at the cycle's first row in input order)
+ * maps that row to `null` and files its id under the matching `broken` kind; the rest of that
+ * subtree keeps its own links.
  */
 export function resolveTreeLinks<TRow>(
   rows: readonly TRow[],

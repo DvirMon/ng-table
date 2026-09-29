@@ -1,8 +1,8 @@
 import { resolveIndex } from '../engine/rows';
 import type { RowId, RowUpdater } from '../api/types';
 
-/** `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an out-of-range or
- * stale `at` clamps instead of crashing. */
+// `at` is `Array.prototype.splice(at, 0, row)` semantics. Never throws — an out-of-range or
+// stale `at` clamps instead of crashing.
 function clampSpliceIndex(at: number | undefined, length: number): number {
   if (at === undefined) return length;
   const resolved = at < 0 ? length + at : at;
@@ -10,10 +10,12 @@ function clampSpliceIndex(at: number | undefined, length: number): number {
 }
 
 /**
- * `at` is `Array.prototype.splice(at, 0, ...rows)` semantics either way — the array form inserts
- * every row as one contiguous block, in array order, in a single write. Assumes `TRow` is never
- * itself an array type; a table row is always a record in this library's usage, so `Array.isArray`
- * is a safe discriminant in practice.
+ * Inserts one or more rows at `at` (`Array.prototype.splice(at, 0, ...rows)` semantics); the
+ * array form inserts every row as one contiguous block, in array order, in a single write.
+ *
+ * @remarks
+ * Note: assumes `TRow` is never itself an array type — a table row is always a record in this
+ * library's usage, so `Array.isArray` is a safe discriminant in practice.
  */
 export function insertRow<TRow>(row: NoInfer<TRow>, opts?: { at?: number }): RowUpdater<TRow>;
 export function insertRow<TRow>(rows: NoInfer<TRow>[], opts?: { at?: number }): RowUpdater<TRow>;
@@ -30,10 +32,14 @@ export function insertRow<TRow>(
 }
 
 /**
- * `ids` (D32) cascade-deletes a subtree in one write — e.g.
- * `removeRow(['r1', ...table.tree.descendantsOf('r1')])`. Ids not present in the rows are
- * skipped; unlike the single-id form, there is no dedicated "not found" no-op path because a
- * partial match is expected (a descendant already removed elsewhere).
+ * Removes rows by id; the array form cascade-deletes a whole subtree in one write.
+ *
+ * @remarks
+ * Ids absent from the rows are skipped — unlike the single-id form there's no "not found"
+ * no-op, since a partial match is expected (a descendant already removed elsewhere).
+ *
+ * @example
+ * removeRow(['r1', ...table.tree.descendantsOf('r1')])
  */
 export function removeRow<TRow>(id: RowId): RowUpdater<TRow>;
 export function removeRow<TRow>(ids: RowId[]): RowUpdater<TRow>;
