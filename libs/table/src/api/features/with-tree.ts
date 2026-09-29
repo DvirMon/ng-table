@@ -22,14 +22,10 @@ export interface WithTreeConfig<TRow> {
   /** Seeds the open set at construction. Emits nothing on `changed`. */
   initial?: readonly RowId[];
   /**
-   * Reads a flat row's declared parent id. `null` and `undefined` both mean root. Nests flat
-   * rows by parent id; claims the `'tree'` render stage and the parent link. Omitted: collapse-
-   * only — no row tree, and the `'tree'` render stage is not claimed. A throw or an `undefined`
-   * return degrade that row to a root.
-   *
-   * @remarks
-   * A self-parent, an absent parent, or a cycle also degrades that row to a root, reported once
-   * per kind per evaluation (ADR-0014).
+   * Reads a flat row's declared parent id (`null`/`undefined` mean root); nests flat rows by
+   * parent id and claims the `'tree'` render stage and the parent link. Omitted: collapse-only,
+   * no row tree, stage left unclaimed. A throw, an `undefined` return, a self-parent, an absent
+   * parent, or a cycle all degrade that row to a root (reported once per kind per evaluation).
    */
   parentId?: (row: TRow) => RowId | null | undefined;
 }
@@ -469,6 +465,9 @@ function buildTreeSpec<TRow>(
  * Real-row parents only — no path or levels API. Claims the `'tree'` render stage only when
  * `parentId` is supplied; omitted gives a collapse-only instance that still hides a collapsed
  * id's descendants without claiming the stage.
+ *
+ * @example
+ * createTable(data, { trackBy: 'id' }, withTree({ parentId: (row) => row.parentId }));
  */
 export function withTree<In extends TreeInput<In>, D extends DerivedDict>(
   derive: Feature<NoInfer<In> & TreeMembers, D>

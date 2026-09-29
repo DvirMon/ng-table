@@ -13,10 +13,10 @@ export interface GroupingPreference {
   readonly groupByRep: boolean;
 }
 
-/** `closedAt` crosses the wire as an ISO string. It has to come back a `Date` before the table
- * sees it: `toGroupKey` normalizes a `Date` to `date:<time>` and leaves a string as
- * `string:<iso>`, so skipping this would silently change every group id the `closedAt` level
- * produces between the seeded rows and a refetched set. */
+// `closedAt` crosses the wire as an ISO string. It has to come back a `Date` before the table
+// sees it: `toGroupKey` normalizes a `Date` to `date:<time>` and leaves a string as
+// `string:<iso>`, so skipping this would silently change every group id the `closedAt` level
+// produces between the seeded rows and a refetched set.
 interface DealRowPayload extends Omit<DealRow, 'closedAt'> {
   readonly closedAt: string;
 }
@@ -35,9 +35,9 @@ function isDealPagePayload(value: unknown): value is DealPagePayload {
   return typeof value === 'object' && value !== null && 'rows' in value && 'total' in value;
 }
 
-/** `httpResource`'s `parse` always hands back `unknown` — MSW owns the response shape, so a
- * mismatch here means the fixture drifted from `handlers.ts` and surfaces via the resource's own
- * error channel rather than a silent bad read. */
+// `httpResource`'s `parse` always hands back `unknown` — MSW owns the response shape, so a
+// mismatch here means the fixture drifted from `handlers.ts` and surfaces via the resource's
+// own error channel rather than a silent bad read.
 function toDealPage(payload: unknown): DealPage {
   if (!isDealPagePayload(payload)) {
     throw new Error('Unexpected grouped-rows response shape.');
@@ -53,9 +53,11 @@ function headersFor(options: GroupedRowsRequestOptions): HttpHeaders {
 }
 
 /**
- * `httpResource()` read for the grouping rows page — headers carry the Storybook
- * `forceFailure`/`latencyMs` controls `handlers.ts` (MSW) reads. `options` returning `undefined`
- * keeps the resource idle (no request).
+ * Reads the grouping rows page via `httpResource()`.
+ *
+ * @remarks
+ * Headers carry the Storybook `forceFailure`/`latencyMs` controls that `handlers.ts` (MSW)
+ * reads. `options` returning `undefined` keeps the resource idle (no request).
  */
 export function createGroupedRowsResource(
   options: () => GroupedRowsRequestOptions | undefined
@@ -70,8 +72,11 @@ export function createGroupedRowsResource(
 }
 
 /**
- * `httpResource()` read for the async grouping-rule lookup, driven by `params` rather than an
- * inline closure — `GroupingAsyncRule.factory` hands us the rule's own params signal.
+ * Reads the async grouping-rule lookup via `httpResource()`.
+ *
+ * @remarks
+ * Driven by `params` rather than an inline closure — `GroupingAsyncRule.factory` hands this the
+ * rule's own params signal.
  */
 export function createGroupingPreferenceResource(
   params: Signal<GroupedRowsRequestOptions | undefined>

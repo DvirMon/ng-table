@@ -75,10 +75,10 @@ export interface GroupingMockRow {
   amount: number;
 }
 
-// Unequal cluster sizes per (region, category): `US > Electronics` has 2 rows, every other
-// leaf has 1, so a parent average computed from children's averages (125) differs from the
-// true leaf-level average (150) for `region: 'US'`. See with-grouping Step 5 plan,
-// "depth-correctness case."
+/** Fixture with unequal (region, category) cluster sizes, for depth-correctness aggregate
+ *  checks. */
+// `US > Electronics` has 2 rows, every other leaf has 1, so a parent average computed from
+// children's averages (125) differs from the true leaf-level average (150) for `region: 'US'`.
 export const mockGroupingRows: GroupingMockRow[] = [
   { id: 1, region: 'US', category: 'Electronics', amount: 100 },
   { id: 2, region: 'US', category: 'Electronics', amount: 300 },
@@ -96,9 +96,9 @@ export interface GroupWhenMockRow {
   amount: number;
 }
 
-// Two US rows, one EU, one `null` region, one `undefined` region — both JS "blank" values
-// coexist so a `when` predicate can be tested against each without two fixtures. See
-// `withGrouping()`'s `when` tests.
+/** Mixed-region fixture covering both JS "blank" values (`null` and `undefined`) in one set,
+ *  for `withGrouping()`'s `when`-predicate tests. */
+// Two US rows, one EU, one `null` region, one `undefined` region.
 export const mockGroupWhenRows: GroupWhenMockRow[] = [
   { id: 1, region: 'US', amount: 100 },
   { id: 2, region: 'US', amount: 300 },
@@ -115,8 +115,8 @@ export interface RepMockRow {
   rep: string;
 }
 
-// Two-level (region -> rep) fixture for `withGrouping()`'s `when`-predicate Q1 test: a
-// null-region row must escape the tree entirely, not re-cluster under a `rep` header.
+/** Two-level (region -> rep) fixture for `withGrouping()`'s `when`-predicate tests. */
+// A null-region row must escape the tree entirely, not re-cluster under a `rep` header (Q1).
 export const mockRepRows: RepMockRow[] = [
   { id: 1, region: 'US', rep: 'Alice' },
   { id: 2, region: 'US', rep: 'Bob' },
@@ -133,7 +133,7 @@ function mockIndexById<TRow>(rows: TRow[], trackBy: TrackByFn<TRow>): ReadonlyMa
   return map;
 }
 
-// See docs/decisions/row-editing.md (D30) for the updater-through-`value` contract.
+// See docs/decisions/row-editing.md for the updater-through-`value` contract.
 /**
  * Minimal store stub carrying a real writable `value` view, for testing updater factories
  * through `table.value.update(...)` — not a full `composeTable()` instance.
@@ -222,12 +222,12 @@ export interface FlatRow {
   parentId?: string | null;
 }
 
-// Flat parentId-linked mirror of with-tree.spec.ts's own makeRows() nested fixture: the same
-// r1 -> c1 -> g1 / c2, r2 tree, expressed as five flat rows instead of nested `children`
-// arrays. Input order [g1, r1, c1, r2, c2] puts g1 (a forward reference) ahead of its parent
-// c1, and mixes an explicit `parentId: null` root (r1) with an omitted-property root (r2), so
-// both root spellings are exercised. `name` values are chosen so a name-descending sort swaps
-// both the root order and r1's own children order (with-tree.spec.ts seam C, #167).
+/** Flat `parentId`-linked mirror of `with-tree.spec.ts`'s own `makeRows()` nested fixture: the
+ *  same r1 -> c1 -> g1 / c2, r2 tree, as five flat rows instead of nested `children` arrays. */
+// Input order [g1, r1, c1, r2, c2] puts g1 (a forward reference) ahead of its parent c1, and
+// mixes an explicit `parentId: null` root (r1) with an omitted-property root (r2), so both
+// root spellings are exercised. `name` values are chosen so a name-descending sort swaps both
+// the root order and r1's own children order (with-tree.spec.ts seam C, #167).
 export function makeFlatRows(): FlatRow[] {
   return [
     { id: 'g1', name: 'G Grandchild', parentId: 'c1' },

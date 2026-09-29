@@ -8,12 +8,8 @@ const ADA: DealOwner = { name: 'Ada Lovelace', email: 'ada@example.com' };
 const GRACE: DealOwner = { name: 'Grace Hopper', email: 'grace@example.com' };
 const ALAN: DealOwner = { name: 'Alan Turing', email: 'alan@example.com' };
 
-/**
- * Covers, in one dataset: three levels of nesting (`region` → `category` → `rep`), a
- * multi-row and a single-row group, an aggregated numeric column, a `Date` and an object
- * column to group by, two rows linked to a parent via `parentId`, and the three blank group
- * keys — `null`, `undefined` and `''`, which currently render as separate unlabelled groups.
- */
+/** Grouping-story fixture covering three nesting levels, `parentId`-linked rows, and the three
+ *  blank group keys (`null`/`undefined`/`''`), which render as separate unlabelled groups. */
 export const GROUPING_ROWS_MOCK: DealRow[] = [
   // North East / Hardware — two reps, one of them with two deals.
   {
