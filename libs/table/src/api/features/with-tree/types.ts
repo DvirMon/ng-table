@@ -5,6 +5,8 @@ import type { ExpansionChange, ExpansionWriteOptions } from '../expansion/state'
 
 export type { ExpansionChange, ExpansionWriteOptions } from '../expansion/state';
 
+export type TreeWriteOptions = ExpansionWriteOptions & { includeHidden?: boolean };
+
 export interface WithTreeConfig<TRow> {
   /** Renders the toggle independently of whether children are loaded — lazy children.
    *  Default: some other row's `parentId` resolves to this row. */
@@ -32,7 +34,7 @@ export interface TreeSlice {
   readonly state: Signal<'all' | 'some' | 'none'>;
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Adds. Omitted `ids`: every expandable row found by the discovery walk. */
-  expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
+  expand(ids?: readonly RowId[], options?: TreeWriteOptions): void;
   /** Removes. Omitted `ids`: everything currently open. */
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   /** Atomic replace — the restore path. */

@@ -43,6 +43,7 @@ export type { WithExpansionConfig, ExpansionMembers } from './api/features/with-
 export { withTree } from './api/features/with-tree/feature';
 export type { WithTreeConfig, TreeMembers } from './api/features/with-tree/types';
 export type { ExpansionChange, ExpansionWriteOptions } from './api/features/expansion/state';
+export type { TreeWriteOptions } from './api/features/with-tree/types';
 export { withRowEdit } from './api/features/with-row-edit';
 export type { WithRowEditConfig, RowEditMembers } from './api/features/with-row-edit';
 export { withOptimistic } from './api/features/with-optimistic';

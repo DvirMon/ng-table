@@ -807,6 +807,51 @@ describe('withTree', () => {
       expect(store.tree.state()).toBe('all');
     });
 
+    describe('filtered view (#169 D8)', () => {
+      // Only c1 ('C Child One') matches; the filter keeps its ancestor r1. rows() = [r1, c1];
+      // g1, c2 and r2 are hidden. Unannotated columns keep `path.name` literal (ADR-0019).
+      function makeFilteredStore() {
+        const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
+        const store = inContext(() =>
+          createTable(
+            signal<FlatRow[]>(makeFlatRows()),
+            { trackBy: 'id', columns },
+            withTree({ parentId: (row) => row.parentId }),
+            withFiltering({
+              schema: (path) => ({ name: contains(path.name) }),
+              includeDescendants: false,
+            })
+          )
+        );
+        store.filters.name().value.set('One');
+        return store;
+      }
+
+      it('expand() with no ids while filtered opens only rows expandable in the filtered view — c1, whose only child is hidden, stays closed (D8)', () => {
+        const store = makeFilteredStore();
+
+        store.tree.expand();
+
+        expect([...store.tree()].sort()).toEqual(['r1']);
+      });
+
+      it('expand() with includeHidden and no ids scans all of data() — c1 opens although its child g1 is filtered out (D8)', () => {
+        const store = makeFilteredStore();
+
+        store.tree.expand(undefined, { includeHidden: true });
+
+        expect([...store.tree()].sort()).toEqual(['c1', 'r1']);
+      });
+
+      it("includeHidden has no effect when ids are given — expand(['c2'], { includeHidden: true }) opens exactly c2", () => {
+        const store = makeFilteredStore();
+
+        store.tree.expand(['c2'], { includeHidden: true });
+
+        expect([...store.tree()]).toEqual(['c2']);
+      });
+    });
+
     describe('broken links (ADR-0014)', () => {
       let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
