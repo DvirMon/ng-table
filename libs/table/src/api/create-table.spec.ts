@@ -425,6 +425,66 @@ describe('createTable', () => {
     ).toEqual(['r2']);
   });
 
+  it('forwards ctx to a factory that has a derive block', () => {
+    const withCtxFactory = createTableFeature(
+      (input: TableStore<Row>, ctx) => ({
+        members: {
+          parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)),
+        },
+      }),
+      () => ({ members: { extra: signal(1).asReadonly() } })
+    );
+    const withLaterLink = createTableFeature(
+      (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
+        parentLink: (row) => (row.id === 'r2' ? 'r1' : null),
+      })
+    );
+
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(
+        signal<Row[]>([
+          { id: 'r1', name: 'Ann', status: 'active' },
+          { id: 'r2', name: 'Bo', status: 'active' },
+        ]),
+        { trackBy: 'id', columns: makeColumns() },
+        withCtxFactory,
+        withLaterLink
+      )
+    );
+
+    expect(store.parentIds()).toEqual([null, 'r1']);
+  });
+
+  it('passes ctx to the derive block', () => {
+    const withCtxDerive = createTableFeature(
+      (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({}),
+      (input, ctx) => ({
+        members: {
+          parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)),
+        },
+      })
+    );
+    const withLaterLink = createTableFeature(
+      (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
+        parentLink: (row) => (row.id === 'r2' ? 'r1' : null),
+      })
+    );
+
+    const store = TestBed.runInInjectionContext(() =>
+      createTable(
+        signal<Row[]>([
+          { id: 'r1', name: 'Ann', status: 'active' },
+          { id: 'r2', name: 'Bo', status: 'active' },
+        ]),
+        { trackBy: 'id', columns: makeColumns() },
+        withCtxDerive,
+        withLaterLink
+      )
+    );
+
+    expect(store.parentIds()).toEqual([null, 'r1']);
+  });
+
   it('rejects a member key declared by both a feature and its derive block, naming the key', () => {
     const withCollidingBlock = createTableFeature(
       () => ({ members: { count: 3 } }),

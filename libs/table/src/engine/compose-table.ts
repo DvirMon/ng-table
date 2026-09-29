@@ -6,7 +6,7 @@ import type { RenderNodeTransform, RenderStage } from './render-stages';
 import { diffRemovedIds } from './rows';
 import { describeFeature, describeInternalFeature, SlotRegistry } from './slots';
 import { resolveStageOrder, type LabelledStageRule } from './stage-order';
-import type { TableCore, TableEngineConfig, TableFeatureSpec } from './types';
+import type { StageContext, TableCore, TableEngineConfig, TableFeatureSpec } from './types';
 
 interface FeatureHooks {
   readonly setup: (() => void)[];
@@ -173,6 +173,14 @@ export function composeTable<TRow>(
   // earlier features, features that read it from a method or computed see everything.
   const store = createBaseStore(handle);
 
+  // Lazy: `parentLink` is contributed by whichever feature folds, possibly after a reader's
+  // factory has run, so `parentOf` must resolve at read time.
+  const stageContext: StageContext<TRow> = {
+    get parentOf() {
+      return handle.parentLink.value;
+    },
+  };
+
   const hooks = foldFeatures(
     [
       ...labelFeatures<TRow, InternalFeature<TRow>>(
@@ -186,7 +194,7 @@ export function composeTable<TRow>(
       ...labelFeatures<TRow, AnyTableFeature>(
         features,
         describeFeature,
-        (feature) => feature(store) as TableFeatureSpec<TRow>,
+        (feature) => feature(store, stageContext as StageContext<unknown>) as TableFeatureSpec<TRow>,
         (feature) => feature.displayName
       ),
     ],
