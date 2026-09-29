@@ -39,6 +39,8 @@ export interface TreeOrder extends Order {
   parentId: number | null;
 }
 
+/** Flat order tree (4 under 1, 5 under 4) whose descendants' region and category differ from
+ * their root's. */
 export const treeOrders: TreeOrder[] = [
   { id: 1, parentId: null, region: 'US', category: 'Electronics' },
   { id: 2, parentId: null, region: 'EU', category: 'Books' },
@@ -47,7 +49,8 @@ export const treeOrders: TreeOrder[] = [
   { id: 5, parentId: 4, region: 'EU', category: 'Electronics' },
 ];
 
-/** Row 6 and 7 form a cycle (breaks at 6); row 8's parent 99 is absent. */
+/** Broken parent links: rows 6 and 7 form a cycle, broken at 6 (first in input order); row 8's
+ * parent 99 is absent. */
 export const brokenLinkOrders: TreeOrder[] = [
   { id: 6, parentId: 7, region: 'EU', category: 'Books' },
   { id: 8, parentId: 99, region: 'US', category: 'Books' },

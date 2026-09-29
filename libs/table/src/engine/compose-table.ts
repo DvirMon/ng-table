@@ -173,8 +173,8 @@ export function composeTable<TRow>(
   // earlier features, features that read it from a method or computed see everything.
   const store = createBaseStore(handle);
 
-  // Lazy: `parentLink` is contributed by whichever feature folds, possibly after a reader's
-  // factory has run, so `parentOf` must resolve at read time.
+  // Note: `parentOf` is a getter over `handle.parentLink`. The contributing feature may fold
+  // after a reader's factory runs; a copied value would stay `undefined` for earlier features.
   const stageContext: StageContext<TRow> = {
     get parentOf() {
       return handle.parentLink.value;

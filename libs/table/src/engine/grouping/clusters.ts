@@ -45,7 +45,8 @@ export interface ClusterOpts<TRow> {
   readonly knownIds?: ReadonlySet<string>;
   /** Names the declaring feature in a guard failure's thrown message. Paired with `knownIds`. */
   readonly label?: string;
-  /** Flat tree data: when present, every level's group value is read from the row's root. */
+  /** Parent link and row identity for flat tree data; when set, every level groups a row by its
+   * root's value instead of its own. */
   readonly treeLinks?: {
     readonly parentOf: ParentLink<TRow>;
     readonly trackBy: TrackByFn<TRow>;
@@ -149,12 +150,19 @@ export function readGroupValue<TRow>(
   return extractValue ? extractValue(raw) : raw;
 }
 
-/** Maps a row to its tree root over `rows`, via `resolveTreeLinks`' `parentById` — never the raw
- * `parentOf`, which loops on a cycle. A row the links do not know is its own root. */
+/**
+ * Returns a lookup from a row to its tree root within `rows`.
+ *
+ * @remarks
+ * A cycle, self-parent or absent parent ends the walk at that row. A row not in `rows` is its
+ * own root.
+ */
 export function createRootLookup<TRow>(
   rows: readonly TRow[],
   treeLinks: NonNullable<ClusterOpts<TRow>['treeLinks']>
 ): (row: TRow) => TRow {
+  // Note: walk the resolved `parentById`, never the raw `parentOf` — the raw link loops forever
+  // on a cycle.
   const { parentById } = resolveTreeLinks(rows, treeLinks);
   const rowById = new Map<RowId, TRow>();
   for (const row of rows) {
@@ -178,11 +186,12 @@ export function createRootLookup<TRow>(
   };
 }
 
-/** Shared by `pipeline.ts`'s `clusterRows` and `queries.ts`'s `rowsBeneathGroup`/`collectGroupIds`/
- * `collectAppliedLevels` — all cluster a raw `TRow[]` by the same resolved levels via the same
- * accessor read; only what the caller does with the resulting tree differs. Builds the column-id
- * map and the accessor-throw report set once per call. With `treeLinks`, every level reads the
- * row's root instead of the row. */
+/**
+ * Clusters `rows` by `levels`, reading each level's group value through its column accessor.
+ *
+ * @remarks
+ * With `treeLinks`, every level reads the row's root instead of the row.
+ */
 export function buildClusterNodes<TRow>(
   rows: TRow[],
   levels: readonly string[],
@@ -190,6 +199,9 @@ export function buildClusterNodes<TRow>(
   extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>,
   treeLinks?: ClusterOpts<TRow>['treeLinks']
 ): ClusterNode<TRow>[] {
+  // Note: the one clustering path behind `clusterRows`, `rowsBeneathGroup`, `collectGroupIds`
+  // and `collectAppliedLevels`, so their trees cannot drift. Column map and accessor-throw
+  // report set are built once per call.
   const columnById = new Map(columns.map((column) => [column.id, column]));
   const reportedColumns = new Set<string>();
   const rootOf = treeLinks ? createRootLookup(rows, treeLinks) : undefined;
