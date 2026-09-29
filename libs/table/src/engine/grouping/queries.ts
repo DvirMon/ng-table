@@ -13,7 +13,7 @@ import {
 function findClusterByPath<T>(
   nodes: ClusterNode<T>[],
   parentPath: string,
-  targetId: RowId
+  targetId: RowId,
 ): ClusterNode<T> | undefined {
   for (const node of nodes) {
     const path = buildGroupPath(parentPath, node.columnId, node.value);
@@ -40,12 +40,18 @@ export function rowsBeneathGroup<TRow>(
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
   groupId: RowId,
-  opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn'>
+  opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn' | 'treeLinks'>,
 ): TRow[] {
   if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(
+    rows,
+    grouping,
+    columns,
+    opts?.extractValueByColumn,
+    opts?.treeLinks,
+  );
   const node = findClusterByPath(nodes, '', groupId);
   return node ? flattenLeaves([node]) : [];
 }
@@ -54,7 +60,10 @@ export function rowsBeneathGroup<TRow>(
 // `emitGroupRows`, which only descends into an expanded node's children. Reuses
 // `buildGroupPath`/`toGroupId` so the id format can never drift from what a header actually
 // renders.
-function collectClusterGroupIds<T>(nodes: ClusterNode<T>[], parentPath: string): RowId[] {
+function collectClusterGroupIds<T>(
+  nodes: ClusterNode<T>[],
+  parentPath: string,
+): RowId[] {
   return nodes.flatMap((node) => {
     if (!node.admitted) return [];
     const path = buildGroupPath(parentPath, node.columnId, node.value);
@@ -70,12 +79,18 @@ export function collectGroupIds<TRow>(
   rows: TRow[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  opts?: ClusterOpts<TRow>
+  opts?: ClusterOpts<TRow>,
 ): RowId[] {
   if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, grouping, columns, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(
+    rows,
+    grouping,
+    columns,
+    opts?.extractValueByColumn,
+    opts?.treeLinks,
+  );
   const admitted = admitClusters(
     nodes,
     opts?.when,
@@ -84,11 +99,16 @@ export function collectGroupIds<TRow>(
     opts?.columnWhen,
     () => columns,
     opts?.knownIds ?? new Set(columns.map((column) => column.id)),
-    opts?.label ?? 'withGrouping'
+    opts?.label ?? 'withGrouping',
   );
-  const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
-    done: false,
-  });
+  const ordered = sortClusters(
+    admitted,
+    opts?.groupOrderByColumn,
+    (items) => items,
+    {
+      done: false,
+    },
+  );
   return collectClusterGroupIds(ordered, '');
 }
 
@@ -105,12 +125,18 @@ export function collectAppliedLevels<TRow>(
   rows: TRow[],
   declaredLevels: readonly string[],
   columns: ColumnDef<TRow>[],
-  opts?: ClusterOpts<TRow>
+  opts?: ClusterOpts<TRow>,
 ): string[] {
   if (declaredLevels.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(rows, declaredLevels, columns, opts?.extractValueByColumn);
+  const nodes = buildClusterNodes(
+    rows,
+    declaredLevels,
+    columns,
+    opts?.extractValueByColumn,
+    opts?.treeLinks,
+  );
   const admitted = admitClusters(
     nodes,
     opts?.when,
@@ -119,7 +145,7 @@ export function collectAppliedLevels<TRow>(
     opts?.columnWhen,
     () => columns,
     opts?.knownIds ?? new Set(columns.map((column) => column.id)),
-    opts?.label ?? 'withGrouping'
+    opts?.label ?? 'withGrouping',
   );
 
   const applied: string[] = [];
@@ -129,7 +155,9 @@ export function collectAppliedLevels<TRow>(
       break;
     }
     applied.push(level);
-    frontier = frontier.filter((node) => node.admitted).flatMap((node) => node.children);
+    frontier = frontier
+      .filter((node) => node.admitted)
+      .flatMap((node) => node.children);
   }
   return applied;
 }
