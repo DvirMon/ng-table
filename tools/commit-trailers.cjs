@@ -2,15 +2,23 @@
 // pr-conventions.yml, so both read a message the same way. Contract:
 // docs/agents/issue-tracker.md#issue-references.
 
-// "<emoji> <type>(<scope>)!: <subject>" — emoji required, scope optional.
-// Types: @commitlint/config-conventional's list.
+// "<emoji> [#<issue> <stage>] <type>(<scope>)!: <subject>" — emoji required;
+// story tag and scope optional. Types: @commitlint/config-conventional's list.
 const TYPES = [
-  'feat', 'fix', 'refactor', 'perf', 'test', 'docs',
+  'feat', 'fix', 'ref', 'perf', 'test', 'docs',
   'chore', 'build', 'ci', 'style', 'revert',
 ];
+// Still accepted, never suggested: the long form `ref` replaced. Drop once
+// the commit-writing skills emit `ref`.
+const LEGACY_TYPES = ['refactor'];
+// Where a commit sits in its issue's story: step N of the plan, or one of
+// the named stages around the steps.
+const STAGES = ['plan', 'review'];
+const STAGE = `s[1-9]\\d*|${STAGES.join('|')}`;
 const HEADER = new RegExp(
   `^(\\p{Extended_Pictographic}[\\u{FE0F}\\u{200D}\\p{Extended_Pictographic}]*) ` +
-  `(${TYPES.join('|')})(?:\\(([a-z0-9][a-z0-9/._-]*)\\))?(!)?: (\\S.*)$`,
+  `(?:\\[#(\\d+) (${STAGE})\\] )?` +
+  `(${[...TYPES, ...LEGACY_TYPES].join('|')})(?:\\(([a-z0-9][a-z0-9/._-]*)\\))?(!)?: (\\S.*)$`,
   'u',
 );
 const PR_ISSUE_SUFFIX = / \(#\d+\)$/;
@@ -62,12 +70,16 @@ function findGithubClosingKeywords(message) {
   );
 }
 
-/** @returns {{ emoji: string, type: string, scope?: string } | null} */
+/**
+ * @returns {{ emoji: string, type: string, scope?: string,
+ *   story?: { issue: number, stage: string } } | null}
+ */
 function parseHeader(subject) {
   const match = HEADER.exec(subject ?? '');
   if (!match) return null;
-  const [, emoji, type, scope] = match;
-  return { emoji, type, scope };
+  const [, emoji, issue, stage, type, scope] = match;
+  const story = issue === undefined ? undefined : { issue: Number(issue), stage };
+  return { emoji, type, scope, story };
 }
 
 // Kept for callers that only need the type: "✅ test(table/x)!: ..." -> "test".
@@ -77,8 +89,10 @@ function commitType(subject) {
 
 function headerProblem(subject, what) {
   return (
-    `${what} "${subject}" must match "<emoji> <type>(<scope>): <subject>" ` +
-    `— types: ${TYPES.join(', ')}. See the atomic-commit skill.`
+    `${what} "${subject}" must match ` +
+    '"<emoji> [#<issue> <stage>] <type>(<scope>): <subject>" (story tag ' +
+    `optional; stage: s<N>, ${STAGES.join(', ')}) — types: ${TYPES.join(', ')}. ` +
+    'See the atomic-commit skill.'
   );
 }
 
@@ -106,8 +120,8 @@ function lintMessage(message, opts = {}) {
     return problems;
   }
 
-  const hasValidHeader = parseHeader(subject) !== null;
-  if (!hasValidHeader) problems.push(headerProblem(subject, 'Subject'));
+  const header = parseHeader(subject);
+  if (header === null) problems.push(headerProblem(subject, 'Subject'));
 
   for (const keyword of findGithubClosingKeywords(cleaned)) {
     problems.push(
@@ -134,6 +148,14 @@ function lintMessage(message, opts = {}) {
     problems.push(
       'Every commit needs a trailer line "Refs: #N" (the issue it belongs ' +
       'to) or "Refs: none".',
+    );
+  }
+
+  const story = header?.story;
+  if (story && !trailers.refs.includes(story.issue)) {
+    problems.push(
+      `Story tag [#${story.issue} ${story.stage}] names an issue the ` +
+      `"Refs:" trailer does not — add "Refs: #${story.issue}" or fix the tag.`,
     );
   }
   return problems;

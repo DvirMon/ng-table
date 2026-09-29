@@ -23,4 +23,4 @@ Acceptance checks on an Angular project cite `nx run <project>:typecheck` (ngc, 
 
 Issues live in GitHub Issues. Every change reaches `main` through a PR, one issue = one branch = one PR, rebase-merged — never a direct push, never a merge commit. `/ship` opens the PR with auto-merge on. See `docs/agents/issue-tracker.md#issue-references`.
 
-Commits: emoji conventional header plus a `Refs: #N` (or `Refs: none`) trailer; `Closes #N` belongs in the PR body, never a commit. The `.githooks/` hooks and the `pr-conventions` check reject violations.
+Commits: emoji conventional header with an optional story tag — `🎸 [#166 s2] feat(table/tree): …` (stage `s<N>`, `plan` or `review`; refactors are `ref`) — plus a `Refs: #N` (or `Refs: none`) trailer; `Closes #N` belongs in the PR body, never a commit. The `.githooks/` hooks and the `pr-conventions` check reject violations.
