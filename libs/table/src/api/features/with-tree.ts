@@ -135,7 +135,8 @@ function reportBrokenLinksOnce(
   reported: Record<BrokenLinkKind, boolean>
 ): void {
   (['self', 'absent', 'cycle'] as const).forEach((kind: BrokenLinkKind) => {
-    if (broken[kind].length > 0 && !reported[kind]) {
+    const shouldReportKind = broken[kind].length > 0 && !reported[kind];
+    if (shouldReportKind) {
       reported[kind] = true;
       reportCallbackError(
         `[withTree] parentId produced a "${kind}" link. The affected row(s) render as roots ` +
