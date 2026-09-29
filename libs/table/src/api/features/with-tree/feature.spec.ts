@@ -24,7 +24,7 @@ import { contains } from '../with-filtering/rules';
 import { withGrouping, type GroupingMembers } from '../with-grouping';
 import { withSorting, type SortingMembers } from '../with-sorting';
 import { withTree } from './feature';
-import type { ExpansionChange, TreeMembers, TreeSlice } from './types';
+import type { ExpansionChange, TreeMembers, TreeSlice, WithTreeConfig } from './types';
 
 interface Row {
   id: string;
@@ -1863,6 +1863,85 @@ describe('withTree', () => {
     });
   });
 
+  // Step 4 (#169): filter reveal. Red phase per step-4-reveal-context-rows.test-plan.md.
+  describe('filter reveal (#169)', () => {
+    // `withTree()` first on purpose: a reveal reading `ctx.contextRows` in the factory body
+    // (forbidden, D22) would see no slot.
+    function setupFiltered(config: Pick<WithTreeConfig<FlatRow>, 'revealContextRow'> = {}) {
+      // Unannotated so `path.name` keeps its literal id (ADR-0019).
+      const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
+      return inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns },
+          withTree({ parentId: (row) => row.parentId, ...config }),
+          withFiltering({ schema: (path) => ({ name: contains(path.name) }) })
+        )
+      );
+    }
+
+    it('renders every context row expanded under an active filter without writing the open set', () => {
+      const store = setupFiltered();
+      const emissions: ExpansionChange[] = [];
+      store.tree.changed.subscribe((change) => emissions.push(change));
+
+      store.filters.name().value.set('Grand');
+
+      const rows = store.renderRows();
+      expect(rows.map((r) => r.id)).toEqual(['r1', 'c1', 'g1']);
+      expect(rows.find((r) => r.id === 'r1')?.isExpanded).toBe(true);
+      expect(rows.find((r) => r.id === 'c1')?.isExpanded).toBe(true);
+      expect([...store.tree()]).toEqual([]);
+      expect(emissions).toEqual([]);
+    });
+
+    it("restores the person's own open set exactly once the filter is cleared", () => {
+      const store = setupFiltered();
+
+      store.tree.expand(['c1']);
+      store.filters.name().value.set('Grand');
+      expect(store.renderRows().map((r) => r.id)).toEqual(['r1', 'c1', 'g1']);
+
+      store.filters().reset(null);
+
+      expect(store.renderRows().map((r) => r.id)).toEqual(['r1', 'r2']);
+      expect([...store.tree()]).toEqual(['c1']);
+    });
+
+    it('reveals only the context rows revealContextRow accepts', () => {
+      const store = setupFiltered({ revealContextRow: (row) => !row.parentId });
+
+      store.filters.name().value.set('Grand');
+
+      const rows = store.renderRows();
+      expect(rows.map((r) => r.id)).toEqual(['r1', 'c1']);
+      expect(rows.find((r) => r.id === 'r1')?.isExpanded).toBe(true);
+      expect(rows.find((r) => r.id === 'c1')?.isExpanded).toBe(false);
+    });
+
+    it('reveals a row whose revealContextRow throws and reports once per evaluation', () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = setupFiltered({
+          revealContextRow: () => {
+            throw new Error('boom');
+          },
+        });
+
+        store.filters.name().value.set('Grand');
+        expect(store.renderRows().map((r) => r.id)).toEqual(['r1', 'c1', 'g1']);
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+        expect(consoleErrorSpy.mock.calls[0][0]).toContain('revealContextRow');
+
+        store.filters.name().value.set('Child');
+        store.renderRows();
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
+  });
+
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — it is
   // inert at runtime. These are only enforced by `tsc -p libs/table/tsconfig.spec.json
@@ -1992,6 +2071,30 @@ describe('withTree', () => {
           withTree({ parentId: () => ({}) })
         )
       );
+    });
+
+    // #169 — `revealContextRow`'s row parameter is inferred as `RowOf<In>`, never any.
+    it('revealContextRow infers its row parameter as RowOf<In>, never any', () => {
+      inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({
+            parentId: (row) => row.parentId,
+            revealContextRow: (row) => {
+              expectTypeOf(row).toEqualTypeOf<FlatRow>();
+              return true;
+            },
+          })
+        )
+      );
+    });
+
+    // #169 — optional, returns boolean.
+    it('revealContextRow is an optional (row) => boolean', () => {
+      expectTypeOf<WithTreeConfig<FlatRow>['revealContextRow']>().toEqualTypeOf<
+        ((row: FlatRow) => boolean) | undefined
+      >();
     });
   });
 });
