@@ -177,7 +177,7 @@ recovered as `RowOf<In>`, never written at the call site.
 
 ```ts
 export function withFeature<In extends Shape>(config: FeatureConfig = {}) {
-  return createTableFeature((store: In) => {
+  return createTableFeature((store: In, ctx) => {
     const someState = signal(initial); // feature owns its own signals, no engine-managed state
 
     return {
@@ -189,6 +189,9 @@ export function withFeature<In extends Shape>(config: FeatureConfig = {}) {
   });
 }
 ```
+
+`ctx` is the engine's `StageContext` (ADR-0028). Read `ctx.parentOf` inside stages, methods or
+computeds, never in the factory body — a feature folded later has not contributed it yet.
 
 `createTableFeature` (exported from `index.ts`) is the public authoring entry point.
 `createTableFeature(factory, derive)` plumbs a trailing derive block, called with `In & Out`; a

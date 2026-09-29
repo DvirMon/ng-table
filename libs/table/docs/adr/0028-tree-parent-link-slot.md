@@ -13,5 +13,6 @@
 - With ancestor retention, filtering never orphans a row; orphans come only from broken parent data, which degrades to root (ADR-0014).
 - Post-filter row counts and select-all include context rows, matching what renders.
 - `withGrouping()`'s `group` stage is the second consumer: with the slot present it groups roots only, and each subtree follows its root.
+- Feature factories receive the slot too: the engine passes the stage context as a required second argument, `(input, ctx)`. `ctx.parentOf` is a lazy getter, so a factory reads it inside stages, methods or computeds, never in its body — a feature folded later has not contributed its link yet.
 - The same pattern carries the reverse fact: `withFiltering()` contributes the set of context-row ids as an accumulating engine slot, which the engine stamps as `RenderRow.isContextRow` and `withTree()` reads for reveal (#163 architecture A2).
 - Without `withTree()` the slot is absent and filtering is unchanged.
