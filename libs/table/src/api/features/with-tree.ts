@@ -156,6 +156,15 @@ function isRowNode<TRow>(node: RenderNode<TRow>): node is RowNode<TRow> {
   return node.data !== null;
 }
 
+// The 4 params `nestFlatPool`/`nestFlatSiblings` pass through their mutual recursion unchanged,
+// bundled so the recursive call site carries one reference instead of four positional args.
+interface NestContext<TRow> {
+  readonly trackBy: TrackByFn<TRow>;
+  readonly parentOf: ParentLink<TRow>;
+  readonly isExpandableGuarded: ((row: TRow) => boolean) | undefined;
+  readonly reported: Record<BrokenLinkKind, boolean>;
+}
+
 // Nests one flat pool of sibling rows — either the top-level input or a single group header's
 // own member list, never across headers (#170 is roots-only grouping across groups) — by
 // resolved parent id. Sibling order follows `poolNodes`' own order, which is the stage's input
@@ -163,23 +172,23 @@ function isRowNode<TRow>(node: RenderNode<TRow>): node is RowNode<TRow> {
 // other row in this same pool declares this row as its parent."
 function nestFlatPool<TRow>(
   poolNodes: readonly RowNode<TRow>[],
-  trackBy: TrackByFn<TRow>,
-  parentOf: ParentLink<TRow>,
-  isExpandableGuarded: ((row: TRow) => boolean) | undefined,
-  reported: Record<BrokenLinkKind, boolean>
+  ctx: NestContext<TRow>
 ): readonly RowNode<TRow>[] {
   if (poolNodes.length === 0) {
     return [];
   }
 
   const rows = poolNodes.map((node) => node.data);
-  const { parentById, broken } = resolveTreeLinks(rows, { parentOf, trackBy });
-  reportBrokenLinksOnce(broken, reported);
+  const { parentById, broken } = resolveTreeLinks(rows, {
+    parentOf: ctx.parentOf,
+    trackBy: ctx.trackBy,
+  });
+  reportBrokenLinksOnce(broken, ctx.reported);
 
   const childIdsByParent = new Map<RowId, RowId[]>();
   const rootIds: RowId[] = [];
   for (const node of poolNodes) {
-    const id = trackBy(node.data);
+    const id = ctx.trackBy(node.data);
     const parent = parentById.get(id) ?? null;
     if (parent === null) {
       rootIds.push(id);
@@ -193,10 +202,10 @@ function nestFlatPool<TRow>(
     }
   }
 
-  const nodeById = new Map(poolNodes.map((node) => [trackBy(node.data), node]));
+  const nodeById = new Map(poolNodes.map((node) => [ctx.trackBy(node.data), node]));
   const canExpand =
-    isExpandableGuarded ??
-    ((row: TRow): boolean => (childIdsByParent.get(trackBy(row))?.length ?? 0) > 0);
+    ctx.isExpandableGuarded ??
+    ((row: TRow): boolean => (childIdsByParent.get(ctx.trackBy(row))?.length ?? 0) > 0);
 
   const buildNode = (id: RowId): RowNode<TRow> => {
     const node = nodeById.get(id)!;
@@ -216,25 +225,22 @@ function nestFlatPool<TRow>(
 // is emitted only once, nested beneath its resolved parent.
 function nestFlatSiblings<TRow>(
   siblings: readonly RenderNode<TRow>[],
-  trackBy: TrackByFn<TRow>,
-  parentOf: ParentLink<TRow>,
-  isExpandableGuarded: ((row: TRow) => boolean) | undefined,
-  reported: Record<BrokenLinkKind, boolean>
+  ctx: NestContext<TRow>
 ): readonly RenderNode<TRow>[] {
   const poolNodes = siblings.filter(isRowNode);
-  const nested = nestFlatPool(poolNodes, trackBy, parentOf, isExpandableGuarded, reported);
-  const nestedById = new Map(nested.map((node) => [trackBy(node.data), node]));
+  const nested = nestFlatPool(poolNodes, ctx);
+  const nestedById = new Map(nested.map((node) => [ctx.trackBy(node.data), node]));
 
   return siblings.flatMap((node) => {
     if (!isRowNode(node)) {
       return [
         {
           ...node,
-          children: nestFlatSiblings(node.children, trackBy, parentOf, isExpandableGuarded, reported),
+          children: nestFlatSiblings(node.children, ctx),
         },
       ];
     }
-    const built = nestedById.get(trackBy(node.data));
+    const built = nestedById.get(ctx.trackBy(node.data));
     return built ? [built] : [];
   });
 }
@@ -249,24 +255,21 @@ function buildFlatTreeStage<TRow>(
   const parentId = config.parentId!;
   return (nodes) => {
     const reported: Record<BrokenLinkKind, boolean> = { self: false, absent: false, cycle: false };
-    let reportedThrow = false;
+    const parentIdReported: ReportFlag = { done: false };
+    const parentOf: ParentLink<TRow> = guardCallback<TRow, RowId | null>(
+      (row) => parentId(row) ?? null,
+      parentIdReported,
+      '[withTree] parentId threw. The affected row(s) render as roots for this evaluation.',
+      null
+    );
 
-    const parentOf: ParentLink<TRow> = (row) => {
-      try {
-        return parentId(row) ?? null;
-      } catch (error) {
-        if (!reportedThrow) {
-          reportedThrow = true;
-          reportCallbackError(
-            '[withTree] parentId threw. The affected row(s) render as roots for this evaluation.',
-            error
-          );
-        }
-        return null;
-      }
+    const ctx: NestContext<TRow> = {
+      trackBy,
+      parentOf,
+      isExpandableGuarded: guardIsExpandable(config),
+      reported,
     };
-
-    return nestFlatSiblings(nodes, trackBy, parentOf, guardIsExpandable(config), reported);
+    return nestFlatSiblings(nodes, ctx);
   };
 }
 
