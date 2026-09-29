@@ -1718,6 +1718,167 @@ describe('withTree', () => {
     });
   });
 
+  // Step 3 (#167): `table.tree.parentOf` / `descendantsOf`. Seams A-J, red-green order per
+  // step-3-tree-reads.test-plan.md (seam K lives in row-mutations.spec.ts). Both reads throw
+  // `not implemented` in this red phase — every seam below is expected to fail.
+  describe('tree reads (parentOf / descendantsOf)', () => {
+    function setupFlatTree(): TableStore<FlatRow> & TreeMembers {
+      return inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
+        )
+      );
+    }
+
+    it('parentOf(id) returns the parent id of a child and of a grandchild', () => {
+      const store = setupFlatTree();
+
+      expect(store.tree.parentOf('c1')).toBe('r1');
+      expect(store.tree.parentOf('g1')).toBe('c1');
+    });
+
+    it('parentOf(id) of a root row returns null', () => {
+      const store = setupFlatTree();
+
+      expect(store.tree.parentOf('r1')).toBeNull();
+      expect(store.tree.parentOf('r2')).toBeNull();
+    });
+
+    it('parentOf(id) of an id not in data() returns null', () => {
+      const store = setupFlatTree();
+
+      expect(() => store.tree.parentOf('nope')).not.toThrow();
+      expect(store.tree.parentOf('nope')).toBeNull();
+    });
+
+    it('descendantsOf(id) returns every descendant depth-first in data() order and excludes the row itself', () => {
+      const store = setupFlatTree();
+
+      expect(store.tree.descendantsOf('r1')).toEqual(['c1', 'g1', 'c2']);
+      expect(store.tree.descendantsOf('c1')).toEqual(['g1']);
+    });
+
+    it('descendantsOf(id) of an id not in data() returns an empty array', () => {
+      const store = setupFlatTree();
+
+      expect(() => store.tree.descendantsOf('nope')).not.toThrow();
+      expect(store.tree.descendantsOf('nope')).toEqual([]);
+    });
+
+    it('parentOf and descendantsOf read data(), so a row the pipeline dropped still counts', () => {
+      // Deliberately a bare pipeline-stage claimant, not `withFiltering()` — that's another
+      // domain (.claude/rules/spec-files-assert-own-domain-only.md).
+      const dropsC1 = createTableFeature((_store: Pick<TableStore<FlatRow>, 'rows'>) => ({
+        stages: stageSchema<FlatRow>('pipeline', (s) =>
+          stage(s.filter, {
+            run: (rowsIn) => rowsIn.filter((row) => row.id !== 'c1'),
+          })
+        ),
+      }));
+
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          dropsC1,
+          withTree({ parentId: (row) => row.parentId })
+        )
+      );
+
+      expect(store.rows().map((row) => row.id)).not.toContain('c1');
+      expect(store.tree.parentOf('g1')).toBe('c1');
+      expect(store.tree.descendantsOf('r1')).toEqual(['c1', 'g1', 'c2']);
+    });
+
+    it('a parentId cycle never loops: the first row of the cycle is a root', () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        interface CycleRow {
+          id: string;
+          name: string;
+          parentId?: string | null;
+        }
+        const rows: CycleRow[] = [
+          { id: 'a', name: 'A', parentId: 'b' },
+          { id: 'b', name: 'B', parentId: 'a' },
+        ];
+        const columns = createColumns(noData<CycleRow>(), (col) => [col('name')]);
+        const store = inContext(() =>
+          createTable(
+            signal<CycleRow[]>(rows),
+            { trackBy: 'id', columns },
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+
+        expect(store.tree.parentOf('a')).toBeNull();
+        expect(store.tree.parentOf('b')).toBe('a');
+        expect(store.tree.descendantsOf('a')).toEqual(['b']);
+        expect(store.tree.descendantsOf('b')).toEqual([]);
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
+
+    it('without parentId, parentOf returns null and descendantsOf returns [] even when rows carry a parent field', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree()
+        )
+      );
+
+      expect(store.tree.parentOf('c1')).toBeNull();
+      expect(store.tree.descendantsOf('r1')).toEqual([]);
+    });
+
+    it('removeRow([id, ...tree.descendantsOf(id)]) cascades the delete in one write', () => {
+      const data = signal<FlatRow[]>(makeFlatRows());
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
+        )
+      );
+
+      store.value.update(removeRow(['r1', ...store.tree.descendantsOf('r1')]));
+      TestBed.tick();
+
+      expect(store.value().map((r) => r.id)).toEqual(['r2']);
+    });
+
+    it('removing only a parent leaves its children in data at the top level, and parentOf reports them as roots', () => {
+      const data = signal<FlatRow[]>(makeFlatRows());
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
+        )
+      );
+
+      store.value.update(removeRow('r1'));
+      TestBed.tick();
+
+      const remainingIds = store.value().map((r) => r.id);
+      expect(remainingIds).toContain('c1');
+      expect(remainingIds).toContain('c2');
+      expect(remainingIds).toContain('g1');
+      expect(store.tree.parentOf('c1')).toBeNull();
+      expect(store.tree.parentOf('g1')).toBe('c1');
+
+      const renderRows = store.renderRows();
+      const c1 = renderRows.find((row) => row.id === 'c1');
+      const c2 = renderRows.find((row) => row.id === 'c2');
+      expect(c1?.depth).toBe(0);
+      expect(c2?.depth).toBe(0);
+    });
+  });
+
   // -------------------------------------------------------------------------------------
   // Type-level assertions. The vitest executor does NOT typecheck `expectTypeOf` — it is
   // inert at runtime. These are only enforced by `tsc -p libs/table/tsconfig.spec.json

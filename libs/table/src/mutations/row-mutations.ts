@@ -29,7 +29,20 @@ export function insertRow<TRow>(
   };
 }
 
-export function removeRow<TRow>(id: RowId): RowUpdater<TRow> {
+/**
+ * `ids` (D32) cascade-deletes a subtree in one write — e.g.
+ * `removeRow(['r1', ...table.tree.descendantsOf('r1')])`. Ids not present in the rows are
+ * skipped; unlike the single-id form, there is no dedicated "not found" no-op path because a
+ * partial match is expected (a descendant already removed elsewhere).
+ */
+export function removeRow<TRow>(id: RowId): RowUpdater<TRow>;
+export function removeRow<TRow>(ids: RowId[]): RowUpdater<TRow>;
+export function removeRow<TRow>(idOrIds: RowId | RowId[]): RowUpdater<TRow> {
+  if (Array.isArray(idOrIds)) {
+    const removing = new Set(idOrIds);
+    return (rows, { trackBy }) => rows.filter((row) => !removing.has(trackBy(row)));
+  }
+  const id = idOrIds;
   return (rows, { trackBy, indexById }) => {
     const at = resolveIndex(rows, id, { trackBy, indexById });
     if (at === -1) return rows;

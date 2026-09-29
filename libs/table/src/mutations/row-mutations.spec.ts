@@ -1,5 +1,6 @@
+import { expectTypeOf } from 'vitest';
 import { insertRow, patchRow, removeRow } from './row-mutations';
-import type { RowId } from '../api/types';
+import type { RowId, RowUpdater } from '../api/types';
 import { createMockTableStoreWithData, mockRows, mockTrackBy, type MockRow } from '../table.mock';
 
 type Person = MockRow;
@@ -81,6 +82,48 @@ describe('removeRow', () => {
   it('is a no-op (returns an equivalent array) when the id is not present', () => {
     const result = removeRow<Person>(999)(rows, ctx);
     expect(result).toEqual(rows);
+  });
+
+  // Seam K (#167 step 3, D32) — the array overload cascade-deletes in one write. Its own
+  // fixture (letters, not `Person`/`mockRows`) matches the plan's exact ids.
+  describe('array form (D32)', () => {
+    interface Letter {
+      id: string;
+    }
+    const letterTrackBy = (row: Letter): RowId => row.id;
+    const letters: Letter[] = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
+    function letterCtx(data: Letter[] = letters): {
+      trackBy: (row: Letter) => RowId;
+      indexById: ReadonlyMap<RowId, number>;
+    } {
+      const map = new Map<RowId, number>();
+      data.forEach((row, i) => map.set(letterTrackBy(row), i));
+      return { trackBy: letterTrackBy, indexById: map };
+    }
+
+    it('removeRow(ids) removes every listed id in one write and skips ids not in the rows', () => {
+      const result = removeRow<Letter>(['b', 'nope', 'd'])(letters, letterCtx());
+      expect(result.map((r) => r.id)).toEqual(['a', 'c']);
+
+      const noop = removeRow<Letter>([])(letters, letterCtx());
+      expect(noop).toEqual(letters);
+
+      // The single-id form is untouched by the array overload.
+      const single = removeRow<Letter>('b')(letters, letterCtx());
+      expect(single.map((r) => r.id)).toEqual(['a', 'c', 'd']);
+    });
+  });
+
+  // -------------------------------------------------------------------------------------
+  // Type-level assertions (#167 step 3). The vitest executor does NOT typecheck
+  // `expectTypeOf` — it is inert at runtime. Only enforced by
+  // `nx run shared-table:typecheck-spec`.
+  // -------------------------------------------------------------------------------------
+  describe('types', () => {
+    it('both overloads resolve to RowUpdater<TRow>', () => {
+      expectTypeOf(removeRow<Person>('a')).toEqualTypeOf<RowUpdater<Person>>();
+      expectTypeOf(removeRow<Person>(['a'])).toEqualTypeOf<RowUpdater<Person>>();
+    });
   });
 });
 
