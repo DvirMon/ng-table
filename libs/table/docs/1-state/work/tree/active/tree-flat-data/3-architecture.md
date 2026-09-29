@@ -171,7 +171,7 @@ includeDescendants?: boolean;
 
 ## Open questions
 
-- ~~**OQ-A1**~~ — resolved 2026-09-29 as B2 (D22): the engine passes
+- ~~**OQ-A1**~~ — resolved 2026-09-29 by D22: the engine passes
   `ctx` to every feature factory as a required second argument
   `(input, ctx)`; nothing is injected into `input`.
 - **OQ-A4** — tri-state `includeHidden` surface (above).
