@@ -33,6 +33,8 @@ export interface TableCoreHandle<TRow> {
   /** One entry per feature declaring `contextRows`. Unioned below into the
    * `isContextRow` stamp. */
   readonly contextSources: Signal<ReadonlySet<RowId>>[];
+  /** The union of every contributed `contextRows` set; `undefined` when none contributed. */
+  readonly contextRows: Signal<ReadonlySet<RowId> | undefined>;
   // Note: a box, not a reassigned property, so `rows`/`renderRows` read `value` at evaluation
   // time. Captured at construction it is always `undefined` — the fold sets it later.
   // Passed to stages unwrapped: a throwing link degrades to root in the contributor's own
@@ -161,6 +163,7 @@ export function createTableCore<TRow>(
     columnRules,
     expandedSources,
     contextSources,
+    contextRows: context,
     parentLink,
   };
 }

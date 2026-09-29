@@ -32,11 +32,16 @@ export type ParentLink<TRow> = (row: TRow) => RowId | null;
  * Second argument to every stage and feature factory; `parentOf` is `undefined` unless a feature
  * contributes `parentLink`. Note: a later feature may contribute it, so a factory reads
  * `parentOf` lazily — in a getter or `computed()`, never once in its body.
+ *
+ * `contextRows()` returns the union of every feature's contributed `contextRows` ids, empty when
+ * none contributed. Read it lazily too — in a stage, method or `computed()`, never in a factory
+ * body — because a feature folded later may contribute.
  */
 // Method syntax on purpose: its parameter is checked bivariantly, so a `StageContext<TRow>`
 // reaches a row-erased `AnyTableFeature` (whose ctx is `StageContext<unknown>`) without a cast.
 export type StageContext<TRow> = {
   parentOf?(row: TRow): RowId | null;
+  contextRows?(): ReadonlySet<RowId>;
 };
 
 // Currently held only by the internally-spliced column-schema wiring — consumer feature

@@ -8,6 +8,8 @@ import { describeFeature, describeInternalFeature, SlotRegistry } from './slots'
 import { resolveStageOrder, type LabelledStageRule } from './stage-order';
 import type { StageContext, TableCore, TableEngineConfig, TableFeatureSpec } from './types';
 
+const EMPTY_CONTEXT_ROWS: ReadonlySet<RowId> = new Set();
+
 interface FeatureHooks {
   readonly setup: (() => void)[];
   readonly onDestroy: (() => void)[];
@@ -178,6 +180,9 @@ export function composeTable<TRow>(
   const stageContext: StageContext<TRow> = {
     get parentOf() {
       return handle.parentLink.value;
+    },
+    contextRows(): ReadonlySet<RowId> {
+      return handle.contextRows() ?? EMPTY_CONTEXT_ROWS;
     },
   };
 
