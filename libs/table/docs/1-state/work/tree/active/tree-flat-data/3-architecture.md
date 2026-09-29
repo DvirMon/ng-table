@@ -146,10 +146,9 @@ includeDescendants?: boolean;
   in one table is a construction error (throw, naming both), per
   `classify-errors-construction-vs-runtime`; `expandedRows` stays
   accumulating.
-- **A4 — `state` with `includeHidden`.** `state` is a signal and takes no
-  arguments; the `includeHidden` variant for the tri-state is left to
-  `/to-tasks` (a second signal vs. a method). `expand(ids?, { includeHidden })`
-  is settled.
+- **A4 — `state` with `includeHidden`.** Resolved by D26: `state` is a
+  method, `state(options?: { includeHidden?: boolean })`.
+  `expand(ids?, { includeHidden })` is settled.
 
 ## File layout for implementation
 
@@ -174,6 +173,7 @@ includeDescendants?: boolean;
 - ~~**OQ-A1**~~ — resolved 2026-09-29 by D22: the engine passes
   `ctx` to every feature factory as a required second argument
   `(input, ctx)`; nothing is injected into `input`.
-- **OQ-A4** — tri-state `includeHidden` surface (above).
+- ~~**OQ-A4**~~ — resolved by D26: `state` is a method,
+  `state(options?: { includeHidden?: boolean })`.
 - Product-level opens (OQ-1 selection cascade, OQ-3 pagination, OQ-4 lazy
   indicator, OQ-5 server filtering) stay in `0-product/tree.md`.

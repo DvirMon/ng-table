@@ -15,4 +15,5 @@
 - `withGrouping()`'s `group` stage is the second consumer: with the slot present it groups roots only, and each subtree follows its root.
 - Feature factories receive the slot too: the engine passes the stage context as a required second argument, `(input, ctx)`. `ctx.parentOf` is a lazy getter, so a factory reads it inside stages, methods or computeds, never in its body — a feature folded later has not contributed its link yet.
 - The same pattern carries the reverse fact: `withFiltering()` contributes the set of context-row ids as an accumulating engine slot, which the engine stamps as `RenderRow.isContextRow` and `withTree()` reads for reveal (#163 architecture A2).
+- `ctx.contextRows()` returns the union of every `contextRows` contribution, empty when none contributes. Read it lazily, like `ctx.parentOf`; `withTree()` uses it for reveal and `table.tree.contextRowIds()` (#169).
 - Without `withTree()` the slot is absent and filtering is unchanged.

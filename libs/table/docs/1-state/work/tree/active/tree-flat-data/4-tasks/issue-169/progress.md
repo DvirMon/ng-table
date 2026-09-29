@@ -30,4 +30,4 @@ Steps 3–8 all edit `api/features/with-tree/feature.ts`, so they run in order.
 | 6 | Open-set writes clear closed rows | ✅ done |
 | 7 | expand() includeHidden | ✅ done |
 | 8 | state() includeHidden | ✅ done |
-| 9 | Docs and decisions | ⬚ pending |
+| 9 | Docs and decisions | ✅ done |

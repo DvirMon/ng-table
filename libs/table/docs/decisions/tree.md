@@ -76,6 +76,9 @@ column.
 | TR27 | `ctx` is required on the `Feature` call signature, so a composer that forgets to forward it fails to compile; one-argument factories still compile | 09-29 | decided (#170) | TFD D23 |
 | TR28 | Grouping's `ClusterOpts` carries the link as one field, `treeLinks?: { parentOf, trackBy }`, so a half-set pair cannot be written; absent means flat grouping | 09-29 | decided (#170) | TFD D24 |
 | TR29 | Rows inside a group bucket keep input order; the `'tree'` render stage owns hierarchy order | 09-29 | decided (#170) | TFD D25 |
+| TR30 | `table.tree.state` is a method, `state(options?: { includeHidden?: boolean })`; default scans the filtered view, `includeHidden` scans all of `data()`, as separate computeds | 09-29 | decided (#169) | TFD D26 · A4 |
+| TR31 | `StageContext` gains `contextRows?()`, the engine's union of every `contextRows` contribution (empty when none), read lazily so `withTree()` reads context rows without reading `withFiltering()` | 09-29 | decided (#169) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD D27 |
+| TR32 | Open-set writes (`expand`, `set`) clear the ids they name from the closed-while-revealed set; `collapse` writes only the open set; a throwing `revealContextRow` reveals the row and reports once per evaluation | 09-29 | decided (#169) | TFD D28 |
 
 ## Still open
 

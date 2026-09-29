@@ -63,6 +63,7 @@ interface WithTreeConfig<TRow> {
   isExpandable?: (row: TRow) => boolean;
   initial?: readonly RowId[];
   parentId?: (row: TRow) => RowId | null | undefined;
+  revealContextRow?: (row: TRow) => boolean;
 }
 ```
 
@@ -131,7 +132,9 @@ array, read once, emits nothing on `changed`.
 | Method | Description |
 |---|---|
 | `table.tree.toggle(rowId, options?)` | Toggle a single row's open state. Emits `changed` once. |
-| `table.tree.expand(ids?, options?)` | Adds. Omitted `ids`: every expandable row found by the discovery walk, unioned with what's already open. |
+| `table.tree.expand(ids?, options?)` | Adds. Omitted `ids`: every expandable row found by the discovery walk over the filtered view, unioned with what's already open. `options.includeHidden` scans all of `data()` instead (D8, D26). |
+| `table.tree.state(options?)` | Read-only. `'all'`, `'some'` or `'none'` over the expandable rows of the filtered view; `{ includeHidden: true }` reads all of `data()` (D26). |
+| `table.tree.contextRowIds()` | Read-only signal. Every row a filter retains as context, including rows hidden under a collapsed parent. Empty when nothing contributes. |
 | `table.tree.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open. |
 | `table.tree.set(ids, options?)` | Atomic replace — the restore path. |
 | `table.tree.parentOf(id)` | Read-only. The id's declared parent, or `null` for a root or an unknown id. Never reports. |
@@ -211,6 +214,35 @@ tr[data-context-row] { opacity: 0.6; }
 ```
 
 Tree indentation, `aria-level` and the toggle are out of this directive's scope.
+
+### Reveal
+
+While a filter is active, context rows render expanded so no match hides under a collapsed
+parent (D20). Reveal is a derived visibility source: the tree's contributed open set is
+(open set ∪ revealed context rows) − closed-while-revealed. It never writes the open set, so
+`table.tree()` is unchanged and `changed` does not fire; clearing the filter restores the
+person's own open set exactly.
+
+- **`revealContextRow`** — `(row) => boolean` on the `withTree()` config picks which context
+  rows reveal. Default: all. `() => false` turns reveal off. A throw reveals that row and reports
+  once per evaluation (ADR-0014, D28).
+- **Closing a revealed row** — `toggle(id)` on a revealed row closes it without writing the open
+  set or firing `changed`. The id stays closed only while its row is a context row, so it clears
+  itself when the row stops being context or the filter clears.
+- **Open-set writes** — `expand(ids)`, `expand()` and `set(ids)` also drop the ids they name from
+  the closed set, so the row shows open. `collapse` writes only the open set (D28).
+
+```ts
+const table = createTable(data, { trackBy: 'id', columns }, withFiltering(...), withTree({
+  parentId: (row) => row.parentId,
+  revealContextRow: (row) => row.kind === 'folder',
+}));
+
+table.tree.contextRowIds();                        // ReadonlySet<RowId>
+table.tree.expand();                               // filtered view only
+table.tree.expand(undefined, { includeHidden: true }); // all of data()
+table.tree.state({ includeHidden: true });         // 'all' | 'some' | 'none'
+```
 
 ## Events Owned
 
