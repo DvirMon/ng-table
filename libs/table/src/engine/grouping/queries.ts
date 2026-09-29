@@ -45,13 +45,7 @@ export function rowsBeneathGroup<TRow>(
   if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(
-    rows,
-    grouping,
-    columns,
-    opts?.extractValueByColumn,
-    opts?.treeLinks,
-  );
+  const nodes = buildClusterNodes(rows, grouping, columns, opts);
   const node = findClusterByPath(nodes, '', groupId);
   return node ? flattenLeaves([node]) : [];
 }
@@ -84,13 +78,7 @@ export function collectGroupIds<TRow>(
   if (grouping.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(
-    rows,
-    grouping,
-    columns,
-    opts?.extractValueByColumn,
-    opts?.treeLinks,
-  );
+  const nodes = buildClusterNodes(rows, grouping, columns, opts);
   const admitted = admitClusters(
     nodes,
     opts?.when,
@@ -130,13 +118,7 @@ export function collectAppliedLevels<TRow>(
   if (declaredLevels.length === 0) {
     return [];
   }
-  const nodes = buildClusterNodes(
-    rows,
-    declaredLevels,
-    columns,
-    opts?.extractValueByColumn,
-    opts?.treeLinks,
-  );
+  const nodes = buildClusterNodes(rows, declaredLevels, columns, opts);
   const admitted = admitClusters(
     nodes,
     opts?.when,
