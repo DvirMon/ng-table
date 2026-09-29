@@ -19,6 +19,8 @@ import { createTableFeature } from '../create-table-feature';
 import type { ColumnDecl, ColumnSet, RenderRow, RowId, TableStore } from '../types';
 import { selectAllIds } from './with-selection/utils';
 import { withComputed } from './with-computed';
+import { withFiltering } from './with-filtering/feature';
+import { contains } from './with-filtering/rules';
 import { withGrouping, type GroupingMembers } from './with-grouping';
 import { withSorting, type SortingMembers } from './with-sorting';
 import { withTree, type ExpansionChange, type TreeMembers, type TreeSlice } from './with-tree';
@@ -760,6 +762,31 @@ describe('withTree', () => {
       const after = store.renderRows();
       expect(after.map((row) => row.id)).toEqual(['lazy', 'lazy-child', 'leaf']);
       expect(after.find((row) => row.id === 'lazy-child')?.depth).toBe(1);
+    });
+
+    it('hasChildren follows the filtered view — a parent whose children are all filtered out renders hasChildren: false (#168 D9)', () => {
+      // Unannotated so `path.name` keeps its literal id (ADR-0019).
+      const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns },
+          withTree({ parentId: (row) => row.parentId }),
+          withFiltering({
+            schema: (path) => ({ name: contains(path.name) }),
+            includeDescendants: false,
+          })
+        )
+      );
+
+      expect(store.renderRows().find((row) => row.id === 'r1')?.hasChildren).toBe(true);
+
+      // Only r1 ('A Parent') matches; its children c1 and c2 do not, so none is retained.
+      store.filters.name().value.set('Parent');
+
+      const filtered = store.renderRows();
+      expect(filtered.map((row) => row.id)).toEqual(['r1']);
+      expect(filtered[0].hasChildren).toBe(false);
     });
 
     it('F — expand() with no ids opens every row with a child in flat data, leaves leaves closed, and state() reads "all"', () => {

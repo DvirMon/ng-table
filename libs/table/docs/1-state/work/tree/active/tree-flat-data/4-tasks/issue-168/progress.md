@@ -3,7 +3,7 @@
 **Issue:** #168
 **Branch:** feat/168-filter-context-rows
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-168-filter-context-rows
-**Status:** 6 / 7 complete
+**Status:** 7 / 7 complete
 
 ## Graph
 
@@ -26,5 +26,5 @@ Parallel-safe: [1, 3] first · [2, 4, 5] after 1 (4 also after 3) · [6, 7] afte
 | 3 | Tree retention helper | ✅ done |
 | 4 | Filter keeps ancestors | ✅ done |
 | 5 | Tree-row directive | ✅ done |
-| 6 | hasChildren follows the filtered view | ▶ in progress |
+| 6 | hasChildren follows the filtered view | ✅ done |
 | 7 | Feature docs | ✅ done |
