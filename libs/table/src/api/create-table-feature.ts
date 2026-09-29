@@ -64,6 +64,7 @@ const PIPELINE_BEHAVIOR_KEYS = [
   'renderStages',
   'columnRules',
   'expandedRows',
+  'contextRows',
   'parentLink',
 ] as const;
 
@@ -94,6 +95,7 @@ function mergeDerivedSpec<TRow, Out extends object, D extends DerivedDict>(
     renderStages: spec.renderStages,
     columnRules: spec.columnRules,
     expandedRows: spec.expandedRows,
+    contextRows: spec.contextRows,
     parentLink: spec.parentLink,
     setup: chainCallbacks(spec.setup, derivedSpec.setup),
     onDestroy: chainCallbacks(spec.onDestroy, derivedSpec.onDestroy),
