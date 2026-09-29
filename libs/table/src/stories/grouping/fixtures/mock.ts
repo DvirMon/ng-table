@@ -42,8 +42,10 @@ export const GROUPING_ROWS_MOCK: DealRow[] = [
     owner: GRACE,
     parentId: null,
   },
-  // North East / Services — d4 has two line items linked via parentId: 'group' and 'tree'
-  // both run on the same row. Group total: 8000 + 25000 + 17000 = 50000.
+  // North East / Services — d4 (rep: Grace) with two tree children: d4-a (rep: Grace) and
+  // d4-b (rep: Ada). With withTree, both children group by root rep: d4-b groups under d4's
+  // 'Grace' group despite rep: Ada. Group total: 8000 + 25000 + 17000 = 50000. Without withTree,
+  // d4-b groups separately under 'Ada'.
   {
     id: 'd4',
     region: 'North East',
@@ -68,10 +70,10 @@ export const GROUPING_ROWS_MOCK: DealRow[] = [
     id: 'd4-b',
     region: 'North East',
     category: 'Services',
-    rep: 'Grace',
+    rep: 'Ada',
     amount: 17000,
     closedAt: new Date('2026-07-01'),
-    owner: GRACE,
+    owner: ADA,
     parentId: 'd4',
   },
   {
