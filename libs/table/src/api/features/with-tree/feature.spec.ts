@@ -2016,6 +2016,82 @@ describe('withTree', () => {
         expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
       });
     });
+
+    // Step 6 (#169): red phase per step-6-open-writes-clear-closed.test-plan.md.
+    describe('open-set writes and closed revealed rows', () => {
+      const ids = (store: ReturnType<typeof setupFiltered>): RowId[] =>
+        store.renderRows().map((r) => r.id);
+
+      it('expand(ids) on a row closed while revealed opens it, writes the open set and emits changed once', () => {
+        const store = setupFiltered();
+        store.filters.name().value.set('Grand');
+        store.tree.toggle('c1');
+        expect(ids(store)).toEqual(['r1', 'c1']);
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+
+        store.tree.expand(['c1']);
+
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+        expect(store.tree()).toEqual(new Set(['c1']));
+        expect(emissions).toEqual([{ added: ['c1'], removed: [] }]);
+      });
+
+      it('expand(ids) on an already-open row closed while revealed shows it open again without emitting changed', () => {
+        const store = setupFiltered({ initial: ['r1'] });
+        store.filters.name().value.set('Grand');
+        store.tree.toggle('r1');
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+
+        store.tree.expand(['r1']);
+
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+        expect(store.tree()).toEqual(new Set(['r1']));
+        expect(emissions).toEqual([]);
+      });
+
+      it('set(ids) naming a row closed while revealed opens it', () => {
+        const store = setupFiltered();
+        store.filters.name().value.set('Grand');
+        store.tree.toggle('c1');
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+
+        store.tree.set(['c1']);
+
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+        expect(store.tree()).toEqual(new Set(['c1']));
+        expect(emissions).toEqual([{ added: ['c1'], removed: [] }]);
+      });
+
+      it('collapse on a revealed id writes only the open set and leaves the reveal showing the row open', () => {
+        const store = setupFiltered({ initial: ['c1'] });
+        store.filters.name().value.set('Grand');
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+
+        store.tree.collapse(['c1']);
+
+        expect([...store.tree()]).toEqual([]);
+        expect(emissions).toEqual([{ added: [], removed: ['c1'] }]);
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+      });
+
+      it('toggle on a context row that revealContextRow excluded writes the open set and emits changed', () => {
+        const store = setupFiltered({ revealContextRow: (row) => row.parentId == null });
+        store.filters.name().value.set('Grand');
+        expect(ids(store)).toEqual(['r1', 'c1']);
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+
+        store.tree.toggle('c1');
+
+        expect(store.tree()).toEqual(new Set(['c1']));
+        expect(emissions).toEqual([{ added: ['c1'], removed: [] }]);
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+      });
+    });
   });
 
   // -------------------------------------------------------------------------------------
