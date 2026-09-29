@@ -2,7 +2,14 @@ import { createColumns } from '../../api/create-columns';
 import type { ColumnBuilder } from '../../api/types';
 import { noData } from '../../table.mock';
 import { resolveColumnDefs } from '../columns';
-import { orderColumns as columns, orders, type Order } from './grouping.mock';
+import {
+  orderColumns as columns,
+  orders,
+  treeOrderColumns,
+  treeOrderLinks,
+  treeOrders,
+  type Order,
+} from './grouping.mock';
 import { collectAppliedLevels, collectGroupIds, rowsBeneathGroup } from './queries';
 
 describe('rowsBeneathGroup', () => {
@@ -114,5 +121,40 @@ describe('the three readers resolve levels through the accessor (Step 6, case 6)
     const applied = collectAppliedLevels(sales, ['tier'], salesColumns);
 
     expect(applied).toEqual(['tier']);
+  });
+});
+
+describe('group queries with treeLinks', () => {
+  it('with treeLinks, a group id resolves every node beneath it, descendants included', () => {
+    const result = rowsBeneathGroup(
+      treeOrders,
+      ['region'],
+      treeOrderColumns,
+      'group:>region:string:US',
+      treeOrderLinks
+    );
+
+    expect(result.map((row) => row.id)).toEqual([1, 3, 4, 5]);
+  });
+
+  it('with treeLinks, collects only group ids that roots produce at every level', () => {
+    expect(
+      collectGroupIds(treeOrders, ['region', 'category'], treeOrderColumns, treeOrderLinks)
+    ).toEqual([
+      'group:>region:string:US',
+      'group:>region:string:US>category:string:Electronics',
+      'group:>region:string:US>category:string:Books',
+      'group:>region:string:EU',
+      'group:>region:string:EU>category:string:Books',
+    ]);
+  });
+
+  it('with treeLinks, when judges a cluster by every node in it, descendants included', () => {
+    expect(
+      collectAppliedLevels(treeOrders, ['region'], treeOrderColumns, {
+        ...treeOrderLinks,
+        when: (state) => state.rows.length >= 4,
+      })
+    ).toEqual(['region']);
   });
 });
