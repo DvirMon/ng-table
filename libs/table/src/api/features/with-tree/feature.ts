@@ -15,7 +15,7 @@ import type { TreeMembers, TreeSlice, TreeWriteOptions, WithTreeConfig } from '.
 type TreeInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy' | 'value'>;
 
 // The parent link `withTree({ parentId })` contributes to `ctx.parentOf` for every stage
-// (#167/ADR-0028) — total and silent. A throw or an `undefined` return both degrade to a root;
+// (ADR-0028) — total and silent. A throw or an `undefined` return both degrade to a root;
 // this contribution never reports (only the `'tree'` stage does).
 function toSilentParentLink<TRow>(
   parentId: (row: TRow) => RowId | null | undefined
@@ -29,9 +29,8 @@ function toSilentParentLink<TRow>(
   };
 }
 
-// Discovers expandable ids straight from flat `input.rows()` (`expand()` with no ids, and
-// `state()`) — degrades exactly like the `'tree'` stage (self/absent/cycle/throw all become a
-// root), but never reports: only the `'tree'` stage reports (#167).
+// Discovers expandable ids straight from flat rows (`expand()` with no ids, and `state()`) —
+// degrades like the `'tree'` stage (self/absent/cycle/throw all become a root), silently.
 function discoverExpandableIdsFlat<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
@@ -75,7 +74,7 @@ function discoverExpandableIds<TRow>(
 }
 
 // Resolves every row's parent link over all of `value()`, not the pipeline's `rows()` view — a
-// row a filter dropped still counts for `parentOf()` / `descendantsOf()` (#167). `null` when no
+// row a filter dropped still counts for `parentOf()` / `descendantsOf()`. `null` when no
 // `parentId` is configured — there is no fallback to a conventional field.
 function resolveDataTreeLinks<TRow>(
   input: Pick<TableStore<TRow>, 'value' | 'trackBy'>,
@@ -280,7 +279,8 @@ function buildTreeSpec<TRow>(
  * @remarks
  * Real-row parents only — no path or levels API. Claims the `'tree'` render stage only when
  * `parentId` is supplied; omitted gives a collapse-only instance that still hides a collapsed
- * id's descendants without claiming the stage.
+ * id's descendants without claiming the stage. Context rows a filter retains render expanded per
+ * `revealContextRow`, without writing the open set.
  *
  * @example
  * createTable(data, { trackBy: 'id' }, withTree({ parentId: (row) => row.parentId }));
