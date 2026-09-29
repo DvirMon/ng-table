@@ -1,5 +1,5 @@
 import type { DerivedDict } from './types';
-import type { Feature, RowOf, Shape, TableFeatureSpec } from '../engine/types';
+import type { Feature, RowOf, Shape, StageContext, TableFeatureSpec } from '../engine/types';
 
 /** `0 extends 1 & T` is true only when `T` is `any` — distinguishes an unresolved generic
  * from a real inferred type. */
@@ -26,10 +26,10 @@ type NormalizeDerived<D> = IsAny<D> extends true ? {} : D;
  * concern — the fold's `SlotRegistry` is the single collision authority.
  */
 export function createTableFeature<In extends Shape, Out extends object>(
-  factory: (input: In) => TableFeatureSpec<RowOf<In>, Out>
+  factory: (input: In, ctx: StageContext<RowOf<In>>) => TableFeatureSpec<RowOf<In>, Out>
 ): Feature<In, Out>;
 export function createTableFeature<In extends Shape, Out extends object, D extends DerivedDict>(
-  factory: (input: In) => TableFeatureSpec<RowOf<In>, Out>,
+  factory: (input: In, ctx: StageContext<RowOf<In>>) => TableFeatureSpec<RowOf<In>, Out>,
   derive: Feature<In & Out, D>
 ): Feature<In, Out & NormalizeDerived<D>>;
 // Implementation signature only — deliberately untyped. The two overloads above are the real
@@ -37,15 +37,15 @@ export function createTableFeature<In extends Shape, Out extends object, D exten
 // satisfy `Out & D` in the no-`derive` branch, which no cast-free expression of this shape can
 // give it (D is opaque to the compiler at this point, not resolved to `{}`).
 export function createTableFeature(
-  factory: (input: any) => TableFeatureSpec<any, any>,
-  derive?: (input: any) => TableFeatureSpec<any, any>
+  factory: (input: any, ctx: StageContext<unknown>) => TableFeatureSpec<any, any>,
+  derive?: (input: any, ctx: StageContext<unknown>) => TableFeatureSpec<any, any>
 ): Feature<any, any> {
   if (!derive) {
     return factory;
   }
 
-  return (input: any) => {
-    const spec = factory(input);
+  return (input: any, ctx: StageContext<unknown>) => {
+    const spec = factory(input, ctx);
 
     // Own members become own properties (visible to the block immediately); `input` stays the
     // prototype so a later feature's member — added to the store after this factory runs — is
@@ -53,7 +53,7 @@ export function createTableFeature(
     // and break "types are stricter than runtime" for reads deferred into a `computed()`.
     const blockInput = Object.assign(Object.create(input), spec.members ?? {});
 
-    const derivedSpec = derive(blockInput);
+    const derivedSpec = derive(blockInput, ctx);
     return mergeDerivedSpec(spec, derivedSpec);
   };
 }

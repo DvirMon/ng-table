@@ -152,7 +152,7 @@ export type ColumnValuesOf<S> = S extends { readonly __columnValues?: infer V }
 
 /** A composable feature: a function of the store built so far. Row type recovered as `RowOf<In>`. */
 export interface Feature<In extends Shape, Out extends object> {
-  (input: In): TableFeatureSpec<RowOf<In>, Out>;
+  (input: In, ctx: StageContext<RowOf<In>>): TableFeatureSpec<RowOf<In>, Out>;
   /** Shown in collision messages after the argument position, e.g. `feature 3 (withComputed)`. */
   readonly displayName?: string;
 }

@@ -797,6 +797,25 @@ describe('composeTable', () => {
   });
 
   describe('parentLink contribution (ADR-0028)', () => {
+    it('resolves ctx.parentOf lazily, so a factory sees a link a later feature contributes', () => {
+      const withParentOfReader: AnyTableFeature = (_store, ctx) => ({
+        members: {
+          parentOfRow: (row: Row) =>
+            (ctx.parentOf as ParentLink<Row> | undefined)?.(row) ?? 'root',
+        },
+      });
+      const withParentLink: AnyTableFeature = () => ({
+        parentLink: asParentLink((row) => (row.id === 'r2' ? 'r1' : null)),
+      });
+
+      const store = composeWithRows(makeRows(), [withParentOfReader, withParentLink]);
+
+      expect(makeRows().map(store['parentOfRow'] as (row: Row) => RowId)).toEqual([
+        'root',
+        'r1',
+      ]);
+    });
+
     it('leaves ctx.parentOf undefined when no feature contributes a parent link', () => {
       const withUnlinkedTag: AnyTableFeature = () => ({
         stages: asStages(

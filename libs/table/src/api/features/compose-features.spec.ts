@@ -279,6 +279,22 @@ function fKeepsLinkedRows(displayName: string): Feature<Store, NoMembers> {
   );
 }
 
+/** Reads `ctx.parentOf` from a factory-received `ctx`, lazily inside a `computed()` — a
+ * dropped or copied-early `ctx` shows as `null` instead of a resolved parent id
+ * (#170 step 1, seam B). */
+function fReadsParentOf(
+  displayName: string
+): Feature<Store, { parentIds: Signal<(RowId | null)[]> }> {
+  return named(
+    displayName,
+    createTableFeature((input: Store, ctx) => ({
+      members: {
+        parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)),
+      },
+    }))
+  );
+}
+
 /** Nests row id 2 under row id 1 via the `'tree'` render stage — mimics a synthesizing
  * feature nesting one row beneath another. `parentId` isn't a settable `RenderNode`
  * field; see ADR-0023. */
@@ -736,6 +752,18 @@ describe('composeFeatures', () => {
       );
 
       expect(store.rows().map((row) => row.name)).toEqual(['Bea']);
+    });
+  });
+
+  describe('stage context (#170 step 1)', () => {
+    it('case 25 — an inner feature receives the outer ctx, resolving a later outer slot’s link', () => {
+      const store = makeStore(
+        signal([...mockRows]),
+        composeFeatures(fReadsParentOf('fReader')),
+        fParentLink('fOuterLink')
+      );
+
+      expect(store.parentIds()).toEqual([null, 1, null]);
     });
   });
 

@@ -4,7 +4,7 @@ import type { PipelineStage, RowTransform } from '../../engine/pipeline';
 import type { RenderNodeTransform, RenderStage } from '../../engine/render-stages';
 import { unionIdSets } from '../../engine/rows';
 import { describeInnerFeature, SlotRegistry } from '../../engine/slots';
-import type { ParentLink, TableFeatureSpec } from '../../engine/types';
+import type { ParentLink, StageContext, TableFeatureSpec } from '../../engine/types';
 import type { StageRule } from '../../schema/stage-rules';
 import type { AnyTableFeature, RowId } from '../types';
 import type { ComposeFeaturesOverloads } from './compose-features.overloads';
@@ -60,7 +60,8 @@ function claimInnerRenderStages<TRow>(
 // merged result again, which is what names a cross-boundary collision.
 function foldInnerFeatures(
   features: readonly AnyTableFeature[],
-  input: Record<string, unknown>
+  input: Record<string, unknown>,
+  ctx: StageContext<unknown>
 ): TableFeatureSpec<unknown, Record<string, unknown>> {
   const registry = new SlotRegistry();
   registry.claimCoreMembers();
@@ -83,7 +84,7 @@ function foldInnerFeatures(
 
   features.forEach((feature, index) => {
     const label = describeInnerFeature(index + 1, feature.displayName);
-    const spec: TableFeatureSpec<unknown> = feature(innerStore);
+    const spec: TableFeatureSpec<unknown> = feature(innerStore, ctx);
 
     claimInnerStages(spec, label, registry, stages);
     claimInnerRenderStages(spec, label, registry, renderStages);
@@ -178,6 +179,6 @@ function foldInnerFeatures(
 export const composeFeatures = ((
   ...features: readonly AnyTableFeature[]
 ): AnyTableFeature => {
-  const composite: AnyTableFeature = (input) => foldInnerFeatures(features, input);
+  const composite: AnyTableFeature = (input, ctx) => foldInnerFeatures(features, input, ctx);
   return Object.assign(composite, { displayName: 'composeFeatures' });
 }) as ComposeFeaturesOverloads;
