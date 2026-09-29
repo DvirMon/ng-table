@@ -2,6 +2,7 @@ import { describe, expectTypeOf, it } from 'vitest';
 import { createColumns } from '../../create-columns';
 import { createTable } from '../../create-table';
 import { groupKey, grouping } from './schema';
+import { withTree } from '../with-tree';
 import { withGrouping } from './feature';
 import type { WritableView } from '../../../engine/writable-view';
 import type { GroupingUpdater, TableDataInput } from '../../types';
@@ -134,6 +135,32 @@ describe("schema's path is keyed by declared column id; groupKey's extractor is 
 
       // Guards against `@ts-expect-error` above being satisfied by an unrelated error instead.
       expectTypeOf(table.grouping).toEqualTypeOf<WritableView<string[], GroupingUpdater<Row>>>();
+    });
+  });
+});
+
+interface TaskRow {
+  id: string;
+  status: string;
+  parentId?: string | null;
+}
+const taskColumns = createColumns(
+  (): readonly TaskRow[] | undefined => undefined,
+  (col) => [col('id'), col('status')]
+);
+declare const taskData: TableDataInput<TaskRow>;
+
+describe('withTree composed before withGrouping still resolves the row type (#170)', () => {
+  it('rowsOf returns readonly TaskRow[]', () => {
+    typecheckOnly(() => {
+      const table = createTable(
+        taskData,
+        { trackBy: 'id', columns: taskColumns },
+        withTree({ parentId: (row) => row.parentId }),
+        withGrouping({ initial: ['status'] })
+      );
+
+      expectTypeOf(table.rowsOf).returns.toEqualTypeOf<readonly TaskRow[]>();
     });
   });
 });
