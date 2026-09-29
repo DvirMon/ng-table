@@ -416,6 +416,35 @@ describe('composeTable', () => {
     });
   });
 
+  describe('ctx.contextRows', () => {
+    const withContextReader: AnyTableFeature = (_store, ctx) => ({
+      members: { readContext: () => ctx.contextRows?.() },
+    });
+
+    it('returns an empty set when no feature contributes contextRows', () => {
+      const store = composeWithRows(makeRows(), [withContextReader]);
+
+      expect((store['readContext'] as () => ReadonlySet<RowId>)()).toEqual(new Set());
+    });
+
+    it('reads contextRows lazily — a reader folded before the contributors sees their union and its later changes', () => {
+      const first = signal(new Set<RowId>(['r1']));
+      const withFirst: AnyTableFeature = () => ({ contextRows: first });
+      const withSecond: AnyTableFeature = () => ({
+        contextRows: signal(new Set<RowId>(['r2'])),
+      });
+
+      const store = composeWithRows(makeRows(), [withContextReader, withFirst, withSecond]);
+      const read = store['readContext'] as () => ReadonlySet<RowId>;
+
+      expect(read()).toEqual(new Set(['r1', 'r2']));
+
+      first.set(new Set<RowId>(['r3']));
+
+      expect(read()).toEqual(new Set(['r3', 'r2']));
+    });
+  });
+
   it('composes render stages in RENDER_ANCHORS order regardless of registration order', () => {
     const withGroupStage: AnyTableFeature = () => ({
       renderStages: stageSchema('render', (s) =>
