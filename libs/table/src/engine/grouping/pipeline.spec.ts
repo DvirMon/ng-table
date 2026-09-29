@@ -3,7 +3,14 @@ import type { ColumnBuilder } from '../../api/types';
 import { noData } from '../../table.mock';
 import { resolveColumnDefs } from '../columns';
 import type { RenderNode } from '../render-stages';
-import { orderColumns as columns, orders } from './grouping.mock';
+import {
+  brokenLinkOrders,
+  orderColumns as columns,
+  orders,
+  treeOrderColumns,
+  treeOrderLinks,
+  treeOrders,
+} from './grouping.mock';
 import { clusterRows } from './pipeline';
 import { buildGroupRenderRows } from './render';
 
@@ -50,6 +57,31 @@ describe('clusterRows', () => {
     const result = clusterRows(orders, ['nope', 'region'], columns);
 
     expect(result.map((row) => row.region)).toEqual(['US', 'US', 'US', 'EU', 'EU']);
+  });
+});
+
+describe('clusterRows with treeLinks', () => {
+  it("with treeLinks, descendants join their root's cluster whatever their own value, in input order", () => {
+    const result = clusterRows(treeOrders, ['region'], treeOrderColumns, treeOrderLinks);
+
+    expect(result.map((row) => row.id)).toEqual([1, 3, 4, 5, 2]);
+  });
+
+  it("with treeLinks, every grouping level reads the root's value, not only the first", () => {
+    const result = clusterRows(
+      treeOrders,
+      ['region', 'category'],
+      treeOrderColumns,
+      treeOrderLinks
+    );
+
+    expect(result.map((row) => row.id)).toEqual([1, 4, 5, 3, 2]);
+  });
+
+  it('with treeLinks, a broken link (absent parent, cycle) makes that row a root grouped by its own value', () => {
+    const result = clusterRows(brokenLinkOrders, ['region'], treeOrderColumns, treeOrderLinks);
+
+    expect(result.map((row) => row.id)).toEqual([6, 7, 8]);
   });
 });
 

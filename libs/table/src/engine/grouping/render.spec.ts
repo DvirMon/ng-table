@@ -3,7 +3,14 @@ import type { ColumnBuilder, ColumnDef, GroupWhen } from '../../api/types';
 import { noData } from '../../table.mock';
 import { resolveColumnDefs } from '../columns';
 import type { RenderNode } from '../render-stages';
-import { orderColumns as columns, orders, type Order } from './grouping.mock';
+import {
+  orderColumns as columns,
+  orders,
+  type Order,
+  treeOrderColumns,
+  treeOrderLinks,
+  treeOrders,
+} from './grouping.mock';
 import { buildGroupRenderRows } from './render';
 
 interface OrderWithAmount extends Order {
@@ -328,5 +335,21 @@ describe('buildGroupRenderRows', () => {
         reportSpy.mockRestore();
       }
     });
+  });
+});
+
+describe('buildGroupRenderRows with treeLinks', () => {
+  it("with treeLinks, a header holds its root's whole subtree and aggregateFn receives every node in it (D15)", () => {
+    const result = buildGroupRenderRows(toSeedRenderRows(treeOrders), ['region'], treeOrderColumns, {
+      ...treeOrderLinks,
+      aggregateByColumn: new Map([['id', (rows: { id: number }[]) => rows.map((r) => r.id)]]),
+    });
+
+    expect(result.map((node) => node.id)).toEqual(['group:>region:string:US', 'group:>region:string:EU']);
+    const [us, eu] = result;
+    expect(us.children.map((n) => n.id)).toEqual([1, 3, 4, 5]);
+    expect(us.aggregates?.['id']).toEqual([1, 3, 4, 5]);
+    expect(eu.children.map((n) => n.id)).toEqual([2]);
+    expect(eu.aggregates?.['id']).toEqual([2]);
   });
 });

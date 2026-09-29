@@ -5,9 +5,12 @@ import type {
   GroupSummary,
   GroupWhen,
   RowId,
+  TrackByFn,
 } from '../../api/types';
 import { readAccessor } from '../cells';
 import { buildValueOfContext, type ValueOfContext } from '../resolvers';
+import { resolveTreeLinks } from '../tree-links';
+import type { ParentLink } from '../types';
 
 export interface ClusterNode<T> {
   readonly columnId: string;
@@ -42,6 +45,11 @@ export interface ClusterOpts<TRow> {
   readonly knownIds?: ReadonlySet<string>;
   /** Names the declaring feature in a guard failure's thrown message. Paired with `knownIds`. */
   readonly label?: string;
+  /** Flat tree data: when present, every level's group value is read from the row's root. */
+  readonly treeLinks?: {
+    readonly parentOf: ParentLink<TRow>;
+    readonly trackBy: TrackByFn<TRow>;
+  };
 }
 
 // Distinguishes `1` from `"1"` and normalizes `Date` — plain `String(value)` would collide the
@@ -141,20 +149,52 @@ export function readGroupValue<TRow>(
   return extractValue ? extractValue(raw) : raw;
 }
 
+/** Maps a row to its tree root over `rows`, via `resolveTreeLinks`' `parentById` — never the raw
+ * `parentOf`, which loops on a cycle. A row the links do not know is its own root. */
+export function createRootLookup<TRow>(
+  rows: readonly TRow[],
+  treeLinks: NonNullable<ClusterOpts<TRow>['treeLinks']>
+): (row: TRow) => TRow {
+  const { parentById } = resolveTreeLinks(rows, treeLinks);
+  const rowById = new Map<RowId, TRow>();
+  for (const row of rows) {
+    const id = treeLinks.trackBy(row);
+    if (!rowById.has(id)) {
+      rowById.set(id, row);
+    }
+  }
+  return (row) => {
+    let current = row;
+    let parentId = parentById.get(treeLinks.trackBy(current)) ?? null;
+    while (parentId !== null) {
+      const parent = rowById.get(parentId);
+      if (parent === undefined) {
+        break;
+      }
+      current = parent;
+      parentId = parentById.get(parentId) ?? null;
+    }
+    return current;
+  };
+}
+
 /** Shared by `pipeline.ts`'s `clusterRows` and `queries.ts`'s `rowsBeneathGroup`/`collectGroupIds`/
  * `collectAppliedLevels` — all cluster a raw `TRow[]` by the same resolved levels via the same
  * accessor read; only what the caller does with the resulting tree differs. Builds the column-id
- * map and the accessor-throw report set once per call. */
+ * map and the accessor-throw report set once per call. With `treeLinks`, every level reads the
+ * row's root instead of the row. */
 export function buildClusterNodes<TRow>(
   rows: TRow[],
   levels: readonly string[],
   columns: ColumnDef<TRow>[],
-  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>
+  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>,
+  treeLinks?: ClusterOpts<TRow>['treeLinks']
 ): ClusterNode<TRow>[] {
   const columnById = new Map(columns.map((column) => [column.id, column]));
   const reportedColumns = new Set<string>();
+  const rootOf = treeLinks ? createRootLookup(rows, treeLinks) : undefined;
   return buildClusters(rows, levels, (row, columnId) =>
-    readGroupValue(row, columnId, columnById, reportedColumns, extractValueByColumn)
+    readGroupValue(rootOf ? rootOf(row) : row, columnId, columnById, reportedColumns, extractValueByColumn)
   );
 }
 
