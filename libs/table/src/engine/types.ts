@@ -33,8 +33,10 @@ export type ParentLink<TRow> = (row: TRow) => RowId | null;
  * contributes `parentLink`. Note: a later feature may contribute it, so a factory reads
  * `parentOf` lazily — in a getter or `computed()`, never once in its body.
  */
+// Method syntax on purpose: its parameter is checked bivariantly, so a `StageContext<TRow>`
+// reaches a row-erased `AnyTableFeature` (whose ctx is `StageContext<unknown>`) without a cast.
 export type StageContext<TRow> = {
-  readonly parentOf?: ParentLink<TRow>;
+  parentOf?(row: TRow): RowId | null;
 };
 
 // Currently held only by the internally-spliced column-schema wiring — consumer feature

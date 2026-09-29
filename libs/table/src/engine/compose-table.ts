@@ -194,7 +194,7 @@ export function composeTable<TRow>(
       ...labelFeatures<TRow, AnyTableFeature>(
         features,
         describeFeature,
-        (feature) => feature(store, stageContext as StageContext<unknown>) as TableFeatureSpec<TRow>,
+        (feature) => feature(store, stageContext) as TableFeatureSpec<TRow>,
         (feature) => feature.displayName
       ),
     ],
