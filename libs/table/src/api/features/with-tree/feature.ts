@@ -7,7 +7,7 @@ import { createTableFeature } from '../../create-table-feature';
 import type { DerivedDict, RowId, TableStore, TrackByFn } from '../../types';
 import { createExpansionStore, type ExpansionWriteOptions } from '../expansion/state';
 import { buildFlatTreeStage } from './nest';
-import { buildRevealedIds } from './reveal';
+import { buildRevealedIds, createClosedWhileRevealed } from './reveal';
 import type { TreeMembers, TreeSlice, WithTreeConfig } from './types';
 
 // F-bounded so a factory body gets `input.rows(): RowOf<In>[]` with no cast. Includes `value` so
@@ -136,7 +136,25 @@ function buildTreeSpec<TRow>(
   // No `onExpanded`: `everExpanded` is the panel's member, not the tree's.
   const store = createExpansionStore({ initial: config.initial });
 
+  const contextRowIds = computed(
+    (): ReadonlySet<RowId> => ctx.contextRows?.() ?? EMPTY_CONTEXT_ROW_IDS
+  );
+  const closedWhileRevealed = createClosedWhileRevealed(contextRowIds);
+  const revealedIds = computed(() =>
+    buildRevealedIds(contextRowIds(), input.rows(), input.trackBy, config)
+  );
+
   function toggle(id: RowId, options?: ExpansionWriteOptions): void {
+    if (revealedIds().has(id)) {
+      closedWhileRevealed.update((closed) => {
+        const next = new Set(closed);
+        if (!next.delete(id)) {
+          next.add(id);
+        }
+        return next;
+      });
+      return;
+    }
     store.toggle(id, options);
   }
 
@@ -198,7 +216,7 @@ function buildTreeSpec<TRow>(
     parentOf,
     descendantsOf,
     // `ctx` is read inside the computed: `withFiltering()` folds after this factory runs.
-    contextRowIds: computed((): ReadonlySet<RowId> => ctx.contextRows?.() ?? EMPTY_CONTEXT_ROW_IDS),
+    contextRowIds,
   });
 
   // Claimed only when `parentId` was supplied — a collapse-only instance leaves the
@@ -214,11 +232,16 @@ function buildTreeSpec<TRow>(
     renderStages,
     // Contributed unconditionally: a collapse-only instance is exactly what hides a group
     // header's members, and the walk needs a defined set to do it.
-    // Open set unioned with the revealed context rows; never written back to the open set.
+    // (open + revealed) - closed; never written back to the open set. `closed` is read
+    // unconditionally so it prunes on every evaluation.
     expandedRows: computed((): ReadonlySet<RowId> => {
       const open = store.expanded();
-      const revealed = buildRevealedIds(tree.contextRowIds(), input.rows(), input.trackBy, config);
-      return revealed.size === 0 ? open : new Set([...open, ...revealed]);
+      const revealed = revealedIds();
+      const closed = closedWhileRevealed();
+      if (revealed.size === 0) {
+        return open;
+      }
+      return new Set([...open, ...revealed].filter((id) => !closed.has(id)));
     }),
     // Single-claim (ADR-0028) — only when `parentId` is set; a second contributor throws.
     parentLink: config.parentId ? toSilentParentLink(config.parentId) : undefined,

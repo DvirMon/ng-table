@@ -1867,7 +1867,9 @@ describe('withTree', () => {
   describe('filter reveal (#169)', () => {
     // `withTree()` first on purpose: a reveal reading `ctx.contextRows` in the factory body
     // (forbidden, D22) would see no slot.
-    function setupFiltered(config: Pick<WithTreeConfig<FlatRow>, 'revealContextRow'> = {}) {
+    function setupFiltered(
+      config: Pick<WithTreeConfig<FlatRow>, 'revealContextRow' | 'initial'> = {}
+    ) {
       // Unannotated so `path.name` keeps its literal id (ADR-0019).
       const columns = createColumns(noData<FlatRow>(), (col) => [col('name')]);
       return inContext(() =>
@@ -1939,6 +1941,80 @@ describe('withTree', () => {
       } finally {
         consoleErrorSpy.mockRestore();
       }
+    });
+
+    // Step 5 (#169): red phase per step-5-close-revealed-row.test-plan.md.
+    describe('closing a revealed row (D20c)', () => {
+      const ids = (store: ReturnType<typeof setupFiltered>): RowId[] =>
+        store.renderRows().map((r) => r.id);
+
+      it('toggle on a revealed context row closes it without writing the open set or emitting changed', () => {
+        const store = setupFiltered();
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+        store.filters.name().value.set('Grand');
+
+        store.tree.toggle('c1');
+
+        const rows = store.renderRows();
+        expect(rows.map((r) => r.id)).toEqual(['r1', 'c1']);
+        expect(rows.find((r) => r.id === 'c1')?.isExpanded).toBe(false);
+        expect([...store.tree()]).toEqual([]);
+        expect(emissions).toEqual([]);
+      });
+
+      it('a closed revealed row stays closed while typing continues and it remains a context row', () => {
+        const store = setupFiltered();
+        store.filters.name().value.set('Grand');
+        store.tree.toggle('c1');
+        expect(ids(store)).toEqual(['r1', 'c1']);
+
+        store.filters.name().value.set('Grandc');
+
+        expect(ids(store)).toEqual(['r1', 'c1']);
+      });
+
+      it('toggling a closed revealed row again reopens it, still without writing the open set', () => {
+        const store = setupFiltered();
+        const emissions: ExpansionChange[] = [];
+        store.tree.changed.subscribe((change) => emissions.push(change));
+        store.filters.name().value.set('Grand');
+
+        store.tree.toggle('c1');
+        store.tree.toggle('c1');
+
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+        expect([...store.tree()]).toEqual([]);
+        expect(emissions).toEqual([]);
+      });
+
+      it('clearing the filter restores the open set exactly, including a row closed while revealed', () => {
+        const store = setupFiltered({ initial: ['r1'] });
+        store.filters.name().value.set('Grand');
+
+        store.tree.toggle('r1');
+
+        expect(ids(store)).toEqual(['r1']);
+        expect(store.tree()).toEqual(new Set(['r1']));
+
+        store.filters.name().value.set('');
+
+        expect(ids(store)).toEqual(['r1', 'c1', 'c2', 'r2']);
+        expect(store.tree()).toEqual(new Set(['r1']));
+      });
+
+      it('a closed row that stops being a context row is revealed again when it becomes one again', () => {
+        const store = setupFiltered();
+        store.filters.name().value.set('Grand');
+        store.tree.toggle('c1');
+
+        store.filters.name().value.set('Two');
+        // Load-bearing read: the closed-set linkedSignal only recomputes when read.
+        expect(ids(store)).toEqual(['r1', 'c2']);
+
+        store.filters.name().value.set('Grand');
+        expect(ids(store)).toEqual(['r1', 'c1', 'g1']);
+      });
     });
   });
 

@@ -26,7 +26,7 @@ Steps 3–8 all edit `api/features/with-tree/feature.ts`, so they run in order.
 | 2 | Engine read of context rows | ✅ done |
 | 3 | table.tree.contextRowIds | ✅ done |
 | 4 | Reveal context rows | ✅ done |
-| 5 | Close a revealed row | ⬚ pending |
+| 5 | Close a revealed row | ✅ done |
 | 6 | Open-set writes clear closed rows | ⬚ pending |
 | 7 | expand() includeHidden | ⬚ pending |
 | 8 | state() includeHidden | ⬚ pending |

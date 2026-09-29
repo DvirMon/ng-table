@@ -1,3 +1,4 @@
+import { linkedSignal, type WritableSignal } from '@angular/core';
 import type { RowId, TrackByFn } from '../../types';
 import { guardCallback, type ReportFlag } from './nest';
 import type { WithTreeConfig } from './types';
@@ -33,4 +34,16 @@ export function buildRevealedIds<TRow>(
     }
   }
   return revealed;
+}
+
+// Revealed rows the person closed. Keeps only ids still in the context set, so a row that stops
+// being a context row is revealed again when it returns. Recomputes on read: always read it.
+export function createClosedWhileRevealed(
+  contextRowIds: () => ReadonlySet<RowId>
+): WritableSignal<ReadonlySet<RowId>> {
+  return linkedSignal<ReadonlySet<RowId>, ReadonlySet<RowId>>({
+    source: contextRowIds,
+    computation: (context, previous) =>
+      new Set([...(previous?.value ?? [])].filter((id) => context.has(id))),
+  });
 }
