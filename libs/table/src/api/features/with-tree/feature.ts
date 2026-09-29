@@ -8,7 +8,7 @@ import type { DerivedDict, RowId, TableStore, TrackByFn } from '../../types';
 import { createExpansionStore, type ExpansionWriteOptions } from '../expansion/state';
 import { buildFlatTreeStage } from './nest';
 import { buildRevealedIds, createClosedWhileRevealed } from './reveal';
-import type { TreeMembers, TreeSlice, WithTreeConfig } from './types';
+import type { TreeMembers, TreeSlice, TreeWriteOptions, WithTreeConfig } from './types';
 
 // F-bounded so a factory body gets `input.rows(): RowOf<In>[]` with no cast. Includes `value` so
 // `parentOf()` / `descendantsOf()` can walk all of the row data, not the pipeline's `rows()` view.
@@ -167,8 +167,9 @@ function buildTreeSpec<TRow>(
     });
   }
 
-  function expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void {
-    const target = ids ?? discoverExpandableIds(input.rows(), input.trackBy, config);
+  function expand(ids?: readonly RowId[], options?: TreeWriteOptions): void {
+    const scanRows = options?.includeHidden ? input.value() : input.rows();
+    const target = ids ?? discoverExpandableIds(scanRows, input.trackBy, config);
     reopenClosedRevealed(target);
     store.setExpanded([...new Set([...store.expanded(), ...target])], options);
   }
