@@ -162,8 +162,8 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
     aggregateByColumn: aggregateByColumn.size > 0 ? aggregateByColumn : undefined,
     knownIds: knownColumnIds,
     label: 'withGrouping',
-    // A getter, not a copy: a feature folded after this one contributes `ctx.parentOf` later,
-    // so it resolves on every read, never in the factory body.
+    // Note: a getter, not a copy. A feature folded after this one may contribute
+    // `ctx.parentOf`; a factory-time read would make grouping ignore the parent link.
     get treeLinks(): ClusterOpts<TRow>['treeLinks'] {
       const parentOf = ctx.parentOf;
       return parentOf ? { parentOf, trackBy: input.trackBy } : undefined;

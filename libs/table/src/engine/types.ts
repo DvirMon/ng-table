@@ -28,7 +28,11 @@ export interface TableEngineConfig<TRow> {
 /** Resolves a row's parent id, or `null` for a root row. */
 export type ParentLink<TRow> = (row: TRow) => RowId | null;
 
-/** Every stage's second argument. `parentOf` is `undefined` unless a feature contributes `parentLink`. */
+/**
+ * Second argument to every stage and feature factory; `parentOf` is `undefined` unless a feature
+ * contributes `parentLink`. Note: a later feature may contribute it, so a factory reads
+ * `parentOf` lazily — in a getter or `computed()`, never once in its body.
+ */
 export type StageContext<TRow> = {
   readonly parentOf?: ParentLink<TRow>;
 };

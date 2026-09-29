@@ -90,14 +90,14 @@ export const mockGroupingRows: GroupingMockRow[] = [
 
 export const mockGroupingTrackBy: TrackByFn<GroupingMockRow> = (row) => row.id;
 
-/** Four-row task tree for grouping with a parent link (#170). Grouped by `status`, the child
- *  `t1a` (done) and grandchild `t1a1` (blocked) differ from their root `t1` (open). */
 export interface TaskTreeMockRow {
   id: string;
   status: string;
   parentId?: string | null;
 }
 
+/** Four-row task tree for grouping with a parent link. By `status`, child `t1a` (done) and
+ *  grandchild `t1a1` (blocked) differ from their root `t1` (open). */
 export const mockTaskTreeRows: TaskTreeMockRow[] = [
   { id: 't1', status: 'open', parentId: null },
   { id: 't2', status: 'done' },
