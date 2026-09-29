@@ -274,3 +274,57 @@ describe('createTableCore — expandedRows union (ADR-0017)', () => {
     expect(renderRows().map((row) => row.id)).toEqual(['p1', 'c1', 'p2', 'c2']);
   });
 });
+
+describe('createTableCore — isContextRow stamp', () => {
+  function makeCore() {
+    return createTableCore<Row>({ columns, trackBy: 'id', data: signal(makeRows()) });
+  }
+
+  it('stamps isContextRow true for ids in a contributed set and false for every other data row', () => {
+    const { renderRows, contextSources } = makeCore();
+    contextSources.push(signal(new Set<RowId>(['r2'])));
+
+    expect(renderRows().map((row) => row.isContextRow)).toEqual([false, true, false]);
+  });
+
+  it('unions every contributed context-row set', () => {
+    const { renderRows, contextSources } = makeCore();
+    contextSources.push(signal(new Set<RowId>(['r1'])));
+    contextSources.push(signal(new Set<RowId>(['r3'])));
+
+    expect(renderRows().map((row) => row.isContextRow)).toEqual([true, false, true]);
+  });
+
+  it('leaves isContextRow undefined on every row when no feature contributes context rows', () => {
+    const { renderRows } = makeCore();
+
+    expect(renderRows().map((row) => row.isContextRow)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('stamps false, not undefined, when a contributor exists but its set is empty', () => {
+    const { renderRows, contextSources } = makeCore();
+    contextSources.push(signal(new Set<RowId>()));
+
+    for (const row of renderRows()) {
+      expect(row.isContextRow).toBe(false);
+    }
+  });
+
+  it('leaves isContextRow undefined on a synthesized group row while stamping its data rows', () => {
+    const { renderRows, renderStages, contextSources } = makeCore();
+    const withGroupRow: RenderNodeTransform<Row> = (nodes) => [
+      { id: 'group-1', kind: 'group', data: null, children: nodes },
+    ];
+    renderStages.push({ name: 'group', run: withGroupRow });
+    contextSources.push(signal(new Set<RowId>(['r2'])));
+
+    const [groupRow, ...rest]: RenderRow<Row>[] = renderRows();
+
+    expect(groupRow.isContextRow).toBeUndefined();
+    expect(rest.map((row) => row.isContextRow)).toEqual([false, true, false]);
+  });
+});

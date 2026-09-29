@@ -398,6 +398,24 @@ describe('composeTable', () => {
     });
   });
 
+  describe('contextRows contributions', () => {
+    it('collects a contextRows contribution from every feature in the fold', () => {
+      const withFirst: AnyTableFeature = () => ({
+        contextRows: signal(new Set<RowId>(['r1'])),
+      });
+      const withSecond: AnyTableFeature = () => ({
+        contextRows: signal(new Set<RowId>(['unrelated'])),
+      });
+
+      const store = composeWithRows(makeRows(), [withFirst, withSecond]);
+      const flags = (
+        store['renderRows'] as () => { isContextRow?: boolean }[]
+      )().map((row) => row.isContextRow);
+
+      expect(flags).toEqual([true, false]);
+    });
+  });
+
   it('composes render stages in RENDER_ANCHORS order regardless of registration order', () => {
     const withGroupStage: AnyTableFeature = () => ({
       renderStages: stageSchema('render', (s) =>

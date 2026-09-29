@@ -9,7 +9,7 @@ import type { StageContext } from './types';
 export interface RenderNode<TRow>
   extends Omit<
     RenderRow<TRow>,
-    'depth' | 'index' | 'isExpanded' | 'sourceIndex' | 'parentId' | 'cells' | 'hasChildren'
+    'depth' | 'index' | 'isExpanded' | 'sourceIndex' | 'parentId' | 'cells' | 'hasChildren' | 'isContextRow'
   > {
   /** Overrides the walk's `children.length > 0` derivation — set `true` for a lazy row
    *  whose children haven't loaded yet, so its toggle still renders. See ADR-0023. */
