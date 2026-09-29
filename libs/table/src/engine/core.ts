@@ -121,11 +121,12 @@ export function createTableCore<TRow>(
     });
     return flattenVisible(tree, expanded()).map((row, index) => {
       const isSynthesizedRow = row.data === null;
+      const hasNoContextFlag = isSynthesizedRow || !contextIds;
       return {
         ...row,
         index,
         sourceIndex: isSynthesizedRow ? undefined : byId.get(row.id),
-        isContextRow: isSynthesizedRow || !contextIds ? undefined : contextIds.has(row.id),
+        isContextRow: hasNoContextFlag ? undefined : contextIds.has(row.id),
         cells: isSynthesizedRow
           ? buildGroupCells(row.aggregates)
           : buildDataCells(row.data, resolvedColumns, reportedColumns),
