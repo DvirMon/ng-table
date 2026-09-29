@@ -204,17 +204,22 @@ export function buildClusterNodes<TRow>(
   rows: TRow[],
   levels: readonly string[],
   columns: ColumnDef<TRow>[],
-  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>,
-  treeLinks?: ClusterOpts<TRow>['treeLinks']
+  opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn' | 'treeLinks'>
 ): ClusterNode<TRow>[] {
   // Note: the one clustering path behind `clusterRows`, `rowsBeneathGroup`, `collectGroupIds`
   // and `collectAppliedLevels`, so their trees cannot drift. Column map and accessor-throw
   // report set are built once per call.
   const columnById = new Map(columns.map((column) => [column.id, column]));
   const reportedColumns = new Set<string>();
-  const rootOf = treeLinks ? createRootLookup(rows, treeLinks) : undefined;
+  const rootOf = opts?.treeLinks ? createRootLookup(rows, opts.treeLinks) : undefined;
   return buildClusters(rows, levels, (row, columnId) =>
-    readGroupValue(rootOf ? rootOf(row) : row, columnId, columnById, reportedColumns, extractValueByColumn)
+    readGroupValue(
+      rootOf ? rootOf(row) : row,
+      columnId,
+      columnById,
+      reportedColumns,
+      opts?.extractValueByColumn
+    )
   );
 }
 
