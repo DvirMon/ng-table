@@ -30,8 +30,9 @@ export interface TreeSlice {
   /** One emission per write, carrying the whole symmetric difference. */
   readonly changed: Observable<ExpansionChange>;
   /** `'all'` when every expandable row is open, `'none'` when none is — including
-   *  "nothing is expandable", which is what a collapse-only instance always reads. */
-  readonly state: Signal<'all' | 'some' | 'none'>;
+   *  "nothing is expandable", which is what a collapse-only instance always reads. The default
+   *  scan is the filtered view (`rows()`); `includeHidden` scans all of `data()`. */
+  state(options?: { includeHidden?: boolean }): 'all' | 'some' | 'none';
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Adds. Omitted `ids`: every expandable row found by the discovery walk. */
   expand(ids?: readonly RowId[], options?: TreeWriteOptions): void;
