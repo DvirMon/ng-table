@@ -25,7 +25,8 @@ export interface WithFilteringConfig<
   /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
    * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
   manual?: boolean;
-  /** With a tree composed, a matched row also keeps its whole branch, not only its ancestors. */
+  /** With a tree composed, a matched row also keeps its whole branch, not only its
+   * ancestors. Defaults to `false`. */
   includeDescendants?: boolean;
   /** Declares the owned filter model, exposed as `filters`. Built once at construction; its
    * criteria narrow the pipeline's `filter` stage through `matcher()`. */
@@ -125,6 +126,8 @@ function buildFilteringSpec<TRow, TValues extends ColumnValueMap>(
         },
       });
     }),
+    // Note: the filter stage writes `contextBox` while `rows` evaluates. Reading `input.rows()`
+    // first runs that stage and subscribes to it — without it, the ids go stale on refilter.
     contextRows: computed(() => {
       input.rows();
       return contextBox.ids;
