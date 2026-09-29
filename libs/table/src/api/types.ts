@@ -62,6 +62,10 @@ export interface RenderRow<TRow> {
    * `undefined` for a top-level row. Opaque: never parse it apart. */
   readonly parentId?: RowId;
 
+  /** Whether this data row is only shown as context for a matching descendant. `undefined`
+   * when no feature contributes context rows, and on synthesized rows. */
+  readonly isContextRow?: boolean;
+
   // See docs/adr/0022-render-row-cell-values.md.
   /** The resolved value per column, keyed by declared column id. Values are raw and ignore
    * column visibility/order — format with a pipe. */

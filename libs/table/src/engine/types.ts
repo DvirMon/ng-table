@@ -96,6 +96,9 @@ export interface TableFeatureSpec<TRow, Members extends object = {}> {
    */
   expandedRows?: Signal<ReadonlySet<RowId>>;
 
+  /** Ids this feature keeps only as context for a matching descendant. Accumulates. */
+  contextRows?: Signal<ReadonlySet<RowId>>;
+
   // Single-claim; why: docs/adr/0028-tree-parent-link-slot.md.
   /**
    * A row's parent id, or `null` for a root row; stages read it as `ctx.parentOf`. A second

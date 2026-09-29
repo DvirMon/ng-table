@@ -20,6 +20,14 @@ interface Row {
   name: string;
 }
 
+describe('RenderRow.isContextRow', () => {
+  it('isContextRow is boolean | undefined', () => {
+    typecheckOnly(() => {
+      expectTypeOf<RenderRow<Row>['isContextRow']>().toEqualTypeOf<boolean | undefined>();
+    });
+  });
+});
+
 describe('RenderRow.parentId', () => {
   it('a RenderRow literal without parentId satisfies the type', () => {
     typecheckOnly(() => {

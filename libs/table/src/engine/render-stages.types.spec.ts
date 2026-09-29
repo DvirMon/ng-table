@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from 'vitest';
-import type { RenderNodeTransform, RenderStage } from './render-stages';
+import type { RenderNode, RenderNodeTransform, RenderStage } from './render-stages';
 import type { StageContext } from './types';
 
 type Row = { id: string };
@@ -23,6 +23,12 @@ describe('RenderStage — closed union', () => {
       const bad: RenderStage = 'pinned';
       void bad;
     });
+  });
+});
+
+describe('RenderNode — engine-stamped fields', () => {
+  it('does not carry isContextRow', () => {
+    expectTypeOf<RenderNode<Row>>().not.toHaveProperty('isContextRow');
   });
 });
 

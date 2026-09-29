@@ -118,6 +118,11 @@ function foldFeatures<TRow>(
       handle.expandedSources.push(spec.expandedRows);
     }
 
+    // Accumulates rather than single-claims, like `expandedRows`.
+    if (spec.contextRows) {
+      handle.contextSources.push(spec.contextRows);
+    }
+
     // Single-claim (ADR-0028) — a second contribution throws, naming both features.
     if (spec.parentLink) {
       registry.claimParentLink(label);

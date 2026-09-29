@@ -30,6 +30,8 @@ export interface TableCoreHandle<TRow> {
   /** Additively populated by `composeTable()`'s fold — one entry per feature declaring
    * `expandedRows`. Unioned below and fed into `flattenVisible`. */
   readonly expandedSources: Signal<ReadonlySet<RowId>>[];
+  /** One entry per feature declaring `contextRows`. */
+  readonly contextSources: Signal<ReadonlySet<RowId>>[];
   // Note: a box, not a reassigned property, so `rows`/`renderRows` read `value` at evaluation
   // time. Captured at construction it is always `undefined` — the fold sets it later.
   // Passed to stages unwrapped: a throwing link degrades to root in the contributor's own
@@ -59,6 +61,7 @@ export function createTableCore<TRow>(
   const stages: ResolvedStage<RowTransform<TRow>>[] = [];
   const renderStages: ResolvedStage<RenderNodeTransform<TRow>>[] = [];
   const expandedSources: Signal<ReadonlySet<RowId>>[] = [];
+  const contextSources: Signal<ReadonlySet<RowId>>[] = [];
   const parentLink: TableCoreHandle<TRow>['parentLink'] = {};
   // Always runs first, never replaced — the `RenderNode[]` seed every render stage chain
   // starts from.
@@ -79,6 +82,21 @@ export function createTableCore<TRow>(
     }
     const union = new Set<RowId>();
     for (const source of expandedSources) {
+      for (const id of source()) {
+        union.add(id);
+      }
+    }
+    return union;
+  });
+
+  // Unions every contributed `contextRows` set. `undefined` when no feature contributed (the
+  // stamp stays `undefined`); a defined, possibly empty, `Set` once one has.
+  const context = computed<ReadonlySet<RowId> | undefined>(() => {
+    if (contextSources.length === 0) {
+      return undefined;
+    }
+    const union = new Set<RowId>();
+    for (const source of contextSources) {
       for (const id of source()) {
         union.add(id);
       }
@@ -107,6 +125,7 @@ export function createTableCore<TRow>(
   const renderRows = computed(() => {
     const byId = indexById();
     const resolvedColumns = columns();
+    const contextIds = context();
     const reportedColumns = new Set<string>();
     const tree = runRenderStages(seedRenderNodes(rows()), renderStages, {
       parentOf: parentLink.value,
@@ -117,6 +136,7 @@ export function createTableCore<TRow>(
         ...row,
         index,
         sourceIndex: isSynthesizedRow ? undefined : byId.get(row.id),
+        isContextRow: isSynthesizedRow || !contextIds ? undefined : contextIds.has(row.id),
         cells: isSynthesizedRow
           ? buildGroupCells(row.aggregates)
           : buildDataCells(row.data, resolvedColumns, reportedColumns),
@@ -150,6 +170,7 @@ export function createTableCore<TRow>(
     renderStages,
     columnRules,
     expandedSources,
+    contextSources,
     parentLink,
   };
 }
