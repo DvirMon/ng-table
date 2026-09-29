@@ -1,3 +1,4 @@
+import { computed } from '@angular/core';
 import { buildFilterModel } from '../../../engine/filters/build';
 import type { AnyRule, StateOf } from '../../../engine/filters/types';
 import type { Filters, FiltersPath } from './types';
@@ -5,7 +6,8 @@ import type { ColumnValuesOf, Feature, RowOf, TableFeatureSpec } from '../../../
 import { stageSchema } from '../../../schema/stage-schema';
 import { stage } from '../../../schema/stage-rules';
 import { createTableFeature } from '../../create-table-feature';
-import type { ColumnValueMap, DerivedDict, TableStore } from '../../types';
+import type { ColumnValueMap, DerivedDict, RowId, TableStore } from '../../types';
+import { retainTreeMatches } from './tree-retention';
 
 // The slice of the accumulating store this feature reads, row-typed via `RowOf<In>`. Recovers
 // the value map via `ColumnValuesOf<In>` rather than `Record<ColumnIdOf<In>, unknown>` — the
@@ -13,7 +15,7 @@ import type { ColumnValueMap, DerivedDict, TableStore } from '../../types';
 // from `In.columns` through an extra `keyof Record<...>` indirection. `ColumnValuesOf<In>` reads
 // `In`'s own `__columnValues` phantom directly, with no circularity. Mirrors `GroupingInput`
 // (`with-grouping/feature.ts`).
-type FilteringInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows'>;
+type FilteringInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows' | 'trackBy'>;
 
 export interface WithFilteringConfig<
   TRow,
@@ -23,6 +25,8 @@ export interface WithFilteringConfig<
   /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
    * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
   manual?: boolean;
+  /** With a tree composed, a matched row also keeps its whole branch, not only its ancestors. */
+  includeDescendants?: boolean;
   /** Declares the owned filter model, exposed as `filters`. Built once at construction; its
    * criteria narrow the pipeline's `filter` stage through `matcher()`. */
   schema?: (path: FiltersPath<TRow, TValues>) => S;
@@ -79,7 +83,7 @@ export function withFiltering(
 // (`engine/filters/build.ts`) — it already holds the built records and the `columns` getter
 // this function passes through, so the check needs nothing this function doesn't already have.
 function buildFilteringSpec<TRow, TValues extends ColumnValueMap>(
-  input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows'>,
+  input: Pick<TableStore<TRow, TValues>, 'columns' | 'rows' | 'trackBy'>,
   config: WithFilteringConfig<TRow, TValues, any>
 ): TableFeatureSpec<TRow, any> {
   const manual = config.manual ?? false;
@@ -88,21 +92,42 @@ function buildFilteringSpec<TRow, TValues extends ColumnValueMap>(
     ? buildFilterModel<TRow, TValues, any>(schemaFn, () => input.columns())
     : undefined;
 
+  const includeDescendants = config.includeDescendants ?? false;
+  const emptyContextIds: ReadonlySet<RowId> = new Set<RowId>();
+  const contextBox: { ids: ReadonlySet<RowId> } = { ids: emptyContextIds };
+
   return {
     members: filters ? { filters } : {},
     stages: stageSchema<TRow>('pipeline', (s) => {
       stage(s.filter, {
-        run: (rows) => {
+        run: (rows, ctx) => {
           const shouldSkipFiltering = manual || !filters;
           if (shouldSkipFiltering) {
+            contextBox.ids = emptyContextIds;
             return rows;
           }
           // One matcher per stage evaluation, not per row — it carries its own
           // error-dedup scope and memoized narrowing set.
           const matcher = filters().matcher();
-          return rows.filter(matcher);
+          const parentOf = ctx.parentOf;
+          if (!parentOf) {
+            contextBox.ids = emptyContextIds;
+            return rows.filter(matcher);
+          }
+          const retained = retainTreeMatches(rows, {
+            matches: matcher,
+            parentOf,
+            trackBy: input.trackBy,
+            includeDescendants,
+          });
+          contextBox.ids = retained.contextIds;
+          return retained.rows;
         },
       });
+    }),
+    contextRows: computed(() => {
+      input.rows();
+      return contextBox.ids;
     }),
   };
 }
