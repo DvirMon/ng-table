@@ -1,7 +1,7 @@
 import { computed, type Signal } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { mapNodes, type RenderNode, type RenderNodeTransform } from '../../engine/render-stages';
-import { resolveTreeLinks, type BrokenLinkKind } from '../../engine/tree-links';
+import { resolveTreeLinks, type BrokenLinkKind, type TreeLinks } from '../../engine/tree-links';
 import type { Feature, ParentLink, RowOf, TableFeatureSpec } from '../../engine/types';
 import { stage } from '../../schema/stage-rules';
 import { stageSchema } from '../../schema/stage-schema';
@@ -50,14 +50,23 @@ export interface TreeSlice {
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   /** Atomic replace — the restore path. */
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
+  /** The id's declared parent, resolved through `engine/tree-links.ts` over all of `data()` —
+   * not the pipeline's `rows()` view. `null` for a root or an id not present in `data()`. Never
+   * reports (#167). */
+  parentOf(id: RowId): RowId | null;
+  /** Every descendant of `id` at any depth, depth-first in `data()` order, parent before child,
+   * never including `id` itself. `[]` for a leaf or an id not present in `data()`. Never
+   * reports (#167). */
+  descendantsOf(id: RowId): RowId[];
 }
 
 export interface TreeMembers {
   readonly tree: TreeSlice;
 }
 
-// F-bounded so a factory body gets `input.rows(): RowOf<In>[]` with no cast.
-type TreeInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy'>;
+// F-bounded so a factory body gets `input.rows(): RowOf<In>[]` with no cast. Includes `value` so
+// `parentOf()` / `descendantsOf()` can walk all of the row data, not the pipeline's `rows()` view.
+type TreeInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy' | 'value'>;
 
 interface ReportFlag {
   done: boolean;
@@ -411,8 +420,61 @@ function discoverExpandableIds<TRow>(
   return collectExpandableRowIds(rows, trackBy, readChildren, canExpand);
 }
 
+// Resolves every row's parent link over all of `value()`, not the pipeline's `rows()` view — a
+// row a filter dropped still counts for `parentOf()` / `descendantsOf()` (#167). `null` when no
+// `parentId` is configured: there is no fallback to `childrenAccessor` or a conventional field
+// (the old `row.children` fallback was removed on purpose, D2/E6).
+function resolveDataTreeLinks<TRow>(
+  input: Pick<TableStore<TRow>, 'value' | 'trackBy'>,
+  config: WithTreeConfig<TRow>
+): TreeLinks | null {
+  if (!config.parentId) {
+    return null;
+  }
+  return resolveTreeLinks(input.value(), {
+    parentOf: toSilentParentLink(config.parentId),
+    trackBy: input.trackBy,
+  });
+}
+
+// Groups `data()` ids by resolved parent, preserving each parent's children in `data()` order —
+// the sibling order `descendantsOf()`'s depth-first walk below relies on.
+function groupChildrenByParent<TRow>(
+  rows: readonly TRow[],
+  trackBy: TrackByFn<TRow>,
+  parentById: ReadonlyMap<RowId, RowId | null>
+): Map<RowId, RowId[]> {
+  const childrenByParent = new Map<RowId, RowId[]>();
+  for (const row of rows) {
+    const id = trackBy(row);
+    const parent = parentById.get(id) ?? null;
+    if (parent === null) {
+      continue;
+    }
+    const siblings = childrenByParent.get(parent);
+    if (siblings) {
+      siblings.push(id);
+    } else {
+      childrenByParent.set(parent, [id]);
+    }
+  }
+  return childrenByParent;
+}
+
+// Depth-first: a child, then its own children, before the next sibling — never `id` itself.
+function collectDescendantIds(
+  id: RowId,
+  childrenByParent: ReadonlyMap<RowId, RowId[]>
+): RowId[] {
+  const children = childrenByParent.get(id) ?? [];
+  return children.flatMap((childId) => [
+    childId,
+    ...collectDescendantIds(childId, childrenByParent),
+  ]);
+}
+
 function buildTreeSpec<TRow>(
-  input: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
+  input: Pick<TableStore<TRow>, 'rows' | 'trackBy' | 'value'>,
   config: WithTreeConfig<TRow>
 ): TableFeatureSpec<TRow, TreeMembers> {
   // No `onExpanded`: `everExpanded` is the panel's member, not the tree's.
@@ -443,6 +505,20 @@ function buildTreeSpec<TRow>(
     store.setExpanded(ids, options);
   }
 
+  function parentOf(id: RowId): RowId | null {
+    const links = resolveDataTreeLinks(input, config);
+    return links?.parentById.get(id) ?? null;
+  }
+
+  function descendantsOf(id: RowId): RowId[] {
+    const links = resolveDataTreeLinks(input, config);
+    if (!links) {
+      return [];
+    }
+    const childrenByParent = groupChildrenByParent(input.value(), input.trackBy, links.parentById);
+    return collectDescendantIds(id, childrenByParent);
+  }
+
   const state = computed<'all' | 'some' | 'none'>(() => {
     const expandable = discoverExpandableIds(input.rows(), input.trackBy, config);
     if (expandable.length === 0) {
@@ -463,6 +539,8 @@ function buildTreeSpec<TRow>(
     expand,
     collapse,
     set,
+    parentOf,
+    descendantsOf,
   });
 
   // Claimed only when an accessor or `parentId` was supplied — a collapse-only instance leaves
