@@ -175,11 +175,40 @@ place in `src` that reads the unioned `expandedRows` slot and derives `depth`, `
 contributes unconditionally to that union (accessor or not — a collapse-only instance is
 exactly what hides a group header's members, and the walk needs a defined set to do it).
 
+**`hasChildren` follows the filtered view (D9).** The walk reads the pipeline's `rows()`, not
+`data()`, so a parent whose children were all filtered out renders `hasChildren: false` — no
+toggle for a branch with nothing to show. `isExpandable` still overrides it, as for lazy loading.
+
 **G6 is closed as impossible, not fixed.** `indexById` is built from `data()`, and under the
 real-row contract every tree node is already an entry there — so a nested child at any depth
 resolves a `sourceIndex` and edits write through by construction. ADR-0012's original Decision 6
 assumed the fix belonged to the `'tree'` render stage; it does not, because `sourceIndex` was
 never stamped by a render stage in the first place.
+
+## Context rows
+
+A filtered tree keeps each match's ancestors so the match renders under its path (see
+[filtering.md](filtering.md#trees--matches-keep-their-ancestors)). An ancestor kept only for
+that reason is a **context row** (D18):
+
+- **`RenderRow.isContextRow`** — `true` on a context row, `false` on any other data row once a
+  feature contributes the engine's accumulating `contextRows` slot (today, `withFiltering()`).
+  `undefined` when nothing contributes, and always `undefined` on a synthesized group row.
+  Stamped centrally by the core, beside `index` and `sourceIndex`.
+- **`ngpTableTreeRow`** — an opt-in directive on the row host
+  (`tr[ngpTableRow][ngpTableTreeRow]`, `div[ngpTableRow][ngpTableTreeRow]`) that reflects the
+  flag as a presence-only `data-context-row` attribute (D21, ADR-0026 rule 1): `""` on a context
+  row, absent otherwise, removed when the row stops being one. It reads the row from
+  `ngpTableRow` and takes no input of its own; the core row directive is unchanged.
+
+```html
+<tr [ngpTableRow]="row" ngpTableTreeRow>…</tr>
+```
+```css
+tr[data-context-row] { opacity: 0.6; }
+```
+
+Tree indentation, `aria-level` and the toggle are out of this directive's scope.
 
 ## Events Owned
 

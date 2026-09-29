@@ -67,6 +67,8 @@ export interface WithFilteringConfig<TRow, TValues extends ColumnValueMap, S ext
   /** Skips the `filter` stage — rows pass through untouched, but the model still builds and
    * `filters` is still exposed. For server-driven filtering via `filters().criteria()`. */
   manual?: boolean;
+  /** With a tree composed, a matched row also keeps its whole branch, not only its ancestors. */
+  includeDescendants?: boolean;
   /** Declares the owned filter model, exposed as `filters`. Built once at construction; its
    * criteria narrow the pipeline's `filter` stage through `matcher()`. */
   schema?: (path: FiltersPath<TRow, TValues>) => S;
@@ -97,9 +99,9 @@ composition seam every feature shares — not filtering-specific, see `architect
   reason to write it.
 - `TRow` comes from the table (`RowOf<In>`), not a generic the caller supplies.
 - **`FilteringInput<In>` widens the feature's own input to `Pick<TableStore<RowOf<In>,
-  ColumnValuesOf<In>>, 'columns' | 'rows'>`** (#115) — filtering reads `columns` to resolve
-  accessors and to check declared ids at construction, the same shape `withGrouping()` already
-  takes. `TValues` (`ColumnValuesOf<In>`) is the declared column-value map `createColumns()`
+  ColumnValuesOf<In>>, 'columns' | 'rows' | 'trackBy'>`** (#115, #168) — filtering reads
+  `columns` to resolve accessors and to check declared ids at construction, the same shape
+  `withGrouping()` already takes, and `trackBy` to key [tree retention](#trees--matches-keep-their-ancestors). `TValues` (`ColumnValuesOf<In>`) is the declared column-value map `createColumns()`
   derives; it is recovered from `In`, never a type parameter a caller writes.
 - **The criterion map is inferred from the schema's returned object.** `StateOf<S>` folds one
   entry per declared filter or `anyOf` group, keyed **verbatim** by the object's own property
@@ -507,6 +509,37 @@ and has no request to throttle.
 - **Order of evaluation:** `when` gate → empty-criterion check (skip the filter entirely) → read
   the cell → matcher, which owns its own null branch. A null cell is only ever reached by an
   *active, ungated* filter.
+
+### Trees — matches keep their ancestors
+
+With [`withTree({ parentId })`](tree.md) composed, the stage sees the hierarchy through the
+silent parent link (`ctx.parentOf`, ADR-0028) and filters by **tree retention** (#168, D5):
+
+- Each matching row is kept **with every ancestor**, so a match deep in the tree still renders
+  under its path. Kept rows stay in input order.
+- `includeDescendants: true` also keeps every descendant of a match — its whole branch.
+- An ancestor kept only for a match below it is a **context row**: the feature contributes it to
+  the engine's `contextRows` slot, and the core stamps it `RenderRow.isContextRow: true`
+  ([tree.md](tree.md#context-rows)). A match, or a row kept as a descendant of a match, is
+  `false`.
+- **`manual: true` computes none.** The stage passes rows through untouched, so no retention runs
+  and no row is a context row — the server owns which rows arrive. The same holds with no
+  `schema`, and clearing the filter drops every context flag.
+
+Without a tree the stage is a plain `rows.filter(matcher)`, and `isContextRow` stays `false` on
+every data row.
+
+```ts
+createTable(
+  data,
+  { trackBy: 'id', columns },
+  withTree({ parentId: (row) => row.parentId }),
+  withFiltering({
+    includeDescendants: true, // omit to keep matches + ancestors only
+    schema: (path) => ({ name: contains(path.name) }),
+  }),
+);
+```
 
 ### One `matcher()` call is one evaluation
 
