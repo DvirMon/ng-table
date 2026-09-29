@@ -10,7 +10,7 @@ files:
   - libs/table/docs/1-state/architecture.md
   - libs/table/docs/0-product/tree.md
   - libs/table/docs/1-state/row-mutations.md
-  - libs/table/docs/1-state/work/expansion/active/tree-flat-data/2-spec.md
+  - libs/table/docs/1-state/work/tree/active/tree-flat-data/2-spec.md
 ---
 # Step 6 — Docs: flat-data tree contract
 
