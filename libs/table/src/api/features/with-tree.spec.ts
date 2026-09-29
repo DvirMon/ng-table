@@ -2,10 +2,13 @@ import { computed, signal, type Signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { expectTypeOf, vi } from 'vitest';
 import { removeRow } from '../../mutations/row-mutations';
+import { getNgDevMode, setNgDevMode } from '../../ng-dev-mode.testing';
 import {
+  makeFlatRows,
   mockGroupingRows,
   mockGroupingTrackBy,
   noData,
+  type FlatRow,
   type GroupingMockRow,
 } from '../../table.mock';
 import { stage } from '../../schema/stage-rules';
@@ -14,6 +17,7 @@ import { createColumns } from '../create-columns';
 import { createTable } from '../create-table';
 import { createTableFeature } from '../create-table-feature';
 import type { ColumnDecl, ColumnSet, RenderRow, RowId, TableStore } from '../types';
+import { selectAllIds } from './with-selection/utils';
 import { withComputed } from './with-computed';
 import { withGrouping, type GroupingMembers } from './with-grouping';
 import { withSorting, type SortingMembers } from './with-sorting';
@@ -34,6 +38,11 @@ interface CustomChildrenRow {
 // Widened `TId` (plain `string`) — no `path.<id>` usage in this file.
 function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
   return createColumns(noData<Row>(), (col) => [col('name')]);
+}
+
+// Columns for the flat-fixture (#167) seams below — same single `name` column, over `FlatRow`.
+function makeFlatColumns(): ColumnSet<FlatRow, readonly ColumnDecl<FlatRow, string, unknown>[]> {
+  return createColumns(noData<FlatRow>(), (col) => [col('name')]);
 }
 
 // Small tree: r1 has two children (c1, c1 has a grandchild g1); r2 is a leaf.
@@ -618,6 +627,503 @@ describe('withTree', () => {
     expect(c1).toBeDefined();
     expect(c1?.depth).toBe(2); // group header depth 0, p1 depth 1, c1 depth 2
     expect(c1?.parentId).toBe('p1');
+  });
+
+  // Step 2 (#167): withTree({ parentId }) nests flat rows via engine/tree-links.ts's
+  // resolveTreeLinks(), instead of a nested childrenAccessor. Seams A-O, red-green order per
+  // step-2-with-tree-parent-id.test-plan.md. `parentId` is type-only in this red phase —
+  // withTree() does not yet nest anything from it, so every seam below is expected to fail.
+  describe('flat data — parentId (#167)', () => {
+    // Shared by the broken-link seams (G, H, I, J, K, L) and O — one row shape, `parentId`
+    // read straight off the row unless a seam's own accessor overrides it to throw.
+    interface LinkRow {
+      id: string;
+      name: string;
+      parentId?: string | null;
+    }
+    function makeLinkColumns(): ColumnSet<LinkRow, readonly ColumnDecl<LinkRow, string, unknown>[]> {
+      return createColumns(noData<LinkRow>(), (col) => [col('name')]);
+    }
+
+    it('A — a flat fixture with parentId renders the same tree the nested fixture renders — ids, depth, parentId, hasChildren, isExpanded — and reports nothing', () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<FlatRow[]>(makeFlatRows()),
+            { trackBy: 'id', columns: makeFlatColumns() },
+            withTree({ parentId: (row) => row.parentId, initial: ['r1', 'c1'] })
+          )
+        );
+
+        const renderRows = store.renderRows();
+        expect(renderRows.map((row) => row.id)).toEqual(['r1', 'c1', 'g1', 'c2', 'r2']);
+        expect(renderRows.map((row) => row.depth)).toEqual([0, 1, 2, 1, 0]);
+        expect(renderRows.map((row) => row.parentId)).toEqual([
+          undefined,
+          'r1',
+          'c1',
+          'r1',
+          undefined,
+        ]);
+        expect(renderRows.map((row) => row.hasChildren)).toEqual([
+          true,
+          true,
+          false,
+          false,
+          false,
+        ]);
+        expect(renderRows.map((row) => row.isExpanded)).toEqual([
+          true,
+          true,
+          undefined,
+          undefined,
+          undefined,
+        ]);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
+
+    it('B — children are real rows — a child carries its data() sourceIndex, and totalRowCount and selectAllIds() count collapsed children', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
+        )
+      );
+
+      expect(store.renderRows().map((row) => row.id)).toEqual(['r1', 'r2']);
+      expect(store.totalRowCount()).toBe(5);
+      expect(selectAllIds(store).sort()).toEqual(['c1', 'c2', 'g1', 'r1', 'r2']);
+
+      store.tree.toggle('r1');
+      const renderRows = store.renderRows();
+      const c1 = renderRows.find((row) => row.id === 'c1');
+      const c2 = renderRows.find((row) => row.id === 'c2');
+      expect(c1?.sourceIndex).toBe(2);
+      expect(c2?.sourceIndex).toBe(4);
+    });
+
+    it('C — siblings at every level follow the pipeline sort order', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId }),
+          withSorting()
+        )
+      );
+
+      store.tree.toggle('r1');
+      store.tree.toggle('c1');
+      store.setSorting([{ columnId: 'name', direction: 'desc' }]);
+      TestBed.tick();
+
+      expect(store.renderRows().map((row) => row.id)).toEqual(['r2', 'r1', 'c2', 'c1', 'g1']);
+    });
+
+    it('D — composed after withGrouping(), a group header passes through and a child nests under its parent inside the header', () => {
+      interface RegionRow {
+        id: string;
+        region: string;
+        parentId?: string | null;
+      }
+      const rows: RegionRow[] = [
+        { id: 'p1', region: 'US', parentId: null },
+        { id: 'c1', region: 'US', parentId: 'p1' },
+        { id: 'p2', region: 'EU', parentId: null },
+      ];
+      const columns = createColumns(noData<RegionRow>(), (col) => [
+        col('region', { label: 'region' }),
+      ]);
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<RegionRow[]>(rows),
+            { trackBy: 'id', columns },
+            withGrouping({ initial: ['region'] }),
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+
+        const usHeader = store
+          .renderRows()
+          .find((row) => row.kind === 'group' && row.groupKey?.value === 'US');
+        expect(usHeader).toBeDefined();
+
+        store.tree.toggle(usHeader?.id ?? '');
+        store.tree.toggle('p1');
+
+        const renderRows = store.renderRows();
+        const c1 = renderRows.find((row) => row.id === 'c1');
+        const header = renderRows.find((row) => row.id === usHeader?.id);
+
+        expect(c1?.depth).toBe(2);
+        expect(c1?.parentId).toBe('p1');
+        expect(header?.kind).toBe('group');
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
+
+    it('E — isExpandable decides hasChildren — a lazy row shows a toggle before children exist, and an appended child row nests under it', () => {
+      interface LazyRow {
+        id: string;
+        name: string;
+        parentId?: string | null;
+      }
+      const data = signal<LazyRow[]>([
+        { id: 'lazy', name: 'Lazy' },
+        { id: 'leaf', name: 'Leaf' },
+      ]);
+      const columns = createColumns(noData<LazyRow>(), (col) => [col('name')]);
+      const store = inContext(() =>
+        createTable(
+          data,
+          { trackBy: 'id', columns },
+          withTree({ parentId: (row) => row.parentId, isExpandable: (row) => row.id === 'lazy' })
+        )
+      );
+
+      const before = store.renderRows();
+      expect(before.map((row) => row.id)).toEqual(['lazy', 'leaf']);
+      expect(before.find((row) => row.id === 'lazy')?.hasChildren).toBe(true);
+
+      store.tree.toggle('lazy');
+      expect(store.renderRows().map((row) => row.id)).toEqual(['lazy', 'leaf']);
+
+      data.update((rows) => [...rows, { id: 'lazy-child', name: 'Lazy Child', parentId: 'lazy' }]);
+      TestBed.tick();
+
+      const after = store.renderRows();
+      expect(after.map((row) => row.id)).toEqual(['lazy', 'lazy-child', 'leaf']);
+      expect(after.find((row) => row.id === 'lazy-child')?.depth).toBe(1);
+    });
+
+    it('F — expand() with no ids opens every row with a child in flat data, leaves leaves closed, and state() reads "all"', () => {
+      const store = inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({ parentId: (row) => row.parentId })
+        )
+      );
+
+      expect(store.tree.state()).toBe('none');
+
+      store.tree.expand();
+
+      expect([...store.tree()].sort()).toEqual(['c1', 'r1']);
+      expect(store.tree.state()).toBe('all');
+    });
+
+    describe('broken links (ADR-0014)', () => {
+      let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
+
+      beforeEach(() => {
+        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        consoleErrorSpy.mockRestore();
+      });
+
+      it('G — a self-parent row renders at depth 0 with its subtree intact and reports once per evaluation', () => {
+        const rows: LinkRow[] = [
+          { id: 's1', name: 'S1', parentId: 's1' },
+          { id: 's1c', name: 'S1 Child', parentId: 's1' },
+          { id: 's2', name: 'S2', parentId: 's2' },
+        ];
+        const store = inContext(() =>
+          createTable(
+            signal<LinkRow[]>(rows),
+            { trackBy: 'id', columns: makeLinkColumns() },
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+
+        store.tree.toggle('s1');
+
+        const renderRows = store.renderRows();
+        const s1 = renderRows.find((row) => row.id === 's1');
+        const s1c = renderRows.find((row) => row.id === 's1c');
+        const s2 = renderRows.find((row) => row.id === 's2');
+
+        expect(s1?.depth).toBe(0);
+        expect(s1?.hasChildren).toBe(true);
+        expect(s1c?.depth).toBe(1);
+        expect(s2?.depth).toBe(0);
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('H — a row whose parent is absent renders at depth 0 with its subtree intact and reports once per evaluation', () => {
+        const rows: LinkRow[] = [
+          { id: 'o1', name: 'O1', parentId: 'missing' },
+          { id: 'o1c', name: 'O1 Child', parentId: 'o1' },
+          { id: 'o2', name: 'O2', parentId: 'gone' },
+        ];
+        const store = inContext(() =>
+          createTable(
+            signal<LinkRow[]>(rows),
+            { trackBy: 'id', columns: makeLinkColumns() },
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+
+        store.tree.toggle('o1');
+
+        const renderRows = store.renderRows();
+        const o1 = renderRows.find((row) => row.id === 'o1');
+        const o1c = renderRows.find((row) => row.id === 'o1c');
+        const o2 = renderRows.find((row) => row.id === 'o2');
+
+        expect(o1?.depth).toBe(0);
+        expect(o1c?.depth).toBe(1);
+        expect(o2?.depth).toBe(0);
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('I — a cycle renders its first member in input order at depth 0 with the rest nested beneath, and reports once', () => {
+        const rows: LinkRow[] = [
+          { id: 'k3', name: 'K3', parentId: 'k2' },
+          { id: 'k1', name: 'K1', parentId: 'k2' },
+          { id: 'k2', name: 'K2', parentId: 'k1' },
+        ];
+        const store = inContext(() =>
+          createTable(
+            signal<LinkRow[]>(rows),
+            { trackBy: 'id', columns: makeLinkColumns() },
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+
+        store.tree.expand();
+
+        const renderRows = store.renderRows();
+        expect(renderRows.map((row) => row.id)).toEqual(['k1', 'k2', 'k3']);
+        expect(renderRows.map((row) => row.depth)).toEqual([0, 1, 2]);
+        expect(renderRows.find((row) => row.id === 'k2')?.parentId).toBe('k1');
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+      });
+
+      it('J — a parentId that throws for a row degrades that row to depth 0, keeps its children beneath it, and reports once naming parentId', () => {
+        const rows: LinkRow[] = [
+          { id: 't1', name: 'T1' },
+          { id: 't1c', name: 'T1 Child', parentId: 't1' },
+          { id: 't2', name: 'T2' },
+        ];
+        const store = inContext(() =>
+          createTable(
+            signal<LinkRow[]>(rows),
+            { trackBy: 'id', columns: makeLinkColumns() },
+            withTree({
+              parentId: (row): string | null | undefined => {
+                if (row.id === 't1' || row.id === 't2') {
+                  throw new Error('boom');
+                }
+                return row.parentId;
+              },
+            })
+          )
+        );
+
+        store.tree.toggle('t1');
+
+        const renderRows = store.renderRows();
+        const t1 = renderRows.find((row) => row.id === 't1');
+        const t1c = renderRows.find((row) => row.id === 't1c');
+        const t2 = renderRows.find((row) => row.id === 't2');
+
+        expect(t1?.depth).toBe(0);
+        expect(t1c?.depth).toBe(1);
+        expect(t2?.depth).toBe(0);
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+        expect(consoleErrorSpy.mock.calls[0][0]).toContain('parentId');
+      });
+
+      it('K — two broken kinds in one evaluation report once each, and a second evaluation reports again', () => {
+        const rows: LinkRow[] = [
+          { id: 's1', name: 'S1', parentId: 's1' },
+          { id: 'o1', name: 'O1', parentId: 'missing' },
+        ];
+        const data = signal<LinkRow[]>(rows);
+        const store = inContext(() =>
+          createTable(
+            data,
+            { trackBy: 'id', columns: makeLinkColumns() },
+            withTree({ parentId: (row) => row.parentId })
+          )
+        );
+
+        store.renderRows();
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(2);
+
+        data.set(rows.map((row) => ({ ...row })));
+        TestBed.tick();
+        store.renderRows();
+
+        expect(consoleErrorSpy).toHaveBeenCalledTimes(4);
+      });
+
+      it('L — broken-link reports fire with ngDevMode false — production too', () => {
+        const previous = getNgDevMode();
+        setNgDevMode(false);
+        try {
+          const rows: LinkRow[] = [
+            { id: 'o1', name: 'O1', parentId: 'missing' },
+            { id: 'o1c', name: 'O1 Child', parentId: 'o1' },
+            { id: 'o2', name: 'O2', parentId: 'gone' },
+          ];
+          const store = inContext(() =>
+            createTable(
+              signal<LinkRow[]>(rows),
+              { trackBy: 'id', columns: makeLinkColumns() },
+              withTree({ parentId: (row) => row.parentId })
+            )
+          );
+
+          store.renderRows();
+
+          expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+        } finally {
+          setNgDevMode(previous);
+        }
+      });
+    });
+
+    it('M — parentId contributes a total parentLink — a pipeline stage reads the parent id, and null for a null, undefined or throwing parentId', () => {
+      interface LinkTestRow {
+        id: string;
+        name: string;
+        parentId?: string | null;
+      }
+      const rows: LinkTestRow[] = [
+        { id: 'r1', name: 'R1' },
+        { id: 'c1', name: 'C1', parentId: 'r1' },
+        { id: 'r2', name: 'R2' },
+        { id: 't1', name: 'T1' },
+      ];
+      const recorded: [string, RowId | null | undefined][] = [];
+      // `_store` is typed, not read: it pins `In` (and so `RowOf<In>`) to `LinkTestRow` for
+      // `createTableFeature`'s inference — an untyped `() => ({...})` factory would otherwise
+      // infer `RowOf<In>` as `unknown` and reject the `LinkTestRow`-typed stage below. `Pick`
+      // to `rows` only, so this doesn't also pin the store's column-id union.
+      const recordsParentOf = createTableFeature((_store: Pick<TableStore<LinkTestRow>, 'rows'>) => ({
+        stages: stageSchema<LinkTestRow>('pipeline', (s) =>
+          stage(s.filter, {
+            run: (rowsIn, ctx) => {
+              rowsIn.forEach((row) => {
+                recorded.push([row.id, ctx.parentOf?.(row)]);
+              });
+              return rowsIn;
+            },
+          })
+        ),
+      }));
+      const columns = createColumns(noData<LinkTestRow>(), (col) => [col('name')]);
+      const parentId = (row: LinkTestRow): string | null | undefined => {
+        if (row.id === 't1') {
+          throw new Error('boom');
+        }
+        if (row.id === 'r1') {
+          return null;
+        }
+        if (row.id === 'r2') {
+          return undefined;
+        }
+        return row.parentId;
+      };
+
+      const store = inContext(() =>
+        createTable(
+          signal<LinkTestRow[]>(rows),
+          { trackBy: 'id', columns },
+          recordsParentOf,
+          withTree({ parentId })
+        )
+      );
+
+      expect(() => store.rows()).not.toThrow();
+      expect(recorded).toContainEqual(['c1', 'r1']);
+      expect(recorded).toContainEqual(['r1', null]);
+      expect(recorded).toContainEqual(['r2', null]);
+      expect(recorded).toContainEqual(['t1', null]);
+    });
+
+    it('N — withTree({ parentId }) claims the tree render stage and the parent link; withTree() without it claims neither', () => {
+      const contributesParentLink = createTableFeature(() => ({ parentLink: () => null }));
+
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            { trackBy: 'id', columns: makeColumns() },
+            claimsTreeStage,
+            withTree({ parentId: () => null })
+          )
+        )
+      ).toThrow(/both provide the "tree" render stage/);
+
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            { trackBy: 'id', columns: makeColumns() },
+            contributesParentLink,
+            withTree({ parentId: () => null })
+          )
+        )
+      ).toThrow(/both provide the parent link/);
+
+      expect(() =>
+        inContext(() =>
+          createTable(
+            signal<Row[]>(makeRows()),
+            { trackBy: 'id', columns: makeColumns() },
+            contributesParentLink,
+            withTree()
+          )
+        )
+      ).not.toThrow();
+    });
+
+    it('O — expand() and state() treat broken links as roots and never report — only the tree stage reports', () => {
+      const rows: LinkRow[] = [
+        { id: 'o1', name: 'O1', parentId: 'missing' },
+        { id: 'o1c', name: 'O1 Child', parentId: 'o1' },
+        { id: 'o2', name: 'O2', parentId: 'gone' },
+      ];
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      try {
+        const store = inContext(() =>
+          createTable(
+            signal<LinkRow[]>(rows),
+            { trackBy: 'id', columns: makeLinkColumns() },
+            withTree({
+              parentId: (row): string | null | undefined => {
+                if (row.id === 'o2') {
+                  throw new Error('boom');
+                }
+                return row.parentId;
+              },
+            })
+          )
+        );
+
+        expect(() => store.tree.state()).not.toThrow();
+        expect(() => store.tree.expand()).not.toThrow();
+
+        expect(store.tree().has('o1')).toBe(true);
+        expect(consoleErrorSpy).not.toHaveBeenCalled();
+      } finally {
+        consoleErrorSpy.mockRestore();
+      }
+    });
   });
 
   describe('collapse-only (D9/E13)', () => {
@@ -1307,6 +1813,35 @@ describe('withTree', () => {
             })
           ),
           withTree({ childrenAccessor })
+        )
+      );
+    });
+
+    // #167 — `parentId`'s row parameter is inferred as `RowOf<In>`, never widened to `any`.
+    it('parentId infers its row parameter as RowOf<In>, never any', () => {
+      inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          withTree({
+            parentId: (row) => {
+              expectTypeOf(row).toEqualTypeOf<FlatRow>();
+              return row.parentId;
+            },
+          })
+        )
+      );
+    });
+
+    // #167 — the return type is pinned to `RowId | null | undefined`; a mismatched return is a
+    // compile error, not silently widened.
+    it('parentId return type is pinned to RowId | null | undefined', () => {
+      inContext(() =>
+        createTable(
+          signal<FlatRow[]>(makeFlatRows()),
+          { trackBy: 'id', columns: makeFlatColumns() },
+          // @ts-expect-error — parentId must return RowId | null | undefined, not {}.
+          withTree({ parentId: () => ({}) })
         )
       );
     });
