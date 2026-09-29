@@ -12,6 +12,12 @@ export interface TreeLinks {
   readonly broken: Readonly<Record<BrokenLinkKind, readonly RowId[]>>;
 }
 
+/** The parent link and row identity that tree links resolve from. */
+export interface TreeLinkSource<TRow> {
+  readonly parentOf: ParentLink<TRow>;
+  readonly trackBy: TrackByFn<TRow>;
+}
+
 /**
  * Resolves each row's parent over `rows`.
  *
@@ -22,7 +28,7 @@ export interface TreeLinks {
  */
 export function resolveTreeLinks<TRow>(
   rows: readonly TRow[],
-  ctx: { parentOf: ParentLink<TRow>; trackBy: TrackByFn<TRow> }
+  ctx: TreeLinkSource<TRow>
 ): TreeLinks {
   const { parentOf, trackBy } = ctx;
 

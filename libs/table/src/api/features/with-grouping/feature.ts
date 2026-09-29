@@ -15,6 +15,7 @@ import {
   maskGroupingLevels,
   type GroupingRuleEntry,
 } from '../../../engine/grouping/rules';
+import type { TreeLinkSource } from '../../../engine/tree-links';
 import type { ColumnValuesOf, Feature, RowOf, StageContext, TableFeatureSpec } from '../../../engine/types';
 import { createWritableView, type WritableView } from '../../../engine/writable-view';
 import { assertDeclarationsAreKnown, assertWrittenIdsAreKnown } from '../../../schema/validate';
@@ -164,7 +165,7 @@ function buildGroupingSpec<TRow, TValues extends ColumnValueMap>(
     label: 'withGrouping',
     // Note: a getter, not a copy. A feature folded after this one may contribute
     // `ctx.parentOf`; a factory-time read would make grouping ignore the parent link.
-    get treeLinks(): ClusterOpts<TRow>['treeLinks'] {
+    get treeLinks(): TreeLinkSource<TRow> | undefined {
       const parentOf = ctx.parentOf;
       return parentOf ? { parentOf, trackBy: input.trackBy } : undefined;
     },
