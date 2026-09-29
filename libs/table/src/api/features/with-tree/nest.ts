@@ -83,8 +83,7 @@ function isRowNode<TRow>(node: RenderNode<TRow>): node is RowNode<TRow> {
   return node.data !== null;
 }
 
-// The 4 params `nestFlatPool`/`nestFlatSiblings` pass through their mutual recursion unchanged,
-// bundled so the recursive call site carries one reference instead of four positional args.
+// The 4 params `nestFlatPool`/`nestFlatSiblings` pass through their mutual recursion unchanged.
 interface NestContext<TRow> {
   readonly trackBy: TrackByFn<TRow>;
   readonly parentOf: ParentLink<TRow>;
@@ -93,7 +92,7 @@ interface NestContext<TRow> {
 }
 
 // Nests one flat pool of sibling rows — either the top-level input or a single group header's
-// own member list, never across headers (#170 is roots-only grouping across groups) — by
+// own member list, never across headers — by
 // resolved parent id. Sibling order follows `poolNodes`' own order, which is the stage's input
 // order (already pipeline-sorted). `canExpand` decides `hasChildren`; its default is "some
 // other row in this same pool declares this row as its parent."
@@ -172,7 +171,7 @@ function nestFlatSiblings<TRow>(
   });
 }
 
-// The `'tree'` render stage for `withTree({ parentId })` (#167). Its own guarded `parentId`
+// The `'tree'` render stage for `withTree({ parentId })`. Its own guarded `parentId`
 // call is separate from the silent `parentLink` contribution: only this stage reports, and it
 // alone needs to tell a throw apart from a declared root to name `parentId` in the message.
 export function buildFlatTreeStage<TRow>(

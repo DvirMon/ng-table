@@ -5,6 +5,8 @@ import type { ExpansionChange, ExpansionWriteOptions } from '../expansion/state'
 
 export type { ExpansionChange, ExpansionWriteOptions } from '../expansion/state';
 
+/** Write options for `expand()`: the expansion options plus `includeHidden`, which scans all of
+ *  `data()` instead of the filtered view when discovering ids. Defaults to `false`. */
 export type TreeWriteOptions = ExpansionWriteOptions & { includeHidden?: boolean };
 
 export interface WithTreeConfig<TRow> {
@@ -25,6 +27,7 @@ export interface WithTreeConfig<TRow> {
   revealContextRow?: (row: TRow) => boolean;
 }
 
+/** The `tree` member: a signal of the open ids, with methods to write and query the tree. */
 export interface TreeSlice {
   (): ReadonlySet<RowId>;
   /** One emission per write, carrying the whole symmetric difference. */
@@ -33,6 +36,7 @@ export interface TreeSlice {
    *  "nothing is expandable", which is what a collapse-only instance always reads. The default
    *  scan is the filtered view (`rows()`); `includeHidden` scans all of `data()`. */
   state(options?: { includeHidden?: boolean }): 'all' | 'some' | 'none';
+  /** Flips one id. A revealed context row closes without changing the open set. */
   toggle(id: RowId, options?: ExpansionWriteOptions): void;
   /** Adds. Omitted `ids`: every expandable row found by the discovery walk. */
   expand(ids?: readonly RowId[], options?: TreeWriteOptions): void;
@@ -40,19 +44,19 @@ export interface TreeSlice {
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   /** Atomic replace — the restore path. */
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
-  /** The id's declared parent, resolved through `engine/tree-links.ts` over all of `data()` —
-   * not the pipeline's `rows()` view. `null` for a root or an id not present in `data()`. Never
-   * reports (#167). */
+  /** The id's declared parent, resolved over all of `data()` — not the pipeline's `rows()`
+   * view. `null` for a root or an id not present in `data()`. Never reports. */
   parentOf(id: RowId): RowId | null;
   /** Every descendant of `id` at any depth, depth-first in `data()` order, parent before child,
    * never including `id` itself. `[]` for a leaf or an id not present in `data()`. Never
-   * reports (#167). */
+   * reports. */
   descendantsOf(id: RowId): RowId[];
   /** Every row a contributor (such as an active filter) retains as context, including rows
-   * hidden under a collapsed parent. Empty when nothing contributes (#169). */
+   * hidden under a collapsed parent. Empty when nothing contributes. */
   readonly contextRowIds: Signal<ReadonlySet<RowId>>;
 }
 
+/** The members `withTree()` adds to the table. */
 export interface TreeMembers {
   readonly tree: TreeSlice;
 }
