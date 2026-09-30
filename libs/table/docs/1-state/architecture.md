@@ -147,8 +147,8 @@ features left to right, handing each one the store *as accumulated so far*. A fe
 core members plus every feature to its **left**, and none to its right.
 
 **2. Member visibility follows argument order. Pipeline execution order does not.** The pipeline
-runs in `PIPELINE_ORDER` (`filter → group → sort → expand`) regardless of how the consumer
-ordered the arguments. Reordering arguments changes what each feature can *read*; it never
+runs the fixed anchor order `filter → group → sort`, plus any stages a feature declares,
+regardless of how the consumer ordered the arguments. Reordering arguments changes what each feature can *read*; it never
 changes what runs when.
 
 **3. Types are stricter than runtime.** The store is one shared object reference, so a read
@@ -202,6 +202,14 @@ justification: Angular upgrades gated on ngrx releases, and a peer dependency is
 if this ships as a standalone primitive library. Intake ticket in
 [`work/drop-ngrx-engine/1-ticket.md`](work/drop-ngrx-engine/1-ticket.md). Do not re-run the two
 approaches above — they are settled, and the ngrx types they failed against are gone.
+
+## Feature authoring
+
+How to write a `with-*()` feature — the exported surface, claiming or declaring a stage
+next to an anchor, `RenderNode` + `mapNodes`, `onRowsRemoved` — is in
+[`feature-authoring.md`](feature-authoring.md). Stage registration is decided in
+[ADR-0020](../adr/0020-open-stage-registration-for-third-party-features.md); the work folder
+is [`work/feature-authoring/`](work/feature-authoring/).
 
 ## Cross-Cutting Open Questions (span multiple features)
 
