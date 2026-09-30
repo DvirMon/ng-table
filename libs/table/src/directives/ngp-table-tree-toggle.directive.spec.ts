@@ -1,5 +1,6 @@
 import { Component, signal, type Type } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { vi, type MockInstance } from 'vitest';
 
 import { NgpTableDirective } from './ngp-table.directive';
 import { NgpTableRowDirective } from './ngp-table-row.directive';
@@ -94,6 +95,133 @@ function setup(hostType: Type<Host>): Setup {
     Array.from(root.querySelectorAll('[role="row"]')).map((row) => row.textContent!.trim());
   return { fixture, toggle, clickToggle, visibleRowIds, rowClicks: fixture.componentInstance.rowClicks };
 }
+
+const CHECK_ROWS: TaskTreeMockRow[] = [
+  { id: 'p1', status: 'open', parentId: null },
+  { id: 'p2', status: 'open', parentId: null },
+  { id: 'c1', status: 'open', parentId: 'p1' },
+  { id: 'c2', status: 'open', parentId: 'p2' },
+];
+
+const LEAF_ROWS: TaskTreeMockRow[] = [{ id: 'solo', status: 'open' }];
+
+function checksTemplate(button: string): string {
+  return `
+  <table [ngpTable]="table">
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [ngpTableRow]="row"><td>${button}</td></tr>
+      }
+    </tbody>
+  </table>
+`;
+}
+
+function createCheckTable(rows: TaskTreeMockRow[], tree: boolean) {
+  const data = signal<TaskTreeMockRow[]>(rows);
+  const config = {
+    trackBy: 'id' as const,
+    columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('status')]),
+  };
+  return tree
+    ? createTable(data, config, withTree({ parentId: (row) => row.parentId }))
+    : createTable(data, config);
+}
+
+const CHECK_IMPORTS = [NgpTableDirective, NgpTableRowDirective, NgpTableTreeToggleDirective];
+
+@Component({ imports: CHECK_IMPORTS, template: checksTemplate('<button ngpTableTreeToggle></button>') })
+class NoTreeHost {
+  protected readonly table = createCheckTable(CHECK_ROWS, false);
+}
+
+@Component({ imports: CHECK_IMPORTS, template: checksTemplate('<button ngpTableTreeToggle></button>') })
+class NamelessHost {
+  protected readonly table = createCheckTable(CHECK_ROWS, true);
+}
+
+@Component({
+  imports: CHECK_IMPORTS,
+  template: checksTemplate('<button ngpTableTreeToggle aria-label="Toggle row"></button>'),
+})
+class AriaLabelHost {
+  protected readonly table = createCheckTable(CHECK_ROWS, true);
+}
+
+@Component({
+  imports: CHECK_IMPORTS,
+  template: checksTemplate('<button ngpTableTreeToggle aria-labelledby="row-name"></button>'),
+})
+class AriaLabelledbyHost {
+  protected readonly table = createCheckTable(CHECK_ROWS, true);
+}
+
+@Component({
+  imports: CHECK_IMPORTS,
+  template: checksTemplate('<button ngpTableTreeToggle>{{ row.id }}</button>'),
+})
+class TextHost {
+  protected readonly table = createCheckTable(CHECK_ROWS, true);
+}
+
+@Component({ imports: CHECK_IMPORTS, template: checksTemplate('<button ngpTableTreeToggle></button>') })
+class LeafNamelessHost {
+  protected readonly table = createCheckTable(LEAF_ROWS, true);
+}
+
+function renderChecks(hostType: Type<unknown>): ComponentFixture<unknown> {
+  const fixture = TestBed.createComponent(hostType);
+  fixture.detectChanges();
+  return fixture;
+}
+
+describe('NgpTableTreeToggleDirective dev checks', () => {
+  let warn: MockInstance<typeof console.warn>;
+
+  beforeEach(() => {
+    warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('throws on first render when the table has no withTree()', () => {
+    expect(() => renderChecks(NoTreeHost)).toThrow(/ngpTableTreeToggle[\s\S]*withTree\(\)/);
+  });
+
+  it('warns once per toggle whose button has no accessible name', () => {
+    renderChecks(NamelessHost);
+
+    expect(warn).toHaveBeenCalledTimes(2);
+    for (const call of warn.mock.calls) expect(String(call[0])).toContain('ngpTableTreeToggle');
+  });
+
+  it('does not warn again when an existing toggle re-renders', () => {
+    const fixture = renderChecks(NamelessHost);
+    const root: HTMLElement = fixture.nativeElement;
+    const first = root.querySelector('button')!;
+
+    first.click();
+    fixture.detectChanges();
+    const callsAfterOpen = warn.mock.calls.length;
+    first.click();
+    fixture.detectChanges();
+
+    expect(warn.mock.calls.length).toBe(callsAfterOpen);
+  });
+
+  it.each([
+    ['aria-label', AriaLabelHost],
+    ['aria-labelledby', AriaLabelledbyHost],
+    ['interpolated text', TextHost],
+    ['disabled leaf toggle', LeafNamelessHost],
+  ])('does not warn when %s', (_name, hostType) => {
+    renderChecks(hostType);
+
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
 
 describe('NgpTableTreeToggleDirective', () => {
   it('opens a collapsed parent on click: the child row renders and aria-expanded becomes "true"', () => {
