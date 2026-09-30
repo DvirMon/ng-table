@@ -36,7 +36,7 @@ shipped.
 | `selection` | — | drilled | partial | stub | none | [✅](0-product/selection.md) | [state](1-state/features/selection.md) · [ui](3-ui/directives/selection.md) · [product](0-product/selection.md) |
 | `sorting` | [log](decisions/sorting.md) | drilled | shipped | drafted | none | [✅](0-product/sorting.md) | [state](1-state/features/sorting.md) · [ui](3-ui/directives/sort.md) · [product](0-product/sorting.md) |
 | `state-persistence` | — | drafted | none | — | — | — | [state](1-state/state-persistence.md) |
-| `tree` | [log](decisions/tree.md) | drilled | shipped | — | — | [✅](0-product/tree.md) | [state](1-state/features/tree.md) · [product](0-product/tree.md) |
+| `tree` | [log](decisions/tree.md) | drilled | shipped | drilled | shipped | [✅](0-product/tree.md) | [state](1-state/features/tree.md) · [ui](3-ui/directives/tree.md) · [product](0-product/tree.md) |
 | `virtual-scroll` | — | drafted | none | — | — | — | [state](1-state/features/virtual-scroll.md) |
 
 `—` — that layer has no doc for this capability.

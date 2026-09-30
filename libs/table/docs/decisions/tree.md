@@ -94,6 +94,7 @@ column.
 | TR43 | Group headers use `ngpTableTreeRow` + `ngpTableTreeToggle` — group collapse already routes through `table.tree.toggle(groupId)` | 09-30 | decided (#165) | TUI D11 |
 | TR44 | Whole-row click bubbling (row `(click)` + toggle button double-toggling) is the consumer's; the toggle neither prevents default nor stops propagation | 09-30 | decided (#165) | TUI D12 |
 | TR45 | A disabled (non-expandable) toggle omits `aria-expanded`; an enabled one mirrors the row's `isExpanded` in `aria-expanded` and `data-expanded` | 09-30 | decided (#165) | TUI spec |
+| TR46 | The nameless-button warning skips a disabled leaf toggle — it is `aria-hidden`, so no assistive tech reaches it | 09-30 | decided (#165) | TUI D13 |
 
 ## Still open
 
