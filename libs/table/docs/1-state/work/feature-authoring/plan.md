@@ -242,6 +242,8 @@ a versioned package that another team consumes and cannot edit.
 
 **Q10 (decided 2026-09-26, issue #155 /to-tasks): production fallback for the other construction checks — drop the stage.** With `ngDevMode` false, a declared stage with an unknown or not-anchor-eligible anchor, or on a cycle, doesn't run; built-ins and valid stages run in order, and a cycle never hangs the resolver. A duplicate declared name keeps the later declaration (as Q8). Not documented as behaviour.
 
+**Q11 (decided 2026-09-30, issue #156): a row is made up when `data === null`.** The runtime containment check exempts rows with `data === null` and reports a real row (`data !== null`) whose id was not in the stage's input. `synthesizesRows` stays a construction-only flag and is not read at runtime. The report names the stage, its feature label and the first offending id.
+
 **No capability decisions log (2026-09-26).** `state.json`'s `capabilityLogPath` is `null`:
 stage registration is an engine-wide feature contract (pipeline + render stages, any
 feature), owned by no single capability's `docs/decisions/<capability>.md`. This file and

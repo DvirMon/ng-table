@@ -86,6 +86,8 @@ Vite, tapable, Babel) and MUI X DataGrid's pipe-processor registry — see Alter
 4. **Runtime invariants** (data-dependent, stage evaluation): row-id uniqueness and
    real-row id containment (output's non-synthesized ids ⊆ input's). Violations degrade +
    report once per stage per evaluation, in production too (ADR-0014 Decision). Never throw.
+   "Non-synthesized ids" means `data !== null` rows — see Q11 in
+   [the feature-authoring plan](../1-state/work/feature-authoring/plan.md).
 
 5. **Construction-checked declarable:** `synthesizesRows: boolean` (a `true` stage cannot
    anchor before `'group'`). Row-count direction (`'preserves' | 'may-shrink' | 'may-grow'`)
