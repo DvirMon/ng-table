@@ -39,12 +39,12 @@ name, `<type>/<NN>-<slice-slug>`.
   declared names); #154 → #155 and #154 → #156 (gated on the
   `stageSchema`/`stage` rule form and the resolved-order fold);
   #152 + #155 + #156 → #157 (the guide documents all three).
-- **Starting frontier:** #152, #153, #154. Note #155 is
-  `needs:grill` (two questions in its body).
+- **Starting frontier:** #152, #153, #154.
 
 ## Source
 
 Edges user-confirmed 2026-09-26 in `/to-issues`, derived from
 `2-spec.md` and `3-architecture.md` § Dependency notes for
-slicing. Related docs: `plan.md`, `2-spec.md`,
+slicing. Titles pulled from `gh issue view` on 2026-09-30.
+Related docs: `plan.md`, `2-spec.md`,
 `3-architecture.md`, ADR-0020.
