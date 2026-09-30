@@ -7,9 +7,9 @@ describe('runPipeline', () => {
   it('folds stages in list order', () => {
     const trace: string[] = [];
     const stages: ResolvedStage<(rows: string[]) => string[]>[] = [
-      { name: 'filter', run: (rows) => (trace.push('filter'), rows) },
-      { name: 'group', run: (rows) => (trace.push('group'), rows) },
-      { name: 'sort', run: (rows) => (trace.push('sort'), rows) },
+      { name: 'filter', label: 'test', run: (rows) => (trace.push('filter'), rows) },
+      { name: 'group', label: 'test', run: (rows) => (trace.push('group'), rows) },
+      { name: 'sort', label: 'test', run: (rows) => (trace.push('sort'), rows) },
     ];
 
     runPipeline(['a'], stages, {});
@@ -19,8 +19,8 @@ describe('runPipeline', () => {
 
   it('threads each stage output into the next', () => {
     const stages: ResolvedStage<(rows: number[]) => number[]>[] = [
-      { name: 'filter', run: (rows) => rows.filter((n) => n > 1) },
-      { name: 'sort', run: (rows) => [...rows].sort((a, b) => b - a) },
+      { name: 'filter', label: 'test', run: (rows) => rows.filter((n) => n > 1) },
+      { name: 'sort', label: 'test', run: (rows) => [...rows].sort((a, b) => b - a) },
     ];
 
     expect(runPipeline([3, 1, 2], stages, {})).toEqual([3, 2]);
@@ -36,8 +36,8 @@ describe('runPipeline', () => {
     const seen: StageContext<string>[] = [];
     const ctx: StageContext<string> = { parentOf: () => null };
     const stages: ResolvedStage<(rows: string[], ctx: StageContext<string>) => string[]>[] = [
-      { name: 'filter', run: (rows, ctx) => (seen.push(ctx), rows) },
-      { name: 'sort', run: (rows, ctx) => (seen.push(ctx), rows) },
+      { name: 'filter', label: 'test', run: (rows, ctx) => (seen.push(ctx), rows) },
+      { name: 'sort', label: 'test', run: (rows, ctx) => (seen.push(ctx), rows) },
     ];
 
     runPipeline(['a'], stages, ctx);

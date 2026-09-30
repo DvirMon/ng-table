@@ -39,7 +39,7 @@ describe('createTableCore — sourceIndex', () => {
       trackBy: 'id',
       data: signal(makeRows()),
     });
-    stages.push({ name: 'sort', run: (rows) => [...rows].reverse() });
+    stages.push({ name: 'sort', label: 'test', run: (rows) => [...rows].reverse() });
 
     expect(renderRows().map((row) => row.sourceIndex)).toEqual([2, 1, 0]);
   });
@@ -53,7 +53,7 @@ describe('createTableCore — sourceIndex', () => {
     const withGroupRow: RenderNodeTransform<Row> = (nodes) => [
       { id: 'group-1', kind: 'group', data: null, children: nodes },
     ];
-    renderStages.push({ name: 'group', run: withGroupRow });
+    renderStages.push({ name: 'group', label: 'test', run: withGroupRow });
 
     const [groupRow, ...rest]: RenderRow<Row>[] = renderRows();
 
@@ -159,6 +159,7 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
     const aggregates = { amount: 150 };
     renderStages.push({
       name: 'group',
+      label: 'test',
       run: (nodes) => [
         {
           id: 'group-1',
@@ -186,6 +187,7 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
     // in `aggregates`, so the synthesized row here mirrors that: only 'amount' is present.
     renderStages.push({
       name: 'group',
+      label: 'test',
       run: (nodes) => [
         {
           id: 'group-1',
@@ -215,6 +217,7 @@ describe('createTableCore — group-row cells (D5, ADR-0022)', () => {
     // cells under its own column id.
     renderStages.push({
       name: 'group',
+      label: 'test',
       run: (nodes) => [
         {
           id: 'group-1',
@@ -253,6 +256,7 @@ describe('createTableCore — expandedRows union (ADR-0017)', () => {
     });
     renderStages.push({
       name: 'tree',
+      label: 'test',
       run: (nodes) => {
         const byId = new Map(nodes.map((node) => [node.id, node]));
         const p1 = byId.get('p1');
@@ -319,7 +323,7 @@ describe('createTableCore — isContextRow stamp', () => {
     const withGroupRow: RenderNodeTransform<Row> = (nodes) => [
       { id: 'group-1', kind: 'group', data: null, children: nodes },
     ];
-    renderStages.push({ name: 'group', run: withGroupRow });
+    renderStages.push({ name: 'group', label: 'test', run: withGroupRow });
     contextSources.push(signal(new Set<RowId>(['r2'])));
 
     const [groupRow, ...rest]: RenderRow<Row>[] = renderRows();
