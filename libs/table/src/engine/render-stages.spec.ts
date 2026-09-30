@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { mapNodes, runRenderStages } from './render-stages';
 import type { RenderNode, RenderNodeTransform } from './render-stages';
 import type { ResolvedStage } from './stage-order';
@@ -63,6 +63,8 @@ describe('runRenderStages', () => {
 
 describe('mapNodes reach (via runRenderStages)', () => {
   it('reaches a node nested two levels under another stage output, post-order (C1/C2)', () => {
+    // The fake 'group' stage below emits real rows absent from its input, which now reports.
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const stages: ResolvedStage<RenderNodeTransform<Row>>[] = [
       {
         // Fake 'group' stage: ignores its input entirely and always emits a fixed,
@@ -109,5 +111,6 @@ describe('mapNodes reach (via runRenderStages)', () => {
     expect(result[0].aggregates).toEqual({ label: 'leaf' });
     expect(result[0].children[0].aggregates).toEqual({ label: 'leaf' });
     expect(result[0].children[0].children[0].aggregates).toEqual({ label: 'leaf' });
+    errorSpy.mockRestore();
   });
 });

@@ -185,6 +185,67 @@ function pinningStage(placement: 'before' | 'after'): AnyTableFeature {
   });
 }
 
+/** A real row no input ever carried — what an inventing render stage appends (#156). */
+const invented = {
+  id: 'x',
+  kind: 'row' as const,
+  data: { id: 'x', name: 'Invented', age: 1 },
+  children: [],
+};
+
+/** Claims `'tree'` and emits every node twice — duplicate ids in one output (#156). */
+function duplicatingStage(): AnyTableFeature {
+  return () => ({
+    renderStages: stageSchema('render', (s) =>
+      stage(s.tree, { run: (nodes) => [...nodes, ...nodes] })
+    ),
+  });
+}
+
+/** Claims `'tree'` and appends one real row that was not in its input (#156). */
+function inventingStage(): AnyTableFeature {
+  return () => ({
+    renderStages: stageSchema('render', (s) =>
+      stage(s.tree, { run: (nodes) => [...nodes, invented] })
+    ),
+  });
+}
+
+/** Claims `'group'`, wraps every node under a made-up header, and nests an invented real
+ * row inside it (#156). */
+function wrapAndInventStage(): AnyTableFeature {
+  return () => ({
+    renderStages: stageSchema('render', (s) =>
+      stage(s.group, {
+        run: (nodes) => [
+          {
+            id: 'group-1',
+            kind: 'group' as const,
+            data: null,
+            children: [...nodes, invented],
+          },
+        ],
+      })
+    ),
+  });
+}
+
+/** Runs `body` with `console.error` silenced and recorded; the spy is restored after. */
+function withConsoleErrorSpy(
+  body: (spy: ReturnType<typeof vi.spyOn>) => void
+): void {
+  const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    body(spy);
+  } finally {
+    spy.mockRestore();
+  }
+}
+
+function renderedIds(store: Record<string, unknown>): string[] {
+  return (store['renderRows'] as () => { id: string }[])().map((row) => row.id);
+}
+
 describe('composeTable', () => {
   it('resolves sparse column defs into full ColumnDefs', () => {
     const store = compose([]);
@@ -633,6 +694,89 @@ describe('composeTable', () => {
       expect(message).toContain('feature 1');
       expect(message).toContain('feature 2');
       expect(message).toContain('"pin"');
+    });
+  });
+
+  describe('runtime row-id checks (#156)', () => {
+    it('reports a stage emitting duplicate ids once and still renders its output', () => {
+      withConsoleErrorSpy((spy) => {
+        const store = composeWithRows(makeRows(), [duplicatingStage()]);
+
+        const ids = renderedIds(store);
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        const message = String(spy.mock.calls[0][0]);
+        expect(message).toContain('[createTable]');
+        expect(message).toContain('"tree"');
+        expect(message).toContain('feature 1');
+        expect(ids).toEqual(['r1', 'r2', 'r1', 'r2']);
+      });
+    });
+
+    it('reports a stage inventing a real row id once and still renders it', () => {
+      withConsoleErrorSpy((spy) => {
+        const store = composeWithRows(makeRows(), [inventingStage()]);
+
+        const ids = renderedIds(store);
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        const message = String(spy.mock.calls[0][0]);
+        expect(message).toContain('[createTable]');
+        expect(message).toContain('"tree"');
+        expect(message).toContain('feature 1');
+        expect(ids).toEqual(['r1', 'r2', 'x']);
+      });
+    });
+
+    it('finds an invented id nested under a made-up row and reports only the stage that added it', () => {
+      withConsoleErrorSpy((spy) => {
+        const store = composeWithRows(makeRows(), [
+          wrapAndInventStage(),
+          renderTaggingStage('tree', 'tree>'),
+        ]);
+
+        const ids = renderedIds(store);
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        const message = String(spy.mock.calls[0][0]);
+        expect(message).toContain('"group"');
+        expect(message).not.toContain('"tree"');
+        expect(ids).toEqual(['group-1', 'r1', 'r2', 'x']);
+      });
+    });
+
+    it('does not report a made-up data:null row, only a later stage that invents a real row', () => {
+      withConsoleErrorSpy((spy) => {
+        const store = composeWithRows(makeRows(), [
+          groupWrappingStage('group-1'),
+          inventingStage(),
+        ]);
+
+        const ids = renderedIds(store);
+
+        expect(spy).toHaveBeenCalledTimes(1);
+        const message = String(spy.mock.calls[0][0]);
+        expect(message).toContain('"tree"');
+        expect(message).not.toContain('"group"');
+        expect(ids).toContain('x');
+      });
+    });
+
+    it('reports duplicate ids even when ngDevMode is false', () => {
+      const previous = getNgDevMode();
+      setNgDevMode(false);
+      try {
+        withConsoleErrorSpy((spy) => {
+          const store = composeWithRows(makeRows(), [duplicatingStage()]);
+
+          renderedIds(store);
+
+          expect(spy).toHaveBeenCalledTimes(1);
+          expect(String(spy.mock.calls[0][0])).toContain('[createTable]');
+        });
+      } finally {
+        setNgDevMode(previous);
+      }
     });
   });
 
