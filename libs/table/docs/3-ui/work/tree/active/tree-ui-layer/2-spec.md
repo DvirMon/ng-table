@@ -8,8 +8,8 @@ audience: developers
 
 # Tree UI layer — spec (#165)
 
-Decisions: [`1-decisions.md`](1-decisions.md) (D1–D12). Capability log:
-[`decisions/tree.md`](../../../../../decisions/tree.md) TR33–TR44;
+Decisions: [`1-decisions.md`](1-decisions.md) (D1–D13). Capability log:
+[`decisions/tree.md`](../../../../../decisions/tree.md) TR33–TR46;
 grouping log G79–G80.
 
 ## Problem Statement
@@ -103,7 +103,7 @@ work.
 - **Toggle identity.** Row from the ancestor row directive's token; table from the table directive's token. No inputs for either.
 - **Toggle on a non-expandable row (D6).** Sets `disabled`, `aria-hidden="true"` and `data-disabled`. It stays in the DOM so width is kept; hiding it visually is the consumer's CSS. The consumer may still omit it with `@if`.
 - **Toggle state.** `aria-expanded` and `data-expanded` follow the row's `isExpanded`; on a disabled toggle `aria-expanded` is omitted.
-- **Accessible name (D7).** Consumer-owned; the library ships no text. Under `ngDevMode`, one warning per toggle whose button has no `aria-label`, `aria-labelledby` or text content, checked after first render so late-rendered text counts.
+- **Accessible name (D7).** Consumer-owned; the library ships no text. Under `ngDevMode`, one warning per toggle whose button has no `aria-label`, `aria-labelledby` or text content, checked after first render so late-rendered text counts. A disabled leaf toggle is skipped — it is `aria-hidden`, so no assistive tech reaches it (D13).
 - **Missing `withTree()` (D8).** A wiring error per ADR-0014: under `ngDevMode` the toggle throws on first render, naming itself and `withTree()`. In production the check is stripped and the toggle is inert. A missing `ngpTableTreeRow` is not an error.
 - **Group headers (D11).** Collapsible grouping (`withGrouping()` + `withTree()`) already collapses groups through `table.tree.toggle(groupId)`, and flattening stamps `hasChildren` / `isExpanded` on group rows — so both directives work on group headers unchanged. The grouping UI spec is re-pointed.
 - **Styling (D10).** No stylesheet ships. The surface is the hooks above plus `--ngp-table-row-depth`. A "Styling recipe" in the new tree UI spec shows: toggle `margin-inline-start: calc(var(--ngp-table-row-depth) * <step>)`, rotation on `[data-expanded]`, `visibility: hidden` on `[data-disabled]`, context-row dimming, and a reduced-motion branch.
@@ -116,7 +116,7 @@ work.
 - **What a good test is here:** drive the directive the way a consumer's template does and assert what the DOM exposes — attributes, their presence/absence, and rendered rows. Never assert on directive internals or private signals. Per the shared testing principles, the table store is same-domain in-memory code, not a system boundary, so it is **not** mocked.
 - **Seam 1 — tree-row directive (existing).** Host component feeds a `RenderRow`; assert `data-expandable` / `data-expanded` presence, absence, and removal when the same row changes. Prior art: the existing tree-row spec's `data-context-row` cases.
 - **Seam 2 — core row directive (existing).** Assert no row `aria-expanded` for any `isExpanded` value, and `--ngp-table-row-depth` equal to `depth`, updating when depth changes. This proves the custom-property binding.
-- **Seam 3 — toggle on a real table (new).** A host with a real `createTable(…, withTree({ parentId }))`, the table directive, `@for` over rendered rows and the toggle button. Cases: a click opens then closes a parent (child rows appear/disappear, `aria-expanded` flips); leaf toggle is `disabled` + `aria-hidden` + `data-disabled` with no `aria-expanded`; a group header under `withGrouping()` + `withTree()` collapses; the dev-mode throw without `withTree()`; the nameless-button warning fires once, and not when a name is present. Clicks use high-fidelity user events.
+- **Seam 3 — toggle on a real table (new).** A host with a real `createTable(…, withTree({ parentId }))`, the table directive, `@for` over rendered rows and the toggle button. Cases: a click opens then closes a parent (child rows appear/disappear, `aria-expanded` flips); leaf toggle is `disabled` + `aria-hidden` + `data-disabled` with no `aria-expanded`; a group header under `withGrouping()` + `withTree()` collapses; the dev-mode throw without `withTree()`; the nameless-button warning fires once, and not when a name is present. Clicks use native `button.click()` in jsdom.
 - **Not tested:** the CSS recipe (consumer-owned), production stripping of dev checks.
 - Acceptance: `nx run shared-table:typecheck` and `typecheck-spec` clean (template-aware), scoped spec runs green.
 

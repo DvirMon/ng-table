@@ -1,8 +1,8 @@
 ---
 title: UI Layer — Expansion (ngpTableExpandable, ngpTableExpandToggle, ngpTableExpandContent)
 type: architecture
-version: 0.4
-date: 2026-08-07
+version: 0.5
+date: 2026-09-30
 capability: expansion
 spec: drilled
 code: none
@@ -11,7 +11,9 @@ audience: developers
 
 # UI Layer — Expansion
 
-Three directives. `withExpansion()` owns all state; these own semantics, activation, and default presentation.
+Three directives for **detail panels only**. `withExpansion()` owns all state; these own semantics, activation, and default presentation.
+
+> **Narrowed 2026-09-30 (#165, TR33).** Tree rows — including collapsible group headers — use `ngpTableTreeRow` + `ngpTableTreeToggle`, specced in [`tree.md`](tree.md). After ADR-0012 the tree and the panel no longer share a store, so these directives serve `withExpansion()`'s detail panels and nothing else. The tree-row path this file used to describe is removed.
 
 | Directive | Host | Owns |
 |---|---|---|
@@ -25,11 +27,11 @@ Not a split of one concern — distinct concerns that resemble one. The row *ref
 
 `ngpTableExpandable` and `ngpTableExpandToggle` inject `NGP_TABLE_ROW`, so they depend on `ngpTableRow`, which depended on `RenderRow`/`renderRows()`. Landed 2026-08-07 via [#10](https://github.com/DvirMon/ng-table/issues/10).
 
-**Outstanding:** the detail-panel path needs `everExpanded` on `withExpansion()` — see "Detail Panels Are Lazy and Persistent" below. Tier 0–2 (tree children) can be built without it; tier 3 cannot.
+**Outstanding:** the detail-panel path needs `everExpanded` on `withExpansion()` — see "Detail Panels Are Lazy and Persistent" below.
 
 ## Why Directives and Not Consumer Markup
 
-`toggleExpanded(rowId)` is a one-line call any consumer could write — the current demo does exactly that (`apps/demo/src/app/table-expansion-demo/table-expansion-demo.html`). What the consumer would *also* have to write, correctly, every time: `aria-expanded` reflecting store state, `aria-level` from `depth`, keyboard activation on a non-interactive host, the `data-*` attributes `../cross-cutting/styling-tokens.md` expects, and enter/leave motion for rows that `renderRows()` adds and removes.
+`toggleExpanded(rowId)` is a one-line call any consumer could write. What the consumer would *also* have to write, correctly, every time: state reflection on the trigger, keyboard activation on a non-interactive host, the `data-*` attributes `../cross-cutting/styling-tokens.md` expects, and the panel's enter/leave motion.
 
 ---
 
@@ -63,19 +65,14 @@ Tier 0 stays fully supported. A consumer maintaining their own animation logic u
   },
 })
 export class NgpTableExpandableDirective {
-  // Detail-panel path only. Omitted for tree rows, where the id comes from NGP_TABLE_ROW.
+  // The detail <tr> is consumer markup with no RenderRow, so the id comes in as an input.
   readonly rowId = input<RowId | undefined>(undefined, { alias: 'ngpTableExpandableFor' });
 }
 ```
 
-**Two paths to row identity**, and exactly one applies per usage:
+**Row identity.** The detail `<tr>` is consumer markup with no `RenderRow`, so `[ngpTableExpandableFor]="row.id"` supplies the id and state is resolved against `NGP_TABLE_STORE`. See "Detail Panels Are Lazy and Persistent".
 
-- **Tree rows** — the `<tr>` is a `renderRows()` entry carrying `ngpTableRow`, so state comes from `NGP_TABLE_ROW` via DI. No input.
-- **Detail rows** — the `<tr>` is consumer markup with no `RenderRow`, so `[ngpTableExpandableFor]="row.id"` supplies the id and state is resolved against `NGP_TABLE_STORE`. See "Detail Panels Are Lazy and Persistent".
-
-The input wins when both are available.
-
-**Motion.** Owns `animate.enter` / `animate.leave` (Angular 21 native — no `@angular/animations` dependency), timed by `--ngp-table-expand-duration`. This directive sits on the element that enters and leaves, which is why motion belongs here and not on the toggle: expanded rows are **added to and removed from `renderRows()`** (`../../1-state/features/expansion.md`, "Render Layer"), so `@for` creates and destroys them and the toggle does not own the rows that appear.
+**Motion.** Owns `animate.enter` / `animate.leave` (Angular 21 native — no `@angular/animations` dependency), timed by `--ngp-table-expand-duration`. This directive sits on the element that enters and leaves, which is why motion belongs here and not on the toggle.
 
 What it animates is **opacity and a small `translateY`**, not height — see "The Accordion Slide" below for why a `<tr>` cannot slide and what does.
 
@@ -103,7 +100,7 @@ export class NgpTableExpandToggleDirective {
 }
 ```
 
-Row identity comes from DI, never a duplicate input. The same directive serves group-header collapse, because `withGrouping()` delegates its collapse state to `withExpansion()`'s `expandedRows` and group ids are synthetic `RowId`s (see `../../1-state/features/grouping.md`).
+Row identity comes from DI, never a duplicate input. Group-header collapse is **not** this directive's job — collapsible grouping is `withGrouping()` + `withTree()` and uses `ngpTableTreeToggle` ([`tree.md`](tree.md)).
 
 ### One directive for both hosts
 
@@ -126,7 +123,7 @@ A toggle on the `<tr>` plus a toggle on a `<button>` inside it would both fire o
 
 ### Disabled
 
-`[ngpTableExpandToggleDisabled]`, `booleanAttribute` transform, matching `cdkDragDisabled`. Defaults to `!row.hasChildren` when the input is not set; an explicit value always wins. Emits `data-disabled` and `aria-disabled`.
+`[ngpTableExpandToggleDisabled]`, `booleanAttribute` transform, matching `cdkDragDisabled`. An explicit value always wins. Emits `data-disabled` and `aria-disabled`.
 
 ---
 
@@ -214,9 +211,7 @@ State comes from `NGP_TABLE_EXPANDABLE` on the ancestor `<tr>` — no input, no 
 
 ### Scope limit — detail panels only
 
-A slide needs one collapsible box. **Tree-child expansion reveals N sibling `<tr>`s**, which have no common box to collapse, so `ngpTableExpandContent` does not apply there; tree children get tier 2's fade + `translateY`, optionally staggered.
-
-This makes the shipped motion asymmetric by construction: detail panels slide, tree children fade in. Consumers wanting a uniform feel across both use tier 0 or 1 and animate themselves.
+A slide needs one collapsible box. Tree-child expansion reveals N sibling `<tr>`s with no common box to collapse — and tree rows are not this file's concern anyway ([`tree.md`](tree.md)).
 
 ---
 
@@ -251,7 +246,7 @@ A never-opened row costs **zero nodes**. First open mounts it and `@starting-sty
 ### What this requires
 
 1. **State layer — `withExpansion()` gains `everExpanded`.** A `Set<RowId>`, additive-only, written by `toggleExpanded()` / `expandAll()`, reset with the data source. Specced in `../../1-state/features/expansion.md`.
-2. **Row identity without a `RenderRow`.** The detail `<tr>` is consumer markup, not a `renderRows()` entry, so `ngpTableExpandable` cannot get its id from `NGP_TABLE_ROW` via DI. Hence the `[ngpTableExpandableFor]="row.id"` input, which resolves against `NGP_TABLE_STORE`. DI stays the path for tree rows; the input is the detail-panel path.
+2. **Row identity without a `RenderRow`.** The detail `<tr>` is consumer markup, not a `renderRows()` entry, so `ngpTableExpandable` cannot get its id from `NGP_TABLE_ROW` via DI. Hence the `[ngpTableExpandableFor]="row.id"` input, which resolves against `NGP_TABLE_STORE`.
 3. **`content-visibility: auto`** on the content wrapper, so opened-but-scrolled-away panels skip layout and paint.
 
 ### Why the two mechanisms differ
@@ -274,67 +269,7 @@ The DS ships a real default look, per `../cross-cutting/styling-tokens.md`'s rej
 
 ## Resulting DX
 
-Measured against the two existing state-layer-only demos.
-
-### Tree children, button toggle
-
-`apps/demo/src/app/table-expansion-demo/table-expansion-demo.html` today:
-
-```html
-<td [style.paddingLeft.px]="first ? row.depth * 16 : null">
-  @if (first && row.hasChildren) {
-    <button type="button" class="…__toggle" (click)="table.toggleExpanded(row.id)">
-      {{ row.isExpanded ? '▾' : '▸' }}
-    </button>
-  }
-  {{ column.accessor(row.data!) }}
-</td>
-```
-
-With directives:
-
-```html
-<td [ngpTableCell]="column.id">
-  @if (first && row.hasChildren) {
-    <button type="button" ngpTableExpandToggle>▸</button>
-  }
-  {{ column.accessor(row.data!) }}
-</td>
-```
-
-| Leaves the template | Where it went |
-|---|---|
-| `(click)="table.toggleExpanded(row.id)"` | directive, id from DI |
-| `{{ row.isExpanded ? '▾' : '▸' }}` | one static glyph; rotation is CSS on `[data-expanded]` |
-| `[style.paddingLeft.px]="row.depth * 16"` | `data-depth` on the row + CSS |
-| `row.hasChildren &&` guard | disabled derivation |
-
-Gained, and absent from the demo today: `aria-expanded`, `aria-level`, keyboard activation, focus ring, `prefers-reduced-motion`.
-
-### Whole row as trigger
-
-`table-expansion-row-demo.html` today:
-
-```html
-<tr
-  [class.…__row--expandable]="row.hasChildren"
-  (click)="row.hasChildren && table.toggleExpanded(row.id)"
-  animate.enter="…__row-enter"
-  animate.leave="…__row-leave"
->
-```
-
-With directives:
-
-```html
-<tr ngpTableExpandable ngpTableExpandToggle>
-```
-
-Both directives on one element — the `cdkDrag`-without-a-handle shape. The hand-written enter/leave class strings and their keyframes are what the DS ships.
-
-### Honest read
-
-Tree children get shorter *and* more accessible — a clear win. Detail panels get **longer** than a naive `@if (row.isExpanded)` version, by one wrapper `<div>` and a less obvious predicate. That extra buys the slide plus lazy mounting; a consumer wanting neither stays on tier 0 and writes the naive version.
+Detail panels get **longer** than a naive `@if (row.isExpanded)` version, by one wrapper `<div>` and a less obvious predicate. That extra buys the slide plus lazy mounting; a consumer wanting neither stays on tier 0 and writes the naive version.
 
 No current demo covers the detail-panel case. Worth adding `table-detail-panel-demo` once the directives exist.
 
@@ -345,7 +280,7 @@ Both `ngDevMode`-guarded, stripped in production. They cover the one real cost o
 - `ngpTableExpandToggle` with no ancestor `ngpTableExpandable` → warn (a11y and motion silently absent).
 - `row.isExpanded === undefined` → warn that `withExpansion()` is not composed on the store. The field is optional (`api/types.ts`), so this is a runtime no-op rather than a compile error — the store type is structural.
 - `ngpTableExpandContent` whose host has more than one element child → warn. The `grid-template-rows` technique requires `overflow: hidden` on a single child box; extra children escape the clip and the slide visibly breaks.
-- `ngpTableExpandable` with neither `NGP_TABLE_ROW` in scope nor `[ngpTableExpandableFor]` set → warn. It has no way to resolve a row id, so every binding would be inert.
+- `ngpTableExpandable` without `[ngpTableExpandableFor]` set → warn. It has no way to resolve a row id, so every binding would be inert.
 - A detail row gated on `isExpanded` rather than `everExpanded` cannot be detected from inside the directive — the directive is simply destroyed. Call it out in docs and the demo instead of trying to assert it.
 
 ## Composition
@@ -372,7 +307,7 @@ Directives never register with `createTable()` — they read optional `RenderRow
 
 ## Rejected Alternatives
 
-**A container directive for the whole table** (the `cdkDropList` shape). `cdkDropList` exists because nothing else owns list membership and ordering. Here `withExpansion()` already owns `expandedRows`, and owns it better — the set survives virtual scrolling, is shared with `withGrouping()`, and is serializable. A container directive would be a second source of truth for state that already has one. Different verdict is likely for drag & drop, where drop-zone geometry has no owner: this is a per-feature call, not a global one.
+**A container directive for the whole table** (the `cdkDropList` shape). `cdkDropList` exists because nothing else owns list membership and ordering. Here `withExpansion()` already owns `expandedRows`, and owns it better — the set survives virtual scrolling and is serializable. A container directive would be a second source of truth for state that already has one. Different verdict is likely for drag & drop, where drop-zone geometry has no owner: this is a per-feature call, not a global one.
 
 **Composing expansion into `ngpTableRow` via `hostDirectives`**, keeping `ngpTable` as the only public surface. Rejected — `hostDirectives` is statically resolved, and expansion is a runtime-optional feature:
 
@@ -384,13 +319,13 @@ Directives never register with `createTable()` — they read optional `RenderRow
 
 `hostDirectives` remains correct for behavior that is unconditional (extracting always-present core bindings) and for sharing mechanism between feature directives — e.g. a private `NgpActivation` directive holding the `isNativelyInteractive` click/keyboard normalization, host-composed into both this toggle and `ngpTableSort`, never exported from `index.ts`.
 
-**Reusing ng-primitives' disclosure/accordion primitives.** Neither ng-primitives nor `@angular/cdk` is installed — dependencies are `@angular/*` and `rxjs` only, so this is a new dependency rather than reuse. Beyond that: those primitives own their open state internally, conflicting with `expandedRows` as the single source of truth shared with grouping; they assume a trigger plus a toggled content region, which the table has neither of (`<tr>` must be a direct child of `<tbody>`, and the "content" is other `<tr>`s the store already removed from the list); and the disclosure ARIA pattern (`aria-controls` on a region) is not the grid/treegrid pattern expandable rows need. `ngp` is also ng-primitives' own selector prefix.
+**Reusing ng-primitives' disclosure/accordion primitives.** Neither ng-primitives nor `@angular/cdk` is installed — dependencies are `@angular/*` and `rxjs` only, so this is a new dependency rather than reuse. Beyond that: those primitives own their open state internally, conflicting with `expandedRows` as the single source of truth; they assume a trigger plus a toggled content region, which the table has neither of (`<tr>` must be a direct child of `<tbody>`, and the "content" is other `<tr>`s the store already removed from the list); and the disclosure ARIA pattern (`aria-controls` on a region) is not the grid/treegrid pattern expandable rows need. `ngp` is also ng-primitives' own selector prefix.
 
 **Folding the toggle into `core.md`.** `core.md` covers always-present directives; expansion is opt-in and composes only when `withExpansion()` is in the feature list — same shape as sort and selection, so it gets its own file.
 
 ## To Drill
 
 - [x] Where a non-tree **detail panel**'s content lives — resolved 2026-08-07. It is consumer markup, gated on `everExpanded`, never a `renderRows()` entry and never its own `RowKind`. `ngpTableExpandable` therefore takes a `[ngpTableExpandableFor]` input for this path instead of resolving through `NGP_TABLE_ROW`. See "Detail Panels Are Lazy and Persistent".
-- [ ] Per-row "loading children" state for the lazy-load contract — `../../1-state/features/expansion.md` flags this as unassigned to any feature; while it stays unassigned, neither directive can render a loading affordance.
+- [ ] Row `aria-expanded` / `aria-level` on the detail `<tr>` (`ngpTableExpandable`'s host bindings) — TR34 makes row `aria-expanded` treegrid-only; re-drill the panel's ARIA against the disclosure pattern before building. A detail row has no `RenderRow`, so `depth()` also needs a source.
 - [ ] Single-open **accordion mode**. `withExpansion()` is multi-only by construction (`expandedRows: Set<RowId>`); CDK's accordion `multi` flag has no counterpart here. If wanted, it is config on the state feature, not a directive.
 - [ ] Whether `expandAll()` / `collapseAll()` get a directive at all, or stay consumer-called as in the demo toolbar.

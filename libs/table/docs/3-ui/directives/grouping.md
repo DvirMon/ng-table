@@ -33,7 +33,7 @@ exists:
 |---|---|
 | Distinguish a group row from a data row | `ngpTableRow`'s `data-row-kind` host binding (`core.md`) |
 | Nesting indentation | `ngpTableRow`'s `data-depth` host binding (`core.md`) |
-| Collapse/expand a group | `ngpTableExpandToggle` (`expansion.md`) — a group id is a synthetic `RowId`, and the engine-owned `'prune'` stage does the hiding ([ADR-0017](../../adr/0017-engine-owned-descendant-prune.md)) |
+| Collapse/expand a group | `ngpTableTreeRow` + `ngpTableTreeToggle` ([`tree.md`](tree.md)) — collapsible grouping is `withGrouping()` + `withTree()`, a group collapses through `table.tree.toggle(groupId)` |
 | Iterating group and data rows uniformly | `renderRows()` (`core.md`) |
 
 **Rejected: an `ngpTableGroupBy` directive on `<th>`.** It would mirror `ngpTableSort`, but
