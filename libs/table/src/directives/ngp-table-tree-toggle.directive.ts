@@ -15,9 +15,9 @@ function hasTree(table: unknown): table is TreeMembers {
   return typeof table.tree === 'function' && 'toggle' in table.tree;
 }
 
-function assertTreeComposed(table: unknown): void {
+function assertTreeComposed(readTable: () => unknown): void {
   if (typeof ngDevMode === 'undefined' || !ngDevMode) return;
-  if (hasTree(table)) return;
+  if (hasTree(readTable())) return;
   throw new Error(
     'ngpTableTreeToggle requires a table created with withTree(); add withTree() to createTable().',
   );
@@ -79,7 +79,7 @@ export class NgpTableTreeToggleDirective {
   });
 
   constructor() {
-    assertTreeComposed(this.table.ngpTable());
+    assertTreeComposed(() => this.table.ngpTable());
     warnWhenNameless(this.host.nativeElement, this.isLeaf);
   }
 
