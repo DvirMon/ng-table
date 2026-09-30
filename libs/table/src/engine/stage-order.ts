@@ -16,6 +16,7 @@ export interface LabelledStageRule<TTransform> {
 /** One stage in the resolved order: its name and the transform run at that position. */
 export interface ResolvedStage<TTransform> {
   readonly name: string;
+  readonly label: string;
   readonly run: TTransform;
 }
 
@@ -30,6 +31,12 @@ interface DeclareEntry<TTransform> {
   readonly anchor: string;
   readonly placement: Placement;
   readonly synthesizesRows?: boolean;
+  readonly run: TTransform;
+}
+
+// A claim of a built-in anchor: the transform plus its claiming feature's label.
+interface ClaimEntry<TTransform> {
+  readonly label: string;
   readonly run: TTransform;
 }
 
@@ -63,7 +70,7 @@ export function resolveStageOrder<TTransform>(
   const builtIns = builtInsFor(layer);
   const eligibleBuiltIns = eligibleBuiltInsFor(layer);
 
-  const claims = new Map<string, TTransform>();
+  const claims = new Map<string, ClaimEntry<TTransform>>();
   const declares: DeclareEntry<TTransform>[] = [];
   for (const { label, rule } of rules) {
     if (isDeclareRule(rule)) {
@@ -76,7 +83,8 @@ export function resolveStageOrder<TTransform>(
         run: rule.run,
       });
     } else {
-      claims.set(rule.anchor, rule.run); // last claim wins — SlotRegistry throws on this, not here.
+      // last claim wins — SlotRegistry throws on this, not here.
+      claims.set(rule.anchor, { label, run: rule.run });
     }
   }
 
@@ -209,7 +217,7 @@ function bucketByGap<TTransform>(
 
 function assemble<TTransform>(
   builtIns: readonly string[],
-  claims: Map<string, TTransform>,
+  claims: Map<string, ClaimEntry<TTransform>>,
   buckets: Map<number, DeclareEntry<TTransform>[]>
 ): ResolvedStage<TTransform>[] {
   const result: ResolvedStage<TTransform>[] = [];
@@ -218,12 +226,12 @@ function assemble<TTransform>(
     const right = gap < builtIns.length ? builtIns[gap] : null;
 
     for (const entry of orderGapEntries(buckets.get(gap) ?? [], left, right)) {
-      result.push({ name: entry.name, run: entry.run });
+      result.push({ name: entry.name, label: entry.label, run: entry.run });
     }
 
     if (right !== null) {
-      const run = claims.get(right);
-      if (run !== undefined) result.push({ name: right, run });
+      const claim = claims.get(right);
+      if (claim !== undefined) result.push({ name: right, label: claim.label, run: claim.run });
     }
   }
   return result;

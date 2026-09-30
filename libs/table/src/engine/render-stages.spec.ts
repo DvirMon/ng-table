@@ -20,8 +20,8 @@ describe('runRenderStages', () => {
   it('folds stages in list order', () => {
     const trace: string[] = [];
     const stages: ResolvedStage<RenderNodeTransform<Row>>[] = [
-      { name: 'group', run: (nodes) => (trace.push('group'), nodes) },
-      { name: 'tree', run: (nodes) => (trace.push('tree'), nodes) },
+      { name: 'group', label: 'test', run: (nodes) => (trace.push('group'), nodes) },
+      { name: 'tree', label: 'test', run: (nodes) => (trace.push('tree'), nodes) },
     ];
 
     runRenderStages([node('a')], stages, {});
@@ -31,8 +31,8 @@ describe('runRenderStages', () => {
 
   it('threads each stage output into the next', () => {
     const stages: ResolvedStage<RenderNodeTransform<Row>>[] = [
-      { name: 'group', run: (nodes) => nodes.filter((n) => n.id !== 'b') },
-      { name: 'tree', run: (nodes) => [...nodes].reverse() },
+      { name: 'group', label: 'test', run: (nodes) => nodes.filter((n) => n.id !== 'b') },
+      { name: 'tree', label: 'test', run: (nodes) => [...nodes].reverse() },
     ];
     const nodes = [node('a'), node('b'), node('c')];
 
@@ -49,8 +49,8 @@ describe('runRenderStages', () => {
     const seen: StageContext<Row>[] = [];
     const ctx: StageContext<Row> = { parentOf: () => null };
     const stages: ResolvedStage<RenderNodeTransform<Row>>[] = [
-      { name: 'group', run: (nodes, ctx) => (seen.push(ctx), nodes) },
-      { name: 'tree', run: (nodes, ctx) => (seen.push(ctx), nodes) },
+      { name: 'group', label: 'test', run: (nodes, ctx) => (seen.push(ctx), nodes) },
+      { name: 'tree', label: 'test', run: (nodes, ctx) => (seen.push(ctx), nodes) },
     ];
 
     runRenderStages([node('a')], stages, ctx);
@@ -69,6 +69,7 @@ describe('mapNodes reach (via runRenderStages)', () => {
         // two-levels-deep tree — proving mapNodes' reach does not depend on which stage
         // produced the nesting.
         name: 'group',
+        label: 'test',
         run: () => [
           {
             id: 'g1',
@@ -89,6 +90,7 @@ describe('mapNodes reach (via runRenderStages)', () => {
         // 'tree' stamps each node's label from its already-mapped children's own labels — a
         // value that can only be correct if mapNodes visited children before their parent.
         name: 'tree',
+        label: 'test',
         run: (nodes) =>
           mapNodes(nodes, (n) => ({
             ...n,

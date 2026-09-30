@@ -139,6 +139,22 @@ describe('resolveStageOrder', () => {
     });
   });
 
+  describe('carries the owning feature label', () => {
+    it("a resolved claim and a resolved declare each carry their owning feature's label", () => {
+      const resolved = resolveStageOrder('pipeline', [
+        claim('withFilter', 'filter'),
+        claim('withSort', 'sort'),
+        declare('withAudit', 'audit', 'filter', 'after'),
+      ]);
+
+      expect(resolved.map((stage) => [stage.name, stage.label])).toEqual([
+        ['filter', 'withFilter'],
+        ['audit', 'withAudit'],
+        ['sort', 'withSort'],
+      ]);
+    });
+  });
+
   describe('throws on wiring errors (dev gate on)', () => {
     it.each<[string, Layer, LabelledStageRule<Run>[], RegExp[]]>([
       [
