@@ -61,7 +61,15 @@
   background: none;
   color: inherit;
   cursor: pointer;
-  padding: 0 0.35rem 0 0;
+  /* 24px minimum hit area (WCAG 2.5.8) — the chevron is the only toggle. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1.5rem;
+  min-block-size: 1.5rem;
+  padding: 0;
+  margin-inline-end: 0.15rem;
+  vertical-align: middle;
   font: inherit;
   line-height: 1;
 }
