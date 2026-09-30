@@ -2,7 +2,7 @@ import type { ColumnDef } from '../../api/types';
 import { admitClusters, buildClusterNodes, flattenLeaves, sortClusters, type ClusterOpts } from './clusters';
 
 /**
- * The `group` pipeline stage (`PIPELINE_ORDER`, `engine/pipeline.ts`) — `TRow[] => TRow[]`,
+ * The `group` pipeline stage (`PIPELINE_ANCHORS`, `engine/pipeline.ts`) — `TRow[] => TRow[]`,
  * stable clustering, contiguous at every depth. Empty/all-unknown `grouping` is a reference-
  * preserving no-op, matching `withSorting()`'s empty-rules case.
  */

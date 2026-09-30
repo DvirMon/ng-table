@@ -285,7 +285,7 @@ describe('withGrouping', () => {
     // sizes. `renderRows()`'s group headers re-derive their own order from the post-pipeline row
     // *set* (buildGroupRenderRows rebuilds the whole cluster tree), so header order is the same
     // regardless of which stage produced that set — it can't tell filter-then-group apart from
-    // group-then-filter. `rows()`, the flat pipeline output, is what `PIPELINE_ORDER` actually
+    // group-then-filter. `rows()`, the flat pipeline output, is what `PIPELINE_ANCHORS` actually
     // governs: `group`'s own sortClusters call runs against whatever `filter` has (or hasn't)
     // already removed at that point in the fixed order.
     const groupIds = store

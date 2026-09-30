@@ -64,7 +64,7 @@ export interface GroupingMembers<TRow> {
    * set via `.update()`, so a gated-off level survives a round-trip instead of being dropped. */
   readonly grouping: WritableView<string[], GroupingUpdater<TRow>>;
   /** Leaf rows beneath a group header, at any depth — post-filter by construction, since
-   * `filter` precedes `group` in `PIPELINE_ORDER`. Resolved by `group.id`, so a header from an
+   * `filter` precedes `group` in `PIPELINE_ANCHORS`. Resolved by `group.id`, so a header from an
    * earlier render pass still works; a group that no longer exists returns `[]`. Reads
    * `input.rows()` (pipeline output), independent of collapse/expand state. */
   readonly rowsOf: (group: RenderRow<TRow>) => readonly TRow[];
