@@ -1,5 +1,14 @@
 import { Component, computed, input, linkedSignal, signal } from '@angular/core';
-import { createTable, setGroupLevels, withGrouping, withTree } from '../../../index';
+import {
+  createTable,
+  setGroupLevels,
+  withGrouping,
+  withTree,
+  NgpTableDirective,
+  NgpTableRowDirective,
+  NgpTableTreeRowDirective,
+  NgpTableTreeToggleDirective,
+} from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
 import { createGroupedRowsResource, toErrorMessage } from '../fixtures/http';
 import {
@@ -30,7 +39,14 @@ import { GroupingCollapsibleToolbarComponent } from './grouping-collapsible-tool
   selector: 'ngp-grouping-collapsible-story-host',
   templateUrl: './grouping-collapsible-story-host.component.html',
   styleUrls: ['../../styles/story-host.css', '../grouping-story.css'],
-  imports: [...GROUPING_STORY_PIPES, GroupingCollapsibleToolbarComponent],
+  imports: [
+    ...GROUPING_STORY_PIPES,
+    GroupingCollapsibleToolbarComponent,
+    NgpTableDirective,
+    NgpTableRowDirective,
+    NgpTableTreeRowDirective,
+    NgpTableTreeToggleDirective,
+  ],
 })
 export class GroupingCollapsibleStoryHostComponent {
   readonly forceFailure = input(false);

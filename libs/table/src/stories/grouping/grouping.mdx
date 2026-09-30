@@ -419,9 +419,10 @@ carries `visible` and `order` and leaves the reading to whoever renders it, whic
 
 ## Collapsible — the navigable outline
 
-`withGrouping()` + `withTree()`, and nothing else: a real `<button>` chevron carrying
-`aria-expanded`, the whole header row as hit area, and subtree collapse. A deal linked to line
-items via `parentId` renders a second, separately-keyed chevron from the `'tree'` stage.
+`withGrouping()` + `withTree()`, and nothing else: group headers bind
+`[ngpTableRow]="row" ngpTableTreeRow`, with buttons carrying `ngpTableTreeToggle` to manage
+expansion. A deal linked to line items via `parentId` renders a second, separately-keyed chevron
+from the `'tree'` stage.
 
 Expand All is the reason `groupIds()` exists. `tree.expand()` on its own discovers data rows through
 `parentId` links and cannot reach a group header, so the outline needs
@@ -438,6 +439,18 @@ rebuilds. `forceFailure` in Controls makes Refetch fail every time instead of re
 page. That collapse state survives a refetch or a sort is asserted in `with-grouping`'s spec
 rather than shown here — a control whose whole outcome is "nothing moved" gives a reader nothing
 to look at.
+
+Group headers bind the tree directives like this:
+
+```html
+<tr [ngpTableRow]="row" ngpTableTreeRow>
+  <td>
+    <button ngpTableTreeToggle class="grouping-story__chevron"
+      [attr.aria-label]="groupName"></button>
+    <span>{{ groupName }}</span>
+  </td>
+</tr>
+```
 
 <div className="code-tabs">
   <div className="code-tabs-list">

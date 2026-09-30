@@ -7,6 +7,7 @@ files:
   - libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html
   - libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts
   - libs/table/src/stories/grouping/grouping.mdx
+  - libs/table/src/stories/grouping/grouping-story.css
 ---
 # Step 4 — Collapsible-grouping story host uses the tree pair
 
