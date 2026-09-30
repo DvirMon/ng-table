@@ -44,6 +44,11 @@ Alongside the move, three code changes that the move made obvious:
 - **`PipelineStages` is now derived from `PIPELINE_ORDER`**
   (`Partial<Record<PipelineStage, RowTransform<TRow>>>`). One declaration; adding a stage is a
   one-line edit and a typed stage is guaranteed to execute. `runPipeline()` is pure.
+  > **Amended 2026-09-30 ([ADR-0020](0020-open-stage-registration-for-third-party-features.md)):**
+  > stage keys now derive from `PipelineStageRegistry` and `RenderStageRegistry`.
+  > `PIPELINE_ANCHORS` and `RENDER_ANCHORS` are fixed anchor lists; a new stage is declared with
+  > `stage()` next to an anchor, not added to an array. The object form `stages: { sort: fn }`
+  > is gone; features use `stageSchema`.
 - **`engine/columns.ts` and `engine/rows.ts`** hold the pure transforms lifted out of
   `composeTable()`'s core object literal. `engine/slots.ts` owns every collision message.
 - **`composeTable()` is ~70 lines** — folding features and wiring hooks, nothing else.
