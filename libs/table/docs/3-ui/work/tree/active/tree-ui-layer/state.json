@@ -7,12 +7,12 @@
   "domainPath": "libs/table",
   "workspaceRoot": "libs/table/docs/3-ui/work/tree/active/tree-ui-layer",
   "stack": "angular",
-  "isComplex": null,
+  "isComplex": false,
   "decisionsPath": "libs/table/docs/3-ui/work/tree/active/tree-ui-layer/1-decisions.md",
   "capabilityLogPath": "libs/table/docs/decisions/tree.md",
   "specPath": null,
   "architecturePath": null,
   "githubIssues": [],
   "createdAt": "2026-09-30T08:20:21Z",
-  "updatedAt": "2026-09-30T08:20:21Z"
+  "updatedAt": "2026-09-30T12:00:00Z"
 }

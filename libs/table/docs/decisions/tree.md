@@ -42,6 +42,7 @@ column.
 | **TFD** | [`work/tree/active/tree-flat-data/1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md) — #163, tree from flat data |
 | **#166 step 2** | [`work/tree/active/tree-flat-data/4-tasks/issue-166/step-2-parent-link-slot.plan.md`](../1-state/work/tree/active/tree-flat-data/4-tasks/issue-166/step-2-parent-link-slot.plan.md) — the `parentLink` slot claim |
 | **TFD arch** | [`work/tree/active/tree-flat-data/3-architecture.md`](../1-state/work/tree/active/tree-flat-data/3-architecture.md) — #163 architecture |
+| **TUI** | [`3-ui/work/tree/active/tree-ui-layer/1-decisions.md`](../3-ui/work/tree/active/tree-ui-layer/1-decisions.md) — #165, tree UI layer |
 
 ## Decisions
 
@@ -79,6 +80,18 @@ column.
 | TR30 | `table.tree.state` is a method, `state(options?: { includeHidden?: boolean })`; default scans the filtered view, `includeHidden` scans all of `data()`, as separate computeds | 09-29 | decided (#169) | TFD D26 · A4 |
 | TR31 | `StageContext` gains `contextRows?()`, the engine's union of every `contextRows` contribution (empty when none), read lazily so `withTree()` reads context rows without reading `withFiltering()` | 09-29 | decided (#169) · [ADR-0028](../adr/0028-tree-parent-link-slot.md) | TFD D27 |
 | TR32 | Open-set writes (`expand`, `set`) clear the ids they name from the closed-while-revealed set; `collapse` writes only the open set; a throwing `revealContextRow` reveals the row and reports once per evaluation | 09-29 | decided (#169) | TFD D28 |
+| TR33 | Tree UI is a tree-only directive pair — `ngpTableTreeRow` (row semantics, `data-*` hooks) and `ngpTableTreeToggle` (`table.tree.toggle()`); `expansion.md`'s expandable/toggle pair narrows to detail panels | 09-30 | decided (#165) | TUI D1 |
+| TR34 | A tree table stays `role="table"`: `aria-expanded` on the toggle button, no row `aria-level`/`aria-expanded`; core `ngpTableRow` stops binding row `aria-expanded`. Treegrid + arrow-key focus is its own table-wide issue and ADR | 09-30 | decided (#165) | TUI D2 |
+| TR35 | `ngpTableTreeRow` emits presence `data-expandable` (from `hasChildren`) and `data-expanded`; named for what styling keys on, since `isExpandable` makes a lazy parent expandable with no children | 09-30 | decided (#165) | TUI D3 |
+| TR36 | `ngpTableTreeToggle` selects `button[ngpTableTreeToggle]` only; whole-row mouse toggling is consumer `(click)` on the `<tr>` | 09-30 | decided (#165) | TUI D4 |
+| TR37 | No attribute is bound by two directives on one element: core row owns `role`/`data-row-kind`/`data-depth`/`aria-rowindex`, `ngpTableTreeRow` owns its `data-*` hooks, the toggle button owns `aria-expanded` | 09-30 | decided (#165) | TUI D5 |
+| TR38 | On a non-expandable row the toggle sets `disabled`, `aria-hidden="true"`, `data-disabled` — hidden from focus and a11y, width kept for alignment | 09-30 | decided (#165) | TUI D6 |
+| TR39 | The toggle's accessible name is consumer-owned — no library text; a dev-mode warning fires once for a nameless toggle | 09-30 | decided (#165) | TUI D7 |
+| TR40 | `ngpTableTreeToggle` without `withTree()` throws on first render under `ngDevMode` (wiring error, ADR-0014); a missing `ngpTableTreeRow` is not an error | 09-30 | decided (#165) | TUI D8 |
+| TR41 | Core `ngpTableRow` binds output property `--ngp-table-row-depth` from `depth` beside `data-depth` — one indentation rule for any depth, shared with grouping | 09-30 | decided (#165) | TUI D9 |
+| TR42 | The tree ships no stylesheet — hooks plus `--ngp-table-row-depth` only (ng-primitives as reference); the CSS is a documented consumer recipe | 09-30 | decided (#165) | TUI D10 |
+| TR43 | Group headers use `ngpTableTreeRow` + `ngpTableTreeToggle` — group collapse already routes through `table.tree.toggle(groupId)` | 09-30 | decided (#165) | TUI D11 |
+| TR44 | Whole-row click bubbling (row `(click)` + toggle button double-toggling) is the consumer's; the toggle neither prevents default nor stops propagation | 09-30 | decided (#165) | TUI D12 |
 
 ## Still open
 
