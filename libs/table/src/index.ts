@@ -9,6 +9,7 @@ export * from './directives/table.tokens';
 export * from './directives/ngp-table.directive';
 export * from './directives/ngp-table-row.directive';
 export * from './directives/ngp-table-tree-row.directive';
+export * from './directives/ngp-table-tree-toggle.directive';
 export * from './directives/ngp-table-row-animation.directive';
 export * from './directives/ngp-table-header-cell.directive';
 export * from './directives/ngp-table-cell.directive';

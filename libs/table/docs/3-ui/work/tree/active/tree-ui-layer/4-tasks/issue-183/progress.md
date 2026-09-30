@@ -3,7 +3,7 @@
 **Issue:** #183
 **Branch:** feat/183-tree-directive-pair
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/docs-tree-ui-layer
-**Status:** 1 / 5 complete
+**Status:** 2 / 5 complete
 
 ## Graph
 
@@ -22,7 +22,7 @@ Parallel-safe: [1, 2, 5] · Dependency: 2 → 3 · 1, 2 → 4
 | Step | Title | Status |
 |---|---|---|
 | 1 | Tree-row hooks | ▶ in progress |
-| 2 | The tree toggle directive | ▶ in progress |
+| 2 | The tree toggle directive | ✅ done |
 | 3 | Toggle dev-mode checks | ⬚ pending |
 | 4 | Collapsible-grouping story host uses the tree pair | ⬚ pending |
 | 5 | Tree UI spec and pointer updates | ✅ done |
