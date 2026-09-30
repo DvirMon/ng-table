@@ -58,8 +58,9 @@ Two of the five original items are now answered by decisions taken since.
       but not closed: [ADR-0022](../../adr/0022-render-row-cell-values.md)'s `buildGroupCells`
       spreads `aggregates` into column-id-keyed `cells`, which is the per-column shape — the
       remaining question is whether the shipped template default spans or not.
-- [ ] **`data-depth` to indentation** — a CSS custom property driven off the attribute, or a
-      consumer-authored style rule? Belongs with the styling-token catalog.
+- [x] ~~`data-depth` to indentation~~ — answered by `--ngp-table-row-depth`, bound by
+      `ngpTableRow` ([`core.md`](core.md)). Indent with
+      `calc(var(--ngp-table-row-depth) * <step>)`; recipe in [`tree.md`](tree.md#styling-recipe).
 - [ ] **Virtual scroll interaction** — group rows and data rows have different natural heights,
       but CDK's `itemSize` assumes a fixed one. Either group rows match data-row height, or
       grouping and virtual scroll are documented as not composing.
