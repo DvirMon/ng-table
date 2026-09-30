@@ -85,7 +85,7 @@ three rails; asking a template to partition the column list itself would put the
   coupling in `mutations/update-columns.ts` — this is the payoff of not duplicating order.
   Reordering a column *across* a rail boundary is a UI concern (a drop target decides both
   the new `order` and the new pin, and issues two updates).
-- **Does not reshape rows.** No pipeline stage, no render stage. `RENDER_ORDER` operates on
+- **Does not reshape rows.** No pipeline stage, no render stage. render stages operate on
   `RenderRow[]`; pinning partitions *columns* and never touches row count, row order or row
   identity.
 

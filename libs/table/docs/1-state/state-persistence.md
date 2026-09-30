@@ -193,7 +193,7 @@ Consequences that make this the preferred shape:
 
 - A new feature opts in by declaring one slot. Persistence never changes. This is the
   general-mechanism-over-enumerated-cases posture the rest of the engine already takes with
-  `PIPELINE_ORDER`/`RENDER_ORDER`.
+  `PIPELINE_ANCHORS`/`RENDER_ANCHORS`.
 - Slot collisions are already solved: `engine/slots.ts` throws at construction for a
   duplicate key, so two features cannot silently share a snapshot slice.
 - Core column state (`order`/`visible`) belongs to no feature, so the core contributes the

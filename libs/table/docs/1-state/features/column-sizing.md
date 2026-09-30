@@ -95,7 +95,7 @@ The sparseness is load-bearing, not an optimisation:
   which is where the competitors' width bugs come from.
 - **Unknown ids are rejected, not stored.** `setColumnWidth` on an id absent from
   `columns()` is a no-op. Otherwise a stale snapshot silently grows the record forever.
-- **Does not reshape rows.** No pipeline stage, no render stage — `RENDER_ORDER` is a
+- **Does not reshape rows.** No pipeline stage, no render stage — render stages are a
   `RenderRow[] → RenderRow[]` chain and sizing touches neither rows nor row count. A reader
   expecting a stage here should not find one.
 

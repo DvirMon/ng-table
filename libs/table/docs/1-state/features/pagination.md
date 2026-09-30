@@ -24,6 +24,6 @@ To be drilled in a future session: full state shape, methods, `manual` contract,
 
 ## Competitive position
 
-**Verdict: missing** — a stub, so the design is not settled either, unlike filtering/grouping which are spec-complete; `RENDER_ORDER` reserves a `'paginate'` slot and nothing claims it, while all four competitors ship pagination in their free/core tier.
+**Verdict: missing** — a stub, so the design is not settled either, unlike filtering/grouping which are spec-complete; no render stage claims pagination (a feature would declare one next to an anchor, ADR-0020), while all four competitors ship pagination in their free/core tier.
 
 Full reasoning: [gap-analysis.md](../work/meta/archive/state-feature-competitive-audit/gap-analysis.md).
