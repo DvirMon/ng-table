@@ -116,6 +116,7 @@ export const NGP_TABLE_ROW = new InjectionToken<NgpTableRowDirective>('NGP_TABLE
   host: {
     '[attr.data-row-kind]': 'renderRow().kind',
     '[attr.data-depth]': 'renderRow().depth',
+    '[style.--ngp-table-row-depth]': 'renderRow().depth',
   },
 })
 export class NgpTableRowDirective {
@@ -126,7 +127,7 @@ export class NgpTableRowDirective {
 }
 ```
 
-`data-row-kind` / `data-depth` follow `styling-tokens.md`'s convention (state as `data-*`), so group headers and nesting indentation are styleable without a second input.
+`data-row-kind` / `data-depth` follow `styling-tokens.md`'s convention (state as `data-*`), so group headers and nesting indentation are styleable without a second input. `--ngp-table-row-depth` carries the same depth as a CSS custom property, so one `calc(var(--ngp-table-row-depth) * <step>)` rule indents any depth and inherits into cells and buttons. The row's attribute set is `role`, `data-row-kind`, `data-depth`, `aria-rowindex` and `--ngp-table-row-depth`. It carries no `aria-expanded`: ARIA allows that on a row only inside a `treegrid`, and the table stays `role="table"` — expansion state lives on the toggle button.
 
 Row-scoped feature directives then read the row from DI — no repeated binding per directive:
 
