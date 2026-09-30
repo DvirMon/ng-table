@@ -631,7 +631,7 @@ separately, taking the table's snapshot and the filter model as separate inputs.
 | A key-rename option (the old `as`) | the schema's own property name is the key | R51 |
 | `toggle()` | `equals()` over a boolean column | R28 |
 | `ColumnDef.filterFn` / `enableFiltering` | predicates live in the schema | R12 |
-| A raw-predicate escape hatch (`predicates`) | narrow the rows signal passed into `createTable()` — `filter` runs first in `PIPELINE_ORDER`, so the pipeline output is identical | R54 |
+| A raw-predicate escape hatch (`predicates`) | narrow the rows signal passed into `createTable()` — `filter` is the first `PIPELINE_ANCHORS` stage, so the pipeline output is identical | R54 |
 | Per-filter `encode` for server params | consumer maps `criteria()` | R16 |
 | Debounce | Signal Forms' `debounce()` over the model | R25 |
 | Persistence / storage adapter, and any validating `restore(unknown)` | consumer's `JSON.stringify` + a guard + `reset(value)` | R21 |
