@@ -60,4 +60,50 @@ describe('NgpTableTreeRowDirective', () => {
 
     expect(rowEl().hasAttribute('data-context-row')).toBe(false);
   });
+
+  it('marks an expandable row with an empty data-expandable attribute', () => {
+    const { rowEl } = setup({ hasChildren: true });
+
+    expect(rowEl().hasAttribute('data-expandable')).toBe(true);
+    expect(rowEl().getAttribute('data-expandable')).toBe('');
+  });
+
+  it.each([false, undefined])('omits data-expandable when hasChildren is %s', (value) => {
+    const { rowEl } = setup({ hasChildren: value });
+
+    expect(rowEl().hasAttribute('data-expandable')).toBe(false);
+  });
+
+  it('marks an expanded row with an empty data-expanded attribute', () => {
+    const { rowEl } = setup({ hasChildren: true, isExpanded: true });
+
+    expect(rowEl().hasAttribute('data-expanded')).toBe(true);
+    expect(rowEl().getAttribute('data-expanded')).toBe('');
+  });
+
+  it.each([false, undefined])(
+    'omits data-expanded on an expandable row when isExpanded is %s',
+    (value) => {
+      const { rowEl } = setup({ hasChildren: true, isExpanded: value });
+
+      expect(rowEl().hasAttribute('data-expandable')).toBe(true);
+      expect(rowEl().hasAttribute('data-expanded')).toBe(false);
+    },
+  );
+
+  it.each(['data-expandable', 'data-expanded'])(
+    'removes %s when the same row stops matching',
+    (attribute) => {
+      const { rowEl, update } = setup({ id: 'row-1', hasChildren: true, isExpanded: true });
+      expect(rowEl().hasAttribute(attribute)).toBe(true);
+
+      update({
+        id: 'row-1',
+        hasChildren: attribute === 'data-expanded',
+        isExpanded: false,
+      });
+
+      expect(rowEl().hasAttribute(attribute)).toBe(false);
+    },
+  );
 });
