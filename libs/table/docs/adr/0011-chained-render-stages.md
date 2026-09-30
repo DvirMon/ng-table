@@ -25,6 +25,11 @@ signature changes from `RenderRowTransform` (flat rows in, flat rows out) to
 stages" now chains node transforms. `RENDER_ORDER` drops to `['group', 'tree']`. See ADR-0023
 for the full rationale.
 
+**Adding a stage is not reordering — amended by [ADR-0020](0020-open-stage-registration-for-third-party-features.md) (2026-09-30).**
+`RENDER_ORDER` is now the fixed anchor list `RENDER_ANCHORS`. A feature adds a stage by declaring it
+next to an anchor (ADR-0020), not by editing the order. That is not reordering: the built-in order
+stays fixed, and the rejection below of a consumer-configurable `RENDER_ORDER` still stands.
+
 `renderRows` (`TRow[] → RenderRow<TRow>[]`) was single-claim: only one feature could ever reshape
 render rows, so `withGrouping()` (inserts group headers), `withPagination()` (slices a window),
 and `withExpansion()`'s tree walk (inserts children) could never compose with each other. Already
@@ -87,7 +92,7 @@ call; see [ADR-0020](0020-open-stage-registration-for-third-party-features.md) d
 **Gained**
 - `withGrouping()`, `withPagination()`, `withSelection()` become buildable/drillable, composing
   with tree and each other independently.
-- One declaration per fact: `RENDER_ORDER` is the only list, `RenderStage` derives from it.
+- One declaration per fact: `RENDER_ORDER` is the only list, `RenderStage` derives from it. (Since ADR-0020 the stage keys derive from `RenderStageRegistry`.)
 - `claimRenderRows` and `RenderRowsBuilder` are deleted, not reinterpreted.
 
 **Cost**
