@@ -12,7 +12,7 @@
   "capabilityLogPath": "libs/table/docs/decisions/tree.md",
   "specPath": "libs/table/docs/3-ui/work/tree/active/tree-ui-layer/2-spec.md",
   "architecturePath": null,
-  "githubIssues": [],
+  "githubIssues": ["#182", "#183", "#184"],
   "createdAt": "2026-09-30T08:20:21Z",
-  "updatedAt": "2026-09-30T13:00:00Z"
+  "updatedAt": "2026-09-30T14:00:00Z"
 }
