@@ -78,7 +78,7 @@
   }
 }
 
-.grouping-story__chevron[aria-expanded='true']::before {
+.grouping-story__chevron:is([data-expanded], [aria-expanded='true'])::before {
   transform: rotate(90deg);
 }
 
