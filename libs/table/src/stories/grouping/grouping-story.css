@@ -82,12 +82,6 @@
   transform: rotate(90deg);
 }
 
-/* The whole header row is an enlarged hit area delegating to the chevron. */
-[data-row-kind='group']:hover > .story-host__cell {
-  background: #172033;
-  cursor: pointer;
-}
-
 /* Group-by controls, lifted out of the column headers: one tab per column, each a single
    pressed/unpressed toggle rather than an add button plus an ungroup button. */
 .grouping-story__tabs {
