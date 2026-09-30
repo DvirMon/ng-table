@@ -171,6 +171,8 @@ stale silently. Check `src/` and `git log`.
 
 ## Feature plugin pattern (`api/features/with-*.ts`)
 
+Authoring guide: [`docs/1-state/feature-authoring.md`](docs/1-state/feature-authoring.md).
+
 A config-taking outer function returns a factory that receives the accumulating store and
 **declares** what it contributes. The factory's own parameter type fixes `In`; the row type is
 recovered as `RowOf<In>`, never written at the call site.
@@ -206,7 +208,7 @@ Rules:
   claims a built-in anchor from `PIPELINE_ANCHORS`/`RENDER_ANCHORS` (`engine/pipeline.ts`/
   `engine/render-stages.ts`). A **new** stage name not covered by a built-in anchor is added via a
   consumer's own `declare module` merge into `PipelineStageRegistry`/`RenderStageRegistry` — the
-  type exists (ADR-0020, #154); a declared stage runs at its resolved position. Render-stage
+  type exists (ADR-0020); a declared stage runs at its resolved position. Render-stage
   collision is per-named-stage, not whole-layer (ADR-0011) —
   `withTree()` claims `'tree'`, leaving `'group'` free for `withGrouping()`. A stage receives and
   returns `RenderNode<TRow>[]`, not flat rows — nest children via `mapNodes`, never as siblings.
