@@ -39,7 +39,18 @@ function warnWhenNameless(button: HTMLElement, isLeaf: Signal<boolean>): void {
   });
 }
 
-/** Toggles its row through `table.tree.toggle()` and owns the button's state attributes. */
+/**
+ * Toggles its row's children open or closed through `table.tree.toggle()`.
+ *
+ * @remarks
+ * Sets `aria-expanded` and `data-expanded`; on a leaf row the button is disabled and
+ * `aria-hidden`. Note: throws in dev mode unless the table composes `withTree()`, and warns
+ * when the button has no accessible name.
+ *
+ * @example
+ * <button ngpTableTreeToggle
+ *   [attr.aria-label]="'Children of ' + row.data.name">▸</button>
+ */
 @Directive({
   selector: 'button[ngpTableTreeToggle]',
   host: {

@@ -2,14 +2,17 @@ import { computed, Directive, inject, type Signal } from '@angular/core';
 
 import { NGP_TABLE_ROW } from './table.tokens';
 
-// Presence-only attribute (ADR-0026 rule 1): `""` on a context row, absent otherwise.
 /**
- * Marks tree rows with presence-only `data-context-row` (kept as an ancestor of a filter
- * match), `data-expandable` (has children) and `data-expanded` (currently expanded).
+ * Marks a tree row with presence-only `data-context-row` (ancestor kept for a filter match),
+ * `data-expandable` (has children) and `data-expanded` (currently open).
+ *
+ * @example
+ * <tr [ngpTableRow]="row" ngpTableTreeRow>…</tr>
  */
 @Directive({
   selector: 'tr[ngpTableRow][ngpTableTreeRow], div[ngpTableRow][ngpTableTreeRow]',
   host: {
+    // Note: `""` or absent, never "true"/"false" (ADR-0026 rule 1).
     '[attr.data-context-row]': 'isContextRow() ? "" : null',
     '[attr.data-expandable]': 'isExpandable() ? "" : null',
     '[attr.data-expanded]': 'isExpanded() ? "" : null',
