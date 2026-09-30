@@ -25,7 +25,7 @@ import type { RenderRow, RowId } from '../api/types';
     '[attr.data-depth]': 'ngpTableRow().depth',
     // aria-rowindex is 1-based per WAI-ARIA; `ngpTableRow().index` is the 0-based array position.
     '[attr.aria-rowindex]': 'ngpTableRow().index + 1',
-    '[attr.aria-expanded]': 'ngpTableRow().isExpanded ?? null',
+    '[style.--ngp-table-row-depth]': 'ngpTableRow().depth',
   },
 })
 export class NgpTableRowDirective<TRow = unknown> {

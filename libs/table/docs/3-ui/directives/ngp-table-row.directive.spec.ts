@@ -130,6 +130,31 @@ describe('NgpTableRowDirective', () => {
     expect(rowElement.getAttribute('aria-rowindex')).toBe('3');
   });
 
+  it('sets --ngp-table-row-depth to depth and follows a depth change on the same row', () => {
+    TestBed.configureTestingModule({ imports: [HostComponent] });
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.componentInstance.renderRow.set(mockDataRenderRow({ id: 'row-1', depth: 2 }));
+    fixture.detectChanges();
+
+    const rowElement = getRowElement(fixture);
+    expect(rowElement.style.getPropertyValue('--ngp-table-row-depth')).toBe('2');
+
+    fixture.componentInstance.renderRow.set(mockDataRenderRow({ id: 'row-1', depth: 5 }));
+    fixture.detectChanges();
+
+    expect(rowElement.style.getPropertyValue('--ngp-table-row-depth')).toBe('5');
+    expect(rowElement.getAttribute('data-depth')).toBe('5');
+  });
+
+  it.each([true, false, undefined])('never sets aria-expanded (isExpanded: %s)', (isExpanded) => {
+    TestBed.configureTestingModule({ imports: [HostComponent] });
+    const fixture = TestBed.createComponent(HostComponent);
+    fixture.componentInstance.renderRow.set(mockDataRenderRow({ isExpanded }));
+    fixture.detectChanges();
+
+    expect(getRowElement(fixture).hasAttribute('aria-expanded')).toBe(false);
+  });
+
   it('resolves NGP_TABLE_ROW to the host directive instance for descendants', () => {
     TestBed.configureTestingModule({ imports: [HostComponent] });
     const fixture = TestBed.createComponent(HostComponent);
