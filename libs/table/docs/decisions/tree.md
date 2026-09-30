@@ -43,6 +43,7 @@ column.
 | **#166 step 2** | [`work/tree/active/tree-flat-data/4-tasks/issue-166/step-2-parent-link-slot.plan.md`](../1-state/work/tree/active/tree-flat-data/4-tasks/issue-166/step-2-parent-link-slot.plan.md) — the `parentLink` slot claim |
 | **TFD arch** | [`work/tree/active/tree-flat-data/3-architecture.md`](../1-state/work/tree/active/tree-flat-data/3-architecture.md) — #163 architecture |
 | **TUI** | [`3-ui/work/tree/active/tree-ui-layer/1-decisions.md`](../3-ui/work/tree/active/tree-ui-layer/1-decisions.md) — #165, tree UI layer |
+| **TUI spec** | [`3-ui/work/tree/active/tree-ui-layer/2-spec.md`](../3-ui/work/tree/active/tree-ui-layer/2-spec.md) — #165 spec |
 
 ## Decisions
 
@@ -92,6 +93,7 @@ column.
 | TR42 | The tree ships no stylesheet — hooks plus `--ngp-table-row-depth` only (ng-primitives as reference); the CSS is a documented consumer recipe | 09-30 | decided (#165) | TUI D10 |
 | TR43 | Group headers use `ngpTableTreeRow` + `ngpTableTreeToggle` — group collapse already routes through `table.tree.toggle(groupId)` | 09-30 | decided (#165) | TUI D11 |
 | TR44 | Whole-row click bubbling (row `(click)` + toggle button double-toggling) is the consumer's; the toggle neither prevents default nor stops propagation | 09-30 | decided (#165) | TUI D12 |
+| TR45 | A disabled (non-expandable) toggle omits `aria-expanded`; an enabled one mirrors the row's `isExpanded` in `aria-expanded` and `data-expanded` | 09-30 | decided (#165) | TUI spec |
 
 ## Still open
 
