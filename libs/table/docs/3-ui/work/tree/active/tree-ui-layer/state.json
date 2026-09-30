@@ -10,9 +10,9 @@
   "isComplex": false,
   "decisionsPath": "libs/table/docs/3-ui/work/tree/active/tree-ui-layer/1-decisions.md",
   "capabilityLogPath": "libs/table/docs/decisions/tree.md",
-  "specPath": null,
+  "specPath": "libs/table/docs/3-ui/work/tree/active/tree-ui-layer/2-spec.md",
   "architecturePath": null,
   "githubIssues": [],
   "createdAt": "2026-09-30T08:20:21Z",
-  "updatedAt": "2026-09-30T12:00:00Z"
+  "updatedAt": "2026-09-30T13:00:00Z"
 }
