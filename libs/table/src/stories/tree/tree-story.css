@@ -1,0 +1,30 @@
+/* Tree styling recipe from the UI spec (3-ui/directives/tree.md).
+ * Used by all tree story hosts. No library stylesheet ships; consumers apply this recipe
+ * or build their own based on the data-* hooks and CSS custom properties. */
+
+/* Indent the toggle itself off the inherited depth. */
+[ngpTableTreeToggle] {
+  margin-inline-start: calc(var(--ngp-table-row-depth, 0) * 1.25rem);
+  transition: rotate 150ms ease;
+}
+
+/* Rotate the chevron when open. */
+[ngpTableTreeToggle][data-expanded] {
+  rotate: 90deg;
+}
+
+/* Keep a leaf toggle's width so labels align. */
+[ngpTableTreeToggle][data-disabled] {
+  visibility: hidden;
+}
+
+/* Dim ancestors kept only for a filter match. */
+[ngpTableTreeRow][data-context-row] {
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [ngpTableTreeToggle] {
+    transition: none;
+  }
+}
