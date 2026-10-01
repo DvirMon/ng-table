@@ -101,6 +101,7 @@ cross-references still resolve.
 | E54 | Single-open becomes state: `withExpansion({ multi?: boolean \| (() => boolean) })`, default `true`, `withRowEdit`'s rule (in single mode a write keeps the last row; a live switch to single closes all). Reverses OQ-exp-1's recipe, since the directive now owns the click and runs first | 10-01 | decided · [#210](https://github.com/DvirMon/ng-table/issues/210) | [panel-directives D10](../3-ui/work/expansion/active/panel-directives/1-decisions.md) |
 | E55 | Panel toggle accessible name is consumer-owned: no label input, no default, no dev warning — the library binds relations only. Amends ADR-0029 #3; tree's TR39 warning goes to #209 | 10-01 | decided (#199) · [ADR-0029](../adr/0029-directives-own-accessibility.md) | [panel-directives D11](../3-ui/work/expansion/active/panel-directives/1-decisions.md) |
 | E56 | A panel's DOM id is a per-table prefix plus the escaped `RowId` — stable across remounts and server/client hydration; not a mount counter | 10-01 | decided (#199) | [panel-directives D13](../3-ui/work/expansion/active/panel-directives/1-decisions.md) |
+| E57 | v1 panel directives support a panel inside the `ngpTable` host only; a panel outside it (a page-level side drawer) can't reach the registry or store through DI — open, not decided | 10-01 | specced (#199) | [panel-directives spec](../3-ui/work/expansion/active/panel-directives/2-spec.md) |
 
 ## Still open
 
