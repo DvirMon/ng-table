@@ -7,12 +7,12 @@
   "domainPath": "libs/table",
   "workspaceRoot": "libs/table/docs/3-ui/work/expansion/active/panel-directives",
   "stack": "angular",
-  "isComplex": null,
+  "isComplex": true,
   "decisionsPath": "libs/table/docs/3-ui/work/expansion/active/panel-directives/1-decisions.md",
   "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
   "specPath": null,
   "architecturePath": null,
   "githubIssues": [],
   "createdAt": "2026-10-01T00:00:00Z",
-  "updatedAt": "2026-10-01T00:00:00Z"
+  "updatedAt": "2026-10-01T18:00:00Z"
 }

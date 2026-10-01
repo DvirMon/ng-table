@@ -456,6 +456,8 @@ index math and no `trackBy`, so it stays a recipe — the same test as the decli
 member (`features/expansion.md:96-99`). Multi-open stays the default. Shown by story 1.6's
 side panel (#190 story D, `side-panel/`).
 
+> **Reversed 2026-10-01 (E54, #210).** Once `ngpTablePanelToggle` owns the click (#199, E53), the one-line recipe becomes a second write after the directive's. Single-open moves to `withExpansion({ multi })`, default `true`.
+
 **OQ-exp-2 — Where do `aria-expanded` and the toggle live for the panel? — resolved 2026-09-30.**
 The panel toggle follows the WAI-ARIA APG
 [Disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): a real `<button>`

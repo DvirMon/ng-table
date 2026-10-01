@@ -12,7 +12,7 @@
 Every feature's directives (core table/row/cell, sorting, expansion panel, tree, grouping, selection, and any future feature) own accessibility completely and by default. A consumer composing the shipped directives gets correct accessibility without wiring any of it. The library owns the mechanism; the product owns the words. The consumer owns:
 
 (a) the visual side, which ADR-0026 already leaves to them: contrast, focus-ring styling, target size;
-(b) product-specific text for accessible names and announcements, including translation (consumer provides a label input, product overrides generic defaults);
+(b) product-specific text for accessible names and announcements, including translation — for accessible names the consumer writes `aria-label` or text on the native element itself (amended 2026-10-01, category 3);
 (c) very specific cases a directive cannot know, opted into explicitly.
 
 Wiring accessibility is never part of the consumer's normal job.
@@ -23,7 +23,7 @@ Wiring accessibility is never part of the consumer's normal job.
 
 2. **States and properties:** `aria-sort`, `aria-expanded` on the toggle button (never on a `role="table"` row), `aria-controls`, `aria-selected`, `aria-level`, `aria-rowindex`/`aria-rowcount`.
 
-3. **Accessible names:** the library guarantees a control has a name, puts it in the right attribute (`aria-label`), and applies it only when content isn't text. Directives take a label input from the consumer and fall back to a generic default (e.g. "Toggle details") when none is given. No dev warning; the default always works.
+3. **Accessible names:** consumer-owned (amended 2026-10-01, #199 E55). The library writes no text: no label input, no generic default, no dev warning. The consumer names the control on the native element (`aria-label` or visible text). The library owns the relations only: `aria-controls`, `aria-labelledby` wiring, ids. Same as ng-primitives 0.130.3, whose collapsible trigger binds only `aria-controls`/`aria-expanded` and whose pagination icon buttons ship no label.
 
 4. **Keyboard operation of triggers:** Enter/Space on sort headers and toggles (native `<button>`).
 
@@ -55,7 +55,9 @@ The user's ruling: accessibility is a major responsibility of the primitives, no
 
 - **Library owns the visual side too (focus-ring CSS):** rejected. It conflicts with ADR-0026 (no shipped CSS); the library exposes `data-*` hooks instead.
 
-- **Dev-mode warning when an icon-only control has no label:** rejected in favour of a generic default that always works.
+- **Dev-mode warning when an icon-only control has no label:** rejected. Naming is the consumer's responsibility (category 3); the library does not police it.
+
+- **A label input with a generic default (e.g. "Toggle details"):** accepted 2026-10-01, then reversed the same day (#199, E55). Words are product-specific and need translation; a library default would be English text nobody chose.
 
 ## Consequences
 
@@ -68,3 +70,5 @@ The user's ruling: accessibility is a major responsibility of the primitives, no
 - `docs/3-ui/cross-cutting/accessibility.md`'s Core Principle is extended to match and points here, and its `aria-live` ownership question is closed by category 8.
 
 - Existing directives that don't meet this are gaps, not precedent.
+
+- The tree toggle's shipped nameless warning (TR39) contradicts category 3; removing it is #209's.
