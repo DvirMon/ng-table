@@ -1,0 +1,220 @@
+import { Meta, Canvas, Source } from '@storybook/addon-docs/blocks';
+import * as BasicStories from './tree-basic/tree-basic.stories';
+import * as FilteredStories from './tree-filtering/tree-filtering.stories';
+import * as RowClickStories from './tree-row-click/tree-row-click.stories';
+import basicClass from './tree-basic/tree-basic-story-host.component.ts?raw';
+import basicTemplate from './tree-basic/tree-basic-story-host.component.html?raw';
+import basicToolbarClass from './tree-basic/tree-basic-toolbar.component.ts?raw';
+import basicToolbarTemplate from './tree-basic/tree-basic-toolbar.component.html?raw';
+import filteredClass from './tree-filtering/tree-filtering-story-host.component.ts?raw';
+import filteredTemplate from './tree-filtering/tree-filtering-story-host.component.html?raw';
+import filteredToolbarClass from './tree-filtering/tree-filtering-toolbar.component.ts?raw';
+import filteredToolbarTemplate from './tree-filtering/tree-filtering-toolbar.component.html?raw';
+import filteredFilters from './tree-filtering/tree-filtering.filters.ts?raw';
+import rowClickClass from './tree-row-click/tree-row-click-story-host.component.ts?raw';
+import rowClickTemplate from './tree-row-click/tree-row-click-story-host.component.html?raw';
+import rowClickStyles from './tree-row-click/tree-row-click.css?raw';
+import treeStyles from './tree-story.css?raw';
+import treeSchema from './fixtures/schema.ts?raw';
+import sharedStyles from '../styles/story-host.css?raw';
+import '../styles/code-tabs.css';
+
+<Meta title="Table / Tree" name="Docs" />
+
+# Tree
+
+Hierarchical row expansion by parent-child links, navigated via outline expand/collapse. One story, one lesson, one canvas — in the order worth reading them.
+
+**`Basic` is the one to copy.** Its host composes `withTree({ parentId: row => row.parentId, initial: [...] })` and nothing else, so nothing in its source is another lesson's setup — no second feature and no row handler.
+
+Each story composes the fewest features its lesson needs. Where a second feature does appear — `withFiltering()` in `Filtered` — the page says what it is there to make visible.
+
+For group-header expansion, see [`Table / Grouping`](?path=/docs/table-grouping--docs), its Collapsible section. For a tree chevron beside a panel chevron within groups, see [#190](https://github.com/DvirMon/ng-table/issues/190)'s `expansion/panel-in-groups/` story. The [tree UI spec](https://github.com/DvirMon/ng-table/blob/main/libs/table/docs/3-ui/directives/tree.md) describes the directive pair and styling recipe.
+
+Shared across all of them: `fixtures/schema.ts` (one column list and one `treeConfig`) and `tree-story.css`. Those are at the bottom of this page, once.
+
+---
+
+## Basic — the whole feature, with nothing else on
+
+`withTree({ parentId: row => row.parentId, initial: [...] })` and nothing else: no predicate, no second feature. One flat data set linked by `parentId`, displaying an outline view to depth 3. Click the chevron to open or close a parent; reopen a closed parent and its previously-open descendants are restored (deep restore, TR36). Expand all / Collapse all operate on every expandable row, and the readout displays the three-state tree state (All open / Some open / None open). 
+
+The toggle appears on every row in the name cell and reads 'Children of [name]' (TR39); leaf toggles render disabled and invisible but keep their width for label alignment (TR38). Tab navigation reaches only parents; leaf toggles are skipped (TR36). Applies the shared tree styling recipe, which includes reduced-motion support.
+
+<Canvas of={BasicStories.Basic} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-basic-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-basic-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-basic-source" />
+      tree-basic-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-basic-source" />
+      tree-basic-toolbar.component.html
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-basic-source" />
+      CSS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={basicClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={basicTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={basicToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={basicToolbarTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={treeStyles} language="css" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Filtered — matches with their ancestors shown
+
+`withFiltering({ schema: treeFilters })` + `withTree({ parentId: row => row.parentId })`. As you type "review", ancestors of each match are kept and shown open automatically (default reveal). Context rows are dimmed by the recipe. The row count stays fixed on the number of matches, not visible nodes. A parent whose name matches but none of its children do renders a hidden, disabled toggle (TR38, 2.6). Close a revealed parent and it stays closed while you keep typing; clear the filter and the branches you opened before filtering are open again (2.4).
+
+<Canvas of={FilteredStories.Filtered} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-filtered-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-filtered-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-filtered-source" />
+      tree-filtering-toolbar.component.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-filtered-source" />
+      tree-filtering-toolbar.component.html
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-filtered-source" />
+      tree-filtering.filters.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-filtered-source" />
+      CSS
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={filteredClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteredTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteredToolbarClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteredToolbarTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={filteredFilters} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={treeStyles} language="css" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Whole-row click — when the page owns the row handler
+
+`withTree({ parentId: row => row.parentId })` only, no toolbar. Clicking anywhere on a parent row's text toggles its expansion, while the toggle button (chevron) still works independently. The toggle's click bubbles to the row handler, which must guard against it — this story shows why the page (not the table) is responsible for that guard. A leaf row does not respond to clicks.
+
+The handler is the tree UI spec's guard written out with named booleans: skip when the target is inside `[ngpTableTreeToggle]` (an `instanceof Element` guard, no type assertion), skip a row without children, else toggle. The CSS adds `cursor: pointer` to rows that can be toggled.
+
+<Canvas of={RowClickStories.RowClick} />
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-row-click-source" defaultChecked />
+      TS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-row-click-source" />
+      HTML
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-row-click-source" />
+      CSS
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-row-click-source" />
+      tree-story.css
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={rowClickClass} language="tsx" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowClickTemplate} language="html" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={rowClickStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={treeStyles} language="css" />
+    </div>
+  </div>
+</div>
+
+---
+
+## Shared across the three stories
+
+<div className="code-tabs">
+  <div className="code-tabs-list">
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-shared-source" defaultChecked />
+      fixtures/schema.ts
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-shared-source" />
+      tree-story.css
+    </label>
+    <label className="code-tabs-tab">
+      <input type="radio" name="tree-shared-source" />
+      story-host.css
+    </label>
+  </div>
+  <div className="code-tabs-panels">
+    <div className="code-tabs-panel">
+      <Source code={treeSchema} language="ts" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={treeStyles} language="css" />
+    </div>
+    <div className="code-tabs-panel">
+      <Source code={sharedStyles} language="css" />
+    </div>
+  </div>
+</div>
