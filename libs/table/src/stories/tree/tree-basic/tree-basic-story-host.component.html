@@ -1,0 +1,56 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Flat data nested by <code>parentId</code>, to depth 3. Click a chevron to toggle a parent
+    open or closed; reopen a parent and its previously-open descendants are restored. Every row
+    has a toggle; leaf toggles are rendered disabled and hidden while keeping their width so
+    labels align. Tab reaches only parents; leaf toggles are skipped. Expand/Collapse All
+    operate on every expandable parent on the page, and the readout shows the current state
+    (All open / Some open / None open).
+  </p>
+
+  <ngp-tree-basic-toolbar
+    (expandAll)="expandAll()"
+    (collapseAll)="collapseAll()"
+  />
+
+  <p class="tree-basic__readout">State: <strong>{{ treeState() }}</strong></p>
+
+  <table [ngpTable]="table" class="story-host__table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr [ngpTableRow]="row" ngpTableTreeRow>
+          @for (column of table.renderColumns(); track column.id) {
+            <td class="story-host__cell">
+              @if (column.id === 'name') {
+                <button
+                  type="button"
+                  ngpTableTreeToggle
+                  [attr.aria-label]="'Children of ' + row.data.name"
+                >
+                  ▸
+                </button>
+              }
+              {{ row.cells[column.id] }}
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <p class="story-host__hint">
+    The toggle renders on every row in the <code>name</code> cell, keyed by
+    <code>column.id === 'name'</code> (not <code>$first</code>). Leaf toggles are stamped
+    <code>[data-disabled]</code> by the directive; the recipe hides them with
+    <code>visibility: hidden</code> while keeping their width. The expanded state, the
+    indentation and the leaf case are the directive's and the recipe's concern, so the
+    template needs no state attribute, no per-depth CSS and no leaf condition.
+  </p>
+</div>
