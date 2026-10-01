@@ -13,7 +13,7 @@
     "start": "npx nx serve ng-table",
     "lint": "npx nx run-many -t lint",
     "table:lint": "npx nx run shared-table:lint",
-    "table:sb": "npx nx run shared-table:storybook",
+    "table:sb": "node tools/storybook-pick.mjs",
     "table:build-storybook": "npx nx run shared-table:build-storybook",
     "table:bench": "powershell -NoProfile -Command \"npx nx run shared-table:bench 2>&1 | Tee-Object -FilePath bench.log\"",
     "table:status": "node --experimental-strip-types libs/table/tools/generate-status.ts",
