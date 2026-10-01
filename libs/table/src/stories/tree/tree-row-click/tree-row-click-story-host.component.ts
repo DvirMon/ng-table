@@ -53,8 +53,8 @@ export class TreeRowClickStoryHostComponent {
    * Toggle the row when clicked, unless the click came from the toggle button
    * or the row has no children.
    *
-   * The row handler receives clicks bubbling from the toggle. Three named
-   * booleans make the guard explicit:
+   * The row handler receives clicks bubbling from the toggle. Two named
+   * guards, then the toggle:
    * 1. Skip if the click targeted the toggle button itself.
    * 2. Skip if the row is a leaf (has no children).
    * 3. Otherwise toggle the row's expansion.

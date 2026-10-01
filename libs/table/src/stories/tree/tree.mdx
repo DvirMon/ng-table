@@ -89,7 +89,7 @@ The toggle appears on every row in the name cell and reads 'Children of [name]' 
 
 ## Filtered — matches with their ancestors shown
 
-`withFiltering({ schema: treeFilters })` + `withTree({ parentId: row => row.parentId })`. As you type "review", ancestors of each match are kept and shown open automatically (default reveal). Context rows are dimmed by the recipe. The row count stays fixed on the number of matches, not visible nodes. A parent whose name matches but none of its children do renders a hidden, disabled toggle (TR38, 2.6). Close a revealed parent and it stays closed while you keep typing; clear the filter and the branches you opened before filtering are open again (2.4).
+`withFiltering({ schema: treeFilters })` + `withTree({ parentId: row => row.parentId })`. As you type "review", ancestors of each match are kept and shown open automatically (default reveal). Context rows are dimmed by the recipe. The row count includes the ancestors kept for context and does not change when you open or close a parent. A parent whose name matches but none of its children do renders a hidden, disabled toggle (TR38, 2.6). Close a revealed parent and it stays closed while you keep typing; clear the filter and the branches you opened before filtering are open again (2.4).
 
 <Canvas of={FilteredStories.Filtered} />
 

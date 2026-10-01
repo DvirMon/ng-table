@@ -14,17 +14,8 @@ import { treeFilters } from './tree-filtering.filters';
 import { TreeFilteringToolbarComponent } from './tree-filtering-toolbar.component';
 
 /**
- * Filtered tree story: demonstrates filtering (`withFiltering()`) composed with tree
- * nesting (`withTree()`). Shows:
- *
- * - Default reveal enabled: ancestors of matches are shown open (TR22).
- * - Context rows dimmed by the recipe's `[data-context-row]` rule (TR42, 2.3).
- * - The row count (`totalRowCount()`) is unchanged by open/close (3.1).
- * - A matching parent with no matching children renders a hidden, disabled toggle (2.6).
- * - Clearing the filter restores the open set from before filtering (2.4).
- *
- * Default reveal only (TR22): no reveal override and no descendant inclusion, since the
- * latter belongs to filtering's own docs. The detail-panel feature is not composed.
+ * Filtered tree story. Proves `withFiltering()` over `withTree()` with the default reveal
+ * (TR22, TR36, TR38, TR39, TR42).
  */
 @Component({
   selector: 'ngp-tree-filtering-story-host',
@@ -48,8 +39,6 @@ export class TreeFilteringStoryHostComponent {
     withTree({ parentId: (row: TaskRow) => row.parentId }),
   );
 
-  protected readonly filters = this.table.filters;
-
   /** Signal Forms directly over the criterion model — `filters().value` is a `WritableSignal`,
    * so the form writes through to the nodes and there is nothing to keep in sync. */
   protected readonly filterForm = form(this.table.filters().value);
@@ -57,6 +46,6 @@ export class TreeFilteringStoryHostComponent {
   protected readonly rowCount = computed(() => this.table.totalRowCount());
 
   protected clearFilter(): void {
-    this.filters().reset(null);
+    this.table.filters().reset(null);
   }
 }

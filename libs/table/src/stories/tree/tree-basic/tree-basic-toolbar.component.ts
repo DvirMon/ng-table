@@ -9,7 +9,6 @@ import { Component, output } from '@angular/core';
 @Component({
   selector: 'ngp-tree-basic-toolbar',
   templateUrl: './tree-basic-toolbar.component.html',
-  standalone: true,
 })
 export class TreeBasicToolbarComponent {
   readonly expandAll = output<void>();

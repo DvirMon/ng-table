@@ -6,8 +6,8 @@ status: >
   Refreshed 2026-10-01 after #166–#169 (flat-data tree, filter retention, reveal) and #182–#184
   (row depth, tree directive pair, styling recipe). Code backs every story in §1–§4. The Tree
   story entry (#189: `Basic`, `Filtered`, `RowClick`) landed 2026-10-01. Canvas marks §1–§4:
-  6 ✅, 7 🟡, 6 ❌ (19 stories; 4.1 and 4.2 are not a story concern, ruled 2026-10-01).
-  Cross-feature: G-T1, G-T2 🟡 on canvas (owner doc still says ❌); F-T1 ✅; F-T2, G-T3,
+  4 ✅, 9 🟡, 6 ❌ (19 stories; 4.1 and 4.2 are not a story concern, ruled 2026-10-01).
+  Cross-feature: G-T1, G-T2 🟡 on canvas (owner doc still says ❌); F-T1 🟡; F-T2, G-T3,
   S-T1, P-T1 ❌; E-T1 and E-G1's panel half go to #190; E-1 tree-owned, ❌ on canvas (OQ-7 resolved).
 date: 2026-10-01
 audience: product, design, engineering
@@ -107,7 +107,7 @@ Competitor and community behavior is cited from discovery files, not restated:
 
 Ordered by how badly the person is hurt if it is missing.
 
-## 1.1 — See each row under the row it belongs to — ✅ covered
+## 1.1 — See each row under the row it belongs to — 🟡 partly covered
 
 > As someone looking at a project plan, I want every subtask sitting under its task, indented by
 > how deep it is, so I can read the structure without reconstructing it from an id column.
@@ -135,7 +135,7 @@ from `--ngp-table-row-depth` (`ngp-table-row.directive.ts:28`).
 custom property). Product expectation matches: indentation in one column, the name column
 (Smartsheet, Notion; products discovery §2).
 
-## 1.2 — Open and close one parent — ✅ covered
+## 1.2 — Open and close one parent — 🟡 partly covered
 
 > As someone scanning a long task list, I want to fold away a task I'm done with, so its
 > subtasks stop taking space, and open it again later exactly as it was.
@@ -677,7 +677,7 @@ mark, the line says so; the re-mark belongs in the owner's doc.
 
 ## Owned by filtering *([`filtering.md`](filtering.md) §5, "Owned by tree")*
 
-- **F-T1 — A matching child keeps its path — ✅.** Filtering keeps each match plus all its
+- **F-T1 — A matching child keeps its path — 🟡.** Filtering keeps each match plus all its
   ancestors, shown as context rows. TR10, TR11, ADR-0028. Code shipped
   (`with-filtering/tree-retention.ts:13-69`, #168); canvas: `tree-filtering/` (`Filtered`).
 - **F-T2 — Show a matched parent's whole branch — ❌.** `includeDescendants` on
