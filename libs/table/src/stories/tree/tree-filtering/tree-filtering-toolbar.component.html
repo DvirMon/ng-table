@@ -1,0 +1,7 @@
+<div class="story-host__toolbar">
+  <label>
+    Name filter (contains)
+    <input type="text" placeholder="type 'review'" [formField]="nameField()" />
+  </label>
+  <button type="button" (click)="clearFilter.emit()">Clear</button>
+</div>
