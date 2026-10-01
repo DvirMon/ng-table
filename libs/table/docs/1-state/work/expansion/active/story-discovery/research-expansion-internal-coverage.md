@@ -1,0 +1,330 @@
+# What does this repo already decide, document, ship and demonstrate for `withExpansion()` — the detail panel?
+
+**Date:** 2026-09-30 · **Mode:** internal-coverage
+
+> ⚠ **Superseded in part** — the UI spec
+> [`3-ui/directives/expansion.md`](../../../../3-ui/directives/expansion.md) (v0.4, 2026-08-07)
+> predates ADR-0012 (09-03), E11/E12 (09-20) and #165's TUI D1–D10 (09-30). The state spec
+> [`1-state/features/expansion.md`](../../../features/expansion.md) and the log
+> [`decisions/expansion.md`](../../../../decisions/expansion.md) win wherever they disagree.
+> The UI spec carries **no banner** saying so. See §B.
+
+## Answer
+
+- The state layer is complete and tested: open set, multi-expand, `everExpanded` lazy-mount
+  ledger, batched `changed`, silent writes, `initial`, pruning on row removal.
+- A person gets **nothing on screen** from it today. No expansion directive ships, no story
+  composes `withExpansion()`, and the one ARIA hook that could fire (`aria-expanded` on core
+  `ngpTableRow`) never fires for a panel and is scheduled for deletion (#182).
+- The UI spec that would give a person the toggle, keyboard, slide and ARIA is stale in at
+  least 12 places. Its tree path has been removed by decision (TR33/G80) but not from the text.
+- Three product docs already hold a panel story or a panel claim: grouping E-G1, filtering 1.1,
+  and a stale reference in selection 2.1. Link them from the panel story. Don't rewrite them.
+  E-G1 is marked ✅, but its evidence is a tree chevron, not a panel.
+
+## Method and source reliability
+
+- Read on 2026-09-30, worktree `feat/190-expansion-detail-panel-story` at `bfd82e9`. Read-only.
+- **Decisions:** `decisions/expansion.md` rows E1–E38. Tree-only rows (E5, E6, E9, E13, E15,
+  E16, E20–E38) are excluded, as the log's own header says (`decisions/expansion.md:16-22`).
+  Added the panel-affecting rows from `decisions/tree.md` (TR33) and `decisions/grouping.md`
+  (G80), plus the #165 grill record.
+- **Shipped code:** `with-expansion.ts`, `expansion/state.ts`, `with-expansion.spec.ts`,
+  `index.ts`, every file in `src/directives/`, and `engine/flatten.ts`. Claims come from the
+  function bodies, not from JSDoc.
+- **Story coverage:** found every `*-story-host.component.ts` under `src/stories/` (26 hosts)
+  with a glob. Grepped all of `src/stories/**` for `withExpansion|.expansion|everExpanded|expan`.
+  Then read the one hit's host `.ts`, never a `.mdx` or a folder name.
+- **Contradictions:** grepped all of `libs/table/docs` outside `work/` for `withExpansion`,
+  `everExpanded`, `expandedRows`, `toggleExpanded`, `rowExpanded`, `ngpTableExpand` and
+  `detail panel`. Each hit was read in context.
+- **Generated file:** `docs/status.md` is generated from spec frontmatter (`libs/table/CLAUDE.md`
+  "Code layout"). Its expansion row (`status.md:29`) is fixed by editing frontmatter and
+  regenerating, never by editing `status.md`.
+- **Tag rule.** *product-visible* means a person in front of the table could perceive the
+  difference. *internal-only* means only an integrator or maintainer could.
+
+## Findings
+
+### A. Settled decisions — one line each
+
+| # | Decision | Tag | Source |
+|---|---|---|---|
+| E2 | No `manual` config; it would toggle no behavior | internal-only | `decisions/expansion.md:49` |
+| E3 | ~~Bulk verbs emit once per id~~. Superseded by E18/E19 | internal-only | `decisions/expansion.md:50` |
+| E4 | Stale restored ids are kept, not dropped. An id with no row renders nothing, and if that row comes back its panel is open again | product-visible (edge) | `decisions/expansion.md:51` |
+| E7 | `everExpanded` is panel-only, layered on the shared store | product-visible (panel stays mounted, so collapse animates and inner state survives reopen) | `decisions/expansion.md:54` |
+| E8 | `setExpanded(ids)` is the store's one general write | internal-only | `decisions/expansion.md:55` |
+| E10 | Ships as the ADR-0015 slice `table.expansion` | internal-only | `decisions/expansion.md:57` |
+| E11 | Public verbs are `toggle`/`expand`/`collapse`/`set`, and omitting `ids` means all. This is what lets a consumer build expand-all/collapse-all buttons | internal-only (names); the buttons it enables are product-visible | `decisions/expansion.md:58` |
+| E12 | The panel contributes nothing to render visibility, so opening a panel never reveals or hides rows. Collapsible groups come from `withTree()` | product-visible | `decisions/expansion.md:59` |
+| E14 | `initial` seeds the open set at construction | product-visible (table opens with panels open) | `decisions/expansion.md:61` |
+| E17 | ~~One emission per id in the symmetric difference~~. Superseded by E18 | internal-only | `decisions/expansion.md:64` |
+| E18 | `changed` emits once per write as `{ added, removed }` | internal-only | `decisions/expansion.md:65` |
+| E19 | `table.expansion.changed` exposes `ExpansionChange` directly, with no per-id adapter | internal-only | `decisions/expansion.md:66` |
+| TR33 | The expandable/toggle pair in `expansion.md` narrows to detail panels. The tree gets `ngpTableTreeRow` + `ngpTableTreeToggle` | internal-only (which directive); product-visible once built | `decisions/tree.md:84` |
+| G80 | Group-header collapse uses `ngpTableTreeToggle`, not `ngpTableExpandToggle` | internal-only | `decisions/grouping.md:124` |
+| TUI D1 | Same as TR33. Rationale: "a shared toggle would have to resolve which feature it serves" | internal-only | `3-ui/work/tree/active/tree-ui-layer/1-decisions.md:30` |
+| TUI D2 | Row `aria-expanded` is valid only in a treegrid. Core's row binding is removed (#182) and the tree puts it on a `<button>` instead | product-visible (screen reader) | `3-ui/work/tree/active/tree-ui-layer/1-decisions.md:31` |
+| TUI D10 | #165 ships no stylesheet (tree scope) | product-visible (no default look) | `3-ui/work/tree/active/tree-ui-layer/1-decisions.md:39` |
+| spec | Multi-expand: opening one panel never closes another | product-visible | `1-state/features/expansion.md:59` |
+| spec | `everExpanded` is additive-only and exempt from pruning | product-visible (lazy-then-persist mount) | `1-state/features/expansion.md:60-75` |
+| spec | `expand()` with no ids targets every row in `rows()`; there is no discovery walk | product-visible (Expand all opens every visible row) | `1-state/features/expansion.md:77-79` |
+| spec | No tri-state member. The consumer derives `expansion().size === rows().length` | product-visible (no built-in expand-all label state) | `1-state/features/expansion.md:93-96` |
+| spec | `initial` is a plain array read once. It also seeds `everExpanded` and emits nothing | product-visible (panels mount on first paint) | `1-state/features/expansion.md:100-115` |
+| spec | Silent writes with `{ emitEvent: false }`, shared shape with selection D18 | internal-only | `1-state/features/expansion.md:117-125` |
+| spec | Snapshot slice `key: 'expansion'`, restored via `set(ids, { emitEvent: false })`. `everExpanded` is not in the slice | internal-only | `1-state/features/expansion.md:127-143` |
+| spec | Panels are consumer markup and never a `renderRows()` entry | internal-only | `1-state/features/expansion.md:161-163` |
+| ADR-0012 D1 | `withExpansion()` keeps the name and becomes the panel feature | internal-only | `adr/0012-split-expansion-into-panel-and-tree.md:85-87` |
+| ADR-0012 D3 | Separate `createExpansionStore()` instance per feature | internal-only | `adr/0012-split-expansion-into-panel-and-tree.md:91-96` |
+| ADR-0012 D4 | `onRowsRemoved` prunes the open set (ADR-0006). This is "the substantive reason panel state lives in the store at all" | product-visible (deleting an open row leaves no orphan open state) | `adr/0012-split-expansion-into-panel-and-tree.md:97-99` |
+| UI 08-07 | Lazy-then-persist: gate on `everExpanded().has(id)`, not on `is open` | product-visible | `3-ui/directives/expansion.md:223-249` |
+| UI 08-07 | Accordion slide needs one consumer-authored wrapper (`grid-template-rows` 0fr→1fr) | product-visible | `3-ui/directives/expansion.md:133-153` |
+| UI 08-07 | Collapsed content is `inert` + delayed `visibility: hidden` | product-visible (focus and screen reader) | `3-ui/directives/expansion.md:166-176` |
+| UI 08-07 | A detail `<tr>` gets its row id from `[ngpTableExpandableFor]`, since it has no `RenderRow` | internal-only | `3-ui/directives/expansion.md:71-76` |
+| UI 08-07 | Rejected: host-composing expansion into `ngpTableRow`, a container directive, and ng-primitives disclosure | internal-only | `3-ui/directives/expansion.md:373-389` |
+
+**Open, never decided (panel):**
+
+| Question | Source |
+|---|---|
+| Non-expandable rows (selection D58's shape if ever wanted) | `1-state/features/expansion.md:180-185` |
+| Same question, from the selection side | `1-state/features/selection.md:214-216` |
+| Should a snapshot `restore()` seed `everExpanded`? | `1-state/features/expansion.md:186` |
+| Per-panel loading state; no feature owns it | `1-state/features/expansion.md:187-189` |
+| Same question, from the UI side | `3-ui/directives/expansion.md:394` |
+| Single-open accordion mode | `3-ui/directives/expansion.md:395` |
+| Whether expand-all/collapse-all get a directive | `3-ui/directives/expansion.md:396` |
+| Shared (default look) vs. primitive (no CSS) for expansion. Unresolved in the doc | `3-ui/directives/expansion.md:273` |
+
+### B. Older docs contradicted by newer decisions
+
+**Flagged by the doc itself** (a banner, strikethrough or inline correction):
+
+| Doc | What it flags | Location |
+|---|---|---|
+| ADR-0012 | D5 (group collapse goes to the panel) is struck and reversed. D6 (G6) is struck and superseded | `adr/0012-split-expansion-into-panel-and-tree.md:100-119` |
+| `1-state/architecture.md` | Revision banner re-points grouping to `withTree()`. It does not correct `:125`, which still cites "`with-expansion.md`, Dual Use" | `1-state/architecture.md:127` |
+| PRD | Story 31 carries an inline correction for E12 | `1-state/prd.md:73` |
+| `decisions/expansion.md` | Superseded rows name their replacement | `decisions/expansion.md:48-66` |
+
+**Not flagged — the dangerous half:**
+
+| Doc | Stale claim | Contradicted by | Location |
+|---|---|---|---|
+| `3-ui/directives/expansion.md` | "Outstanding: … needs `everExpanded`" | E7; shipped (`with-expansion.ts:48-63`) | `:28` |
+| `3-ui/directives/expansion.md` | Tier 0 is "`toggleExpanded()`, `expandedRows`, `renderRows()`" | E11 (verbs renamed); E12 (panel doesn't touch `renderRows()`) | `:42` |
+| `3-ui/directives/expansion.md` | `ngpTableExpandable` binds `aria-expanded`/`aria-level` on `<tr>`, and has a "Tree rows" DI path | TUI D1 (tree path removed); TUI D2 (row `aria-expanded` is invalid in `role="table"`) | `:55-76` |
+| `3-ui/directives/expansion.md` | Motion rationale: "expanded rows are added to and removed from `renderRows()`" | E12. Panel rows never enter `renderRows()` | `:78` |
+| `3-ui/directives/expansion.md` | Toggle calls `this.table.store().toggleExpanded(...)` | E11. `NGP_TABLE_STORE` is the `NgpTableDirective` (`table.tokens.ts:9`), whose input is `ngpTable`, not `store` (`ngp-table.directive.ts:20`) | `:100-101` |
+| `3-ui/directives/expansion.md` | "Same directive serves group-header collapse … delegates to `withExpansion()`'s `expandedRows`" | E12, G80 | `:106` |
+| `3-ui/directives/expansion.md` | `<tr>` host with `tabindex=0` + keydown | TUI D4 rejects a `<tr>` host for the tree toggle (stray focus stop; no valid `aria-expanded`). Not ruled for the panel, but the reasoning transfers | `:116-121` |
+| `3-ui/directives/expansion.md` | Disabled defaults to `!row.hasChildren` | Code: `flatten.ts:28,39` stamps `hasChildren: false` on every flat row. Under a panel-only table, every toggle would default to disabled | `:129` |
+| `3-ui/directives/expansion.md` | "Shipped CSS" block; "The DS ships a real default look" | TUI D10 (no stylesheet, tree scope) and the primitives stance. Not formally ruled for the panel | `:178-207`, `:269` |
+| `3-ui/directives/expansion.md` | `table.everExpanded().has(row.id)`; "written by `toggleExpanded()` / `expandAll()`, reset with the data source" | Now `table.expansion.everExpanded()` (E10). No reset exists in code (§C) | `:236`, `:253` |
+| `3-ui/directives/expansion.md` | Dev assertion: warn when `row.isExpanded === undefined` ("`withExpansion()` not composed") | E12 + `flatten.ts:30,40`. `isExpanded` is always `undefined` under the panel, so this would warn on every correct use | `:346` |
+| `3-ui/directives/expansion.md` | Cites `apps/demo/.../table-expansion-demo.html` | No `apps/demo/**/*.html` exists in this repo (glob, 2026-09-30) | `:32`, `:281`, `:316` |
+| `3-ui/directives/expansion.md` | "Neither ng-primitives nor `@angular/cdk` is installed" | `package.json:34` has `ng-primitives ^0.130.1`. `@angular/cdk` is indeed absent | `:387` |
+| `3-ui/directives/expansion.md` | Rejected-alternative rationale: "`expandedRows` … shared with `withGrouping()`" | E12 | `:375` |
+| `3-ui/architecture.md` | Expansion is "stubbed, ready to drill, one directive (`ngpTableExpandToggle`)". The spec's own frontmatter says `spec: drilled` with three directives | TR33 / TUI D1; `3-ui/directives/expansion.md:7,16-20` | `:26`, `:53` |
+| `3-ui/architecture.md` | "grouping reuses `ngpTableExpandToggle` for group collapse (shared `expandedRows`)" | E12, G80 | `:87` |
+| `3-ui/directives/core.md` | Example feature directive calls `store().toggleExpanded(...)` | E11 | `:133-143` |
+| `3-ui/directives/grouping.md` | Group collapse is `ngpTableExpandToggle` | G80. Flagged in the grouping log, not in this doc | `:36` |
+| `1-state/features/expansion.md` | `everExpanded` is "cleared only when the data source emits a new dataset, alongside the open set" | Code has no dataset reset for either set. Only `onRowsRemoved` pruning of the open set (`state.ts:89-95`, `with-expansion.ts:102`) | `:62-63` (stale line; the same spec's :195 is current) |
+| `1-state/features/expansion.md` | Links to `../work/with-selection/2-decisions.md` | Broken. The file is at `work/selection/archive/with-selection/2-decisions.md` | `:181`, `:192` |
+| `1-state/state-persistence.md` | Stale-id hazard "still open … decide once" | E4 decided keep (09-08) | `:271-276` |
+| `1-state/prd.md` | Stories 28/29: `toggleExpanded()`, `expandAll()`, `collapseAll()`, a `rowExpanded` event "to lazy-load a row's children". Feature notes: grouping delegates to `withExpansion()`'s `expandedRows`; tree-capable via `children`. "Each feature supports … `manual`" | E11, E18/E19, E12, ADR-0012, E2. No banner (`prd.md:1-16`) | `:26`, `:70-71`, `:103-106` |
+| `overview.md` | State shape `{ expandedRows }`; pipeline step `→ withExpansion`; "`withGrouping()` … depend[s] on `withExpansion()`"; event `rowExpanded`; every feature has `manual` | E10/E11, E12, E18, E2. No banner (`overview.md:1-8`) | `:131`, `:141`, `:173`, `:199`, `:226` |
+| `0-product/grouping.md` | Collapsible mode is `withGrouping()` + `withExpansion()`; `grouping-collapsible/` composes `withExpansion()`; `table.expandAll(table.groupIds())`; `collapseAll()` | E12; host composes `withTree()` (`grouping-collapsible-story-host.component.ts:56-61,76-82`) | `:42`, `:50`, `:77`, `:269`, `:297-299`, `:326`, `:817` |
+| `0-product/grouping.md` | E-G1: "ADR-0012 … would re-home the row chevron; the affordance question is unresolved" | Resolved by TR33/G80 (09-30) | `:966-968` |
+| `0-product/sorting.md` | `grouping-collapsible/` composes `withGrouping()` + `withExpansion()` + `withSorting()` | Host composes `withGrouping()` + `withTree()` only (`grouping-collapsible-story-host.component.ts:56-61`) | `:89` |
+| `0-product/selection.md` | Contrast: "unlike `withExpansion()`'s `isExpanded`" | E12. The panel never stamps `isExpanded` | `:264-265` |
+| `0-product/row-editing.md` | E-1 sits under "Owned by expansion"; "still unshipped" | ADR-0012 D6 (superseded). E-1 is tree-owned per `0-product/tree.md:495-498` | `:701-712` |
+| `3-ui/stories.md` | `grouping-collapsible/` shows "`withExpansion()`"; example API read `expandedRows().has(row.id)` | Host composes `withTree()`; E11 | `:282`, `:522-523` |
+| `src/api/features/expansion/state.ts` (comment) | "a future tree feature builds its own" | `withTree()` ships and calls `createExpansionStore` (`with-tree/feature.ts:136`) | `:9-10`, `:20-21` |
+
+### C. What shipped code gives for free, and what it doesn't
+
+| Capability | Free? | Evidence | Tag |
+|---|---|---|---|
+| Open set, multi-expand, `toggle` | yes | `with-expansion.ts:65-67`; `with-expansion.spec.ts:45-69` | product-visible |
+| `expand()` / `collapse()` with no ids = all rows in `rows()` / everything open | yes | `with-expansion.ts:69-84`; `with-expansion.spec.ts:71-122` | product-visible (via consumer buttons) |
+| `set(ids)` atomic replace | yes | `with-expansion.ts:86-88`; `with-expansion.spec.ts:124-135` | internal-only |
+| `everExpanded` lazy-mount ledger, additive, seeded by `initial` | yes | `with-expansion.ts:48-63`; `with-expansion.spec.ts:289-332` | product-visible |
+| `everExpanded` reset / LRU cap | **no** — grows for the table's lifetime, across refetches | `with-expansion.ts:48-63` (no reset path); `1-state/features/expansion.md:74-75` (LRU "not in v1") | internal-only (memory); see Unverified U3 |
+| `changed` — one `{ added, removed }` per write, no-op writes silent | yes | `state.ts:48-77`; `with-expansion.spec.ts:137-208` | internal-only |
+| `changed` completes on destroy | yes | `with-expansion.ts:101`; `state.ts:103`; `with-expansion.spec.ts:234-246` | internal-only |
+| `{ emitEvent: false }` on every verb | yes | `state.ts:71-73`; `with-expansion.spec.ts:210-232` | internal-only |
+| `initial` — seeds both sets, emits nothing | yes | `with-expansion.ts:50-63`; `state.ts:45`; `with-expansion.spec.ts:289-306` | product-visible |
+| `onRowsRemoved` pruning of the open set; `everExpanded` exempt | yes | `with-expansion.ts:102`; `state.ts:89-95`; `with-expansion.spec.ts:248-276` | product-visible |
+| Pruning announced on `changed` | **no** — prune writes the signal directly and emits nothing. Undocumented | `state.ts:89-95` | internal-only |
+| Open panel survives a filter/sort toggle | yes — pruning fires only when a row leaves `data`, and nothing else writes the set | `state.ts:89-95`; ADR-0006 per `libs/table/CLAUDE.md` ("engine diffs `indexById`") | product-visible — meets `0-product/filtering.md:112-113` |
+| Opening a panel never changes `renderRows()` | yes | `with-expansion.spec.ts:334-347` | product-visible |
+| Composes with `withTree()` in either order without collision | yes | `with-expansion.spec.ts:370-398` | product-visible |
+| Trailing `withComputed()` derive block | yes | `with-expansion.spec.ts:420-451` | internal-only |
+| `ExpansionSlice` nameable from the public barrel | **no** — only `WithExpansionConfig`, `ExpansionMembers`, `ExpansionChange`, `ExpansionWriteOptions` are exported | `index.ts:41-45` | internal-only |
+| Toggle directive / keyboard activation | **no** — no expansion directive in `src/directives/` | glob `src/directives/*.ts` (14 files, none for expansion) | product-visible |
+| `aria-expanded` for a panel | **no** — core binds `isExpanded ?? null`, and `isExpanded` is always `undefined` without a tree contributor. #182 deletes the row binding anyway | `ngp-table-row.directive.ts:28`; `flatten.ts:30,40`; `3-ui/work/tree/active/tree-ui-layer/issue-graph.md:11` | product-visible |
+| Slide animation, `inert` when collapsed | **no** | no `ngpTableExpandContent` in `src/directives/`; no shipped CSS | product-visible |
+| Tri-state "all open?" | **no** (by decision) | `1-state/features/expansion.md:93-96` | product-visible |
+| Non-expandable-row gate, accordion mode, per-panel loading state | **no** (open) | §A "Open" table | product-visible |
+| Snapshot `serialize()`/`restore()` | **no** — the mechanism is proposed. `set(ids, { emitEvent: false })` ships, so a consumer can restore by hand | `1-state/state-persistence.md:248-260`; `with-expansion.ts:86-88` | internal-only |
+
+### D. Where an expansion (panel) story is already written — link, don't rewrite
+
+| Where | Story | What it asks of the panel | Current mark / note |
+|---|---|---|---|
+| `0-product/grouping.md:941-968` (§5 "Owned by expansion") | **E-G1**: a table with both collapsible groups and expandable rows | "Collapsing a group hides its rows' open detail panels; reopening the group restores them, or clearly does not" (`:952-953`) | ✅, but the evidence (`:955-961`) is the tree chevron on a `children` deal, and the host composes no `withExpansion()` (`grouping-collapsible-story-host.component.ts:56-61`). **The panel half is undemonstrated** |
+| `0-product/filtering.md:103-114` (1.1) | Filtering never changes "what's selected/expanded on the rows that remain" | Panel state survives a filter toggle | Given for free (§C). No story composes `withExpansion()` + `withFiltering()` |
+| `0-product/selection.md:264-265` (2.1) | Contrast with "`withExpansion()`'s `isExpanded`" | none; stale reference only | Fix the reference; not a panel story |
+| `0-product/row-editing.md:701-712` (E-1) | Editing a child row of an expanded parent | none; tree-owned | Already re-linked by `0-product/tree.md:495-498` |
+| `0-product/grouping.md:269`, `:326`, `:817` | Mentions of "`withExpansion()`" in collapsible-group stories | none; these mean `withTree()` now | Stale (§B) |
+| `1-state/features/selection.md:214-216` | Residual: is "non-expandable row" the same question as `enableRowSelection`? | An open question, not a story | Open |
+| `1-state/state-persistence.md:248-260` | Expansion persisted as its own slice | Restore without firing `changed` | Decided; mechanism proposed |
+
+There is no `0-product/expansion.md` (glob `docs/0-product/**`, 7 files: filtering, grouping,
+performance, row-editing, selection, sorting, tree).
+
+### E. Real story coverage — read from host code
+
+| Host | Composes | Expansion content | Evidence |
+|---|---|---|---|
+| All 26 `*-story-host.component.ts` under `src/stories/` | — | **None composes `withExpansion()`** | grep `withExpansion\|\.expansion\b\|everExpanded` over `src/stories/**`: 0 hits |
+| `grouping/grouping-collapsible/` | `withGrouping({ initial })` + `withTree({ parentId })` | Group and tree collapse only. Expand All is `table.tree.expand(table.groupIds())`; Collapse All is `table.tree.collapse()`. Chevron `aria-expanded` is bound by hand in the template from `row.isExpanded` | `grouping-collapsible-story-host.component.ts:2,56-61,76-82`; `.html:77,109` |
+| `row-edit/external-write/` | row edit (no `ngpTable` directives) | **Closest markup precedent for a panel:** a second consumer `<tr>` with `colspan`, inside the same `@for` over `renderRows()`, gated per row on consumer state | `external-write-story-host.component.html:21-25,58-60` |
+
+- The #165 issue graph records the same gap: "a story audit found no Tree or Expansion story
+  entry on main … The Expansion story is tracked outside this epic as #190"
+  (`3-ui/work/tree/active/tree-ui-layer/issue-graph.md:55-59`).
+- ADR-0012 already noted it: "No story composes `withExpansion()`"
+  (`adr/0012-split-expansion-into-panel-and-tree.md:62,144`). This is still true.
+
+## Synthesis — where they disagree
+
+- **State layer vs. UI spec — two generations apart.** The state spec (v2.0, 09-21) and the code
+  agree. The UI spec (v0.4, 08-07) was written for the pre-split feature that also did trees and
+  group collapse. About half of its mechanism exists only for the tree: the DI path,
+  `aria-level`, `data-depth`, `hasChildren`-derived disabled, motion tied to `renderRows()`.
+  #165 removed that half by decision but not from the text. The panel half is still coherent:
+  lazy-then-persist, the `[ngpTableExpandableFor]` detail row, the one-wrapper slide, `inert`.
+  **Implication:** a panel story built from the UI spec as written would pick up at least four
+  bugs: every toggle disabled, a dev warning on every correct use, invalid row `aria-expanded`,
+  and a missing `store()`.
+- **"Shipped look" vs. "primitive".** The UI spec ships CSS and a default look (`:178-207`,
+  `:269`). #165 ruled "no stylesheet" for the tree (TUI D10), and the memory rule "Primitives: no
+  shipped CSS" points the same way. Nothing has ruled on it for the panel. **Implication:** the
+  panel story must either follow TUI D10 by analogy (a consumer styling recipe) or get an
+  explicit decision. It should not quietly ship CSS.
+- **Where `aria-expanded` lives.** The UI spec puts it on the `<tr>` (`:58`) and on a `<tr>`
+  toggle host (`:116-121`). TUI D2/D4 put it on a `<button>` only, with `role="table"` kept.
+  Whether the panel toggle follows the disclosure pattern on a button is unruled, but the
+  reasoning in D2 is table-wide. **Implication:** this is the one a11y decision the panel story
+  can't avoid, and the tree has already set the precedent.
+- **Spec vs. code on `everExpanded` reset.** The spec says both sets clear on a new dataset. The
+  code never clears either. It only prunes the open set on row removal. **Implication:** someone
+  has to decide which one is right. A refetch that changes ids grows `everExpanded` forever, and a
+  re-added id remounts a closed panel whose content may fetch on init.
+
+  > Correction 2026-09-30: not spec vs code — `features/expansion.md:195` and ADR-0006 already
+  > rule the exemption; line 62 was stale.
+- **E-G1's ✅ vs. the host.** The grouping product doc marks panel-inside-collapsed-group
+  covered. The evidence is two tree/group chevrons. **Implication:** once a panel story exists,
+  E-G1's panel criterion is the natural cross-feature proof to link, and its mark should drop
+  until then.
+- **The product half has never been written.** Every panel story in the repo is an integrator
+  story ("As a design-system consumer…", `1-state/prd.md:70-72`) or a cross-feature row owned by
+  another doc. There is no person-in-front-of-the-table story for opening a detail panel.
+
+## Not researched
+
+- `work/core/active/prune-stage-revisit/4-tasks/step-4-expansion-spec.plan.md` and the archived
+  `computed-state-mechanism` step plans. Episodic, and not needed to settle any claim above.
+- `panel-tree-split/2-spec.md`, `3-architecture.md` and `discovery-emission-shape.md`. Only
+  grepped for specific terms; their decisions are carried by the log rows cited.
+- `apps/site` content beyond the grep hit at `home.content.ts:39`. It names `withExpansion()` in
+  marketing copy and makes no behavioral claim.
+- `3-ui/cross-cutting/accessibility.md` and `styling-tokens.md`. Only read as cited by
+  `3-ui/directives/expansion.md`.
+- `llms.txt` (generated). Not checked for stale expansion text.
+- Git history and issue state for #190/#182/#183 (no `gh` access in this run).
+
+## Unverified
+
+- **U1 — Row animation with an open panel.** `ngpTableRowAnimation` re-measures only when
+  `renderRows()` changes (`ngp-table-row-animation.directive.ts:83-85`), and it only tracks
+  elements registered by `ngpTableRow` (`:109-111`, `:151-159`). Inference: opening a panel moves
+  the rows below with no glide, and the cached `previousRowTops` goes stale, so the next reorder
+  may glide from pre-panel positions. To confirm, run one browser check in a host that composes
+  both.
+- **U2 — Whether E-1 (edit a child row) is now satisfiable** after #163's flat-data tree.
+  `0-product/tree.md:497-498` says #163 closes it; `row-editing.md:708-712` says unshipped.
+  Tree-owned either way; not checked here.
+- **U3 — A re-added id remounts a closed panel.** From the code: `everExpanded` keeps the id
+  after removal (`with-expansion.spec.ts:248-276`). Inference: a consumer `@if` on `everExpanded`
+  mounts the panel again, collapsed, when the row returns. Whether that fetches depends on the
+  panel content. It is not observable from the library.
+- **U4 — TUI D2's table-wide reasoning binds the panel toggle.** D2's text is scoped to #165.
+  Applying it to the panel is a reasonable inference, not a ruling.
+
+## Sources
+
+| Claim | Source |
+|---|---|
+| Decision rows E2–E19 | `libs/table/docs/decisions/expansion.md:48-66` |
+| Tree-only rows excluded; log scope | `libs/table/docs/decisions/expansion.md:16-22` |
+| TR33 | `libs/table/docs/decisions/tree.md:84` |
+| G80 | `libs/table/docs/decisions/grouping.md:124` |
+| TUI D1–D12 | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/1-decisions.md:30-43` |
+| #190 tracks the Expansion story; no Expansion story on main | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/issue-graph.md:55-59` |
+| #182 drops row `aria-expanded` | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/issue-graph.md:11` |
+| Panel state spec | `libs/table/docs/1-state/features/expansion.md:13-198` |
+| Dataset-reset claim | `libs/table/docs/1-state/features/expansion.md:62-63` |
+| Broken selection D58/D8 links | `libs/table/docs/1-state/features/expansion.md:181` |
+| Broken selection D8 link (second) | `libs/table/docs/1-state/features/expansion.md:192` |
+| Actual selection decisions path | `libs/table/docs/1-state/work/selection/archive/with-selection/2-decisions.md` |
+| UI spec (stale) | `libs/table/docs/3-ui/directives/expansion.md:1-397` |
+| ADR-0012 decisions, alternatives, costs | `libs/table/docs/adr/0012-split-expansion-into-panel-and-tree.md:83-164` |
+| #101 grill (D3 everExpanded, D7 verbs, D8 grouping static) | `libs/table/docs/1-state/work/expansion/active/panel-tree-split/1-decisions.md:139-330` |
+| `withExpansion()` implementation | `libs/table/src/api/features/with-expansion.ts:42-138` |
+| `createExpansionStore()`; prune emits nothing | `libs/table/src/api/features/expansion/state.ts:44-105` |
+| Stale "future tree feature" comment | `libs/table/src/api/features/expansion/state.ts:9-10` |
+| `withTree()` uses the store | `libs/table/src/api/features/with-tree/feature.ts:136` |
+| Behavior tests | `libs/table/src/api/features/with-expansion.spec.ts:44-490` |
+| Public exports | `libs/table/src/index.ts:41-45` |
+| Core row `aria-expanded` binding | `libs/table/src/directives/ngp-table-row.directive.ts:28` |
+| `isExpanded` unstamped without a contributor; `hasChildren` always stamped | `libs/table/src/engine/flatten.ts:14-41` |
+| `RenderRow.isExpanded` / `hasChildren` docs | `libs/table/src/api/types.ts:49-55` |
+| `NGP_TABLE_STORE` is the table directive | `libs/table/src/directives/table.tokens.ts:9` |
+| Table directive input is `ngpTable` | `libs/table/src/directives/ngp-table.directive.ts:20` |
+| Row animation re-measures on `renderRows()` only | `libs/table/src/directives/ngp-table-row-animation.directive.ts:83-159` |
+| `ngpTableTreeRow` binds only `data-context-row` | `libs/table/src/directives/ngp-table-tree-row.directive.ts:7-19` |
+| ng-primitives installed | `package.json:34` |
+| Collapsible host composes `withGrouping()` + `withTree()` | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts:56-61` |
+| Collapsible host Expand/Collapse All | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts:76-82` |
+| Consumer detail-`<tr>` precedent | `libs/table/src/stories/row-edit/external-write/external-write-story-host.component.html:21-60` |
+| Grouping product doc: stale collapsible mode | `libs/table/docs/0-product/grouping.md:42-77` |
+| Grouping product doc: E-G1 | `libs/table/docs/0-product/grouping.md:941-968` |
+| Grouping product doc: 2.1/2.2/2.3 stale verbs | `libs/table/docs/0-product/grouping.md:264-333` |
+| Grouping product doc: filtering composition | `libs/table/docs/0-product/grouping.md:816-817` |
+| Sorting product doc story table | `libs/table/docs/0-product/sorting.md:89` |
+| Selection product doc contrast | `libs/table/docs/0-product/selection.md:264-265` |
+| Filtering 1.1 criterion | `libs/table/docs/0-product/filtering.md:112-113` |
+| Row-editing E-1 | `libs/table/docs/0-product/row-editing.md:701-712` |
+| Tree product doc re-links E-1 | `libs/table/docs/0-product/tree.md:495-498` |
+| PRD stale stories and notes | `libs/table/docs/1-state/prd.md:26` |
+| PRD stale stories 28/29 | `libs/table/docs/1-state/prd.md:70-71` |
+| PRD stale feature notes | `libs/table/docs/1-state/prd.md:103-106` |
+| PRD inline correction (story 31) | `libs/table/docs/1-state/prd.md:73` |
+| Overview stale shape, pipeline, dependency, event | `libs/table/docs/overview.md:131-226` |
+| State architecture banner | `libs/table/docs/1-state/architecture.md:125-127` |
+| UI architecture stale expansion row | `libs/table/docs/3-ui/architecture.md:26` |
+| UI architecture stale expansion row (table) | `libs/table/docs/3-ui/architecture.md:53` |
+| UI architecture stale dependency note | `libs/table/docs/3-ui/architecture.md:86-87` |
+| Core UI spec stale example | `libs/table/docs/3-ui/directives/core.md:133-143` |
+| Grouping UI spec stale toggle | `libs/table/docs/3-ui/directives/grouping.md:36` |
+| Stories conventions stale mentions | `libs/table/docs/3-ui/stories.md:282` |
+| Stories conventions stale mentions (grouping list) | `libs/table/docs/3-ui/stories.md:522-523` |
+| Persistence slice + stale-id "still open" | `libs/table/docs/1-state/state-persistence.md:248-276` |
+| Selection residual non-expandable question | `libs/table/docs/1-state/features/selection.md:214-216` |
+| `status.md` is generated | `libs/table/CLAUDE.md` ("Code layout" bullet on generated files) |
+| `status.md` expansion row | `libs/table/docs/status.md:29` |
