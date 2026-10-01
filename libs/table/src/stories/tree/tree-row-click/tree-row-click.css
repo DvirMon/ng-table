@@ -1,0 +1,10 @@
+/**
+ * Whole-row click affordance (TR44): when a page offers row-level click handling
+ * to toggle expansion, the row shows a pointer cursor to signal it's clickable.
+ *
+ * This rule applies only to rows with children (`[data-expandable]`). Leaf rows
+ * retain their default cursor, so the page's handler can skip them safely.
+ */
+[ngpTableTreeRow][data-expandable] {
+  cursor: pointer;
+}

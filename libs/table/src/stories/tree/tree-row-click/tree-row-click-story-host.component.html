@@ -1,0 +1,41 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Click anywhere on a parent row to toggle its expansion. The toggle button works
+    independently; its click bubbles to the row handler, which must guard against it
+    to prevent toggling twice. A leaf row does not respond to clicks.
+  </p>
+
+  <table [ngpTable]="table" class="story-host__table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        <tr
+          [ngpTableRow]="row"
+          ngpTableTreeRow
+          (click)="toggleFromRowClick(row, $event)"
+        >
+          @for (column of table.renderColumns(); track column.id) {
+            <td class="story-host__cell">
+              @if (column.id === 'name') {
+                <button
+                  type="button"
+                  ngpTableTreeToggle
+                  [attr.aria-label]="'Children of ' + row.data?.name"
+                >
+                  ▸
+                </button>
+              }
+              {{ row.cells[column.id] }}
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
