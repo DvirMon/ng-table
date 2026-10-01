@@ -13,7 +13,7 @@
     (collapseAll)="collapseAll()"
   />
 
-  <p class="tree-basic__readout">State: <strong>{{ treeState() }}</strong></p>
+  <p class="tree-basic__readout" role="status">State: <strong>{{ treeState() }}</strong></p>
 
   <table [ngpTable]="table" class="story-host__table">
     <thead>

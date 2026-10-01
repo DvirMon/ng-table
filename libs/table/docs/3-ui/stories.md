@@ -1,14 +1,14 @@
 ---
 title: Storybook story conventions
 type: reference
-status: reflects current practice as of the 23 stories in src/stories/
+status: reflects current practice as of the 26 stories in src/stories/
 date: 2026-09-19
 ---
 
 # Storybook story conventions — `libs/table`
 
 Read this before adding or extending a story in `src/stories/`. It records the pattern the
-existing 23 stories already follow, so a new one doesn't drift from it. Not previously written
+existing 26 stories already follow, so a new one doesn't drift from it. Not previously written
 down anywhere — reverse-engineered from the shipped stories; correct it in place if practice
 moves on.
 

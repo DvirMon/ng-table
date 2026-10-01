@@ -12,20 +12,8 @@ import { treeConfig } from '../fixtures/schema';
 import { TreeBasicToolbarComponent } from './tree-basic-toolbar.component';
 
 /**
- * Basic tree story — flat data nested by parentId, with toggle and bulk control
- *
- * Demonstrates the tree feature baseline: toggling individual parents, expand/collapse all,
- * and the three-state readout. The story seeds the initial open set to depth 3 so tree
- * structure is visible on load. Reopening a parent after closing it restores all open
- * descendants (TR36). The tree toggle sits on every row in the name cell; leaf toggles
- * render disabled and hidden by the recipe while keeping their width so labels align (TR38).
- * Tab reaches parents only; leaf toggles are skipped (TR36). The toggle label is
- * 'Children of ' + row.data.name per TR39, carrying no depth level (OQ-8).
- *
- * The directive stamps the expanded state and the recipe handles depth and the leaf case,
- * so the template carries no state attributes, per-depth CSS or leaf guard (TR38). The
- * toggle's click bubbles freely (TR44). Only the tree feature is composed — filtering,
- * sorting, selection, and row-click handlers are separate stories.
+ * Basic tree story. Proves the tree feature alone: `withTree()` with nothing composed beside it
+ * (TR34, TR36, TR38, TR39, TR41).
  */
 @Component({
   selector: 'ngp-tree-basic-story-host',
