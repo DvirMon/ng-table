@@ -11,6 +11,11 @@ audience: developers
 
 # UI Layer — Expansion
 
+> **Stale — 2026-10-01.** Predates the #195 rulings. Superseded in part by
+> `../../0-product/expansion.md` OQ-exp-8 (part 1: panels unmount on close by default;
+> part 3: the library ships a panel toggle + panel-content a11y directive — E40, E41 in
+> `../../decisions/expansion.md`). Do not build from this file; the rewrite is #199.
+
 Three directives for **detail panels only**. `withExpansion()` owns all state; these own semantics, activation, and default presentation.
 
 > **Narrowed 2026-09-30 (#165, TR33).** Tree rows — including collapsible group headers — use `ngpTableTreeRow` + `ngpTableTreeToggle`, specced in [`tree.md`](tree.md). After ADR-0012 the tree and the panel no longer share a store, so these directives serve `withExpansion()`'s detail panels and nothing else. The tree-row path this file used to describe is removed.

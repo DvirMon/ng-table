@@ -16,6 +16,12 @@ parent: ../architecture.md
 
 Windowed rendering over `renderRows()`. Decoupled from `withGrouping()`/`withExpansion()` by design — it operates purely on the already-flattened, collapse-resolved `renderRows: Signal<RenderRow<TRow>[]>` (see `with-grouping.md`, "Render Layer").
 
+**Requirement — must support detail panels** (`0-product/expansion.md` OQ-exp-8 part 4, E12/E42,
+2026-10-01). A `withExpansion()` detail panel is consumer markup, not a `renderRows()` entry (E12,
+ADR-0012), and has variable height. The design must support either variable-height items or a panel
+that takes a slot in the virtual list without being a render row; a fixed `itemSize` over
+`renderRows()` alone cannot size or unmount a panel.
+
 ## State Shape (sketch — not locked)
 
 ```ts
@@ -38,7 +44,7 @@ interface VirtualScrollState {
 
 ## Compile-Time Dependencies
 
-None. Reads only `renderRows()`, which is always present on the core store (see `with-grouping.md`) — composes with or without `withGrouping()`/`withExpansion()` in the same `createTable()` call.
+None. Reads only `renderRows()`, which is always present on the core store (see `with-grouping.md`) — composes with or without `withGrouping()`/`withExpansion()` in the same `createTable()` call. Detail panels are not `renderRows()` entries — see the panel requirement above (OQ-exp-8 / E12).
 
 ## Open Questions
 

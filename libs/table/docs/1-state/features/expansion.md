@@ -37,8 +37,12 @@ interface ExpansionSlice {
   expand(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   collapse(ids?: readonly RowId[], options?: ExpansionWriteOptions): void;
   set(ids: readonly RowId[], options?: ExpansionWriteOptions): void;
+  release(ids?: readonly RowId[]): void; // specced, not shipped (E39, #200)
 }
 ```
+
+> **Pending (#200):** `release` is specced, not shipped — `code: shipped` covers everything else on this
+> slice. See `0-product/expansion.md` OQ-exp-8 part 2.
 
 `expansion()` is the primary read — the open set. `everExpanded`, `changed` are properties
 (ADR-0015's primary-signal rule).
@@ -57,10 +61,13 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
 ## Behavior
 
 - **Multi-expand:** any number of rows can be open at once — no auto-collapse of siblings.
-- **`everExpanded` — lazy-mount support:** an additive-only set recording every id that has
-  been opened at least once. `expand()`/`toggle()`-to-open add to it; `collapse()` and
-  `toggle()`-to-close never remove from it. Cleared only when the data source emits a new
-  dataset, alongside the open set.
+  Single-open (incl. a side panel) is a consumer use of `set(isOpen ? [] : [id])`, not a mode —
+  `0-product/expansion.md` OQ-exp-1, OQ-exp-7.
+- **`everExpanded` — lazy-mount support:** a set recording every id that has been opened at least
+  once. `expand()`/`toggle()`-to-open add to it; `collapse()` and `toggle()`-to-close never remove
+  from it. It shrinks only through `release()` (E39, specced, not shipped) — exempt from
+  `onRowsRemoved` pruning ([ADR-0006](../../adr/0006-row-id-state-reconciliation.md)), unlike the
+  open set.
 
   It exists so consumers can gate detail-panel markup on `everExpanded().has(id)` instead of
   `expansion().has(id)`, giving lazy-then-persist mounting: a never-opened panel costs nothing,
@@ -71,8 +78,11 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
   Not exposed on `RenderRow`. It is keyed lookup, not per-row layout, and detail rows have no
   `RenderRow` to carry it. Consumers read `table.expansion.everExpanded()` directly.
 
-  Known cost: grows monotonically within a dataset, bounded by how many rows a user actually
-  opens. An LRU cap is possible later; deliberately not in v1.
+  **Mount lifetime — resolved 2026-10-01 (`0-product/expansion.md` OQ-exp-8, #195).** Default
+  recipe unmounts on close (gate `expansion().has(id)`, `animate.leave`); keeping inner state is a
+  per-row opt-in, `expansion().has(id) || (keepMounted(row) && everExpanded().has(id))` (E40).
+  `release(ids?)` frees kept panels (E39, pending in #200). Panel a11y directives ship in #199 (E41). The
+  panel stays outside `renderRows()` (E12 kept); virtual scroll must support it (E42).
 
 - **No discovery walk.** `expand()` with no `ids` targets every row in `rows()` — the panel has
   no `parentId` and no concept of hierarchy, so "expand everything" is the flat row set, not a
@@ -86,6 +96,7 @@ Not generic in `TRow` — nothing in it reads a row. `initial` is covered under
 | `table.expansion.expand(ids?, options?)` | Adds. Omitted `ids`: every row in `rows()`, unioned with what's already open. |
 | `table.expansion.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open. |
 | `table.expansion.set(ids, options?)` | Atomic replace — the restore path. |
+| `table.expansion.release(ids?)` | **Specced, not shipped (E39, #200).** Removes ids from `everExpanded`; omitted `ids` clears it. Never touches the open set; emits nothing on `changed`. Frees kept panels. |
 
 Every write verb takes `options?: ExpansionWriteOptions` (`{ emitEvent?: boolean }`) — see
 [Silent writes](#silent-writes-emitevent-false).
@@ -177,12 +188,12 @@ there is no contributor to the union for `engine/flatten.ts`'s `flattenVisible` 
 
 ## Open Questions
 
-- [ ] **Non-expandable rows.** Selection shipped a per-row gate —
-  [D58](../work/with-selection/2-decisions.md): `enableRowSelection?: boolean | ((row) => boolean)`,
-  gating id-adding writes only, permissive when the id resolves to no row (so D8 holds), no
-  reconcile. Expansion has no equivalent and already adopts D8 verbatim below, so if
-  "non-expandable row" is ever wanted it should take the same shape rather than diverge. Not
-  scheduled — recorded so it is findable from this side.
+- [x] **Non-expandable rows.** **Resolved 2026-09-30 — consumer-owned, no library gate**
+  (`0-product/expansion.md` OQ-exp-4). No per-row predicate, no `isExpandable(id)`; this
+  deliberately does not mirror selection's D58 (`enableRowSelection`). Reason: whether a row has
+  detail depends on panel content, which is consumer data (OQ-exp-5), unlike selection's lock state
+  on the row itself. Recipe: hide the toggle per row in the template; expand-all passes filtered
+  ids, `expand(rows().filter(hasDetail).map(trackBy))`. Bare `expand()` means every row.
 - [ ] Should `everExpanded` be seeded by a snapshot `restore()`, or only by `initial`?
 - [ ] Precise lazy-load UX contract (e.g. a per-row loading indicator) not addressed — likely a
   UI-layer concern once directives are specced, but the *state* for "is this panel currently
