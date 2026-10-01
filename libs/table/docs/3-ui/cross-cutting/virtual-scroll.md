@@ -84,4 +84,9 @@ Angular Material 21.1 has an open, acknowledged regression (`angular/components#
 
 ## Open Questions
 
+- [ ] **Must support detail panels** (`0-product/expansion.md` OQ-exp-8 part 4, E12/E42,
+  2026-10-01). A `withExpansion()` panel is consumer markup, not a `renderRows()` entry (E12,
+  ADR-0012), with variable height — the fixed-`itemSize` `*cdkVirtualFor` over `renderRows()` above
+  can neither size nor unmount one. Required: variable-height items, or a panel that takes a slot in
+  the virtual list without being a render row. Settled when this design is drilled.
 - [ ] **Row height / `itemSize` value** — CDK requires a concrete pixel number; no decision yet exists in this architecture. Depends on the styling/tokens spec (`styling-tokens.md`), which hasn't been started. This is the one blocking dependency for this file to be considered fully closed.
