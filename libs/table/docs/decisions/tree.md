@@ -44,6 +44,7 @@ column.
 | **TFD arch** | [`work/tree/active/tree-flat-data/3-architecture.md`](../1-state/work/tree/active/tree-flat-data/3-architecture.md) — #163 architecture |
 | **TUI** | [`3-ui/work/tree/active/tree-ui-layer/1-decisions.md`](../3-ui/work/tree/active/tree-ui-layer/1-decisions.md) — #165, tree UI layer |
 | **TUI spec** | [`3-ui/work/tree/active/tree-ui-layer/2-spec.md`](../3-ui/work/tree/active/tree-ui-layer/2-spec.md) — #165 spec |
+| **CC** | [`3-ui/work/directive-api-surface/active/collapsible-core/1-decisions.md`](../3-ui/work/directive-api-surface/active/collapsible-core/1-decisions.md) — #209, shared collapsible core |
 
 ## Decisions
 
@@ -87,14 +88,16 @@ column.
 | TR36 | `ngpTableTreeToggle` selects `button[ngpTableTreeToggle]` only; whole-row mouse toggling is consumer `(click)` on the `<tr>` | 09-30 | decided (#165) | TUI D4 |
 | TR37 | No attribute is bound by two directives on one element: core row owns `role`/`data-row-kind`/`data-depth`/`aria-rowindex`, `ngpTableTreeRow` owns its `data-*` hooks, the toggle button owns `aria-expanded` | 09-30 | decided (#165) | TUI D5 |
 | TR38 | On a non-expandable row the toggle sets `disabled`, `aria-hidden="true"`, `data-disabled` — hidden from focus and a11y, width kept for alignment | 09-30 | decided (#165) | TUI D6 |
-| TR39 | The toggle's accessible name is consumer-owned — no library text; a dev-mode warning fires once for a nameless toggle | 09-30 | decided (#165) | TUI D7 |
+| TR39 | The toggle's accessible name is consumer-owned — no library text; a dev-mode warning fires once for a nameless toggle | 09-30 | decided (#165) · superseded by TR47 | TUI D7 |
 | TR40 | `ngpTableTreeToggle` without `withTree()` throws on first render under `ngDevMode` (wiring error, ADR-0014); a missing `ngpTableTreeRow` is not an error | 09-30 | decided (#165) | TUI D8 |
 | TR41 | Core `ngpTableRow` binds output property `--ngp-table-row-depth` from `depth` beside `data-depth` — one indentation rule for any depth, shared with grouping | 09-30 | decided (#165) | TUI D9 |
 | TR42 | The tree ships no stylesheet — hooks plus `--ngp-table-row-depth` only (ng-primitives as reference); the CSS is a documented consumer recipe | 09-30 | decided (#165) | TUI D10 |
 | TR43 | Group headers use `ngpTableTreeRow` + `ngpTableTreeToggle` — group collapse already routes through `table.tree.toggle(groupId)` | 09-30 | decided (#165) | TUI D11 |
 | TR44 | Whole-row click bubbling (row `(click)` + toggle button double-toggling) is the consumer's; the toggle neither prevents default nor stops propagation | 09-30 | decided (#165) | TUI D12 |
-| TR45 | A disabled (non-expandable) toggle omits `aria-expanded`; an enabled one mirrors the row's `isExpanded` in `aria-expanded` and `data-expanded` | 09-30 | decided (#165) | TUI spec |
-| TR46 | The nameless-button warning skips a disabled leaf toggle — it is `aria-hidden`, so no assistive tech reaches it | 09-30 | decided (#165) | TUI D13 |
+| TR45 | A disabled (non-expandable) toggle omits `aria-expanded`; an enabled one mirrors the row's `isExpanded` in `aria-expanded` and `data-expanded` | 09-30 | decided (#165) · superseded by TR48 | TUI spec |
+| TR46 | The nameless-button warning skips a disabled leaf toggle — it is `aria-hidden`, so no assistive tech reaches it | 09-30 | decided (#165) · superseded by TR47 | TUI D13 |
+| TR47 | Toggle accessible names are consumer-owned per ADR-0029 cat. 3 (amended 10-01) — no label input, no default, no dev warning; #209 removes the tree toggle's nameless warning. Supersedes TR39's warning half and TR46 | 10-01 | decided (#209) · [ADR-0029](../adr/0029-directives-own-accessibility.md) | CC D0, CC D8 |
+| TR48 | The tree toggle's `aria-expanded`/`data-expanded` come from the shared core's plain `isOpen` binding; a leaf shows `aria-expanded="false"`, unreachable behind TR38's `aria-hidden`. Supersedes TR45's omission | 10-01 | decided (#209) | CC D2 |
 
 ## Still open
 
