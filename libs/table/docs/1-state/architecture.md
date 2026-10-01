@@ -73,6 +73,16 @@ This criterion is why the composition rules elsewhere in this document exist (fi
 features declare rather than mutate, one stage per key) — they keep the seams predictable enough
 that general mechanisms can be layered on them.
 
+## Standing design criterion — helper or recipe (2026-09-30)
+
+**The library ships a helper when doing it yourself needs index math, `trackBy` resolution, or
+logic every consumer would otherwise rewrite; a cheap one-liner stays a documented recipe.**
+Generalizes [`row-mutations.md`](row-mutations.md) D19's bar ("error-proneness, not convenience"),
+which was scoped to updaters. Shipped: `selectionStateOf` (selection D7), `renderColumns`,
+`RenderRow.cells` (ADR-0022), tree `state` (D5/E9), the D19 updaters. Recipe: expansion's "all
+open?" check ([`features/expansion.md`](features/expansion.md)), single-open and the side panel
+(`0-product/expansion.md` OQ-exp-1/OQ-exp-7), per-row expand eligibility (OQ-exp-4).
+
 ---
 
 ## Core Config
