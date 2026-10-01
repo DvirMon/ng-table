@@ -1,0 +1,39 @@
+#!/bin/sh
+# Link the primary checkout's node_modules into a freshly added worktree.
+# args: <previous HEAD> <new HEAD> <1 = branch checkout, 0 = file checkout>
+# Never fails the checkout: every path exits 0.
+null_sha=0000000000000000000000000000000000000000
+[ "$1" = "$null_sha" ] || exit 0
+[ "$3" = "1" ] || exit 0
+
+top=$(git rev-parse --show-toplevel)
+primary=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+[ "$top" = "$primary" ] && exit 0
+[ -e "$top/node_modules" ] && exit 0
+
+if [ ! -d "$primary/node_modules" ]; then
+  echo "post-checkout: no node_modules in $primary — run npm ci here."
+  exit 0
+fi
+
+# Compare normalized content: the two checkouts may differ in line endings.
+lock_here=$(git hash-object --path=package-lock.json "$top/package-lock.json")
+lock_primary=$(git hash-object --path=package-lock.json "$primary/package-lock.json")
+if [ "$lock_here" != "$lock_primary" ]; then
+  echo "post-checkout: package-lock.json differs from $primary — run npm ci here."
+  exit 0
+fi
+
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*)
+    # MSYS would rewrite the /c and /J switches as paths.
+    MSYS_NO_PATHCONV=1 MSYS2_ARG_CONV_EXCL='*' cmd /c mklink /J \
+      "$(cygpath -w "$top/node_modules")" \
+      "$(cygpath -w "$primary/node_modules")" > /dev/null
+    ;;
+  *)
+    ln -s "$primary/node_modules" "$top/node_modules"
+    ;;
+esac && echo "post-checkout: linked node_modules from $primary."
+
+exit 0
