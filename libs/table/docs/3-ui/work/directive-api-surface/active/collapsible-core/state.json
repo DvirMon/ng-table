@@ -7,12 +7,12 @@
   "domainPath": "libs/table",
   "workspaceRoot": "libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core",
   "stack": "angular",
-  "isComplex": null,
+  "isComplex": true,
   "decisionsPath": "libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core/1-decisions.md",
   "capabilityLogPath": null,
   "specPath": null,
   "architecturePath": null,
   "githubIssues": [],
   "createdAt": "2026-10-01T19:27:40Z",
-  "updatedAt": "2026-10-01T19:27:40Z"
+  "updatedAt": "2026-10-01T20:30:00Z"
 }
