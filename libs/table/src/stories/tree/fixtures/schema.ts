@@ -16,13 +16,13 @@ const taskColumnSet = createColumns(taskData, (col) => [
   col('status', { label: 'Status' }),
 ]);
 
-/** The config for every tree story. */
-// No `TableConfig<TaskRow>` annotation — that would default `columns` to the wide union and lose
-// `taskColumnSet`'s literal ids; `satisfies` checks the shape without widening it.
+// Note: no `TableConfig<TaskRow>` annotation. It would widen `columns` to the wide union and lose
+// `taskColumnSet`'s literal ids; `satisfies` checks the shape without widening.
+/** The config shared by every tree story. */
 export const treeConfig = {
   trackBy: 'id',
   columns: taskColumnSet,
 } satisfies TableConfig<TaskRow>;
 
-/** Column set exported for tree stories. */
+/** The column set behind `treeConfig`, for typing column-id paths. */
 export const treeColumns = taskColumnSet;

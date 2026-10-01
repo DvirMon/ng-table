@@ -1,7 +1,6 @@
 import type { RowId } from '../../../api/types';
 
-/** Fixture row for the tree stories. Represents a task in a project plan, with a flat
- * `parentId` field for linking rows into a tree by the `withTree()` feature. */
+/** A project-plan task; `parentId` links it to its parent for `withTree()`, `null` for a root. */
 export interface TaskRow {
   id: RowId;
   parentId: string | null;
