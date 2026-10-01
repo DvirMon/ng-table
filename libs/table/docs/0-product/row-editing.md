@@ -698,7 +698,7 @@ Bulk *edit* additionally needs the multiple-open semantics resolved first (G4) �
 cannot be specified independently. See [`0-product/selection.md`](selection.md) §6 for the
 selection-side accounting of this story.
 
-## Owned by expansion *(built)*
+## Owned by tree *(built)*
 
 ### E-1 — Editing a child row of an expanded parent — ❌ not covered
 
@@ -708,8 +708,7 @@ selection-side accounting of this story.
 Today a nested child renders no editable field at all (G6). Rescoped 2026-09-03 — narrowed to the
 tree/render-stage half of expansion, tracked under
 [ADR-0011](../adr/0011-chained-render-stages.md) / [ADR-0012](../adr/0012-split-expansion-into-panel-and-tree.md);
-still unshipped. Belongs to expansion because expansion is what the engine's index does not
-consult.
+still unshipped. Owned by the tree (`withTree()`, see [`tree.md`](tree.md)); closed by #163.
 
 ---
 
