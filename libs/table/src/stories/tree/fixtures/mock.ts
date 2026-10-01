@@ -1,9 +1,8 @@
 import type { TaskRow } from './types';
 
-/** Flat project-plan fixture for tree stories — ~25 rows, depth 0–3, three roots.
- * Designed for the Filtered story's "review" search term to hit (a) a depth-3 leaf under
- * non-matching ancestors, (b) another matching leaf in a separate branch, (c) a parent
- * whose name matches but none of its children's do, and (d) one branch with no matches. */
+/** Flat project plan, 25 rows, depth 0-3, three roots. Searching "review" hits a deep leaf under
+ * non-matching ancestors, a leaf in another branch, and a parent with non-matching children;
+ * one branch has no match. */
 export const TREE_ROWS_MOCK: TaskRow[] = [
   // Root 1: "Plan Architecture" — depth 0 parent
   {
