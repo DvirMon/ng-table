@@ -3,7 +3,7 @@
 **Issue:** #189
 **Branch:** feat/189-tree-stories
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-189-tree-stories
-**Status:** 0 / 6 complete
+**Status:** 1 / 6 complete
 
 ## Graph
 
@@ -19,7 +19,7 @@ Parallel-safe: [2, 3, 4] after 1 · Dependency: 1 → {2,3,4} → 5 → 6
 
 | Step | Title | Status |
 |---|---|---|
-| 1 | Tree fixtures and recipe CSS | ⬚ pending |
+| 1 | Tree fixtures and recipe CSS | ✅ done |
 | 2 | Basic tree story | ⬚ pending |
 | 3 | Filtered tree story | ⬚ pending |
 | 4 | Whole-row click story | ⬚ pending |
