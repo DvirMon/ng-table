@@ -1,0 +1,54 @@
+<div class="story-host">
+  <p class="story-host__hint">
+    Tree with client-side filtering. Type "review" and every match appears under its opened
+    ancestors, which are shown dimmed (context rows). Close one revealed parent and it stays
+    closed while you keep typing. The matching parent "API Review" has no matching children, so
+    its toggle is hidden. Clear and the branches you had open before filtering are open again. The
+    row count below is unchanged by what you open or close — it counts matches, not visible nodes.
+  </p>
+
+  <ngp-tree-filtering-toolbar
+    [nameField]="filterForm.name"
+    (clearFilter)="clearFilter()"
+  />
+
+  <p class="story-host__summary">
+    <strong>{{ rowCount() }} rows</strong>
+  </p>
+
+  <table class="story-host__table" [ngpTable]="table">
+    <thead>
+      <tr>
+        @for (column of table.renderColumns(); track column.id) {
+          <th class="story-host__cell">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of table.renderRows(); track row.id) {
+        @if (row.data; as task) {
+          <tr [ngpTableRow]="row" ngpTableTreeRow>
+            @for (column of table.renderColumns(); track column.id) {
+              <td class="story-host__cell">
+                @if (column.id === 'name') {
+                  <button
+                    type="button"
+                    ngpTableTreeToggle
+                    [attr.aria-label]="'Children of ' + task.name"
+                  >
+                    ▸
+                  </button>
+                  {{ task.name }}
+                } @else if (column.id === 'owner') {
+                  {{ task.owner }}
+                } @else if (column.id === 'status') {
+                  {{ task.status }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
