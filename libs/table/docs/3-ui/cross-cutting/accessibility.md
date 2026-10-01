@@ -3,7 +3,7 @@ title: UI Layer — Accessibility (Cross-Cutting)
 type: architecture
 version: 0.2
 date: 2026-07-31
-status: draft — drilled; aria-live region ownership unresolved
+status: draft — drilled; aria-live ownership resolved (ADR-0029, library-owned), mechanism open
 audience: developers
 ---
 
@@ -24,6 +24,8 @@ Directives wire ARIA only where native semantics + text content don't already co
 - Keyboard operability of interactive triggers (see `sort.md`)
 - `aria-live` announcements for dynamic state changes (below)
 - Explicit `scope="col"` on header `<th>` — technically inferable by browsers, but best practice for reliability across screen readers
+
+**Directives own accessibility — fully and by default (2026-10-01, [ADR-0029](../../adr/0029-directives-own-accessibility.md)).** Every feature's directives own nine categories: semantics/roles; ARIA states and properties; accessible names; trigger keyboard operation; keyboard navigation between rows/cells (APG grid/treegrid); focus management; hidden/inert content; live announcements (library-owned, consumer-overridable text); reduced motion. The consumer owns only the visual side (ADR-0026), the content of their own markup, and narrow opt-in cases.
 
 ---
 
@@ -50,7 +52,7 @@ Directives wire ARIA only where native semantics + text content don't already co
 
 `statusMessage()` is a derived signal reacting to store events — one announcement per meaningful state change, not one per cell.
 
-**Ownership is undecided and nothing implements it today.** The store exposes the raw event streams a message would be derived *from* (`withSorting()` publishes `sortChanged: Observable<SortRule[]>`; the not-yet-built pagination/infinite-scroll features would publish their own), but there is no `statusMessage` on `TableStore` and no UI-layer directive producing one. Earlier drafts of this file wrote `store.statusMessage()`, implying a store API that does not exist. See Open Questions.
+**Ownership resolved 2026-10-01: library-owned, consumer-overridable text ([ADR-0029](../../adr/0029-directives-own-accessibility.md) category 8). The mechanism is still open and nothing implements it today.** The store exposes the raw event streams a message would be derived *from* (`withSorting()` publishes `sortChanged: Observable<SortRule[]>`; the not-yet-built pagination/infinite-scroll features would publish their own), but there is no `statusMessage` on `TableStore` and no UI-layer directive producing one. Earlier drafts of this file wrote `store.statusMessage()`, implying a store API that does not exist. See Open Questions.
 
 **Why not per-cell (two independent reasons):**
 1. **Virtual scroll:** CDK recycles `<td>` DOM nodes as the user scrolls (see `virtual-scroll.md`) — per-cell `aria-live` would fire spurious "changed" announcements on every scroll-recycle, flooding screen reader users with noise for cells they never watched change.
@@ -81,6 +83,6 @@ This decision was made in this UI-layer session *before* virtual scroll was dril
 
 ## Open Questions
 
-- [ ] **Who owns `statusMessage()`?** **Deferred by decision (2026-07-31)** — blocks nothing, revisit before shipping to users. Three options: (a) consumer-authored `computed()` over the store's event streams — zero DS surface, every consumer reinvents wording; (b) a `TableStore` member contributed by each feature — puts user-facing English inside the state layer; (c) a dedicated `ngpTableStatus` directive in the UI layer that subscribes to the streams and renders the region itself — keeps copy in the UI layer where it belongs, adds one directive. Blocks this file from being more than a sketch.
+- [ ] **Who owns `statusMessage()`?** **Ownership resolved 2026-10-01 — library-owned (ADR-0029 category 8), which rules out (a); choosing between (b) and (c) — the mechanism — stays open.** Original deferral (2026-07-31) — blocks nothing, revisit before shipping to users. Three options: (a) consumer-authored `computed()` over the store's event streams — zero DS surface, every consumer reinvents wording; (b) a `TableStore` member contributed by each feature — puts user-facing English inside the state layer; (c) a dedicated `ngpTableStatus` directive in the UI layer that subscribes to the streams and renders the region itself — keeps copy in the UI layer where it belongs, adds one directive. Blocks this file from being more than a sketch.
 
 See `sort.md` for the one known limitation carried forward (screen readers not reliably announcing `aria-sort` value changes on their own).
