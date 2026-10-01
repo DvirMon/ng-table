@@ -72,12 +72,14 @@ src/stories/
 ├── grouping/                                ← fixtures/ + grouping-story.css + grouping-story.pipes.ts + 8 hosts
 │   └── grouping-basic/  grouping-when/  grouping-aggregates/  grouping-async-rule/
 │       grouping-order/  grouping-columns/  grouping-collapsible/  grouping-selection/
-└── selection/                               ← fixtures/ + selection-story.css + 3 hosts
-    └── multi-selection/  single-selection/  filtering-selection/
+├── selection/                               ← fixtures/ + selection-story.css + 3 hosts
+│   └── multi-selection/  single-selection/  filtering-selection/
+└── tree/                                    ← fixtures/ + tree-story.css + 3 hosts + tree.mdx
+    └── tree-basic/  tree-filtering/  tree-row-click/
 ```
 
 **A feature's own stylesheet sits beside its `fixtures/`, not inside it.** `filtering-story.css`,
-`grouping-story.css` and `selection-story.css` are each imported by every host in their feature
+`grouping-story.css`, `selection-story.css` and `tree-story.css` are each imported by every host in their feature
 and by nothing else — a second importer within the feature, which is the `fixtures/` bar, but
 they are not fixtures. They layer after `styles/story-host.css`, which every host also lists
 first in `styleUrls`.
@@ -127,6 +129,10 @@ Optimistic` nesting — 9 entries doesn't warrant three levels. Promote if it ou
 | `selection/fixtures/mock.ts` | `SELECTION_ROWS_MOCK`, `SAVED_SELECTION_IDS` (carries an id no row has), `SAVED_CONFLICTING_SELECTION_IDS` (two ids that both exist) |
 | `selection/fixtures/schema.ts` | `multiSelectionConfig` and `singleSelectionConfig` — identical shape, because `enableMultiRowSelection: false` is a `withSelection()` argument, not a config field |
 | `selection/selection-story.css` | Selection-specific styling — count banner, control column, `aria-disabled` and locked-row treatment |
+| `tree/fixtures/types.ts` | `TaskRow` — `parentId` is `null` or another row's `id`; no broken links, self-parents or cycles |
+| `tree/fixtures/mock.ts` | `TREE_ROWS_MOCK` — flat project-plan rows, depth 0 to 3, three roots, a leaf beside a parent at every depth; the term "review" yields a depth-3 match under two non-matching ancestors, a second match in another branch, a matching parent with no matching children, and one branch with no match |
+| `tree/fixtures/schema.ts` | `treeColumns` (`name` first) and `treeConfig`, shared by all three hosts |
+| `tree/tree-story.css` | The tree UI spec's styling recipe, verbatim — depth indent, chevron turn, hidden leaf toggle, dimmed context rows, reduced motion. `tree-row-click/` adds one local rule beside it |
 | `styles/story-host.css` | Shared story styling; every feature's own stylesheet layers after it |
 | `styles/code-tabs.css` | The mdx HTML/TS toggle, shared by the five feature docs pages |
 
@@ -520,8 +526,8 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   on a column that is not currently a level; composes `withSorting()` bare and trailing so the
   header order has a row sort to contrast against), `grouping-columns/` (`groupedColumnMode` —
   what becomes of a column once it is a level), `grouping-collapsible/` (the navigable outline:
-  `withExpansion()`, a real `<button>` chevron carrying `aria-expanded`, and collapse state under
-  regrouping and refetch), and `grouping-selection/` (a group checkbox built from one `rowsOf()`
+  `withTree()` and the `ngpTableTreeRow` + `ngpTableTreeToggle` pair on group headers, and
+  collapse state under regrouping and refetch), and `grouping-selection/` (a group checkbox built from one `rowsOf()`
   call).
 
   **One story, one lesson** (2026-09-19, `work/grouping-stories/3-lesson-audit.md`). The previous
@@ -551,6 +557,14 @@ story in that feature as a `## ` section on one scrolling page, in the order wor
   reordering it — see `0-product/filtering.md` §5 F-S1. It reaches into `filtering/fixtures/` and
   `filtering/filtering-story.css` for its invoice data rather than duplicating them, since the
   subject under test is selection, not a second filtering fixture set.
+- **`tree/` — three hosts, one per mechanism, on one flat fixture.** `tree-basic/` composes
+  `withTree({ parentId, initial })` and nothing else: the shipped toggle on every row in the
+  `name` cell, indentation from `--ngp-table-row-depth`, and Expand all / Collapse all with a
+  tri-state readout. `tree-filtering/` adds `withFiltering()` for context rows, reveal and a stable
+  row count. `tree-row-click/` is its own story because the whole-row click guard is a page-owned
+  handler that would be another lesson's setup inside `tree-basic/`. The toggle is named
+  `'Children of ' + name`, with no level; story files carry no hand-written state attributes and no
+  per-depth CSS. One `tree.mdx` covers all three.
 - `external-write/` — demonstrates an effect from *outside* the story's own button clicks
   (`simulateServerPush`), scoped to exactly §1.5's two acceptance criteria (conflict banner on
   an open row, quiet patch on a closed one) — a worked example of the scope discipline above:
