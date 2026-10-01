@@ -3,12 +3,14 @@ title: Product — Tree User Stories
 type: product
 capability: tree
 status: >
-  Written during the #163 grill, before the spec. One story shows a tree today:
-  `grouping-collapsible/`, on nested data. §1–§4: 0 ✅, 2 🟡, 14 ❌. The ❌ count is honest,
-  not pessimistic: nearly every story depends on the flat-data tree #163 builds, and no host
-  composes `withTree()` with `withFiltering()`. Cross-feature: F-T1, F-T2, G-T1, G-T2, G-T3,
-  S-T1 ❌; E-1 linked (❌ in `row-editing.md`).
-date: 2026-09-27
+  Refreshed 2026-10-01 after #166–#169 (flat-data tree, filter retention, reveal) and #182–#184
+  (row depth, tree directive pair, styling recipe). Code now backs every story in §1–§4; the
+  canvas does not. Canvas marks §1–§4: 0 ✅, 3 🟡, 16 ❌ (the 16 original stories plus five
+  UI-layer stories, 1.5–1.9; 4.1 and 4.2 are not a story concern, ruled 2026-10-01). The only
+  tree canvas is `grouping-collapsible/`; a Tree story entry
+  is #189. Cross-feature: G-T1, G-T2 🟡 on canvas (owner doc still says ❌); F-T1, F-T2, G-T3,
+  S-T1, P-T1 ❌; E-T1 and E-G1's panel half go to #190; E-1 tree-owned, ❌ on canvas (OQ-7 resolved).
+date: 2026-10-01
 audience: product, design, engineering
 ---
 
@@ -23,14 +25,13 @@ document, not the reverse.
 > to it, not rewrite it. Coverage marks here are updated from the product side as capabilities
 > land.
 
-> **This doc was written during the grill, not after the spec.**
-> [`features/tree.md`](../1-state/features/tree.md) is `spec: drilled`, but it describes a tree
-> built from nested children, and #163 replaces that with a tree built from flat rows. The
-> decisions this doc builds on are D1–D19 in
-> [`tree-flat-data/1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md),
-> logged as TR7–TR21 in [`decisions/tree.md`](../decisions/tree.md) (first registered as E20–E34 in
-> the expansion log). Where a story below
-> needs something those decisions do not give, §8 says so.
+> **Where the design lives.** Every decision below is a row in
+> [`decisions/tree.md`](../decisions/tree.md) (TR1–TR46). What the table does today:
+> [`1-state/features/tree.md`](../1-state/features/tree.md) (flat rows by `parentId`) and the
+> tree UI spec [`3-ui/directives/tree.md`](../3-ui/directives/tree.md) (`ngpTableTreeRow`,
+> `ngpTableTreeToggle`, `--ngp-table-row-depth`, the styling recipe). The UI layer's rationale is
+> in [`tree-ui-layer/2-spec.md`](../3-ui/work/tree/active/tree-ui-layer/2-spec.md). Where a story
+> needs something those do not give, §8 says so.
 
 ## Scope
 
@@ -38,16 +39,15 @@ document, not the reverse.
 row.** A person perceives six things, and does not care which layer produces them:
 
 1. Children appear under their parent, indented, at any depth.
-2. I can open and close a parent, one at a time or all at once.
+2. I can open and close a parent, one at a time or all at once, by mouse or keyboard.
 3. When I search or filter, a match never loses its place in the hierarchy, and it is never
    hidden from me.
 4. Counts and totals mean something I can check against what I see.
 5. When the parent data is wrong, rows are misplaced but never missing.
 6. Grouping a tree keeps each family together.
 
-The codebase builds this from `withTree({ parentId })`: each row names its parent's id, the
-`'tree'` render stage nests rows by that id, and `flattenVisible` decides what an open or closed
-parent shows. That mechanism is invisible to the person using the table and is ignored here.
+The codebase builds this from `withTree({ parentId })` plus two directives. That mechanism is
+invisible to the person using the table and is ignored here.
 
 Two modes, genuinely different products:
 
@@ -65,31 +65,39 @@ sent. Stories that differ by filter mode say so.
 | Mark | Meaning |
 |---|---|
 | ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
-| 🟡 **partly covered** | The mechanism exists but the person's experience of it does not: no affordance, no message, no recipe, or the happy path only |
+| 🟡 **partly covered** | Something is on screen, but the happy path only, or a different control than the one this story needs |
 | ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+
+**Marks are canvas marks.** Shipped code with no story is still ❌. Each story carries a separate
+**Code** line, so shipped work is credited without inflating the mark.
 
 One story shows a tree, read as a host component rather than an `.mdx` wrapper:
 
 | Story | Composes | What it demonstrates |
 |---|---|---|
-| [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | `withGrouping()` + `withTree({ parentId: row => row.parentId })` | One parent row (`d4`) with two flat children linked by `parentId`, opened by a row chevron (`table.tree.toggle`), independent of the group chevrons |
+| [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/) | `withGrouping()` + `withTree({ parentId: row => row.parentId })` | Group headers open and close through `ngpTableTreeRow` + `ngpTableTreeToggle`. One data row (`d4`) has two flat children (`d4-a`, `d4-b`), one level deep, opened by a **hand-written** chevron. Indentation uses one `[data-depth]` rule per depth, not `--ngp-table-row-depth` |
 
-What no story shows: a tree under a filter (no host composes `withTree()` with
-`withFiltering()`), a broken parent link, a lazy parent. The
-`grouping-selection/` host composes a filter over the same fixture, but no `'tree'` stage runs
-there, so `d4`'s children never render.
+What no story shows: a Tree entry of its own, a tree deeper than one level, a tree under a filter
+(no host composes `withTree()` with `withFiltering()`), a lazy parent, a leaf row's toggle. All of it is shipped code; the gap is one story entry (#189).
 
 **The stories name no layers; §8 does.** A person cannot perceive the difference between a value
 nothing computes and a control nothing renders, so the stories do not draw one. §8 sorts every
 gap into state, UI, or both, and §9 collects the ones that belong to no existing feature.
 
-Competitor and community behavior is cited from five discovery files in the #163 work folder:
-[`discovery-tree-filter-community.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-community.md),
-[`discovery-tree-filter-competitors.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-competitors.md),
-[`discovery-tree-filter-internal.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-internal.md),
-[`discovery-tree-grouping-competitors.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-competitors.md) and
-[`discovery-tree-grouping-products.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-products.md)
-(all read 2026-09-27). Nothing is restated here beyond what a story needs.
+Competitor and community behavior is cited from discovery files, not restated:
+
+- State behavior (filter, grouping), read 2026-09-27, in the #163 work folder:
+  [`discovery-tree-filter-community.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-community.md),
+  [`discovery-tree-filter-competitors.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-competitors.md),
+  [`discovery-tree-filter-internal.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-internal.md),
+  [`discovery-tree-grouping-competitors.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-competitors.md),
+  [`discovery-tree-grouping-products.md`](../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-products.md).
+- UI affordances (toggle, indentation, keyboard, screen reader, orphans), read 2026-10-01, in the
+  #165 work folder:
+  [`discovery-tree-ui-competitors.md`](../3-ui/work/tree/active/tree-ui-layer/discovery-tree-ui-competitors.md),
+  [`discovery-tree-ui-products.md`](../3-ui/work/tree/active/tree-ui-layer/discovery-tree-ui-products.md),
+  [`discovery-tree-internal-coverage.md`](../3-ui/work/tree/active/tree-ui-layer/discovery-tree-internal-coverage.md)
+  (the source of every Code line below).
 
 ---
 
@@ -97,7 +105,7 @@ Competitor and community behavior is cited from five discovery files in the #163
 
 Ordered by how badly the person is hurt if it is missing.
 
-## 1.1 — See each row under the row it belongs to — 🟡 partly covered *(nested data only)*
+## 1.1 — See each row under the row it belongs to — 🟡 partly covered
 
 > As someone looking at a project plan, I want every subtask sitting under its task, indented by
 > how deep it is, so I can read the structure without reconstructing it from an id column.
@@ -105,7 +113,7 @@ Ordered by how badly the person is hurt if it is missing.
 **Acceptance criteria**
 
 - A row whose parent is in the table appears directly under that parent, one level deeper.
-- Depth has no limit: a sub-subtask sits under its subtask.
+- Depth has no limit: a sub-subtask sits under its subtask, one indentation step further in.
 - A row with no parent sits at the top level.
 - Every row in the tree is a real row: I can edit it, select it and count it like any other
   (E-1, S-T1, 3.1).
@@ -114,13 +122,15 @@ Ordered by how badly the person is hurt if it is missing.
 
 - A row whose parent link is broken is never hidden: it appears at the top level (4.1).
 
-**Covered by:** [`grouping-collapsible/`](../../src/stories/grouping/grouping-collapsible/)
-shows one parent with two children, but from **nested** `children` arrays. Those children are
-not rows in the table's data: they are never filtered, never sorted and cannot be edited. The
-flat-data version, and any depth beyond one, is on no canvas.
+**Covered by:** `grouping-collapsible/` shows `d4` with two flat children, one level deep, under
+three group levels. Depth beyond one, and a tree outside grouping, are on no canvas.
 
-**Design status:** decided — D1 (`parentId`), D3 (nested input removed, no helper). E5 has said
-since 2026-09-20 that every node is a row in `data()`; #163 makes the code agree.
+**Code:** shipped — `with-tree/nest.ts:99-146`, depth from `engine/flatten.ts:27-44`, indentation
+from `--ngp-table-row-depth` (`ngp-table-row.directive.ts:28`).
+
+**Design status:** decided — TR7 (`parentId`), TR8 (no nested input), TR41 (depth as a CSS
+custom property). Product expectation matches: indentation in one column, the name column
+(Smartsheet, Notion; products discovery §2).
 
 ## 1.2 — Open and close one parent — 🟡 partly covered
 
@@ -129,21 +139,25 @@ since 2026-09-20 that every node is a row in `data()`; #163 makes the code agree
 
 **Acceptance criteria**
 
-- A parent shows a toggle; activating it shows or hides that parent's children.
+- A parent shows a toggle beside its name; activating it shows or hides that parent's children.
 - Closing a parent hides every descendant, at every depth, not only its direct children.
 - Reopening a parent restores its descendants' own open or closed state from before.
-- The toggle's state is announced (`aria-expanded`).
+- The toggle shows whether the row is open (a chevron that turns, for example).
 
 **Failure behavior**
 
-- A row with no children shows no toggle, so there is nothing to click that does nothing (2.6).
+- A row with no children shows no usable toggle, so there is nothing to click that does nothing
+  (1.5, 2.6).
 - A row removed from the data stops being remembered as open (ADR-0006).
 
-**Covered by:** `grouping-collapsible/` opens and closes `d4` (one level, nested data). Deeper
-levels, and restoring a descendant's state, are on no canvas.
+**Covered by:** `grouping-collapsible/` opens and closes `d4`, one level, through a hand-written
+button rather than the shipped toggle. Deeper levels, and restoring a descendant's state, are on
+no canvas.
 
-**Design status:** covered — E11 (`toggle`/`expand`/`collapse`/`set`), E18 (one `changed`
-emission per write).
+**Code:** shipped — `toggle` at `with-tree/feature.ts:146-158`; descendants hide in
+`flatten.ts:42-44`; `ngpTableTreeToggle` (`ngp-table-tree-toggle.directive.ts`).
+
+**Design status:** decided — TR33 (the directive pair), TR34, TR45.
 
 ## 1.3 — Open or close everything, and know which it is — ❌ not covered
 
@@ -154,17 +168,22 @@ emission per write).
 
 - One action opens every parent; one action closes every parent.
 - A control can show three states: all open, some open, none open.
-- With a filter active, "open all" opens the parents I can see, not ones the filter hid (D8).
+- With a filter active, "open all" opens the parents I can see, not ones the filter hid.
 
 **Failure behavior**
 
 - With nothing expandable, the state reads "none", never "all": a button must not claim
   everything is open when there is nothing to open.
 
-**Covered by:** nothing. `table.tree.state()` ships, but no host renders an expand-all control.
+**Covered by:** nothing for rows. `grouping-collapsible/` has Expand all / Collapse all for
+**groups**: it never opens `d4`, and it shows no tri-state.
 
-**Design status:** decided — E9 (tri-state), E11, D8 (filtered view by default, `includeHidden`
-for all rows).
+**Code:** shipped — `expand()`/`state()` at `with-tree/feature.ts:169-174`, `207-229`; `'none'`
+when nothing is expandable (`feature.ts:212-214`).
+
+**Design status:** decided — TR3, TR12 (filtered view by default, `includeHidden` for all rows),
+TR30. Every product read ships a bulk control (monday, ClickUp, Smartsheet; Asana after a
+five-year request; products discovery §1).
 
 ## 1.4 — Open a parent whose children haven't loaded yet — ❌ not covered
 
@@ -183,11 +202,147 @@ for all rows).
   never shows a stale child from somewhere else.
 - A per-row loading indicator is not decided (OQ-4).
 
-**Covered by:** nothing. The mechanism is `isExpandable` plus the consumer appending rows to
-`data()`; no host demonstrates it.
+**Covered by:** nothing.
 
-**Design status:** decided in the issue body — lazy children arrive by appending rows (D19);
-`isExpandable` overrides the computed toggle (D9).
+**Code:** shipped — `isExpandable` overrides `hasChildren` (`nest.ts:132-134`) and drives
+`data-expandable`; appended rows nest on the next evaluation.
+
+**Design status:** decided — TR13, TR35.
+
+## 1.5 — Labels line up whether a row has children or not — ❌ not covered
+
+> As someone reading a list where some tasks have subtasks and some don't, I want every task
+> name at the same depth to start in the same place, so the column reads as one list.
+
+**Acceptance criteria**
+
+- A row with no children shows no toggle, but its name starts where a sibling parent's name
+  starts.
+- This holds at every depth.
+
+**Failure behavior**
+
+- If the page's styles fail to load, the leaf's toggle still cannot be clicked, focused or
+  heard. A person may see an inert chevron; they never meet a button that does nothing.
+
+**Covered by:** nothing. Every toggle on `grouping-collapsible/` sits on a row with children.
+
+**Code:** shipped — a leaf toggle is `disabled`, `aria-hidden` and `data-disabled`, and keeps its
+width (`ngp-table-tree-toggle.directive.ts:60-62`); the recipe hides it with `visibility: hidden`.
+
+**Design status:** decided — TR38. Peers split four ways (a spacer, an empty wrapper, a hidden
+toggle, a visible disabled button); TR38 matches PrimeNG's hidden toggle (competitors
+discovery §7). No product documents leaf alignment.
+
+## 1.6 — Groups and child rows open and indent the same way — ❌ not covered
+
+> As someone using a grouped task list where tasks also have subtasks, I want one kind of
+> chevron and one indentation step for both, so I don't have to learn two controls in one table.
+
+**Acceptance criteria**
+
+- A group header and a parent row open and close with the same control, which looks and is
+  announced the same way.
+- Groups and child rows indent by the same step for each level, wherever they appear.
+
+**Failure behavior**
+
+- A tree row nested under groups is indented by its full depth, never reset to the group's
+  first level.
+
+**Covered by:** nothing — the one canvas breaks it. `grouping-collapsible/` uses the shared
+toggle on group headers but a hand-written chevron on `d4`, and indents with per-depth rules.
+The fix is [#202](https://github.com/DvirMon/ng-table/issues/202) (U6), not the Tree entry.
+
+**Code:** shipped — group headers carry `hasChildren`/`isExpanded`, so the pair works on them
+unchanged; groups and rows both get `--ngp-table-row-depth`.
+
+**Design status:** decided — TR43, G79, G80.
+
+## 1.7 — Open and close from the keyboard, and hear what happened — 🟡 partly covered
+
+> As someone who uses a keyboard or a screen reader, I want to reach every parent's toggle,
+> open it, and hear whether it is now open, without wading through toggles that do nothing.
+
+**Acceptance criteria**
+
+- Tab reaches the toggle on every parent; Enter and Space both open and close it.
+- Tab never stops on a leaf row's toggle.
+- A screen reader hears the page's own name for the toggle ("Children of Engineering") and its
+  state ("expanded" / "collapsed"). The table adds no words of its own.
+- The table is announced as an ordinary table. Rows say nothing about level or open state; only
+  the toggle does.
+
+**Failure behavior**
+
+- A toggle the page forgot to name is caught before release (a development warning); a person
+  never meets a nameless button in a shipped product that heeded the warning.
+- A leaf's toggle is never announced as a "collapsed button".
+
+**What cannot be met:** a screen-reader user does not hear a row's depth ("level 2") or its
+position among siblings. Grids that announce depth do so as a treegrid (MUI X, CDK), which TR34
+deferred to its own piece of work. Arrow-key navigation between rows belongs there too (OQ-8).
+
+**Covered by:** `grouping-collapsible/` group headers: native buttons, named by the page, with
+announced state. No leaf toggle and no tree row on canvas, so the "no dead tab stops" half is
+unshown.
+
+**Code:** shipped — `ngp-table-tree-toggle.directive.ts:26-40` (name check), `55`, `60`; no row
+`aria-expanded` (`ngp-table-row.directive.ts:22-29`).
+
+**Design status:** decided — TR34, TR36, TR38, TR39, TR45, TR46. **Where peers differ:** every
+grid vendor with roving focus keeps the toggle out of Tab and puts `aria-expanded` on the row or
+cell under `treegrid`; none ships a disclosure button under `role="table"` (competitors
+discovery §1, §2). The everyday products give no keyboard bar to meet: none documents a key that
+opens one row, and monday rejected a grid role for headings and lists (products discovery §4).
+
+## 1.8 — Click anywhere on a row to open it, when the page offers it — ❌ not covered
+
+> As someone working with a mouse, I want to open a parent by clicking its row, not only the
+> small chevron.
+
+**Acceptance criteria**
+
+- A page may make the whole row open and close its children; this is the page's choice, off by
+  default.
+- Clicking the chevron itself still works exactly once.
+- Other row behavior (selecting the row, for example) still receives the click.
+
+**Failure behavior**
+
+- One click never opens and then immediately closes the row. That is what a person sees if the
+  page's row handler also reacts to the chevron's click, and it looks like the control is
+  broken. The tree UI spec's whole-row example shows how to avoid it.
+
+**Covered by:** nothing.
+
+**Code:** shipped as a documented pattern — tree UI spec "Whole-row click"; the toggle neither
+prevents default nor stops propagation.
+
+**Design status:** decided — TR36, TR44. **Where peers differ:** MUI X and the CDK stop the
+toggle's click from bubbling, so the double toggle cannot happen there (competitors discovery
+§5). TR44 leaves the click to reach the row, so other listeners keep working, and the page owns
+the guard.
+
+## 1.9 — The chevron does not animate when I've asked for less motion — ❌ not covered
+
+> As someone with motion sensitivity, I want the chevron to change state without spinning.
+
+**Acceptance criteria**
+
+- Opening and closing turns the chevron with a short animation by default.
+- With the system's reduced-motion setting on, the chevron changes state with no animation.
+
+**Failure behavior**
+
+- The open/closed state is still visible without the animation.
+
+**Covered by:** nothing.
+
+**Code:** recipe only — tree UI spec "Styling recipe" (reduced-motion branch). No stylesheet
+ships.
+
+**Design status:** decided — TR42.
 
 ---
 
@@ -219,11 +374,13 @@ filed there: F-T1 (keep a match's ancestors) and F-T2 (show a matched parent's w
 
 **Covered by:** nothing.
 
-**Design status:** decided — D20 (supersedes D16): reveal is derived, never written to the open
-set, so it vanishes when the filter clears. `withTree({ revealContextRow })` picks which context
-rows reveal; the default reveals all, `() => false` turns it off. Community: the second-largest
-complaint, "It looks like there are no results" (PrimeNG #8192, MUI X #6812 open since 2022). Only
-DevExtreme reveals by default, and it does so by writing its open set, which D20 rejects.
+**Code:** shipped (#169) — `with-tree/reveal.ts:9-37`, folded into the open rows at
+`feature.ts:259-267`.
+
+**Design status:** decided — TR22, TR32. Community: the second-largest complaint, "It looks like
+there are no results" (PrimeNG #8192, MUI X #6812). Products split: monday shows the ancestor
+chain on all plans, Smartsheet only as a paid opt-in, Jira flattens (73 + 42 votes asking
+otherwise; products discovery §5).
 
 ## 2.2 — Close a revealed parent while I'm still filtering — ❌ not covered
 
@@ -246,10 +403,9 @@ DevExtreme reveals by default, and it does so by writing its open set, which D20
 
 **Covered by:** nothing.
 
-**Design status:** decided — D20(c) (supersedes D17): the closed-while-revealed memory lives
-exactly as long as the row is a context row, so there is no reset-timing policy to choose. A page
-wanting different timing turns reveal off and rebuilds it from `table.tree.contextRowIds()` plus
-`expand`/`set`/`toggle` (D20(e)). Resolves OQ-2.
+**Code:** shipped — `feature.ts:146-156`, `reveal.ts:41-49`.
+
+**Design status:** decided — TR22(c), TR32.
 
 ## 2.3 — Tell a match from a row shown only for context — ❌ not covered
 
@@ -258,20 +414,25 @@ wanting different timing turns reveal off and rebuilds it from `table.tree.conte
 
 **Acceptance criteria**
 
-- A context row can look different from a match (dimmed, for example). How it looks is the
-  page's choice; the table only says which rows are context.
+- A context row looks different from a match (dimmed, for example). How it looks is the page's
+  choice; the table only says which rows are context.
 - With no filter active, no row is a context row.
 
 **Failure behavior**
 
 - A row is never marked as context when it matched on its own.
+- If the page adds no style for context rows, they look like matches; nothing is hidden.
 
-**Covered by:** nothing.
+**Covered by:** nothing. No story renders `ngpTableTreeRow` on a data row, and no story style
+targets context rows.
 
-**Design status:** decided — D18 (`RenderRow.isContextRow`), D20(d) (`table.tree.contextRowIds()`
-for a page that needs the set, not a per-row flag), D21 (`data-context-row` is bound by a new tree
-feature directive, `ngpTableTreeRow`, not the core row directive). No surveyed library ships
-this; Ignite UI's reduced-opacity ancestors are the only precedent found (community T5).
+**Code:** shipped — `isContextRow` stamped at `engine/core.ts:131`; `data-context-row` on
+`ngpTableTreeRow` (`ngp-table-tree-row.directive.ts:16`); the dim rule is in the tree UI spec's
+styling recipe.
+
+**Design status:** decided — TR21, TR23, TR24, TR42. No surveyed library or product documents a
+context-row style; Ignite UI's reduced opacity and an undated secondary source on Notion's gray
+parents are the only precedents (competitors §9, products §5).
 
 ## 2.4 — Get my expand/collapse state back when the filter clears — ❌ not covered
 
@@ -288,12 +449,14 @@ this; Ignite UI's reduced-opacity ancestors are the only precedent found (commun
 
 - If a row was deleted while filtered, its remembered state goes with it, not onto another row.
 
-**Covered by:** nothing on canvas. It holds by construction today: a filter never writes
-`data()`, so no open id is dropped (internal-coverage D1). grouping.md's F-G1 records the same
-criterion as undemonstrated for groups.
+**Covered by:** nothing. grouping.md's F-G1 records the same criterion as undemonstrated for
+groups.
 
-**Design status:** covered — D20(a) (reveal is derived and vanishes with the filter), plus E4
-(restored ids kept).
+**Code:** shipped — reveal never writes the open set (`feature.ts:259-267`); the closed set drops
+ids that stop being context (`reveal.ts:44-48`).
+
+**Design status:** decided — TR22(a). Lost expand state is a live complaint elsewhere (Jira
+JRACLOUD-99126, Asana forum 384263; products discovery §1).
 
 ## 2.5 — See a matched parent's whole branch, when I ask for it — ❌ not covered
 
@@ -303,6 +466,8 @@ criterion as undemonstrated for groups.
 This is F-T2, owned by filtering (§5). The tree's part: descendants kept by the filter nest and
 reveal the same way as any other kept row (2.1). Nothing further.
 
+**Code:** shipped — `includeDescendants` (`with-filtering/tree-retention.ts:41-54`).
+
 ## 2.6 — See a toggle only when opening it will show something — ❌ not covered
 
 > As someone filtering, I don't want a toggle on a row whose children were all filtered out: I'd
@@ -310,7 +475,8 @@ reveal the same way as any other kept row (2.1). Nothing further.
 
 **Acceptance criteria**
 
-- By default, a row shows a toggle only when it has children in the current, filtered view.
+- By default, a row shows a usable toggle only when it has children in the current, filtered
+  view. Otherwise it behaves as a leaf (1.5).
 - A page that loads children lazily can still show a toggle on any row it chooses (1.4).
 
 **Failure behavior**
@@ -320,7 +486,11 @@ reveal the same way as any other kept row (2.1). Nothing further.
 
 **Covered by:** nothing.
 
-**Design status:** decided — D9.
+**Code:** shipped — `hasChildren` counts children in the filtered pool (`nest.ts:132-134`); the
+leaf toggle disables and hides itself (`ngp-table-tree-toggle.directive.ts:60-62`).
+
+**Design status:** decided — TR13, TR38. MUI X does the same: the toggle renders only when
+filtered descendants exist (competitors discovery §8).
 
 ---
 
@@ -335,16 +505,19 @@ reveal the same way as any other kept row (2.1). Nothing further.
 
 - The row count and "select all" include children, whether their parent is open or closed.
 - Only rows the filter removed are left out.
-- The number screen readers hear (`aria-rowcount`) is the same number.
+- The number screen readers hear as the table's row count is the same number.
 
 **Failure behavior**
 
 - The count never changes when I open or close a parent. Kendo #5491's pager, which went from "1 -
   4 of 4" to "1 - 15 of 4" after a collapse, is the failure to avoid.
 
-**Covered by:** nothing. Today children are not rows, so they are missing from every count.
+**Covered by:** nothing. `grouping-collapsible/` shows no row count.
 
-**Design status:** decided — D11. How pagination counts is open (OQ-3).
+**Code:** shipped — `totalRowCount` is `rows().length` (`engine/compose-table.ts:56`);
+`aria-rowcount` reads it (`ngp-table.directive.ts:22`).
+
+**Design status:** decided — TR14. How pagination counts is open (OQ-3).
 
 ## 3.2 — Sort siblings, keep families together — ❌ not covered
 
@@ -362,16 +535,22 @@ reveal the same way as any other kept row (2.1). Nothing further.
 
 - A broken sort callback degrades the whole sort per ADR-0014; the tree shape stays intact.
 
-**Covered by:** nothing. Today children are never sorted (they bypass the pipeline).
+**Covered by:** nothing. No host composes `withTree()` with `withSorting()`.
 
-**Design status:** decided in the issue body — siblings keep input order, so the pipeline's sort
-carries over (D19). PrimeNG #12935 (sort resets expansion) is the only community complaint found.
+**Code:** shipped — the tree stage nests over its already-sorted input (`nest.ts:94-98`).
+
+**Design status:** decided — TR29. PrimeNG #12935 (sort resets expansion) is the only community
+complaint found.
 
 ---
 
 # 4. When the data does not cooperate
 
-## 4.1 — A row whose parent doesn't exist — ❌ not covered
+Stories teach API usage; error and degraded-data UI is not their job
+([`3-ui/stories.md`](../3-ui/stories.md) "What a host may not contain", rule 3). 4.1 and 4.2 keep
+their criteria as the behavior contract, but carry no coverage mark (ruled 2026-10-01).
+
+## 4.1 — A row whose parent doesn't exist — not a story concern
 
 > As someone looking at an org chart where one record points at a manager who left, I want that
 > person still on the chart, even if in the wrong place.
@@ -381,18 +560,24 @@ carries over (D19). PrimeNG #12935 (sort resets expansion) is the only community
 - A row whose parent id matches no row appears at the top level, with its own children still
   under it.
 - The same holds when the parent lookup itself fails on a row.
-- The problem is reported once per evaluation, in production too.
+- The problem is reported to the developer once per evaluation, in production too.
 
 **Failure behavior**
 
 - The row is never hidden. A misplaced row gets noticed; a missing one usually doesn't.
 
-**Covered by:** nothing.
+**Coverage:** not a story concern — ruled 2026-10-01. Marking a misplaced row is the consumer
+app's choice (OQ-9).
 
-**Design status:** decided — D4. Syncfusion forum #185154 is the one community data point: the
-user promoted orphans to root by hand.
+**Code:** shipped — `engine/tree-links.ts:58-65` (absent parent → root), reported by
+`console.error` once per kind (`nest.ts:60-75`).
 
-## 4.2 — Rows that point at themselves, or at each other — ❌ not covered
+**Design status:** decided — TR9. Peers agree on "never hide it": AG Grid moves the row to the
+root and warns; ClickUp and Asana show it top-level and mark it as a child; Jira's own bug
+reports name "display as root-level entries" as the expected behavior (competitors §10,
+products §6).
+
+## 4.2 — Rows that point at themselves, or at each other — not a story concern
 
 > As someone whose data has a task accidentally made its own subtask's child, I want the table
 > to keep working and show me both tasks.
@@ -408,10 +593,11 @@ user promoted orphans to root by hand.
 
 - The table never hangs, and no row in the loop disappears.
 
-**Covered by:** nothing.
+**Coverage:** not a story concern — ruled 2026-10-01 (see 4.1).
 
-**Design status:** decided — D4. Closes `features/tree.md`'s "cycle guarding" open question; the
-spec should drop it.
+**Code:** shipped — `tree-links.ts:60-62`, `108-128`.
+
+**Design status:** decided — TR9.
 
 ## 4.3 — Delete a parent — ❌ not covered
 
@@ -430,8 +616,12 @@ spec should drop it.
 
 **Covered by:** nothing.
 
-**Design status:** decided — D12 (`table.tree.descendantsOf(id)` read; the page composes
-`removeRows([id, ...descendantsOf(id)])`).
+**Code:** shipped — `descendantsOf` (`with-tree/feature.ts:198-205`); the page composes
+`removeRow([id, ...table.tree.descendantsOf(id)])` (`mutations/row-mutations.ts:45-49`).
+
+**Design status:** decided — TR15. **Where products differ:** every product read cascades by
+default (monday, Notion, Smartsheet); Smartsheet keeps children only after the person unlinks
+them first (products discovery §6). TR15 makes the cascade the page's choice.
 
 ## 4.4 — Filter children that haven't loaded yet — ❌ not covered *(a limit, stated)*
 
@@ -451,8 +641,11 @@ spec should drop it.
 
 **Covered by:** nothing.
 
-**Design status:** not decided as a story; follows from D9 and D19. VS Code #66971 (171 👍) is
-this complaint from end users. OQ-5 covers server filtering.
+**Code:** true by construction — the filter runs over `data()` only
+(`with-filtering/tree-retention.ts:13-23`).
+
+**Design status:** follows from TR13. VS Code #66971 (171 👍) is this complaint from end users.
+OQ-5 covers server filtering.
 
 ---
 
@@ -461,41 +654,53 @@ this complaint from end users. OQ-5 covers server filtering.
 **Each story below belongs to the feature that has to change its behavior to resolve the
 collision**, not to the tree. That is this repo's existing convention (`row-editing.md`,
 `grouping.md` §5, `filtering.md` §5). Each owning doc carries the full story; the lines below
-are pointers, and those files own the coverage marks.
+are pointers, and those files own the coverage marks. Where the canvas has moved past the owner's
+mark, the line says so; the re-mark belongs in the owner's doc.
 
 ## Owned by filtering *([`filtering.md`](filtering.md) §5, "Owned by tree")*
 
 - **F-T1 — A matching child keeps its path — ❌.** Filtering keeps each match plus all its
-  ancestors, shown as context rows. Filtering never orphans a row. D5, D6, ADR-0028. All six
-  surveyed libraries do this; it's the default in four.
-- **F-T2 — Show a matched parent's whole branch — ❌.** An opt-in flag, `includeDescendants`, on
-  `withFiltering()` also keeps every descendant of a match. D5. The request that keeps coming
-  back (seven trackers, 2013–2025); on by default in AG Grid and PrimeNG, not available in MUI or
-  Kendo.
+  ancestors, shown as context rows. TR10, TR11, ADR-0028. Code shipped
+  (`with-filtering/tree-retention.ts:13-69`, #168); no host composes `withTree()` with
+  `withFiltering()`.
+- **F-T2 — Show a matched parent's whole branch — ❌.** `includeDescendants` on
+  `withFiltering()`. TR10. Code shipped (`tree-retention.ts:41-54`); no canvas.
 
 ## Owned by grouping *([`grouping.md`](grouping.md) §5, "Owned by tree")*
 
-- **G-T1 — Grouping never splits a family — ❌.** With a tree, only top-level rows are grouped;
-  each branch follows its root, whatever its own value. D13. Grouping each row by its own value
-  is available by leaving `parentId` out. No library splits a child from its parent; products
-  offer per-row grouping only as an opt-in flat mode.
-- **G-T2 — A group's count includes every row in it — ❌.** Descendants count, so group
-  select-all selects the number shown. D14. Wrike, the only product that documents it, counts
-  top-level only.
+- **G-T1 — Grouping never splits a family — 🟡 on canvas (owner says ❌).** Only top-level rows
+  are grouped; each branch follows its root. TR16. On `grouping-collapsible/`, `d4-b` sits in
+  `d4`'s group although its own rep differs. Not called out on canvas; the broken-link path is
+  not shown.
+- **G-T2 — A group's count includes every row in it — 🟡 on canvas (owner says ❌).** TR17. The
+  Services group counts 3 on `grouping-collapsible/`. Group select-all is not on that canvas.
 - **G-T3 — A group total that matches my data model — ❌.** `aggregateFn` receives every row in
-  the group, descendants too; the page decides whether a parent's value is its own or a roll-up.
-  D15. The shipped fixture's `d4` (42000 = 25000 + 17000) is a roll-up and must change.
+  the group; the page decides own value vs. roll-up. TR18. The fixture's `d4` now carries its own
+  amount (8000), but `grouping-aggregates/` does not compose `withTree()`.
 
 ## Owned by selection *([`selection.md`](selection.md) §6, "Owned by tree")*
 
-- **S-T1 — "Select all" includes children — ❌.** It follows 3.1: every row counts, open or
-  closed, filtered-out rows excluded. D11. Whether selecting a parent selects its children is
-  OQ-1, not part of #163.
+- **S-T1 — "Select all" includes children — ❌.** It follows 3.1. TR14. Code shipped
+  (`with-selection/utils.ts:14-15` reads `rows()`); no canvas. Whether selecting a parent selects
+  its children is OQ-1.
 
-## Owned by row editing *(already exists)*
+## Owned by expansion *(#190, planned)*
 
-**E-1 already exists** at [`row-editing.md`](row-editing.md) (editing a child row, ❌). It is
-**linked, not restated**. #163's "child rows carry `sourceIndex`" criterion is what closes it.
+- **E-T1 — A row with both a detail panel and children, two controls not confused — ❌.**
+  Expansion owns it (`0-product/expansion.md` §4, #190). #190's planned `expansion/panel-in-groups/`
+  story shows the tree chevron in the name cell, indented, and the panel chevron in its own
+  leading column. No tree story composes `withExpansion()`.
+- **E-G1, panel half** — collapsing a group hides its rows' open panels. Grouping owns it
+  ([`grouping.md`](grouping.md) §5); the same #190 story demonstrates it. The tree half is
+  already on `grouping-collapsible/`.
+
+## Owned by tree
+
+- **E-1 — Editing a child row — ❌.** A child row is a data row, so I can edit it like any other
+  row; the detail panel is not involved. Owned by `withTree()` and closed in code by #163 (OQ-7).
+  The story's full text is at [`row-editing.md`](row-editing.md). Code shipped: child rows carry
+  `sourceIndex` from `indexById` over `data()` (`engine/core.ts:102-106`, `130`). No row-edit
+  host composes `withTree()`.
 
 ## Owned by pagination *(unbuilt)*
 
@@ -528,38 +733,28 @@ is always one of the page's own rows.
 
 Each carries a recommendation and what would settle it. None silently picked.
 
-**OQ-1 — Does selecting a parent select its children? — open, out of #163.**
-*Recommendation:* no cascade in state, matching selection's D13 (the consumer owns it via
-`rowsOf()`). The recipe becomes `select([id, ...table.tree.descendantsOf(id)])`, so no new API.
-Community wants both (PrimeNG #18936: propagate over the full tree; AG Grid #1627: only visible
-rows), which argues for leaving it to the page.
+**OQ-1 — Does selecting a parent select its children? — open.**
+*Recommendation:* no cascade in state, matching selection's D13 (the consumer owns it). The
+recipe is `select([id, ...table.tree.descendantsOf(id)])`, so no new API. Community wants both
+(PrimeNG #18936: propagate over the full tree; AG Grid #1627: only visible rows), which argues for
+leaving it to the page.
 *To decide:* whether a recipe story is enough, or a tri-state parent checkbox needs a state
 signal.
-*Sequencing:* after #163; owned by `selection.md`.
+*Sequencing:* owned by `selection.md`.
 
-**OQ-2 — Which filter changes forget a parent I closed during the filter? — resolved (D20).**
-*Resolved:* none by timing. The memory lives exactly as long as the row is a context row; it
-drops when the row stops being context or the filter clears (D20(c)). A page wanting other timing
-turns reveal off (`revealContextRow: () => false`) and rebuilds it from
-`table.tree.contextRowIds()` plus `expand`/`set`/`toggle` (D20(e)). D17's reset-on-change is
-superseded.
-
-**OQ-6 — Which directive binds `data-context-row`? — resolved (D21).**
-*Resolved:* a new tree feature directive, `ngpTableTreeRow`, not the core `ngpTableRow`, per
-`libs/table/CLAUDE.md` "RenderRow field ownership by directive layer": `isContextRow` is optional
-and feature-contributed. In #163 it binds only `data-context-row`.
-*Still open:* the wider tree UI (`aria-level`, indentation, the row toggle) goes to
-[#165](https://github.com/DvirMon/ng-table/issues/165) — §8.2, §9.
+**OQ-2 — Which filter changes forget a parent I closed during the filter? — resolved (TR22(c)).**
+The memory lives exactly as long as the row is a context row. A page wanting other timing turns
+reveal off and rebuilds it from `table.tree.contextRowIds()` plus `expand`/`set`/`toggle`.
 
 **OQ-3 — How does a page count a tree? — open, pagination unbuilt.**
-*Recommendation:* count every row (D11), and never start a page with a child whose parent is on
+*Recommendation:* count every row (TR14), and never start a page with a child whose parent is on
 the previous page without showing that parent again. Decide when pagination is built.
 *To decide:* whether pages split families at all.
 *Sequencing:* pagination's spec.
 
 **OQ-4 — Does a lazily loading parent show that it is loading? — open.**
 *Recommendation:* the table exposes nothing new; the page knows it is fetching and renders its
-own indicator. Carried over from `features/tree.md`.
+own indicator. A recipe in a story is enough.
 *To decide:* whether a recipe story is enough.
 *Sequencing:* not blocking.
 
@@ -569,7 +764,32 @@ ancestors or know which rows are context. The server returns matches plus their 
 page marks context rows if it wants to. Document it; add nothing.
 *To decide:* whether a server can report which rows matched, and whether `isContextRow` should
 accept it.
-*Sequencing:* after #163.
+*Sequencing:* not blocking.
+
+**OQ-6 — Which directive binds the tree's row hooks, and what else does the tree UI need? —
+resolved (TR23, TR33–TR46).**
+`ngpTableTreeRow` binds `data-expandable`, `data-expanded` and `data-context-row`;
+`ngpTableTreeToggle` owns the button. Indentation is `--ngp-table-row-depth` (TR41). Row
+`aria-level` was rejected, not deferred: the table stays `role="table"` (TR34).
+
+**OQ-7 — Who owns E-1, editing a child row? — resolved 2026-10-01 (user ruling in the #190
+session).**
+The tree owns it. Child rows are data rows, so the library owns their edit state; the panel is
+not involved. Closed in code by #163. `row-editing.md` and `expansion.md` are re-filed by #190.
+
+**OQ-8 — Should a screen-reader user hear a row's depth? — open, treegrid territory (§9).**
+Under `role="table"` nothing announces depth; grids that do (MUI X, CDK) use treegrid's
+`aria-level`, which TR34 deferred (1.7).
+*Ruled for #189 (2026-10-01):* the Tree stories put no level in the toggle's name
+(`'Children of ' + row.data.name`); the library adds nothing.
+*To decide:* whether and when the treegrid work is pulled forward.
+*Sequencing:* the treegrid issue, not yet opened (TR34).
+
+**OQ-9 — Does the table tell the page which rows are misplaced? — resolved 2026-10-01 (user
+ruling).**
+No story, no API. The report reaches only the console (TR9); marking a misplaced row is the
+consumer app's choice. Products that show an orphan at the top level also mark it as a child
+(ClickUp, Asana; products discovery §6) — that is their app's choice too.
 
 ---
 
@@ -580,77 +800,106 @@ is tagged **state**, **UI**, or **both**.
 
 ## 8.1 State-layer gaps
 
-Owned by [`features/tree.md`](../1-state/features/tree.md) unless named.
+Owned by [`features/tree.md`](../1-state/features/tree.md) unless named. Every gap the 2026-09-27
+pass listed is closed in code:
+
+| # | Gap | Story | Closed by |
+|---|---|---|---|
+| S1 | ~~Tree built from nested children~~ | 1.1, 3.1, 3.2, E-1 | #167, TR7 |
+| S2 | ~~No parent-link slot for filter and group~~ | F-T1, G-T1 | `with-tree/feature.ts:269`, TR11 |
+| S3 | ~~No ancestor retention or `includeDescendants`~~ | F-T1, F-T2 | `tree-retention.ts`, TR10 |
+| S4 | ~~Grouping clusters children by their own values~~ | G-T1 | `clusters.ts:150-156`, TR16 |
+| S5 | ~~No derived reveal or closed-while-context memory~~ | 2.1, 2.2 | `reveal.ts` (#169), TR22 |
+| S6 | ~~No `isContextRow` or `contextRowIds()`~~ | 2.3 | `core.ts:131`, `feature.ts:138-140`, TR21 |
+| S7 | ~~Default toggle ignores the filter~~ | 2.6 | `nest.ts:132-134`, TR13 |
+| S8 | ~~Broken links: no degrade, no report~~ | 4.1, 4.2 | #167, TR9 |
+| S9 | ~~No `descendantsOf(id)`~~ | 4.3, OQ-1 | #167, TR15 |
+| S10 | ~~No `includeHidden` on `expand()`/`state()`~~ | 1.3 | `feature.ts:169-174`, `224-229`, TR12 |
+
+Still open, none blocking a story:
 
 | # | Gap | Story | Note |
 |---|---|---|---|
-| S1 | ~~The tree is built from nested children, not flat rows~~ — closed by #167 | 1.1, 3.1, 3.2, E-1 | `parentId`, D1. `tree.md` now describes `parentId`; `childrenAccessor` removed, no deprecation window |
-| S2 | No parent-link engine slot; filter and group cannot see the hierarchy | F-T1, G-T1 | ADR-0028. Owners: `features/filtering.md`, `features/grouping.md` |
-| S3 | No ancestor retention or `includeDescendants` in the filter stage | F-T1, F-T2 | `features/filtering.md`. D5, D6 |
-| S4 | Grouping clusters children by their own values | G-T1 | `features/grouping.md`. D13 |
-| S5 | No derived reveal, no `revealContextRow`, no closed-while-context memory | 2.1, 2.2 | D20 (supersedes D16, D17) |
-| S6 | No `isContextRow` on `RenderRow`; no `contextRowIds()` read on `table.tree` — `parentOf()` shipped by #167 | 2.3 | D18, D20(d) |
-| S7 | Default toggle ignores the filter | 2.6 | D9 |
-| S8 | ~~Broken parent links: no degrade, no report~~ — closed by #167 | 4.1, 4.2 | D4, ADR-0014 |
-| S9 | ~~No `descendantsOf(id)`~~ — closed by #167 | 4.3, OQ-1 | D12 |
-| S10 | `expand()`/`state` scan without an `includeHidden` option | 1.3 | D8 |
+| S11 | No way to mark context rows under server filtering | 2.3 | OQ-5 |
+| S12 | No tri-state parent-selection signal | OQ-1 | `features/selection.md`, if the recipe proves insufficient |
+| S13 | Pagination counting | P-T1, 3.1 | Pagination unbuilt (OQ-3) |
 
 ## 8.2 UI-layer gaps
 
-No UI directive doc covers the tree: `docs/status.md` shows `tree` with no UI spec. #163 adds
-only the minimal `ngpTableTreeRow` directive (D21). The wider tree UI spec is owned by
-[#165](https://github.com/DvirMon/ng-table/issues/165).
+The tree UI spec is [`3-ui/directives/tree.md`](../3-ui/directives/tree.md) (`spec: drilled`,
+`code: shipped`). What remains is canvas, not directives.
 
-| # | Gap | Story | Note |
+| # | Gap | Story | Owner · note |
 |---|---|---|---|
-| U1 | No expand-all / collapse-all control on any canvas | 1.3 | State ships (`tree.state()`); nothing renders it |
-| U2 | No story for a flat-data tree, a filtered tree, or a broken link | all of §1–§4 | Fixtures (`DealRow.children`, MSW handler, HTTP reviver) are nested and must flatten |
-| U3 | No tree UI spec: indentation, `aria-level`, the row toggle | 1.1, 1.2 | [#165](https://github.com/DvirMon/ng-table/issues/165) (D21). `3-ui/directives/expansion.md` plans parts of it, UI code `none` |
+| U1 | No expand-all / collapse-all for **rows**, and no tri-state label, on any canvas | 1.3 | #189 Tree story. `grouping-collapsible/` has one for groups only |
+| U2 | No Tree story entry: no flat-data tree deeper than one level, no filtered tree, no leaf toggle | §1–§3 | #189. Needs its own flat fixture with depth ≥ 3 and siblings to sort |
+| U3 | ~~No tree UI spec~~ | 1.1, 1.2 | Closed by #182–#184; `aria-level` rejected (TR34) |
 | U4 | Revealing rows under a filter is not announced to screen readers | 2.1 | Same accepted cost as filtering's U4 |
-| U5 | No `ngpTableTreeRow` directive binding `data-context-row` | 2.3 | #163, D21 |
+| U5 | ~~No `ngpTableTreeRow`~~ | 2.3 | Shipped (#166, TR23, TR35) |
+| U6 | `grouping-collapsible/` behind its own decisions: hand-written `d4` chevron, per-depth `[data-depth]` CSS instead of `--ngp-table-row-depth` | 1.2, 1.6 | [#202](https://github.com/DvirMon/ng-table/issues/202) (sub of #165). `grouping-collapsible-story-host.component.html:103-112`, `grouping-story.css:12-19` (TR43, G79) |
+| U7 | Depth not announced to screen readers | 1.7 | OQ-8; treegrid issue not opened |
+| U8 | ~~No canvas marks a misplaced row as misplaced~~ | 4.1 | Closed: not a story concern (OQ-9, ruled 2026-10-01) |
+| U9 | No canvas shows the whole-row click guard | 1.8 | #189, tree UI spec "Whole-row click" |
 
 ## 8.3 Gaps needing both layers
 
 | Gap | State owes | UI owes |
 |---|---|---|
-| Context-row marking (2.3) | `isContextRow` on `RenderRow`, `contextRowIds()` (S6) | `data-context-row` on `ngpTableTreeRow` (U5, D21) |
-| Lazy parent (1.4, 4.4) | nothing new: `isExpandable` + appended rows | a recipe story showing the toggle, the fetch and the loaded children |
+| Lazy parent (1.4, 4.4) | nothing new: `isExpandable` + appended rows | a recipe story showing the toggle, the fetch, the loaded children, and a loading indicator (OQ-4) |
+
+Context-row marking (2.3), listed here on 2026-09-27, is closed on both halves.
 
 ## 8.4 Confirmed right — do not re-litigate
 
-- **Every tree node is a row in `data()`** (E5) — it is what lets filter, sort, edit, select and
+- **Every tree node is a row in `data()`** — it is what lets filter, sort, edit, select and
   count treat children like any row, with no tree-specific wiring in any of them.
-- **Keep ancestors by default** (D5) — the one behavior nobody argues with, in any tracker or
+- **Keep ancestors by default** (TR10) — the one behavior nobody argues with, in any tracker or
   library read.
-- **Reveal without writing** (D20) — the only way to show hidden matches and still give the
+- **Reveal without writing** (TR22) — the only way to show hidden matches and still give the
   person their own state back.
-- **Every library-only fact readable, every policy switchable** (D20(e)) — a page that disagrees
-  with a default turns it off and rebuilds from the reads, rather than asking for a new option.
-- **Broken data is misplaced, never hidden** (D4) — the ADR-0014 direction: visible beats silent.
-- **Families stay together under grouping** (D13) — the one point where libraries and products
+- **Every library-only fact readable, every policy switchable** (TR22(e)) — a page that
+  disagrees with a default turns it off and rebuilds from the reads.
+- **Broken data is misplaced, never hidden** (TR9) — the ADR-0014 direction; AG Grid's code,
+  ClickUp, Asana and Jira's own bug reports all land on "show it at the root".
+- **Families stay together under grouping** (TR16) — the one point where libraries and products
   agree.
+- **A disclosure button under `role="table"`** (TR34) — the only shape that is valid ARIA
+  without taking on treegrid's keyboard contract; no vendor ships it, and PrimeNG's row
+  `aria-expanded` under `role="table"` is the invalid alternative.
+- **Depth as a CSS custom property** (TR41) — AG Grid's `--ag-indentation-level` is the one
+  peer precedent; the others write inline styles this library rules out.
+- **A leaf keeps its toggle's width, hidden and inert** (TR38) — aligns labels without leaving a
+  dead control in the accessibility tree.
+- **The page names the toggle** (TR39) — with `aria-expanded` on the same button, a library
+  label that changes with state would announce it twice.
 
 ---
 
 # 9. Capabilities with no owner
 
-Checked against `docs/status.md` (the generated registry), not against memory.
+Checked against [`docs/status.md`](../status.md) (the generated registry; `tree` reads state
+`drilled/shipped`, UI `drilled/shipped`), not against memory.
 
-- ~~**`tree` has no decisions-log link.**~~ Resolved 2026-09-27: tree has its own log,
-  [`decisions/tree.md`](../decisions/tree.md), split out of the expansion log.
-- **Tree UI has no spec.** Indentation, `aria-level` and the row toggle have no directive doc;
-  `3-ui/directives/expansion.md` plans parts of it. #163 adds only `ngpTableTreeRow` for
-  `data-context-row` (D21); the rest is owned by [#165](https://github.com/DvirMon/ng-table/issues/165). **UI**.
+- ~~**`tree` has no decisions-log link.**~~ Resolved 2026-09-27: [`decisions/tree.md`](../decisions/tree.md).
+- ~~**Tree UI has no spec.**~~ Resolved by #182–#184: [`3-ui/directives/tree.md`](../3-ui/directives/tree.md).
+- **Treegrid** — `role="treegrid"`, row `aria-level`/`aria-expanded`, announced depth (OQ-8),
+  arrow-key navigation between rows. TR34 deferred it to a table-wide issue with its own ADR; no
+  issue exists. It reaches every table, not only trees, so no feature doc can absorb it. **UI**.
 
 # 10. Not user-facing
 
 Real problems, but the integrating developer's, not the person using the table.
 
-- **`parentId` as a function vs. a key name** (D1) — configuration shape.
-- **No `flattenTree` helper** (D3) — a consumer with nested data flattens it once; invisible on
+- **`parentId` as a function vs. a key name** (TR7) — configuration shape.
+- **No `flattenTree` helper** (TR8) — a consumer with nested data flattens it once; invisible on
   screen.
-- **The parent link as an engine slot vs. a second accessor on `withFiltering()`** (D6,
-  ADR-0028) — its consequence (counts match what renders) is product-visible and is credited in
-  3.1; the slot itself is not.
-- **`descendantsOf` as a read, not a cascading delete** (D12) — its product consequence is 4.3.
+- **The parent link as an engine slot** (TR11, ADR-0028) — its consequence (counts match what
+  renders) is product-visible and is credited in 3.1; the slot itself is not.
+- **`descendantsOf` as a read, not a cascading delete** (TR15) — its product consequence is 4.3.
 - **Duplicate row ids** — #156's runtime checks; a person sees at most a symptom.
+- **The broken-link report** (TR9) — a `console.error` once per kind per evaluation. Marking the
+  row on screen is the consumer app's choice (OQ-9).
+- **Toggle without `withTree()`** (TR40) — throws in development, inert in production.
+- **Nameless toggle warning** (TR39, TR46) — development only; skips a disabled leaf. Its
+  product half is 1.7's named toggle.
+- **No attribute bound by two directives** (TR37) — debugging aid, invisible on screen.
