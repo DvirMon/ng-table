@@ -512,7 +512,7 @@ Both stories need filtering to change: the `filter` stage has to see the hierarc
 feature reads the other's state. The tree-side stories (reveal, context-row marking) live in
 [`tree.md`](tree.md) §2.
 
-### F-T1 — A matching child keeps its path — ❌ not covered
+### F-T1 — A matching child keeps its path — ✅ covered
 
 > As someone who searched a team tree for "Alice", I want to see Alice under Engineering, not
 > Alice floating alone, and not nothing because Engineering itself didn't match.
@@ -529,8 +529,10 @@ feature reads the other's state. The tree-side stories (reveal, context-row mark
 - Filtering never orphans a row: a match never appears without its parent.
 - A broken parent link degrades to the top level (tree.md 4.1), never hides the match.
 
-**Covered by:** nothing. Today the filter sees top-level rows only: a parent that fails hides
-children that match.
+**Covered by:** `tree-filtering/` (`Filtered`): a match shows under every ancestor, kept ancestors
+are dimmed as context rows, and the row count includes them. "Select all" is not shown (no
+selection feature in that story). A broken parent link is not a story concern
+([`tree.md`](tree.md) 4.1).
 
 **Design status:** decided — D5, D6, ADR-0028 (#163 work folder
 [`1-decisions.md`](../1-state/work/tree/active/tree-flat-data/1-decisions.md)). All six
