@@ -28,6 +28,9 @@ display. It is an ordinary column in every other respect.
 **Context row** — a row shown only because one of its descendants matched the
 filter. It gives the match its place in the tree; it did not match itself.
 
+**Detail panel** — consumer-written markup that shows one row's detail beneath it, opened and closed per row. It is not a row of the table: the table holds only which panels are open. Distinct from tree expansion, which reveals child rows.
+_Avoid_: expanded row, master/detail row, expandable row.
+
 **Display column** — a column object standing in for a rendered thing with no
 value: a selection checkbox, a row-actions cell, an expand toggle. **This
 library has none.** It is headless, so those are markup the consumer writes;
