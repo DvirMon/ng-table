@@ -10,9 +10,9 @@
   "isComplex": true,
   "decisionsPath": "libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core/1-decisions.md",
   "capabilityLogPath": null,
-  "specPath": null,
-  "architecturePath": null,
-  "githubIssues": [],
+  "specPath": "libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core/2-spec.md",
+  "architecturePath": "libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core/3-architecture.md",
+  "githubIssues": ["#209"],
   "createdAt": "2026-10-01T19:27:40Z",
-  "updatedAt": "2026-10-01T20:30:00Z"
+  "updatedAt": "2026-10-02T09:00:00Z"
 }
