@@ -12,7 +12,7 @@
   "capabilityLogPath": "libs/table/docs/decisions/expansion.md",
   "specPath": "libs/table/docs/3-ui/work/expansion/active/panel-directives/2-spec.md",
   "architecturePath": "libs/table/docs/3-ui/work/expansion/active/panel-directives/3-architecture.md",
-  "githubIssues": [],
+  "githubIssues": [211, 212, 213],
   "createdAt": "2026-10-01T00:00:00Z",
-  "updatedAt": "2026-10-01T20:00:00Z"
+  "updatedAt": "2026-10-02T00:00:00Z"
 }
