@@ -106,6 +106,44 @@ class DuplicatePanelHost {
   readonly table = createExpandableTable();
 }
 
+@Component({
+  selector: 'ngp-close-panel-host',
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (row of table.rows(); track row.id) {
+          @if (table.expansion().has(row.id)) {
+            <tr>
+              <td>
+                <div
+                  [ngpTablePanel]="row.id"
+                  #p="ngpTablePanel"
+                  role="region"
+                  [attr.aria-label]="'Details ' + row.id"
+                  animate.leave="panel--leave"
+                >
+                  <button type="button" (click)="p.close()">Close {{ row.id }}</button>
+                  <button type="button" (keydown.escape)="$event.preventDefault()">
+                    Handles Esc {{ row.id }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  `,
+})
+class ClosePanelHost {
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>(ROWS),
+    createPanelConfig(),
+    withExpansion({ initial: ['t1', 't2'] }),
+  );
+}
+
 interface ExpansionHost {
   readonly table: {
     readonly expansion: {
@@ -182,6 +220,74 @@ describe('NgpTablePanelDirective', () => {
     collapse('t1');
     expect(el.isConnected).toBe(true);
     expect(el.hasAttribute('inert')).toBe(true);
+  });
+
+  describe('close paths', () => {
+    function setupClose() {
+      const base = setup(ClosePanelHost);
+      const root: HTMLElement = base.fixture.nativeElement;
+      const host = base.fixture.componentInstance;
+      if (!(host instanceof ClosePanelHost)) throw new Error('unexpected host');
+      const button = (name: string): HTMLButtonElement => {
+        const found = Array.from(root.querySelectorAll('button')).find(
+          (b) => b.textContent?.trim() === name,
+        );
+        if (found === undefined) throw new Error(`no button named ${name}`);
+        return found;
+      };
+      return { ...base, button, table: host.table };
+    }
+
+    function pressEscape(target: HTMLElement): KeyboardEvent {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+      target.dispatchEvent(event);
+      return event;
+    }
+
+    it('close() collapses only its own row', () => {
+      const { fixture, button, table } = setupClose();
+
+      button('Close t1').click();
+      fixture.detectChanges();
+
+      expect([...table.expansion()]).toEqual(['t2']);
+    });
+
+    it('Esc inside a panel collapses only that row', () => {
+      const { fixture, button, table } = setupClose();
+
+      const event = pressEscape(button('Close t1'));
+      fixture.detectChanges();
+
+      expect([...table.expansion()]).toEqual(['t2']);
+      expect(event.defaultPrevented).toBe(true);
+    });
+
+    it('ignores Esc when an inner element already prevented it', () => {
+      const { fixture, button, table } = setupClose();
+      expect([...table.expansion()]).toEqual(['t1', 't2']);
+
+      pressEscape(button('Handles Esc t1'));
+      fixture.detectChanges();
+
+      expect([...table.expansion()]).toEqual(['t1', 't2']);
+    });
+
+    it('marks a leaving panel inert immediately after the closing change detection', () => {
+      const { fixture, panel, table } = setupClose();
+      const leaving = panel('t1');
+      expect(leaving.hasAttribute('inert')).toBe(false);
+
+      table.expansion.collapse(['t1']);
+      fixture.detectChanges();
+
+      expect(leaving.hasAttribute('inert')).toBe(true);
+      expect(panel('t2').hasAttribute('inert')).toBe(false);
+    });
   });
 
   it('throws on first render when the table has no withExpansion()', () => {
