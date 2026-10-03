@@ -25,6 +25,7 @@ export function createMockTableStore(): TableStore<unknown> {
   };
 }
 
+/** A data `RenderRow` stub, `row-1` at depth 0, with `overrides` applied. */
 export function mockDataRenderRow(overrides: Partial<RenderRow<unknown>> = {}): RenderRow<unknown> {
   return {
     id: 'row-1',
@@ -37,6 +38,7 @@ export function mockDataRenderRow(overrides: Partial<RenderRow<unknown>> = {}): 
   };
 }
 
+/** A group `RenderRow` stub, `group-1` at depth 1, with `overrides` applied. */
 export function mockGroupRenderRow(overrides: Partial<RenderRow<unknown>> = {}): RenderRow<unknown> {
   return {
     id: 'group-1',
@@ -75,8 +77,7 @@ export interface GroupingMockRow {
   amount: number;
 }
 
-/** Fixture with unequal (region, category) cluster sizes, for depth-correctness aggregate
- *  checks. */
+/** Fixture with unequal (region, category) cluster sizes, for depth-correctness aggregates. */
 // `US > Electronics` has 2 rows, every other leaf has 1, so a parent average computed from
 // children's averages (125) differs from the true leaf-level average (150) for `region: 'US'`.
 export const mockGroupingRows: GroupingMockRow[] = [
@@ -105,6 +106,9 @@ export const mockTaskTreeRows: TaskTreeMockRow[] = [
   { id: 't1a1', status: 'blocked', parentId: 't1a' },
 ];
 
+/** A task row whose id contains a space, for id-escaping cases. */
+export const mockSpacedIdRow: TaskTreeMockRow = { id: 'task 5', status: 'open' };
+
 export interface GroupWhenMockRow {
   id: number;
   region: string | null | undefined;
@@ -131,7 +135,7 @@ export interface RepMockRow {
 }
 
 /** Two-level (region -> rep) fixture for `withGrouping()`'s `when`-predicate tests. */
-// A null-region row must escape the tree entirely, not re-cluster under a `rep` header (Q1).
+// A null-region row must escape the tree entirely, not re-cluster under a `rep` header.
 export const mockRepRows: RepMockRow[] = [
   { id: 1, region: 'US', rep: 'Alice' },
   { id: 2, region: 'US', rep: 'Bob' },
