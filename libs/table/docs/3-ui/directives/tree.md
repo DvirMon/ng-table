@@ -55,7 +55,8 @@ what CSS keys on, not the field.
 
 Selector: `button[ngpTableTreeToggle]` only. Native click, Enter,
 Space and focus — no keyboard handlers, no host-type branching, no
-nesting guard.
+nesting guard. The button is always `type="button"`, even over a
+template `type`.
 
 - **Identity.** Row from the ancestor row directive's token
   (`NGP_TABLE_ROW`), table from the table directive's token
@@ -66,8 +67,8 @@ nesting guard.
 - **State.** `aria-expanded` and `data-expanded` follow the row's
   `isExpanded`.
 - **Non-expandable row.** The toggle sets `disabled`,
-  `aria-hidden="true"` and presence `data-disabled`, and omits
-  `aria-expanded`. It stays in the DOM so its width is kept and leaf
+  `aria-hidden="true"` and presence `data-disabled`, and shows
+  `aria-expanded="false"`. It stays in the DOM so its width is kept and leaf
   labels align with parent labels. Hiding it visually is consumer
   CSS; the consumer may also `@if` it away.
 - **Accessible name.** Consumer-owned — the library ships no text.
@@ -84,7 +85,8 @@ No attribute is bound by two directives on one element:
 |---|---|---|
 | `ngpTableRow` | row | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth` |
 | `ngpTableTreeRow` | row | `data-expandable`, `data-expanded`, `data-context-row` |
-| `ngpTableTreeToggle` | button | `aria-expanded`, `data-expanded`, `data-disabled`, `disabled`, `aria-hidden` |
+| Shared trigger core (internal) | button | `type`, `aria-expanded`, `data-expanded` |
+| `ngpTableTreeToggle` | button | `disabled`, `aria-hidden`, `data-disabled` |
 
 ## Toggle-only is the default
 
@@ -173,12 +175,6 @@ All run under `ngDevMode` only and are stripped in production.
   render, a toggle on a table with no `tree` member throws, naming
   `ngpTableTreeToggle` and `withTree()`. In production the toggle is
   inert.
-- **Nameless button** — after first render (so late-rendered text
-  counts), a toggle with no `aria-label`, `aria-labelledby` or text
-  content warns once.
-- **Disabled leaf skipped** — the nameless-button warning skips a
-  disabled leaf toggle: it is `aria-hidden`, so no assistive tech
-  reaches it.
 
 A missing `ngpTableTreeRow` on the `<tr>` is not an error.
 

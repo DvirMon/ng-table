@@ -235,7 +235,7 @@ toggle that the recipe hides with its width kept. The styles-failed failure line
 demonstrable on a canvas, since the recipe always loads.
 
 **Code:** shipped — a leaf toggle is `disabled`, `aria-hidden` and `data-disabled`, and keeps its
-width (`ngp-table-tree-toggle.directive.ts:60-62`); the recipe hides it with `visibility: hidden`.
+width (`ngp-table-tree-toggle.directive.ts`); the recipe hides it with `visibility: hidden`.
 
 **Design status:** decided — TR38. Peers split four ways (a spacer, an empty wrapper, a hidden
 toggle, a visible disabled button); TR38 matches PrimeNG's hidden toggle (competitors
@@ -282,8 +282,6 @@ unchanged; groups and rows both get `--ngp-table-row-depth`.
 
 **Failure behavior**
 
-- A toggle the page forgot to name is caught before release (a development warning); a person
-  never meets a nameless button in a shipped product that heeded the warning.
 - A leaf's toggle is never announced as a "collapsed button".
 
 **What cannot be met:** a screen-reader user does not hear a row's depth ("level 2") or its
@@ -292,9 +290,10 @@ deferred to its own piece of work. Arrow-key navigation between rows belongs the
 
 **Covered by:** `tree-basic/` (`Basic`): native buttons named `'Children of ' + name`, Enter and
 Space toggle a parent, leaf toggles are skipped by Tab. Depth announcement is unmet by design
-(see "What cannot be met"); the missing-name development warning is not shown.
+(see "What cannot be met").
 
-**Code:** shipped — `ngp-table-tree-toggle.directive.ts:26-40` (name check), `55`, `60`; no row
+**Code:** shipped — `ngp-table-tree-toggle.directive.ts` (leaf `disabled`/`aria-hidden`) over
+`ngp-table-collapsible-trigger.directive.ts` (`type`, `aria-expanded`, `data-expanded`); no row
 `aria-expanded` (`ngp-table-row.directive.ts:22-29`).
 
 **Design status:** decided — TR34, TR36, TR38, TR39, TR45, TR46. **Where peers differ:** every
@@ -504,7 +503,7 @@ reveal the same way as any other kept row (2.1). Nothing further.
 do, so its toggle renders disabled and hidden. The lazy-plus-filter failure line is not shown (1.4).
 
 **Code:** shipped — `hasChildren` counts children in the filtered pool (`nest.ts:132-134`); the
-leaf toggle disables and hides itself (`ngp-table-tree-toggle.directive.ts:60-62`).
+leaf toggle disables and hides itself (`ngp-table-tree-toggle.directive.ts`).
 
 **Design status:** decided — TR13, TR38. MUI X does the same: the toggle renders only when
 filtered descendants exist (competitors discovery §8).
@@ -917,6 +916,4 @@ Real problems, but the integrating developer's, not the person using the table.
 - **The broken-link report** (TR9) — a `console.error` once per kind per evaluation. Marking the
   row on screen is the consumer app's choice (OQ-9).
 - **Toggle without `withTree()`** (TR40) — throws in development, inert in production.
-- **Nameless toggle warning** (TR39, TR46) — development only; skips a disabled leaf. Its
-  product half is 1.7's named toggle.
 - **No attribute bound by two directives** (TR37) — debugging aid, invisible on screen.
