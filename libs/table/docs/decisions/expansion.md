@@ -102,6 +102,7 @@ cross-references still resolve.
 | E55 | Panel toggle accessible name is consumer-owned: no label input, no default, no dev warning — the library binds relations only. Amends ADR-0029 #3; tree's TR39 warning goes to #209 | 10-01 | decided (#199) · [ADR-0029](../adr/0029-directives-own-accessibility.md) | [panel-directives D11](../3-ui/work/expansion/active/panel-directives/1-decisions.md) |
 | E56 | A panel's DOM id is a per-table prefix plus the escaped `RowId` — stable across remounts and server/client hydration; not a mount counter | 10-01 | decided (#199) | [panel-directives D13](../3-ui/work/expansion/active/panel-directives/1-decisions.md) |
 | E57 | v1 panel directives support a panel inside the `ngpTable` host only; a panel outside it (a page-level side drawer) can't reach the registry or store through DI — open, not decided | 10-01 | specced (#199) | [panel-directives spec](../3-ui/work/expansion/active/panel-directives/2-spec.md) |
+| E58 | Esc on `ngpTablePanel` marks the event handled (`preventDefault()` after `close()`), so an enclosing dialog does not also close on the same key; extends E49 | 10-02 | decided (#211) | [#211 step 3](../3-ui/work/expansion/active/panel-directives/4-tasks/issue-211/step-3-panel-close-focus.plan.md) |
 
 ## Still open
 
