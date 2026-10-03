@@ -2,6 +2,7 @@ import { computed, InjectionToken, signal, type Signal } from '@angular/core';
 
 import type { RowId } from '../api/types';
 
+/** One table's row-id lookup for its panels' minted DOM ids and their toggle elements. */
 export interface PanelRegistry {
   registerPanel(id: RowId, host: HTMLElement): string;
   unregisterPanel(id: RowId): void;
@@ -11,8 +12,18 @@ export interface PanelRegistry {
   toggleOf(id: RowId): HTMLElement | null;
 }
 
+// Note: one sequence number per table. Two tables can share row ids, so ids minted from the
+// row id alone would collide in one document.
 let nextTableSeq = 0;
 
+/**
+ * Creates the registry one `ngpTable` host provides to its panels and toggles.
+ *
+ * @remarks
+ * Panel ids take the form `ngp-t<table>-panel-<row id>`, URI-encoded so a row id containing
+ * a space still yields a single-token `id`. Note: in dev mode, registering a second panel
+ * for the same row throws.
+ */
 export function createPanelRegistry(): PanelRegistry {
   const tableSeq = nextTableSeq++;
   const panelIds = signal<ReadonlyMap<RowId, string>>(new Map());
@@ -59,6 +70,7 @@ export function createPanelRegistry(): PanelRegistry {
   return { registerPanel, unregisterPanel, registerToggle, unregisterToggle, panelId, toggleOf };
 }
 
+/** Injects the panel registry of the nearest `ngpTable` host. */
 export const NGP_TABLE_PANEL_REGISTRY = new InjectionToken<PanelRegistry>(
   'NGP_TABLE_PANEL_REGISTRY',
 );
