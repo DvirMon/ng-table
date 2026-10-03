@@ -6,6 +6,7 @@ import {
   input,
   type OnDestroy,
   type OnInit,
+  Renderer2,
   type Signal,
 } from '@angular/core';
 
@@ -40,7 +41,12 @@ function assertExpansionComposed(readTable: () => unknown): void {
  */
 @Directive({
   selector: '[ngpTablePanel]',
-  host: { '[id]': 'panelId', '[attr.inert]': 'isOpen() ? null : ""' },
+  host: {
+    '[id]': 'panelId',
+    '[attr.inert]': 'isOpen() ? null : ""',
+    '(keydown.escape)': 'onEscape($event)',
+  },
+  exportAs: 'ngpTablePanel',
 })
 export class NgpTablePanelDirective implements OnInit, OnDestroy {
   readonly ngpTablePanel = input.required<RowId>();
@@ -48,6 +54,7 @@ export class NgpTablePanelDirective implements OnInit, OnDestroy {
   private readonly table = inject(NGP_TABLE_STORE);
   private readonly registry = inject(NGP_TABLE_PANEL_REGISTRY);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly renderer = inject(Renderer2);
 
   protected panelId = '';
   private registeredId: RowId | null = null;
@@ -64,8 +71,35 @@ export class NgpTablePanelDirective implements OnInit, OnDestroy {
     this.registeredId = id;
   }
 
+  /** Collapses this panel's row and returns focus to its toggle when focus was inside or lost. */
+  close(): void {
+    const table = this.table.ngpTable();
+    if (hasExpansion(table)) table.expansion.collapse([this.ngpTablePanel()]);
+    this.returnFocus(this.ngpTablePanel(), { allowBody: true });
+  }
+
+  protected onEscape(event: Event): void {
+    if (event.defaultPrevented) return;
+    this.close();
+    event.preventDefault();
+  }
+
+  private returnFocus(id: RowId, { allowBody }: { allowBody: boolean }): void {
+    const active = document.activeElement;
+    const isFocusInside = active !== null && this.host.nativeElement.contains(active);
+    const isFocusLost = allowBody && (active === null || active === document.body);
+    if (!isFocusInside && !isFocusLost) return;
+    const toggle = this.registry.toggleOf(id);
+    if (toggle !== null && toggle.isConnected) toggle.focus();
+  }
+
   ngOnDestroy(): void {
     if (this.registeredId === null) return;
-    this.registry.unregisterPanel(this.registeredId);
+    const id = this.registeredId;
+    this.returnFocus(id, { allowBody: false });
+    // The `@if` view is destroyed before its bindings refresh (Angular 22.1.2), so the
+    // `attr.inert` binding never marks a leaving panel; write it here.
+    this.renderer.setAttribute(this.host.nativeElement, 'inert', '');
+    this.registry.unregisterPanel(id);
   }
 }
