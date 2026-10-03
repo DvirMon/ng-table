@@ -118,7 +118,8 @@ names are the consumer's own words.
 - **Esc**: a keydown listener on the panel host calls `close()` unless
   the event's default was already prevented. An inner widget handling
   Esc first opts out; a consumer listener on the same host element runs
-  after the directive and cannot (D6, E49).
+  after the directive and cannot (D6, E49). After `close()` the panel
+  calls `event.preventDefault()` to mark Esc handled (E58).
 - **Click and single-open**: the toggle always calls `toggle(id)`.
   Single-open is a state setting, `withExpansion({ multi })`, specced in
   #210 (D10, E54).

@@ -19,7 +19,7 @@ Consumed by `/to-tasks`. Paths and snippets are current as of the date above.
 | 3 | `[ngpTablePanel]` takes a `RowId` | D3 / E46 |
 | 4 | `id`/`inert` by host binding; leaving panel gets `inert` via `Renderer2.setAttribute` in `DestroyRef.onDestroy` | D4 / E47 |
 | 5 | Focus return only to a connected toggle; row-gone is #201 | D5 / E48 |
-| 6 | Esc: `(keydown.escape)` host listener → `close()`, skipped on `defaultPrevented` | D6 / E49 |
+| 6 | Esc: `(keydown.escape)` host listener → `close()`, skipped on `defaultPrevented`; then `preventDefault()` marks it handled | D6 / E49 / E58 |
 | 7 | `inert`, not `until-found` | D7 / E50 |
 | 8 | Focus return from `close()` (exportAs) + `onDestroy`; never an effect | D8 / E51 |
 | 9 | Dev throws: missing `withExpansion()` (per directive), duplicate panel | D9 / E52, #209 D9 |
@@ -71,7 +71,8 @@ Consumed by `/to-tasks`. Paths and snippets are current as of the date above.
 // internal — directives/panel-registry.ts (not exported from index.ts)
 interface PanelRegistry {
   registerPanel(id: RowId, host: HTMLElement): string;   // returns minted DOM id; throws on duplicate (dev)
-  unregisterPanel(id: RowId): void;
+  movePanel(host: HTMLElement, id: RowId): string;       // re-points a host's panel, no duplicate check (reused views swap rows)
+  unregisterPanel(host: HTMLElement): void;              // by host: deletes only that host's entry
   registerToggle(id: RowId, host: HTMLElement): void;
   unregisterToggle(id: RowId, host: HTMLElement): void;  // host-checked: a remounted row's new toggle isn't removed by the old one
   panelId(id: RowId): Signal<string | null>;             // null while unmounted → no aria-controls
@@ -112,7 +113,8 @@ export class NgpTablePanelDirective {
   allowed = inside || (allowBody && (a === null || a === document.body)); then
   `toggleOf(id)?.isConnected && toggle.focus()`.
 - Registration timing: the `RowId` is a required input, unset in the constructor. Register
-  in `ngOnInit` (no effect). A panel's row id changing after mount is out of scope.
+  in `ngOnInit` (no effect). Panels are keyed by host element; a row id change after
+  mount (`track $index`, a re-sort) moves the entry via `movePanel` in `ngOnChanges`.
 
 ```ts
 // public — directives/ngp-table-panel-toggle.directive.ts
