@@ -105,6 +105,9 @@ export const mockTaskTreeRows: TaskTreeMockRow[] = [
   { id: 't1a1', status: 'blocked', parentId: 't1a' },
 ];
 
+/** A task row whose id contains a space, for id-escaping cases. */
+export const mockSpacedIdRow: TaskTreeMockRow = { id: 'task 5', status: 'open' };
+
 export interface GroupWhenMockRow {
   id: number;
   region: string | null | undefined;
