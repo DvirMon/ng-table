@@ -33,7 +33,8 @@ function assertExpansionComposed(readTable: () => unknown): void {
  *
  * @remarks
  * Mints a table-scoped `id` that stays the same across close and reopen, and sets the
- * `inert` attribute while the row is closed. Note: throws in dev mode unless the table
+ * `inert` attribute while the row is closed. Escape inside the panel calls `close()`
+ * unless the event was already handled. Note: throws in dev mode unless the table
  * composes `withExpansion()`, and when a second panel registers for the same row.
  *
  * @example
@@ -49,6 +50,7 @@ function assertExpansionComposed(readTable: () => unknown): void {
   exportAs: 'ngpTablePanel',
 })
 export class NgpTablePanelDirective implements OnInit, OnDestroy {
+  /** Id of the row this element is the detail panel for. */
   readonly ngpTablePanel = input.required<RowId>();
 
   private readonly table = inject(NGP_TABLE_STORE);
