@@ -144,6 +144,34 @@ class ClosePanelHost {
   );
 }
 
+@Component({
+  selector: 'ngp-reordered-panel-host',
+  imports: IMPORTS,
+  template: `
+    <table [ngpTable]="table">
+      <tbody>
+        @for (id of ids(); track $index) {
+          @if (table.expansion.everExpanded().has(id)) {
+            <tr>
+              <td>
+                <div [ngpTablePanel]="id" role="region" [attr.aria-label]="'Details ' + id"></div>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  `,
+})
+class ReorderedPanelHost {
+  readonly ids = signal<string[]>(['t1', 't2']);
+  readonly table = createTable(
+    signal<TaskTreeMockRow[]>(ROWS),
+    createPanelConfig(),
+    withExpansion({ initial: ['t1', 't2'] }),
+  );
+}
+
 interface ExpansionHost {
   readonly table: {
     readonly expansion: {
@@ -288,6 +316,39 @@ describe('NgpTablePanelDirective', () => {
       expect(leaving.hasAttribute('inert')).toBe(true);
       expect(panel('t2').hasAttribute('inert')).toBe(false);
     });
+  });
+
+  it('keeps each panel id and inert state on its own row when views are reused for swapped rows', () => {
+    const { fixture, panel, expand, collapse } = setup(ReorderedPanelHost);
+    const host = fixture.componentInstance;
+    if (!(host instanceof ReorderedPanelHost)) throw new Error('unexpected host');
+    const idOf = (row: string): string => panel(row).id;
+    const initialT1 = idOf('t1');
+    const initialT2 = idOf('t2');
+
+    expect(() => {
+      host.ids.set(['t2', 't1']);
+      fixture.detectChanges();
+    }).not.toThrow();
+    expect(idOf('t1')).toBe(initialT1);
+    expect(idOf('t2')).toBe(initialT2);
+
+    collapse('t1');
+    expect(panel('t1').hasAttribute('inert')).toBe(true);
+    expect(panel('t2').hasAttribute('inert')).toBe(false);
+
+    expect(() => expand('t1')).not.toThrow();
+    expect(idOf('t1')).toBe(initialT1);
+    expect(panel('t1').hasAttribute('inert')).toBe(false);
+
+    host.ids.set([]);
+    fixture.detectChanges();
+    expect(() => {
+      host.ids.set(['t1', 't2']);
+      fixture.detectChanges();
+    }).not.toThrow();
+    expect(idOf('t1')).toBe(initialT1);
+    expect(idOf('t2')).toBe(initialT2);
   });
 
   it('throws on first render when the table has no withExpansion()', () => {
