@@ -21,7 +21,7 @@ Decisions: [D2, D3, D4, D7, D9, D13](../../1-decisions.md) · [E45, E46, E47, E5
 ```ts
 @Directive({
   selector: '[ngpTablePanel]',
-  host: { '[id]': 'panelId', '[inert]': '!isOpen()' },
+  host: { '[id]': 'panelId', '[attr.inert]': 'isOpen() ? null : ""' },
 })
 export class NgpTablePanelDirective {
   readonly ngpTablePanel = input.required<RowId>();
@@ -30,20 +30,19 @@ export class NgpTablePanelDirective {
 
 - `isOpen` is a `computed` over `table.expansion().has(this.ngpTablePanel())`.
 - Register with the registry in `ngOnInit`, because the input is unset in the constructor. Unregister on destroy.
-- In `DestroyRef.onDestroy`, write `inert` with `renderer.setAttribute(host, 'inert', '')`.
-- Add a `//` comment there: the `@if` view is destroyed before its bindings refresh (Angular 22.1.2), so the binding never marks a leaving panel.
 - Add a `hasExpansion(table: unknown): table is ExpansionMembers` guard.
 - Add a dev throw that names `ngpTablePanel` and `withExpansion()`. Mirror `hasTree` and `assertTreeComposed` in `ngp-table-tree-toggle.directive.ts`.
 - Export `NgpTablePanelDirective` from `index.ts` beside the other directives.
 - Add a mock row with a space in its id to `table.mock.ts`, for the escaping case (seam A).
 
 ## Watch out
-- Keep `[inert]` as a property binding. The test DOM is happy-dom, and its `inert` setter reflects the attribute.
-- Step 3 adds focus return before the `inert` write in `onDestroy`. Leave room for it.
+- Bind `inert` through `attr.inert`, so the binding and the destroy-time write in Step 3 are both attributes.
+- Step 3 adds the destroy hook (focus return, then the `inert` write). Register and unregister here without it.
 
 ## Out of scope
 - `exportAs`, `close()`, Esc and focus return (Step 3).
 - The toggle (#212).
+- The destroy-hook `inert` write for a leaving panel (Step 3).
 
 ## Done when
 - [ ] The tests in the test plan pass.

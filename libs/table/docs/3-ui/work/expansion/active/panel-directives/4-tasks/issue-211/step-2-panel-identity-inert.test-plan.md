@@ -25,10 +25,9 @@ components over a real `createTable(...)`.
   `table.expansion.expand(['t1'])` / `collapse(['t1'])`, then
   call `fixture.detectChanges()`.
 - `DefaultHost`:
-  `@if (table.expansion().has(row.id)) { <tr><td><div ngpTablePanel … animate.leave="panel--leave">`.
+  `@if (table.expansion().has(row.id)) { <tr><td><div ngpTablePanel …>`.
 - `KeptMountedHost`: the same markup, gated on
-  `table.expansion.everExpanded().has(row.id)`, with no
-  `animate.leave`.
+  `table.expansion.everExpanded().has(row.id)`.
 - `NoExpansionHost`: no `withExpansion()`. The panel is
   rendered unconditionally for each row.
 - `DuplicatePanelHost`: `withExpansion()`, plus two
@@ -65,22 +64,14 @@ components over a real `createTable(...)`.
 - Why this seam: catches a missing or inverted `!isOpen()` binding, or `isOpen` reading `everExpanded` instead of `expansion()`. Without this, a closed panel leaks into the Tab order and the accessibility tree.
 - Order reason: builds on A.
 
-### C. Default host: collapse → the leaving panel has `inert` right after that `detectChanges()`
-- Test: `it('marks a leaving panel inert immediately after the closing change detection')`
-- Host: `DefaultHost`.
-- Steps: `expand('t1')`; capture `const leaving = panel('t1')`; check `leaving.hasAttribute('inert') === false`; then `collapse('t1')`.
-- Asserts: `leaving.hasAttribute('inert') === true` on the captured reference. Never re-query.
-- Why this seam: pins the source-verified ordering in Angular 22.1.2. The `@if` view is destroyed before its bindings refresh, so B's binding alone never marks a leaving panel inert. Fails unless `DestroyRef.onDestroy` writes the attribute through the renderer.
-- Order reason: builds on B, isolating the destroy-hook path from the binding path.
-
-### D. Table without `withExpansion()` → first render throws, naming the missing feature
+### C. Table without `withExpansion()` → first render throws, naming the missing feature
 - Test: `it('throws on first render when the table has no withExpansion()')`
 - Host: `NoExpansionHost`.
 - Asserts: `expect(() => setup(NoExpansionHost)).toThrow(/ngpTablePanel[\s\S]*withExpansion\(\)/)`.
 - Why this seam: catches a missing or wrong `hasExpansion` guard; the regex rejects a bare `TypeError`.
-- Order reason: independent of A–C.
+- Order reason: independent of A–B.
 
-### E. Two panels for one row → throws, naming the row id
+### D. Two panels for one row → throws, naming the row id
 - Test: `it('throws when a second panel registers for a row that already has one, naming the row id')`
 - Host: `DuplicatePanelHost`.
 - Asserts: `expect(() => setup(DuplicatePanelHost)).toThrow(/t1/)`.
@@ -91,7 +82,8 @@ components over a real `createTable(...)`.
 None — no public type surface in this step.
 
 ## Not tested
-- The registry directly. The spec's Testing Decisions forbid it; A and E reach it through the panel.
+- The registry directly. The spec's Testing Decisions forbid it; A and D reach it through the panel.
+- A leaving panel getting `inert` from the destroy hook. Step 3.
 - The `animate.leave` animation itself (framework).
 - Browser focus fix-up after `inert` is set (browser behavior).
 - `ngDevMode`-off behavior.
