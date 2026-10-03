@@ -132,6 +132,16 @@ class NoTreeHost {
   protected readonly table = createCheckTable(CHECK_ROWS, false);
 }
 
+@Component({
+  imports: CHECK_IMPORTS,
+  template: checksTemplate(
+    '<button ngpTableTreeToggle aria-label="Toggle row" type="submit"></button>',
+  ),
+})
+class SubmitTypeHost {
+  protected readonly table = createCheckTable(CHECK_ROWS, true);
+}
+
 function renderChecks(hostType: Type<unknown>): ComponentFixture<unknown> {
   const fixture = TestBed.createComponent(hostType);
   fixture.detectChanges();
@@ -167,7 +177,24 @@ describe('NgpTableTreeToggleDirective', () => {
     expect(toggle('t1').hasAttribute('data-expanded')).toBe(false);
   });
 
-  it('disables and hides the toggle on a row without children, with no aria-expanded', () => {
+  it('renders the toggle as type="button" when the template sets no type', () => {
+    const { toggle } = setup(TreeHost);
+
+    expect(toggle('t1').getAttribute('type')).toBe('button');
+    expect(toggle('t2').getAttribute('type')).toBe('button');
+  });
+
+  it('forces type="button" even when the template sets type="submit"', () => {
+    const fixture = renderChecks(SubmitTypeHost);
+    const buttons: HTMLButtonElement[] = Array.from(
+      (fixture.nativeElement as HTMLElement).querySelectorAll('button'),
+    );
+
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const button of buttons) expect(button.getAttribute('type')).toBe('button');
+  });
+
+  it('disables and hides the toggle on a row without children, with aria-expanded="false"', () => {
     const { toggle } = setup(TreeHost);
     const leaf = toggle('t2');
     const parent = toggle('t1');
@@ -175,7 +202,7 @@ describe('NgpTableTreeToggleDirective', () => {
     expect(leaf.disabled).toBe(true);
     expect(leaf.getAttribute('aria-hidden')).toBe('true');
     expect(leaf.getAttribute('data-disabled')).toBe('');
-    expect(leaf.hasAttribute('aria-expanded')).toBe(false);
+    expect(leaf.getAttribute('aria-expanded')).toBe('false');
     expect(leaf.hasAttribute('data-expanded')).toBe(false);
 
     expect(parent.disabled).toBe(false);
