@@ -1,11 +1,4 @@
-import {
-  afterNextRender,
-  computed,
-  Directive,
-  ElementRef,
-  inject,
-  type Signal,
-} from '@angular/core';
+import { computed, Directive, inject, type Signal } from '@angular/core';
 
 import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
 import type { TreeMembers } from '../api/features/with-tree/types';
@@ -23,29 +16,12 @@ function assertTreeComposed(readTable: () => unknown): void {
   );
 }
 
-function hasAccessibleName(button: HTMLElement): boolean {
-  const isLabelled = button.hasAttribute('aria-label') || button.hasAttribute('aria-labelledby');
-  const hasText = (button.textContent ?? '').trim() !== '';
-  return isLabelled || hasText;
-}
-
-function warnWhenNameless(button: HTMLElement, isLeaf: Signal<boolean>): void {
-  afterNextRender(() => {
-    if (typeof ngDevMode === 'undefined' || !ngDevMode) return;
-    if (isLeaf() || hasAccessibleName(button)) return;
-    console.warn(
-      'ngpTableTreeToggle: the button has no accessible name. Add aria-label, aria-labelledby or text.',
-    );
-  });
-}
-
 /**
  * Toggles its row's children open or closed through `table.tree.toggle()`.
  *
  * @remarks
  * Sets `aria-expanded` and `data-expanded`; on a leaf row the button is disabled and
- * `aria-hidden`. Note: throws in dev mode unless the table composes `withTree()`, and warns
- * when the button has no accessible name.
+ * `aria-hidden`. Note: throws in dev mode unless the table composes `withTree()`.
  *
  * @example
  * <button ngpTableTreeToggle
@@ -65,7 +41,6 @@ function warnWhenNameless(button: HTMLElement, isLeaf: Signal<boolean>): void {
 export class NgpTableTreeToggleDirective {
   private readonly row = inject(NGP_TABLE_ROW);
   private readonly table = inject(NGP_TABLE_STORE);
-  private readonly host = inject<ElementRef<HTMLButtonElement>>(ElementRef);
 
   protected readonly isLeaf: Signal<boolean> = computed(
     (): boolean => this.row.ngpTableRow().hasChildren !== true,
@@ -80,7 +55,6 @@ export class NgpTableTreeToggleDirective {
 
   constructor() {
     assertTreeComposed(() => this.table.ngpTable());
-    warnWhenNameless(this.host.nativeElement, this.isLeaf);
   }
 
   protected toggle(): void {
