@@ -1,5 +1,6 @@
 import { computed, Directive, input, type InputSignal, type Signal } from '@angular/core';
 
+import { createPanelRegistry, NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_STORE } from './table.tokens';
 import type { ColumnValueMap, TableStore } from '../api/types';
 
@@ -8,7 +9,10 @@ import type { ColumnValueMap, TableStore } from '../api/types';
 // one is a documented no-op, not a conflict.
 @Directive({
   selector: 'table[ngpTable], div[ngpTable]',
-  providers: [{ provide: NGP_TABLE_STORE, useExisting: NgpTableDirective }],
+  providers: [
+    { provide: NGP_TABLE_STORE, useExisting: NgpTableDirective },
+    { provide: NGP_TABLE_PANEL_REGISTRY, useFactory: createPanelRegistry },
+  ],
   host: {
     role: 'table',
     '[attr.aria-rowcount]': 'ariaRowCount()',
