@@ -4,10 +4,12 @@ import {
   ElementRef,
   inject,
   input,
+  type OnChanges,
   type OnDestroy,
   type OnInit,
   Renderer2,
   type Signal,
+  type SimpleChanges,
 } from '@angular/core';
 
 import { NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
@@ -49,7 +51,7 @@ function assertExpansionComposed(readTable: () => unknown): void {
   },
   exportAs: 'ngpTablePanel',
 })
-export class NgpTablePanelDirective implements OnInit, OnDestroy {
+export class NgpTablePanelDirective implements OnChanges, OnInit, OnDestroy {
   /** Id of the row this element is the detail panel for. */
   readonly ngpTablePanel = input.required<RowId>();
 
@@ -65,6 +67,16 @@ export class NgpTablePanelDirective implements OnInit, OnDestroy {
     const table = this.table.ngpTable();
     return hasExpansion(table) && table.expansion().has(this.ngpTablePanel());
   });
+
+  ngOnChanges(changes: SimpleChanges): void {
+    const change = changes['ngpTablePanel'];
+    const isChangedAfterInit = change !== undefined && !change.firstChange;
+    const isMovedAfterInit = isChangedAfterInit && this.registeredId !== null;
+    if (!isMovedAfterInit) return;
+    const id = this.ngpTablePanel();
+    this.panelId = this.registry.movePanel(this.host.nativeElement, id);
+    this.registeredId = id;
+  }
 
   ngOnInit(): void {
     assertExpansionComposed(() => this.table.ngpTable());
@@ -102,6 +114,6 @@ export class NgpTablePanelDirective implements OnInit, OnDestroy {
     // The `@if` view is destroyed before its bindings refresh (Angular 22.1.2), so the
     // `attr.inert` binding never marks a leaving panel; write it here.
     this.renderer.setAttribute(this.host.nativeElement, 'inert', '');
-    this.registry.unregisterPanel(id);
+    this.registry.unregisterPanel(this.host.nativeElement);
   }
 }

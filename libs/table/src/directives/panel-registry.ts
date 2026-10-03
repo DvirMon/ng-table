@@ -5,7 +5,8 @@ import type { RowId } from '../api/types';
 /** One table's row-id lookup for its panels' minted DOM ids and their toggle elements. */
 export interface PanelRegistry {
   registerPanel(id: RowId, host: HTMLElement): string;
-  unregisterPanel(id: RowId): void;
+  movePanel(host: HTMLElement, id: RowId): string;
+  unregisterPanel(host: HTMLElement): void;
   registerToggle(id: RowId, host: HTMLElement): void;
   unregisterToggle(id: RowId, host: HTMLElement): void;
   panelId(id: RowId): Signal<string | null>;
@@ -21,31 +22,45 @@ let nextTableSeq = 0;
  *
  * @remarks
  * Panel ids take the form `ngp-t<table>-panel-<row id>`, URI-encoded so a row id containing
- * a space still yields a single-token `id`. Note: in dev mode, registering a second panel
- * for the same row throws.
+ * a space still yields a single-token `id`. Panels are keyed by host element, so a host
+ * unregisters only its own entry. Note: in dev mode, registering a second panel for the
+ * same row throws; `movePanel` skips that check so two reused views can swap rows.
  */
 export function createPanelRegistry(): PanelRegistry {
   const tableSeq = nextTableSeq++;
-  const panelIds = signal<ReadonlyMap<RowId, string>>(new Map());
+  const rowOfHost = signal<ReadonlyMap<HTMLElement, RowId>>(new Map());
   const toggles = new Map<RowId, HTMLElement>();
 
-  function registerPanel(id: RowId, _host: HTMLElement): string {
+  function mintPanelId(id: RowId): string {
+    return `ngp-t${tableSeq}-panel-${encodeURIComponent(String(id))}`;
+  }
+
+  function hasOtherHostFor(id: RowId, host: HTMLElement): boolean {
+    for (const [other, rowId] of rowOfHost()) {
+      if (other !== host && rowId === id) return true;
+    }
+    return false;
+  }
+
+  function registerPanel(id: RowId, host: HTMLElement): string {
     const isDev = typeof ngDevMode !== 'undefined' && !!ngDevMode;
-    const hasPanelAlready = panelIds().has(id);
-    if (isDev && hasPanelAlready) {
+    if (isDev && hasOtherHostFor(id, host)) {
       throw new Error(
         `ngpTablePanel: row "${String(id)}" already has a panel — one panel per row.`,
       );
     }
-    const minted = `ngp-t${tableSeq}-panel-${encodeURIComponent(String(id))}`;
-    panelIds.update((prev) => new Map(prev).set(id, minted));
-    return minted;
+    return movePanel(host, id);
   }
 
-  function unregisterPanel(id: RowId): void {
-    panelIds.update((prev) => {
+  function movePanel(host: HTMLElement, id: RowId): string {
+    rowOfHost.update((prev) => new Map(prev).set(host, id));
+    return mintPanelId(id);
+  }
+
+  function unregisterPanel(host: HTMLElement): void {
+    rowOfHost.update((prev) => {
       const next = new Map(prev);
-      next.delete(id);
+      next.delete(host);
       return next;
     });
   }
@@ -60,14 +75,27 @@ export function createPanelRegistry(): PanelRegistry {
   }
 
   function panelId(id: RowId): Signal<string | null> {
-    return computed(() => panelIds().get(id) ?? null);
+    return computed(() => {
+      for (const rowId of rowOfHost().values()) {
+        if (rowId === id) return mintPanelId(id);
+      }
+      return null;
+    });
   }
 
   function toggleOf(id: RowId): HTMLElement | null {
     return toggles.get(id) ?? null;
   }
 
-  return { registerPanel, unregisterPanel, registerToggle, unregisterToggle, panelId, toggleOf };
+  return {
+    registerPanel,
+    movePanel,
+    unregisterPanel,
+    registerToggle,
+    unregisterToggle,
+    panelId,
+    toggleOf,
+  };
 }
 
 /** Injects the panel registry of the nearest `ngpTable` host. */
