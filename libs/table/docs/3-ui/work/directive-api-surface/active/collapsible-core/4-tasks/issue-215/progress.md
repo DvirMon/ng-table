@@ -22,5 +22,5 @@ Parallel-safe: [1, 2] · then [4, 5] after 3 · Dependency: {1, 2} → 3 → {4,
 | 1 | The collapsible trigger core | ✅ done |
 | 2 | Drop the nameless-toggle warning | ✅ done |
 | 3 | Tree toggle extends the core | 🧪 awaiting CI |
-| 4 | Stories drop the manual button type | ⬚ pending |
+| 4 | Stories drop the manual button type | ✅ done |
 | 5 | Tree docs retrofit | ✅ done |
