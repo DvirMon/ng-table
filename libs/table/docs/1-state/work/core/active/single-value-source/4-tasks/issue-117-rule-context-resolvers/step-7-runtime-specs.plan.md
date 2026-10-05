@@ -97,7 +97,7 @@ label, meta }` without a `ctx.columns().find(...)` lookup — assert the
 - [ ] `nx run shared-table:typecheck-spec` clean.
 - [ ] All four edited spec files pass.
 - [ ] `rg -n "\.find\(\(c\) => c\.id ===" libs/table/src/columns-schema
-  libs/table/src/engine/columns-schema` shows the existing spec-only
+libs/table/src/engine/columns-schema` shows the existing spec-only
       lookups unaffected (this repo's own tests still use `.find()` to
       _assert_ results — that's fine; only a _rule's own body_ using
       `.find()` instead of `stateOf` is what the acceptance criterion is
