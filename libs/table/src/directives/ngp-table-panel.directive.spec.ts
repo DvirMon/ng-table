@@ -30,8 +30,6 @@ function createPlainTable() {
   return createTable(signal<TaskTreeMockRow[]>(ROWS), createPanelConfig());
 }
 
-const PANEL =
-  '<div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="\'Details \' + row.id"></div>';
 const IMPORTS = [NgpTableDirective, NgpTablePanelDirective];
 
 @Component({
@@ -42,7 +40,7 @@ const IMPORTS = [NgpTableDirective, NgpTablePanelDirective];
       <tbody>
         @for (row of table.rows(); track row.id) {
           @if (table.expansion().has(row.id)) {
-            <tr><td>${PANEL}</td></tr>
+            <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
           }
         }
       </tbody>
@@ -61,7 +59,7 @@ class DefaultHost {
       <tbody>
         @for (row of table.rows(); track row.id) {
           @if (table.expansion.everExpanded().has(row.id)) {
-            <tr><td>${PANEL}</td></tr>
+            <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
           }
         }
       </tbody>
@@ -79,7 +77,7 @@ class KeptMountedHost {
     <table [ngpTable]="table">
       <tbody>
         @for (row of table.rows(); track row.id) {
-          <tr><td>${PANEL}</td></tr>
+          <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
         }
       </tbody>
     </table>
@@ -96,7 +94,7 @@ class NoExpansionHost {
     <table [ngpTable]="table">
       <tbody>
         @for (row of table.rows(); track row.id) {
-          <tr><td>${PANEL}${PANEL}</td></tr>
+          <tr><td><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div><div [ngpTablePanel]="row.id" role="region" [attr.aria-label]="'Details ' + row.id"></div></td></tr>
         }
       </tbody>
     </table>
