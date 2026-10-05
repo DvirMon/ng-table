@@ -3,7 +3,7 @@
 **Issue:** #212
 **Branch:** feat/212-panel-toggle
 **Worktree:** C:/Users/dmena/git/ng-table/.claude/worktrees/feat-212-panel-toggle
-**Status:** 1 / 4 complete
+**Status:** 2 / 4 complete
 
 ## Graph
 
@@ -18,6 +18,6 @@ Parallel-safe: none (steps 1–3 edit the toggle file) · Dependency: 1 → 2 �
 | Step | Title | Status |
 |---|---|---|
 | 1 | The ngpTablePanelToggle directive | ✅ done |
-| 2 | Toggle aria-controls | ⬚ pending |
+| 2 | Toggle aria-controls | ✅ done |
 | 3 | Toggle registers with the panel registry | ⬚ pending |
 | 4 | Destroy-path focus return | ⬚ pending |

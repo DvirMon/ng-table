@@ -2,6 +2,7 @@ import { computed, Directive, inject, type Signal } from '@angular/core';
 
 import { hasExpansion } from './expansion.guard';
 import { NgpTableCollapsibleTrigger } from './ngp-table-collapsible-trigger.directive';
+import { NGP_TABLE_PANEL_REGISTRY } from './panel-registry';
 import { NGP_TABLE_ROW, NGP_TABLE_STORE } from './table.tokens';
 
 function assertExpansionComposed(readTable: () => unknown): void {
@@ -24,10 +25,18 @@ function assertExpansionComposed(readTable: () => unknown): void {
  * <button ngpTablePanelToggle
  *   [attr.aria-label]="'Details of ' + row.id">▸</button>
  */
-@Directive({ selector: 'button[ngpTablePanelToggle]' })
+@Directive({
+  selector: 'button[ngpTablePanelToggle]',
+  host: { '[attr.aria-controls]': 'controlsId()' },
+})
 export class NgpTablePanelToggleDirective extends NgpTableCollapsibleTrigger {
   private readonly row = inject(NGP_TABLE_ROW);
   private readonly table = inject(NGP_TABLE_STORE);
+  private readonly registry = inject(NGP_TABLE_PANEL_REGISTRY);
+
+  protected readonly controlsId: Signal<string | null> = computed(
+    (): string | null => this.registry.panelId(this.row.ngpTableRow().id)(),
+  );
 
   protected override readonly isOpen: Signal<boolean> = computed((): boolean => {
     const table = this.table.ngpTable();
