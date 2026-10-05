@@ -9,7 +9,7 @@ type SelectAllIdsInput<TRow> = Pick<TableStore<TRow>, 'rows' | 'value' | 'trackB
  */
 export function selectAllIds<TRow>(
   table: SelectAllIdsInput<TRow>,
-  opts?: { includeHidden?: boolean }
+  opts?: { includeHidden?: boolean },
 ): RowId[] {
   const rows = opts?.includeHidden ? table.value() : table.rows();
   return rows.map(table.trackBy);

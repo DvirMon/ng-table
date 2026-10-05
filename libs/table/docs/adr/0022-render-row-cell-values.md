@@ -27,14 +27,14 @@ interface RenderRow<TRow> {
 }
 ```
 
-| Question (#80) | Decision | Source |
-|---|---|---|
-| Eager array, or lazy `cellsOf(row)`? | **Eager**, built inside the existing `renderRows` computed | D1, D2 |
-| Ordered array, or a record? | **Record keyed by `columnId`** | D3 |
-| Follows column visibility/order? | **No** — the consumer's own `visibleColumns()` loop stays | D3 |
-| Formatted or raw? | **Raw** — formatting stays in pipes | D6 |
-| Replaces `accessor`, or sits beside it? | **Beside** — `accessor` defines, `cells` reads | D7 |
-| Typed per column? | **No** — `unknown`, narrowed by the consumer's own pipes | D8 |
+| Question (#80)                          | Decision                                                   | Source |
+| --------------------------------------- | ---------------------------------------------------------- | ------ |
+| Eager array, or lazy `cellsOf(row)`?    | **Eager**, built inside the existing `renderRows` computed | D1, D2 |
+| Ordered array, or a record?             | **Record keyed by `columnId`**                             | D3     |
+| Follows column visibility/order?        | **No** — the consumer's own `visibleColumns()` loop stays  | D3     |
+| Formatted or raw?                       | **Raw** — formatting stays in pipes                        | D6     |
+| Replaces `accessor`, or sits beside it? | **Beside** — `accessor` defines, `cells` reads             | D7     |
+| Typed per column?                       | **No** — `unknown`, narrowed by the consumer's own pipes   | D8     |
 
 **Eager (D1/D2).** `renderRows` already is the memo boundary, so per-cell signals would add N×M
 graph nodes and buy no extra memoization. A lazy `cellsOf` cannot live on `RenderRow` without
@@ -42,7 +42,7 @@ allocating a closure per row — which breaks "`rows()` never returns wrapper ob
 have to be a store method; uncached that is the same per-CD-pass cost as today, and cached it
 needs a `Map<RowId, Cell[]>` plus a second computed building the identical eager array.
 
-**Record, not ordered array (D3).** The engine owns *resolving the value*; the consumer keeps
+**Record, not ordered array (D3).** The engine owns _resolving the value_; the consumer keeps
 owning which columns render and in what order. An ordered array would promote every story host's
 local `visibleColumns` computed into core. The tradeoff dissolves on inspection: `renderRows`
 gains a `columns()` dependency either way, so "hiding a column recomputes every row" is a cost of
@@ -50,8 +50,8 @@ building values in `renderRows` at all, not a cost of declining to filter.
 
 **Group rows (D5, as amended).** A `kind: 'group'` row's `cells` carries its aggregates only —
 `cells = { ...aggregates }`. The group's own label is `groupKey.label`, never a `cells` entry.
-ADR-0021 is load-bearing here: `aggregates` is keyed by *declared column id*, while
-`groupKey.columnId` has named a *row field* since grouping's D7. Merging them would write entries
+ADR-0021 is load-bearing here: `aggregates` is keyed by _declared column id_, while
+`groupKey.columnId` has named a _row field_ since grouping's D7. Merging them would write entries
 no template loops over, and would put a group value in an unrelated column whenever a field name
 happened to match a column id. `cells` stays wholly column-keyed on both row kinds.
 
@@ -65,7 +65,7 @@ ripple through the columns config, `columnSchema()`, the `ColumnsPath` proxy, `s
 generated overloads for no gain.
 
 **Duplicate column ids throw (D10).** Keying `cells` by column id makes uniqueness load-bearing:
-two columns sharing an id collapse to last-wins, and *both* table cells then render the same
+two columns sharing an id collapse to last-wins, and _both_ table cells then render the same
 value. Validated in `resolveColumnDefs`, at construction, `ngDevMode`-guarded. Scope is the `id`,
 never the `accessor` — two columns reading one field under different headers stays legal. Prior
 art: Angular CDK throws in `_cacheColumnDefs()`; AG Grid auto-suffixes in `buildColumnTree`;

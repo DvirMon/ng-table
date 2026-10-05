@@ -39,7 +39,7 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
   array and hand out slices — strictly more machinery for an identical result.
 
 - **2026-09-18 — D3. `cells` is a record keyed by `columnId`, not an ordered array.**
-  `readonly cells: Readonly<Record<string, unknown>>`. The engine owns *resolving the value*;
+  `readonly cells: Readonly<Record<string, unknown>>`. The engine owns _resolving the value_;
   the consumer keeps owning which columns render and in what order. An ordered array would
   make the engine own a column render order it does not have today and would promote every
   story host's local `visibleColumns` computed into core — a much larger migration than #80's
@@ -72,11 +72,11 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
   `cells = { ...aggregates }`. The group's own label is `groupKey.label`, never a `cells` entry.
   - **Amended 2026-09-19, superseding the original "aggregates plus the group value under
     `groupKey.columnId`" form.** That version merged two key spaces. `aggregates` is keyed by
-    *declared column id* (`aggregates[column.id]` in `computeAggregates`), while
-    `groupKey.columnId` has held a *row field* key since D7 — `node.columnId` comes from
+    _declared column id_ (`aggregates[column.id]` in `computeAggregates`), while
+    `groupKey.columnId` has held a _row field_ key since D7 — `node.columnId` comes from
     `readGroupFieldValue(row, key)`, bracket access on the row, and the field name is a leftover
     from before that change. `resolveGroupLabel` treating "a column whose id matches" as a
-    *fallback tier* is the proof the match is coincidental. Consequences of the merged form:
+    _fallback tier_ is the proof the match is coincidental. Consequences of the merged form:
     grouping by a field with no matching column writes an entry no template loops over, and a
     column id colliding with an unrelated field puts the group value in the wrong column.
     ADR-0021 makes the separation of the two vocabularies an accepted rule.
@@ -89,7 +89,7 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
     alongside `index`/`sourceIndex` (ADR-0011 precedent).
 
 - **2026-09-18 — D6. Values are raw; formatting stays in pipes.** `{{ row.cells[column.id] |
-  dealAmount }}`. One pure pipe per formatting concern, as `grouping-story.pipes.ts` already
+dealAmount }}`. One pure pipe per formatting concern, as `grouping-story.pipes.ts` already
   does. Settles #80's Q3; formatting was already out of scope there.
 
 - **2026-09-18 — D7. `accessor` defines, `cells` reads.** Not two ways to one value: `accessor`
@@ -98,8 +98,8 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
 
 - **2026-09-18 — D8. `cells` stays `Readonly<Record<string, unknown>>`; no value generic on
   `ColumnDef`.** Settles #80's Q5.
-  - Precedent already in the repo: `grouping-story.pipes.ts:7-9` — *"Each takes `unknown`
-    because a cell reads through `ColumnDef.accessor`, whose return type is erased."*
+  - Precedent already in the repo: `grouping-story.pipes.ts:7-9` — _"Each takes `unknown`
+    because a cell reads through `ColumnDef.accessor`, whose return type is erased."_
   - A per-column value type would not help in this template shape anyway: `row.cells[column.id]`
     indexes by a runtime `string`, so a mapped type collapses to the union of every column's
     value type. Narrowing only pays when indexing by a literal, which a loop over columns never
@@ -118,14 +118,14 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
     left is `with-sorting.ts:117-118`.
   - **Why it is not folded in here.** `accessor` throwing inside the sort comparator has no
     fallback ADR-0014 settles: its `accessor` row says "the cell reads `undefined`", which in
-    the empty-check would sort the row into the empty bucket — *silently mis-sorted*, the exact
+    the empty-check would sort the row into the empty bucket — _silently mis-sorted_, the exact
     outcome the ADR's `sortFn` row rejects in favour of "that column's sort does not apply".
     Two of the ADR's own fallbacks collide, and picking one quietly inside a cell-value issue is
     how the wrong one ships. The follow-up issue settles it explicitly.
 
 - **2026-09-19 — D10. Duplicate column ids throw at construction, guarded by `ngDevMode`.**
   Keying `cells` by column id makes uniqueness load-bearing: two columns sharing an id collapse
-  to last-wins in the record, and *both* table cells then render the same value. That is not
+  to last-wins in the record, and _both_ table cells then render the same value. That is not
   hypothetical — TanStack v8 keys `Row._valuesCache` by column id, the same
   `Record<columnId, unknown>` shape, ships no check, and produces exactly that. Nothing
   validates uniqueness today; `resolveColumnDefs` (`engine/columns.ts`) just `.map()`s.
@@ -159,7 +159,7 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
   into `"object:[object Object]"`, so without a report the grouping is silently wrong while the
   table renders fine. The fix already exists (`GroupingRule.valueOf`, D7), which is what makes
   the report actionable — it names the missing declaration.
-  - Extends ADR-0014's reasoning rather than applying it: the ADR covers a callback *throwing*,
+  - Extends ADR-0014's reasoning rather than applying it: the ADR covers a callback _throwing_,
     this is a silent collapse. Same principle — a failure must be visible.
   - `console.error` matches the two existing report sites in `engine/grouping.ts` and the ADR's
     own "for now" scoping. A real diagnostics channel (injectable reporter, or a
@@ -175,10 +175,10 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
   2026-09-18. Not settled here; D1's eager plain-value build stands unless that thread
   overturns it.
   - **Correction 2026-09-18 (supersedes the original framing).** The argument this thread forked
-    on was *"`TableDataInput<TRow> = WritableSignal<TRow[]>` is one signal for the whole array,
-    so leaves cannot be finer-grained than the root."* That is **wrong as stated** and must not
+    on was _"`TableDataInput<TRow> = WritableSignal<TRow[]>` is one signal for the whole array,
+    so leaves cannot be finer-grained than the root."_ That is **wrong as stated** and must not
     be carried forward. Angular's `computed` recomputes on any dependency change but only
-    *propagates* when its own result differs by `Object.is` — so a fine-grained leaf over a
+    _propagates_ when its own result differs by `Object.is` — so a fine-grained leaf over a
     coarse root does work, and that is exactly how a Signal Forms field reads a single
     `WritableSignal` model and still behaves per field. A coarse `data` signal does not by
     itself rule out per-cell nodes.
@@ -186,21 +186,21 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
     root signal's shape:
     1. **A field is a write target holding state that is not derived from the model.**
        `touched`, `dirty`, validation errors have no other home, which is why `FieldTree`
-       nodes exist (`row-editing/active/with-row-editing/2-decisions.md`: *"`FieldState.reset()`
-       clears touched/dirty only"*). A cell is a read-only projection and `accessor` has no
+       nodes exist (`row-editing/active/with-row-editing/2-decisions.md`: _"`FieldState.reset()`
+       clears touched/dirty only"_). A cell is a read-only projection and `accessor` has no
        inverse (D4), so a cell node would hold one already-present derived value and no state
        of its own — the node earns nothing.
     2. **The field tree is structural; render rows are pipeline output.** `form(model)` builds
-       nodes from the model's *shape*, once, and the tree survives model changes. Render rows
+       nodes from the model's _shape_, once, and the tree survives model changes. Render rows
        are the result of filter → group → sort → expand, with rows synthesized (`kind: 'group'`,
        backing no `TRow`) and destroyed per evaluation — and columns mutate too (visibility,
        reorder, `setColumns`). Per-cell nodes would be an N×M grid dynamic on **both** axes,
        rebuilt by a pipeline rather than mirroring a type.
     3. **Signal Forms already handles the easier one-axis version imperfectly.** For `applyEach`
-       over `data()`, the same decisions doc records as accepted costs: *"N field nodes for N
-       rows, independent of pagination or virtual scroll"* and *"structural mutation
+       over `data()`, the same decisions doc records as accepted costs: _"N field nodes for N
+       rows, independent of pagination or virtual scroll"_ and _"structural mutation
        (`addRow`/`removeRow`) misattributing dirty/touched, since Signal Forms arrays are
-       index-keyed with no identity hook. Both are upstream limits with no local fix."* Nodes
+       index-keyed with no identity hook. Both are upstream limits with no local fix."_ Nodes
        keyed to `renderRows()` inherit that and add a second dynamic axis.
   - **The question to actually answer in that session** is not whether per-cell granularity is
     achievable — it is — but: a cell node would hold one derived value and no state of its own,
@@ -209,10 +209,10 @@ Grilled in that order: C1 first, C2 alongside it (shared wrap site), C3/C4/C5 af
     rebuilds, plus the `(rowId, columnId)` cache and pruning contract that set would need
     alongside ADR-0006?
   - **Verify from source before deciding:** how `FieldState.value` actually reads and propagates
-    in Signal Forms (pinned version, not `main`). The claims above about *why* field nodes exist
+    in Signal Forms (pinned version, not `main`). The claims above about _why_ field nodes exist
     are grounded in this repo's own docs; the propagation mechanism is assumed from `computed`
     semantics and should be confirmed against `packages/forms/signals/src/`.
-  - Revisit condition: a granular *source* — per-row signals from the consumer, or the library
+  - Revisit condition: a granular _source_ — per-row signals from the consumer, or the library
     wrapping rows internally. The latter is an internal row copy, which the locked invariants
     forbid, so reopening is an ADR on the data-input shape, not a cell-model change.
 

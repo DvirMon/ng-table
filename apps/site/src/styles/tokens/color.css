@@ -62,7 +62,7 @@
   --ngpt-onband-text: oklch(0.2 0.03 328);
   --ngpt-onband-fill-inverse: oklch(0.18 0.02 328);
   --ngpt-onband-fill-inverse-hover: oklch(0.24 0.03 328);
-  --ngpt-navbar-scrolled: #18181C;
+  --ngpt-navbar-scrolled: #18181c;
   --ngpt-focus-ring: oklch(0.68 0.22 328 / 0.6);
   --ngpt-status-success: oklch(0.75 0.13 150);
   --ngpt-status-warning: oklch(0.8 0.12 85);

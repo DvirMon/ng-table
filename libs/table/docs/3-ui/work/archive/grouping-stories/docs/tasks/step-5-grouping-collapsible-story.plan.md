@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — grouping-collapsible/: the grouped table as a navigable outline"
+title: 'Step 5 — grouping-collapsible/: the grouped table as a navigable outline'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: D
@@ -43,7 +43,7 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
    `toggleExpanded(row.id)` at Tier 0 (no grouping/expansion directive ships). The whole header row
    is an enlarged hit area delegating to that button (U3, Telerik 1525732 — a real ask, an
    unimplemented one, so it is the secondary target, not the primary).
-   Because it is a real `<button>`, Enter *and* Space both toggle — P11's peer split (AG Grid binds
+   Because it is a real `<button>`, Enter _and_ Space both toggle — P11's peer split (AG Grid binds
    Enter, MUI X binds Space) is resolved by using a button rather than picking a side. Say so in the
    doc-comment.
 3. Three-level fixture depth, so collapsing a parent hides the whole subtree (D11, the render stage
@@ -51,7 +51,7 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
 4. **Expand all / Collapse all** — an honest regression. Implement with a story-local walk over
    `renderRows()`, plus an on-canvas notice that `expandAll()` walks `childrenAccessor` over real
    rows and cannot discover a group (S5), and that the button cannot label itself correctly without
-   S4's "is everything expanded" signal. P3: the *verb* is convergent (4/5), the *button* is not
+   S4's "is everything expanded" signal. P3: the _verb_ is convergent (4/5), the _button_ is not
    (MRT alone) — so OQ-3's "own the state, ship no UI" is defensible, but the state has to exist.
 5. **Refetch** — a real MSW `GET /api/grouped-rows` via `injectGroupedRowsApi()` returning fresh
    object identities; collapse state must survive (S3/OQ-4 confirmed or disproved on screen).
@@ -60,7 +60,7 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
    story 3.3's unverified fourth criterion actually gets tested).
 7. **Regroup** — collapse state is discarded wholesale on a grouping change, never half-restored
    (mui-x #16495 is the half-restored failure: chevron reads expanded, content gone).
-8. **S-G1** — clicking the *grouped* column's header. D5's accepted visible no-op; make it legible
+8. **S-G1** — clicking the _grouped_ column's header. D5's accepted visible no-op; make it legible
    on canvas instead of leaving a dead header (U9's minimum bar).
 9. **E-G1** — the fixture rows carrying `children` make `'group'` and `'tree'` both run: two
    visibly different affordances that never trigger each other (primeng #18171 is the failure).
@@ -68,7 +68,7 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
 **`.stories.ts` + `.mdx`.**
 
 - Title `Table / Grouping / Collapsible`. Exports: `Default`, `ForcedFailure` (the refetch fails;
-  collapse state must survive a *failed* refresh too).
+  collapse state must survive a _failed_ refresh too).
 - `ForcedFailure` gets its own `## Forced failure` section in the `.mdx` with
   `<Canvas of={Stories.ForcedFailure} />` and a one-paragraph summary — Angular's docgen does not
   surface a CSF export's JSDoc, so without it the two stories are indistinguishable to a viewer.
@@ -99,7 +99,7 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
 
 - [ ] Chevron toggles with mouse, Enter and Space; `aria-expanded` tracks state.
 - [ ] Collapsing a parent hides its entire subtree at three levels.
-- [ ] Collapse state survives Refetch (success *and* forced failure) and a sort change; Regroup
+- [ ] Collapse state survives Refetch (success _and_ forced failure) and a sort change; Regroup
       discards it wholesale.
 - [ ] Sorting a data column leaves group order intact; sorting the grouped column is a legible
       no-op.
@@ -107,4 +107,5 @@ Covers 2.1 (+ keyboard), 2.2 (honest regression), 2.5 in three forms, S-G1, S-G2
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 4: grouping-static/](step-4-grouping-static-story.plan.md) | [Step 6: grouping-selection/](step-6-grouping-selection-story.plan.md) →

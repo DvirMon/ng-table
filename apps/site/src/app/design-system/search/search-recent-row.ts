@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  booleanAttribute,
+  computed,
+  input,
+  output,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideHistory, lucideStar, lucideX } from '@ng-icons/lucide';
 import { IconButton } from '../icon-button/icon-button';

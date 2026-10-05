@@ -52,7 +52,7 @@ export function createRecorderSession<TRow, TRule>(): {
       throw new Error(
         "[schema] A path handle was used outside its schema function's synchronous " +
           'execution. Handles are only valid for declare-phase calls made directly inside ' +
-          'the schema function they were fabricated for.'
+          'the schema function they were fabricated for.',
       );
     }
   }
@@ -63,7 +63,7 @@ export function createRecorderSession<TRow, TRule>(): {
  * its session closed, so the open-check stays in one place and this is a plain accessor.
  */
 export function recorderOf<TRow, TRule>(
-  handle: RecordedHandle<TRow, TRule>
+  handle: RecordedHandle<TRow, TRule>,
 ): PathRecorder<TRow, TRule> {
   return handle[PATH_RECORDER];
 }
@@ -76,7 +76,7 @@ export function recorderOf<TRow, TRule>(
  * Proxy+cache mechanism instead of each reimplementing it.
  */
 export function createPathProxy<THandle>(
-  makeHandle: (id: string) => THandle
+  makeHandle: (id: string) => THandle,
 ): Record<string, THandle> {
   const handleCache = new Map<string, THandle>();
 
@@ -95,6 +95,6 @@ export function createPathProxy<THandle>(
         handleCache.set(property, handle);
         return handle;
       },
-    }
+    },
   ) as Record<string, THandle>;
 }

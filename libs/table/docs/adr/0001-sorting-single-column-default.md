@@ -1,6 +1,6 @@
 ---
 status: accepted
-supersedes: "PRD #2 / issue #4 sorting decision (always-additive toggleSort)"
+supersedes: 'PRD #2 / issue #4 sorting decision (always-additive toggleSort)'
 ---
 
 # Single-column sort is the default; multi-column accumulation is opt-in

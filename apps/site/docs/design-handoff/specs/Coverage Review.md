@@ -5,13 +5,22 @@ atomic: —
 spec: specs/Coverage Review.md
 frame: null
 owns:
-  - "The record of what was reviewed, decided, deferred, and why"
+  - 'The record of what was reviewed, decided, deferred, and why'
 does_not_own:
-  - "Any build instruction — this file is history, not spec"
+  - 'Any build instruction — this file is history, not spec'
 depends_on: []
 states: []
 a11y: []
-tokens: [--ngpt-bg-deep, --ngpt-status-, --ngpt-bg-active, --ngpt-bg-hover, --ngpt-comp-tab-item-active-bg, --ngpt-text-primary, --ngpt-focus-ring]
+tokens:
+  [
+    --ngpt-bg-deep,
+    --ngpt-status-,
+    --ngpt-bg-active,
+    --ngpt-bg-hover,
+    --ngpt-comp-tab-item-active-bg,
+    --ngpt-text-primary,
+    --ngpt-focus-ring,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -21,7 +30,7 @@ Developer review of all 24 spec files + 13 components, 2026-08-19.
 
 ## Verdict
 
-**Yes for the static page, no for a working site.** Anything visible in a screenshot is buildable today: the 3-column grid, navbar, sidebar (incl. mobile drawer), TOC, footers, and all 13 atoms/molecules have box models, colors, and states. What's missing is almost entirely *stateful* — surfaces that only exist after a click, and behavior tokens.
+**Yes for the static page, no for a working site.** Anything visible in a screenshot is buildable today: the 3-column grid, navbar, sidebar (incl. mobile drawer), TOC, footers, and all 13 atoms/molecules have box models, colors, and states. What's missing is almost entirely _stateful_ — surfaces that only exist after a click, and behavior tokens.
 
 Two systemic holes behind the individual gaps:
 
@@ -30,14 +39,14 @@ Two systemic holes behind the individual gaps:
 
 ## Decided in review
 
-| # | Gap | Decision |
-| --- | --- | --- |
-| 1 | Interactive data table UI (sort/filter/select/paginate/resize) | **Out of scope.** Docs chrome only; demo tables inherit library styling. |
-| 2 | Preview Window interactive states | **Spec all three:** Source panel, open dropdown menu, copy confirmation. |
-| 3 | Search | **Spec both surfaces as one:** navbar search field that opens a ⌘K overlay. |
-| 4 | Motion | **Full foundation:** duration + easing tokens, per-pattern table (hover, drawer, overlay, tab, scroll), `prefers-reduced-motion`. |
-| 5 | Code syntax highlighting | **Shiki at build time, used as shipped.** Container stays ours (`--ngpt-bg-deep`, border, radius); syntax colors are Shiki's built-in dark theme — the one deliberate exception to the palette. Chrome: line-number gutter (CSS counter) + Shiki meta line highlighting. Copy button lives in the Preview Window toolbar, not in the block. |
-| 6 | Docs content patterns | **In:** callouts (note/warning/tip), H3/H4 + nested TOC, list & blockquote styling, heading anchor links. **Out:** version selector, light-theme toggle, breadcrumbs, edit-this-page meta. |
+| #   | Gap                                                            | Decision                                                                                                                                                                                                                                                                                                                                    |
+| --- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Interactive data table UI (sort/filter/select/paginate/resize) | **Out of scope.** Docs chrome only; demo tables inherit library styling.                                                                                                                                                                                                                                                                    |
+| 2   | Preview Window interactive states                              | **Spec all three:** Source panel, open dropdown menu, copy confirmation.                                                                                                                                                                                                                                                                    |
+| 3   | Search                                                         | **Spec both surfaces as one:** navbar search field that opens a ⌘K overlay.                                                                                                                                                                                                                                                                 |
+| 4   | Motion                                                         | **Full foundation:** duration + easing tokens, per-pattern table (hover, drawer, overlay, tab, scroll), `prefers-reduced-motion`.                                                                                                                                                                                                           |
+| 5   | Code syntax highlighting                                       | **Shiki at build time, used as shipped.** Container stays ours (`--ngpt-bg-deep`, border, radius); syntax colors are Shiki's built-in dark theme — the one deliberate exception to the palette. Chrome: line-number gutter (CSS counter) + Shiki meta line highlighting. Copy button lives in the Preview Window toolbar, not in the block. |
+| 6   | Docs content patterns                                          | **In:** callouts (note/warning/tip), H3/H4 + nested TOC, list & blockquote styling, heading anchor links. **Out:** version selector, light-theme toggle, breadcrumbs, edit-this-page meta.                                                                                                                                                  |
 
 ## Spec backlog — closed 2026-08-19
 

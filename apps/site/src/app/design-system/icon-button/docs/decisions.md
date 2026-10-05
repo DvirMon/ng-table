@@ -15,7 +15,7 @@
 `icon()` is caller-supplied and icon-button is consumed by many other domains (code-block copy
 button, install-row copy button, toolbar run buttons, pagination arrows, drawer close, mobile
 menu trigger, etc. per `docs/CONVENTIONS.md`'s fixed-contract table). Because registration is
-local-only (`viewProviders`, never `app.config.ts`) and the `<ng-icon>` lives in *this*
+local-only (`viewProviders`, never `app.config.ts`) and the `<ng-icon>` lives in _this_
 component's own view, every icon name any caller might ever pass through `icon()` must be
 registered here — icon-button can't know at compile time which glyph a given instance will
 render. I registered the full Lucide inventory listed in `Iconography.md`'s mapping table
@@ -64,7 +64,7 @@ wires the clipboard timer (install-row, code-block).
 ## Scope deltas from the source spec (not in the fixed contract)
 
 - **No `disabled` input.** The spec's States table lists `Disabled | disabled prop | Opacity
-  0.5`, but the task's fixed contract only lists `icon`, `label`, `size`, `state`, `pressed`.
+0.5`, but the task's fixed contract only lists `icon`, `label`, `size`, `state`, `pressed`.
   Implemented nothing for it (no dead `:disabled` CSS, no unused input) rather than
   improvising an input the contract doesn't name. Flagging so a later pass can add it
   deliberately if a consumer needs it.
@@ -74,9 +74,9 @@ wires the clipboard timer (install-row, code-block).
   only renders whatever `state()` it's given. Token is unused inside this component; it belongs
   to whichever consumer (install-row, code-block) owns the `setTimeout`.
 - **Focus ring not restyled locally.** The spec's mock CSS repeats `box-shadow: 0 0 0 2px
-  var(--ngpt-focus-ring)` under `:focus-visible`, but `src/styles/global.css` already applies
+var(--ngpt-focus-ring)` under `:focus-visible`, but `src/styles/global.css` already applies
   that exact rule globally. Only added the state-specific part (`color:
-  var(--ngpt-text-primary)`) locally, per CONVENTIONS rule #5 ("don't restyle focus locally
+var(--ngpt-text-primary)`) locally, per CONVENTIONS rule #5 ("don't restyle focus locally
   unless your spec says an element needs a different treatment") — the ring itself needs no
   different treatment here.
 
@@ -92,12 +92,12 @@ records the conversion and supersedes the parts of it that conflict.
 `ngpt-icon-button` → `button[ngptIconButton]`. The template is now `<ng-content />` in
 `icon-button.html` (separate file — CONVENTIONS forbids inline templates even for a one-liner),
 and every `.icon-button` rule moved verbatim onto `:host` / `:host(:pseudo)`. No wrapper element
-ships; the host *is* the button, so consumers bind the native `(click)` and `pressed:
+ships; the host _is_ the button, so consumers bind the native `(click)` and `pressed:
 output<void>()` is gone.
 
 `type="button"` is applied as a constructor default exactly as `pill-button` does — imperative,
 guarded on `hasAttribute('type')`, so a consumer's explicit `type="submit"` still wins where a
-host *binding* would have clobbered it. Unlike `pill-button` there is no `tagName` check, because
+host _binding_ would have clobbered it. Unlike `pill-button` there is no `tagName` check, because
 the selector admits only `<button>`.
 
 ## `icon` and the 13-icon registry are gone
@@ -123,10 +123,10 @@ instead, for a reason that only surfaced once both halves were written:
    case ADR-0005 says never to re-declare as an input, and the same call the ADR made for
    `disabled`/`href`/`type`. `label` existed only to bridge the wrapper.
 2. **Keeping it is a real collision, not a style preference.** `[ngptCopyConfirm]` binds
-   `[attr.aria-label]` per state on the *same host*. Two directives binding the same attribute
+   `[attr.aria-label]` per state on the _same host_. Two directives binding the same attribute
    both write it every change-detection pass; which one lands is decided by Angular's
    directive-execution order, which is not part of the public contract. Worse, with `label` unset
-   `icon-button` would write `null` — *removing* the attribute the directive just set. The brief
+   `icon-button` would write `null` — _removing_ the attribute the directive just set. The brief
    asked for both "`label` sets `aria-label` on the host" and "per-state `aria-label` on the
    host"; those cannot both be true of one element.
 
@@ -159,7 +159,7 @@ still claims "icon color per state". A directive carries no stylesheet, so this 
 the coloring can live without moving a domain's CSS out of its domain — the exact split ADR-0005
 rejected for `libs/shared/design-system`.
 
-Consequence: `[ngptCopyConfirm]` on a host *other* than `ngptIconButton` gets the behavior but no
+Consequence: `[ngptCopyConfirm]` on a host _other_ than `ngptIconButton` gets the behavior but no
 confirmed/failed color. Acceptable — coloring is chrome, and that host owns its own chrome.
 
 ## `:host(:disabled)` added

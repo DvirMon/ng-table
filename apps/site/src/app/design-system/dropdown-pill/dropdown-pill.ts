@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, TemplateRef, input, output, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  TemplateRef,
+  input,
+  output,
+  viewChild,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideChevronDown } from '@ng-icons/lucide';
 import { NgpMenuTrigger } from 'ng-primitives/menu';
@@ -36,7 +43,8 @@ export class DropdownPill {
 
   readonly optionSelected = output<string>();
 
-  private readonly menu = viewChild.required<TemplateRef<NgpOverlayTemplateContext<unknown>>>('menu');
+  private readonly menu =
+    viewChild.required<TemplateRef<NgpOverlayTemplateContext<unknown>>>('menu');
 
   protected readonly open = withMenuTriggerPanel(this.menu).open;
 

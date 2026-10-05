@@ -16,14 +16,12 @@ declare const ngDevMode: boolean | undefined;
 export function assertWrittenIdsAreKnown(
   ids: Iterable<string>,
   knownIds: Iterable<string>,
-  label: string
+  label: string,
 ): void {
   const known = new Set(knownIds);
   for (const id of ids) {
     if (!known.has(id)) {
-      throw new Error(
-        `[${label}] Unknown column id "${id}" — no declared column has this id.`
-      );
+      throw new Error(`[${label}] Unknown column id "${id}" — no declared column has this id.`);
     }
   }
 }
@@ -40,7 +38,7 @@ export function assertWrittenIdsAreKnown(
 export function assertDeclarationsAreKnown(
   declaredIds: Iterable<string>,
   knownIds: Iterable<string>,
-  label: string
+  label: string,
 ): void {
   if (typeof ngDevMode === 'undefined' || ngDevMode) {
     assertWrittenIdsAreKnown(declaredIds, knownIds, label);

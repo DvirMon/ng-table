@@ -9,6 +9,7 @@ files:
   - libs/table/src/api/features/with-grouping/feature.types.spec.ts
   - libs/table/src/table.mock.ts
 ---
+
 # Step 4 — Wire the parent link into withGrouping()
 
 This step makes `withGrouping()` read the parent link from the stage context and pass it to every grouping call.
@@ -43,4 +44,5 @@ Decisions: [TR16](../../../../../../../decisions/tree.md), [TR17](../../../../..
 - [ ] Without `parentId`, grouping is unchanged (🧪 awaiting CI).
 
 ---
+
 ← [Step 3: Group queries follow the root](step-3-group-queries-follow-root.plan.md) | [Step 5: Show roots-only grouping in the collapsible story](step-5-story-roots-only-grouping.plan.md) →

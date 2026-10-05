@@ -74,4 +74,5 @@ signals-in-a-component; a bare `signal()` stands in for the consumer's `Writable
 - [ ] `nx test shared-design-system --testPathPattern=row-mutations` passes
 
 ---
+
 ← [Step 2: Row updaters and updateRows](step-2-row-updaters-and-updaterows.plan.md)

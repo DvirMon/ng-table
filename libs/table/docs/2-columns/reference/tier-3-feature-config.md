@@ -11,7 +11,7 @@ parent: ../architecture.md
 # Tier 3 — Feature Config (store-owned, column-seeded)
 
 **Each seeds an opt-in store feature; dead unless that feature is composed.** The runtime
-*state* (active sort direction, active filter value) stays store-owned. Ship last. Read
+_state_ (active sort direction, active filter value) stays store-owned. Ship last. Read
 [Ownership model](ownership-model.md) first — as of 2026-07-25, this tier split functions
 duplicating an existing `ColumnDef` field (`filterFn`, `enableFiltering`, `aggregateFn`) as
 **reactive/async only**, static goes on the array literal instead; functions with no `ColumnDef`
@@ -79,13 +79,13 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
 
 ## Summary
 
-| Function | Static? | Seeds / duplicates | AG-Grid analog |
-|---|---|---|---|
-| `sortNulls` / `sortFn` / `sortable` (shipped — #100, `withSorting({ schema })`) | n/a — no `ColumnDef` field to duplicate | superseded, see above | `sortType` |
-| `applyAggregateFn` | ❌ reactive/async only | duplicates `ColumnDef` field — array literal for static | `aggFunc` |
-| `applyDefaultSort` (still speculative, unbuilt — product's OQ-sort-4) | ✅ seed keeps static | no `ColumnDef` field — seeds `withSorting()`'s initial sort state | `sort` / `sortIndex` |
-| `applyEnableFiltering` / `applyFilterFn` | ❌ reactive/async only | duplicates `ColumnDef` field — array literal for static | `filter` + filter model |
-| `applyGroup` | ✅ static seed + reactive `{when}` | no `ColumnDef` field — seeds/toggles `withGrouping()` state | `rowGroup` / `rowGroupIndex` |
+| Function                                                                        | Static?                                 | Seeds / duplicates                                                | AG-Grid analog               |
+| ------------------------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------- | ---------------------------- |
+| `sortNulls` / `sortFn` / `sortable` (shipped — #100, `withSorting({ schema })`) | n/a — no `ColumnDef` field to duplicate | superseded, see above                                             | `sortType`                   |
+| `applyAggregateFn`                                                              | ❌ reactive/async only                  | duplicates `ColumnDef` field — array literal for static           | `aggFunc`                    |
+| `applyDefaultSort` (still speculative, unbuilt — product's OQ-sort-4)           | ✅ seed keeps static                    | no `ColumnDef` field — seeds `withSorting()`'s initial sort state | `sort` / `sortIndex`         |
+| `applyEnableFiltering` / `applyFilterFn`                                        | ❌ reactive/async only                  | duplicates `ColumnDef` field — array literal for static           | `filter` + filter model      |
+| `applyGroup`                                                                    | ✅ static seed + reactive `{when}`      | no `ColumnDef` field — seeds/toggles `withGrouping()` state       | `rowGroup` / `rowGroupIndex` |
 
 > Pivot-only AG-Grid fields (`pivot`, `pivotIndex`, `pivotSort`, `showValuesAs`, `valueIndex`)
 > excluded — no pivot feature in this table.
@@ -93,12 +93,12 @@ applyAggregateFn<TRow, K>(path, aggregateFn: { when: (ctx) => (rows: TRow[]) => 
 ## Open questions (Tier 3)
 
 - [x] **Feature-absent handling** — RESOLVED 2026-07-31: compile error. `applyGroup` on a column
-  rejects at type-check time when `withGrouping()` is not composed — matching how the store now
-  expresses a dependency, as an F-bounded `Feature<In, Out>` input slice typed by argument order
-  (#33), not the removed ngrx `type<>` marker. Requires threading feature presence into the
-  schema fn's / `columnSchema()` generic. Same resolution should apply to the analogous case in
-  [`1-state/architecture.md`](../../1-state/architecture.md).
+      rejects at type-check time when `withGrouping()` is not composed — matching how the store now
+      expresses a dependency, as an F-bounded `Feature<In, Out>` input slice typed by argument order
+      (#33), not the removed ngrx `type<>` marker. Requires threading feature presence into the
+      schema fn's / `columnSchema()` generic. Same resolution should apply to the analogous case in
+      [`1-state/architecture.md`](../../1-state/architecture.md).
 - [x] **Reusable archetypes** — RESOLVED 2026-07-31: deferred. No confirmed repeated-bundle use
-  case yet; ship Tier 1-3 `apply*` functions first, revisit `apply(path, schema)` composability
-  (a `moneyColumn`-style archetype) once a real case surfaces. See
-  [Signal Forms techniques §5](signal-forms-techniques.md#5--applypath-schema--schema-reuse--defer--revisits-no-composability).
+      case yet; ship Tier 1-3 `apply*` functions first, revisit `apply(path, schema)` composability
+      (a `moneyColumn`-style archetype) once a real case surfaces. See
+      [Signal Forms techniques §5](signal-forms-techniques.md#5--applypath-schema--schema-reuse--defer--revisits-no-composability).

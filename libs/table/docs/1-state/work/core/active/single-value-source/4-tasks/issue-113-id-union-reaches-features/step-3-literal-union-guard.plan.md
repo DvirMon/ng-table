@@ -20,13 +20,13 @@ This is the gate the rest of the epic waits on. #114, #115 and #100 all
 key their declarations by column id; if the union silently widens to
 `string`, every one of them still compiles and every path becomes an index
 signature with no error. ADR-0019 records this under Consequences —
-*"Literal inference is required, and its absence is silent"* — and the
+_"Literal inference is required, and its absence is silent"_ — and the
 epic's `decisions.md` names it the one risk K1 carries.
 
 A spec is the only place this can be caught, because the failure has no
 runtime expression: at runtime `buildColumnsPath`'s `get` trap fabricates a
 handle for any string, widened or not. AC #3 asks for the failure mode to
-be *covered*, not documented.
+be _covered_, not documented.
 
 ## What To Do
 
@@ -62,12 +62,12 @@ a `createTable()` slot and put `ColumnIdOf<In>` in a consumer's hands.
 
 2. **A typo is rejected at the call site.** The same call with
    `path.statuss`, under `// @ts-expect-error — 'statuss' was never
-   declared in columns`. This is AC #1. Keep it in its own `it` so the
+declared in columns`. This is AC #1. Keep it in its own `it` so the
    expected error cannot be absorbed by an unrelated failure on an
    adjacent line.
 
 3. **The widening failure mode is pinned.** A second fixture whose helper
-   *is* annotated `: ColumnDef<Row>[]`, and an assertion that the recovered
+   _is_ annotated `: ColumnDef<Row>[]`, and an assertion that the recovered
    union is exactly `string`. Two things must hold and both are asserted:
    the union is `string`, **and** `path.anythingAtAll` compiles under it —
    the index-signature degradation, stated rather than implied. This is
@@ -100,7 +100,7 @@ a `createTable()` slot and put `ColumnIdOf<In>` in a consumer's hands.
 
 ## Risks / Watchouts
 
-- **`@ts-expect-error` is satisfied by *any* error on the next line.** In
+- **`@ts-expect-error` is satisfied by _any_ error on the next line.** In
   case 2, assert the surrounding call still produces a store of the
   expected type, so an error caused by something other than the typo shows
   up as a second failure rather than passing quietly.
@@ -135,4 +135,5 @@ a `createTable()` slot and put `ColumnIdOf<In>` in a consumer's hands.
       make it pass.
 
 ---
+
 ← [Step 2: The generator carries `TId` into every slot](step-2-generator-carries-tid.plan.md) | [Step 4: Record the escape-hatch decision](step-4-record-escape-hatch-decision.plan.md) →

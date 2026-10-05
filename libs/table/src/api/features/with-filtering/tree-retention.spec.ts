@@ -16,7 +16,7 @@ function r(id: RowId, parent: RowId | null): Row {
 function retain(
   rows: readonly Row[],
   matchIds: readonly RowId[],
-  { includeDescendants = false }: { includeDescendants?: boolean } = {}
+  { includeDescendants = false }: { includeDescendants?: boolean } = {},
 ) {
   return retainTreeMatches(rows, {
     matches: (row) => matchIds.includes(row.id),
@@ -35,13 +35,7 @@ describe('retainTreeMatches', () => {
   });
 
   it('keeps every ancestor of a match and reports them as context rows', () => {
-    const rows = [
-      r('root', null),
-      r('p', 'root'),
-      r('leaf', 'p'),
-      r('sib', 'p'),
-      r('other', null),
-    ];
+    const rows = [r('root', null), r('p', 'root'), r('leaf', 'p'), r('sib', 'p'), r('other', null)];
 
     const result = retain(rows, ['leaf']);
 
@@ -64,10 +58,7 @@ describe('retainTreeMatches', () => {
   });
 
   it('keeps a shared ancestor once when several descendants match', () => {
-    const result = retain(
-      [r('p', null), r('c1', 'p'), r('c2', 'p')],
-      ['c1', 'c2']
-    );
+    const result = retain([r('p', null), r('c1', 'p'), r('c2', 'p')], ['c1', 'c2']);
 
     expect(result.rows.map(trackBy)).toEqual(['p', 'c1', 'c2']);
     expect(result.rows).toHaveLength(3);

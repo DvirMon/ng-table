@@ -9,14 +9,7 @@ import type {
 } from '../../../engine/filters/types';
 import type { FilterOptions } from './types';
 import { equalsCriterion } from '../../../engine/filters/state';
-import {
-  hasAnyOf,
-  hasNoneOf,
-  isContaining,
-  isEqual,
-  isInDateRange,
-  isInRange,
-} from './matchers';
+import { hasAnyOf, hasNoneOf, isContaining, isEqual, isInDateRange, isInRange } from './matchers';
 
 // The declaration rules called inside a `withFiltering` schema body. Each builds and *returns*
 // its own `FilterRule`, keyed later by the object property it's assigned to — bare verbs
@@ -52,7 +45,7 @@ interface Emptiness {
 // neither, the rule's own check holds.
 function resolveEmptiness(
   options: { readonly emptyValue?: unknown; readonly isEmpty?: unknown } | undefined,
-  fallback: Emptiness
+  fallback: Emptiness,
 ): Emptiness {
   const explicit = options?.isEmpty as ((v: unknown) => boolean) | undefined;
   const override = options?.emptyValue;
@@ -80,7 +73,7 @@ function resolveEmptiness(
  */
 export function equals<TRow, K extends string, V, const TEmpty = never>(
   path: FilterHandle<TRow, K, V>,
-  options?: FilterOptions<V | null | TEmpty, TRow> & { readonly emptyValue?: TEmpty }
+  options?: FilterOptions<V | null | TEmpty, TRow> & { readonly emptyValue?: TEmpty },
 ): FilterRule<V | null | TEmpty, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => v == null,
@@ -105,7 +98,7 @@ export function equals<TRow, K extends string, V, const TEmpty = never>(
  */
 export function contains<TRow, K extends string, V>(
   path: FilterHandle<TRow, K, V>,
-  options?: FilterOptions<string, TRow>
+  options?: FilterOptions<string, TRow>,
 ): FilterRule<string, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => v === '',
@@ -131,7 +124,7 @@ export function contains<TRow, K extends string, V>(
  */
 export function inRange<TRow, K extends string, V>(
   path: FilterHandle<TRow, K, V>,
-  options?: FilterOptions<RangeCriterion, TRow>
+  options?: FilterOptions<RangeCriterion, TRow>,
 ): FilterRule<RangeCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => isEmptyRange(v as RangeCriterion),
@@ -157,7 +150,7 @@ export function inRange<TRow, K extends string, V>(
  */
 export function inDateRange<TRow, K extends string, V>(
   path: FilterHandle<TRow, K, V>,
-  options?: FilterOptions<DateRangeCriterion, TRow>
+  options?: FilterOptions<DateRangeCriterion, TRow>,
 ): FilterRule<DateRangeCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => isEmptyDateRange(v as DateRangeCriterion),
@@ -183,7 +176,7 @@ export function inDateRange<TRow, K extends string, V>(
  */
 export function hasAny<TRow, K extends string, V, TItem = ItemOf<V>>(
   path: FilterHandle<TRow, K, V>,
-  options?: FilterOptions<readonly TItem[], TRow>
+  options?: FilterOptions<readonly TItem[], TRow>,
 ): FilterRule<readonly TItem[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
@@ -209,7 +202,7 @@ export function hasAny<TRow, K extends string, V, TItem = ItemOf<V>>(
  */
 export function hasNone<TRow, K extends string, V, TItem = ItemOf<V>>(
   path: FilterHandle<TRow, K, V>,
-  options?: FilterOptions<readonly TItem[], TRow>
+  options?: FilterOptions<readonly TItem[], TRow>,
 ): FilterRule<readonly TItem[], TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: (v: unknown) => Array.isArray(v) && v.length === 0,
@@ -240,7 +233,7 @@ export function hasNone<TRow, K extends string, V, TItem = ItemOf<V>>(
 export function filter<TRow, K extends string, V, TCriterion>(
   path: FilterHandle<TRow, K, V>,
   predicate: (cell: V, criterion: TCriterion) => boolean,
-  options?: FilterOptions<TCriterion, TRow>
+  options?: FilterOptions<TCriterion, TRow>,
 ): FilterRule<TCriterion, TRow> {
   const { isEmpty, emptyValue } = resolveEmptiness(options, {
     isEmpty: () => false,
@@ -271,7 +264,7 @@ export function filter<TRow, K extends string, V, TCriterion>(
 export function anyOf<C extends readonly [unknown, ...unknown[]]>(
   children: C & {
     readonly [I in keyof C]: FilterRule<CriterionOf<C[0]>, RowOfRule<C[0]>>;
-  }
+  },
 ): GroupRule<CriterionOf<C[0]>> {
   const records = children as readonly Omit<FilterRuleRecord<unknown>, 'key'>[];
   if (records.length === 0) {

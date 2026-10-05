@@ -14,10 +14,10 @@ A consumer-facing side channel for attaching arbitrary data to a column, modeled
 Angular Signal Forms' `createMetadataKey()` / `metadata()` / `field().metadata(key)`
 (https://angular.dev/guide/forms/signals/field-metadata).
 
-## Not the same thing as `signal-forms-techniques.md` §1's *generic per-key reducer*
+## Not the same thing as `signal-forms-techniques.md` §1's _generic per-key reducer_
 
 [signal-forms-techniques.md §1](signal-forms-techniques.md#1--generic-metadata--reducer-instead-of-n-bespoke-apply--decided-2026-07-25--hybrid)
-sketches an *internal* generic `metadata()` + reducer core, where every rule function (`visible`,
+sketches an _internal_ generic `metadata()` + reducer core, where every rule function (`visible`,
 `applyWidth`, ...) routes through this mechanism and each key declares its own reducer
 (`and`/`or`/`min`/`max`/...). That generic-reducer system is still **not implemented** — only
 one key was actually wired up this way: `visible`/`visibleAsync` now call this doc's
@@ -27,12 +27,12 @@ table. `applyWidth`/`applyFlex`/`applyPinned` etc. are untouched — still plain
 routed through metadata at all. Do not conflate "one key got a hardcoded exemption" with "the
 generic reducer core landed":
 
-| | §1's generic reducer core | This doc's mechanism |
-|---|---|---|
-| Who calls it | Every rule function would route through it | Consumer code directly, plus `visible`/`visibleAsync` (→ `VISIBLE`) |
-| Engine involvement | Would drive every `ColumnDef` field the engine reads (`visible`, `width`, ...) | Only `visible`, via the one `VISIBLE`-key exemption; everything else lands in `ColumnDef.meta` and the engine never looks at it again |
-| Conflict handling | Per-key declared reducer (`and`/`or`/`min`/`max`/...) | Single-writer by default — a second registration for the same `(column, key)` throws; `VISIBLE` is the sole hardcoded AND-combine exception |
-| Status | Drafted, not implemented | Implemented (including the `VISIBLE` wrapper) |
+|                    | §1's generic reducer core                                                      | This doc's mechanism                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who calls it       | Every rule function would route through it                                     | Consumer code directly, plus `visible`/`visibleAsync` (→ `VISIBLE`)                                                                         |
+| Engine involvement | Would drive every `ColumnDef` field the engine reads (`visible`, `width`, ...) | Only `visible`, via the one `VISIBLE`-key exemption; everything else lands in `ColumnDef.meta` and the engine never looks at it again       |
+| Conflict handling  | Per-key declared reducer (`and`/`or`/`min`/`max`/...)                          | Single-writer by default — a second registration for the same `(column, key)` throws; `VISIBLE` is the sole hardcoded AND-combine exception |
+| Status             | Drafted, not implemented                                                       | Implemented (including the `VISIBLE` wrapper)                                                                                               |
 
 ## API
 
@@ -42,7 +42,7 @@ function createColumnMetaKey<T>(): ColumnMetaKey<T>;
 function metadata<TRow, K extends Extract<keyof TRow, string>, T>(
   path: ColumnHandle<TRow, K>,
   key: ColumnMetaKey<T>,
-  logic: T | ((ctx: ColumnRuleContext<TRow>) => T)
+  logic: T | ((ctx: ColumnRuleContext<TRow>) => T),
 ): void;
 
 function readColumnMeta<T>(column: ColumnDef<unknown>, key: ColumnMetaKey<T>): T | undefined;
@@ -67,7 +67,7 @@ function readColumnMeta<T>(column: ColumnDef<unknown>, key: ColumnMetaKey<T>): T
 interface ColumnRuleContext<TRow> {
   readonly columns: () => ColumnDef<TRow>[];
   stateOf<K extends string>(
-    handle: ColumnHandle<TRow, K, unknown>
+    handle: ColumnHandle<TRow, K, unknown>,
   ): Pick<ColumnDef<TRow>, 'visible' | 'label' | 'meta'>;
 }
 ```
@@ -92,7 +92,7 @@ own column ids already use — not a separate one.
 build-time-throw posture `resolveColumnsConfig()` already uses for an unknown `columnId`.
 
 This is a scope cut, not an oversight: the table has no scenario yet where two independent
-sources need to contribute to the same *consumer* metadata key. Revisit only if a real
+sources need to contribute to the same _consumer_ metadata key. Revisit only if a real
 multi-writer need surfaces — the fix is adding a reducer to `ColumnMetaKey` itself, the same
 `MetadataReducer`-shaped extension §1 describes, not a redesign of the recording/resolution
 path.
@@ -128,7 +128,7 @@ the same `computed()` — a static value just never changes. This matches Signal
 
 ## `ColumnDef` extension: a `meta` bag + free reader function, not a `.metadata()` method
 
-Signal Forms' `field().metadata(key)` is a method on a field *handle* — a class-shaped object
+Signal Forms' `field().metadata(key)` is a method on a field _handle_ — a class-shaped object
 with its own identity and lifecycle. `ColumnDef<TRow>` in this table is the opposite: a plain,
 flat interface, always a fresh object produced by `resolveColumnDefs`/`foldColumnRules`, never a
 class or handle (`table/CLAUDE.md`'s locked invariants — `rows()` and, by the same logic,

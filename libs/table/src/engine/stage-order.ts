@@ -65,7 +65,7 @@ function eligibleBuiltInsFor(layer: Layer): readonly string[] {
  */
 export function resolveStageOrder<TTransform>(
   layer: Layer,
-  rules: readonly LabelledStageRule<TTransform>[]
+  rules: readonly LabelledStageRule<TTransform>[],
 ): readonly ResolvedStage<TTransform>[] {
   const builtIns = builtInsFor(layer);
   const eligibleBuiltIns = eligibleBuiltInsFor(layer);
@@ -101,7 +101,7 @@ export function resolveStageOrder<TTransform>(
 // built-in is dropped in favor of the built-in slot.
 function resolveDeclaredNames<TTransform>(
   declares: readonly DeclareEntry<TTransform>[],
-  builtIns: readonly string[]
+  builtIns: readonly string[],
 ): Map<string, DeclareEntry<TTransform>> {
   const declaredByName = new Map<string, DeclareEntry<TTransform>>();
   for (const entry of declares) {
@@ -123,7 +123,7 @@ function resolveDeclaredNames<TTransform>(
 function resolveAnchors<TTransform>(
   declaredByName: Map<string, DeclareEntry<TTransform>>,
   builtIns: readonly string[],
-  eligibleBuiltIns: readonly string[]
+  eligibleBuiltIns: readonly string[],
 ): void {
   const isKnownAnchor = (name: string): boolean =>
     builtIns.includes(name) || declaredByName.has(name);
@@ -155,7 +155,7 @@ function gapFromBuiltIn(builtIns: readonly string[], anchor: string, placement: 
 function bucketByGap<TTransform>(
   validDeclares: Map<string, DeclareEntry<TTransform>>,
   builtIns: readonly string[],
-  layer: Layer
+  layer: Layer,
 ): Map<number, DeclareEntry<TTransform>[]> {
   const gapIndexCache = new Map<string, number>();
   const invalid = new Set<string>();
@@ -218,7 +218,7 @@ function bucketByGap<TTransform>(
 function assemble<TTransform>(
   builtIns: readonly string[],
   claims: Map<string, ClaimEntry<TTransform>>,
-  buckets: Map<number, DeclareEntry<TTransform>[]>
+  buckets: Map<number, DeclareEntry<TTransform>[]>,
 ): ResolvedStage<TTransform>[] {
   const result: ResolvedStage<TTransform>[] = [];
   for (let gap = 0; gap <= builtIns.length; gap++) {
@@ -244,7 +244,7 @@ function assemble<TTransform>(
 function orderGapEntries<TTransform>(
   entries: readonly DeclareEntry<TTransform>[],
   left: string | null,
-  right: string | null
+  right: string | null,
 ): readonly DeclareEntry<TTransform>[] {
   if (entries.length < 2) return entries;
 
@@ -351,7 +351,7 @@ function orderGapEntries<TTransform>(
 // competing stages in an ambiguous-order message without listing every member of each chain.
 function representativePerComponent(
   names: readonly string[],
-  componentOf: Map<string, string>
+  componentOf: Map<string, string>,
 ): [string, string] {
   const seen = new Set<string>();
   const reps: string[] = [];
@@ -368,7 +368,7 @@ function representativePerComponent(
 function assertNoDuplicateDeclaredName(
   label: string,
   existingLabel: string | undefined,
-  name: string
+  name: string,
 ): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
   const detail =
@@ -376,21 +376,21 @@ function assertNoDuplicateDeclaredName(
       ? `"${existingLabel}" already declared it`
       : `"${name}" is already a built-in stage`;
   throw new Error(
-    `[createTable] "${label}" declares stage "${name}", but ${detail} — duplicate stage name.`
+    `[createTable] "${label}" declares stage "${name}", but ${detail} — duplicate stage name.`,
   );
 }
 
 function assertKnownAnchor(label: string, anchor: string): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
   throw new Error(
-    `[createTable] "${label}" anchors on "${anchor}", but no stage named "${anchor}" is declared — unknown anchor.`
+    `[createTable] "${label}" anchors on "${anchor}", but no stage named "${anchor}" is declared — unknown anchor.`,
   );
 }
 
 function assertAnchorEligible(label: string, anchor: string): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
   throw new Error(
-    `[createTable] "${label}" anchors on "${anchor}", but "${anchor}" is not anchor-eligible.`
+    `[createTable] "${label}" anchors on "${anchor}", but "${anchor}" is not anchor-eligible.`,
   );
 }
 
@@ -398,21 +398,26 @@ function assertNoCycle(names: readonly string[], labels: readonly string[]): voi
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
   const quoted = names.map((name) => `"${name}"`).join(' -> ');
   throw new Error(
-    `[createTable] Cycle detected among declared stages ${quoted}, declared by ${labels.join(', ')} — anchor one of them outside the cycle.`
+    `[createTable] Cycle detected among declared stages ${quoted}, declared by ${labels.join(', ')} — anchor one of them outside the cycle.`,
   );
 }
 
-function assertNoAmbiguousOrder(nameA: string, labelA: string, nameB: string, labelB: string): void {
+function assertNoAmbiguousOrder(
+  nameA: string,
+  labelA: string,
+  nameB: string,
+  labelB: string,
+): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
   throw new Error(
     `[createTable] Declared stages "${nameA}" (declared by "${labelA}") and "${nameB}" ` +
-      `(declared by "${labelB}") have no fixed relative order — anchor one on the other.`
+      `(declared by "${labelB}") have no fixed relative order — anchor one on the other.`,
   );
 }
 
 function assertSynthesizesRowsAfterGroup(label: string, name: string): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
   throw new Error(
-    `[createTable] "${label}" declares "${name}" with synthesizesRows before "group" — a synthesized row must land at or after "group".`
+    `[createTable] "${label}" declares "${name}" with synthesizesRows before "group" — a synthesized row must land at or after "group".`,
   );
 }

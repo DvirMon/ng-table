@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — Migrate grouping-regressions to applyGroupOrder"
+title: 'Step 5 — Migrate grouping-regressions to applyGroupOrder'
 type: task-step
 issue: 87
 ---
@@ -115,4 +115,5 @@ is deliberately demonstrating one shared mode-switching comparator, not per-leve
       fixes the two spec files).
 
 ---
+
 ← [Step 4: Wire into withGrouping()](step-4-wire-with-grouping.plan.md) | [Step 6: Tests](step-6-tests.plan.md) →

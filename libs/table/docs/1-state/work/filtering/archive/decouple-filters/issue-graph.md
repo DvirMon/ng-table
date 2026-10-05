@@ -4,14 +4,14 @@ Epic: [#67](https://github.com/DvirMon/ng-table/issues/67) — decouple `createF
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#68](https://github.com/DvirMon/ng-table/issues/68) | `matcher()` on the filters root — a filter model that answers its own match question | ✅ CLOSED | — | #70 |
-| [#69](https://github.com/DvirMon/ng-table/issues/69) | `withFiltering` accepts a predicate list — filter a table with no filter model | ✅ CLOSED | — | #70 |
-| [#70](https://github.com/DvirMon/ng-table/issues/70) | Migrate every filtering call site to the predicate list, split specs by ownership | ✅ CLOSED | #68, #69 | #71 |
-| [#71](https://github.com/DvirMon/ng-table/issues/71) | Delete the coupled filtering surface and the filters side channel + ADR-0016 | ✅ CLOSED | #70 | #72 |
-| [#72](https://github.com/DvirMon/ng-table/issues/72) | Relocate the filters domain to its own folder and barrel | ✅ CLOSED | #71 | #73 |
-| [#73](https://github.com/DvirMon/ng-table/issues/73) | Split the filtering docs by domain | ✅ CLOSED | #72 | — |
+| #                                                    | Title                                                                                | State     | Depends on | Blocks |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------ | --------- | ---------- | ------ |
+| [#68](https://github.com/DvirMon/ng-table/issues/68) | `matcher()` on the filters root — a filter model that answers its own match question | ✅ CLOSED | —          | #70    |
+| [#69](https://github.com/DvirMon/ng-table/issues/69) | `withFiltering` accepts a predicate list — filter a table with no filter model       | ✅ CLOSED | —          | #70    |
+| [#70](https://github.com/DvirMon/ng-table/issues/70) | Migrate every filtering call site to the predicate list, split specs by ownership    | ✅ CLOSED | #68, #69   | #71    |
+| [#71](https://github.com/DvirMon/ng-table/issues/71) | Delete the coupled filtering surface and the filters side channel + ADR-0016         | ✅ CLOSED | #70        | #72    |
+| [#72](https://github.com/DvirMon/ng-table/issues/72) | Relocate the filters domain to its own folder and barrel                             | ✅ CLOSED | #71        | #73    |
+| [#73](https://github.com/DvirMon/ng-table/issues/73) | Split the filtering docs by domain                                                   | ✅ CLOSED | #72        | —      |
 
 ## Graph
 

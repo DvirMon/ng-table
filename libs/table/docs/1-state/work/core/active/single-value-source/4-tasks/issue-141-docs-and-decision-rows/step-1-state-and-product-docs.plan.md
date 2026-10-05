@@ -105,4 +105,5 @@ property, and `apply*` rule names that ADR-0025 removed (#136).
       and `depends-on`.
 
 ---
+
 [Step 2: Columns and UI docs](step-2-columns-and-ui-docs.plan.md) →

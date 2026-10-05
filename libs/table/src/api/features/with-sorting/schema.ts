@@ -19,10 +19,10 @@ import type {
 // Fabricates a `SortingHandle` for any string property; never reads row data.
 // Mirrors `with-grouping/schema.ts`'s proxy shape but imports nothing from it.
 function buildSortingPath<TRow, TValues extends ColumnValueMap>(
-  recorder: PathRecorder<TRow, AnySortingRule<TRow>>
+  recorder: PathRecorder<TRow, AnySortingRule<TRow>>,
 ): SortingPath<TRow, TValues> {
   return createPathProxy(
-    (id): SortingHandle<TRow> => ({ id, [PATH_RECORDER]: recorder })
+    (id): SortingHandle<TRow> => ({ id, [PATH_RECORDER]: recorder }),
   ) as SortingPath<TRow, TValues>;
 }
 
@@ -35,11 +35,11 @@ function buildSortingPath<TRow, TValues extends ColumnValueMap>(
  * using a fresh recorder session each call.
  */
 export function runSortingSchemaFn<TRow, TValues extends ColumnValueMap>(
-  fn: SortingSchemaFn<TRow, TValues>
+  fn: SortingSchemaFn<TRow, TValues>,
 ): readonly AnySortingRule<TRow>[] {
   return runRecordedSchema<TRow, AnySortingRule<TRow>, SortingPath<TRow, TValues>>(
     (recorder) => buildSortingPath<TRow, TValues>(recorder),
-    fn
+    fn,
   );
 }
 
@@ -70,7 +70,7 @@ export function sortNulls<TRow>(path: SortingHandle<TRow>, opts: SortNullsOpts):
 // See docs/adr/0014-runtime-error-policy.md.
 export function sortFn<TRow>(
   path: SortingHandle<TRow>,
-  compare: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number
+  compare: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) => number,
 ): void {
   recorderOf<TRow, AnySortingRule<TRow>>(path).record({
     kind: 'sort-fn',
@@ -113,7 +113,7 @@ export function sortable<TRow>(path: SortingHandle<TRow>, opts: SortableOpts): v
  * ```
  */
 export function sortingSchema<TRow>(
-  fn: (column: SortingHandle<TRow>) => void
+  fn: (column: SortingHandle<TRow>) => void,
 ): (column: SortingHandle<TRow>) => void {
   return fn;
 }

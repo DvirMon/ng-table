@@ -32,17 +32,17 @@ A slice is a callable and a call returns exactly one value. The rule for what th
    (`table.filtering.columns()` / `table.filtering.global()` — `columnFilters` and `globalFilter`
    are peers, forcing one to be primary would be arbitrary).
 
-| Slice | Call returns | Rule part |
-|---|---|---|
-| `value` | `TRow[]` | 1 — already shipped |
-| `columns` | `ColumnDef[]` | 1 — already shipped |
-| `grouping` | `string[]` | 1 — already shipped |
-| `editing` | `ReadonlySet<RowId>` (`open`) | 1 — already shipped |
-| `sorting` | `SortRule[]` | 1 — `sortDirections`, `sortChanged` become properties |
-| `selection` | `ReadonlySet<RowId>` | 1 — `selectionChanged` becomes a property |
-| `expansion` | `ReadonlySet<RowId>` | 1 — `everExpanded`, `changed` become properties (panel — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
-| `tree` | `ReadonlySet<RowId>` | 1 — `changed`, `state` become properties (tree-grid — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
-| `filtering` | *(not callable)* | 3 — `columnFilters`/`globalFilter` are peers |
+| Slice       | Call returns                  | Rule part                                                                                                         |
+| ----------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `value`     | `TRow[]`                      | 1 — already shipped                                                                                               |
+| `columns`   | `ColumnDef[]`                 | 1 — already shipped                                                                                               |
+| `grouping`  | `string[]`                    | 1 — already shipped                                                                                               |
+| `editing`   | `ReadonlySet<RowId>` (`open`) | 1 — already shipped                                                                                               |
+| `sorting`   | `SortRule[]`                  | 1 — `sortDirections`, `sortChanged` become properties                                                             |
+| `selection` | `ReadonlySet<RowId>`          | 1 — `selectionChanged` becomes a property                                                                         |
+| `expansion` | `ReadonlySet<RowId>`          | 1 — `everExpanded`, `changed` become properties (panel — [ADR-0012](0012-split-expansion-into-panel-and-tree.md)) |
+| `tree`      | `ReadonlySet<RowId>`          | 1 — `changed`, `state` become properties (tree-grid — [ADR-0012](0012-split-expansion-into-panel-and-tree.md))    |
+| `filtering` | _(not callable)_              | 3 — `columnFilters`/`globalFilter` are peers                                                                      |
 
 `expansion` and `tree` arrive already split onto their own slices ahead of the rest of this
 ADR — the panel/tree split (#118, #119, #121) lands them alongside ADR-0012's split so the

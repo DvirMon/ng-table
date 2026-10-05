@@ -11,11 +11,11 @@ run against the final pipeline).
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/api/features/with-grouping.spec.ts` | edit — `parentId` on members and nested headers |
-| `libs/shared/table/src/api/features/with-expansion.spec.ts` | edit — `parentId` on tree children |
-| `libs/shared/table/src/api/types.types.spec.ts` | create — compile-time optionality |
+| File                                                        | Action                                          |
+| ----------------------------------------------------------- | ----------------------------------------------- |
+| `libs/shared/table/src/api/features/with-grouping.spec.ts`  | edit — `parentId` on members and nested headers |
+| `libs/shared/table/src/api/features/with-expansion.spec.ts` | edit — `parentId` on tree children              |
+| `libs/shared/table/src/api/types.types.spec.ts`             | create — compile-time optionality               |
 
 ## Why This Step Exists
 
@@ -103,4 +103,5 @@ the wrong thing.
 - [ ] `nx run shared-table:typecheck-spec` clean — the only thing that enforces the type assertions.
 
 ---
+
 ← [Step 5: Engine tests](step-5-engine-tests.plan.md) | [Step 7: Mark D11 and ADR-0011 superseded](step-7-supersede-records.plan.md) →

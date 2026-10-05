@@ -18,12 +18,12 @@ for the reasoning.
 
 Four concrete bindings, all verified in source:
 
-| # | Binding | Site |
-|---|---|---|
-| 1 | Feature imports the evaluator factory | `src/api/features/with-filtering.ts:2` — `import { createFilterEvaluator } from '../create-filters'` |
-| 2 | Feature imports the filters type | `src/api/features/with-filtering.ts:4` — `import type { Filters } from '../filters.types'` |
-| 3 | Feature declares a `TState` it never reads | `src/api/features/with-filtering.ts:13-19`, `:26-37` (both overloads) |
-| 4 | Evaluator reaches into the built object through a symbol | `src/api/filters/evaluator.ts:6` `FILTERS_INTERNAL`, `:16` `attachFiltersInternal`, `:23` `getFiltersInternal`; stamped at `src/api/create-filters.ts:70` |
+| #   | Binding                                                  | Site                                                                                                                                                      |
+| --- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Feature imports the evaluator factory                    | `src/api/features/with-filtering.ts:2` — `import { createFilterEvaluator } from '../create-filters'`                                                      |
+| 2   | Feature imports the filters type                         | `src/api/features/with-filtering.ts:4` — `import type { Filters } from '../filters.types'`                                                                |
+| 3   | Feature declares a `TState` it never reads               | `src/api/features/with-filtering.ts:13-19`, `:26-37` (both overloads)                                                                                     |
+| 4   | Evaluator reaches into the built object through a symbol | `src/api/filters/evaluator.ts:6` `FILTERS_INTERNAL`, `:16` `attachFiltersInternal`, `:23` `getFiltersInternal`; stamped at `src/api/create-filters.ts:70` |
 
 Binding 4 is the load-bearing one: `createFilterEvaluator` is re-exported from
 `src/api/create-filters.ts:8` purely so the feature can reach it, and `FiltersInternal` exists only
@@ -40,7 +40,10 @@ export interface WithFilteringConfig<TRow> {
 }
 
 // filters side — knows nothing about tables
-export interface FiltersRoot<TRow, TState extends Record<string, unknown> = Record<string, unknown>> {
+export interface FiltersRoot<
+  TRow,
+  TState extends Record<string, unknown> = Record<string, unknown>,
+> {
   value: WritableSignal<TState>;
   active(): Partial<TState>;
   reset(value?: Partial<TState> | null): void;
@@ -49,18 +52,18 @@ export interface FiltersRoot<TRow, TState extends Record<string, unknown> = Reco
 }
 
 // consumer wiring — ordinary composition
-withFiltering({ predicates: () => [this.filters().matcher()] })
+withFiltering({ predicates: () => [this.filters().matcher()] });
 ```
 
 ## Types touched
 
-| Type | File | Change |
-|---|---|---|
-| `FiltersRoot<TState>` | `api/filters.types.ts:40` | → `FiltersRoot<TRow, TState>`; gains `matcher()` |
-| `Filters<TRow, TState>` | `api/filters.types.ts:63` | root call site becomes `FiltersRoot<TRow, TState>`; `TRow` stops being phantom as a consequence |
-| `WithFilteringConfig<TRow, TState>` | `api/features/with-filtering.ts:13` | → `WithFilteringConfig<TRow>`; `filters` → `predicates` |
-| `FiltersInternal<TRow>` | `api/filters/evaluator.ts:8` | stays, becomes domain-internal — no longer reachable from outside |
-| `FILTERS_INTERNAL` + `attachFiltersInternal` + `getFiltersInternal` | `api/filters/evaluator.ts:6,16,23` | **deleted** |
+| Type                                                                | File                                | Change                                                                                          |
+| ------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `FiltersRoot<TState>`                                               | `api/filters.types.ts:40`           | → `FiltersRoot<TRow, TState>`; gains `matcher()`                                                |
+| `Filters<TRow, TState>`                                             | `api/filters.types.ts:63`           | root call site becomes `FiltersRoot<TRow, TState>`; `TRow` stops being phantom as a consequence |
+| `WithFilteringConfig<TRow, TState>`                                 | `api/features/with-filtering.ts:13` | → `WithFilteringConfig<TRow>`; `filters` → `predicates`                                         |
+| `FiltersInternal<TRow>`                                             | `api/filters/evaluator.ts:8`        | stays, becomes domain-internal — no longer reachable from outside                               |
+| `FILTERS_INTERNAL` + `attachFiltersInternal` + `getFiltersInternal` | `api/filters/evaluator.ts:6,16,23`  | **deleted**                                                                                     |
 
 `FilterNode`, `FilterOptions`, `FilterRuleRecord`, `FilterGroupChild`, `FilterValueOfContext`,
 `FilterHandle`, `FiltersPath`, `FilterSchemaRecorder` are all unchanged.
@@ -97,10 +100,10 @@ works; only genuinely unrelated row types are rejected.
 
 Two reporting layers, deliberately, because they have different information:
 
-| Layer | Unit | Names the failure by | Where |
-|---|---|---|---|
-| Filter model (unchanged) | one filter record | its filter key | `api/filters/evaluator.ts:39-49`, dedup at `:98`, `:119-122` |
-| Table stage (new) | one term | its index in `predicates()` | `api/features/with-filtering.ts` |
+| Layer                    | Unit              | Names the failure by        | Where                                                        |
+| ------------------------ | ----------------- | --------------------------- | ------------------------------------------------------------ |
+| Filter model (unchanged) | one filter record | its filter key              | `api/filters/evaluator.ts:39-49`, dedup at `:98`, `:119-122` |
+| Table stage (new)        | one term          | its index in `predicates()` | `api/features/with-filtering.ts`                             |
 
 A term produced by `matcher()` reports under its own filter key from inside the evaluator and
 never surfaces as a throw, so the index-based report is the floor for **anonymous** terms, not a
@@ -114,13 +117,13 @@ one throw returns every row unfiltered, which is the silent, unrecoverable direc
 
 **Story hosts (5)** — mechanical, `{ filters: this.filters }` → `{ predicates: () => [this.filters().matcher()] }`:
 
-| File | Line |
-|---|---|
-| `src/stories/composition/derived-state/derived-state-story-host.component.ts` | 37 |
-| `src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | 188 |
-| `src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | 75 |
-| `src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` | 72 |
-| `src/stories/grouping/grouping-static/grouping-static-story-host.component.ts` | 177 |
+| File                                                                                    | Line |
+| --------------------------------------------------------------------------------------- | ---- |
+| `src/stories/composition/derived-state/derived-state-story-host.component.ts`           | 37   |
+| `src/stories/filtering/client-filtering/client-filtering-story-host.component.ts`       | 188  |
+| `src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | 75   |
+| `src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts`    | 72   |
+| `src/stories/grouping/grouping-static/grouping-static-story-host.component.ts`          | 177  |
 
 **Prose only** — `src/stories/filtering/server-filtering/server-filtering-story-host.component.ts:73`,
 `src/stories/filtering/fixtures/schema.ts:25,38`, plus the three `.mdx` files
@@ -134,24 +137,24 @@ one throw returns every row unfiltered, which is the silent, unrecoverable direc
 
 ### S1 — `matcher()` on the root
 
-| File | Action |
-|---|---|
-| `api/filters.types.ts` | thread `TRow` into `FiltersRoot`; add `matcher()` |
-| `api/filters/state.ts:155` | `buildFiltersRoot` gains `TRow` + a `matcher` field |
+| File                       | Action                                                                                                                                                                      |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `api/filters.types.ts`     | thread `TRow` into `FiltersRoot`; add `matcher()`                                                                                                                           |
+| `api/filters/state.ts:155` | `buildFiltersRoot` gains `TRow` + a `matcher` field                                                                                                                         |
 | `api/filters/evaluator.ts` | delete `FILTERS_INTERNAL`, `attachFiltersInternal`, `getFiltersInternal`; `createFilterEvaluator` takes `FiltersInternal<TRow>` directly; drop its `export` past the domain |
-| `api/create-filters.ts` | drop the `createFilterEvaluator` re-export (`:8`) and the `attachFiltersInternal` call (`:70`); build the root with the `internal` object already in scope |
+| `api/create-filters.ts`    | drop the `createFilterEvaluator` re-export (`:8`) and the `attachFiltersInternal` call (`:70`); build the root with the `internal` object already in scope                  |
 
-**Ordering note inside S1:** `buildFiltersObject` (`state.ts:197`) builds the root *before*
+**Ordering note inside S1:** `buildFiltersObject` (`state.ts:197`) builds the root _before_
 `create-filters.ts` has the `internal` object. Either pass `internal` down into
 `buildFiltersObject`, or attach `matcher` to the root after construction inside the factory. Pick
 one and state it in the step file — this is the only non-mechanical decision in S1.
 
 ### S2 — `predicates` config
 
-| File | Action |
-|---|---|
+| File                             | Action                                                                                                                                                                                                                                           |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `api/features/with-filtering.ts` | delete both imports (`:2`, `:4`); `WithFilteringConfig<TRow>`; `predicates` replaces `filters`; delete `TState` from the interface and both overloads (`:26-37`); add per-term try/catch + once-per-pass report in the `filter` stage (`:44-52`) |
-| `index.ts` | no export change — `WithFilteringConfig` is exported via `export * from './api/features/with-filtering'` (`:13`) |
+| `index.ts`                       | no export change — `WithFilteringConfig` is exported via `export * from './api/features/with-filtering'` (`:13`)                                                                                                                                 |
 
 The stage body becomes: call `config.predicates()` once per pass, then `rows.filter(row => …)`
 applying each term under its own guard.
@@ -197,13 +200,13 @@ Pure churn; it conflicts with every other step's diff, which is why it is last.
 
 ### S5 — docs + ADR
 
-| File | Action |
-|---|---|
-| `docs/adr/0016-*.md` | **new** — 0016 is the next free number (0009 is absent; 0001-0008 + 0010-0015 exist). Records: the filter model is the consumer's and the table takes a predicate list; why the term is the error-isolation unit; why AND is the only combinator the table may assume; the phantom-`TRow` flip as a public type-behavior change |
-| `docs/1-state/features/filtering.md` | rewrite Config; delete the whole `TState` section (`:62-72`); rewrite Compile-Time Dependencies — "None" becomes literally true; trim `manual`'s R23 rationale |
-| `docs/1-state/filters.md` | add the `matcher()` contract and the "one call = one evaluation" boundary |
-| `docs/1-state/work/with-filtering/state.json` | split `specPath` / `architecturePath` — they currently both point at the filters docs, which is the coupling in doc form |
-| `docs/status.md` | **generated** — run `npm run table:status`, never hand-edit |
+| File                                          | Action                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/adr/0016-*.md`                          | **new** — 0016 is the next free number (0009 is absent; 0001-0008 + 0010-0015 exist). Records: the filter model is the consumer's and the table takes a predicate list; why the term is the error-isolation unit; why AND is the only combinator the table may assume; the phantom-`TRow` flip as a public type-behavior change |
+| `docs/1-state/features/filtering.md`          | rewrite Config; delete the whole `TState` section (`:62-72`); rewrite Compile-Time Dependencies — "None" becomes literally true; trim `manual`'s R23 rationale                                                                                                                                                                  |
+| `docs/1-state/filters.md`                     | add the `matcher()` contract and the "one call = one evaluation" boundary                                                                                                                                                                                                                                                       |
+| `docs/1-state/work/with-filtering/state.json` | split `specPath` / `architecturePath` — they currently both point at the filters docs, which is the coupling in doc form                                                                                                                                                                                                        |
+| `docs/status.md`                              | **generated** — run `npm run table:status`, never hand-edit                                                                                                                                                                                                                                                                     |
 
 ### S6 — barrel split
 
@@ -242,4 +245,4 @@ Current filters exports to relocate: `index.ts:87-104` — `createFilters`, the 
 - **[#56](https://github.com/DvirMon/ng-table/issues/56) is already CLOSED.** S2 says to close it as
   fixed-by-design; that is already done. No action owed.
 - **S4's file list includes `recorder.ts`.** Correct as of today. The inferred-criterion-map work
-  deletes that file — but it is sequenced *after* this one, so the list stands.
+  deletes that file — but it is sequenced _after_ this one, so the list stands.

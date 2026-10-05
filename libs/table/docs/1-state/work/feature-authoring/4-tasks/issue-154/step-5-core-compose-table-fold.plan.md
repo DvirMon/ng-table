@@ -8,6 +8,7 @@ files:
   - libs/table/src/engine/compose-table.ts (edit)
   - libs/table/src/engine/compose-table.spec.ts (edit)
 ---
+
 # Step 5 — core.ts + compose-table.ts fold
 
 This step makes `foldFeatures` read `spec.stages`/
@@ -79,11 +80,11 @@ spec file:
   form (narrow its param to `'filter' | 'group' | 'sort'` —
   `'expand'` is gone).
 - Test A (migrated): `'folds claimed stages in fixed anchor
-  order regardless of features array order'` — features
+order regardless of features array order'` — features
   `[sort, group, filter]` tagging stages give
   `rows()[0].name === 'Ann-filter-group-sort'`.
 - Test B (migrated): `'composes render stages in RENDER_ANCHORS
-  order regardless of registration order'` — forward vs
+order regardless of registration order'` — forward vs
   reversed registration give equal `renderRows()`.
 - Test C (migrated): one feature recording two render claims
   (`s.group` + `s.tree`) in one `stageSchema` — both must run,
@@ -97,8 +98,8 @@ spec file:
 - Test E (migrated): two features claim the same pipeline
   anchor — throws the full existing message string:
   `'[createTable] feature 1 and feature 2 both provide the
-  "sort" pipeline stage. Only one feature may provide each
-  stage.'`
+"sort" pipeline stage. Only one feature may provide each
+stage.'`
 - Test F (migrated): two features claim the same render anchor
   — throws the full existing message, `"tree" render stage`
   wording.
@@ -108,12 +109,11 @@ spec file:
   `../ng-dev-mode.testing`) — still throws the same full
   message. This is the acceptance criterion that duplicate-claim
   stays ungated, unlike #155's new dev-gated checks.
-- Migrate the existing `'expand'`-using test (lines ~65, 110,
-  119) — drop the `expand` stage, expected literal becomes
+- Migrate the existing `'expand'`-using test (lines ~65, 110, 119) — drop the `expand` stage, expected literal becomes
   `'Ann-filter-group-sort'` (no trailing `-expand`).
 - Leave unchanged: the `expandedRows` accumulation test, the two
   "zero claims = pass-through" tests (`'passes rows through
-  untouched'`, `'1:1-wraps rows'`) — they already guard the
+untouched'`, `'1:1-wraps rows'`) — they already guard the
   regression case and this step doesn't touch that path.
 
 ## Out of scope
@@ -127,4 +127,5 @@ All seams A-G pass; typecheck still expected red until steps
 6-9 land (per the user's accepted mid-sequence red).
 
 ---
+
 ← [Step 4: TableFeatureSpec retype](step-4-table-feature-spec-retype.plan.md) | [Step 6: compose-features.ts fold](step-6-compose-features-fold.plan.md) →

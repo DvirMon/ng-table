@@ -13,6 +13,7 @@ files:
   - libs/table/docs/1-state/work/tree/active/tree-flat-data/3-architecture.md
   - libs/table/CLAUDE.md
 ---
+
 # Step 6 — Record the roots-only grouping contract
 
 This step records the roots-only grouping contract and the four planning decisions P1 to P4.
@@ -47,4 +48,5 @@ Decisions: [TR16](../../../../../../../decisions/tree.md), [TR17](../../../../..
 - [ ] Every decision P1 to P4 has a log row.
 
 ---
+
 ← [Step 5: Show roots-only grouping in the collapsible story](step-5-story-roots-only-grouping.plan.md)

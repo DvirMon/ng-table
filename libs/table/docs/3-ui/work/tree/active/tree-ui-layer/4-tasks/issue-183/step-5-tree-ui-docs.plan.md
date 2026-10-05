@@ -13,6 +13,7 @@ files:
   - libs/table/docs/status.md
   - llms.txt
 ---
+
 # Step 5 — Tree UI spec and pointer updates
 
 A new permanent tree UI spec documents the pair.
@@ -22,6 +23,7 @@ The status and llms files are regenerated.
 Decisions: [D1, D4, D5, D6, D7, D10, D11, D12](../../1-decisions.md)
 
 ## Do
+
 - Write `tree.md` with frontmatter `capability: tree`, `spec: drilled`, `code: shipped`.
 - `tree.md` sections:
   - The directive contract for both directives.
@@ -45,16 +47,20 @@ Decisions: [D1, D4, D5, D6, D7, D10, D11, D12](../../1-decisions.md)
 - Regenerate with `npm run table:status` and `npm run llms`.
 
 ## Watch out
+
 - Snippets bind `<tr [ngpTableRow]="row" ngpTableTreeRow>`, never a bare `ngpTableRow` beside the binding.
 - In the styling recipe, say in one line that `--ngp-table-row-depth` comes from #182.
 
 ## Out of scope
+
 - `core.md` changes and the changelog note (#182).
 - Treegrid.
 
 ## Done when
+
 - [ ] `npm run llms:check` is clean.
 - [ ] `status.md` lists the tree UI spec.
 
 ---
+
 ← [Step 4: Collapsible-grouping story host uses the tree pair](step-4-grouping-story-host.plan.md)

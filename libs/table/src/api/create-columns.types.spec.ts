@@ -68,9 +68,9 @@ describe('ColumnValues — case 2: the accessor arm wins over keyof TRow', () =>
       // obvious patch — `K extends keyof TRow ? TRow[K] : unknown` — gets wrong: 'owner' *is*
       // a keyof DealRow, so that guess would return the whole `{ name; email }` object and
       // lie about what the column actually renders.
-      expectTypeOf<ColumnValues<DealRow, typeof capturedColumns>['owner']>().toEqualTypeOf<
-        string
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof capturedColumns>['owner']
+      >().toEqualTypeOf<string>();
 
       // The accessor param needs no annotation: the curried form (`createColumns<DealRow>()`)
       // has already bound TRow, so `(row) => row.owner.name` typechecks with `row: DealRow`.
@@ -96,9 +96,9 @@ describe('ColumnValues — case 3: the defaulted arm is exact, not a fallback', 
     typecheckOnly(() => {
       // Exact rather than a guess: the engine's documented default accessor *is*
       // `(row) => row[id]`, so TRow['amount'] is what actually runs, not merely a stand-in.
-      expectTypeOf<ColumnValues<DealRow, typeof capturedColumns>['amount']>().toEqualTypeOf<
-        number
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof capturedColumns>['amount']
+      >().toEqualTypeOf<number>();
     });
   });
 });
@@ -109,9 +109,9 @@ describe('ColumnValues — case 4: the carrier arm degrades to unknown, not an e
       // The carrier-column shape (`{ id, accessor, visible: false }`) minus its accessor —
       // the one combination the map genuinely cannot resolve. unknown is the honest answer;
       // there is nothing on DealRow to fall back to and no accessor to infer from.
-      expectTypeOf<ColumnValues<DealRow, typeof capturedColumns>['selected']>().toEqualTypeOf<
-        unknown
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof capturedColumns>['selected']
+      >().toEqualTypeOf<unknown>();
     });
   });
 });
@@ -123,11 +123,7 @@ describe('ColumnValues — case 5: the degradation is pinned, not endorsed', () 
   // ColumnIdOf. A future reader "fixing" this by switching to `createColumns()` would silently
   // disarm the case — the annotation is the point.
   function makeWidenedColumns(): ColumnDefInput<DealRow>[] {
-    return [
-      { id: 'id' },
-      { id: 'amount' },
-      { id: 'owner', accessor: (row) => row.owner.name },
-    ];
+    return [{ id: 'id' }, { id: 'amount' }, { id: 'owner', accessor: (row) => row.owner.name }];
   }
 
   const widenedColumns = makeWidenedColumns();
@@ -184,9 +180,9 @@ const dealColumns = createColumns(deals, (col) => [
 describe('createColumns (col() builder) — case 1: a hoisted capture keeps its literal ids', () => {
   it('does not widen id to string once assigned to a module-level const', () => {
     typecheckOnly(() => {
-      expectTypeOf<
-        ColumnIdIn<ColumnValues<DealRow, typeof dealColumns.columns>>
-      >().toEqualTypeOf<'id' | 'amount' | 'owner' | 'carrier'>();
+      expectTypeOf<ColumnIdIn<ColumnValues<DealRow, typeof dealColumns.columns>>>().toEqualTypeOf<
+        'id' | 'amount' | 'owner' | 'carrier'
+      >();
 
       // The failure mode this case exists to catch: a dead capture mechanism still compiles, it
       // just types every id as string.
@@ -200,9 +196,9 @@ describe('createColumns (col() builder) — case 1: a hoisted capture keeps its 
 describe('createColumns (col() builder) — case 2: the accessor arm wins over keyof TRow', () => {
   it("maps 'owner' to the accessor's return type, not TRow['owner']", () => {
     typecheckOnly(() => {
-      expectTypeOf<ColumnValues<DealRow, typeof dealColumns.columns>['owner']>().toEqualTypeOf<
-        string
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof dealColumns.columns>['owner']
+      >().toEqualTypeOf<string>();
 
       // The accessor param needs no annotation: TRow is already bound from `deals`, so
       // `(row) => row.owner.name` typechecks with `row: DealRow`. If it hadn't, `row` would be
@@ -221,9 +217,9 @@ describe('createColumns (col() builder) — case 2: the accessor arm wins over k
 describe('createColumns (col() builder) — case 3: the field arm is exact, not a fallback', () => {
   it("maps 'amount' to TRow['amount'] when no accessor is declared", () => {
     typecheckOnly(() => {
-      expectTypeOf<ColumnValues<DealRow, typeof dealColumns.columns>['amount']>().toEqualTypeOf<
-        number
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof dealColumns.columns>['amount']
+      >().toEqualTypeOf<number>();
     });
   });
 });
@@ -231,9 +227,9 @@ describe('createColumns (col() builder) — case 3: the field arm is exact, not 
 describe('createColumns (col() builder) — case 4: the unknown arm degrades to unknown, not an error', () => {
   it("maps 'carrier' to unknown when its id is not a keyof DealRow and it declares no accessor", () => {
     typecheckOnly(() => {
-      expectTypeOf<ColumnValues<DealRow, typeof dealColumns.columns>['carrier']>().toEqualTypeOf<
-        unknown
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof dealColumns.columns>['carrier']
+      >().toEqualTypeOf<unknown>();
     });
   });
 });
@@ -266,9 +262,9 @@ describe('createColumns (col() builder) — case 6: the brand rejects a hand-wri
       // still resolves cleanly. (Asserting through the erroring array's own downstream type is
       // not reliable: once TS falls into error recovery on one element, `TCols` stops being a
       // literal tuple and every key's resolved type degrades, not just the bad one.)
-      expectTypeOf<ColumnValues<DealRow, typeof dealColumns.columns>['amount']>().toEqualTypeOf<
-        number
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof dealColumns.columns>['amount']
+      >().toEqualTypeOf<number>();
     });
   });
 });
@@ -305,7 +301,7 @@ describe('createColumns (col() builder) — case 8: schema paths are checked aga
           // @ts-expect-error — 'amont' is not a declared column id; ColumnsPath is keyed by the
           // literal id union the columns array produced, not an open string index
           path.amont;
-        }
+        },
       );
     });
   });
@@ -314,11 +310,15 @@ describe('createColumns (col() builder) — case 8: schema paths are checked aga
 describe('createColumns (col() builder) — case 9: an empty column list leaves no valid schema path', () => {
   it('rejects any path property when the declared column set is empty', () => {
     typecheckOnly(() => {
-      createColumns(deals, () => [], (path) => {
-        // @ts-expect-error — an empty columns array carries no declared ids, so ColumnsPath's
-        // key union is empty; no property access on it can ever be valid
-        path.x;
-      });
+      createColumns(
+        deals,
+        () => [],
+        (path) => {
+          // @ts-expect-error — an empty columns array carries no declared ids, so ColumnsPath's
+          // key union is empty; no property access on it can ever be valid
+          path.x;
+        },
+      );
     });
   });
 });
@@ -327,14 +327,14 @@ describe('createColumns (col() builder) — case 10: the data witness accepts a 
   it('accepts a callable yielding undefined before load, and a WritableSignal<DealRow[]>', () => {
     typecheckOnly(() => {
       const fromCallable = createColumns(deals, (col) => [col('amount')]);
-      expectTypeOf<ColumnValues<DealRow, typeof fromCallable.columns>['amount']>().toEqualTypeOf<
-        number
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof fromCallable.columns>['amount']
+      >().toEqualTypeOf<number>();
 
       const fromSignal = createColumns(dealsSignal, (col) => [col('amount')]);
-      expectTypeOf<ColumnValues<DealRow, typeof fromSignal.columns>['amount']>().toEqualTypeOf<
-        number
-      >();
+      expectTypeOf<
+        ColumnValues<DealRow, typeof fromSignal.columns>['amount']
+      >().toEqualTypeOf<number>();
     });
   });
 });

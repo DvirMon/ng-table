@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — ADR-0014: the derived-signal row in the runtime-error policy"
+title: 'Step 3 — ADR-0014: the derived-signal row in the runtime-error policy'
 type: task-step
 issue: 78
 ---
@@ -31,10 +31,10 @@ the next derived-state author re-derives it wrong.
 
 The settled behaviour, from `3-decisions.md` (D28) and `with-computed.spec.ts`:
 
-- A derive **block** that throws while *declaring* — at construction, before data — throws. There
+- A derive **block** that throws while _declaring_ — at construction, before data — throws. There
   is no correct degraded reading of a block that never produced its members, and it fires on the
   first run.
-- A derived **signal** that throws at *evaluation* — data-dependent, possibly only in production —
+- A derived **signal** that throws at _evaluation_ — data-dependent, possibly only in production —
   is reported with its member key and then **rethrown**. It does not silently fall back.
 - A fallback value was considered and **rejected**.
 
@@ -52,12 +52,12 @@ Add a dated `## Amendment (2026-09, #33): derived signals` section that:
    reported with the member key, then rethrown. Give the report's actual shape (the
    `[createTable] derived member … threw` line the #43 walkthrough watches for).
 3. **Says why rethrow, not degrade.** The ADR's four degrading callbacks each have a fallback that
-   is *visibly* wrong and recoverable (unfiltered rows, unsorted order, an `undefined` cell). A
+   is _visibly_ wrong and recoverable (unfiltered rows, unsorted order, an `undefined` cell). A
    derived member has no such fallback: the library cannot know whether `undefined`, the previous
    value, or a zero is a safe reading of a consumer's own derivation, and every choice is silently
    wrong at the exact moment the value matters. Reporting and rethrowing keeps the failure loud.
    Reference `classify-errors-construction-vs-runtime`'s "hiding data is the unrecoverable
-   direction" — the same reasoning, opposite conclusion, because here the *fallback* is what hides.
+   direction" — the same reasoning, opposite conclusion, because here the _fallback_ is what hides.
 4. **Records the rejected alternative** in the existing `## Alternatives considered` section: a
    per-member fallback value. Why rejected: it makes a broken derivation indistinguishable from a
    working one, and the member's consumers (template bindings, other features' reads) would carry
@@ -94,4 +94,5 @@ Add a dated `## Amendment (2026-09, #33): derived signals` section that:
 - [ ] Amendment carries the date and a pointer to #33
 
 ---
+
 ← [Step 2: ADR-0007 + ADR-0005 member claims](step-2-adr-0007-0005-member-claims.plan.md) | [Step 4: state-layer architecture](step-4-state-architecture-composition.plan.md) →

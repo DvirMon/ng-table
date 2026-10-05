@@ -5,13 +5,13 @@ Epic: [#163](https://github.com/DvirMon/ng-table/issues/163) —
 
 ## Nodes
 
-| # | Title | Slice slug | Depends on | Blocks |
-|---|---|---|---|---|
-| [#166](https://github.com/DvirMon/ng-table/issues/166) | Table: stage context + parent-link engine slot (tree prefactor) | stage-context-parent-link | — | #167 |
-| [#167](https://github.com/DvirMon/ng-table/issues/167) | Table: withTree({ parentId }) nests flat rows | flat-tree-nesting | #166 | #168, #170 |
-| [#168](https://github.com/DvirMon/ng-table/issues/168) | Table: filtering a tree keeps ancestors as context rows | filter-context-rows | #167 | #169 |
-| [#169](https://github.com/DvirMon/ng-table/issues/169) | Table: filter reveal opens context rows | filter-reveal | #168 | — |
-| [#170](https://github.com/DvirMon/ng-table/issues/170) | Table: grouping a tree groups roots only | grouping-tree-roots | #167 | — |
+| #                                                      | Title                                                           | Slice slug                | Depends on | Blocks     |
+| ------------------------------------------------------ | --------------------------------------------------------------- | ------------------------- | ---------- | ---------- |
+| [#166](https://github.com/DvirMon/ng-table/issues/166) | Table: stage context + parent-link engine slot (tree prefactor) | stage-context-parent-link | —          | #167       |
+| [#167](https://github.com/DvirMon/ng-table/issues/167) | Table: withTree({ parentId }) nests flat rows                   | flat-tree-nesting         | #166       | #168, #170 |
+| [#168](https://github.com/DvirMon/ng-table/issues/168) | Table: filtering a tree keeps ancestors as context rows         | filter-context-rows       | #167       | #169       |
+| [#169](https://github.com/DvirMon/ng-table/issues/169) | Table: filter reveal opens context rows                         | filter-reveal             | #168       | —          |
+| [#170](https://github.com/DvirMon/ng-table/issues/170) | Table: grouping a tree groups roots only                        | grouping-tree-roots       | #167       | —          |
 
 The slice slug is what `/to-tasks` uses in the issue's branch
 name, `<type>/<NN>-<slice-slug>`.

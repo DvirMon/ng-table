@@ -8,14 +8,14 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                        | Action                           |
+| ----------------------------------------------------------- | -------------------------------- |
 | `libs/shared/table/src/api/features/with-filtering.spec.ts` | rewrite in place — never deleted |
 
 ## Why This Step Exists
 
 Reading a test file should tell you which domain it belongs to. Today the feature's spec asserts
-facts about the *filter model* — OR within an `anyOf` group, empty-criterion skipping, a throwing
+facts about the _filter model_ — OR within an `anyOf` group, empty-criterion skipping, a throwing
 filter record, the criterion map's typing, and whether a mismatched row type is accepted — none of
 which is table behavior. A test that builds a filter schema in order to check table behavior is the
 exact defect this issue removes.
@@ -34,17 +34,17 @@ The block at `:232-426` already covers the table's contract on predicates. Lift 
 top level of `describe('withFiltering')`, since they stop being "the other input" and become the
 only input the feature is tested through:
 
-| Case | Now at | Covers |
-|---|---|---|
-| narrows `rows()` with a plain predicate | `:233` | composition + narrowing |
-| combines separate terms with AND | `:245` | AND across terms |
-| recomputes when a signal read in the thunk changes | `:262` | reactivity |
-| calls the thunk once per pass, not once per row | `:284` | one call = one evaluation |
-| contributes no members | `:298` | member surface |
-| trailing block sees post-predicate rows | `:311` | stage ordering |
-| manual mode never calls the thunk | `:351` | `manual` |
-| a throwing term is dropped, sibling narrows | `:368` | per-term degradation |
-| a term throwing on a later row is dropped from the whole pass | `:397` | catch unit is the term |
+| Case                                                          | Now at | Covers                    |
+| ------------------------------------------------------------- | ------ | ------------------------- |
+| narrows `rows()` with a plain predicate                       | `:233` | composition + narrowing   |
+| combines separate terms with AND                              | `:245` | AND across terms          |
+| recomputes when a signal read in the thunk changes            | `:262` | reactivity                |
+| calls the thunk once per pass, not once per row               | `:284` | one call = one evaluation |
+| contributes no members                                        | `:298` | member surface            |
+| trailing block sees post-predicate rows                       | `:311` | stage ordering            |
+| manual mode never calls the thunk                             | `:351` | `manual`                  |
+| a throwing term is dropped, sibling narrows                   | `:368` | per-term degradation      |
+| a term throwing on a later row is dropped from the whole pass | `:397` | catch unit is the term    |
 
 Add the one case the current file lacks on the predicate path: **composes into `createTable()` with
 `Row` inferred from the data slot** (the predicate twin of `:59`), and **never narrows while the
@@ -53,26 +53,26 @@ no-op one if it is not already.
 
 ### Delete — filter-model behavior, already covered elsewhere
 
-| Delete | At | Already covered by |
-|---|---|---|
-| composes into `createTable()` via `{ filters }` | `:59` | replaced by its predicate twin above |
-| narrows via an active filter | `:72` | `create-filters.spec.ts:541` |
-| combines separate filters with AND | `:87` | `create-filters.spec.ts:602` |
-| ORs siblings within one `anyOf` group | `:106` | `create-filters.spec.ts:587` |
-| never narrows while every criterion is empty | `:126` | `create-filters.spec.ts:575` |
-| contributes no members (filter-model build) | `:142` | predicate twin at `:298` |
-| manual mode with a filter model | `:157` | predicate twin at `:351` |
-| a throwing *filter* deactivates only that filter | `:177` | `create-filters.spec.ts:415`, `:460` |
-| trailing block sees post-filter rows (filter model) | `:212` | predicate twin at `:311` |
-| `describe('a concretely-typed Filters')` | `:515-552` | moved in Step 2 |
+| Delete                                              | At         | Already covered by                   |
+| --------------------------------------------------- | ---------- | ------------------------------------ |
+| composes into `createTable()` via `{ filters }`     | `:59`      | replaced by its predicate twin above |
+| narrows via an active filter                        | `:72`      | `create-filters.spec.ts:541`         |
+| combines separate filters with AND                  | `:87`      | `create-filters.spec.ts:602`         |
+| ORs siblings within one `anyOf` group               | `:106`     | `create-filters.spec.ts:587`         |
+| never narrows while every criterion is empty        | `:126`     | `create-filters.spec.ts:575`         |
+| contributes no members (filter-model build)         | `:142`     | predicate twin at `:298`             |
+| manual mode with a filter model                     | `:157`     | predicate twin at `:351`             |
+| a throwing _filter_ deactivates only that filter    | `:177`     | `create-filters.spec.ts:415`, `:460` |
+| trailing block sees post-filter rows (filter model) | `:212`     | predicate twin at `:311`             |
+| `describe('a concretely-typed Filters')`            | `:515-552` | moved in Step 2                      |
 
 ### Delete — type assertions that are filter-model facts
 
-| Delete | At | Reason |
-|---|---|---|
-| `withFiltering({ filters })` contributes `{}` | `:435` | replace with the predicate form; the store-type fact is the table's, the `{ filters }` spelling is not |
-| `filters: TRow is consumed — a Filters<OtherRow> is rejected` | `:451` | `create-filters.spec.ts:709` owns row-type rejection |
-| `either input alone is accepted` | `:466` | asserts the transitional two-field config; `#71` deletes one of the two fields |
+| Delete                                                        | At     | Reason                                                                                                 |
+| ------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------ |
+| `withFiltering({ filters })` contributes `{}`                 | `:435` | replace with the predicate form; the store-type fact is the table's, the `{ filters }` spelling is not |
+| `filters: TRow is consumed — a Filters<OtherRow> is rejected` | `:451` | `create-filters.spec.ts:709` owns row-type rejection                                                   |
+| `either input alone is accepted`                              | `:466` | asserts the transitional two-field config; `#71` deletes one of the two fields                         |
 
 Keep `trailing block: withComputed adds visibleCount …` (`:488`), rewritten to `predicates`.
 
@@ -89,8 +89,10 @@ it('composes with a filter model through matcher()', () => {
     createTable(
       signal<Row[]>(makeRows()),
       { trackBy: 'id', columns: makeColumns() },
-      withFiltering({ predicates: () => [filters().matcher(), (row: Row) => row.category === 'b'] })
-    )
+      withFiltering({
+        predicates: () => [filters().matcher(), (row: Row) => row.category === 'b'],
+      }),
+    ),
   );
 
   filters['status']().value.set('open');
@@ -132,7 +134,7 @@ is gone.
 - `filters['status']` uses bracket access deliberately: `filters` is callable, so `filters['name']`
   would collide with `Function.prototype.name`. Preserve that in the integration case.
 - Deleting `buildOtherFilters` while a `@ts-expect-error` still references its result turns the
-  directive into an *unused* `@ts-expect-error`, which is itself a type error. Delete the case and
+  directive into an _unused_ `@ts-expect-error`, which is itself a type error. Delete the case and
   the helper in the same pass.
 
 ## Non-Goals
@@ -153,4 +155,5 @@ is gone.
 - [ ] `npx nx test shared-table` passes
 
 ---
+
 ← [Step 2: Move the criterion-map typing assertions](step-2-move-criterion-map-typing.plan.md) | [Step 4: Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md) →

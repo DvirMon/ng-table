@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — create-table.ts: positional createTable(data, config, ...features), config.injector, delete table-schema.ts"
+title: 'Step 4 — create-table.ts: positional createTable(data, config, ...features), config.injector, delete table-schema.ts'
 type: task-step
 issue: 69
 ---
@@ -52,7 +52,7 @@ site states `trackBy` explicitly (story 3).
    If assigning a single generic arrow to the overload interface does not type-check cleanly
    (overload-implementation compatibility is checked per signature), fall back to a
    `function createTableImpl(...)` plus `export const createTable = createTableImpl as
-   CreateTableOverloads` — one cast, at the boundary, with the ADR-0003 justification moved
+CreateTableOverloads` — one cast, at the boundary, with the ADR-0003 justification moved
    onto it. Do not scatter casts.
 
 2. Body, in order:
@@ -124,4 +124,5 @@ from the barrel — `CreateTableOverloads` is an implementation detail; consumer
       remaining red is confined to `api/features/**`, `src/stories/**`, and spec files.
 
 ---
+
 ← [Step 3: compose-table.ts — fold hands each feature the store](step-3-fold-store-only-input.plan.md) | [Step 5: create-table-feature.ts — re-typed, trailing derive-block plumbing](step-5-create-table-feature-derive-plumbing.plan.md) →

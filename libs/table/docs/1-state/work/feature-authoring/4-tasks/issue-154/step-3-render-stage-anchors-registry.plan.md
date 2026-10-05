@@ -6,6 +6,7 @@ depends_on: []
 files:
   - libs/table/src/engine/render-stages.ts (edit)
 ---
+
 # Step 3 — Render-stage anchors + registry
 
 This step renames `RENDER_ORDER` to `RENDER_ANCHORS` and
@@ -34,12 +35,15 @@ ADR-0020)
 
 ```ts
 // before
-export const RENDER_ORDER = ['group','tree'] as const;
+export const RENDER_ORDER = ['group', 'tree'] as const;
 export type RenderStage = (typeof RENDER_ORDER)[number];
 
 // after
-export const RENDER_ANCHORS = ['group', 'tree'] as const;  // same two members, unchanged
-export interface RenderStageRegistry { group: true; tree: true }
+export const RENDER_ANCHORS = ['group', 'tree'] as const; // same two members, unchanged
+export interface RenderStageRegistry {
+  group: true;
+  tree: true;
+}
 export type RenderStage = keyof RenderStageRegistry & string;
 ```
 
@@ -93,4 +97,5 @@ checks — those are issue #156.
 - `RENDER_ANCHORS` has exactly `['group', 'tree']`.
 
 ---
+
 ← [Step 2: Pipeline anchors + registry](step-2-pipeline-anchors-registry.plan.md) | [Step 4: TableFeatureSpec retype](step-4-table-feature-spec-retype.plan.md) →

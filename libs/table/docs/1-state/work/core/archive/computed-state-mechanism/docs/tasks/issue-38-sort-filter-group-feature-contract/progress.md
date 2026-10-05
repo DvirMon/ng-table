@@ -3,14 +3,14 @@
 **Issue:** #38
 **Status:** 6 / 6 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | with-sorting.ts: `withSorting<In>(config?, derive?)`, F-bounded input | ✅ done | — |
-| 2 | with-filtering.ts: `Feature<In, {}>`, `Filters<RowOf<In>>` | ✅ done | — |
-| 3 | with-grouping.ts: `composed` → lazy guarded store read, `ColumnId<RowOf<In>>` | ✅ done | — |
-| 4 | with-sorting.spec.ts: positional, type assertions, trailing block | ✅ done | — |
-| 5 | with-filtering.spec.ts: positional, `{}` contribution asserted | ✅ done | — |
-| 6 | with-grouping.spec.ts: either-order expansion, pipeline permutation, autocomplete | ✅ done | — |
+| Step | Title                                                                             | Status  | PR  |
+| ---- | --------------------------------------------------------------------------------- | ------- | --- |
+| 1    | with-sorting.ts: `withSorting<In>(config?, derive?)`, F-bounded input             | ✅ done | —   |
+| 2    | with-filtering.ts: `Feature<In, {}>`, `Filters<RowOf<In>>`                        | ✅ done | —   |
+| 3    | with-grouping.ts: `composed` → lazy guarded store read, `ColumnId<RowOf<In>>`     | ✅ done | —   |
+| 4    | with-sorting.spec.ts: positional, type assertions, trailing block                 | ✅ done | —   |
+| 5    | with-filtering.spec.ts: positional, `{}` contribution asserted                    | ✅ done | —   |
+| 6    | with-grouping.spec.ts: either-order expansion, pipeline permutation, autocomplete | ✅ done | —   |
 
 Graph: `1 → 4`, `2 → 5`, `{1, 2, 3} → 6`.
 Parallel-safe: `[1, 2, 3]`; `[4, 5, 6]` after their code steps. Dependency: `1 → 4`, `2 → 5`, `3 → 6`.

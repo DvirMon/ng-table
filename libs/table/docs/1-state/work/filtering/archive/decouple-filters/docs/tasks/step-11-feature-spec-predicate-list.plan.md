@@ -8,15 +8,15 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:1-11` | edit — frontmatter `version`, `date` |
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:41-71` | rewrite — Config |
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:62-71` | delete — the criterion-map section and both call-site rules |
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:73-81` | edit — Behavior |
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:83-101` | edit — `manual` |
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:103-107` | edit — Errors |
-| `libs/shared/table/docs/1-state/features/filtering.md` | `:109-117` | rewrite — Compile-Time Dependencies |
+| File                                                   | Line       | Action                                                      |
+| ------------------------------------------------------ | ---------- | ----------------------------------------------------------- |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:1-11`    | edit — frontmatter `version`, `date`                        |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:41-71`   | rewrite — Config                                            |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:62-71`   | delete — the criterion-map section and both call-site rules |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:73-81`   | edit — Behavior                                             |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:83-101`  | edit — `manual`                                             |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:103-107` | edit — Errors                                               |
+| `libs/shared/table/docs/1-state/features/filtering.md` | `:109-117` | rewrite — Compile-Time Dependencies                         |
 
 ## Why This Step Exists
 
@@ -36,10 +36,10 @@ interface WithFilteringConfig<TRow> {
 }
 ```
 
-| Field | Purpose |
-|---|---|
+| Field        | Purpose                                                                            |
+| ------------ | ---------------------------------------------------------------------------------- |
 | `predicates` | a thunk returning the row predicates to apply. Required — the feature's only input |
-| `manual` | skip the client-side filter stage |
+| `manual`     | skip the client-side filter stage                                                  |
 
 Keep the `TRow` inference note (`TRow` comes from the enclosing `createTable()` config, no per-call
 generic). Add the two facts the thunk shape carries and that nothing else in the doc states: **one
@@ -81,7 +81,7 @@ filter type — checkable by reading its import list. Keep the `ColumnDef.filter
   `api/create-filters` before finishing.
 - Bump `version` to `3.0` and `date` to the day of the change. Leave `capability: filtering`,
   `spec: drilled` and `code: shipped` alone — Step 13 regenerates the roll-up from these keys.
-- Per the repo convention, this doc is the reference; the *why* belongs in ADR-0016. Link, do not
+- Per the repo convention, this doc is the reference; the _why_ belongs in ADR-0016. Link, do not
   restate the rejected alternatives.
 
 ## Risks / Watchouts
@@ -110,4 +110,5 @@ filter type — checkable by reading its import list. Keep the `ColumnDef.filter
 - [ ] No source file is edited by this step
 
 ---
+
 ← [Step 10: Give the filters domain its own barrel](step-10-filters-barrel.plan.md) | [Step 12: Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md) →

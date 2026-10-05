@@ -116,7 +116,7 @@ function reportChildrenAccessorError(error: unknown): void {
   console.error(
     '[withTree] childrenAccessor threw. The affected row(s) render without children for ' +
       'this evaluation.',
-    error
+    error,
   );
 }
 
@@ -125,13 +125,13 @@ function reportIsExpandableError(error: unknown): void {
   console.error(
     '[withTree] isExpandable threw. The affected row(s) render without a toggle for this ' +
       'evaluation.',
-    error
+    error,
   );
 }
 
 function guardChildren<TRow>(
   accessor: (row: TRow) => TRow[] | undefined,
-  reported: ReportFlag
+  reported: ReportFlag,
 ): (row: TRow) => TRow[] | undefined {
   return (row) => {
     try {
@@ -148,7 +148,7 @@ function guardChildren<TRow>(
 
 function guardIsExpandable<TRow>(
   isExpandable: (row: TRow) => boolean,
-  reported: ReportFlag
+  reported: ReportFlag,
 ): (row: TRow) => boolean {
   return (row) => {
     try {
@@ -219,7 +219,7 @@ function toChildNode<TRow>(
   row: TRow,
   trackBy: TrackByFn<TRow>,
   readChildren: (row: TRow) => TRow[] | undefined,
-  canExpand: (row: TRow) => boolean
+  canExpand: (row: TRow) => boolean,
 ): RenderNode<TRow> {
   const children = readChildren(row);
   return {
@@ -241,7 +241,7 @@ function toChildNode<TRow>(
  */
 function buildTreeStage<TRow>(
   trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): RenderNodeTransform<TRow> {
   return (nodes) => {
     const { readChildren, canExpand } = resolveCallbacks(config);
@@ -268,7 +268,7 @@ function collectExpandableRowIds<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
   readChildren: (row: TRow) => TRow[] | undefined,
-  canExpand: (row: TRow) => boolean
+  canExpand: (row: TRow) => boolean,
 ): RowId[] {
   return rows.flatMap((row) => {
     if (!canExpand(row)) {
@@ -286,7 +286,7 @@ function collectExpandableRowIds<TRow>(
 function discoverExpandableIds<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): RowId[] {
   const { readChildren, canExpand } = resolveCallbacks(config);
   return collectExpandableRowIds(rows, trackBy, readChildren, canExpand);
@@ -298,7 +298,7 @@ function discoverExpandableIds<TRow>(
 ```ts
 function buildTreeSpec<TRow>(
   input: Pick<TableStore<TRow>, 'rows' | 'trackBy'>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): TableFeatureSpec<TRow, TreeMembers> {
   // No `onExpanded`: `everExpanded` is the panel's member, not the tree's (D3/E7).
   const store = createExpansionStore({ initial: config.initial });
@@ -320,7 +320,7 @@ function buildTreeSpec<TRow>(
     const removing = new Set(ids);
     store.setExpanded(
       [...store.expanded()].filter((id) => !removing.has(id)),
-      options
+      options,
     );
   }
 
@@ -341,14 +341,17 @@ function buildTreeSpec<TRow>(
     return openCount === expandable.length ? 'all' : 'some';
   });
 
-  const tree: TreeSlice = Object.assign(computed(() => store.expanded()), {
-    changed: store.changed,
-    state,
-    toggle,
-    expand,
-    collapse,
-    set,
-  });
+  const tree: TreeSlice = Object.assign(
+    computed(() => store.expanded()),
+    {
+      changed: store.changed,
+      state,
+      toggle,
+      expand,
+      collapse,
+      set,
+    },
+  );
 
   return {
     members: { tree },
@@ -381,25 +384,24 @@ derive — so `withTree(withComputed(...))` compiles the same way.
  * collapsed id (a `withGrouping()` header, say) without claiming the stage.
  */
 export function withTree<In extends TreeInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & TreeMembers, D>
+  derive: Feature<NoInfer<In> & TreeMembers, D>,
 ): Feature<In, TreeMembers & D>;
 export function withTree<In extends TreeInput<In>>(
-  config?: WithTreeConfig<RowOf<In>>
+  config?: WithTreeConfig<RowOf<In>>,
 ): Feature<In, TreeMembers>;
 export function withTree<In extends TreeInput<In>, D extends DerivedDict>(
   config: WithTreeConfig<RowOf<In>> | undefined,
-  derive: Feature<NoInfer<In> & TreeMembers, D>
+  derive: Feature<NoInfer<In> & TreeMembers, D>,
 ): Feature<In, TreeMembers & D>;
 export function withTree(
   configOrDerive: WithTreeConfig<any> | Feature<any, any> = {},
-  maybeDerive?: Feature<any, any>
+  maybeDerive?: Feature<any, any>,
 ): Feature<any, any> {
   const isDeriveFirst = typeof configOrDerive === 'function';
   const config: WithTreeConfig<any> = isDeriveFirst ? {} : configOrDerive;
   const derive = isDeriveFirst ? configOrDerive : maybeDerive;
-  const factory = <In extends TreeInput<In>>(
-    input: In
-  ): TableFeatureSpec<RowOf<In>, TreeMembers> => buildTreeSpec(input, config);
+  const factory = <In extends TreeInput<In>>(input: In): TableFeatureSpec<RowOf<In>, TreeMembers> =>
+    buildTreeSpec(input, config);
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)
     : createTableFeature(factory);
@@ -505,4 +507,5 @@ without it. Leave the `withExpansion` lines untouched.
       carry their `no-console` exemptions.
 
 ---
+
 [Step 2: The inherited row-tree behavior](step-2-tree-behavior-spec.plan.md) →

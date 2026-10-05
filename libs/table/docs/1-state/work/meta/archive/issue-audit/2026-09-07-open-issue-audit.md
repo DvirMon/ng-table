@@ -13,19 +13,19 @@ against source, not against the issue's own checkboxes.
 
 ## Verdicts
 
-| # | Title | Verdict |
-|---|---|---|
-| 53 | row-edit G3 — optimistic create identity (`swapRowId`) | **Close — shipped** |
-| 47 | row mutation free functions | **Close — shipped** |
-| 4 | `withExpansion()` feature | **Close — shipped** |
-| 8 | `withSorting()` multi opt-in | **Close — shipped** (one demo nit) |
-| 1 | State Layer PRD (`createTableStore`) | **Close — superseded by in-repo doc** |
-| 54 | optimistic G5 — rollback never delete or move | **Retitle — half stale** |
-| 52 | `withExpansion()` reconcile `expandedRows` | Keep — ~90% done, 2 ACs left |
-| 51 | engine announces removed row ids | Keep — 1 doc AC left |
-| 6 | `withGrouping()` feature | Keep, **body stale** — rewrite design section |
-| 5 | `withFiltering()` feature | Keep — unbuilt, body still accurate |
-| 7 | Pipeline integration verification | Keep — blocked on #6/#6 |
+| #   | Title                                                  | Verdict                                       |
+| --- | ------------------------------------------------------ | --------------------------------------------- |
+| 53  | row-edit G3 — optimistic create identity (`swapRowId`) | **Close — shipped**                           |
+| 47  | row mutation free functions                            | **Close — shipped**                           |
+| 4   | `withExpansion()` feature                              | **Close — shipped**                           |
+| 8   | `withSorting()` multi opt-in                           | **Close — shipped** (one demo nit)            |
+| 1   | State Layer PRD (`createTableStore`)                   | **Close — superseded by in-repo doc**         |
+| 54  | optimistic G5 — rollback never delete or move          | **Retitle — half stale**                      |
+| 52  | `withExpansion()` reconcile `expandedRows`             | Keep — ~90% done, 2 ACs left                  |
+| 51  | engine announces removed row ids                       | Keep — 1 doc AC left                          |
+| 6   | `withGrouping()` feature                               | Keep, **body stale** — rewrite design section |
+| 5   | `withFiltering()` feature                              | Keep — unbuilt, body still accurate           |
+| 7   | Pipeline integration verification                      | Keep — blocked on #6/#6                       |
 
 ---
 
@@ -127,7 +127,7 @@ Two ACs are genuinely outstanding:
   row renders collapsed. No such test exists in the spec file.
 - `docs/1-state/features/expansion.md` does not document the removal behavior directly. It
   mentions the prune only obliquely, at line 179, inside an open question about stale
-  *restored* ids.
+  _restored_ ids.
 
 Small residual; keep open until both land.
 
@@ -140,7 +140,7 @@ Implementation is complete: `onRowsRemoved` on `TableFeatureSpec`, folded in
 
 One AC left, a doc line: `docs/1-state/architecture.md` was to record the convention in
 its open-questions list so a future `withSelection()` is written with the hook. Grep finds
-no `onRowsRemoved` in that file. (The obligation *is* recorded in the per-feature docs —
+no `onRowsRemoved` in that file. (The obligation _is_ recorded in the per-feature docs —
 `features/column-pinning.md:114`, `features/column-sizing.md:118,158` — and in `CLAUDE.md`,
 so this is redundancy, not a live trap.) Note `docs/1-state/work/with-selection/` is
 untracked in the working tree, so the risk this AC guards against is imminent.

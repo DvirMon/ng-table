@@ -5,25 +5,43 @@ atomic: Organism
 spec: specs/layout/TOC Column.md
 frame: components/TOC Column.dc.html
 owns:
-  - "TOC column width, sticky offset, padding"
-  - "\"On this page\" label"
-  - "TOC item + nested (H3) item styling"
-  - "Scroll-spy active behavior"
+  - 'TOC column width, sticky offset, padding'
+  - '"On this page" label'
+  - 'TOC item + nested (H3) item styling'
+  - 'Scroll-spy active behavior'
 does_not_own:
-  - "Which headings appear — derived from Content Prose H2/H3"
+  - 'Which headings appear — derived from Content Prose H2/H3'
 depends_on:
-  - "Content Prose.md (prose)"
-  - "foundations/Typography.md (typography)"
-  - "foundations/Motion.md (motion)"
-  - "foundations/Color.md (color)"
+  - 'Content Prose.md (prose)'
+  - 'foundations/Typography.md (typography)'
+  - 'foundations/Motion.md (motion)'
+  - 'foundations/Color.md (color)'
 states:
-  - "item default"
-  - "item hover"
-  - "item active (scroll-spy)"
-  - "hidden below lg"
+  - 'item default'
+  - 'item hover'
+  - 'item active (scroll-spy)'
+  - 'hidden below lg'
 a11y:
-  - "aria-label=\"On this page\"; active item gets aria-current=\"location\""
-tokens: [--ngpt-sys-layout-toc-width, --ngpt-sys-space-900, --ngpt-sys-space-500, --ngpt-sys-typescale-label-large-sm, --ngpt-sys-typescale-label-small-alt, --ngpt-sys-space-100, --ngpt-sys-space-225, --ngpt-sys-space-250, --ngpt-text-muted, --ngpt-text-secondary, --ngpt-bg-hover, --ngpt-accent, --ngpt-comp-toc-nested-indent, --ngpt-comp-toc-nested-text, --ngpt-sys-typescale-label-small-2, --ngpt-sys-layout-scroll-offset]
+  - 'aria-label="On this page"; active item gets aria-current="location"'
+tokens:
+  [
+    --ngpt-sys-layout-toc-width,
+    --ngpt-sys-space-900,
+    --ngpt-sys-space-500,
+    --ngpt-sys-typescale-label-large-sm,
+    --ngpt-sys-typescale-label-small-alt,
+    --ngpt-sys-space-100,
+    --ngpt-sys-space-225,
+    --ngpt-sys-space-250,
+    --ngpt-text-muted,
+    --ngpt-text-secondary,
+    --ngpt-bg-hover,
+    --ngpt-accent,
+    --ngpt-comp-toc-nested-indent,
+    --ngpt-comp-toc-nested-text,
+    --ngpt-sys-typescale-label-small-2,
+    --ngpt-sys-layout-scroll-offset,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -31,25 +49,21 @@ token_values_resolve_in: specs/foundations/ (single source of truth — never re
 
 The right column of the page grid. Mirrors the sidebar's nav-item visual treatment but drives scroll-to-section instead of page navigation.
 
-
 ## Container
 
-| Property | Value | Token |
-| --- | --- | --- |
-| Grid column width | 220px | --ngpt-sys-layout-toc-width |
-| padding | 36px 20px | --ngpt-sys-space-900 --ngpt-sys-space-500 |
-| font-size (base) | 13px | --ngpt-sys-typescale-label-large-sm |
-
+| Property          | Value     | Token                                     |
+| ----------------- | --------- | ----------------------------------------- |
+| Grid column width | 220px     | --ngpt-sys-layout-toc-width               |
+| padding           | 36px 20px | --ngpt-sys-space-900 --ngpt-sys-space-500 |
+| font-size (base)  | 13px      | --ngpt-sys-typescale-label-large-sm       |
 
 ## Structure
 
-| Property | Value | Token |
-| --- | --- | --- |
-| Label ("On this page") | 11px / 600 / uppercase / 0.05em, 10px margin-bottom | --ngpt-sys-typescale-label-small-alt |
-| Item list gap | 4px | --ngpt-sys-space-100 |
-| Item padding | 9px 10px | --ngpt-sys-space-225 --ngpt-sys-space-250 |
-
-
+| Property               | Value                                               | Token                                     |
+| ---------------------- | --------------------------------------------------- | ----------------------------------------- |
+| Label ("On this page") | 11px / 600 / uppercase / 0.05em, 10px margin-bottom | --ngpt-sys-typescale-label-small-alt      |
+| Item list gap          | 4px                                                 | --ngpt-sys-space-100                      |
+| Item padding           | 9px 10px                                            | --ngpt-sys-space-225 --ngpt-sys-space-250 |
 
 ```html
 <aside class="toc">
@@ -62,25 +76,39 @@ The right column of the page grid. Mirrors the sidebar's nav-item visual treatme
 </aside>
 ```
 
-
 ```css
-.toc { padding: 36px 20px; font-size: 13px; }
+.toc {
+  padding: 36px 20px;
+  font-size: 13px;
+}
 .toc-label {
-  font: 600 11px Inter, sans-serif;
+  font:
+    600 11px Inter,
+    sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ngpt-text-muted);
   margin-bottom: 10px;
 }
-.toc-list { display: flex; flex-direction: column; gap: 4px; }
+.toc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 .toc-item {
   padding: 9px 10px;
   border-left: 2px solid transparent;
   color: var(--ngpt-text-muted);
   text-decoration: none;
 }
-.toc-item:hover { color: var(--ngpt-text-secondary); background: var(--ngpt-bg-hover); }
-.toc-item.is-active { color: var(--ngpt-accent); border-left-color: var(--ngpt-accent); }
+.toc-item:hover {
+  color: var(--ngpt-text-secondary);
+  background: var(--ngpt-bg-hover);
+}
+.toc-item.is-active {
+  color: var(--ngpt-accent);
+  border-left-color: var(--ngpt-accent);
+}
 .toc-item--nested {
   padding-left: var(--ngpt-comp-toc-nested-indent, 22px);
   font-size: 12.5px;
@@ -88,17 +116,16 @@ The right column of the page grid. Mirrors the sidebar's nav-item visual treatme
 }
 ```
 
-
 ## Nested items (H3)
 
 The TOC lists H2 and H3 only. H4 is omitted — at 220px wide, a third indent level wraps every label.
 
-| Property | Value | Token |
-| --- | --- | --- |
-| H3 item padding-left | 22px (vs 10px for H2) | `--ngpt-comp-toc-nested-indent` |
-| H3 item font-size | 12.5px | `--ngpt-sys-typescale-label-small-2` |
-| H3 item color (default) | oklch(0.6 0.01 260) | `--ngpt-comp-toc-nested-text` |
-| H3 active treatment | Same accent text + left border as H2 items | `--ngpt-accent` |
+| Property                | Value                                      | Token                                |
+| ----------------------- | ------------------------------------------ | ------------------------------------ |
+| H3 item padding-left    | 22px (vs 10px for H2)                      | `--ngpt-comp-toc-nested-indent`      |
+| H3 item font-size       | 12.5px                                     | `--ngpt-sys-typescale-label-small-2` |
+| H3 item color (default) | oklch(0.6 0.01 260)                        | `--ngpt-comp-toc-nested-text`        |
+| H3 active treatment     | Same accent text + left border as H2 items | `--ngpt-accent`                      |
 
 ## Sticky behavior
 

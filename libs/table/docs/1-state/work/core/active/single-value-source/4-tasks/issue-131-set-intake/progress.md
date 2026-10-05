@@ -3,14 +3,14 @@
 **Issue:** [#131](https://github.com/DvirMon/ng-table/issues/131)
 **Status:** 6 / 6 complete — shipped 918551f
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `createTable` accepts a `ColumnSet` beside the array | ✅ done | — |
-| 2 | Generator constraint, regenerated | ✅ done | — |
-| 3 | Move the three specs off `columnsSchema` | ✅ done | — |
-| 4 | Delete `columnsSchema` from `createTable` | ✅ done | — |
-| 5 | Carriage proofs: `create-table.types.spec.ts` | ✅ done | — |
-| 6 | Record the amendment | ✅ done | — |
+| Step | Title                                                | Status  | PR  |
+| ---- | ---------------------------------------------------- | ------- | --- |
+| 1    | `createTable` accepts a `ColumnSet` beside the array | ✅ done | —   |
+| 2    | Generator constraint, regenerated                    | ✅ done | —   |
+| 3    | Move the three specs off `columnsSchema`             | ✅ done | —   |
+| 4    | Delete `columnsSchema` from `createTable`            | ✅ done | —   |
+| 5    | Carriage proofs: `create-table.types.spec.ts`        | ✅ done | —   |
+| 6    | Record the amendment                                 | ✅ done | —   |
 
 ## Graph
 

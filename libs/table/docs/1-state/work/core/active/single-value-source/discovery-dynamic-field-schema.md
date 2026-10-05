@@ -7,7 +7,7 @@
 **Verdict: no surveyed library lets a new field carry its own new schema while keeping literal
 key typing. `setColumns` being unable to add a column is a structural wall, not a gap.** Signal
 Forms does materialize nodes for runtime-added keys — the field tree is derived from the data's
-shape, there is no "add field" API [R1][R2]. But the *logic* tree is compiled exactly once at
+shape, there is no "add field" API [R1][R2]. But the _logic_ tree is compiled exactly once at
 `form()` and thereafter only **indexed by key**; a key with no compile-time declaration gets an
 empty logic node [R3][R4][R5]. The one mechanism that does cover unknown keys is the `DYNAMIC`
 slot written by `applyEach` — and it is **one shared schema for every key**, not a per-key one
@@ -75,12 +75,12 @@ mutating one already in use [R10][R11].
 - `rootCompile` clears the `compiledSchemas` memo before and after, so each `form()` gets a fresh
   `FieldPathNode` root; within one compile, a reused `SchemaImpl` is memoized [R14].
 - `apply`, `applyWhen`, `applyWhenValue` and `applyEach` all begin with `assertPathIsCurrent(path)`,
-  which throws RuntimeError 1908 — *"A FieldPath can only be used directly within the Schema that
-  owns it"* — unless `currentCompilingNode === path.root` [R6][R15]. `currentCompilingNode` is set
+  which throws RuntimeError 1908 — _"A FieldPath can only be used directly within the Schema that
+  owns it"_ — unless `currentCompilingNode === path.root` [R6][R15]. `currentCompilingNode` is set
   only inside `SchemaImpl.compile()`'s `try` block [R14]. **Calling `apply()` after `form()`
   returns throws.** There is no `extend`/`addRule`/`recompile` export.
-- The docs agree: *"The schema function runs ONCE during form creation … The condition controls
-  whether those rules are active, not whether they exist."* [S3]
+- The docs agree: _"The schema function runs ONCE during form creation … The condition controls
+  whether those rules are active, not whether they exist."_ [S3]
 
 ### (d) Literal keys come from `keyof TModel`, so a growable model has none
 
@@ -90,7 +90,7 @@ mutating one already in use [R10][R11].
 - Consequence, not stated in any doc: for `TModel = Record<string, T>`, `keyof TModel` is `string`,
   so every subfield is `T` under an index signature. For `TModel = { a: A; b: B }` the keys are
   literal but the set cannot grow. **The two properties are mutually exclusive by construction.**
-- There *is* a typed path for dynamically-keyed records, and it is `applyEach`'s second overload:
+- There _is_ a typed path for dynamically-keyed records, and it is `applyEach`'s second overload:
   `applyEach<TValue extends Object>(path, schema: NoInfer<SchemaOrSchemaFn<ItemType<TValue>, PathKind.Child>>)`,
   where `ItemType<T> = T extends ReadonlyArray<any> ? T[number] : T[keyof T]` [R16][R17]. It types
   the schema against the **union of value types**, never against one key.
@@ -101,12 +101,11 @@ mutating one already in use [R10][R11].
 ### Cross-check — the same wall elsewhere
 
 - **TanStack Form** derives paths from the model type, and its record accessor is
-  `UnknownAccessor<TParent> = TParent['key'] extends never ? string : \`${TParent['key']}.${string}\``
-  — a template, not a literal union. Arrays use `[${number}]` [S1].
+  `UnknownAccessor<TParent> = TParent['key'] extends never ? string : \`${TParent['key']}.${string}\``— a template, not a literal union. Arrays use`[${number}]` [S1].
 - **React Hook Form** `FieldPath<TFieldValues> = Path<TFieldValues>`, "eagerly collects all paths
   through a type". A name outside that union is a type error; there is no runtime widening except
   the `IsAny<V> extends true ? string` escape in `ArrayPathImpl` [S2]. `register` declares no new
-  *schema* — validation rules are re-passed per call site.
+  _schema_ — validation rules are re-passed per call site.
 - **Zod** `.extend<U extends $ZodLooseShape>(shape: U): ZodObject<util.Extend<Shape, U>, Config>`,
   with `Extend<A, B>` a mapped merge that preserves literal keys [R10][R11]. It **returns a new
   schema**; the original is untouched, so nothing already constructed against it changes.
@@ -115,14 +114,14 @@ mutating one already in use [R10][R11].
 
 ## Comparison
 
-| Axis | Signal Forms 22.1.2 | TanStack Form 1.33.5 | RHF 7.88.0 | Zod 4.4.3 |
-|---|---|---|---|---|
-| Node appears from data shape | yes — `Object.keys(value)` [R1] | yes — value-driven [S1] | yes — value-driven [S2] | n/a |
-| Explicit add-field API | no [R1][R13] | no [S1] | no [S2] | n/a |
-| Rules for an undeclared key | empty logic node [R4] | none [S1] | none [S2] | n/a |
-| One schema covering unknown keys | `applyEach` → `DYNAMIC` [R5][R6] | per-element validators | resolver schema | `.catchall` [R10] |
-| Schema mutable after construction | no — throws 1908 [R15] | no [S1] | no [S2] | no — `.extend` returns new [R11] |
-| Literal keys survive growth | no — `keyof TModel` [R8][R9] | no — `${string}` [S1] | no [S2] | no — `.catchall` erases [R10] |
+| Axis                              | Signal Forms 22.1.2              | TanStack Form 1.33.5    | RHF 7.88.0              | Zod 4.4.3                        |
+| --------------------------------- | -------------------------------- | ----------------------- | ----------------------- | -------------------------------- |
+| Node appears from data shape      | yes — `Object.keys(value)` [R1]  | yes — value-driven [S1] | yes — value-driven [S2] | n/a                              |
+| Explicit add-field API            | no [R1][R13]                     | no [S1]                 | no [S2]                 | n/a                              |
+| Rules for an undeclared key       | empty logic node [R4]            | none [S1]               | none [S2]               | n/a                              |
+| One schema covering unknown keys  | `applyEach` → `DYNAMIC` [R5][R6] | per-element validators  | resolver schema         | `.catchall` [R10]                |
+| Schema mutable after construction | no — throws 1908 [R15]           | no [S1]                 | no [S2]                 | no — `.extend` returns new [R11] |
+| Literal keys survive growth       | no — `keyof TModel` [R8][R9]     | no — `${string}` [S1]   | no [S2]                 | no — `.catchall` erases [R10]    |
 
 ## Synthesis
 
@@ -133,7 +132,7 @@ already admits — which means either a symbol slot standing for "all of them" (
 `DYNAMIC`), a template pattern (`${string}`, TanStack), or an index signature (Zod `.catchall`).
 All three erase per-key identity.
 
-Where they *do* differ is in how much they let you get away with dynamically. Signal Forms is the
+Where they _do_ differ is in how much they let you get away with dynamically. Signal Forms is the
 most permissive: `getAllChildBuilders` genuinely merges the `DYNAMIC` builder into every key
 lookup, including for a plain object, so an `applyEach`-declared schema reaches keys that did not
 exist at `form()` [R5]. The angular.dev guide describes `applyEach` as an array facility only
@@ -142,12 +141,12 @@ undocumented capability. It is still one schema for all keys.
 
 **Against the repo's G65/G66/G67 hypothesis — verified, then split in two.** The recorded claim
 that "Signal Forms' paths name instances while ours name columns" is **half wrong**. Signal Forms
-has *two* structures, and they name different things:
+has _two_ structures, and they name different things:
 
 - The **schema path** (`FieldPathNode` / `SchemaPathTree`) names a **type-level slot in the
   model** — mapped over `keyof TModel`, with every array element collapsed onto one `DYNAMIC`
   symbol [R6][R9]. It names a cross-section, exactly like `ColumnsPath`. G65's own framing
-  ("a column-keyed path names a cross-section, not an instance") is the *same* shape Signal Forms
+  ("a column-keyed path names a cross-section, not an instance") is the _same_ shape Signal Forms
   uses, not a departure from it.
 - The **field tree** (`FieldNode` / `childrenMap`) names **instances** — one node per array
   element, identity-tracked by injected `Symbol` [R1].
@@ -158,8 +157,8 @@ first. So the G65 rationale survives; its comparison sentence should be correcte
 ### What this means for `setColumns`
 
 The constraint's analogy holds, and the source strengthens it rather than weakening it. For a new
-column to arrive with *its own* rules, ng-table would need what Signal Forms also does not have:
-a way to compile rules after declaration. Porting the one mechanism Signal Forms *does* have —
+column to arrive with _its own_ rules, ng-table would need what Signal Forms also does not have:
+a way to compile rules after declaration. Porting the one mechanism Signal Forms _does_ have —
 `applyEach`'s `DYNAMIC` slot — to a column-keyed path would mean **one schema applied to every
 column, including columns added later**, keyed by nothing. Its cost, read off the structures
 above: `ColumnsPath<TRow, TId>` would need a symbol member alongside its `TId` keys, the
@@ -170,7 +169,7 @@ columns" — not "a new column with its own rules", which nobody ships.
 
 ## Against
 
-- The wall is about *literal typing*, not about adding columns. A separate `addColumn` verb typed
+- The wall is about _literal typing_, not about adding columns. A separate `addColumn` verb typed
   `ColumnsUpdater<TRow, string>` — widening the id union rather than preserving it — is buildable
   and is what every other vendor effectively does. This discovery does not argue against that; it
   argues only that the widened result cannot be typed back down.
@@ -199,34 +198,34 @@ columns" — not "a new column with its own rules", which nobody ships.
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| R1 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1146-1210` (`computeChildrenMap`) | 22.1.2 | yes — source read; this is the whole of (a) |
-| R2 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1140-1145` (`createChildrenMap` / `linkedSignal`) | 22.1.2 | yes — source read |
-| R3 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1592-1611` (`FieldNode.newChild`) | 22.1.2 | yes — source read; the array/object branch |
-| R4 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:340-404` (`LeafLogicNode`, `CompositeLogicNode`) | 22.1.2 | yes — source read; empty-node fallback at :353-354 |
-| R5 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:405-434` (`getAllChildBuilders`) | 22.1.2 | yes — source read; **corrects the guide**, which scopes `applyEach` to arrays |
-| R6 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1811-1828` (`applyEach`, `apply`, `applyWhen`) | 22.1.2 | yes — source read |
-| R7 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1783-1810` (`form`) | 22.1.2 | yes — source read; confirmed the repo's "single rootCompile" phrasing |
-| R8 | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1169-1173` (`Subfields`) | 22.1.2 | yes — type read |
-| R9 | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1555-1559` (`SchemaPathTree`) | 22.1.2 | yes — type read; arrays excluded from the mapping |
-| R10 | `node_modules/zod/v4/classic/schemas.d.cts:459-468` (`catchall`, `passthrough`, `extend`) | 4.4.3 | yes — type read |
-| R11 | `node_modules/zod/v4/core/util.d.cts:60-64` (`Extend<A, B>`) | 4.4.3 | yes — type read; literal keys preserved |
-| R12 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1094-1139` (orphan `keyInParent`) | 22.1.2 | yes — source read |
-| R13 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1059-1067` (`FieldNodeStructure.getChild`) | 22.1.2 | yes — source read |
-| R14 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:511-551` (`SchemaImpl.compile` / `rootCompile`) | 22.1.2 | yes — source read |
-| R15 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:555-559` (`assertPathIsCurrent`, RuntimeError 1908) | 22.1.2 | yes — source read; this is what makes it one-shot |
-| R16 | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1980-1981` (`applyEach` overloads) | 22.1.2 | yes — type read; the object overload the guide omits |
-| R17 | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1765` (`ItemType`) | 22.1.2 | yes — type read |
-| R18 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:500-507` (`FIELD_PATH_PROXY_HANDLER`) | 22.1.2 | yes — source read |
-| R19 | `libs/table/docs/decisions/grouping.md:106-108` (G65, G66, G67) | — | yes — read; comparison sentence in G65 corrected above |
-| R20 | `libs/table/src/engine/columns-schema/resolve.ts:19-28` (`assertRuleColumnIdsAreKnown`) | — | yes — read |
-| R21 | `libs/table/src/schema/path-proxy.ts:78-100` (`createPathProxy`) | — | yes — read; same bare-proxy shape as R18 |
-| R22 | `libs/table/src/api/types.ts:117` (`ColumnIdIn`), `:190-192` (`ColumnsUpdater`) | — | yes — read |
-| S1 | https://unpkg.com/@tanstack/form-core@1.33.5/dist/esm/util-types.d.ts | 1.33.5 | yes — published types read (`UnknownAccessor`, `ArrayAccessor`) |
-| S2 | https://unpkg.com/react-hook-form@7.88.0/dist/types/path/eager.d.ts | 7.88.0 | yes — published types read (`Path`, `FieldPath`, `ArrayPathImpl`) |
-| S3 | https://angular.dev/guide/forms/signals/schemas | unversioned | yes — page read; "schema function runs ONCE during form creation". **Understates `applyEach`** — see R5/R16 |
-| S4 | https://registry.npmjs.org/react-hook-form/latest | 7.88.0 | yes — pin source |
-| S5 | https://registry.npmjs.org/@tanstack/form-core/latest | 1.33.5 | yes — pin source |
-| S6 | https://react-hook-form.com/docs/useform/register | — | no — HTTP 403; S2 used instead |
-| S7 | https://tanstack.com/form/latest/docs/framework/react/guides/arrays | — | yes — read; silent on validator attachment, so S1 carries the claim |
+|     | Source                                                                                                                 | Version     | Verified                                                                                                    |
+| --- | ---------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------- |
+| R1  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1146-1210` (`computeChildrenMap`)                   | 22.1.2      | yes — source read; this is the whole of (a)                                                                 |
+| R2  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1140-1145` (`createChildrenMap` / `linkedSignal`)   | 22.1.2      | yes — source read                                                                                           |
+| R3  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1592-1611` (`FieldNode.newChild`)                   | 22.1.2      | yes — source read; the array/object branch                                                                  |
+| R4  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:340-404` (`LeafLogicNode`, `CompositeLogicNode`)    | 22.1.2      | yes — source read; empty-node fallback at :353-354                                                          |
+| R5  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:405-434` (`getAllChildBuilders`)                    | 22.1.2      | yes — source read; **corrects the guide**, which scopes `applyEach` to arrays                               |
+| R6  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1811-1828` (`applyEach`, `apply`, `applyWhen`)      | 22.1.2      | yes — source read                                                                                           |
+| R7  | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1783-1810` (`form`)                                 | 22.1.2      | yes — source read; confirmed the repo's "single rootCompile" phrasing                                       |
+| R8  | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1169-1173` (`Subfields`)                                      | 22.1.2      | yes — type read                                                                                             |
+| R9  | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1555-1559` (`SchemaPathTree`)                                 | 22.1.2      | yes — type read; arrays excluded from the mapping                                                           |
+| R10 | `node_modules/zod/v4/classic/schemas.d.cts:459-468` (`catchall`, `passthrough`, `extend`)                              | 4.4.3       | yes — type read                                                                                             |
+| R11 | `node_modules/zod/v4/core/util.d.cts:60-64` (`Extend<A, B>`)                                                           | 4.4.3       | yes — type read; literal keys preserved                                                                     |
+| R12 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1094-1139` (orphan `keyInParent`)                   | 22.1.2      | yes — source read                                                                                           |
+| R13 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:1059-1067` (`FieldNodeStructure.getChild`)          | 22.1.2      | yes — source read                                                                                           |
+| R14 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:511-551` (`SchemaImpl.compile` / `rootCompile`)     | 22.1.2      | yes — source read                                                                                           |
+| R15 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:555-559` (`assertPathIsCurrent`, RuntimeError 1908) | 22.1.2      | yes — source read; this is what makes it one-shot                                                           |
+| R16 | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1980-1981` (`applyEach` overloads)                            | 22.1.2      | yes — type read; the object overload the guide omits                                                        |
+| R17 | `node_modules/@angular/forms/types/_structure-chunk.d.ts:1765` (`ItemType`)                                            | 22.1.2      | yes — type read                                                                                             |
+| R18 | `node_modules/@angular/forms/fesm2022/_validation_errors-chunk.mjs:500-507` (`FIELD_PATH_PROXY_HANDLER`)               | 22.1.2      | yes — source read                                                                                           |
+| R19 | `libs/table/docs/decisions/grouping.md:106-108` (G65, G66, G67)                                                        | —           | yes — read; comparison sentence in G65 corrected above                                                      |
+| R20 | `libs/table/src/engine/columns-schema/resolve.ts:19-28` (`assertRuleColumnIdsAreKnown`)                                | —           | yes — read                                                                                                  |
+| R21 | `libs/table/src/schema/path-proxy.ts:78-100` (`createPathProxy`)                                                       | —           | yes — read; same bare-proxy shape as R18                                                                    |
+| R22 | `libs/table/src/api/types.ts:117` (`ColumnIdIn`), `:190-192` (`ColumnsUpdater`)                                        | —           | yes — read                                                                                                  |
+| S1  | https://unpkg.com/@tanstack/form-core@1.33.5/dist/esm/util-types.d.ts                                                  | 1.33.5      | yes — published types read (`UnknownAccessor`, `ArrayAccessor`)                                             |
+| S2  | https://unpkg.com/react-hook-form@7.88.0/dist/types/path/eager.d.ts                                                    | 7.88.0      | yes — published types read (`Path`, `FieldPath`, `ArrayPathImpl`)                                           |
+| S3  | https://angular.dev/guide/forms/signals/schemas                                                                        | unversioned | yes — page read; "schema function runs ONCE during form creation". **Understates `applyEach`** — see R5/R16 |
+| S4  | https://registry.npmjs.org/react-hook-form/latest                                                                      | 7.88.0      | yes — pin source                                                                                            |
+| S5  | https://registry.npmjs.org/@tanstack/form-core/latest                                                                  | 1.33.5      | yes — pin source                                                                                            |
+| S6  | https://react-hook-form.com/docs/useform/register                                                                      | —           | no — HTTP 403; S2 used instead                                                                              |
+| S7  | https://tanstack.com/form/latest/docs/framework/react/guides/arrays                                                    | —           | yes — read; silent on validator attachment, so S1 carries the claim                                         |

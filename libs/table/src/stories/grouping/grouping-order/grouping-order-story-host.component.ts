@@ -10,11 +10,7 @@ import {
   type GroupSummary,
 } from '../../../index';
 import { GROUPING_ROWS_MOCK } from '../fixtures/mock';
-import {
-  BASE_GROUPING_LEVELS,
-  EXTERNAL_GROUP_ORDER,
-  groupingConfig,
-} from '../fixtures/schema';
+import { BASE_GROUPING_LEVELS, EXTERNAL_GROUP_ORDER, groupingConfig } from '../fixtures/schema';
 import type { DealRow } from '../fixtures/types';
 import { formatValue } from '../fixtures/utils';
 import { GROUPING_STORY_PIPES } from '../grouping-story.pipes';
@@ -57,10 +53,7 @@ export class GroupingOrderStoryHostComponent {
    * `first-occurrence` returns a constant 0, and the sort is stable, so the clustering order
    * survives untouched.
    */
-  private readonly compareGroups = (
-    a: GroupSummary<DealRow>,
-    b: GroupSummary<DealRow>
-  ): number => {
+  private readonly compareGroups = (a: GroupSummary<DealRow>, b: GroupSummary<DealRow>): number => {
     const mode = this.groupOrder();
     if (mode === 'throwing') {
       throw new Error('[grouping-order] groupOrder threw while ordering this sibling pair.');
@@ -93,7 +86,7 @@ export class GroupingOrderStoryHostComponent {
         groupOrder(path.rep, this.compareGroups);
       },
     }),
-    withSorting()
+    withSorting(),
   );
 
   /** @internal not a Storybook control — readout, not a knob. */

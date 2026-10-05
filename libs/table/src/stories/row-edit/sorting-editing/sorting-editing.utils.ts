@@ -4,7 +4,9 @@ const SAVE_LATENCY_MS = 400;
 
 /** Maps a column's sort direction to the `aria-sort` value for its `<th>` — `undefined`/no entry
  * reads as `'none'`, matching `table.sortDirections()`'s "unsorted columns are absent" shape. */
-export function sortAriaValue(direction: 'asc' | 'desc' | undefined): 'ascending' | 'descending' | 'none' {
+export function sortAriaValue(
+  direction: 'asc' | 'desc' | undefined,
+): 'ascending' | 'descending' | 'none' {
   switch (direction) {
     case 'asc':
       return 'ascending';

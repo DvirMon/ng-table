@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — expose renderRows on TableCore"
+title: 'Step 1 — expose renderRows on TableCore'
 type: task-step
 issue: 65
 ---
@@ -28,7 +28,7 @@ tracks every pipeline change. A feature factory receives `core: TableCore<TRow>`
 out only on `TableCoreHandle`, and `composeTable()` attaches it to the store object
 (`compose-table.ts:111`). No feature can reach it.
 
-The second factory parameter (`composed`) is not an alternative: it holds only *feature* members,
+The second factory parameter (`composed`) is not an alternative: it holds only _feature_ members,
 and `renderRows` is core.
 
 Decision: `../../../2-decisions.md` D16 / D16.1.
@@ -66,7 +66,7 @@ computed reference**, so `composeTable()` and every existing reader are untouche
 - **Do not reorder the `core` object relative to the `renderRows` computed declaration** — the
   computed is declared above the object literal for a reason; referencing it before declaration
   is a TDZ error, not a type error.
-- This widens what *every* feature can read. That is intended (`rows` is already there on the
+- This widens what _every_ feature can read. That is intended (`rows` is already there on the
   same terms), but it means a future feature can now close over render output — the existing
   "lazy computed, registry complete at evaluation time" note in the `TableCore` doc comment
   covers it; don't add a second caveat.
@@ -85,4 +85,5 @@ computed reference**, so `composeTable()` and every existing reader are untouche
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 [Step 2: rowsBeneathGroup() engine walk](step-2-engine-rows-beneath-group.plan.md) →

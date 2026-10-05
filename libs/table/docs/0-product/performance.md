@@ -59,27 +59,27 @@ Ran `clusterRows` + `buildGroupRenderRows` (`engine/grouping.ts`) directly again
 data — no `TestBed`, no rendered component, per this file's axis-1 framing of "does the pipeline
 stage stay linear." One machine, one run each — figures are indicative, not a certified budget.
 
-*Axis 1 (row count, 2 grouping levels, cardinality 20/level):*
+_Axis 1 (row count, 2 grouping levels, cardinality 20/level):_
 
-| Rows | `clusterRows` | `buildGroupRenderRows` | Total |
-|---|---|---|---|
-| 1,000 | 2.3ms | 2.3ms | 4.6ms |
-| 10,000 | 5.8ms | 8.7ms | 14.5ms |
-| 50,000 | 36.7ms | 34.1ms | 70.8ms |
+| Rows   | `clusterRows` | `buildGroupRenderRows` | Total  |
+| ------ | ------------- | ---------------------- | ------ |
+| 1,000  | 2.3ms         | 2.3ms                  | 4.6ms  |
+| 10,000 | 5.8ms         | 8.7ms                  | 14.5ms |
+| 50,000 | 36.7ms        | 34.1ms                 | 70.8ms |
 
 10x the rows (1k → 10k) costs ~3.1x the time; 5x the rows (10k → 50k) costs ~4.9x the time —
 consistent with the `Map`-bucketing design staying linear in row count, not quadratic, as
 `engine/grouping.ts`'s implementation notes predicted. At the 10,000-row working target, total
 time is ~14ms — well inside anything a person would notice as janky for a one-off recompute.
 
-*Axis 2 (depth, fixed 10,000 rows, cardinality 10/level):*
+_Axis 2 (depth, fixed 10,000 rows, cardinality 10/level):_
 
-| Levels | `clusterRows` | `buildGroupRenderRows` | Total |
-|---|---|---|---|
-| 1 | 2.4ms | 5.7ms | 8.1ms |
-| 2 | 3.9ms | 5.2ms | 9.1ms |
-| 3 | 7.7ms | 8.8ms | 16.5ms |
-| 4 | 9.5ms | 10.9ms | 20.5ms |
+| Levels | `clusterRows` | `buildGroupRenderRows` | Total  |
+| ------ | ------------- | ---------------------- | ------ |
+| 1      | 2.4ms         | 5.7ms                  | 8.1ms  |
+| 2      | 3.9ms         | 5.2ms                  | 9.1ms  |
+| 3      | 7.7ms         | 8.8ms                  | 16.5ms |
+| 4      | 9.5ms         | 10.9ms                 | 20.5ms |
 
 Cost grows roughly linearly with depth too — each added level is one more recursive bucketing
 pass over a shrinking working set, not a multiplicative blowup. Going from 1 to 4 levels roughly
@@ -90,7 +90,7 @@ but it stayed proportionate, not runaway, at 1–4 levels and 10k rows.
 
 **Caveats, so this isn't over-read:** single-run wall-clock timings, not a statistically averaged
 benchmark; no comparison against a stress suite or CI gate (none exists yet, per "Not yet
-decided" below); doesn't cover axis 2's *heavy cell UI* framing at all — this only measured the
+decided" below); doesn't cover axis 2's _heavy cell UI_ framing at all — this only measured the
 pure clustering/aggregation engine, not directive-layer rendering cost, which is a separate,
 unmeasured concern once `withGrouping()` gets a directive layer.
 

@@ -14,12 +14,12 @@ Directly re-opens **D2** in [`../with-grouping/2-decisions.md`](../../archive/wi
 ## Corrections to the issue body, made before grilling (2026-09-16)
 
 - **"The slot already exists and is precedented — `withSorting()` uses it" is wrong.**
-  `sortFn` / `enableSorting` / `aggregateFn` are *consumer-authored* fields on
+  `sortFn` / `enableSorting` / `aggregateFn` are _consumer-authored_ fields on
   `ColumnDefInput`, read by a feature at pipeline time (`with-sorting.ts:112,157`;
   `engine/grouping.ts:186`). No feature writes them. The `types.ts:79` comment
   ("Feature-contributed fields, populated when the corresponding feature is registered")
-  mis-describes them, and D2 says the opposite in words: `ColumnDef` carries *static
-  predicates supplied at column-definition time*. `groupIndex` would be the **first**
+  mis-describes them, and D2 says the opposite in words: `ColumnDef` carries _static
+  predicates supplied at column-definition time_. `groupIndex` would be the **first**
   feature-derived top-level `ColumnDef` field, not an instance of an existing pattern.
 
 - **`columnRules` cannot express it as written.** `ColumnRuleEntry` is
@@ -36,9 +36,9 @@ Directly re-opens **D2** in [`../with-grouping/2-decisions.md`](../../archive/wi
 
 - **The join is two-directional, and the issue only addresses one direction.** Across four
   story hosts:
-  - *column → is it a level, and which* — `isGroupedById` (static, collapsible).
+  - _column → is it a level, and which_ — `isGroupedById` (static, collapsible).
     `groupIndex` answers this cleanly.
-  - *level → its label* — `columnLabelById` (static, collapsible, async-rule, crud; 4 of 4).
+  - _level → its label_ — `columnLabelById` (static, collapsible, async-rule, crud; 4 of 4).
     `groupIndex` answers this only by inverting the iteration — filter `columns()` on
     `groupIndex !== undefined` and sort by it, instead of iterating the ordered
     `grouping()` array that already exists.
@@ -50,15 +50,15 @@ Directly re-opens **D2** in [`../with-grouping/2-decisions.md`](../../archive/wi
 
 ## Node graph (per `decompose-by-dependency-graph`)
 
-| Node | Question | Rank |
-|---|---|---|
-| N1 | What shape carries the column↔level relation (does D2 stand)? | **core** |
-| N2 | Contribution mechanism + registry dynamism | dependent (N1) |
-| N3 | Index semantics when `resolveGroupingLevels` drops a level (D14 / Q2) | dependent (N1) |
-| N4 | Cycle stance: may a column projection read feature state? | dependent (N1) |
-| N5 | Write surface stays `grouping: string[]` only (Q3) | independent |
-| N6 | Same treatment for `withSelection()` / `withExpansion()` (Q4) | independent (leaf) |
-| N7 | Story-host cleanup + columns-reference docs | dependent (N1, N2) |
+| Node | Question                                                              | Rank               |
+| ---- | --------------------------------------------------------------------- | ------------------ |
+| N1   | What shape carries the column↔level relation (does D2 stand)?        | **core**           |
+| N2   | Contribution mechanism + registry dynamism                            | dependent (N1)     |
+| N3   | Index semantics when `resolveGroupingLevels` drops a level (D14 / Q2) | dependent (N1)     |
+| N4   | Cycle stance: may a column projection read feature state?             | dependent (N1)     |
+| N5   | Write surface stays `grouping: string[]` only (Q3)                    | independent        |
+| N6   | Same treatment for `withSelection()` / `withExpansion()` (Q4)         | independent (leaf) |
+| N7   | Story-host cleanup + columns-reference docs                           | dependent (N1, N2) |
 
 ```
 N1 ──▶ N2 ──▶ N7
@@ -71,7 +71,7 @@ N6   (independent, leaf — issue already scopes it to "a look, not a commitment
 
 ## Settled
 
-- **D1 (2026-09-17) — The scenario is a *dynamic* group-by panel, not grouping in general.**
+- **D1 (2026-09-17) — The scenario is a _dynamic_ group-by panel, not grouping in general.**
   A table whose levels are fixed by the developer (`initialGrouping`, no control) needs none of
   this data. The need appears only when a person edits levels at runtime. Two UI pieces:
   an ordered level chip strip (reorder/remove) and a per-column toggle row.
@@ -92,7 +92,7 @@ N6   (independent, leaf — issue already scopes it to "a look, not a commitment
   `isGroupedBy()` method, and `grouping.includes(column.id)` in `syncGroupedColumnMode`.
 
 - **D3 (2026-09-17) — `isGroupedBy(): boolean`, not `groupIndexOf(): number | undefined`.**
-  Every existing call site asks *is this column a level*, never *which level*. `groupingLevels()`
+  Every existing call site asks _is this column a level_, never _which level_. `groupingLevels()`
   already answers "which" by position. Rejecting the index also drops the name `groupIndex` that
   #81 was filed under — the issue's title outlived its own evidence. Reversible: add
   `groupIndexOf` if a per-column index need ever appears.
@@ -135,15 +135,15 @@ feature-level schema APIs, since filtering and grouping put no per-column config
 
 Audit of where per-column feature config lives today — **three placements, no rule**:
 
-| Feature | Per-column fact | Placement | Shape |
-|---|---|---|---|
-| sorting | `sortFn` | `ColumnDef` literal | static pure fn |
-| sorting | `enableSorting` | `ColumnDef` literal | static boolean |
-| sorting | null/empty placement | `columnsSchema` → `applySortNulls` → `SORT_NULLS` meta | static opts, reactive channel |
-| grouping | is-this-column-a-level | `withGrouping(schemaFn)` → `GroupingRule.enable` | reactive, async-capable |
-| grouping | `aggregateFn` | `ColumnDef` literal | static pure fn |
-| visibility | `visible` | `ColumnDef` literal **and** `columnsSchema` → `applyVisible` | both |
-| filtering | — | none (row predicates, ADR-0016) | n/a |
+| Feature    | Per-column fact        | Placement                                                    | Shape                         |
+| ---------- | ---------------------- | ------------------------------------------------------------ | ----------------------------- |
+| sorting    | `sortFn`               | `ColumnDef` literal                                          | static pure fn                |
+| sorting    | `enableSorting`        | `ColumnDef` literal                                          | static boolean                |
+| sorting    | null/empty placement   | `columnsSchema` → `applySortNulls` → `SORT_NULLS` meta       | static opts, reactive channel |
+| grouping   | is-this-column-a-level | `withGrouping(schemaFn)` → `GroupingRule.enable`             | reactive, async-capable       |
+| grouping   | `aggregateFn`          | `ColumnDef` literal                                          | static pure fn                |
+| visibility | `visible`              | `ColumnDef` literal **and** `columnsSchema` → `applyVisible` | both                          |
+| filtering  | —                      | none (row predicates, ADR-0016)                              | n/a                           |
 
 Findings:
 
@@ -156,9 +156,9 @@ Findings:
 - **Filtering is not a clean precedent for "feature-level".** It has no column config because
   R10's construction cycle pushed the whole filter set out to `createFilters()`, outside the
   table (ADR-0016). Structural, not stylistic.
-- **A real distinction may justify a split**: `sortFn`/`aggregateFn` are *static pure functions*
+- **A real distinction may justify a split**: `sortFn`/`aggregateFn` are _static pure functions_
   in the same class as `accessor` — they never change. `GroupingRule.enable` / `applyVisible` are
-  *reactive, conditional, async-capable* state. `enableSorting` is a static boolean where a
+  _reactive, conditional, async-capable_ state. `enableSorting` is a static boolean where a
   reactive `applySortable()` (mirroring `applyVisible()`) would be the consistent shape.
 
 Consequence for #81: N0 is **upstream of N1**. `groupIndex` would add a fourth field to a

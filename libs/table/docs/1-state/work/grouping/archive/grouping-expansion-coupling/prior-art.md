@@ -16,8 +16,8 @@ terminal**: a single recursive descent that emits a node only if every ancestor 
 (`expandRows` [S2], `getVisibleRowsLookup` [S7], `doRowsToDisplay` [S5], `CdkTree._flattenedNodes`
 [S9]). On the third question prior art is **also one-sided but for a subtler reason**: TanStack,
 AG Grid, MUI X and CDK all use **one** expansion state covering synthetic group headers and real
-data rows alike, because in all four a synthetic group header *is* a node in the same tree with the
-same id space. MUI X is the sharpest evidence: row grouping and tree data register the *same*
+data rows alike, because in all four a synthetic group header _is_ a node in the same tree with the
+same id space. MUI X is the sharpest evidence: row grouping and tree data register the _same_
 `getVisibleRowsLookup` function as their `visibleRowsLookupCreation` strategy [S7][S8].
 
 ## Method
@@ -32,7 +32,7 @@ same id space. MUI X is the sharpest evidence: row grouping and tree data regist
   detail and is **not** cited.
 - Reliability note: AG Grid ships no `.d.ts` for `flattenStage`/`doRowsToDisplay` — the stage list
   is read from the published `ClientSideRowModelStage` union and `doRowsToDisplay` is visible only
-  as a private member. The *existence and ownership* of the stage is verified; its body is not.
+  as a private member. The _existence and ownership_ of the stage is verified; its body is not.
 
 ## Evidence
 
@@ -65,7 +65,7 @@ same id space. MUI X is the sharpest evidence: row grouping and tree data regist
 - TanStack: `expandRows(rowModel)` in `getExpandedRowModel.ts` is a plain recursive emit —
   `expandedRows.push(row); if (row.subRows?.length && row.getIsExpanded()) row.subRows.forEach(handleRow)`.
   It is a **row-model stage**, not part of the grouping feature. [S2]
-- TanStack's grouping feature (`getGroupedRowModel`) builds the tree and *sets* `depth`/`parentId`;
+- TanStack's grouping feature (`getGroupedRowModel`) builds the tree and _sets_ `depth`/`parentId`;
   it never filters for collapsed state. It even resets them when grouping is empty:
   `row.depth = 0; row.parentId = undefined`. [S3]
 - The stage order is fixed centrally: `getPreExpandedRowModel = () => table.getSortedRowModel()`,
@@ -111,7 +111,7 @@ same id space. MUI X is the sharpest evidence: row grouping and tree data regist
 - MUI X: expansion is not a separate state object at all — it is the **`childrenExpanded` flag on
   the group node itself** ("If `true`, the children of this group are not visible." — the doc
   comment is inverted relative to the field name, but `getVisibleRowsLookup` reads it as
-  *expanded*). [S6][S7]
+  _expanded_). [S6][S7]
 - MUI X's root group is seeded `childrenExpanded: true`. [S13]
 - The decisive one: **row grouping and tree data register the identical function.** Premium's
   `useGridRowGroupingPreProcessors` does
@@ -138,7 +138,7 @@ same id space. MUI X is the sharpest evidence: row grouping and tree data regist
   `row.toggleExpanded()` and `setExpanded({ 'dept:Sales': true })` all work on them unchanged.
   [S3][S12]
 - Caveat found in source: `table.getExpandedDepth()` computes depth by `id.split('.')` [S12] —
-  a dot-delimiter assumption that matches *sub-row* ids but **not** the `:`/`>` grouping ids. So
+  a dot-delimiter assumption that matches _sub-row_ ids but **not** the `:`/`>` grouping ids. So
   the shared id space is real but one helper reads it with the wrong separator. This is a concrete
   cost of one id space with two id shapes.
 - MUI X: `getGroupRowIdFromPath(path)` returns
@@ -157,22 +157,22 @@ same id space. MUI X is the sharpest evidence: row grouping and tree data regist
 
 ## Comparison
 
-| Axis | TanStack Table 8.21.3 | AG Grid 33.3.2 | MUI X DataGrid 8.5.0 | Angular CDK 20.1.0 |
-|---|---|---|---|---|
-| Parent link on node | `parentId?: string` [S1] | `parent: IRowNode \| null` (object ref) [S4] | `parent: GridRowId` [S6] | derived into private `_parents` [S9] |
-| Depth also present | `depth: number` [S1] | `level` + `uiLevel` [S4] | `depth: number` [S6] | `levelAccessor` [S9] |
-| Prune walk owner | row-model stage `expandRows` [S2] | row model, `private doRowsToDisplay` [S5] | strategy processor `visibleRowsLookupCreation` [S8] | `CdkTree._flattenedNodes` [S9] |
-| Grouping feature prunes? | no — only sets `depth`/`parentId` [S3] | no — sets `childrenAfterGroup` [S4] | no — only builds the tree [S8b] | n/a |
-| Expansion state shape | one `Record<rowId, boolean> \| true` [S12] | `expanded: boolean` on the node [S4] | `childrenExpanded` on the group node [S6] | one `SelectionModel<K>` [S9] |
-| Shared across group + tree? | yes, one `getExpandedRowModel` [S2] | yes, incl. master/detail [S4] | yes, literally the same function [S8a][S8b] | yes [S9] |
-| Synthetic group id | `col:value`, nested `parent>col:value` [S3] | grid-generated [S4] | `auto-generated-row-field/key-…` [S14] | n/a |
-| Generic expand API accepts it | yes — `toggleExpanded`/`setExpanded` by `row.id` [S12] | by node ref: `setRowNodeExpanded` [S5] | yes — `setRowChildrenExpansion(id, bool)` [S15] | yes — by `expansionKey` [S9] |
+| Axis                          | TanStack Table 8.21.3                                  | AG Grid 33.3.2                               | MUI X DataGrid 8.5.0                                | Angular CDK 20.1.0                   |
+| ----------------------------- | ------------------------------------------------------ | -------------------------------------------- | --------------------------------------------------- | ------------------------------------ |
+| Parent link on node           | `parentId?: string` [S1]                               | `parent: IRowNode \| null` (object ref) [S4] | `parent: GridRowId` [S6]                            | derived into private `_parents` [S9] |
+| Depth also present            | `depth: number` [S1]                                   | `level` + `uiLevel` [S4]                     | `depth: number` [S6]                                | `levelAccessor` [S9]                 |
+| Prune walk owner              | row-model stage `expandRows` [S2]                      | row model, `private doRowsToDisplay` [S5]    | strategy processor `visibleRowsLookupCreation` [S8] | `CdkTree._flattenedNodes` [S9]       |
+| Grouping feature prunes?      | no — only sets `depth`/`parentId` [S3]                 | no — sets `childrenAfterGroup` [S4]          | no — only builds the tree [S8b]                     | n/a                                  |
+| Expansion state shape         | one `Record<rowId, boolean> \| true` [S12]             | `expanded: boolean` on the node [S4]         | `childrenExpanded` on the group node [S6]           | one `SelectionModel<K>` [S9]         |
+| Shared across group + tree?   | yes, one `getExpandedRowModel` [S2]                    | yes, incl. master/detail [S4]                | yes, literally the same function [S8a][S8b]         | yes [S9]                             |
+| Synthetic group id            | `col:value`, nested `parent>col:value` [S3]            | grid-generated [S4]                          | `auto-generated-row-field/key-…` [S14]              | n/a                                  |
+| Generic expand API accepts it | yes — `toggleExpanded`/`setExpanded` by `row.id` [S12] | by node ref: `setRowNodeExpanded` [S5]       | yes — `setRowChildrenExpansion(id, bool)` [S15]     | yes — by `expansionKey` [S9]         |
 
 ## Synthesis
 
 **Where they agree, and why it matters here.** The agreement is not stylistic. All four make the
-same structural bet: *hierarchy is a property of the node, visibility is a property of the
-pipeline.* A feature's job ends at producing a correctly-linked tree; deciding what renders is one
+same structural bet: _hierarchy is a property of the node, visibility is a property of the
+pipeline._ A feature's job ends at producing a correctly-linked tree; deciding what renders is one
 stage that runs after every feature. That is exactly the split the proposed `RenderRow.parentId` +
 terminal prune stage would introduce, and it is the split that lets `withGrouping()` stop reading
 `withExpansion()`'s set.
@@ -185,8 +185,8 @@ AG Grid's `refreshModel` needs a `step` enum and a `changedPath` to avoid redoin
 For a signals lib emitting immutable `RenderRow` objects, the id form is the one that fits: it
 survives being recomputed, and it is what makes `expanded` a plain serializable id set.
 
-**Where they disagree: prune by emit vs prune by lookup.** TanStack's `expandRows` *builds a new
-array* by recursive descent [S2]. MUI X's `getVisibleRowsLookup` *builds a `Record<id, false>`* that
+**Where they disagree: prune by emit vs prune by lookup.** TanStack's `expandRows` _builds a new
+array_ by recursive descent [S2]. MUI X's `getVisibleRowsLookup` _builds a `Record<id, false>`_ that
 a downstream selector filters with [S7]. The lookup form has a real advantage under filtering: MUI X
 can keep `filteredRowsLookup` ("the equivalent of the `visibleRowsLookup` if all the groups were
 expanded" [S10]) and `visibleRowsLookup` as separate facts, so it can answer "how many descendants
@@ -276,7 +276,7 @@ serializable, which is what a signals pipeline wants.
 
 **One shared expansion state: yes, favoured — but with two conditions.**
 Every surveyed library uses a single expansion state spanning synthetic group headers and real
-rows, and MUI X goes furthest by having row grouping and tree data register the *identical* prune
+rows, and MUI X goes furthest by having row grouping and tree data register the _identical_ prune
 function. Adopt one id set. The two conditions come from what the survey also turned up:
 (1) **namespace the synthetic ids** with a reserved prefix, as MUI X does with
 `auto-generated-row-`, so a data row can never collide with a group header;
@@ -291,39 +291,39 @@ that is a product question, not one this survey settles.
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://unpkg.com/@tanstack/table-core@8.21.3/src/core/row.ts | 8.21.3 | yes — source read; `CoreRow.parentId`, `depth`, `createRow(..., parentId?)`, `getParentRow`, `getParentRows` |
-| S2 | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getExpandedRowModel.ts | 8.21.3 | yes — source read; full `expandRows` recursive emit |
-| S3 | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getGroupedRowModel.ts | 8.21.3 | yes — source read; `` `${columnId}:${groupingValue}` ``, `parentId ? `${parentId}>${id}`` , and the `row.depth = 0; row.parentId = undefined` reset |
-| S4 | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/interfaces/iRowNode.d.ts | 33.3.2 | yes — types read; `parent`, `level`, `uiLevel`, `expanded`, `childrenAfterGroup/Filter/Sort`, `setExpanded`, `isExpandable`, `rowIndex` null-when-collapsed |
-| S5 | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/interfaces/iClientSideRowModel.d.ts | 33.3.2 | yes — types read; `ClientSideRowModelStage` union, `refreshModel(params)`, `step` = "how much of the pipeline to execute" |
-| S5b | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/clientSideRowModel/clientSideRowModel.d.ts | 33.3.2 | yes — types read; `private rowsToDisplay`, `private doRowsToDisplay`, `rootNode` |
-| S5c | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/api/gridApi.d.ts | 33.3.2 | yes — types read; `setRowNodeExpanded`, `expandAll()`, `collapseAll()` |
-| S6 | https://unpkg.com/@mui/x-data-grid@8.5.0/models/gridRows.d.ts | 8.5.0 | yes — types read; `GridTreeBasicNode.depth`, `GridLeafNode.parent`, `GridBasicGroupNode.parent/children/childrenExpanded/footerId`, `isAutoGenerated`, `serverChildrenCount`, `GridRowTreeConfig` |
-| S7 | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/esm/utils/tree/utils.js | 8.5.0 | yes — compiled source read; `getVisibleRowsLookup` full body, lines 160-197 |
-| S8 | https://unpkg.com/@mui/x-data-grid@8.5.0/esm/hooks/features/filter/useGridFilter.js | 8.5.0 | yes — compiled source read; `applyStrategyProcessor('visibleRowsLookupCreation', …)`, flat-strategy identity comment, the `GRID_DEFAULT_STRATEGY` registration |
-| S8a | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/esm/hooks/features/treeData/useGridTreeDataPreProcessors.js | 8.5.0 | yes — compiled source read; imports `getVisibleRowsLookup` from tree utils and registers it for `TreeDataStrategy.Default` (line 128) |
-| S8b | https://unpkg.com/@mui/x-data-grid-premium@8.5.0/esm/hooks/features/rowGrouping/useGridRowGroupingPreProcessors.js | 8.5.0 | yes — compiled source read; registers the same `getVisibleRowsLookup` for `RowGroupingStrategy.Default` (line 145) — this is what proves grouping and tree data share one prune stage |
-| S9 | https://unpkg.com/@angular/cdk@20.1.0/tree/index.d.ts | 20.1.0 | yes — types read; `levelAccessor`/`childrenAccessor` xor, `expansionKey`, private `_parents`/`_levels`/`_flattenedNodes`/`_expansionModel`, `_getExpansionModel(): SelectionModel<K>` |
-| S10 | https://unpkg.com/@mui/x-data-grid@8.5.0/hooks/features/filter/gridFilterState.d.ts | 8.5.0 | yes — types read; `filteredRowsLookup` / `filteredChildrenCountLookup` / `filteredDescendantCountLookup` and the `GridVisibleRowsLookupState` "passing the filters AND its parents are expanded" comment |
-| S11 | https://unpkg.com/@mui/x-data-grid@8.5.0/esm/hooks/features/filter/gridFilterSelector.js | 8.5.0 | yes — compiled source read; `gridVisibleRowsLookupSelector`, `gridExpandedSortedRowEntriesSelector` filter at line 57 |
-| S12 | https://unpkg.com/@tanstack/table-core@8.21.3/src/features/RowExpanding.ts | 8.21.3 | yes — source read; `ExpandedState` union, `getIsExpanded`, `getCanExpand`, `getIsAllParentsExpanded`, `toggleExpanded`, `toggleAllRowsExpanded`, and `getExpandedDepth`'s `id.split('.')` |
-| S13 | https://unpkg.com/@mui/x-data-grid@8.5.0/esm/hooks/features/rows/gridRowsUtils.js | 8.5.0 | yes — compiled source read; `buildRootGroup()` seeds `childrenExpanded: true`, `parent: null` |
-| S14 | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/esm/utils/tree/utils.js | 8.5.0 | yes — compiled source read; `getGroupRowIdFromPath` → `` `auto-generated-row-${pathStr}` ``, lines 3-6 |
-| S15 | https://unpkg.com/@mui/x-data-grid@8.5.0/models/api/gridRowApi.d.ts | 8.5.0 | yes — types read; `setRowChildrenExpansion: (id: GridRowId, isExpanded: boolean) => void` at line 110, on `GridRowProApi` |
-| S16 | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/models/gridApiPro.d.ts | 8.5.0 | yes — types read; `GridApiPro extends … GridRowProApi …`, confirming the method is on the general api, not a grouping-specific one |
-| S17 | https://www.ag-grid.com/javascript-data-grid/client-side-model/ | 33.x | no — fetched, did not contain the pipeline-stage detail; cited only as the page that did **not** confirm it |
+|     | Source                                                                                                             | Version | Verified                                                                                                                                                                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------ | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | https://unpkg.com/@tanstack/table-core@8.21.3/src/core/row.ts                                                      | 8.21.3  | yes — source read; `CoreRow.parentId`, `depth`, `createRow(..., parentId?)`, `getParentRow`, `getParentRows`                                                                                             |
+| S2  | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getExpandedRowModel.ts                                     | 8.21.3  | yes — source read; full `expandRows` recursive emit                                                                                                                                                      |
+| S3  | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getGroupedRowModel.ts                                      | 8.21.3  | yes — source read; `` `${columnId}:${groupingValue}` ``, `parentId ? `${parentId}>${id}``, and the`row.depth = 0; row.parentId = undefined` reset                                                        |
+| S4  | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/interfaces/iRowNode.d.ts                                 | 33.3.2  | yes — types read; `parent`, `level`, `uiLevel`, `expanded`, `childrenAfterGroup/Filter/Sort`, `setExpanded`, `isExpandable`, `rowIndex` null-when-collapsed                                              |
+| S5  | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/interfaces/iClientSideRowModel.d.ts                      | 33.3.2  | yes — types read; `ClientSideRowModelStage` union, `refreshModel(params)`, `step` = "how much of the pipeline to execute"                                                                                |
+| S5b | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/clientSideRowModel/clientSideRowModel.d.ts               | 33.3.2  | yes — types read; `private rowsToDisplay`, `private doRowsToDisplay`, `rootNode`                                                                                                                         |
+| S5c | https://unpkg.com/ag-grid-community@33.3.2/dist/types/src/api/gridApi.d.ts                                         | 33.3.2  | yes — types read; `setRowNodeExpanded`, `expandAll()`, `collapseAll()`                                                                                                                                   |
+| S6  | https://unpkg.com/@mui/x-data-grid@8.5.0/models/gridRows.d.ts                                                      | 8.5.0   | yes — types read; `GridTreeBasicNode.depth`, `GridLeafNode.parent`, `GridBasicGroupNode.parent/children/childrenExpanded/footerId`, `isAutoGenerated`, `serverChildrenCount`, `GridRowTreeConfig`        |
+| S7  | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/esm/utils/tree/utils.js                                               | 8.5.0   | yes — compiled source read; `getVisibleRowsLookup` full body, lines 160-197                                                                                                                              |
+| S8  | https://unpkg.com/@mui/x-data-grid@8.5.0/esm/hooks/features/filter/useGridFilter.js                                | 8.5.0   | yes — compiled source read; `applyStrategyProcessor('visibleRowsLookupCreation', …)`, flat-strategy identity comment, the `GRID_DEFAULT_STRATEGY` registration                                           |
+| S8a | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/esm/hooks/features/treeData/useGridTreeDataPreProcessors.js           | 8.5.0   | yes — compiled source read; imports `getVisibleRowsLookup` from tree utils and registers it for `TreeDataStrategy.Default` (line 128)                                                                    |
+| S8b | https://unpkg.com/@mui/x-data-grid-premium@8.5.0/esm/hooks/features/rowGrouping/useGridRowGroupingPreProcessors.js | 8.5.0   | yes — compiled source read; registers the same `getVisibleRowsLookup` for `RowGroupingStrategy.Default` (line 145) — this is what proves grouping and tree data share one prune stage                    |
+| S9  | https://unpkg.com/@angular/cdk@20.1.0/tree/index.d.ts                                                              | 20.1.0  | yes — types read; `levelAccessor`/`childrenAccessor` xor, `expansionKey`, private `_parents`/`_levels`/`_flattenedNodes`/`_expansionModel`, `_getExpansionModel(): SelectionModel<K>`                    |
+| S10 | https://unpkg.com/@mui/x-data-grid@8.5.0/hooks/features/filter/gridFilterState.d.ts                                | 8.5.0   | yes — types read; `filteredRowsLookup` / `filteredChildrenCountLookup` / `filteredDescendantCountLookup` and the `GridVisibleRowsLookupState` "passing the filters AND its parents are expanded" comment |
+| S11 | https://unpkg.com/@mui/x-data-grid@8.5.0/esm/hooks/features/filter/gridFilterSelector.js                           | 8.5.0   | yes — compiled source read; `gridVisibleRowsLookupSelector`, `gridExpandedSortedRowEntriesSelector` filter at line 57                                                                                    |
+| S12 | https://unpkg.com/@tanstack/table-core@8.21.3/src/features/RowExpanding.ts                                         | 8.21.3  | yes — source read; `ExpandedState` union, `getIsExpanded`, `getCanExpand`, `getIsAllParentsExpanded`, `toggleExpanded`, `toggleAllRowsExpanded`, and `getExpandedDepth`'s `id.split('.')`                |
+| S13 | https://unpkg.com/@mui/x-data-grid@8.5.0/esm/hooks/features/rows/gridRowsUtils.js                                  | 8.5.0   | yes — compiled source read; `buildRootGroup()` seeds `childrenExpanded: true`, `parent: null`                                                                                                            |
+| S14 | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/esm/utils/tree/utils.js                                               | 8.5.0   | yes — compiled source read; `getGroupRowIdFromPath` → `` `auto-generated-row-${pathStr}` ``, lines 3-6                                                                                                   |
+| S15 | https://unpkg.com/@mui/x-data-grid@8.5.0/models/api/gridRowApi.d.ts                                                | 8.5.0   | yes — types read; `setRowChildrenExpansion: (id: GridRowId, isExpanded: boolean) => void` at line 110, on `GridRowProApi`                                                                                |
+| S16 | https://unpkg.com/@mui/x-data-grid-pro@8.5.0/models/gridApiPro.d.ts                                                | 8.5.0   | yes — types read; `GridApiPro extends … GridRowProApi …`, confirming the method is on the general api, not a grouping-specific one                                                                       |
+| S17 | https://www.ag-grid.com/javascript-data-grid/client-side-model/                                                    | 33.x    | no — fetched, did not contain the pipeline-stage detail; cited only as the page that did **not** confirm it                                                                                              |
 
 ## Pagination vs. expanded children (relocated from ADR-0011, D7)
 
 Both surveyed libraries put pagination last in the row-model pipeline unconditionally and expose a
 flag the pagination step reads, rather than reordering the pipeline:
 
-| Library | Flag | Default | Effect |
-|---|---|---|---|
-| TanStack | `paginateExpandedRows` | `true` | children counted; a parent's children may span pages |
-| AG Grid | `paginateChildRows` | `false` | page holds N top-level rows; expanding grows the page |
+| Library  | Flag                   | Default | Effect                                                |
+| -------- | ---------------------- | ------- | ----------------------------------------------------- |
+| TanStack | `paginateExpandedRows` | `true`  | children counted; a parent's children may span pages  |
+| AG Grid  | `paginateChildRows`    | `false` | page holds N top-level rows; expanding grows the page |
 
 ADR-0011 defaults to AG Grid's behavior (stable page boundaries over strict count) and exposes it
 as `paginateChildRows` on `withPagination()`, reasoning that expanding is a frequent exploratory

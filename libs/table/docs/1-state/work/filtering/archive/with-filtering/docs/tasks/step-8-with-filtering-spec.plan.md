@@ -1,5 +1,5 @@
 ---
-title: "Step 8 — withFiltering() spec"
+title: 'Step 8 — withFiltering() spec'
 type: task-step
 issue: 62
 ---
@@ -79,4 +79,5 @@ Cover, per `filtering.md` and the issue's acceptance criteria:
 - [ ] `nx test shared-table` passes
 
 ---
+
 ← [Step 7: withFiltering() adapter](step-7-with-filtering-adapter.plan.md) | [Step 9: with-grouping filter interaction fix](step-9-with-grouping-filter-fix.plan.md) →

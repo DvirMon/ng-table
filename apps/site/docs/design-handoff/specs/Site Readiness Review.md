@@ -5,9 +5,9 @@ atomic: —
 spec: specs/Site Readiness Review.md
 frame: null
 owns:
-  - "The record of the site-scope review: what a browsable multi-page build still needs"
+  - 'The record of the site-scope review: what a browsable multi-page build still needs'
 does_not_own:
-  - "Any build instruction — this file is a decision record, not spec"
+  - 'Any build instruction — this file is a decision record, not spec'
 depends_on: [coverage]
 states: []
 a11y: []
@@ -22,14 +22,14 @@ This one asks the next question: **can we replicate the site?**
 
 ## Scope, as confirmed in review
 
-| Question | Answer |
-| --- | --- |
-| What must a developer be able to finish? | Several real pages with a working sidebar tree — a site you can browse. |
-| Is the table in scope? | No. The table is the product. The docs site only hosts it inside Preview Window canvases. |
-| Which page types exist? | Doc article, plus a landing / home page. Page count not yet known. |
-| Is there a Figma file? | No, and none is planned. |
-| Who maintains the specs? | One person, who wants to maintain exactly one source. |
-| What generates the code? | An AI agent reading these Markdown specs. |
+| Question                                 | Answer                                                                                    |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
+| What must a developer be able to finish? | Several real pages with a working sidebar tree — a site you can browse.                   |
+| Is the table in scope?                   | No. The table is the product. The docs site only hosts it inside Preview Window canvases. |
+| Which page types exist?                  | Doc article, plus a landing / home page. Page count not yet known.                        |
+| Is there a Figma file?                   | No, and none is planned.                                                                  |
+| Who maintains the specs?                 | One person, who wants to maintain exactly one source.                                     |
+| What generates the code?                 | An AI agent reading these Markdown specs.                                                 |
 
 ## Verdict
 
@@ -71,7 +71,7 @@ section eyebrow / H2 / one-paragraph opening is the page's repeating device; the
 
 Original finding, for the record:
 
-`Section Landing` is a *section* index inside the docs shell. A product home page is normally a
+`Section Landing` is a _section_ index inside the docs shell. A product home page is normally a
 different animal: no sidebar, no TOC, wider than the content column, hero and feature blocks that
 have no equivalent anywhere in the component set. It is the one confirmed page type with zero coverage.
 
@@ -92,7 +92,7 @@ Original finding, for the record:
 
 Given a URL, what is lit up? Which sidebar section is expanded, which item is active, what the TOC is
 tracking, what prev/next point at, what the document title is. Each component specs its own active
-*appearance*; nothing maps a location to a set of states.
+_appearance_; nothing maps a location to a set of states.
 
 ### 4. ~~Search index source~~ — closed 2026-08-21
 
@@ -152,13 +152,13 @@ generates code from.
 
 **Do not.** There is no Figma file, none is planned, one person maintains the specs, and the consumer
 is an agent reading Markdown. Splitting one-file-per-state would double the file count, put behavior
-and appearance in different files, and defeat the property that makes this repo work: *one component,
-one file, enough context.*
+and appearance in different files, and defeat the property that makes this repo work: _one component,
+one file, enough context._
 
 Two sources of truth drift within weeks unless someone owns both. Here, nobody would. So the docs stay
 the single source of truth.
 
-What that *does* imply — because an agent cannot infer what a human designer would have eyeballed from
+What that _does_ imply — because an agent cannot infer what a human designer would have eyeballed from
 a frame:
 
 - **Say what is intentionally absent.** An agent reads silence as an invitation. `does_not_own` already

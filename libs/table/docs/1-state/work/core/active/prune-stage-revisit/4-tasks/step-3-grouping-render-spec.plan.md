@@ -10,9 +10,9 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `libs/table/src/engine/grouping/render.spec.ts` | edit |
+| Path                                            | Action |
+| ----------------------------------------------- | ------ |
+| `libs/table/src/engine/grouping/render.spec.ts` | edit   |
 
 ## Why This Step Exists
 
@@ -83,4 +83,5 @@ supposed to cut the seam (user story 25).
       moved ones still passes, with the D2 change as the only diff.
 
 ---
+
 ← [Step 2: The engine IR seam pair](step-2-flatten-and-fold-specs.plan.md) | [Step 4: Expansion end-to-end](step-4-expansion-spec.plan.md) →

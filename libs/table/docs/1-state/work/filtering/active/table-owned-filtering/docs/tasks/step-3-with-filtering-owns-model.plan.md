@@ -8,28 +8,28 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/api/features/with-filtering.ts` | `:1-75` | rewrite — two overloads, owns the model, exposes `filters` |
-| `libs/table/src/filters/create-filters.ts` | — | edit — becomes the internal model builder; `createFilters` and its `rows` anchor deleted |
-| `libs/table/src/filters/row-of.ts` | — | **delete** |
-| `libs/table/src/filters/types.ts` | `:105-115` | edit — `FiltersPath` loses its `[TRow] extends [never]` brand |
-| `libs/table/src/filters/types.ts` | `:143-151` | edit — `__row`/`RowOfRule` reassessed |
+| File                                            | Line       | Action                                                                                   |
+| ----------------------------------------------- | ---------- | ---------------------------------------------------------------------------------------- |
+| `libs/table/src/api/features/with-filtering.ts` | `:1-75`    | rewrite — two overloads, owns the model, exposes `filters`                               |
+| `libs/table/src/filters/create-filters.ts`      | —          | edit — becomes the internal model builder; `createFilters` and its `rows` anchor deleted |
+| `libs/table/src/filters/row-of.ts`              | —          | **delete**                                                                               |
+| `libs/table/src/filters/types.ts`               | `:105-115` | edit — `FiltersPath` loses its `[TRow] extends [never]` brand                            |
+| `libs/table/src/filters/types.ts`               | `:143-151` | edit — `__row`/`RowOfRule` reassessed                                                    |
 
 ## Why This Step Exists
 
 The spec numbers this as two steps — "1: the feature owns the model" and "4: delete the carrier" —
-but at execution grain they are one edit seen from two sides. `rowOf()` exists *only* because
+but at execution grain they are one edit seen from two sides. `rowOf()` exists _only_ because
 `createFilters` had no table to ask for the row type and had to be handed an inference anchor. The
 moment `TRow` is `RowOf<In>`, supplied by the table, the anchor has nothing left to anchor.
 
-Splitting them ships an intermediate where the builder sits behind the feature and *still* takes a
+Splitting them ships an intermediate where the builder sits behind the feature and _still_ takes a
 `rows` parameter it no longer reads — a shape no reviewer can evaluate, because it is not the
 before state or the after state.
 
 This is also where R10's original blocker is formally closed. `create-table.ts` reads rows through
 a thunk inside a `computed()`, so a `resource()` whose `params` read `table.filters().criteria()`
-wires with no construction cycle. Nothing in this step needs to *prove* that — the proof is the
+wires with no construction cycle. Nothing in this step needs to _prove_ that — the proof is the
 server story in `#91` — but do not reintroduce an anchor "just in case" for server mode.
 
 ## What To Do
@@ -39,11 +39,12 @@ server story in `#91` — but do not reintroduce an anchor "just in case" for se
 
    ```ts
    export function buildFilterModel<TRow, S extends Record<string, AnyRule>>(
-     schema: (path: FiltersPath<TRow>) => S
-   ): Filters<TRow, StateOf<S>>
+     schema: (path: FiltersPath<TRow>) => S,
+   ): Filters<TRow, StateOf<S>>;
    ```
 
    No `rows` parameter, no `RowToken`, no `opts.injector`.
+
 2. **Drop the injection plumbing.** The builder currently does `inject(Injector)` +
    `runInInjectionContext`. `createTable` already composes inside the owner's injection context
    (`api/create-table.ts:53` — `runInInjectionContext(injector, () => composeTable(...))`), and a
@@ -60,17 +61,16 @@ server story in `#91` — but do not reintroduce an anchor "just in case" for se
      readonly filters: Filters<TRow, TState>;
    }
 
-   export function withFiltering<In extends Shape>(
-     config: WithFilteringConfig
-   ): Feature<In, {}>;
+   export function withFiltering<In extends Shape>(config: WithFilteringConfig): Feature<In, {}>;
 
    export function withFiltering<In extends Shape, S extends Record<string, AnyRule>>(
      config: WithFilteringConfig,
-     schema: (path: FiltersPath<RowOf<In>>) => S
+     schema: (path: FiltersPath<RowOf<In>>) => S,
    ): Feature<In, FilteringMembers<RowOf<In>, StateOf<S>>>;
    ```
 
    The factory builds the model from the schema and returns it as the `filters` member.
+
 4. The `filter` stage now applies the owned model's matcher rather than a consumer predicate list,
    still honouring `manual`. `predicates` is not yet removed from the config — that is Step 4, so
    this step keeps the existing predicate path working alongside the new member. Keep the two
@@ -89,6 +89,7 @@ server story in `#91` — but do not reintroduce an anchor "just in case" for se
 
    This also removes the reason `buildFiltersPath` widens its proxy through `unknown` — with a
    non-conditional target, a direct assertion is accepted. Simplify that cast and its comment.
+
 7. Reassess `__row`/`RowOfRule`. Their documented reason is that `TRow` was otherwise unrecoverable
    from a `FilterRuleRecord`. `anyOf`'s homogeneity check still reads `RowOfRule<C[0]>` to reject a
    child built from a different row — **that use survives**, so keep both unless the implementer
@@ -104,7 +105,7 @@ server story in `#91` — but do not reintroduce an anchor "just in case" for se
   and exposes members through `TableFeatureSpec.members`. Follow its shape, including the
   `Object.assign(feature, { displayName: 'withFiltering' })` tail.
 - Per `file-organization`: the builder is engine-side, the rules and public types are API-side. The
-  actual folder move is spec step 10, a *later* issue — do not relocate files here. Name the
+  actual folder move is spec step 10, a _later_ issue — do not relocate files here. Name the
   builder so the eventual move is a move.
 
 ## Risks / Watchouts
@@ -140,4 +141,5 @@ server story in `#91` — but do not reintroduce an anchor "just in case" for se
 - [ ] `withFiltering({ manual: true })` with no schema still compiles and contributes no member.
 
 ---
+
 ← [Step 2: Object-literal schema](step-2-object-literal-schema.plan.md) | [Step 4: Member audit](step-4-member-audit.plan.md) →

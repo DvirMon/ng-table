@@ -1,20 +1,21 @@
 <div class="story-host">
   <p class="story-host__hint">
-    Two declarators, one lesson: <code>groupKey</code> decides what a level clusters
-    <em>on</em>; an <code>initial</code> entry's <code>label</code> decides what its header
-    <em>calls itself</em>. Every header below shows both, as <code>label: value</code>.
+    Two declarators, one lesson: <code>groupKey</code> decides what a level clusters <em>on</em>; an
+    <code>initial</code> entry's <code>label</code> decides what its header <em>calls itself</em>.
+    Every header below shows both, as <code>label: value</code>.
   </p>
 
   <p class="grouping-story__notice">
     <strong>Sales Region</strong> carries an explicit <code>initial</code> label — it wins even
-    though a <code>region</code> column exists with its own label ("Region"). <strong>Closed</strong>
-    has none, so it falls back to the matching <code>closedAt</code> column's own label.
+    though a <code>region</code> column exists with its own label ("Region").
+    <strong>Closed</strong> has none, so it falls back to the matching
+    <code>closedAt</code> column's own label.
   </p>
 
   <p class="grouping-story__notice">
-    <code>groupKey</code> buckets <code>closedAt</code> into a <code>YYYY-MM</code> string.
-    Twelve distinct timestamps collapse into <strong>{{ table.groupIds().length }}</strong> group
-    ids. Turn the toggle off in Controls and the engine groups on the exact <code>Date</code>
+    <code>groupKey</code> buckets <code>closedAt</code> into a <code>YYYY-MM</code> string. Twelve
+    distinct timestamps collapse into <strong>{{ table.groupIds().length }}</strong> group ids. Turn
+    the toggle off in Controls and the engine groups on the exact <code>Date</code>
     instead — it never coarsens a key on its own (D7).
   </p>
 

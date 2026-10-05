@@ -29,9 +29,9 @@ reasons:
 
 1. **`select-trigger` already owns that job.** Its own `docs/spec.md` front-matter is a combobox
    contract — `states: ["empty/placeholder", "filled", ...]`, `a11y: role="combobox" aria-expanded
-   aria-controls"`, `tokens: [..., --ngpt-comp-select-placeholder]`. Dropdown Pill's front-matter has
+aria-controls"`, `tokens: [..., --ngpt-comp-select-placeholder]`. Dropdown Pill's front-matter has
    none of that — no placeholder/filled states, no placeholder token, `a11y:
-   ["aria-haspopup=\"menu\" + aria-expanded"]` (menu, not combobox). Two components with the same
+["aria-haspopup=\"menu\" + aria-expanded"]` (menu, not combobox). Two components with the same
    "shows the current value" behavior would duplicate select-trigger's actual contract.
 2. **The role model backs this up.** dropdown-menu's own `docs/decisions.md` frames Dropdown Pill as
    wanting `aria-haspopup="menu"` + `role="menuitem"` — a command menu ("Actions ▾"), not a
@@ -48,15 +48,15 @@ label.
 of the box (padding, border-radius, hover border/background) but disagree on two, and the
 composition can't reach a third:
 
-| Property | pill-button default | This spec wants | Resolution |
-|---|---|---|---|
-| Border (default) | `--ngpt-comp-pill-border-default` (0.32) | `--ngpt-comp-control-border-default` (0.30) | **Overridden** — see below |
-| Text (default) | `--ngpt-text-tertiary` (0.62 lightness) | `--ngpt-comp-dropdown-text` (0.75 lightness) | **Overridden** — see below |
-| Font | `--ngpt-sys-typescale-label-large-medium` (weight 500) | `--ngpt-sys-typescale-label-large-sm` (weight 400) | **Not overridden** — see below |
-| Border (hover) | `--ngpt-comp-pill-border-hover` | `--ngpt-comp-pill-border-hover` | Already matches |
-| Background (hover) | `--ngpt-bg-hover` | `--ngpt-bg-hover` | Already matches |
-| Padding | `--ngpt-sys-space-150 --ngpt-sys-space-300` | same | Already matches |
-| Focus box-shadow | `--ngpt-focus-ring` | `--ngpt-focus-ring` | Already matches |
+| Property           | pill-button default                                    | This spec wants                                    | Resolution                     |
+| ------------------ | ------------------------------------------------------ | -------------------------------------------------- | ------------------------------ |
+| Border (default)   | `--ngpt-comp-pill-border-default` (0.32)               | `--ngpt-comp-control-border-default` (0.30)        | **Overridden** — see below     |
+| Text (default)     | `--ngpt-text-tertiary` (0.62 lightness)                | `--ngpt-comp-dropdown-text` (0.75 lightness)       | **Overridden** — see below     |
+| Font               | `--ngpt-sys-typescale-label-large-medium` (weight 500) | `--ngpt-sys-typescale-label-large-sm` (weight 400) | **Not overridden** — see below |
+| Border (hover)     | `--ngpt-comp-pill-border-hover`                        | `--ngpt-comp-pill-border-hover`                    | Already matches                |
+| Background (hover) | `--ngpt-bg-hover`                                      | `--ngpt-bg-hover`                                  | Already matches                |
+| Padding            | `--ngpt-sys-space-150 --ngpt-sys-space-300`            | same                                               | Already matches                |
+| Focus box-shadow   | `--ngpt-focus-ring`                                    | `--ngpt-focus-ring`                                | Already matches                |
 
 Border/text overrides, in `dropdown-pill.css`:
 
@@ -68,7 +68,7 @@ ngpt-pill-button {
 ```
 
 This works because CSS custom properties inherit through the DOM regardless of Angular's emulated
-view encapsulation (encapsulation only scopes *rule matching*, not *property inheritance*) — and
+view encapsulation (encapsulation only scopes _rule matching_, not _property inheritance_) — and
 because pill-button's own `.pill-button` rule reads those two tokens directly rather than hardcoding
 a color, they're re-pointable from outside. The rule is scoped to the single `ngpt-pill-button`
 instance inside this component's own template (Angular attaches this component's content attribute
@@ -120,7 +120,7 @@ a target check, the event genuinely never gets there. dropdown-menu's own sugges
 
 `ngpt-pill-button` exposes only `variant`/`disabled` inputs and projects content into its own
 internal `<button>` via `<ng-content>`. Static or bound attributes placed on the `<ngpt-pill-button>`
-tag in this component's template land on that *outer custom element*, not the inner `<button>` a
+tag in this component's template land on that _outer custom element_, not the inner `<button>` a
 screen reader actually focuses — Angular does not forward host-level attributes into a component's
 own template. Two consequences, both resolved by reaching into the real button via `viewChild`
 reading `ElementRef` off a `#trigger` template variable, then `.querySelector('button')` (safe only
@@ -142,7 +142,7 @@ applies to this build.
 
 Rewired this component and `dropdown-menu` onto `ng-primitives/menu` in the same pass. Everything
 above this section describes the pre-wire implementation and is superseded where noted below —
-kept for the historical record of *why* each original call was made, since most of the reasoning
+kept for the historical record of _why_ each original call was made, since most of the reasoning
 (icon choice, label semantics, gap token) still holds.
 
 - **Selector changed:** `ngpt-dropdown-pill` → `button[ngptDropdownPill]` (attribute-hosted,

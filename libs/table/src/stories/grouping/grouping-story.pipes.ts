@@ -42,7 +42,7 @@ export class IsBlankGroupPipe implements PipeTransform {
 export class GroupRowCountPipe implements PipeTransform {
   transform(
     row: RenderRow<DealRow>,
-    source: { rowsOf: (group: RenderRow<DealRow>) => readonly DealRow[] }
+    source: { rowsOf: (group: RenderRow<DealRow>) => readonly DealRow[] },
   ): number {
     return source.rowsOf(row).length;
   }

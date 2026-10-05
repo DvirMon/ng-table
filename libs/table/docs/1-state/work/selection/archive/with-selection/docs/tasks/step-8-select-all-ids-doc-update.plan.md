@@ -1,5 +1,5 @@
 ---
-title: "Step 8 — selection.md: selectAllIds() shipped"
+title: 'Step 8 — selection.md: selectAllIds() shipped'
 type: task-step
 issue: 64
 ---
@@ -28,6 +28,7 @@ way `filtering.md` was synced after #28.
 ## What To Do
 
 1. In the `## selectAllIds() helper` section's closing paragraph, replace:
+
    > Implementable today against the shipped `TableStore` surface — not blocked on
    > `createFilters()`. Not yet coded; see D59 for the proposed file placement and what it
    > deliberately does not solve (page-scoped select-all; the read-side "are all visible rows
@@ -38,8 +39,9 @@ way `filtering.md` was synced after #28.
    keeping the "what it deliberately does not solve" pointer (page-scoped select-all; the
    read-side signal routed to `computed-state-mechanism`) — that scope boundary doesn't change
    just because the code landed.
+
 2. Leave frontmatter (`spec: drilled`, `code: partial`) untouched — other rows in `## Not
-   Shipped` (persistence, group-header select-all, etc.) still make `partial` correct for the
+Shipped` (persistence, group-header select-all, etc.) still make `partial` correct for the
    capability as a whole. Don't flip it to `shipped`.
 3. Leave `## Not Shipped` and `## Open Questions` untouched — `selectAllIds()` was never listed
    as its own row in either.
@@ -67,9 +69,10 @@ way `filtering.md` was synced after #28.
 
 - [ ] `## selectAllIds() helper`'s closing paragraph reflects shipped code, citing D59.
 - [ ] "What it deliberately does not solve" (page-scoped select-all; the read-side signal)
-  pointer is preserved.
+      pointer is preserved.
 - [ ] Frontmatter (`spec`, `code`) unchanged.
 - [ ] `## Not Shipped` / `## Open Questions` unchanged.
 
 ---
+
 ← [Step 7: selectAllIds() unit tests](step-7-select-all-ids-tests.plan.md)

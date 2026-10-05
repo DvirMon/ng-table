@@ -3,39 +3,38 @@
   [ngpMenuItemRadioGroupValue]="currentValue()"
   (ngpMenuItemRadioGroupValueChange)="optionSelected.emit($event)"
 >
-  @for (item of items(); track item.id; let i = $index) {
-    @let isGroupStart = item.group !== undefined && items()[i - 1]?.group !== item.group;
-    @if (isGroupStart) {
-      @if (i > 0) {
-        <div class="menu-divider" role="separator"></div>
-      }
-      @if (item.group) {
-        <div class="menu-label">{{ item.group }}</div>
-      }
+  @for (item of items(); track item.id; let i = $index) { @let isGroupStart = item.group !==
+  undefined && items()[i - 1]?.group !== item.group; @if (isGroupStart) { @if (i > 0) {
+  <div class="menu-divider" role="separator"></div>
+  } @if (item.group) {
+  <div class="menu-label">{{ item.group }}</div>
+  } } @if (item.selected !== undefined) {
+  <button
+    type="button"
+    class="menu-option"
+    ngpMenuItemRadio
+    [ngpMenuItemRadioValue]="item.id"
+    [ngpMenuItemRadioDisabled]="item.disabled ?? false"
+  >
+    <span>{{ item.label }}</span>
+    @if (item.selected) {
+    <ng-icon
+      name="lucideCheck"
+      size="var(--ngpt-sys-icon-size-sm)"
+      color="currentColor"
+      aria-hidden="true"
+    />
     }
-    @if (item.selected !== undefined) {
-      <button
-        type="button"
-        class="menu-option"
-        ngpMenuItemRadio
-        [ngpMenuItemRadioValue]="item.id"
-        [ngpMenuItemRadioDisabled]="item.disabled ?? false"
-      >
-        <span>{{ item.label }}</span>
-        @if (item.selected) {
-          <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-        }
-      </button>
-    } @else {
-      <button
-        type="button"
-        class="menu-option"
-        ngpMenuItem
-        [ngpMenuItemDisabled]="item.disabled ?? false"
-        (click)="onOptionClick(item)"
-      >
-        <span>{{ item.label }}</span>
-      </button>
-    }
-  }
+  </button>
+  } @else {
+  <button
+    type="button"
+    class="menu-option"
+    ngpMenuItem
+    [ngpMenuItemDisabled]="item.disabled ?? false"
+    (click)="onOptionClick(item)"
+  >
+    <span>{{ item.label }}</span>
+  </button>
+  } }
 </div>

@@ -43,6 +43,7 @@ internal layout (`api/`/`engine/`/`directives/`, ADR-0004), selectors, and the p
 ADR-0001 through ADR-0005 — all table-specific, all evaluated for cross-references into
 non-table code and found clean — moved with it, keeping their original numbers, into
 `libs/shared/table/docs/adr/`:
+
 - [ADR-0001](../../../table/docs/adr/0001-sorting-single-column-default.md) — sorting default
 - [ADR-0002](../../../table/docs/adr/0002-table-store-instance-factory.md) — store factory
 - [ADR-0003](../../../table/docs/adr/0003-in-house-table-store-engine.md) — in-house store engine
@@ -52,7 +53,7 @@ non-table code and found clean — moved with it, keeping their original numbers
 ADR-0006–0008 (dropdown/autocomplete/list) stay in this lib's `docs/adr/` — no table
 cross-references were found into or out of them.
 
-This ADR itself stays here in design-system, as the record of *this lib's* decision to split
+This ADR itself stays here in design-system, as the record of _this lib's_ decision to split
 the table out, even though the artifact it describes has left.
 
 ## Consequences

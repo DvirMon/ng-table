@@ -10,16 +10,16 @@ rule: >
 
 # Page — Section Landing
 
-The first page of a sidebar section (e.g. "Overview" of *1. State Layer*). Orients, then routes onward.
+The first page of a sidebar section (e.g. "Overview" of _1. State Layer_). Orients, then routes onward.
 
 ## Differences from Doc Article
 
-| Slot | Change |
-| --- | --- |
-| main › body | Leads with a short lede and a link list to the section's pages, not a `preview-window` |
-| main › body | No `code-block` above the first H2 |
-| right (`toc`) | Usually absent — landing pages are short |
-| main › end | `pagination` prev points to the previous *section's* last page |
+| Slot          | Change                                                                                 |
+| ------------- | -------------------------------------------------------------------------------------- |
+| main › body   | Leads with a short lede and a link list to the section's pages, not a `preview-window` |
+| main › body   | No `code-block` above the first H2                                                     |
+| right (`toc`) | Usually absent — landing pages are short                                               |
+| main › end    | `pagination` prev points to the previous _section's_ last page                         |
 
 ## Page-only rules
 

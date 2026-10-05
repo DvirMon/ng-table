@@ -62,7 +62,7 @@ function closeAllButLast<TRow>(state: EditingState<TRow>): EditingState<TRow> {
  */
 function buildRowEditSpec<TRow>(
   input: EditingStoreInput<TRow>,
-  multiple: Signal<boolean>
+  multiple: Signal<boolean>,
 ): TableFeatureSpec<TRow, RowEditMembers<TRow>> {
   // Enforces single-mode's "closes whatever was open" without any updater (beginEdit, etc.)
   // needing to know about `multiple` — every write funnels through here.
@@ -125,18 +125,18 @@ function buildRowEditSpec<TRow>(
  * open row is mid-save would silently drop its restore point.
  */
 export function withRowEdit<In extends RowEditInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & RowEditMembers<RowOf<In>>, D>
+  derive: Feature<NoInfer<In> & RowEditMembers<RowOf<In>>, D>,
 ): Feature<In, RowEditMembers<RowOf<In>> & D>;
 export function withRowEdit<In extends RowEditInput<In>>(
-  config?: WithRowEditConfig
+  config?: WithRowEditConfig,
 ): Feature<In, RowEditMembers<RowOf<In>>>;
 export function withRowEdit<In extends RowEditInput<In>, D extends DerivedDict>(
   config: WithRowEditConfig | undefined,
-  derive: Feature<NoInfer<In> & RowEditMembers<RowOf<In>>, D>
+  derive: Feature<NoInfer<In> & RowEditMembers<RowOf<In>>, D>,
 ): Feature<In, RowEditMembers<RowOf<In>> & D>;
 export function withRowEdit(
   configOrDerive: WithRowEditConfig | Feature<any, any> = {},
-  maybeDerive?: Feature<any, any>
+  maybeDerive?: Feature<any, any>,
 ): Feature<any, any> {
   const isDeriveFirst = typeof configOrDerive === 'function';
   const config: WithRowEditConfig = isDeriveFirst ? {} : configOrDerive;
@@ -148,7 +148,7 @@ export function withRowEdit(
       : signal(config.multiple ?? false);
 
   const factory = <In extends RowEditInput<In>>(
-    input: In
+    input: In,
   ): TableFeatureSpec<RowOf<In>, RowEditMembers<RowOf<In>>> => buildRowEditSpec(input, multiple);
 
   // The `Feature<any, any>` annotation is load-bearing: without a contextual type the ternary

@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — api/features/with-computed.ts + index.ts: withComputed()"
+title: 'Step 2 — api/features/with-computed.ts + index.ts: withComputed()'
 type: task-step
 issue: 70
 ---
@@ -37,8 +37,8 @@ uniform.
 
    ```ts
    export function withComputed<In extends Shape, D extends DerivedDict>(
-     factory: (store: ReadonlyStore<In>) => D
-   ): Feature<In, D>
+     factory: (store: ReadonlyStore<In>) => D,
+   ): Feature<In, D>;
    ```
 
    `Shape` from `../../engine/types`; `DerivedDict`, `ReadonlyStore` from `../types`. Return
@@ -47,7 +47,6 @@ uniform.
    `IsAny` guard needed here.
 
 2. **Runtime.** The returned feature, called by the fold with `input: In`:
-
    - **Declare** — call `factory(toReadonlyStore(input))` inside `try`/`catch`. On throw:
      construction-class error, rethrow wrapped:
      `new Error('[createTable] withComputed block threw while declaring its members', { cause })`
@@ -133,4 +132,5 @@ uniform.
       window).
 
 ---
+
 ← [Step 1: engine — Feature.displayName](step-1-feature-display-name-label.plan.md) | [Step 3: with-computed.spec.ts — runtime](step-3-with-computed-spec-runtime.plan.md) →

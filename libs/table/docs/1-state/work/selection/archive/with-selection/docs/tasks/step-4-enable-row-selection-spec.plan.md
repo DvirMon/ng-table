@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — enableRowSelection() spec coverage"
+title: 'Step 4 — enableRowSelection() spec coverage'
 type: task-step
 issue: 63
 ---
@@ -39,13 +39,19 @@ already defined in the file:
    lands in `selectedRows()`.
 3. **Ungated `deselect` of a row that became non-selectable after being selected.** Use a
    mutable predicate closure so the row is selectable at select-time and not at deselect-time:
+
    ```ts
    const selectableIds = new Set([1, 2, 3]);
-   const store = makeStore(() => ({
-     trackBy: mockTrackBy,
-     columns: makeColumns(),
-     features: [withSelection<MockRow>({ enableRowSelection: (row) => selectableIds.has(row.id) })],
-   }), mockRows);
+   const store = makeStore(
+     () => ({
+       trackBy: mockTrackBy,
+       columns: makeColumns(),
+       features: [
+         withSelection<MockRow>({ enableRowSelection: (row) => selectableIds.has(row.id) }),
+       ],
+     }),
+     mockRows,
+   );
 
    store.toggle(1);
    expect(store.selectedRows().has(1)).toBe(true);
@@ -55,9 +61,10 @@ already defined in the file:
    store.deselect([1]);
    expect(store.selectedRows().has(1)).toBe(false);
    ```
+
 4. **Gated seed.** `initialSelection: [1, 2]` + `enableRowSelection: (row) => row.id !== 1` →
    `selectedRows()` contains only `2` after construction; no emission (D16 still holds).
-5. **Unresolvable id stays permissive (D8).** A predicate that blocks every *resolvable* row —
+5. **Unresolvable id stays permissive (D8).** A predicate that blocks every _resolvable_ row —
    `enableRowSelection: () => false` — with `store.toggle(999)` (id absent from `mockRows`) still
    adding `999`. A predicate returning `true` wouldn't distinguish this from "gate disabled," so
    it must be `() => false` to prove the permissive-when-unresolved branch specifically.
@@ -90,7 +97,8 @@ already defined in the file:
 - [ ] All six cases from the issue's acceptance criteria are present and pass locally.
 - [ ] Existing coverage (Step 2's tests) is untouched, not merged or overwritten.
 - [ ] `nx test shared-table` passes — user runs this, per this repo's "never run tests
-  unprompted" convention; report what's worth verifying instead of running it.
+      unprompted" convention; report what's worth verifying instead of running it.
 
 ---
+
 ← [Step 3: enableRowSelection() write-path gate (D58)](step-3-enable-row-selection-gate.plan.md) | [Step 5: 3-spec.md — enableRowSelection() config + scope rules](step-5-spec-doc-update.plan.md) →

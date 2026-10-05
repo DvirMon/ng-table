@@ -154,10 +154,10 @@ needs no changes here.
   ```
   Exact shape is a judgment call inside the constraint that `columnRules` must be populated
   before `composeTable()`'s `foldFeatures()` reads `spec.columnRules` — check the timing against
-  `compose-table.ts`'s existing `onInit` hook-running order (hooks run *after* every feature is
+  `compose-table.ts`'s existing `onInit` hook-running order (hooks run _after_ every feature is
   folded, per its own doc comment) and adjust: if `foldFeatures()` reads `spec.columnRules`
   synchronously at fold time (before `onInit` runs), the array must be populated by the time the
-  feature factory *returns*, not inside `onInit` — resource construction's injection-context
+  feature factory _returns_, not inside `onInit` — resource construction's injection-context
   requirement then forces `buildAsyncVisibleEntry` to run at feature-factory time instead, which
   the engine already guarantees runs under an injection context (`composeTable()`'s own
   requirement). Resolve this ordering question by reading `compose-table.ts` (this step's own
@@ -215,4 +215,5 @@ needs no changes here.
   deferred to Step 2 — don't fix them here).
 
 ---
+
 [Step 2: `feature.spec.ts` — D2/D5/D8/D9 cases and the required-`onError` rewrite](step-2-feature-spec-tests.plan.md) →

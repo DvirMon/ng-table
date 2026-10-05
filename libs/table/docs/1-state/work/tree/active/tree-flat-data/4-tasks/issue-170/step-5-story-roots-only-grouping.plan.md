@@ -6,6 +6,7 @@ depends_on: [4]
 files:
   - libs/table/src/stories/grouping/fixtures/mock.ts
 ---
+
 # Step 5 — Show roots-only grouping in the collapsible story
 
 This step changes the shared grouping fixture so the collapsible story shows a child grouped under its root.
@@ -35,4 +36,5 @@ Decisions: [TR16](../../../../../../../decisions/tree.md), [TR17](../../../../..
 - [ ] The collapsible story's `d4` group total reads 50000 with `d4-b` under `d4`.
 
 ---
+
 ← [Step 4: Wire the parent link into withGrouping()](step-4-wire-grouping-parent-link.plan.md) | [Step 6: Record the roots-only grouping contract](step-6-docs-roots-only-grouping.plan.md) →

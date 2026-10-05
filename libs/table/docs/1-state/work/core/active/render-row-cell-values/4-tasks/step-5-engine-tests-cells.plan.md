@@ -9,11 +9,11 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/table/src/engine/cells.spec.ts` | create |
-| `libs/table/src/engine/columns.spec.ts` | edit — duplicate-id cases |
-| `libs/table/src/engine/core.spec.ts` | edit — `cells` stamped on both row kinds |
+| File                                    | Action                                   |
+| --------------------------------------- | ---------------------------------------- |
+| `libs/table/src/engine/cells.spec.ts`   | create                                   |
+| `libs/table/src/engine/columns.spec.ts` | edit — duplicate-id cases                |
+| `libs/table/src/engine/core.spec.ts`    | edit — `cells` stamped on both row kinds |
 
 ## Why This Step Exists
 
@@ -22,7 +22,7 @@ rather than a review:
 
 - the `reportedColumns` dedup is once-per-column-per-**evaluation**; moving the `Set` one line
   inwards degrades it to once-per-row with no visible symptom;
-- a throwing `accessor` degrading the *whole row* instead of one cell looks identical in a story;
+- a throwing `accessor` degrading the _whole row_ instead of one cell looks identical in a story;
 - the duplicate-id throw is `ngDevMode`-guarded, so a wrong guard polarity means it never fires
   and nothing complains.
 
@@ -39,7 +39,7 @@ Follow the `unit-test` skill's selection policy — assert behavior, not shape. 
 - returns the accessor's value for a well-behaved column;
 - returns `undefined` when the accessor throws, and does not rethrow;
 - reports once when the same column throws for many rows sharing one `reportedColumns` set, and
-  once *per column* when two columns throw;
+  once _per column_ when two columns throw;
 - reports again when given a fresh set — the dedup is scoped to the set, not to the column.
 
 `buildDataCells`:
@@ -136,4 +136,5 @@ not merely that it was called.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 4: Non-primitive group value reports](step-4-non-primitive-group-value-report.plan.md) | [Step 6: Grouping report test](step-6-grouping-report-test.plan.md) →

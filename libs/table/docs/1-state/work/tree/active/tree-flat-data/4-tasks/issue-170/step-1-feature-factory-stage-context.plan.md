@@ -14,6 +14,7 @@ files:
   - libs/table/src/engine/types.types.spec.ts (new)
   - libs/table/src/api/create-table-feature.types.spec.ts (new)
 ---
+
 # Step 1 — Feature factories receive the stage context
 
 This step passes the stage context to every feature factory as a required second argument.
@@ -29,7 +30,11 @@ Decisions: [D13](../../1-decisions.md) (planning decisions P1 and P2 are recorde
   ```
 - In `engine/compose-table.ts`, build one lazy context and pass it where the engine calls `feature(store)`:
   ```ts
-  const ctx: StageContext<TRow> = { get parentOf() { return handle.parentLink.value; } };
+  const ctx: StageContext<TRow> = {
+    get parentOf() {
+      return handle.parentLink.value;
+    },
+  };
   ```
 - In `api/features/compose-features.ts`, forward the same `ctx` to every inner feature: `feature(innerStore, ctx)`.
 - In `api/create-table-feature.ts`, both overloads type `factory` as `(input, ctx)`.
@@ -55,4 +60,5 @@ Decisions: [D13](../../1-decisions.md) (planning decisions P1 and P2 are recorde
 - [ ] One-argument factories across `src` still compile.
 
 ---
+
 [Step 2: Cluster by root value in the group stages](step-2-cluster-by-root-value.plan.md) →

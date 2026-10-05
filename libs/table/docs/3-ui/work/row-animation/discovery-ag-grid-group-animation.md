@@ -13,7 +13,7 @@ one CSS rule animates it [S14]. **Grouping with drag-drop off uses exactly this 
 is no group-specific animation class [S15]. Drag only adds `ag-row-dragging`, which sets
 `z-index: 4` [S16][S14].
 
-**For ngpTable:** the existing `renderRows()` effect already covers every grouping *move* for
+**For ngpTable:** the existing `renderRows()` effect already covers every grouping _move_ for
 free [R1]. What grouping adds, and sort never needed, is **enter and exit**. AG Grid handles
 these with a fade plus a 400 ms "zombie" delay [S13][S17]. ngpTable's FLIP skips them today
 [R1], and a directive that is not allowed to change the DOM cannot delay an exit [R3].
@@ -80,14 +80,14 @@ these with a fade plus a 400 ms "zombie" delay [S13][S17]. ngpTable's FLIP skips
 
 How each grouping-driven change classifies, and who covers it today.
 
-| Grouping change | Row classes | AG Grid 36.2.0 | ngpTable FLIP today |
-|---|---|---|---|
-| Row's group-by value changes (header ids stable) | data row **moves** across a group boundary; siblings move | slide via `translateY` [S10][S12] | covered — same id, both tops known [R1][R2] |
-| Group order (`groupOrder`) changes | headers + members **move** (paths unchanged) | slide [S10][S12] | covered [R1][R2] |
-| Group collapses | descendants **exit**; rows below **move** up | exits fade, zombie 400 ms; movers slide [S13][S17] | movers covered; exits vanish instantly [R1] |
-| Group expands | descendants **enter**; rows below **move** down | enters fade in, or slide from `oldRowTop` [S13] | movers covered; enters appear instantly [R1] |
-| A group level is added, removed or reordered | **every** header id changes → all headers exit and enter; data rows move | header ids here — see Unverified | data rows covered; every header vanishes and reappears with no transition [R1][R2] |
-| Cluster appears or dissolves (filter/data) | one header enters or exits | fade [S13] | instant [R1] |
+| Grouping change                                  | Row classes                                                              | AG Grid 36.2.0                                     | ngpTable FLIP today                                                                |
+| ------------------------------------------------ | ------------------------------------------------------------------------ | -------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Row's group-by value changes (header ids stable) | data row **moves** across a group boundary; siblings move                | slide via `translateY` [S10][S12]                  | covered — same id, both tops known [R1][R2]                                        |
+| Group order (`groupOrder`) changes               | headers + members **move** (paths unchanged)                             | slide [S10][S12]                                   | covered [R1][R2]                                                                   |
+| Group collapses                                  | descendants **exit**; rows below **move** up                             | exits fade, zombie 400 ms; movers slide [S13][S17] | movers covered; exits vanish instantly [R1]                                        |
+| Group expands                                    | descendants **enter**; rows below **move** down                          | enters fade in, or slide from `oldRowTop` [S13]    | movers covered; enters appear instantly [R1]                                       |
+| A group level is added, removed or reordered     | **every** header id changes → all headers exit and enter; data rows move | header ids here — see Unverified                   | data rows covered; every header vanishes and reappears with no transition [R1][R2] |
+| Cluster appears or dissolves (filter/data)       | one header enters or exits                                               | fade [S13]                                         | instant [R1]                                                                       |
 
 ## Synthesis
 
@@ -106,7 +106,7 @@ How each grouping-driven change classifies, and who covers it today.
   which is why it uses FLIP [R5]. This supports the FLIP choice; it does not change it.
 - **The general mechanism holds for moves and stops at membership.** The same instinct as
   [[general-mechanism-over-enumerated-cases]] applies: "the rendered index changed" is one
-  operation whatever the trigger. Enter and exit are a *second* operation. Both vendors keep it
+  operation whatever the trigger. Enter and exit are a _second_ operation. Both vendors keep it
   separate from moves (a fade, not a translate) [S13].
 
 ## Proposed mapping (discovery only — nothing decided)
@@ -157,7 +157,7 @@ this FLIP for free. That says nothing about the engine-owned mediation slot.
   `oldRowTop` [S13], but `clearRowTopAndRowIndex` → `setRowTop` overwrites `oldRowTop`
   [S11]. The call order at destroy time was not traced.
 - **Interruption snap — inference, not tested.** `offsetTop` ignores `transform`, so a second
-  `renderRows()` change during a running glide would compute its invert from the old *layout*
+  `renderRows()` change during a running glide would compute its invert from the old _layout_
   slot rather than the row's current visual position. A CSS transition on a reused node (AG
   Grid) starts from the current computed value. To confirm: collapse and expand quickly in a
   grouping story.
@@ -167,30 +167,30 @@ this FLIP for free. That says nothing about the engine-owned mediation slot.
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://registry.npmjs.org/ag-grid-community/latest | 36.2.0 | yes — registry read; set the tag pin |
-| S3 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `onSortChanged` | b36.2.0 | yes — source read |
-| S4 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `addManagedEventListeners` map, `onRowGroupOpened`, `onColumnsChanged` | b36.2.0 | yes — source read; showed that expand/collapse is `rowExpansionStateChanged`, not a group-specific renderer |
-| S5 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `onFilterChanged`, `refreshModel` `modelUpdated` dispatch | b36.2.0 | yes — source read |
-| S6 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/dragAndDrop/rowDragFeature.ts — `csrmMoveRowsReorder` | b36.2.0 | yes — source read; drag reuses `refreshModel`, no drag-specific animation |
-| S7 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/gridOptionsUtils.ts — `_isAnimateRows` | b36.2.0 | yes — source read; found the `ensureDomOrder` override |
-| S8 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/rowRenderer.ts — `onPageLoaded`, `redrawAfterModelUpdate` | b36.2.0 | yes — source read; the re-gate changed the reading of S4/S6 |
-| S9 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/rowRenderer.ts — `getRowsToRecycle`, `createOrUpdateRowCtrl`, `recycleRows` | b36.2.0 | yes — source read |
-| S10 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `positionRows`, `positionAndClearRows`, `clearStaleRowTops` | b36.2.0 | yes — source read |
-| S11 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/entities/rowNode.ts — `setRowTop`, `clearRowTopAndRowIndex`, `oldRowTop` doc comment | b36.2.0 | yes — source read |
+|     | Source                                                                                                                                                                                                                            | Version | Verified                                                                                                         |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
+| S1  | https://registry.npmjs.org/ag-grid-community/latest                                                                                                                                                                               | 36.2.0  | yes — registry read; set the tag pin                                                                             |
+| S3  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `onSortChanged`                                                                               | b36.2.0 | yes — source read                                                                                                |
+| S4  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `addManagedEventListeners` map, `onRowGroupOpened`, `onColumnsChanged`                        | b36.2.0 | yes — source read; showed that expand/collapse is `rowExpansionStateChanged`, not a group-specific renderer      |
+| S5  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `onFilterChanged`, `refreshModel` `modelUpdated` dispatch                                     | b36.2.0 | yes — source read                                                                                                |
+| S6  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/dragAndDrop/rowDragFeature.ts — `csrmMoveRowsReorder`                                                                                    | b36.2.0 | yes — source read; drag reuses `refreshModel`, no drag-specific animation                                        |
+| S7  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/gridOptionsUtils.ts — `_isAnimateRows`                                                                                                   | b36.2.0 | yes — source read; found the `ensureDomOrder` override                                                           |
+| S8  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/rowRenderer.ts — `onPageLoaded`, `redrawAfterModelUpdate`                                                                      | b36.2.0 | yes — source read; the re-gate changed the reading of S4/S6                                                      |
+| S9  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/rowRenderer.ts — `getRowsToRecycle`, `createOrUpdateRowCtrl`, `recycleRows`                                                    | b36.2.0 | yes — source read                                                                                                |
+| S10 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/clientSideRowModel/clientSideRowModel.ts — `positionRows`, `positionAndClearRows`, `clearStaleRowTops`                                   | b36.2.0 | yes — source read                                                                                                |
+| S11 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/entities/rowNode.ts — `setRowTop`, `clearRowTopAndRowIndex`, `oldRowTop` doc comment                                                     | b36.2.0 | yes — source read                                                                                                |
 | S12 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts — `addListeners` (`topChanged`), `onTopChanged`, `setRowTop`, `setRowTopStyle`, constructor `useTopPositioning` | b36.2.0 | yes — source read; confirms the `rowCtrl.ts` finding already in row-animation.md, which the grouping path shares |
-| S13 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts — `setAnimateFlags`, `getInitialRowTopShared`, `destroyFirstPass` | b36.2.0 | yes — source read |
-| S14 | https://unpkg.com/ag-grid-community@36.2.0/styles/ag-grid.css | 36.2.0 | yes — published CSS read |
-| S15 | https://unpkg.com/ag-grid-community@36.2.0/styles/ag-grid.css — every `transition`/`animation` rule | 36.2.0 | yes — negative result: no group-specific transition |
-| S16 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts — `postProcessRowDragging` | b36.2.0 | yes — source read |
-| S17 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/rowRenderer.ts — `destroyRowCtrls`, `ROW_ANIMATION_TIMEOUT` | b36.2.0 | yes — source read |
-| S18 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/gridBodyComp/gridBodyCtrl.ts — `setupRowAnimationCssClass` | b36.2.0 | yes — source read |
-| S19 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/gridBodyComp/gridBodyComp.ts — `setRowAnimationCssOnScrollableArea` | b36.2.0 | yes — source read |
-| S20 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/row-animation/index.mdoc | b36.2.0 | yes — full doc read |
-| S21 | `node_modules/@angular/core/types/core.d.ts:5276` (`animate.leave` instruction) | 22.1.2 | yes — installed package read |
-| R1 | `libs/table/src/directives/ngp-table.directive.ts:46-106` | — | yes — read |
-| R2 | `libs/table/src/engine/grouping/clusters.ts:72-78` | — | yes — read |
-| R3 | `libs/table/CLAUDE.md` — Locked invariants ("Attribute-only directives", "State as `data-*` attributes") | — | yes — read |
-| R4 | `libs/table/src/stories/row-edit/grouping-editing/grouping-editing-story-host.component.html:19` | — | yes — read |
-| R5 | `libs/table/docs/3-ui/directives/row-animation.md` — "Why FLIP, not AG Grid's technique", "Enabling the animation" | — | yes — read |
+| S13 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts — `setAnimateFlags`, `getInitialRowTopShared`, `destroyFirstPass`                                               | b36.2.0 | yes — source read                                                                                                |
+| S14 | https://unpkg.com/ag-grid-community@36.2.0/styles/ag-grid.css                                                                                                                                                                     | 36.2.0  | yes — published CSS read                                                                                         |
+| S15 | https://unpkg.com/ag-grid-community@36.2.0/styles/ag-grid.css — every `transition`/`animation` rule                                                                                                                               | 36.2.0  | yes — negative result: no group-specific transition                                                              |
+| S16 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts — `postProcessRowDragging`                                                                                      | b36.2.0 | yes — source read                                                                                                |
+| S17 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/rowRenderer.ts — `destroyRowCtrls`, `ROW_ANIMATION_TIMEOUT`                                                                    | b36.2.0 | yes — source read                                                                                                |
+| S18 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/gridBodyComp/gridBodyCtrl.ts — `setupRowAnimationCssClass`                                                                               | b36.2.0 | yes — source read                                                                                                |
+| S19 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/gridBodyComp/gridBodyComp.ts — `setRowAnimationCssOnScrollableArea`                                                                      | b36.2.0 | yes — source read                                                                                                |
+| S20 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/row-animation/index.mdoc                                                                                                    | b36.2.0 | yes — full doc read                                                                                              |
+| S21 | `node_modules/@angular/core/types/core.d.ts:5276` (`animate.leave` instruction)                                                                                                                                                   | 22.1.2  | yes — installed package read                                                                                     |
+| R1  | `libs/table/src/directives/ngp-table.directive.ts:46-106`                                                                                                                                                                         | —       | yes — read                                                                                                       |
+| R2  | `libs/table/src/engine/grouping/clusters.ts:72-78`                                                                                                                                                                                | —       | yes — read                                                                                                       |
+| R3  | `libs/table/CLAUDE.md` — Locked invariants ("Attribute-only directives", "State as `data-*` attributes")                                                                                                                          | —       | yes — read                                                                                                       |
+| R4  | `libs/table/src/stories/row-edit/grouping-editing/grouping-editing-story-host.component.html:19`                                                                                                                                  | —       | yes — read                                                                                                       |
+| R5  | `libs/table/docs/3-ui/directives/row-animation.md` — "Why FLIP, not AG Grid's technique", "Enabling the animation"                                                                                                                | —       | yes — read                                                                                                       |

@@ -16,7 +16,7 @@ Decision history: [`decisions/grouping.md`](../../decisions/grouping.md).**
 
 `spec: stub` / `code: none` is accurate and not a gap to close by writing a directive — the
 scope decision below is that grouping needs none. What is genuinely undrilled is what a group
-row *renders*, in the To Drill list at the bottom.
+row _renders_, in the To Drill list at the bottom.
 
 > **Rewritten 2026-09-20.** The previous version described an API that never shipped
 > (`setGrouping(columnId)`, a `_buildRenderRows` override slot), claimed `withGrouping()` was
@@ -29,12 +29,12 @@ row *renders*, in the To Drill list at the bottom.
 **Decided 2026-08-07, still holds.** Everything grouping needs at the directive level already
 exists:
 
-| Need | Already covered by |
-|---|---|
-| Distinguish a group row from a data row | `ngpTableRow`'s `data-row-kind` host binding (`core.md`) |
-| Nesting indentation | `ngpTableRow`'s `data-depth` host binding (`core.md`) |
-| Collapse/expand a group | `ngpTableTreeRow` + `ngpTableTreeToggle` ([`tree.md`](tree.md)) — collapsible grouping is `withGrouping()` + `withTree()`, a group collapses through `table.tree.toggle(groupId)` |
-| Iterating group and data rows uniformly | `renderRows()` (`core.md`) |
+| Need                                    | Already covered by                                                                                                                                                                |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Distinguish a group row from a data row | `ngpTableRow`'s `data-row-kind` host binding (`core.md`)                                                                                                                          |
+| Nesting indentation                     | `ngpTableRow`'s `data-depth` host binding (`core.md`)                                                                                                                             |
+| Collapse/expand a group                 | `ngpTableTreeRow` + `ngpTableTreeToggle` ([`tree.md`](tree.md)) — collapsible grouping is `withGrouping()` + `withTree()`, a group collapses through `table.tree.toggle(groupId)` |
+| Iterating group and data rows uniformly | `renderRows()` (`core.md`)                                                                                                                                                        |
 
 **Rejected: an `ngpTableGroupBy` directive on `<th>`.** It would mirror `ngpTableSort`, but
 `ngpTableSort` earns its existence by owning modifier-key detection, `aria-sort` and keyboard
@@ -46,7 +46,7 @@ A dynamic group-by panel reads `table.groupingLevels()` for the chip strip and
 
 ## What this file is for
 
-The state layer defines *what* an aggregate is, not how or where it renders. That question lands
+The state layer defines _what_ an aggregate is, not how or where it renders. That question lands
 here.
 
 ## To drill

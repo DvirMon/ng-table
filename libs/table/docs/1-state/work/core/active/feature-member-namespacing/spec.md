@@ -43,15 +43,15 @@ it owns, not by the feature's name. Calling the slice returns the concern's prim
 other signal, stream and verb the feature owns is a property on the slice.
 
 ```ts
-table.sorting()               // SortRule[]                          — primary state
-table.sorting.directions()    // ReadonlyMap<ColumnId, SortDirection> — its own signal
-table.sorting.changed         // Observable<SortRule[]>
-table.sorting.toggle(id)      // behavior; the receiver states the precondition
+table.sorting(); // SortRule[]                          — primary state
+table.sorting.directions(); // ReadonlyMap<ColumnId, SortDirection> — its own signal
+table.sorting.changed; // Observable<SortRule[]>
+table.sorting.toggle(id); // behavior; the receiver states the precondition
 
-table.selection()             // ReadonlySet<RowId>
-table.selection.stateOf(ids)  // 'none' | 'some' | 'all'
-table.grouping.rowsOf(group)  // readonly TRow[]
-table.editing.pending()       // ReadonlySet<RowId>
+table.selection(); // ReadonlySet<RowId>
+table.selection.stateOf(ids); // 'none' | 'some' | 'all'
+table.grouping.rowsOf(group); // readonly TRow[]
+table.editing.pending(); // ReadonlySet<RowId>
 ```
 
 `table.editing()` and `table.editing.update(...)`, `table.grouping()` and
@@ -195,16 +195,16 @@ createTable(data, config,
 
 ### Primary per concern, applied to shipped source
 
-| Slice | Call returns | Other members |
-|---|---|---|
-| `value` | row data | `update` — unchanged |
-| `columns` | folded column list | `update` — unchanged |
-| `grouping` | active group levels | `update` — unchanged; gains `rowsOf(group)` |
-| `editing` | open row ids | `update` — unchanged; gains `pending`, `pendingOps`, `unconfirmed`, and `draft` under `withRowEdit()` |
-| `sorting` | sort rules | `directions`, `changed`, `toggle`, `set`, `clear` |
-| `selection` | selected row ids | `changed`, `toggle`, `select`, `deselect`, `clear`, `stateOf`, `isSelectable` |
-| `expansion` | expanded row ids | `everExpanded`, `changed`, `toggle`, `expandAll`, `collapseAll` |
-| filtering | *(no slice)* | `withFiltering()` contributes no members today; see the correction below |
+| Slice       | Call returns        | Other members                                                                                         |
+| ----------- | ------------------- | ----------------------------------------------------------------------------------------------------- |
+| `value`     | row data            | `update` — unchanged                                                                                  |
+| `columns`   | folded column list  | `update` — unchanged                                                                                  |
+| `grouping`  | active group levels | `update` — unchanged; gains `rowsOf(group)`                                                           |
+| `editing`   | open row ids        | `update` — unchanged; gains `pending`, `pendingOps`, `unconfirmed`, and `draft` under `withRowEdit()` |
+| `sorting`   | sort rules          | `directions`, `changed`, `toggle`, `set`, `clear`                                                     |
+| `selection` | selected row ids    | `changed`, `toggle`, `select`, `deselect`, `clear`, `stateOf`, `isSelectable`                         |
+| `expansion` | expanded row ids    | `everExpanded`, `changed`, `toggle`, `expandAll`, `collapseAll`                                       |
+| filtering   | _(no slice)_        | `withFiltering()` contributes no members today; see the correction below                              |
 
 - **`draft` lands on `editing`.** It is `withRowEdit()`'s own signal, but it has no meaning without
   an edit session, and ADR-0015 says the four already-callable slices absorb their siblings.

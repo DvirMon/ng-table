@@ -42,11 +42,11 @@ None — this component has no icon.
 
 ## Converted to `a[ngptInlineLink]` — ADR-0005
 
-| | Was | Now |
-|---|---|---|
-| Selector | `ngpt-inline-link` (element) | `a[ngptInlineLink]` (attribute, camelCase) |
-| Host | inert `<ngpt-inline-link>` wrapping an inner `<a class="inline-link">` | the consumer's own `<a>` |
-| Inputs | `href`, `external` | `external` only |
+|          | Was                                                                    | Now                                        |
+| -------- | ---------------------------------------------------------------------- | ------------------------------------------ |
+| Selector | `ngpt-inline-link` (element)                                           | `a[ngptInlineLink]` (attribute, camelCase) |
+| Host     | inert `<ngpt-inline-link>` wrapping an inner `<a class="inline-link">` | the consumer's own `<a>`                   |
+| Inputs   | `href`, `external`                                                     | `external` only                            |
 
 Per [ADR-0005](../../../../../docs/adr/0005-attribute-hosted-components.md): the template's root was
 a semantic native element the component exists only to style, which is the stated test for
@@ -65,7 +65,7 @@ Deliberate, against the alternative of dropping it and making the consumer autho
 plus the hidden text by hand. Three reasons, in order of weight:
 
 1. **It is not native capability.** `target` and `rel` are, but `external` is a single flag that
-   *composes* them with content this primitive owns. ADR-0005's rule bans re-declaring a native
+   _composes_ them with content this primitive owns. ADR-0005's rule bans re-declaring a native
    attribute as an input; it does not ban a primitive-owned flag that happens to set some.
 2. **The visually-hidden `" (opens in new tab)"` span is real content the primitive projects** —
    it lives in this component's template and its CSS lives in this component's stylesheet. There
@@ -92,7 +92,7 @@ so the transform is the correct fix rather than a patch.
 
 ### `target`/`rel` host bindings preserve a consumer's authored values
 
-A host binding that evaluates to `null` *removes* the attribute, so a naive
+A host binding that evaluates to `null` _removes_ the attribute, so a naive
 `external() ? '_blank' : null` would strip a `target` the consumer set themselves on their own
 element — the wrapper-era binding could not do this because the consumer had no element to author
 on. The constructor captures the authored `target`/`rel` once and the bindings fall back to them
@@ -104,7 +104,7 @@ default the consumer can still override, rather than clobbering them from a host
 ### Template ordering
 
 `<ng-content />` first, then the conditional span. The span joins the anchor's accessible name, so
-it must be announced *after* the label ("GitHub, opens in new tab"), not before it.
+it must be announced _after_ the label ("GitHub, opens in new tab"), not before it.
 
 ### CSS
 

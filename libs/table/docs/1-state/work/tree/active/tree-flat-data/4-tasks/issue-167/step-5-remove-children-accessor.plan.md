@@ -9,6 +9,7 @@ files:
   - libs/table/src/api/features/with-expansion.spec.ts
   - libs/table/src/table.mock.ts
 ---
+
 # Step 5 — Remove `childrenAccessor`
 
 This step deletes `withTree()`'s nested-data path so the flat
@@ -65,4 +66,5 @@ Commit body must say:
 `BREAKING CHANGE: childrenAccessor removed; use parentId.`
 
 ---
+
 ← [Step 4: Move the grouping story fixture to flat rows](step-4-grouping-story-flat-fixture.plan.md) | [Step 6: Docs — flat-data tree contract](step-6-docs.plan.md) →

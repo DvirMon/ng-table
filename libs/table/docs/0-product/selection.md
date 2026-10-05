@@ -18,7 +18,7 @@ Engineering derives API from this document, not the reverse.
 
 > **This doc was written after the spec, not before it.** [`selection.md`](../1-state/features/selection.md)
 > and [`work/with-selection/3-spec.md`](../1-state/work/with-selection/3-spec.md) are `spec:
-> drilled`, carrying D1–D19 and D58–D60 — a careful decision log written in the developer's voice
+drilled`, carrying D1–D19 and D58–D60 — a careful decision log written in the developer's voice
 > (`table.select(selectAllIds(table))`). It does not answer what a person selecting rows in a
 > table sees, clicks, or is told when their selection doesn't survive a filter change. That is
 > this document.
@@ -55,26 +55,26 @@ never loaded at all.
 
 ## Coverage marks
 
-| Mark | Meaning |
-|---|---|
-| ✅ **covered** | Demonstrable today in `src/stories/` or a demo app, with the failure path included |
+| Mark                  | Meaning                                                                                                                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| ✅ **covered**        | Demonstrable today in `src/stories/` or a demo app, with the failure path included                                             |
 | 🟡 **partly covered** | The mechanism exists but the person's experience of it does not — no affordance, no message, no recipe, or the happy path only |
-| ❌ **not covered** | Nothing on screen anywhere; or structurally impossible with what ships |
+| ❌ **not covered**    | Nothing on screen anywhere; or structurally impossible with what ships                                                         |
 
 Four stories measure this feature, and only two of them live under `selection/` — the other two
 are built by the features that had to compose with selection, and are measured in those plans
 rather than recounted here:
 
-| Story | Composes | What it demonstrates |
-|---|---|---|
-| [`multi-selection/`](../../src/stories/selection/multi-selection/) | `withSelection({ enableRowSelection })` | The whole read/write surface on one screen: accumulating row checkboxes, a header checkbox whose second state is the clear, locked rows that stay in the tab order and keep a mark they already had, a saved selection carrying an id no row has, and an external delete that drops the count without emitting. A `selectionChanged` event log makes D9's single-delta clear and D11's silent prune distinguishable |
-| [`single-selection/`](../../src/stories/selection/single-selection/) | `withSelection({ enableMultiRowSelection: false })` | A radio group, so the replace rule is the control's own semantics and arrow-key roving focus comes free; a Clear button, because a radio has no untick gesture; and a two-id restore that makes D14 throw under `ngDevMode`, naming what it discarded, rendered on canvas |
-| [`filtering-selection/`](../../src/stories/selection/filtering-selection/) | `+ withFiltering()` `+ withSorting()` | Retention across a filter, restored exactly; two separately named select-all scopes; sorting changing nothing and deleting pruning. **Measured under the filtering plan** — see [`filtering.md`](filtering.md) §5 F-S1 |
-| [`grouping-selection/`](../../src/stories/grouping/grouping-selection/) | `+ withGrouping()` `+ withFiltering()` | All three peer cascade defaults off one `rowsOf()` call; no group header ever in the selection. **Measured under the grouping plan** — see [`grouping.md`](grouping.md) §5 X-G1 |
+| Story                                                                      | Composes                                            | What it demonstrates                                                                                                                                                                                                                                                                                                                                                                                                |
+| -------------------------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`multi-selection/`](../../src/stories/selection/multi-selection/)         | `withSelection({ enableRowSelection })`             | The whole read/write surface on one screen: accumulating row checkboxes, a header checkbox whose second state is the clear, locked rows that stay in the tab order and keep a mark they already had, a saved selection carrying an id no row has, and an external delete that drops the count without emitting. A `selectionChanged` event log makes D9's single-delta clear and D11's silent prune distinguishable |
+| [`single-selection/`](../../src/stories/selection/single-selection/)       | `withSelection({ enableMultiRowSelection: false })` | A radio group, so the replace rule is the control's own semantics and arrow-key roving focus comes free; a Clear button, because a radio has no untick gesture; and a two-id restore that makes D14 throw under `ngDevMode`, naming what it discarded, rendered on canvas                                                                                                                                           |
+| [`filtering-selection/`](../../src/stories/selection/filtering-selection/) | `+ withFiltering()` `+ withSorting()`               | Retention across a filter, restored exactly; two separately named select-all scopes; sorting changing nothing and deleting pruning. **Measured under the filtering plan** — see [`filtering.md`](filtering.md) §5 F-S1                                                                                                                                                                                              |
+| [`grouping-selection/`](../../src/stories/grouping/grouping-selection/)    | `+ withGrouping()` `+ withFiltering()`              | All three peer cascade defaults off one `rowsOf()` call; no group header ever in the selection. **Measured under the grouping plan** — see [`grouping.md`](grouping.md) §5 X-G1                                                                                                                                                                                                                                     |
 
 **No selection directive ships, and that does not hold a mark down on its own.** Every ✅ below is
 a host binding a consumer copies — `[class]` + `[attr.aria-selected]` read off `selectedRows()`,
-since selection is deliberately never stamped onto `RenderRow` (D5). That binding recipe *is* the
+since selection is deliberately never stamped onto `RenderRow` (D5). That binding recipe _is_ the
 contract these stories were missing. Where a mark is 🟡 it is because the person's experience is
 genuinely incomplete, not because the affordance is story-local.
 
@@ -99,7 +99,7 @@ restated here beyond what a story needs.
 
 Ordered by how badly the person is hurt if it is missing.
 
-## 1.1 — Select a row *(both)* — ✅ covered
+## 1.1 — Select a row _(both)_ — ✅ covered
 
 > As someone reviewing a list of invoices, I want to mark the three I'm about to export, so I can
 > act on exactly those three without re-finding them.
@@ -119,7 +119,7 @@ Ordered by how badly the person is hurt if it is missing.
 **Covered by:** [`multi-selection/`](../../src/stories/selection/multi-selection/) (a checkbox per
 row) and [`single-selection/`](../../src/stories/selection/single-selection/) (a radio per row).
 Marking a row changes nothing else — no value moves, no other row's state changes, and the mark is
-bound off `selectedRows()` rather than stamped on the row. Failure: *Restore a saved selection*
+bound off `selectedRows()` rather than stamped on the row. Failure: _Restore a saved selection_
 writes `['s2', 's5', 's99']`, and no row has `s99` — the write succeeds, the unknown id simply
 renders nothing, the other two mark, and the story's notice says so (D8). **There is still no
 checkbox directive**; what these hosts ship is the binding recipe the 2026-09-12 status says is
@@ -129,7 +129,7 @@ missing, not a shipped affordance.
 exists yet (`3-ui/directives/selection.md` stub). See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §2.
 
-## 1.2 — Select several rows one at a time *(multi)* — ✅ covered
+## 1.2 — Select several rows one at a time _(multi)_ — ✅ covered
 
 > As someone building an export of five specific invoices out of four hundred, I want each click to
 > add to what I've already picked, not replace it.
@@ -146,7 +146,7 @@ per gesture, so "the second click did not replace the first" is read off the scr
 **Design status:** covered by `select(ids)`'s additive bulk write and D14's truncation rule (a
 conflicting request under single-select keeps only the last id, never drops the whole set).
 
-## 1.3 — Select a range in one gesture (shift-click) *(multi)* — ❌ not covered *(blocked on node H)*
+## 1.3 — Select a range in one gesture (shift-click) _(multi)_ — ❌ not covered _(blocked on node H)_
 
 > As someone selecting rows 12 through 40 out of a long list, I want to click the first, shift-click
 > the last, and have everything between them selected — not forty individual clicks.
@@ -169,7 +169,7 @@ to the UI layer, not the state feature. See
 [`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md)
 Theme 3. Raised as **OQ-5**.
 
-## 1.4 — Select everything I can currently see *(multi)* — ✅ covered *(measured under filtering)*
+## 1.4 — Select everything I can currently see _(multi)_ — ✅ covered _(measured under filtering)_
 
 > As someone who just filtered a list down to "overdue," I want one action to select all of them,
 > not one click per row.
@@ -183,8 +183,8 @@ Theme 3. Raised as **OQ-5**.
 
 **Covered by:** [`filtering-selection/`](../../src/stories/selection/filtering-selection/),
 **measured under the filtering plan** — see [`filtering.md`](filtering.md) §5 F-S1, which owns the
-numbers rather than this doc recounting them. Both acceptance criteria render there: *Select all
-(visible)* scopes to `rows()` (post-filter, post-sort) and *Select all (including hidden)* to the
+numbers rather than this doc recounting them. Both acceptance criteria render there: _Select all
+(visible)_ scopes to `rows()` (post-filter, post-sort) and _Select all (including hidden)_ to the
 whole dataset, as two separately named buttons rather than one flag with a chosen default.
 [`multi-selection/`](../../src/stories/selection/multi-selection/) carries the same gesture
 unfiltered, as the header checkbox, pre-filtered by `isSelectable()` so a locked row is never roped
@@ -214,7 +214,7 @@ every row in `value()`; it cannot cover rows never fetched. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §1, §10,
 and §9.3.
 
-## 1.6 — Unmark one row without touching the rest *(multi)* — ✅ covered
+## 1.6 — Unmark one row without touching the rest _(multi)_ — ✅ covered
 
 > As someone who selected six rows and realized one doesn't belong, I want to unmark just that one.
 
@@ -225,7 +225,7 @@ click works on a locked row that already carried a mark, because removal is unga
 **Design status:** covered — `deselect(ids)` is exempt from both the multi-select and
 `enableRowSelection` rules, so it always succeeds regardless of a row's lock/mode state.
 
-## 1.7 — Clear my whole selection in one action *(both)* — ✅ covered
+## 1.7 — Clear my whole selection in one action _(both)_ — ✅ covered
 
 > As someone done with a bulk export, I want to get back to nothing selected in one click, not by
 > unmarking six rows individually.
@@ -245,7 +245,7 @@ event, not six.
 
 # 2. Know what I've selected, and control it
 
-## 2.1 — See at a glance which rows are marked *(both)* — ✅ covered
+## 2.1 — See at a glance which rows are marked _(both)_ — ✅ covered
 
 > As someone who selected rows a minute ago and got distracted, I want to look at the table and
 > immediately see which ones, without re-reading a list elsewhere.
@@ -267,7 +267,7 @@ the render-storm bug class; see
 [`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md)
 Theme 7. No documented binding recipe yet.
 
-## 2.2 — See a count of how many rows I've selected *(multi)* — ✅ covered
+## 2.2 — See a count of how many rows I've selected _(multi)_ — ✅ covered
 
 > As someone about to bulk-delete forty records, I want to see "40 selected" before I commit, so I
 > know the blast radius.
@@ -289,7 +289,7 @@ missing display convention, not a missing primitive. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §7.
 Raised as **OQ-3**.
 
-## 2.3 — Know when everything currently visible is already selected *(multi)* — 🟡 partly covered *(the denominator is hand-computed)*
+## 2.3 — Know when everything currently visible is already selected _(multi)_ — 🟡 partly covered _(the denominator is hand-computed)_
 
 > As someone looking at a header checkbox, I want it to show a clear, correct, three-way state —
 > all selected, none selected, or some — not just a binary that lies half the time.
@@ -321,7 +321,7 @@ an early intake folder, not a resolved design. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §1.
 Raised as **OQ-1**.
 
-## 2.4 — Not lose my selection when the view changes underneath it *(both)* — ✅ covered *(measured under filtering)*
+## 2.4 — Not lose my selection when the view changes underneath it _(both)_ — ✅ covered _(measured under filtering)_
 
 > As someone who selected five rows, then applied a filter that hides three of them, I want those
 > three to still count as selected — not silently vanish from my selection because I can't currently
@@ -338,7 +338,7 @@ Raised as **OQ-1**.
 clear the filter and the selection comes back exactly as it was, checkable against the printed id
 list rather than asserted. Sorting reorders rows and changes no selection at all. The second
 criterion — only an actual data removal changes the selection — renders twice: deleting a
-filtered-out selected row there, and *Someone else deleted this row* in
+filtered-out selected row there, and _Someone else deleted this row_ in
 [`multi-selection/`](../../src/stories/selection/multi-selection/). The denominator question this
 status leaves open is 2.3/2.5, both still 🟡.
 
@@ -349,7 +349,7 @@ hidden-but-selected row is kept, but nothing yet tells the person it's hidden. S
 [`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 2,
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §5.
 
-## 2.5 — Know when part of my selection is currently hidden *(both)* — 🟡 partly covered *(the absence is stated, the count is not)*
+## 2.5 — Know when part of my selection is currently hidden _(both)_ — 🟡 partly covered _(the absence is stated, the count is not)_
 
 > As someone who selected six rows and then filtered the table, I want to be told "6 selected, 2
 > not currently visible" — not left to wonder why my count doesn't match what's on screen.
@@ -371,7 +371,7 @@ nothing can compute it yet. S1, routed to `work/computed-state-mechanism/1-intak
 
 # 3. Selection and the shape of the table
 
-## 3.1 — Select every member of a group at once — ✅ covered *(measured under grouping)*
+## 3.1 — Select every member of a group at once — ✅ covered _(measured under grouping)_
 
 **Covered by:** [`grouping-selection/`](../../src/stories/grouping/grouping-selection/), **measured
 under the grouping plan** — see [`grouping.md`](grouping.md) §5 X-G1, now ✅. It renders all three
@@ -393,7 +393,7 @@ stored, and a readout proving no group header id is ever in the selection. Per D
   a person needs to see that the row exists and that it's specifically excluded, not wonder why a
   checkbox is missing.
 - Selecting "everything visible" never quietly ropes in a locked row.
-- A row that was selected *before* it became locked is not force-deselected as a side effect.
+- A row that was selected _before_ it became locked is not force-deselected as a side effect.
 
 **Failure behavior**
 
@@ -411,12 +411,12 @@ in this section. All three criteria are on screen:
   itself — `toggle()`'s deselect branch is ungated (D58), so without that guard a locked row could
   still lose its mark by click.
 - Select-all never ropes one in: the header's denominator is pre-filtered through `isSelectable()`.
-- *Lock this row* locks an **already-selected** row and the mark survives — the second,
+- _Lock this row_ locks an **already-selected** row and the mark survives — the second,
   separately-filed half of PrimeNG's bug (#15780) that libraries miss even after fixing the first.
   Untick the header afterwards and the mark does go, because `clearSelection()` is ungated: the two
   buttons sit next to each other so the asymmetry is one click apart.
 
-*Not demonstrated:* the stated failure path — a bulk `select()` **asked** to include locked ids
+_Not demonstrated:_ the stated failure path — a bulk `select()` **asked** to include locked ids
 dropping them silently rather than throwing. The host pre-filters, so D58's own gating never fires
 on canvas. It is unit-tested, not rendered.
 
@@ -434,7 +434,7 @@ disabled-not-hidden yet). See
 
 **Covered by:** [`single-selection/`](../../src/stories/selection/single-selection/) — the control
 is a radio group, so the replace rule is the group's own semantics: ticking a second row visibly
-unticks the first with no host code saying so. Failure: *Restore a 2-id saved selection* asks for
+unticks the first with no host code saying so. Failure: _Restore a 2-id saved selection_ asks for
 two rows that both exist, so there is nothing to skip and the table must resolve the conflict —
 under `ngDevMode` D14 throws naming the ids it discarded, and the story catches that error and
 renders the message in a `role="alert"`. The production behavior (truncate to the last id, silently)
@@ -450,7 +450,7 @@ would turn a data mismatch into a startup crash.
 
 # 4. Operate selection without a mouse
 
-## 4.1 — Toggle a row's selection from the keyboard *(both)* — 🟡 partly covered *(Space yes; the focus model no)*
+## 4.1 — Toggle a row's selection from the keyboard _(both)_ — 🟡 partly covered _(Space yes; the focus model no)_
 
 > As someone reviewing fifty rows in sequence, I want Space to mark the focused row, without
 > reaching for the mouse.
@@ -470,7 +470,7 @@ and 4.2.
 the eventual `ngpTableSelectionCheckbox` directive's first drilling pass, not bolted on later. See
 [`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 4.
 
-## 4.2 — Select a range from the keyboard *(multi)* — ❌ not covered *(blocked on node H, with 1.3)*
+## 4.2 — Select a range from the keyboard _(multi)_ — ❌ not covered _(blocked on node H, with 1.3)_
 
 > As someone who already has a row focused via keyboard, I want Shift+Arrow to extend a selection
 > the same way Shift-click does with a mouse.
@@ -481,7 +481,7 @@ both gestures, so they are one piece of work and should be drilled together rath
 **Design status — gap.** No primitive exists. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §3.
 
-## 4.3 — Have a selection change announced to a screen reader *(both)* — 🟡 partly covered *(the count is announced; the row is not)*
+## 4.3 — Have a selection change announced to a screen reader _(both)_ — 🟡 partly covered _(the count is announced; the row is not)_
 
 > As someone using a screen reader, I want to hear "row selected" or "3 rows selected," not silence.
 
@@ -504,7 +504,7 @@ node H.
 
 # 5. When selection doesn't cooperate
 
-## 5.1 — My selection quietly shrinking isn't a mystery *(both)* — 🟡 partly covered *(the shrink is visible; nothing says why)*
+## 5.1 — My selection quietly shrinking isn't a mystery _(both)_ — 🟡 partly covered _(the shrink is visible; nothing says why)_
 
 > As someone who had five rows selected and one got deleted by someone else, I want to know my
 > selection is now four, and ideally why — not just discover the count is off later.
@@ -519,8 +519,8 @@ node H.
   removed" toast off of; they'd have to diff `selectedRows()` before and after a data write
   themselves.
 
-**Covered by:** [`multi-selection/`](../../src/stories/selection/multi-selection/)'s *Someone else
-deleted this row*, which removes a **selected** row from `data` the way a server push would. The
+**Covered by:** [`multi-selection/`](../../src/stories/selection/multi-selection/)'s _Someone else
+deleted this row_, which removes a **selected** row from `data` the way a server push would. The
 state-correctness half renders exactly as designed: reconciliation prunes the id (ADR-0006/D11), the
 count drops, and no phantom id is left behind — Material React Table's open #1362 not happening.
 
@@ -536,20 +536,20 @@ See
 [`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 2/8.
 Raised as **OQ-4**.
 
-## 5.2 — A row edited so it no longer qualifies for selection — ✅ covered *(unexpectedly — see below)*
+## 5.2 — A row edited so it no longer qualifies for selection — ✅ covered _(unexpectedly — see below)_
 
 > As someone who selected a row for a bulk status change, then edited a different field on it such
 > that it now fails whatever rule made it selectable in the first place, I want the table to handle
 > that sensibly — not leave me confused about whether my selection still means what I think it does.
 
-**Covered by:** [`multi-selection/`](../../src/stories/selection/multi-selection/)'s *Lock this row*
+**Covered by:** [`multi-selection/`](../../src/stories/selection/multi-selection/)'s _Lock this row_
 — **unexpectedly, and worth saying plainly**. The button patches `locked: true` onto an
 already-selected row, which is precisely this story's scenario: a field edited such that the row now
 fails the rule that made it selectable. What happens is legible rather than confusing — the mark
 survives (D58/D60 gate id-adding writes and never `deselect`), select-all stops including it, the
 row shows its `locked` badge, and the notice states all three. An explicit clear still removes it.
 
-**What this does not settle.** OQ-6 asked what the *right* behavior is, and no competitor evidence
+**What this does not settle.** OQ-6 asked what the _right_ behavior is, and no competitor evidence
 exists either way. The story shows what **falls out of D58/D60** — retain, and tell — which is a
 demonstrated position, not a decided one. Worth deciding on purpose now that there is something to
 look at.
@@ -559,7 +559,7 @@ no longer match" story (`row-editing.md` F-1). No recommendation offered. See
 [`research-selection-community-pain.md`](../1-state/work/with-selection/research-selection-community-pain.md) Theme 8.
 Raised as **OQ-6**.
 
-## 5.3 — A misclick on "select all" doesn't wipe a large selection with no way back *(multi)* — ❌ not covered *(no library position to inherit)*
+## 5.3 — A misclick on "select all" doesn't wipe a large selection with no way back _(multi)_ — ❌ not covered _(no library position to inherit)_
 
 > As someone who meant to click near a "select all" toggle and hit it by mistake, I don't want a
 > minute of careful picking undone with no way to get it back.
@@ -583,25 +583,25 @@ collision**, not to selection. Per this repo's existing convention (`row-editing
 `filtering.md` §5 and `grouping.md` §5) — where a story already lives in another feature's doc, it
 is **linked, not restated**, and that file keeps owning its coverage mark.
 
-## Owned by filtering *(built)*
+## Owned by filtering _(built)_
 
-**F-S1 already exists** at [`filtering.md`](filtering.md) §5 "Owned by selection *(built)*" —
+**F-S1 already exists** at [`filtering.md`](filtering.md) §5 "Owned by selection _(built)_" —
 "selecting everything I can currently see stays true to what I see," plus the "N selected, M not
 currently visible" retention story (§2.5/§5.1 above). It is **linked, not restated**;
 `filtering.md` owns its coverage mark: 🟡, bullet 1 answered by D59's `selectAllIds()` and
 demonstrated by `filtering-selection/`, bullet 2 (the "N hidden" count) still unbuilt, no shipped
 signal to compute it from.
 
-## Owned by grouping *(built, uncommitted)*
+## Owned by grouping _(built, uncommitted)_
 
-**X-G1 already exists** at [`grouping.md`](grouping.md) §5 "Owned by selection *(built)*" —
+**X-G1 already exists** at [`grouping.md`](grouping.md) §5 "Owned by selection _(built)_" —
 ticking a group header's checkbox. **Linked, not restated.** Resolved by D16: the library ships no
 cascade semantics — `table.rowsOf(group)` (issue #31) plus a consumer-owned cascade, matching the
 flat-ids stance (D13). X-G1 is marked ✅ as the consumer recipe D16 calls for, demonstrated by
 `grouping-selection/`. See
 [`research-selection-ux-capabilities.md`](../1-state/work/with-selection/research-selection-ux-capabilities.md) §4.
 
-## Owned by tree *(unbuilt — #163)*
+## Owned by tree _(unbuilt — #163)_
 
 ### S-T1 — "Select all" includes children — ❌ not covered
 
@@ -626,12 +626,12 @@ flat-ids stance (D13). X-G1 is marked ✅ as the consumer recipe D16 calls for, 
 (recommendation: no cascade in state, matching D13; the recipe is
 `select([id, ...table.tree.descendantsOf(id)])`).
 
-## Owned by selection *(built, blocked on bulk write verbs)*
+## Owned by selection _(built, blocked on bulk write verbs)_
 
 ### X-1 — Bulk delete and bulk edit need a selection source
 
-Story lives at [`row-editing.md`](row-editing.md) §5, "Owned by selection *(built, blocked on bulk
-write verbs)*." `withSelection()` has shipped (`spec: drilled, code: partial`); the story is still
+Story lives at [`row-editing.md`](row-editing.md) §5, "Owned by selection _(built, blocked on bulk
+write verbs)_." `withSelection()` has shipped (`spec: drilled, code: partial`); the story is still
 ❌ — D12 keeps bulk `removeRow(id[])`/`patchRow(id[], partial)` out of scope, and bulk edit
 additionally needs row-editing's own G4 (multiple-open semantics) resolved.
 
@@ -643,64 +643,64 @@ Each carries a recommendation and what would settle it. None silently picked.
 
 **OQ-1 — Should `withSelection()` (or a sibling read-side mechanism) expose a derived "are all
 currently visible rows selected" signal? — open.**
-*Recommendation:* yes, in-repo precedent for a computed cross-cutting signal is already being
+_Recommendation:_ yes, in-repo precedent for a computed cross-cutting signal is already being
 worked out at `work/computed-state-mechanism/`; this is exactly the shape of problem that effort
 exists to answer, and would let a header checkbox derive its indeterminate state without every
 consumer hand-computing a set intersection every render.
-*To decide:* whether it lands as a `withSelection()` member, a standalone helper like
+_To decide:_ whether it lands as a `withSelection()` member, a standalone helper like
 `selectAllIds()`, or waits for the general computed-state mechanism to land first.
-*Sequencing:* not blocking anything else in this document; the current `selectionStateOf(ids)`
+_Sequencing:_ not blocking anything else in this document; the current `selectionStateOf(ids)`
 already covers the case where the consumer supplies the denominator.
 
 **OQ-2 — Should a large, destructive select-all/deselect-all get a confirmation step, or be
 undoable? — open.**
-*Recommendation:* no library-owned default — a documented recipe (warn above N rows, or route
+_Recommendation:_ no library-owned default — a documented recipe (warn above N rows, or route
 through the same undo mechanism `row-editing.md`'s §3.2 already designs for deletes) rather than a
 new API. No competitor treats this as the library's job either.
-*To decide:* whether "large" is a number worth naming in a recipe, or left entirely to the
+_To decide:_ whether "large" is a number worth naming in a recipe, or left entirely to the
 consumer's judgment.
-*Sequencing:* independent; cheap; not blocked on anything.
+_Sequencing:_ independent; cheap; not blocked on anything.
 
 **OQ-3 — Should the library ship a documented recipe (or a first-party component) for a
 selection-count / bulk-action banner? — open.**
-*Recommendation:* a documented recipe, not a shipped component — consistent with this library's
+_Recommendation:_ a documented recipe, not a shipped component — consistent with this library's
 "attribute-only, no structural DOM injection" invariant. `selectedRows().size` already makes this
 nearly free; only Material React Table ships the rendered version for free among the five
 researched, and it's cheap enough there that its absence elsewhere reads as an oversight, not a
 deliberate cost tradeoff.
-*To decide:* whether this recipe belongs in `selection.md` now or waits for
+_To decide:_ whether this recipe belongs in `selection.md` now or waits for
 `3-ui/directives/selection.md` to be drilled.
-*Sequencing:* not blocked; can land as documentation alone.
+_Sequencing:_ not blocked; can land as documentation alone.
 
 **OQ-4 — Should removal-triggered selection shrinkage (D11's silent prune) become observable to a
 consumer? — open.**
-*Recommendation:* yes — a low-cost addition, since the diff is already computed internally to
+_Recommendation:_ yes — a low-cost addition, since the diff is already computed internally to
 perform the prune; the open question is only whether it rides on the existing `selectionChanged`
 stream (contradicting D11's "no user intent" reasoning) or a new, explicitly-labeled channel.
-*To decide:* whether conflating "removed by prune" with "removed by explicit write" on one stream
+_To decide:_ whether conflating "removed by prune" with "removed by explicit write" on one stream
 is more confusing than helpful — D11's original reasoning for keeping them separate was sound; the
 gap is the second channel not existing yet, not that the first one carries the wrong thing.
-*Sequencing:* independent; touches `engine/` reconciliation wiring, not the write verbs.
+_Sequencing:_ independent; touches `engine/` reconciliation wiring, not the write verbs.
 
 **OQ-5 — Should shift-click range selection (and its keyboard equivalent) be designed in from the
 start of the eventual selection directive, given how consistently competitors got it late or
 wrong? — open, but the recommendation is strong.**
-*Recommendation:* yes, explicitly in-scope for that directive's first drilling pass, not a
+_Recommendation:_ yes, explicitly in-scope for that directive's first drilling pass, not a
 follow-up. Budget the anchor-tracking state to live in the directive (not the state feature, which
 stays flat per D13) and expect "does the range span filtered-out or off-page rows" to reopen §1.4's
 scope question in a new shape.
-*To decide:* nothing structural yet — this is a sequencing/scoping commitment for whoever drills
+_To decide:_ nothing structural yet — this is a sequencing/scoping commitment for whoever drills
 `3-ui/directives/selection.md` next, not an API decision today.
-*Sequencing:* blocked only on that directive effort starting.
+_Sequencing:_ blocked only on that directive effort starting.
 
 **OQ-6 — What should happen when an edit makes a previously-valid selected row no longer qualify
 for whatever made it selectable? — genuinely open, no precedent to lean on.**
-*Recommendation:* none offered — the competitive research found no comparable case in any tracker
+_Recommendation:_ none offered — the competitive research found no comparable case in any tracker
 to weigh evidence from, unlike every other open question in this document. This needs a real
 product decision made fresh, not inferred from the market.
-*To decide:* whether this is even in scope for `enableRowSelection`'s existing predicate (re-run on
+_To decide:_ whether this is even in scope for `enableRowSelection`'s existing predicate (re-run on
 every edit?) or a wholly separate mechanism.
-*Sequencing:* not blocking anything else; worth deciding before row-editing × selection composition
+_Sequencing:_ not blocking anything else; worth deciding before row-editing × selection composition
 is designed in earnest (relevant to X-1 once bulk edit exists).
 
 ---
@@ -716,35 +716,35 @@ who does it.
 
 Owned by `1-state/work/with-selection/` and `selection.md` itself.
 
-| # | Gap | Story | Note |
-|---|---|---|---|
-| S1 | No derived "are all currently-visible rows selected" signal | 2.3, F-S1 | Routed to `work/computed-state-mechanism/1-intake.md`, unresolved. OQ-1 |
-| S2 | Reconciliation prune (row removal) emits nothing on `selectionChanged` | 5.1 | Deliberate per D11, but leaves no observability hook. OQ-4 |
-| S3 | No "every row that exists, even unfetched" select-all scope | 1.5 | Deliberately unsolved — only AG Grid's Enterprise SSRM reaches this rung anywhere in the survey |
-| S4 | Bulk `removeRow(id[])`/`patchRow(id[], partial)` don't exist | X-1 | D12 — out of this effort's scope by design, blocks bulk delete/edit downstream |
-| S5 | No **decided** answer for a row edited out of its own selectability | 5.2 | **There is now a demonstrated one.** `multi-selection/`'s *Lock this row* patches `locked: true` onto an already-selected row — this story's scenario exactly — and what falls out of D58/D60 is: the mark survives, select-all stops including it, an explicit clear still removes it. That is a position, not a decision; OQ-6 asked which behavior is *right*, and no competitor precedent exists either way. Worth deciding on purpose now that there is something to look at |
+| #   | Gap                                                                    | Story     | Note                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| --- | ---------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | No derived "are all currently-visible rows selected" signal            | 2.3, F-S1 | Routed to `work/computed-state-mechanism/1-intake.md`, unresolved. OQ-1                                                                                                                                                                                                                                                                                                                                                                                                           |
+| S2  | Reconciliation prune (row removal) emits nothing on `selectionChanged` | 5.1       | Deliberate per D11, but leaves no observability hook. OQ-4                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| S3  | No "every row that exists, even unfetched" select-all scope            | 1.5       | Deliberately unsolved — only AG Grid's Enterprise SSRM reaches this rung anywhere in the survey                                                                                                                                                                                                                                                                                                                                                                                   |
+| S4  | Bulk `removeRow(id[])`/`patchRow(id[], partial)` don't exist           | X-1       | D12 — out of this effort's scope by design, blocks bulk delete/edit downstream                                                                                                                                                                                                                                                                                                                                                                                                    |
+| S5  | No **decided** answer for a row edited out of its own selectability    | 5.2       | **There is now a demonstrated one.** `multi-selection/`'s _Lock this row_ patches `locked: true` onto an already-selected row — this story's scenario exactly — and what falls out of D58/D60 is: the mark survives, select-all stops including it, an explicit clear still removes it. That is a position, not a decision; OQ-6 asked which behavior is _right_, and no competitor precedent exists either way. Worth deciding on purpose now that there is something to look at |
 
 ## 8.2 UI-layer gaps
 
 Owned by `3-ui/directives/selection.md` (currently `spec: stub, code: none`).
 
-| # | Gap | Story | Note |
-|---|---|---|---|
-| U1 | No selection checkbox/row directive of any kind | 1.1–1.7 | Still true — zero directive files reference any selection member. **What changed is that it no longer blocks the stories:** §1.1–§1.7 and §2.1 are ✅ on host bindings a consumer copies (`[class]` + `[attr.aria-selected]` read off `selectedRows()`, per D5's deliberate non-stamping). A directive would package that, not enable it. The stories it *does* block are §1.3/§4.1–§4.3, via U2/U3/U4 below |
-| U2 | No shift-click range-select mechanism or anchor-tracking recipe | 1.3 | OQ-5. Every competitor either got this late (TanStack: 4.5yr) or wrong-then-fixed (PrimeNG: 4.5yr) |
-| U3 | No keyboard model — Space to toggle, Tab containment, Shift+Arrow/Shift+Space/Ctrl+A range | 4.1, 4.2 | Competitors ship this last or never; strong argument to design in from the start |
-| U4 | No screen-reader announcement convention for selection changes | 4.3 | Even AG Grid, the most candid competitor here, admits an unresolved limitation |
-| ~~U5~~ | ~~No selection-count/bulk-action-toolbar recipe~~ — **recipe shipped 2026-09-14** | 2.2 | `multi-selection/` renders a `role="status"` count banner off `selectedRows().size`, with an explicit empty state so "0 selected" is a state rather than a missing element. No toolbar component ships — §9.1 still has no owner — but the recipe half of OQ-3 is answered, and it was as cheap as this row predicted |
-| ~~U6~~ | ~~No visual convention for a disabled-not-hidden locked row~~ — **documented by example 2026-09-14** | 3.2 | `multi-selection/` renders it, and the choice that matters is visible: `aria-disabled`, **not** `[disabled]`, so the control keeps its place in the tab order — which is also why the host has to refuse the write itself, since `aria-disabled` does not stop a click and `toggle()`'s deselect branch is ungated (D58). Plus a `locked` badge, so the row reads as excluded rather than broken |
-| U7 | ~~No indeterminate-checkbox wiring recipe~~ — **the recipe ships; it is the denominator that is hand-computed** | 2.3 | **Not blocked on S1, contrary to this row's 2026-09-12 note.** `multi-selection/` and `filtering-selection/` both render a correct three-way header checkbox today, via `selectionStateOf(ids)` plus an `[indeterminate]` binding — including the case peers get wrong, since the denominator is pre-filtered through `isSelectable()` so a locked row cannot pin the header indeterminate (D61). S1 would replace that hand-computed `selectableRowIds`, not unblock it. Which is why 2.3 is 🟡 rather than ✅ |
+| #      | Gap                                                                                                             | Story    | Note                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------ | --------------------------------------------------------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| U1     | No selection checkbox/row directive of any kind                                                                 | 1.1–1.7  | Still true — zero directive files reference any selection member. **What changed is that it no longer blocks the stories:** §1.1–§1.7 and §2.1 are ✅ on host bindings a consumer copies (`[class]` + `[attr.aria-selected]` read off `selectedRows()`, per D5's deliberate non-stamping). A directive would package that, not enable it. The stories it _does_ block are §1.3/§4.1–§4.3, via U2/U3/U4 below                                                                                                    |
+| U2     | No shift-click range-select mechanism or anchor-tracking recipe                                                 | 1.3      | OQ-5. Every competitor either got this late (TanStack: 4.5yr) or wrong-then-fixed (PrimeNG: 4.5yr)                                                                                                                                                                                                                                                                                                                                                                                                              |
+| U3     | No keyboard model — Space to toggle, Tab containment, Shift+Arrow/Shift+Space/Ctrl+A range                      | 4.1, 4.2 | Competitors ship this last or never; strong argument to design in from the start                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| U4     | No screen-reader announcement convention for selection changes                                                  | 4.3      | Even AG Grid, the most candid competitor here, admits an unresolved limitation                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ~~U5~~ | ~~No selection-count/bulk-action-toolbar recipe~~ — **recipe shipped 2026-09-14**                               | 2.2      | `multi-selection/` renders a `role="status"` count banner off `selectedRows().size`, with an explicit empty state so "0 selected" is a state rather than a missing element. No toolbar component ships — §9.1 still has no owner — but the recipe half of OQ-3 is answered, and it was as cheap as this row predicted                                                                                                                                                                                           |
+| ~~U6~~ | ~~No visual convention for a disabled-not-hidden locked row~~ — **documented by example 2026-09-14**            | 3.2      | `multi-selection/` renders it, and the choice that matters is visible: `aria-disabled`, **not** `[disabled]`, so the control keeps its place in the tab order — which is also why the host has to refuse the write itself, since `aria-disabled` does not stop a click and `toggle()`'s deselect branch is ungated (D58). Plus a `locked` badge, so the row reads as excluded rather than broken                                                                                                                |
+| U7     | ~~No indeterminate-checkbox wiring recipe~~ — **the recipe ships; it is the denominator that is hand-computed** | 2.3      | **Not blocked on S1, contrary to this row's 2026-09-12 note.** `multi-selection/` and `filtering-selection/` both render a correct three-way header checkbox today, via `selectionStateOf(ids)` plus an `[indeterminate]` binding — including the case peers get wrong, since the denominator is pre-filtered through `isSelectable()` so a locked row cannot pin the header indeterminate (D61). S1 would replace that hand-computed `selectableRowIds`, not unblock it. Which is why 2.3 is 🟡 rather than ✅ |
 
 ## 8.3 Gaps needing both layers
 
-| Gap | State owes | UI owes |
-|---|---|---|
-| Indeterminate header checkbox (2.3) | S1's derived "all visible selected" signal — **still owed**, and it is the whole reason 2.3 is 🟡 | ~~rendering the indeterminate state + wiring the click handler~~ — **done**; `multi-selection/` and `filtering-selection/` both render it, the second state of the header checkbox being the clear |
-| Range select (1.3, 4.2) | Nothing new — deliberately flat per D13 | The entire anchor-tracking mechanism; the "does the range span hidden rows" question loops back into needing `rows()`, already available |
-| Selection-shrink observability (5.1) | S2's second, explicitly-labeled emission channel (OQ-4) | Whatever UI hooks that channel into a visible "your selection changed" message |
+| Gap                                  | State owes                                                                                        | UI owes                                                                                                                                                                                            |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Indeterminate header checkbox (2.3)  | S1's derived "all visible selected" signal — **still owed**, and it is the whole reason 2.3 is 🟡 | ~~rendering the indeterminate state + wiring the click handler~~ — **done**; `multi-selection/` and `filtering-selection/` both render it, the second state of the header checkbox being the clear |
+| Range select (1.3, 4.2)              | Nothing new — deliberately flat per D13                                                           | The entire anchor-tracking mechanism; the "does the range span hidden rows" question loops back into needing `rows()`, already available                                                           |
+| Selection-shrink observability (5.1) | S2's second, explicitly-labeled emission channel (OQ-4)                                           | Whatever UI hooks that channel into a visible "your selection changed" message                                                                                                                     |
 
 ## 8.4 Confirmed right — do not re-litigate
 
@@ -766,7 +766,7 @@ Owned by `3-ui/directives/selection.md` (currently `spec: stub, code: none`).
   majority industry position; only AG Grid auto-deselects, and pays for it with a 16-value cause
   enum just to explain the library-initiated change to subscribers.
 - **Silent reconciliation prune on row removal (D11)** — already ahead of Material React Table's
-  own live bug where a deleted row stays reported as selected. The *only* thing missing is
+  own live bug where a deleted row stays reported as selected. The _only_ thing missing is
   observability (S2/OQ-4), not correctness.
 
 ---
@@ -795,7 +795,7 @@ by "the selection directive" once that gets drilled.
 ### 9.3 Server-side "select every row that exists" scope — **state**, deliberately declined
 
 Named already at §1.5 — listed here too because, like the two above, it is a capability with
-*zero* ownership anywhere in the docs, not scoped-out-with-a-note. `state-persistence.md` and
+_zero_ ownership anywhere in the docs, not scoped-out-with-a-note. `state-persistence.md` and
 `selection.md` are both silent on it. Only AG Grid's Enterprise SSRM reaches this rung in the
 entire competitive survey — declining to build it now is defensible, but worth stating as a
 decision rather than a silent gap once server-mode tables become a real target for this library
@@ -824,4 +824,3 @@ not mistaken for missing stories.
 - **`0-architecture-seam.md`'s superseded pre-grill note about a `RenderRow.isSelected?` field**
   (contradicted by D5 the same day it was written) — a stale working note nobody using the table
   would ever read.
-

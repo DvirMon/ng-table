@@ -10,9 +10,9 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `libs/table/src/engine/flatten.spec.ts` | **new** |
+| Path                                          | Action  |
+| --------------------------------------------- | ------- |
+| `libs/table/src/engine/flatten.spec.ts`       | **new** |
 | `libs/table/src/engine/render-stages.spec.ts` | rewrite |
 
 ## Why This Step Exists
@@ -120,4 +120,5 @@ longer exists. Deleting it is an explicit acceptance criterion on
       X1 pair.
 
 ---
+
 ← [Step 1: The IR migration](step-1-node-ir-migration.plan.md) | [Step 3: Grouping's node tree](step-3-grouping-render-spec.plan.md) →

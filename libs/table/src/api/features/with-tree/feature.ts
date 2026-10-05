@@ -1,6 +1,12 @@
 import { computed, type Signal } from '@angular/core';
 import { resolveTreeLinks, type TreeLinks } from '../../../engine/tree-links';
-import type { Feature, ParentLink, RowOf, StageContext, TableFeatureSpec } from '../../../engine/types';
+import type {
+  Feature,
+  ParentLink,
+  RowOf,
+  StageContext,
+  TableFeatureSpec,
+} from '../../../engine/types';
 import { stage } from '../../../schema/stage-rules';
 import { stageSchema } from '../../../schema/stage-schema';
 import { createTableFeature } from '../../create-table-feature';
@@ -18,7 +24,7 @@ type TreeInput<In> = Pick<TableStore<RowOf<In>>, 'rows' | 'trackBy' | 'value'>;
 // (ADR-0028) — total and silent. A throw or an `undefined` return both degrade to a root;
 // this contribution never reports (only the `'tree'` stage does).
 function toSilentParentLink<TRow>(
-  parentId: (row: TRow) => RowId | null | undefined
+  parentId: (row: TRow) => RowId | null | undefined,
 ): ParentLink<TRow> {
   return (row) => {
     try {
@@ -34,7 +40,7 @@ function toSilentParentLink<TRow>(
 function discoverExpandableIdsFlat<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): RowId[] {
   const parentOf = toSilentParentLink(config.parentId!);
   const { parentById } = resolveTreeLinks(rows, { parentOf, trackBy });
@@ -65,7 +71,7 @@ function discoverExpandableIdsFlat<TRow>(
 function discoverExpandableIds<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): RowId[] {
   if (!config.parentId) {
     return [];
@@ -78,7 +84,7 @@ function discoverExpandableIds<TRow>(
 // `parentId` is configured — there is no fallback to a conventional field.
 function resolveDataTreeLinks<TRow>(
   input: Pick<TableStore<TRow>, 'value' | 'trackBy'>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): TreeLinks | null {
   if (!config.parentId) {
     return null;
@@ -94,7 +100,7 @@ function resolveDataTreeLinks<TRow>(
 function groupChildrenByParent<TRow>(
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
-  parentById: ReadonlyMap<RowId, RowId | null>
+  parentById: ReadonlyMap<RowId, RowId | null>,
 ): Map<RowId, RowId[]> {
   const childrenByParent = new Map<RowId, RowId[]>();
   for (const row of rows) {
@@ -114,10 +120,7 @@ function groupChildrenByParent<TRow>(
 }
 
 // Depth-first: a child, then its own children, before the next sibling — never `id` itself.
-function collectDescendantIds(
-  id: RowId,
-  childrenByParent: ReadonlyMap<RowId, RowId[]>
-): RowId[] {
+function collectDescendantIds(id: RowId, childrenByParent: ReadonlyMap<RowId, RowId[]>): RowId[] {
   const children = childrenByParent.get(id) ?? [];
   return children.flatMap((childId) => [
     childId,
@@ -130,17 +133,17 @@ const EMPTY_CONTEXT_ROW_IDS: ReadonlySet<RowId> = new Set();
 function buildTreeSpec<TRow>(
   input: Pick<TableStore<TRow>, 'rows' | 'trackBy' | 'value'>,
   config: WithTreeConfig<TRow>,
-  ctx: StageContext<TRow>
+  ctx: StageContext<TRow>,
 ): TableFeatureSpec<TRow, TreeMembers> {
   // No `onExpanded`: `everExpanded` is the panel's member, not the tree's.
   const store = createExpansionStore({ initial: config.initial });
 
   const contextRowIds = computed(
-    (): ReadonlySet<RowId> => ctx.contextRows?.() ?? EMPTY_CONTEXT_ROW_IDS
+    (): ReadonlySet<RowId> => ctx.contextRows?.() ?? EMPTY_CONTEXT_ROW_IDS,
   );
   const closedWhileRevealed = createClosedWhileRevealed(contextRowIds);
   const revealedIds = computed(() =>
-    buildRevealedIds(contextRowIds(), input.rows(), input.trackBy, config)
+    buildRevealedIds(contextRowIds(), input.rows(), input.trackBy, config),
   );
 
   function toggle(id: RowId, options?: ExpansionWriteOptions): void {
@@ -181,7 +184,7 @@ function buildTreeSpec<TRow>(
     const removing = new Set(ids);
     store.setExpanded(
       [...store.expanded()].filter((id) => !removing.has(id)),
-      options
+      options,
     );
   }
 
@@ -204,9 +207,7 @@ function buildTreeSpec<TRow>(
     return collectDescendantIds(id, childrenByParent);
   }
 
-  function createStateComputed(
-    scanRows: () => readonly TRow[]
-  ): Signal<'all' | 'some' | 'none'> {
+  function createStateComputed(scanRows: () => readonly TRow[]): Signal<'all' | 'some' | 'none'> {
     return computed(() => {
       const expandable = discoverExpandableIds(scanRows(), input.trackBy, config);
       if (expandable.length === 0) {
@@ -228,18 +229,21 @@ function buildTreeSpec<TRow>(
     return options?.includeHidden ? allDataState() : filteredViewState();
   }
 
-  const tree: TreeSlice = Object.assign(computed(() => store.expanded()), {
-    changed: store.changed,
-    state,
-    toggle,
-    expand,
-    collapse,
-    set,
-    parentOf,
-    descendantsOf,
-    // `ctx` is read inside the computed: `withFiltering()` folds after this factory runs.
-    contextRowIds,
-  });
+  const tree: TreeSlice = Object.assign(
+    computed(() => store.expanded()),
+    {
+      changed: store.changed,
+      state,
+      toggle,
+      expand,
+      collapse,
+      set,
+      parentOf,
+      descendantsOf,
+      // `ctx` is read inside the computed: `withFiltering()` folds after this factory runs.
+      contextRowIds,
+    },
+  );
 
   // Claimed only when `parentId` was supplied — a collapse-only instance leaves the
   // single-claim stage free for a future claimant.
@@ -286,25 +290,25 @@ function buildTreeSpec<TRow>(
  * createTable(data, { trackBy: 'id' }, withTree({ parentId: (row) => row.parentId }));
  */
 export function withTree<In extends TreeInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & TreeMembers, D>
+  derive: Feature<NoInfer<In> & TreeMembers, D>,
 ): Feature<In, TreeMembers & D>;
 export function withTree<In extends TreeInput<In>>(
-  config?: WithTreeConfig<RowOf<In>>
+  config?: WithTreeConfig<RowOf<In>>,
 ): Feature<In, TreeMembers>;
 export function withTree<In extends TreeInput<In>, D extends DerivedDict>(
   config: WithTreeConfig<RowOf<In>> | undefined,
-  derive: Feature<NoInfer<In> & TreeMembers, D>
+  derive: Feature<NoInfer<In> & TreeMembers, D>,
 ): Feature<In, TreeMembers & D>;
 export function withTree(
   configOrDerive: WithTreeConfig<any> | Feature<any, any> = {},
-  maybeDerive?: Feature<any, any>
+  maybeDerive?: Feature<any, any>,
 ): Feature<any, any> {
   const isDeriveFirst = typeof configOrDerive === 'function';
   const config: WithTreeConfig<any> = isDeriveFirst ? {} : configOrDerive;
   const derive = isDeriveFirst ? configOrDerive : maybeDerive;
   const factory = <In extends TreeInput<In>>(
     input: In,
-    ctx: StageContext<RowOf<In>>
+    ctx: StageContext<RowOf<In>>,
   ): TableFeatureSpec<RowOf<In>, TreeMembers> => buildTreeSpec(input, config, ctx);
   const feature: Feature<any, any> = derive
     ? createTableFeature(factory, derive)

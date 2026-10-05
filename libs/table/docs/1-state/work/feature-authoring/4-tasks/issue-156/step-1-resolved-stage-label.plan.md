@@ -9,6 +9,7 @@ files:
   - libs/table/src/engine/pipeline.spec.ts
   - libs/table/src/engine/render-stages.spec.ts
 ---
+
 # Step 1 — Carry the feature label on resolved stages
 
 Adds a `label` field to `ResolvedStage` so the runtime checks in
@@ -54,4 +55,5 @@ Existing `ResolvedStage` literals get `label: 'test'`:
       the new field.
 
 ---
+
 [Step 2: Runtime row-id checks on render stages](step-2-runtime-row-id-checks.plan.md) →

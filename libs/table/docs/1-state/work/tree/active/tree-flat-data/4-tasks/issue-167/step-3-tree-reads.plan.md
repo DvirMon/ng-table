@@ -9,6 +9,7 @@ files:
   - libs/table/src/mutations/row-mutations.ts
   - libs/table/src/mutations/row-mutations.spec.ts
 ---
+
 # Step 3 — `table.tree.parentOf` / `descendantsOf` and `removeRow(id[])`
 
 This step adds read-only parent and descendant lookups to
@@ -31,6 +32,7 @@ Decisions: [D12](../../1-decisions.md), [D20](../../1-decisions.md), row-mutatio
   `resolveTreeLinks`, so `withTree`'s input type widens from
   `Pick<TableStore, 'rows' | 'trackBy'>` to also include
   `value`.
+
 - `descendantsOf` returns every descendant at any depth,
   depth-first in `data()` order, parent before child, never
   including the row itself.
@@ -40,9 +42,7 @@ Decisions: [D12](../../1-decisions.md), [D20](../../1-decisions.md), row-mutatio
   array overload:
 
   ```ts
-  table.value.update(
-    removeRow(['r1', ...table.tree.descendantsOf('r1')])
-  );
+  table.value.update(removeRow(['r1', ...table.tree.descendantsOf('r1')]));
   ```
 
   One write. Ids not present in the rows are skipped.
@@ -65,4 +65,5 @@ Decisions: [D12](../../1-decisions.md), [D20](../../1-decisions.md), row-mutatio
 - [ ] Seams A through K in `step-3-tree-reads.test-plan.md` pass.
 
 ---
+
 ← [Step 2: withTree({ parentId }) nests flat rows](step-2-with-tree-parent-id.plan.md) | [Step 4: Move the grouping story fixture to flat rows](step-4-grouping-story-flat-fixture.plan.md) →

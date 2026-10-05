@@ -3,7 +3,12 @@ import type { Feature, RowOf, Shape, TableFeatureSpec } from '../../engine/types
 import type { WritableView } from '../../engine/writable-view';
 import { createTableFeature } from '../create-table-feature';
 import type { DerivedDict, RowId } from '../types';
-import { createEditingStore, type EditingStoreInput, type EditingUpdater, type PendingOp } from './editing/state';
+import {
+  createEditingStore,
+  type EditingStoreInput,
+  type EditingUpdater,
+  type PendingOp,
+} from './editing/state';
 
 export interface OptimisticMembers<TRow> {
   /** Read: which rows are open for editing — **always empty** unless `withRowEdit()` is composed,
@@ -54,11 +59,11 @@ export function withOptimistic<In extends OptimisticInput<In>>(): Feature<
   OptimisticMembers<RowOf<In>>
 >;
 export function withOptimistic<In extends OptimisticInput<In>, D extends DerivedDict>(
-  derive: Feature<NoInfer<In> & OptimisticMembers<RowOf<In>>, D>
+  derive: Feature<NoInfer<In> & OptimisticMembers<RowOf<In>>, D>,
 ): Feature<In, OptimisticMembers<RowOf<In>> & D>;
 export function withOptimistic(derive?: Feature<any, any>): Feature<any, any> {
   const factory = <In extends OptimisticInput<In>>(
-    input: In
+    input: In,
   ): TableFeatureSpec<RowOf<In>, OptimisticMembers<RowOf<In>>> => {
     const store = createEditingStore<RowOf<In>>(input);
     return {

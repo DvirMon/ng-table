@@ -18,7 +18,7 @@ parent: ../../features/row-editing.md
 ## Context
 
 The library is **optimistic by default and silent about it**. `beginEdit(id, { insert })` names a
-*session* operation but writes `data` ([`row-edit-mutations.ts`](../../../../../../src/mutations/row-edit-mutations.ts) :66-67),
+_session_ operation but writes `data` ([`row-edit-mutations.ts`](../../../../../../src/mutations/row-edit-mutations.ts) :66-67),
 so every add-a-row flow is eager whether the story wants it or not. There is no pessimistic create
 path anywhere in the engine.
 
@@ -37,8 +37,8 @@ Already visible in the codebase:
 
 **The definition this proposes:**
 
-> **Optimistic** = the action is reflected to the user *before* the server answers.
-> **Pessimistic** = the action is reflected only *after* the server confirms.
+> **Optimistic** = the action is reflected to the user _before_ the server answers.
+> **Pessimistic** = the action is reflected only _after_ the server confirms.
 
 A **per-operation** axis (create / update / delete), not a per-session one — the reframe that
 supersedes `stories.md:142`.
@@ -49,7 +49,7 @@ consumer cannot derive, each story demonstrating exactly one mode honestly.
 ## The governing invariant
 
 Every verb is called synchronously; the library never sees a request. The mode is therefore not a
-property the library can *hold* — it is **where in the async flow the call sits**. So no
+property the library can _hold_ — it is **where in the async flow the call sits**. So no
 `optimisticX`/`pessimisticX` pairs (they would double the surface and lie). Instead:
 
 > **A row is in `pending` iff an optimistic write is in flight. A pessimistic operation never
@@ -59,12 +59,12 @@ Testable, and it makes a correctly-wired pessimistic table one that can never sh
 
 ## The four verb families
 
-| Family | Verbs | Writes `data`? | Arms rollback? | Call position |
-|---|---|---|---|---|
-| **Row data** (`RowUpdater`) | `insertRow`, `removeRow`, `patchRow` | yes | no | **pessimistic** — after the response |
-| **Session** (`EditingUpdater`) | `beginEdit`, `closeEdit`, `clearEdit` | **never** | no | mode-neutral, local |
-| **Optimistic-arm** | `createRow`, `commitEdit`, `patchEdit`, `removeEdit`, `captureEdit` | yes | yes → `pending` | **optimistic** — before the response |
-| **Optimistic-settle** | `releaseEdit`, `revertEdit`, `discardEdit`, `swapRowId` | some | spends it | on the response |
+| Family                         | Verbs                                                               | Writes `data`? | Arms rollback?  | Call position                        |
+| ------------------------------ | ------------------------------------------------------------------- | -------------- | --------------- | ------------------------------------ |
+| **Row data** (`RowUpdater`)    | `insertRow`, `removeRow`, `patchRow`                                | yes            | no              | **pessimistic** — after the response |
+| **Session** (`EditingUpdater`) | `beginEdit`, `closeEdit`, `clearEdit`                               | **never**      | no              | mode-neutral, local                  |
+| **Optimistic-arm**             | `createRow`, `commitEdit`, `patchEdit`, `removeEdit`, `captureEdit` | yes            | yes → `pending` | **optimistic** — before the response |
+| **Optimistic-settle**          | `releaseEdit`, `revertEdit`, `discardEdit`, `swapRowId`             | some           | spends it       | on the response                      |
 
 The three `RowUpdater`s **are** the pessimistic data surface — they write and hold nothing, which
 is exactly the after-response shape. No new pessimistic verbs needed.
@@ -77,13 +77,20 @@ export function beginEdit<TRow>(id: RowId): EditingUpdater<TRow>;
 // absent id → full no-op (replaces today's "open with no snapshot" misuse branch, :79-82)
 
 // createRow becomes standalone — the only insert-and-arm verb
-export function createRow<TRow>(id: RowId, row: NoInfer<TRow>, opts?: { at?: number; open?: boolean }): EditingUpdater<TRow>;
-export function createRow<TRow>(rows: { id: RowId; row: NoInfer<TRow> }[], opts?: { at?: number; open?: boolean }): EditingUpdater<TRow>;
+export function createRow<TRow>(
+  id: RowId,
+  row: NoInfer<TRow>,
+  opts?: { at?: number; open?: boolean },
+): EditingUpdater<TRow>;
+export function createRow<TRow>(
+  rows: { id: RowId; row: NoInfer<TRow> }[],
+  opts?: { at?: number; open?: boolean },
+): EditingUpdater<TRow>;
 // open defaults true (matches 4 gated call sites); { open: false } is the withOptimistic-only live case
 
 // BREAKING — endEdit splits; keep-vs-drop IS "is a request still in flight?"
-export function commitEdit<TRow>(id: RowId, partial?: Partial<TRow>): EditingUpdater<TRow>;  // merge + close, KEEP restore point → pending
-export function closeEdit<TRow>(id: RowId, partial?: Partial<TRow>): EditingUpdater<TRow>;   // merge + close, RELEASE → clean
+export function commitEdit<TRow>(id: RowId, partial?: Partial<TRow>): EditingUpdater<TRow>; // merge + close, KEEP restore point → pending
+export function closeEdit<TRow>(id: RowId, partial?: Partial<TRow>): EditingUpdater<TRow>; // merge + close, RELEASE → clean
 ```
 
 `closeEdit` collapses the `endEdit(...)` + `releaseEdit(...)` pair spelled by hand in 3 stories.
@@ -100,8 +107,8 @@ Unchanged: `captureEdit`, `revertEdit`, `discardEdit`, `removeEdit`, `patchEdit`
 
 ## Pessimistic create — no row exists until the server confirms
 
-**Decided by the product owner, 2026-09-05:** *"there is no row until the server returns true —
-this is the point."* Nothing enters `data` *or* `renderRows()` before the response. The typing
+**Decided by the product owner, 2026-09-05:** _"there is no row until the server returns true —
+this is the point."_ Nothing enters `data` _or_ `renderRows()` before the response. The typing
 surface is a **composer form outside the row set** — its own `signal<TRow>` and its own `form()`,
 naturally placed in `<tfoot>`. On success: `table.value.update(insertRow(saved, { at }))`.
 **Zero engine change**, and it survives sort/pagination trivially because it was never a pipeline
@@ -122,13 +129,13 @@ export type PendingOp = 'create' | 'update' | 'delete';
 export interface RowRestorePoint<TRow> {
   readonly row: TRow;
   readonly at: number;
-  readonly op: PendingOp;          // REPLACES `detached`; detached ≡ op === 'delete'
+  readonly op: PendingOp; // REPLACES `detached`; detached ≡ op === 'delete'
 }
 
 export interface EditingState<TRow> {
   readonly snapshots: SnapshotMap<TRow>;
   readonly open: ReadonlySet<RowId>;
-  readonly unconfirmed: ReadonlySet<RowId>;   // NEW — client ids the server never acknowledged
+  readonly unconfirmed: ReadonlySet<RowId>; // NEW — client ids the server never acknowledged
 }
 ```
 
@@ -138,22 +145,22 @@ is the exact branch every failure handler needs. Enables the library-supported
 `op === 'create' ? discardEdit(id) : revertEdit(id)`.
 
 **`unconfirmed` — library owns.** Nearly derivable from `op === 'create'`, but not quite, and the
-gap is load-bearing: a *failed* create calls `revertEdit`, spending the snapshot, yet the row must
+gap is load-bearing: a _failed_ create calls `revertEdit`, spending the snapshot, yet the row must
 still POST on retry — `gated-single-optimistic-story-host.component.ts:75-78` documents exactly
 this. Unconfirmed identity outlives a restore point.
 
-| Verb | Effect on `unconfirmed` |
-|---|---|
-| `createRow` | adds |
-| `swapRowId(from, to)` | **deletes `from`, does not add `to`** — a swap *is* the acknowledgement |
-| `releaseEdit(id)` | clears — **requires relaxing its early return** ([`optimistic-mutations.ts`](../../../../../../src/mutations/optimistic-mutations.ts) :58), which today bails when no snapshot is held |
-| `discardEdit(id)` | clears |
-| `removeEdit(id)` | **keeps** — `revertEdit` may bring the row back, still unconfirmed |
-| `revertEdit(id)` | keeps |
+| Verb                  | Effect on `unconfirmed`                                                                                                                                                                |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `createRow`           | adds                                                                                                                                                                                   |
+| `swapRowId(from, to)` | **deletes `from`, does not add `to`** — a swap _is_ the acknowledgement                                                                                                                |
+| `releaseEdit(id)`     | clears — **requires relaxing its early return** ([`optimistic-mutations.ts`](../../../../../../src/mutations/optimistic-mutations.ts) :58), which today bails when no snapshot is held |
+| `discardEdit(id)`     | clears                                                                                                                                                                                 |
+| `removeEdit(id)`      | **keeps** — `revertEdit` may bring the row back, still unconfirmed                                                                                                                     |
+| `revertEdit(id)`      | keeps                                                                                                                                                                                  |
 
 **Per-row error — stays consumer-side.** The library does not own the request, cannot type the
 error without either dictating a message format (`string`) or forcing a banned cast (`unknown`),
-and decisively cannot know *when to clear it* — the 4 stories that have one clear on cancel, on
+and decisively cannot know _when to clear it_ — the 4 stories that have one clear on cancel, on
 discard, on save-start and on dismiss, in four different combinations. Ship as a shared story
 helper `src/stories/row-error-slot.ts`, mirroring the existing `src/stories/local-undo-slot.ts`.
 Promotion later is non-breaking if consumers converge.
@@ -176,7 +183,7 @@ twin — it is load-bearing for downstream computeds.
 Stories import from source paths, not `index.ts`, so removing any export breaks 9 hosts in the
 same commit — that drives the 3a/3b split. **The library compiles and tests green at every step.**
 
-**Step 0 — ADR + D-number reservation** *(judgment, no code)* · `Depends on: —` · **DONE 2026-09-05**
+**Step 0 — ADR + D-number reservation** _(judgment, no code)_ · `Depends on: —` · **DONE 2026-09-05**
 [ADR-0013](../../../../../adr/0013-optimistic-and-pessimistic-are-call-site-facts.md) written (status
 `proposed`), and [`2-decisions.md`](2-decisions.md) reserves **D50–D57**.
 
@@ -188,22 +195,23 @@ where implementation corrected the design pass. Pre-writing D51–D57 would inve
 that does not exist.
 
 Two parts genuinely could not wait, and are done:
-- **ADR-0013**, because it acts on two *currently published* claims that contradict this work:
+
+- **ADR-0013**, because it acts on two _currently published_ claims that contradict this work:
   it **supersedes** [`3-ui/stories.md`](../../../../../3-ui/stories.md) :142's gated-only framing, and
   **narrows — does not reverse** — [`0-product/row-editing.md`](../../../../../0-product/row-editing.md)
-  OQ-7, whose finding that a flow is undetectable *at composition time* remains true. What changes
+  OQ-7, whose finding that a flow is undetectable _at composition time_ remains true. What changes
   is only that the verb now names the mode at the **call site**.
 - **D50–D57 reservation**, because the D-sequence is global across `1-state/work/` and a concurrent
   effort could otherwise take D50.
 
 Still open in this step: `state.json`. D51–D57 rationale is written per step, below.
 
-**Step 1 — `op` replaces `detached`** *(mechanical)* · `Depends on: 0` (numbering only) · **DONE 2026-09-05**
+**Step 1 — `op` replaces `detached`** _(mechanical)_ · `Depends on: 0` (numbering only) · **DONE 2026-09-05**
 `editing-state.ts`, `optimistic-mutations.ts`, `row-edit-mutations.ts`, colocated specs,
 `index.ts` (+`PendingOp`). The ADR-0006 keep-predicate becomes `(v) => v.op === 'delete'`.
 `detached` appears nowhere in `src/stories/` — verified. See [D53](./2-decisions.md#d53--rowrestorepointdetached-becomes-op-create--update--delete-2026-09-05).
 
-**Step 2 — `pendingOps` + `unconfirmed`** *(additive, non-breaking)* · `Depends on: 1` · **DONE 2026-09-05**
+**Step 2 — `pendingOps` + `unconfirmed`** _(additive, non-breaking)_ · `Depends on: 1` · **DONE 2026-09-05**
 `editing-state.ts` (shape, `pendingOps()`, prune `unconfirmed` with the exemption),
 `engine/rows.ts` — `pruneByIds`'s Set overload gains `keep?: (id: RowId) => boolean`,
 `with-optimistic.ts`, `with-row-edit.ts`, `optimistic-mutations.ts` (including the relaxed
@@ -214,43 +222,44 @@ new member yet (that's step 5). See
 Not touched: `index.ts` — `pendingOps`/`unconfirmed` reach consumers as `OptimisticMembers`/
 `RowEditMembers` fields (both types already exported), not as new standalone exports.
 
-**Step 3a — new verbs alongside the old** *(judgment)* · `Depends on: 2`
+**Step 3a — new verbs alongside the old** _(judgment)_ · `Depends on: 2`
 Add standalone `createRow` (with `open`), `commitEdit`, `closeEdit`. Mark `beginEdit`'s options
 param and `endEdit` `@deprecated`, still working. The spec must assert **`closeEdit` leaves
 `pending` empty** — the invariant made executable.
 
-**Step 3b — migrate call sites, delete the deprecated** *(judgment, NOT mechanical)* · `Depends on: 3a`
+**Step 3b — migrate call sites, delete the deprecated** _(judgment, NOT mechanical)_ · `Depends on: 3a`
 8 `endEdit` sites across 6 hosts; a wrong pick silently strands a row in `pending`:
 
-| Site | Becomes |
-|---|---|
-| `gated-single-optimistic:251` (before request) | `commitEdit(id, row)` |
-| `gated-single-pessimistic:240,244` (after response) | `closeEdit(...)` |
-| `gated-multiple-optimistic:272` (before request) | `commitEdit` |
-| `sorting-editing:134-135` (after `await`) | `closeEdit` |
-| `form-write-mutations:61-62` (after `await`) | `closeEdit(id)` |
+| Site                                                | Becomes               |
+| --------------------------------------------------- | --------------------- |
+| `gated-single-optimistic:251` (before request)      | `commitEdit(id, row)` |
+| `gated-single-pessimistic:240,244` (after response) | `closeEdit(...)`      |
+| `gated-multiple-optimistic:272` (before request)    | `commitEdit`          |
+| `sorting-editing:134-135` (after `await`)           | `closeEdit`           |
+| `form-write-mutations:61-62` (after `await`)        | `closeEdit(id)`       |
 
 Plus `beginEdit({insert})` → `createRow` at 5 sites. Then delete `BeginEditOptions` and `endEdit`.
 No deprecation window (no external consumers, per D46/OQ-B) — the 3a/3b overlap exists only to keep
 CI green across two PRs.
 
-**Step 4 — dev-mode misuse guard** *(small, judgment)* · `Depends on: 3b` · `Parallel-safe with: 5`
+**Step 4 — dev-mode misuse guard** _(small, judgment)_ · `Depends on: 3b` · `Parallel-safe with: 5`
 `createEditingStore(core, { supportsOpen })`; `beginEdit`/`closeEdit`/`clearEdit` emit an
 `ngDevMode` warning on a `withOptimistic`-only table. Makes real the hazard
 `row-edit-mutations.ts:15-24` currently only describes in prose.
 
-**Step 5 — story-state extraction** *(mechanical, batchable)* · `Depends on: 2, 3b` · `Parallel-safe with: 4`
+**Step 5 — story-state extraction** _(mechanical, batchable)_ · `Depends on: 2, 3b` · `Parallel-safe with: 4`
 New `src/stories/row-error-slot.ts` and `src/stories/gated-row-edit.state.ts` (the 8
 byte-identical methods plus `forcedInvalid`, `needsUniqueName`, `insertAt`). Delete
 `pendingCreateIds` at all 6 sites in favour of `table.unconfirmed()`; fold
 `gated-bulk-optimistic.state.ts`'s `pendingIds` in. Reuse the existing `injectRowEditApi()`
 (`src/stories/row-edit.http.ts`), `local-undo-slot.ts`, `commit-counter.component.ts`.
 
-**Step 6 — fix the three mislabeled stories** *(judgment)* · `Depends on: 3b, 5`
+**Step 6 — fix the three mislabeled stories** _(judgment)_ · `Depends on: 3b, 5`
+
 - `gated-single-pessimistic/` — **the real fix.** `addBlankRow` stops writing `data`; `<tfoot>`
   composer with its own `form()` → POST → `insertRow(saved, { at })`. Proves pessimistic create
   exists.
-- `sorting-editing/` — the mislabel is only in the doc-comment; its save *is* pessimistic, and its
+- `sorting-editing/` — the mislabel is only in the doc-comment; its save _is_ pessimistic, and its
   add exists to demo sort-under-insert, not save mode. Switch the adds to `createRow`, correct the
   comment. Do not restructure.
 - `form-write-mutations/` — relabel "Pessimistic save" to **"local save"** (no rollback, binds
@@ -258,7 +267,7 @@ byte-identical methods plus `forcedInvalid`, `needsUniqueName`, `insertAt`). Del
 - **All row-edit stories: render a per-row `pending` / `unconfirmed` badge.** Cheap, and it makes a
   mis-migrated `commitEdit` visible instead of silent.
 
-**Step 7 — specs and docs** *(judgment; specs are the contract, so they land matching the code)* · `Depends on: all`
+**Step 7 — specs and docs** _(judgment; specs are the contract, so they land matching the code)_ · `Depends on: all`
 [`features/row-editing.md`](../../../../features/row-editing.md) (verb families, the invariant, the new
 state shape), [`1-state/row-mutations.md`](../../../../row-mutations.md) (the three `RowUpdater`s named
 as the pessimistic surface), [`3-ui/stories.md`](../../../../../3-ui/stories.md) :142,

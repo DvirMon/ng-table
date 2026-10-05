@@ -7,6 +7,7 @@ files:
   - libs/table/docs/1-state/work/feature-authoring/plan.md
   - libs/table/docs/adr/0020-open-stage-registration-for-third-party-features.md
 ---
+
 # Step 3 — Record the made-up-row ruling
 
 Records the 2026-09-30 ruling on what counts as a made-up row
@@ -35,4 +36,5 @@ its "non-synthesized ids" means `data !== null` rows.
 - [ ] ADR-0020 Decision 4 links to it.
 
 ---
+
 ← [Step 2: Runtime row-id checks on render stages](step-2-runtime-row-id-checks.plan.md)

@@ -16,6 +16,7 @@ files:
   - libs/table/src/api/features/with-grouping/feature.types.spec.ts
   - libs/table/src/table.mock.ts
 ---
+
 # Step 1 — Split with-tree into a folder
 
 This step turns `with-tree.ts` into a `with-tree/` folder, with no behaviour change.
@@ -49,4 +50,5 @@ The later steps add their code to the new files.
 - [ ] No file imports `with-tree.ts` any more.
 
 ---
+
 [Step 2: Engine read of context rows](step-2-ctx-context-rows.plan.md) →

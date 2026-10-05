@@ -19,7 +19,7 @@ Today's tree assertions live in `with-expansion.spec.ts` and lean on
 the `row.children` fallback that D2/E6 removes. They are the
 regression surface for the stage this feature now owns, so they move
 here with the accessor passed explicitly — and they must exist and be
-green *before* #121 deletes the originals, or the window between the
+green _before_ #121 deletes the originals, or the window between the
 two issues has no coverage of the row tree at all.
 
 Seam and prior art: [`2-spec.md`](../../2-spec.md) §"Testing
@@ -84,7 +84,7 @@ Render output:
     array; `isExpanded` matches `tree()` membership for a row with
     children and is `undefined` for a childless row (C4). Add the flat
     variant: a table with nothing expandable stamps `isExpanded:
-    undefined` on every row.
+undefined` on every row.
 15. C3 — a row whose accessor returns `[]` but whose `isExpandable`
     returns `true` renders `hasChildren: true`, so its toggle shows
     before children load; toggling it adds no rows; supplying children
@@ -160,4 +160,5 @@ Composition and lifecycle:
 - [ ] `with-expansion.spec.ts` still passes, untouched.
 
 ---
+
 ← [Step 1: `withTree()`, the stage and `state()`](step-1-with-tree-feature.plan.md) | [Step 3: Collapse-only, `state()` and the degrade path](step-3-new-surface-spec.plan.md) →

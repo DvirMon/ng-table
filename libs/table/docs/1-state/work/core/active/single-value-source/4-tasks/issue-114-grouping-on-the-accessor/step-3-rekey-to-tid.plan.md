@@ -22,9 +22,9 @@ Step 1 (types and declarator signatures here; `feature.ts` body there).
 
 Three things are named across this feature and two of them share the word
 `key`: the declared column id, the row field name, and the grouped value.
-`initial`'s object form says `{ key: 'region' }` meaning *which column*;
-one interface over, `ClusterSummary` says `key: 'north'` meaning *what
-value* and calls the column `columnId`. `ClusterSummary.key` is the one
+`initial`'s object form says `{ key: 'region' }` meaning _which column_;
+one interface over, `ClusterSummary` says `key: 'north'` meaning _what
+value_ and calls the column `columnId`. `ClusterSummary.key` is the one
 that stays — it matches SQL's `GROUP BY` key and LINQ's `IGrouping.Key`.
 
 **Why the rename cannot ship alone (G60).** While the field stays typed
@@ -51,8 +51,9 @@ export type GroupingPath<TRow, TId extends string = string> = {
   readonly [K in TId]: GroupingHandle<TRow, K>;
 };
 
-export type GroupingSchemaFn<TRow, TId extends string = string> =
-  (path: GroupingPath<TRow, TId>) => void;
+export type GroupingSchemaFn<TRow, TId extends string = string> = (
+  path: GroupingPath<TRow, TId>,
+) => void;
 ```
 
 Rewrite `GroupingPath`'s doc comment: it no longer says "keyed by row
@@ -83,8 +84,8 @@ lives on `GroupingPath`'s key set, and `K` is inferred from the handle.
 ```ts
 export function applyGroupKey<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
-  extractValue: (value: unknown) => unknown
-): void
+  extractValue: (value: unknown) => unknown,
+): void;
 ```
 
 It was `(fieldValue: TRow[K]) => unknown`. `TRow[K]` no longer resolves
@@ -101,8 +102,7 @@ one to key a month out of what the accessor returns.
 **4. `feature.ts` — thread `TId` through the config and the feature.**
 
 ```ts
-type GroupingInput<In> =
-  Pick<TableStore<RowOf<In>, ColumnIdOf<In>>, 'columns' | 'rows'>;
+type GroupingInput<In> = Pick<TableStore<RowOf<In>, ColumnIdOf<In>>, 'columns' | 'rows'>;
 
 export interface WithGroupingConfig<TRow, TId extends string = string> {
   initial?: (TId | GroupingLevel<TId>)[];
@@ -137,7 +137,7 @@ since the whole point is that this vocabulary is now one thing.
 - **`GroupingHandle` is unchanged.** Its `K extends string = string`
   already fits; only what populates `K` changes.
 - **The string shorthand must keep compiling.** `initial: ['region',
-  'status']` is a `TId[]`, so it works once the union is literal — this
+'status']` is a `TId[]`, so it works once the union is literal — this
   is AC #7 and Step 7 pins it with a type-level case.
 - **Do not export `ColumnIdOf`.** The workspace decisions log settles it:
   neither `RowOf` nor `ColumnIdOf` is in the public barrel, and a call
@@ -185,9 +185,10 @@ since the whole point is that this vocabulary is now one thing.
 - [ ] `nx run shared-table:typecheck-spec` — existing specs compile or
       are left for Step 7; no assertion is softened to make them pass.
 - [ ] `ColumnId` appears nowhere in `libs/table/src` (`grep -rn
-      'ColumnId\b' libs/table/src` returns only `ColumnIdOf`).
+  'ColumnId\b' libs/table/src` returns only `ColumnIdOf`).
 - [ ] `path.<declaredId>` autocompletes the declared ids inside a
       `withGrouping({ schema })` slot, and a typo is a compile error.
 
 ---
+
 ← [Step 2: Both cluster walks read the accessor](step-2-walks-read-accessor.plan.md) | [Step 4: `applyAggregate` keys by column id](step-4-apply-aggregate.plan.md) →

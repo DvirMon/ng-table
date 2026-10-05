@@ -9,10 +9,10 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                 | Action                                  |
+| ---------------------------------------------------- | --------------------------------------- |
 | `libs/shared/table/src/engine/render-stages.spec.ts` | edit — prune ordering and pass behavior |
-| `libs/shared/table/src/engine/compose-table.spec.ts` | edit — two contributors compose |
+| `libs/shared/table/src/engine/compose-table.spec.ts` | edit — two contributors compose         |
 
 ## Why This Step Exists
 
@@ -39,7 +39,7 @@ Cases:
 
 - **Prune runs between `'tree'` and `'paginate'`.** Extend the existing trace-based ordering test:
   with a fake `paginate` transform registered, the trace shows the prune's effect has already been
-  applied by the time `paginate` receives its input. Assert on what `paginate` *sees*, not on a
+  applied by the time `paginate` receives its input. Assert on what `paginate` _sees_, not on a
   trace string — the prune is not a registered stage and will not push to the trace.
 - **Empty set is a no-op.** `runRenderStages(rows, {}, new Set())` returns the input rows
   unchanged, including rows that carry a `parentId`.
@@ -50,7 +50,7 @@ Cases:
 - **Union across two sets** — a row is hidden when either contributed set collapses its parent.
   Assert at whatever boundary does the unioning; if `core.ts` owns it, this case may belong there
   instead. Do not duplicate it in both places.
-- **The emit-order dependency is real.** A case where a child appears *before* its parent in the
+- **The emit-order dependency is real.** A case where a child appears _before_ its parent in the
   input and is therefore not pruned. This documents the invariant as a known limitation rather
   than leaving a future reader to discover it — mark it clearly as asserting the contract, not a
   bug.
@@ -61,7 +61,7 @@ Follow the existing fake-feature style in that file (features declared inline wi
 around lines 129-190).
 
 - **Two features each contributing a collapsed set both fold**, with no throw — the ADR-0012
-  verification case. Contrast with the existing render-stage collision test, which *does* throw:
+  verification case. Contrast with the existing render-stage collision test, which _does_ throw:
   making both behaviors visible in one file is what stops someone "fixing" the accumulating slot
   into a claiming one.
 - **Contributions are collected in fold order**, and both reach the prune.
@@ -104,4 +104,5 @@ ran, how many passes occurred, or the internal shape of the slot.
 - [ ] `nx test shared-table` green for these two files.
 
 ---
+
 ← [Step 4: `'prune'` stage](step-4-prune-stage.plan.md) | [Step 6: Feature + type tests](step-6-feature-tests.plan.md) →

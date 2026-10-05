@@ -1,5 +1,10 @@
 import type { Signal } from '@angular/core';
-import { httpResource, HttpErrorResponse, HttpHeaders, type HttpResourceRef } from '@angular/common/http';
+import {
+  httpResource,
+  HttpErrorResponse,
+  HttpHeaders,
+  type HttpResourceRef,
+} from '@angular/common/http';
 import type { DealPage, DealRow } from './types';
 
 export interface GroupedRowsRequestOptions {
@@ -60,14 +65,14 @@ function headersFor(options: GroupedRowsRequestOptions): HttpHeaders {
  * reads. `options` returning `undefined` keeps the resource idle (no request).
  */
 export function createGroupedRowsResource(
-  options: () => GroupedRowsRequestOptions | undefined
+  options: () => GroupedRowsRequestOptions | undefined,
 ): HttpResourceRef<DealPage | undefined> {
   return httpResource(
     () => {
       const requestOptions = options();
       return requestOptions && { url: '/api/grouped-rows', headers: headersFor(requestOptions) };
     },
-    { parse: toDealPage }
+    { parse: toDealPage },
   );
 }
 
@@ -79,11 +84,13 @@ export function createGroupedRowsResource(
  * rule's own params signal.
  */
 export function createGroupingPreferenceResource(
-  params: Signal<GroupedRowsRequestOptions | undefined>
+  params: Signal<GroupedRowsRequestOptions | undefined>,
 ): HttpResourceRef<GroupingPreference | undefined> {
   return httpResource<GroupingPreference>(() => {
     const requestOptions = params();
-    return requestOptions && { url: '/api/grouping-preference', headers: headersFor(requestOptions) };
+    return (
+      requestOptions && { url: '/api/grouping-preference', headers: headersFor(requestOptions) }
+    );
   });
 }
 

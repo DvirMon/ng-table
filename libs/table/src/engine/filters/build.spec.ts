@@ -96,10 +96,7 @@ function buildWithColumns<
     [...createColumns(noData<Invoice>(), declare).columns],
     'build.spec',
   );
-  const filters = buildFilterModel<Invoice, ColumnValues<Invoice, TCols>, S>(
-    schema,
-    () => columns,
-  );
+  const filters = buildFilterModel<Invoice, ColumnValues<Invoice, TCols>, S>(schema, () => columns);
   return {
     filters,
     removeColumn: (id: string): void => {
@@ -332,14 +329,10 @@ describe('buildFilterModel — emptyValue extends, isEmpty replaces', () => {
 
   it('an explicit isEmpty still wins over emptyValue on filter()', () => {
     const filters = build((path) => ({
-      tags: filter(
-        path.tags,
-        (cell, criterion: readonly string[]) => hasAnyOf(cell, criterion),
-        {
-          emptyValue: ['none'],
-          isEmpty: (criterion) => criterion.length === 0,
-        },
-      ),
+      tags: filter(path.tags, (cell, criterion: readonly string[]) => hasAnyOf(cell, criterion), {
+        emptyValue: ['none'],
+        isEmpty: (criterion) => criterion.length === 0,
+      }),
     }));
     expect(filters.tags().value()).toEqual(['none']);
     expect(filters().criteria()).toEqual({ tags: ['none'] });
@@ -415,9 +408,7 @@ describe('buildFilterModel — combination semantics (via the safe-evaluate guar
     const matches = filters().matcher();
 
     expect(matches(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
-    expect(
-      matches(invoice({ customer: 'Globex', notes: 'contact acme' })),
-    ).toBe(true);
+    expect(matches(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
     expect(matches(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
   });
 
@@ -430,15 +421,9 @@ describe('buildFilterModel — combination semantics (via the safe-evaluate guar
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
-    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(
-      true,
-    );
-    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(
-      false,
-    );
-    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(
-      false,
-    );
+    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
+    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
   });
 });
 
@@ -449,18 +434,14 @@ describe('buildFilterModel — null/undefined cells', () => {
     }));
     filters.subCategory().value.set('widgets');
     const matches = filters().matcher();
-    expect(
-      matches(invoice({ subCategory: undefined as unknown as string })),
-    ).toBe(false);
+    expect(matches(invoice({ subCategory: undefined as unknown as string }))).toBe(false);
   });
 
   it('hasNone passes a nullable/empty array cell', () => {
     const filters = build((path) => ({ tags: hasNone(path.tags) }));
     filters.tags().value.set(['urgent']);
     const matches = filters().matcher();
-    expect(matches(invoice({ tags: undefined as unknown as string[] }))).toBe(
-      true,
-    );
+    expect(matches(invoice({ tags: undefined as unknown as string[] }))).toBe(true);
   });
 
   it('a custom filter() predicate receives the cell unguarded and can match nulls', () => {
@@ -473,9 +454,7 @@ describe('buildFilterModel — null/undefined cells', () => {
     }));
     filters.notes().value.set(true);
     const matches = filters().matcher();
-    expect(matches(invoice({ notes: undefined as unknown as string }))).toBe(
-      true,
-    );
+    expect(matches(invoice({ notes: undefined as unknown as string }))).toBe(true);
     expect(matches(invoice({ notes: 'has content' }))).toBe(false);
   });
 });
@@ -633,9 +612,10 @@ describe('buildFilterModel — matcher()', () => {
       invoice({ status: 'open', customer: 'Initech' }),
     ];
 
-    expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual(
-      ['Acme', 'Initech'],
-    );
+    expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual([
+      'Acme',
+      'Initech',
+    ]);
   });
 
   it('reflects the criteria current at the moment it was requested', () => {
@@ -672,9 +652,7 @@ describe('buildFilterModel — matcher()', () => {
     const matches = filters().matcher();
 
     expect(matches(invoice({ customer: 'Acme Corp', notes: '' }))).toBe(true);
-    expect(
-      matches(invoice({ customer: 'Globex', notes: 'contact acme' })),
-    ).toBe(true);
+    expect(matches(invoice({ customer: 'Globex', notes: 'contact acme' }))).toBe(true);
     expect(matches(invoice({ customer: 'Globex', notes: '' }))).toBe(false);
   });
 
@@ -687,15 +665,9 @@ describe('buildFilterModel — matcher()', () => {
     filters.search().value.set('acme');
     const matches = filters().matcher();
 
-    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(
-      true,
-    );
-    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(
-      false,
-    );
-    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(
-      false,
-    );
+    expect(matches(invoice({ status: 'open', customer: 'Acme Corp' }))).toBe(true);
+    expect(matches(invoice({ status: 'closed', customer: 'Acme Corp' }))).toBe(false);
+    expect(matches(invoice({ status: 'open', customer: 'Globex' }))).toBe(false);
   });
 
   it('does not narrow through a filter gated off by when', () => {
@@ -708,15 +680,11 @@ describe('buildFilterModel — matcher()', () => {
     filters.subCategory().value.set('widgets');
 
     const gatedOff = filters().matcher();
-    expect(gatedOff(invoice({ category: null, subCategory: 'gadgets' }))).toBe(
-      true,
-    );
+    expect(gatedOff(invoice({ category: null, subCategory: 'gadgets' }))).toBe(true);
 
     filters.category().value.set('electronics');
     const gatedOn = filters().matcher();
-    expect(
-      gatedOn(invoice({ category: 'electronics', subCategory: 'gadgets' })),
-    ).toBe(false);
+    expect(gatedOn(invoice({ category: 'electronics', subCategory: 'gadgets' }))).toBe(false);
   });
 
   it('fails a positive matcher on a null cell', () => {
@@ -740,9 +708,7 @@ describe('buildFilterModel — matcher()', () => {
 
         expect(matched.map((row) => row.customer)).toEqual(['Acme', 'Initech']);
         expect(reportSpy).toHaveBeenCalledTimes(1);
-        expect(String(reportSpy.mock.calls[0]?.[0])).toContain(
-          'filter "broken"',
-        );
+        expect(String(reportSpy.mock.calls[0]?.[0])).toContain('filter "broken"');
       } finally {
         reportSpy.mockRestore();
       }
@@ -828,9 +794,10 @@ describe('buildFilterModel — matcher()', () => {
         invoice({ status: 'open', customer: 'Initech' }),
       ];
 
-      expect(
-        rows.filter(filters().matcher()).map((row) => row.customer),
-      ).toEqual(['Acme', 'Initech']);
+      expect(rows.filter(filters().matcher()).map((row) => row.customer)).toEqual([
+        'Acme',
+        'Initech',
+      ]);
     });
   });
 });

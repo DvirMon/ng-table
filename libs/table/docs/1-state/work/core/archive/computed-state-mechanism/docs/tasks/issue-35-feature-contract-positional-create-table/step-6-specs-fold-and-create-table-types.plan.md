@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — compose-table.spec.ts + create-table.spec.ts: fold runtime, positional runtime, type assertions"
+title: 'Step 6 — compose-table.spec.ts + create-table.spec.ts: fold runtime, positional runtime, type assertions'
 type: task-step
 issue: 69
 ---
@@ -41,7 +41,7 @@ Adapt/add, all with one-argument factories:
 
 1. Several features fold in order, each seeing prior members on the store it is handed
    (factory-time read of an earlier member is defined; of a later member is `undefined`).
-2. A deferred read (inside a member function) of a *later* feature's member is defined —
+2. A deferred read (inside a member function) of a _later_ feature's member is defined —
    runtime "types are stricter" truth (D25).
 3. `setup` hooks run after the whole composition (existing case — keep).
 4. ADR-0006 removal reconciliation still prunes ids after the fold rewrite (existing describe —
@@ -132,4 +132,5 @@ three synthetic features via `createTableFeature` with distinct members (`a: Sig
       (documented, not automated).
 
 ---
+
 ← [Step 5: create-table-feature.ts — derive plumbing](step-5-create-table-feature-derive-plumbing.plan.md)

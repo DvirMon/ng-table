@@ -13,6 +13,7 @@ parent: ../architecture.md
 # withInfiniteScroll()
 
 Known from `overview.md`:
+
 - State shape sketch: `{ hasMore, isLoading }`.
 - Mutually exclusive with `withPagination()` in practice.
 

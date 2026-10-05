@@ -85,4 +85,5 @@ export class NgpTableRowDirective {
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 ← [Step 2: NgpTableDirective](step-2-ngp-table-directive.plan.md) | [Step 4: Barrel exports](step-4-barrel-exports.plan.md) →

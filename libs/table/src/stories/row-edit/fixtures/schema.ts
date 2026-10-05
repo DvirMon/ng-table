@@ -17,7 +17,7 @@ export const editRowsSchema = schema<EditRow[]>((path) =>
   applyEach(path, (row) => {
     debounce(row.name, 'blur');
     debounce(row.dept, 0);
-  })
+  }),
 );
 
 /**
@@ -32,7 +32,8 @@ export const editRowsWithUniqueNameSchema = schema<EditRow[]>((path) => {
       if (name === '') {
         return undefined;
       }
-      const isDuplicate = ctx.valueOf(path).filter((candidate) => candidate.name === name).length > 1;
+      const isDuplicate =
+        ctx.valueOf(path).filter((candidate) => candidate.name === name).length > 1;
       return isDuplicate
         ? { kind: 'duplicateName', message: 'Another row already uses this name.' }
         : undefined;

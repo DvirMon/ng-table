@@ -45,7 +45,11 @@ export class GatedMultipleOptimisticStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, editTableConfig, withRowEdit({ multiple: () => true }));
+  protected readonly table = createTable(
+    this.data,
+    editTableConfig,
+    withRowEdit({ multiple: () => true }),
+  );
   /** Gated mode's commit boundary is the row (OQ-3) — `form()` writes into `table.draft` instead
    * of `data`, so a field's blur-commit can't move the row under the user or leak into the
    * pipeline before Save (`withRowEdit()`'s `draft` member, `api/features/editing/draft-rows.ts`). */
@@ -229,7 +233,10 @@ export class GatedMultipleOptimisticStoryHostComponent {
     const isCreate = this.flags.pendingCreateIds().has(id);
 
     return this.rowEditApi
-      .saveRow(id, row, isCreate, { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() })
+      .saveRow(id, row, isCreate, {
+        forceFailure: this.forceFailure(),
+        latencyMs: this.latencyMs(),
+      })
       .pipe(
         tap((saved) => {
           if (isCreate) {

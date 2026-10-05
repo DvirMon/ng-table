@@ -7,11 +7,13 @@ Spec file: `libs/table/src/api/features/with-tree/feature.spec.ts`
 Placement: a nested `describe('open-set writes and closed revealed rows')` beside step 5's describe. It uses the same fixture and filter terms as step 5.
 
 ## Stubs (red phase)
+
 - None. No exported symbol is added. The change is inside `expand` / `set` in `with-tree/feature.ts` and its closed-set handle from `with-tree/reveal.ts`.
 
 ## Seams — in red-green order
 
 ### H. expand(ids) on a row closed while revealed → it shows open, the open set gains it, `changed` fires once
+
 - Test: `it('expand(ids) on a row closed while revealed opens it, writes the open set and emits changed once')`
 - Asserts: filter `'Grand'`, `tree.toggle('c1')` (closed; `renderRows()` ids `['r1', 'c1']`). Subscribe a spy to `tree.changed`, then `tree.expand(['c1'])`:
   - `renderRows()` ids equal `['r1', 'c1', 'g1']`
@@ -21,6 +23,7 @@ Placement: a nested `describe('open-set writes and closed revealed rows')` besid
 - Order reason: independent. Base case of the new behaviour; builds on step 5's close.
 
 ### H2. expand(ids) on an already-open row closed while revealed → it shows open again, `changed` silent
+
 - Test: `it('expand(ids) on an already-open row closed while revealed shows it open again without emitting changed')`
 - Asserts: `withTree({ parentId, initial: ['r1'] })`, filter `'Grand'`, `tree.toggle('r1')` (closed while revealed; r1 still in the open set). Subscribe a spy to `tree.changed`, then `tree.expand(['r1'])`:
   - `renderRows()` ids equal `['r1', 'c1', 'g1']`
@@ -30,6 +33,7 @@ Placement: a nested `describe('open-set writes and closed revealed rows')` besid
 - Order reason: builds on H (same clear, the already-open case).
 
 ### I. set(ids) naming a row closed while revealed → it shows open
+
 - Test: `it('set(ids) naming a row closed while revealed opens it')`
 - Asserts: filter `'Grand'`, `tree.toggle('c1')`, spy on `changed`, `tree.set(['c1'])`:
   - `renderRows()` ids equal `['r1', 'c1', 'g1']`
@@ -39,6 +43,7 @@ Placement: a nested `describe('open-set writes and closed revealed rows')` besid
 - Order reason: builds on H (same mechanism, second entry point).
 
 ### E. collapse(ids) on a revealed id → writes only the open set; the reveal still shows the row open
+
 - Test: `it('collapse on a revealed id writes only the open set and leaves the reveal showing the row open')`
 - Asserts: `withTree({ parentId, initial: ['c1'] })`, filter `'Grand'`, `tree.collapse(['c1'])`:
   - `tree()` is empty
@@ -49,6 +54,7 @@ Placement: a nested `describe('open-set writes and closed revealed rows')` besid
 - Red note: passes in red. Accepted guard.
 
 ### D. toggle(id) on a context row the predicate did not reveal → writes the open set as before
+
 - Test: `it('toggle on a context row that revealContextRow excluded writes the open set and emits changed')`
 - Asserts: `withTree({ parentId, revealContextRow: (row) => row.parentId == null })`, filter `'Grand'`. `renderRows()` ids are `['r1', 'c1']`: r1 is revealed; c1 is a context row but not revealed. Then `tree.toggle('c1')`:
   - `tree()` equals `new Set(['c1'])`
@@ -59,9 +65,11 @@ Placement: a nested `describe('open-set writes and closed revealed rows')` besid
 - Red note: passes in red. Accepted guard.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - `expand()` with no ids clearing discovered ids from the closed set. Same line as H: `target = ids ?? discovered` feeds one write. One bug, one seam.
 - Toggle-to-open on a non-revealed id clearing the closed set. Unreachable: only a toggle on a revealed id adds to the closed set, and the closed set is always intersected with the context ids. The exception — a `revealContextRow` reading mutable row data that flips after a data replace — is not in the outline.
 - `set(ids)` clearing closed ids it does not name. Unspecified; D28 covers only named ids.

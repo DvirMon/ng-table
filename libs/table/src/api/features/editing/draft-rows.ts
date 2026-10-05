@@ -22,7 +22,7 @@ interface DraftRowsSource<TRow> {
 function resetClosedRows<TRow>(
   source: DraftRowsSource<TRow>,
   previous: { source: DraftRowsSource<TRow>; value: TRow[] },
-  indexById: () => ReadonlyMap<RowId, number>
+  indexById: () => ReadonlyMap<RowId, number>,
 ): TRow[] {
   const closedIds = [...previous.source.open].filter((id) => !source.open.has(id));
   const hasNoClosedRows = closedIds.length === 0;
@@ -45,7 +45,7 @@ function resetClosedRows<TRow>(
 function remapAllRows<TRow>(
   source: DraftRowsSource<TRow>,
   previousValue: TRow[],
-  trackBy: TrackByFn<TRow>
+  trackBy: TrackByFn<TRow>,
 ): TRow[] {
   const draftById = new Map(previousValue.map((row) => [trackBy(row), row]));
   return source.data.map((row) => {
@@ -58,7 +58,7 @@ export function createDraftRows<TRow>(
   data: () => TRow[],
   editing: () => ReadonlySet<RowId>,
   trackBy: TrackByFn<TRow>,
-  indexById: () => ReadonlyMap<RowId, number>
+  indexById: () => ReadonlyMap<RowId, number>,
 ): WritableSignal<TRow[]> {
   return linkedSignal<DraftRowsSource<TRow>, TRow[]>({
     source: () => ({ data: data(), open: editing() }),

@@ -8,6 +8,7 @@ files:
   - libs/table/src/api/features/with-tree/feature.ts
   - libs/table/src/api/features/with-tree/feature.spec.ts
 ---
+
 # Step 3 — table.tree.contextRowIds
 
 This step adds `table.tree.contextRowIds`, a read of the current context rows.
@@ -38,4 +39,5 @@ Decisions: [D20, D27](../../1-decisions.md) (spec story 30)
 - [ ] `contextRowIds()` lists every context row, including rows hidden under a collapsed parent.
 
 ---
+
 ← [Step 2: Engine read of context rows](step-2-ctx-context-rows.plan.md) | [Step 4: Reveal context rows](step-4-reveal-context-rows.plan.md) →

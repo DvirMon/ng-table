@@ -4,6 +4,7 @@ Step: [step-1-tree-row-hooks.plan.md](step-1-tree-row-hooks.plan.md)
 Spec file: `libs/table/src/directives/ngp-table-tree-row.directive.spec.ts`
 
 ## Stubs (red phase)
+
 - None. The step adds no new symbol. It adds two host
   bindings to the existing `NgpTableTreeRowDirective`. The
   tests import only what already exists (`HostComponent`,
@@ -11,6 +12,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-row.directive.spec.ts`
   assertions, not on imports.
 
 ## Seams — in red-green order
+
 Reuse the existing `HostComponent` / `setup()` / `update()`.
 `mockDataRenderRow()` leaves `hasChildren` and `isExpanded`
 `undefined` by default. `update()` rebuilds the row from
@@ -18,6 +20,7 @@ defaults, so every `update` call must pass the full set of
 overrides (`id`, `hasChildren`, `isExpanded`).
 
 ### A. `hasChildren: true` → `data-expandable=""`
+
 - Test: `it('marks an expandable row with an empty data-expandable attribute')`
 - Asserts: `hasAttribute('data-expandable')` is `true` and
   `getAttribute('data-expandable')` is `''`.
@@ -29,6 +32,7 @@ overrides (`id`, `hasChildren`, `isExpanded`).
   the first host binding.
 
 ### B. `hasChildren: false | undefined` → no `data-expandable`
+
 - Test: `it.each([false, undefined])('omits data-expandable when hasChildren is %s')`
 - Asserts: `hasAttribute('data-expandable')` is `false`.
 - Why this seam: catches `? '' : false` or
@@ -40,6 +44,7 @@ overrides (`id`, `hasChildren`, `isExpanded`).
   the binding A introduced.
 
 ### C. `isExpanded: true` → `data-expanded=""`
+
 - Test: `it('marks an expanded row with an empty data-expanded attribute')`
 - Asserts: with `{ hasChildren: true, isExpanded: true }`,
   `hasAttribute('data-expanded')` is `true` and
@@ -51,6 +56,7 @@ overrides (`id`, `hasChildren`, `isExpanded`).
   the proven shape of the first.
 
 ### D. `hasChildren: true`, `isExpanded: false | undefined` → `data-expandable` present, `data-expanded` absent
+
 - Test: `it.each([false, undefined])('omits data-expanded on an expandable row when isExpanded is %s')`
 - Asserts: `hasAttribute('data-expandable')` is `true`
   and `hasAttribute('data-expanded')` is `false`.
@@ -63,6 +69,7 @@ overrides (`id`, `hasChildren`, `isExpanded`).
   to exist so it can prove they are independent.
 
 ### E. same row changes → attribute removed
+
 - Test: `it.each(['data-expandable', 'data-expanded'])('removes %s when the same row stops matching')`
 - Asserts: `setup({ id: 'row-1', hasChildren: true, isExpanded: true })`.
   Assert the attribute is present. Then call
@@ -78,9 +85,11 @@ overrides (`id`, `hasChildren`, `isExpanded`).
   meaningful once both static branches are pinned.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - Existing `data-context-row` cases: kept unchanged, not
   rewritten. They must still pass as a regression guard
   (Done-when). They are not a new seam.

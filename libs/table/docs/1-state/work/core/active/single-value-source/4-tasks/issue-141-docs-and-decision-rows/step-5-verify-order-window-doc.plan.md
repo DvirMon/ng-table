@@ -13,7 +13,7 @@
 
 - Whatever consumer doc #140 wrote the window into. Find it
   with `gh issue view 140 --comments` and `git log --grep
-  "#140"`. Likely `docs/1-state/columns.md` or
+"#140"`. Likely `docs/1-state/columns.md` or
   `docs/1-state/row-mutations.md`.
 - Only if missing: the same doc, edited here.
 
@@ -63,4 +63,5 @@ required.
       so.
 
 ---
+
 ← [Step 4: CLAUDE.md invariants](step-4-claude-md-invariants.plan.md) | [Step 6: Columns decisions log](step-6-columns-decisions-log.plan.md) →

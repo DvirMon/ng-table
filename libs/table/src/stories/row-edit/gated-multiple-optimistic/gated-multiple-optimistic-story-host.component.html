@@ -1,8 +1,8 @@
 <div class="story-host">
   @if (forceFailure()) {
     <p class="story-host__hint">
-      Every save fails: rows still close immediately on Save All — closing never waits on the
-      round trip — then each reverts to its pre-edit value and shows a Retry/Dismiss control.
+      Every save fails: rows still close immediately on Save All — closing never waits on the round
+      trip — then each reverts to its pre-edit value and shows a Retry/Dismiss control.
     </p>
   } @else {
     <p class="story-host__hint">
@@ -44,7 +44,8 @@
           <td class="story-host__cell">
             @if (isEditing) {
               <ng-container *ngpTableRowField="row; from: rows; let field">
-                @let needsUniqueNameFlag = field.name().errors().some((error) => error.kind === 'duplicateName');
+                @let needsUniqueNameFlag =
+                  field.name().errors().some((error) => error.kind === 'duplicateName');
                 <input
                   type="text"
                   [formField]="field.name"
@@ -52,11 +53,16 @@
                   [class.story-host__field--needs-change]="needsUniqueNameFlag"
                   [attr.aria-invalid]="needsUniqueNameFlag || isForcedInvalid ? true : null"
                   [attr.aria-describedby]="
-                    needsUniqueNameFlag ? 'gated-multiple-optimistic-duplicate-hint-' + row.id : null
+                    needsUniqueNameFlag
+                      ? 'gated-multiple-optimistic-duplicate-hint-' + row.id
+                      : null
                   "
                 />
                 @if (needsUniqueNameFlag) {
-                  <span class="story-host__field-hint" [id]="'gated-multiple-optimistic-duplicate-hint-' + row.id">
+                  <span
+                    class="story-host__field-hint"
+                    [id]="'gated-multiple-optimistic-duplicate-hint-' + row.id"
+                  >
                     another row already uses this name
                   </span>
                 }

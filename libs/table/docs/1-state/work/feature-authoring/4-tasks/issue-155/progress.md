@@ -20,10 +20,10 @@ fixtures).
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | The stage order resolver | ✅ done |
-| 2 | Run the resolved order | ✅ done |
-| 3 | Duplicate stage claim is dev-only | ✅ done |
-| 4 | Declared names typed to the registries | ✅ done |
-| 5 | Drop stale #155 notes | ✅ done |
+| Step | Title                                  | Status  |
+| ---- | -------------------------------------- | ------- |
+| 1    | The stage order resolver               | ✅ done |
+| 2    | Run the resolved order                 | ✅ done |
+| 3    | Duplicate stage claim is dev-only      | ✅ done |
+| 4    | Declared names typed to the registries | ✅ done |
+| 5    | Drop stale #155 notes                  | ✅ done |

@@ -12,7 +12,7 @@ in this doc stays a proposal until designed.
 
 Companion to [discovery-benchmark-thresholds.md](discovery-benchmark-thresholds.md), which
 covers budgets, AG Grid, Handsontable and TanStack. This doc does not repeat them. It adds the
-measurement *mechanics* and the statistics, and recommends a rebuilt harness.
+measurement _mechanics_ and the statistics, and recommends a rebuilt harness.
 
 ## Answer
 
@@ -25,10 +25,10 @@ measurement *mechanics* and the statistics, and recommends a rebuilt harness.
   3. It reads one number per run and gates on it. The suites **sample until a confidence
      interval on the difference resolves**, and treat "can't tell" as its own outcome
      [S10][S11][S43].
-- **Window:** measure *mutation → first frame rendered* per variant. That window captures both
+- **Window:** measure _mutation → first frame rendered_ per variant. That window captures both
   in-page cost (rAF + MessageChannel, which is how Preact and Speedometer do it)
   [S30][S31][S32][S33] and trace cost (click → `Commit`, which is how js-framework-benchmark
-  does it) [S1]. The directive's `earlyRead` only moves layout *earlier* inside that window
+  does it) [S1]. The directive's `earlyRead` only moves layout _earlier_ inside that window
   [R2]. So a tick-only window charges the directive for layout that the plain variant also
   pays, later in the same frame [R9].
 - **Recommended setup:**
@@ -230,18 +230,18 @@ measurement *mechanics* and the statistics, and recommends a rebuilt harness.
 
 ## Comparison — harness mechanics
 
-| Axis | js-framework-benchmark | Tachometer | Angular benchpress | Lit | Preact bench | This repo today |
-|---|---|---|---|---|---|---|
-| Driver | Puppeteer [S5] | Selenium [S12] | Protractor/Selenium [S15] | Tachometer [S25] | patched Tachometer [S28] | Vitest browser [R3] |
-| Build | prod required [S9] | whatever is served [S11] | Bazel prod bundle [S17] | built packages [S22] | Vite [S29] | dev-mode TestBed [R1] |
-| Variant isolation | page per iteration [S2] | page per sample, round-robin [S11] | one app per target [S16] | page per sample [S22] | page per sample [S28] | two hosts, one document [R1] |
-| Trigger | real click [S3] | page script [S11] | Protractor click [S16] | page script [S22] | page script [S30] | `data.update` + `TestBed.tick()` [R1] |
-| Window | click → first `Commit` after last work [S1] | page's perf entry [S11] | perf log script/render [S19] | `render`/`update` measures [S22] | mark → after-frame [S30][S32] | tick + forced layout + next-frame render [R1] |
-| Warm-up | 5 [S8] | page-defined [S11] | `prepare` [S16] | page-defined [S22] | 3 [S30] | 3 [R1] |
-| Samples | 15 fixed [S5] | ≥50, auto to CI [S11] | regression slope, 20 [S18] | 30 fixed [S22] | ≥25, auto 1 min [S27] | 10 [R1] |
-| Throttle | 4× for swap [S8] | optional [S12] | none stated [S15] | none [S22] | none stated [S27] | none [R1] |
-| Statistic | mean/median; t-test p≤.05 in UI [S6][S7] | 95 % CI of diff [S10] | slope ≥ 0 [S19] | 95 % CI of diff [S10][S22] | CI vs 5 % horizon [S27] | min and median [R1] |
-| Gate | none | none built-in; unsure state [S11] | PR comment [S21] | PR comment, never fails [S24] | none (interactive) [S27] | absolute 16.7 / 50 ms [R1] |
+| Axis              | js-framework-benchmark                      | Tachometer                         | Angular benchpress           | Lit                              | Preact bench                  | This repo today                               |
+| ----------------- | ------------------------------------------- | ---------------------------------- | ---------------------------- | -------------------------------- | ----------------------------- | --------------------------------------------- |
+| Driver            | Puppeteer [S5]                              | Selenium [S12]                     | Protractor/Selenium [S15]    | Tachometer [S25]                 | patched Tachometer [S28]      | Vitest browser [R3]                           |
+| Build             | prod required [S9]                          | whatever is served [S11]           | Bazel prod bundle [S17]      | built packages [S22]             | Vite [S29]                    | dev-mode TestBed [R1]                         |
+| Variant isolation | page per iteration [S2]                     | page per sample, round-robin [S11] | one app per target [S16]     | page per sample [S22]            | page per sample [S28]         | two hosts, one document [R1]                  |
+| Trigger           | real click [S3]                             | page script [S11]                  | Protractor click [S16]       | page script [S22]                | page script [S30]             | `data.update` + `TestBed.tick()` [R1]         |
+| Window            | click → first `Commit` after last work [S1] | page's perf entry [S11]            | perf log script/render [S19] | `render`/`update` measures [S22] | mark → after-frame [S30][S32] | tick + forced layout + next-frame render [R1] |
+| Warm-up           | 5 [S8]                                      | page-defined [S11]                 | `prepare` [S16]              | page-defined [S22]               | 3 [S30]                       | 3 [R1]                                        |
+| Samples           | 15 fixed [S5]                               | ≥50, auto to CI [S11]              | regression slope, 20 [S18]   | 30 fixed [S22]                   | ≥25, auto 1 min [S27]         | 10 [R1]                                       |
+| Throttle          | 4× for swap [S8]                            | optional [S12]                     | none stated [S15]            | none [S22]                       | none stated [S27]             | none [R1]                                     |
+| Statistic         | mean/median; t-test p≤.05 in UI [S6][S7]    | 95 % CI of diff [S10]              | slope ≥ 0 [S19]              | 95 % CI of diff [S10][S22]       | CI vs 5 % horizon [S27]       | min and median [R1]                           |
+| Gate              | none                                        | none built-in; unsure state [S11]  | PR comment [S21]             | PR comment, never fails [S24]    | none (interactive) [S27]      | absolute 16.7 / 50 ms [R1]                    |
 
 ## Comparison — driver options against this repo's requirements
 
@@ -249,16 +249,16 @@ Requirements come from the brief and the handoff [R9]: runs on Windows, uses wha
 a real prod page, per-variant isolation, trace access, a CI on the difference, and a DOM-level
 FLIP window.
 
-| Requirement | Plain Playwright + CDP | Tachometer 0.7.2 | Vitest browser mode (fixed) | Storybook profile story |
-|---|---|---|---|---|
-| Already installed | yes, 1.63.0 [R5][R6] | no; also needs chromedriver [S12] | yes [R5] | yes [R5] |
-| Prod build | yes, serves any dist [R4] | yes, if served from its root [S11] | default `development` [R7]; prod untested | no, dev mode [R9][S39] |
-| Fresh page per sample | yes, `newPage()` (own code) [R6] | built-in [S11] | no, one document per file [R1] | manual only |
-| Real input event | `page.click` [R6] | no, page script [S11] | no [R1] | manual |
-| Trace as measurement | yes, `Tracing.start` stream [S36][R6] | no, diagnostic only [S11] | yes via `cdp()`, as `bench-trace` [R9] | manual DevTools |
-| CPU throttle | `Emulation.setCPUThrottlingRate` [R8] | `cpuThrottlingRate` [S12] | via `cdp()` [R8] | manual |
-| CI on difference + auto-sample | must write (~50 lines) | built-in [S10] | must write | none |
-| Maintenance risk | Playwright is active and already a dep | dormant since 2025-07 [S13] | `bench` is experimental in v4 [R8] | tied to Storybook + MSW [R9] |
+| Requirement                    | Plain Playwright + CDP                 | Tachometer 0.7.2                   | Vitest browser mode (fixed)               | Storybook profile story      |
+| ------------------------------ | -------------------------------------- | ---------------------------------- | ----------------------------------------- | ---------------------------- |
+| Already installed              | yes, 1.63.0 [R5][R6]                   | no; also needs chromedriver [S12]  | yes [R5]                                  | yes [R5]                     |
+| Prod build                     | yes, serves any dist [R4]              | yes, if served from its root [S11] | default `development` [R7]; prod untested | no, dev mode [R9][S39]       |
+| Fresh page per sample          | yes, `newPage()` (own code) [R6]       | built-in [S11]                     | no, one document per file [R1]            | manual only                  |
+| Real input event               | `page.click` [R6]                      | no, page script [S11]              | no [R1]                                   | manual                       |
+| Trace as measurement           | yes, `Tracing.start` stream [S36][R6]  | no, diagnostic only [S11]          | yes via `cdp()`, as `bench-trace` [R9]    | manual DevTools              |
+| CPU throttle                   | `Emulation.setCPUThrottlingRate` [R8]  | `cpuThrottlingRate` [S12]          | via `cdp()` [R8]                          | manual                       |
+| CI on difference + auto-sample | must write (~50 lines)                 | built-in [S10]                     | must write                                | none                         |
+| Maintenance risk               | Playwright is active and already a dep | dormant since 2025-07 [S13]        | `bench` is experimental in v4 [R8]        | tied to Storybook + MSW [R9] |
 
 ## Synthesis
 
@@ -290,14 +290,14 @@ FLIP window.
     None gates on the minimum.
   - The minimum is defensible when "load only adds time", but it has no error bar, and a 5×
     swing between runs [R9] says the environment is not stationary.
-  - Tachometer and Pinpoint both answer an unresolved difference with a *third* outcome —
+  - Tachometer and Pinpoint both answer an unresolved difference with a _third_ outcome —
     unsure / UNKNOWN — rather than pass or fail [S11][S43]. That is exactly what a noisy
     Windows dev machine needs.
 - **Absolute vs relative, again.**
   - Lit and Angular post comments, and Lit never fails [S24][S21]. Perfherder alerts only on
     significance plus ≥ 2 % [S41].
   - An absolute 16.7 ms gate can still be expressed statistically: "the 95 % CI upper bound of
-    `animated − plain` < 16.7 ms". It then passes only when the data *supports* it, fails only
+    `animated − plain` < 16.7 ms". It then passes only when the data _supports_ it, fails only
     when the CI lower bound clears 16.7 ms, and is otherwise unsure. That is tachometer's
     horizon mechanism with the horizon set in ms [S10][S11].
 - **One harness, not three.** Today there are three measuring surfaces: the Vitest bench, the
@@ -343,11 +343,11 @@ zoneless). Model it on `apps/site`'s build and `serve-static` targets [R4].
 
 **Gate at N=1000**, three-way:
 
-| Result | Condition | Exit |
-|---|---|---|
-| pass | CI upper bound of `animated − plain` < 16.7 ms | 0 |
-| fail | CI lower bound > 16.7 ms | 1 |
-| unsure | otherwise, after timeout | 0, loudly reported |
+| Result | Condition                                      | Exit               |
+| ------ | ---------------------------------------------- | ------------------ |
+| pass   | CI upper bound of `animated − plain` < 16.7 ms | 0                  |
+| fail   | CI lower bound > 16.7 ms                       | 1                  |
+| unsure | otherwise, after timeout                       | 0, loudly reported |
 
 - The absolute reorder-frame number (< 50 ms) and the 5000/10000 scaling stay **report-only**
   on a dev machine [R8].
@@ -357,9 +357,9 @@ zoneless). Model it on `apps/site`'s build and `serve-static` targets [R4].
 **What it replaces**
 
 - **Vitest `bench`:**
-  - Its *timing* sections go: overhead, reorder frame, min gates, and the probes (which move to
+  - Its _timing_ sections go: overhead, reorder frame, min gates, and the probes (which move to
     `reorder-bare.html`) [R1].
-  - Its *deterministic* gates stay in Vitest browser mode, and they are correct there:
+  - Its _deterministic_ gates stay in Vitest browser mode, and they are correct there:
     animations started ≤ on-screen, settle to 0, and the mid-glide peak [R1].
 - **`bench-trace` spec:** replaced by the driver's traced sample [R9].
 - **Storybook profile story:** redundant once a prod page exists. It is dev-mode by
@@ -378,7 +378,7 @@ zoneless). Model it on `apps/site`'s build and `serve-static` targets [R4].
 - Tachometer gives auto-sampling, the CI, round-robin and a version-swap A/B with **zero driver
   code**, and Lit and Preact both use it [S22][S28].
   - Accepting Selenium, chromedriver and a dormant repo would buy all of that for free.
-  - It also compares *library versions*, which the Playwright script does not
+  - It also compares _library versions_, which the Playwright script does not
     (`packageVersions`) [S22].
 - A prod app is a second consumer to maintain. benchpress needed Bazel [S17], and the
   published package still died [S20].
@@ -404,7 +404,7 @@ zoneless). Model it on `apps/site`'s build and `serve-static` targets [R4].
   after the click and the last `Layout`.
 - That `@angular/build:unit-test` with a production `buildTarget` runs TestBed and strips
   `ngDevMode`. To confirm: set it on a scratch target and log `ngDevMode` in a spec.
-- The size of dev mode's cost on this reorder. Its *existence* is cited [S37]; no ms figure was
+- The size of dev mode's cost on this reorder. Its _existence_ is cited [S37]; no ms figure was
   found or measured.
 - Preact's patch to tachometer: the patch file was not opened [S28].
 - Pinpoint's actual `low_threshold` / `high_threshold` values. They are passed in by the
@@ -412,57 +412,57 @@ zoneless). Model it on `apps/site`'s build and `serve-static` targets [R4].
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/timeline.ts | master ≈ f2df01a | yes — source read; end-event rule quoted |
-| S2 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/forkedBenchmarkRunnerPuppeteer.ts | f2df01a | yes — source read; fresh page per iteration, GC placement |
-| S3 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/benchmarksPuppeteer.ts | f2df01a | yes — swap/run init+run quoted |
-| S4 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/puppeteerAccess.ts | f2df01a | yes — launch args; headed by default |
-| S5 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/common.ts | f2df01a | yes — 15 iterations, Puppeteer default |
-| S6 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/stats.ts | f2df01a | yes — descriptive only, no test |
-| S7 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts-results/src/Common.ts | f2df01a | yes — t-test found here, not in runner; corrected "no statistics" reading of S6 |
-| S8 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/benchmarksCommon.ts | f2df01a | yes — warm-ups, throttling map |
-| S9 | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/README.md | f2df01a | yes — visible-window warning, `build-prod` |
-| S10 | https://raw.githubusercontent.com/google/tachometer/705d64846f8ffc67981eab9fb240cf2cb222d6db/src/stats.ts | 0.7.2 | yes — `computeDifference`, df rule quoted |
-| S11 | https://raw.githubusercontent.com/google/tachometer/705d64846f8ffc67981eab9fb240cf2cb222d6db/README.md | 0.7.2 | yes — read; external URL ⇒ FCP only changed the page-hosting plan |
-| S12 | https://raw.githubusercontent.com/google/tachometer/705d64846f8ffc67981eab9fb240cf2cb222d6db/src/browser.ts | 0.7.2 | yes — Selenium, throttle, trace prefs |
-| S13 | https://api.github.com/repos/google/tachometer/commits?per_page=3 | 705d648 | yes — last commit 2025-07-03 |
-| S14 | https://registry.npmjs.org/tachometer/latest | 0.7.2 | yes — version, gitHead, `jstat` dep |
-| S15 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/utilities/perf_util.ts | 846c73d | yes — full file read |
-| S16 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/benchmarks/src/js-web-frameworks/js-web-frameworks.perf-spec.ts | 846c73d | yes — full file read |
-| S17 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/benchmarks/src/js-web-frameworks/BUILD.bazel | 846c73d | yes — Protractor dep |
-| S18 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/benchmarks/README.md | 846c73d | yes — sample size, env vars |
-| S19 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/packages/benchpress/README.md | 846c73d | yes — metrics, validators, forceGc caveat |
-| S20 | https://registry.npmjs.org/@angular/benchpress/latest | 0.3.0 | yes — EOL notice |
-| S21 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/.github/workflows/benchmark-compare.yml | 846c73d | yes — ubuntu-latest, comment |
-| S22 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/packages/benchmarks/lit-html/repeat/tachometer.json | 01dbc66 | yes — full config read |
-| S23 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/.github/workflows/benchmarks.yml | 01dbc66 | yes — PR trigger, artifact only |
-| S24 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/.github/workflows/benchmarks-report.yaml | 01dbc66 | yes — comment, no failing check |
-| S25 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/packages/benchmarks/package.json | 01dbc66 | yes — `tach` scripts, `tachometer ^0.7.0` |
-| S26 | https://raw.githubusercontent.com/preactjs/preact/8101ff821690817c7786739c317af215c62a0cff/.gitmodules | 8101ff8 | yes — `benchmarks` is a submodule; the in-repo path is empty |
-| S27 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/README.md | ec93e1b | yes — CLI defaults |
-| S28 | https://raw.githubusercontent.com/preactjs/benchmarks/main/package.json | main ≈ ec93e1b | yes — patched `tachometer@0.7.0`; patch not opened |
-| S29 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/cli/package.json | ec93e1b | yes — `tachometer`, `jstat` deps |
-| S30 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/apps/table-app/reorder1k.html | ec93e1b | yes — script quoted verbatim |
-| S31 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/apps/utils.js | ec93e1b | yes — `afterFrameAsync`, `markRunEnd` |
-| S32 | https://unpkg.com/afterframe@1.0.2/dist/afterframe.module.js | 1.0.2 | yes — minified source read; rAF + MessageChannel |
-| S33 | https://browserbench.org/Speedometer3.1/about.html | 3.1 | yes — sync/async method; aggregation not on page |
-| S34 | https://raw.githubusercontent.com/ChromeDevTools/devtools-frontend/main/front_end/models/trace/types/TraceEvents.ts | main (unpinned) | yes — `EventTiming`, `AnimationFrame` defs |
-| S35 | https://web.dev/articles/manually-diagnose-slow-interactions-in-the-lab | updated 2024-10-17 | yes — page read |
-| S36 | https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/pdl/domains/Tracing.pdl | master (unpinned) | yes — `transferMode`, `tracingComplete.stream` |
-| S37 | https://angular.dev/errors/NG0100 | Angular docs, fetched 2026-09-25 | yes — dev-mode extra check quoted |
-| S38 | https://angular.dev/api/core/isDevMode | Angular docs, fetched 2026-09-25 | yes — `optimization` disables dev mode |
-| S39 | https://angular.dev/best-practices/profiling-with-chrome-devtools | Angular docs, fetched 2026-09-25 | yes — "exclusively in development mode" |
-| S40 | https://raw.githubusercontent.com/mozilla/treeherder/master/treeherder/perfalert/perfalert/__init__.py | master ≈ 737610f | yes — `detect_changes` defaults, Welch t |
-| S41 | https://raw.githubusercontent.com/mozilla/treeherder/master/treeherder/config/settings.py | master ≈ 737610f | yes — 2 % threshold, windows |
-| S42 | https://raw.githubusercontent.com/mozilla/treeherder/master/treeherder/perf/alerts.py | master ≈ 737610f | yes — magnitude check after t |
-| S43 | https://raw.githubusercontent.com/catapult-project/catapult/main/dashboard/dashboard/pinpoint/models/compare/compare.py | main ≈ 6fd8bbe | yes — KS+MWU, three-way result |
-| R1 | libs/table/src/directives/ngp-table-row-animation.bench.spec.ts:258 | working tree | yes — `sampleReorder`, min gates |
-| R2 | libs/table/src/directives/ngp-table-row-animation.directive.ts:83 | working tree | yes — `afterRenderEffect` earlyRead/write |
-| R3 | libs/table/project.json:63 | working tree | yes — `bench` target |
-| R4 | apps/site/project.json:9 | working tree | yes — `@angular/build:application`, `serve-static` |
-| R5 | package.json:74 | working tree | yes — `playwright ^1.63.0`, `vitest 4.1.9`, `@angular/core 22.1.2` |
-| R6 | node_modules/playwright-core/types/types.d.ts:11750 | 1.63.0 (node_modules/playwright-core/package.json) | yes — `startTracing`, `newCDPSession` |
-| R7 | node_modules/@angular/build/src/builders/unit-test/schema.json:7 | 22.1.2 | yes — `buildTarget` defaults to `development` |
-| R8 | libs/table/docs/3-ui/work/row-animation/discovery-benchmark-thresholds.md | 2026-09-24 | yes — sibling discovery; AG Grid, Handsontable, headless, throttle, Vitest v4 claims carried from there |
-| R9 | handoffs/handoff-row-animation-bench.md | 2026-09-25 | yes — timeline and trace findings |
+|     | Source                                                                                                                                                             | Version                                            | Verified                                                                                                |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| S1  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/master/webdriver-ts/src/timeline.ts                                                              | master ≈ f2df01a                                   | yes — source read; end-event rule quoted                                                                |
+| S2  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/forkedBenchmarkRunnerPuppeteer.ts      | f2df01a                                            | yes — source read; fresh page per iteration, GC placement                                               |
+| S3  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/benchmarksPuppeteer.ts                 | f2df01a                                            | yes — swap/run init+run quoted                                                                          |
+| S4  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/puppeteerAccess.ts                     | f2df01a                                            | yes — launch args; headed by default                                                                    |
+| S5  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/common.ts                              | f2df01a                                            | yes — 15 iterations, Puppeteer default                                                                  |
+| S6  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/stats.ts                               | f2df01a                                            | yes — descriptive only, no test                                                                         |
+| S7  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts-results/src/Common.ts                      | f2df01a                                            | yes — t-test found here, not in runner; corrected "no statistics" reading of S6                         |
+| S8  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/webdriver-ts/src/benchmarksCommon.ts                    | f2df01a                                            | yes — warm-ups, throttling map                                                                          |
+| S9  | https://raw.githubusercontent.com/krausest/js-framework-benchmark/f2df01a8679de05225c32714ca8cecbea3d78c5d/README.md                                               | f2df01a                                            | yes — visible-window warning, `build-prod`                                                              |
+| S10 | https://raw.githubusercontent.com/google/tachometer/705d64846f8ffc67981eab9fb240cf2cb222d6db/src/stats.ts                                                          | 0.7.2                                              | yes — `computeDifference`, df rule quoted                                                               |
+| S11 | https://raw.githubusercontent.com/google/tachometer/705d64846f8ffc67981eab9fb240cf2cb222d6db/README.md                                                             | 0.7.2                                              | yes — read; external URL ⇒ FCP only changed the page-hosting plan                                       |
+| S12 | https://raw.githubusercontent.com/google/tachometer/705d64846f8ffc67981eab9fb240cf2cb222d6db/src/browser.ts                                                        | 0.7.2                                              | yes — Selenium, throttle, trace prefs                                                                   |
+| S13 | https://api.github.com/repos/google/tachometer/commits?per_page=3                                                                                                  | 705d648                                            | yes — last commit 2025-07-03                                                                            |
+| S14 | https://registry.npmjs.org/tachometer/latest                                                                                                                       | 0.7.2                                              | yes — version, gitHead, `jstat` dep                                                                     |
+| S15 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/utilities/perf_util.ts                                          | 846c73d                                            | yes — full file read                                                                                    |
+| S16 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/benchmarks/src/js-web-frameworks/js-web-frameworks.perf-spec.ts | 846c73d                                            | yes — full file read                                                                                    |
+| S17 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/benchmarks/src/js-web-frameworks/BUILD.bazel                    | 846c73d                                            | yes — Protractor dep                                                                                    |
+| S18 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/modules/benchmarks/README.md                                            | 846c73d                                            | yes — sample size, env vars                                                                             |
+| S19 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/packages/benchpress/README.md                                           | 846c73d                                            | yes — metrics, validators, forceGc caveat                                                               |
+| S20 | https://registry.npmjs.org/@angular/benchpress/latest                                                                                                              | 0.3.0                                              | yes — EOL notice                                                                                        |
+| S21 | https://raw.githubusercontent.com/angular/angular/846c73d52be8104aea826da5d4d95814fd24b117/.github/workflows/benchmark-compare.yml                                 | 846c73d                                            | yes — ubuntu-latest, comment                                                                            |
+| S22 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/packages/benchmarks/lit-html/repeat/tachometer.json                             | 01dbc66                                            | yes — full config read                                                                                  |
+| S23 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/.github/workflows/benchmarks.yml                                                | 01dbc66                                            | yes — PR trigger, artifact only                                                                         |
+| S24 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/.github/workflows/benchmarks-report.yaml                                        | 01dbc66                                            | yes — comment, no failing check                                                                         |
+| S25 | https://raw.githubusercontent.com/lit/lit/01dbc6673cdc211543932afd0ca04e223e567366/packages/benchmarks/package.json                                                | 01dbc66                                            | yes — `tach` scripts, `tachometer ^0.7.0`                                                               |
+| S26 | https://raw.githubusercontent.com/preactjs/preact/8101ff821690817c7786739c317af215c62a0cff/.gitmodules                                                             | 8101ff8                                            | yes — `benchmarks` is a submodule; the in-repo path is empty                                            |
+| S27 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/README.md                                                           | ec93e1b                                            | yes — CLI defaults                                                                                      |
+| S28 | https://raw.githubusercontent.com/preactjs/benchmarks/main/package.json                                                                                            | main ≈ ec93e1b                                     | yes — patched `tachometer@0.7.0`; patch not opened                                                      |
+| S29 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/cli/package.json                                                    | ec93e1b                                            | yes — `tachometer`, `jstat` deps                                                                        |
+| S30 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/apps/table-app/reorder1k.html                                       | ec93e1b                                            | yes — script quoted verbatim                                                                            |
+| S31 | https://raw.githubusercontent.com/preactjs/benchmarks/ec93e1bf79f97c6aa6e0e7cbb7b4afd760669d5f/apps/utils.js                                                       | ec93e1b                                            | yes — `afterFrameAsync`, `markRunEnd`                                                                   |
+| S32 | https://unpkg.com/afterframe@1.0.2/dist/afterframe.module.js                                                                                                       | 1.0.2                                              | yes — minified source read; rAF + MessageChannel                                                        |
+| S33 | https://browserbench.org/Speedometer3.1/about.html                                                                                                                 | 3.1                                                | yes — sync/async method; aggregation not on page                                                        |
+| S34 | https://raw.githubusercontent.com/ChromeDevTools/devtools-frontend/main/front_end/models/trace/types/TraceEvents.ts                                                | main (unpinned)                                    | yes — `EventTiming`, `AnimationFrame` defs                                                              |
+| S35 | https://web.dev/articles/manually-diagnose-slow-interactions-in-the-lab                                                                                            | updated 2024-10-17                                 | yes — page read                                                                                         |
+| S36 | https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/pdl/domains/Tracing.pdl                                                                  | master (unpinned)                                  | yes — `transferMode`, `tracingComplete.stream`                                                          |
+| S37 | https://angular.dev/errors/NG0100                                                                                                                                  | Angular docs, fetched 2026-09-25                   | yes — dev-mode extra check quoted                                                                       |
+| S38 | https://angular.dev/api/core/isDevMode                                                                                                                             | Angular docs, fetched 2026-09-25                   | yes — `optimization` disables dev mode                                                                  |
+| S39 | https://angular.dev/best-practices/profiling-with-chrome-devtools                                                                                                  | Angular docs, fetched 2026-09-25                   | yes — "exclusively in development mode"                                                                 |
+| S40 | https://raw.githubusercontent.com/mozilla/treeherder/master/treeherder/perfalert/perfalert/__init__.py                                                             | master ≈ 737610f                                   | yes — `detect_changes` defaults, Welch t                                                                |
+| S41 | https://raw.githubusercontent.com/mozilla/treeherder/master/treeherder/config/settings.py                                                                          | master ≈ 737610f                                   | yes — 2 % threshold, windows                                                                            |
+| S42 | https://raw.githubusercontent.com/mozilla/treeherder/master/treeherder/perf/alerts.py                                                                              | master ≈ 737610f                                   | yes — magnitude check after t                                                                           |
+| S43 | https://raw.githubusercontent.com/catapult-project/catapult/main/dashboard/dashboard/pinpoint/models/compare/compare.py                                            | main ≈ 6fd8bbe                                     | yes — KS+MWU, three-way result                                                                          |
+| R1  | libs/table/src/directives/ngp-table-row-animation.bench.spec.ts:258                                                                                                | working tree                                       | yes — `sampleReorder`, min gates                                                                        |
+| R2  | libs/table/src/directives/ngp-table-row-animation.directive.ts:83                                                                                                  | working tree                                       | yes — `afterRenderEffect` earlyRead/write                                                               |
+| R3  | libs/table/project.json:63                                                                                                                                         | working tree                                       | yes — `bench` target                                                                                    |
+| R4  | apps/site/project.json:9                                                                                                                                           | working tree                                       | yes — `@angular/build:application`, `serve-static`                                                      |
+| R5  | package.json:74                                                                                                                                                    | working tree                                       | yes — `playwright ^1.63.0`, `vitest 4.1.9`, `@angular/core 22.1.2`                                      |
+| R6  | node_modules/playwright-core/types/types.d.ts:11750                                                                                                                | 1.63.0 (node_modules/playwright-core/package.json) | yes — `startTracing`, `newCDPSession`                                                                   |
+| R7  | node_modules/@angular/build/src/builders/unit-test/schema.json:7                                                                                                   | 22.1.2                                             | yes — `buildTarget` defaults to `development`                                                           |
+| R8  | libs/table/docs/3-ui/work/row-animation/discovery-benchmark-thresholds.md                                                                                          | 2026-09-24                                         | yes — sibling discovery; AG Grid, Handsontable, headless, throttle, Vitest v4 claims carried from there |
+| R9  | handoffs/handoff-row-animation-bench.md                                                                                                                            | 2026-09-25                                         | yes — timeline and trace findings                                                                       |

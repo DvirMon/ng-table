@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — compose-features.spec.ts + slots.spec.ts: runtime visibility, collisions, hooks"
+title: 'Step 3 — compose-features.spec.ts + slots.spec.ts: runtime visibility, collisions, hooks'
 type: task-step
 issue: 71
 ---
@@ -43,10 +43,10 @@ Shipped `with-*` features are **not** used (unconverted until #38–#40).
 ### Visibility
 
 1. **Following slot sees the composite** — `makeStore(data, composeFeatures(fA(), fB()),
-   fC())` where `fC`'s factory reads `input.a()` and `input.b()` at factory time; assert
+fC())` where `fC`'s factory reads `input.a()` and `input.b()` at factory time; assert
    `store.a()`, `store.b()`, `store.c()` values.
 2. **Inner sees earlier inner + earlier outer slot** — `makeStore(data, fA(),
-   composeFeatures(fB(), fReadsAB()))`; the last inner factory reads both at factory time.
+composeFeatures(fB(), fReadsAB()))`; the last inner factory reads both at factory time.
 3. **Deferred read sees a later outer slot** — `composeFeatures(fLazy())` in slot 1 where
    `fLazy` returns `lazy: computed(() => input.z())`, then `fZ()` in slot 2; `store.lazy()`
    resolves (the prototype-chain choice under test).
@@ -78,7 +78,7 @@ Match messages with `toThrow(/…/)`. Prior art: `compose-table.spec.ts` lines 1
 13. **Column rules from two inner features both apply** — build two `ColumnRuleEntry`s the
     way `columns.spec.ts` does; assert on `store.columns()`.
 14. **Composite as a trailing derive block** — `createTableFeature(fAFactory,
-    composeFeatures(withComputed(...), withComputed(...)))` composes without tripping the
+composeFeatures(withComputed(...), withComputed(...)))` composes without tripping the
     "declared pipeline behaviour" guard; both derived members present. Proves the
     "absent, not `{}`" rule from Step 2.
 
@@ -123,4 +123,5 @@ Match messages with `toThrow(/…/)`. Prior art: `compose-table.spec.ts` lines 1
 - [ ] Worth running by the user: `npx nx test shared-table -- compose-features slots`.
 
 ---
+
 ← [Step 2: compose-features.ts + index.ts — composeFeatures()](step-2-compose-features.plan.md) | [Step 4: create-table.spec.ts — types](step-4-create-table-spec-types.plan.md) →

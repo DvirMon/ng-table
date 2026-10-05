@@ -91,7 +91,7 @@ describe('ColumnIdOf — case 1: a declared id is nameable', () => {
           schema: (path) => {
             path.status;
           },
-        })
+        }),
       );
 
       expectTypeOf<ColumnIdOf<typeof table>>().toEqualTypeOf<'name' | 'status'>();
@@ -113,7 +113,7 @@ describe('ColumnIdOf — case 2: a typo is rejected at the call site', () => {
             // @ts-expect-error — 'statuss' was never declared in columns
             path.statuss;
           },
-        })
+        }),
       );
 
       expectTypeOf<ColumnIdOf<typeof table>>().toEqualTypeOf<'name' | 'status'>();
@@ -135,7 +135,7 @@ describe('ColumnIdOf — case 3: the widening failure mode is pinned', () => {
             // once `path` falls back to an index signature.
             path['anythingAtAll'];
           },
-        })
+        }),
       );
 
       expectTypeOf<ColumnIdOf<typeof table>>().toEqualTypeOf<string>();
@@ -157,8 +157,8 @@ describe('ColumnIdOf — case 4: the arity escape hatch carries the union', () =
             schema: (path) => {
               path.status;
             },
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf<ColumnIdOf<typeof table>>().toEqualTypeOf<'name' | 'status'>();
@@ -177,8 +177,8 @@ describe('ColumnIdOf — case 4: the arity escape hatch carries the union', () =
               // @ts-expect-error — 'statuss' was never declared in columns
               path.statuss;
             },
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf<ColumnIdOf<typeof table>>().toEqualTypeOf<'name' | 'status'>();
@@ -235,7 +235,7 @@ describe('ColumnValuesOf — case 7: a typo is rejected with createColumns()-cap
             // @ts-expect-error — 'statuss' was never declared in columns
             path.statuss;
           },
-        })
+        }),
       );
 
       expectTypeOf<ColumnIdOf<typeof table>>().toEqualTypeOf<'name' | 'status'>();
@@ -257,8 +257,8 @@ describe('ColumnValuesOf — case 8: carriage through composeFeatures', () => {
             schema: (path) => {
               path.status;
             },
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
@@ -344,8 +344,8 @@ describe('ColumnValuesOf / TableConfig — carriage proofs (#131, step 5)', () =
             schema: (path) => {
               path.status;
             },
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
@@ -369,8 +369,8 @@ describe('ColumnValuesOf / TableConfig — carriage proofs (#131, step 5)', () =
               // @ts-expect-error — 'statuss' was never declared in columns
               path.statuss;
             },
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{
@@ -391,7 +391,7 @@ describe('ColumnValuesOf / TableConfig — carriage proofs (#131, step 5)', () =
             // @ts-expect-error — 'statuss' was never declared in columns
             path.statuss;
           },
-        })
+        }),
       );
 
       expectTypeOf<ColumnValuesOf<typeof table>>().toEqualTypeOf<{

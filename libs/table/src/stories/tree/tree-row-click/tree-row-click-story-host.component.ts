@@ -26,11 +26,7 @@ import type { TaskRow } from '../fixtures/types';
 @Component({
   selector: 'ngp-tree-row-click-story-host',
   templateUrl: './tree-row-click-story-host.component.html',
-  styleUrls: [
-    '../../styles/story-host.css',
-    '../tree-story.css',
-    './tree-row-click.css',
-  ],
+  styleUrls: ['../../styles/story-host.css', '../tree-story.css', './tree-row-click.css'],
   imports: [
     NgpTableDirective,
     NgpTableRowDirective,
@@ -46,7 +42,7 @@ export class TreeRowClickStoryHostComponent {
     treeConfig,
     withTree({
       parentId: (row: TaskRow) => row.parentId,
-    })
+    }),
   );
 
   /**

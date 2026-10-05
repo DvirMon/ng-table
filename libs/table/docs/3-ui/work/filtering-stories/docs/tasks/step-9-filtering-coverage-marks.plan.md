@@ -1,5 +1,5 @@
 ---
-title: "Step 9 — re-derive 0-product/filtering.md coverage marks"
+title: 'Step 9 — re-derive 0-product/filtering.md coverage marks'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: F
@@ -31,7 +31,7 @@ carries three stale claims to fix in the same pass.
 ## What To Do
 
 1. Re-derive every story's mark **from the shipped stories**, not from this plan's predictions. ✅
-   only where the story demonstrates the behavior *including its failure path*.
+   only where the story demonstrates the behavior _including its failure path_.
 2. Fix §8.1's **S3 and S4** rows — both resolved: `create-filters.ts` plus `api/filters/` ship with
    spec coverage, and `with-filtering.ts` is the v2.0 adapter over it (`createFilterEvaluator`,
    `manual` mode), not the shape it replaces.
@@ -68,4 +68,5 @@ Marks that must stay explicit rather than quietly ✅:
 - [ ] `1-gap-analysis.md` status reflects what shipped.
 
 ---
+
 ← [Step 8: architecture.md U5](step-8-architecture-u5-method-names.plan.md) | [Step 10: stories.md registration](step-10-stories-doc-registration.plan.md) →

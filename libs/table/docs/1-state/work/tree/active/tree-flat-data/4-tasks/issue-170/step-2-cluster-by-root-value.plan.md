@@ -11,6 +11,7 @@ files:
   - libs/table/src/engine/grouping/pipeline.spec.ts
   - libs/table/src/engine/grouping/render.spec.ts
 ---
+
 # Step 2 — Cluster by root value in the group stages
 
 This step makes both group stages read every level's group value from a row's root when a parent link is present.
@@ -50,4 +51,5 @@ Decisions: [TR16](../../../../../../../decisions/tree.md), [TR17](../../../../..
 - [ ] Without `treeLinks`, every existing grouping spec is unchanged (🧪 awaiting CI).
 
 ---
+
 ← [Step 1: Feature factories receive the stage context](step-1-feature-factory-stage-context.plan.md) | [Step 3: Group queries follow the root](step-3-group-queries-follow-root.plan.md) →

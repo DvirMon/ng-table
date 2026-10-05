@@ -43,7 +43,7 @@ function makeColumns(): ColumnSet<MockRow, readonly ColumnDecl<MockRow, string, 
 /** Collision messages are matched by `displayName`, so every fixture below carries one. */
 function named<In extends Shape, Out extends object>(
   displayName: string,
-  feature: Feature<In, Out>
+  feature: Feature<In, Out>,
 ): Feature<In, Out> {
   return Object.assign(feature, { displayName });
 }
@@ -56,13 +56,13 @@ interface MakeStore {
   <O1 extends object, O2 extends object>(
     data: WritableSignal<MockRow[]>,
     f1: Feature<Store, O1>,
-    f2: Feature<Store & O1, O2>
+    f2: Feature<Store & O1, O2>,
   ): Store & O1 & O2;
   <O1 extends object, O2 extends object, O3 extends object>(
     data: WritableSignal<MockRow[]>,
     f1: Feature<Store, O1>,
     f2: Feature<Store & O1, O2>,
-    f3: Feature<Store & O1 & O2, O3>
+    f3: Feature<Store & O1 & O2, O3>,
   ): Store & O1 & O2 & O3;
 }
 
@@ -82,7 +82,7 @@ type CreateTableVariadic = (
 function composeWith(
   data: WritableSignal<MockRow[]>,
   injector: Injector | undefined,
-  features: readonly AnyTableFeature[]
+  features: readonly AnyTableFeature[],
 ): Store {
   const config = { trackBy: mockTrackBy, columns: makeColumns(), injector };
   const call = (): Store =>
@@ -119,7 +119,7 @@ function fA(): Feature<Store, WithA> {
 function fA2(): Feature<Store & WithA, WithA> {
   return named(
     'fA2',
-    createTableFeature((): TableFeatureSpec<MockRow, WithA> => ({ members: { a: signal(0) } }))
+    createTableFeature((): TableFeatureSpec<MockRow, WithA> => ({ members: { a: signal(0) } })),
   );
 }
 
@@ -128,7 +128,9 @@ function fA2(): Feature<Store & WithA, WithA> {
 function fBAfterA(): Feature<Store & WithA, WithB> {
   return named(
     'fBAfterA',
-    createTableFeature((input: Store & WithA) => ({ members: { b: computed(() => `b:${input.a()}`) } }))
+    createTableFeature((input: Store & WithA) => ({
+      members: { b: computed(() => `b:${input.a()}`) },
+    })),
   );
 }
 
@@ -139,7 +141,7 @@ function fReadsAB(): Feature<Store & WithA & WithB, WithC> {
     createTableFeature((input: Store & WithA & WithB) => {
       const seenAtFactoryTime = `${input.a()}/${input.b()}`;
       return { members: { c: computed(() => seenAtFactoryTime) } };
-    })
+    }),
   );
 }
 
@@ -149,7 +151,7 @@ function fSeesAll(): Feature<Store & WithA & WithB & WithC, { all: Signal<string
     'fSeesAll',
     createTableFeature((input: Store & WithA & WithB & WithC) => ({
       members: { all: computed(() => `${input.a()}|${input.b()}|${input.c()}`) },
-    }))
+    })),
   );
 }
 
@@ -157,7 +159,7 @@ function fSeesAll(): Feature<Store & WithA & WithB & WithC, { all: Signal<string
 function fZ(): Feature<Shape, WithZ> {
   return named(
     'fZ',
-    createTableFeature((): TableFeatureSpec<unknown, WithZ> => ({ members: { z: signal(99) } }))
+    createTableFeature((): TableFeatureSpec<unknown, WithZ> => ({ members: { z: signal(99) } })),
   );
 }
 
@@ -170,7 +172,7 @@ function fLazy(): Feature<Store, { lazy: Signal<number> }> {
       // see it (types are stricter than runtime). Same bridge `compose-table.spec.ts` uses.
       const deferred = input as Store & WithZ;
       return { members: { lazy: computed(() => deferred.z()) } };
-    })
+    }),
   );
 }
 
@@ -181,8 +183,8 @@ function fShadowsRows(): Feature<Store, { rows: Signal<MockRow[]> }> {
     createTableFeature(
       (): TableFeatureSpec<MockRow, { rows: Signal<MockRow[]> }> => ({
         members: { rows: signal<MockRow[]>([]) },
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -192,7 +194,7 @@ function fThrows(): Feature<Store, NoMembers> {
     'fThrows',
     createTableFeature((): TableFeatureSpec<MockRow, NoMembers> => {
       throw new Error('inner factory blew up');
-    })
+    }),
   );
 }
 
@@ -205,10 +207,10 @@ function fFilterFirstTwo(displayName = 'fFilterFirstTwo'): Feature<Store, NoMemb
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
         stages: stageSchema<MockRow>('pipeline', (s) =>
-          stage(s.filter, { run: (rows) => rows.slice(0, 2) })
+          stage(s.filter, { run: (rows) => rows.slice(0, 2) }),
         ),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -220,10 +222,10 @@ function fSortByNameDesc(): Feature<Store, NoMembers> {
         stages: stageSchema<MockRow>('pipeline', (s) =>
           stage(s.sort, {
             run: (rows) => [...rows].sort((left, right) => right.name.localeCompare(left.name)),
-          })
+          }),
         ),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -232,9 +234,11 @@ function fGroupRenderStage(displayName: string): Feature<Store, NoMembers> {
     displayName,
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
-        renderStages: stageSchema<MockRow>('render', (s) => stage(s.group, { run: (rows) => rows })),
-      })
-    )
+        renderStages: stageSchema<MockRow>('render', (s) =>
+          stage(s.group, { run: (rows) => rows }),
+        ),
+      }),
+    ),
   );
 }
 
@@ -244,8 +248,8 @@ function fHidesColumn(columnId: string, displayName: string): Feature<Store, NoM
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
         columnRules: [{ columnId, key: VISIBLE, result: signal(false).asReadonly() }],
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -257,8 +261,8 @@ function fParentLink(displayName: string): Feature<Store, NoMembers> {
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
         parentLink: (row) => (row.id === 2 ? 1 : null),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -272,10 +276,10 @@ function fKeepsLinkedRows(displayName: string): Feature<Store, NoMembers> {
         stages: stageSchema<MockRow>('pipeline', (s) =>
           stage(s.filter, {
             run: (rows, ctx) => rows.filter((row) => ctx.parentOf?.(row) != null),
-          })
+          }),
         ),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -283,7 +287,7 @@ function fKeepsLinkedRows(displayName: string): Feature<Store, NoMembers> {
  * dropped or copied-early `ctx` shows as `null` instead of a resolved parent id
  * (#170 step 1, seam B). */
 function fReadsParentOf(
-  displayName: string
+  displayName: string,
 ): Feature<Store, { parentIds: Signal<(RowId | null)[]> }> {
   return named(
     displayName,
@@ -291,7 +295,7 @@ function fReadsParentOf(
       members: {
         parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)),
       },
-    }))
+    })),
   );
 }
 
@@ -316,10 +320,10 @@ function fParentsSecondRow(displayName: string): Feature<Store, NoMembers> {
                 .filter((node) => node.id !== 2)
                 .map((node) => (node.id === 1 ? { ...row1, children: [row2] } : node));
             },
-          })
+          }),
         ),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -343,10 +347,10 @@ function fTreeTrail(displayName: string): Feature<Store, NoMembers> {
                 ...node,
                 aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}tree>` },
               })),
-          })
+          }),
         ),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -369,10 +373,10 @@ function fPinAfterTree(displayName: string): Feature<Store, NoMembers> {
                 ...node,
                 aggregates: { ...(node.aggregates ?? {}), trail: `${trailOf(node)}pin>` },
               })),
-          })
+          }),
         ),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -382,20 +386,18 @@ function fExpandedRows(ids: readonly RowId[], displayName: string): Feature<Stor
     createTableFeature(
       (): TableFeatureSpec<MockRow, NoMembers> => ({
         expandedRows: signal(new Set<RowId>(ids)).asReadonly(),
-      })
-    )
+      }),
+    ),
   );
 }
 
 function fContextRows(
   source: Signal<ReadonlySet<RowId>>,
-  displayName: string
+  displayName: string,
 ): Feature<Store, NoMembers> {
   return named(
     displayName,
-    createTableFeature(
-      (): TableFeatureSpec<MockRow, NoMembers> => ({ contextRows: source })
-    )
+    createTableFeature((): TableFeatureSpec<MockRow, NoMembers> => ({ contextRows: source })),
   );
 }
 
@@ -412,8 +414,8 @@ function fSetup(label: string, order: string[]): Feature<Store, NoMembers> {
   return named(
     label,
     createTableFeature(
-      (_input: Store): TableFeatureSpec<MockRow, NoMembers> => ({ setup: () => order.push(label) })
-    )
+      (_input: Store): TableFeatureSpec<MockRow, NoMembers> => ({ setup: () => order.push(label) }),
+    ),
   );
 }
 
@@ -428,7 +430,7 @@ function fSetupReadsZ(seen: { value?: number }): Feature<Store, NoMembers> {
           seen.value = deferred.z();
         },
       };
-    })
+    }),
   );
 }
 
@@ -436,8 +438,8 @@ function fDestroy(label: string, destroyed: string[]): Feature<Shape, NoMembers>
   return named(
     label,
     createTableFeature(
-      (): TableFeatureSpec<unknown, NoMembers> => ({ onDestroy: () => destroyed.push(label) })
-    )
+      (): TableFeatureSpec<unknown, NoMembers> => ({ onDestroy: () => destroyed.push(label) }),
+    ),
   );
 }
 
@@ -447,8 +449,8 @@ function fRowsRemoved(label: string, seen: string[]): Feature<Shape, NoMembers> 
     createTableFeature(
       (): TableFeatureSpec<unknown, NoMembers> => ({
         onRowsRemoved: (ids: readonly RowId[]) => seen.push(`${label}:${ids.join(',')}`),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -487,7 +489,7 @@ describe('composeFeatures', () => {
       const store = makeStore(
         data,
         composeFeatures(fA(), composeFeatures(fBAfterA(), fReadsAB())),
-        fSeesAll()
+        fSeesAll(),
       );
 
       expect(store.c()).toBe('30/b:30');
@@ -512,7 +514,7 @@ describe('composeFeatures', () => {
       const attempt = () => makeStore(signal([...mockRows]), composeFeatures(fA(), fA2()));
 
       expect(attempt).toThrow(
-        /composeFeatures inner feature 1 \(fA\) and composeFeatures inner feature 2 \(fA2\) both provide the "a" store member/
+        /composeFeatures inner feature 1 \(fA\) and composeFeatures inner feature 2 \(fA2\) both provide the "a" store member/,
       );
     });
 
@@ -520,11 +522,11 @@ describe('composeFeatures', () => {
       const attempt = () =>
         makeStore(
           signal([...mockRows]),
-          composeFeatures(fFilterFirstTwo(), fFilterFirstTwo('fFilterOdd'))
+          composeFeatures(fFilterFirstTwo(), fFilterFirstTwo('fFilterOdd')),
         );
 
       expect(attempt).toThrow(
-        /composeFeatures inner feature 1 \(fFilterFirstTwo\) and composeFeatures inner feature 2 \(fFilterOdd\) both provide the "filter" pipeline stage/
+        /composeFeatures inner feature 1 \(fFilterFirstTwo\) and composeFeatures inner feature 2 \(fFilterOdd\) both provide the "filter" pipeline stage/,
       );
     });
 
@@ -532,11 +534,11 @@ describe('composeFeatures', () => {
       const attempt = () =>
         makeStore(
           signal([...mockRows]),
-          composeFeatures(fGroupRenderStage('fGroupA'), fGroupRenderStage('fGroupB'))
+          composeFeatures(fGroupRenderStage('fGroupA'), fGroupRenderStage('fGroupB')),
         );
 
       expect(attempt).toThrow(
-        /composeFeatures inner feature 1 \(fGroupA\) and composeFeatures inner feature 2 \(fGroupB\) both provide the "group" render stage/
+        /composeFeatures inner feature 1 \(fGroupA\) and composeFeatures inner feature 2 \(fGroupB\) both provide the "group" render stage/,
       );
     });
 
@@ -544,7 +546,7 @@ describe('composeFeatures', () => {
       const attempt = () => makeStore(signal([...mockRows]), composeFeatures(fShadowsRows()));
 
       expect(attempt).toThrow(
-        /core and composeFeatures inner feature 1 \(fShadowsRows\) both provide the "rows" store member/
+        /core and composeFeatures inner feature 1 \(fShadowsRows\) both provide the "rows" store member/,
       );
     });
 
@@ -552,7 +554,7 @@ describe('composeFeatures', () => {
       const attempt = () => makeStore(signal([...mockRows]), fA(), composeFeatures(fA2()));
 
       expect(attempt).toThrow(
-        /feature 1 \(fA\) and feature 2 \(composeFeatures\) both provide the "a" store member/
+        /feature 1 \(fA\) and feature 2 \(composeFeatures\) both provide the "a" store member/,
       );
     });
 
@@ -561,11 +563,11 @@ describe('composeFeatures', () => {
         makeStore(
           signal([...mockRows]),
           fFilterFirstTwo('fOuterFilter'),
-          composeFeatures(fFilterFirstTwo())
+          composeFeatures(fFilterFirstTwo()),
         );
 
       expect(attempt).toThrow(
-        /feature 1 \(fOuterFilter\) and feature 2 \(composeFeatures\) both provide the "filter" pipeline stage/
+        /feature 1 \(fOuterFilter\) and feature 2 \(composeFeatures\) both provide the "filter" pipeline stage/,
       );
     });
 
@@ -592,7 +594,7 @@ describe('composeFeatures', () => {
 
       const store = makeStore(
         data,
-        composeFeatures(fHidesColumn('name', 'fHidesName'), fHidesColumn('id', 'fHidesId'))
+        composeFeatures(fHidesColumn('name', 'fHidesName'), fHidesColumn('id', 'fHidesId')),
       );
 
       const columns = store.columns();
@@ -609,8 +611,8 @@ describe('composeFeatures', () => {
           })),
           withComputed((store: ReadonlyStore<Store & WithA & { twice: Signal<number> }>) => ({
             thrice: computed(() => store.a() * 3),
-          }))
-        )
+          })),
+        ),
       );
 
       const store = makeStore(signal([...mockRows]), feature);
@@ -622,7 +624,7 @@ describe('composeFeatures', () => {
   });
 
   describe('expandedRows (ADR-0017)', () => {
-    it('case 18 — an inner expandedRows contribution reaches the outer engine\'s flatten', () => {
+    it("case 18 — an inner expandedRows contribution reaches the outer engine's flatten", () => {
       const data = signal([...mockRows]);
 
       // Row 2 is parented under row 1, but nothing is contributed as expanded — the outer
@@ -631,18 +633,24 @@ describe('composeFeatures', () => {
       // register no contributor at all and every row would stay visible, wrongly keeping row 2.
       const store = makeStore(
         data,
-        composeFeatures(fParentsSecondRow('fParentsSecondRow'), fExpandedRows([99], 'fExpandedRows'))
+        composeFeatures(
+          fParentsSecondRow('fParentsSecondRow'),
+          fExpandedRows([99], 'fExpandedRows'),
+        ),
       );
 
       expect(store.renderRows().map((row) => row.id)).toEqual([1, 3]);
     });
 
-    it('case 19 — the composite\'s union includes the parent id, so the child survives', () => {
+    it("case 19 — the composite's union includes the parent id, so the child survives", () => {
       const data = signal([...mockRows]);
 
       const store = makeStore(
         data,
-        composeFeatures(fParentsSecondRow('fParentsSecondRow'), fExpandedRows([1], 'fExpandedRows'))
+        composeFeatures(
+          fParentsSecondRow('fParentsSecondRow'),
+          fExpandedRows([1], 'fExpandedRows'),
+        ),
       );
 
       expect(store.renderRows().map((row) => row.id)).toEqual([1, 2, 3]);
@@ -650,10 +658,10 @@ describe('composeFeatures', () => {
   });
 
   describe('contextRows (#168)', () => {
-    it('case 25 — an inner contextRows contribution reaches the outer engine\'s stamping', () => {
+    it("case 25 — an inner contextRows contribution reaches the outer engine's stamping", () => {
       const store = makeStore(
         signal([...mockRows]),
-        composeFeatures(fContextRows(signal<ReadonlySet<RowId>>(new Set([2])), 'fContext'))
+        composeFeatures(fContextRows(signal<ReadonlySet<RowId>>(new Set([2])), 'fContext')),
       );
 
       expect(contextRowIds(store)).toEqual([2]);
@@ -664,8 +672,8 @@ describe('composeFeatures', () => {
         signal([...mockRows]),
         composeFeatures(
           fContextRows(signal<ReadonlySet<RowId>>(new Set([1])), 'fCtxA'),
-          fContextRows(signal<ReadonlySet<RowId>>(new Set([3])), 'fCtxB')
-        )
+          fContextRows(signal<ReadonlySet<RowId>>(new Set([3])), 'fCtxB'),
+        ),
       );
 
       expect(contextRowIds(store)).toEqual([1, 3]);
@@ -675,7 +683,7 @@ describe('composeFeatures', () => {
       const ctx = signal<ReadonlySet<RowId>>(new Set([2]));
       const store = makeStore(
         signal([...mockRows]),
-        composeFeatures(fContextRows(ctx, 'fContext'))
+        composeFeatures(fContextRows(ctx, 'fContext')),
       );
 
       expect(contextRowIds(store)).toEqual([2]);
@@ -691,13 +699,13 @@ describe('composeFeatures', () => {
       const data = signal([...mockRows]);
 
       expect(() =>
-        makeStore(data, fTreeTrail('fOuterTree'), composeFeatures(fPinAfterTree('fPin')))
+        makeStore(data, fTreeTrail('fOuterTree'), composeFeatures(fPinAfterTree('fPin'))),
       ).not.toThrow();
 
       const store = makeStore(
         signal([...mockRows]),
         fTreeTrail('fOuterTree'),
-        composeFeatures(fPinAfterTree('fPin'))
+        composeFeatures(fPinAfterTree('fPin')),
       );
 
       for (const row of store.renderRows()) {
@@ -713,7 +721,7 @@ describe('composeFeatures', () => {
       const store = makeStore(
         data,
         composeFeatures(fParentLink('fLink')),
-        fKeepsLinkedRows('fOuterFilter')
+        fKeepsLinkedRows('fOuterFilter'),
       );
 
       expect(store.rows().map((row) => row.name)).toEqual(['Bea']);
@@ -723,11 +731,11 @@ describe('composeFeatures', () => {
       const attempt = () =>
         makeStore(
           signal([...mockRows]),
-          composeFeatures(fParentLink('fLinkA'), fParentLink('fLinkB'))
+          composeFeatures(fParentLink('fLinkA'), fParentLink('fLinkB')),
         );
 
       expect(attempt).toThrow(
-        /composeFeatures inner feature 1 \(fLinkA\) and composeFeatures inner feature 2 \(fLinkB\) both provide the parent link/
+        /composeFeatures inner feature 1 \(fLinkA\) and composeFeatures inner feature 2 \(fLinkB\) both provide the parent link/,
       );
     });
 
@@ -736,11 +744,11 @@ describe('composeFeatures', () => {
         makeStore(
           signal([...mockRows]),
           fParentLink('fOuterLink'),
-          composeFeatures(fParentLink('fInnerLink'))
+          composeFeatures(fParentLink('fInnerLink')),
         );
 
       expect(attempt).toThrow(
-        /feature 1 \(fOuterLink\) and feature 2 \(composeFeatures\) both provide the parent link/
+        /feature 1 \(fOuterLink\) and feature 2 \(composeFeatures\) both provide the parent link/,
       );
     });
 
@@ -748,7 +756,7 @@ describe('composeFeatures', () => {
       const store = makeStore(
         signal([...mockRows]),
         fParentLink('fOuterLink'),
-        composeFeatures(fKeepsLinkedRows('fInnerFilter'))
+        composeFeatures(fKeepsLinkedRows('fInnerFilter')),
       );
 
       expect(store.rows().map((row) => row.name)).toEqual(['Bea']);
@@ -760,7 +768,7 @@ describe('composeFeatures', () => {
       const store = makeStore(
         signal([...mockRows]),
         composeFeatures(fReadsParentOf('fReader')),
-        fParentLink('fOuterLink')
+        fParentLink('fOuterLink'),
       );
 
       expect(store.parentIds()).toEqual([null, 1, null]);
@@ -776,7 +784,7 @@ describe('composeFeatures', () => {
       makeStore(
         data,
         composeFeatures(fSetup('s1', order), fSetup('s2', order), fSetupReadsZ(seen)),
-        fZ()
+        fZ(),
       );
 
       expect(order).toEqual(['s1', 's2']);
@@ -790,7 +798,7 @@ describe('composeFeatures', () => {
       makeStoreIn(
         injector,
         signal([...mockRows]),
-        composeFeatures(fDestroy('d1', destroyed), fDestroy('d2', destroyed))
+        composeFeatures(fDestroy('d1', destroyed), fDestroy('d2', destroyed)),
       );
 
       expect(destroyed).toEqual([]);

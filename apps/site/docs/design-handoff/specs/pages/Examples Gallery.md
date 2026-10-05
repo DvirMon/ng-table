@@ -14,10 +14,10 @@ A page whose body is a sequence of live examples.
 
 ## Differences from Doc Article
 
-| Slot | Change |
-| --- | --- |
-| main › body | Repeating unit: H2 → one paragraph → `preview-window` |
-| main › body | No bare `code-block` — code lives in the Source tab of the `preview-window` |
+| Slot          | Change                                                                                                                                  |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| main › body   | Repeating unit: H2 → one paragraph → `preview-window`                                                                                   |
+| main › body   | No bare `code-block` — code lives in the Source tab of the `preview-window`                                                             |
 | right (`toc`) | Always renders — one entry per example. **Overrides** Doc Article's 2-H2 minimum: a gallery with a single example still gets the column |
 
 ## Page-only rules

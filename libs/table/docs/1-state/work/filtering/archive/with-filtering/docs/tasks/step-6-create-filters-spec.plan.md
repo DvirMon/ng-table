@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — createFilters() spec"
+title: 'Step 6 — createFilters() spec'
 type: task-step
 issue: 61
 ---
@@ -75,7 +75,7 @@ Cover, per `filters.md`:
 
 ## Risks / Watchouts
 
-- Don't test the per-row filtering *loop* here — that's issue #28's `withFiltering()` spec. This
+- Don't test the per-row filtering _loop_ here — that's issue #28's `withFiltering()` spec. This
   file tests `createFilters()`'s own state/validation/evaluator-building contract only, calling
   the Step 4 evaluator directly with hand-built rows where a "does it filter" assertion is needed.
 
@@ -90,4 +90,5 @@ Cover, per `filters.md`:
 - [ ] `nx test shared-table` passes
 
 ---
+
 ← [Step 5: Rules + public exports](step-5-filters-rules-and-exports.plan.md) | [Step 7: withFiltering() adapter](step-7-with-filtering-adapter.plan.md) →

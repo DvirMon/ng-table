@@ -9,6 +9,7 @@ files:
   - libs/table/src/stories/tree/tree-row-click/tree-row-click-story-host.component.html
   - libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html
 ---
+
 # Step 4 — Stories drop the manual button type
 
 Removes the hand-written `type="button"` from the tree toggle buttons in four story hosts.
@@ -35,4 +36,5 @@ Decisions: [D11](../../1-decisions.md)
 - [ ] `grep` finds no `type="button"` on any `ngpTableTreeToggle` button under `libs/table/src/stories`.
 
 ---
+
 ← [Step 3: Tree toggle extends the core](step-3-tree-toggle-extends-core.plan.md) | [Step 5: Tree docs retrofit](step-5-tree-docs-retrofit.plan.md) →

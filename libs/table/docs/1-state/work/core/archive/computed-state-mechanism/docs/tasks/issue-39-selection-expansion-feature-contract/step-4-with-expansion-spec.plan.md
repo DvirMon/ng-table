@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — with-expansion.spec.ts: positional form, typed predicates, trailing block; strip the interim type args in with-grouping.spec.ts"
+title: 'Step 4 — with-expansion.spec.ts: positional form, typed predicates, trailing block; strip the interim type args in with-grouping.spec.ts'
 type: task-step
 issue: 73
 ---
@@ -78,4 +78,5 @@ argument in the spec.
 - [ ] Runtime green (`vitest run …/with-expansion.spec.ts`) — the user runs it.
 
 ---
+
 ← [Step 3: with-selection.spec.ts + selection.utils.spec.ts](step-3-with-selection-spec.plan.md)

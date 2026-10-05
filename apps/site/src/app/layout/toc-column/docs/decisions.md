@@ -13,7 +13,7 @@ same call `nav-item` already made for `[data-active]`/`[data-nested]`.
 **Items are plain `<a href="#id">` inline in the template, not a separate atom.** A TOC row has no
 independent state or lifecycle of its own (per `.claude/rules/extract-encapsulated-logic.md`) — it's a
 templated cell, same reasoning as the sidebar's rows before those became `nav-item` (which earned its own
-component because `nav-item` is *reused* across sidebar and elsewhere with its own active/nested API).
+component because `nav-item` is _reused_ across sidebar and elsewhere with its own active/nested API).
 No reuse case exists for a toc-item yet; revisit if one appears.
 
 **Mock headings shaped after `libs/table/src/api/row-edit-mutations.ts`'s updaters** (`beginEdit`,

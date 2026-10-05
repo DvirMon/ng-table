@@ -24,7 +24,7 @@ angular-implementer
 
 ## Why This Step Exists
 
-`createTable()` returns a live store *instance*, not a class — there is no DI token for consumers to provide. `NgpTableDirective` is the mechanism that gets the instance into DI: it takes the instance as a required input and self-provides itself under `NGP_TABLE_STORE`, so every descendant directive can inject the token without the consumer writing any provider wiring. See `docs/3-ui/directives/core.md` — "Store Connection Pattern".
+`createTable()` returns a live store _instance_, not a class — there is no DI token for consumers to provide. `NgpTableDirective` is the mechanism that gets the instance into DI: it takes the instance as a required input and self-provides itself under `NGP_TABLE_STORE`, so every descendant directive can inject the token without the consumer writing any provider wiring. See `docs/3-ui/directives/core.md` — "Store Connection Pattern".
 
 ## What To Do
 
@@ -71,4 +71,5 @@ export class NgpTableDirective {
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 ← [Step 1: DI tokens](step-1-di-tokens.plan.md) | [Step 3: NgpTableRowDirective](step-3-ngp-table-row-directive.plan.md) →

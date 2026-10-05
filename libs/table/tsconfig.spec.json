@@ -6,9 +6,5 @@
     "tsBuildInfoFile": "../../dist/out-tsc/shared-table-spec.tsbuildinfo",
     "types": ["vitest/globals", "node"]
   },
-  "include": [
-    "src/**/*.test.ts",
-    "src/**/*.spec.ts",
-    "src/**/*.d.ts"
-  ]
+  "include": ["src/**/*.test.ts", "src/**/*.spec.ts", "src/**/*.d.ts"]
 }

@@ -13,6 +13,7 @@ CSS has nothing that reads an input token. So in ng-table, **input tokens exist 
 the optional stylesheets that read them**, and each sheet owns its own token list.
 
 Proposed contract:
+
 - State goes out as `data-*`: presence for booleans, a value for enums [S1][S2].
 - Measured values go out as output `--ngp-table-*` variables.
 - The library sets classes only where Angular's `animate.enter`/`animate.leave` needs one
@@ -137,16 +138,16 @@ This keeps D3–D5. It questions D6's `ngp-table-row--flip` class. It reverses
 
 ## Comparison
 
-| Axis | ng-primitives 0.130.3 | Material 22.1.7 | CDK 22.1.7 | Base UI 1.8.0 | ng-table today |
-|---|---|---|---|---|---|
-| Boolean state | presence `data-*` [S1] | private classes [S22] | classes [S25] | presence `data-*` [S14] | none shipped |
-| Enum state | valued `data-*` [S4] | private classes [S22] | — | — | valued `data-row-kind`, `data-depth` [R1] |
-| Library-applied animation phase | `data-enter`/`data-exit` [S8] | — | class `cdk-drag-animating` [S25] | `data-starting-style`/`data-ending-style` [S27] | class `ngp-table-row--flip` [R1] |
-| Output variables (library writes) | yes, measured [S3] | no | no [S20] | yes, measured [S14] | none (JSDoc claims one) [R2] |
-| Input tokens (consumer writes) | none read by components; example theme only [S12] | component + system, Sass-validated [S9][S16] | none [S20] | none [S14] | none in src [R3] |
-| Inline geometry styles | yes [S3] | — | yes, transform/sticky [S25][S26] | not checked | yes, `transform` [R1] |
-| CSS shipped | example theme, tokens only [S12] | embedded component CSS + optional tokens-only themes [S9][S21] | structural, **auto-loaded**; prebuilt copies optional [S23] | none [S14] | 1 opt-in sheet [R5] |
-| Public styling contract | `data-*` + output vars [S11] | Sass mixins; classes and vars are private [S22] | classes [S25] | `data-*` + output vars [S14] | `data-*` + class [R1] |
+| Axis                              | ng-primitives 0.130.3                             | Material 22.1.7                                                | CDK 22.1.7                                                  | Base UI 1.8.0                                   | ng-table today                            |
+| --------------------------------- | ------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------- |
+| Boolean state                     | presence `data-*` [S1]                            | private classes [S22]                                          | classes [S25]                                               | presence `data-*` [S14]                         | none shipped                              |
+| Enum state                        | valued `data-*` [S4]                              | private classes [S22]                                          | —                                                           | —                                               | valued `data-row-kind`, `data-depth` [R1] |
+| Library-applied animation phase   | `data-enter`/`data-exit` [S8]                     | —                                                              | class `cdk-drag-animating` [S25]                            | `data-starting-style`/`data-ending-style` [S27] | class `ngp-table-row--flip` [R1]          |
+| Output variables (library writes) | yes, measured [S3]                                | no                                                             | no [S20]                                                    | yes, measured [S14]                             | none (JSDoc claims one) [R2]              |
+| Input tokens (consumer writes)    | none read by components; example theme only [S12] | component + system, Sass-validated [S9][S16]                   | none [S20]                                                  | none [S14]                                      | none in src [R3]                          |
+| Inline geometry styles            | yes [S3]                                          | —                                                              | yes, transform/sticky [S25][S26]                            | not checked                                     | yes, `transform` [R1]                     |
+| CSS shipped                       | example theme, tokens only [S12]                  | embedded component CSS + optional tokens-only themes [S9][S21] | structural, **auto-loaded**; prebuilt copies optional [S23] | none [S14]                                      | 1 opt-in sheet [R5]                       |
+| Public styling contract           | `data-*` + output vars [S11]                      | Sass mixins; classes and vars are private [S22]                | classes [S25]                                               | `data-*` + output vars [S14]                    | `data-*` + class [R1]                     |
 
 ## Synthesis
 
@@ -157,10 +158,10 @@ This keeps D3–D5. It questions D6's `ngp-table-row--flip` class. It reverses
   follows CDK's `cdk-drag-animating` pattern [S25][R1]. In ng-primitives, that spot would be a
   presence attribute, as `data-enter`/`data-exit` are [S8].
 - **Classes have one legitimate place: Angular's `animate.*` API.** `animate.enter`/
-  `animate.leave` are *class* bindings [S17]. So preset enter/leave hooks have to be class
+  `animate.leave` are _class_ bindings [S17]. So preset enter/leave hooks have to be class
   names. The library ships them and the **consumer** applies them. The library never binds
-  them itself. That gives a clean rule: a class the library *applies* is state and should be
-  `data-*`; a class the library only *names* is a preset argument for `animate.*`.
+  them itself. That gives a clean rule: a class the library _applies_ is state and should be
+  `data-*`; a class the library only _names_ is a preset argument for `animate.*`.
 - **Variables: the headless libraries and Material do opposite things.** Headless means
   output-only variables [S3][S14]. Material means input-only tokens with private names and a
   Sass gate [S9][S22]. A token needs a reader. With no shipped CSS, `--ngp-table-cell-bg` is
@@ -184,20 +185,20 @@ This keeps D3–D5. It questions D6's `ngp-table-row--flip` class. It reverses
 - **D5's host attribute removes a limitation that row-animation.md records.** The doc says
   `border-collapse: separate` "cannot be shipped inside `row-flip.css`" because the sheet
   cannot know the table's selector [R9]. With `data-row-animation` on the table (D5), the sheet
-  can target `table[data-row-animation]`. Whether it *should* is a separate decision, because
+  can target `table[data-row-animation]`. Whether it _should_ is a separate decision, because
   it changes how the consumer's table looks.
 
 ## Proposed contract (discovery only, nothing decided)
 
 **1. What directives expose**
 
-| Channel | Rule | Examples |
-|---|---|---|
-| State | `data-*`. Presence for booleans (`""`/absent), a value for enums. Never `="true"`/`="false"` | `data-row-kind="group"`, `data-depth="2"`, `data-row-animation` |
-| Measured values | output `--ngp-table-<part>-<measure>`, written by the library, read-only to the consumer | `--ngp-table-row-flip-offset` |
-| Animation phase the library applies | `data-*` presence attribute, not a class | `ngp-table-row--flip` → e.g. `data-flipping` (see Conflicts) |
-| Preset hooks the consumer applies | class names, **only** as arguments to Angular `animate.enter`/`animate.leave` | `ngp-table-row--enter`, `ngp-table-row--leave` |
-| Inline styles | none, which keeps the invariant. Geometry goes out as an output variable | D5 |
+| Channel                             | Rule                                                                                         | Examples                                                        |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| State                               | `data-*`. Presence for booleans (`""`/absent), a value for enums. Never `="true"`/`="false"` | `data-row-kind="group"`, `data-depth="2"`, `data-row-animation` |
+| Measured values                     | output `--ngp-table-<part>-<measure>`, written by the library, read-only to the consumer     | `--ngp-table-row-flip-offset`                                   |
+| Animation phase the library applies | `data-*` presence attribute, not a class                                                     | `ngp-table-row--flip` → e.g. `data-flipping` (see Conflicts)    |
+| Preset hooks the consumer applies   | class names, **only** as arguments to Angular `animate.enter`/`animate.leave`                | `ngp-table-row--enter`, `ngp-table-row--leave`                  |
+| Inline styles                       | none, which keeps the invariant. Geometry goes out as an output variable                     | D5                                                              |
 
 **2. What the library ships**
 
@@ -228,12 +229,18 @@ This keeps D3–D5. It questions D6's `ngp-table-row--flip` class. It reverses
 **4. Consumer-authored styling without the sheets**
 
 ```css
-[data-row-kind='group'] { font-weight: 600; }
-[data-depth='2'] > td:first-child { padding-inline-start: 2rem; }
+[data-row-kind='group'] {
+  font-weight: 600;
+}
+[data-depth='2'] > td:first-child {
+  padding-inline-start: 2rem;
+}
 [data-row-animation] [data-row-kind] {
   transform: translateY(var(--ngp-table-row-flip-offset, 0));
 }
-[data-row-animation] [data-flipping] { transition: transform 200ms ease-out; }
+[data-row-animation] [data-flipping] {
+  transition: transform 200ms ease-out;
+}
 ```
 
 Enter/exit: the consumer's own classes on `animate.enter`/`animate.leave` (D1). Tailwind reads
@@ -247,7 +254,7 @@ the same hooks: `data-[row-kind=group]:font-semibold` (styling-tokens.md, still 
   - the rejection of ng-primitives' headless model (its premise, an in-house design-system
     component with Atera tokens, is gone);
   - `--ngp-table-cell-bg` as a directive-level token (nothing reads it);
-  - "values as CSS custom properties" as a directive concern. It narrows to *measured* values.
+  - "values as CSS custom properties" as a directive concern. It narrows to _measured_ values.
 - Open questions to move: the row height / CDK `itemSize` question stops being a token-catalog
   question (see Unverified).
 
@@ -306,47 +313,47 @@ the same hooks: `data-[row-kind=group]:font-semibold` (styling-tokens.md, still 
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | `node_modules/ng-primitives/fesm2022/ng-primitives-state.mjs:281` (`dataBinding`) | 0.130.3 | yes, source read; set the presence-vs-value rule |
-| S2 | `node_modules/ng-primitives/fesm2022/ng-primitives-interactions.mjs:8-39` (config), `:260` (`data-hover`), `:357` (`data-press`), `:872` (exports) | 0.130.3 | yes, source read |
-| S3 | `node_modules/ng-primitives/fesm2022/ng-primitives-popover.mjs:492-497` | 0.130.3 | yes, source read; plus a repo-wide grep of `styleBinding(`, `[class.` and `classList` (no class bindings) |
-| S4 | `node_modules/ng-primitives/fesm2022/ng-primitives-listbox.mjs:254-256` | 0.130.3 | yes, source read |
-| S5 | `node_modules/ng-primitives/fesm2022/ng-primitives-interactions.mjs:111` (`data-focus-visible` = origin) | 0.130.3 | yes, source read |
-| S6 | https://angularprimitives.com/interactions/hover | unmarked | yes, page read; **corrected**: the docs say `provideInteractionConfig`, the published export is `provideInteractionsConfig` [S2] |
-| S7 | `node_modules/ng-primitives/fesm2022/ng-primitives-collapsible.mjs:192-270` | 0.130.3 | yes, source read |
-| S8 | `node_modules/ng-primitives/fesm2022/ng-primitives-internal.mjs:105-170` (`setupExitAnimation`) | 0.130.3 | yes, source read |
-| S9 | https://unpkg.com/@angular/material@22.1.7/fesm2022/table.mjs (MatTable `styles`) | 22.1.7 | yes, published bundle read |
-| S10 | https://angularprimitives.com/primitives/popover | unmarked | yes, page read |
-| S11 | https://angularprimitives.com/getting-started/styling | unmarked | yes, page read; "no built-in styles" is true for components only, see S12 |
-| S12 | `node_modules/ng-primitives/example-theme/index.css` | 0.130.3 | yes, file read; exported at `node_modules/ng-primitives/package.json:62` |
-| S13 | `node_modules/ng-primitives/schematics/ng-generate/schema.json` | 0.130.3 | yes, file read |
-| S14 | https://base-ui.com/react/handbook/styling | 1.8.0 | yes, page read |
-| S15 | https://unpkg.com/@angular/material@22.1.7/table/_m3-table.scss | 22.1.7 | yes, published file read |
-| S16 | https://unpkg.com/@angular/material@22.1.7/table/_table-theme.scss | 22.1.7 | yes, published file read |
-| S17 | `node_modules/@angular/core/types/core.d.ts:5256-5285` | 22.1.2 | yes, installed package read |
-| S18 | https://unpkg.com/@angular/material@22.1.7/core/tokens/_token-utils.scss | 22.1.7 | yes, published file read |
-| S19 | https://registry.npmjs.org/@angular/material/latest (`exports`) | 22.1.7 | yes, registry read |
-| S20 | `node_modules/@angular/cdk/package.json:21-44` | 22.1.7 | yes, installed package read |
-| S21 | https://unpkg.com/@angular/material@22.1.7/prebuilt-themes/azure-blue.css | 22.1.7 | partial, fetched summary plus substring check |
-| S22 | https://raw.githubusercontent.com/angular/components/22.1.x/guides/theming.md | 22.1.x branch | yes, raw markdown read ("Customizing Tokens", "Direct Style Overrides") |
-| S23 | `node_modules/@angular/cdk/fesm2022/_style-loader-chunk.mjs:5-29` | 22.1.7 | yes, source read; **changed the finding**: the prebuilt CSS is not the only way the styles arrive |
-| S24 | `node_modules/@angular/cdk/fesm2022/text-field.mjs:10-68` | 22.1.7 | yes, source read |
-| S25 | `node_modules/@angular/cdk/fesm2022/drag-drop.mjs:239-282` (`@layer cdk-resets`), `:1146`, `:1527`, `:2808`, `:3230` | 22.1.7 | yes, source read |
-| S26 | `node_modules/@angular/cdk/fesm2022/table.mjs:2219`, `:1066-1085` | 22.1.7 | yes, source read |
-| S27 | https://base-ui.com/react/handbook/animation | 1.8.0 | yes, page read |
-| S28 | `node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:5123-5143` (`applyStyling`), `:17019` (`normalizeSuffix`) | 22.1.2 | yes, source read |
-| S29 | `node_modules/@angular/platform-browser/fesm2022/_dom_renderer-chunk.mjs:647-655` (`setStyle`) | 22.1.2 | yes, source read |
-| S30 | `node_modules/ng-primitives/fesm2022/ng-primitives-combobox.mjs:106-117` | 0.130.3 | yes, source read |
-| S31 | `node_modules/ng-primitives` (grep for `ngpTable` and `--ngp-table`) | 0.130.3 | yes, negative result |
-| R1 | `libs/table/src/directives/ngp-table-row.directive.ts:20-32` | — | yes, read |
-| R2 | `libs/table/src/directives/ngp-table.directive.ts:87-95` | — | yes, read |
-| R3 | `libs/table/src` (grep for `--ngp-table-` and `data-sort-direction`) | — | yes, one hit only: the JSDoc in R2 |
-| R4 | `libs/table/docs/3-ui/cross-cutting/styling-tokens.md` | — | yes, read |
-| R5 | `libs/table/src/row-flip.css` | — | yes, read |
-| R6 | `libs/table/src/stories/row-edit/grouping-editing/grouping-editing-flip.css:1` | — | yes, read |
-| R7 | `tsconfig.base.json:17` | — | yes, read |
-| R8 | `libs/table/project.json` (no `package.json`/`ng-package.json` in `libs/table/`) | — | yes, read, plus a glob |
-| R9 | `libs/table/docs/3-ui/directives/row-animation.md` ("Rejected: custom-property indirection", "Target `tr[ngpTableRow]` directly", "Enter and exit") | — | yes, read |
-| R10 | `libs/table/CLAUDE.md`, "Locked invariants" | — | yes, read |
-| R11 | `libs/table/docs/3-ui/work/row-animation/1-plan-grouping-moves.md` D3-D6, Verification | — | yes, read |
+|     | Source                                                                                                                                              | Version       | Verified                                                                                                                         |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | `node_modules/ng-primitives/fesm2022/ng-primitives-state.mjs:281` (`dataBinding`)                                                                   | 0.130.3       | yes, source read; set the presence-vs-value rule                                                                                 |
+| S2  | `node_modules/ng-primitives/fesm2022/ng-primitives-interactions.mjs:8-39` (config), `:260` (`data-hover`), `:357` (`data-press`), `:872` (exports)  | 0.130.3       | yes, source read                                                                                                                 |
+| S3  | `node_modules/ng-primitives/fesm2022/ng-primitives-popover.mjs:492-497`                                                                             | 0.130.3       | yes, source read; plus a repo-wide grep of `styleBinding(`, `[class.` and `classList` (no class bindings)                        |
+| S4  | `node_modules/ng-primitives/fesm2022/ng-primitives-listbox.mjs:254-256`                                                                             | 0.130.3       | yes, source read                                                                                                                 |
+| S5  | `node_modules/ng-primitives/fesm2022/ng-primitives-interactions.mjs:111` (`data-focus-visible` = origin)                                            | 0.130.3       | yes, source read                                                                                                                 |
+| S6  | https://angularprimitives.com/interactions/hover                                                                                                    | unmarked      | yes, page read; **corrected**: the docs say `provideInteractionConfig`, the published export is `provideInteractionsConfig` [S2] |
+| S7  | `node_modules/ng-primitives/fesm2022/ng-primitives-collapsible.mjs:192-270`                                                                         | 0.130.3       | yes, source read                                                                                                                 |
+| S8  | `node_modules/ng-primitives/fesm2022/ng-primitives-internal.mjs:105-170` (`setupExitAnimation`)                                                     | 0.130.3       | yes, source read                                                                                                                 |
+| S9  | https://unpkg.com/@angular/material@22.1.7/fesm2022/table.mjs (MatTable `styles`)                                                                   | 22.1.7        | yes, published bundle read                                                                                                       |
+| S10 | https://angularprimitives.com/primitives/popover                                                                                                    | unmarked      | yes, page read                                                                                                                   |
+| S11 | https://angularprimitives.com/getting-started/styling                                                                                               | unmarked      | yes, page read; "no built-in styles" is true for components only, see S12                                                        |
+| S12 | `node_modules/ng-primitives/example-theme/index.css`                                                                                                | 0.130.3       | yes, file read; exported at `node_modules/ng-primitives/package.json:62`                                                         |
+| S13 | `node_modules/ng-primitives/schematics/ng-generate/schema.json`                                                                                     | 0.130.3       | yes, file read                                                                                                                   |
+| S14 | https://base-ui.com/react/handbook/styling                                                                                                          | 1.8.0         | yes, page read                                                                                                                   |
+| S15 | https://unpkg.com/@angular/material@22.1.7/table/_m3-table.scss                                                                                     | 22.1.7        | yes, published file read                                                                                                         |
+| S16 | https://unpkg.com/@angular/material@22.1.7/table/_table-theme.scss                                                                                  | 22.1.7        | yes, published file read                                                                                                         |
+| S17 | `node_modules/@angular/core/types/core.d.ts:5256-5285`                                                                                              | 22.1.2        | yes, installed package read                                                                                                      |
+| S18 | https://unpkg.com/@angular/material@22.1.7/core/tokens/_token-utils.scss                                                                            | 22.1.7        | yes, published file read                                                                                                         |
+| S19 | https://registry.npmjs.org/@angular/material/latest (`exports`)                                                                                     | 22.1.7        | yes, registry read                                                                                                               |
+| S20 | `node_modules/@angular/cdk/package.json:21-44`                                                                                                      | 22.1.7        | yes, installed package read                                                                                                      |
+| S21 | https://unpkg.com/@angular/material@22.1.7/prebuilt-themes/azure-blue.css                                                                           | 22.1.7        | partial, fetched summary plus substring check                                                                                    |
+| S22 | https://raw.githubusercontent.com/angular/components/22.1.x/guides/theming.md                                                                       | 22.1.x branch | yes, raw markdown read ("Customizing Tokens", "Direct Style Overrides")                                                          |
+| S23 | `node_modules/@angular/cdk/fesm2022/_style-loader-chunk.mjs:5-29`                                                                                   | 22.1.7        | yes, source read; **changed the finding**: the prebuilt CSS is not the only way the styles arrive                                |
+| S24 | `node_modules/@angular/cdk/fesm2022/text-field.mjs:10-68`                                                                                           | 22.1.7        | yes, source read                                                                                                                 |
+| S25 | `node_modules/@angular/cdk/fesm2022/drag-drop.mjs:239-282` (`@layer cdk-resets`), `:1146`, `:1527`, `:2808`, `:3230`                                | 22.1.7        | yes, source read                                                                                                                 |
+| S26 | `node_modules/@angular/cdk/fesm2022/table.mjs:2219`, `:1066-1085`                                                                                   | 22.1.7        | yes, source read                                                                                                                 |
+| S27 | https://base-ui.com/react/handbook/animation                                                                                                        | 1.8.0         | yes, page read                                                                                                                   |
+| S28 | `node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:5123-5143` (`applyStyling`), `:17019` (`normalizeSuffix`)                                | 22.1.2        | yes, source read                                                                                                                 |
+| S29 | `node_modules/@angular/platform-browser/fesm2022/_dom_renderer-chunk.mjs:647-655` (`setStyle`)                                                      | 22.1.2        | yes, source read                                                                                                                 |
+| S30 | `node_modules/ng-primitives/fesm2022/ng-primitives-combobox.mjs:106-117`                                                                            | 0.130.3       | yes, source read                                                                                                                 |
+| S31 | `node_modules/ng-primitives` (grep for `ngpTable` and `--ngp-table`)                                                                                | 0.130.3       | yes, negative result                                                                                                             |
+| R1  | `libs/table/src/directives/ngp-table-row.directive.ts:20-32`                                                                                        | —             | yes, read                                                                                                                        |
+| R2  | `libs/table/src/directives/ngp-table.directive.ts:87-95`                                                                                            | —             | yes, read                                                                                                                        |
+| R3  | `libs/table/src` (grep for `--ngp-table-` and `data-sort-direction`)                                                                                | —             | yes, one hit only: the JSDoc in R2                                                                                               |
+| R4  | `libs/table/docs/3-ui/cross-cutting/styling-tokens.md`                                                                                              | —             | yes, read                                                                                                                        |
+| R5  | `libs/table/src/row-flip.css`                                                                                                                       | —             | yes, read                                                                                                                        |
+| R6  | `libs/table/src/stories/row-edit/grouping-editing/grouping-editing-flip.css:1`                                                                      | —             | yes, read                                                                                                                        |
+| R7  | `tsconfig.base.json:17`                                                                                                                             | —             | yes, read                                                                                                                        |
+| R8  | `libs/table/project.json` (no `package.json`/`ng-package.json` in `libs/table/`)                                                                    | —             | yes, read, plus a glob                                                                                                           |
+| R9  | `libs/table/docs/3-ui/directives/row-animation.md` ("Rejected: custom-property indirection", "Target `tr[ngpTableRow]` directly", "Enter and exit") | —             | yes, read                                                                                                                        |
+| R10 | `libs/table/CLAUDE.md`, "Locked invariants"                                                                                                         | —             | yes, read                                                                                                                        |
+| R11 | `libs/table/docs/3-ui/work/row-animation/1-plan-grouping-moves.md` D3-D6, Verification                                                              | —             | yes, read                                                                                                                        |

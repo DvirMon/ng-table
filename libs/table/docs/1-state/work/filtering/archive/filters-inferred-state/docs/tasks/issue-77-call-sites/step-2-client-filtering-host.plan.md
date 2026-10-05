@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                                                                | Action                                                                      |
+| --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
 | `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | edit — array schema, row carrier, `anyOf` group, `keepValidCriteria`, prose |
-| `libs/shared/table/src/stories/filtering/fixtures/types.ts` | edit — delete `ClientInvoiceFilterState` |
-| `libs/shared/table/src/stories/filtering/fixtures/mock.ts` | edit — one sentence of prose |
+| `libs/shared/table/src/stories/filtering/fixtures/types.ts`                                         | edit — delete `ClientInvoiceFilterState`                                    |
+| `libs/shared/table/src/stories/filtering/fixtures/mock.ts`                                          | edit — one sentence of prose                                                |
 
 The widest of the five: six filters, an `anyOf` group, a custom `filter()` closing over host state,
 and a guard function that names the criterion map in a position nothing infers.
@@ -83,7 +83,8 @@ the sentence a reader consults when asking why the option lists are hand-supplie
 
    Its doc comment's point — a partial load is still a complete state, because omitted keys reset
    to their declared default — survives unchanged. Only the sentence explaining the `Partial<…>`
-   *annotation* goes.
+   _annotation_ goes.
+
 4. **`loadSavedFilterRaw`.** `STALE_SAVED_FILTER as Partial<ClientInvoiceFilterState>` becomes
    `as never` — or whatever the narrowest escape is that still compiles against the inferred
    `reset()` parameter. **The escape must stay visible**: the story's stated finding is that an
@@ -97,7 +98,7 @@ the sentence a reader consults when asking why the option lists are hand-supplie
    never reads, so distinct values are still never derived from it.
 6. Delete `ClientInvoiceFilterState` from `filtering/fixtures/types.ts`. Keep `RangeCriterion`,
    `DateRangeCriterion` and `TagCriterion` — the custom `filter()` still annotates its predicate
-   with `TagCriterion`, and that annotation is now the *only* thing typing the `tags` criterion.
+   with `TagCriterion`, and that annotation is now the _only_ thing typing the `tags` criterion.
 
 ## Implementation Notes
 
@@ -105,7 +106,7 @@ the sentence a reader consults when asking why the option lists are hand-supplie
   a literal-union key exactly as it indexed the alias, so the summary row and its × buttons need no
   change.
 - The `anyOf` group is homogeneous: `contains` yields `string`, and `matchesInvoiceNumber(cell:
-  number, criterion: string)` yields `string` from its own annotation. `#76`'s homogeneity check
+number, criterion: string)` yields `string` from its own annotation. `#76`'s homogeneity check
   is against `CriterionOf<C[0]>`, so a child whose criterion drifts from the first child's is a
   compile error — expected, not a bug to route around.
 - `path.note` is `string | null` and `path.id` is `number`; both are cell types, not criterion
@@ -115,7 +116,7 @@ the sentence a reader consults when asking why the option lists are hand-supplie
 
 ## Risks / Watchouts
 
-- **`filter()`'s two inference sites.** The criterion is typed by the predicate's annotation *and*
+- **`filter()`'s two inference sites.** The criterion is typed by the predicate's annotation _and_
   by `options.isEmpty`. Here they are `TagCriterion` and `isEmptyTagCriterion`. If they disagree the
   result is an error, not a silent widening — but check it compiles rather than assuming.
 - **Deleting the alias silently weakens `keepValidCriteria`.** The spread form only produces the
@@ -145,4 +146,5 @@ the sentence a reader consults when asking why the option lists are hand-supplie
 - [ ] `nx run shared-table:typecheck` reports no error in the three files this step touched
 
 ---
+
 ← [Step 1: Composition: the derived-state story host](step-1-composition-derived-state.plan.md) | [Step 3: The selection filtering host](step-3-selection-filtering-host.plan.md) →

@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — tests for the combined config shape"
+title: 'Step 2 — tests for the combined config shape'
 type: task-step
 issue: 118
 ---
@@ -134,4 +134,5 @@ of them was passing a schema fn positionally.
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
 
 ---
+
 ← [Step 1: Reshape the config and sweep call sites](step-1-reshape-config-and-sweep.plan.md) | [Step 3: Documentation](step-3-docs.plan.md) →

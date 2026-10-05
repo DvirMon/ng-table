@@ -14,7 +14,7 @@ import type { ColumnHandle, ColumnRuleContext } from './types';
  */
 export function visible<TRow, K extends string>(
   path: ColumnHandle<TRow, K>,
-  visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean }
+  visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean },
 ): void {
   metadata(path, VISIBLE, visible.when);
 }
@@ -37,7 +37,7 @@ export interface VisibleAsyncOpts<TRow, TParams, TResult> {
  */
 export function visibleAsync<TRow, K extends string, TParams, TResult>(
   path: ColumnHandle<TRow, K>,
-  opts: VisibleAsyncOpts<TRow, TParams, TResult>
+  opts: VisibleAsyncOpts<TRow, TParams, TResult>,
 ): void {
   metadataAsync(path, VISIBLE, opts);
 }

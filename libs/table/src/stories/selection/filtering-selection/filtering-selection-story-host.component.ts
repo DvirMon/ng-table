@@ -61,9 +61,7 @@ export class FilteringSelectionStoryHostComponent {
   );
   protected readonly selectedCount = computed(() => this.table.selectedRows().size);
   /** Rendered so "restored exactly" is checkable rather than asserted. */
-  protected readonly selectedIdsLabel = computed(() =>
-    [...this.table.selectedRows()].join(', '),
-  );
+  protected readonly selectedIdsLabel = computed(() => [...this.table.selectedRows()].join(', '));
 
   protected toggleRow(id: RowId): void {
     this.table.toggle(id);
@@ -90,9 +88,7 @@ export class FilteringSelectionStoryHostComponent {
 
   /** Hand-wired: a tag multi-select is a set, not a single control value. */
   protected toggleTag(tag: string): void {
-    this.filters
-      .tags()
-      .value.update((selected) => toggleOption(selected, tag, this.tagOptions));
+    this.filters.tags().value.update((selected) => toggleOption(selected, tag, this.tagOptions));
   }
 
   protected clearAllFilters(): void {

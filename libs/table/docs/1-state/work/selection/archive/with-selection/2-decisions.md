@@ -8,22 +8,23 @@ handoff `handoffs/handoff-table-with-selection.md`, ranking
 
 Sub-features listed, edges mapped between nodes:
 
-| Node | Rank | Edge |
-|---|---|---|
-| A. Selection scope (page / filtered / all) | **core** | B, C, D, E, F all depend on it |
-| B. State shape + mode (single/multi) | dependent | needs A |
-| C. Public verbs (toggle/select-all/clear) | dependent | needs A, B |
-| D. `RenderRow.isSelected` / render stage claim | dependent | needs B |
-| E. `onRowsRemoved` pruning contract (ADR-0006) | dependent | needs B |
-| F. Bulk `removeRow(id[])` / `patchRow(id[], partial)` unblocking (D32) | dependent | needs C |
-| G. Persistence of selection (state-persistence.md open Q) | dependent, deferrable | needs A |
-| H. UI directive layer | out of scope | state layer only |
+| Node                                                                   | Rank                  | Edge                           |
+| ---------------------------------------------------------------------- | --------------------- | ------------------------------ |
+| A. Selection scope (page / filtered / all)                             | **core**              | B, C, D, E, F all depend on it |
+| B. State shape + mode (single/multi)                                   | dependent             | needs A                        |
+| C. Public verbs (toggle/select-all/clear)                              | dependent             | needs A, B                     |
+| D. `RenderRow.isSelected` / render stage claim                         | dependent             | needs B                        |
+| E. `onRowsRemoved` pruning contract (ADR-0006)                         | dependent             | needs B                        |
+| F. Bulk `removeRow(id[])` / `patchRow(id[], partial)` unblocking (D32) | dependent             | needs C                        |
+| G. Persistence of selection (state-persistence.md open Q)              | dependent, deferrable | needs A                        |
+| H. UI directive layer                                                  | out of scope          | state layer only               |
 
 Grill order: A first, then B/C/D/E, then F. G recorded but deferred to `state-persistence.md`.
 
 ## Decisions
 
 _(appended as they settle)_
+
 - **D1 (2026-09-06) — no selection-scope concept.** `withSelection()` stores `RowId`s and nothing
   else. There is no `scope: 'page' | 'filtered' | 'all'` config and no per-call scope argument;
   "select all" is the call site passing the id set it means (`table.rows().map(r => r.id)`, a
@@ -36,7 +37,7 @@ _(appended as they settle)_
   config." It is narrower — reject config whose meaning depends on state the feature does not
   own. A `scope` enum fails that test: `'page'` is unresolvable unless `withPagination()` happens
   to be composed, so it fails silently on absence and shifts meaning per call site. Config that
-  parameterizes a verb the feature *does* own is fine, and D2 adds one.
+  parameterizes a verb the feature _does_ own is fine, and D2 adds one.
 - **D2 (2026-09-06) — `toggle(id)` ships, governed by a per-row multi predicate.** Config:
   `withSelection({ enableMultiRowSelection?: boolean | ((row: TRow) => boolean) })`, default
   `true`. `toggle()` clears the set before selecting when the predicate is false for that row;
@@ -67,7 +68,7 @@ _(appended as they settle)_
   Rationale: stamping would rebuild the whole `RenderRow[]` on every checkbox click (re-running
   the `RENDER_ORDER` chain and re-diffing `@for`), where signal reads cost one `Set.has()` per row
   against attribute bindings only. Divergence from `withExpansion()`'s `isExpanded` stamp is
-  deliberate — expansion *changes which rows exist*, selection does not.
+  deliberate — expansion _changes which rows exist_, selection does not.
 
 - **D6 (2026-09-06) — `ngpTableSelectionCheckbox` supports native `<input type="checkbox">` only.**
   Component checkbox hosts (Angular Material, a consumer's own DS wrapper) are **not** auto-wired.
@@ -82,10 +83,11 @@ _(appended as they settle)_
   `checked = model()`. **Deliberately deferred, not rejected — recall if demand appears.**
 
   What ships instead: a documented recipe. The consumer authors a thin directive on their own
-  component, injecting the component instance *by type* — which they can do and the library cannot
+  component, injecting the component instance _by type_ — which they can do and the library cannot
   — plus `NGP_TABLE_ROW` and `NGP_TABLE_STORE`. Both tokens are already public (`src/index.ts`
   re-exports `directives/table.tokens`), so this needs no new API surface. Belongs in
   `docs/3-ui/directives/selection.md` when that file is drilled.
+
 - **D7 (2026-09-06) — tri-state ships as `selectionStateOf(ids)`, the caller supplies the
   denominator.** Signature: `selectionStateOf(ids: readonly RowId[]): 'none' | 'some' | 'all'`.
   The feature never picks what "all" means (D1 holds), but the tri-state logic is written once
@@ -105,9 +107,8 @@ _(appended as they settle)_
 
   **Extended 2026-09-08, deciding the same question for expansion**
   ([expansion.md](../../../../features/expansion.md), "Stale restored ids"). The rationale above is
-  written for a *click*; it is the restore path that makes rejecting unknown ids actively wrong,
+  written for a _click_; it is the restore path that makes rejecting unknown ids actively wrong,
   and that argument belongs on this decision because both features now cite it:
-
   - **An id can be valid but not yet loaded.** `initialSelection` is applied at construction,
     which may precede the first fetch, and under pagination a selected row may live on a page
     never requested. Validating the seed against `indexById()` would silently discard a correct
@@ -141,13 +142,12 @@ _(appended as they settle)_
   them; `enableRowSelection` governs rows that resolve and answer `false`.
 
   Scope, all three halves settled by unanimous precedent (research §2–§4):
-
   - **Gates id-adding writes only** — `toggle`, `select`, and the `initialSelection` seed. Never
     `deselect`/`clearSelection`, so a row that becomes non-selectable while selected stays
     escapable. Mirrors how `applyMultiSelectRule` is already scoped.
   - **Write path, not read path.** `selectedRows()` and `selectionStateOf()` do not consult the
     predicate — selection stays a plain id set.
-  - **No reconcile.** A row turning non-selectable while selected is *not* auto-deselected. AG Grid
+  - **No reconcile.** A row turning non-selectable while selected is _not_ auto-deselected. AG Grid
     is the only library that reconciles, and it needs a `SelectionEventSourceType` on its event to
     explain the library-caused change; our `SelectionChange` delta has no `source` field, and
     pruning ids the user never deselected is what D8 refuses.
@@ -174,7 +174,7 @@ _(appended as they settle)_
   ```ts
   export function selectAllIds<TRow>(
     table: Pick<TableStore<TRow>, 'rows' | 'value' | 'trackBy'>,
-    opts?: { includeHidden?: boolean }
+    opts?: { includeHidden?: boolean },
   ): RowId[] {
     const rows = opts?.includeHidden ? table.value() : table.rows();
     return rows.map(table.trackBy);
@@ -182,13 +182,12 @@ _(appended as they settle)_
   ```
 
   ```ts
-  table.select(selectAllIds(table));                          // visible/matching — default
-  table.select(selectAllIds(table, { includeHidden: true }));  // every row, filtered or not
-  table.deselect(selectAllIds(table));                         // "deselect all visible" — same helper
+  table.select(selectAllIds(table)); // visible/matching — default
+  table.select(selectAllIds(table, { includeHidden: true })); // every row, filtered or not
+  table.deselect(selectAllIds(table)); // "deselect all visible" — same helper
   ```
 
   Scope:
-
   - Reads only `rows` / `value` / `trackBy` off the **core** `TableStore` — not a `SelectionMembers`
     addition, no dependency on `withFiltering()` or any other feature. D1's "no runtime or
     compile-time dependency on `withPagination()`/`withFiltering()`" is untouched: `select()` and
@@ -215,7 +214,7 @@ _(appended as they settle)_
   grabs the unfiltered set" (MUI X #976/#1863) and "selection doesn't accumulate across filter
   changes" (MUI X #14074) structurally — one source of truth (`table.rows()`), additive `select()`
   (D15's duplicate-collapse). **Does not cover**, and isn't meant to: page-scoped select-all (AG
-  Grid #2139 — blocked on pagination; `paginate` is a *render* stage per `RENDER_ORDER`, so it runs
+  Grid #2139 — blocked on pagination; `paginate` is a _render_ stage per `RENDER_ORDER`, so it runs
   after `rows()` is produced, meaning a page-scoped id list needs `renderRows()`, not `rows()`) or
   the read-side "are all currently-visible rows already selected" signal a select-all checkbox
   needs for its own state (TanStack #4781). Both routed to
@@ -237,9 +236,8 @@ _(appended as they settle)_
   `toggle`/`select`/seed, nothing is logged and nothing is emitted — a fully-blocked write falls
   through `applyNextSelection`'s existing no-op guard.
 
-  The asymmetry with `applyMultiSelectRule`, which *throws* in dev mode, is deliberate — the two
+  The asymmetry with `applyMultiSelectRule`, which _throws_ in dev mode, is deliberate — the two
   rules fail for different reasons:
-
   - `enableMultiRowSelection` throws because `select([a, b])` under single-select is the caller
     contradicting their own config, and the discard is lossy and arbitrary (last id wins). A caller
     bug worth surfacing loudly.
@@ -272,7 +270,7 @@ _(appended as they settle)_
      ```ts
      const ids = selectAllIds(table).filter(table.isSelectable);
      table.select(ids);
-     table.selectionStateOf(ids);   // 'all' — matches what select() actually stored
+     table.selectionStateOf(ids); // 'all' — matches what select() actually stored
      ```
   3. ~~The directive filters.~~ Deferred, not rejected — `[ngpTableSelectAllFor]` doesn't exist
      yet (`3-ui/directives/selection.md` still `code: none`). `isSelectable` is exactly the
@@ -285,7 +283,7 @@ _(appended as they settle)_
 
 - **Non-selectable rows — residual questions after D58**
   ([#23](https://github.com/DvirMon/ng-table/issues/23), research at
-  [research-row-selectability.md](research-row-selectability.md)). D58 settles *whether* the gate
+  [research-row-selectability.md](research-row-selectability.md)). D58 settles _whether_ the gate
   ships and its write-path scope.
   - ~~Does `selectionStateOf(ids)` exclude non-selectable ids from its denominator?~~ Answered by
     **D61** above (#32) — the caller filters via `isSelectable`, `selectionStateOf()` itself is
@@ -336,17 +334,18 @@ _(appended as they settle)_
   type + ADR only when a third set-owning feature (`withGrouping()`) gives real evidence the shape
   generalizes — per `file-organization.md`, promote on evidence, never on anticipation.
 
-  Deliberately *not* decided: AG Grid's orthogonal idea of a `source` discriminator on the event
-  (`'checkboxSelected' | 'apiSelectAll' | …`) — answering *why* selection changed rather than
-  *what* changed. Recorded in the research file in case a UI-vs-programmatic distinction is ever
+  Deliberately _not_ decided: AG Grid's orthogonal idea of a `source` discriminator on the event
+  (`'checkboxSelected' | 'apiSelectAll' | …`) — answering _why_ selection changed rather than
+  _what_ changed. Recorded in the research file in case a UI-vs-programmatic distinction is ever
   needed.
+
 - **D11 (2026-09-06) — `onRowsRemoved` pruning is silent; it does not emit `selectionChanged`.**
   ADR-0006 reconciliation prunes `selectedRows` (via `pruneByIds`, `engine/rows.ts`) with no
   exemption — a deleted row's id must leave the set. But the emission is suppressed.
 
-  D9's rule is therefore stated precisely as: **every selection *write verb* emits exactly once;
+  D9's rule is therefore stated precisely as: **every selection _write verb_ emits exactly once;
   reconciliation is not a write verb.** This is not the `expandAll()` hole — that bug dropped
-  *user intent*. A prune carries no intent: nobody selected or deselected anything, the row ceased
+  _user intent_. A prune carries no intent: nobody selected or deselected anything, the row ceased
   to exist. `selectedRows()` still updates, so any consumer reading state sees the change
   immediately; only the intent log stays quiet.
 
@@ -363,11 +362,12 @@ _(appended as they settle)_
   Rejected — a `cause: 'write' | 'prune'` discriminator on the payload: solves the same problem by
   making every consumer filter, and expands `SelectionChange` past CDK's shape immediately after
   D10 deferred the `source` concept.
+
 - **D12 (2026-09-06) — bulk `removeRow(id[])` / `patchRow(id[], partial)` are out of scope.**
   This effort ships `withSelection()` alone. D1–D11 unblock the bulk verbs, but they become their
   own ticket. `row-mutations.md`'s "Not Shipped" table must have its blocker updated from "needs a
   selection source; `withSelection()` does not exist" to "unblocked by `withSelection()`, not yet
-  built". Rationale: bulk *edit* requires resolving D31.2 first (`multiple: true` combined with
+  built". Rationale: bulk _edit_ requires resolving D31.2 first (`multiple: true` combined with
   optimistic save is explicitly undesigned per `row-mutations.md`) — an editing question that does
   not belong in a selection grill.
 - **D13 (2026-09-06) — selection ids are flat; no parent/child cascade.** Selecting a row selects
@@ -435,12 +435,12 @@ _(appended as they settle)_
 - **D18 (2026-09-06) — async initial selection uses a silent write: `{ emitEvent: false }`.**
   The write verbs take an options argument: `select(ids, { emitEvent: false })` sets the state
   without emitting `selectionChanged`. Precedent: Angular reactive forms' `setValue(v, {
-  emitEvent: false })`. Covers async restore (ids arriving from a server after construction) and any
+emitEvent: false })`. Covers async restore (ids arriving from a server after construction) and any
   later programmatic sync. `initialSelection: RowId[]` (D16) stays for the sync case.
 
   This generalizes D11 from one hard-coded case to a caller-controlled one: pruning is silent
   because it carries no intent, and a restore carries no intent either. The failure mode is a
-  caller forgetting the flag — a *visible* spurious emission, unlike the silent no-op a latched
+  caller forgetting the flag — a _visible_ spurious emission, unlike the silent no-op a latched
   signal input would produce.
 
   Rejected — `initialSelection?: RowId[] | Signal<RowId[]>` seeded once: the type promises
@@ -476,7 +476,7 @@ _(appended as they settle)_
 
 - **`withExpansion()` contradicts the flat-data invariant.** Its default `childrenAccessor` reads
   `row.children` and its `'tree'` render stage recursively flattens nested `TRow` children into
-  `renderRows()` — the feature only does anything when `data()` is *not* flat. Likely resolved by
+  `renderRows()` — the feature only does anything when `data()` is _not_ flat. Likely resolved by
   ADR-0012 (`proposed`), which splits expansion into a detail-panel feature plus a new `withTree()`;
   nested data would then be legal only under `withTree()`. Not a selection decision — recorded
   because D13 rests on the invariant.

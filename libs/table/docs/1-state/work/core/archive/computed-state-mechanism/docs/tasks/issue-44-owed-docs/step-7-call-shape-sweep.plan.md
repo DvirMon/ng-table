@@ -1,5 +1,5 @@
 ---
-title: "Step 7 — call-shape sweep across the remaining docs, plus the persistence exclusion"
+title: 'Step 7 — call-shape sweep across the remaining docs, plus the persistence exclusion'
 type: task-step
 issue: 78
 ---
@@ -52,7 +52,7 @@ file another step owns is excluded below)
 ## Why This Step Exists
 
 Issue AC 1 and AC 4: no document may tell a consumer to write a row type on a feature call, and
-every doc must show the positional form. Steps 1–6 own the docs whose *reasoning* changed; this
+every doc must show the positional form. Steps 1–6 own the docs whose _reasoning_ changed; this
 step owns the rest, where only the call shape is wrong. Splitting it out keeps the reasoning
 rewrites reviewable — a 19-file mechanical diff and a rewritten ADR do not belong in one review.
 
@@ -74,7 +74,7 @@ re-derive.
 4. **Historical ADRs get updated snippets too.** Decided by the user, 2026-09-14, against the
    alternative of leaving them period-accurate: AC 1 is read literally, so no doc anywhere shows the
    old shape.
-   - `adr/0015:267` is the exception that needs care, not exemption. Its sentence is a *finding*
+   - `adr/0015:267` is the exception that needs care, not exemption. Its sentence is a _finding_
      ("the generic-parameter drift found alongside this — `withSorting<Person>()` in 20+ doc call
      sites"). Reword it to past tense so the finding survives as history — it was found, and #33
      closed it — rather than deleting the sentence or silently updating its example. The finding's
@@ -105,7 +105,7 @@ re-derive.
   1–6 in the same lines.
 - A snippet is not always just a snippet: `2-columns/architecture.md:90` shows `columnsSchema` in the
   same call. Preserve every other argument while changing the shape.
-- Do not "fix" prose that is describing a *past* state deliberately — check whether the sentence is
+- Do not "fix" prose that is describing a _past_ state deliberately — check whether the sentence is
   making a historical claim before rewriting its example.
 
 ## Non-Goals
@@ -125,4 +125,5 @@ re-derive.
 - [ ] No file owned by Steps 1–6 appears in this diff
 
 ---
+
 ← [Step 6: CLAUDE.md](step-6-claude-md-composed-and-surface.plan.md) | [Step 8: audit gate and close-out](step-8-audit-gate-closeout.plan.md) →

@@ -58,10 +58,14 @@ The consumer writes what they mean, once, and reads it back off the store as a f
 // Shape verified against the library's real types; see 2-research.md.
 const table = createTable(
   this.data,
-  { trackBy: 'id', columns, columnsSchema: (c) => [applyVisible(c.total, () => this.showAmounts())] },
+  {
+    trackBy: 'id',
+    columns,
+    columnsSchema: (c) => [applyVisible(c.total, () => this.showAmounts())],
+  },
 
   withSelection(
-    { enableMultiRowSelection: (row) => row.status === 'open' },   // row: Invoice
+    { enableMultiRowSelection: (row) => row.status === 'open' }, // row: Invoice
     withComputed((store) => ({
       hiddenSelected: computed(() => store.selectedRows().size - store.rows().length),
     })),
@@ -232,7 +236,7 @@ const table = createTable(
   members; the block composes them rather than replacing them.
 - The store handed to a derive block is read-only. This is a **type-level projection** of the
   input — write views (`value`, `columns`, `editing`) lose their `.update` path, so writing through
-  them is a compile error (story 16). Mutating *methods* a feature contributes (`selectRow`,
+  them is a compile error (story 16). Mutating _methods_ a feature contributes (`selectRow`,
   `beginEdit`) cannot be distinguished from queries statically and stay visible; not calling them
   from a block is convention, stated in the docs, not enforced.
 - The evaluation-error wrapper and the non-signal check below live **inside** `withComputed()`,
@@ -297,7 +301,7 @@ Two seams, both existing files:
   it exists because the payload of this change is type-level: inference with no type arguments,
   accumulated member types across slots, a derive block's parameter type (including that a write
   view's `.update` is absent), a member of an uncomposed feature being absent, a slot that cannot
-  see a *later* slot's member (compile error, not a silent `any` — verified in D24), a slot after
+  see a _later_ slot's member (compile error, not a silent `any` — verified in D24), a slot after
   `composeFeatures(...)` seeing the composite's full contribution, and explicitly that the composed
   store is not `any` — that last one is the regression test for the three silent collapses found by
   prototype.

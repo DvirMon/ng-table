@@ -191,7 +191,10 @@ export class GatedSinglePessimisticStoryHostComponent {
     const isCreate = this.flags.pendingCreateIds().has(id);
 
     return this.rowEditApi
-      .saveRow(id, row, isCreate, { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() })
+      .saveRow(id, row, isCreate, {
+        forceFailure: this.forceFailure(),
+        latencyMs: this.latencyMs(),
+      })
       .pipe(
         tap((saved) => {
           if (isCreate) {

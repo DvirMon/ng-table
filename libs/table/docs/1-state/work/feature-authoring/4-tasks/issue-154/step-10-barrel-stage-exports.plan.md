@@ -6,6 +6,7 @@ depends_on: [1, 2, 3]
 files:
   - libs/table/src/index.ts (edit)
 ---
+
 # Step 10 — Barrel export
 
 This step exports `stageSchema`, `stage`,
@@ -73,4 +74,5 @@ line, not two.
 logic of its own — this is enforcement, not a spec file).
 
 ---
+
 ← [Step 9: Refactor withTree](step-9-refactor-tree.plan.md) | [Step 11: CLAUDE.md doc fix](step-11-claude-md-doc-fix.plan.md) →

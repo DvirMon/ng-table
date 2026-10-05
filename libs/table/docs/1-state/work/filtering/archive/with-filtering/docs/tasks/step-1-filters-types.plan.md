@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — Filter types"
+title: 'Step 1 — Filter types'
 type: task-step
 issue: 61
 ---
@@ -34,7 +34,7 @@ Every other file in this issue (`matchers.ts`, `create-filters.ts`, `rules.ts`) 
 
    export interface FilterNode<TCriterion> {
      value: WritableSignal<TCriterion>;
-     active(): TCriterion | undefined;    // undefined when this filter's criterion is empty
+     active(): TCriterion | undefined; // undefined when this filter's criterion is empty
      reset(value?: TCriterion | null): void;
      dirty(): boolean;
    }
@@ -48,7 +48,7 @@ Every other file in this issue (`matchers.ts`, `create-filters.ts`, `rules.ts`) 
 
    ```ts
    export interface FiltersRoot<TRow> {
-     value(): TRow extends unknown ? Record<string, unknown> : never;  // see note below
+     value(): TRow extends unknown ? Record<string, unknown> : never; // see note below
      active(): Record<string, unknown>;
      reset(value?: Record<string, unknown> | null): void;
      dirty(): boolean;
@@ -86,7 +86,10 @@ Every other file in this issue (`matchers.ts`, `create-filters.ts`, `rules.ts`) 
      record(rule: FilterRuleRecord<TRow>): void;
    }
 
-   export interface FilterHandle<TRow, K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>> {
+   export interface FilterHandle<
+     TRow,
+     K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>,
+   > {
      readonly id: K;
      /** @internal */
      readonly [FILTER_RECORDER]: FilterSchemaRecorder<TRow>;
@@ -103,10 +106,10 @@ Every other file in this issue (`matchers.ts`, `create-filters.ts`, `rules.ts`) 
    ```ts
    /** @internal */
    export interface FilterRuleRecord<TRow, TCell = unknown, TCriterion = unknown> {
-     readonly key: string;               // resolved later — borrowed from path, or `as`, or anyOf's positional key
-     readonly paths: readonly string[];  // one entry, except `anyOf` groups (R8/R9)
+     readonly key: string; // resolved later — borrowed from path, or `as`, or anyOf's positional key
+     readonly paths: readonly string[]; // one entry, except `anyOf` groups (R8/R9)
      readonly predicate: (cell: TCell, criterion: TCriterion) => boolean;
-     readonly isEmpty: (criterion: TCriterion) => boolean;   // per-predicate emptiness test (R14)
+     readonly isEmpty: (criterion: TCriterion) => boolean; // per-predicate emptiness test (R14)
      readonly options?: FilterOptions;
      readonly kind: 'single' | 'group' | 'conditional';
    }
@@ -130,7 +133,7 @@ Every other file in this issue (`matchers.ts`, `create-filters.ts`, `rules.ts`) 
 - The root `Filters<TRow>`/`FiltersRoot<TRow>` type is the one genuinely hard type-level problem
   in this issue — don't rush it to unblock Step 4. If the "derive keys from recorded rules"
   approach fights TypeScript's inference, fall back to `Filters<TRow, TState extends
-  Record<string, unknown>>` with `TState` supplied by the consumer as a second type parameter to
+Record<string, unknown>>` with `TState` supplied by the consumer as a second type parameter to
   `createFilters<TRow, TState>(...)`, and document that as a deliberate simplification.
 
 ## Non-Goals
@@ -146,4 +149,5 @@ Every other file in this issue (`matchers.ts`, `create-filters.ts`, `rules.ts`) 
 - [ ] `tsc --noEmit` passes with no new errors (file compiles standalone — no other filters file exists yet, so this only checks internal consistency)
 
 ---
+
 [Step 2: Matchers](step-2-filters-matchers.plan.md) →

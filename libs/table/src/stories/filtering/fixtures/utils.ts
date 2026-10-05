@@ -1,11 +1,11 @@
-import { hasAnyOf, hasNoneOf, isContaining, isEqual } from '../../../api/features/with-filtering/matchers';
+import {
+  hasAnyOf,
+  hasNoneOf,
+  isContaining,
+  isEqual,
+} from '../../../api/features/with-filtering/matchers';
 import { STATUS_OPTIONS } from './mock';
-import type {
-  DateRangeCriterion,
-  InvoiceStatus,
-  RangeCriterion,
-  TagCriterion,
-} from './types';
+import type { DateRangeCriterion, InvoiceStatus, RangeCriterion, TagCriterion } from './types';
 
 export const EMPTY_RANGE: RangeCriterion = { min: null, max: null };
 export const EMPTY_TAG_CRITERION: TagCriterion = { include: [], exclude: [] };
@@ -125,8 +125,6 @@ export function toggleOption(
   options: readonly string[],
 ): readonly string[] {
   const isSelected = selected.includes(option);
-  const next = isSelected
-    ? selected.filter((entry) => entry !== option)
-    : [...selected, option];
+  const next = isSelected ? selected.filter((entry) => entry !== option) : [...selected, option];
   return options.filter((entry) => next.includes(entry));
 }

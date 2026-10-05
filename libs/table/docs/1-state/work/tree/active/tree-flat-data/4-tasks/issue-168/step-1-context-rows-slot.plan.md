@@ -14,6 +14,7 @@ files:
   - libs/table/src/api/types.types.spec.ts
   - libs/table/src/engine/render-stages.types.spec.ts
 ---
+
 # Step 1 — Context-rows engine slot
 
 This step adds an accumulating `contextRows` slot to the engine and stamps `RenderRow.isContextRow` centrally.
@@ -57,4 +58,5 @@ Decisions: [D18](../../1-decisions.md), [A2](../../3-architecture.md)
 - [ ] Group rows keep `isContextRow` as `undefined`.
 
 ---
+
 [Step 2: Compose context rows](step-2-compose-context-rows.plan.md) →

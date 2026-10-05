@@ -7,6 +7,7 @@ files:
   - libs/table/src/engine/grouping/queries.ts
   - libs/table/src/engine/grouping/queries.spec.ts
 ---
+
 # Step 3 — Group queries follow the root
 
 This step makes the three group query functions resolve buckets by root value.
@@ -36,4 +37,5 @@ Decisions: [TR16](../../../../../../../decisions/tree.md), [TR17](../../../../..
 - [ ] `rowsBeneathGroup`, `collectGroupIds` and `collectAppliedLevels` all forward `treeLinks`.
 
 ---
+
 ← [Step 2: Cluster by root value in the group stages](step-2-cluster-by-root-value.plan.md) | [Step 4: Wire the parent link into withGrouping()](step-4-wire-grouping-parent-link.plan.md) →

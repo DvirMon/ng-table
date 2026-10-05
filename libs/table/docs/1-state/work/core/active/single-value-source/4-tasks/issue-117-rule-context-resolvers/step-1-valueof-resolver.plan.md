@@ -23,7 +23,7 @@ independent of it and of each other).
 ## Why This Step Exists
 
 Once a feature reads through the accessor (ADR-0024), a rule callback
-holding raw rows has no legal way to read a *different* declared column's
+holding raw rows has no legal way to read a _different_ declared column's
 value — the accessor is the value source and `readAccessor`
 (`engine/cells.ts`) is engine-internal. ADR-0027 Rule 3 names this
 resolver `valueOf(path, row)` — unbound-tier, since it reads data, not a
@@ -71,7 +71,7 @@ gap: `GroupingHandle`/`GroupingPath` (unlike `SortingHandle`/
    id naming no known column reads `undefined` (matches the existing
    "removed column" degrade pattern elsewhere, e.g. `readGroupValue`'s doc
    comment: "An unknown `columnId` reads `undefined`") — Step 6 adds the
-   *construction*-time reject for a genuinely undeclared id; this file's
+   _construction_-time reject for a genuinely undeclared id; this file's
    own body only handles the "known-at-declare-time, since removed"
    runtime case.
    Needs its own `reportedColumns: Set<string>` for ADR-0014's
@@ -86,7 +86,7 @@ gap: `GroupingHandle`/`GroupingPath` (unlike `SortingHandle`/
    ```ts
    export interface GroupingHandle<TRow, K extends string = string, V = unknown> {
      readonly id: K;
-     readonly __value?: V;   // new
+     readonly __value?: V; // new
      readonly [PATH_RECORDER]: PathRecorder<TRow, AnyGroupingRule<TRow>>;
    }
 
@@ -94,8 +94,9 @@ gap: `GroupingHandle`/`GroupingPath` (unlike `SortingHandle`/
      readonly [K in ColumnIdIn<TValues>]: GroupingHandle<TRow, K, TValues[K]>;
    };
 
-   export type GroupingSchemaFn<TRow, TValues extends ColumnValueMap> =
-     (path: GroupingPath<TRow, TValues>) => void;
+   export type GroupingSchemaFn<TRow, TValues extends ColumnValueMap> = (
+     path: GroupingPath<TRow, TValues>,
+   ) => void;
    ```
 
    This changes `GroupingPath`'s second type parameter from
@@ -106,17 +107,17 @@ gap: `GroupingHandle`/`GroupingPath` (unlike `SortingHandle`/
    unchanged (`V` defaults to `unknown`).
 
 3. **`with-grouping/schema.ts`.** `buildGroupingPath<TRow, TId extends
-   string>` becomes `buildGroupingPath<TRow, TValues extends
-   ColumnValueMap>`, same body — only the generic parameter and its use in
+string>` becomes `buildGroupingPath<TRow, TValues extends
+ColumnValueMap>`, same body — only the generic parameter and its use in
    `GroupingPath<TRow, TValues>`/`createPathProxy` cast change.
    `runGroupingSchemaFn` follows the same substitution.
 
 4. **`with-grouping/feature.ts`.** `WithGroupingConfig<TRow, TId>`'s
    `schema` field and `buildGroupingSpec`'s call to
    `runGroupingSchemaFn<TRow, TId>` currently key by `TId =
-   ColumnIdIn<TValues>` directly (not by `TValues` itself, unlike
+ColumnIdIn<TValues>` directly (not by `TValues` itself, unlike
    sorting). Change `WithGroupingConfig` to also carry `TValues extends
-   ColumnValueMap` (mirroring `WithSortingConfig<TRow, TValues>`) so
+ColumnValueMap` (mirroring `WithSortingConfig<TRow, TValues>`) so
    `schema?: GroupingSchemaFn<TRow, TValues>` typechecks. Trace every call
    site of `WithGroupingConfig`/`buildGroupingSpec` in this file (the
    `withGrouping` overloads near the bottom of the file) and thread
@@ -127,7 +128,7 @@ gap: `GroupingHandle`/`GroupingPath` (unlike `SortingHandle`/
 ## Implementation Notes
 
 - Take the simplest signature first ([[simplest-signature-first]]) —
-  `ValueOfHandle`'s generic `<K, V>` on the *method*, not the interface,
+  `ValueOfHandle`'s generic `<K, V>` on the _method_, not the interface,
   mirrors `FilterValueOfContext.valueOf`'s existing per-call generic
   (`engine/filters/types.ts:34`). Don't add a class or a builder.
 - `engine/resolvers.ts` imports only from `engine/cells.ts`
@@ -162,4 +163,5 @@ gap: `GroupingHandle`/`GroupingPath` (unlike `SortingHandle`/
       `__value?`, recorder symbol).
 
 ---
+
 [Step 2: Grouping `when` reads `ctx.valueOf`](step-2-grouping-when.plan.md) →

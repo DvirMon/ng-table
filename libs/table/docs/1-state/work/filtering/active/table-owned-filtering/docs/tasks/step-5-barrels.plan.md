@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/filters/index.ts` | `:1-27` | rewrite — the domain's surface after the model moved |
-| `libs/table/src/index.ts` | `:1-3` | edit — the header comment's claim about the filters domain |
-| `libs/table/CLAUDE.md` | — | edit — the `filters/index.ts` row and the `filters/` layout line |
+| File                              | Line    | Action                                                           |
+| --------------------------------- | ------- | ---------------------------------------------------------------- |
+| `libs/table/src/filters/index.ts` | `:1-27` | rewrite — the domain's surface after the model moved             |
+| `libs/table/src/index.ts`         | `:1-3`  | edit — the header comment's claim about the filters domain       |
+| `libs/table/CLAUDE.md`            | —       | edit — the `filters/index.ts` row and the `filters/` layout line |
 
 ## Why This Step Exists
 
@@ -60,7 +60,7 @@ so this step edits the domain barrel and the public surface follows. Only the he
 
 - **This is the step that breaks the repo.** Every story host and fixture importing `createFilters`
   fails from here. That is the issue's stated contract — it "does not stay green on its own" — so
-  the acceptance check is a *scoped* typecheck, not a repo-wide one. Do not patch call sites to get
+  the acceptance check is a _scoped_ typecheck, not a repo-wide one. Do not patch call sites to get
   green; that work is `#91`.
 
 ## Non-Goals
@@ -80,4 +80,5 @@ so this step edits the domain barrel and the public surface follows. Only the he
       expected here and belong to `#91`. Run twice.
 
 ---
+
 ← [Step 4: Member audit](step-4-member-audit.plan.md) | [Step 6: Inference probe](step-6-inference-probe.plan.md) →

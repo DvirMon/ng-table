@@ -36,20 +36,21 @@ are exported. Inference through `createTableFeature(factory)` works without nami
 Still not exported (verified 2026-09-25 — `index.ts` exports only `createTableFeature` of this
 surface):
 
-| Symbol | File | Why an author needs it |
-|---|---|---|
-| `TableFeatureSpec<TRow, Members>` | `engine/types.ts` | Return type of a `buildXSpec()` helper — every in-repo feature has one |
-| `Feature<In, Out>`, `Shape`, `RowOf<In>` | `engine/types.ts` | Overload signatures (`withSorting` shape: config / derive / config+derive), F-bounded `In extends XInput<In>` |
-| `WritableView<T, U>`, `createWritableView` | `engine/writable-view.ts` | A feature exposing a writable slice (`withGrouping` does) |
-| `pruneByIds` | `engine/rows.ts` | ADR-0006: "if you store RowIds, declare `onRowsRemoved` and prune with `pruneByIds`" — mandatory rule, internal helper |
-| `resolveIndex` | `engine/rows.ts` | Any id-keyed feature writing through `value.update` |
-| `RenderNode`, `mapNodes`, `RenderStage`, `RenderStages`, `PipelineStage`, `RowTransform` | `engine/{render-stages,pipeline}.ts` | Typing a stage-builder helper; a render stage receives and returns `RenderNode<TRow>[]` and nests children via `mapNodes` |
-| `ColumnRuleEntry` / `ColumnRuleRegistry` | `engine/columns.ts` | `TableFeatureSpec.columnRules` is typed with it |
-| `displayName` convention | `engine/types.ts` `Feature.displayName` | Set via `Object.assign(feature, { displayName })` in every feature; undocumented |
+| Symbol                                                                                   | File                                    | Why an author needs it                                                                                                    |
+| ---------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `TableFeatureSpec<TRow, Members>`                                                        | `engine/types.ts`                       | Return type of a `buildXSpec()` helper — every in-repo feature has one                                                    |
+| `Feature<In, Out>`, `Shape`, `RowOf<In>`                                                 | `engine/types.ts`                       | Overload signatures (`withSorting` shape: config / derive / config+derive), F-bounded `In extends XInput<In>`             |
+| `WritableView<T, U>`, `createWritableView`                                               | `engine/writable-view.ts`               | A feature exposing a writable slice (`withGrouping` does)                                                                 |
+| `pruneByIds`                                                                             | `engine/rows.ts`                        | ADR-0006: "if you store RowIds, declare `onRowsRemoved` and prune with `pruneByIds`" — mandatory rule, internal helper    |
+| `resolveIndex`                                                                           | `engine/rows.ts`                        | Any id-keyed feature writing through `value.update`                                                                       |
+| `RenderNode`, `mapNodes`, `RenderStage`, `RenderStages`, `PipelineStage`, `RowTransform` | `engine/{render-stages,pipeline}.ts`    | Typing a stage-builder helper; a render stage receives and returns `RenderNode<TRow>[]` and nests children via `mapNodes` |
+| `ColumnRuleEntry` / `ColumnRuleRegistry`                                                 | `engine/columns.ts`                     | `TableFeatureSpec.columnRules` is typed with it                                                                           |
+| `displayName` convention                                                                 | `engine/types.ts` `Feature.displayName` | Set via `Object.assign(feature, { displayName })` in every feature; undocumented                                          |
 
 ## Finding 2 — engine-fixed points a feature cannot change
 
 ### 2a. Closed stage unions — blocking
+
 - `engine/render-stages.ts:22` `RENDER_ORDER = ['group', 'tree']`
 - `engine/pipeline.ts:6` `PIPELINE_ORDER = ['filter', 'group', 'sort', 'expand']`
 - `RenderStages`/`PipelineStages` derive from them. A feature declaring `renderStages: { pin: … }`
@@ -60,37 +61,42 @@ surface):
 - Render stages exchange a nested `RenderNode<TRow>[]` tree; `engine/flatten.ts`
   `flattenVisible()` runs after the chain and alone derives `depth`/`parentId`/`hasChildren`/
   `isExpanded`. A child cannot be emitted above its parent, so no emission-order rule is needed.
-- ADR-0011 rejected making the order *consumer-configurable* (reordering); *adding* a stage is a
+- ADR-0011 rejected making the order _consumer-configurable_ (reordering); _adding_ a stage is a
   different question it did not cover.
 
 ### 2b. Core member claim list — minor
+
 - `engine/slots.ts` `OverridableCoreKey = 'totalRowCount'` — the only core member a feature may
   override. Documented in CLAUDE.md, not in consumer docs.
 
 ### 2c. `RenderRow` is a closed interface — moderate
+
 - `api/types.ts` — feature-contributed fields (`isExpanded`, `hasChildren`, `aggregates`,
   `groupKey`) are hard-coded. A third-party stage cannot type a new field (`isPinned`).
   `aggregates` is the only open bag and is group-row-scoped by name.
 
 ### 2d. `ColumnDef` feature fields — already solved
+
 - `ColumnDef.meta` + `createColumnMetaKey()` is a general side channel. No change needed.
 
 ### 2e. `index`/`sourceIndex` stamped centrally after the chain — informational
+
 - Whether `aria-rowindex` is page- or dataset-relative is a pagination design question.
 
 ### 2f. Derive-block guard `PIPELINE_BEHAVIOR_KEYS` (`create-table-feature.ts`)
+
 - Hand-maintained list of spec keys; update whenever `TableFeatureSpec` grows. Internal-only.
 
 ## Finding 3 — cost to add a feature after this effort
 
-| Feature | Fits? | What blocks |
-|---|---|---|
-| `withRowPinning` (render, after `'tree'`) | Yes | Finding 1 exports + this mechanism |
-| A second filter pass (server + client) | Yes | Declared stage anchored on `'filter'` |
-| `withAggregation` as separate feature | Yes | Declared stage after `'group'` |
-| `withPagination` | **No** | Needs a post-flatten anchor; deferred to pagination's own issue (Q1) |
-| `withVirtualScroll` / `withVirtualWindow` | **No** | Same — flat rows only exist after `flattenVisible` |
-| `withColumnPinning` | Partly | Column side is `ColumnDef.meta`; a new `RenderRow` field is still closed (2c) |
+| Feature                                   | Fits?  | What blocks                                                                   |
+| ----------------------------------------- | ------ | ----------------------------------------------------------------------------- |
+| `withRowPinning` (render, after `'tree'`) | Yes    | Finding 1 exports + this mechanism                                            |
+| A second filter pass (server + client)    | Yes    | Declared stage anchored on `'filter'`                                         |
+| `withAggregation` as separate feature     | Yes    | Declared stage after `'group'`                                                |
+| `withPagination`                          | **No** | Needs a post-flatten anchor; deferred to pagination's own issue (Q1)          |
+| `withVirtualScroll` / `withVirtualWindow` | **No** | Same — flat rows only exist after `flattenVisible`                            |
+| `withColumnPinning`                       | Partly | Column side is `ColumnDef.meta`; a new `RenderRow` field is still closed (2c) |
 
 ## Direction (answered 2026-09-17)
 
@@ -112,12 +118,12 @@ M1–M7 with worked author/consumer code: [`mechanisms.md`](mechanisms.md) (pre-
 - Signal Forms makes multi-contributor slots commutative via reducers; a row-transform chain is
   non-commutative, so explicit ordering is required. Record in ADR so nobody "fixes" it later.
 
-| | M1 DI | M2 Anchors | M3 Priority | M4 Config | M5 Slots | M6 Hybrid | M7 MUI |
-|---|---|---|---|---|---|---|---|
-| Who knows placement | consumer | author | author | consumer | author | author (+consumer override) | nobody |
-| Order = arg order? | no | no | ties yes | no | within slot yes | no | yes |
-| Per-app override | ✓ | ✗ | ✗ | per-table | ✗ | ✓ | ✗ |
-| Verdict | override layer only | **core** | reject | reject (⊂ M1) | reject | **recommended** | steal typing only |
+|                     | M1 DI               | M2 Anchors | M3 Priority | M4 Config     | M5 Slots        | M6 Hybrid                   | M7 MUI            |
+| ------------------- | ------------------- | ---------- | ----------- | ------------- | --------------- | --------------------------- | ----------------- |
+| Who knows placement | consumer            | author     | author      | consumer      | author          | author (+consumer override) | nobody            |
+| Order = arg order?  | no                  | no         | ties yes    | no            | within slot yes | no                          | yes               |
+| Per-app override    | ✓                   | ✗          | ✗           | per-table     | ✗               | ✓                           | ✗                 |
+| Verdict             | override layer only | **core**   | reject      | reject (⊂ M1) | reject          | **recommended**             | steal typing only |
 
 ## Decision
 
@@ -181,13 +187,13 @@ stages: stageSchema((s) => {
 
 ### Edge rationale (from discovery Addendum 2, updated)
 
-| Edge | Class | Reason |
-|---|---|---|
-| pipeline filter → group | **hard** on summaries | `when`/aggregates see a cluster's own rows; group-first counts filtered-out rows |
-| pipeline group → sort | soft / contract | decides `table.rows()` shape; render re-clusters |
-| pipeline → render seed | hard, a **type boundary** | `TRow[]` vs `RenderNode<TRow>[]`; synthesizing rows needs the render layer |
-| render group → tree | **hard, self-checking** | `buildGroupRenderRows` throws on synthesized input |
-| render chain → `flattenVisible` | engine-owned, not an anchor | visibility and `depth`/`parentId` are derived from tree position (ADR-0023) |
+| Edge                            | Class                       | Reason                                                                           |
+| ------------------------------- | --------------------------- | -------------------------------------------------------------------------------- |
+| pipeline filter → group         | **hard** on summaries       | `when`/aggregates see a cluster's own rows; group-first counts filtered-out rows |
+| pipeline group → sort           | soft / contract             | decides `table.rows()` shape; render re-clusters                                 |
+| pipeline → render seed          | hard, a **type boundary**   | `TRow[]` vs `RenderNode<TRow>[]`; synthesizing rows needs the render layer       |
+| render group → tree             | **hard, self-checking**     | `buildGroupRenderRows` throws on synthesized input                               |
+| render chain → `flattenVisible` | engine-owned, not an anchor | visibility and `depth`/`parentId` are derived from tree position (ADR-0023)      |
 
 ### Checks
 
@@ -212,6 +218,7 @@ ordering mechanism; never document it as one.
 **Runtime (data-dependent) — degrade + report, never throw.** Once per stage per evaluation, in
 production too (ADR-0014, confirmed against its Decision section directly — closes ADR-0020's
 third open item):
+
 1. Row-id uniqueness per `renderRows` evaluation.
 2. Real-row id containment (output's non-synthesized ids ⊆ input's).
 
@@ -254,13 +261,16 @@ ADR-0020 are the decision record.
 Ordered by dependency. 1 and 2 are parallel-safe; 3 gates 4–6.
 
 ### 1. Persist discovery (docs only) — done except registration
+
 - `discovery-open-stage-registration.md` and `mechanisms.md` exist. `1-intake.md` dropped: this
   file and #102 already carry the intake.
 - Register the effort in `docs/1-state/architecture.md` "Not yet drilled" and `llms.txt` if the
   generator needs it (`npm run llms` — user runs).
 
 ### 2. Export the feature-author surface (code, no behaviour change) — not started
+
 `libs/table/src/index.ts` adds, type-only where possible:
+
 - `Feature`, `Shape`, `RowOf`, `TableFeatureSpec` from `engine/types.ts`
 - `WritableView`, `createWritableView` from `engine/writable-view.ts`
 - `pruneByIds`, `resolveIndex` from `engine/rows.ts`
@@ -273,6 +283,7 @@ exported" becomes "engine exports only what `index.ts` lists for feature authors
 Acceptance: `nx run shared-table:typecheck` clean.
 
 ### 3. Amend ADR-0020 + related ADRs (docs) — next step
+
 - Amend ADR-0020:
   - Decision 1 → the `stageSchema` + `stage` rule form (recording, ADR-0027 Rule 2).
   - Decision 2 → close the `'expand'` open item (#119/#121); state no post-flatten anchor (Q1).
@@ -291,12 +302,14 @@ Acceptance: `nx run shared-table:typecheck` clean.
   is gone).
 
 ### 4. Compile probe (spike, throwaway) — depends on 3 — ✅ done (#153: merging works, no fallback)
+
 A scratch `.ts` in a consumer app doing
 `declare module '@ngp/table' { interface RenderStageRegistry { pin: true } }`; verify `ngc` +
 barrel + `tools/generate-overloads.ts` accept it. Record the result in ADR-0020 (its second open
 item). If merging fails through the barrel, fall back to `name: string`.
 
 ### 5. Engine implementation (code) — depends on 3, 4; via `/to-spec` → `/to-issues` → `/to-tasks`
+
 - `schema/stage-schema.ts` (new, declare phase): `stageSchema(fn)` over `runRecordedSchema()`,
   typed handle proxy over `PipelineStageRegistry` / `RenderStageRegistry`.
 - `schema/stage-rules.ts` (new): `stage(handle, opts)` — claim form (no `name`)
@@ -321,10 +334,11 @@ item). If merging fails through the barrel, fall back to `name: string`.
   unchanged; each declares `synthesizesRows` where true (grouping render stage).
 
 ### 6. Tests — depends on 5
+
 - `engine/stage-order.spec.ts` (vitest, pure): every dev throw path + happy DAG + built-in order
   preserved with zero declared stages (regression guard) + `synthesizesRows` positional violation
-  + tie resolved by anchoring one declared stage on another + name-sort fallback with the dev
-  check stripped.
+  - tie resolved by anchoring one declared stage on another + name-sort fallback with the dev
+    check stripped.
 - `engine/render-stages.spec.ts`: runtime checks 1–2 report and pass through; never throw.
 - `schema/stage-schema.spec.ts`: claim vs declare forms, duplicate claim throws naming both.
 - `compose-table.spec.ts` / `compose-features.spec.ts`: a declared stage runs after `'tree'`;
@@ -333,17 +347,20 @@ item). If merging fails through the barrel, fall back to `name: string`.
 - Existing `with-*.spec.ts` unchanged and green after the refactor (behaviour guard).
 
 ### 7. Feature-authoring guide (docs) — depends on 2, 5
+
 `libs/table/docs/1-state/feature-authoring.md`: the `with-*()` shape, the exported surface from
 step 2, declaring a stage with an anchor, `RenderNode` + `mapNodes`, `onRowsRemoved` +
 `pruneByIds`, `displayName`, testing a feature standalone. Worked example: `withRowPinning`.
 
 ### 8. Deferred — separate issues
+
 - `provideTableStages(order => order)` DI override — not in v1 (Q4). Open the issue when a
   feature ships as a versioned package that another team consumes and cannot edit. ADR-0020
   records it as the escape hatch.
 - Post-flatten anchor — owned by pagination's issue (Q1).
 
 ## Verification
+
 - Steps 2, 5: `nx run shared-table:typecheck` and `typecheck-spec` clean (user runs).
 - Step 6: `nx test shared-table` (user runs).
 - Step 4: probe compiles in a consumer app; result pasted into ADR-0020.

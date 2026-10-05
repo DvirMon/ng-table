@@ -6,11 +6,11 @@ host renders from it.
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#143](https://github.com/DvirMon/ng-table/issues/143) | Add renderColumns to the table store | ✅ CLOSED 09-25 (76988b5) | — | #144, #145 |
-| [#144](https://github.com/DvirMon/ng-table/issues/144) | Render grouping story hosts from renderColumns() | ✅ CLOSED 09-25 (c7b1834) | #143 (cleared) | — |
-| [#145](https://github.com/DvirMon/ng-table/issues/145) | Hide hidden columns in filtering and selection stories | ✅ CLOSED 09-25 (c7b1834) | #143 (cleared) | — |
+| #                                                      | Title                                                  | State                     | Depends on     | Blocks     |
+| ------------------------------------------------------ | ------------------------------------------------------ | ------------------------- | -------------- | ---------- |
+| [#143](https://github.com/DvirMon/ng-table/issues/143) | Add renderColumns to the table store                   | ✅ CLOSED 09-25 (76988b5) | —              | #144, #145 |
+| [#144](https://github.com/DvirMon/ng-table/issues/144) | Render grouping story hosts from renderColumns()       | ✅ CLOSED 09-25 (c7b1834) | #143 (cleared) | —          |
+| [#145](https://github.com/DvirMon/ng-table/issues/145) | Hide hidden columns in filtering and selection stories | ✅ CLOSED 09-25 (c7b1834) | #143 (cleared) | —          |
 
 ## Graph
 

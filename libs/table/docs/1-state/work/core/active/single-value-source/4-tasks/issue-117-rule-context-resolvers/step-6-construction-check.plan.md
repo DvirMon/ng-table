@@ -22,9 +22,9 @@
 
 ## Why This Step Exists
 
-The issue's own acceptance criterion: *"A resolver naming an undeclared
+The issue's own acceptance criterion: _"A resolver naming an undeclared
 column id is rejected by the same construction check the declarations
-use — not a separate one."* `schema/validate.ts` already has exactly
+use — not a separate one."_ `schema/validate.ts` already has exactly
 that check — `assertDeclarationsAreKnown(declaredIds, knownIds, label)`
 — dev-gated, throws, used today by every feature's own declared-rule
 validation (e.g. `with-sorting/feature.ts`'s
@@ -36,7 +36,7 @@ the moment the resolver runs — classified as a **construction-class**
 error (a truly undeclared id is a deterministic wiring bug, not
 data-dependent) even though the call happens lazily, inside a
 consumer-callback invocation rather than at feature-build time. This is
-distinct from — and must not be confused with — a column that *was*
+distinct from — and must not be confused with — a column that _was_
 declared but was later removed via `setColumns()`, which is the existing
 runtime-degrade case (`readGroupValue`'s "unknown columnId reads
 `undefined`" comment) and must keep degrading, not throw.
@@ -44,7 +44,7 @@ runtime-degrade case (`readGroupValue`'s "unknown columnId reads
 ## What To Do
 
 1. **`engine/resolvers.ts`.** `buildValueOfContext<TRow>(columns,
-   knownIds: ReadonlySet<string>, label: string)` — add `knownIds` (the
+knownIds: ReadonlySet<string>, label: string)` — add `knownIds` (the
    declared-id set fixed at the calling feature's own construction time,
    the same list already passed to that feature's
    `assertDeclarationsAreKnown` call) and `label` (names the calling
@@ -65,7 +65,7 @@ runtime-degrade case (`readGroupValue`'s "unknown columnId reads
 2. **`with-grouping/feature.ts`, `with-sorting/feature.ts`.** Each
    already computes its own `knownIds` for its existing
    `assertDeclarationsAreKnown` call (`input.columns().map((c) =>
-   c.id)`) — pass that **same array/set** into
+c.id)`) — pass that **same array/set** into
    `buildValueOfContext(..., new Set(knownIds), 'withGrouping')` /
    `'withSorting'` at the Step 2/Step 3 call sites. Don't compute a
    second, separate known-id list.
@@ -81,9 +81,9 @@ runtime-degrade case (`readGroupValue`'s "unknown columnId reads
 
 - The thrown message should read like every other
   `assertDeclarationsAreKnown` failure — `[withGrouping] Unknown column
-  id "..." — no declared column has this id.` — don't write a custom
+id "..." — no declared column has this id.` — don't write a custom
   message for the resolver case; it's the literal same function.
-- `knownIds` must be captured at the *calling feature's* construction
+- `knownIds` must be captured at the _calling feature's_ construction
   time (once), not re-read on every `valueOf` call — build the `Set`
   once, close over it.
 
@@ -109,4 +109,5 @@ runtime-degrade case (`readGroupValue`'s "unknown columnId reads
       `assertDeclarationsAreKnown` — not a hand-written duplicate throw.
 
 ---
+
 ← [Step 5: Column rules `stateOf`](step-5-columns-stateof.plan.md) | [Step 7: Runtime specs](step-7-runtime-specs.plan.md) →

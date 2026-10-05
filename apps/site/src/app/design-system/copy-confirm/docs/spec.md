@@ -2,29 +2,29 @@
 id: copy-confirm
 kind: directive
 atomic: Behavior
-selector: "button[ngptCopyConfirm]"
+selector: 'button[ngptCopyConfirm]'
 exportAs: ngptCopyConfirm
 spec: extracted from design-system/icon-button/docs/spec.md § "Confirmation variant (copy)"
 adr: ../../../../docs/adr/0005-attribute-hosted-components.md
 owns:
-  - "The clipboard write and its success/failure outcome"
-  - "The idle → copied/failed → idle hold, and restart-on-re-click"
-  - "Per-state accessible name (aria-label + title) on the host button"
-  - "The polite live-region announcement of the outcome"
-  - "The data-copy-state host attribute other stylesheets key off"
+  - 'The clipboard write and its success/failure outcome'
+  - 'The idle → copied/failed → idle hold, and restart-on-re-click'
+  - 'Per-state accessible name (aria-label + title) on the host button'
+  - 'The polite live-region announcement of the outcome'
+  - 'The data-copy-state host attribute other stylesheets key off'
 does_not_own:
-  - "Any styling — a @Directive carries no stylesheet"
-  - "The glyph — the consumer authors it and branches on state()"
-  - "The confirmed/failed color — icon-button.css, keyed off data-copy-state"
+  - 'Any styling — a @Directive carries no stylesheet'
+  - 'The glyph — the consumer authors it and branches on state()'
+  - 'The confirmed/failed color — icon-button.css, keyed off data-copy-state'
 depends_on:
-  - "src/styles/tokens/sizing.css (--ngpt-comp-icon-btn-confirm-hold)"
+  - 'src/styles/tokens/sizing.css (--ngpt-comp-icon-btn-confirm-hold)'
 states:
-  - "idle"
-  - "copied"
-  - "failed"
+  - 'idle'
+  - 'copied'
+  - 'failed'
 a11y:
-  - "Accessible name changes with state via aria-label on the host."
-  - "Outcome announced through a shared body-level aria-live=\"polite\" region."
+  - 'Accessible name changes with state via aria-label on the host.'
+  - 'Outcome announced through a shared body-level aria-live="polite" region.'
 tokens: [--ngpt-comp-icon-btn-confirm-hold]
 token_values_resolve_in: src/styles/tokens/ (single source of truth — never restate values here)
 ---
@@ -42,7 +42,7 @@ input and a live region every non-copying icon button paid for and never used.
 ## Placement
 
 The consumer puts it **beside** a component on the same `<button>`. Legal because Angular forbids
-only *component + component* on one host; a component plus any number of directives composes
+only _component + component_ on one host; a component plus any number of directives composes
 freely. It is not `hostDirectives` on `icon-button` — that is statically resolved, so it would
 apply to every icon button in the app, defeat tree-shaking, and force `icon-button` to re-declare
 `text`/`idleLabel`/`failedLabel` in its own metadata.
@@ -56,17 +56,28 @@ apply to every icon button in the app, defeat tree-shaking, and force `icon-butt
   idleLabel="Copy install command"
   failedLabel="Copy failed — select the command manually"
 >
-  @switch (copy.state()) {
-    @case ('copied') {
-      <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-    @case ('failed') {
-      <ng-icon name="lucideTriangleAlert" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-    @default {
-      <ng-icon name="lucideCopy" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-  }
+  @switch (copy.state()) { @case ('copied') {
+  <ng-icon
+    name="lucideCheck"
+    size="var(--ngpt-sys-icon-size-sm)"
+    color="currentColor"
+    aria-hidden="true"
+  />
+  } @case ('failed') {
+  <ng-icon
+    name="lucideTriangleAlert"
+    size="var(--ngpt-sys-icon-size-sm)"
+    color="currentColor"
+    aria-hidden="true"
+  />
+  } @default {
+  <ng-icon
+    name="lucideCopy"
+    size="var(--ngpt-sys-icon-size-sm)"
+    color="currentColor"
+    aria-hidden="true"
+  />
+  } }
 </button>
 ```
 
@@ -76,18 +87,18 @@ The consumer registers `lucideCopy` / `lucideCheck` / `lucideTriangleAlert` loca
 
 ## API
 
-| Input | Type | Default | Notes |
-|---|---|---|---|
-| `text` | `string \| undefined` | `undefined` | What to write. Unset or `''` makes the click a no-op. |
-| `idleLabel` | `string` | `'Copy'` | |
-| `copiedLabel` | `string` | `'Copied'` | |
-| `failedLabel` | `string` | `'Copy failed, select manually'` | |
+| Input         | Type                  | Default                          | Notes                                                 |
+| ------------- | --------------------- | -------------------------------- | ----------------------------------------------------- |
+| `text`        | `string \| undefined` | `undefined`                      | What to write. Unset or `''` makes the click a no-op. |
+| `idleLabel`   | `string`              | `'Copy'`                         |                                                       |
+| `copiedLabel` | `string`              | `'Copied'`                       |                                                       |
+| `failedLabel` | `string`              | `'Copy failed, select manually'` |                                                       |
 
-| Member | Type | Notes |
-|---|---|---|
-| `state` | `Signal<CopyConfirmState>` | Readonly. `'idle' \| 'copied' \| 'failed'`. |
-| `label` | `Signal<string>` | Readonly, derived. The label for the current state. |
-| `copy()` | `void` | Bound to the host `click`; public so a consumer can trigger it too. |
+| Member   | Type                       | Notes                                                               |
+| -------- | -------------------------- | ------------------------------------------------------------------- |
+| `state`  | `Signal<CopyConfirmState>` | Readonly. `'idle' \| 'copied' \| 'failed'`.                         |
+| `label`  | `Signal<string>`           | Readonly, derived. The label for the current state.                 |
+| `copy()` | `void`                     | Bound to the host `click`; public so a consumer can trigger it too. |
 
 No outputs. Host bindings: `[attr.data-copy-state]`, `[attr.aria-label]`, `[attr.title]`,
 `(click)`.

@@ -11,7 +11,7 @@ export interface ColumnRuleContext<TRow> {
   readonly columns: () => ColumnDef<TRow>[];
   /** Another column's current declared state, named by handle instead of a string-keyed lookup. */
   stateOf<K extends string>(
-    handle: ColumnHandle<TRow, K, unknown>
+    handle: ColumnHandle<TRow, K, unknown>,
   ): Pick<ColumnDef<TRow>, 'visible' | 'label' | 'meta'>;
 }
 
@@ -33,7 +33,7 @@ export interface ColumnHandle<TRow, K extends string = string, TRule = ColumnRul
 }
 
 export type ColumnsSchemaFn<TRow, TId extends string = string> = (
-  path: ColumnsPath<TRow, TId>
+  path: ColumnsPath<TRow, TId>,
 ) => void;
 
 /** Opaque, compiled form of a schema fn — the standalone-reuse value. */

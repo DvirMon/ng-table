@@ -6,6 +6,7 @@ depends_on: [4]
 files:
   - libs/table/src/api/features/with-tree.spec.ts
 ---
+
 # Step 6 — hasChildren follows the filtered view
 
 This step adds one test for what a filtered tree does to `hasChildren`.
@@ -34,4 +35,5 @@ Write the test after the code, through `createTable()` with `withTree({ parentId
 - [ ] The test exists and passes.
 
 ---
+
 ← [Step 5: Tree-row directive](step-5-tree-row-directive.plan.md) | [Step 7: Feature docs](step-7-feature-docs.plan.md) →

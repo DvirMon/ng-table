@@ -12,12 +12,12 @@ context, gathered after the decision, and it does not overturn it.
 
 ## Inventory
 
-| Library | State exposed | Change notification | Bulk expand/collapse notification |
-|---|---|---|---|
-| TanStack Table v8 | `state.expanded: ExpandedState` = `true \| Record<string, boolean>` | `onExpandedChange?: OnChangeFn<ExpandedState>` — **whole-state only**, no per-row event | `toggleAllRowsExpanded(expanded?: boolean)` fires `onExpandedChange` **once**, with the whole new state |
-| Material React Table | `state.expanded: Record<string, boolean> \| boolean` (TanStack's, re-exposed) | `onExpandedChange` — whole-state only | Same as TanStack. `enableExpandAll` (default `true`) only adds the header button |
-| AG Grid | Per-node: `node.expanded`, `node.setExpanded()`, walked via `api.forEachNode()` | `rowGroupOpened` — "A row group was opened or closed", fires **per row** | **Separate bulk event.** `expandOrCollapseAll` — "Fired when calling either of the API methods `expandAll()` or `collapseAll()`" — fires once |
-| PrimeNG `p-table` | `[(expandedRowKeys)]: {[key: string]: boolean}` keyed by `dataKey`; `rowExpandMode` | `onRowExpand` / `onRowCollapse` — **two separate events**, each `{ originalEvent: Event; data: RowData }` | No first-party bulk verb. Expand-all is consumer code writing `expandedRowKeys` through the two-way binding — which fires neither event |
+| Library              | State exposed                                                                       | Change notification                                                                                       | Bulk expand/collapse notification                                                                                                             |
+| -------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| TanStack Table v8    | `state.expanded: ExpandedState` = `true \| Record<string, boolean>`                 | `onExpandedChange?: OnChangeFn<ExpandedState>` — **whole-state only**, no per-row event                   | `toggleAllRowsExpanded(expanded?: boolean)` fires `onExpandedChange` **once**, with the whole new state                                       |
+| Material React Table | `state.expanded: Record<string, boolean> \| boolean` (TanStack's, re-exposed)       | `onExpandedChange` — whole-state only                                                                     | Same as TanStack. `enableExpandAll` (default `true`) only adds the header button                                                              |
+| AG Grid              | Per-node: `node.expanded`, `node.setExpanded()`, walked via `api.forEachNode()`     | `rowGroupOpened` — "A row group was opened or closed", fires **per row**                                  | **Separate bulk event.** `expandOrCollapseAll` — "Fired when calling either of the API methods `expandAll()` or `collapseAll()`" — fires once |
+| PrimeNG `p-table`    | `[(expandedRowKeys)]: {[key: string]: boolean}` keyed by `dataKey`; `rowExpandMode` | `onRowExpand` / `onRowCollapse` — **two separate events**, each `{ originalEvent: Event; data: RowData }` | No first-party bulk verb. Expand-all is consumer code writing `expandedRowKeys` through the two-way binding — which fires neither event       |
 
 Sources: TanStack expanding API reference; Material React Table "Expanding Sub Rows" guide;
 AG Grid Grid Events reference + master/detail master-rows page; PrimeNG
@@ -34,22 +34,22 @@ AG Grid Grid Events reference + master/detail master-rows page; PrimeNG
   interleaving (whether `rowGroupOpened` also fires for each node during `expandAll()`) was
   not confirmed.
 
-## The read surface: what a consumer can *ask*, not just be told
+## The read surface: what a consumer can _ask_, not just be told
 
 The table above covers notification. The other half of the question is what state a consumer
 can read, and at what granularity. The four libraries diverge more here than on events.
 
-| Read concern | TanStack v8 | MRT | AG Grid | PrimeNG | `libs/shared/table` |
-|---|---|---|---|---|---|
-| Canonical container | `state.expanded: true \| Record<string, boolean>` | same (TanStack's) | none — state lives on each `RowNode` (`node.expanded`) | `expandedRowKeys: {[key: string]: boolean}`, keyed by `dataKey` | `expandedRows: Signal<Set<RowId>>` |
-| "Is *this* row expanded?" | `row.getIsExpanded(): boolean` | same | `node.expanded` | index `expandedRowKeys[key]` | `expandedRows().has(id)`, plus `RenderRow.isExpanded` |
-| "*Can* this row expand?" | `row.getCanExpand(): boolean` | `getRowCanExpand` option | `isRowMaster` callback | template-driven, no predicate | `isExpandable` config → `RenderRow.hasChildren` |
-| Expand-everything predicates | `getIsAllRowsExpanded()`, `getIsSomeRowsExpanded()` | same | none documented | none | **none** |
-| Override the derived answer | `getIsRowExpanded?: (row) => boolean` | same | `isMasterOpenByDefault`, `masterDefaultExpanded` | — | **none** |
-| "Has this row *ever* been expanded?" | — | — | — | — | `everExpanded: Signal<Set<RowId>>` |
-| Ready-made toggle binding | `row.getToggleExpandedHandler(): () => void` | same | `node.setExpanded()` | template `[pRowToggler]` | `toggleExpanded(rowId)` |
-| Server/manual mode | `manualExpanding` | via TanStack | SSRM (Enterprise) | `[lazy]` + `onLazyLoad` | **none** |
-| Expansion × pagination | `paginateExpandedRows` | same | — | — | **none** (no pagination feature yet) |
+| Read concern                         | TanStack v8                                         | MRT                      | AG Grid                                                | PrimeNG                                                         | `libs/shared/table`                                   |
+| ------------------------------------ | --------------------------------------------------- | ------------------------ | ------------------------------------------------------ | --------------------------------------------------------------- | ----------------------------------------------------- |
+| Canonical container                  | `state.expanded: true \| Record<string, boolean>`   | same (TanStack's)        | none — state lives on each `RowNode` (`node.expanded`) | `expandedRowKeys: {[key: string]: boolean}`, keyed by `dataKey` | `expandedRows: Signal<Set<RowId>>`                    |
+| "Is _this_ row expanded?"            | `row.getIsExpanded(): boolean`                      | same                     | `node.expanded`                                        | index `expandedRowKeys[key]`                                    | `expandedRows().has(id)`, plus `RenderRow.isExpanded` |
+| "_Can_ this row expand?"             | `row.getCanExpand(): boolean`                       | `getRowCanExpand` option | `isRowMaster` callback                                 | template-driven, no predicate                                   | `isExpandable` config → `RenderRow.hasChildren`       |
+| Expand-everything predicates         | `getIsAllRowsExpanded()`, `getIsSomeRowsExpanded()` | same                     | none documented                                        | none                                                            | **none**                                              |
+| Override the derived answer          | `getIsRowExpanded?: (row) => boolean`               | same                     | `isMasterOpenByDefault`, `masterDefaultExpanded`       | —                                                               | **none**                                              |
+| "Has this row _ever_ been expanded?" | —                                                   | —                        | —                                                      | —                                                               | `everExpanded: Signal<Set<RowId>>`                    |
+| Ready-made toggle binding            | `row.getToggleExpandedHandler(): () => void`        | same                     | `node.setExpanded()`                                   | template `[pRowToggler]`                                        | `toggleExpanded(rowId)`                               |
+| Server/manual mode                   | `manualExpanding`                                   | via TanStack             | SSRM (Enterprise)                                      | `[lazy]` + `onLazyLoad`                                         | **none**                                              |
+| Expansion × pagination               | `paginateExpandedRows`                              | same                     | —                                                      | —                                                               | **none** (no pagination feature yet)                  |
 
 Three things fall out of that grid:
 
@@ -79,12 +79,12 @@ redesign of this surface — noted there rather than bolted on now.
 **Three different answers exist, and each library is internally consistent about which one
 it picked.**
 
-1. **Whole-state, one notification** — TanStack, MRT. Works because the payload *is* the
+1. **Whole-state, one notification** — TanStack, MRT. Works because the payload _is_ the
    state: a consumer diffs old vs. new to find what changed. The "which ids changed" question
    is pushed to the consumer.
 2. **Per-row event plus a separate bulk event** — AG Grid. The per-row event stays
    per-row-honest, and bulk gets its own name rather than being flattened into N emissions.
-3. **Per-interaction only** — PrimeNG. The event is a *UI event* (it carries `originalEvent`),
+3. **Per-interaction only** — PrimeNG. The event is a _UI event_ (it carries `originalEvent`),
    not a state-change event. Programmatic state writes deliberately notify nothing.
 
 Nobody emits N per-row events from a bulk verb. That is worth naming plainly: the chosen

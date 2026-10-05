@@ -54,26 +54,26 @@ in `specs/Content Model.md`, resolved against the current URL by `specs/Routing 
 find yourself writing the sidebar twice, the content model has been bypassed — that is the bug the spec
 exists to prevent.
 
-| Concern | Spec |
-| --- | --- |
-| The page list: sections, order, entry fields, slug rules | `specs/Content Model.md` |
-| URL → archetype / active entry / eyebrow / H1 / prev / next / title, hash behavior, route-change focus | `specs/Routing and Page State.md` |
-| What is indexed, the result record shape, groups, ranking, what select does | `specs/Search Index.md` |
-| Brand assets, font delivery, where article Markdown lives | `specs/Assets and Content Source.md` |
+| Concern                                                                                                | Spec                                 |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------ |
+| The page list: sections, order, entry fields, slug rules                                               | `specs/Content Model.md`             |
+| URL → archetype / active entry / eyebrow / H1 / prev / next / title, hash behavior, route-change focus | `specs/Routing and Page State.md`    |
+| What is indexed, the result record shape, groups, ranking, what select does                            | `specs/Search Index.md`              |
+| Brand assets, font delivery, where article Markdown lives                                              | `specs/Assets and Content Source.md` |
 
 ## Screens / views
 
 Six archetypes. Each spec is `composes_only` — it assigns components to slots and makes page-only
 decisions, and never restates styling. The component spec named in the slot table owns the appearance.
 
-| Archetype | Spec | Frame | What is different about it |
-| --- | --- | --- | --- |
-| Home (`/`) | `specs/pages/Home.md` | `frames/Home Page.dc.html` | Marketing. Drops the sidebar, the TOC, the grid and pagination. Four sections: full-bleed accent hero band containing the navbar, feature grid, install command row, footer. Two-state sticky navbar. |
-| Doc Article | `specs/pages/Doc Article.md` | `frames/Doc Article.dc.html` | The default docs page. Every docs route is this unless named otherwise. |
-| Section Landing | `specs/pages/Section Landing.md` | `frames/Section Landing.dc.html` | Lede + a link list to the section's pages. Usually no TOC. The frame renders the docs root, which has no parent section — so the eyebrow resolves to `null` and is absent, and pagination is next-only. |
-| API Reference | `specs/pages/API Reference.md` | `frames/API Reference.dc.html` | Table-dense lookup page. Real `<table>` per API surface, TOC always renders. |
-| Examples Gallery | `specs/pages/Examples Gallery.md` | `frames/Examples Gallery.dc.html` | H2 → one paragraph → `preview-window`, repeated. No bare code blocks. |
-| Not Found | `specs/pages/Not Found.md` | `frames/Not Found.dc.html` | Keeps the chrome, sidebar with nothing active, no TOC, no pagination, real HTTP 404. |
+| Archetype        | Spec                              | Frame                             | What is different about it                                                                                                                                                                              |
+| ---------------- | --------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home (`/`)       | `specs/pages/Home.md`             | `frames/Home Page.dc.html`        | Marketing. Drops the sidebar, the TOC, the grid and pagination. Four sections: full-bleed accent hero band containing the navbar, feature grid, install command row, footer. Two-state sticky navbar.   |
+| Doc Article      | `specs/pages/Doc Article.md`      | `frames/Doc Article.dc.html`      | The default docs page. Every docs route is this unless named otherwise.                                                                                                                                 |
+| Section Landing  | `specs/pages/Section Landing.md`  | `frames/Section Landing.dc.html`  | Lede + a link list to the section's pages. Usually no TOC. The frame renders the docs root, which has no parent section — so the eyebrow resolves to `null` and is absent, and pagination is next-only. |
+| API Reference    | `specs/pages/API Reference.md`    | `frames/API Reference.dc.html`    | Table-dense lookup page. Real `<table>` per API surface, TOC always renders.                                                                                                                            |
+| Examples Gallery | `specs/pages/Examples Gallery.md` | `frames/Examples Gallery.dc.html` | H2 → one paragraph → `preview-window`, repeated. No bare code blocks.                                                                                                                                   |
+| Not Found        | `specs/pages/Not Found.md`        | `frames/Not Found.dc.html`        | Keeps the chrome, sidebar with nothing active, no TOC, no pagination, real HTTP 404.                                                                                                                    |
 
 Page regions live in `specs/layout/` (page shell and grid, top navbar, sidebar + mobile drawer, content
 column, TOC column, page footer). Components live in `specs/` — seventeen of them, atoms through templates,

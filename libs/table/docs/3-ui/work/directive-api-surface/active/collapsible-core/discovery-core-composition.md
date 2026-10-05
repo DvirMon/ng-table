@@ -42,7 +42,8 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
 ## Evidence
 
 **Runtime: hostDirectives**
-- Host directives are put *before* the matched directives, so their constructors and host
+
+- Host directives are put _before_ the matched directives, so their constructors and host
   bindings run first. The host's binding to the same attribute runs last and wins.
   [R6][S1]
 - In 22.1.2, a host directive reached twice is de-duplicated: binding maps merge, nothing
@@ -69,6 +70,7 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
   internal class is referenced from the public typings [R21].
 
 **Runtime: inheritance**
+
 - `ɵɵInheritDefinitionFeature` walks the base chain and merges the base's inputs, outputs,
   host attributes and host-binding count into the subclass definition [R10].
 - Base host bindings run first and the subclass's run second, inside one function on one
@@ -77,6 +79,7 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
   `hostDirectives` and every subclass gets them. [R1]
 
 **Compiler and packaging**
+
 - The private-export check runs only when a flat-module entry point exists. That happens only
   when `flatModuleOutFile` is set. [R14][R15]
 - ng-packagr sets `flatModuleOutFile: \`${entryPoint.flatModuleFile}.js\`` for every entry
@@ -93,10 +96,11 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
 - `typeCheckHostBindings` defaults to `true` [R22] and is set in the lib's tsconfig [R23].
 - Type-checking sees only literal `PropertyAssignment` entries of `host` [R18]. The
   language-service source comments: "We only support type checking of static bindings." [R19]
-- The static evaluator *does* resolve `host: { ...SHARED_CONST }` [R20]. Spread-in bindings
+- The static evaluator _does_ resolve `host: { ...SHARED_CONST }` [R20]. Spread-in bindings
   compile, but are never type-checked [R18].
 
 **Precedence on the host element**
+
 - Host binding vs consumer template on one property: "If one value is static and the other
   dynamic, the dynamic value wins" [S2].
 - "If both values are static, the instance binding wins" [S2].
@@ -105,6 +109,7 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
   for every option.
 
 **The functional-API trend, tested**
+
 - Real for DI and the member APIs: the style guide says to prefer `inject()` over constructor
   parameters [S3].
 - Angular's guidance on host bindings is "Always prefer using the `host` property over
@@ -126,6 +131,7 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
   only when the attribute is absent [S7].
 
 **Repo**
+
 - Today's tree toggle binds `(click)`, `aria-expanded` and `data-expanded` through `host:` on
   protected members. Protected access in host bindings already type-checks. [R25]
 - The repo has no `hostDirectives` or `extends` in `src/` (grep, 2026-10-02).
@@ -138,17 +144,17 @@ The `hostDirectives` option (2) works today, because the lib is not built with n
 
 Requirements come from the caller's constraints and from D1, D2, D4 and D7 [R30].
 
-| Requirement | (1) abstract base `@Directive` | (2a) hostDirective, core injects token (`useExisting`) | (2b) hostDirective, host injects core and pushes | (3) ng-primitives-style function | (4) shared `host` const spread |
-|---|---|---|---|---|---|
-| Core not exported from `index.ts`, ng-packagr build | yes [R16] | **no, NG3001** [R13][R16][S8] | **no, NG3001** [R13][R16][S8] | yes (plain function) | yes (const only) |
-| No `effect()` DOM write | yes [R11] | yes [R6] | yes [R6] | **no** [S5] | yes |
-| TR37 single writer per attribute | one directive; a subclass rebinding a core key silently wins [R11] | two directives; the host's same-key binding silently wins [R6][S1] | same as 2a [R6] | not detectable: effect plus `setAttribute` bypass precedence [S5] | one directive; a later literal key silently replaces the spread key (JS object semantics) |
-| Core bindings type-checked | yes, against the base's abstract members [R18][R19] | yes, against the core [R18] | yes [R18] | n/a (no template expression) | **no**, spread entries are skipped [R18][R19] |
-| `isOpen` / `toggle` can stay `protected` | yes (`protected abstract`) [R25] | no: the token type needs public members on the exported directive | yes, but the core needs a public `connect()` | yes | no if enforced with `implements` (interfaces are public-only) |
-| DI wiring | none | token, provider, `forwardRef`; NG0200 if the host also injects the core [R8][R9] | `inject(Core)` in the host constructor; works because the core is built first [R6] | `runInInjectionContext` [S6] | none |
-| Extra instance per toggle | 0 [R11] | +1 [R7] | +1 [R7] | 0, plus effect nodes [S5] | 0 |
-| Composition vs inheritance | inheritance (one abstract level) | composition | composition | composition | composition (metadata) |
-| Leaks the internal type into public `.d.ts` | `extends Core` in the subclass `.d.ts` | `typeof Core` in `ɵdir` [R21] | `typeof Core` in `ɵdir` [R21] | no | no |
+| Requirement                                         | (1) abstract base `@Directive`                                     | (2a) hostDirective, core injects token (`useExisting`)                           | (2b) hostDirective, host injects core and pushes                                   | (3) ng-primitives-style function                                  | (4) shared `host` const spread                                                            |
+| --------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Core not exported from `index.ts`, ng-packagr build | yes [R16]                                                          | **no, NG3001** [R13][R16][S8]                                                    | **no, NG3001** [R13][R16][S8]                                                      | yes (plain function)                                              | yes (const only)                                                                          |
+| No `effect()` DOM write                             | yes [R11]                                                          | yes [R6]                                                                         | yes [R6]                                                                           | **no** [S5]                                                       | yes                                                                                       |
+| TR37 single writer per attribute                    | one directive; a subclass rebinding a core key silently wins [R11] | two directives; the host's same-key binding silently wins [R6][S1]               | same as 2a [R6]                                                                    | not detectable: effect plus `setAttribute` bypass precedence [S5] | one directive; a later literal key silently replaces the spread key (JS object semantics) |
+| Core bindings type-checked                          | yes, against the base's abstract members [R18][R19]                | yes, against the core [R18]                                                      | yes [R18]                                                                          | n/a (no template expression)                                      | **no**, spread entries are skipped [R18][R19]                                             |
+| `isOpen` / `toggle` can stay `protected`            | yes (`protected abstract`) [R25]                                   | no: the token type needs public members on the exported directive                | yes, but the core needs a public `connect()`                                       | yes                                                               | no if enforced with `implements` (interfaces are public-only)                             |
+| DI wiring                                           | none                                                               | token, provider, `forwardRef`; NG0200 if the host also injects the core [R8][R9] | `inject(Core)` in the host constructor; works because the core is built first [R6] | `runInInjectionContext` [S6]                                      | none                                                                                      |
+| Extra instance per toggle                           | 0 [R11]                                                            | +1 [R7]                                                                          | +1 [R7]                                                                            | 0, plus effect nodes [S5]                                         | 0                                                                                         |
+| Composition vs inheritance                          | inheritance (one abstract level)                                   | composition                                                                      | composition                                                                        | composition                                                       | composition (metadata)                                                                    |
+| Leaks the internal type into public `.d.ts`         | `extends Core` in the subclass `.d.ts`                             | `typeof Core` in `ɵdir` [R21]                                                    | `typeof Core` in `ɵdir` [R21]                                                      | no                                                                | no                                                                                        |
 
 ## Synthesis
 
@@ -156,7 +162,7 @@ Requirements come from the caller's constraints and from D1, D2, D4 and D7 [R30]
   and `@angular/aria` uses it [S7]. But Angular's own library had to export the shared
   directive (as `ɵɵ`) to ship it. NG3001 would force the same here [R13][R16]. The user's
   preference and the settled "not exported" contract conflict under (2), and only one can hold.
-- **Functional vs repo rules.** ng-primitives gets its function shape *because* it writes the
+- **Functional vs repo rules.** ng-primitives gets its function shape _because_ it writes the
   DOM from effects [S5]. Copying the shape without the effects leaves only (4). (4) gives up
   type-checking of exactly the strings that carry the contract [R18][R19].
 - **Inheritance cost, concretely.** The usual objections are deep hierarchies, shared mutable
@@ -219,12 +225,12 @@ its own selector, its disabled/`aria-hidden` branch and its dev throw, per D1 an
 
 ## Unverified
 
-- That `@angular/aria` needed the `ɵɵ` export *because of* NG3001. Inferred from the mechanism
+- That `@angular/aria` needed the `ɵɵ` export _because of_ NG3001. Inferred from the mechanism
   [R13][R16]; no Angular commit or comment was read.
 - That a `.d.ts` `extends` on a class exported from its own file (but not from `index.ts`)
   emits cleanly. TS4020 ("has or is using private name") exists in the installed TypeScript at
   `node_modules/typescript/lib/typescript.js:10233`, and it is believed to fire only when the
-  base is not exported from its *module*. Confirm with
+  base is not exported from its _module_. Confirm with
   `ngc -p libs/table/tsconfig.lib.json` after writing the base.
 - That host bindings on a selectorless abstract class that call `protected abstract` members
   type-check clean. The type-check path accepts a `null` selector
@@ -240,45 +246,45 @@ its own selector, its disabled/`aria-hidden` branch and its dev throw, per D1 an
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://angular.dev/guide/directives/directive-composition-api | live 2026-10-02 | yes — page fetch; dedup sentence matches R2, override sentence matches R6 |
-| S2 | https://angular.dev/guide/components/host-elements | live 2026-10-02 | yes — page fetch; gave the static-vs-dynamic rule that changes D7's binding form |
-| S3 | https://angular.dev/style-guide | live 2026-10-02 | yes — page fetch; has the `inject()` rule, no guidance on inheritance or composition |
-| S4 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-collapsible.mjs | 0.130.3 | yes — read; the "functional" trigger is still a class directive wrapping a function |
-| S5 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-state.mjs | 0.130.3 | yes — read `attrBinding`/`dataBinding`/`isomorphicEffect`/`listener`; DOM writes go through effects |
-| S6 | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-state.mjs (`createPrimitive`) | 0.130.3 | yes — read |
-| S7 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/accordion.mjs | 22.2.1 | yes — read export line, imports, host metadata; `_pattern` detail is a summary |
-| S8 | https://unpkg.com/ng-packagr@22.2.4/src/lib/ts/tsconfig.js | 22.2.4 | yes — read `initializeTsConfig` overrides; this made NG3001 a real risk instead of a theoretical one |
-| S9 | https://registry.npmjs.org/ng-packagr/latest | 22.2.4 | yes — fetched |
-| S10 | https://briantree.se/angular-host-directives-deduplicate-shared-directives/ | — | no — cited only (search result) |
-| R1 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10490-10504 | 22.1.2 | yes — read |
-| R2 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10548-10562 | 22.1.2 | yes — read; corrects the older "NG0309 on double match" belief |
-| R3 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10563-10574 | 22.1.2 | yes — read |
-| R4 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10607-10620 | 22.1.2 | yes — read |
-| R5 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:8679-8697 | 22.1.2 | yes — read (and `assertNoDuplicateDirectives` at 8926-8937) |
-| R6 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10505-10533 | 22.1.2 | yes — read; host directives pushed before matches |
-| R7 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:8716-8767 | 22.1.2 | yes — read |
-| R8 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:709-723 | 22.1.2 | yes — read |
-| R9 | node_modules/@angular/core/fesm2022/_pending_tasks-chunk.mjs:519-522 | 22.1.2 | yes — read (code -200) |
-| R10 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10640-10692 | 22.1.2 | yes — read |
-| R11 | node_modules/@angular/core/fesm2022/_debug_node-chunk.mjs:10748-10758 | 22.1.2 | yes — read |
-| R12 | node_modules/@angular/core/types/_debug_node-chunk.d.ts:6519-6533 | 22.1.2 | yes — read |
-| R13 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:2056-2100 | 22.1.2 | yes — read |
-| R14 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:5155-5161 | 22.1.2 | yes — read |
-| R15 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:5521-5538 | 22.1.2 | yes — read |
-| R16 | node_modules/@angular/compiler-cli/bundles/chunk-GHRGMTHM.js:3258-3267 | 22.1.2 | yes — read; grep found the only other `referencesRegistry.add` at :6853 (NgModule exports) |
-| R17 | node_modules/@angular/compiler-cli/bundles/chunk-GHRGMTHM.js:3198-3209 | 22.1.2 | yes — read (NgModule case at :7137-7143) |
-| R18 | node_modules/@angular/compiler-cli/bundles/chunk-GHRGMTHM.js:3380-3396 | 22.1.2 | yes — read; the finding that rules out (4) |
-| R19 | node_modules/@angular/language-service/bundles/language-service.js:38484-38485 | 22.1.2 | yes — read |
-| R20 | node_modules/@angular/compiler-cli/bundles/chunk-A2CBMQIU.js:2563-2573 | 22.1.2 | yes — read |
-| R21 | node_modules/@angular/compiler/fesm2022/compiler.mjs:26192-26209 | 22.1.2 | yes — read |
-| R22 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:5174 | 22.1.2 | yes — read |
-| R23 | libs/table/tsconfig.json:27-33 | — | yes — read |
-| R24 | libs/table/project.json:28-37 | — | yes — read |
-| R25 | libs/table/src/directives/ngp-table-tree-toggle.directive.ts:54-89 | — | yes — read |
-| R26 | libs/table/docs/3-ui/directives/expansion.md:325 | — | yes — read |
-| R27 | libs/table/docs/decisions/tree.md:89 | — | yes — read |
-| R28 | libs/table/CLAUDE.md:84 | — | yes — read ("`hostDirectives` only for unconditional or internal-mechanism behavior") |
-| R29 | node_modules/@angular/core/types/core.d.ts:4386 | 22.1.2 | yes — grep `declare function \w*[Hh]ost\w*`; the only other matches are `ɵɵ`/`getHostElement` at :4735, :5707, :5857 |
-| R30 | libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core/1-decisions.md:14-22 | — | yes — read |
+|     | Source                                                                                       | Version         | Verified                                                                                                             |
+| --- | -------------------------------------------------------------------------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------- |
+| S1  | https://angular.dev/guide/directives/directive-composition-api                               | live 2026-10-02 | yes — page fetch; dedup sentence matches R2, override sentence matches R6                                            |
+| S2  | https://angular.dev/guide/components/host-elements                                           | live 2026-10-02 | yes — page fetch; gave the static-vs-dynamic rule that changes D7's binding form                                     |
+| S3  | https://angular.dev/style-guide                                                              | live 2026-10-02 | yes — page fetch; has the `inject()` rule, no guidance on inheritance or composition                                 |
+| S4  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-collapsible.mjs               | 0.130.3         | yes — read; the "functional" trigger is still a class directive wrapping a function                                  |
+| S5  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-state.mjs                     | 0.130.3         | yes — read `attrBinding`/`dataBinding`/`isomorphicEffect`/`listener`; DOM writes go through effects                  |
+| S6  | https://unpkg.com/ng-primitives@0.130.3/fesm2022/ng-primitives-state.mjs (`createPrimitive`) | 0.130.3         | yes — read                                                                                                           |
+| S7  | https://unpkg.com/@angular/aria@22.2.1/fesm2022/accordion.mjs                                | 22.2.1          | yes — read export line, imports, host metadata; `_pattern` detail is a summary                                       |
+| S8  | https://unpkg.com/ng-packagr@22.2.4/src/lib/ts/tsconfig.js                                   | 22.2.4          | yes — read `initializeTsConfig` overrides; this made NG3001 a real risk instead of a theoretical one                 |
+| S9  | https://registry.npmjs.org/ng-packagr/latest                                                 | 22.2.4          | yes — fetched                                                                                                        |
+| S10 | https://briantree.se/angular-host-directives-deduplicate-shared-directives/                  | —               | no — cited only (search result)                                                                                      |
+| R1  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10490-10504                       | 22.1.2          | yes — read                                                                                                           |
+| R2  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10548-10562                       | 22.1.2          | yes — read; corrects the older "NG0309 on double match" belief                                                       |
+| R3  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10563-10574                       | 22.1.2          | yes — read                                                                                                           |
+| R4  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10607-10620                       | 22.1.2          | yes — read                                                                                                           |
+| R5  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:8679-8697                         | 22.1.2          | yes — read (and `assertNoDuplicateDirectives` at 8926-8937)                                                          |
+| R6  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10505-10533                       | 22.1.2          | yes — read; host directives pushed before matches                                                                    |
+| R7  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:8716-8767                         | 22.1.2          | yes — read                                                                                                           |
+| R8  | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:709-723                           | 22.1.2          | yes — read                                                                                                           |
+| R9  | node_modules/@angular/core/fesm2022/\_pending_tasks-chunk.mjs:519-522                        | 22.1.2          | yes — read (code -200)                                                                                               |
+| R10 | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10640-10692                       | 22.1.2          | yes — read                                                                                                           |
+| R11 | node_modules/@angular/core/fesm2022/\_debug_node-chunk.mjs:10748-10758                       | 22.1.2          | yes — read                                                                                                           |
+| R12 | node_modules/@angular/core/types/\_debug_node-chunk.d.ts:6519-6533                           | 22.1.2          | yes — read                                                                                                           |
+| R13 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:2056-2100                       | 22.1.2          | yes — read                                                                                                           |
+| R14 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:5155-5161                       | 22.1.2          | yes — read                                                                                                           |
+| R15 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:5521-5538                       | 22.1.2          | yes — read                                                                                                           |
+| R16 | node_modules/@angular/compiler-cli/bundles/chunk-GHRGMTHM.js:3258-3267                       | 22.1.2          | yes — read; grep found the only other `referencesRegistry.add` at :6853 (NgModule exports)                           |
+| R17 | node_modules/@angular/compiler-cli/bundles/chunk-GHRGMTHM.js:3198-3209                       | 22.1.2          | yes — read (NgModule case at :7137-7143)                                                                             |
+| R18 | node_modules/@angular/compiler-cli/bundles/chunk-GHRGMTHM.js:3380-3396                       | 22.1.2          | yes — read; the finding that rules out (4)                                                                           |
+| R19 | node_modules/@angular/language-service/bundles/language-service.js:38484-38485               | 22.1.2          | yes — read                                                                                                           |
+| R20 | node_modules/@angular/compiler-cli/bundles/chunk-A2CBMQIU.js:2563-2573                       | 22.1.2          | yes — read                                                                                                           |
+| R21 | node_modules/@angular/compiler/fesm2022/compiler.mjs:26192-26209                             | 22.1.2          | yes — read                                                                                                           |
+| R22 | node_modules/@angular/compiler-cli/bundles/chunk-B4766EOF.js:5174                            | 22.1.2          | yes — read                                                                                                           |
+| R23 | libs/table/tsconfig.json:27-33                                                               | —               | yes — read                                                                                                           |
+| R24 | libs/table/project.json:28-37                                                                | —               | yes — read                                                                                                           |
+| R25 | libs/table/src/directives/ngp-table-tree-toggle.directive.ts:54-89                           | —               | yes — read                                                                                                           |
+| R26 | libs/table/docs/3-ui/directives/expansion.md:325                                             | —               | yes — read                                                                                                           |
+| R27 | libs/table/docs/decisions/tree.md:89                                                         | —               | yes — read                                                                                                           |
+| R28 | libs/table/CLAUDE.md:84                                                                      | —               | yes — read ("`hostDirectives` only for unconditional or internal-mechanism behavior")                                |
+| R29 | node_modules/@angular/core/types/core.d.ts:4386                                              | 22.1.2          | yes — grep `declare function \w*[Hh]ost\w*`; the only other matches are `ɵɵ`/`getHostElement` at :4735, :5707, :5857 |
+| R30 | libs/table/docs/3-ui/work/directive-api-surface/active/collapsible-core/1-decisions.md:14-22 | —               | yes — read                                                                                                           |

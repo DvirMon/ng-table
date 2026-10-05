@@ -10,7 +10,7 @@ parent: ../architecture.md
 
 # Tier 1 — Intrinsic (column-owned)
 
-**No store feature exists for these; the column definition is their sole home.** Present on *every*
+**No store feature exists for these; the column definition is their sole home.** Present on _every_
 column, always, with a default. The column schema exists to manage them. This is the first-impl
 scope. Read [Ownership model](ownership-model.md) first — every function below is seed-or-rule.
 
@@ -19,7 +19,7 @@ scope. Read [Ownership model](ownership-model.md) first — every function below
 ```ts
 export function visible<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K>,
-  visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean }
+  visible: { when: (ctx: ColumnRuleContext<TRow>) => boolean },
 ): void;
 
 export function visibleAsync<TRow, K extends Extract<keyof TRow, string>, TParams, TResult>(
@@ -29,13 +29,13 @@ export function visibleAsync<TRow, K extends Extract<keyof TRow, string>, TParam
     factory: (params: Signal<TParams | undefined>) => ResourceRef<TResult | undefined>;
     onSuccess: (result: TResult) => boolean;
     onError?: (error: unknown) => boolean;
-  }
+  },
 ): void;
 ```
 
 - **Concern:** column `visible` state — whether the column renders.
 - **Default / static override:** `visible: true`, set directly on `col()` (`col('x', { visible:
-  false })`) — not through the schema. `visible` only exists for the reactive case.
+false })`) — not through the schema. `visible` only exists for the reactive case.
 - **AG-Grid analog:** `hide` field + `_setColsVisible` (visibility can't change membership/order, so
   it skips the full rebuild).
 - **Async semantics:** mirrors Signal Forms' `validateAsync` (`params` / `factory` / `onSuccess` /
@@ -49,7 +49,7 @@ export function visibleAsync<TRow, K extends Extract<keyof TRow, string>, TParam
 filtering or sorting reads without ever rendering a cell for it.
 
 ```ts
-col('ownerName', { accessor: (r) => r.owner.name, visible: false })
+col('ownerName', { accessor: (r) => r.owner.name, visible: false });
 ```
 
 See [ADR-0024](../../adr/0024-single-value-source-accessor.md). Other docs that mention a carrier
@@ -77,11 +77,12 @@ template must honor, not a guarantee the engine withholds the value.
 
   ```html
   @for (column of visibleColumns(); track column.id) {
-    <td>{{ row.cells[column.id] | dealAmount }}</td>
+  <td>{{ row.cells[column.id] | dealAmount }}</td>
   }
   ```
 
   See [ADR-0022](../../adr/0022-render-row-cell-values.md).
+
 - **Values are raw.** Formatting is a pipe's job, not the engine's. `grouping-story.pipes.ts` is
   the worked example: one pure pipe per concern, each taking `unknown` because `accessor`'s return
   type is erased.
@@ -90,7 +91,7 @@ template must honor, not a guarantee the engine withholds the value.
   evaluation — it never takes the table down.
 - **Ids must be unique.** `cells` is keyed by column id, so two columns sharing an id collapse to
   last-wins and both cells render the same value. `resolveColumnDefs` throws on this under
-  `ngDevMode` (ADR-0022, D10). Two columns sharing an `accessor` under *different* ids stays legal
+  `ngDevMode` (ADR-0022, D10). Two columns sharing an `accessor` under _different_ ids stays legal
   — the supported way to show one field twice.
 - **`accessor` is not in the grouping path.** A grouping level names a row field and reads it by
   bracket access; value narrowing there is the rule's own `groupKey` (D9), not the column's
@@ -116,14 +117,14 @@ See [ownership-model.md](ownership-model.md#columnsschema-is-reactiveasync-only-
 
 ## Summary
 
-| Function | Concern | AG-Grid analog | Static override | Reactive/async |
-|---|---|---|---|---|
-| `visible` (+`visibleAsync`) | show / hide | `hide`, `_setColsVisible` | `col()` `visible` field, default `true` | ✅ schema |
-| ~~`applyOrder`~~ | display order | `colsList` reorder | builder-array position / index default | ❌ removed — no schema path |
-| ~~`applyAccessor`~~ | row → value derivation | `valueGetter` | `col()` `accessor` field, default `(row) => row[id]` | ❌ no schema path — builder-only, static |
-| ~~`applyLabel`~~ | header text | `headerName` | `col()` `label` field, default `id` | ❌ no schema path — builder-only, static |
+| Function                    | Concern                | AG-Grid analog            | Static override                                      | Reactive/async                           |
+| --------------------------- | ---------------------- | ------------------------- | ---------------------------------------------------- | ---------------------------------------- |
+| `visible` (+`visibleAsync`) | show / hide            | `hide`, `_setColsVisible` | `col()` `visible` field, default `true`              | ✅ schema                                |
+| ~~`applyOrder`~~            | display order          | `colsList` reorder        | builder-array position / index default               | ❌ removed — no schema path              |
+| ~~`applyAccessor`~~         | row → value derivation | `valueGetter`             | `col()` `accessor` field, default `(row) => row[id]` | ❌ no schema path — builder-only, static |
+| ~~`applyLabel`~~            | header text            | `headerName`              | `col()` `label` field, default `id`                  | ❌ no schema path — builder-only, static |
 
 ## Open questions (Tier 1)
 
 - [x] **~~Reactive `applyOrder` demand.~~** RESOLVED 2026-07-25 by removing `applyOrder` — no case
-  ever surfaced, so the question is moot rather than answered either way.
+      ever surfaced, so the question is moot rather than answered either way.

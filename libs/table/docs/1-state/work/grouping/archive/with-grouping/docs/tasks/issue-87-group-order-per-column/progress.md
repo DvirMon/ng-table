@@ -3,15 +3,15 @@
 **Issue:** #87
 **Status:** 7 / 7 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | GroupOrder type, GroupOrderRule, and the per-column collector | ✅ done | — |
-| 2 | `applyGroupOrder(path.x, cmp)` schema sugar | ✅ done | — |
-| 3 | Engine: `sortClusters` resolves its comparator per column | ✅ done | — |
-| 4 | `withGrouping()`: drop `config.groupOrder`, collect per-column comparators | ✅ done | — |
-| 5 | Migrate `grouping-regressions` story to `applyGroupOrder` | ✅ done | — |
-| 6 | Tests: per-column `sortClusters`, `applyGroupOrder` through the public surface | ✅ done | — |
-| 7 | Documentation: `applyGroupOrder` replaces `config.groupOrder` | ✅ done | — |
+| Step | Title                                                                          | Status  | PR  |
+| ---- | ------------------------------------------------------------------------------ | ------- | --- |
+| 1    | GroupOrder type, GroupOrderRule, and the per-column collector                  | ✅ done | —   |
+| 2    | `applyGroupOrder(path.x, cmp)` schema sugar                                    | ✅ done | —   |
+| 3    | Engine: `sortClusters` resolves its comparator per column                      | ✅ done | —   |
+| 4    | `withGrouping()`: drop `config.groupOrder`, collect per-column comparators     | ✅ done | —   |
+| 5    | Migrate `grouping-regressions` story to `applyGroupOrder`                      | ✅ done | —   |
+| 6    | Tests: per-column `sortClusters`, `applyGroupOrder` through the public surface | ✅ done | —   |
+| 7    | Documentation: `applyGroupOrder` replaces `config.groupOrder`                  | ✅ done | —   |
 
 **Verification note:** per repo policy, `nx test shared-table` is not run locally during
 implementation — each step's acceptance checks that depend on it stay unverified until CI runs

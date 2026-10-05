@@ -37,7 +37,7 @@ describe('resolveColumnDefs', () => {
   it('keeps explicitly provided values', () => {
     const [column] = resolveColumnDefs<Person>(
       [{ id: 'name', visible: false, order: 7, label: 'Full name' }],
-      'createTable'
+      'createTable',
     );
 
     expect(column).toMatchObject({ visible: false, order: 7, label: 'Full name' });
@@ -45,9 +45,9 @@ describe('resolveColumnDefs', () => {
 
   it('throws with the exact D10 message when two columns share an id', () => {
     expect(() =>
-      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }], 'createTable')
+      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }], 'createTable'),
     ).toThrow(
-      '[createTable] Duplicate column id provided: "name" — ensure all column ids are unique.'
+      '[createTable] Duplicate column id provided: "name" — ensure all column ids are unique.',
     );
   });
 
@@ -55,10 +55,8 @@ describe('resolveColumnDefs', () => {
     // `setColumns` (`mutations/update-columns.ts`) calls `resolveColumnDefs(defs, 'setColumns')`
     // directly — this is that same call, proving the duplicate-id check still guards the
     // runtime write path, not just `createColumns()`'s construction-time check.
-    expect(() =>
-      resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }], 'setColumns')
-    ).toThrow(
-      '[setColumns] Duplicate column id provided: "name" — ensure all column ids are unique.'
+    expect(() => resolveColumnDefs<Person>([{ id: 'name' }, { id: 'name' }], 'setColumns')).toThrow(
+      '[setColumns] Duplicate column id provided: "name" — ensure all column ids are unique.',
     );
   });
 
@@ -71,14 +69,14 @@ describe('resolveColumnDefs', () => {
           { id: 'name', accessor: sharedAccessor },
           { id: 'fullName', accessor: sharedAccessor },
         ],
-        'createTable'
-      )
+        'createTable',
+      ),
     ).not.toThrow();
   });
 
   it('does not throw for a list with no duplicates', () => {
     expect(() =>
-      resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable')
+      resolveColumnDefs<Person>([{ id: 'id' }, { id: 'name' }], 'createTable'),
     ).not.toThrow();
   });
 
@@ -94,7 +92,7 @@ describe('resolveColumnDefs', () => {
             { id: 'name', label: 'First label' },
             { id: 'name', label: 'Second label' },
           ],
-          'createTable'
+          'createTable',
         );
       }).not.toThrow();
 
@@ -158,8 +156,11 @@ describe('column visibility', () => {
 describe('selectRenderColumns', () => {
   it('returns [] when every column is hidden', () => {
     const columns = resolveColumnDefs<Person>(
-      [{ id: 'id', visible: false }, { id: 'name', visible: false }],
-      'createTable'
+      [
+        { id: 'id', visible: false },
+        { id: 'name', visible: false },
+      ],
+      'createTable',
     );
 
     expect(selectRenderColumns(columns)).toEqual([]);
@@ -167,20 +168,23 @@ describe('selectRenderColumns', () => {
 
   it('keeps declaration order for columns with equal order (stable sort)', () => {
     const columns = resolveColumnDefs<Person>(
-      [{ id: 'id', order: 0 }, { id: 'name', order: 0 }],
-      'createTable'
+      [
+        { id: 'id', order: 0 },
+        { id: 'name', order: 0 },
+      ],
+      'createTable',
     );
 
-    expect(selectRenderColumns(columns).map((column) => column.id)).toEqual([
-      'id',
-      'name',
-    ]);
+    expect(selectRenderColumns(columns).map((column) => column.id)).toEqual(['id', 'name']);
   });
 
   it('does not mutate the input array or its elements', () => {
     const columns = resolveColumnDefs<Person>(
-      [{ id: 'id', order: 1 }, { id: 'name', order: 0 }],
-      'createTable'
+      [
+        { id: 'id', order: 1 },
+        { id: 'name', order: 0 },
+      ],
+      'createTable',
     );
     const snapshot = [...columns];
     const elements = columns.slice();
@@ -243,7 +247,7 @@ describe('foldColumnRules', () => {
   function metaRule(
     columnId: string,
     key: ColumnMetaKey<unknown>,
-    value: unknown
+    value: unknown,
   ): ColumnRuleEntry<Person> {
     return { columnId, key, result: signal(value).asReadonly() };
   }

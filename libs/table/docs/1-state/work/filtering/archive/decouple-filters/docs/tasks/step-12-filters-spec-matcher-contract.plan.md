@@ -8,13 +8,13 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/shared/table/docs/1-state/filters.md` | `:1-11` | edit — frontmatter `version`, `date` |
-| `libs/shared/table/docs/1-state/filters.md` | `:202-234` | edit — State: add `matcher()` to the root members |
-| `libs/shared/table/docs/1-state/filters.md` | `:336-344` | rewrite — Wiring → Client |
+| File                                        | Line       | Action                                                    |
+| ------------------------------------------- | ---------- | --------------------------------------------------------- |
+| `libs/shared/table/docs/1-state/filters.md` | `:1-11`    | edit — frontmatter `version`, `date`                      |
+| `libs/shared/table/docs/1-state/filters.md` | `:202-234` | edit — State: add `matcher()` to the root members         |
+| `libs/shared/table/docs/1-state/filters.md` | `:336-344` | rewrite — Wiring → Client                                 |
 | `libs/shared/table/docs/1-state/filters.md` | `:422-444` | edit — Semantics: the one-call-is-one-evaluation boundary |
-| `libs/shared/table/docs/1-state/filters.md` | `:506-529` | edit — Public API table: post-move paths, barrel claim |
+| `libs/shared/table/docs/1-state/filters.md` | `:506-529` | edit — Public API table: post-move paths, barrel claim    |
 
 ## Why This Step Exists
 
@@ -31,11 +31,11 @@ predicate) and **its evaluation boundary** (one call is one evaluation).
 alongside `value`, `active()`, `reset()` and `dirty()`:
 
 ```ts
-filters().matcher()             // (row: TRow) => boolean, compiled from the current criteria
+filters().matcher(); // (row: TRow) => boolean, compiled from the current criteria
 ```
 
-| Member | Purpose |
-|---|---|
+| Member      | Purpose                                                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `matcher()` | a row predicate compiled from the model's current criteria — the model's answer to "does this row match?", usable with or without a table |
 
 State why it is on the root rather than as a top-level member: `Filters` is an intersection whose
@@ -59,8 +59,11 @@ makes the reporting behavior identical to before the decoupling.
 Replace with the composition expression:
 
 ```ts
-createTable(data, { trackBy: 'id', columns },
-  withFiltering({ predicates: () => [this.filters().matcher()] }));
+createTable(
+  data,
+  { trackBy: 'id', columns },
+  withFiltering({ predicates: () => [this.filters().matcher()] }),
+);
 ```
 
 Add the sentence this section now earns: neither side imports the other — the table never learns
@@ -116,4 +119,5 @@ are expand–contract scaffolding from a change that has now fully landed.
 - [ ] No source file is edited by this step
 
 ---
+
 ← [Step 11: Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md) | [Step 13: Split the older workspace's pointers and regenerate the roll-up](step-13-split-pointers-regenerate.plan.md) →

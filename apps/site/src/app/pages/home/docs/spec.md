@@ -19,27 +19,27 @@ Reference for structure and section order: `angularprimitives.com`.
 
 ## What it drops
 
-| Region | On docs pages | Here |
-| --- | --- | --- |
-| `sidebar` | Left column, 270px | **Absent.** No hamburger below `md` either — there is no tree to open. |
-| `toc` | Right column, 220px | **Absent.** |
-| Page grid | 3 columns, 1440px max | **Absent.** Full-width sections, each with its own inner max-width. |
-| Navbar surface | `--ngpt-bg-deep`, bottom border, sticky | **Sticky, but two-state.** Over the band it is the band's own color with no border; past 24px of scroll it becomes `--ngpt-navbar-scrolled` (`#18181C`) with a `--ngpt-border-subtle` bottom edge and a soft shadow. |
-| `category-badge` eyebrow | Section name | Used as the section eyebrow (see below), not as a page eyebrow. |
-| `pagination` | Prev/next | **Absent.** Home is not in the nav tree order. |
+| Region                   | On docs pages                           | Here                                                                                                                                                                                                                 |
+| ------------------------ | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidebar`                | Left column, 270px                      | **Absent.** No hamburger below `md` either — there is no tree to open.                                                                                                                                               |
+| `toc`                    | Right column, 220px                     | **Absent.**                                                                                                                                                                                                          |
+| Page grid                | 3 columns, 1440px max                   | **Absent.** Full-width sections, each with its own inner max-width.                                                                                                                                                  |
+| Navbar surface           | `--ngpt-bg-deep`, bottom border, sticky | **Sticky, but two-state.** Over the band it is the band's own color with no border; past 24px of scroll it becomes `--ngpt-navbar-scrolled` (`#18181C`) with a `--ngpt-border-subtle` bottom edge and a soft shadow. |
+| `category-badge` eyebrow | Section name                            | Used as the section eyebrow (see below), not as a page eyebrow.                                                                                                                                                      |
+| `pagination`             | Prev/next                               | **Absent.** Home is not in the nav tree order.                                                                                                                                                                       |
 
 Kept: `navbar` (with search) and `page-footer`.
 
 ## Slots
 
-| Order | Slot | Component | Page-only decision |
-| --- | --- | --- | --- |
-| 1 | shell | — | Full-width vertical stack. Not `page-shell`'s grid. |
-| 2 | header | `navbar` | **Sticky, two-state** — band-colored over the hero, `--ngpt-navbar-scrolled` once scrolled. Inner row at the 1080px wide measure so the logo aligns with the hero copy. Contents: search field, **Documentation**, **GitHub** — no Sponsor pill, no status dot, no Discord; those stay on the docs bar. No hamburger. Links are unfilled — a darkening pill on hover only. |
-| 3 | hero | page-local | Full-bleed `--ngpt-accent-surface` band — see below |
-| 4 | features | page-local | See below |
-| 5 | install | `prose` H2 + one paragraph + a command row | Single shell line with a 30×30 copy `icon-button` on its right, inside one bordered surface. No line numbers. |
-| 6 | footer | `page-footer` | Gains a link row (Sponsor / Discord / GitHub) above the copyright line |
+| Order | Slot     | Component                                  | Page-only decision                                                                                                                                                                                                                                                                                                                                                         |
+| ----- | -------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | shell    | —                                          | Full-width vertical stack. Not `page-shell`'s grid.                                                                                                                                                                                                                                                                                                                        |
+| 2     | header   | `navbar`                                   | **Sticky, two-state** — band-colored over the hero, `--ngpt-navbar-scrolled` once scrolled. Inner row at the 1080px wide measure so the logo aligns with the hero copy. Contents: search field, **Documentation**, **GitHub** — no Sponsor pill, no status dot, no Discord; those stay on the docs bar. No hamburger. Links are unfilled — a darkening pill on hover only. |
+| 3     | hero     | page-local                                 | Full-bleed `--ngpt-accent-surface` band — see below                                                                                                                                                                                                                                                                                                                        |
+| 4     | features | page-local                                 | See below                                                                                                                                                                                                                                                                                                                                                                  |
+| 5     | install  | `prose` H2 + one paragraph + a command row | Single shell line with a 30×30 copy `icon-button` on its right, inside one bordered surface. No line numbers.                                                                                                                                                                                                                                                              |
+| 6     | footer   | `page-footer`                              | Gains a link row (Sponsor / Discord / GitHub) above the copyright line                                                                                                                                                                                                                                                                                                     |
 
 **Four sections, not seven.** A logo row and a testimonial grid were specified and are now **cut** —
 both needed assets that do not exist (monochrome company logos, real avatars and real quotes), and a
@@ -70,9 +70,9 @@ block inside the wide measure, which put section headings 65px right of the H1 a
 13px left of both — three rails in one scroll. A centered inner measure cannot share a left edge with
 the thing above it; only a cap can.
 
-| Measure | Value | Applies to |
-| --- | --- | --- |
-| Wide | 1080px, centered | Every section's content box |
+| Measure   | Value                | Applies to                                |
+| --------- | -------------------- | ----------------------------------------- |
+| Wide      | 1080px, centered     | Every section's content box               |
 | Prose cap | 720px, from the rail | Headings, paragraphs, the install command |
 
 Section padding is `clamp(64px, 8vw, 96px)` vertical.
@@ -105,7 +105,7 @@ the page's one block of color and the reason no other section is tinted.
 - **Navbar links carry no fill or border.** White label on the band, and on hover a pill that **darkens**
   the band (`oklch(0 0 0 / 0.15)`) rather than lightening it. A solid pill here competes with the hero's
   primary action, which is the one filled thing on the band. The fill darkens for the same reason the
-  announcement pill does: a translucent *white* fill raises the local background and drops the white
+  announcement pill does: a translucent _white_ fill raises the local background and drops the white
   label to 3.84:1, below AA. Darkening takes it to 6.17:1.
 - A large soft white shape (`oklch(1 0 0 / 0.07)`, ~28% radius) sits to the right of the copy, bleeding
   off the top-right. Its clearance is **structural, not coincidental**: it is anchored by its left edge
@@ -137,7 +137,7 @@ for this band.
 
 Body copy on the band is **full white**, never a reduced alpha — `oklch(1 0 0 / 0.85)` measured 3.19:1
 and failed. The announcement pill darkens its fill (`oklch(0 0 0 / 0.15)`) rather than lightening it,
-for the same reason: a translucent *white* fill raises the local background and drops the label's
+for the same reason: a translucent _white_ fill raises the local background and drops the label's
 contrast below AA.
 
 **Height.** The band is tight — `clamp(28px, 3.5vw, 44px)` top padding and `clamp(32px, 4vw, 52px)`
@@ -166,11 +166,11 @@ on the left (`overflow-x: auto`, `min-width: 0` so it scrolls rather than pushin
 The button is a 30×30 `icon-button` — glyph only, no text label. It has **three states**, and every one
 of them is visible:
 
-| State | Glyph | Color |
-| --- | --- | --- |
-| idle | copy | `--ngpt-text-secondary` |
+| State  | Glyph | Color                   |
+| ------ | ----- | ----------------------- |
+| idle   | copy  | `--ngpt-text-secondary` |
 | copied | check | `--ngpt-status-success` |
-| failed | alert | `--ngpt-status-error` |
+| failed | alert | `--ngpt-status-error`   |
 
 The non-idle states hold for `--ngpt-comp-icon-btn-confirm-hold` (1400ms), then revert — the same hold
 every copy affordance in the system uses (`foundations/Motion.md` § Per-pattern table). The states and

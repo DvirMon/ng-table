@@ -7,6 +7,7 @@ files:
   - libs/table/src/api/features/with-filtering/tree-retention.ts (new)
   - libs/table/src/api/features/with-filtering/tree-retention.spec.ts (new)
 ---
+
 # Step 3 — Tree retention helper
 
 This step adds a pure helper that keeps each matching row with its ancestors.
@@ -49,4 +50,5 @@ Decisions: [D5, D7](../../1-decisions.md)
 - [ ] Every seam in the test plan passes.
 
 ---
+
 ← [Step 2: Compose context rows](step-2-compose-context-rows.plan.md) | [Step 4: Filter keeps ancestors](step-4-filter-keeps-ancestors.plan.md) →

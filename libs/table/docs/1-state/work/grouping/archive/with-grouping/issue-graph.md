@@ -6,13 +6,13 @@ shipped-API amendments the shape carries.
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#84](https://github.com/DvirMon/ng-table/issues/84) | `withGrouping()` takes initial levels and a rules schema in one config | 🟡 OPEN | — | #85, #86, #87 |
-| [#85](https://github.com/DvirMon/ng-table/issues/85) | Rows with no group value stay flat — table-wide `groupWhen` | 🟡 OPEN | #84 | #86, #87 |
-| [#86](https://github.com/DvirMon/ng-table/issues/86) | A grouping threshold per column — `groupWhen` on `applyGrouping` | 🟡 OPEN | #85, #84 | #88 |
-| [#87](https://github.com/DvirMon/ng-table/issues/87) | Order groups per column — `applyGroupOrder` replaces `config.groupOrder` | ✅ CLOSED | #85, #84 | #88 |
-| [#88](https://github.com/DvirMon/ng-table/issues/88) | State what happens to missing group values and one-row groups (OQ-5, OQ-6) | 🟡 OPEN | #86, #87 | — |
+| #                                                    | Title                                                                      | State     | Depends on | Blocks        |
+| ---------------------------------------------------- | -------------------------------------------------------------------------- | --------- | ---------- | ------------- |
+| [#84](https://github.com/DvirMon/ng-table/issues/84) | `withGrouping()` takes initial levels and a rules schema in one config     | 🟡 OPEN   | —          | #85, #86, #87 |
+| [#85](https://github.com/DvirMon/ng-table/issues/85) | Rows with no group value stay flat — table-wide `groupWhen`                | 🟡 OPEN   | #84        | #86, #87      |
+| [#86](https://github.com/DvirMon/ng-table/issues/86) | A grouping threshold per column — `groupWhen` on `applyGrouping`           | 🟡 OPEN   | #85, #84   | #88           |
+| [#87](https://github.com/DvirMon/ng-table/issues/87) | Order groups per column — `applyGroupOrder` replaces `config.groupOrder`   | ✅ CLOSED | #85, #84   | #88           |
+| [#88](https://github.com/DvirMon/ng-table/issues/88) | State what happens to missing group values and one-row groups (OQ-5, OQ-6) | 🟡 OPEN   | #86, #87   | —             |
 
 ## Graph
 

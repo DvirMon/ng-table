@@ -51,7 +51,7 @@ interface FilterState<TCriterion> {
  *  `features/filtering.md`'s "State" and "Sources" sections. `dirty` is a `computed()`, never a
  *  stored flag. */
 export function buildFilterState<TCriterion>(
-  record: FilterRuleRecord<unknown, unknown, TCriterion>
+  record: FilterRuleRecord<unknown, unknown, TCriterion>,
 ): FilterState<TCriterion> {
   const emptyValue = record.emptyValue;
   const source = record.options?.source;
@@ -93,7 +93,7 @@ export function buildFilterState<TCriterion>(
 export function gateByCondition<TRow, TCriterion>(
   base: FilterNode<TCriterion>,
   condition: (ctx: FilterValueOfContext<TRow>) => boolean,
-  ctx: FilterValueOfContext<TRow>
+  ctx: FilterValueOfContext<TRow>,
 ): FilterNode<TCriterion> {
   const criterion = computed(() => (condition(ctx) ? base.criterion() : undefined));
 
@@ -122,7 +122,7 @@ export function gateByCondition<TRow, TCriterion>(
  * satisfy the interface structurally. Angular hits the same wall and is simply untyped there.
  */
 function createRootValueSignal<TState extends Record<string, unknown>>(
-  nodesByKey: ReadonlyMap<string, FilterNode<unknown>>
+  nodesByKey: ReadonlyMap<string, FilterNode<unknown>>,
 ): WritableSignal<TState> {
   const read = computed(() => {
     const result: Record<string, unknown> = {};
@@ -156,7 +156,7 @@ function createRootValueSignal<TState extends Record<string, unknown>>(
 }
 
 export function buildFiltersRoot<TRow, TState extends Record<string, unknown>>(
-  internal: FiltersInternal<TRow>
+  internal: FiltersInternal<TRow>,
 ): FiltersRoot<TRow, TState> {
   const { nodesByKey } = internal;
 
@@ -221,7 +221,7 @@ export function buildFiltersRoot<TRow, TState extends Record<string, unknown>>(
  *  state. Each indexed property returns a *function* yielding the node (`filters.status()` →
  *  node), per `Filters<TRow, TState>`'s mapped-type shape. */
 export function buildFiltersObject<TRow, TState extends Record<string, unknown>>(
-  internal: FiltersInternal<TRow>
+  internal: FiltersInternal<TRow>,
 ): Filters<TRow, TState> {
   const root = buildFiltersRoot<TRow, TState>(internal);
   const callable = ((): FiltersRoot<TRow, TState> => root) as Filters<TRow, TState>;

@@ -10,7 +10,7 @@ export function buildRevealedIds<TRow>(
   contextRowIds: ReadonlySet<RowId>,
   rows: readonly TRow[],
   trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): Set<RowId> {
   const revealed = new Set<RowId>();
   if (contextRowIds.size === 0) {
@@ -24,7 +24,7 @@ export function buildRevealedIds<TRow>(
         reported,
         '[withTree] revealContextRow threw. The affected row(s) are revealed for this ' +
           'evaluation.',
-        true
+        true,
       )
     : () => true;
   for (const row of rows) {
@@ -39,7 +39,7 @@ export function buildRevealedIds<TRow>(
 // Revealed rows the person closed. Keeps only ids still in the context set, so a row that stops
 // being a context row is revealed again when it returns. Recomputes on read: always read it.
 export function createClosedWhileRevealed(
-  contextRowIds: () => ReadonlySet<RowId>
+  contextRowIds: () => ReadonlySet<RowId>,
 ): WritableSignal<ReadonlySet<RowId>> {
   return linkedSignal<ReadonlySet<RowId>, ReadonlySet<RowId>>({
     source: contextRowIds,

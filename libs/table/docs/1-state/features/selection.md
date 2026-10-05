@@ -28,8 +28,8 @@ Full decision record: [`work/with-selection/2-decisions.md`](../work/with-select
 
 ```ts
 interface WithSelectionConfig<TRow> {
-  enableRowSelection?: boolean | ((row: TRow) => boolean);        // default true
-  enableMultiRowSelection?: boolean | ((row: TRow) => boolean);   // default true
+  enableRowSelection?: boolean | ((row: TRow) => boolean); // default true
+  enableMultiRowSelection?: boolean | ((row: TRow) => boolean); // default true
   initialSelection?: RowId[];
 }
 
@@ -39,7 +39,7 @@ interface SelectionChange {
 }
 
 interface SelectionWriteOptions {
-  emitEvent?: boolean;                                            // default true
+  emitEvent?: boolean; // default true
 }
 ```
 
@@ -62,14 +62,14 @@ interface SelectionMembers {
 }
 ```
 
-| Method | Description |
-|---|---|
-| `toggle(id, opts?)` | Adds `id` if absent, removes it if present. Subject to the multi-select rule (see below) when adding. |
-| `select(ids, opts?)` | Bulk add in one write; duplicate ids collapse (D15). |
-| `deselect(ids, opts?)` | Bulk remove in one write; never subject to the multi-select rule — removal can't violate single-select. |
-| `clearSelection(opts?)` | Empties the set. |
-| `selectionStateOf(ids)` | `'none' \| 'some' \| 'all'` for exactly the given id set (D7) — the caller supplies the denominator; unaffected by selection state on ids outside it. |
-| `isSelectable(id)` | The `enableRowSelection` predicate, read-side, for one id (D61). Permissive for an id that resolves to no row (D8). Lets a caller pre-filter its own denominator against the same rule `select()` enforces, instead of duplicating `enableRowSelection`'s logic. |
+| Method                  | Description                                                                                                                                                                                                                                                      |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `toggle(id, opts?)`     | Adds `id` if absent, removes it if present. Subject to the multi-select rule (see below) when adding.                                                                                                                                                            |
+| `select(ids, opts?)`    | Bulk add in one write; duplicate ids collapse (D15).                                                                                                                                                                                                             |
+| `deselect(ids, opts?)`  | Bulk remove in one write; never subject to the multi-select rule — removal can't violate single-select.                                                                                                                                                          |
+| `clearSelection(opts?)` | Empties the set.                                                                                                                                                                                                                                                 |
+| `selectionStateOf(ids)` | `'none' \| 'some' \| 'all'` for exactly the given id set (D7) — the caller supplies the denominator; unaffected by selection state on ids outside it.                                                                                                            |
+| `isSelectable(id)`      | The `enableRowSelection` predicate, read-side, for one id (D61). Permissive for an id that resolves to no row (D8). Lets a caller pre-filter its own denominator against the same rule `select()` enforces, instead of duplicating `enableRowSelection`'s logic. |
 
 Every write verb never checks whether an id is data-backed — an unknown id still
 toggles/selects, and both the row-selection and multi-select predicates default permissive when
@@ -78,8 +78,8 @@ no row resolves (D8).
 ## `enableRowSelection` Contract
 
 ```ts
-withSelection({ enableRowSelection: false })                          // no row selectable
-withSelection({ enableRowSelection: (row) => row.status !== 'locked' }) // per-row exception
+withSelection({ enableRowSelection: false }); // no row selectable
+withSelection({ enableRowSelection: (row) => row.status !== 'locked' }); // per-row exception
 ```
 
 D58 (#29). A rule on the write verbs, never stored state — resolved per row, inside each write,
@@ -103,8 +103,8 @@ against the row(s) involved.
 ## `enableMultiRowSelection` Contract
 
 ```ts
-withSelection({ enableMultiRowSelection: false })                       // table-wide single-select
-withSelection({ enableMultiRowSelection: (row) => row.status !== 'draft' }) // per-row exception
+withSelection({ enableMultiRowSelection: false }); // table-wide single-select
+withSelection({ enableMultiRowSelection: (row) => row.status !== 'draft' }); // per-row exception
 ```
 
 Not stored mode state (D2) — resolved per row, inside each write verb, against the row(s)
@@ -126,8 +126,8 @@ through `select()`, which emits (D16) — but is still subject to this same trun
 ```ts
 export function selectAllIds<TRow>(
   table: Pick<TableStore<TRow>, 'rows' | 'value' | 'trackBy'>,
-  opts?: { includeHidden?: boolean }
-): RowId[]
+  opts?: { includeHidden?: boolean },
+): RowId[];
 ```
 
 Not a `SelectionMembers` method — a standalone function reading only the **core** `TableStore`
@@ -136,9 +136,9 @@ Not a `SelectionMembers` method — a standalone function reading only the **cor
 becomes a third write verb.
 
 ```ts
-table.select(selectAllIds(table));                          // visible/matching — default
-table.select(selectAllIds(table, { includeHidden: true }));  // every row, filtered or not
-table.deselect(selectAllIds(table));                         // "deselect all visible" toggle half
+table.select(selectAllIds(table)); // visible/matching — default
+table.select(selectAllIds(table, { includeHidden: true })); // every row, filtered or not
+table.deselect(selectAllIds(table)); // "deselect all visible" toggle half
 ```
 
 `includeHidden` is a boolean, not a `scope` enum — exactly two datasets exist at the core level
@@ -157,7 +157,7 @@ selected" signal, routed to
 ```ts
 const ids = selectAllIds(table).filter(table.isSelectable);
 table.select(ids);
-table.selectionStateOf(ids);   // 'all' — same id set select() actually stored
+table.selectionStateOf(ids); // 'all' — same id set select() actually stored
 ```
 
 Resolves the Q4/#57 residual question: `select(ids)` drops non-selectable ids (D58), so an
@@ -188,14 +188,14 @@ None. Standalone — reads only `rows` (for the multi-select predicate's row loo
 
 ## Not Shipped
 
-| Deferred | Reason | Shape already settled |
-|---|---|---|
-| Bulk `removeRow(id[])` / `patchRow(id[], partial)` | This effort ships `withSelection()` alone; bulk *edit* needs D31.2 resolved first | yes — D12 |
-| Selection checkbox directive + header directive (UI layer) | Tracked separately, now unblocked | no |
-| Auto-wiring component checkbox hosts (Angular Material, a consumer's own DS wrapper) | An attribute directive's host bindings can't reach a sibling component's inputs — Angular's own bridging mechanism is private API (D6) | deferred, documented recipe instead |
-| Persistence of selection | `withSelection()` will declare a snapshot slice once cross-feature persistence ships; its `write()` will use the `emitEvent: false` silent path (D18/D19) | yes — D19 |
-| Group-header select-all, parent/child cascade | `withGrouping()` doesn't exist yet; data is flat by invariant (D13) | no |
-| A cause discriminator (`'checkboxSelected' | 'apiSelectAll' | …`) on `SelectionChange` | Recorded from AG Grid's `source` idea, not adopted (D10) | no |
+| Deferred                                                                             | Reason                                                                                                                                                    | Shape already settled               |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------- | --- |
+| Bulk `removeRow(id[])` / `patchRow(id[], partial)`                                   | This effort ships `withSelection()` alone; bulk _edit_ needs D31.2 resolved first                                                                         | yes — D12                           |
+| Selection checkbox directive + header directive (UI layer)                           | Tracked separately, now unblocked                                                                                                                         | no                                  |
+| Auto-wiring component checkbox hosts (Angular Material, a consumer's own DS wrapper) | An attribute directive's host bindings can't reach a sibling component's inputs — Angular's own bridging mechanism is private API (D6)                    | deferred, documented recipe instead |
+| Persistence of selection                                                             | `withSelection()` will declare a snapshot slice once cross-feature persistence ships; its `write()` will use the `emitEvent: false` silent path (D18/D19) | yes — D19                           |
+| Group-header select-all, parent/child cascade                                        | `withGrouping()` doesn't exist yet; data is flat by invariant (D13)                                                                                       | no                                  |
+| A cause discriminator (`'checkboxSelected'                                           | 'apiSelectAll'                                                                                                                                            | …`) on `SelectionChange`            | Recorded from AG Grid's `source` idea, not adopted (D10) | no  |
 
 ## Open Questions
 

@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — with-filtering.ts: withFiltering<In>(config, derive?) contributing Feature<In, {}>"
+title: 'Step 2 — with-filtering.ts: withFiltering<In>(config, derive?) contributing Feature<In, {}>'
 type: task-step
 issue: 72
 ---
@@ -35,7 +35,7 @@ acceptance: "A feature contributing no members contributes `{}`, not `object`."
 
    > **Superseded 2026-09-14** (after this issue closed). The config now carries a second
    > parameter — `WithFilteringConfig<TRow, TState extends Record<string, unknown> =
-   > Record<string, unknown>>` holding `filters: Filters<TRow, TState>` — and both overloads
+Record<string, unknown>>` holding `filters: Filters<TRow, TState>` — and both overloads
    > thread `TState`. Pinning it to the default made a concretely-keyed filter set unassignable
    > (`FilterNode<T>` holds an invariant `WritableSignal<T>`). The `Feature<In, Out>` shape this
    > step delivered is unchanged. Current contract:
@@ -49,11 +49,11 @@ acceptance: "A feature contributing no members contributes `{}`, not `object`."
 
    ```ts
    export function withFiltering<In extends Shape>(
-     config: WithFilteringConfig<RowOf<In>>
+     config: WithFilteringConfig<RowOf<In>>,
    ): Feature<In, {}>;
    export function withFiltering<In extends Shape, D extends DerivedDict>(
      config: WithFilteringConfig<RowOf<In>>,
-     derive: Feature<NoInfer<In>, D>
+     derive: Feature<NoInfer<In>, D>,
    ): Feature<In, D>;
    ```
 
@@ -64,14 +64,16 @@ acceptance: "A feature contributing no members contributes `{}`, not `object`."
    ```ts
    export function withFiltering(
      config: WithFilteringConfig<any>,
-     derive?: Feature<any, any>
+     derive?: Feature<any, any>,
    ): Feature<any, any> {
      const manual = config.manual ?? false;
      const factory = <In extends Shape>(_input: In): TableFeatureSpec<RowOf<In>, {}> => ({
        stages: {
          filter: (rows) => {
            if (manual) return rows;
-           const evaluator = createFilterEvaluator<RowOf<In>, Record<string, unknown>>(config.filters);
+           const evaluator = createFilterEvaluator<RowOf<In>, Record<string, unknown>>(
+             config.filters,
+           );
            return rows.filter((row) => evaluator.matchesRow(row));
          },
        },
@@ -115,4 +117,5 @@ acceptance: "A feature contributing no members contributes `{}`, not `object`."
       `with-filtering.ts`.
 
 ---
+
 ← [Step 1: with-sorting.ts](step-1-with-sorting.plan.md) | [Step 3: with-grouping.ts — lazy guarded expandedRows read](step-3-with-grouping.plan.md) →

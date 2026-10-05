@@ -3,7 +3,12 @@ import type { FieldTree } from '@angular/forms/signals';
 import { FormField } from '@angular/forms/signals';
 import type { Filters } from '../../../api/features/with-filtering/types';
 import { toggleOption } from '../fixtures/utils';
-import type { InvoiceRow, InvoiceStatus, DateRangeCriterion, RangeCriterion } from '../fixtures/types';
+import type {
+  InvoiceRow,
+  InvoiceStatus,
+  DateRangeCriterion,
+  RangeCriterion,
+} from '../fixtures/types';
 import type { ClientCriteria } from './client-filtering.filters';
 
 /**

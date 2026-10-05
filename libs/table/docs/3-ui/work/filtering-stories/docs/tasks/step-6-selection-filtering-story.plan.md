@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — selection-filtering/: selection under an active filter"
+title: 'Step 6 — selection-filtering/: selection under an active filter'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: D
@@ -46,7 +46,7 @@ selection half adds only a checkbox column on top. Cheap dependency follows expe
 ## What To Do
 
 1. `createTable(data, selectionInvoiceConfig, withFiltering({ filters }), withSelection(…),
-   withSorting())`.
+withSorting())`.
 2. **Two select-all buttons, side by side, co-equal and separately named** — `selectAllIds(table)`
    (defaults to `rows()`: post-filter, post-sort — D59) and
    `selectAllIds(table, { includeHidden: true })`. Deliberately TanStack's shape: the only library
@@ -64,17 +64,17 @@ selection half adds only a checkbox column on top. Cheap dependency follows expe
    `1-state/work/computed-state-mechanism/1-intake.md` and `0-product/selection.md` §2.5. It starts
    passing on its own when the signal ships — no story rework. The doc-comment names **MUI X's
    opposite, documented behavior** ("selected rows that do not pass the filtering criteria are
-   automatically deselected") so the reader sees retention is a *rejected* convention, not an
+   automatically deselected") so the reader sees retention is a _rejected_ convention, not an
    unconsidered default.
 5. **Clearing the filter restores the selection exactly** — nothing added, nothing lost (TanStack
    #2210, MUI X #14074 are the failures this proves absent).
-6. **Failure behavior** — when the hidden count is unavailable, only the *count display* degrades;
+6. **Failure behavior** — when the hidden count is unavailable, only the _count display_ degrades;
    the selection itself is never reset as a side effect.
 7. **Sort toggle** — the selection is unchanged when rows reorder. Separates "the row moved" from
-   "the row left the visible set", two things one count would otherwise conflate. *(Migrated from
-   the selection plan.)*
+   "the row left the visible set", two things one count would otherwise conflate. _(Migrated from
+   the selection plan.)_
 8. **Delete a selected, currently-filtered-out row** — the count drops (D11), where filtering it out
-   never did. Retention and pruning are the same mechanism from two sides. *(Migrated.)*
+   never did. Retention and pruning are the same mechanism from two sides. _(Migrated.)_
 9. Reuse Step 4's filter inputs (a subset is fine) so there is a real filter to act under.
 
 **`.stories.ts` + `.mdx`.** Title `Table / Filtering / Selection × Filtering`. Single `Default` —
@@ -111,4 +111,5 @@ Code tabs: `HTML`, `TS`, `CSS`, `filtering/fixtures/filters.ts`, `filtering/fixt
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 5: server-filtering/](step-5-server-filtering-story.plan.md) | [Step 7: filters.md code status](step-7-filters-doc-code-status.plan.md) →

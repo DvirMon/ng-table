@@ -6,6 +6,7 @@ depends_on: [2, 3, 4]
 files:
   - libs/table/src/stories/tree/tree.mdx (new)
 ---
+
 # Step 5 — Tree docs page
 
 Adds the single docs page for the Tree entry, with one section per story.
@@ -34,6 +35,7 @@ Page outline and code tabs: see [story-plan.md](story-plan.md) §3 "`tree.mdx`".
 - Link repo docs the way existing mdx pages do.
 
 ## Watch out
+
 - Any row snippet uses `<tr [ngpTableRow]="row" ngpTableTreeRow>`, with no bare `ngpTableRow` attribute
   beside the binding.
 - The page says the toggle name is `'Children of ' + name`, with no level.
@@ -41,15 +43,18 @@ Page outline and code tabs: see [story-plan.md](story-plan.md) §3 "`tree.mdx`".
 - The RowClick section says the toggle's click bubbles and the row handler skips it.
 
 ## Out of scope
+
 - Story code changes.
 - Touching `grouping-collapsible/` or `grouping.mdx`.
 - Any `withExpansion()` example.
 - Broken-link or cycle content.
 
 ## Done when
+
 - [ ] The page has the four sections in order, each embedding a working `<Canvas>`.
 - [ ] The intro carries the three links above.
 - [ ] Every code tab points at a file that exists.
 
 ---
+
 ← [Step 4: Whole-row click story](step-4-whole-row-click-story.plan.md) | [Step 6: Story conventions and coverage marks](step-6-conventions-and-coverage.plan.md) →

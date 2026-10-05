@@ -8,6 +8,7 @@ The question assumes ng-primitives means "a11y only, no behavior". It doesn't. n
 ships behavior: click toggling, find-in-page reveal, enter/exit attributes, size variables, and
 outputs [S1][S5]. The line every peer draws runs along **who owns the state**, not along
 behavior versus no behavior.
+
 - **Change events sit on the state owner, never on the trigger.** This holds for ng-primitives,
   Radix, Zag, React Aria, TanStack and AG Grid [S1][S3][S17][S23][S21][S25][S26].
 - In @ngp/table the owner is `table.tree`, and it already emits `changed` [R7].
@@ -59,9 +60,9 @@ behavior versus no behavior.
   - `--ngp-collapsible-content-width/height`, written as inline style custom properties [S1].
 - `controlledState` emits `onChange` only from `set()` (an internal write). A change to the
   controlled input does **not** emit. In controlled mode `set()` emits but does not update local
-  state, so the output is a *request*, not a notification [S2].
+  state, so the output is a _request_, not a notification [S2].
 - Accordion composes the collapsible with `open` derived from the group (`computed(() =>
-  accordion().isOpen(value()))`) and `onOpenChange` routed to `accordion().toggle()`. Only
+accordion().isOpen(value()))`) and `onOpenChange` routed to `accordion().toggle()`. Only
   `ngpAccordion` declares an output (`ngpAccordionValueChange`). Item and trigger declare none
   [S3].
 - `ngpToggle` exposes `ngpToggleSelectedChange` — again on the element that owns `selected`
@@ -167,7 +168,7 @@ behavior versus no behavior.
 
 - **React Aria (GridList/Tree item):** row press toggles only as a fallback —
   `if (onAction == null && !hasLink && selectionMode === 'none' && hasChildRows) onAction =
-  () => state.toggleKey(node.key)`. A row that already has a job (selection, action, link) never
+() => state.toggleKey(node.key)`. A row that already has a job (selection, action, link) never
   toggles on press [S18].
 - **@angular/aria tree:** an item click always toggles. There is no separate trigger button, so
   double-toggle cannot occur [S14].
@@ -193,21 +194,21 @@ behavior versus no behavior.
 
 Where each peer puts the change event, and how its trigger and row behave.
 
-| Library@version | Change event on | Event carries gesture? | Cancel before write? | Trigger stops propagation? | Row press toggles? |
-|---|---|---|---|---|---|
-| ng-primitives@0.130.3 | state owner (root) [S1][S3] | no [S2] | controlled = request [S2] | no [S1] | n/a — no row [S1] |
-| @angular/cdk@22.1.7 accordion | item = owner [S7] | no [S7] | no [S7] | no listener [S7] | n/a |
-| @angular/cdk@22.1.7 tree | node (central-model diff) + `activation` [S9] | `activation` only [S10] | no [S9] | **yes** [S8] | no — focus only [S9] |
-| @angular/material@22.1.7 panel | panel + `afterExpand/afterCollapse` [S11] | no [S11] | no [S11] | no [S11] | n/a |
-| @angular/aria@22.2.1 tree | item `model()` [S13] | no [S13] | no [S14] | no toggle element [S13] | **yes, always** [S14] |
-| Radix collapsible@1.1.20 / accordion@1.2.20 | root only [S15][S17] | no [S15] | `preventDefault` [S16] | no [S16] | n/a |
-| react-aria@3.52.1 / RAC@1.21.1 | `Tree` root [S21] | no [S21] | no [S21] | **yes** by default [S20] | **fallback only** [S18] |
-| Zag collapsible@1.44.0 | machine [S23] | no [S23] | controlled blocks [S23] | not read | n/a |
-| Base UI@1.8.0 | root [S31] | **yes** — `reason`, `event` [S31] | **`cancel()`** [S31] | yes, opt-out [S31] | n/a |
-| Headless UI@2.2.10 | none [S24] | — | — | not read | n/a |
-| TanStack table-core@8.21.3 | table option [S25] | no [S25] | consumer-owned state [S25] | no [S25] | consumer [S25] |
-| AG Grid@36.2.0 | grid event [S26] | **yes** — `event` [S26] | not read | marker only [S29] | **double-click**, icon-guarded [S27][S28] |
-| @ngp/table (main) | store `changed` [R7] | no [R7] | no [R1] | no (TR44) [R4] | consumer recipe [R5] |
+| Library@version                             | Change event on                               | Event carries gesture?            | Cancel before write?       | Trigger stops propagation? | Row press toggles?                        |
+| ------------------------------------------- | --------------------------------------------- | --------------------------------- | -------------------------- | -------------------------- | ----------------------------------------- |
+| ng-primitives@0.130.3                       | state owner (root) [S1][S3]                   | no [S2]                           | controlled = request [S2]  | no [S1]                    | n/a — no row [S1]                         |
+| @angular/cdk@22.1.7 accordion               | item = owner [S7]                             | no [S7]                           | no [S7]                    | no listener [S7]           | n/a                                       |
+| @angular/cdk@22.1.7 tree                    | node (central-model diff) + `activation` [S9] | `activation` only [S10]           | no [S9]                    | **yes** [S8]               | no — focus only [S9]                      |
+| @angular/material@22.1.7 panel              | panel + `afterExpand/afterCollapse` [S11]     | no [S11]                          | no [S11]                   | no [S11]                   | n/a                                       |
+| @angular/aria@22.2.1 tree                   | item `model()` [S13]                          | no [S13]                          | no [S14]                   | no toggle element [S13]    | **yes, always** [S14]                     |
+| Radix collapsible@1.1.20 / accordion@1.2.20 | root only [S15][S17]                          | no [S15]                          | `preventDefault` [S16]     | no [S16]                   | n/a                                       |
+| react-aria@3.52.1 / RAC@1.21.1              | `Tree` root [S21]                             | no [S21]                          | no [S21]                   | **yes** by default [S20]   | **fallback only** [S18]                   |
+| Zag collapsible@1.44.0                      | machine [S23]                                 | no [S23]                          | controlled blocks [S23]    | not read                   | n/a                                       |
+| Base UI@1.8.0                               | root [S31]                                    | **yes** — `reason`, `event` [S31] | **`cancel()`** [S31]       | yes, opt-out [S31]         | n/a                                       |
+| Headless UI@2.2.10                          | none [S24]                                    | —                                 | —                          | not read                   | n/a                                       |
+| TanStack table-core@8.21.3                  | table option [S25]                            | no [S25]                          | consumer-owned state [S25] | no [S25]                   | consumer [S25]                            |
+| AG Grid@36.2.0                              | grid event [S26]                              | **yes** — `event` [S26]           | not read                   | marker only [S29]          | **double-click**, icon-guarded [S27][S28] |
+| @ngp/table (main)                           | store `changed` [R7]                          | no [R7]                           | no [R1]                    | no (TR44) [R4]             | consumer recipe [R5]                      |
 
 ## Synthesis
 
@@ -222,7 +223,7 @@ Where each peer puts the change event, and how its trigger and row behave.
   - @ngp/table already matches this [R1][R2][R6].
 - **Owns, with API — the API attaches to the state owner.** This is the real ng-primitives line:
   - Behavior is fine inside a primitive (`beforematch`, enter/exit, toggling) [S1].
-  - *Outputs* appear only where `controlledState` lives [S1][S3].
+  - _Outputs_ appear only where `controlledState` lives [S1][S3].
   - @ngp/table's owner is the store. The analog of `ngpAccordionValueChange` is
     `table.tree.changed`, which already exists [R7].
 - **Must not own (converge).**
@@ -240,14 +241,14 @@ Where each peer puts the change event, and how its trigger and row behave.
   - Stop it: CDK tree [S8], React Aria [S20], Base UI with opt-out [S31].
   - Leave it: Radix [S16], Material [S11], TanStack [S25], ng-primitives [S1], TR44 [R4].
   - Mark-not-stop: AG Grid [S29].
-  The stoppers are exactly the libraries that also put behavior on the row: React Aria's
-  fallback, CDK's focus-on-click. Stopping is what makes a row listener safe. AG Grid gets the
-  same safety without breaking TR44's "other listeners still receive it".
+    The stoppers are exactly the libraries that also put behavior on the row: React Aria's
+    fallback, CDK's focus-on-click. Stopping is what makes a row listener safe. AG Grid gets the
+    same safety without breaking TR44's "other listeners still receive it".
 - **Row press.** Three collision strategies:
   - Toggle only when the row has no other job — React Aria [S18].
   - A different gesture, plus an icon-path guard — AG Grid [S27][S28].
   - No separate trigger at all — @angular/aria [S14].
-  None of the three is a bare `toggleOnRowClick` boolean. Each encodes which job wins.
+    None of the three is a bare `toggleOnRowClick` boolean. Each encodes which job wins.
 - **Event payload.** Most peers emit the bare value. Only AG Grid and Base UI carry gesture
   [S26][S31]. Only Radix and Base UI let the consumer cancel the library's write
   [S16][S31].
@@ -290,10 +291,10 @@ Where each peer puts the change event, and how its trigger and row behave.
   - React Aria resolves it with cross-feature knowledge — "selectionMode none" [S18]. That
     cuts against E37's "no feature reads another's state" [R10].
   - AG Grid resolves it with a different gesture [S27].
-  - PrimeNG puts the target guard on the *selection* side [S30].
+  - PrimeNG puts the target guard on the _selection_ side [S30].
 - **Trajectory.** ADR-0029 cat. 5 / E43 / #201 already move row-level expansion behavior
-  (→/← keys) onto the row directives [R11][R10]. Row-owned *pointer* expansion would sit beside
-  row-owned *keyboard* expansion. Today the row directive owns neither.
+  (→/← keys) onto the row directives [R11][R10]. Row-owned _pointer_ expansion would sit beside
+  row-owned _keyboard_ expansion. Today the row directive owns neither.
 
 ## Against
 
@@ -329,49 +330,49 @@ Where each peer puts the change event, and how its trigger and row behave.
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-collapsible.mjs` | 0.130.3 | yes — source read; showed the "no behavior" framing wrong (beforematch, enter/exit, inline size vars) |
-| S2 | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-state.mjs` (`controlledState`, l.182-214) | 0.130.3 | yes — source read; output = request in controlled mode |
-| S3 | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-accordion.mjs` | 0.130.3 | yes — source read; only root declares outputs |
-| S4 | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-toggle.mjs` | 0.130.3 | yes — grep |
-| S5 | https://angularprimitives.com/getting-started/introduction | unversioned | yes — page fetch |
-| S6 | https://registry.npmjs.org/ng-primitives/latest | 0.131.1 | yes — registry |
-| S7 | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/accordion.mjs` (l.80-188) | 22.1.7 | yes — source read |
-| S8 | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/tree.mjs` (`CdkTreeNodeToggle`, l.1430-1481) | 22.1.7 | yes — source read; toggle stops propagation |
-| S9 | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/tree.mjs` (`CdkTreeNode`, l.927-1126; `_emitExpansionState` l.378-385) | 22.1.7 | yes — source read |
-| S10 | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/_tree-key-manager-chunk.mjs` (l.96-98, 254) | 22.1.7 | yes — grep |
-| S11 | https://unpkg.com/@angular/material@22.1.7/fesm2022/expansion.mjs | 22.1.7 | yes — bundle fetch |
-| S12 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/accordion.mjs | 22.2.1 | yes — bundle fetch |
-| S13 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/tree.mjs | 22.2.1 | yes — bundle fetch |
-| S14 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_tree-chunk.mjs (`goto`) | 22.2.1 | yes — bundle fetch |
-| S15 | https://unpkg.com/@radix-ui/react-collapsible@1.1.20/dist/index.mjs | 1.1.20 | yes — bundle fetch |
-| S16 | https://unpkg.com/@radix-ui/primitive@1.1.7/dist/index.mjs (`composeEventHandlers`) | 1.1.7 | yes — bundle fetch |
-| S17 | https://unpkg.com/@radix-ui/react-accordion@1.2.20/dist/index.mjs | 1.2.20 | yes — bundle fetch |
-| S18 | https://unpkg.com/react-aria@3.52.1/dist/private/gridlist/useGridListItem.mjs | 3.52.1 | yes — bundle fetch; overturned the docs-page summary |
-| S19 | https://unpkg.com/react-aria@3.52.1/dist/private/tree/useTreeItem.mjs (`expandButtonProps`) | 3.52.1 | yes — bundle fetch |
-| S20 | https://unpkg.com/react-aria@3.52.1/dist/private/interactions/usePress.mjs (`continuePropagation`) | 3.52.1 | yes — bundle fetch |
-| S21 | https://unpkg.com/react-aria-components@1.21.1/dist/private/Tree.mjs | 1.21.1 | yes — bundle fetch |
-| S22 | https://react-aria.adobe.com/Tree | unversioned | partly — prop descriptions only; row-press summary rejected |
-| S23 | https://unpkg.com/@zag-js/collapsible@1.44.0/dist/collapsible.machine.mjs | 1.44.0 | yes — bundle fetch |
-| S24 | https://unpkg.com/@headlessui/react@2.2.10/dist/components/disclosure/disclosure.js | 2.2.10 | yes — minified bundle fetch |
-| S25 | https://unpkg.com/@tanstack/table-core@8.21.3/src/features/RowExpanding.ts | 8.21.3 | yes — source read (v8; registry latest is v9) |
-| S26 | https://unpkg.com/ag-grid-community@36.2.0/dist/types/src/events.d.ts (`RowGroupOpenedEvent`) | 36.2.0 | yes — types read |
-| S27 | https://unpkg.com/ag-grid-community@36.2.0/dist/types/src/interfaces/groupCellRenderer.d.ts | 36.2.0 | yes — types read |
-| S28 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRendererCtrl.ts | b36.2.0 | yes — source read (community path 404s; lives in enterprise) |
-| S29 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/utils/gridEvent.ts | b36.2.0 | yes — source read; marker, not native stop |
-| S30 | https://unpkg.com/primeng@22.1.2/fesm2022/primeng-treetable.mjs (`handleRowClick`) | 22.1.2 | partly — row guard read; toggler truncated |
-| S31 | https://base-ui.com/react/components/collapsible | 1.8.0 | yes — docs page (version on page) |
-| S32 | https://registry.npmjs.org/@angular/aria/latest | 22.2.1 | yes — registry |
-| R1 | `libs/table/src/directives/ngp-table-tree-toggle.directive.ts` | main (feat-189 wt) | yes — read |
-| R2 | `libs/table/src/directives/ngp-table-tree-row.directive.ts` | main (feat-189 wt) | yes — read |
-| R3 | grep `output\(\|@Output\|model\(` over `libs/table/src` | main (feat-189 wt) | yes — 0 hits |
-| R4 | `libs/table/docs/decisions/tree.md` TR33-TR46 (l.84-97) | main (feat-189 wt) | yes — read |
-| R5 | `libs/table/docs/3-ui/directives/tree.md` "Whole-row click" (l.95-113) | main (feat-189 wt) | yes — read |
-| R6 | `libs/table/docs/adr/0026-headless-styling-contract.md` Decision 1-6 | main (feat-189 wt) | yes — read |
-| R7 | `libs/table/src/api/features/with-tree/types.ts` `TreeSlice.changed` (l.31-34) | main (feat-189 wt) | yes — read |
-| R8 | `libs/table/src/api/features/expansion/state.ts` `ExpansionWriteOptions`, `ExpansionChange` (l.12-29) | main (feat-189 wt) | yes — read |
-| R9 | `.claude/worktrees/docs-panel-directives/libs/table/docs/3-ui/work/expansion/active/panel-directives/1-decisions.md` D1-D4 | #199 wt | yes — read |
-| R10 | `.claude/worktrees/docs-panel-directives/libs/table/docs/decisions/expansion.md` E37, E41, E43-E47 | #199 wt | yes — read |
-| R11 | `.claude/worktrees/docs-panel-directives/libs/table/docs/adr/0029-directives-own-accessibility.md` | #199 wt | yes — read; not on main |
-| R12 | `libs/table/CLAUDE.md` "Locked invariants" | main (feat-189 wt) | yes — read |
+|     | Source                                                                                                                                    | Version            | Verified                                                                                              |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------- |
+| S1  | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-collapsible.mjs`                                           | 0.130.3            | yes — source read; showed the "no behavior" framing wrong (beforematch, enter/exit, inline size vars) |
+| S2  | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-state.mjs` (`controlledState`, l.182-214)                  | 0.130.3            | yes — source read; output = request in controlled mode                                                |
+| S3  | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-accordion.mjs`                                             | 0.130.3            | yes — source read; only root declares outputs                                                         |
+| S4  | `C:/Users/dmena/git/ng-table/node_modules/ng-primitives/fesm2022/ng-primitives-toggle.mjs`                                                | 0.130.3            | yes — grep                                                                                            |
+| S5  | https://angularprimitives.com/getting-started/introduction                                                                                | unversioned        | yes — page fetch                                                                                      |
+| S6  | https://registry.npmjs.org/ng-primitives/latest                                                                                           | 0.131.1            | yes — registry                                                                                        |
+| S7  | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/accordion.mjs` (l.80-188)                                                 | 22.1.7             | yes — source read                                                                                     |
+| S8  | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/tree.mjs` (`CdkTreeNodeToggle`, l.1430-1481)                              | 22.1.7             | yes — source read; toggle stops propagation                                                           |
+| S9  | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/tree.mjs` (`CdkTreeNode`, l.927-1126; `_emitExpansionState` l.378-385)    | 22.1.7             | yes — source read                                                                                     |
+| S10 | `C:/Users/dmena/git/ng-table/node_modules/@angular/cdk/fesm2022/_tree-key-manager-chunk.mjs` (l.96-98, 254)                               | 22.1.7             | yes — grep                                                                                            |
+| S11 | https://unpkg.com/@angular/material@22.1.7/fesm2022/expansion.mjs                                                                         | 22.1.7             | yes — bundle fetch                                                                                    |
+| S12 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/accordion.mjs                                                                             | 22.2.1             | yes — bundle fetch                                                                                    |
+| S13 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/tree.mjs                                                                                  | 22.2.1             | yes — bundle fetch                                                                                    |
+| S14 | https://unpkg.com/@angular/aria@22.2.1/fesm2022/_tree-chunk.mjs (`goto`)                                                                  | 22.2.1             | yes — bundle fetch                                                                                    |
+| S15 | https://unpkg.com/@radix-ui/react-collapsible@1.1.20/dist/index.mjs                                                                       | 1.1.20             | yes — bundle fetch                                                                                    |
+| S16 | https://unpkg.com/@radix-ui/primitive@1.1.7/dist/index.mjs (`composeEventHandlers`)                                                       | 1.1.7              | yes — bundle fetch                                                                                    |
+| S17 | https://unpkg.com/@radix-ui/react-accordion@1.2.20/dist/index.mjs                                                                         | 1.2.20             | yes — bundle fetch                                                                                    |
+| S18 | https://unpkg.com/react-aria@3.52.1/dist/private/gridlist/useGridListItem.mjs                                                             | 3.52.1             | yes — bundle fetch; overturned the docs-page summary                                                  |
+| S19 | https://unpkg.com/react-aria@3.52.1/dist/private/tree/useTreeItem.mjs (`expandButtonProps`)                                               | 3.52.1             | yes — bundle fetch                                                                                    |
+| S20 | https://unpkg.com/react-aria@3.52.1/dist/private/interactions/usePress.mjs (`continuePropagation`)                                        | 3.52.1             | yes — bundle fetch                                                                                    |
+| S21 | https://unpkg.com/react-aria-components@1.21.1/dist/private/Tree.mjs                                                                      | 1.21.1             | yes — bundle fetch                                                                                    |
+| S22 | https://react-aria.adobe.com/Tree                                                                                                         | unversioned        | partly — prop descriptions only; row-press summary rejected                                           |
+| S23 | https://unpkg.com/@zag-js/collapsible@1.44.0/dist/collapsible.machine.mjs                                                                 | 1.44.0             | yes — bundle fetch                                                                                    |
+| S24 | https://unpkg.com/@headlessui/react@2.2.10/dist/components/disclosure/disclosure.js                                                       | 2.2.10             | yes — minified bundle fetch                                                                           |
+| S25 | https://unpkg.com/@tanstack/table-core@8.21.3/src/features/RowExpanding.ts                                                                | 8.21.3             | yes — source read (v8; registry latest is v9)                                                         |
+| S26 | https://unpkg.com/ag-grid-community@36.2.0/dist/types/src/events.d.ts (`RowGroupOpenedEvent`)                                             | 36.2.0             | yes — types read                                                                                      |
+| S27 | https://unpkg.com/ag-grid-community@36.2.0/dist/types/src/interfaces/groupCellRenderer.d.ts                                               | 36.2.0             | yes — types read                                                                                      |
+| S28 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRendererCtrl.ts | b36.2.0            | yes — source read (community path 404s; lives in enterprise)                                          |
+| S29 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/utils/gridEvent.ts                               | b36.2.0            | yes — source read; marker, not native stop                                                            |
+| S30 | https://unpkg.com/primeng@22.1.2/fesm2022/primeng-treetable.mjs (`handleRowClick`)                                                        | 22.1.2             | partly — row guard read; toggler truncated                                                            |
+| S31 | https://base-ui.com/react/components/collapsible                                                                                          | 1.8.0              | yes — docs page (version on page)                                                                     |
+| S32 | https://registry.npmjs.org/@angular/aria/latest                                                                                           | 22.2.1             | yes — registry                                                                                        |
+| R1  | `libs/table/src/directives/ngp-table-tree-toggle.directive.ts`                                                                            | main (feat-189 wt) | yes — read                                                                                            |
+| R2  | `libs/table/src/directives/ngp-table-tree-row.directive.ts`                                                                               | main (feat-189 wt) | yes — read                                                                                            |
+| R3  | grep `output\(\|@Output\|model\(` over `libs/table/src`                                                                                   | main (feat-189 wt) | yes — 0 hits                                                                                          |
+| R4  | `libs/table/docs/decisions/tree.md` TR33-TR46 (l.84-97)                                                                                   | main (feat-189 wt) | yes — read                                                                                            |
+| R5  | `libs/table/docs/3-ui/directives/tree.md` "Whole-row click" (l.95-113)                                                                    | main (feat-189 wt) | yes — read                                                                                            |
+| R6  | `libs/table/docs/adr/0026-headless-styling-contract.md` Decision 1-6                                                                      | main (feat-189 wt) | yes — read                                                                                            |
+| R7  | `libs/table/src/api/features/with-tree/types.ts` `TreeSlice.changed` (l.31-34)                                                            | main (feat-189 wt) | yes — read                                                                                            |
+| R8  | `libs/table/src/api/features/expansion/state.ts` `ExpansionWriteOptions`, `ExpansionChange` (l.12-29)                                     | main (feat-189 wt) | yes — read                                                                                            |
+| R9  | `.claude/worktrees/docs-panel-directives/libs/table/docs/3-ui/work/expansion/active/panel-directives/1-decisions.md` D1-D4                | #199 wt            | yes — read                                                                                            |
+| R10 | `.claude/worktrees/docs-panel-directives/libs/table/docs/decisions/expansion.md` E37, E41, E43-E47                                        | #199 wt            | yes — read                                                                                            |
+| R11 | `.claude/worktrees/docs-panel-directives/libs/table/docs/adr/0029-directives-own-accessibility.md`                                        | #199 wt            | yes — read; not on main                                                                               |
+| R12 | `libs/table/CLAUDE.md` "Locked invariants"                                                                                                | main (feat-189 wt) | yes — read                                                                                            |

@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                   | Action                                                        |
+| ------------------------------------------------------ | ------------------------------------------------------------- |
 | `libs/shared/table/src/filters/create-filters.spec.ts` | edit — one helper, ~40 schemas, three spec-local types delete |
 
 655 lines, roughly 40 `build<…>(…)` calls. The largest diff in the issue and the one reviewed by
@@ -22,7 +22,7 @@ signature, so **the library's test suite cannot run at all** until this file is 
 just these tests, the suite.
 
 The rewrite is mechanical by design. **Every schema changes shape; no assertion changes.** A case
-that needs its *assertion* edited is a semantic regression in `#76`, not an accommodation to make
+that needs its _assertion_ edited is a semantic regression in `#76`, not an accommodation to make
 here — stop and check it against
 [`design-options-hybrid-api.md`](../../../with-filtering/design-options-hybrid-api.md).
 
@@ -92,7 +92,7 @@ here — stop and check it against
   expected values (`null`, `''`, `{ min: null, max: null }`, `[]`) come from the rules' own
   defaults, which `#76` did not touch.
 - `filter(path.tags, (cell, criterion: readonly string[]) => …)` at ~277 relies on the predicate
-  annotation to type the criterion. That is now the *only* channel; do not add a type argument.
+  annotation to type the criterion. That is now the _only_ channel; do not add a type argument.
 - The duplicate-path (~120) and duplicate-key (~144) throws are unchanged behaviour — only their
   schema bodies change to returned arrays.
 - `Filters` is still imported for `buildBrokenFilters`' old annotation; if that annotation goes and
@@ -136,4 +136,5 @@ here — stop and check it against
 - [ ] `nx test shared-table -- create-filters` passes
 
 ---
+
 ← [Step 5: The grouping fixtures](step-5-grouping-fixtures.plan.md) | [Step 7: `state.spec.ts`](step-7-state-spec.plan.md) →

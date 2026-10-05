@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — documentation table-wide admission owes"
+title: 'Step 6 — documentation table-wide admission owes'
 type: task-step
 issue: 119
 ---
@@ -52,18 +52,18 @@ interface ClusterSummary<TRow> {
 }
 
 interface GroupSummary<TRow> extends ClusterSummary<TRow> {
-  readonly admitted: boolean;   // false ⇒ emits flat, no header
+  readonly admitted: boolean; // false ⇒ emits flat, no header
 }
 
 type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>) => boolean;
 
 interface WithGroupingConfig<TRow> {
-  initial?: ColumnId<TRow>[];                                       // D14
-  groupWhen?: GroupWhen<TRow>;                                      // #85 — table-wide admission
-  groupingRule?: () => string[] | undefined;                        // D6, D7
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;  // D4
+  initial?: ColumnId<TRow>[]; // D14
+  groupWhen?: GroupWhen<TRow>; // #85 — table-wide admission
+  groupingRule?: () => string[] | undefined; // D6, D7
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number; // D4
   schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #84
-  rules?: AnyGroupingRule<TRow>[];                                  // D8
+  rules?: AnyGroupingRule<TRow>[]; // D8
 }
 ```
 
@@ -132,4 +132,5 @@ the two drift.
 - [ ] Every relative link in the edited files resolves.
 
 ---
+
 ← [Step 5: The story](step-5-grouping-static-story.plan.md)

@@ -105,7 +105,7 @@ reach. That is exactly what a backstop is, but it is a fair thing to challenge.
 > **additive** — it joins the rule's own empty set rather than displacing it — so
 > `equals(path.status, { emptyValue: '' })` infers `string | null`, `null` is still empty at
 > runtime, and the `@ts-expect-error` is deleted. The case survives, inverted: it now asserts that
-> the rule's own empty holds *alongside* the override. Subtracting `null` back out is what the new
+> the rule's own empty holds _alongside_ the override. Subtracting `null` back out is what the new
 > `isEmpty` option is for. Precedence: `isEmpty` replaces; `emptyValue` extends and seeds; with
 > neither, the rule's own holds.
 

@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — grouping rule types + engine-side fold"
+title: 'Step 2 — grouping rule types + engine-side fold'
 type: task-step
 issue: 60
 ---
@@ -76,13 +76,17 @@ export type AnyGroupingRule<TRow = unknown> = GroupingRule<TRow> | GroupingAsync
 
 ```ts
 import { computed, linkedSignal, type ResourceStatus, type Signal } from '@angular/core';
-import type { AnyGroupingRule, GroupingAsyncRule, GroupingRule } from '../schema/grouping-schema.types';
+import type {
+  AnyGroupingRule,
+  GroupingAsyncRule,
+  GroupingRule,
+} from '../schema/grouping-schema.types';
 
 export function isGroupingRule<TRow>(rule: AnyGroupingRule<TRow>): rule is GroupingRule<TRow> {
   return rule.kind === 'grouping';
 }
 export function isGroupingAsyncRule<TRow>(
-  rule: AnyGroupingRule<TRow>
+  rule: AnyGroupingRule<TRow>,
 ): rule is GroupingAsyncRule<TRow> {
   return rule.kind === 'grouping-async';
 }
@@ -95,7 +99,7 @@ export interface GroupingRuleEntry {
 }
 
 export function buildGroupingRuleEntries<TRow>(
-  rules: readonly GroupingRule<TRow>[]
+  rules: readonly GroupingRule<TRow>[],
 ): GroupingRuleEntry[] {
   return rules.map((rule) => ({ columnId: rule.columnId, result: computed(() => rule.when()) }));
 }
@@ -105,7 +109,7 @@ export function buildGroupingRuleEntries<TRow>(
  * flight, applies `onSuccess`/`onError` on settle, and is `undefined` (abstain) before first
  * resolution. */
 export function buildAsyncGroupingRuleEntry<TRow>(
-  rule: GroupingAsyncRule<TRow>
+  rule: GroupingAsyncRule<TRow>,
 ): GroupingRuleEntry {
   const params = computed(() => rule.params());
   const resourceRef = rule.factory(params);
@@ -157,8 +161,8 @@ export function foldGroupingRules(entries: readonly GroupingRuleEntry[]): string
 ## Risks / Watchouts
 
 - **Don't special-case `VISIBLE`-style AND-combining here.** `foldColumnRules` ANDs multiple
-  rules targeting the *same* column; this fold does something structurally different — it
-  abstains-as-a-set and otherwise unions *distinct* columns into one ordered array. Copy-pasting
+  rules targeting the _same_ column; this fold does something structurally different — it
+  abstains-as-a-set and otherwise unions _distinct_ columns into one ordered array. Copy-pasting
   `foldColumnRules`'s shape would silently reproduce the wrong semantics.
 - **`linkedSignal`'s `previous` is `undefined` before first resolution** — `buildAsyncGroupingRuleEntry`
   must return `undefined` in that case (falls through to `foldGroupingRules`'s abstain branch), not
@@ -184,4 +188,5 @@ export function foldGroupingRules(entries: readonly GroupingRuleEntry[]): string
 - [ ] `tsc --noEmit` passes.
 
 ---
+
 ← [Step 1: Generalize recorder session](step-1-generalize-recorder-session.plan.md) | [Step 3: Declarative sugar functions →](step-3-declarative-sugar-functions.plan.md)

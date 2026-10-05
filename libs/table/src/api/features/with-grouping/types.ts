@@ -103,5 +103,5 @@ export type GroupingPath<TRow, TValues extends ColumnValueMap> = {
 
 /** Schema fn passed as `WithGroupingConfig.schema`. */
 export type GroupingSchemaFn<TRow, TValues extends ColumnValueMap> = (
-  path: GroupingPath<TRow, TValues>
+  path: GroupingPath<TRow, TValues>,
 ) => void;

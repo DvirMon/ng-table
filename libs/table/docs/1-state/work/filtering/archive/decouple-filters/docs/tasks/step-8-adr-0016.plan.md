@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                                  | Action |
+| --------------------------------------------------------------------- | ------ |
 | `libs/shared/table/docs/adr/0016-filtering-takes-a-predicate-list.md` | create |
 
 `0016` is the next free number — `0001`–`0008` and `0010`–`0015` exist, `0009` is absent and stays
@@ -87,4 +87,5 @@ in kind (a cross-cutting policy with rejected alternatives). Cover exactly these
 - [ ] No source file is edited by this step
 
 ---
+
 ← [Step 7: Delete the coupled filtering surface](step-7-delete-coupled-surface.plan.md) | [Step 9: Relocate the filters domain](step-9-relocate-filters-domain.plan.md) →

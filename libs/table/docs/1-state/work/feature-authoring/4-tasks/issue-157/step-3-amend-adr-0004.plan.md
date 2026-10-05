@@ -6,6 +6,7 @@ depends_on: []
 files:
   - libs/table/docs/adr/0004-table-source-layout.md
 ---
+
 # Step 3 — Amend ADR-0004: anchors and registries replace the order array
 
 Adds a dated note to ADR-0004 recording that stage keys now
@@ -44,4 +45,5 @@ Under the "`PipelineStages` is now derived from
       editing an array."
 
 ---
+
 ← [Step 2: Amend ADR-0011: adding a stage is not reordering](step-2-amend-adr-0011.plan.md) | [Step 4: Register the effort and link the guide](step-4-register-guide.plan.md) →

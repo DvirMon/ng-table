@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                                              | Action                                               |
+| --------------------------------------------------------------------------------- | ---------------------------------------------------- |
 | `libs/shared/table/docs/1-state/work/with-filtering/design-options-hybrid-api.md` | edit — five in-place banners, one factual correction |
 
 ## Why This Step Exists
@@ -22,7 +22,7 @@ reachable from there.
 
 A decision record is a history. The fix is a banner at each decision, not an edit to its argument:
 the reasoning is why the project believed what it believed, and deleting it destroys the only
-account of how the current shape was reached. One of these decisions was *factually wrong* about
+account of how the current shape was reached. One of these decisions was _factually wrong_ about
 TypeScript, which is the most valuable kind of entry to keep legible and the one most likely to be
 quietly rewritten.
 
@@ -41,7 +41,7 @@ banner style.
      API, so "takes no `data` argument" is no longer the shape.
    - **The closing claim is factually wrong and the correction is the point of the banner.**
      R11 ends by asserting that TypeScript cannot recover `TRow` from a callback whose parameter
-     is `ColumnsPath<TRow>`. Recovery through the *callback* was never the mechanism — R35 anchors
+     is `ColumnsPath<TRow>`. Recovery through the _callback_ was never the mechanism — R35 anchors
      `TRow` on a value in argument position, exactly as `createTable(data, …)` and `form(model, …)`
      do, which R11 itself names as the two APIs it was worse than. Cite
      `research-typescript-inference-probes.md` as the compiled evidence — from the decisions doc
@@ -53,7 +53,7 @@ banner style.
    specified now bites at compile time instead of being aspirational.
 4. **R32** (~L1304) — **superseded by R34/R36.** The criterion map is inferred from the returned
    array; the caller-supplied type parameter is gone. R32's argument rests on `schema: (path) =>
-   void` having no return channel to observe — say plainly that the change was to give it one, so
+void` having no return channel to observe — say plainly that the change was to give it one, so
    the reasoning was sound on its own premise and the premise is what moved.
 5. **R33** (~L1320) — **ceases to exist, and say that rather than "superseded".** The ambient
    recorder stack it describes is deleted, not replaced by a different recorder: rules return
@@ -80,7 +80,7 @@ banner style.
 ## Risks / Watchouts
 
 - **Never edit a superseded decision's body to make it true.** The one exception this step
-  contains is a *correction appended as a banner* to R11's factual error — the wrong sentence
+  contains is a _correction appended as a banner_ to R11's factual error — the wrong sentence
   stays on the page, with the correction above it. A record that silently agrees with the present
   is not a record.
 - This file is ~1900 lines and heavily cross-referenced by R-number from the specs and from the
@@ -108,4 +108,5 @@ banner style.
 - [ ] The banners and the `What the re-grill supersedes` table agree
 
 ---
+
 ← [Step 2: Reconcile the feature doc](step-2-feature-doc.plan.md) | [Step 4: Correct the remaining surfaces](step-4-surfaces-issue-rollup.plan.md) →

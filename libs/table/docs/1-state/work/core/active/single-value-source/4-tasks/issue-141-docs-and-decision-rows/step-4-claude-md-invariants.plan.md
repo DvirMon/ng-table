@@ -46,10 +46,10 @@ and #139 removed.
    - `rules.ts`: already says `visible()`/`visibleAsync()`.
      Check it.
    - Top-level tree comment (`columns-schema/ ← column schema
-     DSL: columnSchema(), …`): check the names.
+DSL: columnSchema(), …`): check the names.
 4. **Remove the deleted `resolve.ts`.** The
    `engine/columns-schema/` row lists `resolve.ts (compile —
-   resolveColumnsConfig())`, and the Naming paragraph cites
+resolveColumnsConfig())`, and the Naming paragraph cites
    `engine/columns-schema/resolve.ts` as the compile-verb
    example. The file is deleted in the working tree. Write
    what replaced it (read `engine/columns-schema/index.ts` and
@@ -86,4 +86,5 @@ and #139 removed.
 - [ ] No status language added.
 
 ---
+
 ← [Step 3: ADR amendments](step-3-adr-amendments.plan.md) | [Step 5: Check #140's order-window doc](step-5-verify-order-window-doc.plan.md) →

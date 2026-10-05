@@ -34,7 +34,7 @@ An orphaned `expandedRows` id costs ~50–100 B; an orphaned `editing` entry cos
 under single mode (~10 KB/session), ~100 KB for a 1,000-row bulk delete. The only scenario
 reaching tens of MB is a table alive for hours with continuous id churn (a WebSocket feed, or
 paging where rows never return) while the user keeps expanding rows: ~58,000 entries ≈ 6 MB over
-an 8-hour session. Re-fetching the *same* ids leaks nothing. Memory was never the deciding factor
+an 8-hour session. Re-fetching the _same_ ids leaks nothing. Memory was never the deciding factor
 in either direction.
 
 ## Open — trackBy-swap interaction (tracked as G3/O20 in the gap register)
@@ -43,8 +43,8 @@ Does `onRowsRemoved` fire for ids that leave via a trackBy change (a temp-id swa
 replaces a client id with the server's)? Under a pure id diff, yes — the old id is genuinely
 gone — which would clean `editing` for a row the user is still editing mid-swap.
 
-Confirmed against the implementation: `open` *is* pruned on a swap, so a row swapped while still
-open silently leaves edit mode. `snapshots` is *not* pruned when the snapshot is `ABSENT` (the
+Confirmed against the implementation: `open` _is_ pruned on a swap, so a row swapped while still
+open silently leaves edit mode. `snapshots` is _not_ pruned when the snapshot is `ABSENT` (the
 optimistic-create case), so a pending entry orphans under the temp key instead. Neither is fixed.
 Engine-side swap detection was rejected: `{removed: [temp], added: [server]}` in one recompute is
 indistinguishable from a delete plus an unrelated insert.

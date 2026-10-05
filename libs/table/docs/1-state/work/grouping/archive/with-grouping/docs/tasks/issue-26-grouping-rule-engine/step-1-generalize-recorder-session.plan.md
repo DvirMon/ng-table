@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — generalize the recorder-session machinery over rule type"
+title: 'Step 1 — generalize the recorder-session machinery over rule type'
 type: task-step
 issue: 60
 ---
@@ -52,7 +52,7 @@ export interface ColumnSchemaRecorder<TRow, TRule = ColumnRule<TRow>> {
 export interface ColumnHandle<
   TRow,
   K extends Extract<keyof TRow, string> = Extract<keyof TRow, string>,
-  TRule = ColumnRule<TRow>
+  TRule = ColumnRule<TRow>,
 > {
   readonly id: K;
   readonly [COLUMN_RECORDER]: ColumnSchemaRecorder<TRow, TRule>;
@@ -70,15 +70,21 @@ function createRecorderSession<TRow, TRule = ColumnRule<TRow>>(): {
   rules: TRule[];
   close(): void;
   assertOpen(): void;
-} { /* same body, rules: TRule[], recorder.record(rule: TRule) pushes directly */ }
+} {
+  /* same body, rules: TRule[], recorder.record(rule: TRule) pushes directly */
+}
 
 export function buildColumnsPath<TRow, TRule = ColumnRule<TRow>>(
-  recorder: ColumnSchemaRecorder<TRow, TRule>
-): ColumnsPath<TRow, TRule> { /* unchanged logic, propagate TRule */ }
+  recorder: ColumnSchemaRecorder<TRow, TRule>,
+): ColumnsPath<TRow, TRule> {
+  /* unchanged logic, propagate TRule */
+}
 
 export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
-  fn: (path: ColumnsPath<TRow, TRule>) => void
-): readonly TRule[] { /* unchanged body, propagate TRule */ }
+  fn: (path: ColumnsPath<TRow, TRule>) => void,
+): readonly TRule[] {
+  /* unchanged body, propagate TRule */
+}
 ```
 
 `assertPathIsCurrent<TRow, TRule = ColumnRule<TRow>>(handle: ColumnHandle<TRow, never, TRule>): ColumnSchemaRecorder<TRow, TRule>` gets the same default-parameter treatment.
@@ -87,7 +93,7 @@ export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
 
 - **The exact generic shape of `record()` is an implementation judgment call, not a typographic
   requirement.** Today's `record<TParams, TResult, T>(rule: MetadataRule<TRow, T> |
-  MetadataAsyncRule<TRow, TParams, TResult, T>)` is method-generic so `metadata()`/`metadataAsync()`
+MetadataAsyncRule<TRow, TParams, TResult, T>)` is method-generic so `metadata()`/`metadataAsync()`
   (`column-metadata.ts`) get contextual typing of the `{ kind, columnId, key, logic }` literal at
   the call site. A plain `record(rule: TRule)` with `TRule` fixed by the session should typecheck
   the same call sites via structural assignability (a `MetadataRule<TRow, string>` object is
@@ -105,7 +111,7 @@ export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
 ## Risks / Watchouts
 
 - **Don't collapse `TRule` to `unknown` at the interface level.** The point of the parameter is
-  that a *session* is homogeneous (one rule family per session) while different call sites
+  that a _session_ is homogeneous (one rule family per session) while different call sites
   instantiate it differently — `unknown` would defeat the type-checking `assertRuleColumnIdsAreKnown`-
   style downstream code relies on.
 - **Don't change `COLUMN_RECORDER`'s runtime value or the proxy's `get` trap logic** — this step is
@@ -130,4 +136,5 @@ export function runColumnsSchemaFn<TRow, TRule = ColumnRule<TRow>>(
       step, for every existing caller.
 
 ---
+
 [Step 2: Grouping rule types + engine fold →](step-2-grouping-rule-types-and-fold.plan.md)

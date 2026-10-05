@@ -31,10 +31,7 @@ describe('columnSchema', () => {
       visible(path.name, { when: () => false });
     });
 
-    expect(schema.rules.map((rule) => rule.columnId)).toEqual([
-      'status',
-      'name',
-    ]);
+    expect(schema.rules.map((rule) => rule.columnId)).toEqual(['status', 'name']);
   });
 
   it('records a visibleAsync rule', () => {
@@ -82,9 +79,7 @@ describe('columnSchema', () => {
       visible(path.status, { when: () => true });
     });
 
-    expect(() =>
-      visible(firstHandle as ColumnHandle<Row>, { when: () => true })
-    ).toThrow();
+    expect(() => visible(firstHandle as ColumnHandle<Row>, { when: () => true })).toThrow();
     expect(second.rules).toHaveLength(1);
   });
 });

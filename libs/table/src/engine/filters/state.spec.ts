@@ -250,7 +250,7 @@ describe('filters root — a Signal Form binds to it directly', () => {
     const filterForm = TestBed.runInInjectionContext(() =>
       form(filters().value, () => {
         // Intentionally empty: the assertion is that the model is schema-compatible at all.
-      })
+      }),
     );
 
     filterForm.customer().value.set('Acme');
@@ -303,7 +303,7 @@ describe('filters root — debounce on the form delays the criterion write (R25)
     const filterForm = TestBed.runInInjectionContext(() =>
       form(filters().value, (path) => {
         debounce(path.customer, 300);
-      })
+      }),
     );
 
     return { filters, filterForm };

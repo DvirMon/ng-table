@@ -116,7 +116,7 @@ The previous shape bound the offset to `--ngp-table-row-flip-offset` and let con
 transition it. CSS starts a transition only between two computed values the browser actually
 resolved (CSS Transitions §3), so the invert had to render before the play:
 
-- **Double `requestAnimationFrame`** — dropped: it only *guessed* that Angular had rendered the
+- **Double `requestAnimationFrame`** — dropped: it only _guessed_ that Angular had rendered the
   invert by two frames later.
 - **Deferred `afterNextRender` + forced `getComputedStyle(row).transform`** (tried as "option
   B") — dropped: correct, but needed a second render per reorder plus a forced style read.
@@ -173,7 +173,9 @@ stays a manual step the consumer must take on their own table CSS.
 
 ```html
 <table [ngpTable]="table" ngpTableRowAnimation>
-  <tr [ngpTableRow]="row">...</tr>
+  <tr [ngpTableRow]="row">
+    ...
+  </tr>
 </table>
 ```
 
@@ -195,7 +197,7 @@ table's selector):
   [ngpTable]="table"
   ngpTableRowAnimation
   [flipTiming]="{ duration: 200, easing: 'ease-out' }"
->
+></table>
 ```
 
 `row-animation.css` (`libs/table/src/row-animation.css`) ships **no FLIP rules** — only the
@@ -222,9 +224,11 @@ Angular already ships the primitive for this: `animate.enter`/`animate.leave` di
 `@for` row's `<tr>`, no library involvement beyond the preset's optional class names.
 
 ```html
-<tr [ngpTableRow]="row"
-    animate.enter="ngp-table-row--enter"
-    animate.leave="ngp-table-row--leave">
+<tr
+  [ngpTableRow]="row"
+  animate.enter="ngp-table-row--enter"
+  animate.leave="ngp-table-row--leave"
+></tr>
 ```
 
 `row-animation.css` ships these two classes: `.ngp-table-row--enter` (200ms fade-in) and
@@ -239,7 +243,7 @@ a later insert.
 **Snap limitation (D2), documented not fixed:** `animate.leave` keeps the leaving `<tr>` in the
 DOM until its own animation finishes. Rows below it get no glide for that interval — they only
 snap up once the element is actually removed. The row registry (above) stops a lingering
-leaving row from corrupting *other* rows' measured positions while it's still present, but it
+leaving row from corrupting _other_ rows' measured positions while it's still present, but it
 does not give the leaving row's old slot a glide of its own; that's the documented tradeoff of
 letting the browser finish the leave animation before touching layout.
 

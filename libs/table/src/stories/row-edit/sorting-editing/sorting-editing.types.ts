@@ -8,7 +8,7 @@ export interface SortEditRow {
   id: string;
   name: string;
   /** ISO date string, or `null` for "no due date yet" — the nullable column S-2 needs. */
-dueDate: string | null;
+  dueDate: string | null;
 }
 
 /** S-1 row-hold regression (OQ-3, not implemented): the render position a row held when it was

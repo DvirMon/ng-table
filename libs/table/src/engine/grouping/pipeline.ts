@@ -1,5 +1,11 @@
 import type { ColumnDef } from '../../api/types';
-import { admitClusters, buildClusterNodes, flattenLeaves, sortClusters, type ClusterOpts } from './clusters';
+import {
+  admitClusters,
+  buildClusterNodes,
+  flattenLeaves,
+  sortClusters,
+  type ClusterOpts,
+} from './clusters';
 
 /**
  * The `group` pipeline stage (`PIPELINE_ANCHORS`, `engine/pipeline.ts`) — `TRow[] => TRow[]`,
@@ -10,7 +16,7 @@ export function clusterRows<TRow>(
   rows: TRow[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  opts?: ClusterOpts<TRow>
+  opts?: ClusterOpts<TRow>,
 ): TRow[] {
   if (grouping.length === 0) {
     return rows;
@@ -24,7 +30,7 @@ export function clusterRows<TRow>(
     opts?.columnWhen,
     () => columns,
     opts?.knownIds ?? new Set(columns.map((column) => column.id)),
-    opts?.label ?? 'withGrouping'
+    opts?.label ?? 'withGrouping',
   );
   const ordered = sortClusters(admitted, opts?.groupOrderByColumn, (items) => items, {
     done: false,

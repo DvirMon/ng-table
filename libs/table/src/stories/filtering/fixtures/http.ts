@@ -1,12 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { catchError, map, throwError, type Observable } from 'rxjs';
-import type {
-  InvoicePage,
-  InvoicePagePayload,
-  InvoiceRow,
-  InvoiceRowPayload,
-} from './types';
+import type { InvoicePage, InvoicePagePayload, InvoiceRow, InvoiceRowPayload } from './types';
 
 export interface InvoiceRequestOptions {
   readonly forceFailure: boolean;

@@ -8,10 +8,10 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
+| File                                             | Line                                              | Action                                  |
+| ------------------------------------------------ | ------------------------------------------------- | --------------------------------------- |
 | `libs/table/src/stories/filtering/filtering.mdx` | `:1-24`, `:38-49`, `:95-113`, `:159-194`, `:222+` | edit — rewrite two sections, delete one |
-| — | — | verify — full typecheck ×2, full suite |
+| —                                                | —                                                 | verify — full typecheck ×2, full suite  |
 
 ## Why This Step Exists
 
@@ -27,14 +27,14 @@ the lib does not compile until every call site has landed.
 ## What To Do
 
 1. **`## Client` (`:38-49`).** Replace the opening claim —
-   *"`withFiltering({ predicates: () => [filters().matcher()] })` feeds a standalone
+   _"`withFiltering({ predicates: () => [filters().matcher()] })` feeds a standalone
    `createFilters()` object into the pipeline's `filter` stage as one predicate term. The feature
-   takes row predicates…"*. It becomes: the table owns the model; `withFiltering({ schema })` builds
+   takes row predicates…"_. It becomes: the table owns the model; `withFiltering({ schema })` builds
    it at construction and its criteria narrow the `filter` stage. If the section carries a `<Source>`
    block, update the snippet to the shipped call — `withFiltering({ schema: clientInvoiceFilters })`,
    the hoisted `const` from Step 7, since that const is the story's R55 demonstration.
 
-2. **`## Server` (`:95-113`).** Two claims to replace: *"No filtering feature is composed here"*
+2. **`## Server` (`:95-113`).** Two claims to replace: _"No filtering feature is composed here"_
    (`:97`) and the `createFilters()`-feeds-the-request sentence (`:100`). It becomes:
    `withFiltering({ manual: true, schema })` — the model is built and exposed, the local stage is
    skipped, and `criteria()` drives the request through `resource({ params })`. Say why there is no
@@ -51,8 +51,8 @@ the lib does not compile until every call site has landed.
    a section written over three stories will have comparisons that no longer parse, not just a
    wrong number in the heading.
 
-5. **Sweep the rest of `src/` for stale prose.** `mock.ts:3` describes row data *"passed to
-   `createFilters()`"*. Grep for the four dead names across every comment and string under `src/`,
+5. **Sweep the rest of `src/` for stale prose.** `mock.ts:3` describes row data _"passed to
+   `createFilters()`"_. Grep for the four dead names across every comment and string under `src/`,
    including `.html` templates, and fix what Steps 7–9 left.
 
 6. **Run the gate.** Both runs, both targets, plus the suite. This is the step that reports whether
@@ -103,4 +103,5 @@ the lib does not compile until every call site has landed.
       here, since Step 8 verified it before the other call sites landed.
 
 ---
+
 ← [Step 10: Specs](step-10-specs.plan.md)

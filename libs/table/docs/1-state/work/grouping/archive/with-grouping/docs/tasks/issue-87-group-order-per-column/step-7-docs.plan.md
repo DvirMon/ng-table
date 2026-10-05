@@ -1,5 +1,5 @@
 ---
-title: "Step 7 — Documentation: applyGroupOrder replaces config.groupOrder"
+title: 'Step 7 — Documentation: applyGroupOrder replaces config.groupOrder'
 type: task-step
 issue: 87
 ---
@@ -54,9 +54,8 @@ for a member that moved rather than one that was added.
 Every other `groupOrder` mention in this file (lines ~23, 68, 93, 96, 129, 206-207, 226, 235, 273,
 340, 380, 384, 398, 424-430, 451, 456) is describing the **concept** ("group order, over
 contents, decoupled from sort") which is unchanged — only its declaration site moved. Do not
-rewrite these wholesale; add one clarifying line near the first substantial mention (~line 68 or
-226) stating the comparator is now declared per-column via `applyGroupOrder(path.x, cmp)`
-(#87), not as one config member applied at every depth, and that the *behavior* described
+rewrite these wholesale; add one clarifying line near the first substantial mention (~line 68 or 226) stating the comparator is now declared per-column via `applyGroupOrder(path.x, cmp)`
+(#87), not as one config member applied at every depth, and that the _behavior_ described
 everywhere else in this file (siblings-only comparison, decoupled from sort, throw-falls-back-to-
 stable, D4/D5/D15) is exactly what shipped.
 
@@ -82,7 +81,7 @@ step; a full sweep of the table is not this slice's job).
 - Line ~65: "Still open, deliberately unbuilt: `manual: true` and routing a header click to
   `groupOrder`" — update `groupOrder` → `applyGroupOrder` (the concept name pointing at its new
   declaration site), sentence otherwise unchanged (still open, still unbuilt).
-- Lines ~180-183, ~198: these describe `groupOrder`'s *behavior* (decoupled from sort, orders
+- Lines ~180-183, ~198: these describe `groupOrder`'s _behavior_ (decoupled from sort, orders
   siblings within a parent), not its declaration site — leave as-is unless the wording implies a
   single table-wide slot; if it does, adjust to "per column" without changing the underlying
   claim.
@@ -122,4 +121,5 @@ step; a full sweep of the table is not this slice's job).
 - [ ] No claim in any touched doc contradicts the code Steps 1-6 shipped.
 
 ---
+
 ← [Step 6: Tests](step-6-tests.plan.md)

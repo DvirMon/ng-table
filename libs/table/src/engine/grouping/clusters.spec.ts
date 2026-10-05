@@ -28,8 +28,10 @@ const orderKnownIds = new Set(orderColumns.map((column) => column.id));
 
 describe('buildClusters', () => {
   it('produces the right node shape for a 2-level input', () => {
-    const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region', 'category'],
+      (row, columnId) => row[columnId as keyof Order],
     );
 
     const us = nodes.find((node) => node.value === 'US')!;
@@ -41,9 +43,11 @@ describe('buildClusters', () => {
     expect(usElectronics.children).toEqual([]);
   });
 
-  it('every node\'s items contains all leaves under it — parent items.length equals the sum of children items.length', () => {
-    const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
-      row[columnId as keyof Order]
+  it("every node's items contains all leaves under it — parent items.length equals the sum of children items.length", () => {
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region', 'category'],
+      (row, columnId) => row[columnId as keyof Order],
     );
 
     function assertItemsCoverChildren(node: ClusterNode<Order>): void {
@@ -128,8 +132,10 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
         { id: 2, alpha: { x: 2 }, beta: { y: 2 } },
       ];
 
-      buildClusters<TwoLevelRow>(rows, ['alpha', 'beta'], (row, columnId) =>
-        row[columnId as keyof TwoLevelRow]
+      buildClusters<TwoLevelRow>(
+        rows,
+        ['alpha', 'beta'],
+        (row, columnId) => row[columnId as keyof TwoLevelRow],
       );
 
       expect(reportSpy).toHaveBeenCalledTimes(2);
@@ -208,7 +214,13 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
         { id: 2, createdAt: new Date('2024-01-02') },
       ];
       const columns: ColumnDef<DateRow>[] = [
-        { id: 'createdAt', accessor: (row) => row.createdAt, visible: true, order: 0, label: 'createdAt' },
+        {
+          id: 'createdAt',
+          accessor: (row) => row.createdAt,
+          visible: true,
+          order: 0,
+          label: 'createdAt',
+        },
       ];
 
       buildClusterNodes<DateRow>(rows, ['createdAt'], columns);
@@ -231,7 +243,7 @@ describe('buildClusters / buildClusterNodes — non-primitive group-value report
       const nodes = buildClusters<MetaRow>(
         rows,
         ['meta'],
-        (row, columnId) => row[columnId as keyof MetaRow]
+        (row, columnId) => row[columnId as keyof MetaRow],
       );
 
       expect(nodes).toHaveLength(1);
@@ -313,7 +325,7 @@ describe('sortClusters', () => {
         ['sub', groupOrder],
       ]),
       (items) => items,
-      { done: false }
+      { done: false },
     );
 
     expect(result.map((node) => node.value)).toEqual(['A', 'B']);
@@ -335,7 +347,7 @@ describe('sortClusters', () => {
         ['sub', subByLengthDescending],
       ]),
       (items) => items,
-      { done: false }
+      { done: false },
     );
 
     // 'top' reorders by its own rule (descending by key: 'B' before 'A') while 'sub' reorders
@@ -371,7 +383,7 @@ describe('sortClusters', () => {
           ['sub', throwingGroupOrder],
         ]),
         (items) => items,
-        { done: false }
+        { done: false },
       );
 
       // Top level and both parents' children each hit the throw independently, yet all fall
@@ -389,8 +401,10 @@ describe('sortClusters', () => {
 
 describe('admitClusters (#85 table-wide admission)', () => {
   it('returns its input by reference at every level when no predicate is supplied — the no-op guarantee', () => {
-    const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region', 'category'],
+      (row, columnId) => row[columnId as keyof Order],
     );
 
     const result = admitClusters(
@@ -401,7 +415,7 @@ describe('admitClusters (#85 table-wide admission)', () => {
       undefined,
       orderColumnsGetter,
       orderKnownIds,
-      'withGrouping'
+      'withGrouping',
     );
 
     expect(result).toBe(nodes);
@@ -409,8 +423,10 @@ describe('admitClusters (#85 table-wide admission)', () => {
   });
 
   it('marks a rejected node rather than removing it — columnId/value/items survive, the sibling array keeps its length', () => {
-    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region'],
+      (row, columnId) => row[columnId as keyof Order],
     );
     const when = (c: ClusterSummary<Order>): boolean => c.key !== 'EU';
 
@@ -422,7 +438,7 @@ describe('admitClusters (#85 table-wide admission)', () => {
       undefined,
       orderColumnsGetter,
       orderKnownIds,
-      'withGrouping'
+      'withGrouping',
     );
 
     expect(result).toHaveLength(nodes.length);
@@ -435,8 +451,10 @@ describe('admitClusters (#85 table-wide admission)', () => {
   });
 
   it('never judges descendants of a rejected node — a predicate rejecting every top-level cluster is never called for the deeper level', () => {
-    const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region', 'category'],
+      (row, columnId) => row[columnId as keyof Order],
     );
     const seenColumnIds: string[] = [];
     const rejectEverything = (c: ClusterSummary<Order>): boolean => {
@@ -452,7 +470,7 @@ describe('admitClusters (#85 table-wide admission)', () => {
       undefined,
       orderColumnsGetter,
       orderKnownIds,
-      'withGrouping'
+      'withGrouping',
     );
 
     // US and EU are each judged once at 'region' — since both are rejected, 'category' (the
@@ -464,8 +482,10 @@ describe('admitClusters (#85 table-wide admission)', () => {
   it('a throwing when admits the cluster and reports once per column, not once per cluster', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const nodes = buildClusters<Order>(orders, ['region', 'category'], (row, columnId) =>
-        row[columnId as keyof Order]
+      const nodes = buildClusters<Order>(
+        orders,
+        ['region', 'category'],
+        (row, columnId) => row[columnId as keyof Order],
       );
       const throwingWhen = (): boolean => {
         throw new Error('boom');
@@ -479,7 +499,7 @@ describe('admitClusters (#85 table-wide admission)', () => {
         undefined,
         orderColumnsGetter,
         orderKnownIds,
-        'withGrouping'
+        'withGrouping',
       );
 
       // Every node at every level (2 region clusters + 4 category clusters) hit the throw
@@ -497,8 +517,10 @@ describe('admitClusters (#85 table-wide admission)', () => {
 
 describe('admitClusters (#86 per-column admission)', () => {
   it('per-column when narrows an otherwise-admitted cluster to dissolved', () => {
-    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region'],
+      (row, columnId) => row[columnId as keyof Order],
     );
     const columnWhen = new Map<string, GroupWhen<Order>>([
       ['region', (c: ClusterSummary<Order>) => c.key !== 'EU'],
@@ -512,7 +534,7 @@ describe('admitClusters (#86 per-column admission)', () => {
       columnWhen,
       orderColumnsGetter,
       orderKnownIds,
-      'withGrouping'
+      'withGrouping',
     );
 
     const us = result.find((node) => node.value === 'US')!;
@@ -522,8 +544,10 @@ describe('admitClusters (#86 per-column admission)', () => {
   });
 
   it('admits only when both the table-wide and per-column predicates pass', () => {
-    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region'],
+      (row, columnId) => row[columnId as keyof Order],
     );
     const when = (): boolean => true;
     const columnWhen = new Map<string, GroupWhen<Order>>([
@@ -538,7 +562,7 @@ describe('admitClusters (#86 per-column admission)', () => {
       columnWhen,
       orderColumnsGetter,
       orderKnownIds,
-      'withGrouping'
+      'withGrouping',
     );
 
     const us = result.find((node) => node.value === 'US')!;
@@ -550,8 +574,10 @@ describe('admitClusters (#86 per-column admission)', () => {
   it('a throwing per-column predicate admits that vote, but a false table-wide result still dissolves the cluster (AND)', () => {
     const reportSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
-        row[columnId as keyof Order]
+      const nodes = buildClusters<Order>(
+        orders,
+        ['region'],
+        (row, columnId) => row[columnId as keyof Order],
       );
       const when = (): boolean => false;
       const throwingColumnWhen: GroupWhen<Order> = () => {
@@ -567,7 +593,7 @@ describe('admitClusters (#86 per-column admission)', () => {
         columnWhen,
         orderColumnsGetter,
         orderKnownIds,
-        'withGrouping'
+        'withGrouping',
       );
 
       // The per-column vote defaults to admit (true) on throw, but AND'd with the table-wide
@@ -581,8 +607,10 @@ describe('admitClusters (#86 per-column admission)', () => {
   });
 
   it('a columnWhen entry for a columnId that never appears in nodes is inert (no-op on an inactive level)', () => {
-    const nodes = buildClusters<Order>(orders, ['region'], (row, columnId) =>
-      row[columnId as keyof Order]
+    const nodes = buildClusters<Order>(
+      orders,
+      ['region'],
+      (row, columnId) => row[columnId as keyof Order],
     );
     // 'category' names no active level here (the only level clustered is 'region').
     const columnWhen = new Map<string, GroupWhen<Order>>([['category', () => false]]);
@@ -595,7 +623,7 @@ describe('admitClusters (#86 per-column admission)', () => {
       columnWhen,
       orderColumnsGetter,
       orderKnownIds,
-      'withGrouping'
+      'withGrouping',
     );
 
     expect(result.every((node) => node.admitted)).toBe(true);
@@ -685,8 +713,8 @@ describe('buildClusterNodes — derived-accessor column (Step 6, AC #1)', () => 
       ['tier'],
       resolveColumnDefs(
         [...createColumns(noData<Sale>(), (col) => [tierColumn(col)]).columns],
-        'clusters.spec'
-      )
+        'clusters.spec',
+      ),
     );
 
     expect(nodes.map((node) => node.value).sort()).toEqual(['high', 'low']);

@@ -10,8 +10,8 @@ has no edge to the `cells` shape.
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                         | Action                                            |
+| -------------------------------------------- | ------------------------------------------------- |
 | `libs/table/src/engine/grouping/clusters.ts` | edit — report from the `toGroupKey` collapse path |
 
 ## Why This Step Exists
@@ -24,7 +24,7 @@ The fix already exists: `GroupingRule.extractValue` (grouping's D7) narrows an o
 field to a primitive before it becomes a group key. That is what makes a report actionable rather
 than merely noisy — it names the declaration that is missing.
 
-D11 extends ADR-0014's reasoning rather than applying it: the ADR covers a callback *throwing*,
+D11 extends ADR-0014's reasoning rather than applying it: the ADR covers a callback _throwing_,
 this is a silent collapse. Same principle — a failure must be visible.
 
 > **Naming note.** D11 calls the extractor `GroupingRule.valueOf`. That name is stale; the shipped
@@ -36,7 +36,7 @@ this is a silent collapse. Same principle — a failure must be visible.
 
 ### `engine/grouping/clusters.ts`
 
-**The predicate.** A value is reportable when, *after* any `extractValue` has run, it is a
+**The predicate.** A value is reportable when, _after_ any `extractValue` has run, it is a
 non-null object that `toGroupKey` has no dedicated branch for — i.e. not a `Date`:
 
 ```ts
@@ -46,7 +46,7 @@ function isCollapsingGroupValue(value: unknown): boolean {
 ```
 
 Keep it a named guard with an `is*` prefix rather than inlining the condition
-(`declarative-naming`). Note that `null` and `undefined` are *not* reportable — `toGroupKey` gives
+(`declarative-naming`). Note that `null` and `undefined` are _not_ reportable — `toGroupKey` gives
 each its own key, so they cluster correctly and a "no value" bucket is a legitimate result.
 
 **The report:**
@@ -58,7 +58,7 @@ function reportNonPrimitiveGroupValue(columnId: string): void {
   console.error(
     `[withGrouping] field "${columnId}" groups on a non-primitive value — every distinct ` +
       'object collapses into one group. Declare extractValue on that field to key the group ' +
-      'on a primitive.'
+      'on a primitive.',
   );
 }
 ```
@@ -73,7 +73,7 @@ export function buildClusters<T>(
   items: T[],
   levels: readonly string[],
   accessor: (item: T, columnId: string) => unknown,
-  reportedFields: Set<string> = new Set()
+  reportedFields: Set<string> = new Set(),
 ): ClusterNode<T>[] {
   // …
   for (const item of items) {
@@ -92,7 +92,7 @@ The default parameter keeps every existing caller compiling unchanged, and makes
 "one `buildClusters` call tree" — which is one evaluation, matching `computeAggregates` and
 `evaluateGroupWhen`.
 
-Check the value *after* `accessor` runs, not the raw field: `accessor` is the lambda that already
+Check the value _after_ `accessor` runs, not the raw field: `accessor` is the lambda that already
 applied `extractValue` (`readGroupFieldValue`), so a field with a declared extractor that returns
 a primitive must not report.
 
@@ -155,4 +155,5 @@ functions that understand the key format sit together.
 - [ ] `nx run shared-table:typecheck` and `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 3: `RenderRow.cells`](step-3-render-row-cells.plan.md) | [Step 5: Engine tests — cells and duplicate ids](step-5-engine-tests-cells.plan.md) →

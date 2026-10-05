@@ -3,14 +3,14 @@
 **Issue:** [#125](https://github.com/DvirMon/ng-table/issues/125)
 **Status:** 6 / 6 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `ColumnValues<>` and the `createColumns()` capture point | ✅ done | — |
-| 2 | The capture guard | ✅ done | — |
-| 3 | The store shape carries the map | ✅ done | — |
-| 4 | The generator carries the map into every slot | ✅ done | — |
-| 5 | The end-to-end guard | ✅ done | — |
-| 6 | Record the decision | ✅ done | — |
+| Step | Title                                                    | Status  | PR  |
+| ---- | -------------------------------------------------------- | ------- | --- |
+| 1    | `ColumnValues<>` and the `createColumns()` capture point | ✅ done | —   |
+| 2    | The capture guard                                        | ✅ done | —   |
+| 3    | The store shape carries the map                          | ✅ done | —   |
+| 4    | The generator carries the map into every slot            | ✅ done | —   |
+| 5    | The end-to-end guard                                     | ✅ done | —   |
+| 6    | Record the decision                                      | ✅ done | —   |
 
 Steps 3 and 4 each required fallout fixes beyond their own `Files` lists to
 keep `nx run shared-table:typecheck`/`typecheck-spec` clean — neither step's
@@ -29,7 +29,7 @@ steps landed. Two findings led to further edits, both since resolved:
   (`RenderRow.cells`), ADR-0012 (`expandedRows`), ADR-0004/R50 (`index.ts`'s
   barrel-history comment), the `@ngrx/signals` migration note
   (`engine/slots.ts`'s `SlotRegistry` comment), and a `Precedent:
-  FilterRule.__criterion / __row` citation on both new `__columnValues`
+FilterRule.__criterion / __row` citation on both new `__columnValues`
   phantom comments (`api/types.ts`, `engine/types.ts`) — the exact citation
   that shows the phantom isn't a novel pattern. It also touched
   `generate-overloads.ts` inside the region Step 4's own Non-Goals named as
@@ -45,7 +45,7 @@ steps landed. Two findings led to further edits, both since resolved:
   are double-underscore-prefixed members on public store interfaces**,
   which `libs/table/CLAUDE.md`'s "No private store members" rule reads as
   banned on its face — "There is no `_`-prefix convention... If a future
-  feature genuinely needs a private *store* member, reintroduce
+  feature genuinely needs a private _store_ member, reintroduce
   `OmitPrivate`." Step 3's plan directed this exact shape, citing
   `FilterRule.__criterion`/`__row` (`engine/filters/types.ts:61-73`) as
   precedent — a type-only inference channel, never assigned at runtime,
@@ -86,7 +86,7 @@ isolation — each left the tree red until these were also touched:
   it to the list, same treatment as every other core member.
 - **`with-sorting.ts`, `with-grouping/feature.ts`** — both had a
   non-generated, two-argument `TableStore<TRow, TId>` / `Pick<TableStore<...>,
-  ...>` reference (`SortingInput<In>`, `GroupingInput<In>`,
+...>` reference (`SortingInput<In>`, `GroupingInput<In>`,
   `buildSortingSpec`, `buildGroupingSpec`) that Step 3's own plan missed —
   it named only `create-table.spec.ts`'s `withReversibleSort` probe as "the
   one" such reference. First attempt wrapped the recovered id union as
@@ -105,13 +105,13 @@ isolation — each left the tree red until these were also touched:
   than widen `resolveColumnsConfig`'s signature, which Step 4's Files list
   didn't include.
 - **`wire-columns-schema.spec.ts`** — a local `makeStore<TId extends
-  string>(cfg: TableConfig<Row, TId>): TableStore<Row, TId>` test helper,
+string>(cfg: TableConfig<Row, TId>): TableStore<Row, TId>` test helper,
   same shape as the `create-table.spec.ts` probe Step 3 already fixed, but
   in a file neither step named. Re-keyed to `TCols` → `ColumnValues<Row,
-  TCols>`, same pattern.
+TCols>`, same pattern.
 - **`with-tree.spec.ts`, `with-grouping/feature.spec.ts`** — two local test
   helpers (`setup()`) carried an explicit `TableStore<Row, 'region' |
-  'category'>` / `TableStore<Row, MockColumnId>` return-type annotation
+'category'>` / `TableStore<Row, MockColumnId>` return-type annotation
   naming the id union directly. Dropped the annotation; inferring off the
   `createTable()` call inside carries the same literal ids with no
   re-spelling needed.

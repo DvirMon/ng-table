@@ -19,13 +19,13 @@ Two acceptance criteria are inherently cross-domain, not owned by any
 one feature's spec file: (1) the two-tier arity rule itself —
 `criterionOf`/`stateOf` reject a second argument, `valueOf` requires
 one; (2) `criterionOf(path.total)` and `valueOf(path.total, row)` must
-have *different* return types for a non-`equals` rule (`inRange`), per
+have _different_ return types for a non-`equals` rule (`inRange`), per
 ADR-0027's own worked example (`{ min, max }` vs `number`). Neither fact
 belongs to filtering, sorting, or grouping alone — each is a statement
 about the relationship between two registers — so it gets its own file
 rather than being duplicated into (or borrowed by) any one domain's own
 types-spec ([[spec-files-assert-own-domain-only]]: this file's ownership
-is the *resolver mechanism itself*, not any one feature).
+is the _resolver mechanism itself_, not any one feature).
 
 ## What To Do
 
@@ -37,7 +37,7 @@ Using `expectTypeOf`/`@ts-expect-error` (this repo's existing
 1. **Arity rejection:** construct a minimal `FilterValueOfContext<Row>`
    and `ColumnRuleContext<Row>` (or reuse fixtures from `table.mock.ts`)
    and assert `// @ts-expect-error` on `ctx.criterionOf(path.total,
-   row)` (a second argument) and `ctx.stateOf(path.total, row)` (a
+row)` (a second argument) and `ctx.stateOf(path.total, row)` (a
    second argument) — both must fail to compile.
 2. **Arity requirement:** assert `// @ts-expect-error` on
    `ctx.valueOf(path.total)` (a bound, 0-subject call) from Step 1's
@@ -46,7 +46,7 @@ Using `expectTypeOf`/`@ts-expect-error` (this repo's existing
    `path.total` and a grouping/sorting `valueOf` resolver on the same
    `path.total`, assert
    `expectTypeOf(ctx.criterionOf(path.total)).toEqualTypeOf<{ min:
-   number; max: number } | undefined>()` (or whatever `inRange`'s actual
+number; max: number } | undefined>()` (or whatever `inRange`'s actual
    criterion shape is — check `with-filtering/matchers.ts`'s `inRange`
    for its exact type) against
    `expectTypeOf(ctx.valueOf(path.total, row)).toEqualTypeOf<number>()`
@@ -67,7 +67,7 @@ Using `expectTypeOf`/`@ts-expect-error` (this repo's existing
 ## Risks / Watchouts
 
 - This file directly proves the two-tier rule ADR-0027 documents — if
-  any assertion here needs a `@ts-expect-error` *removed* to compile,
+  any assertion here needs a `@ts-expect-error` _removed_ to compile,
   that's a sign a Step 1–5 signature is wrong, not that this spec should
   be loosened.
 
@@ -82,4 +82,5 @@ Using `expectTypeOf`/`@ts-expect-error` (this repo's existing
       the widened signature it guards makes the file fail to compile).
 
 ---
+
 ← [Step 7: Runtime specs](step-7-runtime-specs.plan.md) | [Step 9: Docs and migration](step-9-docs-and-migration.plan.md) →

@@ -17,7 +17,7 @@ function assertDerivedSignals(dict: Record<string, unknown>): asserts dict is De
   for (const [key, value] of Object.entries(dict)) {
     if (!isSignal(value)) {
       throw new Error(
-        `[createTable] withComputed: member "${key}" is not a signal — a derive block returns signals only`
+        `[createTable] withComputed: member "${key}" is not a signal — a derive block returns signals only`,
       );
     }
   }
@@ -61,17 +61,16 @@ function wrapDerivedMembers(declared: DerivedDict): DerivedDict {
  * signals only.
  */
 export function withComputed<In extends Shape, D extends DerivedDict>(
-  factory: (store: ReadonlyStore<In>) => D
+  factory: (store: ReadonlyStore<In>) => D,
 ): Feature<In, D> {
   const feature: Feature<In, D> = (input) => {
     let declared: D;
     try {
       declared = factory(toReadonlyStore(input));
     } catch (cause) {
-      throw new Error(
-        '[createTable] withComputed block threw while declaring its members',
-        { cause }
-      );
+      throw new Error('[createTable] withComputed block threw while declaring its members', {
+        cause,
+      });
     }
 
     assertDerivedSignals(declared);

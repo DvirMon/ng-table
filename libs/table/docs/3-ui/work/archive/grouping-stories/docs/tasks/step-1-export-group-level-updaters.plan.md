@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — export the four group-level updaters from index.ts"
+title: 'Step 1 — export the four group-level updaters from index.ts'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: C2
@@ -67,4 +67,5 @@ grouping block adjacent to the column-updater block so the two read as siblings.
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 [Step 2: grouping fixtures — schema.ts](step-2-grouping-fixtures-schema.plan.md) →

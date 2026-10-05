@@ -39,7 +39,7 @@ split makes existing behavior deterministic instead of scheduler-dependent.
 
 ## D3 — Async needs no effect (2026-08-17)
 
-`resource()` *creation* requires an injection context (stays in `onInit`); *reading* it does
+`resource()` _creation_ requires an injection context (stays in `onInit`); _reading_ it does
 not. `computed(() => resourceRef.status())` is ordinary signal composition. The current
 `wireAsyncVisibleRule` reaches for `effect()` only because it must write the result into a
 different signal — which D2 removes.
@@ -70,7 +70,7 @@ const ruleVisible = linkedSignal<ResourceStatus, boolean | undefined>({
   computation: (status, previous) => {
     if (status === 'resolved' || status === 'local') return rule.onSuccess(resourceRef.value());
     if (status === 'error') return rule.onError(resourceRef.error());
-    return previous?.value;            // loading / reloading / idle → hold
+    return previous?.value; // loading / reloading / idle → hold
   },
 });
 ```
@@ -89,7 +89,7 @@ the state `linkedSignal` computation:
 ```js
 status = request === undefined ? 'idle' : 'loading';
 if (previous.value.extRequest.request === request) {
-  stream = previous.value.stream;   // same request → previous value survives
+  stream = previous.value.stream; // same request → previous value survives
 }
 // different request → stream undefined → value() undefined, hasValue() false
 ```
@@ -100,7 +100,7 @@ the value intact.
 
 **False — that Signal Forms therefore reverts to a default.** It does not. `validateAsync`
 returns `'pending'` while loading, and a pending field **is not valid** — submit stays blocked.
-Angular fails *safe*, toward the restrictive side. It never falls back to the declared value.
+Angular fails _safe_, toward the restrictive side. It never falls back to the declared value.
 "Abstain to the declared default" was a third behavior, not the Angular one.
 
 **And Angular does use previous-value memory** — one layer lower than validation, which is why
@@ -116,13 +116,13 @@ merge — which is exactly where this decision puts it.
 
 ### Why this does not compromise D2
 
-The memory is confined to how a single rule's result signal is *produced*. The fold over those
+The memory is confined to how a single rule's result signal is _produced_. The fold over those
 signals stays a pure function of `{ baseColumns, ruleResults }`. No `effect()` is involved —
 `linkedSignal` is a derivation primitive — so the gap report's actual invariant holds.
 
 ### Known limitation, accepted
 
-When params change because the *subject* changed (user switches tenant, permission query
+When params change because the _subject_ changed (user switches tenant, permission query
 re-runs), the retained value answers the previous subject's question — a column stays visible
 on the old tenant's permissions for the duration of the fetch. The library cannot distinguish
 this from a benign re-query; only the rule author can.
@@ -136,7 +136,7 @@ appears. Not shipped now because no consumer needs it.
 ## D6 — Rule registry reaches `columns` via a mutable handle registry (2026-08-17)
 
 `columns` is built in `createTableCore()`, but rules are owned by `withColumnsSchemaAsync`,
-which runs *after* core construction and can only contribute
+which runs _after_ core construction and can only contribute
 `members`/`stages`/`renderRows`/hooks. Resolution: core builds
 
 ```ts
@@ -149,7 +149,7 @@ like `stages` and `renderRows`.
 
 **Why:** this is the mechanism the engine already uses — `core.ts:16` documents that `stages`
 and the render-rows builder are handed out as mutable registries precisely because the
-computeds read them at *evaluation* time, so features registering during the fold are visible
+computeds read them at _evaluation_ time, so features registering during the fold are visible
 before any consumer reads. No new engine concept is introduced. Registration completes during
 the fold; `composeTable()` runs `onInit` before returning the store, so async rules' `resource()`
 instances exist before `columns()` can be read.
@@ -170,7 +170,7 @@ different verdicts.
 
 **Managed construction** (`createManagedMetadataKey`) — a framework-owned slot that lazily
 builds the `resource` per field, in the right injection context, torn down with the field.
-Signal Forms needs it because fields are *dynamic*: `applyEach` over an array creates and
+Signal Forms needs it because fields are _dynamic_: `applyEach` over an array creates and
 destroys fields as data changes, so resources cannot be built up front. And a resource cannot
 be constructed inside a rule at all — Angular throws `NG0992`
 (`invalidResourceCreationInParams`) — so construction must live outside rule evaluation.
@@ -183,7 +183,7 @@ table instance, no rule node created or destroyed at runtime. Building the resou
 reducer: `.and()`, `.or()`, `.list()`, `.min()`, `.max()`, `override()`
 (`@angular/forms/types/_structure-chunk.d.ts:867-887`).
 
-**Already adopted, under a different name.** `MetadataReducer.and()` *is*
+**Already adopted, under a different name.** `MetadataReducer.and()` _is_
 `columnRules.every((rule) => rule.when(ctx))`. D4's rule registry is a narrow hand-roll of this
 mechanism — recorded here so it reads as prior art rather than invention, and so a future
 second rule kind reaches for the reducer vocabulary Angular already settled on.
@@ -191,7 +191,7 @@ second rule kind reaches for the reducer vocabulary Angular already settled on.
 ## D8 — `ColumnRuleContext` must expose base columns, not derived columns (2026-08-17)
 
 Rule callbacks receive `{ columns: () => store.columns() }` — both `when()` and `params()` read
-the resolved columns. Under D2 `columns` becomes derived *from rule results*, which closes a
+the resolved columns. Under D2 `columns` becomes derived _from rule results_, which closes a
 cycle: rule result → `columns` → params → resource → rule result.
 
 Today's `effect()` masks this — the scheduler breaks the loop, and it converges by accident.
@@ -214,8 +214,8 @@ from importing the concrete type instead of its interface, not an intentional on
 Angular's own `validateAsync` doesn't make this mistake — its `factory` is typed
 `(params) => Resource<TResult | undefined>` (`@angular/forms/types/signals.d.ts:368`), where
 `Resource<T>` is Angular's public read-only structural interface (`value`, `status`, `error`,
-`isLoading`, `hasValue()` — no mutation members). Its own doc comment: *"various other APIs may
-present `Resource` instances to describe their own concepts."* — a declared extension point for
+`isLoading`, `hasValue()` — no mutation members). Its own doc comment: _"various other APIs may
+present `Resource` instances to describe their own concepts."_ — a declared extension point for
 exactly this.
 
 Confirmed `validateHttp` is sugar over `validateAsync`, not a separate abstraction tier —
@@ -230,18 +230,18 @@ wrapping TanStack Query (or any other async source) into the same
 `{status, value, error, isLoading, hasValue()}` shape becomes usable without Angular's `resource()`
 at all. Zero change to D5/D8's wiring logic; this is a type-only widening.
 
-## D9 — The rule *set* is static; columns and rule *results* are not (2026-08-17)
+## D9 — The rule _set_ is static; columns and rule _results_ are not (2026-08-17)
 
 D6 rejects a keyed registry on the grounds that rules are static. That claim needs its scope
 stated, because two other things nearby genuinely are dynamic:
 
-| | Dynamic? | Mechanism |
-|---|---|---|
-| Rule results (`when()`, resource) | yes | re-evaluated by the fold on dependency change |
-| Columns (`setColumns` replaces the list) | yes | fold re-reads `baseColumns()` |
-| The rule set — which rules exist, on which column id | **no** | fixed by `resolve.ts` at construction |
+|                                                      | Dynamic? | Mechanism                                     |
+| ---------------------------------------------------- | -------- | --------------------------------------------- |
+| Rule results (`when()`, resource)                    | yes      | re-evaluated by the fold on dependency change |
+| Columns (`setColumns` replaces the list)             | yes      | fold re-reads `baseColumns()`                 |
+| The rule set — which rules exist, on which column id | **no**   | fixed by `resolve.ts` at construction         |
 
-Only the third justifies Angular's keyed `Map`. Signal Forms needs one because *field nodes*
+Only the third justifies Angular's keyed `Map`. Signal Forms needs one because _field nodes_
 are created and destroyed at runtime (`applyEach` over an array), each owning a stateful
 resource that must be found by key and torn down with its node.
 
@@ -281,7 +281,7 @@ the consumer's source signal, upstream of both the pipeline and columns). Reject
 (`some`/`every`/threshold), and a per-row value driving whole-column visibility is incoherent
 as UX. A table-scoped input belongs in a table-scoped signal, which the closure already covers.
 
-**Rule-to-rule dependency — rejected.** A rule reading another column's *rule-computed*
+**Rule-to-rule dependency — rejected.** A rule reading another column's _rule-computed_
 `visible` is the D8 cycle. Under D8 rules see `baseColumns()`, so they observe imperative
 visibility changes (`toggleColumnVisibility`) but not other rules' outputs. Supporting the
 latter would require dependency-ordered resolution and real cycle detection. Rules coordinate

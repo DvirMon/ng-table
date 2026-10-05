@@ -38,7 +38,7 @@ function labelFeatures<TRow, TFeature>(
   features: readonly TFeature[],
   describe: (position: number, displayName?: string) => string,
   call: (feature: TFeature) => TableFeatureSpec<TRow>,
-  displayNameOf?: (feature: TFeature) => string | undefined
+  displayNameOf?: (feature: TFeature) => string | undefined,
 ): LabeledFeature<TRow>[] {
   return features.map((feature, index) => ({
     run: () => call(feature),
@@ -48,9 +48,7 @@ function labelFeatures<TRow, TFeature>(
 
 // Builds the core half of the store before any feature runs, so a feature factory already
 // sees `renderRows` and `totalRowCount` on the store it is handed.
-function createBaseStore<TRow>(
-  handle: TableCoreHandle<TRow>
-): FoldingStore<TRow> {
+function createBaseStore<TRow>(handle: TableCoreHandle<TRow>): FoldingStore<TRow> {
   // Default is the row count before any virtualization/pagination trims what's actually
   // rendered — equals `renderRows().length` until a feature overrides it.
   const totalRowCount = computed(() => handle.core.rows().length);
@@ -75,7 +73,7 @@ function foldFeatures<TRow>(
   features: readonly LabeledFeature<TRow>[],
   store: FoldingStore<TRow>,
   handle: TableCoreHandle<TRow>,
-  registry: SlotRegistry
+  registry: SlotRegistry,
 ): FeatureHooks {
   const hooks: FeatureHooks = { setup: [], onDestroy: [], onRowsRemoved: [] };
   const pipelineRules: LabelledStageRule<RowTransform<TRow>>[] = [];
@@ -162,7 +160,7 @@ function foldFeatures<TRow>(
 export function composeTable<TRow>(
   config: TableEngineConfig<TRow>,
   features: readonly AnyTableFeature[],
-  internalFeatures: readonly InternalFeature<TRow>[] = []
+  internalFeatures: readonly InternalFeature<TRow>[] = [],
 ): TableStore<TRow> {
   const handle = createTableCore<TRow>(config);
 
@@ -191,7 +189,7 @@ export function composeTable<TRow>(
       ...labelFeatures<TRow, InternalFeature<TRow>>(
         internalFeatures,
         describeInternalFeature,
-        (feature) => feature(handle.core)
+        (feature) => feature(handle.core),
       ),
       // `AnyTableFeature` erases `In`/`Out` to `any`, so calling it back statically resolves to
       // `TableFeatureSpec<unknown>` — the same static/dynamic seam `create-table.ts` bridges
@@ -200,12 +198,12 @@ export function composeTable<TRow>(
         features,
         describeFeature,
         (feature) => feature(store, stageContext) as TableFeatureSpec<TRow>,
-        (feature) => feature.displayName
+        (feature) => feature.displayName,
       ),
     ],
     store,
     handle,
-    registry
+    registry,
   );
 
   // Hooks run only once every feature is composed, so a `setup` can read any other

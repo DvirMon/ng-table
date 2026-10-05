@@ -20,21 +20,25 @@ function isHostProbeComponent(value: unknown): value is HostProbeComponent {
 
 @Component({
   imports: [NgpTableDirective, HostProbeComponent],
-  template: `<table [ngpTable]="store"><tbody><tr host-probe></tr></tbody></table>`,
+  template: `<table [ngpTable]="store">
+    <tbody>
+      <tr host-probe></tr>
+    </tbody>
+  </table>`,
 })
 class HostComponent {
   store!: TableStore<unknown>;
 }
 
 function getDirective(fixture: ReturnType<typeof TestBed.createComponent>): NgpTableDirective {
-  return fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(NgpTableDirective, null) !== null
-  ).injector.get(NgpTableDirective);
+  return fixture.debugElement
+    .query((debugEl) => debugEl.injector.get(NgpTableDirective, null) !== null)
+    .injector.get(NgpTableDirective);
 }
 
 function getProbe(fixture: ReturnType<typeof TestBed.createComponent>): HostProbeComponent {
   const componentInstance: unknown = fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(HostProbeComponent, null) !== null
+    (debugEl) => debugEl.injector.get(HostProbeComponent, null) !== null,
   ).componentInstance;
   if (!isHostProbeComponent(componentInstance)) {
     throw new Error('Expected HostProbeComponent instance');
@@ -44,7 +48,7 @@ function getProbe(fixture: ReturnType<typeof TestBed.createComponent>): HostProb
 
 function getTableElement(fixture: ReturnType<typeof TestBed.createComponent>): HTMLElement {
   const nativeElement: unknown = fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(NgpTableDirective, null) !== null
+    (debugEl) => debugEl.injector.get(NgpTableDirective, null) !== null,
   ).nativeElement;
   if (!(nativeElement instanceof HTMLElement)) {
     throw new Error('Expected an HTMLElement');

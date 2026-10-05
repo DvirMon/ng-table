@@ -59,7 +59,12 @@ export class LiveTableStoryHostComponent {
   private readonly rowEditApi = injectRowEditApi();
 
   protected readonly data = signal<EditRow[]>(EDIT_ROWS_MOCK);
-  protected readonly table = createTable(this.data, editTableConfig, withSorting(), withOptimistic());
+  protected readonly table = createTable(
+    this.data,
+    editTableConfig,
+    withSorting(),
+    withOptimistic(),
+  );
   protected readonly rows = form(this.data, editRowsSchema);
   protected readonly deptOptions = DEPT_OPTIONS;
 
@@ -82,8 +87,12 @@ export class LiveTableStoryHostComponent {
 
   protected readonly undoLabel = computed(() => this.undo.label());
 
-  protected readonly nameSortAria = computed(() => toAriaSort(this.table.sortDirections().get('name')));
-  protected readonly deptSortAria = computed(() => toAriaSort(this.table.sortDirections().get('dept')));
+  protected readonly nameSortAria = computed(() =>
+    toAriaSort(this.table.sortDirections().get('name')),
+  );
+  protected readonly deptSortAria = computed(() =>
+    toAriaSort(this.table.sortDirections().get('dept')),
+  );
 
   protected readonly requestOptions = computed<RowEditRequestOptions>(() => ({
     forceFailure: this.forceFailure(),
@@ -98,12 +107,7 @@ export class LiveTableStoryHostComponent {
     const id = crypto.randomUUID();
     this.newRowId.set(id);
     this.flags.markPendingCreate(id);
-    this.table.value.update(
-      insertRow(
-        { id, name: '', dept: DEPT_OPTIONS[0] },
-        { at: insertAt },
-      ),
-    );
+    this.table.value.update(insertRow({ id, name: '', dept: DEPT_OPTIONS[0] }, { at: insertAt }));
   }
 
   /** Re-sends the row's current value — a create `POST`s again, an update `PUT`s again. Simple

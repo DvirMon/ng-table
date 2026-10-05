@@ -39,7 +39,7 @@ store first (`updateRows`, `updateColumns`)"). What's still missing is a row for
 
 ## Risks / Watchouts
 
-- Don't also try to update `docs/1-state/prd.md` here — issue #13 doesn't list it in acceptance criteria (unlike #12's presumed future scope), and D12's own consequences list only calls out `prd.md` stories 7/8/9 as *already* stale from the schema-only column API migration, not as this issue's responsibility. Leave that to a future doc-sync pass unless the user asks.
+- Don't also try to update `docs/1-state/prd.md` here — issue #13 doesn't list it in acceptance criteria (unlike #12's presumed future scope), and D12's own consequences list only calls out `prd.md` stories 7/8/9 as _already_ stale from the schema-only column API migration, not as this issue's responsibility. Leave that to a future doc-sync pass unless the user asks.
 
 ## Non-Goals
 
@@ -51,4 +51,5 @@ store first (`updateRows`, `updateColumns`)"). What's still missing is a row for
 - `engine/core.ts` row confirmed accurate (no mutation methods, free-function write path).
 
 ---
+
 ← [Step 8: `update-columns.spec.ts`](step-8-update-columns-spec.plan.md)

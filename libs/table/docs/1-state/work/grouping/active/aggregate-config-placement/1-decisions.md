@@ -35,7 +35,7 @@
   produced inside `accessor` can never be aggregated.
   Side finding, not resolved here (out of this slice's scope): ADR-0019's
   own canonical derived-column example (`{ id: 'fullName', accessor: r =>
-  r.first + ' ' + r.last }`) is itself a computation, not a bare
+r.first + ' ' + r.last }`) is itself a computation, not a bare
   extraction — in tension with "accessor extracts, template computes" if
   that becomes a stated rule. Flagged for a separate, project-wide
   decision on `accessor`'s contract; not litigated here.

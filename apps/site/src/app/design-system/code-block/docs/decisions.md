@@ -13,7 +13,7 @@ here since no highlighter is wired up yet to actually set it.
 
 Line-highlighting (`states: - "highlighted line"` in the spec front-matter) is in the same bucket:
 the CSS rule (`.line.is-highlighted`) is present per the HTML/CSS mock, but nothing sets the class —
-its trigger is Shiki fence meta (`` ```ts {2,4-6} ``), which isn't wired up this round either, and
+its trigger is Shiki fence meta (` ```ts {2,4-6} `), which isn't wired up this round either, and
 `highlightedLines` isn't in the fixed contract's inputs. Inert until both land.
 
 ## Copy button: built here, diverging from `spec.md`'s ownership note
@@ -90,7 +90,7 @@ Nothing local to type: `copyState` reuses `IconButtonState` from `icon-button.ty
 
 `lucideCopy` for the idle glyph, per `src/styles/docs/Iconography.md`'s `⧉ → lucideCopy` mapping —
 already registered by `icon-button`'s own `viewProviders`, so `code-block.ts` doesn't register any
-icons itself; it only ever passes an icon *name* string to `ngpt-icon-button`. `copied`/`failed`
+icons itself; it only ever passes an icon _name_ string to `ngpt-icon-button`. `copied`/`failed`
 glyphs (`lucideCheck` / `lucideTriangleAlert`) are icon-button's own concern, not code-block's.
 
 ## Two seams added for `preview-window`: `showCopyButton`, `radius`

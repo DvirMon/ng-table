@@ -13,12 +13,12 @@ this node set.
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#100](https://github.com/DvirMon/ng-table/issues/100) | `sortFn`/`enableSorting` move off `ColumnDef` into `withSorting()`'s schema | 🟡 OPEN — `needs:tasks` | — (all cleared: #111, #129/R1) | #117 |
-| [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id | ✅ CLOSED 09-25 (7dda2e5) | — (all cleared: #111, #113, #125, #129) | #117 |
-| [#116](https://github.com/DvirMon/ng-table/issues/116) | ADR for the schema-declaration surface — keying, authoring forms, resolver naming | 🟡 OPEN — `needs:triage` | — (none, ever) | none (docs-only; #117 doesn't block on it) |
-| [#117](https://github.com/DvirMon/ng-table/issues/117) | Rule contexts resolve declared columns — `valueOf`/`criterionOf`/`stateOf` | 🟡 OPEN — `needs:tasks` | #100 (open), #115 (cleared) | — |
+| #                                                      | Title                                                                             | State                     | Depends on                              | Blocks                                     |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------- | --------------------------------------- | ------------------------------------------ |
+| [#100](https://github.com/DvirMon/ng-table/issues/100) | `sortFn`/`enableSorting` move off `ColumnDef` into `withSorting()`'s schema       | 🟡 OPEN — `needs:tasks`   | — (all cleared: #111, #129/R1)          | #117                                       |
+| [#115](https://github.com/DvirMon/ng-table/issues/115) | Filtering reads the accessor; criteria key by column id                           | ✅ CLOSED 09-25 (7dda2e5) | — (all cleared: #111, #113, #125, #129) | #117                                       |
+| [#116](https://github.com/DvirMon/ng-table/issues/116) | ADR for the schema-declaration surface — keying, authoring forms, resolver naming | 🟡 OPEN — `needs:triage`  | — (none, ever)                          | none (docs-only; #117 doesn't block on it) |
+| [#117](https://github.com/DvirMon/ng-table/issues/117) | Rule contexts resolve declared columns — `valueOf`/`criterionOf`/`stateOf`        | 🟡 OPEN — `needs:tasks`   | #100 (open), #115 (cleared)             | —                                          |
 
 ## Graph
 
@@ -39,7 +39,7 @@ this node set.
   (V2/V3) before a rule callback has a legal way to read a declared column's
   value through a carrier column. Already recorded in #117's `Blocked by`.
 - **#116 has no edge to #100/#115/#117.** It is a pure documentation ADR
-  whose *content* is already settled (R2 and R3 corrections are both already
+  whose _content_ is already settled (R2 and R3 corrections are both already
   folded into #116's live body — see "Already-applied corrections" below).
   Nothing in #100/#115/#117 is blocked on #116 landing first, and #116 is not
   blocked on anything. It races independently.
@@ -66,12 +66,12 @@ side entirely.
 
 ## Readiness
 
-| # | rung (as labeled) | actual readiness | why |
-|---|---|---|---|
-| #100 | `needs:tasks` | **ready for `/to-tasks` now** | Design fully settled (Rule A chosen, Q1–Q5 answered, aggregate half already split to #114/shipped). The only open blocker (#111) is closed and R1 already resolved the #129 ship-order question — #129 is closed. Nothing left to re-litigate; next step is task-slicing the implementation itself, not further design. |
-| #115 | `needs:tasks` (stale label) | **shipped and closed** | `/to-tasks` (8 steps), `/implement` and `/ship` all ran 2026-09-25 — commit 7dda2e5, pushed directly to `main`, closed by the closing keyword in the commit message. All 9 acceptance criteria checked off on the issue. |
-| #116 | `needs:triage` | **effectively ready-for-agent; label lags content** | Its own 2026-09-20 assessment says "low difficulty, docs only, content already settled... Proposes ready-for-agent; not self-granted, per the assessment rule." That self-imposed caveat is the only thing keeping it off `ready-for-agent` — a human/agent just needs to apply the label. Both R2 and R3 scope additions (2026-09-24) are already written into its acceptance criteria. |
-| #117 | `needs:tasks` | **blocked, correctly labeled** | Cannot start until #100 and #115 both ship — its resolver signatures for `sortFn` and filtering depend on what those two land. Once unblocked, still high difficulty per its own assessment (breaking rename, three-feature span) — genuinely needs `/to-tasks` when its turn comes. |
+| #    | rung (as labeled)           | actual readiness                                    | why                                                                                                                                                                                                                                                                                                                                                                                      |
+| ---- | --------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #100 | `needs:tasks`               | **ready for `/to-tasks` now**                       | Design fully settled (Rule A chosen, Q1–Q5 answered, aggregate half already split to #114/shipped). The only open blocker (#111) is closed and R1 already resolved the #129 ship-order question — #129 is closed. Nothing left to re-litigate; next step is task-slicing the implementation itself, not further design.                                                                  |
+| #115 | `needs:tasks` (stale label) | **shipped and closed**                              | `/to-tasks` (8 steps), `/implement` and `/ship` all ran 2026-09-25 — commit 7dda2e5, pushed directly to `main`, closed by the closing keyword in the commit message. All 9 acceptance criteria checked off on the issue.                                                                                                                                                                 |
+| #116 | `needs:triage`              | **effectively ready-for-agent; label lags content** | Its own 2026-09-20 assessment says "low difficulty, docs only, content already settled... Proposes ready-for-agent; not self-granted, per the assessment rule." That self-imposed caveat is the only thing keeping it off `ready-for-agent` — a human/agent just needs to apply the label. Both R2 and R3 scope additions (2026-09-24) are already written into its acceptance criteria. |
+| #117 | `needs:tasks`               | **blocked, correctly labeled**                      | Cannot start until #100 and #115 both ship — its resolver signatures for `sortFn` and filtering depend on what those two land. Once unblocked, still high difficulty per its own assessment (breaking rename, three-feature span) — genuinely needs `/to-tasks` when its turn comes.                                                                                                     |
 
 ## Already-applied corrections (informational — no action needed)
 

@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                               | Action |
+| ------------------------------------------------------------------ | ------ |
 | `libs/shared/table/docs/adr/0017-engine-owned-descendant-prune.md` | create |
 
 ## Why This Step Exists
@@ -47,13 +47,13 @@ relitigate them:
 
 1. **Polarity — the one that can change Step 3's type.** The leading candidate, developed during
    `/to-spec` and not yet ratified: features contribute `expandedRows` **as-is** (an expanded set,
-   collapsed-by-default), and the prune rule is *hide a row when its `parentId` is set and absent
-   from every contributed set*. This needs no "universe of expandable ids" — a set `parentId`
+   collapsed-by-default), and the prune rule is _hide a row when its `parentId` is set and absent
+   from every contributed set_. This needs no "universe of expandable ids" — a set `parentId`
    already means the parent nests. Both existing emit sites are already expanded-set semantics
    (`engine/grouping.ts:232`, and `expandRow`'s `expanded.has(row.id)` in
    `api/features/with-expansion.ts`).
 
-   If adopted, note the consequence for D4's wording: contributions are *expanded* sets, so
+   If adopted, note the consequence for D4's wording: contributions are _expanded_ sets, so
    "union of hiding" reads as "visible if the parent is in any contributed set". There is still no
    precedence conflict, because group ids and data-row ids are disjoint universes — a group
    member's `parentId` can only ever appear in the group-collapse set. Say that explicitly; it is
@@ -114,4 +114,5 @@ the contract. Link, don't duplicate.
 - [ ] Section shape matches `docs/adr/0016-filtering-takes-a-predicate-list.md`.
 
 ---
+
 [Step 2: `RenderRow.parentId` + both synthesizing stages](step-2-parent-id.plan.md) →

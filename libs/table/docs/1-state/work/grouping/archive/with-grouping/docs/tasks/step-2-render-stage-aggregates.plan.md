@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — Render-stage group headers + per-depth aggregates"
+title: 'Step 2 — Render-stage group headers + per-depth aggregates'
 type: task-step
 issue: 6
 ---
@@ -41,7 +41,7 @@ Spec: `../../3-spec.md` (D9's two invariants; the Render Layer section of
 ```ts
 function computeAggregates<TRow>(
   rows: TRow[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
 ): Record<string, unknown> {
   const aggregates: Record<string, unknown> = {};
   for (const column of columns) {
@@ -64,7 +64,7 @@ function emitGroupRows<TRow>(
   nodes: ClusterNode<Omit<RenderRow<TRow>, 'index'>>[],
   depth: number,
   parentPath: string,
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
     const path = `${parentPath}>${node.columnId}:${toGroupKey(node.value)}`;
@@ -76,7 +76,7 @@ function emitGroupRows<TRow>(
       hasChildren: node.items.length > 0,
       aggregates: computeAggregates(
         node.items.map((item) => item.data as TRow),
-        columns
+        columns,
       ),
     };
     const nested =
@@ -97,7 +97,7 @@ directly, since both live in this one file) rather than re-deriving id serializa
 export function buildGroupRenderRows<TRow>(
   rows: Omit<RenderRow<TRow>, 'index'>[],
   grouping: readonly string[],
-  columns: ColumnDef<TRow>[]
+  columns: ColumnDef<TRow>[],
 ): Omit<RenderRow<TRow>, 'index'>[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -105,7 +105,7 @@ export function buildGroupRenderRows<TRow>(
   }
   const columnById = new Map(columns.map((c) => [c.id, c]));
   const nodes = buildClusters(rows, levels, (item, columnId) =>
-    columnById.get(columnId)!.accessor(item.data as TRow)
+    columnById.get(columnId)!.accessor(item.data as TRow),
   );
   return emitGroupRows(nodes, 0, '', columns);
 }
@@ -168,4 +168,5 @@ plain 1:1 seed from `buildDefaultRenderRows` (`engine/rows.ts`) — every `item.
 - [ ] `tsc --noEmit` passes; `engine/grouping.spec.ts` passes under plain `vitest`.
 
 ---
+
 ← [Step 1: Pipeline clustering engine + shared types](step-1-pipeline-clustering.plan.md) | [Step 3: mutations/update-grouping.ts](step-3-update-grouping-mutations.plan.md) →

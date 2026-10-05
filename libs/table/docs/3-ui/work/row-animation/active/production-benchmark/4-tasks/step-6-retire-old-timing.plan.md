@@ -9,16 +9,16 @@ deterministic gates.
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/table/src/directives/ngp-table-row-animation.bench.spec.ts` | edit — drop timing, keep counts |
-| `libs/table/src/directives/ngp-table-row-animation.trace.bench.spec.ts` | delete |
-| `libs/table/project.json` | edit — delete `bench-trace` target; keep `bench` (counts only) |
-| `libs/table/tsconfig.bench.json` | keep — still isolates the bench from other specs |
-| `libs/table/src/stories/row-animation/` | delete (profile story, host, CSS) |
-| `libs/table/.storybook/main.ts` | edit — remove the `profile` tag option |
-| `.gitignore` | edit — remove `bench-trace.json` |
-| `package.json` | edit — `table:bench` keeps pointing at the counts-only Vitest bench |
+| File                                                                    | Action                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `libs/table/src/directives/ngp-table-row-animation.bench.spec.ts`       | edit — drop timing, keep counts                                     |
+| `libs/table/src/directives/ngp-table-row-animation.trace.bench.spec.ts` | delete                                                              |
+| `libs/table/project.json`                                               | edit — delete `bench-trace` target; keep `bench` (counts only)      |
+| `libs/table/tsconfig.bench.json`                                        | keep — still isolates the bench from other specs                    |
+| `libs/table/src/stories/row-animation/`                                 | delete (profile story, host, CSS)                                   |
+| `libs/table/.storybook/main.ts`                                         | edit — remove the `profile` tag option                              |
+| `.gitignore`                                                            | edit — remove `bench-trace.json`                                    |
+| `package.json`                                                          | edit — `table:bench` keeps pointing at the counts-only Vitest bench |
 
 ## What To Do
 

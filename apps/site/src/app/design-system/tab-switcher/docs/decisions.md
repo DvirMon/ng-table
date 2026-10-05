@@ -17,7 +17,7 @@ The spec's `a11y` front-matter only says "arrow keys move between tabs, aria-sel
 active one" — it doesn't say whether arrowing onto a tab activates it immediately. The States
 table resolves this implicitly: it lists **"Inactive tab (focus) — Keyboard focus — 2px accent
 ring"** as its own reachable row, distinct from "Active tab — selected — Filled bg". If
-selection followed focus, a tab could never be simultaneously focused *and* inactive via
+selection followed focus, a tab could never be simultaneously focused _and_ inactive via
 keyboard, so that row would be unreachable. Read literally, the spec requires focus and
 selection to be decouplable — i.e. the ARIA APG **manual activation** pattern.
 

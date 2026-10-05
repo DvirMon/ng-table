@@ -29,24 +29,20 @@ caller).
 - In the constructor `effect()`, replace:
   ```ts
   this.table.updateColumns((columns) =>
-    columns.map((column) =>
-      column.id === 'age' ? { ...column, visible: allowed } : column,
-    ),
+    columns.map((column) => (column.id === 'age' ? { ...column, visible: allowed } : column)),
   );
   ```
   with:
   ```ts
   updateColumns(this.table, (columns) =>
-    columns.map((column) =>
-      column.id === 'age' ? { ...column, visible: allowed } : column,
-    ),
+    columns.map((column) => (column.id === 'age' ? { ...column, visible: allowed } : column)),
   );
   ```
 - Update the comment above `ageColumnPermission` — it currently reads "the store only exposes
   `updateColumns()` as a plain mutator"; reword to reflect that `updateColumns()` is now a free
   function taking the table, not a store method.
 - Check `table-demo.mock.ts:11`'s comment (`// updateColumns() driven from a resource()/effect().
-  Not a real check.`) for the same staleness; reword if it implies a store method.
+Not a real check.`) for the same staleness; reword if it implies a store method.
 
 ## Implementation Notes
 
@@ -57,7 +53,7 @@ caller).
 
 ## Risks / Watchouts
 
-- Don't swap this call to `toggleColumnVisibility('age')` — that flips the *current* value, not
+- Don't swap this call to `toggleColumnVisibility('age')` — that flips the _current_ value, not
   set it to `allowed`; behavior would silently diverge from today's demo.
 
 ## Non-Goals
@@ -71,4 +67,5 @@ caller).
 - Demo still typechecks; behavior (age column visibility follows `ageColumnPermission`) unchanged.
 
 ---
+
 ← [Step 5: `table.mock.ts`](step-5-table-mock.plan.md) | [Step 7: remove stale store-method tests](step-7-remove-stale-tests.plan.md) →

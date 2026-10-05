@@ -9,15 +9,15 @@ difference and a pass / fail / unsure verdict against a limit. No I/O.
 
 ## Files
 
-| File | Action |
-|---|---|
-| `apps/table-bench/driver/stats.ts` | create |
+| File                                    | Action               |
+| --------------------------------------- | -------------------- |
+| `apps/table-bench/driver/stats.ts`      | create               |
 | `apps/table-bench/driver/stats.test.ts` | create — `node:test` |
 
 ## Why This Step Exists
 
 The old bench gated one number (median, then minimum) against 16.7 ms while its spread was
-larger than the result. Every surveyed suite tests the *difference* and treats "can't tell" as
+larger than the result. Every surveyed suite tests the _difference_ and treats "can't tell" as
 its own outcome (discovery § Synthesis › Noise; tachometer `computeDifference` [S10]).
 
 ## What To Do
@@ -29,7 +29,11 @@ its own outcome (discovery § Synthesis › Noise; tachometer `computeDifference
     `jstat` dependency.
 - API:
   ```ts
-  interface DifferenceInterval { low: number; high: number; mean: number }
+  interface DifferenceInterval {
+    low: number;
+    high: number;
+    mean: number;
+  }
   type Verdict = 'pass' | 'fail' | 'unsure';
   function differenceInterval(a: readonly number[], b: readonly number[]): DifferenceInterval; // a − b
   function verdictAgainst(interval: DifferenceInterval, limitMs: number): Verdict;
@@ -41,6 +45,6 @@ its own outcome (discovery § Synthesis › Noise; tachometer `computeDifference
 ## Acceptance Checks
 
 - [ ] `node --experimental-strip-types --test apps/table-bench/driver/stats.test.ts` passes
-  (user runs it). Cases: identical samples → interval contains 0; clearly separated samples →
-  resolved; t quantile at df=9 ≈ 2.262; verdict boundaries.
+      (user runs it). Cases: identical samples → interval contains 0; clearly separated samples →
+      resolved; t quantile at df=9 ≈ 2.262; verdict boundaries.
 - [ ] Type-checked by Step 5's driver `tsconfig`.

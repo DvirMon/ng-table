@@ -61,4 +61,5 @@ amendment, not a new ADR (per `4-architecture.md`'s open question 1, resolved th
   original decision.
 
 ---
+
 ← [Step 2: `feature.spec.ts` — D2/D5/D8/D9 cases and the required-`onError` rewrite](step-2-feature-spec-tests.plan.md)

@@ -21,10 +21,10 @@ npm run llms:check                    # llms.txt is in sync
 
 ## Projects
 
-| Nx project | Path | Entry doc |
-|---|---|---|
+| Nx project     | Path         | Entry doc              |
+| -------------- | ------------ | ---------------------- |
 | `shared-table` | `libs/table` | `libs/table/CLAUDE.md` |
-| `ng-table` | `apps/site` | `apps/site/CLAUDE.md` |
+| `ng-table`     | `apps/site`  | `apps/site/CLAUDE.md`  |
 
 Import alias: `@ngp/table`, `@ngp/table/forms` (`tsconfig.base.json`).
 

@@ -20,12 +20,12 @@ Every claim below was read from released source or published docs. Versions and 
 
 ## The four surveyed
 
-| Library | What it is | Coupled to a table? |
-|---|---|---|
-| **Lodash `_.groupBy`** | Generic collection aggregator | No |
-| **`Object.groupBy` / `Map.groupBy`** | Native language built-ins (Baseline 2024) | No |
-| **d3-array `group`/`rollup`/`groupSort`** | Generic array-grouping + reduction utilities | No |
-| **RxJS `groupBy` operator** | Stream/Observable grouping operator | No |
+| Library                                   | What it is                                   | Coupled to a table? |
+| ----------------------------------------- | -------------------------------------------- | ------------------- |
+| **Lodash `_.groupBy`**                    | Generic collection aggregator                | No                  |
+| **`Object.groupBy` / `Map.groupBy`**      | Native language built-ins (Baseline 2024)    | No                  |
+| **d3-array `group`/`rollup`/`groupSort`** | Generic array-grouping + reduction utilities | No                  |
+| **RxJS `groupBy` operator**               | Stream/Observable grouping operator          | No                  |
 
 Sources:
 [lodash@4.18.1 groupBy.js](https://www.npmjs.com/package/lodash) (read from `npm pack lodash@4.18.1`, `groupBy.js` + `_createAggregator.js`) ·
@@ -48,16 +48,16 @@ _.groupBy([6.1, 4.2, 6.3], Math.floor);
 // => { '4': [4.2], '6': [6.1, 6.3] }
 ```
 
-Lodash's own canonical example *is* a bucketing case (floor a number into an integer bucket) — and
+Lodash's own canonical example _is_ a bucketing case (floor a number into an integer bucket) — and
 it needs no dedicated bucketing API. The iteratee simply computes the bucket label itself. Same
 shape everywhere else:
 
-| | key parameter |
-|---|---|
-| Lodash | `iteratee` (function, or property-name shorthand) |
-| `Object.groupBy`/`Map.groupBy` | `callbackFn(element, index)` returning a string/symbol (Object) or any value (Map) |
-| d3-array `group(values, ...keys)` | one or more `keyof` functions, applied to nest multi-level |
-| RxJS `groupBy(key: (value: T) => K, ...)` | `key` function |
+|                                           | key parameter                                                                      |
+| ----------------------------------------- | ---------------------------------------------------------------------------------- |
+| Lodash                                    | `iteratee` (function, or property-name shorthand)                                  |
+| `Object.groupBy`/`Map.groupBy`            | `callbackFn(element, index)` returning a string/symbol (Object) or any value (Map) |
+| d3-array `group(values, ...keys)`         | one or more `keyof` functions, applied to nest multi-level                         |
+| RxJS `groupBy(key: (value: T) => K, ...)` | `key` function                                                                     |
 
 **Consequence for `withGrouping()`:** "bucket dates into months" or "bucket numbers into ranges" is
 already fully expressible today with `ColumnDef.accessor` alone (or a computed column) — no
@@ -67,19 +67,19 @@ mechanism here.
 ## Finding 2 — group order is never a first-class output; it's always first-occurrence, or an explicit separate step
 
 None of the four bakes in an alternate default order (alphabetical, etc.) — and none support
-sorting groups as an option *on the grouping call itself*.
+sorting groups as an option _on the grouping call itself_.
 
-| | default order of produced groups | how to get a different order |
-|---|---|---|
-| Lodash `groupBy` | **First-occurrence** — stated in the function's own doc comment: *"The order of grouped values is determined by the order they occur in `collection`."* Keys land in a plain object in that order. | Not offered — sort the resulting object's keys yourself. |
-| `Object.groupBy` | Same — insertion order into a null-prototype object, per standard object semantics. **Caveat, confirmed from MDN's own `Object.keys()` example:** integer-like string keys are reordered ascending *ahead of* insertion order, regardless of when they were created — `{100:"a", 2:"b", 7:"c"}` → `Object.keys()` → `['2','7','100']`. A numeric group key (e.g. a numeric category id) run through `Object.groupBy` would silently stop being first-occurrence-ordered. | Not offered by the API. `Map.groupBy` exists partly to sidestep this — Maps have no key-type-based reordering. |
-| `Map.groupBy` | First-occurrence, and — unlike plain objects — this is unaffected by key type (string vs number vs object reference), since `Map` iteration order is always insertion order. | Not offered — sort the resulting `Map`'s entries yourself. |
-| d3-array `group`/`rollup` | First-occurrence — built on an `InternMap`, iterated in source order, `Map.set()` called once per new key (`src/group.js`, `nest()`). | **`d3.groupSort(values, reduce, key)`** — a dedicated, separate function. See Finding 3. |
-| RxJS `groupBy` | Order of first appearance in the *stream* — a new `GroupedObservable` is emitted the moment a never-seen-before key arrives. Not reorderable after the fact without buffering the whole stream first, because groups are emitted incrementally, not returned as one collection. | Not applicable — inherent to the push model. |
+|                           | default order of produced groups                                                                                                                                                                                                                                                                                                                                                                                                                                         | how to get a different order                                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| Lodash `groupBy`          | **First-occurrence** — stated in the function's own doc comment: _"The order of grouped values is determined by the order they occur in `collection`."_ Keys land in a plain object in that order.                                                                                                                                                                                                                                                                       | Not offered — sort the resulting object's keys yourself.                                                       |
+| `Object.groupBy`          | Same — insertion order into a null-prototype object, per standard object semantics. **Caveat, confirmed from MDN's own `Object.keys()` example:** integer-like string keys are reordered ascending _ahead of_ insertion order, regardless of when they were created — `{100:"a", 2:"b", 7:"c"}` → `Object.keys()` → `['2','7','100']`. A numeric group key (e.g. a numeric category id) run through `Object.groupBy` would silently stop being first-occurrence-ordered. | Not offered by the API. `Map.groupBy` exists partly to sidestep this — Maps have no key-type-based reordering. |
+| `Map.groupBy`             | First-occurrence, and — unlike plain objects — this is unaffected by key type (string vs number vs object reference), since `Map` iteration order is always insertion order.                                                                                                                                                                                                                                                                                             | Not offered — sort the resulting `Map`'s entries yourself.                                                     |
+| d3-array `group`/`rollup` | First-occurrence — built on an `InternMap`, iterated in source order, `Map.set()` called once per new key (`src/group.js`, `nest()`).                                                                                                                                                                                                                                                                                                                                    | **`d3.groupSort(values, reduce, key)`** — a dedicated, separate function. See Finding 3.                       |
+| RxJS `groupBy`            | Order of first appearance in the _stream_ — a new `GroupedObservable` is emitted the moment a never-seen-before key arrives. Not reorderable after the fact without buffering the whole stream first, because groups are emitted incrementally, not returned as one collection.                                                                                                                                                                                          | Not applicable — inherent to the push model.                                                                   |
 
 **This is the doc's key finding: no surveyed utility treats "group order" as a property of
 grouping itself.** It's either first-occurrence-and-nothing-else, or (d3 only) a second,
-independent function you compose *after* grouping. This directly supports modeling group ordering
+independent function you compose _after_ grouping. This directly supports modeling group ordering
 in `withGrouping()` as a separate, explicit concern rather than folding a sort comparator into the
 grouping key logic — see Finding 3 for the shape that separation takes.
 
@@ -89,7 +89,7 @@ ever keyed by a plain JS object (rather than iterating an array of clusters, whi
 reorder ahead of insertion order. Not a risk today — worth a one-line guard note if a `Record<string,
 ...>`-shaped group index is ever introduced.
 
-## Finding 3 — d3 proves ordering-by-computed-value is a real, precedented shape, and it needs the group's *values*, not just its key
+## Finding 3 — d3 proves ordering-by-computed-value is a real, precedented shape, and it needs the group's _values_, not just its key
 
 `group()` and `rollup()` are not two separate implementations — they're the same internal
 function, differing only in what gets done to each bucket's array at the end:
@@ -97,10 +97,10 @@ function, differing only in what gets done to each bucket's array at the end:
 ```js
 // d3-array src/group.js
 export default function group(values, ...keys) {
-  return nest(values, identity, identity, keys);     // reduce = identity → raw arrays
+  return nest(values, identity, identity, keys); // reduce = identity → raw arrays
 }
 export function rollup(values, reduce, ...keys) {
-  return nest(values, identity, reduce, keys);        // reduce = consumer fn → aggregated value
+  return nest(values, identity, reduce, keys); // reduce = consumer fn → aggregated value
 }
 ```
 
@@ -115,10 +115,14 @@ full per-group value array, not just the group's key:
 ```js
 // d3-array src/groupSort.js
 export default function groupSort(values, reduce, key) {
-  return (reduce.length !== 2
-    ? sort(rollup(values, reduce, key), (([ak, av], [bk, bv]) => ascending(av, bv) || ascending(ak, bk)))
-    : sort(group(values, key), (([ak, av], [bk, bv]) => reduce(av, bv) || ascending(ak, bk))))
-    .map(([key]) => key);
+  return (
+    reduce.length !== 2
+      ? sort(
+          rollup(values, reduce, key),
+          ([ak, av], [bk, bv]) => ascending(av, bv) || ascending(ak, bk),
+        )
+      : sort(group(values, key), ([ak, av], [bk, bv]) => reduce(av, bv) || ascending(ak, bk))
+  ).map(([key]) => key);
 }
 ```
 
@@ -146,7 +150,7 @@ signature does not.
 
 - Whether any SQL-query-builder or ORM abstraction (outside d3/lodash/RxJS) has its own take on
   "ORDER BY an aggregate" that differs meaningfully from `groupSort`'s shape — SQL's own `ORDER BY
-  COUNT(*)` is the obvious real-world precedent for the count case but wasn't independently
+COUNT(*)` is the obvious real-world precedent for the count case but wasn't independently
   source-verified here since it's a language feature, not a library API.
 - Immer/Reselect or other memoization-focused utilities' treatment of grouped derived state —
   out of scope, this doc stayed at the grouping-primitive level, not caching.

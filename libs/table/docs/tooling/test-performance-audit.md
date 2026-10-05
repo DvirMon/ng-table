@@ -10,12 +10,12 @@ Duration 17.88s (transform 20.39s, setup 66.27s, import 27.94s, tests 17.64s, en
 
 The four inflated figures are **not** four blocks of wall-clock work.
 
-| Figure | What it actually is |
-|---|---|
-| `environment 139.66s` | `_environmentTime` is measured **once per worker** and then copied onto **every file's** duration (`vitest/dist/chunks/base.*.js`: `state.durations.environment = _environmentTime`). Real cost ≈ 139.66 / 33 ≈ **4.2s per worker**, paid in parallel at startup. |
-| `setup 66.27s` | Same shape. `init-testbed.js` is guarded by `Symbol.for('@angular/cli/testbed-setup')` and its body runs **once per worker**; the rest is cached module re-entry attributed per file. ≈ 2.0s per worker. |
-| `transform` / `import` | Sums across workers, not wall time. |
-| `tests 17.64s` | Sum of test-body time across all 33 files. Spread over N workers this is ~2–3s wall. |
+| Figure                 | What it actually is                                                                                                                                                                                                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environment 139.66s`  | `_environmentTime` is measured **once per worker** and then copied onto **every file's** duration (`vitest/dist/chunks/base.*.js`: `state.durations.environment = _environmentTime`). Real cost ≈ 139.66 / 33 ≈ **4.2s per worker**, paid in parallel at startup. |
+| `setup 66.27s`         | Same shape. `init-testbed.js` is guarded by `Symbol.for('@angular/cli/testbed-setup')` and its body runs **once per worker**; the rest is cached module re-entry attributed per file. ≈ 2.0s per worker.                                                          |
+| `transform` / `import` | Sums across workers, not wall time.                                                                                                                                                                                                                               |
+| `tests 17.64s`         | Sum of test-body time across all 33 files. Spread over N workers this is ~2–3s wall.                                                                                                                                                                              |
 
 **Conclusion: the suite body is ~2–3s. The other ~15s is startup.** Every lever below targets startup; none targets the tests themselves.
 

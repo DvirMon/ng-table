@@ -57,88 +57,88 @@
 
 Canvas = something a person can see in Storybook today.
 
-| Story | Code on main | Decision | Canvas today | Mark (canvas) |
-|---|---|---|---|---|
-| 1.1 Rows under their parent, any depth | Flat-data nesting: `with-tree/nest.ts:99-146` (`nestFlatPool`), depth from `engine/flatten.ts:27-44` | TR7, TR8 | `grouping-collapsible`: `d4` with `d4-a` and `d4-b`, **flat** `parentId` rows (`fixtures/mock.ts:49-78`), one level deep, nested under three group levels | 🟡 (premise changed: flat, not nested) |
-| 1.2 Open/close one parent | `toggle` at `with-tree/feature.ts:146-158`; descendants hide in `flatten.ts:42-44` | TR33, TR34, TR45 | `grouping-collapsible-story-host.component.html:103-112`: a hand-written button calls `table.tree.toggle(row.id)` with its own `aria-expanded`, **not** `ngpTableTreeToggle`. One level only; restoring a descendant's state is not shown | 🟡 |
-| 1.3 Open/close everything, tri-state | `expand()`/`state()` at `feature.ts:169-174`, `207-229`; tri-state `'none'` when nothing is expandable (`feature.ts:212-214`) | TR3, TR12, TR30 | `grouping-collapsible` has Expand all / Collapse all (`grouping-collapsible-toolbar.component.html:2-3`), but Expand all passes `groupIds()` only (`…story-host.component.ts:92-94`), so it never opens `d4`. No tri-state display | ❌ |
-| 1.4 Lazy parent | `isExpandable` overrides `hasChildren` (`nest.ts:132-134`); appended rows nest on the next evaluation | TR13, TR35 | none | ❌ |
-| 2.1 Match never hidden under a closed parent | Derived reveal: `with-tree/reveal.ts:9-37`, folded into `expandedRows` at `feature.ts:259-267` (#169) | TR22, TR32 | none | ❌ |
-| 2.2 Close a revealed parent mid-filter | `feature.ts:146-156` and `reveal.ts:41-49` (`createClosedWhileRevealed`, a `linkedSignal` over context ids) | TR22(c), TR32 | none | ❌ |
-| 2.3 Tell a match from a context row | `RenderRow.isContextRow` stamped at `engine/core.ts:131`; `data-context-row` at `ngp-table-tree-row.directive.ts:16`; dim recipe at [`3-ui/directives/tree.md`](../../../../directives/tree.md) "Styling recipe" | TR21, TR23, TR24, TR42 | none (no story uses `ngpTableTreeRow` on a data row, and no story CSS mentions `data-context-row`) | ❌ |
-| 2.4 State comes back when the filter clears | Reveal never writes the open set (`feature.ts:259-267`); the closed set drops ids that stop being context (`reveal.ts:44-48`) | TR22(a) | none | ❌ |
-| 2.5 / F-T2 Matched parent's whole branch | `includeDescendants` at `with-filtering/feature.ts:30`, `96`; `with-filtering/tree-retention.ts:41-54` | TR10 | none | ❌ |
-| 2.6 Toggle only when it shows something | `hasChildren` counts children in the filtered pool (`nest.ts:132-134`, run over `rows()` at `core.ts:121`); leaf toggle disabled and hidden (`ngp-table-tree-toggle.directive.ts:60-62`) | TR13, TR38 | none | ❌ |
-| 3.1 Count every row | `totalRowCount = rows().length` (`engine/compose-table.ts:56`), so collapsed children count; `aria-rowcount` reads it (`ngp-table.directive.ts:22`) | TR14 | none (`grouping-collapsible` shows no row count) | ❌ |
-| 3.2 Sort siblings, families together | The tree stage nests over its already-sorted input (`nest.ts:94-98`) | TR29, D19 | none (no host composes `withTree()` + `withSorting()`) | ❌ |
-| 4.1 Parent doesn't exist | `engine/tree-links.ts:58-65` (absent → root); reported once per kind by `console.error` (`nest.ts:60-75`) | TR9 | none | ❌ |
-| 4.2 Self-parent / cycle | `tree-links.ts:60-62`, `108-128` (the first cycle row in input order becomes the root) | TR9 | none | ❌ |
-| 4.3 Delete a parent | `descendantsOf` at `feature.ts:198-205`; `removeRow(ids[])` at `mutations/row-mutations.ts:45-49` | TR15 | none | ❌ |
-| 4.4 Filter can't see unloaded children | A limit, true by construction: the filter runs over `data()` only (`tree-retention.ts:13-23`) | follows TR13, D19 | none | ❌ |
+| Story                                        | Code on main                                                                                                                                                                                                     | Decision               | Canvas today                                                                                                                                                                                                                              | Mark (canvas)                          |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| 1.1 Rows under their parent, any depth       | Flat-data nesting: `with-tree/nest.ts:99-146` (`nestFlatPool`), depth from `engine/flatten.ts:27-44`                                                                                                             | TR7, TR8               | `grouping-collapsible`: `d4` with `d4-a` and `d4-b`, **flat** `parentId` rows (`fixtures/mock.ts:49-78`), one level deep, nested under three group levels                                                                                 | 🟡 (premise changed: flat, not nested) |
+| 1.2 Open/close one parent                    | `toggle` at `with-tree/feature.ts:146-158`; descendants hide in `flatten.ts:42-44`                                                                                                                               | TR33, TR34, TR45       | `grouping-collapsible-story-host.component.html:103-112`: a hand-written button calls `table.tree.toggle(row.id)` with its own `aria-expanded`, **not** `ngpTableTreeToggle`. One level only; restoring a descendant's state is not shown | 🟡                                     |
+| 1.3 Open/close everything, tri-state         | `expand()`/`state()` at `feature.ts:169-174`, `207-229`; tri-state `'none'` when nothing is expandable (`feature.ts:212-214`)                                                                                    | TR3, TR12, TR30        | `grouping-collapsible` has Expand all / Collapse all (`grouping-collapsible-toolbar.component.html:2-3`), but Expand all passes `groupIds()` only (`…story-host.component.ts:92-94`), so it never opens `d4`. No tri-state display        | ❌                                     |
+| 1.4 Lazy parent                              | `isExpandable` overrides `hasChildren` (`nest.ts:132-134`); appended rows nest on the next evaluation                                                                                                            | TR13, TR35             | none                                                                                                                                                                                                                                      | ❌                                     |
+| 2.1 Match never hidden under a closed parent | Derived reveal: `with-tree/reveal.ts:9-37`, folded into `expandedRows` at `feature.ts:259-267` (#169)                                                                                                            | TR22, TR32             | none                                                                                                                                                                                                                                      | ❌                                     |
+| 2.2 Close a revealed parent mid-filter       | `feature.ts:146-156` and `reveal.ts:41-49` (`createClosedWhileRevealed`, a `linkedSignal` over context ids)                                                                                                      | TR22(c), TR32          | none                                                                                                                                                                                                                                      | ❌                                     |
+| 2.3 Tell a match from a context row          | `RenderRow.isContextRow` stamped at `engine/core.ts:131`; `data-context-row` at `ngp-table-tree-row.directive.ts:16`; dim recipe at [`3-ui/directives/tree.md`](../../../../directives/tree.md) "Styling recipe" | TR21, TR23, TR24, TR42 | none (no story uses `ngpTableTreeRow` on a data row, and no story CSS mentions `data-context-row`)                                                                                                                                        | ❌                                     |
+| 2.4 State comes back when the filter clears  | Reveal never writes the open set (`feature.ts:259-267`); the closed set drops ids that stop being context (`reveal.ts:44-48`)                                                                                    | TR22(a)                | none                                                                                                                                                                                                                                      | ❌                                     |
+| 2.5 / F-T2 Matched parent's whole branch     | `includeDescendants` at `with-filtering/feature.ts:30`, `96`; `with-filtering/tree-retention.ts:41-54`                                                                                                           | TR10                   | none                                                                                                                                                                                                                                      | ❌                                     |
+| 2.6 Toggle only when it shows something      | `hasChildren` counts children in the filtered pool (`nest.ts:132-134`, run over `rows()` at `core.ts:121`); leaf toggle disabled and hidden (`ngp-table-tree-toggle.directive.ts:60-62`)                         | TR13, TR38             | none                                                                                                                                                                                                                                      | ❌                                     |
+| 3.1 Count every row                          | `totalRowCount = rows().length` (`engine/compose-table.ts:56`), so collapsed children count; `aria-rowcount` reads it (`ngp-table.directive.ts:22`)                                                              | TR14                   | none (`grouping-collapsible` shows no row count)                                                                                                                                                                                          | ❌                                     |
+| 3.2 Sort siblings, families together         | The tree stage nests over its already-sorted input (`nest.ts:94-98`)                                                                                                                                             | TR29, D19              | none (no host composes `withTree()` + `withSorting()`)                                                                                                                                                                                    | ❌                                     |
+| 4.1 Parent doesn't exist                     | `engine/tree-links.ts:58-65` (absent → root); reported once per kind by `console.error` (`nest.ts:60-75`)                                                                                                        | TR9                    | none                                                                                                                                                                                                                                      | ❌                                     |
+| 4.2 Self-parent / cycle                      | `tree-links.ts:60-62`, `108-128` (the first cycle row in input order becomes the root)                                                                                                                           | TR9                    | none                                                                                                                                                                                                                                      | ❌                                     |
+| 4.3 Delete a parent                          | `descendantsOf` at `feature.ts:198-205`; `removeRow(ids[])` at `mutations/row-mutations.ts:45-49`                                                                                                                | TR15                   | none                                                                                                                                                                                                                                      | ❌                                     |
+| 4.4 Filter can't see unloaded children       | A limit, true by construction: the filter runs over `data()` only (`tree-retention.ts:13-23`)                                                                                                                    | follows TR13, D19      | none                                                                                                                                                                                                                                      | ❌                                     |
 
 **Tally:** canvas 0 ✅ / 2 🟡 / 14 ❌ (unchanged from `tree.md`). Code: 15 shipped, plus 1 that
 holds by construction (4.4).
 
 ### 2. Cross-feature stories, owned by other product docs (linked, not restated)
 
-| Id | Owner doc (current mark there) | Code on main | Canvas today | Proposed mark |
-|---|---|---|---|---|
-| F-T1 | [`filtering.md` §5 "Owned by tree"](../../../../../0-product/filtering.md) — ❌, heading still says "(unbuilt — #163)" | `with-filtering/feature.ts:113-125` → `tree-retention.ts:13-69` (#168) | none (`client-filtering` and `grouping-selection` do not compose `withTree()`) | ❌ |
-| F-T2 | same — ❌ | `tree-retention.ts:41-54` | none | ❌ |
-| G-T1 | [`grouping.md` §5 "Owned by tree"](../../../../../0-product/grouping.md) — ❌ | `with-grouping/feature.ts:168-170` (`treeLinks` getter) → `engine/grouping/clusters.ts:150-156` (root lookup) | **Visible**: in `grouping-collapsible` (levels region/category/rep, `fixtures/schema.ts:71-75`), `d4-b` (rep Ada) sits in `d4`'s Grace group (`fixtures/mock.ts:45-48`). Not called out on canvas; the broken-link failure path is not shown | 🟡 |
-| G-T2 | same — ❌ | buckets include descendants (G78, TR17); the count pill reads `rowsOf` (`grouping-story.pipes.ts:41-48`) | **Visible**: NE / Services / Grace counts 3 in `grouping-collapsible`. Group select-all is not on that canvas | 🟡 |
-| G-T3 | same — ❌ | `aggregateFn` gets every node (TR18); fixture `d4` now carries its own amount, 8000 (`fixtures/mock.ts:54`) | none: `grouping-aggregates` does not compose `withTree()` | ❌ |
-| S-T1 | [`selection.md` §6 "Owned by tree"](../../../../../0-product/selection.md) — ❌ | `with-selection/utils.ts:14-15` reads `rows()`, which includes children and context rows | none | ❌ |
-| E-1 | [`row-editing.md` §5 "Owned by expansion"](../../../../../0-product/row-editing.md) — ❌ (ownership disputed, see §7) | `sourceIndex` resolves from `indexById` over `data()` (`core.ts:102-106`, `130`); G6 closed as impossible ([`1-state/features/tree.md`](../../../../../1-state/features/tree.md) "G6 is closed…") | none (no row-edit host composes `withTree()`) | ❌ |
-| P-T1 | `tree.md` §5 only — ❌ | pagination unbuilt | none | ❌ |
-| E-G1 | [`grouping.md` §5 "Owned by expansion"](../../../../../0-product/grouping.md) — ✅ | — | `grouping-collapsible` shows the tree half only; #190 argues the mark should drop to ❌ until a panel story exists (§7) | tree half ✅; panel half → #190 |
-| E-T1 | #190 `0-product/expansion.md` §4 "Owned by expansion" (uncommitted) — ❌ | panel + tree compose with separate state (cited by #190 as `with-expansion.spec.ts:370-398`, not re-read here) | none; planned in #190 `panel-in-groups/` | ❌ → #190 |
+| Id   | Owner doc (current mark there)                                                                                         | Code on main                                                                                                                                                                                      | Canvas today                                                                                                                                                                                                                                 | Proposed mark                   |
+| ---- | ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| F-T1 | [`filtering.md` §5 "Owned by tree"](../../../../../0-product/filtering.md) — ❌, heading still says "(unbuilt — #163)" | `with-filtering/feature.ts:113-125` → `tree-retention.ts:13-69` (#168)                                                                                                                            | none (`client-filtering` and `grouping-selection` do not compose `withTree()`)                                                                                                                                                               | ❌                              |
+| F-T2 | same — ❌                                                                                                              | `tree-retention.ts:41-54`                                                                                                                                                                         | none                                                                                                                                                                                                                                         | ❌                              |
+| G-T1 | [`grouping.md` §5 "Owned by tree"](../../../../../0-product/grouping.md) — ❌                                          | `with-grouping/feature.ts:168-170` (`treeLinks` getter) → `engine/grouping/clusters.ts:150-156` (root lookup)                                                                                     | **Visible**: in `grouping-collapsible` (levels region/category/rep, `fixtures/schema.ts:71-75`), `d4-b` (rep Ada) sits in `d4`'s Grace group (`fixtures/mock.ts:45-48`). Not called out on canvas; the broken-link failure path is not shown | 🟡                              |
+| G-T2 | same — ❌                                                                                                              | buckets include descendants (G78, TR17); the count pill reads `rowsOf` (`grouping-story.pipes.ts:41-48`)                                                                                          | **Visible**: NE / Services / Grace counts 3 in `grouping-collapsible`. Group select-all is not on that canvas                                                                                                                                | 🟡                              |
+| G-T3 | same — ❌                                                                                                              | `aggregateFn` gets every node (TR18); fixture `d4` now carries its own amount, 8000 (`fixtures/mock.ts:54`)                                                                                       | none: `grouping-aggregates` does not compose `withTree()`                                                                                                                                                                                    | ❌                              |
+| S-T1 | [`selection.md` §6 "Owned by tree"](../../../../../0-product/selection.md) — ❌                                        | `with-selection/utils.ts:14-15` reads `rows()`, which includes children and context rows                                                                                                          | none                                                                                                                                                                                                                                         | ❌                              |
+| E-1  | [`row-editing.md` §5 "Owned by expansion"](../../../../../0-product/row-editing.md) — ❌ (ownership disputed, see §7)  | `sourceIndex` resolves from `indexById` over `data()` (`core.ts:102-106`, `130`); G6 closed as impossible ([`1-state/features/tree.md`](../../../../../1-state/features/tree.md) "G6 is closed…") | none (no row-edit host composes `withTree()`)                                                                                                                                                                                                | ❌                              |
+| P-T1 | `tree.md` §5 only — ❌                                                                                                 | pagination unbuilt                                                                                                                                                                                | none                                                                                                                                                                                                                                         | ❌                              |
+| E-G1 | [`grouping.md` §5 "Owned by expansion"](../../../../../0-product/grouping.md) — ✅                                     | —                                                                                                                                                                                                 | `grouping-collapsible` shows the tree half only; #190 argues the mark should drop to ❌ until a panel story exists (§7)                                                                                                                      | tree half ✅; panel half → #190 |
+| E-T1 | #190 `0-product/expansion.md` §4 "Owned by expansion" (uncommitted) — ❌                                               | panel + tree compose with separate state (cited by #190 as `with-expansion.spec.ts:370-398`, not re-read here)                                                                                    | none; planned in #190 `panel-in-groups/`                                                                                                                                                                                                     | ❌ → #190                       |
 
 ### 3. Settled decisions since 2026-09-27, one line each
 
 **P** = product-visible (a person can perceive it). **I** = internal-only.
 
-| Id | Decision | Tag |
-|---|---|---|
-| TR7 / TFD D1 | Tree built from flat rows by `parentId`; `null`/`undefined` = root | P |
-| TR8 / D3 | `childrenAccessor` removed; no flatten helper | I |
-| TR9 / D4 | Broken link → row at root, subtree intact, reported once per evaluation | P (placement) · I (report) |
-| TR10 / D5 | Filter keeps matches + ancestors; `includeDescendants` keeps branches | P |
-| TR11 / D6 | Parent link is an engine slot read by filter | I |
-| TR12 / D8 | `expand()`/`state()` scan the filtered view; `includeHidden` scans everything | P |
-| TR13 / D9 | Default toggle follows the filtered view; `isExpandable` overrides | P |
-| TR14 / D11 | Every node counts: `totalRowCount`, `aria-rowcount`, `selectAllIds()` | P |
-| TR15 / D12 | `descendantsOf` is a read; deletion never cascades on its own | P |
-| TR16 / D13 | Grouping a tree groups roots only | P |
-| TR17 / D14 | Group count includes descendants | P |
-| TR18 / D15 | `aggregateFn` receives descendants; roll-up vs own value is the consumer's choice | P |
-| TR19, TR20 | Superseded by TR22 | — |
-| TR21 / D18 | `RenderRow.isContextRow`; directive amended by TR23 | P |
-| TR22 / D20 | Reveal is derived; `revealContextRow`; closed-while-context memory; `contextRowIds()` read | P |
-| TR23 / D21 | `data-context-row` lives on `ngpTableTreeRow`, not core | I |
-| TR24 / A2 | Context ids are an accumulating engine slot from `withFiltering()` | I |
-| TR25 | A second `parentLink` claim throws, in production too | I |
-| TR26–TR28 / D22–D24 | `ctx` as the factory's second argument; `treeLinks` on `ClusterOpts` | I |
-| TR29 / D25 | Rows keep input order inside a bucket; the tree stage owns hierarchy order | P (order) |
-| TR30 / D26 | `state(options?)` is a method | I |
-| TR31 / D27 | `StageContext.contextRows?()` | I |
-| TR32 / D28 | `expand`/`set` reopen closed-revealed ids; `collapse` does not; a throwing `revealContextRow` reveals | P |
-| TR33 / TUI D1 | Tree UI = `ngpTableTreeRow` + `ngpTableTreeToggle`; the expansion pair narrows to panels | I |
-| TR34 / D2 | Table stays `role="table"`; `aria-expanded` on the button; no row `aria-level`/`aria-expanded`; treegrid is its own issue | P (screen reader) |
-| TR35 / D3 | Row hooks `data-expandable`, `data-expanded` | I (hook) · P via the recipe |
-| TR36 / D4 | Toggle is `button` only; whole-row click is consumer `(click)` | P (keyboard: native Enter/Space, one tab stop per parent) |
-| TR37 / D5 | No attribute bound by two directives | I |
-| TR38 / D6 | Leaf toggle: `disabled`, `aria-hidden`, `data-disabled`; width kept | P |
-| TR39 / D7 | Accessible name is consumer-owned; dev warning when missing | P (what a screen reader says) · I (warning) |
-| TR40 / D8 | Toggle without `withTree()` throws in dev; inert in production | I |
-| TR41 / D9 | Core row binds `--ngp-table-row-depth` | P (indentation) |
-| TR42 / D10 | No stylesheet; a consumer CSS recipe | P (no default look) |
-| TR43 / D11, G80 | Group headers use the tree pair | P (one chevron behavior for groups and rows) |
-| TR44 / D12 | Toggle neither prevents default nor stops propagation; whole-row double-toggle is the consumer's | P (if mishandled: click does nothing) |
-| TR45 | Disabled toggle omits `aria-expanded` | P (screen reader) |
-| TR46 / D13 | Nameless warning skips a disabled leaf | I |
-| G78 | Grouping-side mirror of TR16–TR18, TR26–TR29 | P |
-| G79 | Group indentation reads `--ngp-table-row-depth` | P |
+| Id                  | Decision                                                                                                                  | Tag                                                       |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| TR7 / TFD D1        | Tree built from flat rows by `parentId`; `null`/`undefined` = root                                                        | P                                                         |
+| TR8 / D3            | `childrenAccessor` removed; no flatten helper                                                                             | I                                                         |
+| TR9 / D4            | Broken link → row at root, subtree intact, reported once per evaluation                                                   | P (placement) · I (report)                                |
+| TR10 / D5           | Filter keeps matches + ancestors; `includeDescendants` keeps branches                                                     | P                                                         |
+| TR11 / D6           | Parent link is an engine slot read by filter                                                                              | I                                                         |
+| TR12 / D8           | `expand()`/`state()` scan the filtered view; `includeHidden` scans everything                                             | P                                                         |
+| TR13 / D9           | Default toggle follows the filtered view; `isExpandable` overrides                                                        | P                                                         |
+| TR14 / D11          | Every node counts: `totalRowCount`, `aria-rowcount`, `selectAllIds()`                                                     | P                                                         |
+| TR15 / D12          | `descendantsOf` is a read; deletion never cascades on its own                                                             | P                                                         |
+| TR16 / D13          | Grouping a tree groups roots only                                                                                         | P                                                         |
+| TR17 / D14          | Group count includes descendants                                                                                          | P                                                         |
+| TR18 / D15          | `aggregateFn` receives descendants; roll-up vs own value is the consumer's choice                                         | P                                                         |
+| TR19, TR20          | Superseded by TR22                                                                                                        | —                                                         |
+| TR21 / D18          | `RenderRow.isContextRow`; directive amended by TR23                                                                       | P                                                         |
+| TR22 / D20          | Reveal is derived; `revealContextRow`; closed-while-context memory; `contextRowIds()` read                                | P                                                         |
+| TR23 / D21          | `data-context-row` lives on `ngpTableTreeRow`, not core                                                                   | I                                                         |
+| TR24 / A2           | Context ids are an accumulating engine slot from `withFiltering()`                                                        | I                                                         |
+| TR25                | A second `parentLink` claim throws, in production too                                                                     | I                                                         |
+| TR26–TR28 / D22–D24 | `ctx` as the factory's second argument; `treeLinks` on `ClusterOpts`                                                      | I                                                         |
+| TR29 / D25          | Rows keep input order inside a bucket; the tree stage owns hierarchy order                                                | P (order)                                                 |
+| TR30 / D26          | `state(options?)` is a method                                                                                             | I                                                         |
+| TR31 / D27          | `StageContext.contextRows?()`                                                                                             | I                                                         |
+| TR32 / D28          | `expand`/`set` reopen closed-revealed ids; `collapse` does not; a throwing `revealContextRow` reveals                     | P                                                         |
+| TR33 / TUI D1       | Tree UI = `ngpTableTreeRow` + `ngpTableTreeToggle`; the expansion pair narrows to panels                                  | I                                                         |
+| TR34 / D2           | Table stays `role="table"`; `aria-expanded` on the button; no row `aria-level`/`aria-expanded`; treegrid is its own issue | P (screen reader)                                         |
+| TR35 / D3           | Row hooks `data-expandable`, `data-expanded`                                                                              | I (hook) · P via the recipe                               |
+| TR36 / D4           | Toggle is `button` only; whole-row click is consumer `(click)`                                                            | P (keyboard: native Enter/Space, one tab stop per parent) |
+| TR37 / D5           | No attribute bound by two directives                                                                                      | I                                                         |
+| TR38 / D6           | Leaf toggle: `disabled`, `aria-hidden`, `data-disabled`; width kept                                                       | P                                                         |
+| TR39 / D7           | Accessible name is consumer-owned; dev warning when missing                                                               | P (what a screen reader says) · I (warning)               |
+| TR40 / D8           | Toggle without `withTree()` throws in dev; inert in production                                                            | I                                                         |
+| TR41 / D9           | Core row binds `--ngp-table-row-depth`                                                                                    | P (indentation)                                           |
+| TR42 / D10          | No stylesheet; a consumer CSS recipe                                                                                      | P (no default look)                                       |
+| TR43 / D11, G80     | Group headers use the tree pair                                                                                           | P (one chevron behavior for groups and rows)              |
+| TR44 / D12          | Toggle neither prevents default nor stops propagation; whole-row double-toggle is the consumer's                          | P (if mishandled: click does nothing)                     |
+| TR45                | Disabled toggle omits `aria-expanded`                                                                                     | P (screen reader)                                         |
+| TR46 / D13          | Nameless warning skips a disabled leaf                                                                                    | I                                                         |
+| G78                 | Grouping-side mirror of TR16–TR18, TR26–TR29                                                                              | P                                                         |
+| G79                 | Group indentation reads `--ngp-table-row-depth`                                                                           | P                                                         |
 
 ### 4. What `tree.md` (and its sibling docs) still say that newer decisions contradict
 
@@ -194,7 +194,7 @@ holds by construction (4.4).
 **The same staleness in sibling docs (also unflagged):**
 
 - `filtering.md`, `grouping.md` and `selection.md` all head their tree section
-  "*(unbuilt — #163)*".
+  "_(unbuilt — #163)_".
 - `filtering.md` F-T1 "Covered by": "Today the filter sees top-level rows only". This is false.
 - `grouping.md` G-T1 "Covered by": "today's clustering would place each child by its own value".
   This is false.
@@ -223,17 +223,17 @@ holds by construction (4.4).
 All of these are product-visible unless tagged otherwise. Each is decided and shipped, and
 none is on a canvas.
 
-| New story | What a person experiences | Decision · code |
-|---|---|---|
-| Leaf rows keep alignment | A leaf's label lines up with its parent's label at the same depth, because the toggle keeps its width but is invisible | TR38 · `ngp-table-tree-toggle.directive.ts:60-62`; recipe `visibility: hidden` |
-| No dead tab stops | Keyboard users never tab onto a leaf toggle; Enter/Space work on parent toggles (native button) | TR36, TR38 · same file, `55`, `60` |
-| Toggle says what it opens | A screen reader hears the page's own name for the row ("Children of Engineering, collapsed button"). The library adds no words | TR39 · same file, `26-40` |
-| An ordinary table, not a treegrid | A screen reader announces a table. Rows say nothing about level or open state; only the toggle reports expanded/collapsed. No arrow-key tree navigation | TR34, TR45 · `ngp-table-row.directive.ts:22-29` (no `aria-expanded`) |
-| Indentation at any depth | Each level is indented by one step, with no per-depth CSS | TR41 · `ngp-table-row.directive.ts:28` |
-| Click anywhere on the row (opt-in) | The page may make the whole row a toggle. If it forgets to skip the button, one click opens and closes again, which looks like nothing happened | TR36, TR44 · tree UI spec "Whole-row click" |
-| Context rows look different | Dimmed ancestors (the recipe uses `opacity: 0.6`). Closes the UI half of 2.3 | TR35, TR42 · `ngp-table-tree-row.directive.ts:16` |
-| Chevron motion respects reduced motion | The rotation animates, except under `prefers-reduced-motion` | TR42 · tree UI spec "Styling recipe" |
-| *Not user-facing* (goes in §10) | Dev throw without `withTree()`; nameless warning; broken-link `console.error` | TR40, TR39/TR46, TR9 — **I** |
+| New story                              | What a person experiences                                                                                                                               | Decision · code                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Leaf rows keep alignment               | A leaf's label lines up with its parent's label at the same depth, because the toggle keeps its width but is invisible                                  | TR38 · `ngp-table-tree-toggle.directive.ts:60-62`; recipe `visibility: hidden` |
+| No dead tab stops                      | Keyboard users never tab onto a leaf toggle; Enter/Space work on parent toggles (native button)                                                         | TR36, TR38 · same file, `55`, `60`                                             |
+| Toggle says what it opens              | A screen reader hears the page's own name for the row ("Children of Engineering, collapsed button"). The library adds no words                          | TR39 · same file, `26-40`                                                      |
+| An ordinary table, not a treegrid      | A screen reader announces a table. Rows say nothing about level or open state; only the toggle reports expanded/collapsed. No arrow-key tree navigation | TR34, TR45 · `ngp-table-row.directive.ts:22-29` (no `aria-expanded`)           |
+| Indentation at any depth               | Each level is indented by one step, with no per-depth CSS                                                                                               | TR41 · `ngp-table-row.directive.ts:28`                                         |
+| Click anywhere on the row (opt-in)     | The page may make the whole row a toggle. If it forgets to skip the button, one click opens and closes again, which looks like nothing happened         | TR36, TR44 · tree UI spec "Whole-row click"                                    |
+| Context rows look different            | Dimmed ancestors (the recipe uses `opacity: 0.6`). Closes the UI half of 2.3                                                                            | TR35, TR42 · `ngp-table-tree-row.directive.ts:16`                              |
+| Chevron motion respects reduced motion | The rotation animates, except under `prefers-reduced-motion`                                                                                            | TR42 · tree UI spec "Styling recipe"                                           |
+| _Not user-facing_ (goes in §10)        | Dev throw without `withTree()`; nameless warning; broken-link `console.error`                                                                           | TR40, TR39/TR46, TR9 — **I**                                                   |
 
 ### 6. What shipped code gives a minimal Tree story for free, and what it does not
 
@@ -287,11 +287,11 @@ edited.
 **(a) Tree cross-feature items #190 will demonstrate. Tree stories should link to these, not
 repeat them.**
 
-| Item | Owner | #190 vehicle | What it shows | Tree story's job |
-|---|---|---|---|---|
-| E-T1: panel and child rows on one row, two controls that are not confused | expansion (`expansion.md` §4 "Owned by expansion") | Story C `expansion/panel-in-groups/`: `withGrouping()` + `withTree({ parentId })` + `withExpansion()` over `grouping/fixtures` | Tree chevron in the name cell with indent; panel chevron in a leading column | Link only. No tree story should compose `withExpansion()` |
-| E-G1: panel under a collapsed group (panel half) | grouping (`grouping.md` §5) | same Story C | Open a deal's panel, collapse its group: the panel goes with it, then comes back | None. The tree half is already ✅ on `grouping-collapsible` |
-| E-1: editing a child row | **disputed**: `row-editing.md` says expansion; `tree.md` §5 says row editing; #190 `expansion.md` §4 "Not owned here" says tree | not in #190 | — | Ownership needs one ruling before any story claims it. #190's reason ("filed under expansion only because the heading predates ADR-0012") is right about `row-editing.md`. But `tree.md` does not claim E-1 either |
+| Item                                                                      | Owner                                                                                                                           | #190 vehicle                                                                                                                   | What it shows                                                                    | Tree story's job                                                                                                                                                                                                   |
+| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| E-T1: panel and child rows on one row, two controls that are not confused | expansion (`expansion.md` §4 "Owned by expansion")                                                                              | Story C `expansion/panel-in-groups/`: `withGrouping()` + `withTree({ parentId })` + `withExpansion()` over `grouping/fixtures` | Tree chevron in the name cell with indent; panel chevron in a leading column     | Link only. No tree story should compose `withExpansion()`                                                                                                                                                          |
+| E-G1: panel under a collapsed group (panel half)                          | grouping (`grouping.md` §5)                                                                                                     | same Story C                                                                                                                   | Open a deal's panel, collapse its group: the panel goes with it, then comes back | None. The tree half is already ✅ on `grouping-collapsible`                                                                                                                                                        |
+| E-1: editing a child row                                                  | **disputed**: `row-editing.md` says expansion; `tree.md` §5 says row editing; #190 `expansion.md` §4 "Not owned here" says tree | not in #190                                                                                                                    | —                                                                                | Ownership needs one ruling before any story claims it. #190's reason ("filed under expansion only because the heading predates ADR-0012") is right about `row-editing.md`. But `tree.md` does not claim E-1 either |
 
 The chevron placement convention (tree chevron in the name cell, panel chevron in a leading
 column) is **#190's convention, not a tree decision**. It does fit the tree recipe: the
@@ -378,54 +378,54 @@ panel") and OQ-exp-2 (row `aria-expanded` is treegrid-only), which agrees with T
 
 ## Sources
 
-| Claim | Source |
-|---|---|
-| Product doc under review | `libs/table/docs/0-product/tree.md` |
-| Tree decision log TR1–TR46 | `libs/table/docs/decisions/tree.md` |
-| UI decisions D1–D13 | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/1-decisions.md` |
-| UI spec (#165) | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/2-spec.md` |
-| #189 placement in the epic | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/issue-graph.md` |
-| Step 4 left data-row chevron hand-written | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/4-tasks/issue-183/step-4-grouping-story-host.plan.md` |
-| Flat-data decisions D1–D28 | `libs/table/docs/1-state/work/tree/active/tree-flat-data/1-decisions.md` |
-| State spec v1.1 | `libs/table/docs/1-state/features/tree.md` |
-| UI directive spec + recipe | `libs/table/docs/3-ui/directives/tree.md` |
-| G78–G80 | `libs/table/docs/decisions/grouping.md` |
-| Generated status row | `libs/table/docs/status.md:39` |
-| F-T1/F-T2 marks | `libs/table/docs/0-product/filtering.md:508-557` |
-| G-T1–G-T3 marks | `libs/table/docs/0-product/grouping.md:834-900` |
-| E-G1 mark and stale fixture text | `libs/table/docs/0-product/grouping.md:943-968` |
-| S-T1 mark | `libs/table/docs/0-product/selection.md:604-627` |
-| E-1 mark, filed under expansion | `libs/table/docs/0-product/row-editing.md:701-712` |
-| E-T1, E-1 "tree-owned", E-G1 critique (#190, uncommitted) | `C:/Users/dmena/git/ng-table/.claude/worktrees/feat-190-expansion-detail-panel-story/libs/table/docs/0-product/expansion.md` §4 |
-| "#182 is deleting row aria-expanded" (#190) | same file, §1.2 Coverage |
+| Claim                                                                              | Source                                                                                                                                                     |
+| ---------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product doc under review                                                           | `libs/table/docs/0-product/tree.md`                                                                                                                        |
+| Tree decision log TR1–TR46                                                         | `libs/table/docs/decisions/tree.md`                                                                                                                        |
+| UI decisions D1–D13                                                                | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/1-decisions.md`                                                                                       |
+| UI spec (#165)                                                                     | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/2-spec.md`                                                                                            |
+| #189 placement in the epic                                                         | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/issue-graph.md`                                                                                       |
+| Step 4 left data-row chevron hand-written                                          | `libs/table/docs/3-ui/work/tree/active/tree-ui-layer/4-tasks/issue-183/step-4-grouping-story-host.plan.md`                                                 |
+| Flat-data decisions D1–D28                                                         | `libs/table/docs/1-state/work/tree/active/tree-flat-data/1-decisions.md`                                                                                   |
+| State spec v1.1                                                                    | `libs/table/docs/1-state/features/tree.md`                                                                                                                 |
+| UI directive spec + recipe                                                         | `libs/table/docs/3-ui/directives/tree.md`                                                                                                                  |
+| G78–G80                                                                            | `libs/table/docs/decisions/grouping.md`                                                                                                                    |
+| Generated status row                                                               | `libs/table/docs/status.md:39`                                                                                                                             |
+| F-T1/F-T2 marks                                                                    | `libs/table/docs/0-product/filtering.md:508-557`                                                                                                           |
+| G-T1–G-T3 marks                                                                    | `libs/table/docs/0-product/grouping.md:834-900`                                                                                                            |
+| E-G1 mark and stale fixture text                                                   | `libs/table/docs/0-product/grouping.md:943-968`                                                                                                            |
+| S-T1 mark                                                                          | `libs/table/docs/0-product/selection.md:604-627`                                                                                                           |
+| E-1 mark, filed under expansion                                                    | `libs/table/docs/0-product/row-editing.md:701-712`                                                                                                         |
+| E-T1, E-1 "tree-owned", E-G1 critique (#190, uncommitted)                          | `C:/Users/dmena/git/ng-table/.claude/worktrees/feat-190-expansion-detail-panel-story/libs/table/docs/0-product/expansion.md` §4                            |
+| "#182 is deleting row aria-expanded" (#190)                                        | same file, §1.2 Coverage                                                                                                                                   |
 | Story C `panel-in-groups/`, chevron convention, "no toggle directive ships" (#190) | `C:/Users/dmena/git/ng-table/.claude/worktrees/feat-190-expansion-detail-panel-story/libs/table/docs/3-ui/work/expansion-stories/1-gap-analysis.md` Step 3 |
-| "Leading … matches the tree chevron" (#190) | same file, "Conventions from peer libraries" |
-| No expansion directive on main | `libs/table/src/directives/` (glob `*expan*`: no match) |
-| `withTree` toggle/expand/state/reveal/parentLink | `libs/table/src/api/features/with-tree/feature.ts` |
-| Flat nesting, `hasChildren`, reports | `libs/table/src/api/features/with-tree/nest.ts` |
-| Reveal + closed-while-revealed | `libs/table/src/api/features/with-tree/reveal.ts` |
-| Public tree types | `libs/table/src/api/features/with-tree/types.ts` |
-| Broken-link resolution | `libs/table/src/engine/tree-links.ts` |
-| Ancestor / descendant retention | `libs/table/src/api/features/with-filtering/tree-retention.ts` |
-| Filter stage wiring, `includeDescendants`, `contextRows` | `libs/table/src/api/features/with-filtering/feature.ts` |
-| Grouping reads the parent link | `libs/table/src/api/features/with-grouping/feature.ts:168-170` |
-| Root lookup for grouping | `libs/table/src/engine/grouping/clusters.ts:150-156` |
-| `isContextRow` stamp, `sourceIndex` | `libs/table/src/engine/core.ts` |
-| Depth / visibility walk | `libs/table/src/engine/flatten.ts` |
-| `totalRowCount` | `libs/table/src/engine/compose-table.ts:56` |
-| `aria-rowcount` | `libs/table/src/directives/ngp-table.directive.ts:22` |
-| Core row bindings, `--ngp-table-row-depth`, no `aria-expanded` | `libs/table/src/directives/ngp-table-row.directive.ts` |
-| Tree row hooks | `libs/table/src/directives/ngp-table-tree-row.directive.ts` |
-| Tree toggle | `libs/table/src/directives/ngp-table-tree-toggle.directive.ts` |
-| `selectAllIds` | `libs/table/src/api/features/with-selection/utils.ts` |
-| `removeRow(ids[])` | `libs/table/src/mutations/row-mutations.ts:44-49` |
-| Public exports | `libs/table/src/index.ts:11-12`, `44-47` |
-| Only tree host | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts` |
-| Its template (group pair, hand-written data chevron) | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` |
-| Expand/Collapse all buttons | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-toolbar.component.html` |
-| Flat fixture, `d4` amounts | `libs/table/src/stories/grouping/fixtures/mock.ts` |
-| `DealRow.parentId` | `libs/table/src/stories/grouping/fixtures/types.ts` |
-| Group levels | `libs/table/src/stories/grouping/fixtures/schema.ts:71-79` |
-| Group count pipe | `libs/table/src/stories/grouping/grouping-story.pipes.ts:41-48` |
-| Per-depth indentation in story CSS | `libs/table/src/stories/grouping/grouping-story.css:12-19` |
-| Story titles (no Tree entry) | `title:` lines across `libs/table/src/stories/**/*.stories.ts` |
+| "Leading … matches the tree chevron" (#190)                                        | same file, "Conventions from peer libraries"                                                                                                               |
+| No expansion directive on main                                                     | `libs/table/src/directives/` (glob `*expan*`: no match)                                                                                                    |
+| `withTree` toggle/expand/state/reveal/parentLink                                   | `libs/table/src/api/features/with-tree/feature.ts`                                                                                                         |
+| Flat nesting, `hasChildren`, reports                                               | `libs/table/src/api/features/with-tree/nest.ts`                                                                                                            |
+| Reveal + closed-while-revealed                                                     | `libs/table/src/api/features/with-tree/reveal.ts`                                                                                                          |
+| Public tree types                                                                  | `libs/table/src/api/features/with-tree/types.ts`                                                                                                           |
+| Broken-link resolution                                                             | `libs/table/src/engine/tree-links.ts`                                                                                                                      |
+| Ancestor / descendant retention                                                    | `libs/table/src/api/features/with-filtering/tree-retention.ts`                                                                                             |
+| Filter stage wiring, `includeDescendants`, `contextRows`                           | `libs/table/src/api/features/with-filtering/feature.ts`                                                                                                    |
+| Grouping reads the parent link                                                     | `libs/table/src/api/features/with-grouping/feature.ts:168-170`                                                                                             |
+| Root lookup for grouping                                                           | `libs/table/src/engine/grouping/clusters.ts:150-156`                                                                                                       |
+| `isContextRow` stamp, `sourceIndex`                                                | `libs/table/src/engine/core.ts`                                                                                                                            |
+| Depth / visibility walk                                                            | `libs/table/src/engine/flatten.ts`                                                                                                                         |
+| `totalRowCount`                                                                    | `libs/table/src/engine/compose-table.ts:56`                                                                                                                |
+| `aria-rowcount`                                                                    | `libs/table/src/directives/ngp-table.directive.ts:22`                                                                                                      |
+| Core row bindings, `--ngp-table-row-depth`, no `aria-expanded`                     | `libs/table/src/directives/ngp-table-row.directive.ts`                                                                                                     |
+| Tree row hooks                                                                     | `libs/table/src/directives/ngp-table-tree-row.directive.ts`                                                                                                |
+| Tree toggle                                                                        | `libs/table/src/directives/ngp-table-tree-toggle.directive.ts`                                                                                             |
+| `selectAllIds`                                                                     | `libs/table/src/api/features/with-selection/utils.ts`                                                                                                      |
+| `removeRow(ids[])`                                                                 | `libs/table/src/mutations/row-mutations.ts:44-49`                                                                                                          |
+| Public exports                                                                     | `libs/table/src/index.ts:11-12`, `44-47`                                                                                                                   |
+| Only tree host                                                                     | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts`                                                        |
+| Its template (group pair, hand-written data chevron)                               | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html`                                                      |
+| Expand/Collapse all buttons                                                        | `libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-toolbar.component.html`                                                         |
+| Flat fixture, `d4` amounts                                                         | `libs/table/src/stories/grouping/fixtures/mock.ts`                                                                                                         |
+| `DealRow.parentId`                                                                 | `libs/table/src/stories/grouping/fixtures/types.ts`                                                                                                        |
+| Group levels                                                                       | `libs/table/src/stories/grouping/fixtures/schema.ts:71-79`                                                                                                 |
+| Group count pipe                                                                   | `libs/table/src/stories/grouping/grouping-story.pipes.ts:41-48`                                                                                            |
+| Per-depth indentation in story CSS                                                 | `libs/table/src/stories/grouping/grouping-story.css:12-19`                                                                                                 |
+| Story titles (no Tree entry)                                                       | `title:` lines across `libs/table/src/stories/**/*.stories.ts`                                                                                             |

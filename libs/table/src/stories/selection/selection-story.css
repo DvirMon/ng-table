@@ -50,13 +50,7 @@
 /* A locked row must read as locked without clicking it. */
 .selection-story__row--locked > .story-host__cell,
 .selection-story__row--locked > .selection-story__cell--control {
-  background: repeating-linear-gradient(
-    135deg,
-    #111827,
-    #111827 6px,
-    #172033 6px,
-    #172033 12px
-  );
+  background: repeating-linear-gradient(135deg, #111827, #111827 6px, #172033 6px, #172033 12px);
   color: #9ca3af;
 }
 

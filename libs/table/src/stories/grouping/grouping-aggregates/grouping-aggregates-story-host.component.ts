@@ -41,13 +41,11 @@ export class GroupingAggregatesStoryHostComponent {
     withGrouping({
       initial: BASE_GROUPING_LEVELS,
       schema: (path) => aggregate(path.amount, sumAmount),
-    })
+    }),
   );
 
   /** Read off the data, not a flag — the failure is data-dependent (ADR-0014). */
-  protected readonly isSummaryBroken = computed(() =>
-    this.data().some((row) => row.amount < 0)
-  );
+  protected readonly isSummaryBroken = computed(() => this.data().some((row) => row.amount < 0));
 
   /** Poisons — or restores — one row's `amount`. A patched row, not a flag the fixture reads:
    * `aggregateFn` fails on a *record*. */
@@ -56,7 +54,7 @@ export class GroupingAggregatesStoryHostComponent {
     this.table.value.update(
       patchRow<DealRow>(BREAKABLE_ROW_ID, {
         amount: shouldBreak ? -1 : BREAKABLE_ROW_AMOUNT,
-      })
+      }),
     );
   }
 }

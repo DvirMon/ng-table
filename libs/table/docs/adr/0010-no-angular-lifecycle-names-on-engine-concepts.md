@@ -22,12 +22,12 @@ trailing arguments to `createTable()` and that `index.ts` exports. It is neither
 
 - **Not exported from `index.ts`** — only its supporting types are public.
 - **Not consumer-invoked** — `api/create-table.ts` always splices it into the fold
-  (`docs/2-columns/architecture.md`: *"one new composed feature always spliced into
-  `coreFeature`"*).
+  (`docs/2-columns/architecture.md`: _"one new composed feature always spliced into
+  `coreFeature`"_).
 - **Contributes nothing to the public contract** — it declares no members, so it adds nothing
   to the accumulating `Feature<In, Out>` fold; same invisibility class as internal engine state.
-- **Flagged in its own docstring** before this ADR: *"Auto-composed by `createTable()`, unlike
-  every other `with-*()` feature."* The design doc already knew; the naming never caught up.
+- **Flagged in its own docstring** before this ADR: _"Auto-composed by `createTable()`, unlike
+  every other `with-_()` feature."\* The design doc already knew; the naming never caught up.
 
 A maintainer skimming `api/features/` reasonably assumes five composable plugins. One of them
 doesn't match the `Config = {}` shape every real `with*()` plugin takes and needs internally
@@ -37,8 +37,8 @@ resolved rules a consumer never has in hand — a real defect, not folder hygien
 
 `TableFeatureSpec.onInit` (`engine/types.ts`) is collected by `composeTable()` and run once,
 synchronously, right after every feature is folded — still inside the same construction call as
-`createTable()` itself (`engine/compose-table.ts`: *"Must run inside an Angular injection
-context: `onInit` hooks create `effect()`/`resource()`"*).
+`createTable()` itself (`engine/compose-table.ts`: _"Must run inside an Angular injection
+context: `onInit` hooks create `effect()`/`resource()`"_).
 
 Angular's own `ngOnInit` means something specific and different: a method Angular itself calls
 on a class it instantiates and tracks as a component/directive/pipe in its view tree, firing
@@ -63,24 +63,25 @@ primitive that does exactly what the name says.
    exports); `resolve.ts` (compile) → `wiring.ts` (run) → `wire-columns-schema.ts` (declare) keeps
    the existing internal phase split.
 4. **Rename** `TableFeatureSpec.onInit` → `setup`, and `FeatureHooks.onInit` /
-   `composeTable()`'s internal `hooks.onInit` collection to match. Named for *what it does*
-   (construction-time setup), not *when* in a lifecycle it fires — sidesteps borrowing Angular
+   `composeTable()`'s internal `hooks.onInit` collection to match. Named for _what it does_
+   (construction-time setup), not _when_ in a lifecycle it fires — sidesteps borrowing Angular
    vocabulary at all.
 5. **Keep** `onDestroy` as-is — it's correctly named because it's a direct pass-through to a real
    `DestroyRef.onDestroy` call.
 
 ## Alternatives considered
 
-| Option | Why not |
-|---|---|
-| Rename `withColumnsSchemaAsync` only, leave folder in `api/features/` | Folder location is the stronger signal a maintainer scans first; leaving it there keeps implying "opt-in plugin" regardless of the function name |
-| Move folder only, keep `with*` name | Name is the part that actively misleads (matches the public convention letter-for-letter); moving without renaming just relocates the same trap |
-| Give `setup` a phase-timing name (`onConstruct`, `afterCompose`) | Considered and rejected in discussion — naming it for *when* it runs is exactly the pattern that caused the `onInit` collision in the first place; naming for *what it does* doesn't collide with any Angular vocabulary |
-| Rename by editing ADR-0003 (which introduced `onInit`) | ADR-0003 is `accepted` and already shipped/verified — editing it rewrites a historical record. This is a new decision for a reason ADR-0003 never considered, so it gets its own ADR, same as ADR-0005 superseded a specific point in ADR-0004 without editing it |
+| Option                                                                | Why not                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rename `withColumnsSchemaAsync` only, leave folder in `api/features/` | Folder location is the stronger signal a maintainer scans first; leaving it there keeps implying "opt-in plugin" regardless of the function name                                                                                                                  |
+| Move folder only, keep `with*` name                                   | Name is the part that actively misleads (matches the public convention letter-for-letter); moving without renaming just relocates the same trap                                                                                                                   |
+| Give `setup` a phase-timing name (`onConstruct`, `afterCompose`)      | Considered and rejected in discussion — naming it for _when_ it runs is exactly the pattern that caused the `onInit` collision in the first place; naming for _what it does_ doesn't collide with any Angular vocabulary                                          |
+| Rename by editing ADR-0003 (which introduced `onInit`)                | ADR-0003 is `accepted` and already shipped/verified — editing it rewrites a historical record. This is a new decision for a reason ADR-0003 never considered, so it gets its own ADR, same as ADR-0005 superseded a specific point in ADR-0004 without editing it |
 
 ## Consequences
 
 **Gained**
+
 - `api/features/` contains exactly the consumer-facing plugins — `with*` is trustworthy
   again as "safe to pass as a `createTable()` feature argument."
 - `engine/` correctly owns every always-on, non-exported composition step.
@@ -88,6 +89,7 @@ primitive that does exactly what the name says.
   `createTable()` — a plain factory, not a class Angular instantiates — cannot actually provide.
 
 **Cost**
+
 - Renamed across `engine/types.ts`, `engine/compose-table.ts`, `engine/compose-table.spec.ts`,
   `api/types.ts`, `api/create-table.ts`, `api/features/with-row-edit.ts`, and the moved
   `engine/columns-schema/` folder (5 files) — import-line and identifier-only diffs, no behavior
@@ -97,6 +99,7 @@ primitive that does exactly what the name says.
   accurate records of what was decided at the time, not live specs.
 
 **Verification plan**
+
 - `npx tsc -p apps/demo/tsconfig.app.json --noEmit` clean.
 - Full table spec suite passes.
 - `git diff main -- apps/demo` empty — no consumer-visible change (neither renamed symbol was

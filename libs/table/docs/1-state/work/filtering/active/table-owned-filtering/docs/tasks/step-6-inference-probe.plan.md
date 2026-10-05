@@ -8,10 +8,10 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
+| File                                                  | Line     | Action                                                                |
+| ----------------------------------------------------- | -------- | --------------------------------------------------------------------- |
 | `libs/table/src/filters/create-filters.types.spec.ts` | `:1-322` | rewrite — probes `withFiltering`'s object schema, not `createFilters` |
-| `libs/table/src/filters/create-filters.spec.ts` | — | edit — only what the construction-throw changes force |
+| `libs/table/src/filters/create-filters.spec.ts`       | —        | edit — only what the construction-throw changes force                 |
 
 ## Why This Step Exists
 
@@ -37,7 +37,7 @@ the carrier, and `applyWhen` — all deleted by Steps 1–3. Rewrite rather than
 2. Keep the two scaffolding devices that still earn their place:
    - `typecheckOnly(assertions)` — typechecks a body that would throw at construction.
    - the shared `Invoice` / `Ticket` row interfaces, for the cross-row rejection case.
-   Delete `rowsArray`, `ticketPath`-as-carrier-probe and every `rowOf()` case.
+     Delete `rowsArray`, `ticketPath`-as-carrier-probe and every `rowOf()` case.
 3. Assert, one `it` per claim:
    - Each of the eight rules infers its criterion exactly through `StateOf` — `equals` →
      `TRow[K] | null`, `contains` → `string`, `inRange` → `RangeCriterion`, `inDateRange` →
@@ -69,7 +69,7 @@ the carrier, and `applyWhen` — all deleted by Steps 1–3. Rewrite rather than
 
 ## Risks / Watchouts
 
-- **`anyOf`'s criterion borrow is the easiest thing to break silently.** It borrows criterion *and*
+- **`anyOf`'s criterion borrow is the easiest thing to break silently.** It borrows criterion _and_
   row type from the first child; a regression makes the group's criterion `unknown`, which
   `expectTypeOf` will accept against a loose assertion. Assert the exact type, never
   `toMatchTypeOf`.
@@ -94,4 +94,5 @@ the carrier, and `applyWhen` — all deleted by Steps 1–3. Rewrite rather than
       genuinely error.
 
 ---
+
 ← [Step 5: Barrels](step-5-barrels.plan.md) | [Step 7: Client-filtering host](step-7-client-filtering-host.plan.md) →

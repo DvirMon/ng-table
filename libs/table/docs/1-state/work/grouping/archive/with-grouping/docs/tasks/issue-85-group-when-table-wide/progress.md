@@ -3,14 +3,14 @@
 **Issue:** #85
 **Status:** 6 / 6 complete (tests not run locally — see note below)
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `ClusterSummary`, the `admitted` flag, and admission-aware ordering | ✅ done | — |
-| 2 | Emission honours admission (dissolution) | ✅ done | — |
-| 3 | Wire `config.groupWhen` through `withGrouping()` | ✅ done | — |
-| 4 | Tests for table-wide admission | ✅ done | — |
-| 5 | `grouping-static` demonstrates rows with no group value staying flat | ✅ done | — |
-| 6 | Documentation table-wide admission owes | ✅ done | — |
+| Step | Title                                                                | Status  | PR  |
+| ---- | -------------------------------------------------------------------- | ------- | --- |
+| 1    | `ClusterSummary`, the `admitted` flag, and admission-aware ordering  | ✅ done | —   |
+| 2    | Emission honours admission (dissolution)                             | ✅ done | —   |
+| 3    | Wire `config.groupWhen` through `withGrouping()`                     | ✅ done | —   |
+| 4    | Tests for table-wide admission                                       | ✅ done | —   |
+| 5    | `grouping-static` demonstrates rows with no group value staying flat | ✅ done | —   |
+| 6    | Documentation table-wide admission owes                              | ✅ done | —   |
 
 ## Graph
 

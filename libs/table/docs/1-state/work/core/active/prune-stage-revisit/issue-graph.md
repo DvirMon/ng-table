@@ -6,12 +6,12 @@ ADR-0017 D2). **Closed 2026-09-20 — all four slices shipped.**
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks | Shipped in |
-|---|---|---|---|---|---|
-| [#106](https://github.com/DvirMon/ng-table/issues/106) | Drop the unclaimed `'paginate'` render stage | ✅ CLOSED | — | #107 | `29052f7` |
-| [#107](https://github.com/DvirMon/ng-table/issues/107) | Render stages exchange a nested node tree; a flatten walk replaces the prune | ✅ CLOSED | #106 | #108, #109 | `e0161ee`, `333ef5b` |
-| [#108](https://github.com/DvirMon/ng-table/issues/108) | Group headers report expansion through `row.isExpanded` | ✅ CLOSED | #107 | — | `4b38acd`, `a34db14` |
-| [#109](https://github.com/DvirMon/ng-table/issues/109) | Record the tree-shaped render IR across the ADR set | ✅ CLOSED | #107 | — | `8d843f6` |
+| #                                                      | Title                                                                        | State     | Depends on | Blocks     | Shipped in           |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------- | --------- | ---------- | ---------- | -------------------- |
+| [#106](https://github.com/DvirMon/ng-table/issues/106) | Drop the unclaimed `'paginate'` render stage                                 | ✅ CLOSED | —          | #107       | `29052f7`            |
+| [#107](https://github.com/DvirMon/ng-table/issues/107) | Render stages exchange a nested node tree; a flatten walk replaces the prune | ✅ CLOSED | #106       | #108, #109 | `e0161ee`, `333ef5b` |
+| [#108](https://github.com/DvirMon/ng-table/issues/108) | Group headers report expansion through `row.isExpanded`                      | ✅ CLOSED | #107       | —          | `4b38acd`, `a34db14` |
+| [#109](https://github.com/DvirMon/ng-table/issues/109) | Record the tree-shaped render IR across the ADR set                          | ✅ CLOSED | #107       | —          | `8d843f6`            |
 
 ## Graph
 
@@ -48,7 +48,7 @@ Worth recording, because the divergence is the useful part:
   hand against the commits that shipped them. `ADR-0023`'s own header says "implemented in #107".
 - **#109's `needs:grill` rung was satisfied without a grill.** Its question — what happens to
   ADR-0020 D2's anchor set once `'paginate'` and `'prune'` are both gone — was answered in the
-  ADR text directly: *no post-flatten anchor exists*. The rung was right to exist; it just got
+  ADR text directly: _no post-flatten anchor exists_. The rung was right to exist; it just got
   resolved in passing rather than in a session of its own.
 - **#108 was the only slice with a real gap at review.** Three of its four criteria passed, but
   `docs/overview.md` still taught the pre-flatten pattern — gating nested rows on

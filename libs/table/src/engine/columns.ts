@@ -29,7 +29,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  */
 export function assertUniqueColumnIds<TRow>(
   defs: readonly ColumnDefInput<TRow>[],
-  label: string
+  label: string,
 ): void {
   if (typeof ngDevMode !== 'undefined' && !ngDevMode) return;
 
@@ -37,7 +37,7 @@ export function assertUniqueColumnIds<TRow>(
   for (const def of defs) {
     if (seen.has(def.id)) {
       throw new Error(
-        `[${label}] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`
+        `[${label}] Duplicate column id provided: "${def.id}" — ensure all column ids are unique.`,
       );
     }
     seen.add(def.id);
@@ -55,13 +55,12 @@ export function assertUniqueColumnIds<TRow>(
  */
 export function resolveColumnDefs<TRow>(
   defs: readonly ColumnDefInput<TRow>[],
-  label: string
+  label: string,
 ): ColumnDef<TRow>[] {
   assertUniqueColumnIds(defs, label);
   return defs.map((def, index) => ({
     ...def,
-    accessor:
-      def.accessor ?? ((row: TRow) => (isRecord(row) ? row[def.id] : undefined)),
+    accessor: def.accessor ?? ((row: TRow) => (isRecord(row) ? row[def.id] : undefined)),
     visible: def.visible ?? true,
     order: def.order ?? index,
     label: def.label ?? def.id,
@@ -74,15 +73,13 @@ export function resolveColumnDefs<TRow>(
  * elements.
  */
 export function selectRenderColumns<TRow>(columns: ColumnDef<TRow>[]): ColumnDef<TRow>[] {
-  return columns
-    .filter((column) => column.visible === true)
-    .sort((a, b) => a.order - b.order);
+  return columns.filter((column) => column.visible === true).sort((a, b) => a.order - b.order);
 }
 
 /** Rewrites `order` from the given id list. Columns absent from `ids` keep their current order. */
 export function applyColumnOrder<TRow>(
   columns: ColumnDef<TRow>[],
-  ids: string[]
+  ids: string[],
 ): ColumnDef<TRow>[] {
   const orderById = new Map(ids.map((id, index) => [id, index]));
   return columns.map((column) => ({
@@ -95,20 +92,18 @@ export function applyColumnOrder<TRow>(
 export function setColumnVisible<TRow>(
   columns: ColumnDef<TRow>[],
   id: string,
-  visible: boolean
+  visible: boolean,
 ): ColumnDef<TRow>[] {
-  return columns.map((column) =>
-    column.id === id ? { ...column, visible } : column
-  );
+  return columns.map((column) => (column.id === id ? { ...column, visible } : column));
 }
 
 /** Flips `visible` on one column by id. Unknown ids are a no-op. */
 export function toggleColumnVisible<TRow>(
   columns: ColumnDef<TRow>[],
-  id: string
+  id: string,
 ): ColumnDef<TRow>[] {
   return columns.map((column) =>
-    column.id === id ? { ...column, visible: !column.visible } : column
+    column.id === id ? { ...column, visible: !column.visible } : column,
   );
 }
 
@@ -148,14 +143,15 @@ export type ColumnRuleRegistry<TRow = unknown> = readonly ColumnRuleEntry<TRow>[
  */
 export function foldColumnRules<TRow>(
   columns: ColumnDef<TRow>[],
-  registry: ColumnRuleRegistry<TRow>
+  registry: ColumnRuleRegistry<TRow>,
 ): ColumnDef<TRow>[] {
   const valuesByColumnId = new Map<string, Map<ColumnMetaKey<unknown>, unknown[]>>();
 
   for (const entry of registry) {
     const value = entry.result();
     if (value === undefined) continue;
-    const byKey = valuesByColumnId.get(entry.columnId) ?? new Map<ColumnMetaKey<unknown>, unknown[]>();
+    const byKey =
+      valuesByColumnId.get(entry.columnId) ?? new Map<ColumnMetaKey<unknown>, unknown[]>();
     const values = byKey.get(entry.key);
     if (values) values.push(value);
     else byKey.set(entry.key, [value]);

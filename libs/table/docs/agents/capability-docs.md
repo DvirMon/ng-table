@@ -3,10 +3,10 @@
 The procedure that converts a capability whose docs have spread across work folders, specs,
 plans and ADRs into the **two permanent files** every capability is supposed to have:
 
-| File | Answers |
-|---|---|
-| `docs/1-state/features/<capability>.md` (and `docs/3-ui/directives/<capability>.md`) | what it does **today** |
-| `docs/decisions/<capability>.md` | **why**, what was tried, what was reversed, what is open |
+| File                                                                                 | Answers                                                  |
+| ------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| `docs/1-state/features/<capability>.md` (and `docs/3-ui/directives/<capability>.md`) | what it does **today**                                   |
+| `docs/decisions/<capability>.md`                                                     | **why**, what was tried, what was reversed, what is open |
 
 The log's own contract — numbering, status vocabulary, the four maintenance rules — is
 `~/.claude/conventions/doc-contracts/decisions-log.md`, which is portable across repos. This
@@ -18,7 +18,7 @@ contract as the worked example before starting another.
 ## Entry point
 
 `/audit-docs <capability>` — `audit-docs` routes here when its scope is a capability name
-rather than a file path. Steps 2 and 3 below *are* an `audit-docs` run; the rest is structural
+rather than a file path. Steps 2 and 3 below _are_ an `audit-docs` run; the rest is structural
 work `audit-docs` does not do.
 
 ## Procedure
@@ -72,10 +72,10 @@ was wrong with it.
 
 Which of two jobs this is depends on what the permanent spec actually is:
 
-| The permanent spec is… | Do |
-|---|---|
-| missing, a stub, or delegating its contract into `archive/` | **rewrite it** wholesale from `src/` |
-| a real contract that is stale in identified places | **correct those places** against `src/`, leave the rest |
+| The permanent spec is…                                      | Do                                                      |
+| ----------------------------------------------------------- | ------------------------------------------------------- |
+| missing, a stub, or delegating its contract into `archive/` | **rewrite it** wholesale from `src/`                    |
+| a real contract that is stale in identified places          | **correct those places** against `src/`, leave the rest |
 
 `grouping` was the first case — 70 lines of superseded banner over a draft that delegated its
 own contract to an archived file. `row-editing` was the second: 670 lines that were mostly
@@ -92,7 +92,7 @@ moves a number on a generated roll-up.
 
 ### 5. Demote any permanent doc that claims to override the contract
 
-An archived file that says it *supersedes* the permanent spec is the core defect — the
+An archived file that says it _supersedes_ the permanent spec is the core defect — the
 permanent file ends up delegating its own contract into `archive/`. Gut it to a short tombstone
 naming its replacement and listing how it was stale. Keep the file so links and `git log
 --follow` still resolve; never delete it.
@@ -130,7 +130,7 @@ in `libs/table/CLAUDE.md`.
 
 1. **It rewrites prose that quotes the old path on purpose.** A sentence like "links still
    pointing at `work/<old-slug>/`" becomes a sentence naming the new path, which inverts its
-   meaning. After any sweep, diff the non-link hits and read them. Citations in prose *should*
+   meaning. After any sweep, diff the non-link hits and read them. Citations in prose _should_
    be updated; descriptions of the old layout should not.
 2. **On Windows, `Set-Content -Encoding utf8` writes a BOM** — and `tools/generate-status.ts`
    tests `lines[0].trim() === '---'`, so a BOM makes the frontmatter unparseable and the
@@ -165,6 +165,6 @@ than presenting it as part of the consolidation.
 
 ## What this does not do
 
-Nothing about the docs *axis*. Whether a capability's decisions, spec and work should all live
+Nothing about the docs _axis_. Whether a capability's decisions, spec and work should all live
 under `docs/features/<capability>/` rather than split across numbered streams is a separate,
 parked question — do not reopen it inside one capability's cleanup.

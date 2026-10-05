@@ -97,4 +97,5 @@ copy: the pipeline reads `data()` directly.
 - [ ] `nx typecheck shared-design-system` fails only in spec files (expected until Step 2)
 
 ---
+
 [Step 2: Update engine/create-table specs for the new data ingress](step-2-update-data-ingress-specs.plan.md) →

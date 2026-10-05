@@ -10,15 +10,15 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `libs/table/docs/adr/0023-tree-shaped-render-ir.md` | **new** |
-| `libs/table/docs/adr/0017-engine-owned-descendant-prune.md` | edit |
-| `libs/table/docs/adr/0011-…render-stages….md` | edit |
-| `libs/table/docs/adr/0020-open-stage-registration-for-third-party-features.md` | edit |
-| `libs/table/CLAUDE.md` | edit |
-| `libs/table/docs/1-state/architecture.md` | edit (the `'prune'` sentence, ~line 158) |
-| `llms.txt` | regenerate |
+| Path                                                                           | Action                                   |
+| ------------------------------------------------------------------------------ | ---------------------------------------- |
+| `libs/table/docs/adr/0023-tree-shaped-render-ir.md`                            | **new**                                  |
+| `libs/table/docs/adr/0017-engine-owned-descendant-prune.md`                    | edit                                     |
+| `libs/table/docs/adr/0011-…render-stages….md`                                  | edit                                     |
+| `libs/table/docs/adr/0020-open-stage-registration-for-third-party-features.md` | edit                                     |
+| `libs/table/CLAUDE.md`                                                         | edit                                     |
+| `libs/table/docs/1-state/architecture.md`                                      | edit (the `'prune'` sentence, ~line 158) |
+| `llms.txt`                                                                     | regenerate                               |
 
 ## Why This Step Exists
 
@@ -30,7 +30,7 @@ every session. Stale text there does not sit quietly; it propagates
 into conclusions. The file currently teaches that `'prune'` is
 engine-owned and unclaimable, that `RenderStages` excludes it, and
 that `withGrouping()` composes with zero knowledge of expansion
-*because of* ADR-0017's prune stage. All three become false.
+_because of_ ADR-0017's prune stage. All three become false.
 
 ## What To Do
 
@@ -48,8 +48,8 @@ that `withGrouping()` composes with zero knowledge of expansion
      becomes `RenderNodeTransform`, so "chained render stages" chains
      node transforms.
 2. **ADR-0017** — add the supersede marker on D2. D1 stays, but its
-   wording changes: `parentId` goes from *stamped by each stage* to
-   *derived by the walk*.
+   wording changes: `parentId` goes from _stamped by each stage_ to
+   _derived by the walk_.
 3. **ADR-0011** — amend D2's `RENDER_ORDER` literal and the
    `RenderRowTransform` snippet.
 4. **ADR-0020** (`proposed`, edited **in place**, not superseded —
@@ -58,8 +58,8 @@ that `withGrouping()` composes with zero knowledge of expansion
      emission order to preserve, so the boolean is not built;
    - drop the emission-order half of **D5**;
    - remove `'paginate'` and `'prune'` from **D2**'s anchor set.
-     D2 justified keeping `'paginate'` as the only way to say *before
-     the window is cut*; with the name gone there is **no**
+     D2 justified keeping `'paginate'` as the only way to say _before
+     the window is cut_; with the name gone there is **no**
      post-flatten anchor. State that there is none, deliberately —
      do not leave a reserved name nobody designed. Whether to add one
      is #102's call (architecture open question 1); flag it there.
@@ -69,7 +69,7 @@ that `withGrouping()` composes with zero knowledge of expansion
    - the `engine/render-stages.ts` row in the file table;
    - the `engine/rows.ts` row (the seed is a node seed now);
    - add an `engine/flatten.ts` row;
-   - the "add a render stage" rule under *Feature plugin pattern* —
+   - the "add a render stage" rule under _Feature plugin pattern_ —
      `RENDER_ORDER` is now exactly "stages a feature may claim", with
      no exclusion list beside it;
    - the `withGrouping()` / ADR-0017 paragraph in the same section,
@@ -86,10 +86,10 @@ that `withGrouping()` composes with zero knowledge of expansion
   CLAUDE.md edits carry invariants only. Do not add "#107 landed" or
   a migration note — the rule is what the reader needs to not misuse
   the code.
-- ADR-0023's *Alternatives considered* should name both rejected
-  options with the reason they were rejected: *alt-1 terminal
-  finalize* (fold the prune into `core.ts`'s terminal pass) and
-  *keep ADR-0017 as shipped*. Both relocate the emission-order
+- ADR-0023's _Alternatives considered_ should name both rejected
+  options with the reason they were rejected: _alt-1 terminal
+  finalize_ (fold the prune into `core.ts`'s terminal pass) and
+  _keep ADR-0017 as shipped_. Both relocate the emission-order
   invariant instead of removing it. `alt-1-terminal-finalize.md` and
   `alt-tree-shaped-stages.md` in this workspace have the detail.
 - Record **X5** in the consequences: allocation roughly doubles, one
@@ -129,4 +129,5 @@ that `withGrouping()` composes with zero knowledge of expansion
 - [ ] Every link touched in this step resolves.
 
 ---
+
 ← [Step 6: The collapsible grouping story](step-6-collapsible-story.plan.md)

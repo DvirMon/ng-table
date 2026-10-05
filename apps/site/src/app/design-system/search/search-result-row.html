@@ -1,8 +1,8 @@
 <span class="search-row__surface">
   @if (result().kind === 'heading') {
-    <svg class="search-row__tree" width="24" height="54" viewBox="0 0 24 54" aria-hidden="true">
-      <path [attr.d]="treePath()" fill="none" stroke="currentColor" stroke-width="1.5" />
-    </svg>
+  <svg class="search-row__tree" width="24" height="54" viewBox="0 0 24 54" aria-hidden="true">
+    <path [attr.d]="treePath()" fill="none" stroke="currentColor" stroke-width="1.5" />
+  </svg>
   }
   <ng-icon
     [name]="result().kind === 'heading' ? 'lucideHash' : 'lucideFile'"

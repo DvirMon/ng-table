@@ -54,9 +54,7 @@ function toTransform(offset: number): string {
 // `ngpTableRow` registers nothing (docs/3-ui/directives/row-animation.md).
 @Directive({
   selector: 'table[ngpTableRowAnimation], div[ngpTableRowAnimation]',
-  providers: [
-    { provide: NGP_TABLE_ROW_ANIMATION, useExisting: NgpTableRowAnimationDirective },
-  ],
+  providers: [{ provide: NGP_TABLE_ROW_ANIMATION, useExisting: NgpTableRowAnimationDirective }],
   host: {
     'data-row-animation': '',
   },

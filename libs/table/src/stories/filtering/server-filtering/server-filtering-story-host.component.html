@@ -1,17 +1,17 @@
 <div class="story-host">
   @if (forceFailure()) {
     <p class="story-host__hint">
-      Every request fails. The rows loaded before the failure stay on screen behind the error
-      marker — the table does not blank, and the filter inputs keep their values so Retry sends
-      the same query rather than a reset one.
+      Every request fails. The rows loaded before the failure stay on screen behind the error marker
+      — the table does not blank, and the filter inputs keep their values so Retry sends the same
+      query rather than a reset one.
     </p>
   } @else {
     <p class="story-host__hint">
       Server filtering — the table owns the model; <code>manual: true</code> skips the local filter
       stage and <code>criteria()</code> drives the request directly, already narrowed on arrival.
       Type in the search box with latency on and watch the request counter: one request per typing
-      pause, not per keystroke. Type an amount, then press <em>Deliver server default now</em> —
-      the default loses to what you typed.
+      pause, not per keystroke. Type an amount, then press <em>Deliver server default now</em> — the
+      default loses to what you typed.
     </p>
   }
 

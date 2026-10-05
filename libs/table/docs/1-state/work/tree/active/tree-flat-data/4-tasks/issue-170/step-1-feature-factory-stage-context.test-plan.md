@@ -7,10 +7,12 @@ Spec file: `libs/table/src/engine/compose-table.spec.ts` (seam A),
 the existing home of the `createTableFeature` derive tests)
 
 ## Stubs (red phase)
+
 The tests import no new runtime symbol. `StageContext<TRow>`
 already exists (`engine/types.ts:32`). What red must land is
 the type-only signature change. Without it, a two-argument
 fixture does not compile:
+
 - `engine/types.ts` — `Feature<In, Out>` call signature becomes
   `(input: In, ctx: StageContext<RowOf<In>>): TableFeatureSpec<RowOf<In>, Out>`.
   `ctx` is required.
@@ -34,7 +36,9 @@ fixture does not compile:
   `ctx`.
 
 ## Seams — in red-green order
+
 ### A. Reader feature listed before the link feature → its factory's `ctx.parentOf` resolves the later link when read after composition
+
 - Test: `it('resolves ctx.parentOf lazily, so a factory sees a link a later feature contributes')`
   inside the existing `describe('parentLink contribution (ADR-0028)')`
 - Asserts: feature 1 is
@@ -54,6 +58,7 @@ fixture does not compile:
   forwards the context this seam makes the engine supply.
 
 ### B. Inner feature of `composeFeatures`, link in a later outer slot → the inner `ctx.parentOf` resolves it
+
 - Test: `it('case 25 — an inner feature receives the outer ctx, resolving a later outer slot’s link')`
   inside `describe('parentLink (ADR-0028, #166 step 3)')`
 - Asserts: a new fixture, `fReadsParentOf('fReader')`, is
@@ -70,6 +75,7 @@ fixture does not compile:
   context the engine gives it.
 
 ### C. `createTableFeature(factory, derive)` → `factory` still receives `ctx`
+
 - Test: `it('forwards ctx to a factory that has a derive block')`
 - Asserts: the factory is
   `(input: TableStore<Row>, ctx) => ({ members: { parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)) } })`.
@@ -86,6 +92,7 @@ fixture does not compile:
 - Order reason: builds on A. Independent of B and D.
 
 ### D. `createTableFeature(factory, derive)` → `derive` receives `ctx`
+
 - Test: `it('passes ctx to the derive block')`
 - Asserts: the factory is `() => ({})`. The derive block is
   `(input, ctx) => ({ members: { parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)) } })`
@@ -99,8 +106,10 @@ fixture does not compile:
   site in the same wrapper.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 In `engine/types.types.spec.ts` (new; `Feature` lives in
 `engine/types.ts`):
+
 - `expectTypeOf<Parameters<Feature<TableStore<Row>, {}>>[1]>().toEqualTypeOf<StageContext<Row>>()`
   — pins that `ctx` is typed by the row recovered through
   `RowOf<In>`, not `unknown`/`any`.
@@ -110,6 +119,7 @@ In `engine/types.types.spec.ts` (new; `Feature` lives in
 
 In `api/create-table-feature.types.spec.ts` (new; owner of
 `createTableFeature`):
+
 - `createTableFeature((input: TableStore<Row>, ctx) => { expectTypeOf(ctx).toEqualTypeOf<StageContext<Row>>(); return {}; })`
   — pins that the overload types an unannotated `ctx` from the
   factory's `In`.
@@ -118,6 +128,7 @@ In `api/create-table-feature.types.spec.ts` (new; owner of
   intersection the derive block is typed against.
 
 ## Not tested
+
 - **No link contributed → the factory's `ctx.parentOf` is
   `undefined`.**
   - It passes against the red `{}` placeholder, so it cannot
@@ -126,7 +137,7 @@ In `api/create-table-feature.types.spec.ts` (new; owner of
     box is already pinned by the stage-side test ("leaves
     ctx.parentOf undefined when no feature contributes a parent
     link").
-- **A link from an *earlier* feature.** Any bug it would catch,
+- **A link from an _earlier_ feature.** Any bug it would catch,
   seam A also catches: a lazy getter passes both, a value copied
   at factory time fails A. One seam.
 - **`createTableFeature(factory)` without derive.** It returns
@@ -152,5 +163,6 @@ In `api/create-table-feature.types.spec.ts` (new; owner of
   stage's job (ADR-0014/0028, `core.ts:35-36`).
 
 ## Resolved in planning
+
 - `ctx` is required on the `Feature` call signature (P2), so a forgotten forward fails to compile.
 - The lazy context object is built in `compose-table.ts` only. `core.ts` is unchanged.

@@ -98,7 +98,7 @@ export type ColumnIdOf<S> = S extends {
 ## Risks / Watchouts
 
 - **`with-expansion.ts:27`** narrows through `Pick<TableStore<RowOf<In>>,
-  'rows' | 'trackBy'>`. Neither picked member mentions a column id, so it
+'rows' | 'trackBy'>`. Neither picked member mentions a column id, so it
   is unaffected — but it is the one place a `TableStore<…>` is destructured
   by key, so check it explicitly rather than assuming.
 - **`ColumnsSchemaStore<TRow>` (`columns-schema/types.ts`)** declares
@@ -135,4 +135,5 @@ export type ColumnIdOf<S> = S extends {
       have made the generated files drift.
 
 ---
+
 [Step 2: The generator carries `TId` into every slot](step-2-generator-carries-tid.plan.md) →

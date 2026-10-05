@@ -28,15 +28,17 @@ resolve an accessor and to recover the value map for `path`.
 latter self-references under the F-bound):
 
 ```ts
-type FilteringInput<In> =
-  Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows'>;
+type FilteringInput<In> = Pick<TableStore<RowOf<In>, ColumnValuesOf<In>>, 'columns' | 'rows'>;
 ```
 
 **2. Config and all four overloads** take the map:
 
 ```ts
-export interface WithFilteringConfig<TRow, TValues extends ColumnValueMap,
-  S extends Record<string, AnyRule> = {}> {
+export interface WithFilteringConfig<
+  TRow,
+  TValues extends ColumnValueMap,
+  S extends Record<string, AnyRule> = {},
+> {
   manual?: boolean;
   schema?: (path: FiltersPath<TRow, TValues>) => S;
 }
@@ -51,7 +53,7 @@ Every overload becomes `<In extends FilteringInput<In>, …>` with
 
 - `buildFilterModel(schemaFn, () => input.columns())`
 - then `assertDeclarationsAreKnown(<every recorded path>,
-  input.columns().map((c) => c.id), 'withFiltering')`. Paths come off
+input.columns().map((c) => c.id), 'withFiltering')`. Paths come off
   the built model's records (`pathsOf`), so `anyOf` children are checked
   too. The check is dev-gated inside its own body — do not gate at the
   call site.
@@ -93,4 +95,5 @@ The `filter` stage body is unchanged.
       `createTable()` autocompletes declared column ids on `path`.
 
 ---
+
 ← [Step 2: The engine reads the accessor](step-2-engine-reads-accessor.plan.md) | [Step 4: Engine specs](step-4-engine-specs.plan.md) →

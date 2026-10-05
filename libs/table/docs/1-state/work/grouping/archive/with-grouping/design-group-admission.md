@@ -33,7 +33,7 @@ level, unconditionally:
 - There is no size threshold. A cluster of one renders as an ordinary group, costing an expand
   click for one row (`0-product/grouping.md:734`).
 
-Both behaviors are *consistent by construction* and *stated nowhere*. Neither is configurable.
+Both behaviors are _consistent by construction_ and _stated nowhere_. Neither is configurable.
 
 ## Why this is engine work, not a directive
 
@@ -44,7 +44,7 @@ A UI-level "don't render this header" is not the same feature. The cluster still
 - `computeAggregates` still runs for a group with no consumer;
 - `rowsOf(group)` still resolves it.
 
-Admission changes row *structure* — depth, ids, aggregates, `rowsOf`. It belongs in
+Admission changes row _structure_ — depth, ids, aggregates, `rowsOf`. It belongs in
 `engine/grouping.ts`, applied in `buildClusters`/`emitGroupRows` **and** in the `clusterRows`
 pipeline stage, or pipeline order and render order describe two different tables.
 
@@ -55,7 +55,7 @@ takes (D4):
 
 ```ts
 interface ClusterSummary<TRow> {
-  readonly columnId: string;          // which level is being judged
+  readonly columnId: string; // which level is being judged
   readonly key: GroupKey;
   readonly rows: readonly TRow[];
 }
@@ -126,7 +126,7 @@ withGrouping(
     schema: (path) => {
       applyGrouping(path.region, {
         enable: () => this.groupByRegion(),
-        when: (c) => c.key != null,               // no region ⇒ stays flat
+        when: (c) => c.key != null, // no region ⇒ stays flat
       });
       applyGroupOrder(path.region, (a, b) => String(a.key).localeCompare(String(b.key)));
 
@@ -135,7 +135,7 @@ withGrouping(
         factory: (p) => groupingPreferenceResource(p),
         onSuccess: (pref) => pref.groupByRep,
         onError: () => false,
-        when: (c) => c.rows.length >= 3,          // AND'd with table-wide >= 2
+        when: (c) => c.rows.length >= 3, // AND'd with table-wide >= 2
       });
       applyGroupOrder(path.rep, (a, b) => b.rows.length - a.rows.length);
     },
@@ -146,7 +146,7 @@ withGrouping(
       () => store.renderRows().filter((r) => r.kind === 'row' && r.depth === 0).length,
     ),
   })),
-)
+);
 ```
 
 ### Why the schema fn stays store-free and returns `void`
@@ -161,7 +161,7 @@ removes the need for the return, and with it:
   (`schema/column-schema.ts:113-121`), before any store exists. Supplying one means moving the
   schema run inside the factory, over a prototype-chained input — the same `Object.create(input)`
   trick `createTableFeature` needs for slot 2 (`create-table-feature.ts:51-53`), because
-  `compose-table.ts:76-77` merges members as features run, so a factory sees core plus *earlier*
+  `compose-table.ts:76-77` merges members as features run, so a factory sees core plus _earlier_
   features only. A second site needing that trick for that reason is a second place to get it
   wrong.
 - **an unverified inference route.** A fn that both side-effects and returns `D`, resolved
@@ -184,14 +184,14 @@ design's scope.
 function applyGrouping<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
   opts: {
-    enable: () => boolean | undefined;    // level activation — unchanged, renamed from `when`
-    when?: GroupWhen<TRow>;               // new — admission, this column only
+    enable: () => boolean | undefined; // level activation — unchanged, renamed from `when`
+    when?: GroupWhen<TRow>; // new — admission, this column only
   },
 ): void;
 ```
 
 Same `when` member on `applyGroupingAsync`'s opts. The async rule's `onSuccess`/`onError`
-decide *level activation*; `when` decides *admission*. Orthogonal, and a `when` on a
+decide _level activation_; `when` decides _admission_. Orthogonal, and a `when` on a
 column that is not an active level is a silent no-op by construction.
 
 ### Combining the two scopes
@@ -200,7 +200,7 @@ column that is not an active level is a silent no-op by construction.
 predicates pass.
 
 Precedent: `foldColumnRules` AND-combines same-column `VISIBLE` entries (`engine/columns.ts`).
-Rejected: per-column *overrides* table-wide — it makes the effective rule for any level
+Rejected: per-column _overrides_ table-wide — it makes the effective rule for any level
 unreadable without knowing both, and "the table's floor" is the more useful table-wide semantic.
 
 Table-wide `when` stays in the config because the path proxy is keyed by `keyof TRow`
@@ -219,7 +219,7 @@ cluster time. A pending `enable` has nothing to say about `when`.
 `when` is a consumer callback evaluated against row data — runtime class, per ADR-0014 and
 `classify-errors-construction-vs-runtime`:
 
-- **Throws ⇒ admit the cluster** (group it). The fallback must be the *visible* direction;
+- **Throws ⇒ admit the cluster** (group it). The fallback must be the _visible_ direction;
   dissolving on error hides structure a person configured.
 - Reported once per column per evaluation, matching `computeAggregates`' `reportedColumns`
   dedupe rather than the comparator's once-per-evaluation flag.
@@ -234,7 +234,7 @@ carrying its own `key` and `rows`, flagged:
 
 ```ts
 interface GroupSummary<TRow> extends ClusterSummary<TRow> {
-  readonly admitted: boolean;   // false ⇒ this cluster emits flat, no header
+  readonly admitted: boolean; // false ⇒ this cluster emits flat, no header
 }
 ```
 
@@ -291,7 +291,7 @@ therefore **replaced**, not supplemented.
 
 `grouping-regressions/` is the only consumer supplying a comparator. `WithGroupingConfig.groupOrder`
 is removed in the same change that adds `applyGroupOrder` — pre-1.0, one call site, no deprecation
-window. D4 is amended rather than superseded: the *shape* (a comparator over `GroupSummary`,
+window. D4 is amended rather than superseded: the _shape_ (a comparator over `GroupSummary`,
 siblings only, decoupled from row sort) is unchanged; only its declaration site moves.
 
 ### Multiple dissolved clusters at one level stay separate
@@ -310,7 +310,7 @@ arranges rows within them.
 
 ## Open questions
 
-**Q1 — Does a dissolved cluster's rows still group by the *next* level?** — **DECIDED
+**Q1 — Does a dissolved cluster's rows still group by the _next_ level?** — **DECIDED
 2026-09-16: exit entirely.** Recorded in [2-decisions.md](2-decisions.md). The recommendation
 below stands; the counter-case was checked and rejected. Note the question is only observable
 where `when` is non-monotone in size (a value predicate, or a per-column threshold looser at
@@ -318,10 +318,10 @@ a deeper level) — under a size threshold a rejected cluster's sub-clusters are
 so both answers render identically.
 Level 1 rejects a cluster — do its rows cluster by level 2 inside the flat region, or exit the
 grouping tree entirely?
-*Recommendation:* exit entirely. "Stays flat" is the stated promise; a row that escaped level 1
+_Recommendation:_ exit entirely. "Stays flat" is the stated promise; a row that escaped level 1
 reappearing under a level-2 header is the confusing outcome, and re-entering the tree makes depth
 arithmetic depend on which level rejected it.
-*Counter-case worth checking before closing:* grouping by region then rep, where a region with
+_Counter-case worth checking before closing:_ grouping by region then rep, where a region with
 two deals dissolves — its two rows arguably still want their rep headers. If that reads better,
 the alternative is "dissolve this level only, keep descending", which is a one-line change in
 `emitGroupRows` but a different stated promise.
@@ -330,7 +330,7 @@ the alternative is "dissolve this level only, keep descending", which is a one-l
 Nothing marks where admitted groups end and dissolved rows begin. A consumer wanting an
 "Ungrouped (12)" heading has no row to hang it on, since a dissolved cluster emits no header by
 definition.
-*Recommendation:* ship nothing in v1. The escape hatch is admitting the cluster and styling its
+_Recommendation:_ ship nothing in v1. The escape hatch is admitting the cluster and styling its
 header differently — which the consumer can already do, since `when` is their predicate and
 they know which clusters it rejects. Revisit if the flat region turns out to need a divider more
 often than not.
@@ -338,7 +338,7 @@ often than not.
 **Q3 — Does `rowsOf()` see dissolved rows? — DECIDED, confirmed by test 2026-09-17: yes, via the
 parent.** `rowsBeneathGroup` re-derives the cluster tree; a dissolved cluster itself has no group
 id to resolve, so `rowsOf` on anything resolving to it returns `[]` with no throw — but the
-*parent* group's `rowsOf` still includes those rows, since dissolution changes depth, not
+_parent_ group's `rowsOf` still includes those rows, since dissolution changes depth, not
 membership. Landed as recommended below; `with-grouping.spec.ts` (#85 Step 4) asserts both
 halves through the public surface.
 
@@ -350,7 +350,7 @@ Two things were raised while shaping this and deliberately do **not** belong to 
   Its driver is the `withComputed()`/slot-2 question across all five features, not grouping. It
   is an ADR and should open with a typing spike, the way `computed-state-mechanism/2-research.md`
   probed every route before D19-D22 landed.
-- **OQ-5's display half** — what a header *shows* for a missing or non-primitive value. A
+- **OQ-5's display half** — what a header _shows_ for a missing or non-primitive value. A
   consumer who admits `null` clusters still needs a stated label, and
   [#80](https://github.com/DvirMon/ng-table/issues/80) still owns the accessor contract. Admission
   only offers the escape hatch of not creating the group at all.

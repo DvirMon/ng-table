@@ -12,32 +12,32 @@ Moves — `src/filters/` becomes a sibling of `api/`, `engine/` and `directives/
 [ADR-0004](../../../../../../../adr/0004-table-source-layout.md) the folder supplies the domain, so the
 `filters.` prefix comes off inside it.
 
-| From | To |
-|---|---|
-| `src/api/create-filters.ts` | `src/filters/create-filters.ts` |
-| `src/api/create-filters.spec.ts` | `src/filters/create-filters.spec.ts` |
-| `src/api/filters.types.ts` | `src/filters/types.ts` |
-| `src/api/filters/evaluator.ts` | `src/filters/evaluator.ts` |
-| `src/api/filters/matchers.ts` | `src/filters/matchers.ts` |
-| `src/api/filters/matchers.spec.ts` | `src/filters/matchers.spec.ts` |
-| `src/api/filters/recorder.ts` | `src/filters/recorder.ts` |
-| `src/api/filters/rules.ts` | `src/filters/rules.ts` |
-| `src/api/filters/state.ts` | `src/filters/state.ts` |
-| `src/api/filters/state.spec.ts` | `src/filters/state.spec.ts` |
-| `src/api/filters/validate.ts` | `src/filters/validate.ts` |
+| From                               | To                                   |
+| ---------------------------------- | ------------------------------------ |
+| `src/api/create-filters.ts`        | `src/filters/create-filters.ts`      |
+| `src/api/create-filters.spec.ts`   | `src/filters/create-filters.spec.ts` |
+| `src/api/filters.types.ts`         | `src/filters/types.ts`               |
+| `src/api/filters/evaluator.ts`     | `src/filters/evaluator.ts`           |
+| `src/api/filters/matchers.ts`      | `src/filters/matchers.ts`            |
+| `src/api/filters/matchers.spec.ts` | `src/filters/matchers.spec.ts`       |
+| `src/api/filters/recorder.ts`      | `src/filters/recorder.ts`            |
+| `src/api/filters/rules.ts`         | `src/filters/rules.ts`               |
+| `src/api/filters/state.ts`         | `src/filters/state.ts`               |
+| `src/api/filters/state.spec.ts`    | `src/filters/state.spec.ts`          |
+| `src/api/filters/validate.ts`      | `src/filters/validate.ts`            |
 
 Import updates — every file outside the domain that names a moved path:
 
-| File |
-|---|
-| `src/index.ts` (`:87`, `:88`, `:89-99`, `:100-107`) |
-| `src/api/features/with-filtering.spec.ts` (`:4`, `:6`, `:10`) |
-| `src/stories/composition/derived-state/derived-state-story-host.component.ts` (`:3`, `:7`) |
-| `src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` (`:3`, `:11`) |
+| File                                                                                                 |
+| ---------------------------------------------------------------------------------------------------- |
+| `src/index.ts` (`:87`, `:88`, `:89-99`, `:100-107`)                                                  |
+| `src/api/features/with-filtering.spec.ts` (`:4`, `:6`, `:10`)                                        |
+| `src/stories/composition/derived-state/derived-state-story-host.component.ts` (`:3`, `:7`)           |
+| `src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` (`:3`, `:11`)      |
 | `src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` (`:3`, `:4`) |
-| `src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` (`:3`, `:4`) |
-| `src/stories/filtering/fixtures/utils.ts` (`:1`) |
-| `src/stories/grouping/fixtures/schema.ts` (`:1`, `:2`, `:3`) |
+| `src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` (`:3`, `:4`)       |
+| `src/stories/filtering/fixtures/utils.ts` (`:1`)                                                     |
+| `src/stories/grouping/fixtures/schema.ts` (`:1`, `:2`, `:3`)                                         |
 
 ## Why This Step Exists
 
@@ -66,7 +66,7 @@ conflict with every other step's diff if done earlier. Nothing about it changes 
 - `git mv` rather than delete-and-create, in its own commit, so the move and any subsequent edit
   are separable in review. Rename detection is what keeps this diff readable.
 - Only `filters.types.ts` → `types.ts` loses a prefix. `create-filters.ts` keeps its name — the
-  prefix invariant strips the *domain* from the filename, and `create-` is the factory verb, not
+  prefix invariant strips the _domain_ from the filename, and `create-` is the factory verb, not
   the domain.
 - `src/api/types.ts` already exists and is a different file. After the move, `src/filters/types.ts`
   and `src/api/types.ts` are siblings-by-concern in different domains — that is the intended shape,
@@ -107,4 +107,5 @@ conflict with every other step's diff if done earlier. Nothing about it changes 
 - [ ] `npx nx test shared-table` passes with no spec file edited beyond its import lines
 
 ---
+
 ← [Step 8: ADR-0016](step-8-adr-0016.plan.md) | [Step 10: Give the filters domain its own barrel](step-10-filters-barrel.plan.md) →

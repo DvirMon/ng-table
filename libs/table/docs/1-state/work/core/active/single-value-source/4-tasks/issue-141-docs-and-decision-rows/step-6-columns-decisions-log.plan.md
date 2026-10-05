@@ -15,7 +15,7 @@
 - `libs/table/docs/decisions/grouping.md` (edit: G74 status)
 - `libs/table/docs/decisions/sorting.md` (edit: SO25 status)
 - `libs/table/docs/status.md` (**generated**: `npm run
-  table:status`, never hand-edited)
+table:status`, never hand-edited)
 - `libs/table/docs/1-state/work/core/active/single-value-source/3-architecture.md`
   (edit: "Where the rows go", `:455-473`)
 
@@ -112,4 +112,5 @@ registered in its capability's log.
 - [ ] `3-architecture.md`'s "Where the rows go" is resolved.
 
 ---
+
 ← [Step 5: Check #140's order-window doc](step-5-verify-order-window-doc.plan.md) | [Step 7: Regenerate and gate](step-7-regenerate-and-gate.plan.md) →

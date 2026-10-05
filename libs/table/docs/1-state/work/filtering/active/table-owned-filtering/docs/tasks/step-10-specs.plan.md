@@ -8,9 +8,9 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/table/src/filters/state.spec.ts` | `:1-30` | edit — construction preamble only |
+| File                                                 | Line     | Action                                        |
+| ---------------------------------------------------- | -------- | --------------------------------------------- |
+| `libs/table/src/filters/state.spec.ts`               | `:1-30`  | edit — construction preamble only             |
 | `libs/table/src/api/features/with-filtering.spec.ts` | `:1-302` | rewrite — 10 of 18 cases assert a deleted API |
 
 ## Why This Step Exists
@@ -59,25 +59,25 @@ no injection context — `state.ts` builds only `signal`/`computed`/`linkedSigna
 ### B. `with-filtering.spec.ts` — a rewrite
 
 Ten of eighteen cases assert `predicates`, which no longer exists. They are not deletable as a
-group: most assert a *behaviour* that survives and only its *input* changed. Rewrite case by case:
+group: most assert a _behaviour_ that survives and only its _input_ changed. Rewrite case by case:
 
-| Current (`:line`) | Becomes |
-|---|---|
-| `narrows rows() with a plain predicate` `:60` | narrows `rows()` from a schema criterion |
-| `combines separate predicate terms with AND` `:72` | two criteria narrow conjunctively |
-| `never narrows while the term list is empty` `:89` | never narrows while every criterion is empty |
-| `recomputes when a signal read inside the thunk changes` `:114` | re-narrows when a criterion — and separately, a rule's `source` — changes |
-| `calls the thunk once per pass, not once per row` `:136` | **one `matcher()` per stage evaluation, not per row** (`with-filtering.ts:64-66` states this; a counting rule predicate proves it) |
-| `manual mode skips without calling the thunk` `:175` | `manual: true` skips the stage although the model still builds and `filters` is still exposed |
-| `drops a throwing term for the pass` `:192` | ADR-0014 at feature level: a throwing rule predicate stops narrowing for that evaluation, siblings unaffected |
-| `drops a term throwing on a later row from the whole pass` `:221` | same, from a row past the first — the per-*evaluation*, not per-*row*, boundary |
-| `composes with a filter model through matcher()` `:251` | **delete** — that composition is the feature now, so this asserts nothing |
-| `withFiltering({ predicates }) alone contributes {}` `:273` | `withFiltering()` and `withFiltering({ manual: true })` with no schema contribute `{}` — `TableStore<Row>` recovered exactly, never widened to `any` |
+| Current (`:line`)                                                 | Becomes                                                                                                                                              |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `narrows rows() with a plain predicate` `:60`                     | narrows `rows()` from a schema criterion                                                                                                             |
+| `combines separate predicate terms with AND` `:72`                | two criteria narrow conjunctively                                                                                                                    |
+| `never narrows while the term list is empty` `:89`                | never narrows while every criterion is empty                                                                                                         |
+| `recomputes when a signal read inside the thunk changes` `:114`   | re-narrows when a criterion — and separately, a rule's `source` — changes                                                                            |
+| `calls the thunk once per pass, not once per row` `:136`          | **one `matcher()` per stage evaluation, not per row** (`with-filtering.ts:64-66` states this; a counting rule predicate proves it)                   |
+| `manual mode skips without calling the thunk` `:175`              | `manual: true` skips the stage although the model still builds and `filters` is still exposed                                                        |
+| `drops a throwing term for the pass` `:192`                       | ADR-0014 at feature level: a throwing rule predicate stops narrowing for that evaluation, siblings unaffected                                        |
+| `drops a term throwing on a later row from the whole pass` `:221` | same, from a row past the first — the per-_evaluation_, not per-_row_, boundary                                                                      |
+| `composes with a filter model through matcher()` `:251`           | **delete** — that composition is the feature now, so this asserts nothing                                                                            |
+| `withFiltering({ predicates }) alone contributes {}` `:273`       | `withFiltering()` and `withFiltering({ manual: true })` with no schema contribute `{}` — `TableStore<Row>` recovered exactly, never widened to `any` |
 
 Cases at `:48`, `:101`, `:150`, `:286` survive with only their construction rewritten.
 
-**Then add the member cases the issue asks for.** Eight members, asserted *through a composed
-store*, since that is the only place `RowOf<In>` supplies `TRow`:
+**Then add the member cases the issue asks for.** Eight members, asserted _through a composed
+store_, since that is the only place `RowOf<In>` supplies `TRow`:
 
 - Root: `filters().value` is writable and fans out; `filters().criteria()` omits empties;
   `filters().isActive()`; `filters().reset()` vs `reset(null)`.
@@ -133,4 +133,5 @@ name and narrows the pipeline. Do **not** restate criterion semantics here — t
 - [ ] `state.spec.ts` keeps its `dirty()` and its four Signal-Form `describe` blocks.
 
 ---
+
 ← [Step 9: Remaining call sites](step-9-remaining-call-sites.plan.md) | [Step 11: MDX prose and the green gate](step-11-mdx-and-green-gate.plan.md) →

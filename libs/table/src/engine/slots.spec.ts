@@ -30,7 +30,7 @@ describe('describeInnerFeature', () => {
 
   it('appends the display name when given one', () => {
     expect(describeInnerFeature(1, 'withSorting')).toBe(
-      'composeFeatures inner feature 1 (withSorting)'
+      'composeFeatures inner feature 1 (withSorting)',
     );
   });
 });
@@ -49,7 +49,7 @@ describe('SlotRegistry', () => {
     registry.claimStage('sort', 'features[0]');
 
     expect(() => registry.claimStage('sort', 'features[1]')).toThrowError(
-      /features\[0\] and features\[1\] both provide the "sort" pipeline stage/
+      /features\[0\] and features\[1\] both provide the "sort" pipeline stage/,
     );
   });
 
@@ -66,7 +66,7 @@ describe('SlotRegistry', () => {
     registry.claimMember('editing', 'features[0]');
 
     expect(() => registry.claimMember('editing', 'features[1]')).toThrowError(
-      /features\[0\] and features\[1\] both provide the "editing" store member/
+      /features\[0\] and features\[1\] both provide the "editing" store member/,
     );
   });
 
@@ -83,7 +83,7 @@ describe('SlotRegistry', () => {
     registry.claimRenderStage('tree', 'features[0]');
 
     expect(() => registry.claimRenderStage('tree', 'features[1]')).toThrowError(
-      /features\[0\] and features\[1\] both provide the "tree" render stage/
+      /features\[0\] and features\[1\] both provide the "tree" render stage/,
     );
   });
 
@@ -95,18 +95,16 @@ describe('SlotRegistry', () => {
         registry.claimCoreMembers();
 
         expect(() => registry.claimMember(key, 'feature 1')).toThrowError(
-          new RegExp(`core and feature 1 both provide the "${key}" store member`)
+          new RegExp(`core and feature 1 both provide the "${key}" store member`),
         );
-      }
+      },
     );
 
     it('leaves totalRowCount claimable (ADR-0005)', () => {
       const registry = new SlotRegistry();
       registry.claimCoreMembers();
 
-      expect(() =>
-        registry.claimMember('totalRowCount', 'feature 1')
-      ).not.toThrow();
+      expect(() => registry.claimMember('totalRowCount', 'feature 1')).not.toThrow();
     });
 
     it('throws when the core members are pre-claimed twice', () => {
@@ -114,7 +112,7 @@ describe('SlotRegistry', () => {
       registry.claimCoreMembers();
 
       expect(() => registry.claimCoreMembers()).toThrowError(
-        /core and core both provide the "\w+" store member/
+        /core and core both provide the "\w+" store member/,
       );
     });
 

@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — groupOrder on WithGroupingConfig"
+title: 'Step 3 — groupOrder on WithGroupingConfig'
 type: task-step
 issue: 58
 ---
@@ -91,4 +91,5 @@ renderStages: {
 - [ ] `tsc --noEmit` passes.
 
 ---
+
 ← [Step 2: sortClusters() + wiring into clusterRows/buildGroupRenderRows](step-2-engine-sort-clusters.plan.md) | [Step 4: Tests](step-4-tests.plan.md) →

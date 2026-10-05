@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — state-layer architecture: argument-order visibility, fixed pipeline order"
+title: 'Step 4 — state-layer architecture: argument-order visibility, fixed pipeline order'
 type: task-step
 issue: 78
 ---
@@ -26,31 +26,31 @@ issue: 78
 
 This doc carries the longest surviving statement of the old world. `:129` opens "Today every
 feature call repeats the row type", `:132` shows `createTableSchema(columns, { features: [...] })`
-with `withExpansion<Department>()`, `:154` explains the contextual-typing idea that was *not*
+with `withExpansion<Department>()`, `:154` explains the contextual-typing idea that was _not_
 taken, `:167` explains why ngrx blocked it, and `:201` is a whole paragraph titled "Why the `TRow`
 fix still hasn't shipped". All five are now false. A reader landing here is told the library works
 the opposite of how it works.
 
-It depends on Step 1 because ADR-0003 is where the reversal is *decided*; this doc *describes*.
+It depends on Step 1 because ADR-0003 is where the reversal is _decided_; this doc _describes_.
 Writing the description first risks two different accounts of the same change.
 
 ## What To Do
 
 1. **Delete the "still hasn't shipped" framing.** `:201` and the surrounding rejected-alternatives
-   block describe a deferral that is over. What survives is the *history* — keep a short dated
+   block describe a deferral that is over. What survives is the _history_ — keep a short dated
    paragraph saying the `features: (ctx) => [...]` direction was explored and superseded by
    positional composition (#33), and link ADR-0003's amendment for the reasoning. Do not keep the
    full argument; ADR-0003 owns it now.
 2. **Rewrite the composition description to argument-order member visibility.** The rules, stated
    plainly:
    - Features are trailing positional arguments to `createTable(data, config, ...features)`.
-   - The base store is built *before* the fold; each feature is handed the store as accumulated so
+   - The base store is built _before_ the fold; each feature is handed the store as accumulated so
      far, so a feature sees the members of every feature to its **left**, and none to its right.
    - **Member visibility follows argument order. Pipeline execution order does not.** The pipeline
      runs in `PIPELINE_ORDER` regardless of how the consumer ordered the arguments. This is the
      single most confusable point in the model — state it as its own line, not inside a paragraph.
    - Types are stricter than runtime: `withGrouping()` reads `composed['expandedRows']` as a lazy
-     guarded read, so it *works* in either order at runtime but is only *typed* when
+     guarded read, so it _works_ in either order at runtime but is only _typed_ when
      `withExpansion()` precedes it (D25). Give this as the worked example of the previous rule.
 3. **Update `:132`'s snippet** to positional form. `createTableSchema()` is deleted from the
    library (D25) — the snippet must not show it.
@@ -87,4 +87,5 @@ Writing the description first risks two different accounts of the same change.
 - [ ] ADR-0003's amendment is linked, not restated
 
 ---
+
 ← [Step 3: ADR-0014 derived-signal errors](step-3-adr-0014-derived-signal-errors.plan.md) | [Step 5: row-editing shared-store rationale](step-5-row-editing-shared-store-rationale.plan.md) →

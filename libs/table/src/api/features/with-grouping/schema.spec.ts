@@ -1,10 +1,4 @@
-import {
-  aggregate,
-  groupKey,
-  grouping,
-  groupingAsync,
-  runGroupingSchemaFn,
-} from './schema';
+import { aggregate, groupKey, grouping, groupingAsync, runGroupingSchemaFn } from './schema';
 import type { GroupingPath } from './types';
 import type { GroupingMockRow } from '../../../table.mock';
 

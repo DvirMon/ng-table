@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/shared/table/src/filters/index.ts` | — | create — the domain's public surface |
-| `libs/shared/table/src/index.ts` | `:1-3` | edit — the header's "only definition" claim |
-| `libs/shared/table/src/index.ts` | `:87-104` | replace — three hand-listed blocks become one wholesale re-export |
+| File                                     | Line      | Action                                                            |
+| ---------------------------------------- | --------- | ----------------------------------------------------------------- |
+| `libs/shared/table/src/filters/index.ts` | —         | create — the domain's public surface                              |
+| `libs/shared/table/src/index.ts`         | `:1-3`    | edit — the header's "only definition" claim                       |
+| `libs/shared/table/src/index.ts`         | `:87-104` | replace — three hand-listed blocks become one wholesale re-export |
 
 ## Why This Step Exists
 
@@ -91,4 +91,5 @@ of their own". Once `filters/` has one, that is false.
 - [ ] A consumer app still compiles against the library unchanged — `npx tsc -p apps/demo/tsconfig.app.json --noEmit`
 
 ---
+
 ← [Step 9: Relocate the filters domain](step-9-relocate-filters-domain.plan.md) | [Step 11: Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md) →

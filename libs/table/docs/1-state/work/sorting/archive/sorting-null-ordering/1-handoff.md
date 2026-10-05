@@ -13,7 +13,7 @@ Self-contained brief. Everything needed is here or linked.
 ## Why now
 
 `features/sorting.md` §"Null / Empty Value Ordering" is marked **REQUIRED, NOT IMPLEMENTED** and
-says it must ship *with or before* editable rows. Editable rows are shipping. Two defects are
+says it must ship _with or before_ editable rows. Editable rows are shipping. Two defects are
 reachable by an ordinary user on day one:
 
 1. **A crash.** A nullable Date column with `withSorting()` throws `TypeError` on the first sort —
@@ -28,7 +28,7 @@ reachable by an ordinary user on day one:
 "empty", whether emptiness is a row- or cell-level predicate, which feature owns it) **stay
 parked**.
 
-*Why they can stay parked:* S1–S9 exist because a blank row's landing spot mattered — the person
+_Why they can stay parked:_ S1–S9 exist because a blank row's landing spot mattered — the person
 was filling it in and needed to not lose it. Product **OQ-3** decided the edited row **holds its
 display position for the whole gated edit session**
 ([`0-product/row-editing.md`](../../../../../0-product/row-editing.md) §5, S-1). The row no longer moves
@@ -54,32 +54,34 @@ multiplication:
 
 ```ts
 const compare = column.sortFn ?? detectComparator(column.accessor, rows);
-const sign  = rule.direction === 'asc' ? 1 : -1;
-const nulls = nullsOrderFor(column);            // 'last' unless overridden — see below
+const sign = rule.direction === 'asc' ? 1 : -1;
+const nulls = nullsOrderFor(column); // 'last' unless overridden — see below
 
-return [(a: TRow, b: TRow) => {
-  const aEmpty = isEmpty(column.accessor(a), column);
-  const bEmpty = isEmpty(column.accessor(b), column);
-  if (aEmpty || bEmpty) {
-    if (aEmpty && bEmpty) return 0;
-    // NOT multiplied by `sign` — this is what makes placement direction-independent
-    return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
-  }
-  return sign * compare(a, b);
-}];
+return [
+  (a: TRow, b: TRow) => {
+    const aEmpty = isEmpty(column.accessor(a), column);
+    const bEmpty = isEmpty(column.accessor(b), column);
+    if (aEmpty || bEmpty) {
+      if (aEmpty && bEmpty) return 0;
+      // NOT multiplied by `sign` — this is what makes placement direction-independent
+      return (aEmpty ? 1 : -1) * (nulls === 'last' ? 1 : -1);
+    }
+    return sign * compare(a, b);
+  },
+];
 ```
 
 **The whole fix is that the empty branch does not multiply by `sign`.** Everything else follows.
 
 ### What this closes
 
-| Defect (from the spec's table) | Closed by |
-|---|---|
-| Date + `null` → `TypeError` on `.getTime()` | nullish never reaches the comparator |
-| number + `undefined` → `NaN`, whole-array ordering undefined | same |
-| number + `null` → coerced to `0`, sorts among real zeros | same |
-| string + `null` → `String(null)` is `"null"`, sorts among the n-words | same |
-| `""` / empty flips ends with direction | the empty branch ignores `sign` |
+| Defect (from the spec's table)                                        | Closed by                            |
+| --------------------------------------------------------------------- | ------------------------------------ |
+| Date + `null` → `TypeError` on `.getTime()`                           | nullish never reaches the comparator |
+| number + `undefined` → `NaN`, whole-array ordering undefined          | same                                 |
+| number + `null` → coerced to `0`, sorts among real zeros              | same                                 |
+| string + `null` → `String(null)` is `"null"`, sorts among the n-words | same                                 |
+| `""` / empty flips ends with direction                                | the empty branch ignores `sign`      |
 
 It also applies to a **consumer-supplied `sortFn`**, which is deliberate: a custom comparator should
 not have to re-implement null guards. Recorded as an accepted trade — a `sortFn` author who
@@ -100,7 +102,7 @@ fixing.
 ```ts
 columnSchema<Person>((path) => {
   applySortNulls(path.startDate, { order: 'first' });
-  applySortNulls(path.notes,     { emptyString: 'is-empty' });
+  applySortNulls(path.notes, { emptyString: 'is-empty' });
 });
 ```
 
@@ -108,11 +110,11 @@ Implemented the way `applyVisible` already is (`api/column-rules.ts`): a thin wr
 `metadata()` writing to an internal key minted in `engine/columns.ts`, consumed by `sortRows`.
 `applyVisible` is the exact precedent — copy its shape.
 
-*Single-writer applies* (a second rule for the same column throws at resolve time), unlike `VISIBLE`
+_Single-writer applies_ (a second rule for the same column throws at resolve time), unlike `VISIBLE`
 which is specially exempted to AND-combine. Two conflicting null orders on one column should be an
 error, not a merge.
 
-*Why a rule rather than `ColumnDef.nulls`:* the spec's own **S7** lists "is `withSorting()` even the
+_Why a rule rather than `ColumnDef.nulls`:_ the spec's own **S7** lists "is `withSorting()` even the
 right owner" as unresolved. Keeping the declaration in the schema and the mechanism in `sortRows`
 means moving ownership later does not churn `ColumnDef`. It also avoids adding two fields (`nulls`,
 `treatEmptyStringAsNull`) to a type the spec already flags as carrying unimplemented entries.
@@ -123,14 +125,14 @@ carries the fix; every table is correct without composing anything.
 
 ## Files
 
-| File | Change |
-|---|---|
-| `api/features/with-sorting.ts` | the wrapper in `sortRows`; `isEmpty` / `nullsOrderFor` helpers |
-| `engine/columns.ts` | mint the internal nulls metadata key beside `VISIBLE` |
-| `api/column-rules.ts` | `applySortNulls()`, mirroring `applyVisible()` |
-| `index.ts` | export `applySortNulls` and its options type |
-| `api/features/with-sorting.spec.ts` | tests below |
-| `features/sorting.md` | replace the REQUIRED-NOT-IMPLEMENTED section with shipped behavior; keep S1–S9 parked and note why (the OQ-3 dependency) |
+| File                                | Change                                                                                                                   |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `api/features/with-sorting.ts`      | the wrapper in `sortRows`; `isEmpty` / `nullsOrderFor` helpers                                                           |
+| `engine/columns.ts`                 | mint the internal nulls metadata key beside `VISIBLE`                                                                    |
+| `api/column-rules.ts`               | `applySortNulls()`, mirroring `applyVisible()`                                                                           |
+| `index.ts`                          | export `applySortNulls` and its options type                                                                             |
+| `api/features/with-sorting.spec.ts` | tests below                                                                                                              |
+| `features/sorting.md`               | replace the REQUIRED-NOT-IMPLEMENTED section with shipped behavior; keep S1–S9 parked and note why (the OQ-3 dependency) |
 
 ## Tests
 
@@ -156,5 +158,5 @@ everywhere — at which point it is one config field and a fallback in `nullsOrd
 S1–S9 in [`features/sorting.md`](../../../../features/sorting.md): "new" versus "empty" as different
 predicates, emptiness as a row-level rather than cell-level property, what counts as empty beyond
 nullish (`0`, `false`, `[]`, whitespace), where an empty row sits under grouping, and which feature
-should own the concept. All remain parked, and remain parked *because* OQ-3 holds the edited row
+should own the concept. All remain parked, and remain parked _because_ OQ-3 holds the edited row
 still.

@@ -48,8 +48,11 @@ createTable(data, {
 // after
 createTable(data, {
   trackBy: 'id',
-  columns: createColumns(data, (col) => [col('name'), col('status')],
-    (path) => visible(path.status, { when })),
+  columns: createColumns(
+    data,
+    (col) => [col('name'), col('status')],
+    (path) => visible(path.status, { when }),
+  ),
 });
 ```
 
@@ -115,4 +118,5 @@ at `createColumns`. That pins the interim location until
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 2: Generator constraint](step-2-generator-constraint.plan.md) | [Step 4: Delete `columnsSchema`](step-4-delete-columns-schema.plan.md) →

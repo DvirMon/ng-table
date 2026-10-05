@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — grouping/fixtures/handlers.ts + http.ts: GET /api/grouped-rows"
+title: 'Step 3 — grouping/fixtures/handlers.ts + http.ts: GET /api/grouped-rows'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: A (part)
@@ -63,4 +63,5 @@ need a real intercepted round trip. `3-ui/stories.md` is explicit: never a fake 
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 2: grouping fixtures — schema.ts](step-2-grouping-fixtures-schema.plan.md) | [Step 4: grouping-static/](step-4-grouping-static-story.plan.md) →

@@ -12,7 +12,7 @@ import type { TaskRow } from '../fixtures/types';
  * - A parent whose name matches but none of its children do (2.6)
  */
 export const treeFilters = (
-  path: FiltersPath<TaskRow, ColumnValues<TaskRow, typeof treeColumns.columns>>
+  path: FiltersPath<TaskRow, ColumnValues<TaskRow, typeof treeColumns.columns>>,
 ) => ({
   name: contains(path.name),
 });

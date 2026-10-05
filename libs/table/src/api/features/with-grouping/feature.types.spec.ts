@@ -41,11 +41,7 @@ const rowData = (): readonly Row[] | undefined => undefined;
 // literal when the variable itself was never widened. No accessor needed on any column — each
 // id is a keyof Row, so the defaulted arm resolves the same field type the old `accessor: (row)
 // => row.<id>` calls resolved explicitly.
-const columns = createColumns(rowData, (col) => [
-  col('region'),
-  col('category'),
-  col('amount'),
-]);
+const columns = createColumns(rowData, (col) => [col('region'), col('category'), col('amount')]);
 
 declare const data: TableDataInput<Row>;
 
@@ -55,7 +51,7 @@ describe("initial's string shorthand still compiles (AC #7)", () => {
       const table = createTable(
         data,
         { trackBy: 'id', columns },
-        withGrouping({ initial: ['region', 'category'] })
+        withGrouping({ initial: ['region', 'category'] }),
       );
 
       expectTypeOf(table.grouping).toEqualTypeOf<WritableView<string[], GroupingUpdater<Row>>>();
@@ -69,7 +65,7 @@ describe("initial's object form uses columnId — the key -> columnId rename", (
       const table = createTable(
         data,
         { trackBy: 'id', columns },
-        withGrouping({ initial: [{ columnId: 'region', label: 'Sales Region' }] })
+        withGrouping({ initial: [{ columnId: 'region', label: 'Sales Region' }] }),
       );
 
       expectTypeOf(table.grouping).toEqualTypeOf<WritableView<string[], GroupingUpdater<Row>>>();
@@ -84,7 +80,7 @@ describe("initial's object form uses columnId — the key -> columnId rename", (
         withGrouping({
           // @ts-expect-error — `key` was renamed to `columnId`; the old property is gone.
           initial: [{ key: 'region' }],
-        })
+        }),
       );
 
       // Guards against `@ts-expect-error` above being satisfied by an unrelated error instead —
@@ -103,7 +99,7 @@ describe('initial — a typo is rejected', () => {
         withGrouping({
           // @ts-expect-error — 'regionn' was never declared in columns.
           initial: ['regionn'],
-        })
+        }),
       );
 
       expectTypeOf(table.grouping).toEqualTypeOf<WritableView<string[], GroupingUpdater<Row>>>();
@@ -130,7 +126,7 @@ describe("schema's path is keyed by declared column id; groupKey's extractor is 
             // @ts-expect-error — 'regionn' was never declared in columns.
             grouping(path.regionn, { enable: () => true });
           },
-        })
+        }),
       );
 
       // Guards against `@ts-expect-error` above being satisfied by an unrelated error instead.
@@ -146,7 +142,7 @@ interface TaskRow {
 }
 const taskColumns = createColumns(
   (): readonly TaskRow[] | undefined => undefined,
-  (col) => [col('id'), col('status')]
+  (col) => [col('id'), col('status')],
 );
 declare const taskData: TableDataInput<TaskRow>;
 
@@ -157,7 +153,7 @@ describe('withTree composed before withGrouping still resolves the row type (#17
         taskData,
         { trackBy: 'id', columns: taskColumns },
         withTree({ parentId: (row) => row.parentId }),
-        withGrouping({ initial: ['status'] })
+        withGrouping({ initial: ['status'] }),
       );
 
       expectTypeOf(table.rowsOf).returns.toEqualTypeOf<readonly TaskRow[]>();

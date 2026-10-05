@@ -136,4 +136,5 @@ and the overloads are the contract.
       and at most `create-table.ts` — nothing else.
 
 ---
+
 ← [Step 3: The store shape carries the map](step-3-store-carries-the-map.plan.md) | [Step 5: The end-to-end guard](step-5-end-to-end-guard.plan.md) →

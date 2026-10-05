@@ -18,9 +18,9 @@ Step 2, Step 4, Step 5.
 
 ## Why This Step Exists
 
-#100's own Step 1 plan explicitly deferred this: *"No `ctx` argument to
+#100's own Step 1 plan explicitly deferred this: _"No `ctx` argument to
 the comparator. `ctx.valueOf(path.x, row)` is #117's; this step only
-supplies the `path`."* #100 shipped `sortFn(path, compare)` with
+supplies the `path`."_ #100 shipped `sortFn(path, compare)` with
 `compare: (a: TRow, b: TRow) => number` unchanged. This step is exactly
 that deferred widening — the workspace `decisions.md` (R6/S1 note)
 already ruled that no new `withSorting` API is needed: the schema fn's
@@ -32,7 +32,7 @@ parameter added.
 
 1. **`with-sorting/schema.ts`.** `sortFn`'s `compare` parameter type
    becomes `compare: (a: TRow, b: TRow, ctx: ValueOfContext<TRow>) =>
-   number` (import `ValueOfContext` from `../../../engine/resolvers`,
+number` (import `ValueOfContext` from `../../../engine/resolvers`,
    Step 1). The recorded `SortFnRule.comparator` field type (in
    `with-sorting/types.ts`) follows the same widening. This is additive:
    an existing 2-argument comparator `(a, b) => a - b` still satisfies
@@ -45,11 +45,11 @@ parameter added.
      taking `ctx` too, or build `ctx` inside `sortRows` and call
      `compare(a, b, ctx)` directly inside the guarded closure. Prefer:
      widen `guardCompare`'s returned closure to `(a, b, ctx) => { try {
-     return compare(a, b, ctx) } catch {...} }` and have `sortRows` pass
+return compare(a, b, ctx) } catch {...} }` and have `sortRows` pass
      `ctx` at each call site.
    - `sortRows<TRow>(rows, rules, columns, nullsByColumn,
-     compareByColumn)` — build `const ctx =
-     buildValueOfContext<TRow>(() => columns);` **once per `sortRows`
+compareByColumn)` — build `const ctx =
+buildValueOfContext<TRow>(() => columns);` **once per `sortRows`
      call** (it is already called once per pipeline evaluation, matching
      the "once per evaluator instance" discipline). Thread `ctx` into
      every `compare(a, b, ctx)` call inside the `comparators` `flatMap`
@@ -60,7 +60,7 @@ parameter added.
 
 - `columns` is already a plain array parameter to `sortRows` (not a
   getter) — `buildValueOfContext` expects `() => readonly
-  ColumnDef<TRow>[]`, so wrap it: `() => columns`.
+ColumnDef<TRow>[]`, so wrap it: `() => columns`.
 - Keep `detectComparator`'s auto-detected fallback comparator untouched —
   it never reads `ctx` and doesn't need to.
 
@@ -85,4 +85,5 @@ parameter added.
       unchanged.
 
 ---
+
 ← [Step 2: Grouping `when` reads `ctx.valueOf`](step-2-grouping-when.plan.md) | [Step 4: Filtering rename to `criterionOf`](step-4-filtering-criterionof-rename.plan.md) →

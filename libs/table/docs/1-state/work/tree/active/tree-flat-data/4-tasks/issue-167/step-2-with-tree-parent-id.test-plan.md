@@ -6,6 +6,7 @@ Spec file: `libs/table/src/api/features/with-tree.spec.ts`
 New cases go in a new `describe('flat data — parentId (#167)')` block. The broken-link cases go in a nested describe that reuses the `vi.spyOn(console, 'error')` before/after pattern from `describe('the ADR-0014 degrade')`.
 
 Fixture: `makeFlatRows()` in `src/table.mock.ts`.
+
 - It builds the same r1 → c1 → g1 / c2, r2 tree.
 - Row type: `FlatRow { id; name; parentId?: string | null }`.
 - Input order: `[g1, r1, c1, r2, c2]`.
@@ -13,6 +14,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
   - r1 has `parentId: null`. r2 omits `parentId` (undefined).
 
 ## Stubs (red phase)
+
 - `WithTreeConfig<TRow>.parentId?: (row: TRow) => RowId | null | undefined`
   - A type-only field. `withTree()` ignores it in red.
   - No function stub: every test goes through the existing `withTree()` export.
@@ -21,6 +23,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 ## Seams — in red-green order
 
 ### A. Flat rows + `parentId`, r1 and c1 open → the tree the nested fixture renders, with no report
+
 - Test: `it('a flat fixture with parentId renders the same tree the nested fixture renders — ids, depth, parentId, hasChildren, isExpanded — and reports nothing')`
 - Setup: `withTree({ parentId: (row) => row.parentId, initial: ['r1', 'c1'] })`. Spy on `console.error`.
 - Asserts:
@@ -36,6 +39,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: independent. This is the base case.
 
 ### B. Children are real rows: sourceIndex, counts and selectAllIds include collapsed children
+
 - Test: `it('children are real rows — a child carries its data() sourceIndex, and totalRowCount and selectAllIds() count collapsed children')`
 - Asserts:
   - Nothing open: `renderRows()` ids are `['r1','r2']`. This precondition is what fails in red.
@@ -45,6 +49,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A (nesting must exist first).
 
 ### C. Sorting by name desc → every sibling list follows the sort
+
 - Test: `it('siblings at every level follow the pipeline sort order')`
 - Setup: compose `withSorting()`, open r1 and c1, call `setSorting([{ columnId: 'name', direction: 'desc' }])`, then `TestBed.tick()`.
 - Asserts: ids `['r2','r1','c2','c1','g1']`. Roots are swapped and r1's children are swapped.
@@ -52,6 +57,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A.
 
 ### D. Group headers pass through; nesting happens inside a header's member list
+
 - Test: `it('composed after withGrouping(), a group header passes through and a child nests under its parent inside the header')`
 - Fixture: flat `{id, region, parentId}` rows. p1 is US, c1 is US with `parentId: 'p1'`, p2 is EU. It mirrors the existing C1 test.
 - Asserts:
@@ -64,6 +70,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A.
 
 ### E. `isExpandable` given → it decides `hasChildren`; a lazy row's child nests once appended
+
 - Test: `it('isExpandable decides hasChildren — a lazy row shows a toggle before children exist, and an appended child row nests under it')`
 - Setup: rows `lazy` and `leaf`, with `isExpandable: (row) => row.id === 'lazy'`.
 - Asserts:
@@ -74,6 +81,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A.
 
 ### F. `expand()` with no ids and `state` discover expandable rows from flat `input.rows()`
+
 - Test: `it('expand() with no ids opens every row with a child in flat data, leaves leaves closed, and state() reads "all"')`
 - Asserts:
   - `[...tree()].sort()` is `['c1','r1']`.
@@ -83,6 +91,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A (uses the same "has a child" rule).
 
 ### G. Self-parent → the row renders at depth 0 with its subtree; one report
+
 - Test: `it('a self-parent row renders at depth 0 with its subtree intact and reports once per evaluation')`
 - Fixture:
   - `s1` with `parentId: 's1'`.
@@ -95,6 +104,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A.
 
 ### H. Parent absent from the input → the row renders at depth 0 with its subtree; one report
+
 - Test: `it('a row whose parent is absent renders at depth 0 with its subtree intact and reports once per evaluation')`
 - Fixture:
   - `o1` with `parentId: 'missing'`.
@@ -107,6 +117,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A.
 
 ### I. Cycle → the first cycle member in input order is the root; the rest nest under it; one report
+
 - Test: `it('a cycle renders its first member in input order at depth 0 with the rest nested beneath, and reports once')`
 - Fixture: `[k3→k2, k1→k2, k2→k1]`. k3 is not in the cycle but hangs off k2.
 - Asserts:
@@ -117,6 +128,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A. This detection is separate from G and H.
 
 ### J. Throwing `parentId` → that row is a root, and rows naming it as parent still nest under it; one report
+
 - Test: `it('a parentId that throws for a row degrades that row to depth 0, keeps its children beneath it, and reports once naming parentId')`
 - Fixture: `parentId` throws for `t1` and `t2`. `t1c` resolves to `'t1'` normally.
 - Asserts:
@@ -127,6 +139,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on A.
 
 ### K. Dedupe is per kind and per evaluation
+
 - Test: `it('two broken kinds in one evaluation report once each, and a second evaluation reports again')`
 - Fixture: one self-parent and one absent-parent row, in a writable `signal`.
 - Asserts:
@@ -136,6 +149,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on G and H.
 
 ### L. Reports also fire in production (`ngDevMode` false)
+
 - Test: `it('broken-link reports fire with ngDevMode false — production too')`
 - Setup: `setNgDevMode(false)` in a `try/finally` that restores the previous value. Uses the H fixture.
 - Asserts: one `console.error` call.
@@ -143,6 +157,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on H.
 
 ### M. The contributed `parentLink` is total: parent id, `null` for a root, `null` when `parentId` throws or returns undefined
+
 - Test: `it('parentId contributes a total parentLink — a pipeline stage reads the parent id, and null for a null, undefined or throwing parentId')`
 - Setup: a spec-local test feature, `recordsParentOf`, built with public `createTableFeature` and `stageSchema('pipeline')`. It claims `s.filter`, records `[id, ctx.parentOf?.(row)]` per row and returns the rows unchanged. This follows the pattern of the existing `claimsTreeStage` helper. The `parentId` returns null for r1, undefined for r2, and throws for `t1`.
 - Asserts:
@@ -152,6 +167,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: independent. No nesting is needed.
 
 ### N. `parentId` set → claims the `'tree'` stage and the parent link; omitted → claims neither
+
 - Test: `it('withTree({ parentId }) claims the tree render stage and the parent link; withTree() without it claims neither')`
 - Setup: a spec-local `contributesParentLink` feature built with `createTableFeature(() => ({ parentLink: () => null }))`.
 - Asserts:
@@ -164,6 +180,7 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: independent.
 
 ### O. `expand()` and `state()` degrade on broken links without reporting
+
 - Test: `it('expand() and state() treat broken links as roots and never report — only the tree stage reports')`
 - Setup: the H fixture plus a `parentId` that throws for one row. Spy on `console.error`. Do not read `renderRows()`.
 - Asserts:
@@ -174,13 +191,16 @@ Fixture: `makeFlatRows()` in `src/table.mock.ts`.
 - Order reason: builds on F and H.
 
 ## Types phase (after green)
+
 Add these to the existing `describe('types')` block in `with-tree.spec.ts`. That is where this file already keeps its `expectTypeOf` checks.
+
 - `withTree({ parentId: (row) => { expectTypeOf(row).toEqualTypeOf<FlatRow>(); return row.parentId; } })` inside `createTable(signal<FlatRow[]>(…), …)`
   - Pins that `parentId`'s row parameter is inferred as `RowOf<In>`, not `any`.
 - `// @ts-expect-error` on `withTree({ parentId: () => ({}) })`
   - Pins the return type to `RowId | null | undefined`.
 
 ## Not tested
+
 - **Collapse-only behaviour with no `parentId`:** the existing `describe('collapse-only (D9/E13)')` tests already cover it and the outline keeps them unchanged. N covers only the new half: no parent-link claim.
 - **The `childrenAccessor` path:** the existing tests stay as they are; Step 5 removes the accessor.
 - **Hiding descendants of a collapsed row:** `flattenVisible` owns this and existing tests cover it. It is not this step's logic (spec-files-assert-own-domain-only).
@@ -193,6 +213,7 @@ Add these to the existing `describe('types')` block in `with-tree.spec.ts`. That
 - **`isExpanded` / `aria-rowcount` in the directive:** directive layer, #165.
 
 ## Decisions (resolved in review, 2026-09-29)
+
 - Only the `'tree'` stage reports. `expand()` and `state()` degrade silently (seam O).
 - `parentLink` maps a throw or `undefined` to `null` without reporting; a self-parent id passes through as-is (tree-links resolves it).
 - Fixture lives in `src/table.mock.ts`.

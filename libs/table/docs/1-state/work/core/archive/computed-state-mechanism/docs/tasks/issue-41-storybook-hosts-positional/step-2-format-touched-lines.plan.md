@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — Tidy the two migration-touched lines that skipped formatting"
+title: 'Step 2 — Tidy the two migration-touched lines that skipped formatting'
 type: task-step
 issue: 75
 ---
@@ -38,7 +38,7 @@ Issue AC 4 ("reads as a mechanical rewrite") — these are the only non-mechanic
 ## Implementation Notes
 
 - Do **not** run `prettier --write` on either file or the tree. `npx prettier --check
-  "src/stories/row-edit/**/*.ts"` flags 20 pre-existing files; a whole-file reformat would blow
+"src/stories/row-edit/**/*.ts"` flags 20 pre-existing files; a whole-file reformat would blow
   the "diff limited to the `createTable()` call" AC and is not this issue's work.
 
 ## Risks / Watchouts
@@ -55,4 +55,5 @@ Issue AC 4 ("reads as a mechanical rewrite") — these are the only non-mechanic
 - [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` still exit 0.
 
 ---
+
 ← [Step 1: story hosts on positional createTable()](step-1-story-hosts-positional.plan.md) | [Step 3: stories.md fixtures table](step-3-stories-doc-schema-row.plan.md) →

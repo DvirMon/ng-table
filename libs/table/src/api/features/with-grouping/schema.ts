@@ -19,10 +19,10 @@ import type {
 // `GroupingHandle` for any string property, never reading real row data. Shares the
 // Proxy+recorder mechanism with `columns-schema/schema.ts`; imports nothing from it.
 function buildGroupingPath<TRow, TValues extends ColumnValueMap>(
-  recorder: PathRecorder<TRow, AnyGroupingRule<TRow>>
+  recorder: PathRecorder<TRow, AnyGroupingRule<TRow>>,
 ): GroupingPath<TRow, TValues> {
   return createPathProxy(
-    (id): GroupingHandle<TRow> => ({ id, [PATH_RECORDER]: recorder })
+    (id): GroupingHandle<TRow> => ({ id, [PATH_RECORDER]: recorder }),
   ) as GroupingPath<TRow, TValues>;
 }
 
@@ -32,11 +32,11 @@ function buildGroupingPath<TRow, TValues extends ColumnValueMap>(
  * via `runRecordedSchema`, keyed by declared column id.
  */
 export function runGroupingSchemaFn<TRow, TValues extends ColumnValueMap>(
-  fn: GroupingSchemaFn<TRow, TValues>
+  fn: GroupingSchemaFn<TRow, TValues>,
 ): readonly AnyGroupingRule<TRow>[] {
   return runRecordedSchema<TRow, AnyGroupingRule<TRow>, GroupingPath<TRow, TValues>>(
     (recorder) => buildGroupingPath<TRow, TValues>(recorder),
-    fn
+    fn,
   );
 }
 
@@ -54,7 +54,7 @@ export function grouping<TRow, K extends string>(
   opts: {
     enable?: () => boolean | undefined;
     when?: GroupWhen<TRow>;
-  }
+  },
 ): void {
   recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'grouping',
@@ -73,7 +73,7 @@ export function grouping<TRow, K extends string>(
  */
 export function groupKey<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
-  extractValue: (value: unknown) => unknown
+  extractValue: (value: unknown) => unknown,
 ): void {
   recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'grouping-key',
@@ -104,7 +104,7 @@ export interface GroupingAsyncOpts<TRow, K extends string, TParams, TResult> {
  */
 export function groupingAsync<TRow, K extends string, TParams, TResult>(
   path: GroupingHandle<TRow, K>,
-  opts: GroupingAsyncOpts<TRow, K, TParams, TResult>
+  opts: GroupingAsyncOpts<TRow, K, TParams, TResult>,
 ): void {
   const rule: GroupingAsyncRule<TRow, TParams, TResult> = {
     kind: 'grouping-async',
@@ -128,7 +128,7 @@ export function groupingAsync<TRow, K extends string, TParams, TResult>(
  */
 export function groupOrder<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
-  comparator: GroupOrder<TRow>
+  comparator: GroupOrder<TRow>,
 ): void {
   recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'group-order',
@@ -145,7 +145,7 @@ export function groupOrder<TRow, K extends string>(
  */
 export function aggregate<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
-  aggregateFn: (rows: TRow[]) => unknown
+  aggregateFn: (rows: TRow[]) => unknown,
 ): void {
   recorderOf<TRow, AnyGroupingRule<TRow>>(path).record({
     kind: 'grouping-aggregate',

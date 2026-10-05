@@ -35,7 +35,7 @@ export class GroupingBasicStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initial: BASE_GROUPING_LEVELS })
+    withGrouping({ initial: BASE_GROUPING_LEVELS }),
   );
 
   /** One control per column, one boolean state: grouped or not. The two writes stay separate

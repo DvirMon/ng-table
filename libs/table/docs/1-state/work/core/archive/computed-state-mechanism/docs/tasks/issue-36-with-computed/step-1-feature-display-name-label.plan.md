@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — engine/types.ts + slots.ts + compose-table.ts: optional Feature.displayName, fold label appends it"
+title: 'Step 1 — engine/types.ts + slots.ts + compose-table.ts: optional Feature.displayName, fold label appends it'
 type: task-step
 issue: 70
 ---
@@ -99,4 +99,5 @@ which would have made the block a second collision authority next to the registr
 - [ ] `engine/` compiles; existing `slots.spec.ts` and `compose-table.spec.ts` cases unchanged.
 
 ---
+
 [Step 2: with-computed.ts + index.ts — withComputed()](step-2-with-computed.plan.md) →

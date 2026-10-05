@@ -22,12 +22,12 @@ sequences the work and records the questions settled while sequencing it.
 
 Four consumers read three value paths today:
 
-| Consumer | Reads via | Site |
-|---|---|---|
-| cells | `column.accessor` | `engine/cells.ts:28` |
-| sorting | `column.accessor` (unwrapped) | `with-sorting.ts:112,117,118` |
-| grouping | raw `row[key]` | `engine/grouping/clusters.ts:124` |
-| filtering | raw `rowRecord[path]` | `engine/filters/evaluator.ts:63` |
+| Consumer  | Reads via                     | Site                              |
+| --------- | ----------------------------- | --------------------------------- |
+| cells     | `column.accessor`             | `engine/cells.ts:28`              |
+| sorting   | `column.accessor` (unwrapped) | `with-sorting.ts:112,117,118`     |
+| grouping  | raw `row[key]`                | `engine/grouping/clusters.ts:124` |
+| filtering | raw `rowRecord[path]`         | `engine/filters/evaluator.ts:63`  |
 
 After: one path, `readAccessor(column, row)`. Data concerns key by declared column id. A value
 the table reads but never renders is a carrier column, `{ id, accessor, visible: false }`.
@@ -38,7 +38,7 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
 
 - **#100 Q2 — does `applySortNulls` stay in `columnsSchema`? No — reversed the same day.**
   The first answer was yes, argued from ADR-0021's capability test: it reads no row data, so it
-  is a column concern. That test says what *may* live on the column surface, not what *should*.
+  is a column concern. That test says what _may_ live on the column surface, not what _should_.
   Under Rule A the question is whose config it is, and it is sorting's — `with-sorting.ts:105-113`
   reads `column.sortFn` and `readSortNulls(column)` three lines apart in one function. It moves
   into `withSorting()`, which gains a schema fn (G69, reversing D11a). See #100.
@@ -94,8 +94,8 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   updater call the same as a runtime data condition it is not — the id is wrong at the moment the
   call is made, not depending on what data later arrives); **keep the filter** (the option V4
   itself deletes, and keeping it would leave two ways to read the same list disagree). Index
-  bounds on `reorderGroupLevels` are unaffected — that check is about *shape* (`string[]` array
-  bounds), not about *identity* (declared column ids), so it keeps degrading. Registered as
+  bounds on `reorderGroupLevels` are unaffected — that check is about _shape_ (`string[]` array
+  bounds), not about _identity_ (declared column ids), so it keeps degrading. Registered as
   [G71](../../../../decisions/grouping.md).
 
 - **#114 — found while writing the public-surface spec: does `groupingLevels()`'s totality
@@ -126,7 +126,7 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   exactly the case ADR-0024 exists to close: `{ id: 'owner', accessor: (r) => r.owner.name }`
   over a row whose `owner` is an object infers the object, not `string`. A map derived from the
   declared columns is not a guess — with no declared `accessor` the engine's documented default
-  *is* `(row) => row[id]`, so the field-type arm is exact rather than a fallback. Rejected:
+  _is_ `(row) => row[id]`, so the field-type arm is exact rather than a fallback. Rejected:
   **uniform `unknown`** (honest, but regresses `StateOf<S>` and every consumer of it across the
   public surface — the one thing #115 promises not to touch); **object-keyed columns** (map is
   free and can never degrade, but reopens column order and breaks `setColumns`,
@@ -139,7 +139,7 @@ the table reads but never renders is a carrier column, `{ id, accessor, visible:
   do not help a hoisted array.** TS 5.0 states the limit verbatim: the modifier "only affects
   inference of object, array and primitive expressions that were written within the call", so
   `const cols = [...]` widens before `createTable` ever sees it — which is why the capture point
-  moves inside a `createColumns([...])` call, where the literal *is* written within the call.
+  moves inside a `createColumns([...])` call, where the literal _is_ written within the call.
   **A `readonly` constraint does not conflict with `ColumnsUpdater`'s mutable write path**,
   because the map rides in a phantom slot, never in `columns`' own type — `setColumns` and
   `reorderColumns` are untouched. Also a correction to the framing: a **tuple is not required**.
@@ -199,24 +199,24 @@ without A's artifact. Presentation order below is not an edge.
 
 ### Nodes
 
-| | Node | Class | Status |
-|---|---|---|---|
-| **M1** | Decouple `schema/path-proxy.ts` from `columns-schema/types` — `PathRecorder<TRule>`, drop the baked `MetadataRule`/`MetadataAsyncRule` arms, rename `assertPathIsCurrent` → `recorderOf` | behaviour-preserving | done (#111) |
-| **M2** | Shared recording runner — `runRecordedSchema` in `schema/run.ts`; rewire columns and grouping. The declaring form keeps `buildFiltersPath` / `keyRules` in `engine/filters/build.ts` until `stageSchema` (ADR-0020) is a second caller — #111 reading B, see "Questions settled" | behaviour-preserving | done (#111) |
-| **M3** | Shared `assertDeclarationsAreKnown` in `schema/validate.ts`; `assertRuleColumnIdsAreKnown` becomes a call into it | behaviour-preserving | done (#111) |
-| **V1** | ADR-0014 wrap in `sortRows` — `column.accessor` through `readAccessor`, consumer `sortFn` guarded (pre-existing bug, independent of everything else) | bug fix | done (#112) |
-| **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor` | behaviour change | ✅ done (#114) |
-| **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor` | behaviour change | ✅ done (#115) |
-| **V4** | Delete `resolveGroupLabel`'s raw-key fallback; `groupingLevels`' filter becomes total | behaviour change | ✅ done (#114) |
-| **K0** | The column **value** map — `createColumns()` captures declared ids and accessor return types, `ColumnValues<TRow, TCols>` derives the map, a phantom carrier puts it on `TableStore`, regenerate `create-table.overloads.ts`. Mechanism only: no consumer reads it in this node. Numbered below K1 because it is the same keying channel carried one step further — it *depends on* K1's shipped plumbing | API change | ✅ done (#125) |
-| **K1** | `TId` reaches feature configs — un-erase on `Shape`/`TableStore`/`TableCore`, regenerate `create-table.overloads.ts`, decide `compose-features.overloads.ts` | API change | done (#113) |
-| **K2** | Grouping declarations key by column id | API change | ✅ done (#114) |
-| **K3** | Filtering declarations key by column id | API change | ✅ done (#115) |
-| **K4** | `applyAggregate` by column id (G58), validated at construction (G59) — replaces #100's row-field version | API change | ✅ done (#114) |
-| **S1** | `withSorting()` gains a schema fn (recording form); `sortFn` / `enableSorting` move off `ColumnDef` into the bare-named `sortFn` / `sortable` declarators, and `sortNulls` moves out of `columnsSchema` into the same schema (#100 Rule A + G69) | API change | ✅ done (#100) |
-| **S2** | Supersede D2's wording (#100 Q4); close #100 | docs | ✅ done (#100) |
-| **D1** | Stories + fixtures | migration | grouping's slice done (#114); filtering's slice ✅ done (#115); sorting's slice ✅ done (#100) |
-| **D2** | Docs — `1-state/features/{grouping,filtering,sorting}.md`, ADR-0019 amendment line, `llms.txt` regen | docs | grouping's slice done (#114); filtering's slice ✅ done (#115); sorting's slice ✅ done (#100) |
+|        | Node                                                                                                                                                                                                                                                                                                                                                                                                      | Class                | Status                                                                                         |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | ---------------------------------------------------------------------------------------------- |
+| **M1** | Decouple `schema/path-proxy.ts` from `columns-schema/types` — `PathRecorder<TRule>`, drop the baked `MetadataRule`/`MetadataAsyncRule` arms, rename `assertPathIsCurrent` → `recorderOf`                                                                                                                                                                                                                  | behaviour-preserving | done (#111)                                                                                    |
+| **M2** | Shared recording runner — `runRecordedSchema` in `schema/run.ts`; rewire columns and grouping. The declaring form keeps `buildFiltersPath` / `keyRules` in `engine/filters/build.ts` until `stageSchema` (ADR-0020) is a second caller — #111 reading B, see "Questions settled"                                                                                                                          | behaviour-preserving | done (#111)                                                                                    |
+| **M3** | Shared `assertDeclarationsAreKnown` in `schema/validate.ts`; `assertRuleColumnIdsAreKnown` becomes a call into it                                                                                                                                                                                                                                                                                         | behaviour-preserving | done (#111)                                                                                    |
+| **V1** | ADR-0014 wrap in `sortRows` — `column.accessor` through `readAccessor`, consumer `sortFn` guarded (pre-existing bug, independent of everything else)                                                                                                                                                                                                                                                      | bug fix              | done (#112)                                                                                    |
+| **V2** | Thread `columns` into `clusterRows` / `buildClusterNodes`; grouping reads `readAccessor`                                                                                                                                                                                                                                                                                                                  | behaviour change     | ✅ done (#114)                                                                                 |
+| **V3** | Widen `withFiltering`'s input to carry `columns`; filtering reads `readAccessor`                                                                                                                                                                                                                                                                                                                          | behaviour change     | ✅ done (#115)                                                                                 |
+| **V4** | Delete `resolveGroupLabel`'s raw-key fallback; `groupingLevels`' filter becomes total                                                                                                                                                                                                                                                                                                                     | behaviour change     | ✅ done (#114)                                                                                 |
+| **K0** | The column **value** map — `createColumns()` captures declared ids and accessor return types, `ColumnValues<TRow, TCols>` derives the map, a phantom carrier puts it on `TableStore`, regenerate `create-table.overloads.ts`. Mechanism only: no consumer reads it in this node. Numbered below K1 because it is the same keying channel carried one step further — it _depends on_ K1's shipped plumbing | API change           | ✅ done (#125)                                                                                 |
+| **K1** | `TId` reaches feature configs — un-erase on `Shape`/`TableStore`/`TableCore`, regenerate `create-table.overloads.ts`, decide `compose-features.overloads.ts`                                                                                                                                                                                                                                              | API change           | done (#113)                                                                                    |
+| **K2** | Grouping declarations key by column id                                                                                                                                                                                                                                                                                                                                                                    | API change           | ✅ done (#114)                                                                                 |
+| **K3** | Filtering declarations key by column id                                                                                                                                                                                                                                                                                                                                                                   | API change           | ✅ done (#115)                                                                                 |
+| **K4** | `applyAggregate` by column id (G58), validated at construction (G59) — replaces #100's row-field version                                                                                                                                                                                                                                                                                                  | API change           | ✅ done (#114)                                                                                 |
+| **S1** | `withSorting()` gains a schema fn (recording form); `sortFn` / `enableSorting` move off `ColumnDef` into the bare-named `sortFn` / `sortable` declarators, and `sortNulls` moves out of `columnsSchema` into the same schema (#100 Rule A + G69)                                                                                                                                                          | API change           | ✅ done (#100)                                                                                 |
+| **S2** | Supersede D2's wording (#100 Q4); close #100                                                                                                                                                                                                                                                                                                                                                              | docs                 | ✅ done (#100)                                                                                 |
+| **D1** | Stories + fixtures                                                                                                                                                                                                                                                                                                                                                                                        | migration            | grouping's slice done (#114); filtering's slice ✅ done (#115); sorting's slice ✅ done (#100) |
+| **D2** | Docs — `1-state/features/{grouping,filtering,sorting}.md`, ADR-0019 amendment line, `llms.txt` regen                                                                                                                                                                                                                                                                                                      | docs                 | grouping's slice done (#114); filtering's slice ✅ done (#115); sorting's slice ✅ done (#100) |
 
 ### Graph
 
@@ -274,7 +274,7 @@ registered as **G60–G68**). Three corrections to the list, all published on th
 - **M2 is two authoring forms, not one runner** (G62). The recording form and the declaring form
   each stay permanent; they share the path proxy, the handle and the recorder session. Converging
   filtering onto the void form was rejected — its criterion type is inferred from the return
-  type. Which forms get an *extracted* runner in this slice is #111's own reading question — one
+  type. Which forms get an _extracted_ runner in this slice is #111's own reading question — one
   runner, reading B, see "Questions settled while sequencing".
 - **K2 absorbs `GroupingLevel.key` → `columnId` and retires `ColumnId<TRow>`** (G60), and changes
   `applyGroupKey`'s extractor input to the accessor's output (G68). The rename is not separable:
@@ -291,8 +291,8 @@ registered as **G60–G68**). Three corrections to the list, all published on th
   Filtering's existing `valueOf` is renamed `criterionOf` **there**, not in K3/V3.
 
   Its shape is set by a **two-tier rule that is mechanism-wide, not grouping's** (G65): a
-  resolver reading another *declaration* is bound to the schema and takes a path
-  (`criterionOf(path)`, `stateOf(path)`); one reading *data* takes a path and a subject
+  resolver reading another _declaration_ is bound to the schema and takes a path
+  (`criterionOf(path)`, `stateOf(path)`); one reading _data_ takes a path and a subject
   (`valueOf(path, row)`), because a column-keyed path names a cross-section of every row, not an
   instance. The three are separate **registers**, not synonyms (G63/G64): `valueOf`
   answers what the data says, `criterionOf` what the user asked for, `stateOf` how the column is
@@ -376,17 +376,17 @@ declaring a column's presentation, accessor and rules, replacing the curried
 
 ### Nodes
 
-| | Node | Class | Status |
-|---|---|---|---|
-| **N4** | `col()`'s option set — what `Presentation` carries (`label`/`visible`, and whether `order`, `meta` or feature fields stay) | core | open |
-| **N1** | `ColumnSet` runtime shape — `{ columns, rules }`, and whether it carries the `data` reference | core | open |
-| **N2** | Where the throws live — duplicate ids and unknown rule ids move from `resolveColumnDefs`/`resolveColumnsConfig` into `createColumns`; plus the dev-gating axis | dependent (N1) | resolved — shipped #132 |
-| **N3** | `createTable` intake — `resolveColumnsConfig` consumes a `ColumnSet`; whether a plain `ColumnDefInput[]` stays accepted for one release | dependent (N1) | open |
-| **N5** | `ColumnSet` reuse — one declaration shared by two live tables, and the async-rule / injection-context consequence | dependent (N1, N2) | open |
-| **N6** | Runtime write path — `setColumns` / `ColumnsUpdater` against a statically-derived value map | dependent (N4, N1) | open |
-| **N7** | Migration order — 5 inline `columns: [`, ~20 spec factories, 5 story fixtures, every story host, both `*.types.spec.ts` | dependent (N3) | open |
-| **N8** | ADR-0019 amendment + retiring the curried-`createColumns` rows (K0 here, G73 in the log) | dependent (N1, N2, N3) | open |
-| **N9** | `FiltersPath` / `SortingPath` key by `ColumnIdIn<ColumnValuesOf<In>>` when #115 and #100 land | independent leaf | ✅ done — `FiltersPath` (#115); `SortingPath` (#100) |
+|        | Node                                                                                                                                                           | Class                  | Status                                               |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------- |
+| **N4** | `col()`'s option set — what `Presentation` carries (`label`/`visible`, and whether `order`, `meta` or feature fields stay)                                     | core                   | open                                                 |
+| **N1** | `ColumnSet` runtime shape — `{ columns, rules }`, and whether it carries the `data` reference                                                                  | core                   | open                                                 |
+| **N2** | Where the throws live — duplicate ids and unknown rule ids move from `resolveColumnDefs`/`resolveColumnsConfig` into `createColumns`; plus the dev-gating axis | dependent (N1)         | resolved — shipped #132                              |
+| **N3** | `createTable` intake — `resolveColumnsConfig` consumes a `ColumnSet`; whether a plain `ColumnDefInput[]` stays accepted for one release                        | dependent (N1)         | open                                                 |
+| **N5** | `ColumnSet` reuse — one declaration shared by two live tables, and the async-rule / injection-context consequence                                              | dependent (N1, N2)     | open                                                 |
+| **N6** | Runtime write path — `setColumns` / `ColumnsUpdater` against a statically-derived value map                                                                    | dependent (N4, N1)     | open                                                 |
+| **N7** | Migration order — 5 inline `columns: [`, ~20 spec factories, 5 story fixtures, every story host, both `*.types.spec.ts`                                        | dependent (N3)         | open                                                 |
+| **N8** | ADR-0019 amendment + retiring the curried-`createColumns` rows (K0 here, G73 in the log)                                                                       | dependent (N1, N2, N3) | open                                                 |
+| **N9** | `FiltersPath` / `SortingPath` key by `ColumnIdIn<ColumnValuesOf<In>>` when #115 and #100 land                                                                  | independent leaf       | ✅ done — `FiltersPath` (#115); `SortingPath` (#100) |
 
 ### Graph
 
@@ -494,8 +494,8 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   `applySortFn` → `sortFn` and `applySortable` → `sortable`. Not a new convention — **the library
   already has it**: filtering's eight rules ship bare (`anyOf`, `contains`, `equals`, `filter`,
   `hasAny`, `hasNone`, `inDateRange`, `inRange`), and `.claude/rules/declarative-naming.md`
-  codifies the split those names rest on — `is*`/`has*` for a predicate that *returns* a boolean,
-  a bare name for a function that *registers a declaration*, which is why the matchers are
+  codifies the split those names rest on — `is*`/`has*` for a predicate that _returns_ a boolean,
+  a bare name for a function that _registers a declaration_, which is why the matchers are
   `isEqual`/`hasAnyOf` and the rules are `equals`/`hasAny`. The eight `apply*` functions were the
   deviation. Rejected on the way: naming the **property** rather than the **constraint**
   (`visibility`, `aggregation`). Filtering's rules assert a constraint — `equals`, `inRange`, not
@@ -528,18 +528,18 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   accessor is a value source rather than presentation, not every column needs one, and it felt
   schema-level. Settled by
   [`discovery-accessor-placement.md`](discovery-accessor-placement.md). **The type flow is
-  decisive**: the columns schema is G62's *recording* form, typed `(path) => void`, and a side
+  decisive**: the columns schema is G62's _recording_ form, typed `(path) => void`, and a side
   effect has no type representation — `path` is built before the body runs, so nothing about a
   rule escapes to the type system. Register `accessor` there and `ColumnValues` falls back to its
   `TRow[C['id']]` arm, which is exactly the case ADR-0024 exists to close
   (`{ id: 'owner', accessor: (r) => r.owner.name }` would infer the object, not the string). It
-  survives only by converting the columns schema to the *declaring* form — and that is
+  survives only by converting the columns schema to the _declaring_ form — and that is
   self-defeating: once the third argument returns declarations carrying a value type it is
   structurally the same thing as the second argument, so `owner` would be declared twice and the
   map would merge two tuples keyed by the same ids; collapsing the redundancy returns
   `col('owner', { label, accessor })`. Supporting evidence: TanStack, AG Grid, MUI X and Kendo
   all put value access on the column definition beside the id, and TanStack makes it the column
-  *kind* rather than an optional field; Angular Material is the only surveyed separator and its
+  _kind_ rather than an optional field; Angular Material is the only surveyed separator and its
   separated accessor is untyped and string-keyed, which is the cost rather than the benefit.
   Internally, `foldColumnRules` re-reads every rule signal per fold, so a static accessor
   registered as a rule would get a fresh function identity each fold and invalidate
@@ -553,7 +553,7 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   `assertRuleColumnIdsAreKnown` and `assertMetadataKeysAreUnique` move wholesale from
   `engine/columns-schema/resolve.ts` into `createColumns`, the earliest point where both the
   rules and the declared id list exist. `assertUniqueColumnIds` does **not** move — it is called
-  inside `resolveColumnDefs`, which `setColumns` also calls, so it fires at `createColumns` *and*
+  inside `resolveColumnDefs`, which `setColumns` also calls, so it fires at `createColumns` _and_
   stays on the write path. That makes it an addition, not the relocation the brief describes. Its
   message takes a `label` parameter like `assertDeclarationsAreKnown` already has, since a fixed
   `[createTable]` prefix is wrong from both call sites. **Gating:** all three are wrapped in
@@ -575,9 +575,9 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
 
 - **Correction to G65/G66's supporting comparison — the decision stands, the contrast does not.**
   [`discovery-dynamic-field-schema.md`](discovery-dynamic-field-schema.md) verified against
-  published `@angular/forms` source that Signal Forms' *schema path* names a **type-level slot**
+  published `@angular/forms` source that Signal Forms' _schema path_ names a **type-level slot**
   (`keyof TModel`, with arrays collapsed to a single `DYNAMIC` builder) — the same cross-section
-  shape as our `ColumnsPath`. Only its *field tree* names instances. So the sentence in this file
+  shape as our `ColumnsPath`. Only its _field tree_ names instances. So the sentence in this file
   reading "Signal Forms' paths name **instances**, so the subject is the path. Ours name
   **columns**" is wrong as written. G65's two-tier rule survives on its own evidence, which is
   G66's inventory — no consumer callback in any of the four schemas has exactly one row as its
@@ -614,7 +614,7 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
 - **The row witness is `() => readonly TRow[] | undefined`, not `TableDataInput<TRow>`.** The
   brief types `createColumns`'s first argument as `TableDataInput<TRow>` —
   `WritableSignal<TRow[]>`, the same type `createTable` takes — but the two arguments do not have
-  the same job. `createTable` needs a writable signal because it *is* the write path behind
+  the same job. `createTable` needs a writable signal because it _is_ the write path behind
   `table.value.update()`. `createColumns` never reads its argument at all; the brief says so
   ("`data` is a type witness"). Typing it `WritableSignal` therefore claims a capability the
   function does not use, and excludes rows that come from a resource: an `httpResource`'s
@@ -629,11 +629,11 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   plain method.
 
 - **The `ColumnDecl` brand is a type-only `unique symbol`, declared and never assigned, as a
-  *required* member.** Settled by
+  _required_ member.** Settled by
   [`discovery-nominal-branding.md`](discovery-nominal-branding.md), nine libraries surveyed.
   **First, a correction to this repo's own framing**: `FilterRule.__criterion?`, `__row?`,
   `TableStore.__columnValues?` and `ColumnMetaKey._type?` are all **optional**, so they are type
-  *carriers*, not brands — an optional member rejects nothing. Every one of the eight surveyed
+  _carriers_, not brands — an optional member rejects nothing. Every one of the eight surveyed
   libraries that brands at all makes the member **required**; not one uses an optional member for
   nominality. **The real-symbol-vs-type-only split tracks exactly one variable**: whether the
   library must answer "is this mine?" about an `unknown` at runtime. Angular (`isSignal`), Effect
@@ -647,7 +647,7 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   gating decision settles it independently**: zero of the five runtime-checking libraries gate
   their check, so a gated brand check here would be weaker than every precedent the real-symbol
   preference was drawn from. **The Angular belief that prompted the preference is correct but
-  misplaced** — `SIGNAL` *is* a real `Symbol('SIGNAL')` stamped ungated on every getter, but what
+  misplaced** — `SIGNAL` _is_ a real `Symbol('SIGNAL')` stamped ungated on every getter, but what
   rejects a hand-written object is the type, `Signal<T> = (() => T) & { [SIGNAL]: unknown }`, a
   required member; the runtime stamp buys only `isSignal`. Three libraries' published `.d.ts`
   imply a runtime operation that does not exist (Zod's `.brand()` is `return this`, io-ts never
@@ -700,7 +700,7 @@ is no `docs/decisions/core.md`, and `state.json` carries no `capabilityLogPath` 
   right: `ColumnDef` loses `order`, `TableStore` gains the ordered-id member,
   `applyColumnOrder`/`reorderColumns` retarget, and roughly ten grouping story hosts rewrite
   their visible-column loop — `.sort((a, b) => a.order - b.order)` is the shipped consumer
-  pattern for rendering columns in order, so removing the field changes how a consumer *reads*
+  pattern for rendering columns in order, so removing the field changes how a consumer _reads_
   order, not only how it is written. (The `order` in `with-sorting.ts:108` is
   `SortNullsOpts.order`, unrelated.) Rejected: folding it in, which roughly doubles the migration
   and mixes a declaration-surface change with a runtime-state change in one review; and taking
@@ -807,8 +807,8 @@ of the rulings themselves:
   Source: [`conflicts-vs-unshipped.md`](conflicts-vs-unshipped.md) E6.
 
 - **R7 — construction checks are dev-only, library-wide; ADR-0014 gains the
-  position it never took.** *Not from the six-item list — it came out of
-  grilling E2.* Construction errors are developer errors: they fire on first
+  position it never took.** _Not from the six-item list — it came out of
+  grilling E2._ Construction errors are developer errors: they fire on first
   render, every run, before any data, so they have already done their job by
   the time an app ships. They are gated to dev builds and stripped from
   production, matching Angular's own `ngDevMode` practice. Consequences, all
@@ -834,7 +834,7 @@ of the rulings themselves:
   in once.
 
 - **R8 — R7's dev-only rule reaches G71's construction half only; the writer
-  path keeps throwing in production.** *The G71 revisit R7 obliged.* R7 rests
+  path keeps throwing in production.** _The G71 revisit R7 obliged._ R7 rests
   on "a construction check has already done its job by the time you ship" —
   true of the construction half, false of `table.grouping`'s writer, where the
   id can arrive from a user action or a saved layout and may never appear in
@@ -884,9 +884,9 @@ numbering continues the 2026-09-24 R-series.
   object-literal `id` property supplied at the call, matching decision 15's
   assumption. `col.from(decl, { label: '…' })` with `id` omitted has no
   inference source for `K` — `decl`'s own id arrives as `ColumnDecl<TRow,
-  string, unknown>` in `from`'s parameter type, so its literal is not visible
+string, unknown>` in `from`'s parameter type, so its literal is not visible
   to recover — and `K` falls back to its `string` constraint. So the runtime
-  value still carries `decl`'s original id, but the *type* of an
+  value still carries `decl`'s original id, but the _type_ of an
   id-omitting `from` call widens to `string` rather than staying literal.
   Decision 15's severity claim needs no correction: the sanctioned variant
   path (`col.from` with an explicit `id`) captures exactly as assumed.
@@ -913,7 +913,7 @@ numbering continues the 2026-09-24 R-series.
 
 - **R13 — the `ColumnDecl` brand never leaks into `ColumnValues` (open
   question 6, settled by probe).** `keyof ColumnValues<DealRow, typeof
-  dealColumns.columns>` is exactly the declared id union — no `[COLUMN_DECL]`
+dealColumns.columns>` is exactly the declared id union — no `[COLUMN_DECL]`
   symbol key appears. `ColumnValues` remaps keys via `as C['id']`, which only
   ever produces the declared string id, so the brand is structurally
   excluded rather than merely absent by convention. Case:
@@ -930,18 +930,18 @@ numbering continues the 2026-09-24 R-series.
   until #139.** User ruling. There is no in-repo caller worth a compatibility
   window (only 3 specs read `columnsSchema`, all moved in #131's Step 3), and
   splitting the deletion this way leaves exactly one source of schema rules
-  during the migration window instead of two. Amends D11's *sequencing*
+  during the migration window instead of two. Amends D11's _sequencing_
   only — D11's end state (`{ trackBy, columns: ColumnSet, injector? }`, no
   array intake, no separate schema property) is unchanged — and narrows the
   #131/#139 boundary: #131 now also deletes `columnsSchema`; #139 is left
   with only the array-intake deletion. `TableConfig.columns` shipped as
   `TCols | ColumnSet<TRow, TCols & readonly ColumnDecl<TRow, string,
-  unknown>[]>` (Step 1's shape 1 — it passed both probes on the first try, so
+unknown>[]>` (Step 1's shape 1 — it passed both probes on the first try, so
   shape 2's wider `TCols` constraint on `TableConfig` was never needed); the
   generated `create-table.overloads.ts` needed no change as a consequence
   (Step 2: "no diff — shape 1"). Probe result (Step 5, case 15): a
   `ColumnSet<OtherRow, ...>` passed as `columns` to a `createTable(data,
-  {...})` typed over `Row` does fail to compile, but TypeScript anchors the
+{...})` typed over `Row` does fail to compile, but TypeScript anchors the
   error on the `data` argument (TS2345, missing property) rather than on
   `columns` — inference resolves `TRow` off `columns` first, then checks
   `data` against `TableDataInput<TRow>` and fails there. Recorded as observed
@@ -991,7 +991,7 @@ numbering continues the 2026-09-24 R-series.
 - **R17 — the compile step folds into the intake; `engine/columns-schema/resolve.ts`
   is deleted outright, not slimmed to a pass-through.** `createTable` now
   unpacks `config.columns` directly (`const { columns, rules } =
-  config.columns;`); `TableConfig.columns` takes a `ColumnSet<TRow, TCols>`
+config.columns;`); `TableConfig.columns` takes a `ColumnSet<TRow, TCols>`
   only, no array union arm. This settles the shaping question N3/#139 left
   open ("what the compile step becomes"). Reasoning: after #132 moved
   `assertRuleColumnIdsAreKnown` and `assertMetadataKeysAreUnique` into

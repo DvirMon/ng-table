@@ -5,16 +5,7 @@ import { composeFeatures } from '../compose-features';
 import { withGrouping } from '../with-grouping/feature';
 import { withSorting } from '../with-sorting';
 import { withFiltering } from './feature';
-import {
-  anyOf,
-  contains,
-  equals,
-  filter,
-  hasAny,
-  hasNone,
-  inDateRange,
-  inRange,
-} from './rules';
+import { anyOf, contains, equals, filter, hasAny, hasNone, inDateRange, inRange } from './rules';
 import type { DateRangeCriterion, RangeCriterion } from './rules';
 import type { Filters, FiltersPath } from './types';
 import type { ColumnValues, TableDataInput } from '../../types';
@@ -105,9 +96,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
           }),
         }),
       );
-      expectTypeOf(table.filters.status().value()).toEqualTypeOf<
-        string | null
-      >();
+      expectTypeOf(table.filters.status().value()).toEqualTypeOf<string | null>();
     });
   });
 
@@ -137,9 +126,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
           }),
         }),
       );
-      expectTypeOf(
-        table.filters.amount().value(),
-      ).toEqualTypeOf<RangeCriterion>();
+      expectTypeOf(table.filters.amount().value()).toEqualTypeOf<RangeCriterion>();
     });
   });
 
@@ -154,9 +141,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
           }),
         }),
       );
-      expectTypeOf(
-        table.filters.dueDate().value(),
-      ).toEqualTypeOf<DateRangeCriterion>();
+      expectTypeOf(table.filters.dueDate().value()).toEqualTypeOf<DateRangeCriterion>();
     });
   });
 
@@ -171,9 +156,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
           }),
         }),
       );
-      expectTypeOf(table.filters.tags().value()).toEqualTypeOf<
-        readonly string[]
-      >();
+      expectTypeOf(table.filters.tags().value()).toEqualTypeOf<readonly string[]>();
     });
   });
 
@@ -188,9 +171,7 @@ describe('withFiltering — each rule infers exactly through StateOf', () => {
           }),
         }),
       );
-      expectTypeOf(table.filters.tags().value()).toEqualTypeOf<
-        readonly string[]
-      >();
+      expectTypeOf(table.filters.tags().value()).toEqualTypeOf<readonly string[]>();
     });
   });
 
@@ -359,11 +340,7 @@ describe('withFiltering — table.filters is typed Filters<Invoice, StateOf<S>>'
 
   it('the no-schema config contributes no filters member at all', () => {
     typecheckOnly(() => {
-      const table = createTable(
-        data,
-        { trackBy: 'customer', columns },
-        withFiltering(),
-      );
+      const table = createTable(data, { trackBy: 'customer', columns }, withFiltering());
       // @ts-expect-error — no `schema` means the feature contributes no `filters` member.
       table.filters;
     });

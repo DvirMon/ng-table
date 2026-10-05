@@ -41,7 +41,10 @@ function mockGroupRow(overrides: Partial<RenderRow<MockRow>> = {}): RenderRow<Mo
   template: `
     <table>
       <tbody>
-        <tr *ngpTableRowField="renderRow(); from: rowsForm; let field" [attr.data-name]="field.name().value()">
+        <tr
+          *ngpTableRowField="renderRow(); from: rowsForm; let field"
+          [attr.data-name]="field.name().value()"
+        >
           field-rendered
         </tr>
       </tbody>
@@ -54,9 +57,7 @@ class HostComponent {
     { id: 2, name: 'Bea' },
   ]);
   readonly rowsForm: FieldTree<MockRow[]> = form(this.rows);
-  readonly renderRow: WritableSignal<RenderRow<MockRow>> = signal(
-    mockRow({ sourceIndex: 0 })
-  );
+  readonly renderRow: WritableSignal<RenderRow<MockRow>> = signal(mockRow({ sourceIndex: 0 }));
 }
 
 function queryRowElement(fixture: ReturnType<typeof TestBed.createComponent>): HTMLElement | null {
@@ -89,9 +90,7 @@ describe('NgpTableRowFieldDirective', () => {
     fixture.detectChanges();
     expect(queryRowElement(fixture)?.getAttribute('data-name')).toBe('Ada');
 
-    fixture.componentInstance.renderRow.set(
-      mockRow({ sourceIndex: 1 })
-    );
+    fixture.componentInstance.renderRow.set(mockRow({ sourceIndex: 1 }));
     fixture.detectChanges();
 
     expect(queryRowElement(fixture)?.getAttribute('data-name')).toBe('Bea');

@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — collapse-aware group render stage"
+title: 'Step 1 — collapse-aware group render stage'
 type: task-step
 issue: 59
 ---
@@ -37,7 +37,7 @@ function emitGroupRows<TRow>(
   depth: number,
   parentPath: string,
   columns: ColumnDef<TRow>[],
-  expandedRows: ReadonlySet<RowId> | undefined
+  expandedRows: ReadonlySet<RowId> | undefined,
 ): Omit<RenderRow<TRow>, 'index'>[] {
   return nodes.flatMap((node) => {
     const path = `${parentPath}>${node.columnId}:${toGroupKey(node.value)}`;
@@ -48,10 +48,7 @@ function emitGroupRows<TRow>(
       kind: 'group',
       data: null,
       hasChildren: node.items.length > 0,
-      aggregates: computeAggregates(
-        node.items.map((item) => item.data).filter(isRowData),
-        columns
-      ),
+      aggregates: computeAggregates(node.items.map((item) => item.data).filter(isRowData), columns),
     };
     const isExpanded = expandedRows === undefined || expandedRows.has(id);
     const nested = !isExpanded
@@ -68,7 +65,7 @@ export function buildGroupRenderRows<TRow>(
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
   groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number,
-  expandedRows?: ReadonlySet<RowId>
+  expandedRows?: ReadonlySet<RowId>,
 ): Omit<RenderRow<TRow>, 'index'>[] {
   // ...unchanged levels/columnById/nodes/ordered setup...
   return emitGroupRows(ordered, 0, '', columns, expandedRows);
@@ -102,7 +99,7 @@ instead of reconstructing the template string twice.
   to omit either way); special-casing it adds a branch with no behavioral difference.
 - Keep the recursive call passing `expandedRows` unchanged through every depth — a nested header
   three levels down must resolve its own membership independent of its ancestors' collapse state
-  (a collapsed parent already prevents its children from being *emitted at all*, so no double
+  (a collapsed parent already prevents its children from being _emitted at all_, so no double
   gating is needed or correct).
 
 ## Non-Goals
@@ -122,4 +119,5 @@ instead of reconstructing the template string twice.
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 [Step 2: Collapse-independent rowsOf →](step-2-rows-of-collapse-independent.plan.md)

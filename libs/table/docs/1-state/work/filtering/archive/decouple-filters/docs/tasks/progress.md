@@ -7,36 +7,36 @@ Three issues remain, one PR each, strictly sequential. Steps 1–5 were `#70` an
 
 ## `#70` — migrate every call site, split specs by ownership · ✅ merged (`6627b0c`)
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 1 | [Migrate the five story hosts to the predicate list](step-1-migrate-story-hosts.plan.md) | `code` | ✅ done | `6627b0c` |
-| 2 | [Move the criterion-map typing assertions into the filter model's own spec](step-2-move-criterion-map-typing.plan.md) | `test` | ✅ done | `6627b0c` |
-| 3 | [Split `with-filtering.spec.ts` by ownership](step-3-split-feature-spec.plan.md) | `test` | ✅ done | `6627b0c` |
-| 4 | [Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md) | `test` | ✅ done | `6627b0c` |
-| 5 | [Update the prose that describes the old config shape](step-5-update-prose.plan.md) | `docs` | ✅ done | `6627b0c` |
+| Step | Title                                                                                                                 | Type   | Status  | PR        |
+| ---- | --------------------------------------------------------------------------------------------------------------------- | ------ | ------- | --------- |
+| 1    | [Migrate the five story hosts to the predicate list](step-1-migrate-story-hosts.plan.md)                              | `code` | ✅ done | `6627b0c` |
+| 2    | [Move the criterion-map typing assertions into the filter model's own spec](step-2-move-criterion-map-typing.plan.md) | `test` | ✅ done | `6627b0c` |
+| 3    | [Split `with-filtering.spec.ts` by ownership](step-3-split-feature-spec.plan.md)                                      | `test` | ✅ done | `6627b0c` |
+| 4    | [Cross-feature specs narrow with bare predicates](step-4-cross-feature-specs.plan.md)                                 | `test` | ✅ done | `6627b0c` |
+| 5    | [Update the prose that describes the old config shape](step-5-update-prose.plan.md)                                   | `docs` | ✅ done | `6627b0c` |
 
 ## `#71` — delete the coupled surface + ADR-0016 · PR 1 of 3
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 6 | [Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) | `test` | ✅ done | `d59ab3e` |
-| 7 | [Delete the coupled filtering surface and the filters side channel](step-7-delete-coupled-surface.plan.md) | `code` | ✅ done | `d59ab3e` |
-| 8 | [ADR-0016: the filter model is the consumer's, the table takes a predicate list](step-8-adr-0016.plan.md) | `docs` | ✅ done | `d59ab3e` |
+| Step | Title                                                                                                                     | Type   | Status  | PR        |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- | ------ | ------- | --------- |
+| 6    | [Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) | `test` | ✅ done | `d59ab3e` |
+| 7    | [Delete the coupled filtering surface and the filters side channel](step-7-delete-coupled-surface.plan.md)                | `code` | ✅ done | `d59ab3e` |
+| 8    | [ADR-0016: the filter model is the consumer's, the table takes a predicate list](step-8-adr-0016.plan.md)                 | `docs` | ✅ done | `d59ab3e` |
 
 ## `#72` — relocate the filters domain · PR 2 of 3
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 9 | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md) | `code` | ✅ done | `6b8e251` |
-| 10 | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ✅ done | `6b8e251` |
+| Step | Title                                                                                                       | Type   | Status  | PR        |
+| ---- | ----------------------------------------------------------------------------------------------------------- | ------ | ------- | --------- |
+| 9    | [Relocate the filters domain to its own top-level folder](step-9-relocate-filters-domain.plan.md)           | `code` | ✅ done | `6b8e251` |
+| 10   | [Give the filters domain its own barrel; the public barrel delegates to it](step-10-filters-barrel.plan.md) | `code` | ✅ done | `6b8e251` |
 
 ## `#73` — split the filtering docs by domain · PR 3 of 3
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 11 | [Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md) | `docs` | ✅ done | — |
-| 12 | [Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md) | `docs` | ✅ done | — |
-| 13 | [Split the older workspace's pointers and regenerate the roll-up](step-13-split-pointers-regenerate.plan.md) | `chore` | ✅ done | — |
+| Step | Title                                                                                                        | Type    | Status  | PR  |
+| ---- | ------------------------------------------------------------------------------------------------------------ | ------- | ------- | --- |
+| 11   | [Rewrite the feature's spec for the predicate list](step-11-feature-spec-predicate-list.plan.md)             | `docs`  | ✅ done | —   |
+| 12   | [Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md)                  | `docs`  | ✅ done | —   |
+| 13   | [Split the older workspace's pointers and regenerate the roll-up](step-13-split-pointers-regenerate.plan.md) | `chore` | ✅ done | —   |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 

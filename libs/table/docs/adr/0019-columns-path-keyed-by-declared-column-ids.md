@@ -41,12 +41,12 @@ Two limits stay outside that guarantee, and neither is caught by the type system
 guarded by `create-columns.types.spec.ts` instead:
 
 - A spread variant that overrides `id` still widens to `string`: `{ ...col('amount'), id: 'total'
-  }` types `id` as `string` (R11).
+}` types `id` as `string` (R11).
 - `col.from(decl, opts)` with `id` omitted also widens to `string`, even though the runtime value
   still carries `decl`'s original id (R10). `col.from` with an explicit `id` override does capture
   the literal, per R10.
 
-So: the keying source (one call, not a config pairing) is structural; whether every *spelling*
+So: the keying source (one call, not a config pairing) is structural; whether every _spelling_
 that reaches that call stays literal is still a probe-guarded property, not a compiler-enforced
 one.
 
@@ -66,7 +66,7 @@ The "What still stands" sentence below — "Key `ColumnsPath` by the literal ids
 source: all four consumers (cells, sorting, grouping, filtering) read through
 `readAccessor(column, row)`, and any value used by grouping or filtering must be declared as a
 column — a carrier column (`visible: false`) where it is not displayed. ADR-0024's header names this
-ADR as *"the keying this ADR describes"*. So a schema fn on a **feature's** config keys by declared
+ADR as _"the keying this ADR describes"_. So a schema fn on a **feature's** config keys by declared
 column id, exactly as `columnsSchema` does.
 
 **What this reverses in the 2026-09-18 amendment.**
@@ -79,7 +79,7 @@ column id, exactly as `columnsSchema` does.
   `ColumnIdOf<S>` and `TId` on `TableStore`/`TableCore` come back, and `create-table.overloads.ts`
   with them.
 - **The spike's mootness.** The inference-order spike under [Open](#open) is no longer moot. Its
-  recorded outcome — **"Resolved: it works"**, kept explicitly *"should a future surface need it"* —
+  recorded outcome — **"Resolved: it works"**, kept explicitly _"should a future surface need it"_ —
   now applies directly. It still needs no re-running.
 - **Its citation of D7.** D7 is itself reversed by ADR-0024, which also reverses D7's rejection of
   data-carrier columns. The current record is D11 in
@@ -89,12 +89,12 @@ column id, exactly as `columnsSchema` does.
 in `TableConfig.columns`. That core has survived both amendments; only its reach has moved.
 
 **The general rule, now inverted.** The 2026-09-18 amendment deferred a cross-cutting rule to its
-own ADR: *"a schema fn on `TableConfig` names columns; a schema fn on a feature's config names row
-fields."* That ADR was never written, and the rule is now simply **every schema fn names declared
+own ADR: _"a schema fn on `TableConfig` names columns; a schema fn on a feature's config names row
+fields."_ That ADR was never written, and the rule is now simply **every schema fn names declared
 columns**. Written as [ADR-0027](0027-schema-declaration-surface.md) (2026-09-25), which also
 states the authoring-form and resolver-naming rules D11 carried alongside it.
 
-## Amendment 2026-09-18 — scope narrowed to the column schema fn *(superseded 2026-09-20)*
+## Amendment 2026-09-18 — scope narrowed to the column schema fn _(superseded 2026-09-20)_
 
 > **Superseded by [Amendment 2026-09-20](#amendment-2026-09-20--narrowing-reversed-every-schema-fn-names-columns).**
 > Kept as the record of what was decided on 2026-09-18 and why. Do not act on it.
@@ -114,7 +114,7 @@ close.
 **What is retracted.**
 
 - **`ColumnIdOf<S>` and cross-argument recovery.** Recovering `TId` structurally from the store
-  shape, the way `RowOf<S>` does, existed solely so a *feature's* schema fn — declared on a
+  shape, the way `RowOf<S>` does, existed solely so a _feature's_ schema fn — declared on a
   different argument than `columns` — could see the id union. No feature schema names columns any
   more, so the recovery has no consumer. `ColumnIdOf<S>` and `TId` on `TableStore`/`TableCore`
   revert, and `create-table.overloads.ts` reverts with them.
@@ -146,7 +146,7 @@ every recorded `columnId` against its resolved `columns` at construction.
 > as `ColumnIdOf<S>` the way `RowOf<S>` already recovers the row type from the store shape
 > (`engine/types.ts`)." Retracted on 2026-09-18, when no feature schema named columns. **Restored**
 > under ADR-0024, which puts feature schemas back on declared column ids: `TId` still flows within
-> one argument for `columnsSchema`, and store recovery is what a *feature's* schema fn needs.
+> one argument for `columnsSchema`, and store recovery is what a _feature's_ schema fn needs.
 
 This is strictly more correct than widening to `string`: it also rejects `path.someRowField`
 where that field was never declared as a column — a bug class invisible today.

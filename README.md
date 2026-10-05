@@ -2,10 +2,10 @@
 
 Nx workspace for **`@ngp/table`** — a signal-based, attribute-only data table engine for Angular — and its docs site.
 
-| Project | Path | What it is |
-|---|---|---|
+| Project        | Path         | What it is                                                                                                                                        |
+| -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `shared-table` | `libs/table` | The library: `createTable()` store engine, column schema, `ngp*` directives, `with-*()` feature plugins. Zero runtime deps beyond Angular + RxJS. |
-| `ng-table` | `apps/site` | Docs / landing site for the library (Angular, app-local design system). |
+| `ng-table`     | `apps/site`  | Docs / landing site for the library (Angular, app-local design system).                                                                           |
 
 Each project owns its own `CLAUDE.md`, `CONTEXT.md` and `docs/adr/`. Start at `llms.txt` for the map.
 

@@ -1,6 +1,13 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideBlocks, lucideColumns3, lucidePuzzle, lucideRows, lucideTable, lucideTag } from '@ng-icons/lucide';
+import {
+  lucideBlocks,
+  lucideColumns3,
+  lucidePuzzle,
+  lucideRows,
+  lucideTable,
+  lucideTag,
+} from '@ng-icons/lucide';
 import { CategoryBadge } from '../../design-system/category-badge/category-badge';
 import { Prose } from '../../design-system/prose/prose';
 import { SearchOverlay } from '../../design-system/search/search-overlay';
@@ -40,7 +47,16 @@ import { InstallRow } from './install-row/install-row';
   templateUrl: './home.html',
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  viewProviders: [provideIcons({ lucideTable, lucideColumns3, lucideTag, lucidePuzzle, lucideRows, lucideBlocks })],
+  viewProviders: [
+    provideIcons({
+      lucideTable,
+      lucideColumns3,
+      lucideTag,
+      lucidePuzzle,
+      lucideRows,
+      lucideBlocks,
+    }),
+  ],
 })
 export class Home {
   protected readonly content = HOME_CONTENT;

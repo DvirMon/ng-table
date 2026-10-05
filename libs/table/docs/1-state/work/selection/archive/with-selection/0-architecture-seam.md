@@ -17,27 +17,27 @@ rather than inventing one.
 
 ## The three roles
 
-| Role | Owns | Never does |
-|---|---|---|
+| Role                               | Owns                                                      | Never does             |
+| ---------------------------------- | --------------------------------------------------------- | ---------------------- |
 | Feature (`api/features/with-*.ts`) | the signals, the verbs, the render stage, `onRowsRemoved` | know that a DOM exists |
-| Store (`createTable()` result) | composition of features into one object | render |
-| Directive (`directives/*.ts`) | ARIA, `data-*`, activation, motion | **store state** |
+| Store (`createTable()` result)     | composition of features into one object                   | render                 |
+| Directive (`directives/*.ts`)      | ARIA, `data-*`, activation, motion                        | **store state**        |
 
 Verified against the shipped code:
 
 - `withExpansion()` (`src/api/features/with-expansion.ts`) holds `expandedRows`, `everExpanded`,
   and exposes `toggleExpanded` / `expandAll` / `collapseAll`. No DOM reference anywhere.
-- `NgpTableRowDirective` takes the `RenderRow` as an input and only *reflects* it —
+- `NgpTableRowDirective` takes the `RenderRow` as an input and only _reflects_ it —
   `[attr.aria-expanded]="ngpTableRow().isExpanded ?? null"`. It stores nothing.
 - `ngpTableExpandToggle` (`docs/3-ui/directives/expansion.md`) is the write path:
   `this.table.store().toggleExpanded(this.row.rowId())`. The directive injects the store via
-  `NGP_TABLE_STORE` and *calls* it. It has no state of its own.
+  `NGP_TABLE_STORE` and _calls_ it. It has no state of its own.
 
 **The invariant, stated once:** a directive may inject the store and call a verb, and may read
 signals to reflect them. A directive may never be the place a fact is stored. If a directive
 needs to remember something, that something belongs on a feature.
 
-That is the whole difference from PrimeNG/AG Grid, where the component *is* the owner and the
+That is the whole difference from PrimeNG/AG Grid, where the component _is_ the owner and the
 "state" is a side effect of the component being mounted. Here, unmounting every directive
 changes nothing about the table's state.
 
@@ -59,10 +59,10 @@ Verified from published source
 `docs/3-ui/directives/expansion.md` defines four tiers, and tier 0 is "store only, zero DOM
 opinion — not a degraded path, it is the contract." Selection gets the same ladder:
 
-| Tier | Consumer writes | Gets |
-|---|---|---|
-| 0 | store only | selection signals + verbs; consumer owns checkbox, ARIA, keyboard |
-| 1 | `+ ngpTableSelectionCheckbox` | activation, `aria-selected`, `data-selected`, indeterminate header state |
+| Tier | Consumer writes               | Gets                                                                     |
+| ---- | ----------------------------- | ------------------------------------------------------------------------ |
+| 0    | store only                    | selection signals + verbs; consumer owns checkbox, ARIA, keyboard        |
+| 1    | `+ ngpTableSelectionCheckbox` | activation, `aria-selected`, `data-selected`, indeterminate header state |
 
 ## Declarative config, imperative verbs — both, at different moments
 
@@ -87,7 +87,7 @@ config (and D1 removed it). A checkbox click is a verb.
    `RenderRow[]` on every checkbox click; a signal read costs one `Set.has()` per row against
    attribute bindings only. The divergence from `withExpansion()`'s `isExpanded` stamp is
    deliberate — expansion changes which rows exist, selection does not. The general rule this
-   item cited still holds for features that *do* contribute a `RenderRow` field; selection is not
+   item cited still holds for features that _do_ contribute a `RenderRow` field; selection is not
    one of them. Both shipped selection stories read the signal directly, which is the recipe
    [`0-product/selection.md`](../../../../../0-product/selection.md) §2.1 is now marked ✅ against.
 4. `docs/3-ui/directives/selection.md`'s "Known Blocker" (select-all scope) is **removed by D1** —

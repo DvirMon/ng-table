@@ -32,10 +32,13 @@ function makeFilteredStore(): TableStore<MockRow> {
         // emptyValue-equality check `filter()` would otherwise apply, which would treat the
         // initial value (equal to `emptyValue`) as empty and never narrow at all.
         schema: (path) => ({
-          isRowOne: filter(path['id'], (cell) => cell === 1, { emptyValue: null, isEmpty: () => false }),
+          isRowOne: filter(path['id'], (cell) => cell === 1, {
+            emptyValue: null,
+            isEmpty: () => false,
+          }),
         }),
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -61,8 +64,8 @@ describe('selectAllIds', () => {
       createTable(
         signal<MockRow[]>(mockRows),
         { trackBy: mockTrackBy, columns: makeColumns() },
-        withSelection()
-      )
+        withSelection(),
+      ),
     );
 
     store.select([1]);
@@ -81,7 +84,7 @@ describe('selectAllIds', () => {
 
   it('returns [] for an empty row set, both default and includeHidden, without throwing', () => {
     const store = inContext(() =>
-      createTable(signal<MockRow[]>([]), { trackBy: mockTrackBy, columns: makeColumns() })
+      createTable(signal<MockRow[]>([]), { trackBy: mockTrackBy, columns: makeColumns() }),
     );
 
     expect(() => selectAllIds(store)).not.toThrow();

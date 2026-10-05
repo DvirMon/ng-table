@@ -27,8 +27,7 @@ export interface NgpTableRowFieldContext<TRow> {
  */
 @Directive({ selector: '[ngpTableRowField]' })
 export class NgpTableRowFieldDirective<TRow> {
-  private readonly templateRef =
-    inject<TemplateRef<NgpTableRowFieldContext<TRow>>>(TemplateRef);
+  private readonly templateRef = inject<TemplateRef<NgpTableRowFieldContext<TRow>>>(TemplateRef);
   private readonly viewContainerRef = inject(ViewContainerRef);
 
   private viewRef: EmbeddedViewRef<NgpTableRowFieldContext<TRow>> | null = null;
@@ -39,7 +38,7 @@ export class NgpTableRowFieldDirective<TRow> {
 
   static ngTemplateContextGuard<TRow>(
     _dir: NgpTableRowFieldDirective<TRow>,
-    _ctx: unknown
+    _ctx: unknown,
   ): _ctx is NgpTableRowFieldContext<TRow> {
     return true;
   }

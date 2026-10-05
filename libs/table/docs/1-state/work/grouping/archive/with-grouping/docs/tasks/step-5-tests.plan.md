@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — Tests through the public createTable() surface"
+title: 'Step 5 — Tests through the public createTable() surface'
 type: task-step
 issue: 6
 ---
@@ -73,7 +73,7 @@ Compose via the real `createTable()` factory (`data: signal(mockGroupingRows)`, 
 - Two-level grouping (`['region', 'category']`): `renderRows()` contains nested `kind: 'group'`
   headers at `depth: 0` and `depth: 1`, leaf rows at `depth: 2`, contiguous per cluster.
 - **Depth-correctness:** an `amount` column with `aggregateFn: rows => rows.reduce((s, r) => s +
-  r.amount, 0) / rows.length` (plain average) at two-level grouping — assert the `region: 'US'`
+r.amount, 0) / rows.length` (plain average) at two-level grouping — assert the `region: 'US'`
   header's `aggregates.amount` equals `150` (true leaf average across all 3 US rows), not `125`
   (naive average of the two category averages). This is the test the spec calls out by name.
 - `withGrouping()` composed alone (no other features): `renderRows()` renders every group fully
@@ -88,7 +88,7 @@ Compose via the real `createTable()` factory (`data: signal(mockGroupingRows)`, 
   **not** throw — `renderRows()` groups by `region` only, dropping the unknown level.
 - Removing rows that were a cluster's sole members removes that cluster from `renderRows()` with
   no residual header (data-driven — no `onRowsRemoved` needed for this, since the pipeline/render
-  stages recompute from `core.rows()` on every change; assert the *behavior*, not that a specific
+  stages recompute from `core.rows()` on every change; assert the _behavior_, not that a specific
   hook fired).
 
 ## Implementation Notes
@@ -125,4 +125,5 @@ Compose via the real `createTable()` factory (`data: signal(mockGroupingRows)`, 
 - [ ] `nx test shared-table` passes.
 
 ---
+
 ← [Step 4: with-grouping.ts feature plugin + barrel export](step-4-with-grouping-feature.plan.md) | [Step 6: Docs — perf findings, frontmatter, status regen](step-6-docs-and-perf.plan.md) →

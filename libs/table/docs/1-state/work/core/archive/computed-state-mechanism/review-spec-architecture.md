@@ -15,8 +15,8 @@ source they describe. Findings ranked. "Issue" = the GitHub issue that already a
 
 ### 1. `composed` is not unused — grouping reads it
 
-Spec (Implementation Decisions → The feature contract): *"The feature-to-feature seam (`composed`)
-is retired … No shipped feature uses it today."* False. `withGrouping()` reads
+Spec (Implementation Decisions → The feature contract): _"The feature-to-feature seam (`composed`)
+is retired … No shipped feature uses it today."_ False. `withGrouping()` reads
 `composed['expandedRows']` inside its `group` render stage (`with-grouping.ts:79`), guarded by
 `isExpandedRowsSignal`, and its doc comment cites ADR-0007 for why the guard is sufficient.
 
@@ -27,8 +27,8 @@ up expansion regardless of argument order".
 
 ### 2. Architecture fold steps 3 and 4 contradict each other
 
-Step 3: *"A derive feature is not special-cased."* Step 4: *"wrap each derived member so a throw
-during evaluation reports the member key … validate each returned value with `isSignal()`."* At
+Step 3: _"A derive feature is not special-cased."_ Step 4: _"wrap each derived member so a throw
+during evaluation reports the member key … validate each returned value with `isSignal()`."_ At
 fold level `isSignal()` would reject every method member an ordinary feature contributes
 (`selectRow`, `beginEdit`, `rowsOf`). The wrapping and validation must live **inside**
 `withComputed()`; the fold stays uniform. Issue: #36 is written this way; architecture should say
@@ -44,12 +44,13 @@ wiring is spliced internally and keeps taking the core handle. Decisions log owe
 
 ### 4. "Read-only over the store" has no type
 
-Spec: *"The store handed to a derive block is read-only: no write views, no update paths."* Story
+Spec: _"The store handed to a derive block is read-only: no write views, no update paths."_ Story
 16 promises a compile error on write. `TableStore` carries `value` and `columns` as `WritableView`
 (with `.update`), and features contribute mutating methods. The probe passes `store` raw. No
 `ReadonlyStore<In>` projection is defined anywhere.
 
 Decide one of:
+
 - (a) mapped type stripping `.update` from write views; mutating methods stay visible (cannot be
   distinguished statically) — story 16 holds for views, "by convention" for methods;
 - (b) drop the compile-time claim; document read-only as convention.
@@ -61,7 +62,7 @@ through it is a compile error" assumes (a).
 
 ### 5. Arity — spec decides, architecture reopens
 
-Spec: *"Default arity: 15 slots."* Architecture OQ2 reopens it. `composeFeatures()` needs its own
+Spec: _"Default arity: 15 slots."_ Architecture OQ2 reopens it. `composeFeatures()` needs its own
 accumulating overloads → ~30 near-identical blocks, which strengthens OQ3 (generate, commit output,
 CI check that committed output matches). Settle both in one line: keep 15, generate.
 
@@ -72,13 +73,13 @@ say three. Rename the header.
 
 ### 7. `describeFeature` description wrong
 
-Architecture table: *"`describeFeature(index)` → `features[0]`"*. Actual: `features[${index}]`,
+Architecture table: _"`describeFeature(index)` → `features[0]`"_. Actual: `features[${index}]`,
 off by one because `wireColumnsSchemaAsync` is spliced as feature 0. #34 wording corrected.
 
 ### 8. Persistence gate unmet
 
-Spec: *"The persistence spec and this change both touch the feature contract and must agree
-before either lands."* `state-persistence.md` has no mention of derived members or
+Spec: _"The persistence spec and this change both touch the feature contract and must agree
+before either lands."_ `state-persistence.md` has no mention of derived members or
 `withComputed`. Owed-docs list marks it "unchanged by D21" — the exclusion row is still owed.
 Either add the one paragraph now or downgrade the gate to "before persistence lands". Issue: #44.
 
@@ -105,8 +106,8 @@ are the stricter of the two; finding 1 is the worked example.
 
 ### 12. Missing negative type tests in "Testing Decisions"
 
-D24 verified *"a `withComputed` in slot 1 cannot see a later slot's members (compile error, not a
-silent `any`)"*. Spec's type seam lists "a member of an uncomposed feature being absent" but not
+D24 verified _"a `withComputed` in slot 1 cannot see a later slot's members (compile error, not a
+silent `any`)"_. Spec's type seam lists "a member of an uncomposed feature being absent" but not
 the later-slot case, nor `composeFeatures()` at all. Issues: #35, #37 ACs.
 
 ## Settled by the breakdown — record, don't reopen

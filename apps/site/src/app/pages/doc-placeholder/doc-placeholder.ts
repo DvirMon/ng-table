@@ -3,7 +3,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import { SidebarNavigation } from '../../layout/sidebar-navigation/sidebar-navigation';
-import { DOCS_NAV_ROOT, DOCS_NAV_SECTIONS } from '../../layout/sidebar-navigation/sidebar-navigation.mock';
+import {
+  DOCS_NAV_ROOT,
+  DOCS_NAV_SECTIONS,
+} from '../../layout/sidebar-navigation/sidebar-navigation.mock';
 import { TocColumn } from '../../layout/toc-column/toc-column';
 import { findNavLabel } from './doc-placeholder.utils';
 
@@ -31,5 +34,7 @@ export class DocPlaceholder {
   protected readonly sections = DOCS_NAV_SECTIONS;
   protected readonly activeSlug = this.slug;
 
-  protected readonly label = computed(() => findNavLabel(this.slug(), this.root, this.sections) ?? this.slug());
+  protected readonly label = computed(
+    () => findNavLabel(this.slug(), this.root, this.sections) ?? this.slug(),
+  );
 }

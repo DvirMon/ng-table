@@ -42,8 +42,8 @@ Two observations, in order:
 
 ```ts
 interface EditingState<TRow> {
-  readonly snapshots: SnapshotMap<TRow>;   // restore points  — withOptimistic
-  readonly open: ReadonlySet<RowId>;       // rows showing inputs — withRowEdit
+  readonly snapshots: SnapshotMap<TRow>; // restore points  — withOptimistic
+  readonly open: ReadonlySet<RowId>; // rows showing inputs — withRowEdit
 }
 ```
 
@@ -56,30 +56,30 @@ feature is composed. `withRowEdit` does not re-expose a second `table.optimistic
 
 **Rationale — the coupling was one-directional and shallow.** Audited against the shipped code:
 
-| Updater | Reads `open` | Survives `open` permanently empty |
-|---|---|---|
-| `settleEdit` | guard only | yes — degenerates to "has snapshot" |
-| `revertEdit` | not at all (the `withoutOpen` call is a no-op) | yes |
-| `pendingIds` | as a subtraction | yes — pending becomes all snapshots |
-| `beginEdit` | **writes it** | no |
+| Updater      | Reads `open`                                   | Survives `open` permanently empty   |
+| ------------ | ---------------------------------------------- | ----------------------------------- |
+| `settleEdit` | guard only                                     | yes — degenerates to "has snapshot" |
+| `revertEdit` | not at all (the `withoutOpen` call is a no-op) | yes                                 |
+| `pendingIds` | as a subtraction                               | yes — pending becomes all snapshots |
+| `beginEdit`  | **writes it**                                  | no                                  |
 
-Only `beginEdit` genuinely couples the two, because it is the sole *capture* entry point and also
+Only `beginEdit` genuinely couples the two, because it is the sole _capture_ entry point and also
 opens the row. Giving the optimistic slice its own capture verb (D40) removes that, and the rest
 degenerates harmlessly — the live table needs no `open`, and `withRowEdit` needs no `live` flag.
 
 **This partially resolves O22, and deliberately not all of it.** O22 laid out two designs and
-picked neither. Its Option 2 — *"Optimistic-ness becomes its own concern… `withRowEdit()` would
-compose it rather than own it"* — has two halves:
+picked neither. Its Option 2 — _"Optimistic-ness becomes its own concern… `withRowEdit()` would
+compose it rather than own it"_ — has two halves:
 
-| Half of O22 Option 2 | Status |
-|---|---|
-| Own feature, composed by `withRowEdit()` | **taken** — this decision |
-| Inverse operation instead of a value snapshot | **still deferred** |
+| Half of O22 Option 2                          | Status                    |
+| --------------------------------------------- | ------------------------- |
+| Own feature, composed by `withRowEdit()`      | **taken** — this decision |
+| Inverse operation instead of a value snapshot | **still deferred**        |
 
 We keep value snapshots. So **G5 stays open**: optimistic rollback still covers update and create
 only, and still cannot cover delete or move — `revertEdit` replaces in place and cannot re-insert,
-and a snapshot holds a value, never an index. Splitting the feature changes *who owns* the
-restore point, not *what a restore point can express*.
+and a snapshot holds a value, never an index. Splitting the feature changes _who owns_ the
+restore point, not _what a restore point can express_.
 
 **Rejected — snapshots move to core instead of a feature.** Every table would carry a restore-point
 map whether or not it edits, and "restore point for a write" would become a property of the value
@@ -96,9 +96,9 @@ preserve it, and the exemption list in the table's `CLAUDE.md` needs updating.
 update and create only, never delete or move, with a pointer to G5/O22.
 
 **Rationale:** while rollback lived inside `withRowEdit()` its scope was self-evident from the name
-— optimistic *editing*, not optimistic *CRUD*, exactly as O22 observed. Standalone and named for
+— optimistic _editing_, not optimistic _CRUD_, exactly as O22 observed. Standalone and named for
 the general concept, it now reads as covering optimistic delete, which it does not and cannot
-(D37). The gap is unchanged; its *discoverability* got worse. A gaps file is not where a consumer
+(D37). The gap is unchanged; its _discoverability_ got worse. A gaps file is not where a consumer
 looks before calling a verb.
 
 **Alternatives considered:** `withRowRollback()` / `withRestorePoints()` — both encode the
@@ -116,7 +116,7 @@ uses — still holds exactly. What changes is the corollary "the minimal live ta
 nothing": true only for a table with no rollback story.
 
 **The edit session is the focus session.** A live table is not "always in edit mode" from the state
-layer's view — the focused row *is* the row being edited. That reframe is what makes the same verbs
+layer's view — the focused row _is_ the row being edited. That reframe is what makes the same verbs
 work in both modes:
 
 ```ts
@@ -125,12 +125,11 @@ table.editing.update(captureEdit(id));
 // blur
 table.value.update(patchRow(id, partial));
 // server
-ok ? table.editing.update(releaseEdit(id))
-   : table.editing.update(revertEdit(id));
+ok ? table.editing.update(releaseEdit(id)) : table.editing.update(revertEdit(id));
 ```
 
-Falls out for free: focus is inherently single-row, so D31.2's *"`{ multiple: true }` combined with
-optimistic save is undesigned"* narrows to button mode only. G4 is unaffected either way.
+Falls out for free: focus is inherently single-row, so D31.2's _"`{ multiple: true }` combined with
+optimistic save is undesigned"_ narrows to button mode only. G4 is unaffected either way.
 
 **Consequences:** E2's `table-edit-demo` must keep composing nothing (D29, and G12 pins it as the
 reference for the minimal table). The live-table-optimistic path needs its **own** story, not a
@@ -145,13 +144,13 @@ Omitting `row` re-reads `data()` for the id (`ABSENT` if gone). No open-guard.
 row was open. That guard was only ever meaningful because capture lived on the session slice. Post
 D37 it would make the verb dead on a live table — the one place it is now the primary entry point.
 
-**The distinction against `beginEdit` is preserved, not lost.** `beginEdit` captures *if absent*
+**The distinction against `beginEdit` is preserved, not lost.** `beginEdit` captures _if absent_
 (D31.1 — oldest restore point wins, so Cancel returns to the true pre-edit state);
 `captureEdit` overwrites. That difference is the whole of what D34 existed to express, so it
 survives the rename as the difference between two verbs rather than a flag on one.
 
-**G12's risk is already retired.** That register (2026-08-25) records `rebaseEdit` as *"a shipped
-public verb, exercised only in unit tests"*, with a "simulate server push" control as the suggested
+**G12's risk is already retired.** That register (2026-08-25) records `rebaseEdit` as _"a shipped
+public verb, exercised only in unit tests"_, with a "simulate server push" control as the suggested
 fix. That control now exists — `src/stories/external-write/` pushes a write to `data` underneath an
 open row and calls `rebaseEdit(id, pushed)`. The verb we are renaming has field validation; 5-gaps
 predates the story and is stale on this point.
@@ -160,16 +159,17 @@ predates the story and is stale on this point.
 
 **Decision:** the two things `endEdit` did become two verbs.
 
-| Verb | Does |
-|---|---|
-| `endEdit(id)` | closes the row. Always keeps the restore point |
-| `releaseEdit(id)` | drops the restore point |
+| Verb              | Does                                           |
+| ----------------- | ---------------------------------------------- |
+| `endEdit(id)`     | closes the row. Always keeps the restore point |
+| `releaseEdit(id)` | drops the restore point                        |
 
 Both take a **required** id. Bulk teardown is `clearEditing()`, which is not absorbed — see D44.
 
 **Supersedes D31's `keepSnapshot` sub-decision.** `settleEdit` is renamed to `releaseEdit`, pairing
 with `captureEdit` as acquire/release. `endEdit(id, { keepSnapshot: false })` becomes `endEdit(id)`
-+ `releaseEdit(id)`.
+
+- `releaseEdit(id)`.
 
 **Rationale:** the flag existed only because one verb did two things. Optimistic becomes the default
 by composition rather than by a boolean — which is the stated goal, and follows the house preference
@@ -184,7 +184,7 @@ point belongs to a request still waiting on the server: a later rejection has no
 to, `revertEdit` no-ops, and the rejected value stays on screen with no error and no way back.
 
 Bulk teardown is one atomic verb (D44), not a pair of bulk forms that must be called in the right
-order. There is deliberately no way to bulk-release *pending* rows — each settles on its own server
+order. There is deliberately no way to bulk-release _pending_ rows — each settles on its own server
 response, and a bulk release of in-flight saves has no legitimate caller.
 
 **Accepted cost:** a non-optimistic close is now two calls instead of one. Between them the row
@@ -198,7 +198,7 @@ local-only table. Real, minor, and must be stated in the spec rather than discov
 
 **Supersedes D35/D36 without changing their behavior.** D36 established that the restore point is
 the row itself, not `ABSENT`, making `addNewRow` behaviorally identical to `addRow` + `beginEdit`
-— *"pure ergonomics (one call instead of two), not a separate intent"*. A verb that is explicitly
+— _"pure ergonomics (one call instead of two), not a separate intent"_. A verb that is explicitly
 not a separate intent should not be a separate verb. Same one call, one fewer name.
 
 D36's consequence is unchanged: plain `revertEdit(id)` **resets** such a row rather than removing
@@ -217,8 +217,8 @@ A **directive the consumer places** on a row may call `captureEdit` on focus and
 behavior — the same standing D18 gives row actions, which are consumer template code calling the
 same updaters.
 
-**Why this needed saying:** D20's rejected list names *"library-detected edit triggers (blur hooks,
-dirty checking)"* explicitly. A focus/blur directive is a blur hook by any reading. The distinction
+**Why this needed saying:** D20's rejected list names _"library-detected edit triggers (blur hooks,
+dirty checking)"_ explicitly. A focus/blur directive is a blur hook by any reading. The distinction
 that keeps D20 intact is **who installs it**: opt-in, placed by the consumer, tree-shakeable,
 absent unless asked for — versus the engine doing it for every table.
 
@@ -240,8 +240,8 @@ in a single write. D41 does **not** absorb it.
 3. Every restore point survives with no open row behind it, so every row is **`pending` forever**
 
 Which is precisely the failure `clearEditing`'s own doc comment says dropping-on-close exists to
-prevent: *"closing without `keepSnapshot` and leaving the restore point behind would mark the row
-`pending`, arming a rollback for a save nobody started."* The reverse order works, and nothing
+prevent: _"closing without `keepSnapshot` and leaving the restore point behind would mark the row
+`pending`, arming a rollback for a save nobody started."_ The reverse order works, and nothing
 enforces it — the wrong order fails with no error.
 
 Splitting a verb is only safe when both halves are independently meaningful. `endEdit` and
@@ -251,8 +251,8 @@ Splitting a verb is only safe when both halves are independently meaningful. `en
 and `clearEditing()` (close all + release all) both do two things in one write because their
 halves must land together. That is the rule, not two exceptions.
 
-*(Originally this named a third verb, `cancelEdit`. See A1 — it was a duplicate of `revertEdit`
-and was dropped during implementation. Final count is six verbs, not seven.)*
+_(Originally this named a third verb, `cancelEdit`. See A1 — it was a duplicate of `revertEdit`
+and was dropped during implementation. Final count is six verbs, not seven.)_
 
 Rejected: a bulk `revertEdit()` as the teardown form. It reverts rather than keeps, so
 `gated-edit`'s "Close all" — which today keeps whatever the user typed — would start discarding it.
@@ -273,7 +273,7 @@ that the shipped `revertEdit` already closes the row — its final write is
 `{ snapshots: withoutSnapshot(...), open: withoutOpen(...) }`. `cancelEdit` would have been
 byte-identical.
 
-The error came from D37's framing: once `open` belongs to `withRowEdit`, it *looks* like the
+The error came from D37's framing: once `open` belongs to `withRowEdit`, it _looks_ like the
 optimistic slice cannot touch it, which implies a separate closing verb. But leaving `open` is
 not the same as owning it — `withoutOpen` on a table where nothing is open is a no-op, which is
 the same degeneration D37's own audit table already relied on for `revertEdit` and `pendingIds`.
@@ -292,16 +292,16 @@ D44's rule is unchanged, only its examples: the two fused verbs are `revertEdit`
 
 **D37 says `withRowEdit()` calls `withOptimistic()`'s factory directly.** The implementation
 instead extracts `createEditingStore()` (`api/features/editing-state.ts`) — not a feature — and
-*both* `with-*()` files call it.
+_both_ `with-*()` files call it.
 
 Same guarantees, one fewer moving part:
 
-| D37's requirement | Held? |
-|---|---|
-| No cross-feature signal reads | yes — neither feature sees the other's state |
-| Composition independent of `features` array order | yes — nothing is read from `composed` |
-| One member (`table.editing`) either way | yes |
-| Listing both in `features` throws | yes (ADR-0007) |
+| D37's requirement                                 | Held?                                        |
+| ------------------------------------------------- | -------------------------------------------- |
+| No cross-feature signal reads                     | yes — neither feature sees the other's state |
+| Composition independent of `features` array order | yes — nothing is read from `composed`        |
+| One member (`table.editing`) either way           | yes                                          |
+| Listing both in `features` throws                 | yes (ADR-0007)                               |
 
 It also removes a risk the migration plan called out: `TableFeatureSpec` carries a single
 `onRowsRemoved`, so a feature wrapping another's spec would have had to chain the two hooks by
@@ -315,23 +315,23 @@ so the invariant still lives with the feature that owns it.
 
 ## Open — carried forward
 
-- **O22** *(narrowed 2026-08-26 by D37)* ~~Is optimistic rollback an editing concern or a mutation
+- **O22** _(narrowed 2026-08-26 by D37)_ ~~Is optimistic rollback an editing concern or a mutation
   concern?~~ **Ownership half resolved** — it is its own feature, composed by `withRowEdit()`
   (Option 2's composition half). What remains open is only the **representation**: a restore point
-  holds a *value*, so delete and move stay uncoverable (G5, tracked as [#20](https://github.com/DvirMon/ng-table/issues/20)). Re-derive an inverse-operation
+  holds a _value_, so delete and move stay uncoverable (G5, tracked as [#20](https://github.com/DvirMon/ng-table/issues/20)). Re-derive an inverse-operation
   representation when a consumer needs optimistic delete, reading it against D32 (a batched write
   is one rollback unit, not N) and against ADR-0006 (which locks in "no optimistic delete" rather
   than fixing it).
-- **O24** *(new, from D37, tracked as [#19](https://github.com/DvirMon/ng-table/issues/19))* **Where does `swapRowId(from, to)` live after the split?** G3's leading
+- **O24** _(new, from D37, tracked as [#19](https://github.com/DvirMon/ng-table/issues/19))_ **Where does `swapRowId(from, to)` live after the split?** G3's leading
   fix re-keys whichever of `open` / `snapshots` hold `from` — post-D37 those sit in different
   features, so it straddles the boundary the same way `beginEdit` does. Plan G3 **after** this
   effort, not in parallel.
-- **O25** ~~*(new, from D41)* `releaseEdit()` with no id discards every in-flight rollback.~~
+- **O25** ~~_(new, from D41)_ `releaseEdit()` with no id discards every in-flight rollback.~~
   **Closed 2026-08-26 by D41 + D44** — there is no bulk form. Both verbs require an id; bulk
   teardown is `clearEditing()`, which stays atomic. The footgun cannot be spelled.
-**The index of what is still open lives in the gap registers**, mapped to the gaps each question
-gates: [state](../with-row-editing/5-gaps.md#open-decisions),
-[UI](../../../3-ui/work/row-editing/5-gaps.md#open-decisions).
+  **The index of what is still open lives in the gap registers**, mapped to the gaps each question
+  gates: [state](../with-row-editing/5-gaps.md#open-decisions),
+  [UI](../../../3-ui/work/row-editing/5-gaps.md#open-decisions).
 
 - **O11**, **O15**, **O16**, **O17**, **O19**, **O23** — unchanged, see
   [`../with-row-editing/2-decisions.md`](../../active/with-row-editing/2-decisions.md).
@@ -353,24 +353,24 @@ colliding member, so nothing existing starts throwing.
 
 ## Downstream doc updates this effort owes
 
-| Doc | Change |
-|---|---|
-| `features/row-editing.md` | the whole verb surface; the `pending` flicker (D41) |
+| Doc                                                  | Change                                                                                                                                                                                                                                                              |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `features/row-editing.md`                            | the whole verb surface; the `pending` flicker (D41)                                                                                                                                                                                                                 |
 | `work/row-editing/active/with-row-editing/5-gaps.md` | **stale** — predates `src/stories/`. G12's `rebaseEdit`, `clearEditing` and `{ multiple: true }` lines are closed by the `external-write` and `gated-edit-multiple` stories; only pessimistic save remains. Also: G5 restated against D38, G3 sequenced after (O24) |
-| `table/CLAUDE.md` | ADR-0006 exemption list; `writable-view.ts` row naming `with-row-edit.ts` as the `editing` owner |
-| `docs/3-ui/work/row-edit-stories/1-proposal.md` | S1 stays feature-free (D39); new story for the live-optimistic path |
+| `table/CLAUDE.md`                                    | ADR-0006 exemption list; `writable-view.ts` row naming `with-row-edit.ts` as the `editing` owner                                                                                                                                                                    |
+| `docs/3-ui/work/row-edit-stories/1-proposal.md`      | S1 stays feature-free (D39); new story for the live-optimistic path                                                                                                                                                                                                 |
 
 ## Story migration this effort owes
 
 Five stories exist under `src/stories/`. Every one except `live-table` calls a renamed verb.
 
-| Story | Change |
-|---|---|
-| `optimistic-save` | `endEdit(id, { keepSnapshot: true })` → `endEdit(id)`; `settleEdit` → `releaseEdit` |
-| `external-write` | `rebaseEdit(id, pushed)` → `captureEdit(id, pushed)` |
-| `gated-edit` | `addNewRow(...)` → `beginEdit(id, { insert })`; save-success `endEdit(id)` → `endEdit(id)` + `releaseEdit(id)`. `clearEditing()` unchanged (D44) |
-| `form-write-mutations` | save-success `endEdit(id)` → `endEdit(id)` + `releaseEdit(id)` |
-| `live-table` | unchanged (composes nothing, D39). Needs a **new** sibling story for the live-optimistic path |
+| Story                  | Change                                                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `optimistic-save`      | `endEdit(id, { keepSnapshot: true })` → `endEdit(id)`; `settleEdit` → `releaseEdit`                                                              |
+| `external-write`       | `rebaseEdit(id, pushed)` → `captureEdit(id, pushed)`                                                                                             |
+| `gated-edit`           | `addNewRow(...)` → `beginEdit(id, { insert })`; save-success `endEdit(id)` → `endEdit(id)` + `releaseEdit(id)`. `clearEditing()` unchanged (D44) |
+| `form-write-mutations` | save-success `endEdit(id)` → `endEdit(id)` + `releaseEdit(id)`                                                                                   |
+| `live-table`           | unchanged (composes nothing, D39). Needs a **new** sibling story for the live-optimistic path                                                    |
 
 The two save-success sites are where D41's accepted cost lands in real code: both are purely local
 saves that were one call and become two, with a one-tick `pending` flicker between.

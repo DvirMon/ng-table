@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                      | Action     |
+| ----------------------------------------- | ---------- |
 | `libs/shared/table/src/filters/row-of.ts` | **create** |
 
 One concern, one file. It imports nothing from the domain and nothing imports it until Step 4.
@@ -77,4 +77,5 @@ export function rowOf<TRow>(): RowToken<TRow>;
 - [ ] `nx run shared-table:typecheck` is clean
 
 ---
+
 ← [Step 1: Add the rule types and the `StateOf` fold](step-1-rule-types-and-stateof.plan.md) | [Step 3: Rules return their records](step-3-rules-return-records.plan.md) →

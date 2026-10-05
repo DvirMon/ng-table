@@ -1,7 +1,7 @@
 ---
 title: Tree UI layer — spec
 type: spec
-ticket: "#165"
+ticket: '#165'
 date: 2026-09-30
 audience: developers
 ---
@@ -48,8 +48,7 @@ work.
 ```html
 <tr [ngpTableRow]="row" ngpTableTreeRow>
   <td>
-    <button ngpTableTreeToggle
-      [attr.aria-label]="'Children of ' + row.data.name">▸</button>
+    <button ngpTableTreeToggle [attr.aria-label]="'Children of ' + row.data.name">▸</button>
     {{ row.data.name }}
   </td>
 </tr>
@@ -92,11 +91,11 @@ work.
 - **Core row changes (D2, D9).** `ngpTableRow` drops its `aria-expanded` binding and adds the output custom property `--ngp-table-row-depth`, bound from the required `depth` field, beside the existing `data-depth`. The binding form (`[style.--…]`) must be proven by a test — an earlier record calls it untested.
 - **Attribute ownership (D5).** No attribute is bound by two directives on one element:
 
-  | Directive | Element | Binds |
-  |---|---|---|
-  | `ngpTableRow` | row | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth` |
-  | `ngpTableTreeRow` | row | `data-expandable`, `data-expanded`, `data-context-row` |
-  | `ngpTableTreeToggle` | button | `aria-expanded`, `data-expanded`, `data-disabled`, `disabled`, `aria-hidden` |
+  | Directive            | Element | Binds                                                                           |
+  | -------------------- | ------- | ------------------------------------------------------------------------------- |
+  | `ngpTableRow`        | row     | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth` |
+  | `ngpTableTreeRow`    | row     | `data-expandable`, `data-expanded`, `data-context-row`                          |
+  | `ngpTableTreeToggle` | button  | `aria-expanded`, `data-expanded`, `data-disabled`, `disabled`, `aria-hidden`    |
 
 - **Row hooks (D3).** Presence-only per ADR-0026 rule 1. `data-expandable` reflects `RenderRow.hasChildren` (which `isExpandable` overrides); `data-expanded` reflects `isExpanded`. Named for what CSS keys on, not the field.
 - **Toggle host (D4).** Selector is `button[ngpTableTreeToggle]` only — native activation and focus, no keyboard handlers, no host-type branching, no nesting guard.

@@ -134,4 +134,5 @@ partition logic itself is already covered.
 - [ ] Cases 1–4 fail on the pre-Step-2 tree.
 
 ---
+
 ← [Step 5: Delete the raw-name label tier and the levels filter](step-5-delete-fallbacks.plan.md) | [Step 7: The public-surface spec](step-7-public-surface-spec.plan.md) →

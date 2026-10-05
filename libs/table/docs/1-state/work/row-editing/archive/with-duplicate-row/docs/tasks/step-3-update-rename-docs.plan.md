@@ -1,5 +1,5 @@
 ---
-title: "Step 3: Update rename docs"
+title: 'Step 3: Update rename docs'
 ---
 
 ← [Step 2: Fix `beginEdit` no-op invariant comment](step-2-fix-beginedit-invariant-doc.plan.md) | [Step 4: Add Duplicate action to gated-edit story](step-4-add-duplicate-action-story.plan.md) →
@@ -15,6 +15,7 @@ title: "Step 3: Update rename docs"
 **Scaffolding agent:** none — main thread
 
 **Files:**
+
 - `libs/shared/table/docs/1-state/row-mutations.md`
 - `libs/shared/table/docs/1-state/architecture.md`
 
@@ -27,8 +28,9 @@ and must reflect Step 1's rename so the spec stays the contract.
 ## What To Do
 
 In `row-mutations.md`:
+
 - Line ~20: `` `addRow`, `removeRow`, `patchRow` `` → `` `insertRow`, `removeRow`, `patchRow` ``
-- Line ~59: `` table.value.update(addRow(newRow, { at: 0 })); `` → `insertRow(...)`
+- Line ~59: `table.value.update(addRow(newRow, { at: 0 }));` → `insertRow(...)`
 - Line ~88: the updater table row for `` `addRow` `` → `` `insertRow` ``
 - Line ~95: `` `addRow({ at: 0 })` is the add-blank-row flow `` → `insertRow(...)`
 - Line ~99: `` `addRow(row, { at })` behaves exactly as `Array.prototype.splice(at, 0, row)` `` →
@@ -36,6 +38,7 @@ In `row-mutations.md`:
 - Line ~146: the blank-row example call → `insertRow(...)`
 
 In `architecture.md`:
+
 - Line ~45: `` `addRow` / `removeRow` / `patchRow` `` → `` `insertRow` / `removeRow` / `patchRow` ``
 - Line ~47: `` it falls out as `addRow({ ...row, id: newId() })` `` → `insertRow(...)`
 
@@ -64,4 +67,5 @@ In `architecture.md`:
   returns nothing.
 
 ---
+
 ← [Step 2: Fix `beginEdit` no-op invariant comment](step-2-fix-beginedit-invariant-doc.plan.md) | [Step 4: Add Duplicate action to gated-edit story](step-4-add-duplicate-action-story.plan.md) →

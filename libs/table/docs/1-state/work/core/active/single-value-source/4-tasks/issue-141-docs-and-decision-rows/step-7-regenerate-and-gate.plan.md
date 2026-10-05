@@ -59,4 +59,5 @@ gate.
 - [ ] The final sweep returns nothing.
 
 ---
+
 ← [Step 6: Columns decisions log](step-6-columns-decisions-log.plan.md)

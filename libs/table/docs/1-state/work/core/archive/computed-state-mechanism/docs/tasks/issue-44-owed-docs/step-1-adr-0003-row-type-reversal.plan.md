@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — ADR-0003: the deferred row-type inference shipped; record the reversal"
+title: 'Step 1 — ADR-0003: the deferred row-type inference shipped; record the reversal'
 type: task-step
 issue: 78
 ---
@@ -26,7 +26,7 @@ issue: 78
 ADR-0003's `## Deferred: features: (ctx) => [...]` section (lines ~127–147) says consumers still
 repeat `<TRow>` per feature, names the `features: (t) => [...]` shape as the fix, and defers it on
 two grounds — DX-only gains, and `composed` always empty at factory time. #33 shipped the
-capability, and it shipped by a *different* mechanism than the one this ADR deferred. Left as-is
+capability, and it shipped by a _different_ mechanism than the one this ADR deferred. Left as-is
 the ADR tells a reader the opposite of what the code does.
 
 This is the core step: `1-state/architecture.md` (Step 4) carries the same deferral argument at
@@ -50,7 +50,7 @@ The amendment must state, in this order:
 3. **Why the functional surface made it typable.** The deferral's blocker was that building every
    spec inside one expression leaves `composed` empty at factory time. The positional fold does
    not have that problem: the base store is built before the fold, and each feature is handed the
-   store *as accumulated so far*, so a later argument sees earlier arguments' members. Argument
+   store _as accumulated so far_, so a later argument sees earlier arguments' members. Argument
    order, not a `ctx` closure, is what makes the seam typable — and the seam stays open.
 4. **The correctness win the deferral called "modest" is now in force.** A mismatched
    `withExpansion<Person>()` on a `Department` table no longer compiles, because there is no type
@@ -62,7 +62,7 @@ Then fix the two stale call sites this ADR owns:
 
 - `:129` — `withExpansion<Department>()` in prose.
 - `:142` — `withExpansion<Person>()` in the correctness-win sentence. Keep the example (it is the
-  point being made) but phrase it as what *used to* compile.
+  point being made) but phrase it as what _used to_ compile.
 
 ## Implementation Notes
 
@@ -74,7 +74,7 @@ Then fix the two stale call sites this ADR owns:
 
 ## Risks / Watchouts
 
-- Do not restate the whole composition model here. ADR-0003 owns *the engine decision*; the
+- Do not restate the whole composition model here. ADR-0003 owns _the engine decision_; the
   argument-order visibility rule belongs to `1-state/architecture.md` (Step 4), which cites this.
 - `docs/1-state/architecture.md:201` contains a near-duplicate paragraph ("Why the `TRow` fix
   still hasn't shipped"). It is Step 4's, not this step's — do not edit it here.
@@ -93,4 +93,5 @@ Then fix the two stale call sites this ADR owns:
 - [ ] No other file changed
 
 ---
+
 [Step 2: ADR-0007 + ADR-0005 member claims](step-2-adr-0007-0005-member-claims.plan.md) →

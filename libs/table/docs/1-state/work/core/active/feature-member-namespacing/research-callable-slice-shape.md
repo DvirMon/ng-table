@@ -15,39 +15,38 @@ that prompted it:
 **That dismissal is factually wrong**, and it is the load-bearing sentence keeping Option 4
 un-weighed. This file replaces it with what the shipped types say.
 
-## Finding 1 — Signal Forms *does* put functions-of-an-argument on a callable slice
+## Finding 1 — Signal Forms _does_ put functions-of-an-argument on a callable slice
 
 `FieldTree` (`node_modules/@angular/forms/types/_structure-chunk.d.ts:1153`), trimmed:
 
 ```ts
-type FieldTree<TModel, TKey, TMode> =
-    (() => FieldStateByMode<TModel, TKey, TMode>)                // call  → the state object
-  & (TModel extends Record<string, any> ? Subfields<TModel, TMode> : object);  // props → child fields
+type FieldTree<TModel, TKey, TMode> = (() => FieldStateByMode<TModel, TKey, TMode>) & // call  → the state object
+  (TModel extends Record<string, any> ? Subfields<TModel, TMode> : object); // props → child fields
 ```
 
 `FieldState` (`:1375`) — the thing `field()` returns — carries **both** state signals and behavior
 functions that take arguments:
 
-| Member | Kind |
-|---|---|
-| `value: WritableSignal<TValue>`, `errors`, `valid`, `pending`, `touched` | state |
-| `getError(kind: string)` | **function of an argument** |
-| `metadata<M>(key: MetadataKey<M>)`, `hasMetadata(key)` | **function of an argument** |
-| `markAsTouched(options?)`, `focusBoundControl(options?)` | behavior |
+| Member                                                                   | Kind                        |
+| ------------------------------------------------------------------------ | --------------------------- |
+| `value: WritableSignal<TValue>`, `errors`, `valid`, `pending`, `touched` | state                       |
+| `getError(kind: string)`                                                 | **function of an argument** |
+| `metadata<M>(key: MetadataKey<M>)`, `hasMetadata(key)`                   | **function of an argument** |
+| `markAsTouched(options?)`, `focusBoundControl(options?)`                 | behavior                    |
 
 So the analogy holds. `field().getError('required')` and `field().metadata(key)` are exactly the
 class of member ADR-0015 says the precedent does not cover. The ADR's objection should be struck
 and replaced with the disagreement below, which is the real one.
 
-## Finding 2 — but Signal Forms puts behavior on the *called result*, and acme puts it on the *callable*
+## Finding 2 — but Signal Forms puts behavior on the _called result_, and acme puts it on the _callable_
 
 The two conventions are mirror images, and only one of them is acme's:
 
-| | Call `x()` returns | Behavior lives on |
-|---|---|---|
-| Signal Forms `FieldTree` | a **state object** (`FieldState`) | the called result — `field().getError(k)` |
-| acme `WritableView` (D30) | the **raw value** (`string[]`) | the **callable** — `table.grouping.update(u)` |
-| | property access = child-field navigation | property access = behavior |
+|                           | Call `x()` returns                       | Behavior lives on                             |
+| ------------------------- | ---------------------------------------- | --------------------------------------------- |
+| Signal Forms `FieldTree`  | a **state object** (`FieldState`)        | the called result — `field().getError(k)`     |
+| acme `WritableView` (D30) | the **raw value** (`string[]`)           | the **callable** — `table.grouping.update(u)` |
+|                           | property access = child-field navigation | property access = behavior                    |
 
 `engine/writable-view.ts`:
 
@@ -64,19 +63,19 @@ property access is reserved for navigating to children (`field.address.street`),
 and behavior together onto the called result. A table slice has no children to navigate to, so
 property access is free — and D30 already spent it on `update()`.
 
-**Consequence: do not import Signal Forms' layout.** Cite it as precedent for *a slice being a
-callable that carries functions of an argument* — which it is — and nothing further. Where those
+**Consequence: do not import Signal Forms' layout.** Cite it as precedent for _a slice being a
+callable that carries functions of an argument_ — which it is — and nothing further. Where those
 functions go is already answered by `.update()`.
 
-## Finding 2b — the callable-with-methods shape is Angular's *mainline* convention, not a Forms quirk
+## Finding 2b — the callable-with-methods shape is Angular's _mainline_ convention, not a Forms quirk
 
 `signal()` itself is built this way (`node_modules/@angular/core/fesm2022/_pending_tasks-chunk.mjs:2769`):
 
 ```js
 function signal(initialValue, options) {
   const [get, set, update] = createSignal(initialValue, options?.equal);
-  const signalFn = get;                                   // a plain function
-  signalFn.set = set;                                     // ...with methods bolted on
+  const signalFn = get; // a plain function
+  signalFn.set = set; // ...with methods bolted on
   signalFn.update = update;
   signalFn.asReadonly = signalAsReadonlyFn.bind(signalFn);
   return signalFn;
@@ -85,19 +84,19 @@ function signal(initialValue, options) {
 
 Same shape, three more times in the same package:
 
-| Primitive | Call `x()` returns | Members on the callable |
-|---|---|---|
-| `signal()` | the value | `set`, `update`, `asReadonly`, `[SIGNAL]` |
-| `model()` (`core.mjs:186`) | the value | `set`, `update`, `asReadonly`, **`subscribe`**, **`destroyRef`** |
-| `input()` (`core.mjs:181`) | n/a — `input` is itself a fn | **`required`** |
-| acme `WritableView` | the value | `update` |
+| Primitive                  | Call `x()` returns           | Members on the callable                                          |
+| -------------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| `signal()`                 | the value                    | `set`, `update`, `asReadonly`, `[SIGNAL]`                        |
+| `model()` (`core.mjs:186`) | the value                    | `set`, `update`, `asReadonly`, **`subscribe`**, **`destroyRef`** |
+| `input()` (`core.mjs:181`) | n/a — `input` is itself a fn | **`required`**                                                   |
+| acme `WritableView`        | the value                    | `update`                                                         |
 
 **`model()` is the decisive precedent.** Its callable carries `subscribe` and `destroyRef` —
 members that are not "write the value" and not even state. Angular already treats the callable as a
 general namespace for everything belonging to that reactive cell, not strictly a write surface. So
 `table.grouping.rowIdsOf(g)` is not an extension of the convention; it is the convention.
 
-This also re-ranks Finding 2. Signal Forms' `FieldTree` layout (behavior on the *called result*) is
+This also re-ranks Finding 2. Signal Forms' `FieldTree` layout (behavior on the _called result_) is
 the **exception**, forced by needing property access for child navigation. Mainline Angular —
 `signal`, `model`, `input` — puts members on the **callable**, which is what acme already does. The
 `writable-view.ts` JSDoc says so explicitly:
@@ -120,7 +119,7 @@ consumer to learn, and it reuses the shape four shipped members already use (`va
 That reframes ADR-0015's cost table. Option 4 is not "adopt a callable slice"; it is **"stop
 treating `.update()` as the only thing allowed on the slice acme already ships."**
 
-## Finding 4 — the D37 objection dissolves, because the namespace is the *slice*, not the *feature*
+## Finding 4 — the D37 objection dissolves, because the namespace is the _slice_, not the _feature_
 
 ADR-0015 frames the obstacle as:
 
@@ -145,7 +144,7 @@ colliding.
 
 ## Finding 5 — there is no cross-slice verb, and that is structural
 
-Raised as an open question, then closed: *which slice owns a verb needing two features?* No such
+Raised as an open question, then closed: _which slice owns a verb needing two features?_ No such
 verb exists, because **every slice's currency is a core type**.
 
 Group selection is the case that looked hardest, and it is already solved in shipped code
@@ -158,8 +157,8 @@ selectionStateOf(ids: readonly RowId[]): 'none' | 'some' | 'all';
 Tri-state group-header checkbox, both directions, with no library verb spanning two features:
 
 ```ts
-table.selectionStateOf(table.grouping.rowIdsOf(group));   // read  — 'none' | 'some' | 'all'
-table.select(table.grouping.rowIdsOf(group));             // write
+table.selectionStateOf(table.grouping.rowIdsOf(group)); // read  — 'none' | 'some' | 'all'
+table.select(table.grouping.rowIdsOf(group)); // write
 ```
 
 Grouping emits `RowId[]`; selection consumes `RowId[]`; neither imports the other. The consumer
@@ -170,17 +169,17 @@ owns the cascade — which is what `rowIdsOf` was designed for
 `api/types.ts` — `RowId`, `RenderRow<TRow>`, `ColumnId<TRow>`. Feature-declared types are confined
 to their own slice's own operations and are never a handoff between features:
 
-| Feature-declared type | Used as |
-|---|---|
-| `SelectionWriteOptions`, `ExpansionWriteOptions` | that slice's own write options |
-| `EditingUpdater<TRow>`, `GroupingUpdater<TRow>` | that slice's own `update()` argument |
-| `PendingOp`, `RowSnapshot<TRow>` | that slice's own read shape |
+| Feature-declared type                            | Used as                              |
+| ------------------------------------------------ | ------------------------------------ |
+| `SelectionWriteOptions`, `ExpansionWriteOptions` | that slice's own write options       |
+| `EditingUpdater<TRow>`, `GroupingUpdater<TRow>`  | that slice's own `update()` argument |
+| `PendingOp`, `RowSnapshot<TRow>`                 | that slice's own read shape          |
 
 So slice A's output is always expressible as slice B's input, and any "cross-slice" behavior
 decomposes into two single-slice calls at the consumer's call site.
 
 **State this in ADR-0015 as a consequence, not implicitly.** It breaks the moment a feature wants
-a *feature-private* type as another feature's argument — then no handoff exists and the ownership
+a _feature-private_ type as another feature's argument — then no handoff exists and the ownership
 question returns. Nothing does that today; keeping it that way is the condition under which
 single-slice namespacing is sufficient.
 

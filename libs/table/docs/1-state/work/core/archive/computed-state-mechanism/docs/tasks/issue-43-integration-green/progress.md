@@ -3,13 +3,13 @@
 **Issue:** #43
 **Status:** 5 / 5 complete — issue closed
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | `stories/composition/`: fixtures + `derived-state` story host with both derive-block placements | ✅ done | 80c991d |
-| 2 | `derived-state.stories.ts` + `derived-state.mdx` — `Table / Composition / Derived State` | ✅ done | 80c991d |
-| 3 | `docs/3-ui/stories.md`: `composition/` in the layout tree and fixtures table | ✅ done | 80c991d |
-| 4 | Agent-run static gates: type-check + lint across the library and both apps | ⚠ run — 2 pre-existing failures, not from #43 (see results below) | — |
-| 5 | User-run gates (unit suites, Storybook build, walkthrough) and #43 close-out | ✅ done | — |
+| Step | Title                                                                                           | Status                                                             | PR      |
+| ---- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ------- |
+| 1    | `stories/composition/`: fixtures + `derived-state` story host with both derive-block placements | ✅ done                                                            | 80c991d |
+| 2    | `derived-state.stories.ts` + `derived-state.mdx` — `Table / Composition / Derived State`        | ✅ done                                                            | 80c991d |
+| 3    | `docs/3-ui/stories.md`: `composition/` in the layout tree and fixtures table                    | ✅ done                                                            | 80c991d |
+| 4    | Agent-run static gates: type-check + lint across the library and both apps                      | ⚠ run — 2 pre-existing failures, not from #43 (see results below) | —       |
+| 5    | User-run gates (unit suites, Storybook build, walkthrough) and #43 close-out                    | ✅ done                                                            | —       |
 
 Graph: `1 → {2, 3} → 4 → 5`.
 Parallel-safe: `[2, 3]` after 1. Dependency: `1 → 2`, `1 → 3`, `{2, 3} → 4`, `4 → 5`.
@@ -26,14 +26,14 @@ still pending at plan time; Step 5 confirms them rather than duplicating their c
 
 ## Step 4 — static gate results (2026-09-14, working tree as-is, other tickets' WIP present)
 
-| Command | Exit |
-|---|---|
-| `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` | 0 |
-| `npx tsc -p libs/shared/table/tsconfig.spec.json --noEmit` | 0 |
+| Command                                                          | Exit                                                                                                                                |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit`        | 0                                                                                                                                   |
+| `npx tsc -p libs/shared/table/tsconfig.spec.json --noEmit`       | 0                                                                                                                                   |
 | `npx tsc -p libs/shared/table/.storybook/tsconfig.json --noEmit` | 2 — pre-existing, `preview.ts(13)` TS7006/TS7031 implicit `any`; file unmodified since `e80d3fa`, nothing in `stories/composition/` |
-| `npx tsc -p apps/demo/tsconfig.app.json --noEmit` | 0 |
-| `npx tsc -p apps/ng-table/tsconfig.app.json --noEmit` | 0 |
-| `npx nx run-many -t lint -p shared-table demo ng-table` | 1 — 42 errors / 108 warnings, all pre-existing classes |
+| `npx tsc -p apps/demo/tsconfig.app.json --noEmit`                | 0                                                                                                                                   |
+| `npx tsc -p apps/ng-table/tsconfig.app.json --noEmit`            | 0                                                                                                                                   |
+| `npx nx run-many -t lint -p shared-table demo ng-table`          | 1 — 42 errors / 108 warnings, all pre-existing classes                                                                              |
 
 Lint classification: 24 of the 42 errors are `Parsing error: Unexpected token <`, one per
 story-host `.html` — every host in the repo hits it, including the eleven committed `row-edit/`
@@ -75,11 +75,11 @@ same two pre-existing `preview.ts` implicit-`any` errors).
 
 All three commands run by the user, all reported green:
 
-| Command | Result |
-|---|---|
-| `npx nx run-many -t test -p shared-table demo ng-table` | pass (user-reported) |
-| `npx nx run shared-table:build-storybook` | pass (user-reported) |
-| `npx nx run shared-table:storybook` | served; sidebar scanned, every table story renders |
+| Command                                                 | Result                                             |
+| ------------------------------------------------------- | -------------------------------------------------- |
+| `npx nx run-many -t test -p shared-table demo ng-table` | pass (user-reported)                               |
+| `npx nx run shared-table:build-storybook`               | pass (user-reported)                               |
+| `npx nx run shared-table:storybook`                     | served; sidebar scanned, every table story renders |
 
 `Table / Composition / Derived State` walkthrough: every row of the Step 5 table green — banner
 counts track selection and filtering together, a filtered-out row keeps its mark, neither number

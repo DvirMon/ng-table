@@ -18,10 +18,10 @@ Parallel-safe: [1, 2, 3, 5] · Dependency: 1 → 4
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | The feature-authoring guide | ✅ done |
-| 2 | Amend ADR-0011: adding a stage is not reordering | ✅ done |
-| 3 | Amend ADR-0004: anchors and registries replace the order array | ✅ done |
-| 4 | Register the effort and link the guide | ✅ done |
-| 5 | Rename stale order-array mentions in source comments | ✅ done |
+| Step | Title                                                          | Status  |
+| ---- | -------------------------------------------------------------- | ------- |
+| 1    | The feature-authoring guide                                    | ✅ done |
+| 2    | Amend ADR-0011: adding a stage is not reordering               | ✅ done |
+| 3    | Amend ADR-0004: anchors and registries replace the order array | ✅ done |
+| 4    | Register the effort and link the guide                         | ✅ done |
+| 5    | Rename stale order-array mentions in source comments           | ✅ done |

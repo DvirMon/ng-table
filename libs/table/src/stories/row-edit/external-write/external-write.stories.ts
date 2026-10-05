@@ -18,4 +18,5 @@ type Story = StoryObj<ExternalWriteStoryHostComponent>;
  * patched quietly, no banner.
  */
 export const ExternalWrite: Story = {
-  name: 'External Write & Reconciliation',};
+  name: 'External Write & Reconciliation',
+};

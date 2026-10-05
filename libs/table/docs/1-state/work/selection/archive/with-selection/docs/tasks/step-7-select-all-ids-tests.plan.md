@@ -1,5 +1,5 @@
 ---
-title: "Step 7 — selectAllIds() unit tests"
+title: 'Step 7 — selectAllIds() unit tests'
 type: task-step
 issue: 64
 ---
@@ -36,7 +36,7 @@ Cases:
    `value()`, `selectAllIds(table)` returns exactly `table.rows()`'s ids (order matches
    `rows()`, not `value()`).
 2. **`includeHidden: true`** — same filtered table; `selectAllIds(table, { includeHidden: true
-   })` returns exactly `table.value()`'s ids (every row, filtered or not).
+})` returns exactly `table.value()`'s ids (every row, filtered or not).
 3. **Combines with pre-existing selection** — call `table.select(selectAllIds(table))` twice, or
    once after an existing `table.select([someId])`; assert the result relies on `select()`'s own
    D15 dedup (no duplicate ids in `selectedRows()`) rather than re-implementing dedup in the
@@ -77,4 +77,5 @@ Cases:
 - [ ] All four cases pass under the project's existing test runner config (no new config).
 
 ---
+
 ← [Step 6: selectAllIds() helper (D59)](step-6-select-all-ids-helper.plan.md) | [Step 8: selection.md — selectAllIds() shipped](step-8-select-all-ids-doc-update.plan.md) →

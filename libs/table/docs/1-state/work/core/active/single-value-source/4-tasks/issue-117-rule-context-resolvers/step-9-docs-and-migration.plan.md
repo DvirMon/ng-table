@@ -14,7 +14,7 @@ surface).
 
 - Any file matching
   `rg -n "\.valueOf\(" libs/table/src/stories libs/table/docs --glob
-  '*.ts' --glob '*.html' --glob '*.mdx'` that sits inside a
+'*.ts' --glob '*.html' --glob '*.mdx'` that sits inside a
   `FilterOptions.when` — rename to `.criterionOf(`.
 - `libs/table/docs/1-state/features/grouping.md` — document `when`'s new
   `ctx` parameter.
@@ -104,4 +104,5 @@ migrated; their `.mdx` code tabs match the code."
       scope.
 
 ---
+
 ← [Step 8: Cross-domain types-spec](step-8-types-spec.plan.md)

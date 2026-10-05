@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — Matchers spec"
+title: 'Step 3 — Matchers spec'
 type: task-step
 issue: 61
 ---
@@ -30,7 +30,7 @@ repo's rule that pure `engine/`-shaped logic is tested without Angular test mach
    - The straightforward true/false case from `filters.md`'s own examples.
    - The null/undefined cell case (R27 table): every positive matcher → `false`; `hasNoneOf` → `true`.
    - `isInRange`/`isInDateRange`: one-sided bounds (`min` only, `max` only) and both-null (matches
-     everything — not the same as *empty*, which is a Step 5 concern, but the matcher itself must
+     everything — not the same as _empty_, which is a Step 5 concern, but the matcher itself must
      not throw or misbehave on that shape).
    - `hasAnyOf`/`hasNoneOf`: empty criterion array, empty cell array, disjoint arrays, intersecting
      arrays.
@@ -58,4 +58,5 @@ repo's rule that pure `engine/`-shaped logic is tested without Angular test mach
 - [ ] `nx test shared-table` passes
 
 ---
+
 ← [Step 2: Matchers](step-2-filters-matchers.plan.md) | [Step 4: createFilters() core](step-4-create-filters-core.plan.md) →

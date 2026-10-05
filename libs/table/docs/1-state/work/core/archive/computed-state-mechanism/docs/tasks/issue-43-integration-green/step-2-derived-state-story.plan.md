@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — derived-state.stories.ts + derived-state.mdx — Table / Composition / Derived State"
+title: 'Step 2 — derived-state.stories.ts + derived-state.mdx — Table / Composition / Derived State'
 type: task-step
 issue: 77
 ---
@@ -71,4 +71,5 @@ it through story conventions, not component conventions.
 - [ ] Title is `Table / Composition / Derived State`; exactly one exported story
 
 ---
+
 ← [Step 1: `stories/composition/` fixtures + host](step-1-composition-derived-state-host.plan.md) | [Step 3: `stories.md` layout tree + fixtures table](step-3-stories-doc-composition-folder.plan.md) →

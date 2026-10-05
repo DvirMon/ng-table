@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — wire withGrouping() to expandedRows"
+title: 'Step 3 — wire withGrouping() to expandedRows'
 type: task-step
 issue: 59
 ---
@@ -52,10 +52,10 @@ function isExpandedRowsSignal(value: unknown): value is Signal<ReadonlySet<RowId
 }
 
 export function withGrouping<TRow = unknown>(
-  config: WithGroupingConfig<TRow> = {}
+  config: WithGroupingConfig<TRow> = {},
 ): (
   core: GroupingInput<TRow>,
-  composed: Record<string, unknown>
+  composed: Record<string, unknown>,
 ) => TableFeatureSpec<TRow, GroupingMembers<TRow>> {
   return (core: GroupingInput<TRow>, composed: Record<string, unknown>) => {
     // ...unchanged initialGrouping validation, baseGrouping, grouping WritableView...
@@ -77,7 +77,7 @@ export function withGrouping<TRow = unknown>(
             baseGrouping(),
             core.columns(),
             config.groupOrder,
-            expandedRows
+            expandedRows,
           );
         },
       },
@@ -93,13 +93,13 @@ export function withGrouping<TRow = unknown>(
 
 - **Read `composed['expandedRows']` inside the render stage closure, not at factory time.**
   `composeTable()`'s `foldFeatures()` calls every feature's factory once, in `features` array
-  order — at that moment `composed` holds only *earlier* features' members. The returned
+  order — at that moment `composed` holds only _earlier_ features' members. The returned
   `renderStages.group` function is stored and called later, on every render pass, by which point
   `composed` is complete regardless of where `withExpansion()` sits in the array. This is exactly
   what makes the optional read order-independent (`CLAUDE.md`, "read later ... it holds
   everything").
 - **`isExpandedRowsSignal` is intentionally a shallow duck-type check** (`typeof value ===
-  'function'`), not a full runtime validation of "is this a `Signal<Set<RowId>>`". That's the
+'function'`), not a full runtime validation of "is this a `Signal<Set<RowId>>`". That's the
   documented contract — `grouping.md`'s Compile-Time Dependencies section: "detected at runtime
   (e.g. an optional prop/method check), not enforced via a `type<>` compile-time contract." A
   custom type guard (not a bare `as`) is what makes this typecheck cleanly per
@@ -140,4 +140,5 @@ export function withGrouping<TRow = unknown>(
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 [← Step 2: Collapse-independent rowsOf](step-2-rows-of-collapse-independent.plan.md) | [Step 4: Tests →](step-4-tests.plan.md)

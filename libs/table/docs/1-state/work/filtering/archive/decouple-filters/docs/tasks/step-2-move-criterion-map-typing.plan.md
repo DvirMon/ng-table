@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
+| File                                               | Line                      | Action           |
+| -------------------------------------------------- | ------------------------- | ---------------- |
 | `libs/shared/table/src/api/create-filters.spec.ts` | `describe('types')` @ 685 | edit — add cases |
 
 Source of the moved assertions (read-only in this step):
@@ -64,7 +64,7 @@ that is still true: `Filters<TRow, TState>` is not assignable to `Filters<TRow>`
 
 ## Risks / Watchouts
 
-- `Invoice`'s criterion types are not `Row`'s. Port the *assertions*, not the literals — a
+- `Invoice`'s criterion types are not `Row`'s. Port the _assertions_, not the literals — a
   copy-paste of `string | null` against a field that is `number | null` passes for the wrong
   reason.
 - `build<TState>()` runs inside `TestBed.runInInjectionContext`. Keep new helpers on that path.
@@ -86,4 +86,5 @@ that is still true: `Filters<TRow, TState>` is not assignable to `Filters<TRow>`
 - [ ] `with-filtering.spec.ts` is unchanged by this step
 
 ---
+
 ← [Step 1: Migrate the story hosts](step-1-migrate-story-hosts.plan.md) | [Step 3: Split the feature spec by ownership](step-3-split-feature-spec.plan.md) →

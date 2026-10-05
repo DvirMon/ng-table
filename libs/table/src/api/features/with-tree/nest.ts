@@ -20,7 +20,7 @@ export function guardCallback<TRow, R>(
   fn: (row: TRow) => R,
   reported: ReportFlag,
   message: string,
-  fallback: R
+  fallback: R,
 ): (row: TRow) => R {
   return (row) => {
     try {
@@ -38,7 +38,7 @@ export function guardCallback<TRow, R>(
 // One guard per evaluation, shared across `withTree()`'s callbacks: a throwing
 // `isExpandable` degrades to `false` and reports once, never per row. See ADR-0014.
 function guardIsExpandable<TRow>(
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): ((row: TRow) => boolean) | undefined {
   if (!config.isExpandable) {
     return undefined;
@@ -49,7 +49,7 @@ function guardIsExpandable<TRow>(
     reported,
     '[withTree] isExpandable threw. The affected row(s) render without a toggle for this ' +
       'evaluation.',
-    false
+    false,
   );
 }
 
@@ -59,7 +59,7 @@ function guardIsExpandable<TRow>(
 // ADR-0014.
 function reportBrokenLinksOnce(
   broken: Readonly<Record<BrokenLinkKind, readonly RowId[]>>,
-  reported: Record<BrokenLinkKind, boolean>
+  reported: Record<BrokenLinkKind, boolean>,
 ): void {
   (['self', 'absent', 'cycle'] as const).forEach((kind: BrokenLinkKind) => {
     const shouldReportKind = broken[kind].length > 0 && !reported[kind];
@@ -68,7 +68,7 @@ function reportBrokenLinksOnce(
       reportCallbackError(
         `[withTree] parentId produced a "${kind}" link. The affected row(s) render as roots ` +
           'for this evaluation.',
-        undefined
+        undefined,
       );
     }
   });
@@ -98,7 +98,7 @@ interface NestContext<TRow> {
 // other row in this same pool declares this row as its parent."
 function nestFlatPool<TRow>(
   poolNodes: readonly RowNode<TRow>[],
-  ctx: NestContext<TRow>
+  ctx: NestContext<TRow>,
 ): readonly RowNode<TRow>[] {
   if (poolNodes.length === 0) {
     return [];
@@ -151,7 +151,7 @@ function nestFlatPool<TRow>(
 // is emitted only once, nested beneath its resolved parent.
 function nestFlatSiblings<TRow>(
   siblings: readonly RenderNode<TRow>[],
-  ctx: NestContext<TRow>
+  ctx: NestContext<TRow>,
 ): readonly RenderNode<TRow>[] {
   const poolNodes = siblings.filter(isRowNode);
   const nested = nestFlatPool(poolNodes, ctx);
@@ -176,7 +176,7 @@ function nestFlatSiblings<TRow>(
 // alone needs to tell a throw apart from a declared root to name `parentId` in the message.
 export function buildFlatTreeStage<TRow>(
   trackBy: TrackByFn<TRow>,
-  config: WithTreeConfig<TRow>
+  config: WithTreeConfig<TRow>,
 ): RenderNodeTransform<TRow> {
   const parentId = config.parentId!;
   return (nodes) => {
@@ -186,7 +186,7 @@ export function buildFlatTreeStage<TRow>(
       (row) => parentId(row) ?? null,
       parentIdReported,
       '[withTree] parentId threw. The affected row(s) render as roots for this evaluation.',
-      null
+      null,
     );
 
     const ctx: NestContext<TRow> = {

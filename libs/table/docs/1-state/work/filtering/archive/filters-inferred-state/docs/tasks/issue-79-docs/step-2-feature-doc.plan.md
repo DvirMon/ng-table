@@ -8,15 +8,15 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                   | Action                                            |
+| ------------------------------------------------------ | ------------------------------------------------- |
 | `libs/shared/table/docs/1-state/features/filtering.md` | edit — verify the config, fix two stale sentences |
 
 ## Why This Step Exists
 
 This document was already rewritten to v3.0 when the decoupling landed (`#71`, ADR-0016), so the
 body is expected to be correct: `WithFilteringConfig<TRow>` is `predicates` plus `manual`, and the
-feature names no filter type. The step exists to *confirm* that — the issue's acceptance criteria
+feature names no filter type. The step exists to _confirm_ that — the issue's acceptance criteria
 name it, and a check that finds nothing is a real result — and to fix the two places where the
 rewrite left the previous signature visible:
 
@@ -25,7 +25,7 @@ rewrite left the previous signature visible:
 - the superseded-decisions paragraph (~L153) still sends readers away from "the `TState` call-site
   rules", a phrase that describes something a reader can no longer find.
 
-Small edit, separate step, because it is the *feature's* document and Step 1 is the *model's*.
+Small edit, separate step, because it is the _feature's_ document and Step 1 is the _model's_.
 Nothing here depends on Step 1 landing — both are fixed by the architecture doc's signature.
 
 ## What To Do
@@ -36,6 +36,7 @@ Nothing here depends on Step 1 landing — both are fixed by the architecture do
    that is a code fact this issue does not own, and the architecture doc says nothing in that file
    changes.
 2. **Fix the composition snippet.** Move it to the array form and drop the explicit type argument:
+
    ```ts
    readonly filters = createFilters(this.data, (path) => [
      equals(path.status),
@@ -48,8 +49,10 @@ Nothing here depends on Step 1 landing — both are fixed by the architecture do
      withFiltering({ predicates: () => [this.filters().matcher()] }),
    );
    ```
+
    The `this.data` carrier appearing in both calls is the point worth one clause: the table reads
    the rows, `createFilters` only takes the row type from them.
+
 3. **Fix the superseded-decisions paragraph.** The sentence ending "or the `TState` call-site
    rules describes a shape that no longer exists" needs its middle term replaced — those rules are
    gone from every living document as of this issue, so pointing at them by name sends a reader
@@ -92,4 +95,5 @@ Nothing here depends on Step 1 landing — both are fixed by the architecture do
 - [ ] Links to `../filters.md` and `../../adr/0016-*.md` resolve
 
 ---
+
 ← [Step 1: Rewrite the filters spec](step-1-filters-spec.plan.md) | [Step 3: Mark the decision record](step-3-decision-record.plan.md) →

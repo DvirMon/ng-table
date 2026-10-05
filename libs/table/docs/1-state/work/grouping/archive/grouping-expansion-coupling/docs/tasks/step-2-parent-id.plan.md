@@ -9,10 +9,10 @@ additive — nothing reads the field yet.
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/api/types.ts` | edit — add `parentId?: RowId` to `RenderRow` |
-| `libs/shared/table/src/engine/grouping.ts` | edit — `emitGroupRows` stamps it on nested headers and leaves |
+| File                                                   | Action                                                            |
+| ------------------------------------------------------ | ----------------------------------------------------------------- |
+| `libs/shared/table/src/api/types.ts`                   | edit — add `parentId?: RowId` to `RenderRow`                      |
+| `libs/shared/table/src/engine/grouping.ts`             | edit — `emitGroupRows` stamps it on nested headers and leaves     |
 | `libs/shared/table/src/api/features/with-expansion.ts` | edit — `expandRow` / `toChildRenderRow` stamp it on tree children |
 
 ## Why This Step Exists
@@ -22,7 +22,7 @@ producers before anything consumes it keeps the change reviewable on its own: th
 provably behavior-neutral, because no code path branches on the new field.
 
 Independent of Step 1 — D1 fixes the field's shape, and the ADR's open questions are all about the
-*prune*, none about the field.
+_prune_, none about the field.
 
 ## What To Do
 
@@ -106,4 +106,5 @@ has taken a wrong turn.
 - [ ] `nx run shared-table:typecheck` clean — template-aware; re-run after fixing any `.ts` error, since `ngc` aborts before the template phase.
 
 ---
+
 ← [Step 1: ADR-0017](step-1-adr.plan.md) | [Step 3: `collapsedRows` slot](step-3-collapsed-rows-slot.plan.md) →

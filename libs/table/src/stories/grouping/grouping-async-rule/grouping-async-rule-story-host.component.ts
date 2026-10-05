@@ -49,12 +49,12 @@ export class GroupingAsyncRuleStoryHostComponent {
           onSuccess: (preference) => preference.groupByRep,
           onError: () => false,
         }),
-    })
+    }),
   );
 
   protected readonly asyncRuleStatus = computed(() => this.asyncRuleResource?.status() ?? 'idle');
 
   protected readonly isGroupingRulePending = computed(
-    () => this.asyncRuleResource?.isLoading() ?? false
+    () => this.asyncRuleResource?.isLoading() ?? false,
   );
 }

@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — mutations/update-grouping.ts"
+title: 'Step 3 — mutations/update-grouping.ts'
 type: task-step
 issue: 6
 ---
@@ -44,18 +44,13 @@ functions, each returning a `GroupingUpdater<TRow>` closure, no shared internal 
 import type { ColumnId, GroupingUpdater } from '../api/types';
 
 /** Replaces the full ordered level list. */
-export function setGroupLevels<TRow>(
-  levels: ColumnId<TRow>[]
-): GroupingUpdater<TRow> {
+export function setGroupLevels<TRow>(levels: ColumnId<TRow>[]): GroupingUpdater<TRow> {
   return () => levels as string[];
 }
 
 /** Appends (or inserts at `index`) a level. Already-present id is a no-op — a level can only
  * be active once. */
-export function addGroupLevel<TRow>(
-  id: ColumnId<TRow>,
-  index?: number
-): GroupingUpdater<TRow> {
+export function addGroupLevel<TRow>(id: ColumnId<TRow>, index?: number): GroupingUpdater<TRow> {
   return (grouping) => {
     if (grouping.includes(id as string)) {
       return grouping;
@@ -67,22 +62,16 @@ export function addGroupLevel<TRow>(
 }
 
 /** Removes a level by id. Id not present is a no-op. */
-export function removeGroupLevel<TRow>(
-  id: ColumnId<TRow>
-): GroupingUpdater<TRow> {
+export function removeGroupLevel<TRow>(id: ColumnId<TRow>): GroupingUpdater<TRow> {
   return (grouping) => grouping.filter((level) => level !== (id as string));
 }
 
 /** Moves the level at `from` to `to`. Out-of-range indices are a no-op — never throws (this is
  * a runtime write path, not construction-time config; D14's throw/degrade split does not apply
  * to index bounds, only to column ids). */
-export function reorderGroupLevels<TRow>(
-  from: number,
-  to: number
-): GroupingUpdater<TRow> {
+export function reorderGroupLevels<TRow>(from: number, to: number): GroupingUpdater<TRow> {
   return (grouping) => {
-    const inBounds =
-      from >= 0 && from < grouping.length && to >= 0 && to < grouping.length;
+    const inBounds = from >= 0 && from < grouping.length && to >= 0 && to < grouping.length;
     if (!inBounds) {
       return grouping;
     }
@@ -96,6 +85,7 @@ export function reorderGroupLevels<TRow>(
 
 Write `update-grouping.spec.ts` calling each factory directly against plain `string[]` inputs —
 no store, no `createTable()` needed (mirrors `mutations/update-columns.spec.ts`'s style). Cover:
+
 - `setGroupLevels` replaces wholesale.
 - `addGroupLevel` appends by default, inserts at `index` when given, no-ops when the id is
   already present.
@@ -112,7 +102,7 @@ no store, no `createTable()` needed (mirrors `mutations/update-columns.spec.ts`'
 - `ColumnId<TRow>` values are cast to `string` at the boundary (`as string`) — same pattern
   `ColumnDefInput`/`setColumns` already accept string ids without re-deriving a narrower type.
   Not a bare unchecked assertion in the sense `typescript-conventions.md` warns against: `string
-  & {}` in `ColumnId<TRow>`'s definition already collapses to `string` structurally, this is a
+& {}` in `ColumnId<TRow>`'s definition already collapses to `string` structurally, this is a
   widening cast, not a narrowing one.
 
 ## Risks / Watchouts
@@ -127,7 +117,7 @@ no store, no `createTable()` needed (mirrors `mutations/update-columns.spec.ts`'
 - No `groupingRule`/rules-array/schema-fn config layer (#26) — these four are the entire write
   surface for this issue.
 - No validation against a live `columns` list here — an updater is a pure `string[] =>
-  string[]` function with no store access; the unknown-id degrade (D14) happens downstream, in
+string[]` function with no store access; the unknown-id degrade (D14) happens downstream, in
   the pipeline/render stages (Step 1/2), not in the updater itself.
 
 ## Acceptance Checks
@@ -141,4 +131,5 @@ no store, no `createTable()` needed (mirrors `mutations/update-columns.spec.ts`'
 - [ ] `tsc --noEmit` passes; `update-grouping.spec.ts` passes under plain `vitest`.
 
 ---
+
 ← [Step 2: Render-stage group headers + aggregates](step-2-render-stage-aggregates.plan.md) | [Step 4: with-grouping.ts feature plugin + barrel export](step-4-with-grouping-feature.plan.md) →

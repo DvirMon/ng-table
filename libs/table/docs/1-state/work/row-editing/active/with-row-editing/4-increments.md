@@ -10,7 +10,7 @@ parent: ./2-decisions.md
 
 Purpose: break the row-editing cluster into slices that each ship something usable, instead of
 holding everything behind a complete design. Each slice names its dependencies and the open
-questions that genuinely block it — as opposed to open questions that merely *touch* it.
+questions that genuinely block it — as opposed to open questions that merely _touch_ it.
 
 ## The finding that reorders everything
 
@@ -19,10 +19,10 @@ questions that genuinely block it — as opposed to open questions that merely *
 
 So several open questions cannot be worked at all, and are not blocking anything:
 
-| Open | Needs | Status |
-|---|---|---|
-| D25 filter retention, **O15**, **O16** | `withFiltering()` | **phantom** — nothing to exempt a row from |
-| **O17** validation scope | filtering or pagination | **phantom** — every row is visible today |
+| Open                                   | Needs                   | Status                                     |
+| -------------------------------------- | ----------------------- | ------------------------------------------ |
+| D25 filter retention, **O15**, **O16** | `withFiltering()`       | **phantom** — nothing to exempt a row from |
+| **O17** validation scope               | filtering or pagination | **phantom** — every row is visible today   |
 
 These are not hard problems being deferred. They are problems that do not exist yet. Re-open them
 when the stage they depend on is built, and re-derive them then — the decisions recorded now are
@@ -62,7 +62,7 @@ decisions for the add flow.
 **Open questions blocking it:** none.
 
 **Scope:** no library code. One demo component in `apps/demo/` proving the pattern end to end, and
-the state-layer spec section presenting it as *the* starting point:
+the state-layer spec section presenting it as _the_ starting point:
 
 ```ts
 readonly data  = signal<Person[]>(people);
@@ -122,7 +122,7 @@ a row is open and the snapshot goes stale. Genuinely blocking, but cheap: pick a
 
 ---
 
-## E2b — The gated editing demo *(shipped 2026-08-25)*
+## E2b — The gated editing demo _(shipped 2026-08-25)_
 
 **Ships:** the counterpart to E2 — a table where rows render text until Edit opens them, plus the
 blank-row add flow and optimistic save. This is where D28's call order and D31's `pending` map are
@@ -139,7 +139,7 @@ showing the minimal table.
 
 ---
 
-## E5 — `editableRow()` schema fragment *(optional, any time after E2)*
+## E5 — `editableRow()` schema fragment _(optional, any time after E2)_
 
 **Ships:** the commit boundary as one call instead of per-column discipline.
 
@@ -151,7 +151,7 @@ writing the demo reveals. If `applyEach` + two `debounce` lines reads fine, O19 
 
 ---
 
-## E5' — `*ngpTableRowField` directive *(optional, any time after E2, independent of E5)*
+## E5' — `*ngpTableRowField` directive _(optional, any time after E2, independent of E5)_
 
 **Ships:** folds E2's `@if (row.sourceIndex !== undefined) { @let field = rows[row.sourceIndex]; }`
 into one structural directive line.
@@ -172,7 +172,7 @@ secondary barrel), `tsconfig.base.json` path entry, colocated spec, a standalone
 
 ---
 
-## E6 — Sort staleness *(design incomplete)*
+## E6 — Sort staleness _(design incomplete)_
 
 **Ships:** a signal telling the consumer the sort no longer reflects the data, so they can render
 their own re-sort affordance.
@@ -184,12 +184,12 @@ their own re-sort affordance.
 1. The granularity question was interrupted and never answered — `staleRows: Signal<Set<RowId>>`
    with `sortStale` derived from it, versus a boolean alone.
 2. Holding rows in place while `data` changes means the sort stage can no longer compare live
-   values — it must apply a *captured order* (an ordering key per row id, recomputed only when the
+   values — it must apply a _captured order_ (an ordering key per row id, recomputed only when the
    sort is re-applied). That is a different `withSorting()` than the one that exists, and it is
    undesigned. It may also subsume insertion-at-a-display-position, which is why it deserves a real
    design pass rather than a patch.
 
-**Note the tension with D24:** under `debounce('blur')` a committed edit *does* move the row, which
+**Note the tension with D24:** under `debounce('blur')` a committed edit _does_ move the row, which
 is the behavior chosen for grouping. E6 exists because sorting was chosen to hold position instead.
 Confirm that preference still holds after E2 shows the movement in a real demo — it may not survive
 contact, in which case E6 disappears entirely.

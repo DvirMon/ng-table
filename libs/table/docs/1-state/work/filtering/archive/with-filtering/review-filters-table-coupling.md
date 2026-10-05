@@ -13,10 +13,10 @@ Question asked: can `createFilters` stand alone (future standalone lib), and can
 
 ## Verdict
 
-| Direction | State |
-|---|---|
-| `createFilters` → table | **Already clean.** Nothing to fix. |
-| `withFiltering` → `createFilters` | **Coupled, hard.** Type import *and* a private-symbol runtime channel. |
+| Direction                         | State                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------- |
+| `createFilters` → table           | **Already clean.** Nothing to fix.                                     |
+| `withFiltering` → `createFilters` | **Coupled, hard.** Type import _and_ a private-symbol runtime channel. |
 
 ## Direction A — `createFilters` is already standalone
 
@@ -35,7 +35,7 @@ extractable as-is. Two residual (non-blocking) notes:
   If standalone is a real trajectory, move the closure to `src/filters/` — a sibling of `api/`,
   `engine/`, `directives/` — so the seam is visible before it is cut.
 - **Angular DI, not framework-free.** `inject(Injector)` + `runInInjectionContext` mean
-  "standalone lib" = standalone *Angular* lib. Fine, just scope the ambition accordingly.
+  "standalone lib" = standalone _Angular_ lib. Fine, just scope the ambition accordingly.
 - Shared barrel: `index.ts` currently exports `createFilters`, `rules`, `matchers`, `Filters`,
   `FilterNode`, `FilterOptions`. That block is the future package's public surface — it splits
   cleanly, but the table barrel's "only definition of the consumer surface" comment needs a
@@ -46,8 +46,8 @@ extractable as-is. Two residual (non-blocking) notes:
 [with-filtering.ts:2-4](../../../../src/api/features/with-filtering.ts:2)
 
 ```ts
-import { createFilterEvaluator } from '../create-filters';   // runtime
-import type { Filters } from '../filters.types';             // typing  ← the stated violation
+import { createFilterEvaluator } from '../create-filters'; // runtime
+import type { Filters } from '../filters.types'; // typing  ← the stated violation
 ```
 
 1. **Type import.** `WithFilteringConfig.filters: Filters<TRow, TState>` makes the filters model
@@ -55,7 +55,7 @@ import type { Filters } from '../filters.types';             // typing  ← the 
 2. **Private side channel — the harder one.** `createFilterEvaluator` reads `FILTERS_INTERNAL`,
    a `unique symbol` stamped onto the object by `createFilters()` itself
    ([evaluator.ts:6](../../../../src/api/filters/evaluator.ts:6)). So it is not merely "typed to
-   `Filters`" — it *only works* on an object `createFilters` built. No structural escape hatch
+   `Filters`" — it _only works_ on an object `createFilters` built. No structural escape hatch
    exists today.
 3. **Knock-on complexity.** The whole `TState` generic apparatus on `WithFilteringConfig` — plus
    the two documented call-site landmines (`TState` must be a `type` not an `interface`; never
@@ -67,7 +67,7 @@ import type { Filters } from '../filters.types';             // typing  ← the 
 The `filter` stage needs exactly one thing, re-derived per pass:
 
 ```ts
-(row: TRow) => boolean
+(row: TRow) => boolean;
 ```
 
 Everything else — criteria, keys, `active()`, `dirty()`, `reset()`, empty-skipping, anyOf OR
@@ -95,8 +95,8 @@ filters object, e.g. `filters().matcher(): (row: TRow) => boolean`. `FILTERS_INT
 **Consumer wires the two:**
 
 ```ts
-withFiltering({ predicate: () => this.filters().matcher() })   // createFilters user
-withFiltering({ predicate: () => (row) => row.status === this.status() })  // anyone else
+withFiltering({ predicate: () => this.filters().matcher() }); // createFilters user
+withFiltering({ predicate: () => (row) => row.status === this.status() }); // anyone else
 ```
 
 Cost: one lambda vs. today's `{ filters }`. Bridge direction becomes consumer → both libs,
@@ -112,7 +112,7 @@ function. Add it later only if the boilerplate actually bites.
 ## Follow-on work the change implies
 
 - **Error policy moves, and a new one appears.** ADR-0014's per-filter/per-evaluation dedup
-  follows the predicates into the filters lib (correct — it owns them). But a *raw consumer*
+  follows the predicates into the filters lib (correct — it owns them). But a _raw consumer_
   predicate can now throw, and nothing catches it. `withFiltering` must degrade at the stage
   level: catch around the pass, report once, return rows unnarrowed. Do **not** wrap per row —
   that yields a half-filtered set and puts a `try` in the hot loop.

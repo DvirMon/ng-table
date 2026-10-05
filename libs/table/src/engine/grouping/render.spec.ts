@@ -28,12 +28,11 @@ function orderWithAmountColumn(col: ColumnBuilder<OrderWithAmount>, id: string) 
 function makeAmountColumns(ids: string[]): ColumnDef<OrderWithAmount>[] {
   return resolveColumnDefs(
     [
-      ...createColumns(
-        noData<OrderWithAmount>(),
-        (col) => ids.map((id) => orderWithAmountColumn(col, id))
+      ...createColumns(noData<OrderWithAmount>(), (col) =>
+        ids.map((id) => orderWithAmountColumn(col, id)),
       ).columns,
     ],
-    'render.spec'
+    'render.spec',
   );
 }
 
@@ -52,7 +51,7 @@ function toSeedRenderRows<TRow extends { id: number }>(rows: TRow[]): RenderNode
  *  can't just filter the top-level array. */
 function collectGroupHeaders<TRow>(nodes: readonly RenderNode<TRow>[]): RenderNode<TRow>[] {
   return nodes.flatMap((node) =>
-    node.kind === 'group' ? [node, ...collectGroupHeaders(node.children)] : []
+    node.kind === 'group' ? [node, ...collectGroupHeaders(node.children)] : [],
   );
 }
 
@@ -72,7 +71,9 @@ describe('buildGroupRenderRows', () => {
   });
 
   it("throws when grouping receives a row whose data is already null — render anchor 'group' must run before any stage that synthesizes rows", () => {
-    const seed: RenderNode<Order>[] = [{ id: 'synthetic', kind: 'group', data: null, children: [] }];
+    const seed: RenderNode<Order>[] = [
+      { id: 'synthetic', kind: 'group', data: null, children: [] },
+    ];
 
     let message = '';
     try {
@@ -137,9 +138,7 @@ describe('buildGroupRenderRows', () => {
     const usRows = result.filter((row) => row.kind === 'row');
     expect(usRows).toHaveLength(3);
     expect(usRows.every((row) => row.data?.region === 'US')).toBe(true);
-    expect(result.some((row) => row.kind === 'group' && row.groupKey?.value === 'US')).toBe(
-      false
-    );
+    expect(result.some((row) => row.kind === 'group' && row.groupKey?.value === 'US')).toBe(false);
   });
 
   it('D2: a header carries no hasChildren — children is what a header exposes now', () => {
@@ -173,7 +172,7 @@ describe('buildGroupRenderRows', () => {
     });
 
     const usHeader = collectGroupHeaders(result).find(
-      (row) => row.groupKey?.columnId === 'region' && row.groupKey.value === 'US'
+      (row) => row.groupKey?.columnId === 'region' && row.groupKey.value === 'US',
     )!;
     expect(usHeader.aggregates?.['amount']).toBeCloseTo((10 + 20 + 100) / 3);
     expect(usHeader.aggregates?.['amount']).not.toBeCloseTo((15 + 100) / 2);
@@ -340,12 +339,20 @@ describe('buildGroupRenderRows', () => {
 
 describe('buildGroupRenderRows with treeLinks', () => {
   it("with treeLinks, a header holds its root's whole subtree and aggregateFn receives every node in it (D15)", () => {
-    const result = buildGroupRenderRows(toSeedRenderRows(treeOrders), ['region'], treeOrderColumns, {
-      ...treeOrderLinks,
-      aggregateByColumn: new Map([['id', (rows: { id: number }[]) => rows.map((r) => r.id)]]),
-    });
+    const result = buildGroupRenderRows(
+      toSeedRenderRows(treeOrders),
+      ['region'],
+      treeOrderColumns,
+      {
+        ...treeOrderLinks,
+        aggregateByColumn: new Map([['id', (rows: { id: number }[]) => rows.map((r) => r.id)]]),
+      },
+    );
 
-    expect(result.map((node) => node.id)).toEqual(['group:>region:string:US', 'group:>region:string:EU']);
+    expect(result.map((node) => node.id)).toEqual([
+      'group:>region:string:US',
+      'group:>region:string:EU',
+    ]);
     const [us, eu] = result;
     expect(us.children.map((n) => n.id)).toEqual([1, 3, 4, 5]);
     expect(us.aggregates?.['id']).toEqual([1, 3, 4, 5]);

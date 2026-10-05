@@ -24,18 +24,18 @@ spec: none | stub | drafted | drilled
 code: none | partial | shipped
 ```
 
-| `spec:` | Meaning |
-|---|---|
-| `none` | No spec file exists |
-| `stub` | File exists, placeholder only — today's "not yet drilled" |
+| `spec:`   | Meaning                                                        |
+| --------- | -------------------------------------------------------------- |
+| `none`    | No spec file exists                                            |
+| `stub`    | File exists, placeholder only — today's "not yet drilled"      |
 | `drafted` | Full spec written, never validated through a decisions session |
-| `drilled` | Been through a grill/decisions session; contract settled |
+| `drilled` | Been through a grill/decisions session; contract settled       |
 
-| `code:` | Meaning |
-|---|---|
-| `none` | Nothing in `src/` |
+| `code:`   | Meaning                      |
+| --------- | ---------------------------- |
+| `none`    | Nothing in `src/`            |
 | `partial` | Some of the spec implemented |
-| `shipped` | Spec fully implemented |
+| `shipped` | Spec fully implemented       |
 
 The prose that used to live in `status:` is not lost — it moves into the body,
 where it was always more readable anyway.
@@ -49,21 +49,21 @@ partial`. Collapsing either into one word discards the half you needed.
 
 Settled here so C, D and E do not each re-derive them.
 
-| File | `spec:` | `code:` | Was |
-|---|---|---|---|
-| `1-state/features/sorting.md` | `drilled` | `shipped` | `drafted` |
-| `1-state/features/row-editing.md` | `drilled` | `shipped` | long prose |
-| `1-state/features/expansion.md` | `drilled` | `partial` | `shipped — …not yet implemented` |
-| `1-state/features/grouping.md` | `drafted` | `none` | `drafted` |
-| `1-state/features/filtering.md` | `drafted` | `none` | `drafted` |
-| `1-state/features/virtual-scroll.md` | `drafted` | `none` | `drafted — not yet fully specced` |
-| `1-state/features/selection.md` | `stub` | `none` | `not yet drilled` |
-| `1-state/features/pagination.md` | `stub` | `none` | `not yet drilled` |
-| `1-state/features/drag-drop.md` | `stub` | `none` | `not yet drilled` |
-| `1-state/features/infinite-scroll.md` | `stub` | `none` | `not yet drilled` |
-| `1-state/features/column-sizing.md` *(new)* | `drafted` | `none` | — |
-| `1-state/features/column-pinning.md` *(new)* | `drafted` | `none` | — |
-| `1-state/state-persistence.md` *(new)* | `drafted` | `none` | — |
+| File                                         | `spec:`   | `code:`   | Was                               |
+| -------------------------------------------- | --------- | --------- | --------------------------------- |
+| `1-state/features/sorting.md`                | `drilled` | `shipped` | `drafted`                         |
+| `1-state/features/row-editing.md`            | `drilled` | `shipped` | long prose                        |
+| `1-state/features/expansion.md`              | `drilled` | `partial` | `shipped — …not yet implemented`  |
+| `1-state/features/grouping.md`               | `drafted` | `none`    | `drafted`                         |
+| `1-state/features/filtering.md`              | `drafted` | `none`    | `drafted`                         |
+| `1-state/features/virtual-scroll.md`         | `drafted` | `none`    | `drafted — not yet fully specced` |
+| `1-state/features/selection.md`              | `stub`    | `none`    | `not yet drilled`                 |
+| `1-state/features/pagination.md`             | `stub`    | `none`    | `not yet drilled`                 |
+| `1-state/features/drag-drop.md`              | `stub`    | `none`    | `not yet drilled`                 |
+| `1-state/features/infinite-scroll.md`        | `stub`    | `none`    | `not yet drilled`                 |
+| `1-state/features/column-sizing.md` _(new)_  | `drafted` | `none`    | —                                 |
+| `1-state/features/column-pinning.md` _(new)_ | `drafted` | `none`    | —                                 |
+| `1-state/state-persistence.md` _(new)_       | `drafted` | `none`    | —                                 |
 
 `sorting.md` is promoted `drafted` → `drilled`: it carries ADR-0001, a settled
 null-ordering contract, and D-numbered decisions. Its old `drafted` value was
@@ -77,7 +77,7 @@ already says so.
 
 ## D2 — A `capability:` field pairs the same feature across layers
 
-The roll-up must answer "where is selection?" across state *and* UI in one row.
+The roll-up must answer "where is selection?" across state _and_ UI in one row.
 Selection today is `1-state/features/selection.md` (stub) plus
 `3-ui/directives/selection.md` (stub) — two files, no declared relationship.
 
@@ -100,7 +100,7 @@ Capability slugs: `sorting`, `filtering`, `grouping`, `selection`, `expansion`,
 
 ## D3 — Only feature-scoped specs carry the axes
 
-The axes describe *a capability's* maturity. Architecture, PRD and reference
+The axes describe _a capability's_ maturity. Architecture, PRD and reference
 docs do not have a "code" state, so forcing the fields on them would produce
 meaningless rows in the roll-up.
 
@@ -158,7 +158,7 @@ both parallel-safe.
 - `docs/1-state/state-persistence.md`
 
 **Placement rationale for the third:** persistence is a sibling of
-`row-mutations.md`, *not* under `features/`, because it is cross-feature rather
+`row-mutations.md`, _not_ under `features/`, because it is cross-feature rather
 than a `with-*()` plugin — the same reasoning D8 used to keep row mutations out
 of `features/`. Persistence serialises sort + columns + filters + pagination as
 one object; it is not one plugin's state.

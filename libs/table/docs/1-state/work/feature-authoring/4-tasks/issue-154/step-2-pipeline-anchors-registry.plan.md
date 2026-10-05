@@ -6,6 +6,7 @@ depends_on: []
 files:
   - libs/table/src/engine/pipeline.ts (edit)
 ---
+
 # Step 2 — Pipeline anchors + registry
 
 This step renames `PIPELINE_ORDER` to `PIPELINE_ANCHORS`,
@@ -35,12 +36,16 @@ ADR-0020)
 
 ```ts
 // before
-export const PIPELINE_ORDER = ['filter','group','sort','expand'] as const;
+export const PIPELINE_ORDER = ['filter', 'group', 'sort', 'expand'] as const;
 export type PipelineStage = (typeof PIPELINE_ORDER)[number];
 
 // after
 export const PIPELINE_ANCHORS = ['filter', 'group', 'sort'] as const;
-export interface PipelineStageRegistry { filter: true; group: true; sort: true }
+export interface PipelineStageRegistry {
+  filter: true;
+  group: true;
+  sort: true;
+}
 export type PipelineStage = keyof PipelineStageRegistry & string;
 ```
 
@@ -60,8 +65,8 @@ keyed lookup and reduces over the anchor array, just reading
   `PIPELINE_ANCHORS` in the import and the first test's title/
   assertion, drop the `stages.expand = ...` line from that test,
   keep the other three tests (`threads each stage output into
-  the next`, `skips unregistered stages`, `is a pass-through
-  with no stages registered`) unchanged.
+the next`, `skips unregistered stages`, `is a pass-through
+with no stages registered`) unchanged.
 - Add `engine/pipeline.types.spec.ts` (new):
   `expectTypeOf<PipelineStage>().toEqualTypeOf<'filter' | 'group' | 'sort'>()`
   — pins the registry-derived key type and confirms `'expand'`
@@ -83,4 +88,5 @@ keyed lookup and reduces over the anchor array, just reading
   no `'expand'`.
 
 ---
+
 ← [Step 1: Stage authoring surface](step-1-stage-authoring-surface.plan.md) | [Step 3: Render-stage anchors + registry](step-3-render-stage-anchors-registry.plan.md) →

@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — selection/fixtures/schema.ts: multi and single table configs"
+title: 'Step 1 — selection/fixtures/schema.ts: multi and single table configs'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: B
@@ -40,7 +40,7 @@ Export two `TableConfig<SelectionRow>` values plus the shared column list (`name
 1. `multiSelectionConfig` — for Step 2, consumed with
    `withSelection({ enableRowSelection: (row) => !row.locked })`.
 2. `singleSelectionConfig` — for Step 3, consumed with `withSelection({ enableMultiRowSelection:
-   false })`. A construction-time path, not an argument — which is why it is a second config and a
+false })`. A construction-time path, not an argument — which is why it is a second config and a
    second story rather than a toggle.
 
 `trackBy: 'id'` on both.
@@ -70,4 +70,5 @@ Export two `TableConfig<SelectionRow>` values plus the shared column list (`name
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 [Step 2: multi-selection/](step-2-multi-selection-story.plan.md) →

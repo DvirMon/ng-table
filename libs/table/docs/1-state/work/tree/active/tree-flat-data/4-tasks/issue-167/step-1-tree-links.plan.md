@@ -7,6 +7,7 @@ files:
   - libs/table/src/engine/tree-links.ts (new)
   - libs/table/src/engine/tree-links.spec.ts (new)
 ---
+
 # Step 1 — `tree-links`: resolve parent links, degrade broken ones
 
 This step adds a pure engine helper that maps every row to its
@@ -32,11 +33,12 @@ Decisions: [D4](../../1-decisions.md), [D12](../../1-decisions.md), [ADR-0014](.
 
   export function resolveTreeLinks<TRow>(
     rows: readonly TRow[],
-    ctx: { parentOf: ParentLink<TRow>; trackBy: TrackByFn<TRow> }
+    ctx: { parentOf: ParentLink<TRow>; trackBy: TrackByFn<TRow> },
   ): TreeLinks;
   ```
 
   Object-param shape matches `resolveIndex` in `engine/rows.ts`.
+
 - Resolve each row's parent over the given row list. A
   self-parent, a parent id absent from the list, or a cycle
   (the first row of the cycle in input order) maps that row to
@@ -68,4 +70,5 @@ Decisions: [D4](../../1-decisions.md), [D12](../../1-decisions.md), [ADR-0014](.
 - [ ] The eight seams in `step-1-tree-links.test-plan.md` pass.
 
 ---
+
 [Step 2: `withTree({ parentId })` nests flat rows](step-2-with-tree-parent-id.plan.md) →

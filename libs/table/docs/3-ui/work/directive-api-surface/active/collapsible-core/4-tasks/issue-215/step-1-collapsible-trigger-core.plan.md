@@ -6,6 +6,7 @@ depends_on: []
 files:
   - libs/table/src/directives/ngp-table-collapsible-trigger.directive.ts (new)
 ---
+
 # Step 1 — The collapsible trigger core
 
 Adds the internal selectorless core directive that owns the shared trigger bindings.
@@ -50,4 +51,5 @@ export abstract class NgpTableCollapsibleTrigger {
 - [ ] `libs/table/src/index.ts` has no export for it.
 
 ---
+
 [Step 2: Drop the nameless-toggle warning](step-2-drop-nameless-warning.plan.md) →

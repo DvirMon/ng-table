@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — api/features/compose-features.ts + index.ts: composeFeatures()"
+title: 'Step 2 — api/features/compose-features.ts + index.ts: composeFeatures()'
 type: task-step
 issue: 71
 ---
@@ -51,7 +51,6 @@ way the engine fold does, then hands the engine a single spec.
 
 2. **`foldInnerFeatures(features, input)`** — a named helper in the same file, returning
    `TableFeatureSpec<unknown, Record<string, unknown>>`:
-
    - **Registry.** `const registry = new SlotRegistry(); registry.claimCoreMembers();`
      (`SlotRegistry`, `describeInnerFeature` from `../../engine/slots`). Per composite call,
      so inner-vs-inner collisions are detected here — otherwise the merge below would
@@ -63,16 +62,11 @@ way the engine fold does, then hands the engine a single spec.
      `computed()` still sees every later outer slot (spec "types are stricter than runtime").
      Same seam as `createTableFeature`'s `blockInput`.
    - **Loop** over `features` with `index`; `label = describeInnerFeature(index + 1,
-     feature.displayName)`; `spec = feature(innerStore)`. For each spec:
-     - `stages`: for `stage of PIPELINE_ORDER` (from `../../engine/pipeline`) with a
-       transform — `registry.claimStage(stage, label)`, then set on the accumulating
-       `stages` object.
-     - `renderStages`: same with `RENDER_ORDER` (`../../engine/render-stages`) and
-       `claimRenderStage`.
-     - `members`: `registry.claimMember(key, label)` per key; assign onto both the
-       accumulating `members` object and `innerStore`.
-     - `columnRules`: push onto an accumulating array (additive — never claimed, ADR-0010).
-     - `setup` / `onDestroy` / `onRowsRemoved`: push onto three arrays.
+feature.displayName)`; `spec = feature(innerStore)`. For each spec: - `stages`: for `stage of PIPELINE_ORDER` (from `../../engine/pipeline`) with a
+     transform — `registry.claimStage(stage, label)`, then set on the accumulating
+     `stages` object. - `renderStages`: same with `RENDER_ORDER` (`../../engine/render-stages`) and
+     `claimRenderStage`. - `members`: `registry.claimMember(key, label)` per key; assign onto both the
+     accumulating `members` object and `innerStore`. - `columnRules`: push onto an accumulating array (additive — never claimed, ADR-0010). - `setup` / `onDestroy` / `onRowsRemoved`: push onto three arrays.
    - **Return** a spec that sets a key **only when it has content**: `members` always;
      `stages` / `renderStages` only if at least one was claimed; `columnRules` only if
      non-empty; each hook only if its array is non-empty, as one function that runs the
@@ -139,4 +133,5 @@ way the engine fold does, then hands the engine a single spec.
 - [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` passes.
 
 ---
+
 ← [Step 1: engine/slots.ts — describeInnerFeature()](step-1-slots-inner-feature-label.plan.md) | [Step 3: compose-features.spec.ts — runtime](step-3-compose-features-spec-runtime.plan.md) →

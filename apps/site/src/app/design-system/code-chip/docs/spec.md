@@ -5,18 +5,26 @@ atomic: Atom
 spec: specs/Inline Code Chip.md
 frame: components/Inline Code Chip.dc.html
 owns:
-  - "Inline <code> run inside prose: mono type, chip bg, tight radius + padding"
+  - 'Inline <code> run inside prose: mono type, chip bg, tight radius + padding'
 does_not_own:
-  - "Multi-line code — see Code Block.md"
+  - 'Multi-line code — see Code Block.md'
 depends_on:
-  - "foundations/Typography.md (typography)"
-  - "foundations/Color.md (color)"
-  - "foundations/Radius and Elevation.md (shape)"
+  - 'foundations/Typography.md (typography)'
+  - 'foundations/Color.md (color)'
+  - 'foundations/Radius and Elevation.md (shape)'
 states:
-  - "default"
-  - "inside a link (inherits accent)"
+  - 'default'
+  - 'inside a link (inherits accent)'
 a11y: []
-tokens: [--ngpt-sys-typescale-code, --ngpt-sys-space-050, --ngpt-sys-space-150, --ngpt-sys-shape-corner-extra-small, --ngpt-bg-code-chip, --ngpt-text-secondary]
+tokens:
+  [
+    --ngpt-sys-typescale-code,
+    --ngpt-sys-space-050,
+    --ngpt-sys-space-150,
+    --ngpt-sys-shape-corner-extra-small,
+    --ngpt-bg-code-chip,
+    --ngpt-text-secondary,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -34,25 +42,25 @@ Monospace text run set on a tinted background, used inline within paragraph copy
 
 ## Build spec
 
-| Property | Value | Token |
-|---|---|---|
-| Font | JetBrains Mono, 13px | `--ngpt-sys-typescale-code` |
-| Padding | 2px 6px | `--ngpt-sys-space-050 --ngpt-sys-space-150` |
-| Border radius | 4px | `--ngpt-sys-shape-corner-extra-small` |
-| Background | oklch(0.24 0.005 260) | `--ngpt-bg-code-chip` |
-| Text color | oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
-| Margin | none — inline within text flow | `—` |
+| Property      | Value                          | Token                                       |
+| ------------- | ------------------------------ | ------------------------------------------- |
+| Font          | JetBrains Mono, 13px           | `--ngpt-sys-typescale-code`                 |
+| Padding       | 2px 6px                        | `--ngpt-sys-space-050 --ngpt-sys-space-150` |
+| Border radius | 4px                            | `--ngpt-sys-shape-corner-extra-small`       |
+| Background    | oklch(0.24 0.005 260)          | `--ngpt-bg-code-chip`                       |
+| Text color    | oklch(0.85 0.01 260)           | `--ngpt-text-secondary`                     |
+| Margin        | none — inline within text flow | `—`                                         |
 
 ## API
 
 Attribute-hosted on the consumer's own `<code>` element (ADR-0005) — no wrapper element ships.
 
-| | |
-|---|---|
-| Selector | `code[ngptCodeChip]` |
-| Inputs | none — projected code text only |
-| Outputs | none |
-| Host attributes | none |
+|                 |                                 |
+| --------------- | ------------------------------- |
+| Selector        | `code[ngptCodeChip]`            |
+| Inputs          | none — projected code text only |
+| Outputs         | none                            |
+| Host attributes | none                            |
 
 ```html
 <code ngptCodeChip>ng-primitives/table</code>

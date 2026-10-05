@@ -44,7 +44,7 @@ describe('declared stage name typing (#155)', () => {
     });
   });
 
-  it('carries the layer\'s merged key union onto a handle, not just its own anchor', () => {
+  it("carries the layer's merged key union onto a handle, not just its own anchor", () => {
     typecheckOnly(() => {
       stageSchema<Row>('render', (s) => {
         expectTypeOf(s.pin).toEqualTypeOf<

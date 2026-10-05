@@ -20,7 +20,7 @@ only presentation status.
 Rejected, on two grounds:
 
 **Position is view-only information.** Undoing a delete means restoring the row
-*where it was*. Its index in the current sorted/filtered/grouped order is a fact
+_where it was_. Its index in the current sorted/filtered/grouped order is a fact
 only the view holds — a consumer's store has a collection, not an ordering. A
 table that holds no restore point cannot make delete-rollback correct, only
 approximate.
@@ -31,9 +31,9 @@ mutation library to be useful has failed at the thing it is named after.
 
 ### The obligation this creates
 
-The genuine argument against was never *"the table shouldn't hold it"* — it was
-*"two layers must not both hold it."* That failure is symmetric: consumer-only
-and table-only are both correct; only *both* is broken, and it breaks silently
+The genuine argument against was never _"the table shouldn't hold it"_ — it was
+_"two layers must not both hold it."_ That failure is symmetric: consumer-only
+and table-only are both correct; only _both_ is broken, and it breaks silently
 (table restores V1, store restores V0, store's data flows back down, table
 renders V0 while believing it restored V1 — no error anywhere).
 
@@ -57,11 +57,11 @@ something to leave unhandled either.
 
 Three candidate representations of "what do we keep in order to undo":
 
-| | What is stored | Undo is |
-|---|---|---|
-| **Prior value** | the whole row + its index | put the copy back |
-| Inverse diff | the changed fields, reversed | merge the old fields in |
-| Replay log | the operation itself | drop it, reset to server data, re-run the rest |
+|                 | What is stored               | Undo is                                        |
+| --------------- | ---------------------------- | ---------------------------------------------- |
+| **Prior value** | the whole row + its index    | put the copy back                              |
+| Inverse diff    | the changed fields, reversed | merge the old fields in                        |
+| Replay log      | the operation itself         | drop it, reset to server data, re-run the rest |
 
 **Chosen: prior value.**
 
@@ -77,7 +77,7 @@ set on every server response, where a snapshot restore dirties one row.
 **Inverse diff rejected because it does not replace the prior-value form, it
 adds to it.** Delete has no inverse diff: there is no "reverse the fields" for a
 row that is gone, so delete falls back to storing the whole row and its position
-regardless. Choosing inverse diff therefore means maintaining *two*
+regardless. Choosing inverse diff therefore means maintaining _two_
 representations of "how to undo" permanently, in exchange for one benefit —
 concurrent writes to different fields of the same row not clobbering each other
 — which D3 rules out as a scenario. Its other advantage, a smaller stored value,
@@ -113,16 +113,16 @@ server until the next refetch.
 
 **Two things are separated here, and only one of them changes:**
 
-| | On incoming server data for an in-flight row |
-|---|---|
+|                     | On incoming server data for an in-flight row                           |
+| ------------------- | ---------------------------------------------------------------------- |
 | **Displayed value** | unchanged — the user's optimistic value stays until the write resolves |
-| **Held fallback** | replaced with the newer server value |
+| **Held fallback**   | replaced with the newer server value                                   |
 
 So a failed write lands on current truth rather than on a value that no longer
 exists anywhere. The user's edit is lost, which is correct — it failed — but what
 replaces it is real.
 
-The display deliberately does *not* jump mid-flight. An optimistic value that
+The display deliberately does _not_ jump mid-flight. An optimistic value that
 flickers to a third party's value while the user's own save is still pending is
 worse than either endpoint.
 
@@ -146,17 +146,17 @@ D4's default, not as the default itself.
 ## D5 — The restore point is tagged with the operation it undoes
 
 D2's "prior row + position" covers update and delete. Create breaks it: there is
-no prior row, because the row did not exist. Undoing a create means *removing* a
+no prior row, because the row did not exist. Undoing a create means _removing_ a
 row, not restoring one — the opposite action, from a store that otherwise only
 restores.
 
 So one shape carries a tag, and rollback branches on it:
 
-| tag | undo does |
-|---|---|
-| `update` | replace the row with the held copy |
+| tag      | undo does                                    |
+| -------- | -------------------------------------------- |
+| `update` | replace the row with the held copy           |
 | `delete` | re-insert the held copy at its held position |
-| `create` | remove the row |
+| `create` | remove the row                               |
 
 **Rejected — infer it from what is stored.** A create could leave no prior row,
 letting rollback read "prior row present → restore, absent → remove." The absence

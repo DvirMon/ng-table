@@ -23,11 +23,11 @@ MCP server so agents can call it as a tool. Canonical implementation:
 
 Everything runs on-device — three local GGUF models, no cloud call, no API key:
 
-| Model | Size | Role |
-|---|---|---|
-| EmbeddingGemma-300M | ~300 MB | Vector embeddings |
-| Qwen3-Reranker-0.6B | ~640 MB | Re-ranking |
-| QMD Query Expansion-1.7B | ~1.1 GB | Query expansion |
+| Model                    | Size    | Role              |
+| ------------------------ | ------- | ----------------- |
+| EmbeddingGemma-300M      | ~300 MB | Vector embeddings |
+| Qwen3-Reranker-0.6B      | ~640 MB | Re-ranking        |
+| QMD Query Expansion-1.7B | ~1.1 GB | Query expansion   |
 
 ## Why it matters for us
 
@@ -44,7 +44,7 @@ Two properties matter specifically for a code repo's docs:
 - **AST-aware chunking** for `.ts`, `.tsx`, `.js`, `.jsx`, `.py`, `.go`, `.rs` — the index can
   cover `src/` as well as `docs/`, chunked at semantic boundaries rather than every 900 tokens.
 - **Frontmatter metadata filtering** with a recursive JSON AST and `eq`/`ne`/`gt`/`in`/`exists`
-  operators. Our 216 frontmatter-bearing files become queryable facets — *if* the vocabulary is
+  operators. Our 216 frontmatter-bearing files become queryable facets — _if_ the vocabulary is
   controlled. This is the concrete payoff for fixing G3.
 
 ## Command surface
@@ -96,11 +96,11 @@ wiki, isolated index" rule, and it keeps design-system results out of table quer
 ```yaml
 # ~/.config/qmd/index.yml (sketch)
 collections:
-  table-docs:   { path: libs/table/docs,  pattern: "**/*.md" }
-  table-src:    { path: libs/table/src,   pattern: "**/*.ts" }
-  ds-docs:      { path: libs/shared/design-system/docs, pattern: "**/*.md" }
-  issa-docs:    { path: apps/issa-landing, pattern: "**/docs/**/*.md" }
-  guidelines:   { path: ~/.claude, pattern: "**/*.md" }
+  table-docs: { path: libs/table/docs, pattern: '**/*.md' }
+  table-src: { path: libs/table/src, pattern: '**/*.ts' }
+  ds-docs: { path: libs/shared/design-system/docs, pattern: '**/*.md' }
+  issa-docs: { path: apps/issa-landing, pattern: '**/docs/**/*.md' }
+  guidelines: { path: ~/.claude, pattern: '**/*.md' }
 ```
 
 Then `docs/agents/domain.md` gains a "before you grep, query" instruction pointing agents at the

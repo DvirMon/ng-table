@@ -17,10 +17,7 @@ interface Row {
 }
 
 function makeColumns() {
-  return createColumns(noData<Row>(), (col) => [
-    col('name'),
-    col('status'),
-  ]);
+  return createColumns(noData<Row>(), (col) => [col('name'), col('status')]);
 }
 
 // Mirrors `makeColumns()`'s two columns, via `createColumns()`, for the many call sites below
@@ -30,7 +27,7 @@ function makeColumns() {
 // instead reuse their own `data` const, per the step's data-witness note.
 function makeColumnSet(
   data: () => readonly Row[] | undefined,
-  schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>
+  schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>,
 ) {
   return createColumns(data, (col) => [col('name'), col('status')], schema);
 }
@@ -40,11 +37,9 @@ function makeColumnSet(
 // caller's literal `columns` still contextually types its `columnsSchema` callback, and the
 // returned store now carries the derived value map (#113, re-keyed for #125).
 function makeStore<TCols extends readonly ColumnDecl<Row, string, unknown>[]>(
-  cfg: TableConfig<Row, TCols>
+  cfg: TableConfig<Row, TCols>,
 ): TableStore<Row, ColumnValues<Row, TCols>> {
-  return TestBed.runInInjectionContext(() =>
-    createTable(signal<Row[]>([]), cfg)
-  );
+  return TestBed.runInInjectionContext(() => createTable(signal<Row[]>([]), cfg));
 }
 
 /**
@@ -147,9 +142,7 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
     });
 
     TestBed.tick();
-    expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(
-      false
-    );
+    expect(store.columns().find((c) => c.id === 'status')?.visible).toBe(false);
   });
 
   it('visibleAsync sets visible via onSuccess when the resource resolves', () => {
@@ -297,7 +290,7 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
         (path) => {
           visible(path.name, { when: () => false });
           visible(path.id, { when: () => true });
-        }
+        },
       ),
     });
 
@@ -310,7 +303,7 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
       // dropping/re-adding columns is this test's whole point — so it can't be inferred
       // from the argument the way `makeColumns()`'s call sites can (#113).
       store.columns.update(
-        setColumns<Row, 'name' | 'status' | 'id'>([{ id: 'status', visible: true }])
+        setColumns<Row, 'name' | 'status' | 'id'>([{ id: 'status', visible: true }]),
       );
       TestBed.tick();
     }).not.toThrow();
@@ -324,7 +317,7 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
       setColumns<Row, 'name' | 'status' | 'id'>([
         { id: 'status', visible: true },
         { id: 'id', accessor: (row: Row) => row.id, visible: false },
-      ])
+      ]),
     );
     TestBed.tick();
 
@@ -369,8 +362,7 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
         // Would form a cycle if `ctx.columns()` resolved to the derived `columns` (which this
         // very rule contributes to) instead of `baseColumns`.
         visible(path.status, {
-          when: (ctx) =>
-            !(ctx.columns().find((c) => c.id === 'status')?.visible ?? true),
+          when: (ctx) => !(ctx.columns().find((c) => c.id === 'status')?.visible ?? true),
         });
       }),
     });
@@ -417,7 +409,7 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
 
       expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(true);
       expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(
-        viaFind.columns().find((c) => c.id === 'status')?.visible
+        viaFind.columns().find((c) => c.id === 'status')?.visible,
       );
 
       viaStateOf.columns.update(toggleColumnVisibility('name'));
@@ -425,11 +417,11 @@ describe('wireColumnsSchemaAsync (via a column set’s schema)', () => {
 
       expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(false);
       expect(viaStateOf.columns().find((c) => c.id === 'status')?.visible).toBe(
-        viaFind.columns().find((c) => c.id === 'status')?.visible
+        viaFind.columns().find((c) => c.id === 'status')?.visible,
       );
     });
 
-    it("returns an object with no order key", () => {
+    it('returns an object with no order key', () => {
       let captured: unknown;
       const store = makeStore({
         trackBy: 'id',
@@ -495,22 +487,20 @@ describe('metadata() (via a column set’s schema)', () => {
     const store = makeStore({
       trackBy: 'id',
       columns: makeColumnSet(signal<Row[]>([]), (path) => {
-        metadata(path.status, KEY, () =>
-          role() === 'admin' ? 'full-access' : 'read-only'
-        );
+        metadata(path.status, KEY, () => (role() === 'admin' ? 'full-access' : 'read-only'));
       }),
     });
 
     TestBed.tick();
-    expect(
-      readColumnMeta(store.columns().find((c) => c.id === 'status') as never, KEY)
-    ).toBe('read-only');
+    expect(readColumnMeta(store.columns().find((c) => c.id === 'status') as never, KEY)).toBe(
+      'read-only',
+    );
 
     role.set('admin');
     TestBed.tick();
-    expect(
-      readColumnMeta(store.columns().find((c) => c.id === 'status') as never, KEY)
-    ).toBe('full-access');
+    expect(readColumnMeta(store.columns().find((c) => c.id === 'status') as never, KEY)).toBe(
+      'full-access',
+    );
   });
 
   it('leaves an unrelated column untouched', () => {
@@ -526,5 +516,4 @@ describe('metadata() (via a column set’s schema)', () => {
     const name = store.columns().find((c) => c.id === 'name');
     expect(readColumnMeta(name as never, KEY)).toBeUndefined();
   });
-
 });

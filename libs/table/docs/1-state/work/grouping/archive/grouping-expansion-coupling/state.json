@@ -8,12 +8,7 @@
   "decisionsPath": null,
   "specPath": "libs/shared/table/docs/1-state/work/grouping/archive/grouping-expansion-coupling/plan.md",
   "architecturePath": null,
-  "githubIssues": [
-    130,
-    131,
-    132,
-    133
-  ],
+  "githubIssues": [130, 131, 132, 133],
   "checklist": {
     "intake": true,
     "grill": true,

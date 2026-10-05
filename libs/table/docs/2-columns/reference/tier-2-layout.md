@@ -30,12 +30,12 @@ feature's initial state** — the same seed-into-a-feature pattern Tier 3 alread
 export function applyWidth<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K>,
   width: number | { when: (ctx: ColumnRuleContext<TRow>) => number },
-  opts?: { min?: number; max?: number }
+  opts?: { min?: number; max?: number },
 ): void;
 
 export function applyFlex<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K>,
-  flex: number | { when: (ctx: ColumnRuleContext<TRow>) => number }
+  flex: number | { when: (ctx: ColumnRuleContext<TRow>) => number },
 ): void;
 ```
 
@@ -55,13 +55,15 @@ export function applyFlex<TRow, K extends Extract<keyof TRow, string>>(
 export function applyPinned<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K>,
   pinned:
-    | 'left' | 'right' | null
-    | { when: (ctx: ColumnRuleContext<TRow>) => 'left' | 'right' | null }
+    | 'left'
+    | 'right'
+    | null
+    | { when: (ctx: ColumnRuleContext<TRow>) => 'left' | 'right' | null },
 ): void;
 ```
 
 - **Concern:** seeds a column id into `withColumnPinning()`'s `columnPinning: { left: string[];
-  right: string[] }` state — a new table-level state slice, **not** a `ColumnDef` field. The UI
+right: string[] }` state — a new table-level state slice, **not** a `ColumnDef` field. The UI
   layer reads the feature's start/center/end region derivation (mirroring TanStack's
   `row_getStartVisibleCells`/`row_getCenterVisibleCells`/`row_getEndVisibleCells`) to render pinned
   columns in a fixed rail.
@@ -77,20 +79,20 @@ export function applyPinned<TRow, K extends Extract<keyof TRow, string>>(
 
 ## Summary
 
-| Function | Ownership | Concern | AG-Grid analog | Note |
-|---|---|---|---|---|
-| `applyWidth` / `applyFlex` | column-owned (seed only; store-owned if resizable) | column sizing | `width` / `flex` / `minWidth` / `maxWidth`; `columnFlexService.ts` | mutually exclusive, flex wins |
-| `applyPinned` | seeds `withColumnPinning()` store feature | freeze left / right | `pinned`, `pinnedCols.setColPinned` | not a `ColumnDef` field — table-level state |
+| Function                   | Ownership                                          | Concern             | AG-Grid analog                                                     | Note                                        |
+| -------------------------- | -------------------------------------------------- | ------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| `applyWidth` / `applyFlex` | column-owned (seed only; store-owned if resizable) | column sizing       | `width` / `flex` / `minWidth` / `maxWidth`; `columnFlexService.ts` | mutually exclusive, flex wins               |
+| `applyPinned`              | seeds `withColumnPinning()` store feature          | freeze left / right | `pinned`, `pinnedCols.setColPinned`                                | not a `ColumnDef` field — table-level state |
 
 ## Open questions (Tier 2)
 
 - [x] **Sizing state ownership** — RESOLVED 2026-07-25, using the pinning precedent above: width is
-  a column-owned config seed (consumer CSS) by default. If resizable via a drag directive, promote
-  it to a dedicated `withColumnSizing()` store feature — `applyWidth` then seeds that feature's
-  initial per-column width state instead of a `ColumnDef` field, the same seed-into-a-feature
-  pattern `applyPinned` uses. Static, non-resizable width stays on the column def / CSS; there is no
-  in-between state.
+      a column-owned config seed (consumer CSS) by default. If resizable via a drag directive, promote
+      it to a dedicated `withColumnSizing()` store feature — `applyWidth` then seeds that feature's
+      initial per-column width state instead of a `ColumnDef` field, the same seed-into-a-feature
+      pattern `applyPinned` uses. Static, non-resizable width stays on the column def / CSS; there is no
+      in-between state.
 - [x] **Reactive `applyWidth`/`applyPinned` demand** — RESOLVED 2026-07-31: static-only, consumer
-  template/CSS owns width (matches Sizing state ownership resolution above). No store-driven
-  reactive width. Revisit only if a resizable-column story lands (promotes to `withColumnSizing()`
-  per the resolution above).
+      template/CSS owns width (matches Sizing state ownership resolution above). No store-driven
+      reactive width. Revisit only if a resizable-column story lands (promotes to `withColumnSizing()`
+      per the resolution above).

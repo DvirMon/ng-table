@@ -8,9 +8,9 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/filters/types.ts` | edit |
+| File                                     | Action |
+| ---------------------------------------- | ------ |
+| `libs/shared/table/src/filters/types.ts` | edit   |
 
 Nothing else. `rules.ts` and `create-filters.ts` still compile against the recorder at the end of
 this step — they are Steps 3 and 4.
@@ -54,8 +54,9 @@ once nothing references it.
    ```ts
    export type CriterionOf<R> = R extends FilterRule<string, infer C> ? C : never;
 
-   export type StateOf<T extends readonly unknown[]> =
-     { [R in Extract<Flatten<T>, AnyRule> as NonNullable<R['__key']>]: CriterionOf<R> };
+   export type StateOf<T extends readonly unknown[]> = {
+     [R in Extract<Flatten<T>, AnyRule> as NonNullable<R['__key']>]: CriterionOf<R>;
+   };
    ```
 
    `Flatten` must see through **both** a nested array and a `ConditionalRule`'s children — that
@@ -65,8 +66,9 @@ once nothing references it.
 
    ```ts
    export type FiltersPath<TRow> = [TRow] extends [never]
-     ? { readonly __rowTypeCouldNotBeInferred_useRowOf:
-           'createFilters: the first argument is empty, so the row type is unknown. Pass rowOf<Row>() instead.' }
+     ? {
+         readonly __rowTypeCouldNotBeInferred_useRowOf: 'createFilters: the first argument is empty, so the row type is unknown. Pass rowOf<Row>() instead.';
+       }
      : { readonly [K in Extract<keyof TRow, string>]: FilterHandle<TRow, K> };
    ```
 
@@ -88,7 +90,7 @@ once nothing references it.
 
 - **Never name the key type in a schema constraint.** This is the non-negotiable constraint from
   the inference probes and it governs Steps 3 and 4 as well as this one. `S extends readonly
-  FilterRule<string, unknown>[]` contextually types the array elements and pushes `string` down
+FilterRule<string, unknown>[]` contextually types the array elements and pushes `string` down
   onto every rule's key parameter, widening all of them. The tuple survives, so it reads like tuple
   widening and sends you after the wrong cause. Constrain to `readonly unknown[]` and `Extract`
   inside the fold. `as const`, the `const` type-parameter modifier and a variadic `[...T[]]`
@@ -133,4 +135,5 @@ once nothing references it.
 - [ ] `nx run shared-table:typecheck` is clean
 
 ---
+
 [Step 2: Add the row-type token](step-2-row-of-token.plan.md) →

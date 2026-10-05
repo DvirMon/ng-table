@@ -9,11 +9,11 @@ pages, applies Step 2's gate, and takes one trace per variant through Step 3.
 
 ## Files
 
-| File | Action |
-|---|---|
-| `apps/table-bench/driver/bench.ts` | create — entry point |
-| `apps/table-bench/driver/static-server.ts` | create — `node:http` server over the build output |
-| `apps/table-bench/driver/tsconfig.json` | create — `noEmit`, `module: nodenext`, strip-types compatible |
+| File                                       | Action                                                        |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| `apps/table-bench/driver/bench.ts`         | create — entry point                                          |
+| `apps/table-bench/driver/static-server.ts` | create — `node:http` server over the build output             |
+| `apps/table-bench/driver/tsconfig.json`    | create — `noEmit`, `module: nodenext`, strip-types compatible |
 
 ## Why This Step Exists
 
@@ -30,7 +30,7 @@ instead of three surfaces (Vitest bench, `bench-trace`, the Storybook story).
   (1280×800), `reducedMotion: 'no-preference'`.
 - **Sample loop**, per row count (default `[1000]`, flag for `100,1000,5000,10000`):
   - Alternate `plain`, `animated` (round-robin). Each sample: **new page** → `goto
-    /?variant=X&rows=N` → 5 warm-up clicks on `#reverse` (wait for each `reorder` measure) →
+/?variant=X&rows=N` → 5 warm-up clicks on `#reverse` (wait for each `reorder` measure) →
     `window.gc()` → 1 measured click → read the last `reorder` measure's duration → check
     `__benchFirstRowText()` changed → close page.
   - Minimum 25 samples per variant; after that, stop when `isResolved(interval, 16.7)` or after

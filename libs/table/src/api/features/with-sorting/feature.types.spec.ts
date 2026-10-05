@@ -63,7 +63,7 @@ describe("withSorting's schema path is keyed by declared column id (#100, #125)"
           schema: (path: SortingPath<Row, RowValues>) => {
             sortFn(path.name, (a, b) => a.name.localeCompare(b.name));
           },
-        })
+        }),
       );
 
       // Guards against a later `@ts-expect-error` in this file being satisfied by an unrelated
@@ -82,7 +82,7 @@ describe("withSorting's schema path is keyed by declared column id (#100, #125)"
             // @ts-expect-error — 'nope' was never declared in columns.
             sortFn(path.nope, (a, b) => a.total - b.total);
           },
-        })
+        }),
       );
 
       expectTypeOf(table.toggleSort).toEqualTypeOf<(columnId: string) => void>();
@@ -100,7 +100,7 @@ describe("path.total resolves to SortingHandle<Row, 'total', number> (#125's edg
           schema: (path: SortingPath<Row, RowValues>) => {
             expectTypeOf(path.total).toEqualTypeOf<SortingHandle<Row, 'total', number>>();
           },
-        })
+        }),
       );
 
       expectTypeOf(table.toggleSort).toEqualTypeOf<(columnId: string) => void>();
@@ -128,7 +128,7 @@ describe('sortingSchema — col is inferred with no annotation (Step 1)', () => 
             highlightSortable(path.total);
             highlightSortable(path.dueDate);
           },
-        })
+        }),
       );
 
       expectTypeOf(table.toggleSort).toEqualTypeOf<(columnId: string) => void>();
@@ -150,7 +150,7 @@ describe("sortFn's comparator parameters are Row, not unknown", () => {
               return a.total - b.total;
             });
           },
-        })
+        }),
       );
 
       expectTypeOf(table.toggleSort).toEqualTypeOf<(columnId: string) => void>();
@@ -172,7 +172,7 @@ describe('sortable — the key is `enable`, not `when` (ADR-0018)', () => {
               when: () => true,
             });
           },
-        })
+        }),
       );
 
       expectTypeOf(table.toggleSort).toEqualTypeOf<(columnId: string) => void>();

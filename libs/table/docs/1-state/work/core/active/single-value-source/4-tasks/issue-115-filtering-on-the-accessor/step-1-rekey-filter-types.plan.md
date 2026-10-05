@@ -77,12 +77,12 @@ spells `ColumnValues<Row, typeof set.columns>`.
 Each single-path rule becomes generic in `<TRow, K extends string, V>`
 over `path: FilterHandle<TRow, K, V>`:
 
-| Rule | Was | Becomes |
-|---|---|---|
-| `equals` | `TRow[K] \| null \| TEmpty` | `V \| null \| TEmpty` |
-| `hasAny` / `hasNone` | `ItemOf<TRow[K]>` | `ItemOf<V>` |
-| `filter` | `predicate(cell: TRow[K], …)` | `predicate(cell: V, …)` |
-| `contains`, `inRange`, `inDateRange` | criterion fixed | unchanged; only the handle generic |
+| Rule                                 | Was                           | Becomes                            |
+| ------------------------------------ | ----------------------------- | ---------------------------------- |
+| `equals`                             | `TRow[K] \| null \| TEmpty`   | `V \| null \| TEmpty`              |
+| `hasAny` / `hasNone`                 | `ItemOf<TRow[K]>`             | `ItemOf<V>`                        |
+| `filter`                             | `predicate(cell: TRow[K], …)` | `predicate(cell: V, …)`            |
+| `contains`, `inRange`, `inDateRange` | criterion fixed               | unchanged; only the handle generic |
 
 `anyOf`, `CriterionOf`, `RowOfRule`, `StateOf` are untouched — `StateOf<S>`
 still infers off the schema's return (the declaring form, #111/#116).
@@ -100,7 +100,7 @@ string, and it is now a column id.
 
 ## Risks / Watchouts
 
-- **`src/stories/**` and the filtering specs go red here** and stay red
+- **`src/stories/**` and the filtering specs go red here\*\* and stay red
   until Steps 4–7. Do not fix them in this step.
 - **`const TEmpty` on `equals`** — confirm `V` still infers from the
   handle and not from `options.emptyValue`; the handle must be the first
@@ -123,4 +123,5 @@ string, and it is now a column id.
 - [ ] `FiltersPath` has no default on its second parameter.
 
 ---
+
 [Step 2: The engine reads the accessor](step-2-engine-reads-accessor.plan.md) →

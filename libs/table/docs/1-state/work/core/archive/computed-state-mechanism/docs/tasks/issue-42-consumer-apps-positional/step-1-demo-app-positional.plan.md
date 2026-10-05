@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — apps/demo: seven demos on positional createTable()"
+title: 'Step 1 — apps/demo: seven demos on positional createTable()'
 type: task-step
 issue: 76
 ---
@@ -51,15 +51,15 @@ Same shape as #41 Step 1 (`fixtures/schema.ts` → `editTableConfig`): the store
 features move out of the store into the component's `createTable()` call, in the same order the
 old `features: [...]` array had them.
 
-| Demo | Store export (replaces `xTableSchema = createTableSchema(...)`) | Component call |
-|---|---|---|
-| table-demo | `peopleTableConfig: TableConfig<Person> = { trackBy: 'id', columns }` | `createTable(this.data, peopleTableConfig, withSorting())` |
-| table-column-visibility-demo | `peopleColumnVisibilityConfig: TableConfig<Person> = { trackBy: 'id', columns, columnsSchema: (schema) => { …unchanged body… } }` | `createTable(this.data, peopleColumnVisibilityConfig)` |
-| table-edit-demo | `personEditTableConfig: TableConfig<EditablePerson> = { trackBy: 'id', columns }` | `createTable(this.data, personEditTableConfig)` |
-| table-expansion-demo | `departmentsTableConfig: TableConfig<Department> = { trackBy: 'id', columns }` | `createTable(this.data, departmentsTableConfig, withExpansion())` |
-| table-expansion-row-demo | (imports `departmentsTableConfig` from the expansion store) | `createTable(this.data, departmentsTableConfig, withExpansion())` |
-| table-row-edit-demo | `rowEditTableConfig: TableConfig<EditRow> = { trackBy: 'id', columns }` | `createTable(this.data, rowEditTableConfig, withRowEdit())` |
-| table-row-field-demo | `fieldRowTableConfig: TableConfig<FieldRow> = { trackBy: 'id', columns }` | `createTable(this.data, fieldRowTableConfig, withExpansion(), withRowEdit())` |
+| Demo                         | Store export (replaces `xTableSchema = createTableSchema(...)`)                                                                   | Component call                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| table-demo                   | `peopleTableConfig: TableConfig<Person> = { trackBy: 'id', columns }`                                                             | `createTable(this.data, peopleTableConfig, withSorting())`                    |
+| table-column-visibility-demo | `peopleColumnVisibilityConfig: TableConfig<Person> = { trackBy: 'id', columns, columnsSchema: (schema) => { …unchanged body… } }` | `createTable(this.data, peopleColumnVisibilityConfig)`                        |
+| table-edit-demo              | `personEditTableConfig: TableConfig<EditablePerson> = { trackBy: 'id', columns }`                                                 | `createTable(this.data, personEditTableConfig)`                               |
+| table-expansion-demo         | `departmentsTableConfig: TableConfig<Department> = { trackBy: 'id', columns }`                                                    | `createTable(this.data, departmentsTableConfig, withExpansion())`             |
+| table-expansion-row-demo     | (imports `departmentsTableConfig` from the expansion store)                                                                       | `createTable(this.data, departmentsTableConfig, withExpansion())`             |
+| table-row-edit-demo          | `rowEditTableConfig: TableConfig<EditRow> = { trackBy: 'id', columns }`                                                           | `createTable(this.data, rowEditTableConfig, withRowEdit())`                   |
+| table-row-field-demo         | `fieldRowTableConfig: TableConfig<FieldRow> = { trackBy: 'id', columns }`                                                         | `createTable(this.data, fieldRowTableConfig, withExpansion(), withRowEdit())` |
 
 Per file:
 
@@ -123,4 +123,5 @@ Per file:
 - [ ] `git diff --stat` lists only the thirteen files in **Files**
 
 ---
+
 [Step 2: `apps/ng-table` home copy + `apps/demo/CLAUDE.md` off the deleted builder](step-2-ng-table-copy-and-demo-claude-md.plan.md) →

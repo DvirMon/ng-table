@@ -1,5 +1,5 @@
 ---
-title: "/audit-docs results — issue #44 gate"
+title: '/audit-docs results — issue #44 gate'
 type: audit
 issue: 78
 date: 2026-09-14
@@ -19,30 +19,30 @@ the array/thunk form, the config-builder helper, or `ComposedFeatureMembers` out
 
 ### Objective half — the Step 7 greps, library-wide, `work/` excluded
 
-| Grep | Hits |
-|---|---|
-| `createTableSchema` | 0 |
-| `ComposedFeatureMembers` | 0 |
-| `features: [` | 0 |
-| `createTable(.*() => ({` | 0 |
-| `optsFn` | 1 — ADR-0002's own amendment, naming the removed thunk as history |
-| `TableStoreConfig` | 0 |
-| `with[A-Za-z]+<[A-Z]` | 3 — all in ADR-0003's historical example (Step 1), phrased as past or negated behaviour |
+| Grep                     | Hits                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------- |
+| `createTableSchema`      | 0                                                                                       |
+| `ComposedFeatureMembers` | 0                                                                                       |
+| `features: [`            | 0                                                                                       |
+| `createTable(.*() => ({` | 0                                                                                       |
+| `optsFn`                 | 1 — ADR-0002's own amendment, naming the removed thunk as history                       |
+| `TableStoreConfig`       | 0                                                                                       |
+| `with[A-Za-z]+<[A-Z]`    | 3 — all in ADR-0003's historical example (Step 1), phrased as past or negated behaviour |
 
-Two further `with…<…>` hits are type-parameter *declarations*, not row types on a call, and are
+Two further `with…<…>` hits are type-parameter _declarations_, not row types on a call, and are
 correct as written: `adr/0015:220`'s `withSelectionSliced<In extends Shape, D extends DerivedDict>`
 and `CLAUDE.md:170`'s `withFeature<In extends Shape>` authoring pattern.
 
 ### Subjective half — what the agents returned
 
-| Batch | Files | STALE findings | In #44 scope |
-|---|---|---|---|
-| ADRs | 14 | 39 | 9 |
-| `1-state/` core + `CLAUDE.md` | 7 | 46 | 11 |
-| `1-state/features/` | 12 | 32 | 2 |
-| `2-columns/` + `3-ui/` | 19 | 70 | 9 |
-| `0-product/` + top-level | 9 | 53 | 0 |
-| **Total** | **61** | **240** | **31** |
+| Batch                         | Files  | STALE findings | In #44 scope |
+| ----------------------------- | ------ | -------------- | ------------ |
+| ADRs                          | 14     | 39             | 9            |
+| `1-state/` core + `CLAUDE.md` | 7      | 46             | 11           |
+| `1-state/features/`           | 12     | 32             | 2            |
+| `2-columns/` + `3-ui/`        | 19     | 70             | 9            |
+| `0-product/` + top-level      | 9      | 53             | 0            |
+| **Total**                     | **61** | **240**        | **31**       |
 
 `docs/status.md` audited clean — its 17 rows match every spec's `capability:`/`spec:`/`code:`
 frontmatter row for row. No regeneration needed.
@@ -113,7 +113,7 @@ None of these are #33 artifacts. They are pre-existing drift from other tickets,
 here would have made a docs-reconciliation issue unreviewable. Grouped by what would close them:
 
 1. **ADR-0013's `op: PendingOp` rename** — `detached: boolean` survives in `row-editing.md:287,
-   :300, :317, :340` and `adr/0006:16, :110`. ADR-0013 is still `status: proposed` though its
+:300, :317, :340` and `adr/0006:16, :110`. ADR-0013 is still `status: proposed` though its
    Decision 6 shipped.
 2. **Features that ship but are documented as unbuilt** — `withGrouping()`, `withFiltering()`,
    `withSelection()`, `everExpanded`. Affects `row-editing.md:515, :596, :645, :663, :875, :893`,

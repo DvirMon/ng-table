@@ -61,8 +61,8 @@ reads `rule.columnId` off every recorded rule regardless of kind.
 ```ts
 export function applyAggregate<TRow, K extends string>(
   path: GroupingHandle<TRow, K>,
-  aggregateFn: (rows: TRow[]) => unknown
-): void
+  aggregateFn: (rows: TRow[]) => unknown,
+): void;
 ```
 
 Positional, like `applyGroupOrder` and `applyGroupKey` — one concern, no
@@ -71,10 +71,10 @@ options bag.
 **3. `rules.ts` — the collector.**
 
 ```ts
-export function isGroupAggregateRule<TRow>(rule): rule is GroupAggregateRule<TRow>
+export function isGroupAggregateRule<TRow>(rule): rule is GroupAggregateRule<TRow>;
 export function collectAggregates<TRow>(
-  rules: readonly AnyGroupingRule<TRow>[]
-): Map<string, (rows: TRow[]) => unknown>
+  rules: readonly AnyGroupingRule<TRow>[],
+): Map<string, (rows: TRow[]) => unknown>;
 ```
 
 Exactly the shape of `collectGroupKeys` / `collectGroupOrder`, including
@@ -97,8 +97,8 @@ Its loop currently walks `columns` and skips any without an
 function computeAggregates<TRow>(
   rows: TRow[],
   aggregateByColumn: ReadonlyMap<string, (rows: TRow[]) => unknown> | undefined,
-  reportedColumns: Set<string>
-): Record<string, unknown>
+  reportedColumns: Set<string>,
+): Record<string, unknown>;
 ```
 
 Keep the ADR-0014 wrap byte-for-byte: a throwing `aggregateFn` yields
@@ -119,7 +119,7 @@ declarators.
 
 - **`aggregates` on `RenderRow` is unchanged.** It stays
   `Record<string, unknown>` keyed by column id, and `buildGroupCells`
-  still spreads it. Only where the *function* is declared moves.
+  still spreads it. Only where the _function_ is declared moves.
 - **`clusterOpts` is built once in `buildGroupingSpec`** — add
   `aggregateByColumn: map.size > 0 ? map : undefined` alongside the
   existing four, matching their `size > 0` idiom exactly so an
@@ -171,4 +171,5 @@ declarators.
       groups and reports once per column per evaluation.
 
 ---
+
 ← [Step 3: Re-key the grouping surface to `TId`](step-3-rekey-to-tid.plan.md) | [Step 5: Delete the raw-name label tier and the levels filter](step-5-delete-fallbacks.plan.md) →

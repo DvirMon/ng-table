@@ -11,24 +11,24 @@ Issues `#92`–`#93` get their own plans and continue the step numbering.
 
 ## `#90` — `withFiltering` owns the filter model · PR 1 of 1
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 1 | [`when` moves into `FilterOptions`; `applyWhen` deleted](step-1-when-in-filter-options.plan.md) | `code` | ✅ done | — |
-| 2 | [Object-literal schema; delete the key-derivation layer](step-2-object-literal-schema.plan.md) | `code` | ✅ done | — |
-| 3 | [`withFiltering(config, schema)` owns the model; carrier deleted](step-3-with-filtering-owns-model.plan.md) | `code` | ✅ done | — |
-| 4 | [Member audit: `matcher()`/`dirty()` internal, `predicates` deleted](step-4-member-audit.plan.md) | `code` | ✅ done | — |
-| 5 | [Barrels: drop the standalone surface, add `FiltersPath`](step-5-barrels.plan.md) | `code` | ✅ done | — |
-| 6 | [Rewrite the compile-time probe for `StateOf` inference](step-6-inference-probe.plan.md) | `test` | ✅ done | — |
+| Step | Title                                                                                                       | Type   | Status  | PR  |
+| ---- | ----------------------------------------------------------------------------------------------------------- | ------ | ------- | --- |
+| 1    | [`when` moves into `FilterOptions`; `applyWhen` deleted](step-1-when-in-filter-options.plan.md)             | `code` | ✅ done | —   |
+| 2    | [Object-literal schema; delete the key-derivation layer](step-2-object-literal-schema.plan.md)              | `code` | ✅ done | —   |
+| 3    | [`withFiltering(config, schema)` owns the model; carrier deleted](step-3-with-filtering-owns-model.plan.md) | `code` | ✅ done | —   |
+| 4    | [Member audit: `matcher()`/`dirty()` internal, `predicates` deleted](step-4-member-audit.plan.md)           | `code` | ✅ done | —   |
+| 5    | [Barrels: drop the standalone surface, add `FiltersPath`](step-5-barrels.plan.md)                           | `code` | ✅ done | —   |
+| 6    | [Rewrite the compile-time probe for `StateOf` inference](step-6-inference-probe.plan.md)                    | `test` | ✅ done | —   |
 
 ## `#91` — Migrate every filtering call site and spec · PR 1 of 1
 
-| Step | Title | Type | Status | PR |
-|---|---|---|---|---|
-| 7 | [Client-filtering host takes the owned model](step-7-client-filtering-host.plan.md) | `code` | ✅ done | — |
-| 8 | [Server-filtering host: the filters move into the table](step-8-server-filtering-host.plan.md) | `code` | ✅ done | — |
-| 9 | [Remaining call sites; delete the predicate story](step-9-remaining-call-sites.plan.md) | `code` | ✅ done | — |
-| 10 | [Migrate `state.spec.ts`, rewrite `with-filtering.spec.ts`](step-10-specs.plan.md) | `test` | ✅ done | — |
-| 11 | [`filtering.mdx` prose and the green gate](step-11-mdx-and-green-gate.plan.md) | `docs` | ✅ done | — |
+| Step | Title                                                                                          | Type   | Status  | PR  |
+| ---- | ---------------------------------------------------------------------------------------------- | ------ | ------- | --- |
+| 7    | [Client-filtering host takes the owned model](step-7-client-filtering-host.plan.md)            | `code` | ✅ done | —   |
+| 8    | [Server-filtering host: the filters move into the table](step-8-server-filtering-host.plan.md) | `code` | ✅ done | —   |
+| 9    | [Remaining call sites; delete the predicate story](step-9-remaining-call-sites.plan.md)        | `code` | ✅ done | —   |
+| 10   | [Migrate `state.spec.ts`, rewrite `with-filtering.spec.ts`](step-10-specs.plan.md)             | `test` | ✅ done | —   |
+| 11   | [`filtering.mdx` prose and the green gate](step-11-mdx-and-green-gate.plan.md)                 | `docs` | ✅ done | —   |
 
 Status values: `⬚ pending`, `▶ in progress`, `✅ done`, `⏭ skipped`.
 

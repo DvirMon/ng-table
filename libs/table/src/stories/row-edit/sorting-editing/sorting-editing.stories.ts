@@ -19,4 +19,5 @@ type Story = StoryObj<Host>;
  * in place while the table re-sorts around it does not work yet — a known limitation.
  */
 export const SortingAndEditing: Story = {
-  name: 'Sorting × Editing',};
+  name: 'Sorting × Editing',
+};

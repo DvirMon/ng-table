@@ -4,11 +4,11 @@ Epic: [#199](https://github.com/DvirMon/ng-table/issues/199) — detail panel a1
 
 ## Nodes
 
-| # | Title | Slice slug | Depends on | Blocks |
-|---|---|---|---|---|
-| [#211](https://github.com/DvirMon/ng-table/issues/211) | Table: ngpTablePanel directive and panel registry | `panel-content` | — | [#212](https://github.com/DvirMon/ng-table/issues/212) |
-| [#212](https://github.com/DvirMon/ng-table/issues/212) | Table: ngpTablePanelToggle directive | `panel-toggle` | [#211](https://github.com/DvirMon/ng-table/issues/211), [#209](https://github.com/DvirMon/ng-table/issues/209) (external: shared collapsible core, not a child of this epic) | — |
-| [#213](https://github.com/DvirMon/ng-table/issues/213) | Docs: rewrite expansion UI spec for panel directives | `ui-spec-rewrite` | — | — |
+| #                                                      | Title                                                | Slice slug        | Depends on                                                                                                                                                                   | Blocks                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------- | ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| [#211](https://github.com/DvirMon/ng-table/issues/211) | Table: ngpTablePanel directive and panel registry    | `panel-content`   | —                                                                                                                                                                            | [#212](https://github.com/DvirMon/ng-table/issues/212) |
+| [#212](https://github.com/DvirMon/ng-table/issues/212) | Table: ngpTablePanelToggle directive                 | `panel-toggle`    | [#211](https://github.com/DvirMon/ng-table/issues/211), [#209](https://github.com/DvirMon/ng-table/issues/209) (external: shared collapsible core, not a child of this epic) | —                                                      |
+| [#213](https://github.com/DvirMon/ng-table/issues/213) | Docs: rewrite expansion UI spec for panel directives | `ui-spec-rewrite` | —                                                                                                                                                                            | —                                                      |
 
 The slice slug is what `/to-tasks` uses in the issue's branch name, `<type>/<NN>-<slice-slug>`.
 

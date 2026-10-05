@@ -11,7 +11,7 @@ planned here.
 ## Two invariants this plan is built around
 
 1. **Status is owned by the feature's own doc.** Each spec's frontmatter is the
-   single declaration of its status. `docs/status.md` is *derived* from those
+   single declaration of its status. `docs/status.md` is _derived_ from those
    blocks by a script, never hand-edited — otherwise it is two hand-maintained
    copies of the same fact, which is the silent-drift failure
    `.claude/rules/file-organization.md` calls out.
@@ -36,9 +36,9 @@ Decides:
 - **The two status axes** replacing today's free-text `status:` string:
   - `spec: none | stub | drafted | drilled`
   - `code: none | partial | shipped`
-  Today `features/expansion.md` crams both into one line
-  (`shipped — everExpanded specced, not yet implemented`), which is why no
-  script can read it and why "what's the state of X?" takes three file opens.
+    Today `features/expansion.md` crams both into one line
+    (`shipped — everExpanded specced, not yet implemented`), which is why no
+    script can read it and why "what's the state of X?" takes three file opens.
 - **The verdict block format** — the section D/E/F append to each spec, so
   seventeen docs come out consistent. Carries: verdict
   (ahead / on par / gap / missing / not assessed), the one-line justification,
@@ -84,15 +84,15 @@ no other node touches, so it can start immediately and land independently.
 
 Seven files. Disjoint from every other node's file set.
 
-| File | Verdict to record |
-|---|---|
+| File                              | Verdict to record                                                                                                                                                                                                                                     |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `1-state/features/row-editing.md` | **ahead of all four** — the two-feature optimistic/gated split sharing one `EditingState` core, and `RowRestorePoint` making rollback structurally sound. Directly answers the audit's #5 cross-cutting gap, which no vendor has shipped an answer to |
-| `1-state/row-mutations.md` | **ahead of 3 of 4** — TanStack/MRT/PrimeNG have no transaction/patch API at all; roughly comparable in intent to AG Grid's `applyTransaction`, narrower (no batch/async variant) |
-| `1-state/architecture.md` | **ahead** — ADR-0006 diff-and-prune row-removal reconciliation has no documented competitor equivalent |
-| `2-columns/architecture.md` | **ahead** — declarative, async-resolved, multi-writer column visibility (`applyVisible`/`applyVisibleAsync`) exists nowhere in the four |
-| `1-state/columns.md` | **ahead** on visibility (as above); **missing** on sizing and pinning — link to the two new specs pinned in A |
-| `1-state/features/sorting.md` | **on par** on the sort model; **ahead** on null-ordering rigor (`nulls: 'last'`, `applySortNulls`) — silent/undefined behavior in all four |
-| `1-state/features/expansion.md` | **on par** with TanStack/MRT; note ADR-0012's pending panel-vs-tree split |
+| `1-state/row-mutations.md`        | **ahead of 3 of 4** — TanStack/MRT/PrimeNG have no transaction/patch API at all; roughly comparable in intent to AG Grid's `applyTransaction`, narrower (no batch/async variant)                                                                      |
+| `1-state/architecture.md`         | **ahead** — ADR-0006 diff-and-prune row-removal reconciliation has no documented competitor equivalent                                                                                                                                                |
+| `2-columns/architecture.md`       | **ahead** — declarative, async-resolved, multi-writer column visibility (`applyVisible`/`applyVisibleAsync`) exists nowhere in the four                                                                                                               |
+| `1-state/columns.md`              | **ahead** on visibility (as above); **missing** on sizing and pinning — link to the two new specs pinned in A                                                                                                                                         |
+| `1-state/features/sorting.md`     | **on par** on the sort model; **ahead** on null-ordering rigor (`nulls: 'last'`, `applySortNulls`) — silent/undefined behavior in all four                                                                                                            |
+| `1-state/features/expansion.md`   | **on par** with TanStack/MRT; note ADR-0012's pending panel-vs-tree split                                                                                                                                                                             |
 
 ---
 
@@ -101,16 +101,16 @@ Seven files. Disjoint from every other node's file set.
 **Depends on:** A. **Parallel-safe with:** C, E, F, G.
 
 Five files. Each records the gap plus what the audit says to avoid when it
-gets built — the point is that these specs carry the trap warnings *before*
+gets built — the point is that these specs carry the trap warnings _before_
 someone drills them, not after.
 
-| File | Verdict to record |
-|---|---|
-| `1-state/features/selection.md` | **missing** — the #2 baseline gap and the audit's #2 sentiment finding. Carries the warning to decide selection scope (page / filtered / all) deliberately on day one; nobody else has done this cleanly |
-| `1-state/features/grouping.md` | **missing** — spec drafted, zero code. Record that the single-level scope deliberately sidesteps TanStack's unresolved depth-0 aggregation bug, so a future reader doesn't "fix" the scope by adding depth |
-| `1-state/features/filtering.md` | **missing** — spec drafted, zero code; `ColumnDef.filterFn`/`enableFiltering` already typed and unconsumed. Baseline in all four |
-| `1-state/features/pagination.md` | **missing** — stub, design not settled. Baseline in all four |
-| `1-state/features/drag-drop.md` | **behind** AG Grid and PrimeNG on row reorder (both ship it built-in); same gap as TanStack |
+| File                             | Verdict to record                                                                                                                                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `1-state/features/selection.md`  | **missing** — the #2 baseline gap and the audit's #2 sentiment finding. Carries the warning to decide selection scope (page / filtered / all) deliberately on day one; nobody else has done this cleanly   |
+| `1-state/features/grouping.md`   | **missing** — spec drafted, zero code. Record that the single-level scope deliberately sidesteps TanStack's unresolved depth-0 aggregation bug, so a future reader doesn't "fix" the scope by adding depth |
+| `1-state/features/filtering.md`  | **missing** — spec drafted, zero code; `ColumnDef.filterFn`/`enableFiltering` already typed and unconsumed. Baseline in all four                                                                           |
+| `1-state/features/pagination.md` | **missing** — stub, design not settled. Baseline in all four                                                                                                                                               |
+| `1-state/features/drag-drop.md`  | **behind** AG Grid and PrimeNG on row reorder (both ship it built-in); same gap as TanStack                                                                                                                |
 
 ---
 
@@ -222,7 +222,7 @@ All nodes landed. Deviations from the graph above, and what they cost:
   fix something outside its scope rather than half-fixing it:
   - **J** — `2-columns/` had a systematically stale link set, not just the one broken
     `parent:` C found. 46 path fixes across 8 files.
-  - **L** — nine stale anchor *fragments* in `2-columns/`, caused by headings gaining ✅/⏳
+  - **L** — nine stale anchor _fragments_ in `2-columns/`, caused by headings gaining ✅/⏳
     markers after the links were written. J flagged these rather than touch headings.
   - **K** — all nine `3-ui/directives/*.md` lacked the frontmatter fields, so the roll-up
     would have rendered `—` in every UI cell, defeating the cross-layer pairing that
@@ -243,8 +243,8 @@ All nodes landed. Deviations from the graph above, and what they cost:
   and `resizing.md` both name it as a dependency, so both are blocked on a directive that
   isn't there. K recorded this in the affected bodies; nobody has decided what to do about it.
 - `core.md`'s `ngpTableCell` diverges from what shipped (spec: `columnId` + `data-column-id`
-  + token styling; shipped: 0-based numeric index, `role`/`aria-colindex` only), and
-  `ngpTableHeaderCell` ships entirely unspecced.
+  - token styling; shipped: 0-based numeric index, `role`/`aria-colindex` only), and
+    `ngpTableHeaderCell` ships entirely unspecced.
 - **`features/row-editing.md` is now stale against `src/`.** Commit `580c21a` (D53) replaced
   `RowRestorePoint.detached` with `op: PendingOp`; the spec still documents `detached` in
   three places. ADR-0013 records the rename. Not fixed here because that refactor is still

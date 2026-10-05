@@ -39,7 +39,7 @@ export class GroupingSelectionStoryHostComponent {
     groupingConfig,
     withGrouping({ initial: SELECTION_GROUPING_LEVELS }),
     withSelection(),
-    withFiltering({ schema: dealFilters })
+    withFiltering({ schema: dealFilters }),
   );
 
   protected readonly repFilter = computed(() => readRepCriterion(this.table.filters));
@@ -49,7 +49,7 @@ export class GroupingSelectionStoryHostComponent {
   /** The denominator is rows the pipeline produced, never render rows, so a header can never be
    * counted as one of them. */
   protected readonly selectionReadout = computed(
-    () => `${this.table.selectedRows().size} of ${this.table.rows().length} rows selected`
+    () => `${this.table.selectedRows().size} of ${this.table.rows().length} rows selected`,
   );
 
   /** Always 0, and rendered anyway: a group id ending up in the selection state is only ever
@@ -59,7 +59,7 @@ export class GroupingSelectionStoryHostComponent {
       this.table
         .renderRows()
         .filter((row) => row.kind === 'group')
-        .map((row) => row.id)
+        .map((row) => row.id),
     );
     return [...this.table.selectedRows()].filter((id) => groupIds.has(id)).length;
   });
@@ -78,8 +78,8 @@ export class GroupingSelectionStoryHostComponent {
       this.table
         .renderRows()
         .filter((row) => row.kind === 'group')
-        .map((row) => [row.id, this.table.selectionStateOf(this.groupRowIds(row))])
-    )
+        .map((row) => [row.id, this.table.selectionStateOf(this.groupRowIds(row))]),
+    ),
   );
 
   /**

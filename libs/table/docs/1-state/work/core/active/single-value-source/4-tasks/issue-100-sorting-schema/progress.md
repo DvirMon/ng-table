@@ -3,14 +3,14 @@
 **Issue:** #100
 **Status:** 6 / 6 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | The sorting schema module | ✅ done | — |
-| 2 | Wire `withSorting({ schema })` | ✅ done | — |
-| 3 | Delete the old surface | ✅ done | — |
-| 4 | Runtime spec | ✅ done | — |
-| 5 | Types spec | ✅ done | — |
-| 6 | Docs, decisions and `llms.txt` | ✅ done | — |
+| Step | Title                          | Status  | PR  |
+| ---- | ------------------------------ | ------- | --- |
+| 1    | The sorting schema module      | ✅ done | —   |
+| 2    | Wire `withSorting({ schema })` | ✅ done | —   |
+| 3    | Delete the old surface         | ✅ done | —   |
+| 4    | Runtime spec                   | ✅ done | —   |
+| 5    | Types spec                     | ✅ done | —   |
+| 6    | Docs, decisions and `llms.txt` | ✅ done | —   |
 
 ## Execution graph
 

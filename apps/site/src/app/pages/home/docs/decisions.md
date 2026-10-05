@@ -48,7 +48,8 @@ decisions). The section paragraphs under `[ngptProse]` here are light-DOM childr
 template (not content projected across an encapsulation boundary — `[ngptProse]` is
 attribute-hosted with no wrapper), so `home.css`'s `[ngptProse] p` rule is ordinary parent-scoped
 styling, not a `::ng-deep` reach. Kept in `home.css` since it's a page-only layout decision (margin
-+ tertiary color), not a `prose` typographic default worth promoting.
+
+- tertiary color), not a `prose` typographic default worth promoting.
 
 ## Install section paragraph, not `install-row`
 

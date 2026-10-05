@@ -19,8 +19,8 @@
 
 The mechanism can fail silently in two directions and neither has a
 runtime witness. If `createColumns()` does not actually capture literal
-ids, every downstream map degrades to an index signature and *everything
-still compiles*. If the `ColumnValues` conditional picks the wrong arm, a
+ids, every downstream map degrades to an index signature and _everything
+still compiles_. If the `ColumnValues` conditional picks the wrong arm, a
 column maps to the wrong type and the first thing anyone learns about it
 is a wrong criterion type in #115.
 
@@ -71,7 +71,7 @@ interface DealRow {
    **not** to `{ name: string; email: string }`. Comment that this is
    precisely the case ADR-0024 exists to close, and precisely the case the
    obvious patch — `K extends keyof TRow ? TRow[K] : unknown` — gets
-   wrong: `owner` *is* a `keyof DealRow`, so that guess returns the object
+   wrong: `owner` _is_ a `keyof DealRow`, so that guess returns the object
    and lies. Also assert the accessor param needs no annotation: the
    curried form has already bound `TRow`, so `(row) => row.owner.name`
    typechecks with `row: DealRow`.
@@ -79,7 +79,7 @@ interface DealRow {
 3. **The defaulted arm.** A column declared `{ id: 'amount' }`, with no
    accessor, maps to `number` — `TRow['amount']`. Comment that this arm is
    exact rather than a fallback, because the engine's documented default
-   accessor *is* `(row) => row[id]`.
+   accessor _is_ `(row) => row[id]`.
 
 4. **The carrier arm.** A column whose id is not a `keyof DealRow` and
    which declares no accessor maps to `unknown`. This is the carrier-column
@@ -101,15 +101,15 @@ interface DealRow {
 - **Put the captured and widened fixtures side by side, each with a
   comment saying why it is written the way it is.** `create-table.spec.ts`
   and `create-table.types.spec.ts` both already do this for the `as
-  const` / annotated pair, and for the same reason: a future reader
+const` / annotated pair, and for the same reason: a future reader
   "fixing" case 1 by adding a return-type annotation would silently disarm
   it, and the comment is the only thing standing in the way.
 - **Assert with `toEqualTypeOf`, not `toMatchTypeOf`.** The failure mode
-  here is a type being *wider* than expected (`string`, `unknown`, an index
+  here is a type being _wider_ than expected (`string`, `unknown`, an index
   signature), and `toMatchTypeOf` passes on exactly those.
 - **Assert the whole map in at least one case**, not only individual
   members — `expectTypeOf<ColumnValues<DealRow, typeof cols>>()
-  .toEqualTypeOf<{ owner: string; amount: number; … }>()`. A per-key
+.toEqualTypeOf<{ owner: string; amount: number; … }>()`. A per-key
   assertion cannot catch an extra or missing key.
 - **Define the row interface locally; do not import a story fixture.**
   Importing `DealRow` from `src/stories/grouping/fixtures/types.ts` would
@@ -150,4 +150,5 @@ interface DealRow {
       confirm once by temporarily widening the fixture, then revert.
 
 ---
+
 ← [Step 1: `ColumnValues<>` and the `createColumns()` capture point](step-1-column-values-and-create-columns.plan.md) | [Step 3: The store shape carries the map](step-3-store-carries-the-map.plan.md) →

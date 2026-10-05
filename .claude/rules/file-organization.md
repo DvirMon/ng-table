@@ -1,7 +1,7 @@
 ---
 globs:
-  - "libs/**/*.ts"
-  - "apps/**/*.ts"
+  - 'libs/**/*.ts'
+  - 'apps/**/*.ts'
 ---
 
 # File organization: one concern per file
@@ -10,16 +10,17 @@ Split generated/edited code by concern instead of putting everything in one file
 
 Reference implementation: `libs/table/src/` (grouped — see "Once a domain outgrows flat" below).
 
-| Concern | File | Contents |
-|---|---|---|
-| Types/models | `<feature>.types.ts` | interfaces, type aliases, enums |
-| Store/state | `<feature>.store.ts` | signal store / state container, actions |
-| Mock data | `<feature>.mock.ts` | fixtures, sample data for demos and tests |
-| Helpers | `<feature>.utils.ts` | pure helper/utility functions |
-| Pipeline/derivation logic | `<feature>.pipeline.ts` | data transforms feeding the store (when non-trivial) |
-| Feature plugin | `with-<capability>.ts` | one file per opt-in feature (e.g. `with-sorting.ts`), matching its own `.spec.ts` |
+| Concern                   | File                    | Contents                                                                          |
+| ------------------------- | ----------------------- | --------------------------------------------------------------------------------- |
+| Types/models              | `<feature>.types.ts`    | interfaces, type aliases, enums                                                   |
+| Store/state               | `<feature>.store.ts`    | signal store / state container, actions                                           |
+| Mock data                 | `<feature>.mock.ts`     | fixtures, sample data for demos and tests                                         |
+| Helpers                   | `<feature>.utils.ts`    | pure helper/utility functions                                                     |
+| Pipeline/derivation logic | `<feature>.pipeline.ts` | data transforms feeding the store (when non-trivial)                              |
+| Feature plugin            | `with-<capability>.ts`  | one file per opt-in feature (e.g. `with-sorting.ts`), matching its own `.spec.ts` |
 
 Rules:
+
 - Don't inline an interface/type inside a component or store file — put it in `<feature>.types.ts` and import it.
 - Don't inline mock/sample data in a component (e.g. a `-demo` component) — put it in `<feature>.mock.ts` and import it.
 - A folder's `index.ts` is a barrel: re-export the public API only, don't define logic there.
@@ -51,6 +52,6 @@ Angular conventions deliberately rejected:
 
 This does not require rewriting existing single-file components; apply it to new features and when a file grows past one concern.
 
-For *whether* inline logic should be pulled out of its host's scope at all (own named function or
+For _whether_ inline logic should be pulled out of its host's scope at all (own named function or
 own file, reuse not required) — see [extract-encapsulated-logic.md](extract-encapsulated-logic.md).
 This file only governs where something goes once that question is settled.

@@ -38,12 +38,12 @@ and [`../../row-mutations.md`](../../../../row-mutations.md).
 > (user stories for both modes across add / duplicate / delete / change-in-place) and resolved seven
 > open product questions. Four state-layer efforts came out of it; three have shipped:
 >
-> | Effort | Closes | State |
-> |---|---|---|
-> | [`with-optimistic-crud/`](../../archive/with-optimistic-crud/2-decisions.md) D45–D48 | **G5's delete half** | shipped 2026-08-27 |
-> | [`with-multiple-edit/`](../../archive/with-multiple-edit/1-design.md) | **G4** | shipped 2026-08-27 |
-> | [`with-duplicate-row/`](../../archive/with-duplicate-row/1-design.md) | duplicate; `insertRow`/`clearEdit` renames | shipped 2026-08-27 |
-> | [`sorting-null-ordering/`](../../../sorting/archive/sorting-null-ordering/1-handoff.md) | sorting's null defects | shipped 2026-08-27 (`2d13dda`) |
+> | Effort                                                                                  | Closes                                     | State                          |
+> | --------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------ |
+> | [`with-optimistic-crud/`](../../archive/with-optimistic-crud/2-decisions.md) D45–D48    | **G5's delete half**                       | shipped 2026-08-27             |
+> | [`with-multiple-edit/`](../../archive/with-multiple-edit/1-design.md)                   | **G4**                                     | shipped 2026-08-27             |
+> | [`with-duplicate-row/`](../../archive/with-duplicate-row/1-design.md)                   | duplicate; `insertRow`/`clearEdit` renames | shipped 2026-08-27             |
+> | [`sorting-null-ordering/`](../../../sorting/archive/sorting-null-ordering/1-handoff.md) | sorting's null defects                     | shipped 2026-08-27 (`2d13dda`) |
 >
 > **v2.1 verb renames**, on top of the v1.0 list above: `addRow` → `insertRow`,
 > `clearEditing` → `clearEdit`, `ABSENT` removed, and three verbs added — `discardEdit`,
@@ -52,12 +52,12 @@ and [`../../row-mutations.md`](../../../../row-mutations.md).
 ## The split
 
 Docs are numbered by dependency order — state layer (1) → columns (2) → UI (3). A gap belongs to
-whichever layer *owns the mechanism*, not whichever layer the user notices it in:
+whichever layer _owns the mechanism_, not whichever layer the user notices it in:
 
-| Layer | Owns | Example |
-|---|---|---|
+| Layer         | Owns                                                                                               | Example                                      |
+| ------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | **State (1)** | what is true about a row: which rows are open, what restores on Cancel, what happens on an id swap | a `pending` entry orphaned by a temp-id swap |
-| **UI (3)** | how a person drives it: keys, focus, announcements, affordances | Escape cancels the row |
+| **UI (3)**    | how a person drives it: keys, focus, announcements, affordances                                    | Escape cancels the row                       |
 
 Keyboard and accessibility are **UI-layer in full**. `revertEdit` exists and works; nothing calls
 it from a key handler, and adding that call is directive work — no state-layer change is
@@ -78,7 +78,7 @@ Two gaps are neither: they are defects in the decision record itself (G8).
 UI layer in full. Now in [`3-ui/work/row-editing/5-gaps.md`](../../../../../3-ui/work/row-editing/5-gaps.md).
 No Escape-to-cancel, no Enter-to-save, no Tab containment; the verbs it needs all shipped in E4.
 
-### ~~G2 — A row removed externally while open leaves a dead entry~~ *(state layer)* — **CLOSED 2026-08-25**
+### ~~G2 — A row removed externally while open leaves a dead entry~~ _(state layer)_ — **CLOSED 2026-08-25**
 
 **Was:** `revertEdit` restores by mapping over `data`, so a row that is gone matches nothing and
 the write is a silent no-op — while the entry is never cleared, leaving the row "open" forever
@@ -92,7 +92,7 @@ Tests colocated. The disposition table's claim is now true rather than aspiratio
 
 **What it deliberately does not cover:** the temp-id swap, both halves — see G3.
 
-### ~~G3 — Optimistic create has no identity story~~ *(state layer)* — **CLOSED 2026-09-03**
+### ~~G3 — Optimistic create has no identity story~~ _(state layer)_ — **CLOSED 2026-09-03**
 
 **Closed by implementing `swapRowId(from, to)`** (`mutations/optimistic-mutations.ts`,
 `docs/1-state/work/row-editing/archive/swap-row-id/1-handoff.md`, D49). Both defects below are fixed: a pending
@@ -111,7 +111,7 @@ stop existing". The two real defects are narrower and different:
 1. **A pending optimistic create orphans if settled under the server id.** `settleEdit(saved.id)`
    is the natural thing to write and is a silent no-op; the row stays `pending` forever. ADR-0006
    does not clean it either — the snapshot is `ABSENT` (D28), and `ABSENT` is exempt from pruning
-   by design, because D28 puts an id in `snapshots` *before* the row exists.
+   by design, because D28 puts an id in `snapshots` _before_ the row exists.
 2. **A row swapped while still open silently leaves edit mode.** `open` is not exempt, so
    ADR-0006's reconciliation prunes it on the swap. This is D26's documented failure, still live,
    and it has no consumer workaround.
@@ -131,7 +131,7 @@ the two-call consumer order is safe (not just conventional):
 
 ## Priority 2 — shipped surface is under-specified
 
-### ~~G4 — `{ multiple: true }` is a flag with no design~~ *(state layer)* — **CLOSED 2026-08-27**
+### ~~G4 — `{ multiple: true }` is a flag with no design~~ _(state layer)_ — **CLOSED 2026-08-27**
 
 **Closed by [`with-multiple-edit/1-design.md`](../../archive/with-multiple-edit/1-design.md)** (status:
 implemented). Product OQ-7 chose "design the semantics" over "refuse the combination" — refusing was
@@ -155,7 +155,7 @@ designed against.
 **Original text, for history:**
 
 **Partially addressed 2026-08-26.** `src/stories/gated-edit/` now toggles `multiple` live, so the
-config has a demo and the live-reaction path is exercised. The *semantics* gap below stands.
+config has a demo and the live-reaction path is exercised. The _semantics_ gap below stands.
 
 **Also narrowed by D39.** A live table's edit session is delimited by focus, which is inherently
 single, so D31.2's unsupported combination is now a **gated-table-only** problem.
@@ -170,14 +170,14 @@ unsupported combination fail loudly at composition time.
 
 **Where:** `api/features/with-row-edit.ts`.
 
-**Blocked on:** whoever specs bulk edit — D32 (mutations) routes bulk *edit* through this
+**Blocked on:** whoever specs bulk edit — D32 (mutations) routes bulk _edit_ through this
 decision.
 
 **Now blocks something too:** **O23** (`applyEditable({ when })`, a declarative openness rule —
 see D35). A predicate matching N rows wants N rows open, so a row rule cannot be designed while
 `multiple: true` has no semantics. G4 is no longer only a tidiness gap.
 
-### G5 — Optimistic rollback covers update, create, and (now) delete; move stays uncovered *(state layer)*
+### G5 — Optimistic rollback covers update, create, and (now) delete; move stays uncovered _(state layer)_
 
 **Tracked as [#20](https://github.com/DvirMon/ng-table/issues/20)** (opened 2026-08-26).
 
@@ -187,11 +187,11 @@ captures + removes in one write, so `revertEdit(id)` alone re-inserts it. `ABSEN
 (D46) — the mechanism that made delete unrepresentable no longer exists.
 
 **Move is still uncovered**, and for the reason O22 originally gave: `RowRestorePoint` fixes a
-row's *position at capture time*, but no verb reorders rows, and undoing a reorder needs an
+row's _position at capture time_, but no verb reorders rows, and undoing a reorder needs an
 inverse-operation representation (from-index/to-index or similar), not a fixed snapshot position.
 
 **Blocked on `withDragDrop()`/`moveRow` not existing yet** — see the product doc's D-2. There is
-nothing to design a rollback representation *for* until a move verb exists to define what
+nothing to design a rollback representation _for_ until a move verb exists to define what
 "inverse" means; re-derive O22's representation half as part of that feature's own design, not
 ahead of it.
 
@@ -203,11 +203,11 @@ ahead of it.
 restore point is ever captured; `revertEdit` replaces in place and cannot re-insert; a snapshot
 holds a **value**, never an index, so position is unrecoverable regardless.~~
 
-**Not closed by the D37 split alone** — that was true until D45. D37 took O22's *ownership* half
-(rollback becomes its own feature) and left the *representation* half open; D45–D47 closed the
+**Not closed by the D37 split alone** — that was true until D45. D37 took O22's _ownership_ half
+(rollback becomes its own feature) and left the _representation_ half open; D45–D47 closed the
 representation half for delete specifically, leaving move as the one still-open case.
 
-### G13 — `closeAllButLast` may now discard a displaced row's unsaved edit, contradicting D31.2 *(state layer)*
+### G13 — `closeAllButLast` may now discard a displaced row's unsaved edit, contradicting D31.2 _(state layer)_
 
 **Where:** `api/features/with-row-edit.ts`, `closeAllButLast()`.
 
@@ -230,7 +230,7 @@ comments — the discrepancy surfaced as unresolved product behavior, not docume
 outcome under gated/`draft` editing, or should `closeAllButLast` carry the draft forward (e.g.
 into the snapshot, or by refusing to displace a row with an unsaved draft)? Tracked as **O26**.
 
-### G6 — Expansion children get no `sourceIndex` *(state layer — engine)* — **IN PROGRESS, separate session**
+### G6 — Expansion children get no `sourceIndex` _(state layer — engine)_ — **IN PROGRESS, separate session**
 
 **Being handled outside this work folder** — via ADR-0011/ADR-0012 implementation, tracked
 elsewhere. Do not pick this up from here; check ADR-0011/ADR-0012 status before touching
@@ -265,12 +265,12 @@ Consumer + UI; no state-layer work. Now in [`3-ui/work/row-editing/5-gaps.md`](.
 The form owns dirty/validity (D1) and `table.editing()` gives the row set — what is missing is the
 recipe, not a mechanism.
 
-### G8 — Decision-record defects *(neither layer — docs integrity)*
+### G8 — Decision-record defects _(neither layer — docs integrity)_
 
 Three, all cheap, all actively misleading:
 
 **All three fixed 2026-08-25.** Decision numbers are global across this folder and
-`../with-mutations/2-decisions.md`, so both collisions were resolved by renumbering on *this*
+`../with-mutations/2-decisions.md`, so both collisions were resolved by renumbering on _this_
 side, leaving the mutation decisions and the engine `CLAUDE.md` citations untouched:
 
 1. ~~**Two decisions numbered D31 in one file.**~~ `*ngpTableRowField` is now **D33**. Optimistic
@@ -292,14 +292,14 @@ decision.
 **Closed by Storybook** (`src/stories/`, commits `ca5f56f` + `e681fda`). Four stories now cover
 what no demo could:
 
-| Was uncovered | Now |
-|---|---|
-| **`rebaseEdit`** | **closed** — `external-write/` pushes a write to `data` under an open row and calls `rebaseEdit(id, pushed)`. This was the suggested fix below, and it shipped. |
-| `clearEditing()` | **closed** — `gated-edit/` has a Close-all button |
-| `{ multiple: true }` | **closed** — `gated-edit/` toggles it live |
-| D28's reverse order | **dissolved by D36**, not demoed — there is one add path now |
-| Pessimistic save | **still open** — every story is optimistic; the row-stays-open-through-the-round-trip path is shown nowhere |
-| Single-mode switching (D31.2) | **still open** — reachable, but nothing on screen distinguishes A closing as a Save from a Cancel |
+| Was uncovered                 | Now                                                                                                                                                             |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`rebaseEdit`**              | **closed** — `external-write/` pushes a write to `data` under an open row and calls `rebaseEdit(id, pushed)`. This was the suggested fix below, and it shipped. |
+| `clearEditing()`              | **closed** — `gated-edit/` has a Close-all button                                                                                                               |
+| `{ multiple: true }`          | **closed** — `gated-edit/` toggles it live                                                                                                                      |
+| D28's reverse order           | **dissolved by D36**, not demoed — there is one add path now                                                                                                    |
+| Pessimistic save              | **still open** — every story is optimistic; the row-stays-open-through-the-round-trip path is shown nowhere                                                     |
+| Single-mode switching (D31.2) | **still open** — reachable, but nothing on screen distinguishes A closing as a Save from a Cancel                                                               |
 
 **~~One new gap, from D39~~ — closed 2026-08-26:** the live table + `withOptimistic()` shape now
 has `src/stories/live-optimistic/` (S6), driven by focus/blur rather than buttons.
@@ -311,14 +311,14 @@ The original entry follows.
 Between them they exercise `beginEdit`, `endEdit({ keepSnapshot })`, `settleEdit`, `revertEdit`
 from both states, and D28's discard order. What no demo could trigger at the time:
 
-| Uncovered | Note |
-|---|---|
-| **`rebaseEdit`** | shipped public verb, exercised only in unit tests. Its reason for existing is O13 — a restore point going stale from an *external* write — and no demo has an external writer. |
-| `clearEditing()` | no affordance anywhere |
-| Pessimistic save | E2b is optimistic-only; the row-stays-open-through-the-round-trip path is never shown |
-| `{ multiple: true }` | E2b hardcodes single mode |
-| D28's reverse order (Cancel = reset, not discard) | lives only in a code comment |
-| Single-mode switching (D31.2) | *is* reachable — Edit row A, then Edit row B — but nothing on screen shows that A closed as a Save rather than a Cancel |
+| Uncovered                                         | Note                                                                                                                                                                           |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`rebaseEdit`**                                  | shipped public verb, exercised only in unit tests. Its reason for existing is O13 — a restore point going stale from an _external_ write — and no demo has an external writer. |
+| `clearEditing()`                                  | no affordance anywhere                                                                                                                                                         |
+| Pessimistic save                                  | E2b is optimistic-only; the row-stays-open-through-the-round-trip path is never shown                                                                                          |
+| `{ multiple: true }`                              | E2b hardcodes single mode                                                                                                                                                      |
+| D28's reverse order (Cancel = reset, not discard) | lives only in a code comment                                                                                                                                                   |
+| Single-mode switching (D31.2)                     | _is_ reachable — Edit row A, then Edit row B — but nothing on screen shows that A closed as a Save rather than a Cancel                                                        |
 
 **Why it matters beyond tidiness:** E2 and E2b were built to make D24 and D31 falsifiable, and
 both found things. `rebaseEdit` has never run outside a unit test, so the same check has not
@@ -344,14 +344,14 @@ phantom) are now in [`3-ui/work/row-editing/5-gaps.md`](../../../../../3-ui/work
 
 ## Not gaps — deliberate
 
-| Not shipped | Why |
-|---|---|
-| Row actions markup, keyboard, ARIA | D18 — every operation is already expressible through the updaters; an action registry would drag label/icon/ordering into a data-only store. Revisit only on real cross-consumer duplication, and then as a UI directive. |
-| Library-detected edit triggers (blur hooks, dirty checking) | D20 — "editing" has exactly one definition: membership in the map. Trigger policy is the consumer's. |
-| A store-owned form | D1 — the consumer creates `form(data)` and keeps its full surface. |
-| `withRowEdit()` for always-edit tables | D29 — D24 removed the pinning justification; the minimal live table composes nothing. **Narrowed by D39:** still true of `withRowEdit()`, but a live table that wants rollback composes `withOptimistic()`. |
-| Pipeline exemption for editing rows | D24 superseded D20's mechanism. `debounce()` holds the row still without the engine knowing who is editing. |
-| `moveRow`, bulk arity, `batch()` | D19/D32 — shape settled, no v1 caller; bulk edit additionally blocked on `withSelection()`. |
+| Not shipped                                                 | Why                                                                                                                                                                                                                       |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Row actions markup, keyboard, ARIA                          | D18 — every operation is already expressible through the updaters; an action registry would drag label/icon/ordering into a data-only store. Revisit only on real cross-consumer duplication, and then as a UI directive. |
+| Library-detected edit triggers (blur hooks, dirty checking) | D20 — "editing" has exactly one definition: membership in the map. Trigger policy is the consumer's.                                                                                                                      |
+| A store-owned form                                          | D1 — the consumer creates `form(data)` and keeps its full surface.                                                                                                                                                        |
+| `withRowEdit()` for always-edit tables                      | D29 — D24 removed the pinning justification; the minimal live table composes nothing. **Narrowed by D39:** still true of `withRowEdit()`, but a live table that wants rollback composes `withOptimistic()`.               |
+| Pipeline exemption for editing rows                         | D24 superseded D20's mechanism. `debounce()` holds the row still without the engine knowing who is editing.                                                                                                               |
+| `moveRow`, bulk arity, `batch()`                            | D19/D32 — shape settled, no v1 caller; bulk edit additionally blocked on `withSelection()`.                                                                                                                               |
 
 ---
 
@@ -361,17 +361,17 @@ Every open question that gates a gap in this file, collapsed into one index. **T
 in the decision logs** — this table is the answer to "what has to be decided before I can start
 G*n*", nothing more. Follow the link before acting on any of them.
 
-| # | Question | Gates | Full text |
-|---|---|---|---|
-| ~~**O24**~~ | ~~Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features?~~ **Resolved 2026-09-03** — its own updater in `mutations/optimistic-mutations.ts`, touching both maps, owned by neither feature | **G3** ([#19](https://github.com/DvirMon/ng-table/issues/19)) — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
-| ~~**O20**~~ | ~~On an id swap: enforce end-edit-first, migrate the orphaned key, or document the sequence?~~ **Resolved 2026-09-03** — migrate the key; end-edit-first rejected outright, it gates a consumer action on internal sync | **G3** — no longer blocking | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
-| **O22** | *(representation half, delete closed 2026-08-27)* Inverse operation instead of a fixed-position snapshot, so rollback can cover **move**? | **G5** ([#20](https://github.com/DvirMon/ng-table/issues/20)) — delete no longer blocked | [with-optimistic-crud](../../archive/with-optimistic-crud/2-decisions.md) |
-| **O23** | Should openness be declarative — `applyEditable({ when })` mirroring `applyVisible()`? | blocked *by* **G4** — a predicate matching N rows forces `multiple: true` | [with-row-editing](2-decisions.md) |
-| **O15** | How does the `filter` stage express "keep these ids even though the predicate rejects them"? | phantom — needs `withFiltering()` | [with-row-editing](2-decisions.md) |
-| **O16** | Where does a *retained* row sit once it no longer matches the filter — in place, or collected? | phantom — same | [with-row-editing](2-decisions.md) |
-| **O11** | Does `withRowEdit()` fire a `rowEditChanged` Observable, or is `editing()` the only notification? | no gap — API surface. Decide with **O6** | [with-row-editing](2-decisions.md) |
-| **O19** | Export an `editableRow(row, columns)` schema fragment so the commit boundary is one call? | no gap — E5 in [`4-increments.md`](4-increments.md) | [with-row-editing](2-decisions.md) |
-| **O26** | Should a displaced row's unsaved `draft` be discarded (today's behavior) or carried forward when `closeAllButLast` fires? | **G13** | [with-row-edit.ts](../../../../../../src/api/features/with-row-edit.ts) |
+| #           | Question                                                                                                                                                                                                                               | Gates                                                                                    | Full text                                                                                |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| ~~**O24**~~ | ~~Where does `swapRowId(from, to)` live now that `open` and `snapshots` belong to different features?~~ **Resolved 2026-09-03** — its own updater in `mutations/optimistic-mutations.ts`, touching both maps, owned by neither feature | **G3** ([#19](https://github.com/DvirMon/ng-table/issues/19)) — no longer blocking       | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
+| ~~**O20**~~ | ~~On an id swap: enforce end-edit-first, migrate the orphaned key, or document the sequence?~~ **Resolved 2026-09-03** — migrate the key; end-edit-first rejected outright, it gates a consumer action on internal sync                | **G3** — no longer blocking                                                              | [D49](./2-decisions.md#d49--o20-resolved-swaprowidfrom-to-no-forced-end-edit-2026-09-03) |
+| **O22**     | _(representation half, delete closed 2026-08-27)_ Inverse operation instead of a fixed-position snapshot, so rollback can cover **move**?                                                                                              | **G5** ([#20](https://github.com/DvirMon/ng-table/issues/20)) — delete no longer blocked | [with-optimistic-crud](../../archive/with-optimistic-crud/2-decisions.md)                |
+| **O23**     | Should openness be declarative — `applyEditable({ when })` mirroring `applyVisible()`?                                                                                                                                                 | blocked _by_ **G4** — a predicate matching N rows forces `multiple: true`                | [with-row-editing](2-decisions.md)                                                       |
+| **O15**     | How does the `filter` stage express "keep these ids even though the predicate rejects them"?                                                                                                                                           | phantom — needs `withFiltering()`                                                        | [with-row-editing](2-decisions.md)                                                       |
+| **O16**     | Where does a _retained_ row sit once it no longer matches the filter — in place, or collected?                                                                                                                                         | phantom — same                                                                           | [with-row-editing](2-decisions.md)                                                       |
+| **O11**     | Does `withRowEdit()` fire a `rowEditChanged` Observable, or is `editing()` the only notification?                                                                                                                                      | no gap — API surface. Decide with **O6**                                                 | [with-row-editing](2-decisions.md)                                                       |
+| **O19**     | Export an `editableRow(row, columns)` schema fragment so the commit boundary is one call?                                                                                                                                              | no gap — E5 in [`4-increments.md`](4-increments.md)                                      | [with-row-editing](2-decisions.md)                                                       |
+| **O26**     | Should a displaced row's unsaved `draft` be discarded (today's behavior) or carried forward when `closeAllButLast` fires?                                                                                                              | **G13**                                                                                  | [with-row-edit.ts](../../../../../../src/api/features/with-row-edit.ts)                  |
 
 **O17** (`applyEach` validates rows the user cannot see) moved with G7 — see the
 [UI register](../../../../../3-ui/work/row-editing/5-gaps.md).

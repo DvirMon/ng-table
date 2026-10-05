@@ -21,8 +21,7 @@ these directives reflect it and toggle it.
 ```html
 <tr [ngpTableRow]="row" ngpTableTreeRow>
   <td>
-    <button ngpTableTreeToggle
-      [attr.aria-label]="'Children of ' + row.data.name">▸</button>
+    <button ngpTableTreeToggle [attr.aria-label]="'Children of ' + row.data.name">▸</button>
     {{ row.data.name }}
   </td>
 </tr>
@@ -42,11 +41,11 @@ Selector: `tr[ngpTableRow][ngpTableTreeRow]`,
 Presence-only hooks (ADR-0026 rule 1) — `""` when true, absent
 otherwise:
 
-| Attribute | From | Meaning |
-|---|---|---|
-| `data-expandable` | `RenderRow.hasChildren` (overridden by `isExpandable`) | the row can open — a lazy parent with no loaded children counts |
-| `data-expanded` | `RenderRow.isExpanded` | the row is open |
-| `data-context-row` | `RenderRow.isContextRow` | the row is kept only as an ancestor of a filter match |
+| Attribute          | From                                                   | Meaning                                                         |
+| ------------------ | ------------------------------------------------------ | --------------------------------------------------------------- |
+| `data-expandable`  | `RenderRow.hasChildren` (overridden by `isExpandable`) | the row can open — a lazy parent with no loaded children counts |
+| `data-expanded`    | `RenderRow.isExpanded`                                 | the row is open                                                 |
+| `data-context-row` | `RenderRow.isContextRow`                               | the row is kept only as an ancestor of a filter match           |
 
 Named `data-expandable`, not `data-has-children`: the hook names
 what CSS keys on, not the field.
@@ -81,12 +80,12 @@ template `type`.
 
 No attribute is bound by two directives on one element:
 
-| Directive | Element | Binds |
-|---|---|---|
-| `ngpTableRow` | row | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth` |
-| `ngpTableTreeRow` | row | `data-expandable`, `data-expanded`, `data-context-row` |
-| Shared trigger core (internal) | button | `type`, `aria-expanded`, `data-expanded` |
-| `ngpTableTreeToggle` | button | `disabled`, `aria-hidden`, `data-disabled` |
+| Directive                      | Element | Binds                                                                           |
+| ------------------------------ | ------- | ------------------------------------------------------------------------------- |
+| `ngpTableRow`                  | row     | `role`, `data-row-kind`, `data-depth`, `aria-rowindex`, `--ngp-table-row-depth` |
+| `ngpTableTreeRow`              | row     | `data-expandable`, `data-expanded`, `data-context-row`                          |
+| Shared trigger core (internal) | button  | `type`, `aria-expanded`, `data-expanded`                                        |
+| `ngpTableTreeToggle`           | button  | `disabled`, `aria-hidden`, `data-disabled`                                      |
 
 ## Toggle-only is the default
 
@@ -100,11 +99,9 @@ A whole-row mouse trigger is consumer markup — a `(click)` on the
 `<tr>`:
 
 ```html
-<tr [ngpTableRow]="row" ngpTableTreeRow
-  (click)="table.tree.toggle(row.id)">
+<tr [ngpTableRow]="row" ngpTableTreeRow (click)="table.tree.toggle(row.id)">
   <td>
-    <button ngpTableTreeToggle
-      [attr.aria-label]="'Children of ' + row.data.name">▸</button>
+    <button ngpTableTreeToggle [attr.aria-label]="'Children of ' + row.data.name">▸</button>
     {{ row.data.name }}
   </td>
 </tr>
@@ -124,8 +121,7 @@ directives work on group headers unchanged:
 ```html
 <tr [ngpTableRow]="row" ngpTableTreeRow>
   <td>
-    <button ngpTableTreeToggle
-      [attr.aria-label]="'Group ' + row.groupKey">▸</button>
+    <button ngpTableTreeToggle [attr.aria-label]="'Group ' + row.groupKey">▸</button>
     {{ row.groupKey }}
   </td>
 </tr>

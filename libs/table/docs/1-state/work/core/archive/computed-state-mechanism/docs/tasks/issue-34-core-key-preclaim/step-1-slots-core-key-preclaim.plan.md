@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — slots.ts: core-key pre-claim API and positional claimant labels"
+title: 'Step 1 — slots.ts: core-key pre-claim API and positional claimant labels'
 type: task-step
 issue: 68
 ---
@@ -101,8 +101,8 @@ lands immediately after, rather than fixing the 0-based index and relabeling a s
 
 - The `_everyCoreKeyIsClaimed` sentinel is the one place a type-only assertion is used as a
   runtime const; prefix it with `_` and mark it `// eslint-disable-next-line
-  @typescript-eslint/no-unused-vars` if the linter objects. A `satisfies` alone only checks that
-  each entry is a valid key; the sentinel is what checks the list is *complete*.
+@typescript-eslint/no-unused-vars` if the linter objects. A `satisfies` alone only checks that
+  each entry is a valid key; the sentinel is what checks the list is _complete_.
 - `TableStore<unknown>` is the right instantiation for `keyof` — the member names do not depend
   on `TRow`.
 - Keep the generic collision message. D4 says "like any other member collision"; a dedicated
@@ -135,4 +135,5 @@ lands immediately after, rather than fixing the 0-based index and relabeling a s
       `internal feature 1`.
 
 ---
+
 [Step 2: Registry spec — core-key pre-claim →](step-2-slots-spec-core-key-preclaim.plan.md)

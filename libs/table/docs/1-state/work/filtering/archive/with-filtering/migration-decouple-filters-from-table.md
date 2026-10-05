@@ -25,7 +25,7 @@ export interface WithFilteringConfig<TRow> {
 }
 
 // filters side — knows nothing about tables
-withFiltering({ predicates: () => [this.filters().matcher()] })
+withFiltering({ predicates: () => [this.filters().matcher()] });
 ```
 
 ## Dependency graph
@@ -113,10 +113,11 @@ Why a method on the root rather than a property on the callable: `Filters` is a 
 - Cross-feature specs (`selection.utils`, `with-grouping`) currently build a whole
   `createFilters` schema just to narrow rows. Replace with a bare predicate — they get shorter
   and stop testing filtering.
-> **Merged into R47's call-site pass**, same reason as S3b — these specs are rewritten once, for
-> `predicates` and the array schema together. Note `selection.utils.spec.ts` and
-> `with-grouping.spec.ts` **delete** their `createFilters` schemas rather than migrating them,
-> which corrects R41's claim that `selection.utils.spec.ts:27` becomes generic in `S`.
+
+  > **Merged into R47's call-site pass**, same reason as S3b — these specs are rewritten once, for
+  > `predicates` and the array schema together. Note `selection.utils.spec.ts` and
+  > `with-grouping.spec.ts` **delete** their `createFilters` schemas rather than migrating them,
+  > which corrects R41's claim that `selection.utils.spec.ts:27` becomes generic in `S`.
 
 - `with-filtering.spec.ts` splits by ownership:
   - **Keeps, rewritten to predicates:** composes into `createTable` (:59), narrows rows (:72),
@@ -167,8 +168,8 @@ Sequenced last because it is pure churn that would conflict with every other ste
 
 **Depends on:** S2. **Parallel-safe with:** S3a, S3b.
 
-- **ADR-0016** (next free number): *the filter model is the consumer's, the table takes a
-  predicate list*. Records the general-mechanism choice, why the term is the error-isolation
+- **ADR-0016** (next free number): _the filter model is the consumer's, the table takes a
+  predicate list_. Records the general-mechanism choice, why the term is the error-isolation
   unit, why AND is the only combinator the table may assume, and the phantom-`TRow` flip.
 - `1-state/features/filtering.md` — rewrite Config, delete the whole `TState` section, rewrite
   Compile-Time Dependencies ("None" is finally literally true), trim `manual` (its R23 rationale

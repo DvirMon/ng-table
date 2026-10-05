@@ -1,238 +1,860 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>NGP Table — Home</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
-<script src="./image-slot.js"></script>
-<style>
-  body { margin: 0; background: oklch(0.16 0.005 260); font-family: Inter, sans-serif; -webkit-font-smoothing: antialiased; }
-  a { color: oklch(0.62 0.19 52); text-decoration: none; }
-  a:hover { color: oklch(0.68 0.19 52); }
-  p a { text-decoration: underline; text-decoration-color: oklch(0.62 0.19 52 / 0.4); text-underline-offset: 2px; }
-  p a:hover { text-decoration-color: currentColor; }
-  [data-skip]:focus { transform: translateY(0) !important; opacity: 1 !important; }
-  ::selection { background: oklch(0.62 0.19 52 / 0.3); }
-</style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>NGP Table — Home</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap"
+          rel="stylesheet"
+        />
+        <script src="./image-slot.js"></script>
+        <style>
+          body {
+            margin: 0;
+            background: oklch(0.16 0.005 260);
+            font-family: Inter, sans-serif;
+            -webkit-font-smoothing: antialiased;
+          }
+          a {
+            color: oklch(0.62 0.19 52);
+            text-decoration: none;
+          }
+          a:hover {
+            color: oklch(0.68 0.19 52);
+          }
+          p a {
+            text-decoration: underline;
+            text-decoration-color: oklch(0.62 0.19 52 / 0.4);
+            text-underline-offset: 2px;
+          }
+          p a:hover {
+            text-decoration-color: currentColor;
+          }
+          [data-skip]:focus {
+            transform: translateY(0) !important;
+            opacity: 1 !important;
+          }
+          ::selection {
+            background: oklch(0.62 0.19 52 / 0.3);
+          }
+        </style>
+      </helmet>
 
-<div style="background:oklch(0.16 0.005 260);color:white;min-height:100vh;">
-
-  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 24px;background:oklch(0.21 0.03 85);border-bottom:1px solid oklch(0.34 0.06 85);">
-    <span style="font:700 11px Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.8 0.12 85);">Reference frame</span>
-    <span style="flex:1;min-width:260px;font:400 13px/1.5 Inter,sans-serif;color:oklch(0.85 0.06 85);">Layout, rhythm and states are spec-accurate. <strong style="font-weight:600;">All marketing copy, feature text and the install command are invented placeholder</strong> — there is no NGP Table source in this project. Every block carries <code style="font:400 12px 'JetBrains Mono',monospace;">data-role</code>, <code style="font:400 12px 'JetBrains Mono',monospace;">data-spec</code> and <code style="font:400 12px 'JetBrains Mono',monospace;">data-purpose</code> naming what belongs there.</span>
-    <button type="button" onClick="{{ toggleAnnotations }}" style="flex:none;padding:6px 12px;border-radius:20px;border:1px solid oklch(0.5 0.1 85);background:transparent;color:oklch(0.85 0.06 85);font:500 12.5px Inter,sans-serif;cursor:pointer;" style-hover="background:oklch(0.28 0.04 85);color:white;">{{ annotationLabel }}</button>
-  </div>
-
-  <a data-skip data-role="skip-link" data-spec="specs/foundations/Focus and Keyboard.md" data-purpose="First focusable element in the document, on every page including this one. Moves focus to the H1, not just the hash." data-content="derived" href="#hero-h1" style="position:fixed;top:8px;left:8px;z-index:80;padding:8px 14px;border-radius:8px;background:oklch(0.2 0.005 260);border:1px solid oklch(0.62 0.19 52);color:white;font:500 13px Inter,sans-serif;transform:translateY(-200%);opacity:0;transition:transform 120ms ease,opacity 120ms ease;">Skip to content</a>
-
-  <header data-role="navbar" data-spec="specs/pages/Home.md" data-purpose="Band treatment: no border, band-colored, contained by the hero. Past 24px of scroll it swaps to its own surface. The docs treatment in layout/Top Navbar.md is a different bar." data-content="MOCK" role="banner" style="position:sticky;top:0;z-index:10;height:56px;padding:0 clamp(24px,4vw,48px);background:oklch(0.57 0.19 52);border-bottom:1px solid transparent;display:flex;align-items:center;transition:background 180ms ease,border-color 180ms ease,box-shadow 180ms ease;background-color:{{ headerBg }};border-bottom-color:{{ headerBorderColor }};box-shadow:{{ headerShadow }};">
-    <div style="width:100%;max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:22px;height:22px;border-radius:6px;background:oklch(1 0 0 / 0.9);"></div>
-        <span style="font:600 15px/1.2 Inter,sans-serif;color:white;letter-spacing:-0.01em;">NGP Table</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <button type="button" style="display:flex;align-items:center;gap:8px;height:32px;padding:0 10px;border-radius:8px;border:1px solid oklch(1 0 0 / 0.28);background:oklch(1 0 0 / 0.12);color:white;font:400 13px Inter,sans-serif;cursor:pointer;width:220px;justify-content:space-between;" style-hover="border-color:oklch(1 0 0 / 0.45);background:oklch(1 0 0 / 0.18);color:white;">
-          <span style="display:flex;align-items:center;gap:7px;">
-            <span aria-hidden="true" style="font-size:15px;line-height:1;">⌕</span>
-            Search
-          </span>
-          <span style="font:400 11px 'JetBrains Mono',monospace;color:white;border:1px solid oklch(1 0 0 / 0.28);border-radius:4px;padding:1px 5px;">⌘K</span>
-        </button>
-        <a href="#" style="padding:6px 12px;border-radius:20px;background:transparent;color:white;font:500 13px Inter,sans-serif;" style-hover="background:oklch(0 0 0 / 0.15);">Documentation</a>
-        <a href="#" style="padding:6px 12px;border-radius:20px;background:transparent;color:white;font:500 13px Inter,sans-serif;" style-hover="background:oklch(0 0 0 / 0.15);">GitHub</a>
-      </div>
-    </div>
-  </header>
-<section style="position:relative;background:oklch(0.57 0.19 52);overflow:hidden;padding:clamp(28px,3.5vw,44px) clamp(24px,4vw,48px) clamp(32px,4vw,52px);">
-    <div aria-hidden="true" style="position:absolute;top:-140px;left:calc(max(clamp(24px,4vw,48px),(100vw - 1080px) / 2) + 700px);width:620px;height:620px;border-radius:28%;background:oklch(1 0 0 / 0.07);pointer-events:none;"></div>
-    
-    <div style="position:relative;max-width:1080px;margin:0 auto;">
-      <div style="max-width:660px;">
-        <div style="display:inline-flex;align-items:center;gap:7px;padding:4px 12px 4px 9px;border-radius:20px;background:oklch(0 0 0 / 0.15);font:500 12.5px Inter,sans-serif;color:white;margin-bottom:20px;">
-          <span style="width:5px;height:5px;border-radius:50%;background:oklch(0.85 0.18 145);"></span>
-          Now in public beta
+      <div style="background: oklch(0.16 0.005 260); color: white; min-height: 100vh">
+        <div
+          style="
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 24px;
+            background: oklch(0.21 0.03 85);
+            border-bottom: 1px solid oklch(0.34 0.06 85);
+          "
+        >
+          <span
+            style="
+              font:
+                700 11px Inter,
+                sans-serif;
+              letter-spacing: 0.08em;
+              text-transform: uppercase;
+              color: oklch(0.8 0.12 85);
+            "
+            >Reference frame</span
+          >
+          <span
+            style="
+              flex: 1;
+              min-width: 260px;
+              font:
+                400 13px/1.5 Inter,
+                sans-serif;
+              color: oklch(0.85 0.06 85);
+            "
+            >Layout, rhythm and states are spec-accurate.
+            <strong style="font-weight: 600"
+              >All marketing copy, feature text and the install command are invented
+              placeholder</strong
+            >
+            — there is no NGP Table source in this project. Every block carries
+            <code
+              style="
+                font:
+                  400 12px 'JetBrains Mono',
+                  monospace;
+              "
+              >data-role</code
+            >,
+            <code
+              style="
+                font:
+                  400 12px 'JetBrains Mono',
+                  monospace;
+              "
+              >data-spec</code
+            >
+            and
+            <code
+              style="
+                font:
+                  400 12px 'JetBrains Mono',
+                  monospace;
+              "
+              >data-purpose</code
+            >
+            naming what belongs there.</span
+          >
+          <button
+            type="button"
+            onClick="{{ toggleAnnotations }}"
+            style="
+              flex: none;
+              padding: 6px 12px;
+              border-radius: 20px;
+              border: 1px solid oklch(0.5 0.1 85);
+              background: transparent;
+              color: oklch(0.85 0.06 85);
+              font:
+                500 12.5px Inter,
+                sans-serif;
+              cursor: pointer;
+            "
+            style-hover="background:oklch(0.28 0.04 85);color:white;"
+          >
+            {{ annotationLabel }}
+          </button>
         </div>
-        <h1 id="hero-h1" tabindex="-1" data-role="prose.h1" data-spec="specs/pages/Home.md" data-purpose="The page's only H1, and a marketing step: clamp(38px,6vw,64px), never the docs headline-large. Positioning line, not a feature list." data-content="MOCK" style="margin:0;font:700 clamp(38px,6vw,64px)/1.05 Inter,sans-serif;letter-spacing:-0.025em;color:white;">
-          Table behavior,<br>none of the styling
-        </h1>
-        <p data-role="prose.lede" data-spec="specs/pages/Home.md" data-purpose="One paragraph under the H1. Full white, never a reduced alpha — on the band, 85% white measures 3.85:1 and fails AA." data-content="MOCK" style="margin:18px 0 0;font:400 16px/1.65 Inter,sans-serif;color:white;max-width:520px;">
-          A headless table primitive for Angular. Sorting, selection, grouping and virtual scroll as composable behavior — you own every pixel of the markup.
-        </p>
-        <div style="display:flex;flex-wrap:wrap;gap:11px;margin-top:26px;">
-          <a href="#" style="padding:11px 20px;border-radius:22px;background:white;color:oklch(0.2 0.03 52);font:600 14.5px Inter,sans-serif;" style-hover="background:oklch(0.95 0.01 52);">Get Started</a>
-          <a href="#" style="padding:11px 20px;border-radius:22px;background:oklch(0.18 0.02 52);color:white;font:600 14.5px Inter,sans-serif;" style-hover="background:oklch(0.24 0.03 52);">Join the Community</a>
-        </div>
+
+        <a
+          data-skip
+          data-role="skip-link"
+          data-spec="specs/foundations/Focus and Keyboard.md"
+          data-purpose="First focusable element in the document, on every page including this one. Moves focus to the H1, not just the hash."
+          data-content="derived"
+          href="#hero-h1"
+          style="
+            position: fixed;
+            top: 8px;
+            left: 8px;
+            z-index: 80;
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: oklch(0.2 0.005 260);
+            border: 1px solid oklch(0.62 0.19 52);
+            color: white;
+            font:
+              500 13px Inter,
+              sans-serif;
+            transform: translateY(-200%);
+            opacity: 0;
+            transition:
+              transform 120ms ease,
+              opacity 120ms ease;
+          "
+          >Skip to content</a
+        >
+
+        <header
+          data-role="navbar"
+          data-spec="specs/pages/Home.md"
+          data-purpose="Band treatment: no border, band-colored, contained by the hero. Past 24px of scroll it swaps to its own surface. The docs treatment in layout/Top Navbar.md is a different bar."
+          data-content="MOCK"
+          role="banner"
+          style="position:sticky;top:0;z-index:10;height:56px;padding:0 clamp(24px,4vw,48px);background:oklch(0.57 0.19 52);border-bottom:1px solid transparent;display:flex;align-items:center;transition:background 180ms ease,border-color 180ms ease,box-shadow 180ms ease;background-color:{{ headerBg }};border-bottom-color:{{ headerBorderColor }};box-shadow:{{ headerShadow }};"
+        >
+          <div
+            style="
+              width: 100%;
+              max-width: 1080px;
+              margin: 0 auto;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              gap: 24px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div
+                style="
+                  width: 22px;
+                  height: 22px;
+                  border-radius: 6px;
+                  background: oklch(1 0 0 / 0.9);
+                "
+              ></div>
+              <span
+                style="
+                  font:
+                    600 15px/1.2 Inter,
+                    sans-serif;
+                  color: white;
+                  letter-spacing: -0.01em;
+                "
+                >NGP Table</span
+              >
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <button
+                type="button"
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 8px;
+                  height: 32px;
+                  padding: 0 10px;
+                  border-radius: 8px;
+                  border: 1px solid oklch(1 0 0 / 0.28);
+                  background: oklch(1 0 0 / 0.12);
+                  color: white;
+                  font:
+                    400 13px Inter,
+                    sans-serif;
+                  cursor: pointer;
+                  width: 220px;
+                  justify-content: space-between;
+                "
+                style-hover="border-color:oklch(1 0 0 / 0.45);background:oklch(1 0 0 / 0.18);color:white;"
+              >
+                <span style="display: flex; align-items: center; gap: 7px">
+                  <span aria-hidden="true" style="font-size: 15px; line-height: 1">⌕</span>
+                  Search
+                </span>
+                <span
+                  style="
+                    font:
+                      400 11px 'JetBrains Mono',
+                      monospace;
+                    color: white;
+                    border: 1px solid oklch(1 0 0 / 0.28);
+                    border-radius: 4px;
+                    padding: 1px 5px;
+                  "
+                  >⌘K</span
+                >
+              </button>
+              <a
+                href="#"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  background: transparent;
+                  color: white;
+                  font:
+                    500 13px Inter,
+                    sans-serif;
+                "
+                style-hover="background:oklch(0 0 0 / 0.15);"
+                >Documentation</a
+              >
+              <a
+                href="#"
+                style="
+                  padding: 6px 12px;
+                  border-radius: 20px;
+                  background: transparent;
+                  color: white;
+                  font:
+                    500 13px Inter,
+                    sans-serif;
+                "
+                style-hover="background:oklch(0 0 0 / 0.15);"
+                >GitHub</a
+              >
+            </div>
+          </div>
+        </header>
+        <section
+          style="
+            position: relative;
+            background: oklch(0.57 0.19 52);
+            overflow: hidden;
+            padding: clamp(28px, 3.5vw, 44px) clamp(24px, 4vw, 48px) clamp(32px, 4vw, 52px);
+          "
+        >
+          <div
+            aria-hidden="true"
+            style="
+              position: absolute;
+              top: -140px;
+              left: calc(max(clamp(24px, 4vw, 48px), (100vw - 1080px) / 2) + 700px);
+              width: 620px;
+              height: 620px;
+              border-radius: 28%;
+              background: oklch(1 0 0 / 0.07);
+              pointer-events: none;
+            "
+          ></div>
+
+          <div style="position: relative; max-width: 1080px; margin: 0 auto">
+            <div style="max-width: 660px">
+              <div
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 7px;
+                  padding: 4px 12px 4px 9px;
+                  border-radius: 20px;
+                  background: oklch(0 0 0 / 0.15);
+                  font:
+                    500 12.5px Inter,
+                    sans-serif;
+                  color: white;
+                  margin-bottom: 20px;
+                "
+              >
+                <span
+                  style="
+                    width: 5px;
+                    height: 5px;
+                    border-radius: 50%;
+                    background: oklch(0.85 0.18 145);
+                  "
+                ></span>
+                Now in public beta
+              </div>
+              <h1
+                id="hero-h1"
+                tabindex="-1"
+                data-role="prose.h1"
+                data-spec="specs/pages/Home.md"
+                data-purpose="The page's only H1, and a marketing step: clamp(38px,6vw,64px), never the docs headline-large. Positioning line, not a feature list."
+                data-content="MOCK"
+                style="
+                  margin: 0;
+                  font:
+                    700 clamp(38px, 6vw, 64px) / 1.05 Inter,
+                    sans-serif;
+                  letter-spacing: -0.025em;
+                  color: white;
+                "
+              >
+                Table behavior,<br />none of the styling
+              </h1>
+              <p
+                data-role="prose.lede"
+                data-spec="specs/pages/Home.md"
+                data-purpose="One paragraph under the H1. Full white, never a reduced alpha — on the band, 85% white measures 3.85:1 and fails AA."
+                data-content="MOCK"
+                style="
+                  margin: 18px 0 0;
+                  font:
+                    400 16px/1.65 Inter,
+                    sans-serif;
+                  color: white;
+                  max-width: 520px;
+                "
+              >
+                A headless table primitive for Angular. Sorting, selection, grouping and virtual
+                scroll as composable behavior — you own every pixel of the markup.
+              </p>
+              <div style="display: flex; flex-wrap: wrap; gap: 11px; margin-top: 26px">
+                <a
+                  href="#"
+                  style="
+                    padding: 11px 20px;
+                    border-radius: 22px;
+                    background: white;
+                    color: oklch(0.2 0.03 52);
+                    font:
+                      600 14.5px Inter,
+                      sans-serif;
+                  "
+                  style-hover="background:oklch(0.95 0.01 52);"
+                  >Get Started</a
+                >
+                <a
+                  href="#"
+                  style="
+                    padding: 11px 20px;
+                    border-radius: 22px;
+                    background: oklch(0.18 0.02 52);
+                    color: white;
+                    font:
+                      600 14.5px Inter,
+                      sans-serif;
+                  "
+                  style-hover="background:oklch(0.24 0.03 52);"
+                  >Join the Community</a
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section
+          style="
+            padding: clamp(64px, 8vw, 96px) clamp(24px, 4vw, 48px);
+            background: oklch(0.11 0.004 260);
+          "
+        >
+          <div style="max-width: 1080px; margin: 0 auto">
+            <div
+              data-role="category-badge"
+              data-spec="specs/Category Badge.md"
+              data-purpose="Section eyebrow — the repeating three-part opening of every section after the hero. On a docs page the same atom carries the derived section label; here it is page-local copy."
+              data-content="MOCK"
+              style="
+                font:
+                  700 12px Inter,
+                  sans-serif;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: oklch(0.62 0.19 52);
+                margin-bottom: 6px;
+              "
+            >
+              About
+            </div>
+            <h2
+              data-role="prose.h2"
+              data-spec="specs/pages/Home.md"
+              data-purpose="Marketing section H2 at headline-marketing, not the docs title-large — a 19px H2 here makes the page read as documentation."
+              data-content="MOCK"
+              style="
+                margin: 0;
+                font:
+                  700 clamp(26px, 3.4vw, 36px) / 1.15 Inter,
+                  sans-serif;
+                letter-spacing: -0.02em;
+                color: white;
+              "
+            >
+              Designed for flexibility. Built for Angular.
+            </h2>
+            <p
+              style="
+                margin: 14px 0 0;
+                font:
+                  400 14.5px/1.65 Inter,
+                  sans-serif;
+                color: oklch(0.62 0.01 260);
+                max-width: 720px;
+              "
+            >
+              NGP Table replaces the opinionated data grid with a set of low-level behaviors. State,
+              sorting and selection live in signals; rendering stays entirely yours. No overrides,
+              no theme to fight, no bundle you did not ask for.
+            </p>
+          </div>
+          <div
+            style="
+              max-width: 1080px;
+              margin: 56px auto 0;
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+              gap: 40px 44px;
+            "
+          >
+            <div>
+              <h3
+                style="
+                  margin: 0 0 8px;
+                  font:
+                    600 15px Inter,
+                    sans-serif;
+                  color: white;
+                "
+              >
+                Headless by design
+              </h3>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    400 14.5px/1.65 Inter,
+                    sans-serif;
+                  color: oklch(0.62 0.01 260);
+                "
+              >
+                Every element is yours to render. The primitive supplies structure, roles and state
+                — never a stylesheet.
+              </p>
+            </div>
+            <div>
+              <h3
+                style="
+                  margin: 0 0 8px;
+                  font:
+                    600 15px Inter,
+                    sans-serif;
+                  color: white;
+                "
+              >
+                Accessible out of the box
+              </h3>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    400 14.5px/1.65 Inter,
+                    sans-serif;
+                  color: oklch(0.62 0.01 260);
+                "
+              >
+                Grid semantics, roving focus and full keyboard navigation are built in and tested
+                against screen readers.
+              </p>
+            </div>
+            <div>
+              <h3
+                style="
+                  margin: 0 0 8px;
+                  font:
+                    600 15px Inter,
+                    sans-serif;
+                  color: white;
+                "
+              >
+                Composable behavior
+              </h3>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    400 14.5px/1.65 Inter,
+                    sans-serif;
+                  color: oklch(0.62 0.01 260);
+                "
+              >
+                Take sorting without selection, or selection without pagination. Each behavior is an
+                independent directive.
+              </p>
+            </div>
+            <div>
+              <h3
+                style="
+                  margin: 0 0 8px;
+                  font:
+                    600 15px Inter,
+                    sans-serif;
+                  color: white;
+                "
+              >
+                Powered by signals
+              </h3>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    400 14.5px/1.65 Inter,
+                    sans-serif;
+                  color: oklch(0.62 0.01 260);
+                "
+              >
+                Row state is reactive by default and zoneless-ready, so updates stay predictable at
+                any row count.
+              </p>
+            </div>
+            <div>
+              <h3
+                style="
+                  margin: 0 0 8px;
+                  font:
+                    600 15px Inter,
+                    sans-serif;
+                  color: white;
+                "
+              >
+                Virtualized when it matters
+              </h3>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    400 14.5px/1.65 Inter,
+                    sans-serif;
+                  color: oklch(0.62 0.01 260);
+                "
+              >
+                Opt into windowed rendering for large sets without changing your template or your
+                row markup.
+              </p>
+            </div>
+            <div>
+              <h3
+                style="
+                  margin: 0 0 8px;
+                  font:
+                    600 15px Inter,
+                    sans-serif;
+                  color: white;
+                "
+              >
+                Made for design systems
+              </h3>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    400 14.5px/1.65 Inter,
+                    sans-serif;
+                  color: oklch(0.62 0.01 260);
+                "
+              >
+                A stable behavioral contract underneath your tokens, so the table matches the rest
+                of your system.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section
+          style="
+            padding: clamp(64px, 8vw, 96px) clamp(24px, 4vw, 48px);
+            background: oklch(0.16 0.005 260);
+          "
+        >
+          <div style="max-width: 1080px; margin: 0 auto">
+            <div
+              data-role="category-badge"
+              data-spec="specs/Category Badge.md"
+              data-purpose="Section eyebrow — the repeating three-part opening of every section after the hero."
+              data-content="MOCK"
+              style="
+                font:
+                  700 12px Inter,
+                  sans-serif;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: oklch(0.62 0.19 52);
+                margin-bottom: 6px;
+              "
+            >
+              Get Started
+            </div>
+            <h2
+              data-role="prose.h2"
+              data-spec="specs/pages/Home.md"
+              data-purpose="Marketing section H2. Section order and rhythm are fixed; the words are not."
+              data-content="MOCK"
+              style="
+                margin: 0;
+                font:
+                  700 clamp(26px, 3.4vw, 36px) / 1.15 Inter,
+                  sans-serif;
+                letter-spacing: -0.02em;
+                color: white;
+              "
+            >
+              Try it out
+            </h2>
+            <p
+              style="
+                margin: 14px 0 24px;
+                font:
+                  400 14.5px/1.65 Inter,
+                  sans-serif;
+                color: oklch(0.62 0.01 260);
+                max-width: 720px;
+              "
+            >
+              One command adds the primitives and wires the schematics into your project.
+            </p>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                max-width: 720px;
+                padding: 14px 14px 14px 18px;
+                background: oklch(0.11 0.004 260);
+                border: 1px solid oklch(0.26 0.005 260);
+                border-radius: 10px;
+              "
+            >
+              <pre
+                style="
+                  margin: 0;
+                  flex: 1;
+                  min-width: 0;
+                  overflow-x: auto;
+                  font:
+                    400 13px 'JetBrains Mono',
+                    monospace;
+                  color: oklch(0.85 0.01 260);
+                "
+              ><span style="color:oklch(0.6 0.01 260);user-select:none;">$ </span>ng add ngp-table</pre>
+              <button
+                data-role="icon-button"
+                data-spec="specs/Icon Button.md"
+                data-purpose="Copy affordance, three visible states. Failure is a real state: the clipboard API can exist and still reject, and a button that looks inert on click is worse than one that says so."
+                data-content="derived"
+                type="button"
+                onClick="{{ copyInstall }}"
+                aria-label="{{ copyAria }}"
+                title="{{ copyAria }}"
+                style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:oklch(0.16 0.005 260);font:400 14px Inter,sans-serif;line-height:1;cursor:pointer;transition:color 120ms ease,border-color 120ms ease,background 120ms ease;color:{{ copyColor }};"
+                style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);"
+              >
+                <span aria-hidden="true">{{ copyGlyph }}</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <footer
+          data-role="page-footer"
+          data-spec="specs/layout/Page Footer.md"
+          data-purpose="Site-wide footer. On this page only it gains a link row above the copyright line."
+          data-content="MOCK"
+          style="
+            padding: 28px clamp(24px, 4vw, 48px);
+            border-top: 1px solid oklch(0.26 0.005 260);
+            background: oklch(0.11 0.004 260);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+          "
+        >
+          <div style="display: flex; gap: 20px">
+            <a
+              href="#"
+              style="
+                font:
+                  400 13px Inter,
+                  sans-serif;
+                color: oklch(0.62 0.01 260);
+              "
+              style-hover="color:oklch(0.85 0.01 260);"
+              >Sponsor Us</a
+            >
+            <a
+              href="#"
+              style="
+                font:
+                  400 13px Inter,
+                  sans-serif;
+                color: oklch(0.62 0.01 260);
+              "
+              style-hover="color:oklch(0.85 0.01 260);"
+              >Discord</a
+            >
+            <a
+              href="#"
+              style="
+                font:
+                  400 13px Inter,
+                  sans-serif;
+                color: oklch(0.62 0.01 260);
+              "
+              style-hover="color:oklch(0.85 0.01 260);"
+              >GitHub</a
+            >
+          </div>
+          <div
+            style="
+              font:
+                400 13px Inter,
+                sans-serif;
+              color: oklch(0.6 0.01 260);
+            "
+          >
+            © 2026 NGP Table. All rights reserved.
+          </div>
+        </footer>
       </div>
-    </div>
-  </section>
+    </x-dc>
+    <script type="text/x-dc" data-dc-script>
+      class Component extends DCLogic {
+        state = { scrolled: false, copyStatus: null, annotated: false };
 
-  
+        componentDidMount() {
+          this._onScroll = () => {
+            const y = window.scrollY || document.documentElement.scrollTop || 0;
+            const scrolled = y > 24;
+            if (scrolled !== this.state.scrolled) this.setState({ scrolled });
+          };
+          window.addEventListener('scroll', this._onScroll, { passive: true });
+          this._onScroll();
+        }
 
-  <section style="padding:clamp(64px,8vw,96px) clamp(24px,4vw,48px);background:oklch(0.11 0.004 260);">
-    <div style="max-width:1080px;margin:0 auto;">
-      <div data-role="category-badge" data-spec="specs/Category Badge.md" data-purpose="Section eyebrow — the repeating three-part opening of every section after the hero. On a docs page the same atom carries the derived section label; here it is page-local copy." data-content="MOCK" style="font:700 12px Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.62 0.19 52);margin-bottom:6px;">About</div>
-      <h2 data-role="prose.h2" data-spec="specs/pages/Home.md" data-purpose="Marketing section H2 at headline-marketing, not the docs title-large — a 19px H2 here makes the page read as documentation." data-content="MOCK" style="margin:0;font:700 clamp(26px,3.4vw,36px)/1.15 Inter,sans-serif;letter-spacing:-0.02em;color:white;">Designed for flexibility. Built for Angular.</h2>
-      <p style="margin:14px 0 0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);max-width:720px;">
-        NGP Table replaces the opinionated data grid with a set of low-level behaviors. State, sorting and selection live in signals; rendering stays entirely yours. No overrides, no theme to fight, no bundle you did not ask for.
-      </p>
-    </div>
-    <div style="max-width:1080px;margin:56px auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:40px 44px;">
-      <div>
-        <h3 style="margin:0 0 8px;font:600 15px Inter,sans-serif;color:white;">Headless by design</h3>
-        <p style="margin:0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Every element is yours to render. The primitive supplies structure, roles and state — never a stylesheet.</p>
-      </div>
-      <div>
-        <h3 style="margin:0 0 8px;font:600 15px Inter,sans-serif;color:white;">Accessible out of the box</h3>
-        <p style="margin:0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Grid semantics, roving focus and full keyboard navigation are built in and tested against screen readers.</p>
-      </div>
-      <div>
-        <h3 style="margin:0 0 8px;font:600 15px Inter,sans-serif;color:white;">Composable behavior</h3>
-        <p style="margin:0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Take sorting without selection, or selection without pagination. Each behavior is an independent directive.</p>
-      </div>
-      <div>
-        <h3 style="margin:0 0 8px;font:600 15px Inter,sans-serif;color:white;">Powered by signals</h3>
-        <p style="margin:0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Row state is reactive by default and zoneless-ready, so updates stay predictable at any row count.</p>
-      </div>
-      <div>
-        <h3 style="margin:0 0 8px;font:600 15px Inter,sans-serif;color:white;">Virtualized when it matters</h3>
-        <p style="margin:0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">Opt into windowed rendering for large sets without changing your template or your row markup.</p>
-      </div>
-      <div>
-        <h3 style="margin:0 0 8px;font:600 15px Inter,sans-serif;color:white;">Made for design systems</h3>
-        <p style="margin:0;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);">A stable behavioral contract underneath your tokens, so the table matches the rest of your system.</p>
-      </div>
-    </div>
-  </section>
+        componentWillUnmount() {
+          window.removeEventListener('scroll', this._onScroll);
+        }
 
-  <section style="padding:clamp(64px,8vw,96px) clamp(24px,4vw,48px);background:oklch(0.16 0.005 260);">
-    <div style="max-width:1080px;margin:0 auto;">
-      <div data-role="category-badge" data-spec="specs/Category Badge.md" data-purpose="Section eyebrow — the repeating three-part opening of every section after the hero." data-content="MOCK" style="font:700 12px Inter,sans-serif;letter-spacing:0.08em;text-transform:uppercase;color:oklch(0.62 0.19 52);margin-bottom:6px;">Get Started</div>
-      <h2 data-role="prose.h2" data-spec="specs/pages/Home.md" data-purpose="Marketing section H2. Section order and rhythm are fixed; the words are not." data-content="MOCK" style="margin:0;font:700 clamp(26px,3.4vw,36px)/1.15 Inter,sans-serif;letter-spacing:-0.02em;color:white;">Try it out</h2>
-      <p style="margin:14px 0 24px;font:400 14.5px/1.65 Inter,sans-serif;color:oklch(0.62 0.01 260);max-width:720px;">
-        One command adds the primitives and wires the schematics into your project.
-      </p>
-      <div style="display:flex;align-items:center;gap:12px;max-width:720px;padding:14px 14px 14px 18px;background:oklch(0.11 0.004 260);border:1px solid oklch(0.26 0.005 260);border-radius:10px;">
-        <pre style="margin:0;flex:1;min-width:0;overflow-x:auto;font:400 13px 'JetBrains Mono',monospace;color:oklch(0.85 0.01 260);"><span style="color:oklch(0.6 0.01 260);user-select:none;">$ </span>ng add ngp-table</pre>
-        <button data-role="icon-button" data-spec="specs/Icon Button.md" data-purpose="Copy affordance, three visible states. Failure is a real state: the clipboard API can exist and still reject, and a button that looks inert on click is worse than one that says so." data-content="derived" type="button" onClick="{{ copyInstall }}" aria-label="{{ copyAria }}" title="{{ copyAria }}" style="flex:none;display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;border:1px solid oklch(0.3 0.005 260);background:oklch(0.16 0.005 260);font:400 14px Inter,sans-serif;line-height:1;cursor:pointer;transition:color 120ms ease,border-color 120ms ease,background 120ms ease;color:{{ copyColor }};" style-hover="border-color:oklch(0.45 0.005 260);background:oklch(0.2 0.005 260);"><span aria-hidden="true">{{ copyGlyph }}</span></button>
-      </div>
-    </div>
-  </section>
+        copyInstall = () => {
+          const cmd = 'ng add ngp-table';
 
-  
+          const settle = (status) => {
+            this.setState({ copyStatus: status });
+            clearTimeout(this._copyTimer);
+            // --ngpt-comp-icon-btn-confirm-hold — one hold duration for every copy affordance
+            this._copyTimer = setTimeout(() => this.setState({ copyStatus: null }), 1400);
+          };
 
-  <footer data-role="page-footer" data-spec="specs/layout/Page Footer.md" data-purpose="Site-wide footer. On this page only it gains a link row above the copyright line." data-content="MOCK" style="padding:28px clamp(24px,4vw,48px);border-top:1px solid oklch(0.26 0.005 260);background:oklch(0.11 0.004 260);display:flex;flex-direction:column;align-items:center;gap:12px;">
-    <div style="display:flex;gap:20px;">
-      <a href="#" style="font:400 13px Inter,sans-serif;color:oklch(0.62 0.01 260);" style-hover="color:oklch(0.85 0.01 260);">Sponsor Us</a>
-      <a href="#" style="font:400 13px Inter,sans-serif;color:oklch(0.62 0.01 260);" style-hover="color:oklch(0.85 0.01 260);">Discord</a>
-      <a href="#" style="font:400 13px Inter,sans-serif;color:oklch(0.62 0.01 260);" style-hover="color:oklch(0.85 0.01 260);">GitHub</a>
-    </div>
-    <div style="font:400 13px Inter,sans-serif;color:oklch(0.6 0.01 260);">© 2026 NGP Table. All rights reserved.</div>
-  </footer>
+          // Selection fallback. Reached both when the async API is absent and when it rejects
+          // (unfocused document, permissions policy, non-secure context, iframe without clipboard-write).
+          const viaSelection = () => {
+            const ta = document.createElement('textarea');
+            ta.value = cmd;
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.top = '0';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            ta.setSelectionRange(0, cmd.length);
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; } finally { document.body.removeChild(ta); }
+            settle(ok ? 'copied' : 'failed');
+          };
 
-</div>
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(cmd).then(() => settle('copied'), viaSelection);
+          } else {
+            viaSelection();
+          }
+        };
 
-</x-dc>
-<script type="text/x-dc" data-dc-script>
-class Component extends DCLogic {
-  state = { scrolled: false, copyStatus: null, annotated: false };
+        toggleAnnotations = () => {
+          const on = !this.state.annotated;
+          this.setState({ annotated: on });
+          document.querySelectorAll('[data-role]').forEach((el) => {
+            const existing = el.querySelector(':scope > [data-annotation-tag]');
+            if (!on) { if (existing) existing.remove(); el.style.outline = ''; return; }
+            if (existing) return;
+            el.style.outline = '1px dashed oklch(0.62 0.19 52 / 0.55)';
+            if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
+            const tag = document.createElement('div');
+            tag.setAttribute('data-annotation-tag', '');
+            tag.textContent = el.getAttribute('data-role');
+            tag.title = el.getAttribute('data-purpose') || '';
+            tag.style.cssText = 'position:absolute;top:-9px;left:8px;z-index:40;padding:1px 6px;border-radius:4px;background:oklch(0.62 0.19 52);color:oklch(0.16 0.02 52);font:600 10px Inter,sans-serif;letter-spacing:0.04em;text-transform:uppercase;pointer-events:auto;cursor:help;white-space:nowrap;';
+            el.appendChild(tag);
+          });
+        };
 
-  componentDidMount() {
-    this._onScroll = () => {
-      const y = window.scrollY || document.documentElement.scrollTop || 0;
-      const scrolled = y > 24;
-      if (scrolled !== this.state.scrolled) this.setState({ scrolled });
-    };
-    window.addEventListener('scroll', this._onScroll, { passive: true });
-    this._onScroll();
-  }
-
-  componentWillUnmount() {
-    window.removeEventListener('scroll', this._onScroll);
-  }
-
-  copyInstall = () => {
-    const cmd = 'ng add ngp-table';
-
-    const settle = (status) => {
-      this.setState({ copyStatus: status });
-      clearTimeout(this._copyTimer);
-      // --ngpt-comp-icon-btn-confirm-hold — one hold duration for every copy affordance
-      this._copyTimer = setTimeout(() => this.setState({ copyStatus: null }), 1400);
-    };
-
-    // Selection fallback. Reached both when the async API is absent and when it rejects
-    // (unfocused document, permissions policy, non-secure context, iframe without clipboard-write).
-    const viaSelection = () => {
-      const ta = document.createElement('textarea');
-      ta.value = cmd;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed';
-      ta.style.top = '0';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      ta.setSelectionRange(0, cmd.length);
-      let ok = false;
-      try { ok = document.execCommand('copy'); } catch (e) { ok = false; } finally { document.body.removeChild(ta); }
-      settle(ok ? 'copied' : 'failed');
-    };
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(cmd).then(() => settle('copied'), viaSelection);
-    } else {
-      viaSelection();
-    }
-  };
-
-  toggleAnnotations = () => {
-    const on = !this.state.annotated;
-    this.setState({ annotated: on });
-    document.querySelectorAll('[data-role]').forEach((el) => {
-      const existing = el.querySelector(':scope > [data-annotation-tag]');
-      if (!on) { if (existing) existing.remove(); el.style.outline = ''; return; }
-      if (existing) return;
-      el.style.outline = '1px dashed oklch(0.62 0.19 52 / 0.55)';
-      if (getComputedStyle(el).position === 'static') el.style.position = 'relative';
-      const tag = document.createElement('div');
-      tag.setAttribute('data-annotation-tag', '');
-      tag.textContent = el.getAttribute('data-role');
-      tag.title = el.getAttribute('data-purpose') || '';
-      tag.style.cssText = 'position:absolute;top:-9px;left:8px;z-index:40;padding:1px 6px;border-radius:4px;background:oklch(0.62 0.19 52);color:oklch(0.16 0.02 52);font:600 10px Inter,sans-serif;letter-spacing:0.04em;text-transform:uppercase;pointer-events:auto;cursor:help;white-space:nowrap;';
-      el.appendChild(tag);
-    });
-  };
-
-  renderVals() {
-    const s = this.state.scrolled;
-    const st = this.state.copyStatus;
-    return {
-      toggleAnnotations: this.toggleAnnotations,
-      annotationLabel: this.state.annotated ? 'Hide roles' : 'Show roles',
-      copyInstall: this.copyInstall,
-      copyGlyph: st === 'copied' ? '✓' : st === 'failed' ? '!' : '⧉',
-      copyAria: st === 'copied' ? 'Command copied'
-        : st === 'failed' ? 'Copy failed — select the command and copy manually'
-        : 'Copy install command',
-      copyColor: st === 'copied' ? 'oklch(0.75 0.13 150)'
-        : st === 'failed' ? 'oklch(0.7 0.19 25)'
-        : 'oklch(0.62 0.01 260)',
-      headerBg: s ? '#18181C' : 'oklch(0.57 0.19 52)',
-      headerBorderColor: s ? 'oklch(0.26 0.005 260)' : 'transparent',
-      headerShadow: s ? '0 4px 16px oklch(0 0 0 / 0.35)' : 'none',
-    };
-  }
-}
-</script>
-</body>
+        renderVals() {
+          const s = this.state.scrolled;
+          const st = this.state.copyStatus;
+          return {
+            toggleAnnotations: this.toggleAnnotations,
+            annotationLabel: this.state.annotated ? 'Hide roles' : 'Show roles',
+            copyInstall: this.copyInstall,
+            copyGlyph: st === 'copied' ? '✓' : st === 'failed' ? '!' : '⧉',
+            copyAria: st === 'copied' ? 'Command copied'
+              : st === 'failed' ? 'Copy failed — select the command and copy manually'
+              : 'Copy install command',
+            copyColor: st === 'copied' ? 'oklch(0.75 0.13 150)'
+              : st === 'failed' ? 'oklch(0.7 0.19 25)'
+              : 'oklch(0.62 0.01 260)',
+            headerBg: s ? '#18181C' : 'oklch(0.57 0.19 52)',
+            headerBorderColor: s ? 'oklch(0.26 0.005 260)' : 'transparent',
+            headerShadow: s ? '0 4px 16px oklch(0 0 0 / 0.35)' : 'none',
+          };
+        }
+      }
+    </script>
+  </body>
 </html>

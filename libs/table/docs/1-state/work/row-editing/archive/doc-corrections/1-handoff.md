@@ -41,12 +41,11 @@ briefly `pending` only when the consumer awaits between closing and releasing.
 
 ## 2. `with-optimistic-crud/2-decisions.md` — two decisions numbered D48
 
-**Where:** `docs/1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md`, headings at ~line 110 and ~line
-153.
+**Where:** `docs/1-state/work/row-editing/archive/with-optimistic-crud/2-decisions.md`, headings at ~line 110 and ~line 153.
 
-| Line | Heading |
-|---|---|
-| ~110 | `## D48 — O(1) id lookups via indexById` |
+| Line | Heading                                                               |
+| ---- | --------------------------------------------------------------------- |
+| ~110 | `## D48 — O(1) id lookups via indexById`                              |
 | ~153 | `## D48 — restored signal dropped, scroll/flash stays consumer-space` |
 
 **Fix:** renumber the second to **D49**. D-numbers are global across the

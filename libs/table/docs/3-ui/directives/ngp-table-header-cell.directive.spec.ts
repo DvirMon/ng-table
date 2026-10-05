@@ -5,7 +5,11 @@ import { NgpTableHeaderCellDirective } from '../../../directives/ngp-table-heade
 
 @Component({
   imports: [NgpTableHeaderCellDirective],
-  template: `<table><tr><th ngpTableHeaderCell [ngpTableHeaderCellColIndex]="colIndex">Name</th></tr></table>`,
+  template: `<table>
+    <tr>
+      <th ngpTableHeaderCell [ngpTableHeaderCellColIndex]="colIndex">Name</th>
+    </tr>
+  </table>`,
 })
 class HostComponent {
   colIndex = 0;
@@ -13,7 +17,7 @@ class HostComponent {
 
 function getHeaderCellElement(fixture: ReturnType<typeof TestBed.createComponent>): HTMLElement {
   const nativeElement: unknown = fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(NgpTableHeaderCellDirective, null) !== null
+    (debugEl) => debugEl.injector.get(NgpTableHeaderCellDirective, null) !== null,
   ).nativeElement;
   if (!(nativeElement instanceof HTMLElement)) {
     throw new Error('Expected an HTMLElement');

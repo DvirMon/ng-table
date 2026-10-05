@@ -8,11 +8,11 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/docs/1-state/work/with-filtering/state.json` | edit — split `specPath` / `architecturePath` |
-| `libs/shared/table/docs/status.md` | **generated** — `npm run table:status` |
-| root `llms.txt` | **generated** — `npm run llms`, only if the file set changed |
+| File                                                            | Action                                                       |
+| --------------------------------------------------------------- | ------------------------------------------------------------ |
+| `libs/shared/table/docs/1-state/work/with-filtering/state.json` | edit — split `specPath` / `architecturePath`                 |
+| `libs/shared/table/docs/status.md`                              | **generated** — `npm run table:status`                       |
+| root `llms.txt`                                                 | **generated** — `npm run llms`, only if the file set changed |
 
 ## Why This Step Exists
 
@@ -24,7 +24,7 @@ The older `with-filtering` workspace points both of its documents at the same pl
 ```
 
 `specPath` aims at the filter model's reference and `architecturePath` at the feature's, so the
-workspace claims the filter model is the *spec* for the feature. That pointer is the coupling in
+workspace claims the filter model is the _spec_ for the feature. That pointer is the coupling in
 documentation form, and it outlives the code change unless it is explicitly cut — it is why no
 document described the feature alone in the first place.
 
@@ -33,7 +33,7 @@ from them.
 
 ## What To Do
 
-1. **Split the pointers.** The `with-filtering` workspace is the *feature's* workspace: both
+1. **Split the pointers.** The `with-filtering` workspace is the _feature's_ workspace: both
    `specPath` and `architecturePath` belong to `docs/1-state/features/filtering.md`, or
    `architecturePath` is dropped to `null` if the feature has no separate architecture document.
    `docs/1-state/filters.md` must not be reachable from this workspace as its spec — it is the
@@ -82,4 +82,5 @@ from them.
 - [ ] Cross-references between `features/filtering.md` and `filters.md` resolve to post-move paths
 
 ---
+
 ← [Step 12: Document the filter model's match contract](step-12-filters-spec-matcher-contract.plan.md)

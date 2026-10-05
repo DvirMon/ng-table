@@ -55,7 +55,7 @@ one PR-scoped unit of test work, not because they share a fact.
 **Column rules** (`wire-columns-schema.spec.ts`):
 
 - A rule's `ctx.stateOf(path.other)` reads another column's `{ visible,
-  label, meta }` without a `ctx.columns().find(...)` lookup — assert the
+label, meta }` without a `ctx.columns().find(...)` lookup — assert the
   rule body itself never calls `.find(` (or simply assert the resulting
   behavior matches an equivalent hand-written `.find()`-based rule,
   proving parity).
@@ -97,11 +97,12 @@ one PR-scoped unit of test work, not because they share a fact.
 - [ ] `nx run shared-table:typecheck-spec` clean.
 - [ ] All four edited spec files pass.
 - [ ] `rg -n "\.find\(\(c\) => c\.id ===" libs/table/src/columns-schema
-      libs/table/src/engine/columns-schema` shows the existing spec-only
+  libs/table/src/engine/columns-schema` shows the existing spec-only
       lookups unaffected (this repo's own tests still use `.find()` to
-      *assert* results — that's fine; only a *rule's own body* using
+      _assert_ results — that's fine; only a _rule's own body_ using
       `.find()` instead of `stateOf` is what the acceptance criterion is
       about).
 
 ---
+
 ← [Step 6: Construction check](step-6-construction-check.plan.md) | [Step 8: Cross-domain types-spec](step-8-types-spec.plan.md) →

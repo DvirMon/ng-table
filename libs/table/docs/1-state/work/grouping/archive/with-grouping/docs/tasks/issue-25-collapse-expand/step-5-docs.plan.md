@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — docs: collapse/expand shipped"
+title: 'Step 5 — docs: collapse/expand shipped'
 type: task-step
 issue: 59
 ---
@@ -34,13 +34,13 @@ future reader can find why `rowsOf`'s implementation re-derives clusters instead
 - Move D11 out of the "still unbuilt" list in the superseded banner (line ~36-39) into the shipped
   list alongside D1/D3/D4/D9/D16, citing issue #25.
 - **Behavior** section: the "Static grouping (no `withExpansion()`)" and "Collapse/expand" bullets
-  currently describe the *intended* contract — confirm the prose now matches shipped behavior
+  currently describe the _intended_ contract — confirm the prose now matches shipped behavior
   (it already does; D11 didn't change the intended design, only implemented it) and drop any
   remaining "when it ships" framing.
 - **Compile-Time Dependencies** section: same — confirm "detected at runtime (e.g. an optional
   prop/method check)" still accurately describes the shipped `isExpandedRowsSignal` duck-type,
   since that's the literal mechanism Step 3 used.
-- Leave `spec:`/`code:` frontmatter alone unless this closes out the *whole* feature's maturity —
+- Leave `spec:`/`code:` frontmatter alone unless this closes out the _whole_ feature's maturity —
   D6–D8 (`groupingRule`/`applyGrouping()`, issue #26) are still unbuilt, so the file stays
   `spec: drafted` / `code: partial`.
 - Never hand-edit `docs/status.md` — regenerate via `npm run table:status`, left for the user to
@@ -59,7 +59,7 @@ future reader can find why `rowsOf`'s implementation re-derives clusters instead
     collapsed group's descendants, that scan finds nothing for a collapsed header and silently
     returns `[]` — breaking the selection-cascade recipe the moment a group is collapsed.
     `0-product/grouping.md` X-G1 specs the correct behavior directly: "I never select rows I cannot
-    see and was never told about" describes what I *can* select, not what currently renders.
+    see and was never told about" describes what I _can_ select, not what currently renders.
     `rowsBeneathGroup` now re-clusters `rows()` (pipeline output, never collapse-affected) and
     locates the target group by its synthetic id path, matching `emitGroupRows`'s own id
     construction. Cost model unchanged from D16 (derived on call, no library-side cache).
@@ -76,14 +76,14 @@ future reader can find why `rowsOf`'s implementation re-derives clusters instead
 - **Testing Decisions → Coverage** (the bullet list ending in "...rows render flat and expanded"):
   add a line for the `rowsOf`-under-collapse case, since it's now part of what this spec commits to
   testing.
-- **Documentation updates this work owes** section: this step *is* that owed update for D11 — check
+- **Documentation updates this work owes** section: this step _is_ that owed update for D11 — check
   off / remove the line once done, don't leave it dangling for a future reader to think it's still
   outstanding.
 
 ## Implementation Notes
 
 - No decision narration in source JSDoc — the code comments from Steps 1-3 stay at "what it does +
-  the constraint"; rationale for *why* stays in these docs only.
+  the constraint"; rationale for _why_ stays in these docs only.
 - Don't restate D16's rejected alternatives or D11's original rationale in three places — the
   decisions doc owns the reasoning, the spec and feature doc link to it.
 
@@ -113,4 +113,5 @@ future reader can find why `rowsOf`'s implementation re-derives clusters instead
 - [ ] No markdown link in the edited files points at a missing anchor or file.
 
 ---
+
 [← Step 4: Tests](step-4-tests.plan.md)

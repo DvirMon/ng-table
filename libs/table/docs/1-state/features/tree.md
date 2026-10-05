@@ -131,16 +131,16 @@ array, read once, emits nothing on `changed`.
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `table.tree.toggle(rowId, options?)` | Toggle a single row's open state. Emits `changed` once. |
-| `table.tree.expand(ids?, options?)` | Adds. Omitted `ids`: every expandable row found by the discovery walk over the filtered view, unioned with what's already open. `options.includeHidden` scans all of `data()` instead (D8, D26). |
-| `table.tree.state(options?)` | Read-only. `'all'`, `'some'` or `'none'` over the expandable rows of the filtered view; `{ includeHidden: true }` reads all of `data()` (D26). |
-| `table.tree.contextRowIds()` | Read-only signal. Every row a filter retains as context, including rows hidden under a collapsed parent. Empty when nothing contributes. |
-| `table.tree.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open. |
-| `table.tree.set(ids, options?)` | Atomic replace — the restore path. |
-| `table.tree.parentOf(id)` | Read-only. The id's declared parent, or `null` for a root or an unknown id. Never reports. |
-| `table.tree.descendantsOf(id)` | Read-only. Every descendant at any depth, depth-first in `data()` order, never including `id` itself. Never reports. |
+| Method                                | Description                                                                                                                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `table.tree.toggle(rowId, options?)`  | Toggle a single row's open state. Emits `changed` once.                                                                                                                                          |
+| `table.tree.expand(ids?, options?)`   | Adds. Omitted `ids`: every expandable row found by the discovery walk over the filtered view, unioned with what's already open. `options.includeHidden` scans all of `data()` instead (D8, D26). |
+| `table.tree.state(options?)`          | Read-only. `'all'`, `'some'` or `'none'` over the expandable rows of the filtered view; `{ includeHidden: true }` reads all of `data()` (D26).                                                   |
+| `table.tree.contextRowIds()`          | Read-only signal. Every row a filter retains as context, including rows hidden under a collapsed parent. Empty when nothing contributes.                                                         |
+| `table.tree.collapse(ids?, options?)` | Removes. Omitted `ids`: everything currently open.                                                                                                                                               |
+| `table.tree.set(ids, options?)`       | Atomic replace — the restore path.                                                                                                                                                               |
+| `table.tree.parentOf(id)`             | Read-only. The id's declared parent, or `null` for a root or an unknown id. Never reports.                                                                                                       |
+| `table.tree.descendantsOf(id)`        | Read-only. Every descendant at any depth, depth-first in `data()` order, never including `id` itself. Never reports.                                                                             |
 
 Every write verb takes `options?: ExpansionWriteOptions` (`{ emitEvent?: boolean }`) — see
 `expansion.md`'s [Silent writes](expansion.md#silent-writes-emitevent-false); the shape and
@@ -209,10 +209,15 @@ that reason is a **context row** (D18):
   `ngpTableRow` and takes no input of its own; the core row directive is unchanged.
 
 ```html
-<tr [ngpTableRow]="row" ngpTableTreeRow>…</tr>
+<tr [ngpTableRow]="row" ngpTableTreeRow>
+  …
+</tr>
 ```
+
 ```css
-tr[data-context-row] { opacity: 0.6; }
+tr[data-context-row] {
+  opacity: 0.6;
+}
 ```
 
 Tree indentation, `aria-level` and the toggle are out of this directive's scope.
@@ -259,10 +264,10 @@ own flat entry in `data()`, carrying its own parent id:
 
 ```ts
 // before (removed)
-withTree({ childrenAccessor: (row) => row.children })
+withTree({ childrenAccessor: (row) => row.children });
 
 // after
-withTree({ parentId: (row) => row.parentId })
+withTree({ parentId: (row) => row.parentId });
 ```
 
 ```ts
@@ -279,7 +284,7 @@ const rows = [
 ## Open Questions
 
 - [ ] **A tree built from paths** (`getDataPath`, invented parents). Filed against grouping as
-  a variable-depth level source if a consumer ever needs it, never against `withTree()`.
+      a variable-depth level source if a consumer ever needs it, never against `withTree()`.
 - [ ] Precise lazy-load UX contract (e.g. a per-row loading indicator) not addressed.
 
 ---

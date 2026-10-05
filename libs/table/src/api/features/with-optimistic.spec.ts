@@ -38,7 +38,7 @@ function inContext<T>(build: () => T): T {
 
 function optimisticStore(rows: Row[] = makeRows()) {
   return inContext(() =>
-    createTable(signal<Row[]>(rows), { trackBy: 'id', columns: makeColumns() }, withOptimistic())
+    createTable(signal<Row[]>(rows), { trackBy: 'id', columns: makeColumns() }, withOptimistic()),
   );
 }
 
@@ -120,10 +120,10 @@ describe('withOptimistic', () => {
     expect(store.value().find((row) => row.id === 'r1')?.name).toBe('external');
   });
 
-  it('prunes a removed row\'s restore point via the raw data signal (ADR-0006)', () => {
+  it("prunes a removed row's restore point via the raw data signal (ADR-0006)", () => {
     const data = signal<Row[]>(makeRows());
     const store = inContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() }, withOptimistic())
+      createTable(data, { trackBy: 'id', columns: makeColumns() }, withOptimistic()),
     );
 
     store.editing.update(captureEdit<Row>('r1'));
@@ -174,9 +174,9 @@ describe('withOptimistic', () => {
             withComputed((s) => {
               expectTypeOf(s.editing).toEqualTypeOf<Signal<ReadonlySet<RowId>>>();
               return { inFlight: computed(() => s.pending().size) };
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
 
       expectTypeOf(store.inFlight).toEqualTypeOf<Signal<number>>();
@@ -200,9 +200,9 @@ describe('withOptimistic + withRowEdit composed together', () => {
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
           withOptimistic(),
-          withRowEdit()
-        )
-      )
+          withRowEdit(),
+        ),
+      ),
     ).toThrow(/both provide the "editing" store member/);
   });
 
@@ -213,9 +213,9 @@ describe('withOptimistic + withRowEdit composed together', () => {
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
           withOptimistic(),
-          withRowEdit()
-        )
-      )
+          withRowEdit(),
+        ),
+      ),
     ).toThrow('feature 1 (withOptimistic) and feature 2 (withRowEdit)');
   });
 
@@ -226,9 +226,9 @@ describe('withOptimistic + withRowEdit composed together', () => {
           signal<Row[]>(makeRows()),
           { trackBy: 'id', columns: makeColumns() },
           withRowEdit(),
-          withOptimistic()
-        )
-      )
+          withOptimistic(),
+        ),
+      ),
     ).toThrow(/both provide the "editing" store member/);
   });
 });

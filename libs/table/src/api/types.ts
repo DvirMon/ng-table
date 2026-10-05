@@ -125,25 +125,22 @@ export interface Presentation {
 export interface ColumnBuilder<TRow> {
   <K extends string, V>(
     id: K,
-    opts: Presentation & { accessor: (row: TRow) => V }
+    opts: Presentation & { accessor: (row: TRow) => V },
   ): ColumnDecl<TRow, K, V>;
   <K extends string>(
     id: K,
-    opts?: Presentation
+    opts?: Presentation,
   ): ColumnDecl<TRow, K, K extends keyof TRow ? TRow[K] : unknown>;
   /** Re-declares `decl` under a new id/accessor/presentation. Returns a fresh declaration —
    * `decl` itself is untouched. */
   from<K extends string, V>(
     decl: ColumnDecl<TRow, string, unknown>,
-    opts: Presentation & { id?: K; accessor?: (row: TRow) => V }
+    opts: Presentation & { id?: K; accessor?: (row: TRow) => V },
   ): ColumnDecl<TRow, K, V>;
 }
 
 /** `createColumns()`'s return: the declared columns plus any rules their schema recorded. */
-export interface ColumnSet<
-  TRow,
-  TCols extends readonly ColumnDecl<TRow, string, unknown>[],
-> {
+export interface ColumnSet<TRow, TCols extends readonly ColumnDecl<TRow, string, unknown>[]> {
   readonly columns: TCols;
   readonly rules: readonly ColumnRule<TRow>[];
 }
@@ -160,10 +157,7 @@ export type ColumnIdIn<TValues extends ColumnValueMap> = keyof TValues & string;
 // to `TRow[id]`, losing the `V` resolved at the `col()` call site.
 /** Maps each declared column id to its resolved value type: a `ColumnDecl`'s own `V`, else an
  * inferred `accessor` return, else `TRow[id]` (the engine's documented default accessor). */
-export type ColumnValues<
-  TRow,
-  TCols extends readonly ColumnDefInput<any, string>[],
-> = {
+export type ColumnValues<TRow, TCols extends readonly ColumnDefInput<any, string>[]> = {
   [C in TCols[number] as C['id']]: C extends ColumnDecl<any, string, infer V>
     ? V
     : C extends { accessor: (row: any) => infer V }
@@ -190,10 +184,7 @@ export interface GroupSummary<TRow> extends ClusterSummary<TRow> {
   readonly admitted: boolean;
 }
 
-export type GroupWhen<TRow> = (
-  cluster: ClusterSummary<TRow>,
-  ctx: ValueOfContext<TRow>
-) => boolean;
+export type GroupWhen<TRow> = (cluster: ClusterSummary<TRow>, ctx: ValueOfContext<TRow>) => boolean;
 
 /** Compares two sibling clusters from the same level, after admission is decided — see
  * `GroupSummary.admitted`. */
@@ -233,7 +224,7 @@ export interface TableConfig<
 export type AnyTableFeature = Feature<any, any>;
 
 export type ColumnsUpdater<TRow, TId extends string = string> = (
-  columns: ColumnDef<TRow, TId>[]
+  columns: ColumnDef<TRow, TId>[],
 ) => ColumnDef<TRow, TId>[];
 
 /** Pure row transform. `ctx.trackBy` is supplied by `table.value.update(...)` so id-based
@@ -241,7 +232,7 @@ export type ColumnsUpdater<TRow, TId extends string = string> = (
  * lambda `rows => rows.filter(...)` also satisfies this type — it just ignores `ctx`. */
 export type RowUpdater<TRow> = (
   rows: TRow[],
-  ctx: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> }
+  ctx: { trackBy: TrackByFn<TRow>; indexById: ReadonlyMap<RowId, number> },
 ) => TRow[];
 
 /** Public surface of a store returned by `createTable()` — the contract consumers program

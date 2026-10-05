@@ -4,6 +4,7 @@ Step: [step-2-panel-identity-inert.plan.md](step-2-panel-identity-inert.plan.md)
 Spec file: `libs/table/src/directives/ngp-table-panel.directive.spec.ts`
 
 ## Stubs (red phase)
+
 - In `libs/table/src/directives/ngp-table-panel.directive.ts`:
   `@Directive({ selector: '[ngpTablePanel]' })`
   `export class NgpTablePanelDirective { readonly ngpTablePanel = input.required<RowId>(); ngOnInit(): void }`.
@@ -13,8 +14,10 @@ Spec file: `libs/table/src/directives/ngp-table-panel.directive.spec.ts`
 - Re-export `NgpTablePanelDirective` from `libs/table/src/index.ts`.
 
 ## Host fixtures (shared by the seams)
+
 These follow `ngp-table-tree-toggle.directive.spec.ts`: host
 components over a real `createTable(...)`.
+
 - Rows: `mockTaskTreeRows`, with `trackBy: 'id'` and
   `columns: createColumns(noData<TaskTreeMockRow>(), (col) => [col('status')])`,
   plus the new mock row whose id contains a space.
@@ -39,6 +42,7 @@ components over a real `createTable(...)`.
 ## Seams — in red-green order
 
 ### A. Panel mounts → host `id` is the minted id; close then reopen → the same id
+
 - Test: `it('gives the panel a table-scoped id that stays the same across close and reopen')`
 - Host: `DefaultHost`.
 - Asserts:
@@ -56,6 +60,7 @@ components over a real `createTable(...)`.
 - Note: `tableSeq` is a module-level counter, so its value depends on test order. Match it with `\d+`; never hard-code it.
 
 ### B. Kept-mounted panel: open → not `inert`; closed → `inert`
+
 - Test: `it('marks a kept-mounted panel inert while its row is closed, and not while it is open')`
 - Host: `KeptMountedHost`.
 - Asserts:
@@ -65,6 +70,7 @@ components over a real `createTable(...)`.
 - Order reason: builds on A.
 
 ### C. Table without `withExpansion()` → first render throws, naming the missing feature
+
 - Test: `it('throws on first render when the table has no withExpansion()')`
 - Host: `NoExpansionHost`.
 - Asserts: `expect(() => setup(NoExpansionHost)).toThrow(/ngpTablePanel[\s\S]*withExpansion\(\)/)`.
@@ -72,6 +78,7 @@ components over a real `createTable(...)`.
 - Order reason: independent of A–B.
 
 ### D. Two panels for one row → throws, naming the row id
+
 - Test: `it('throws when a second panel registers for a row that already has one, naming the row id')`
 - Host: `DuplicatePanelHost`.
 - Asserts: `expect(() => setup(DuplicatePanelHost)).toThrow(/t1/)`.
@@ -79,9 +86,11 @@ components over a real `createTable(...)`.
 - Order reason: depends on A.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None — no public type surface in this step.
 
 ## Not tested
+
 - The registry directly. The spec's Testing Decisions forbid it; A and D reach it through the panel.
 - A leaving panel getting `inert` from the destroy hook. Step 3.
 - The `animate.leave` animation itself (framework).
@@ -92,4 +101,5 @@ None — no public type surface in this step.
 - `aria-controls` on the toggle. #212.
 
 ## Open questions
+
 None — `inert` reflects as an attribute in happy-dom (the repo's test DOM); escaping is covered in A.

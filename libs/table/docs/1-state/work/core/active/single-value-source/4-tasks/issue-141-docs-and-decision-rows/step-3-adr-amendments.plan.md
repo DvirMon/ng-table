@@ -28,7 +28,7 @@
   its absence is silent") was something the config shape
   happened to allow. It is now structural.
 - **ADR-0014.** Its `## Amendment (2026-09-24): construction
-  checks are dev-only` (`:193`) already opens with "This ADR
+checks are dev-only` (`:193`) already opens with "This ADR
   never took a position on dev vs. production. It argued throw
   vs. degrade". That is the clarification #141 asks for, in the
   place readers of the error policy will look. This step checks
@@ -37,7 +37,7 @@
 ## What To Do
 
 1. **ADR-0019: add `## Amendment 2026-09-25 — keyed from
-   the declaring call`** above the 2026-09-20 amendment, and
+the declaring call`** above the 2026-09-20 amendment, and
    update the header's read-first pointer to it. Content:
    - `ColumnsPath` is keyed from `createColumns`, whose builder
      mints `ColumnDecl`s inside the call (spec D3). It is no
@@ -66,7 +66,7 @@
      never a call site) or links `libs/table/CLAUDE.md`'s
      Errors bullet, which does.
    - It records the #127 accepted risk (R7).
-   If all three hold, no edit.
+     If all three hold, no edit.
 
 ## Implementation Notes
 
@@ -93,4 +93,5 @@
       violation point, checked or edited.
 
 ---
+
 ← [Step 2: Columns and UI docs](step-2-columns-and-ui-docs.plan.md) | [Step 4: CLAUDE.md invariants](step-4-claude-md-invariants.plan.md) →

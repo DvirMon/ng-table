@@ -20,12 +20,12 @@ from what its `composeFeatures` case proved, not ahead of it).
 
 ## Why This Step Exists
 
-AC #4 asks for a recorded decision on the arity escape hatch: *either it
+AC #4 asks for a recorded decision on the arity escape hatch: _either it
 carries the union or a composed feature cannot name a column — say which,
-and why.* The epic's `decisions.md` names the same thing under Risks
-carried — *"`compose-features.overloads.ts` has no `TRow` and no `TId`
+and why._ The epic's `decisions.md` names the same thing under Risks
+carried — _"`compose-features.overloads.ts` has no `TRow` and no `TId`
 (`:11-21`). K1 must decide whether the arity escape hatch carries the
-union or drops it."*
+union or drops it."_
 
 That risk is now answered, and the answer is the cheap one: nothing
 changed. A record saying so is worth more than the two-line diff it
@@ -33,9 +33,9 @@ describes — the next reader looking at
 `compose-features.overloads.ts` will see a file with no `TId` in it and
 reasonably assume the union was dropped.
 
-ADR-0019's Open 1 is the other half. Its spike is recorded as *"Resolved:
-it works"* and then *"Moot as of the Amendment … Kept as the record that it
-does work, should a future surface need it."* That future surface is now
+ADR-0019's Open 1 is the other half. Its spike is recorded as _"Resolved:
+it works"_ and then _"Moot as of the Amendment … Kept as the record that it
+does work, should a future surface need it."_ That future surface is now
 shipped and spec'd. The ADR should say so, so nobody re-runs a spike whose
 result is sitting in a spec file.
 
@@ -55,7 +55,7 @@ entry.** It must state, in this order:
 - **The evidence.** Case 4 of `api/create-table.types.spec.ts` (Step 3) —
   a column-naming probe inside a `composeFeatures()` bundle, asserting both
   the literal union and the typo rejection.
-- **What reopens it.** A composite that must name a column *without* an
+- **What reopens it.** A composite that must name a column _without_ an
   enclosing `createTable()` call to bind `In` — there is no such caller
   today. That would need `TRow`/`TId` on `COMPOSE_FEATURES`'s
   `baseGenerics`, which is a materially bigger change.
@@ -97,7 +97,7 @@ have landed, and add one line to § Summary noting that `#114`, `#115` and
 ## Risks / Watchouts
 
 - **If Step 3's case 4 failed**, everything above is written the other way
-  round: the escape hatch *drops* the union, Step 2 reopens to add
+  round: the escape hatch _drops_ the union, Step 2 reopens to add
   `TRow`/`TId` to `COMPOSE_FEATURES`, and this entry records that instead.
   Write what the spec actually proved.
 - **`npm run llms:check` reads the public surface.** `ColumnIdOf` is a new
@@ -110,7 +110,7 @@ have landed, and add one line to § Summary noting that `#114`, `#115` and
 ## Non-Goals
 
 - **No ADR for the cross-cutting schema-fn rule.** ADR-0019's 2026-09-20
-  amendment says *"every schema fn names declared columns"* is still owed
+  amendment says _"every schema fn names declared columns"_ is still owed
   its own ADR. That is
   [#116](https://github.com/DvirMon/ng-table/issues/116)'s, not this
   step's.
@@ -132,4 +132,5 @@ have landed, and add one line to § Summary noting that `#114`, `#115` and
       file's own directory.
 
 ---
+
 ← [Step 3: The literal-union guard](step-3-literal-union-guard.plan.md)

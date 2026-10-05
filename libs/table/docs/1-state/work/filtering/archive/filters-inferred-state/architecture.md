@@ -1,5 +1,5 @@
 ---
-title: "createFilters inferred TState — architecture"
+title: 'createFilters inferred TState — architecture'
 type: architecture
 status: ready-for-issues
 date: 2026-09-14
@@ -16,17 +16,17 @@ Compiled evidence: [research-typescript-inference-probes.md](research-typescript
 
 Verified against `libs/shared/table/src/`, not assumed.
 
-| Fact | Where |
-|---|---|
-| The filters domain is already a top-level sibling of `api/`/`engine/`/`directives/` | `src/filters/` (12 files) |
-| It already owns its barrel; `src/index.ts:88` is `export * from './filters'` | `src/filters/index.ts` — 19 symbols, listed explicitly |
-| The table already takes a predicate list and nothing else — R48 shipped | `src/api/features/with-filtering.ts:5-9` (`WithFilteringConfig<TRow>`, `predicates` required) |
-| `matcher()` already puts `TRow` in the type body — R43 must not be built | `src/filters/types.ts` (`FiltersRoot.matcher`) |
-| The ambient recorder is referenced by nothing outside the domain | `src/filters/{recorder,rules,create-filters,types}.ts` only. `src/schema/*`'s recorder is a separate, unrelated one |
-| Duplicate key and duplicate path already throw at construction | `src/filters/validate.ts` |
-| The literal-key guard exists but does not bite yet | `src/filters/types.ts` (`EnforceLiteralKey`) |
-| Type assertions are `expectTypeOf` from `vitest`, enforced by `tsc`, not the runner | `src/filters/create-filters.spec.ts:683-743`, `src/api/features/with-filtering.spec.ts:268-300` |
-| `tsconfig.spec.json` includes only `src/**/*.test.ts`, `src/**/*.spec.ts`, `src/**/*.d.ts` | `libs/shared/table/tsconfig.spec.json` |
+| Fact                                                                                       | Where                                                                                                               |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| The filters domain is already a top-level sibling of `api/`/`engine/`/`directives/`        | `src/filters/` (12 files)                                                                                           |
+| It already owns its barrel; `src/index.ts:88` is `export * from './filters'`               | `src/filters/index.ts` — 19 symbols, listed explicitly                                                              |
+| The table already takes a predicate list and nothing else — R48 shipped                    | `src/api/features/with-filtering.ts:5-9` (`WithFilteringConfig<TRow>`, `predicates` required)                       |
+| `matcher()` already puts `TRow` in the type body — R43 must not be built                   | `src/filters/types.ts` (`FiltersRoot.matcher`)                                                                      |
+| The ambient recorder is referenced by nothing outside the domain                           | `src/filters/{recorder,rules,create-filters,types}.ts` only. `src/schema/*`'s recorder is a separate, unrelated one |
+| Duplicate key and duplicate path already throw at construction                             | `src/filters/validate.ts`                                                                                           |
+| The literal-key guard exists but does not bite yet                                         | `src/filters/types.ts` (`EnforceLiteralKey`)                                                                        |
+| Type assertions are `expectTypeOf` from `vitest`, enforced by `tsc`, not the runner        | `src/filters/create-filters.spec.ts:683-743`, `src/api/features/with-filtering.spec.ts:268-300`                     |
+| `tsconfig.spec.json` includes only `src/**/*.test.ts`, `src/**/*.spec.ts`, `src/**/*.d.ts` | `libs/shared/table/tsconfig.spec.json`                                                                              |
 
 **Uncommitted in the working tree:** the decoupling ticket's PR 2 (`#72`) — `src/filters/index.ts`
 and the `src/index.ts:88` delegation. Its steps 11–13 (spec rewrites, doc pointers) are still open.
@@ -56,7 +56,7 @@ Rules stop calling `recorder.record(...)` and return the record instead. The run
 // src/filters/types.ts
 export interface FilterRule<TKey extends string, TCriterion, TRow = unknown>
   extends FilterRuleRecord<TRow> {
-  readonly __key?: TKey;            // phantom — carries the literal key
+  readonly __key?: TKey; // phantom — carries the literal key
   readonly __criterion?: TCriterion; // phantom — carries the criterion shape
 }
 ```
@@ -68,8 +68,9 @@ are an implementation choice; what is fixed is that a rule's static type names b
 ```ts
 export type CriterionOf<R> = R extends FilterRule<string, infer C> ? C : never;
 
-export type StateOf<T extends readonly unknown[]> =
-  { [R in Extract<Flatten<T>, AnyRule> as NonNullable<R['__key']>]: CriterionOf<R> };
+export type StateOf<T extends readonly unknown[]> = {
+  [R in Extract<Flatten<T>, AnyRule> as NonNullable<R['__key']>]: CriterionOf<R>;
+};
 ```
 
 `Flatten` is the recursion R37 requires — it must see through both a nested array and a
@@ -122,8 +123,9 @@ R35's published signature omitted it; that was elision, not removal.
 
 ```ts
 export type FiltersPath<TRow> = [TRow] extends [never]
-  ? { readonly __rowTypeCouldNotBeInferred_useRowOf:
-        'createFilters: the first argument is empty, so the row type is unknown. Pass rowOf<Row>() instead.' }
+  ? {
+      readonly __rowTypeCouldNotBeInferred_useRowOf: 'createFilters: the first argument is empty, so the row type is unknown. Pass rowOf<Row>() instead.';
+    }
   : { readonly [K in Extract<keyof TRow, string>]: FilterHandle<TRow, K> };
 ```
 
@@ -135,7 +137,9 @@ schema rather than the empty carrier that caused it.
 ```ts
 // src/filters/row-of.ts
 declare const ROW_TOKEN: unique symbol;
-export interface RowToken<TRow> { readonly [ROW_TOKEN]: TRow }
+export interface RowToken<TRow> {
+  readonly [ROW_TOKEN]: TRow;
+}
 export function rowOf<TRow>(): RowToken<TRow>;
 ```
 
@@ -187,7 +191,7 @@ it, so the node folds to its children's top-level keys when placed directly in a
 > `[Symbol.iterator]`, so the spread form is a `TS2488` compile error. Verified by compiled probe.
 > **Place the node directly, without a spread — that is the only supported form.** The design goal
 > is still met, and more strictly than promised: the failure the node shape exists to prevent is a
-> *forgotten* spread on an array-returning `applyWhen`, which left a nested array the fold skipped
+> _forgotten_ spread on an array-returning `applyWhen`, which left a nested array the fold skipped
 > and dropped the gated filters from both the type and the runtime silently. Under the node shape a
 > written spread fails loudly at compile time and an omitted one is simply correct.
 
@@ -202,33 +206,33 @@ TState>`. `WithFilteringConfig` has no `TState` left to change.
 
 ## File layout
 
-| File | Action |
-|---|---|
-| `src/filters/types.ts` | edit — add `FilterRule`/`GroupRule`/`ConditionalRule`/`AnyRule`, `CriterionOf`, `Flatten`, `StateOf`; brand `FiltersPath<never>`; drop both `TState` defaults; delete `FILTER_RECORDER`, `FilterSchemaRecorder`, and `FilterHandle`'s recorder field |
-| `src/filters/row-of.ts` | **create** — `RowToken<TRow>`, `rowOf<TRow>()` |
-| `src/filters/rules.ts` | rewrite — all seven rules return their record; `anyOf` takes a non-empty tuple; `applyWhen` takes an array and returns one node; every `assertFilterPathIsCurrent`/`currentFilterRecorder` call goes |
-| `src/filters/create-filters.ts` | rewrite signature + body per above; drop the recorder re-export block |
-| `src/filters/recorder.ts` | **delete** |
-| `src/filters/index.ts` | edit — add `rowOf` and `type RowToken`; the header's symbol count and its "recorder internals" clause both change |
-| `src/filters/validate.ts` | unchanged — still the key/path construction throws |
-| `src/filters/state.ts`, `evaluator.ts`, `matchers.ts` | unchanged |
-| `src/filters/create-filters.spec.ts` | edit — every schema to the array form; move the trailing `describe('types')` block out |
-| `src/filters/create-filters.types.spec.ts` | **create** — the type seam (see below) |
-| `src/filters/state.spec.ts`, `matchers.spec.ts` | check only — neither imports the recorder today |
-| `src/api/features/with-filtering.spec.ts` | edit — its `createFilters<Row>(schema)` helper and the schemas it builds |
-| `src/stories/composition/derived-state/derived-state-story-host.component.ts` | edit — array schema, drop annotation |
-| `src/stories/composition/fixtures/types.ts` | edit — delete `CompositionFilterState` |
-| `src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | edit — array schema, drop annotation; its prose about the previous signature |
-| `src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | edit — same |
-| `src/stories/filtering/server-filtering/server-filtering-story-host.component.ts` | edit — same; this is the `rowOf()` showcase |
-| `src/stories/filtering/fixtures/types.ts` | edit — delete `ClientInvoiceFilterState`, `ServerInvoiceFilterState`, `SelectionInvoiceFilterState` |
-| `src/stories/filtering/fixtures/mock.ts` | edit — its "takes no data argument" note is now false |
-| `src/stories/grouping/fixtures/schema.ts` | edit — `createDealFilters()` drops its return annotation |
-| `src/stories/grouping/fixtures/types.ts` | edit — delete `DealFilterState` |
-| `docs/1-state/filters.md` | rewrite — signature, array schema, carrier, `rowOf`, the three guards; delete the Signature section's R32 rationale |
-| `docs/1-state/features/filtering.md` | check — it should already describe only the predicate list |
-| `libs/shared/table/CLAUDE.md` | edit — the `filters/index.ts` row (symbol count, "recorder internals") and the `recorder.ts`-as-internal claim |
-| `docs/1-state/work/with-filtering/design-options-hybrid-api.md` | edit — mark R10/R11/R31/R32/R33 superseded where they stand; correct R11's row-type-recovery claim |
+| File                                                                                    | Action                                                                                                                                                                                                                                               |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/filters/types.ts`                                                                  | edit — add `FilterRule`/`GroupRule`/`ConditionalRule`/`AnyRule`, `CriterionOf`, `Flatten`, `StateOf`; brand `FiltersPath<never>`; drop both `TState` defaults; delete `FILTER_RECORDER`, `FilterSchemaRecorder`, and `FilterHandle`'s recorder field |
+| `src/filters/row-of.ts`                                                                 | **create** — `RowToken<TRow>`, `rowOf<TRow>()`                                                                                                                                                                                                       |
+| `src/filters/rules.ts`                                                                  | rewrite — all seven rules return their record; `anyOf` takes a non-empty tuple; `applyWhen` takes an array and returns one node; every `assertFilterPathIsCurrent`/`currentFilterRecorder` call goes                                                 |
+| `src/filters/create-filters.ts`                                                         | rewrite signature + body per above; drop the recorder re-export block                                                                                                                                                                                |
+| `src/filters/recorder.ts`                                                               | **delete**                                                                                                                                                                                                                                           |
+| `src/filters/index.ts`                                                                  | edit — add `rowOf` and `type RowToken`; the header's symbol count and its "recorder internals" clause both change                                                                                                                                    |
+| `src/filters/validate.ts`                                                               | unchanged — still the key/path construction throws                                                                                                                                                                                                   |
+| `src/filters/state.ts`, `evaluator.ts`, `matchers.ts`                                   | unchanged                                                                                                                                                                                                                                            |
+| `src/filters/create-filters.spec.ts`                                                    | edit — every schema to the array form; move the trailing `describe('types')` block out                                                                                                                                                               |
+| `src/filters/create-filters.types.spec.ts`                                              | **create** — the type seam (see below)                                                                                                                                                                                                               |
+| `src/filters/state.spec.ts`, `matchers.spec.ts`                                         | check only — neither imports the recorder today                                                                                                                                                                                                      |
+| `src/api/features/with-filtering.spec.ts`                                               | edit — its `createFilters<Row>(schema)` helper and the schemas it builds                                                                                                                                                                             |
+| `src/stories/composition/derived-state/derived-state-story-host.component.ts`           | edit — array schema, drop annotation                                                                                                                                                                                                                 |
+| `src/stories/composition/fixtures/types.ts`                                             | edit — delete `CompositionFilterState`                                                                                                                                                                                                               |
+| `src/stories/filtering/client-filtering/client-filtering-story-host.component.ts`       | edit — array schema, drop annotation; its prose about the previous signature                                                                                                                                                                         |
+| `src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | edit — same                                                                                                                                                                                                                                          |
+| `src/stories/filtering/server-filtering/server-filtering-story-host.component.ts`       | edit — same; this is the `rowOf()` showcase                                                                                                                                                                                                          |
+| `src/stories/filtering/fixtures/types.ts`                                               | edit — delete `ClientInvoiceFilterState`, `ServerInvoiceFilterState`, `SelectionInvoiceFilterState`                                                                                                                                                  |
+| `src/stories/filtering/fixtures/mock.ts`                                                | edit — its "takes no data argument" note is now false                                                                                                                                                                                                |
+| `src/stories/grouping/fixtures/schema.ts`                                               | edit — `createDealFilters()` drops its return annotation                                                                                                                                                                                             |
+| `src/stories/grouping/fixtures/types.ts`                                                | edit — delete `DealFilterState`                                                                                                                                                                                                                      |
+| `docs/1-state/filters.md`                                                               | rewrite — signature, array schema, carrier, `rowOf`, the three guards; delete the Signature section's R32 rationale                                                                                                                                  |
+| `docs/1-state/features/filtering.md`                                                    | check — it should already describe only the predicate list                                                                                                                                                                                           |
+| `libs/shared/table/CLAUDE.md`                                                           | edit — the `filters/index.ts` row (symbol count, "recorder internals") and the `recorder.ts`-as-internal claim                                                                                                                                       |
+| `docs/1-state/work/with-filtering/design-options-hybrid-api.md`                         | edit — mark R10/R11/R31/R32/R33 superseded where they stand; correct R11's row-type-recovery claim                                                                                                                                                   |
 
 **Nothing in `src/api/features/with-filtering.ts` changes.** If a step proposes editing it, the
 step is wrong.
@@ -237,10 +241,10 @@ step is wrong.
 
 Two, both anchored at the public `createFilters()` call.
 
-| Seam | File | Enforced by |
-|---|---|---|
-| Runtime | `src/filters/create-filters.spec.ts` | `nx test shared-table` |
-| Types | `src/filters/create-filters.types.spec.ts` | `npx tsc -p libs/shared/table/tsconfig.spec.json --noEmit` |
+| Seam    | File                                       | Enforced by                                                |
+| ------- | ------------------------------------------ | ---------------------------------------------------------- |
+| Runtime | `src/filters/create-filters.spec.ts`       | `nx test shared-table`                                     |
+| Types   | `src/filters/create-filters.types.spec.ts` | `npx tsc -p libs/shared/table/tsconfig.spec.json --noEmit` |
 
 **The type file must be named `*.types.spec.ts`, not `*.type-spec.ts`.** `tsconfig.spec.json`
 includes only `src/**/*.test.ts` and `src/**/*.spec.ts`, so a `.type-spec.ts` file would be
@@ -315,7 +319,7 @@ Land those first — they touch `src/filters/index.ts` and the same spec files.
    criterion and contributes nothing back to it. There is no second inference site any more.
 3. **How much of `create-filters.spec.ts`'s 743 lines survives the schema rewrite mechanically?**
    Every schema changes shape, so the diff is large and the review is by inspection. If a case
-   needs its *assertion* changed rather than its schema, that is a semantic regression — stop and
+   needs its _assertion_ changed rather than its schema, that is a semantic regression — stop and
    check it against the decisions doc rather than accommodating it.
 4. ~~**Which issue closes `#56`?**~~ — **resolved 2026-09-14 at `/to-issues`: the docs issue.**
    It tracks the two `TState` landmines, which delete with the parameter. It closes as

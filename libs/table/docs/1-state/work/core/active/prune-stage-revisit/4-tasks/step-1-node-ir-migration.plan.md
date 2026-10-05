@@ -10,18 +10,18 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `libs/table/src/engine/render-stages.ts` | rewrite |
-| `libs/table/src/engine/flatten.ts` | **new** |
-| `libs/table/src/engine/rows.ts` | edit (`buildDefaultRenderNodes`) |
-| `libs/table/src/engine/core.ts` | edit (`renderRows`, two comments) |
-| `libs/table/src/engine/compose-table.ts` | edit (import + fold) |
-| `libs/table/src/api/features/compose-features.ts` | edit (import + fold) |
-| `libs/table/src/engine/grouping/render.ts` | rewrite walk (`buildGroupNodes`) |
-| `libs/table/src/api/features/with-expansion.ts` | rewrite `buildTreeStage` |
-| `libs/table/src/api/types.ts` | edit (3 field comments) |
-| `libs/table/src/engine/types.ts` | edit (2 slot docs) |
+| Path                                              | Action                            |
+| ------------------------------------------------- | --------------------------------- |
+| `libs/table/src/engine/render-stages.ts`          | rewrite                           |
+| `libs/table/src/engine/flatten.ts`                | **new**                           |
+| `libs/table/src/engine/rows.ts`                   | edit (`buildDefaultRenderNodes`)  |
+| `libs/table/src/engine/core.ts`                   | edit (`renderRows`, two comments) |
+| `libs/table/src/engine/compose-table.ts`          | edit (import + fold)              |
+| `libs/table/src/api/features/compose-features.ts` | edit (import + fold)              |
+| `libs/table/src/engine/grouping/render.ts`        | rewrite walk (`buildGroupNodes`)  |
+| `libs/table/src/api/features/with-expansion.ts`   | rewrite `buildTreeStage`          |
+| `libs/table/src/api/types.ts`                     | edit (3 field comments)           |
+| `libs/table/src/engine/types.ts`                  | edit (2 slot docs)                |
 
 ## Why This Step Exists
 
@@ -67,13 +67,13 @@ them; this section is the order, not a second source of truth.
    JSDoc blocks that describe flat emission and the `'prune'` stage.
 7. **`api/features/with-expansion.ts`** — `toChildRenderRow` becomes
    `toChildNode`; `buildTreeStage(trackBy, childrenAccessor,
-   isExpandable)` uses `mapNodes` and **drops the `expandedRows`
+isExpandable)` uses `mapNodes` and **drops the `expandedRows`
    parameter entirely**. Delete the "read the signal inside the
    transform" JSDoc paragraph along with it. Drop the argument at the
    `renderStages.tree` registration site. `spec.expandedRows` stays.
 8. **Field comments** — `api/types.ts` `isExpanded` / `hasChildren` /
-   `parentId` now read *derived by the walk*, not *stamped by a
-   stage*. `engine/types.ts` `renderStages` and `expandedRows` slot
+   `parentId` now read _derived by the walk_, not _stamped by a
+   stage_. `engine/types.ts` `renderStages` and `expandedRows` slot
    docs lose the `'prune'` references.
 
 ## Implementation Notes
@@ -138,4 +138,5 @@ them; this section is the order, not a second source of truth.
       reads `expanded`.
 
 ---
+
 [Step 2: The engine IR seam pair](step-2-flatten-and-fold-specs.plan.md) →

@@ -59,7 +59,7 @@ function makeControllableResource<TResult>(): {
 function makeAsyncRule(
   control: { resource: Resource<unknown> },
   columnId = 'region',
-  when?: GroupWhen<unknown>
+  when?: GroupWhen<unknown>,
 ): GroupingAsyncRule {
   return {
     kind: 'grouping-async',
@@ -197,9 +197,7 @@ describe('collectGroupPredicates', () => {
   });
 
   it('excludes a rule with no when from the map', () => {
-    const rules: AnyGroupingRule[] = [
-      { kind: 'grouping', columnId: 'region', enable: () => true },
-    ];
+    const rules: AnyGroupingRule[] = [{ kind: 'grouping', columnId: 'region', enable: () => true }];
 
     const predicates = collectGroupPredicates(rules);
 

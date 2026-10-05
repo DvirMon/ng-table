@@ -33,7 +33,7 @@ existing assertion is softened.
 **2. New cases in `build.spec.ts`:**
 
 - **Derived accessor.** A column `id: 'owner'`, `accessor: r =>
-  r.owner.name`; `equals(path.owner)` set to `'Ada'` matches the row whose
+r.owner.name`; `equals(path.owner)` set to `'Ada'` matches the row whose
   cell shows `Ada`, not by the raw `owner` object.
 - **Carrier column.** A column declared `visible: false` is filterable
   like any other.
@@ -56,4 +56,5 @@ existing assertion is softened.
 - [ ] Each new case fails if `evaluator.ts` reverts to `rowRecord[path]`.
 
 ---
+
 ← [Step 3: Widen `withFiltering`'s input](step-3-widen-feature-input.plan.md) | [Step 5: Feature spec](step-5-feature-spec.plan.md) →

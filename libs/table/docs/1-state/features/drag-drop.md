@@ -13,6 +13,7 @@ parent: ../architecture.md
 # withDragDrop()
 
 Known from `overview.md`:
+
 - State shape sketch: `{ dragState }`.
 
 **Flagged cross-cutting question raised in a prior session (not yet resolved):**
@@ -20,7 +21,7 @@ Does row drag-drop reordering require active sort to be cleared/disabled first (
 
 **Flagged cross-cutting question — `withDragDrop()` vs `withGrouping()` (not yet resolved):**
 Dropping an ungrouped row onto a group's section assigns it that group. Dropping a row that
-already belongs to one group onto a *different* group must be configurable: an option to block
+already belongs to one group onto a _different_ group must be configurable: an option to block
 cross-group drag (the row cannot leave its group by drag), and an option to allow it (the drop
 reassigns the row to the target group). Dragging an entire group (its header, i.e. every row in
 it) onto another group is a separate, opt-in capability: enabling it bulk-reassigns every row in

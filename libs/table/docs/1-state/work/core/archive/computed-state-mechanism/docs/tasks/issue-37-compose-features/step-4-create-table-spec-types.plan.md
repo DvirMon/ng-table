@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — create-table.spec.ts: type assertions for composite slots, nesting, arity escape, not-any"
+title: 'Step 4 — create-table.spec.ts: type assertions for composite slots, nesting, arity escape, not-any'
 type: task-step
 issue: 71
 ---
@@ -96,4 +96,5 @@ Import `composeFeatures` from `./features/compose-features`.
 - [ ] Case 40's standalone-row result recorded in `progress.md`.
 
 ---
+
 ← [Step 3: compose-features.spec.ts — runtime](step-3-compose-features-spec-runtime.plan.md)

@@ -8,6 +8,7 @@ files:
   - libs/table/src/engine/compose-table.spec.ts
   - libs/table/src/engine/render-stages.spec.ts
 ---
+
 # Step 2 — Runtime row-id checks on render stages
 
 `runRenderStages` checks each stage's output after it runs,
@@ -63,4 +64,5 @@ walked once. The seed's id set is the first stage's input.
       [step-2-runtime-row-id-checks.test-plan.md](step-2-runtime-row-id-checks.test-plan.md).
 
 ---
+
 ← [Step 1: Carry the feature label on resolved stages](step-1-resolved-stage-label.plan.md) | [Step 3: Record the made-up-row ruling](step-3-record-made-up-row-ruling.plan.md) →

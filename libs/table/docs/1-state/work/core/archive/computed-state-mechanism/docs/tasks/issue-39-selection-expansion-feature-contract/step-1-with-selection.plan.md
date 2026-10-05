@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — with-selection.ts: withSelection<In>(config?, derive?) on the Feature<In, Out> contract"
+title: 'Step 1 — with-selection.ts: withSelection<In>(config?, derive?) on the Feature<In, Out> contract'
 type: task-step
 issue: 73
 ---
@@ -56,14 +56,14 @@ and 10 are this feature.
 
    ```ts
    export function withSelection<In extends SelectionInput<In>, D extends DerivedDict>(
-     derive: Feature<NoInfer<In> & SelectionMembers, D>
+     derive: Feature<NoInfer<In> & SelectionMembers, D>,
    ): Feature<In, SelectionMembers & D>;
    export function withSelection<In extends SelectionInput<In>>(
-     config?: WithSelectionConfig<RowOf<In>>
+     config?: WithSelectionConfig<RowOf<In>>,
    ): Feature<In, SelectionMembers>;
    export function withSelection<In extends SelectionInput<In>, D extends DerivedDict>(
      config: WithSelectionConfig<RowOf<In>> | undefined,
-     derive: Feature<NoInfer<In> & SelectionMembers, D>
+     derive: Feature<NoInfer<In> & SelectionMembers, D>,
    ): Feature<In, SelectionMembers & D>;
    ```
 
@@ -72,13 +72,14 @@ and 10 are this feature.
    ```ts
    export function withSelection(
      a: WithSelectionConfig<any> | Feature<any, any> = {},
-     b?: Feature<any, any>
+     b?: Feature<any, any>,
    ): Feature<any, any> {
      const isDeriveFirst = typeof a === 'function';
      const config: WithSelectionConfig<any> = isDeriveFirst ? {} : a;
      const derive = isDeriveFirst ? a : b;
-     const factory = <In extends SelectionInput<In>>(input: In): TableFeatureSpec<RowOf<In>, SelectionMembers> =>
-       buildSelectionSpec(input, config);
+     const factory = <In extends SelectionInput<In>>(
+       input: In,
+     ): TableFeatureSpec<RowOf<In>, SelectionMembers> => buildSelectionSpec(input, config);
      const feature: Feature<any, any> = derive
        ? createTableFeature(factory, derive)
        : createTableFeature(factory);
@@ -126,4 +127,5 @@ and 10 are this feature.
 - [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean for `with-selection.ts`.
 
 ---
+
 [Step 2: with-expansion.ts](step-2-with-expansion.plan.md) →

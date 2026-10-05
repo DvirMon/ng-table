@@ -8,6 +8,7 @@ files:
   - libs/table/src/api/features/with-tree/feature.ts
   - libs/table/src/api/features/with-tree/feature.spec.ts
 ---
+
 # Step 8 — state() includeHidden
 
 This step turns `TreeSlice.state` from a `Signal` into a method that takes `includeHidden`.
@@ -41,4 +42,5 @@ Decisions: [D8, D26](../../1-decisions.md) (spec stories 32, 33)
 - [ ] Both variants stay reactive.
 
 ---
+
 ← [Step 7: expand() includeHidden](step-7-expand-include-hidden.plan.md) | [Step 9: Docs and decisions](step-9-docs-and-decisions.plan.md) →

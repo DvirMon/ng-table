@@ -46,7 +46,7 @@ Cover, one `it()` per line:
   toggling, assert emitted value)
 - `renderRows()` excludes a row's children when collapsed (default state)
 - `renderRows()` includes a row's children, at `depth + 1`, only once that row is expanded
-- nested/grandchild case: a depth-2 child only appears once *both* its ancestors are expanded
+- nested/grandchild case: a depth-2 child only appears once _both_ its ancestors are expanded
   independently
 - `hasChildren` is `true` only for rows with a non-empty children array; `isExpanded` matches
   `expandedRows` membership
@@ -77,4 +77,5 @@ Cover, one `it()` per line:
 - [ ] `nx test shared-design-system` passes
 
 ---
+
 ← [Step 2: Barrel export](step-2-barrel-export.plan.md) | [Step 4: Update with-expansion.md](step-4-update-spec-doc.plan.md) →

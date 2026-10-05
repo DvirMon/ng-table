@@ -7,7 +7,7 @@ audience: product, developers
 issue: null
 ---
 
-# What a person can *click and press* for row selection — capability inventory across grid libraries
+# What a person can _click and press_ for row selection — capability inventory across grid libraries
 
 Product-side input for `withSelection()` user stories. Same method as the sibling
 `research-filter-ux-capabilities.md`, focused on **row selection**: what a person can click, tap,
@@ -37,13 +37,13 @@ Version pins carried over from the sibling developer-facing research in this sam
 packages/tarballs there — reused here rather than re-pinned, since they are the same libraries at
 the same point in time.
 
-| Library | Version read | Selection tier |
-|---|---|---|
-| Angular CDK `SelectionModel` | `@angular/cdk@22.1.2` (source, `main` branch matches installed API) | Free — no paid tier exists; ships zero UI |
-| TanStack Table v8 | `@tanstack/table-core@8.21.3` | Free, headless — no rendered UI of any kind |
-| AG Grid | `ag-grid-community@36.1.0` / enterprise docs | Row selection itself (checkbox, click, shift/ctrl-click, keyboard): **Community**. Grouping/tree cascade, server-side select-all, Status Bar selected-count: **Enterprise** |
-| PrimeNG `p-table` | `primeng@22.1.1` | Free — no paid tier exists |
-| Material React Table | `material-react-table@3.2.1` | Free; TanStack v8 underneath, adds the rendered checkbox/radio UI layer TanStack omits |
+| Library                      | Version read                                                        | Selection tier                                                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Angular CDK `SelectionModel` | `@angular/cdk@22.1.2` (source, `main` branch matches installed API) | Free — no paid tier exists; ships zero UI                                                                                                                                   |
+| TanStack Table v8            | `@tanstack/table-core@8.21.3`                                       | Free, headless — no rendered UI of any kind                                                                                                                                 |
+| AG Grid                      | `ag-grid-community@36.1.0` / enterprise docs                        | Row selection itself (checkbox, click, shift/ctrl-click, keyboard): **Community**. Grouping/tree cascade, server-side select-all, Status Bar selected-count: **Enterprise** |
+| PrimeNG `p-table`            | `primeng@22.1.1`                                                    | Free — no paid tier exists                                                                                                                                                  |
+| Material React Table         | `material-react-table@3.2.1`                                        | Free; TanStack v8 underneath, adds the rendered checkbox/radio UI layer TanStack omits                                                                                      |
 
 Docs roots: [ag-grid.com row-selection](https://www.ag-grid.com/angular-data-grid/row-selection/),
 [tanstack.com/table/v8 row-selection](https://tanstack.com/table/v8/docs/guide/row-selection),
@@ -60,7 +60,7 @@ Docs roots: [ag-grid.com row-selection](https://www.ag-grid.com/angular-data-gri
   active filters), `'currentPage'` (only rows on the current page, and only those also passing
   filters). When `isRowSelectable` is set, "the header checkbox will only select selectable rows."
   Under the **Server-Side Row Model (Enterprise)**, `'filtered'`/`'currentPage'` are explicitly
-  **invalid** — only `'all'` is supported, and it selects the *entire server-side dataset*,
+  **invalid** — only `'all'` is supported, and it selects the _entire server-side dataset_,
   including rows never fetched/rendered: `getServerSideSelectionState()` /
   `setServerSideSelectionState()` are the documented way to read/write that state "without having
   ever loaded the rows." This is the only library in the set that reaches the third rung of the
@@ -104,12 +104,12 @@ Docs roots: [ag-grid.com row-selection](https://www.ag-grid.com/angular-data-gri
 **Where they disagree.** Three different defaults for what an unconfigured header checkbox does:
 AG Grid and PrimeNG both default to **every row in the dataset** (filtered/paginated or not); MRT
 defaults to **current page only**; TanStack ships no default because it ships no checkbox at all,
-but is the only library to expose the page-scoped and dataset-scoped variants as two *separately
-named, equally first-class* functions rather than one flag with a chosen default. Nobody besides
+but is the only library to expose the page-scoped and dataset-scoped variants as two _separately
+named, equally first-class_ functions rather than one flag with a chosen default. Nobody besides
 AG Grid's SSRM mode reaches "every row ever, including unfetched" — and even there it's gated to
 Enterprise and to server-mode specifically. This maps directly onto the internal design's D1/D59
 stance (no scope concept at all, the caller passes the id set): the industry's disagreement here
-*is* the D1 finding restated — a `scope` enum has no single sane default because three vendors
+_is_ the D1 finding restated — a `scope` enum has no single sane default because three vendors
 picked three different ones.
 
 ## 2. Individual row selection
@@ -138,14 +138,14 @@ picked three different ones.
   [Table docs](https://primeng.dev/table)
 - **MRT**: checkbox is the default multi-select affordance; `enableMultiRowSelection: false`
   switches the same control to a **radio button** automatically (not a separate prop to learn).
-  Click-anywhere is *not* a shipped default — it requires the documented recipe of wiring
+  Click-anywhere is _not_ a shipped default — it requires the documented recipe of wiring
   `muiTableBodyRowProps.onClick` to `getMRT_RowSelectionHandler()` yourself.
   [Row Selection guide](https://www.material-react-table.com/docs/guides/row-selection)
 
 **Where they disagree.** AG Grid and PrimeNG both ship click-anywhere as a **first-class,
 declarative option** (a boolean/mode, no extra wiring); TanStack, CDK, and MRT all require the
 consumer to hand-attach a click handler to get the same behavior — the checkbox-only path is each
-library's true zero-config default. PrimeNG is the only library where the *selection mode itself*
+library's true zero-config default. PrimeNG is the only library where the _selection mode itself_
 (single vs. multiple) changes which affordance appears by default (row-click for both single and
 multi, checkbox optional) rather than checkbox being the fixed default and click-anywhere the
 opt-in.
@@ -187,7 +187,7 @@ opt-in.
 story** (arrows, shift+arrow, shift+space, Ctrl+A) — and even it has an open correctness bug on the
 combination that matters most (`Ctrl+A` + `dataKey`). AG Grid, the most feature-rich library
 overall, has the **weakest keyboard range story of the five for rows specifically** — its shift and
-Ctrl+A behaviors are real but scoped to *cell* selection, a materially different feature that
+Ctrl+A behaviors are real but scoped to _cell_ selection, a materially different feature that
 happens to share a keyboard vocabulary. Mouse-side shift-click is near-universal (AG Grid, PrimeNG,
 MRT all name it); ctrl-click for toggle-without-replacing is real in AG Grid and PrimeNG but absent
 from MRT's documented feature list. Nobody in the state-only tier (CDK, TanStack) ships any of
@@ -203,7 +203,7 @@ matches this repo's own state/UI split (D3).
   **Group nodes are excluded from `api.getSelectedNodes()`/`getSelectedRows()`** under
   `'descendants'`/`'filteredDescendants'` — the selection count/read API is leaf-rows-only by
   construction, even though the group row visually shows as checked/indeterminate. Grouping itself
-  is **Enterprise**; the selection *mechanism* (`RowSelectionModule`) is Community, so this whole
+  is **Enterprise**; the selection _mechanism_ (`RowSelectionModule`) is Community, so this whole
   axis only exists for a customer already paying for grouping.
   [Row grouping — selection](https://www.ag-grid.com/angular-data-grid/grouping-row-selection/)
 - **TanStack v8**: `enableSubRowSelection` (boolean or per-row predicate), default behavior:
@@ -247,23 +247,23 @@ concrete cautionary case for whatever `withGrouping()` does with `withSelection(
   preserved when the grid is sorted or filtered and are displayed as selected when scrolled into
   view," including "if a selected row doesn't match the applied filter, it will still be selected
   when the filter is removed." Community-mode `'currentPage'`/`'filtered'` select-all scopes (axis
-  1) only change what a **future** select-all click captures — they do not retroactively touch
-  rows already selected before the filter changed.
-  [ag-grid#3555](https://github.com/ag-grid/ag-grid/issues/3555) ·
-  [SSRM row selection](https://ag-grid.com/angular-data-grid/server-side-model-selection/)
+  1. only change what a **future** select-all click captures — they do not retroactively touch
+     rows already selected before the filter changed.
+     [ag-grid#3555](https://github.com/ag-grid/ag-grid/issues/3555) ·
+     [SSRM row selection](https://ag-grid.com/angular-data-grid/server-side-model-selection/)
 - **TanStack v8**: same posture, explicit in the docs — selection state is "row ids that are not
   present in the data array just fine," i.e. it is not pruned when rows leave the visible/filtered
   set. The load-bearing caveat is `getRowId`: default index-based ids mean a selected "row 3" can
-  silently become a *different* row after a sort/filter/page change re-indexes the array — the
+  silently become a _different_ row after a sort/filter/page change re-indexes the array — the
   library's own guidance is to always supply a stable `getRowId` precisely to avoid this. Pagination
-  specifically: `getSelectedRowModel()` only returns rows present in the *currently materialized*
+  specifically: `getSelectedRowModel()` only returns rows present in the _currently materialized_
   row model, so a selection on another page reads as "not there" from that API even though the
   underlying `rowSelection` state object still holds it.
   [Row Selection guide](https://tanstack.com/table/v8/docs/guide/row-selection) ·
   [TanStack/table#4781](https://github.com/TanStack/table/issues/4781)
 - **CDK**: trivially persists, because `SelectionModel` is never touched by sort/filter/pagination
   code at all — it only knows what `select()`/`deselect()` told it. The failure mode is the mirror
-  image of AG Grid/TanStack's *intentional* behavior: because nothing prunes it, a `MatTableDataSource`
+  image of AG Grid/TanStack's _intentional_ behavior: because nothing prunes it, a `MatTableDataSource`
   swap that changes which objects represent "the same" row (e.g. re-fetched objects with new
   identity) can silently orphan a selection unless the developer's own `compareWith` or object
   identity discipline holds.
@@ -278,7 +278,7 @@ concrete cautionary case for whatever `withGrouping()` does with `withSelection(
   TanStack's "persists, but get a stable `getRowId`" posture. **Unverified independently.**
 
 **Where they disagree.** AG Grid and TanStack both make an explicit, confident choice — **keep it
-selected, always**, and both explain *why* (a selection is a fact about a row, not about the
+selected, always**, and both explain _why_ (a selection is a fact about a row, not about the
 current view). PrimeNG has no such stated policy, and the community's own coping pattern
 (`onFilter` handlers that wipe selection) is the visible symptom of that gap — it's a real, if
 unglamorous, product decision PrimeNG has left to every integrator to make for themselves. This is
@@ -292,7 +292,7 @@ whether `selectionStateOf(ids)`'s denominator should count a since-hidden id (op
 
 Fully covered by the sibling doc [research-row-selectability.md](research-row-selectability.md)
 (source-verified against installed packages, not re-derived here). Summary relevant to the
-*person-facing* half only:
+_person-facing_ half only:
 
 - **Visual convention is unanimous**: render a **disabled control, never hide it**. MRT disables
   the checkbox (`disabled={!row.getCanSelect()}`); AG Grid renders a disabled checkbox by default
@@ -356,7 +356,7 @@ capability itself is expensive.
   `SelectionModel` automatically — a developer must choose to route through listbox semantics.
 - **PrimeNG**: sets `aria-selected="true"` on a selected row and exposes `selectAll`/`unselectAll`
   locale keys specifically to label the header checkbox for assistive tech — the only library found
-  to treat the header checkbox's *label text* as a first-class, translatable a11y concern rather
+  to treat the header checkbox's _label text_ as a first-class, translatable a11y concern rather
   than an implementation detail left to the integrator.
   [Table docs](https://primeng.dev/table)
 - **MRT**: no selection-specific accessibility documentation was found in the fetched guide;
@@ -369,7 +369,7 @@ capability itself is expensive.
 **Where they disagree.** AG Grid is the only library candid about a known, unresolved screen-reader
 gap rather than presenting selection a11y as solved — worth taking at face value rather than as a
 uniquely AG Grid problem, since it likely applies to any grid announcing selection state on an
-already-focused element. PrimeNG is the only library treating the header checkbox's *label*
+already-focused element. PrimeNG is the only library treating the header checkbox's _label_
 (select-all vs. deselect-all) as something to localize and get right, which the internal design's
 directive layer (D6's native-checkbox-only stance) should account for when it eventually drills
 `aria-label`/announcement text for `ngpTableSelectionCheckbox`.
@@ -388,16 +388,16 @@ single-select "replace" write; AG Grid and TanStack ship no delta at all, only a
 
 ## 10. Tier splits
 
-| Capability | AG Grid | PrimeNG | MRT | TanStack / CDK |
-|---|---|---|---|---|
-| Checkbox + click-anywhere + keyboard row toggle | **Free** | **Free** | Checkbox free; click-anywhere needs wiring | n/a (no UI) |
-| Shift-click / ctrl-click | **Free** | **Free** | Shift-click free; no ctrl-click documented | n/a |
-| Shift+Arrow / Ctrl+A keyboard range | Cell-selection only, not row | **Free** (buggy w/ `dataKey`) | Not documented | n/a |
-| Native indeterminate header checkbox | **Free** | Not confirmed | Inferred, not confirmed | n/a (consumer-built) |
-| Select-all scope = literally every row, unfetched | **Enterprise** (SSRM only) | Not offered | Not offered | Not offered |
-| Group-header cascade selection (`groupSelects`) | **Enterprise** (grouping itself is Enterprise) | **Not built** — conflicts with grouping | Free (`enableSubRowSelection`) | Free (TanStack primitive) |
-| Built-in "N selected" bulk toolbar | **Enterprise** (Status Bar) | **Not offered** | **Free**, automatic | Not offered |
-| Disabled-row predicate + disabled (not hidden) checkbox | **Free** | Free, but header select-all has a filed bug counting disabled rows | Free | n/a (CDK: view-layer only, via listbox) |
+| Capability                                              | AG Grid                                        | PrimeNG                                                            | MRT                                        | TanStack / CDK                          |
+| ------------------------------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------ | --------------------------------------- |
+| Checkbox + click-anywhere + keyboard row toggle         | **Free**                                       | **Free**                                                           | Checkbox free; click-anywhere needs wiring | n/a (no UI)                             |
+| Shift-click / ctrl-click                                | **Free**                                       | **Free**                                                           | Shift-click free; no ctrl-click documented | n/a                                     |
+| Shift+Arrow / Ctrl+A keyboard range                     | Cell-selection only, not row                   | **Free** (buggy w/ `dataKey`)                                      | Not documented                             | n/a                                     |
+| Native indeterminate header checkbox                    | **Free**                                       | Not confirmed                                                      | Inferred, not confirmed                    | n/a (consumer-built)                    |
+| Select-all scope = literally every row, unfetched       | **Enterprise** (SSRM only)                     | Not offered                                                        | Not offered                                | Not offered                             |
+| Group-header cascade selection (`groupSelects`)         | **Enterprise** (grouping itself is Enterprise) | **Not built** — conflicts with grouping                            | Free (`enableSubRowSelection`)             | Free (TanStack primitive)               |
+| Built-in "N selected" bulk toolbar                      | **Enterprise** (Status Bar)                    | **Not offered**                                                    | **Free**, automatic                        | Not offered                             |
+| Disabled-row predicate + disabled (not hidden) checkbox | **Free**                                       | Free, but header select-all has a filed bug counting disabled rows | Free                                       | n/a (CDK: view-layer only, via listbox) |
 
 **Where they disagree.** The Enterprise line AG Grid draws is consistent across every row on this
 table: **anything requiring the grid to reason about rows it hasn't rendered or fully modeled**
@@ -420,7 +420,7 @@ Not decisions — just where the inventory points.
   refusing to bake one in is defensible, not a gap.
 - **Selection-survives-filtering is the majority, confident position** (AG Grid, TanStack both
   state it as a deliberate guarantee) — the internal design's architecture already matches it by
-  construction. What's still open industry-wide, not just internally, is whether the *denominator*
+  construction. What's still open industry-wide, not just internally, is whether the _denominator_
   for a tri-state/count should count a since-hidden id — nobody here has answered that either.
 - **Group-header cascade is a genuine fork with a cautionary tale attached.** AG Grid proves a
   library-owned `groupSelects`-style policy is buildable; PrimeNG is the concrete, years-old proof

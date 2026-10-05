@@ -8,19 +8,19 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/shared/table/src/api/features/with-filtering.ts` | `:2`, `:4` | delete — both filters-domain imports |
-| `libs/shared/table/src/api/features/with-filtering.ts` | `:9-23` | edit — `WithFilteringConfig<TRow>`; drop `TState` and `filters` |
-| `libs/shared/table/src/api/features/with-filtering.ts` | `:25-31` | delete — `applyFilterModel` |
-| `libs/shared/table/src/api/features/with-filtering.ts` | `:68-82` | edit — drop `TState` from both overloads |
-| `libs/shared/table/src/api/features/with-filtering.ts` | `:88-99` | edit — stage body applies terms only |
-| `libs/shared/table/src/api/filters/evaluator.ts` | `:4-6`, `:14-21`, `:23-26` | delete — `FILTERS_INTERNAL`, `attachFiltersInternal`, `getFiltersInternal` |
-| `libs/shared/table/src/api/filters/evaluator.ts` | `:104-112` | delete — `createFilterEvaluator` |
-| `libs/shared/table/src/api/filters/evaluator.ts` | `:114-120` | edit — `createFilterEvaluatorFrom` doc comment |
-| `libs/shared/table/src/api/create-filters.ts` | `:2` | edit — drop `attachFiltersInternal` from the import |
-| `libs/shared/table/src/api/create-filters.ts` | `:8` | delete — the `createFilterEvaluator` re-export |
-| `libs/shared/table/src/api/create-filters.ts` | `:72` | delete — the `attachFiltersInternal(filters, internal)` call |
+| File                                                   | Line                       | Action                                                                     |
+| ------------------------------------------------------ | -------------------------- | -------------------------------------------------------------------------- |
+| `libs/shared/table/src/api/features/with-filtering.ts` | `:2`, `:4`                 | delete — both filters-domain imports                                       |
+| `libs/shared/table/src/api/features/with-filtering.ts` | `:9-23`                    | edit — `WithFilteringConfig<TRow>`; drop `TState` and `filters`            |
+| `libs/shared/table/src/api/features/with-filtering.ts` | `:25-31`                   | delete — `applyFilterModel`                                                |
+| `libs/shared/table/src/api/features/with-filtering.ts` | `:68-82`                   | edit — drop `TState` from both overloads                                   |
+| `libs/shared/table/src/api/features/with-filtering.ts` | `:88-99`                   | edit — stage body applies terms only                                       |
+| `libs/shared/table/src/api/filters/evaluator.ts`       | `:4-6`, `:14-21`, `:23-26` | delete — `FILTERS_INTERNAL`, `attachFiltersInternal`, `getFiltersInternal` |
+| `libs/shared/table/src/api/filters/evaluator.ts`       | `:104-112`                 | delete — `createFilterEvaluator`                                           |
+| `libs/shared/table/src/api/filters/evaluator.ts`       | `:114-120`                 | edit — `createFilterEvaluatorFrom` doc comment                             |
+| `libs/shared/table/src/api/create-filters.ts`          | `:2`                       | edit — drop `attachFiltersInternal` from the import                        |
+| `libs/shared/table/src/api/create-filters.ts`          | `:8`                       | delete — the `createFilterEvaluator` re-export                             |
+| `libs/shared/table/src/api/create-filters.ts`          | `:72`                      | delete — the `attachFiltersInternal(filters, internal)` call               |
 
 ## Why This Step Exists
 
@@ -115,4 +115,5 @@ the domain.
 - [ ] Filtering stories behave identically — client, server, predicate, selection and both grouping hosts
 
 ---
+
 ← [Step 6: Migrate `create-filters.spec.ts` off `createFilterEvaluator(filters)`](step-6-migrate-evaluator-spec-to-matcher.plan.md) | [Step 8: ADR-0016](step-8-adr-0016.plan.md) →

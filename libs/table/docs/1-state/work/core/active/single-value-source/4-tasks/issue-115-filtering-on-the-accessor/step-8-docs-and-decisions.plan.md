@@ -59,4 +59,5 @@ half done; D1/D2 filtering slices done.
       edit is docs, but the story tree is final here).
 
 ---
+
 ← [Step 7: Stories and fixtures migrate](step-7-stories-and-fixtures.plan.md)

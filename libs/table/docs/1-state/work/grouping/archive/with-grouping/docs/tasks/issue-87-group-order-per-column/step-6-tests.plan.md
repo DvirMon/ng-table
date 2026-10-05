@@ -1,5 +1,5 @@
 ---
-title: "Step 6 — Tests: per-column sortClusters, applyGroupOrder through the public surface"
+title: 'Step 6 — Tests: per-column sortClusters, applyGroupOrder through the public surface'
 type: task-step
 issue: 87
 ---
@@ -47,7 +47,7 @@ tests could never exercise: two levels ordering by genuinely different criteria 
   the first test — `new Map([['top', throwingGroupOrder], ['sub', throwingGroupOrder]])`. Keep the
   assertion that `reportSpy` is called **exactly once** across the whole tree (D15 — once per
   evaluation, not once per level).
-- **Add:** a test with *different* comparators for `'top'` and `'sub'` — e.g. `top` ascending by
+- **Add:** a test with _different_ comparators for `'top'` and `'sub'` — e.g. `top` ascending by
   `key`, `sub` by `rows.length` descending — asserting each level's own siblings order by its own
   rule and neither leaks into the other. This is the direct engine-level proof of #87's headline
   claim; the with-grouping.spec.ts addition below is its public-surface counterpart.
@@ -77,7 +77,7 @@ line (→ `import { applyGrouping, applyGroupOrder } from '../../schema/grouping
   `groupOrder: (a, b) => b.rows.length - a.rows.length` with
   `schema: (path) => applyGroupOrder(path.category, (a, b) => b.rows.length - a.rows.length)`.
   Read the existing assertion carefully first: region siblings (US, EU) are tied at 3 rows each in
-  this fixture, so the *observable* behavior of "only `category` has a comparator, `region` uses
+  this fixture, so the _observable_ behavior of "only `category` has a comparator, `region` uses
   the default" is identical to today's "one comparator applied everywhere" for this specific data
   — the assertion block (lines 300-313) should not need to change, only the config. If the tied
   count means the test can no longer tell "region has no comparator" apart from "region has the
@@ -95,7 +95,7 @@ line (→ `import { applyGrouping, applyGroupOrder } from '../../schema/grouping
   one comparator recursed everywhere; now it needs to be checked because there is no comparator at
   all for the untouched depth, and the stable partition/no-op default must still hold there.
 - **`'sorting the grouped column is a no-op on cluster order when groupOrder is not supplied
-  (D5)'`** (line 348): unaffected — no config change.
+(D5)'`** (line 348): unaffected — no config change.
 - **`'a throwing groupOrder falls back to stable order...'`** (line 373): replace
   `groupOrder: () => { throw new Error('boom'); }` with
   `schema: (path) => applyGroupOrder(path.region, () => { throw new Error('boom'); })`.
@@ -157,4 +157,5 @@ line (→ `import { applyGrouping, applyGroupOrder } from '../../schema/grouping
       "passes" claims above are unverified until CI confirms.
 
 ---
+
 ← [Step 5: Migrate grouping-regressions story](step-5-migrate-grouping-regressions-story.plan.md) | [Step 7: Docs](step-7-docs.plan.md) →

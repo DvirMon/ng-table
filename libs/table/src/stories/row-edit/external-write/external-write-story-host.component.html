@@ -1,8 +1,8 @@
 <div class="story-host">
   <p class="story-host__hint">
     Open a row, then push a change from outside the edit flow. "Simulate server push" stages a
-    conflict instead of overwriting your typed value — choose Keep mine, Take theirs, or merge
-    field by field. "Push to row I'm not editing" quietly patches a closed row, no interruption.
+    conflict instead of overwriting your typed value — choose Keep mine, Take theirs, or merge field
+    by field. "Push to row I'm not editing" quietly patches a closed row, no interruption.
   </p>
 
   <ngp-external-write-toolbar (pushToUnopenedRow)="pushToUnopenedRow()" />
@@ -48,7 +48,9 @@
           <td class="story-host__cell">
             @if (isEditing) {
               <button type="button" (click)="cancelEdit(row.id)">Cancel</button>
-              <button type="button" (click)="simulateServerPush(row.id)">Simulate server push</button>
+              <button type="button" (click)="simulateServerPush(row.id)">
+                Simulate server push
+              </button>
             } @else {
               <button type="button" (click)="openEdit(row.id)">Edit</button>
             }
@@ -63,7 +65,9 @@
                   <p>
                     Updated by someone else —
                     @for (fieldDiff of conflict.fields; track fieldDiff.field; let last = $last) {
-                      {{ fieldDiff.field }} changed to "{{ fieldDiff.theirsValue }}"{{ last ? '' : ', ' }}
+                      {{ fieldDiff.field }} changed to "{{ fieldDiff.theirsValue }}"{{
+                        last ? '' : ', '
+                      }}
                     }
                   </p>
                   <button type="button" (click)="keepMine(row.id)">Keep mine</button>
@@ -73,10 +77,16 @@
                   @for (fieldDiff of conflict.fields; track fieldDiff.field) {
                     <div class="story-host__conflict-field">
                       <span>
-                        {{ fieldDiff.field }}: mine "{{ fieldDiff.mineValue }}" vs. theirs "{{ fieldDiff.theirsValue }}"
+                        {{ fieldDiff.field }}: mine "{{ fieldDiff.mineValue }}" vs. theirs "{{
+                          fieldDiff.theirsValue
+                        }}"
                       </span>
-                      <button type="button" (click)="keepMineField(row.id, fieldDiff.field)">Keep mine</button>
-                      <button type="button" (click)="takeTheirsField(row.id, fieldDiff.field)">Take theirs</button>
+                      <button type="button" (click)="keepMineField(row.id, fieldDiff.field)">
+                        Keep mine
+                      </button>
+                      <button type="button" (click)="takeTheirsField(row.id, fieldDiff.field)">
+                        Take theirs
+                      </button>
                     </div>
                   }
                 }

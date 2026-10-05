@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — client-filtering/: the filtering baseline"
+title: 'Step 4 — client-filtering/: the filtering baseline'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: B
@@ -117,4 +117,5 @@ Code tabs: `HTML`, `TS`, `CSS`, `filtering/fixtures/filters.ts`, `filtering/fixt
 - [ ] `npx tsc -p libs/table/tsconfig.lib.json --noEmit` clean.
 
 ---
+
 ← [Step 3: filtering fixtures — transport](step-3-filtering-fixtures-transport.plan.md) | [Step 5: server-filtering/](step-5-server-filtering-story.plan.md) →

@@ -8,15 +8,26 @@
   idleLabel="Copy install command"
   failedLabel="Copy failed — select the command manually"
 >
-  @switch (copy.state()) {
-    @case ('copied') {
-      <ng-icon name="lucideCheck" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-    @case ('failed') {
-      <ng-icon name="lucideTriangleAlert" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-    @default {
-      <ng-icon name="lucideCopy" size="var(--ngpt-sys-icon-size-sm)" color="currentColor" aria-hidden="true" />
-    }
-  }
+  @switch (copy.state()) { @case ('copied') {
+  <ng-icon
+    name="lucideCheck"
+    size="var(--ngpt-sys-icon-size-sm)"
+    color="currentColor"
+    aria-hidden="true"
+  />
+  } @case ('failed') {
+  <ng-icon
+    name="lucideTriangleAlert"
+    size="var(--ngpt-sys-icon-size-sm)"
+    color="currentColor"
+    aria-hidden="true"
+  />
+  } @default {
+  <ng-icon
+    name="lucideCopy"
+    size="var(--ngpt-sys-icon-size-sm)"
+    color="currentColor"
+    aria-hidden="true"
+  />
+  } }
 </button>

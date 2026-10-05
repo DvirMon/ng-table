@@ -24,8 +24,8 @@ none. **Parallel-safe with:** Steps 1, 2, 3, 5.
 ## Why This Step Exists
 
 ADR-0027 Rule 3: filtering's existing `FilterValueOfContext.valueOf`
-answers "what did the user ask for?" (a criterion) — the *bound*
-register — which collides in name with the new *unbound*
+answers "what did the user ask for?" (a criterion) — the _bound_
+register — which collides in name with the new _unbound_
 `valueOf(path, row)` (Step 1) that answers "what does the data say?" The
 issue's own acceptance criterion requires the old name **gone, not
 deprecated**.
@@ -34,9 +34,9 @@ deprecated**.
 
 1. **`engine/filters/types.ts`.** Rename the `FilterValueOfContext`
    interface member: `valueOf<K extends string = string>(path:
-   FilterHandle<unknown, K, unknown>): unknown` →
+FilterHandle<unknown, K, unknown>): unknown` →
    `criterionOf<K extends string = string>(path: FilterHandle<unknown,
-   K, unknown>): unknown`. Update the interface's own doc comment
+K, unknown>): unknown`. Update the interface's own doc comment
    (currently: "Context `FilterOptions.when` reads other filters'
    current criterion values through, not row data") to name
    `criterionOf` explicitly.
@@ -45,7 +45,7 @@ deprecated**.
    `buildValueOfContext` → `buildCriterionOfContext` (it builds a
    `FilterValueOfContext`, and the member it implements is now
    `criterionOf`) and its object literal's method key `valueOf(handle)
-   {...}` → `criterionOf(handle) {...}`. Update the one call site in
+{...}` → `criterionOf(handle) {...}`. Update the one call site in
    `narrowingRecords()` (`buildValueOfContext<TRow>(internal)` →
    `buildCriterionOfContext<TRow>(internal)`).
 
@@ -93,4 +93,5 @@ deprecated**.
 - [ ] Every existing filtering spec passes unchanged in behavior.
 
 ---
+
 ← [Step 3: Sorting `sortFn` reads `ctx.valueOf`](step-3-sorting-sortfn.plan.md) | [Step 5: Column rules `stateOf`](step-5-columns-stateof.plan.md) →

@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                                        | Action                        |
+| ----------------------------------------------------------- | ----------------------------- |
 | `libs/shared/table/src/api/features/with-filtering.spec.ts` | edit — one helper, one schema |
 
 The table feature's own spec. Two lines of real change; it is here as its own step because it lives
@@ -72,7 +72,7 @@ the schema returns `void`, and `Filters<Row>` no longer compiles because `#76`'s
   one sanctioned cross-domain use, because composition is what it tests.
 - Dropping the `Filters<Row>` return annotation means the helper's type is inferred from
   `createFilters`. If `StateOf<S>` folds to `{}` the file still compiles and `filters.status`
-  becomes an error at the *call* site, not the helper. Read the error's location before assuming
+  becomes an error at the _call_ site, not the helper. Read the error's location before assuming
   the schema is wrong.
 
 ## Non-Goals
@@ -92,4 +92,5 @@ the schema returns `void`, and `Filters<Row>` no longer compiles because `#76`'s
 - [ ] `nx test shared-table -- with-filtering` passes
 
 ---
+
 ← [Step 7: `state.spec.ts`](step-7-state-spec.plan.md) | [Step 9: Restore green](step-9-green-gate.plan.md) →

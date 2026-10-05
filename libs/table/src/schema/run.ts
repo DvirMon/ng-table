@@ -12,7 +12,7 @@ import { createRecorderSession, type PathRecorder } from './path-proxy';
  */
 export function runRecordedSchema<TRow, TRule, TPath>(
   buildPath: (recorder: PathRecorder<TRow, TRule>) => TPath,
-  fn: (path: TPath) => void
+  fn: (path: TPath) => void,
 ): readonly TRule[] {
   const session = createRecorderSession<TRow, TRule>();
   fn(buildPath(session.recorder));

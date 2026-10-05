@@ -5,7 +5,6 @@
    Consumer tables using row animation must also set `border-collapse: separate;
    border-spacing: 0;` — collapsed borders don't follow a transform. */
 @layer ngp-table {
-
   /* Pass these class names to Angular's `animate.enter` / `animate.leave` — the library never
      binds them itself. */
   .ngp-table-row--enter {

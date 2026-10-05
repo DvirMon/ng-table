@@ -8,8 +8,8 @@
 
 ## Files
 
-| File | Action |
-|---|---|
+| File                                          | Action                                                                    |
+| --------------------------------------------- | ------------------------------------------------------------------------- |
 | `libs/shared/table/src/filters/state.spec.ts` | edit — `build` helper, two type-naming sites, delete `InvoiceFilterState` |
 
 198 lines, one schema. Small, but it is the file `architecture.md` marks "check only" — which is
@@ -17,8 +17,8 @@ wrong, and this step is where that is corrected.
 
 ## Why This Step Exists
 
-`architecture.md`'s file-layout table reads *"`src/filters/state.spec.ts`, `matchers.spec.ts` |
-check only — neither imports the recorder today"*. True about the recorder, and beside the point:
+`architecture.md`'s file-layout table reads _"`src/filters/state.spec.ts`, `matchers.spec.ts` |
+check only — neither imports the recorder today"_. True about the recorder, and beside the point:
 this file calls `createFilters<Invoice, InvoiceFilterState>(schema)` at line 30 and names
 `InvoiceFilterState` twice more. It does not compile.
 
@@ -61,7 +61,7 @@ Per the ticket's resolution, both derive locally rather than keeping the alias.
    const filterForm = TestBed.runInInjectionContext(() =>
      form(filters().value, () => {
        // Intentionally empty: the assertion is that the model is schema-compatible at all.
-     })
+     }),
    );
    ```
 
@@ -70,7 +70,7 @@ Per the ticket's resolution, both derive locally rather than keeping the alias.
 4. Delete `InvoiceFilterState`. **Keep `RangeCriterion`** — `buildInvoiceFilters`' `source`
    parameter and `EMPTY_RANGE` both use it, and its comment ("`inRange`'s criterion shape is not
    exported, so a consumer typing `TState` restates it") needs rewording: a consumer no longer
-   types `TState`, but the shape is still unexported and a *test* still restates it to build a
+   types `TState`, but the shape is still unexported and a _test_ still restates it to build a
    source value.
 
 ## Implementation Notes
@@ -107,4 +107,5 @@ Per the ticket's resolution, both derive locally rather than keeping the alias.
 - [ ] `nx test shared-table -- state` passes
 
 ---
+
 ← [Step 6: `create-filters.spec.ts`](step-6-create-filters-spec.plan.md) | [Step 8: `with-filtering.spec.ts`](step-8-with-filtering-spec.plan.md) →

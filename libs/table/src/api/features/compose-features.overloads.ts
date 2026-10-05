@@ -19,13 +19,7 @@ export interface ComposeFeaturesOverloads {
     f2: Feature<In & O1, O2>,
     f3: Feature<In & O1 & O2, O3>,
   ): Feature<In, O1 & O2 & O3>;
-  <
-    In extends Shape,
-    O1 extends object,
-    O2 extends object,
-    O3 extends object,
-    O4 extends object,
-  >(
+  <In extends Shape, O1 extends object, O2 extends object, O3 extends object, O4 extends object>(
     f1: Feature<In, O1>,
     f2: Feature<In & O1, O2>,
     f3: Feature<In & O1 & O2, O3>,
@@ -197,10 +191,7 @@ export interface ComposeFeaturesOverloads {
     f9: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8, O9>,
     f10: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9, O10>,
     f11: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10, O11>,
-    f12: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11,
-      O12
-    >,
+    f12: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11, O12>,
   ): Feature<In, O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12>;
   <
     In extends Shape,
@@ -229,18 +220,9 @@ export interface ComposeFeaturesOverloads {
     f9: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8, O9>,
     f10: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9, O10>,
     f11: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10, O11>,
-    f12: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11,
-      O12
-    >,
-    f13: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12,
-      O13
-    >,
-  ): Feature<
-    In,
-    O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13
-  >;
+    f12: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11, O12>,
+    f13: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12, O13>,
+  ): Feature<In, O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13>;
   <
     In extends Shape,
     O1 extends object,
@@ -269,22 +251,10 @@ export interface ComposeFeaturesOverloads {
     f9: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8, O9>,
     f10: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9, O10>,
     f11: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10, O11>,
-    f12: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11,
-      O12
-    >,
-    f13: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12,
-      O13
-    >,
-    f14: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13,
-      O14
-    >,
-  ): Feature<
-    In,
-    O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13 & O14
-  >;
+    f12: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11, O12>,
+    f13: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12, O13>,
+    f14: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13, O14>,
+  ): Feature<In, O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13 & O14>;
   <
     In extends Shape,
     O1 extends object,
@@ -314,52 +284,12 @@ export interface ComposeFeaturesOverloads {
     f9: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8, O9>,
     f10: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9, O10>,
     f11: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10, O11>,
-    f12: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11,
-      O12
-    >,
-    f13: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12,
-      O13
-    >,
-    f14: Feature<
-      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13,
-      O14
-    >,
+    f12: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11, O12>,
+    f13: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12, O13>,
+    f14: Feature<In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13, O14>,
     f15: Feature<
-      In &
-        O1 &
-        O2 &
-        O3 &
-        O4 &
-        O5 &
-        O6 &
-        O7 &
-        O8 &
-        O9 &
-        O10 &
-        O11 &
-        O12 &
-        O13 &
-        O14,
+      In & O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13 & O14,
       O15
     >,
-  ): Feature<
-    In,
-    O1 &
-      O2 &
-      O3 &
-      O4 &
-      O5 &
-      O6 &
-      O7 &
-      O8 &
-      O9 &
-      O10 &
-      O11 &
-      O12 &
-      O13 &
-      O14 &
-      O15
-  >;
+  ): Feature<In, O1 & O2 & O3 & O4 & O5 & O6 & O7 & O8 & O9 & O10 & O11 & O12 & O13 & O14 & O15>;
 }

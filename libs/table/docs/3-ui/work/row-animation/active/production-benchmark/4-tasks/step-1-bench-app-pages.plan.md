@@ -8,16 +8,16 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `apps/table-bench/project.json` | create — `build` (`@angular/build:application`, `production` default), `serve-static`, `typecheck` |
-| `apps/table-bench/tsconfig.json`, `tsconfig.app.json` | create — model on `apps/site` |
-| `apps/table-bench/src/index.html` | create — no fonts, no global stylesheet |
-| `apps/table-bench/src/main.ts` | create — zoneless bootstrap of `BenchPageComponent` |
-| `apps/table-bench/src/bench-page.component.ts` | create — reads `?variant=` and `?rows=`, renders one variant |
-| `apps/table-bench/src/bench-table.component.ts` | create — the table (plain or animated via an input) |
-| `apps/table-bench/src/bare-reorder.ts` | create — the no-Angular probe (`variant=bare`) |
-| `apps/table-bench/src/after-frame.ts` | create — rAF + `MessageChannel` "after next frame" helper |
+| File                                                  | Action                                                                                             |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `apps/table-bench/project.json`                       | create — `build` (`@angular/build:application`, `production` default), `serve-static`, `typecheck` |
+| `apps/table-bench/tsconfig.json`, `tsconfig.app.json` | create — model on `apps/site`                                                                      |
+| `apps/table-bench/src/index.html`                     | create — no fonts, no global stylesheet                                                            |
+| `apps/table-bench/src/main.ts`                        | create — zoneless bootstrap of `BenchPageComponent`                                                |
+| `apps/table-bench/src/bench-page.component.ts`        | create — reads `?variant=` and `?rows=`, renders one variant                                       |
+| `apps/table-bench/src/bench-table.component.ts`       | create — the table (plain or animated via an input)                                                |
+| `apps/table-bench/src/bare-reorder.ts`                | create — the no-Angular probe (`variant=bare`)                                                     |
+| `apps/table-bench/src/after-frame.ts`                 | create — rAF + `MessageChannel` "after next frame" helper                                          |
 
 ## Why This Step Exists
 
@@ -56,5 +56,5 @@ numbers drift (§ Decision).
 - [ ] `nx run table-bench:typecheck` clean (add the target: `ngc -p apps/table-bench/tsconfig.app.json --noEmit`).
 - [ ] No global `styles` entry in `project.json`; `index.html` has no `<link rel="stylesheet">`.
 - [ ] User runs `nx run table-bench:build` and opens
-  `serve-static` → `/?variant=animated` and `/?variant=plain`; Reverse works in both, glide
-  visible only in `animated`.
+      `serve-static` → `/?variant=animated` and `/?variant=plain`; Reverse works in both, glide
+      visible only in `animated`.

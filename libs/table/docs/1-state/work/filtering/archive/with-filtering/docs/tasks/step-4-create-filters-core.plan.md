@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — createFilters() core"
+title: 'Step 4 — createFilters() core'
 type: task-step
 issue: 61
 ---
@@ -114,7 +114,7 @@ has no path-proxy concern of its own.
     equivalent, which:
     - Reads the cell via the record's path accessor.
     - Wraps the predicate call in try/catch.
-    - On throw: deactivates *that filter* for this evaluation (treat as non-matching, or however
+    - On throw: deactivates _that filter_ for this evaluation (treat as non-matching, or however
       the eventual caller composes results — decide and document here since issue #28 will build
       on it), and reports **once per filter per evaluation** (not per row) — matching the
       `classify-errors-construction-vs-runtime` split: this is the runtime half, so it degrades,
@@ -187,4 +187,5 @@ has no path-proxy concern of its own.
 - [ ] `tsc --noEmit` passes with no new errors
 
 ---
+
 ← [Step 3: Matchers spec](step-3-filters-matchers-spec.plan.md) | [Step 5: Rules + public exports](step-5-filters-rules-and-exports.plan.md) →

@@ -6,11 +6,11 @@ descendant-hiding into one engine-owned prune stage.
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#97](https://github.com/DvirMon/ng-table/issues/97) | `expandAll()` takes explicit ids; `withGrouping()` publishes `groupIds` | 🟡 OPEN | — | — |
-| [#98](https://github.com/DvirMon/ng-table/issues/98) | `RenderRow.parentId` + engine-owned prune stage (grouping still prunes) | 🟡 OPEN | — | #99 |
-| [#99](https://github.com/DvirMon/ng-table/issues/99) | Grouping stops pruning; delete `readExpandedRows` | 🟡 OPEN | #98 | — |
+| #                                                    | Title                                                                   | State   | Depends on | Blocks |
+| ---------------------------------------------------- | ----------------------------------------------------------------------- | ------- | ---------- | ------ |
+| [#97](https://github.com/DvirMon/ng-table/issues/97) | `expandAll()` takes explicit ids; `withGrouping()` publishes `groupIds` | 🟡 OPEN | —          | —      |
+| [#98](https://github.com/DvirMon/ng-table/issues/98) | `RenderRow.parentId` + engine-owned prune stage (grouping still prunes) | 🟡 OPEN | —          | #99    |
+| [#99](https://github.com/DvirMon/ng-table/issues/99) | Grouping stops pruning; delete `readExpandedRows`                       | 🟡 OPEN | #98        | —      |
 
 ## Graph
 

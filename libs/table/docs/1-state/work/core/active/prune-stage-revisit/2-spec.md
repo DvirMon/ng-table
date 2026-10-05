@@ -27,7 +27,7 @@ Four things go wrong with that, none of them checked:
    over a `hidden` accumulator, correct only because a parent precedes its
    descendants. A stage that sorts, or that inserts rows anywhere, silently breaks
    collapse. ADR-0017 records this as a known, unchecked invariant, and
-   `render-stages.spec.ts` carries a test whose only job is to *document* the broken
+   `render-stages.spec.ts` carries a test whose only job is to _document_ the broken
    case.
 3. **Four constructs exist to say "this entry is not a feature"** — the `'prune'`
    entry in `RENDER_ORDER`, `Exclude<RenderStage, 'prune'>`, `CLAIMABLE_RENDER_STAGES`,
@@ -49,14 +49,14 @@ and one engine-owned walk — `flattenVisible` — turns the tree into the flat
 Hiding stops being an operation. A collapsed node is simply not descended into. Every
 field that was a stamp becomes a derivation:
 
-| Was | Becomes |
-|---|---|
-| `parentId` stamped by each stage; forget it ⇒ unprunable row | derived by the walk from position |
-| `depth` stamped by each stage; can disagree with `parentId` | derived; cannot disagree |
-| "parent emitted immediately before its descendants" | structural — a child is *inside* its parent |
-| `'prune'` + `Exclude` + `CLAIMABLE_RENDER_STAGES` + reduce branch | deleted |
-| `hasChildren` a stage must remember to set | derived from `children`, overridable for lazy trees |
-| `isExpanded` on tree rows only; group headers read the store | stamped uniformly on every node that has children |
+| Was                                                               | Becomes                                             |
+| ----------------------------------------------------------------- | --------------------------------------------------- |
+| `parentId` stamped by each stage; forget it ⇒ unprunable row      | derived by the walk from position                   |
+| `depth` stamped by each stage; can disagree with `parentId`       | derived; cannot disagree                            |
+| "parent emitted immediately before its descendants"               | structural — a child is _inside_ its parent         |
+| `'prune'` + `Exclude` + `CLAIMABLE_RENDER_STAGES` + reduce branch | deleted                                             |
+| `hasChildren` a stage must remember to set                        | derived from `children`, overridable for lazy trees |
+| `isExpanded` on tree rows only; group headers read the store      | stamped uniformly on every node that has children   |
 
 The public contract does not move. A consumer still passes flat `data`, still reads a
 flat `RenderRow<TRow>[]` off `renderRows()`, with the same `id` / `depth` / `kind` /
@@ -147,8 +147,8 @@ Decision ids in **bold** trace to [`1-decisions.md`](1-decisions.md).
 ### The intermediate representation
 
 - **A1 — the tree IR is settled.** Render stages exchange nested `RenderNode`s. The two
-  rejected alternatives are recorded: *alt-1 terminal finalize* (fold the prune into
-  `core.ts`'s terminal pass) and *keep ADR-0017 as shipped*. Both relocate the
+  rejected alternatives are recorded: _alt-1 terminal finalize_ (fold the prune into
+  `core.ts`'s terminal pass) and _keep ADR-0017 as shipped_. Both relocate the
   emission-order invariant instead of removing it.
 - **`RenderNode` is engine-internal.** Not exported from `index.ts`. A consumer never
   constructs or receives one.
@@ -167,7 +167,7 @@ Decision ids in **bold** trace to [`1-decisions.md`](1-decisions.md).
 ### The stage contract
 
 - `RenderNodeTransform<TRow>` — `readonly RenderNode<TRow>[]` in, `readonly
-  RenderNode<TRow>[]` out — replaces `RenderRowTransform`. `StagedRow` is deleted.
+RenderNode<TRow>[]` out — replaces `RenderRowTransform`. `StagedRow` is deleted.
 - **B1 — `RENDER_ORDER` becomes `['group', 'tree']`.** `'prune'` is gone because the
   stage is gone. `'paginate'` is **dropped**, not kept: it has no claimant today (only
   fakes in `render-stages.spec.ts`). The post-flatten phase question is deferred, not
@@ -179,7 +179,7 @@ Decision ids in **bold** trace to [`1-decisions.md`](1-decisions.md).
   iterate `RENDER_ORDER` directly.
 - **C1 — the engine owns the recursion.** It ships `mapNodes(nodes, fn)`; a stage supplies
   a per-node function and never hand-writes a tree walk. This closes a gap the prototype
-  missed: `'tree'` runs *after* `'group'`, so under a nested IR it must descend through
+  missed: `'tree'` runs _after_ `'group'`, so under a nested IR it must descend through
   group nodes to reach data leaves — a walk it does not have today, and one every
   third-party stage author would otherwise inherit.
 - **C2 —** this also makes "a stage forgot to recurse, so grouped rows were silently
@@ -236,32 +236,32 @@ Decision ids in **bold** trace to [`1-decisions.md`](1-decisions.md).
 
 ### Modules changed
 
-| Module | Change |
-|---|---|
-| `engine/render-stages.ts` | Owns `RenderNode`, `RenderNodeTransform`, `RENDER_ORDER`, `RenderStages`, `runRenderStages`, `mapNodes`. Loses the prune and its four support constructs |
-| `engine/flatten.ts` (new) | `flattenVisible` — the whole visibility rule, and the only producer of `depth`/`parentId` |
-| `engine/rows.ts` | The seed becomes a node seed (no `depth`) |
-| `engine/core.ts` | `renderRows` runs stages over nodes, then flattens, then stamps `index`/`sourceIndex`/`cells` as today |
-| `engine/compose-table.ts`, `api/features/compose-features.ts` | Both folds iterate `RENDER_ORDER` instead of `CLAIMABLE_RENDER_STAGES` |
-| `engine/grouping/render.ts` | Emits nested header nodes instead of a flat header-then-members sequence; stops stamping `depth`, `parentId`, `hasChildren` |
-| `api/features/with-expansion.ts` | The `'tree'` stage nests children via `mapNodes` and **stops reading `expandedRows` entirely**; keeps stamping `hasChildren` from `isExpandable` |
-| `api/types.ts` | `RenderRow` unchanged in shape; the `isExpanded` and `hasChildren` field comments rewritten to say uniform and derived |
+| Module                                                        | Change                                                                                                                                                   |
+| ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `engine/render-stages.ts`                                     | Owns `RenderNode`, `RenderNodeTransform`, `RENDER_ORDER`, `RenderStages`, `runRenderStages`, `mapNodes`. Loses the prune and its four support constructs |
+| `engine/flatten.ts` (new)                                     | `flattenVisible` — the whole visibility rule, and the only producer of `depth`/`parentId`                                                                |
+| `engine/rows.ts`                                              | The seed becomes a node seed (no `depth`)                                                                                                                |
+| `engine/core.ts`                                              | `renderRows` runs stages over nodes, then flattens, then stamps `index`/`sourceIndex`/`cells` as today                                                   |
+| `engine/compose-table.ts`, `api/features/compose-features.ts` | Both folds iterate `RENDER_ORDER` instead of `CLAIMABLE_RENDER_STAGES`                                                                                   |
+| `engine/grouping/render.ts`                                   | Emits nested header nodes instead of a flat header-then-members sequence; stops stamping `depth`, `parentId`, `hasChildren`                              |
+| `api/features/with-expansion.ts`                              | The `'tree'` stage nests children via `mapNodes` and **stops reading `expandedRows` entirely**; keeps stamping `hasChildren` from `isExpandable`         |
+| `api/types.ts`                                                | `RenderRow` unchanged in shape; the `isExpanded` and `hasChildren` field comments rewritten to say uniform and derived                                   |
 
 ### Docs and ADRs
 
 - **G1 — ship a new ADR**, superseding **ADR-0017 §Decision D2 only**, using this repo's
   `supersedes:` front-matter plus inline `*(Superseded <date> by …)*` convention. ADR-0017
   D1 (`parentId` exists), D3 (contributed read-only signal) and D4 (accumulating slot) all
-  stand — though D1's `parentId` changes from *stamped by each stage* to *derived by the
-  walk*.
+  stand — though D1's `parentId` changes from _stamped by each stage_ to _derived by the
+  walk_.
 - **G2 —** the new ADR also amends **ADR-0011**: the render-stage signature changes from
   `RenderRowTransform` to `RenderNodeTransform`, so "chained render stages" now chains node
   transforms, and D2's `RENDER_ORDER` literal changes.
 - **G3 / E3 / B2 — ADR-0020 is edited in place**, not superseded: it is still `proposed` and
   nothing depends on it. Three edits — drop **D3** (`preservesEmissionOrder`), drop the
   emission-order half of **D5**, and remove `'paginate'` and `'prune'` from **D2**'s anchor
-  set. D2 justified keeping `'paginate'` as "the only way for a future stage to say *before
-  the window is cut*"; with the name gone there is **no** post-flatten anchor at all. Either
+  set. D2 justified keeping `'paginate'` as "the only way for a future stage to say _before
+  the window is cut_"; with the name gone there is **no** post-flatten anchor at all. Either
   add one deliberately or state that there is none — do not inherit a reserved name nobody
   designed.
 - **D3 — the migration is additively non-neutral.** Group rows gain a field that was
@@ -269,7 +269,7 @@ Decision ids in **bold** trace to [`1-decisions.md`](1-decisions.md).
   is no longer the whole gate. The collapsible grouping story host and its MDX are updated in
   the same slice.
 - **F1 — #105 lands before #101.** The tree IR goes in against today's `withExpansion()`;
-  #101 then *moves* an already-nesting stage into `withTree()` rather than rewriting it.
+  #101 then _moves_ an already-nesting stage into `withTree()` rather than rewriting it.
 - **F2 —** group collapse delegates to `withExpansion()`, not `withTree()` (ADR-0012 scope
   item 5). Both still contribute `expandedRows`, so `core.ts`'s union is unchanged by the
   split and #105 needs no allowance for it.
@@ -281,17 +281,17 @@ Decision ids in **bold** trace to [`1-decisions.md`](1-decisions.md).
 A good test here asserts what a stage or the walk **produces**, never how it walks. No test
 may assert a recursion order, a call count, or an intermediate array identity. Ownership is
 the second rule: a spec asserts its own domain only — if breaking an assertion would require
-changing a *different* module, the assertion is in the wrong file.
+changing a _different_ module, the assertion is in the wrong file.
 
 **Seams — four existing, one new.**
 
-| Seam | Owns | Change |
-|---|---|---|
-| `engine/flatten.spec.ts` | **new** — the entire visibility rule: descent, `depth`, `parentId`, `hasChildren` resolution, `isExpanded` stamping, the zero-contributor vs. empty-set distinction | New file. Inherits the prune behaviour cases from `render-stages.spec.ts` |
-| `engine/render-stages.spec.ts` | Stage fold order, unclaimed-stage pass-through, `mapNodes` reach | Rewritten: prune cases move out, and the "documents the emit-order contract" case is **deleted, not ported** — it documented a hazard that no longer exists |
-| `engine/grouping/render.spec.ts` | The node tree grouping builds: one header node per admitted cluster, members nested, non-admitted clusters inlined at the parent level, aggregates, labels, the throwing-`aggregateFn` policy | Assertions on `depth` and `parentId` move to `flatten.spec.ts` — those are the walk's facts, not grouping's |
-| `api/features/with-expansion.spec.ts` | End-to-end through `table.renderRows()`: what is visible after a toggle, at what depth, with what `parentId` | Mostly unchanged — it already asserts at the highest seam. Adds the `hasChildren` lazy-override case and the C4 `isExpanded: undefined` flip |
-| `engine/core.spec.ts` | The union of contributed `expandedRows`, `sourceIndex`, `cells` | Unchanged |
+| Seam                                  | Owns                                                                                                                                                                                          | Change                                                                                                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `engine/flatten.spec.ts`              | **new** — the entire visibility rule: descent, `depth`, `parentId`, `hasChildren` resolution, `isExpanded` stamping, the zero-contributor vs. empty-set distinction                           | New file. Inherits the prune behaviour cases from `render-stages.spec.ts`                                                                                   |
+| `engine/render-stages.spec.ts`        | Stage fold order, unclaimed-stage pass-through, `mapNodes` reach                                                                                                                              | Rewritten: prune cases move out, and the "documents the emit-order contract" case is **deleted, not ported** — it documented a hazard that no longer exists |
+| `engine/grouping/render.spec.ts`      | The node tree grouping builds: one header node per admitted cluster, members nested, non-admitted clusters inlined at the parent level, aggregates, labels, the throwing-`aggregateFn` policy | Assertions on `depth` and `parentId` move to `flatten.spec.ts` — those are the walk's facts, not grouping's                                                 |
+| `api/features/with-expansion.spec.ts` | End-to-end through `table.renderRows()`: what is visible after a toggle, at what depth, with what `parentId`                                                                                  | Mostly unchanged — it already asserts at the highest seam. Adds the `hasChildren` lazy-override case and the C4 `isExpanded: undefined` flip                |
+| `engine/core.spec.ts`                 | The union of contributed `expandedRows`, `sourceIndex`, `cells`                                                                                                                               | Unchanged                                                                                                                                                   |
 
 **Prior art to follow.** `render-stages.spec.ts`'s existing fake-stage helpers (a
 trace-pushing transform, a minimal row literal) carry over to node transforms directly.
@@ -317,7 +317,7 @@ since `ngc` stops at the first `.ts` error and never reaches the templates.
   `withPagination()`, and deciding whether a post-flatten phase exists, is separate work.
 - **#102 / ADR-0020 itself.** This spec records the three edits that ADR owes; opening stage
   registration to third parties remains #102's.
-- **#101 / ADR-0012.** The `withExpansion()` / `withTree()` split runs *after* this. This
+- **#101 / ADR-0012.** The `withExpansion()` / `withTree()` split runs _after_ this. This
   spec neither performs nor blocks it.
 - **Cycle guarding.** A cyclic `children` array still overflows the stack. Unchanged
   behaviour, noted on #101.
@@ -330,11 +330,11 @@ since `ngc` stops at the first `.ts` error and never reaches the templates.
 
 ## Further Notes
 
-- The one genuinely new question the prototype left open — *does any future stage need to run
-  between synthesis and flatten, on already-flat rows?* — is answered by **C1**: such a stage
+- The one genuinely new question the prototype left open — _does any future stage need to run
+  between synthesis and flatten, on already-flat rows?_ — is answered by **C1**: such a stage
   sees the tree and uses `mapNodes`. With `'paginate'` dropped (**B1**) no stage wants a flat
   view today, and the first one that does reopens the post-flatten-phase question deliberately.
-- Reading `1-decisions.md` alongside this spec is worth it for **E1/E2**, which record *why*
+- Reading `1-decisions.md` alongside this spec is worth it for **E1/E2**, which record _why_
   the alternative was picked: #102 is a real destination, and a structural guarantee beats a
   declared boolean at a third-party boundary.
 - The biggest reviewer trap is **D1a**. Uniform `isExpanded` stamping is the headline consumer

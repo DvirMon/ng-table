@@ -1,5 +1,5 @@
 ---
-title: "Step 4: Add Duplicate action to gated-edit story"
+title: 'Step 4: Add Duplicate action to gated-edit story'
 ---
 
 ← [Step 3: Update rename docs](step-3-update-rename-docs.plan.md) |
@@ -15,6 +15,7 @@ title: "Step 4: Add Duplicate action to gated-edit story"
 **Scaffolding agent:** angular-implementer
 
 **Files:**
+
 - `libs/shared/table/src/stories/gated-edit/gated-edit-story-host.component.ts`
 - `libs/shared/table/src/stories/gated-edit/gated-edit-story-host.component.html`
 
@@ -30,6 +31,7 @@ finding that gated-mode duplicate needs nothing new.
 
 1. In `gated-edit-story-host.component.ts`, add a `protected duplicateRow(sourceId: RowId): void`
    method modeled on the design doc's snippet:
+
    ```ts
    protected duplicateRow(sourceId: RowId): void {
      const source = this.data().find((row) => this.table.trackBy(row) === sourceId);
@@ -42,9 +44,11 @@ finding that gated-mode duplicate needs nothing new.
      );
    }
    ```
+
    Use `crypto.randomUUID()` for the new id, matching `addBlankRow()`'s existing convention in
    this same file (the design doc's `newId` is a design-doc placeholder, not a real symbol in this
    codebase).
+
 2. In `gated-edit-story-host.component.html`, add a "Duplicate" button next to the existing "Edit"
    button in the row-not-editing branch (the `@else` block under the existing per-row `actions`
    cell), wired to `(click)="duplicateRow(row.id)"`.
@@ -58,7 +62,7 @@ finding that gated-mode duplicate needs nothing new.
 - Cancel: per the design doc's recommendation, do **not** wire a special Cancel path for
   duplicated rows. The existing `cancelEdit` (→ `revertEdit`, resets to snapshot) and
   `discardEdit` (→ removes the row) buttons already cover both outcomes generically — the design
-  doc's recommended default for a *consumer* choosing one policy is `discardEdit`, but this story
+  doc's recommended default for a _consumer_ choosing one policy is `discardEdit`, but this story
   already exposes both buttons per row, so no new wiring is needed here.
 
 ## Risks / Watchouts
@@ -87,4 +91,5 @@ finding that gated-mode duplicate needs nothing new.
 - `npx nx typecheck shared-table` passes.
 
 ---
+
 ← [Step 3: Update rename docs](step-3-update-rename-docs.plan.md) |

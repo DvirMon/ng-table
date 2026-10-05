@@ -51,7 +51,7 @@ and inactive rows)" — was wrong. That check inspected the 22×22 **wrapper div
 in the DOM at fixed size on every row (so there's no layout shift when it appears/disappears).
 The **inner `<svg>`** itself is `display: none` on idle rows and `display: block` only on the
 active/hovered row — live-confirmed via a real pointer hover (not synthetic), toggling correctly
-between rows as hover moved. So the trailing arrow icon should only be *visible* on the
+between rows as hover moved. So the trailing arrow icon should only be _visible_ on the
 active row, not present-but-transparent on every row as item 1's fix currently implements. Needs
 a follow-up fix: keep the wrapper's fixed 22×22 box on every row (so nothing shifts), but only
 render/show the arrow icon inside it when `[data-active]`/`:hover` — e.g. `.search-row__action {
@@ -65,18 +65,19 @@ approach without needing a conditional `@if` that could shift layout).
 (no `<ul>` gap, no `<li>` margin) — but the `<li>` itself paints **no background**. The `<a>`
 nested inside it (the element that actually paints background/shadow/radius) is only 56px tall
 inside the 60px `<li>`. So the `<li>`'s `padding-bottom: 4px` is empty, unpainted space — it
-shows through as a real visible gap precisely *because* the painted box (`<a>`) is shorter than
-its unpainted parent (`<li>`) and doesn't stretch to fill the padding. Padding on the *same*
-element that paints a background never creates a visible gap (it's rendered *behind*, filling the
+shows through as a real visible gap precisely _because_ the painted box (`<a>`) is shorter than
+its unpainted parent (`<li>`) and doesn't stretch to fill the padding. Padding on the _same_
+element that paints a background never creates a visible gap (it's rendered _behind_, filling the
 padding too) — this only works as a two-box split.
 
 **Task, matching this structure exactly (depends on item 20's `<li>` wrapper landing first):**
+
 - `<li>` (or its Angular equivalent, the row's outer element once item 20 introduces one): no
   background, `padding-bottom: var(--ngpt-sys-space-100)` (4px), `height`/`min-height` un-set
   (grows to content + padding).
 - The inner painted element — `.search-row`, still carrying `background`, `border-radius`,
   `box-shadow` (items 2/19), explicit `min-height: var(--ngpt-comp-search-input-height)` (item
-  15, 56px) — stays a fixed height *shorter* than its `<li>` parent, exactly like the reference's
+  15, 56px) — stays a fixed height _shorter_ than its `<li>` parent, exactly like the reference's
   `<a>` inside `<li>`.
 - `.search-results`'s `gap` goes to `0` (item 18) — the 4px no longer comes from a flex gap at
   all, it comes from this padding/two-box structure instead.
@@ -102,6 +103,7 @@ live-confirmed reference behavior. `npx nx run ng-table:build` passes clean.
 (`search-overlay.html`).~~
 
 ~~**Reference (exact DOM/SVG scraped):**
+
 - Top-level page result: `.DocSearch-Hit-icon` — 20×20 file/doc SVG
   (`M17 6v12c0 .52-.2 1-1 1H4c-.7 0-1-.33-1-1V2c0-.55.42-1 1-1h8l5 5zM14 8h-3.13c-.51 0-.87-.34-.87-.87V4`)
 - Child/heading result (`DocSearch-Hit--Child`): `.DocSearch-Hit-Tree` — 24×54 connector SVG,
@@ -120,7 +122,8 @@ the same `provideIcons()` pattern already used for `lucideSearch`.~~
 ## ~~2. Active row: solid fill, not tint + left border — done 2026-08-23~~
 
 ~~**Current:** `.search-row[data-active]` → `background: var(--ngpt-bg-active)` (a low-alpha tint)
-+ `border-inline-start-color: var(--ngpt-accent)` (2px left accent).~~
+
+- `border-inline-start-color: var(--ngpt-accent)` (2px left accent).~~
 
 ~~**Reference:** solid fill, no left border. Scraped computed style on the active `<a>`:
 `background-color: rgb(255, 70, 81)` = `--docsearch-highlight-color` (`#FF4651`), full-bleed,
@@ -344,8 +347,9 @@ in `docs/design-handoff/`, updated to match. See `docs/decisions.md` and
 matches → two centered lines (title + hint), no icon, no suggestions.
 
 **Reference (measured HTML):**
+
 - **Empty query, no recent searches:** single centered `<p class="DocSearch-Help">No recent
-  searches</p>`, 11.34px, muted color — actually simpler than ours already (matches roughly).
+searches</p>`, 11.34px, muted color — actually simpler than ours already (matches roughly).
 - **No results:** a 40×40 "magnifier with slash" SVG icon above the title, **plus** a
   `.DocSearch-NoResults-Prefill-List` — "Try searching for:" followed by clickable
   `<button class="DocSearch-Prefill">` suggestion chips (populated from the site's own top-level
@@ -424,6 +428,7 @@ only, no icon, no trailing action, **not** in the listbox model — Tab-only, pe
 decision "Recent-search items aren't part of the keyboard/activedescendant model."
 
 **Reference (measured markup, populated via a real click-through + reopening search):**
+
 ```html
 <li id="docsearch-recentSearches-item-0" role="option" aria-selected="true" class="DocSearch-Hit">
   <a href="...">
@@ -442,6 +447,7 @@ decision "Recent-search items aren't part of the keyboard/activedescendant model
   </a>
 </li>
 ```
+
 **Same `role="option"`, same `<ul id="docsearch-list">`, same `aria-selected` — one unified row
 component for both states**, not two. Only real differences: (a) leading icon is a clock/history
 glyph instead of file/hash, (b) trailing slot holds **two** action buttons (save-search star,

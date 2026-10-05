@@ -43,7 +43,7 @@ stretching the runtime spec.
   The path no longer exists.
 - Cases whose `initial` names a field with no column now throw at
   construction. Where the level was incidental scenery, give it a column.
-  Where the missing column *was* the point, the case is deleted and
+  Where the missing column _was_ the point, the case is deleted and
   replaced by case 2 below.
 
 **2. Both throws name both parties (AC #4).**
@@ -123,7 +123,7 @@ Four cases:
 
 ## Risks / Watchouts
 
-- **`@ts-expect-error` is satisfied by *any* error on the next line.** In
+- **`@ts-expect-error` is satisfied by _any_ error on the next line.** In
   the typo cases, assert the surrounding `createTable(...)` still returns
   the expected store type, so an unrelated error shows up as a second
   failure rather than passing quietly.
@@ -159,4 +159,5 @@ Four cases:
       `@ts-expect-error`, not only by the passing form.
 
 ---
+
 ← [Step 6: The two-walks gate spec](step-6-engine-gate-spec.plan.md) | [Step 8: Stories and fixtures migrate](step-8-stories-and-fixtures.plan.md) →

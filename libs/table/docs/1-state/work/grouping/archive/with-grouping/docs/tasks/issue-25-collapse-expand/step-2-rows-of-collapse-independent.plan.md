@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — collapse-independent rowsBeneathGroup()"
+title: 'Step 2 — collapse-independent rowsBeneathGroup()'
 type: task-step
 issue: 59
 ---
@@ -43,7 +43,7 @@ Replace the `renderRows()`-scanning walk with a cluster-tree lookup over the **p
 function findClusterByPath<T>(
   nodes: ClusterNode<T>[],
   parentPath: string,
-  targetId: RowId
+  targetId: RowId,
 ): ClusterNode<T> | undefined {
   for (const node of nodes) {
     const path = `${parentPath}>${node.columnId}:${toGroupKey(node.value)}`;
@@ -69,7 +69,7 @@ export function rowsBeneathGroup<TRow>(
   rows: TRow[],
   grouping: readonly string[],
   columns: ColumnDef<TRow>[],
-  groupId: RowId
+  groupId: RowId,
 ): TRow[] {
   const levels = resolveGroupingLevels(grouping, columns);
   if (levels.length === 0) {
@@ -77,7 +77,7 @@ export function rowsBeneathGroup<TRow>(
   }
   const columnById = new Map(columns.map((c) => [c.id, c]));
   const nodes = buildClusters(rows, levels, (row, columnId) =>
-    columnById.get(columnId)!.accessor(row)
+    columnById.get(columnId)!.accessor(row),
   );
   const node = findClusterByPath(nodes, '', groupId);
   return node ? flattenLeaves([node]) : [];
@@ -113,7 +113,7 @@ existing engine tests, Step 4) update to match.
   silently reintroduce the bug this step exists to fix.
 - **This breaks every existing `rowsBeneathGroup` test** (`engine/grouping.spec.ts`'s hand-rolled
   `RenderRow[]` fixtures, e.g. `twoClusterFixture()`) — they construct ids like `'group:A'` that
-  don't match the real `` group:${path} `` format and no longer compile against the new signature.
+  don't match the real `group:${path}` format and no longer compile against the new signature.
   Step 4 replaces that whole `describe` block; don't patch it in this step.
 
 ## Non-Goals
@@ -132,4 +132,5 @@ existing engine tests, Step 4) update to match.
 - [ ] `tsc --noEmit` passes with no new errors.
 
 ---
+
 [← Step 1: Render-stage collapse](step-1-render-stage-collapse.plan.md) | [Step 3: Wire withGrouping() →](step-3-wire-with-grouping.plan.md)

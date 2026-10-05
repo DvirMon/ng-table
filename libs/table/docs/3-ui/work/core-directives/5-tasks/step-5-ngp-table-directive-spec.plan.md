@@ -56,4 +56,5 @@ Use a minimal host test component with `<table [ngpTable]="table">` and a nested
 - [ ] `nx test shared-design-system` passes for this spec
 
 ---
+
 ← [Step 4: Barrel exports](step-4-barrel-exports.plan.md) | [Step 6: NgpTableRowDirective spec](step-6-ngp-table-row-directive-spec.plan.md) →

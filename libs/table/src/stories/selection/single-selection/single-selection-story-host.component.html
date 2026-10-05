@@ -1,9 +1,9 @@
 <div class="story-host">
   <p class="story-host__hint">
-    One row at a time. Pick a row, then pick another — the radio group unticks the first on its
-    own; Space selects and the arrow keys move between rows without any directive. Clear is a
-    button because a radio has no untick gesture. "Restore a 2-id saved selection" asks for two
-    rows at once, which a single-select table refuses.
+    One row at a time. Pick a row, then pick another — the radio group unticks the first on its own;
+    Space selects and the arrow keys move between rows without any directive. Clear is a button
+    because a radio has no untick gesture. "Restore a 2-id saved selection" asks for two rows at
+    once, which a single-select table refuses.
   </p>
 
   <ngp-single-selection-toolbar
@@ -27,10 +27,7 @@
       @for (row of table.renderRows(); track row.id) {
         @let isSelected = selectedRowIds.has(row.id);
 
-        <tr
-          [class.selection-story__row--selected]="isSelected"
-          [attr.aria-selected]="isSelected"
-        >
+        <tr [class.selection-story__row--selected]="isSelected" [attr.aria-selected]="isSelected">
           <td class="story-host__cell selection-story__cell--control">
             <input
               class="selection-story__control"

@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — docs/3-ui/stories.md: composition/ in the layout tree and fixtures table"
+title: 'Step 3 — docs/3-ui/stories.md: composition/ in the layout tree and fixtures table'
 type: task-step
 issue: 77
 ---
@@ -30,9 +30,9 @@ wrong the moment Step 1 lands (the same discipline #41 Step 3 applied for `schem
 ## What To Do
 
 1. **Layout tree** (line ~67, `└── filtering/  grouping/  selection/ ← fixtures/ only; hosts
-   land when those stories ship`): add `composition/` as its own line above that one —
+land when those stories ship`): add `composition/` as its own line above that one —
    `├── composition/ ← fixtures/ + derived-state/: the positional-composition showcase
-   (withComputed() in both placements)`. Keep the trailing line for the three fixture-only
+(withComputed() in both placements)`. Keep the trailing line for the three fixture-only
    folders unchanged unless the `selection-stories` ticket has already edited it — then merge,
    don't overwrite.
 2. **Fixtures table** (lines ~84–92): add three rows after the `row-edit/ui/*` row —
@@ -63,4 +63,5 @@ wrong the moment Step 1 lands (the same discipline #41 Step 3 applied for `schem
 - [ ] `git diff --stat` lists only `stories.md`
 
 ---
+
 ← [Step 2: `derived-state.stories.ts` + `.mdx`](step-2-derived-state-story.plan.md) | [Step 4: Agent-run static gates](step-4-static-gates.plan.md) →

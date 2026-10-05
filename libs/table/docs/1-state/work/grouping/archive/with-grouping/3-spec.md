@@ -12,7 +12,7 @@ audience: developers
 admission sections were folded into
 [`1-state/features/grouping.md`](../../../../features/grouping.md) on 2026-09-20. Go there.
 
-It used to say it *superseded* `features/grouping.md` — an archived episodic file overriding a
+It used to say it _superseded_ `features/grouping.md` — an archived episodic file overriding a
 permanent spec, which is what sent every reader on a two-hop chase and is the specific bug the
 consolidation fixed.
 

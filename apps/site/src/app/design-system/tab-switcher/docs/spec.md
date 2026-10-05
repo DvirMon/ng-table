@@ -5,22 +5,38 @@ atomic: Molecule
 spec: specs/Tab Switcher.md
 frame: components/Tab Switcher.dc.html
 owns:
-  - "Segmented track + item: track bg, item padding, active pill bg, inactive text"
+  - 'Segmented track + item: track bg, item padding, active pill bg, inactive text'
 does_not_own:
-  - "The panels it switches — see Preview Window.md"
+  - 'The panels it switches — see Preview Window.md'
 depends_on:
-  - "foundations/Radius and Elevation.md (shape)"
-  - "foundations/Color.md (color)"
-  - "foundations/Motion.md (motion)"
-  - "foundations/Typography.md (typography)"
+  - 'foundations/Radius and Elevation.md (shape)'
+  - 'foundations/Color.md (color)'
+  - 'foundations/Motion.md (motion)'
+  - 'foundations/Typography.md (typography)'
 states:
-  - "item inactive"
-  - "item hover"
-  - "item active"
-  - "item focus-visible"
+  - 'item inactive'
+  - 'item hover'
+  - 'item active'
+  - 'item focus-visible'
 a11y:
-  - "role=\"tablist\"; arrow keys move between tabs, aria-selected on the active one"
-tokens: [--ngpt-comp-tab-track-bg, --ngpt-sys-shape-corner-small, --ngpt-sys-space-075, --ngpt-sys-space-150, --ngpt-comp-tab-item-px, --ngpt-comp-tab-item-active-bg, --ngpt-sys-shape-corner-extra-small-alt, --ngpt-text-primary, --ngpt-comp-tab-text-inactive, --ngpt-border-subtle, --ngpt-sys-typescale-label-large-sm, --ngpt-sys-typescale-label-large-medium, --ngpt-focus-ring, --ngpt-bg-active]
+  - 'role="tablist"; arrow keys move between tabs, aria-selected on the active one'
+tokens:
+  [
+    --ngpt-comp-tab-track-bg,
+    --ngpt-sys-shape-corner-small,
+    --ngpt-sys-space-075,
+    --ngpt-sys-space-150,
+    --ngpt-comp-tab-item-px,
+    --ngpt-comp-tab-item-active-bg,
+    --ngpt-sys-shape-corner-extra-small-alt,
+    --ngpt-text-primary,
+    --ngpt-comp-tab-text-inactive,
+    --ngpt-border-subtle,
+    --ngpt-sys-typescale-label-large-sm,
+    --ngpt-sys-typescale-label-large-medium,
+    --ngpt-focus-ring,
+    --ngpt-bg-active,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -39,28 +55,28 @@ Two-way (Preview/Source) segmented control used at the top of live example windo
 
 ## States
 
-| State | Trigger | Visual change |
-|---|---|---|
-| Active tab | selected | Filled bg, radius, white 500-weight text |
-| Inactive tab (default) | — | No bg, muted text |
-| Inactive tab (hover) | Pointer enters | Subtle bg lift |
-| Inactive tab (focus) | Keyboard focus | 2px accent ring |
+| State                  | Trigger        | Visual change                            |
+| ---------------------- | -------------- | ---------------------------------------- |
+| Active tab             | selected       | Filled bg, radius, white 500-weight text |
+| Inactive tab (default) | —              | No bg, muted text                        |
+| Inactive tab (hover)   | Pointer enters | Subtle bg lift                           |
+| Inactive tab (focus)   | Keyboard focus | 2px accent ring                          |
 
 ## Build spec
 
-| Property | Value | Token |
-|---|---|---|
-| Track background | oklch(0.22 0.005 260) | `--ngpt-comp-tab-track-bg` |
-| Track radius | 8px | `--ngpt-sys-shape-corner-small` |
-| Track padding | 3px | `--ngpt-sys-space-075` |
-| Item padding | 6px 14px | `--ngpt-sys-space-150 --ngpt-comp-tab-item-px` |
-| Active item bg | oklch(0.3 0.005 260) | `--ngpt-comp-tab-item-active-bg` |
-| Active item radius | 6px | `--ngpt-sys-shape-corner-extra-small-alt` |
-| Active text | white / 500 weight | `--ngpt-text-primary` |
-| Inactive text | oklch(0.64 0.01 260) | `--ngpt-comp-tab-text-inactive` |
-| Inactive hover bg | oklch(0.26 0.005 260) | `--ngpt-border-subtle (reused as tint)` |
-| Font | Inter, 13px / 400 inactive, 500 active | `--ngpt-sys-typescale-label-large-sm` / `-label-large-medium` |
-| Focus ring (inactive) | 0 0 0 2px oklch(0.68 0.22 328 / 0.6) | `--ngpt-focus-ring` |
+| Property              | Value                                  | Token                                                         |
+| --------------------- | -------------------------------------- | ------------------------------------------------------------- |
+| Track background      | oklch(0.22 0.005 260)                  | `--ngpt-comp-tab-track-bg`                                    |
+| Track radius          | 8px                                    | `--ngpt-sys-shape-corner-small`                               |
+| Track padding         | 3px                                    | `--ngpt-sys-space-075`                                        |
+| Item padding          | 6px 14px                               | `--ngpt-sys-space-150 --ngpt-comp-tab-item-px`                |
+| Active item bg        | oklch(0.3 0.005 260)                   | `--ngpt-comp-tab-item-active-bg`                              |
+| Active item radius    | 6px                                    | `--ngpt-sys-shape-corner-extra-small-alt`                     |
+| Active text           | white / 500 weight                     | `--ngpt-text-primary`                                         |
+| Inactive text         | oklch(0.64 0.01 260)                   | `--ngpt-comp-tab-text-inactive`                               |
+| Inactive hover bg     | oklch(0.26 0.005 260)                  | `--ngpt-border-subtle (reused as tint)`                       |
+| Font                  | Inter, 13px / 400 inactive, 500 active | `--ngpt-sys-typescale-label-large-sm` / `-label-large-medium` |
+| Focus ring (inactive) | 0 0 0 2px oklch(0.68 0.22 328 / 0.6)   | `--ngpt-focus-ring`                                           |
 
 ## Notes
 

@@ -13,7 +13,7 @@ export const serverDefaultAmount = signal<RangeCriterion>(EMPTY_RANGE);
 /** No table composes this schema — it types the form only, against the same declared set the
  * table's own config uses. */
 export const serverInvoiceFilters = (
-  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof narrowColumns.columns>>
+  path: FiltersPath<InvoiceRow, ColumnValues<InvoiceRow, typeof narrowColumns.columns>>,
 ) => ({
   status: filter(path.status, matchesStatus, { emptyValue: '' }),
   search: contains(path.customer),

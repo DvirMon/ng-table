@@ -36,7 +36,7 @@ export class GroupingColumnsStoryHostComponent {
   protected readonly table = createTable(
     this.data,
     groupingConfig,
-    withGrouping({ initial: BASE_GROUPING_LEVELS })
+    withGrouping({ initial: BASE_GROUPING_LEVELS }),
   );
 
   /** The table's own column layout — what the user sees before any disposition. */

@@ -8,10 +8,10 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/filters/recorder.ts` | **delete** |
-| `libs/shared/table/src/filters/types.ts` | edit — remove the recorder residue |
+| File                                              | Action                                           |
+| ------------------------------------------------- | ------------------------------------------------ |
+| `libs/shared/table/src/filters/recorder.ts`       | **delete**                                       |
+| `libs/shared/table/src/filters/types.ts`          | edit — remove the recorder residue               |
 | `libs/shared/table/src/filters/create-filters.ts` | edit — drop the stub recorder Step 4 left behind |
 
 **Added 2026-09-14 during `/implement`:** `create-filters.ts` was not in this table originally.
@@ -90,4 +90,5 @@ was quietly kept.
       only on the declaration shape `#77` rewrites
 
 ---
+
 ← [Step 4: The row carrier and the array schema](step-4-carrier-and-array-schema.plan.md) | [Step 6: Export the token from the domain barrel](step-6-barrel-export.plan.md) →

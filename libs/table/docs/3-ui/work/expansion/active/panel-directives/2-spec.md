@@ -1,6 +1,6 @@
 ---
 title: Spec — detail panel a11y directives (#199)
-ticket: "#199"
+ticket: '#199'
 capability: expansion
 date: 2026-10-01
 decisions: 1-decisions.md (D1–D14), decisions/expansion.md (E44–E56)

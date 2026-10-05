@@ -24,7 +24,7 @@ Signal Forms does **not** hand-code a function per field property. One primitive
 **reducer** defining how multiple contributions to the same key combine (`metadata.ts:72-131`):
 
 ```ts
-MetadataReducer = { list, min, max, or, and, latest }   // metadata.ts:72-131
+MetadataReducer = { list, min, max, or, and, latest }; // metadata.ts:72-131
 ```
 
 The [Feature Catalog](../architecture.md#feature-catalog) is ~12 bespoke `apply*`. Signal
@@ -49,18 +49,18 @@ independent implementations. Implementation touches `schema/column-rules.ts` (th
 
 ## 2 — Reducers replace conflict-rejection ✅ decided 2026-07-25 — reducer-combine (reverses the earlier settled decision)
 
-The hub's Decisions say: *throw at build time on two `visible` rules for one column.* Signal Forms
+The hub's Decisions say: _throw at build time on two `visible` rules for one column._ Signal Forms
 does the opposite — rules **accumulate** into an array and combine
 (`schema/logic_node.ts:105` `all: [...]`, `:245-250` `logic.hidden.push(...)`). Multiple `hidden`
 rules coexist, reduced (visibility = OR: hidden if any rule hides).
 
 So the real choice is **not** "reject conflicts" — it's "pick a reducer." `or` for visibility is
 arguably more useful than throwing: two independent permission checks, hide if either fails, no
-authoring error. 
+authoring error.
 
 **Decided: reducer-combine, superseding the hub's "conflicting `visible` rules rejected at build
 time" decision.** Made cheap by §1's generic reducer core landing — no separate conflict-rejection
-code path needed, each `MetadataKey`'s reducer *is* the conflict resolution. Default reducer per
+code path needed, each `MetadataKey`'s reducer _is_ the conflict resolution. Default reducer per
 property: `visible` → `and` (visible only if every rule says visible — a permission check hiding a
 column should always win over a rule that shows it, the safer default for gating sensitive data);
 revisit per-property if a real case wants `or` instead. Build-time rejection is dropped entirely —
@@ -95,7 +95,10 @@ schemas"). But for columns it enables reusable archetypes — a `moneyColumn` (w
 formatter) applied to many columns/tables:
 
 ```ts
-const moneyColumn = columnSchema<Product>((c) => { applyWidth(c, 120); applyAlign(c, 'right'); });
+const moneyColumn = columnSchema<Product>((c) => {
+  applyWidth(c, 120);
+  applyAlign(c, 'right');
+});
 apply(path.price, moneyColumn);
 ```
 
@@ -107,7 +110,7 @@ archetype need is real; revisit the hub's "no composability" grounding then.
 
 ## 6 — `assertPathIsCurrent` — guard stale path handles ✅ adopt
 
-Every rule call asserts the path belongs to the *currently running* schema fn
+Every rule call asserts the path belongs to the _currently running_ schema fn
 (`api/rules/hidden.ts:58`, `api/structure.ts:286,319`). Catches a `path.x` captured and reused
 outside its `schemaFn`. Cheap correctness win — `columnSchema()` should assert the same, since its
 `path` proxy is the same structural design.
@@ -123,12 +126,12 @@ can't widen `TRow`. Portable directly to the `apply*` signatures.
 
 ## Adoption summary
 
-| # | Technique | Verdict | Touches |
-|---|---|---|---|
-| 3 | `{ when }` object form | ✅ adopt now | all `apply*` signatures |
-| 6 | `assertPathIsCurrent` | ✅ adopt now | `create-columns.ts` |
-| 7 | `NoInfer` args | ✅ adopt now | `schema/column-rules.ts` |
-| 1 | metadata + reducer core | ✅ decided — hybrid (bespoke public, generic internal) | `schema/column-rules.ts` core + each tier's `apply*` |
-| 2 | reducer vs reject | ✅ decided — reducer-combine (`and` default for `visible`) | hub Decisions, supersedes build-time rejection |
-| 4 | `applyEach` wildcard | ⏳ defer | future |
-| 5 | `apply`/`schema` reuse | ⏳ defer (revisits grounding) | future |
+| #   | Technique               | Verdict                                                    | Touches                                              |
+| --- | ----------------------- | ---------------------------------------------------------- | ---------------------------------------------------- |
+| 3   | `{ when }` object form  | ✅ adopt now                                               | all `apply*` signatures                              |
+| 6   | `assertPathIsCurrent`   | ✅ adopt now                                               | `create-columns.ts`                                  |
+| 7   | `NoInfer` args          | ✅ adopt now                                               | `schema/column-rules.ts`                             |
+| 1   | metadata + reducer core | ✅ decided — hybrid (bespoke public, generic internal)     | `schema/column-rules.ts` core + each tier's `apply*` |
+| 2   | reducer vs reject       | ✅ decided — reducer-combine (`and` default for `visible`) | hub Decisions, supersedes build-time rejection       |
+| 4   | `applyEach` wildcard    | ⏳ defer                                                   | future                                               |
+| 5   | `apply`/`schema` reuse  | ⏳ defer (revisits grounding)                              | future                                               |

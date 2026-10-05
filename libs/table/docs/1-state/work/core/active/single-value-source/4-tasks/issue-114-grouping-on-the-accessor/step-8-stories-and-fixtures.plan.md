@@ -27,8 +27,8 @@ their values. `fixtures/schema.ts` annotates its column list
 `ColumnDefInput<DealRow>[]`, which widens `TId` to `string` and turns
 every re-keyed `path` into an index signature with no error — so the
 stories would compile while proving nothing. Its own comment says as
-much, and states the now-false reason: *"Grouping no longer reads a
-column's `accessor` at all (D7)."*
+much, and states the now-false reason: _"Grouping no longer reads a
+column's `accessor` at all (D7)."_
 
 Two stories teach lessons this slice retires: `grouping-aggregates`
 teaches that `aggregateFn` is a column option, and `grouping-keys`
@@ -70,13 +70,13 @@ inherits totals from the column list. It now declares them:
 withGrouping({
   initial: BASE_GROUPING_LEVELS,
   schema: (path) => applyAggregate(path.amount, sumAmount),
-})
+});
 ```
 
 Rewrite the host's doc block and the `.stories.ts` description. The
-current text — *"`aggregateFn` is a **column** option, not a
+current text — _"`aggregateFn` is a **column** option, not a
 `withGrouping()` one: the column says how to summarise a set of rows,
-and grouping is what supplies the sets"* — is now exactly backwards.
+and grouping is what supplies the sets"_ — is now exactly backwards.
 The replacement lesson: aggregation is a grouping declaration, keyed by
 declared column id like every other data concern, so a column with no
 row field of its own can carry a total too.
@@ -93,8 +93,8 @@ for the affected groups and reports once per evaluation. Keep it.
   control, and the `addGroupLevel`/`removeGroupLevel` imports if nothing
   else uses them. The lesson they taught no longer exists.
 - The remaining lesson is still two-declarator and still worth a story:
-  `applyGroupKey` decides what a level clusters *on*; an `initial`
-  entry's `label` decides what its header *calls itself*. `Sales Region`
+  `applyGroupKey` decides what a level clusters _on_; an `initial`
+  entry's `label` decides what its header _calls itself_. `Sales Region`
   wins over the `region` column's own label; `Closed` has none and falls
   back to the `closedAt` column's. Two tiers, one render.
 - `monthOf(date: Date)` now receives `unknown` from the extractor
@@ -167,4 +167,5 @@ pre-emptively edit them.
       once when the toolbar poisons a row.
 
 ---
+
 ← [Step 7: The public-surface spec](step-7-public-surface-spec.plan.md) | [Step 9: Docs, decisions and `llms.txt`](step-9-docs-and-decisions.plan.md) →

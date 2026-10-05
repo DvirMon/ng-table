@@ -6,6 +6,7 @@ depends_on: [1, 2, 3, 9]
 files:
   - libs/table/CLAUDE.md (edit)
 ---
+
 # Step 11 — CLAUDE.md doc fix
 
 This step corrects two stale statements in
@@ -81,4 +82,5 @@ section:
 Both corrections are made; no other content changes.
 
 ---
+
 ← [Step 10: Barrel export](step-10-barrel-stage-exports.plan.md)

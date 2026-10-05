@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — with-selection.spec.ts + selection.utils.spec.ts: positional form, hiddenSelected headline case, reconciliation"
+title: 'Step 3 — with-selection.spec.ts + selection.utils.spec.ts: positional form, hiddenSelected headline case, reconciliation'
 type: task-step
 issue: 73
 ---
@@ -50,14 +50,16 @@ no explicit row type argument.
 
    ```ts
    const store = inContext(() =>
-     createTable(signal([...mockRows]), { trackBy: mockTrackBy, columns: makeColumns() },
+     createTable(
+       signal([...mockRows]),
+       { trackBy: mockTrackBy, columns: makeColumns() },
        withSelection(
          { enableMultiRowSelection: (row) => row.id !== 2 },
          withComputed((s) => ({
            hiddenSelected: computed(() => s.selectedRows().size - s.rows().length),
-         }))
-       )
-     )
+         })),
+       ),
+     ),
    );
    ```
 
@@ -102,4 +104,5 @@ no explicit row type argument.
 - [ ] Runtime green (`vitest run` on both files) — the user runs it.
 
 ---
+
 ← [Step 2: with-expansion.ts](step-2-with-expansion.plan.md) | [Step 4: with-expansion.spec.ts](step-4-with-expansion-spec.plan.md) →

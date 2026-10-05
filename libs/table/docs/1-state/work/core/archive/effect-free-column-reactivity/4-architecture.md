@@ -72,7 +72,7 @@ interface ColumnRuleEntry {
 
 export function foldColumnRules<TRow>(
   columns: ColumnDef<TRow>[],
-  registry: ColumnRuleRegistry<TRow>
+  registry: ColumnRuleRegistry<TRow>,
 ): ColumnDef<TRow>[];
 ```
 
@@ -97,13 +97,13 @@ of performing writes:
 ```ts
 export function buildReactiveVisibleEntries<TRow>(
   ctx: ColumnRuleContext<TRow>,
-  rules: readonly VisibleReactiveRule<TRow>[]
-): ColumnRuleEntry[];   // one entry per rule; result = computed(() => rule.when(ctx))
+  rules: readonly VisibleReactiveRule<TRow>[],
+): ColumnRuleEntry[]; // one entry per rule; result = computed(() => rule.when(ctx))
 
 export function buildAsyncVisibleEntry<TRow>(
   ctx: ColumnRuleContext<TRow>,
-  rule: VisibleAsyncRule<TRow>
-): ColumnRuleEntry;      // constructs the resource; result = the D5 linkedSignal
+  rule: VisibleAsyncRule<TRow>,
+): ColumnRuleEntry; // constructs the resource; result = the D5 linkedSignal
 ```
 
 `groupRulesByColumnId` (lines 30-40) is no longer needed here — grouping moves into
@@ -120,7 +120,7 @@ const result = linkedSignal<ResourceStatus, boolean | undefined>({
       return value === undefined ? previous?.value : rule.onSuccess(value);
     }
     if (status === 'error') return rule.onError(resourceRef.error());
-    return previous?.value;          // loading / reloading / idle → hold
+    return previous?.value; // loading / reloading / idle → hold
   },
 });
 ```
@@ -138,7 +138,7 @@ columnRules?: ColumnRuleRegistry<TRow>;
 ```
 
 **This refines D6.** D6 said "claimed through `SlotRegistry`". That is wrong on reflection:
-`SlotRegistry` (`engine/slots.ts:13-39`) exists for *single-occupancy* slots, where a second
+`SlotRegistry` (`engine/slots.ts:13-39`) exists for _single-occupancy_ slots, where a second
 claimant would silently win by array order. Column rules are **additive** — two `applyVisible`
 calls on the same column already merge via the AND reducer (`feature.spec.ts:91`), so a second
 feature contributing rules must merge for the same reason. `columnRules` therefore behaves like
@@ -175,22 +175,22 @@ Callers: `apps/demo/src/app/table-demo/table-demo.store.ts:28-32` must add an `o
 
 ## File layout
 
-| File | Change |
-|---|---|
-| `engine/core.ts` | Split `columns` into `baseColumns` + `columns` computed; add `columnRules` registry to `TableCoreHandle` |
-| `engine/types.ts` | `TableCore.columns` → readonly `Signal`; add `baseColumns`; add `columnRules` to `TableFeatureSpec` |
-| `engine/columns.ts` | Add `foldColumnRules` + `ColumnRuleRegistry` / `ColumnRuleEntry` types |
-| `engine/columns.spec.ts` | Add `foldColumnRules` cases (plain vitest, no `TestBed`) |
-| `engine/compose-table.ts` | Merge each feature's `columnRules` into the handle registry in `foldFeatures()` |
-| `api/update-columns.ts` | Retarget the cast + structural overload at `baseColumns` |
-| `api/column-rules.ts` | `onError` required; correct the JSDoc at lines 12-13 and 28-31 |
-| `api/column-schema.types.ts` | `VisibleAsyncRule.onError` required; narrow `ColumnsSchemaStore`; document the `baseColumns` contract on `ColumnRuleContext` |
-| `api/features/with-columns-schema/wiring.ts` | Delete both `effect()`s and `patchColumnVisible`; return rule entries; add the D5 `linkedSignal` |
-| `api/features/with-columns-schema/feature.ts` | Return `columnRules` from the spec; keep resource construction in `onInit` |
-| `api/features/with-columns-schema/feature.spec.ts` | Rewrite the no-`onError` case; add D2/D5/D8/D9 cases |
-| `apps/demo/src/app/table-demo/table-demo.store.ts` | Add the now-required `onError` |
-| `src/ui/table/CLAUDE.md` | Correct the `engine/core.ts` row and the `api/update-columns.ts` row |
-| `libs/shared/design-system/docs/adr/` | Consider an ADR amendment — `TableFeatureSpec` is a documented contract (ADR-0003) |
+| File                                               | Change                                                                                                                       |
+| -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `engine/core.ts`                                   | Split `columns` into `baseColumns` + `columns` computed; add `columnRules` registry to `TableCoreHandle`                     |
+| `engine/types.ts`                                  | `TableCore.columns` → readonly `Signal`; add `baseColumns`; add `columnRules` to `TableFeatureSpec`                          |
+| `engine/columns.ts`                                | Add `foldColumnRules` + `ColumnRuleRegistry` / `ColumnRuleEntry` types                                                       |
+| `engine/columns.spec.ts`                           | Add `foldColumnRules` cases (plain vitest, no `TestBed`)                                                                     |
+| `engine/compose-table.ts`                          | Merge each feature's `columnRules` into the handle registry in `foldFeatures()`                                              |
+| `api/update-columns.ts`                            | Retarget the cast + structural overload at `baseColumns`                                                                     |
+| `api/column-rules.ts`                              | `onError` required; correct the JSDoc at lines 12-13 and 28-31                                                               |
+| `api/column-schema.types.ts`                       | `VisibleAsyncRule.onError` required; narrow `ColumnsSchemaStore`; document the `baseColumns` contract on `ColumnRuleContext` |
+| `api/features/with-columns-schema/wiring.ts`       | Delete both `effect()`s and `patchColumnVisible`; return rule entries; add the D5 `linkedSignal`                             |
+| `api/features/with-columns-schema/feature.ts`      | Return `columnRules` from the spec; keep resource construction in `onInit`                                                   |
+| `api/features/with-columns-schema/feature.spec.ts` | Rewrite the no-`onError` case; add D2/D5/D8/D9 cases                                                                         |
+| `apps/demo/src/app/table-demo/table-demo.store.ts` | Add the now-required `onError`                                                                                               |
+| `src/ui/table/CLAUDE.md`                           | Correct the `engine/core.ts` row and the `api/update-columns.ts` row                                                         |
+| `libs/shared/design-system/docs/adr/`              | Consider an ADR amendment — `TableFeatureSpec` is a documented contract (ADR-0003)                                           |
 
 Untouched: `api/types.ts` (public types already correct), `api/update-columns.spec.ts`
 (regression evidence), `engine/slots.ts`, `engine/pipeline.ts`, `directives/`.

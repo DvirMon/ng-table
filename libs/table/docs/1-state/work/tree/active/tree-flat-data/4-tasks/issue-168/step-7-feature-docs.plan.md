@@ -7,6 +7,7 @@ files:
   - libs/table/docs/1-state/features/filtering.md
   - libs/table/docs/1-state/features/tree.md
 ---
+
 # Step 7 — Feature docs
 
 This step documents tree retention in the filtering and tree feature docs.
@@ -37,4 +38,5 @@ Decisions: [D5, D9, D18, D21](../../1-decisions.md)
 - [ ] Both docs describe the behaviour with a short usage snippet.
 
 ---
+
 ← [Step 6: hasChildren follows the filtered view](step-6-filtered-has-children.plan.md)

@@ -51,7 +51,7 @@ Consequences:
 - **Template is `<ng-content />`.** The inner `<code class="code-chip">` is gone.
 - **`.code-chip` rules moved onto `:host`.** Same declarations, same tokens, no visual change.
 - **`:host { display: contents }` deleted.** It only existed to stop the custom element from
-  contributing a second box around the inner `<code>`. With the host *being* the `<code>`, the
+  contributing a second box around the inner `<code>`. With the host _being_ the `<code>`, the
   element's own `inline` default is exactly what the spec's "inline within text flow" asks for, so
   no `display` is declared at all now.
 - **`:host-context(a) .code-chip` → `:host-context(a)`.** The inside-a-link state still resolves

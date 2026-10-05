@@ -37,7 +37,7 @@ Both effects terminate in `patchColumnVisible()` → `updateColumns()` (`api/upd
 to keep out of consumer code — it has just been relocated into the library instead of
 eliminated. A consumer who writes their own `effect()` to flip `visible` (the
 `table-demo.ts` case that started this thread) and a consumer who calls `applyVisibleAsync`
-are, underneath, doing the *same* thing. The library API hides the pattern; it does not remove
+are, underneath, doing the _same_ thing. The library API hides the pattern; it does not remove
 it.
 
 ## Why this matters (not just style)
@@ -54,7 +54,7 @@ it.
   render pipeline (`engine/core.ts` — no internal copy, "D3/D4" invariant). Every write path
   into it — sync rules, async rules, consumer-driven `updateColumns()` calls — currently
   funnels through imperative `.update()` calls issued from inside `effect()`s. There is no
-  purely-derived (`computed()`-only) path for *any* column mutation today.
+  purely-derived (`computed()`-only) path for _any_ column mutation today.
 
 ## How Angular's own Signal Forms solves the equivalent problem
 
@@ -66,22 +66,22 @@ Angular source:
 - The resource/params plumbing is built with `computed()` chaining (`ɵchain`), including an
   optional `debounced()` wrapper — no `effect()`.
 - The resource is attached to the field via a `metadata(path, RESOURCE, (ctx) => opts.params(ctx))`
-  call — a reactive *derivation* registered against the field's metadata system, not an
+  call — a reactive _derivation_ registered against the field's metadata system, not an
   imperative write.
 - The result is read back through `addAsyncErrorRule((ctx) => { const res =
-  ctx.state.metadata(RESOURCE)!; switch (res.status()) { case 'resolved': ... return
-  addDefaultField(errors, ctx.fieldTree); } })`. This rule is *evaluated by the forms system's
-  own validation pipeline* whenever it runs — the forms engine pulls the current resource
+ctx.state.metadata(RESOURCE)!; switch (res.status()) { case 'resolved': ... return
+addDefaultField(errors, ctx.fieldTree); } })`. This rule is _evaluated by the forms system's
+  own validation pipeline_ whenever it runs — the forms engine pulls the current resource
   status when it needs validity, rather than the resource pushing a value into state via
   `effect()`.
 
 In short: Signal Forms has a generic **rule-evaluation pipeline** (fields carry a list of
-rules; validity is computed by *running* those rules on demand, memoized via `computed()`).
+rules; validity is computed by _running_ those rules on demand, memoized via `computed()`).
 Async work becomes just another rule whose "value" happens to come from a `resource()`. There
 is never a moment where something reaches out and mutates field state imperatively — validity
 is always a derivation, resolved lazily, cached by signals' own change detection.
 
-This table lib has no equivalent pipeline for *column state* (it has one for *row* pipeline
+This table lib has no equivalent pipeline for _column state_ (it has one for _row_ pipeline
 stages — `engine/pipeline.ts`'s `PIPELINE_ORDER`/`runPipeline()` — but that's a `computed()`
 chain over rows, unrelated to columns). `columns` is a flat `WritableSignal<ColumnDef[]>`
 mutated in place by whoever calls `updateColumns()`, including the engine's own rule wiring.
@@ -98,20 +98,20 @@ Sketching the shape Signal Forms implies, for research to evaluate/replace:
    function of reactive state, so folding it into a `computed()` is close to free.
 3. Async rules (`applyVisibleAsync`) are the hard part: a `resource()`'s `status()`/`value()`
    are themselves signals, so `computed(() => resourceRef.value())` is legitimate signal
-   composition (no `effect()` needed to *read* a resource) — the current code only reaches for
-   `effect()` because it needs to *write* the result somewhere else (`store.columns`). If
+   composition (no `effect()` needed to _read_ a resource) — the current code only reaches for
+   `effect()` because it needs to _write_ the result somewhere else (`store.columns`). If
    `columns` becomes computed instead of writable, the async rule's resource value can be
    folded directly into that computed's dependency graph instead of pushed via `.update()`.
 4. Open question for research: does this generalize to a per-column-id rule registry +
    `computed()` merge (mirroring Signal Forms' per-field rule list), or is there a simpler
    Angular-idiomatic mechanism (e.g. `linkedSignal`, `toSignal` composition) that gets the same
    "no imperative write" property without building a full rule-pipeline abstraction?
-5. Backward-compat concern: `updateColumns()` is also the *only* consumer-facing write path
+5. Backward-compat concern: `updateColumns()` is also the _only_ consumer-facing write path
    for non-rule-driven column changes (`setColumns`, `reorderColumns`,
    `toggleColumnVisibility` — see `api/update-columns.ts`). Any redesign that makes `columns`
    read-only/computed needs an answer for these — they are legitimate imperative writes (a user
    clicking "hide column"), not the same problem as rule-driven reactivity. The gap here is
-   specifically about *rule-driven* writes triggered by `effect()`, not all mutation.
+   specifically about _rule-driven_ writes triggered by `effect()`, not all mutation.
 
 ## Relevant files (for the research pass)
 

@@ -5,15 +5,15 @@ atomic: Token
 spec: specs/foundations/Iconography.md
 frame: null
 owns:
-  - "Icon library choice + setup"
-  - "Size scale"
-  - "The placeholder-glyph → real-icon mapping table"
+  - 'Icon library choice + setup'
+  - 'Size scale'
+  - 'The placeholder-glyph → real-icon mapping table'
 does_not_own:
-  - "Icon color (inherits from the host component)"
+  - 'Icon color (inherits from the host component)'
 depends_on: []
 states: []
 a11y:
-  - "Decorative icons get aria-hidden=\"true\"; icon-only controls need aria-label"
+  - 'Decorative icons get aria-hidden="true"; icon-only controls need aria-label'
 tokens: [--ngpt-sys-icon-size-md, --ngpt-sys-icon-size-sm, --ngpt-sys-icon-size-lg]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
@@ -32,17 +32,37 @@ Reference frames in `components/` must use only the placeholders listed in the m
 // app.config.ts
 import { provideIcons } from '@ng-icons/core';
 import {
-  lucideChevronDown, lucideCopy, lucideZap, lucideArrowLeft, lucideArrowRight,
-  lucideMenu, lucideX, lucideArrowUp,
-  lucideSearch, lucideCheck, lucideInfo, lucideTriangleAlert, lucideLightbulb,
+  lucideChevronDown,
+  lucideCopy,
+  lucideZap,
+  lucideArrowLeft,
+  lucideArrowRight,
+  lucideMenu,
+  lucideX,
+  lucideArrowUp,
+  lucideSearch,
+  lucideCheck,
+  lucideInfo,
+  lucideTriangleAlert,
+  lucideLightbulb,
 } from '@ng-icons/lucide';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideIcons({
-      lucideChevronDown, lucideCopy, lucideZap, lucideArrowLeft, lucideArrowRight,
-      lucideMenu, lucideX, lucideArrowUp,
-      lucideSearch, lucideCheck, lucideInfo, lucideTriangleAlert, lucideLightbulb,
+      lucideChevronDown,
+      lucideCopy,
+      lucideZap,
+      lucideArrowLeft,
+      lucideArrowRight,
+      lucideMenu,
+      lucideX,
+      lucideArrowUp,
+      lucideSearch,
+      lucideCheck,
+      lucideInfo,
+      lucideTriangleAlert,
+      lucideLightbulb,
     }),
   ],
 };
@@ -56,11 +76,11 @@ export const appConfig: ApplicationConfig = {
 
 ## Size scale
 
-| Token | Value | Usage |
-| --- | --- | --- |
-| --ngpt-sys-icon-size-sm | 13px | Icon buttons, toolbar glyphs (copy, run) |
-| --ngpt-sys-icon-size-md | 16px | Navbar dot/avatar, dropdown chevrons |
-| --ngpt-sys-icon-size-lg | 20px | Drawer close button, hamburger trigger |
+| Token                   | Value | Usage                                    |
+| ----------------------- | ----- | ---------------------------------------- |
+| --ngpt-sys-icon-size-sm | 13px  | Icon buttons, toolbar glyphs (copy, run) |
+| --ngpt-sys-icon-size-md | 16px  | Navbar dot/avatar, dropdown chevrons     |
+| --ngpt-sys-icon-size-lg | 20px  | Drawer close button, hamburger trigger   |
 
 ```css
 :root {
@@ -74,30 +94,30 @@ export const appConfig: ApplicationConfig = {
 
 Every glyph used as a stand-in across the component specs should be swapped for the matching ng-icon:
 
-| Placeholder used in specs | ng-icon name |
-| --- | --- |
-| ▾ (dropdown chevron) | lucideChevronDown |
-| ↑ (sort ascending) | lucideArrowUp |
-| ⧉ (copy) | lucideCopy |
-| ⚡ (run/execute) | lucideZap |
-| ← / → (pagination arrows) | lucideArrowLeft / lucideArrowRight |
-| ≡ (mobile menu trigger) | lucideMenu |
-| × (drawer close) | lucideX |
-| ⌕ (search) | lucideSearch |
-| ✓ (selected / confirmed) | lucideCheck |
-| ⓘ (callout — note) | lucideInfo |
-| ⚠ (callout — warning) | lucideTriangleAlert |
-| inline stroked bulb SVG (callout — tip) | lucideLightbulb |
+| Placeholder used in specs               | ng-icon name                       |
+| --------------------------------------- | ---------------------------------- |
+| ▾ (dropdown chevron)                    | lucideChevronDown                  |
+| ↑ (sort ascending)                      | lucideArrowUp                      |
+| ⧉ (copy)                                | lucideCopy                         |
+| ⚡ (run/execute)                        | lucideZap                          |
+| ← / → (pagination arrows)               | lucideArrowLeft / lucideArrowRight |
+| ≡ (mobile menu trigger)                 | lucideMenu                         |
+| × (drawer close)                        | lucideX                            |
+| ⌕ (search)                              | lucideSearch                       |
+| ✓ (selected / confirmed)                | lucideCheck                        |
+| ⓘ (callout — note)                      | lucideInfo                         |
+| ⚠ (callout — warning)                  | lucideTriangleAlert                |
+| inline stroked bulb SVG (callout — tip) | lucideLightbulb                    |
 
 ## Added by later specs
 
-| Usage | ng-icon name | Spec |
-| --- | --- | --- |
-| Search field + overlay input | lucideSearch | `specs/Search.md` |
-| Selected menu option, copy confirmation | lucideCheck | `specs/Dropdown Menu.md`, `specs/Icon Button.md` |
-| Callout — note | lucideInfo | `specs/Callout.md` |
-| Callout — warning | lucideTriangleAlert | `specs/Callout.md` |
-| Callout — tip | lucideLightbulb | `specs/Callout.md` |
+| Usage                                   | ng-icon name        | Spec                                             |
+| --------------------------------------- | ------------------- | ------------------------------------------------ |
+| Search field + overlay input            | lucideSearch        | `specs/Search.md`                                |
+| Selected menu option, copy confirmation | lucideCheck         | `specs/Dropdown Menu.md`, `specs/Icon Button.md` |
+| Callout — note                          | lucideInfo          | `specs/Callout.md`                               |
+| Callout — warning                       | lucideTriangleAlert | `specs/Callout.md`                               |
+| Callout — tip                           | lucideLightbulb     | `specs/Callout.md`                               |
 
 ## Notes
 

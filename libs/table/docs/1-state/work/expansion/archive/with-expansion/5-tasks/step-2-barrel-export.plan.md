@@ -58,4 +58,5 @@ N/A.
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 ← [Step 1: withExpansion() feature + RenderRow fields](step-1-with-expansion-feature.plan.md) | [Step 3: with-expansion.spec.ts](step-3-with-expansion-tests.plan.md) →

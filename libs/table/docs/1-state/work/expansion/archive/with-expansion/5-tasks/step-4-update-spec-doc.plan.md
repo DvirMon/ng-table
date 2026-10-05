@@ -49,4 +49,5 @@ Rewriting the whole doc — targeted edits only.
 - [ ] Open Questions reflect current state
 
 ---
+
 ← [Step 3: with-expansion.spec.ts](step-3-with-expansion-tests.plan.md)

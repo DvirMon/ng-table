@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — 3-spec.md: enableRowSelection() config + scope rules"
+title: 'Step 5 — 3-spec.md: enableRowSelection() config + scope rules'
 type: task-step
 issue: 63
 ---
@@ -39,7 +39,7 @@ in sync with shipped code for #28.
      escapable.
    - Write path, not read path — `selectedRows()` and `selectionStateOf()` stay unfiltered.
    - No reconcile — a row turning non-selectable while selected is not auto-deselected.
-   Cite `2-decisions.md`'s D58 section the way other bullets cite their decision letters.
+     Cite `2-decisions.md`'s D58 section the way other bullets cite their decision letters.
 3. Under `## Testing Decisions` → Coverage, add the six new cases (mirrors Step 4's spec
    additions): blocked toggle, blocked select with a mixed id array, ungated deselect of a row
    that became non-selectable after being selected, gated seed, unresolvable id stays permissive,
@@ -72,9 +72,10 @@ in sync with shipped code for #28.
 
 - [ ] `3-spec.md`'s Public surface sketch includes `enableRowSelection`.
 - [ ] The three scope rules (id-adding-only, write-not-read, no-reconcile) are stated, citing
-  D58.
+      D58.
 - [ ] Testing Decisions → Coverage list includes the six new cases.
 - [ ] `2-decisions.md`'s Open questions section is unchanged (Q4/Q5 still open).
 
 ---
+
 ← [Step 4: enableRowSelection() spec coverage](step-4-enable-row-selection-spec.plan.md) | [Step 6: selectAllIds() helper (D59)](step-6-select-all-ids-helper.plan.md) →

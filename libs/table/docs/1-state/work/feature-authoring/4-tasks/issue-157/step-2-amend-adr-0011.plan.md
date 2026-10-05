@@ -6,6 +6,7 @@ depends_on: []
 files:
   - libs/table/docs/adr/0011-chained-render-stages.md
 ---
+
 # Step 2 — Amend ADR-0011: adding a stage is not reordering
 
 Adds a dated note to ADR-0011 that ties its `RENDER_ORDER`
@@ -49,4 +50,5 @@ keys now derive from `RenderStageRegistry`.
       still standing.
 
 ---
+
 ← [Step 1: The feature-authoring guide](step-1-feature-authoring-guide.plan.md) | [Step 3: Amend ADR-0004: anchors and registries replace the order array](step-3-amend-adr-0004.plan.md) →

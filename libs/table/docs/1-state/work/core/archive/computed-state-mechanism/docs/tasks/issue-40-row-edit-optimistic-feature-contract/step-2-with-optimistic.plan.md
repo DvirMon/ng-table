@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — with-optimistic.ts: withOptimistic<In>(derive?) on the Feature<In, Out> contract"
+title: 'Step 2 — with-optimistic.ts: withOptimistic<In>(derive?) on the Feature<In, Out> contract'
 type: task-step
 issue: 74
 ---
@@ -44,9 +44,12 @@ infers `In` from the slot once the derive parameter is `NoInfer<In>`.
 2. **Overloads, this order** (no config, so derive-only is the second form):
 
    ```ts
-   export function withOptimistic<In extends OptimisticInput<In>>(): Feature<In, OptimisticMembers<RowOf<In>>>;
+   export function withOptimistic<In extends OptimisticInput<In>>(): Feature<
+     In,
+     OptimisticMembers<RowOf<In>>
+   >;
    export function withOptimistic<In extends OptimisticInput<In>, D extends DerivedDict>(
-     derive: Feature<NoInfer<In> & OptimisticMembers<RowOf<In>>, D>
+     derive: Feature<NoInfer<In> & OptimisticMembers<RowOf<In>>, D>,
    ): Feature<In, OptimisticMembers<RowOf<In>> & D>;
    ```
 
@@ -55,11 +58,16 @@ infers `In` from the slot once the derive parameter is `NoInfer<In>`.
    ```ts
    export function withOptimistic(derive?: Feature<any, any>): Feature<any, any> {
      const factory = <In extends OptimisticInput<In>>(
-       input: In
+       input: In,
      ): TableFeatureSpec<RowOf<In>, OptimisticMembers<RowOf<In>>> => {
        const store = createEditingStore<RowOf<In>>(input);
        return {
-         members: { editing: store.editing, pending: store.pending, pendingOps: store.pendingOps, unconfirmed: store.unconfirmed },
+         members: {
+           editing: store.editing,
+           pending: store.pending,
+           pendingOps: store.pendingOps,
+           unconfirmed: store.unconfirmed,
+         },
          onRowsRemoved: store.onRowsRemoved,
        };
      };
@@ -100,4 +108,5 @@ infers `In` from the slot once the derive parameter is `NoInfer<In>`.
 - [ ] `npx tsc -p libs/shared/table/tsconfig.lib.json --noEmit` clean for `with-optimistic.ts`.
 
 ---
+
 ← [Step 1: editing-state.ts](step-1-editing-state-input.plan.md) | [Step 3: with-row-edit.ts](step-3-with-row-edit.plan.md) →

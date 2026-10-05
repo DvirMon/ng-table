@@ -17,11 +17,11 @@ Parallel-safe: [2, 3, 4] after 1 · Dependency: 1 → {2,3,4} → 5 → 6
 
 ## Steps
 
-| Step | Title | Status |
-|---|---|---|
-| 1 | Tree fixtures and recipe CSS | ✅ done |
-| 2 | Basic tree story | ✅ done |
-| 3 | Filtered tree story | ✅ done |
-| 4 | Whole-row click story | ✅ done |
-| 5 | Tree docs page | ✅ done |
-| 6 | Story conventions and coverage marks | ✅ done |
+| Step | Title                                | Status  |
+| ---- | ------------------------------------ | ------- |
+| 1    | Tree fixtures and recipe CSS         | ✅ done |
+| 2    | Basic tree story                     | ✅ done |
+| 3    | Filtered tree story                  | ✅ done |
+| 4    | Whole-row click story                | ✅ done |
+| 5    | Tree docs page                       | ✅ done |
+| 6    | Story conventions and coverage marks | ✅ done |

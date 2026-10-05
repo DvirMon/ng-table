@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — applyGroupOrder(path.x, cmp) schema sugar"
+title: 'Step 2 — applyGroupOrder(path.x, cmp) schema sugar'
 type: task-step
 issue: 87
 ---
@@ -44,7 +44,7 @@ Beside `applyGrouping`/`applyGroupingAsync` in `schema/grouping-rules.ts`:
  */
 export function applyGroupOrder<TRow, K extends Extract<keyof TRow, string>>(
   path: ColumnHandle<TRow, K, AnyGroupingRule<TRow>>,
-  comparator: GroupOrder<TRow>
+  comparator: GroupOrder<TRow>,
 ): void {
   assertPathIsCurrent(path).record({
     kind: 'group-order',
@@ -87,7 +87,7 @@ export { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema/gro
 
 - Don't give `applyGroupOrder` an `opts` object (`{ comparator }`) — every sibling function in
   this file that takes exactly one behavioral argument (there are none yet, but `applyGrouping`'s
-  `opts.when` precedent is for *multiple* orthogonal members) takes it positionally when there's
+  `opts.when` precedent is for _multiple_ orthogonal members) takes it positionally when there's
   only one. Match the design doc's call shape: `applyGroupOrder(path.region, cmp)`, not
   `applyGroupOrder(path.region, { comparator: cmp })`.
 
@@ -107,4 +107,5 @@ export { applyGrouping, applyGroupingAsync, applyGroupOrder } from './schema/gro
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
 
 ---
+
 ← [Step 1: GroupOrder type, GroupOrderRule, and the per-column collector](step-1-group-order-rule-types.plan.md) | [Step 3: Engine — per-column ordering](step-3-engine-per-column-ordering.plan.md) →

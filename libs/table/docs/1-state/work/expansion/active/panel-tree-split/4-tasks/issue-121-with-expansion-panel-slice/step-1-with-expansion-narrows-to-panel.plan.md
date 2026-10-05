@@ -238,4 +238,5 @@ it covers both features.
       (there should be zero live call sites).
 
 ---
+
 [Step 2: `with-expansion.spec.ts` narrows to the panel](step-2-with-expansion-spec-narrows-to-panel.plan.md) →

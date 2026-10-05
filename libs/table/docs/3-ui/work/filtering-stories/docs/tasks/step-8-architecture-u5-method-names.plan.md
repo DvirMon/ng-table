@@ -1,5 +1,5 @@
 ---
-title: "Step 8 — 3-ui/architecture.md U5: stale filtering method names"
+title: 'Step 8 — 3-ui/architecture.md U5: stale filtering method names'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: G
@@ -49,4 +49,5 @@ reaches it independently); only the method names are wrong.
 - [ ] Every replacement name exists in `src/`.
 
 ---
+
 ← [Step 7: filters.md code status](step-7-filters-doc-code-status.plan.md) | [Step 9: product coverage marks](step-9-filtering-coverage-marks.plan.md) →

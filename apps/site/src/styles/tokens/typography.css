@@ -15,11 +15,21 @@
   --ngpt-sys-typescale-label-small: 700 12px/1.3 Inter, sans-serif;
   --ngpt-sys-typescale-label-small-alt: 600 11px/1.3 Inter, sans-serif;
   --ngpt-sys-typescale-label-small-2: 400 12.5px/1.4 Inter, sans-serif;
-  --ngpt-sys-typescale-code: 400 13px/1.6 "JetBrains Mono", monospace;
+  --ngpt-sys-typescale-code: 400 13px/1.6 'JetBrains Mono', monospace;
 }
 
 /* usage — letter-spacing and text-transform are not part of the font shorthand,
    so the roles that need them set them alongside the token */
-h1 { font: var(--ngpt-sys-typescale-headline-large); letter-spacing: -0.01em; }
-.eyebrow { font: var(--ngpt-sys-typescale-label-small); letter-spacing: 0.08em; text-transform: uppercase; }
-code, pre { font: var(--ngpt-sys-typescale-code); }
+h1 {
+  font: var(--ngpt-sys-typescale-headline-large);
+  letter-spacing: -0.01em;
+}
+.eyebrow {
+  font: var(--ngpt-sys-typescale-label-small);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+code,
+pre {
+  font: var(--ngpt-sys-typescale-code);
+}

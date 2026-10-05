@@ -7,6 +7,7 @@ files:
   - libs/table/src/api/features/compose-features.ts (edit)
   - libs/table/src/api/features/compose-features.spec.ts (edit)
 ---
+
 # Step 6 — compose-features.ts fold
 
 This step mirrors step 5's treatment for the inner fold, so an
@@ -77,7 +78,7 @@ Migrate `compose-features.spec.ts` in place:
   `'filter'`, composite's inner feature also claims `'filter'` —
   outer registry throws, naming the composite:
   `/feature 1 \(fOuterFilter\) and feature 2 \(composeFeatures\)
-  both provide the "filter" pipeline stage/`.
+both provide the "filter" pipeline stage/`.
 - Leave unchanged: cases 1-6, 9-11, 13-17, 19 (no stage rules
   involved, or already proven equivalent either way — e.g. case
   19's union result holds regardless).
@@ -94,4 +95,5 @@ All seams A-E pass; typecheck still expected red until steps
 7-9 land.
 
 ---
+
 ← [Step 5: core.ts + compose-table.ts fold](step-5-core-compose-table-fold.plan.md) | [Step 7: Refactor withSorting + withFiltering](step-7-refactor-sorting-filtering.plan.md) →

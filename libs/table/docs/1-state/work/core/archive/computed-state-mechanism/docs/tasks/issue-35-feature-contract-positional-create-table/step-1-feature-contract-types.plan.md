@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — engine/types.ts + api/types.ts: Feature<In, Out> contract, TableConfig, ReadonlyStore, indexById"
+title: 'Step 1 — engine/types.ts + api/types.ts: Feature<In, Out> contract, TableConfig, ReadonlyStore, indexById'
 type: task-step
 issue: 69
 ---
@@ -7,7 +7,7 @@ issue: 69
 # Step 1 — engine/types.ts + api/types.ts: `Feature<In, Out>` contract, `TableConfig`, `ReadonlyStore`, `indexById`
 
 **PR scope:** Types only. Introduces the new feature contract and the public config/store
-additions, deletes the array-form types. Nothing that *uses* the new types changes here — the
+additions, deletes the array-form types. Nothing that _uses_ the new types changes here — the
 fold, `createTable()`, and the authoring helper follow in Steps 3–5. The lib is expected to
 stop compiling at this step (issue: "not green individually") — every shipped `with-*` still
 names `TableCore`/`TableFeature`.
@@ -134,4 +134,5 @@ editing features can reach it from a `Feature<In extends Shape>`.
       `Invoice`; `Signal<Invoice[]>` satisfies `Shape`.
 
 ---
+
 [Step 2: tools/generate-overloads.ts — 15 + 15 overloads as call-signature interfaces](step-2-generate-overloads-script.plan.md) →

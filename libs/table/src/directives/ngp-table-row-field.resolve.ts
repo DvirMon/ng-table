@@ -12,7 +12,7 @@ import type { RenderRow } from '../api/types';
  */
 export function resolveRowField<TRow>(
   form: FieldTree<TRow[]>,
-  row: RenderRow<TRow>
+  row: RenderRow<TRow>,
 ): FieldTree<TRow> | undefined {
   const { sourceIndex } = row;
   if (sourceIndex === undefined) {

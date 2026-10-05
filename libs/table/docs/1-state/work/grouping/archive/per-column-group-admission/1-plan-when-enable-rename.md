@@ -12,13 +12,13 @@ audience: developers
 
 `withGrouping()` carries two unrelated predicates whose names collide conceptually:
 
-| Field | Signature | Driven by | Scopes |
-|---|---|---|---|
-| `when` | `() => boolean \| undefined` | outside component state (zero-arg) | per-column only |
-| `groupWhen` | `(cluster: ClusterSummary<TRow>) => boolean` | cluster data | per-column **and** table-wide |
+| Field       | Signature                                    | Driven by                          | Scopes                        |
+| ----------- | -------------------------------------------- | ---------------------------------- | ----------------------------- |
+| `when`      | `() => boolean \| undefined`                 | outside component state (zero-arg) | per-column only               |
+| `groupWhen` | `(cluster: ClusterSummary<TRow>) => boolean` | cluster data                       | per-column **and** table-wide |
 
-Level activation (`when`) asks *is this column a grouping level*; admission (`groupWhen`) asks
-*did this built cluster earn a header, or does it dissolve to flat rows*. Full design context:
+Level activation (`when`) asks _is this column a grouping level_; admission (`groupWhen`) asks
+_did this built cluster earn a header, or does it dissolve to flat rows_. Full design context:
 [`design-group-admission.md`](../../archive/with-grouping/design-group-admission.md)
 — "The surface", "Combining the two scopes".
 
@@ -31,7 +31,7 @@ currently **uncommitted** in the working tree (`schema/grouping-rules.ts`,
 
 - **`when`** is the keyword for any dynamically-toggled conditional on a feature — data-driven
   or external-state-driven. One `when` serving both sources is the default and stays.
-- **`enable`** appears *only* where a feature must **separate** a data condition from an
+- **`enable`** appears _only_ where a feature must **separate** a data condition from an
   external-state condition. Grouping is the only such feature: two orthogonal predicates sit on
   one rule object, so they cannot share a name.
 
@@ -47,16 +47,16 @@ external-state gate stops competing for the word.
 
 ## Rename map
 
-| Site | From | To |
-|---|---|---|
-`WithGroupingConfig` (`api/features/with-grouping.ts:50`) | `groupWhen` | `when` |
-`GroupingRule` (`schema/grouping-schema.types.ts:14`) | `when` | `enable` |
-`GroupingRule` (`:16`) | `groupWhen` | `when` |
-`GroupingAsyncRule` (`:38`) | `groupWhen` | `when` |
-`GroupingAsyncOpts` (`schema/grouping-rules.ts:35`) | `groupWhen` | `when` |
-`applyGrouping` opts (`:15`) | `{ when, groupWhen }` | `{ enable, when }` |
-`ClusterOpts` (`engine/grouping.ts:44`) | `groupWhen` | `when` |
-`ClusterOpts` (`:46`) | `columnGroupWhen` | `columnWhen` |
+| Site                                                      | From                  | To                 |
+| --------------------------------------------------------- | --------------------- | ------------------ |
+| `WithGroupingConfig` (`api/features/with-grouping.ts:50`) | `groupWhen`           | `when`             |
+| `GroupingRule` (`schema/grouping-schema.types.ts:14`)     | `when`                | `enable`           |
+| `GroupingRule` (`:16`)                                    | `groupWhen`           | `when`             |
+| `GroupingAsyncRule` (`:38`)                               | `groupWhen`           | `when`             |
+| `GroupingAsyncOpts` (`schema/grouping-rules.ts:35`)       | `groupWhen`           | `when`             |
+| `applyGrouping` opts (`:15`)                              | `{ when, groupWhen }` | `{ enable, when }` |
+| `ClusterOpts` (`engine/grouping.ts:44`)                   | `groupWhen`           | `when`             |
+| `ClusterOpts` (`:46`)                                     | `columnGroupWhen`     | `columnWhen`       |
 
 `GroupingAsyncRule` has **no** `when` — its activation is `onSuccess`/`onError`. Do not add
 `enable` to it; only its admission field renames.

@@ -91,4 +91,5 @@ pin the `Iterable<string>` parameter type against a future narrowing to
       no existing spec modified (AC #8).
 
 ---
+
 ← [Step 4: Shared identifier check](step-4-shared-identifier-check.plan.md) | [Step 6: Document the two new files](step-6-doc-new-files.plan.md) →

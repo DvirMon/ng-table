@@ -4,6 +4,7 @@ Step: [step-2-tree-toggle.plan.md](step-2-tree-toggle.plan.md)
 Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
 
 ## Stubs (red phase)
+
 - `@Directive({ selector: 'button[ngpTableTreeToggle]' }) export class NgpTableTreeToggleDirective { constructor() { throw new Error('not implemented: NgpTableTreeToggleDirective'); } }`
   in `libs/table/src/directives/ngp-table-tree-toggle.directive.ts`.
   The class has no inputs, so this is the full public signature.
@@ -15,6 +16,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
   typecheck.
 
 ## Fixture and host (shared by all seams)
+
 - No new mock data is needed. Reuse `table.mock.ts`:
   - `mockTaskTreeRows` (`t1` > `t1a` > `t1a1`, leaf `t2`) with
     `trackBy: 'id'`.
@@ -45,7 +47,9 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
   `fixture.detectChanges()` (user ruling).
 
 ## Seams — in red-green order
+
 ### A. Click on a collapsed parent → its child renders and the toggle reads expanded
+
 - Test: `it('opens a collapsed parent on click: the child row renders and aria-expanded becomes "true"')`
 - Asserts: before the click, `visibleRowIds()` equals
   `['t1', 't2']`. After `toggle('t1').click()`, it equals
@@ -60,6 +64,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
 - Order reason: independent. The base case.
 
 ### B. Second click on an open parent → the child is removed and the toggle reads collapsed
+
 - Test: `it('closes an open parent on a second click: the child row is removed, aria-expanded is "false" and data-expanded is gone')`
 - Asserts: after two clicks on `t1`, `visibleRowIds()` equals
   `['t1', 't2']`. `aria-expanded` is `"false"`, not absent.
@@ -71,6 +76,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
 - Order reason: builds on A.
 
 ### C. Leaf row → the toggle is inert and hidden, with no expanded state
+
 - Test: `it('disables and hides the toggle on a row without children, with no aria-expanded')`
 - Asserts: the `t2` button has `disabled === true`;
   `aria-hidden="true"`; `data-disabled` present with value `""`;
@@ -86,6 +92,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
   green builds the expandable path first.
 
 ### D. Group header click (withGrouping + withTree) → its members render, and a second click collapses them
+
 - Test: `it('opens and collapses a group header under withGrouping() + withTree()')`
 - Asserts: before any click, `visibleRowIds()` has the two
   headers and no leaf ids. After clicking
@@ -103,6 +110,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
 - Order reason: builds on A and B.
 
 ### E. Toggle click → the event bubbles to the row, default not prevented
+
 - Test: `it('lets the click bubble to the row without preventing default')`
 - Asserts: after `toggle('t1').click()`, the host's `rowClicks`
   has length 1 and `rowClicks[0].defaultPrevented === false`.
@@ -111,6 +119,7 @@ Spec file: `libs/table/src/directives/ngp-table-tree-toggle.directive.spec.ts`
 - Order reason: builds on A.
 
 ## Not tested
+
 - Clicking the disabled leaf toggle: a native `disabled` button
   dispatches no click — the browser, not our logic.
 - Keyboard activation (Enter/Space): native `<button>`

@@ -21,8 +21,8 @@ the same `id` reach `baseColumns`. `buildDataCells` writes
 overwrites the first for every row; `toggleColumnVisible` and
 `applyColumnOrder` both match by id and hit both entries.
 
-The dev-only gate is justified in ADR-0014's amendment by *"a check has
-already done its job by the time an app ships"*. That holds for
+The dev-only gate is justified in ADR-0014's amendment by _"a check has
+already done its job by the time an app ships"_. That holds for
 `createTable()`'s static `columns` config. It does not hold for
 `setColumns()`, a **runtime write path** taking a list built from user
 or server data — the #127 case the amendment lists as accepted risk,
@@ -33,16 +33,14 @@ except already reachable.
 ```ts
 // layout restored from localStorage, written by an older app
 // version that emitted `total` twice
-const saved: ColumnDefInput<Order>[] = JSON.parse(
-  localStorage.getItem('cols') ?? '[]',
-);            // [{id:'id'},{id:'total'},{id:'total'}]
+const saved: ColumnDefInput<Order>[] = JSON.parse(localStorage.getItem('cols') ?? '[]'); // [{id:'id'},{id:'total'},{id:'total'}]
 
 table.columns.update(setColumns(saved));
 ```
 
 Dev throws and the developer fixes the payload. Production does not.
 Three header cells render, but `renderRows()[n].cells.total` holds only
-the *second* `total` column's accessor output, and a column picker's
+the _second_ `total` column's accessor output, and a column picker's
 `toggleColumnVisibility('total')` flips both entries at once — so the
 checkbox and the rendered table disagree.
 
@@ -105,7 +103,9 @@ const ALIGN = createColumnMetaKey<'start' | 'end'>();
 const table = createTable(data, {
   trackBy: 'id',
   columns: [{ id: 'total', meta: new Map([[ALIGN, 'end']]) }],
-  columnsSchema: (p) => { metadata(p.total, WIDTH, 120); },
+  columnsSchema: (p) => {
+    metadata(p.total, WIDTH, 120);
+  },
 });
 
 readColumnMeta(table.columns()[0], ALIGN); // undefined — was 'end'
@@ -116,7 +116,7 @@ back correctly — an inverted relationship no consumer will guess. A
 header template branching on `ALIGN` renders left-aligned currency.
 Fix direction: seed the merge from `column.meta` rather than a fresh
 map; single-writer per `(columnId, key)` still holds because
-`resolve.ts:37` rejects a second *rule* on the pair, and a declared
+`resolve.ts:37` rejects a second _rule_ on the pair, and a declared
 `meta` entry is not a rule.
 
 ---
@@ -139,8 +139,7 @@ surfaces named in the file's own docstring: `columnsSchema`,
 
 ```ts
 // grouping levels restored from a shareable URL
-const levels = new URLSearchParams(location.search)
-  .get('groupBy')?.split(',') ?? [];   // ['region','legacy_tier']
+const levels = new URLSearchParams(location.search).get('groupBy')?.split(',') ?? []; // ['region','legacy_tier']
 
 createTable(data, { trackBy: 'id', columns }, withGrouping({ levels }));
 ```
@@ -157,12 +156,12 @@ Whether the fix is gating these three sites or carving them out of the
 amendment is a decision, not a change the reviewer could make — the
 amendment's closing paragraph names #127 as the place to reopen it.
 Recorded because today the code and the ADR disagree, and the gate is
-applied inconsistently across construction checks *within the same fold*.
+applied inconsistently across construction checks _within the same fold_.
 
 > **Caller's note (2026-09-24).** The amendment landed earlier the same
 > day as decision R7 and is not yet implemented — the gating rides with
 > #129's N2. So F4 is owed work, not a latent bug. It stands as
-> evidence that the gate must be applied to the *whole* fold at once,
+> evidence that the gate must be applied to the _whole_ fold at once,
 > and it is the same asymmetry F1 exploits from the other side.
 
 ---
@@ -172,7 +171,9 @@ applied inconsistently across construction checks *within the same fold*.
 `directives/ngp-table-row.directive.ts:48-54`
 
 ```ts
-effect(() => { this.rowAnimation?.registerRowElement(this.rowId(), element); });
+effect(() => {
+  this.rowAnimation?.registerRowElement(this.rowId(), element);
+});
 inject(DestroyRef).onDestroy(() => {
   this.rowAnimation?.unregisterRowElement(this.rowId(), element);
 });
@@ -180,7 +181,7 @@ inject(DestroyRef).onDestroy(() => {
 
 No `onCleanup`, so a re-run registers under the new id without
 unregistering the old, and the `DestroyRef` hook only ever unregisters
-the *last* id the instance held. The inline comment justifies this with
+the _last_ id the instance held. The inline comment justifies this with
 "`@for` tracks by row id" — a claim about the **consumer's** template.
 Nothing enforces it: `docs/3-ui/directives/row-animation.md` states no
 `track` requirement, and neither does the directive's contract.
@@ -189,7 +190,9 @@ Nothing enforces it: `docs/3-ui/directives/row-animation.md` states no
 
 ```html
 @for (row of table.renderRows(); track $index) {
-  <tr [ngpTableRow]="row"> … </tr>
+<tr [ngpTableRow]="row">
+  …
+</tr>
 }
 ```
 
@@ -202,7 +205,7 @@ under a new id while the deleted row's id keeps its entry in
 bound.
 
 `measureMoves` iterates only current `renderRows()` ids, so stale
-entries are never *read* — the observable defect is retention, not a
+entries are never _read_ — the observable defect is retention, not a
 wrong animation. `effect((onCleanup) => { … onCleanup(() =>
 unregister(id, el)); })` closes it without depending on the consumer's
 `track`.
@@ -215,7 +218,7 @@ unregister(id, el)); })` closes it without depending on the consumer's
   the fn once, eagerly, through its own session.
 - **`columns-schema/rules.ts`** — `applyVisible`/`applyVisibleAsync`
   target the exempted `VISIBLE` key, matching `resolve.ts:41`'s skip and
-  the AND-combine. `applySortNulls` targets `SORT_NULLS`, which is *not*
+  the AND-combine. `applySortNulls` targets `SORT_NULLS`, which is _not_
   skipped at `resolve.ts:41`, so its "single-writer, throws at resolve
   time" docstring is true.
 - **`columns-schema/metadata.ts`** — both record functions resolve the
@@ -238,7 +241,7 @@ unregister(id, el)); })` closes it without depending on the consumer's
   `createRow:143` return all three fields, not a partial spread);
   `open ⊆ snapshots` preserved on each path; `beginEdit`'s `{ insert }`
   and `createRow`'s array form resolve the inserted index against the
-  *newly written* array, and the stale `indexById` they pass cannot
+  _newly written_ array, and the stale `indexById` they pass cannot
   produce a false hit because `resolveIndex` verifies it.
 - **`ngp-table.directive.ts`**, **`ngp-table-cell.directive.ts`**,
   **`ngp-table-header-cell.directive.ts`**, **`table.tokens.ts`** — no

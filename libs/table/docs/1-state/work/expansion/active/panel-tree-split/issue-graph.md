@@ -6,14 +6,14 @@ ADR-0015 slices.
 
 ## Nodes
 
-| # | Title | State | Depends on | Blocks |
-|---|---|---|---|---|
-| [#118](https://github.com/DvirMon/ng-table/issues/118) | `createExpansionStore()` — the shared open-id factory, plus `initial` | ✅ CLOSED 09-20 | — | #119 |
-| [#119](https://github.com/DvirMon/ng-table/issues/119) | `withTree()` — the row tree, the `'tree'` stage and `state()` | ✅ CLOSED 09-24 (9349602) | #118 (cleared) | #120 |
-| [#120](https://github.com/DvirMon/ng-table/issues/120) | Collapsible grouping composes `withTree()`; grouping spec decoupled | ✅ CLOSED 09-24 (d75d4d8) | #119 (cleared) | #121 |
-| [#121](https://github.com/DvirMon/ng-table/issues/121) | `withExpansion()` narrows to the detail panel and ships as a slice | ✅ CLOSED 09-24 (5a1ad78) | #120 (cleared) | #122 |
-| [#122](https://github.com/DvirMon/ng-table/issues/122) | Reconcile the expansion docs and ADR-0012 with the split | ✅ CLOSED 09-25 (8cb5f41) | #121 (cleared) | — |
-| [#124](https://github.com/DvirMon/ng-table/issues/124) | Reconsider per-id emission (E3/E17) against `SelectionChange`'s `{ added, removed }` shape | ✅ RESOLVED — `discovery-emission-shape.md`, decided as E18 | — | #118 (folded in, design only) |
+| #                                                      | Title                                                                                      | State                                                       | Depends on     | Blocks                        |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | -------------- | ----------------------------- |
+| [#118](https://github.com/DvirMon/ng-table/issues/118) | `createExpansionStore()` — the shared open-id factory, plus `initial`                      | ✅ CLOSED 09-20                                             | —              | #119                          |
+| [#119](https://github.com/DvirMon/ng-table/issues/119) | `withTree()` — the row tree, the `'tree'` stage and `state()`                              | ✅ CLOSED 09-24 (9349602)                                   | #118 (cleared) | #120                          |
+| [#120](https://github.com/DvirMon/ng-table/issues/120) | Collapsible grouping composes `withTree()`; grouping spec decoupled                        | ✅ CLOSED 09-24 (d75d4d8)                                   | #119 (cleared) | #121                          |
+| [#121](https://github.com/DvirMon/ng-table/issues/121) | `withExpansion()` narrows to the detail panel and ships as a slice                         | ✅ CLOSED 09-24 (5a1ad78)                                   | #120 (cleared) | #122                          |
+| [#122](https://github.com/DvirMon/ng-table/issues/122) | Reconcile the expansion docs and ADR-0012 with the split                                   | ✅ CLOSED 09-25 (8cb5f41)                                   | #121 (cleared) | —                             |
+| [#124](https://github.com/DvirMon/ng-table/issues/124) | Reconsider per-id emission (E3/E17) against `SelectionChange`'s `{ added, removed }` shape | ✅ RESOLVED — `discovery-emission-shape.md`, decided as E18 | —              | #118 (folded in, design only) |
 
 ## Graph
 
@@ -56,13 +56,13 @@ dependency, not presentation order:
 
 ## Readiness at slicing time
 
-| # | rung | why |
-|---|---|---|
+| #    | rung              | why                                                                                                                                                               |
+| ---- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | #118 | `ready-for-agent` | one new file + a behavior-preserving rewire; the emission rule (now E18's `{ added, removed }` diff, not per-id) and full type surface are in `3-architecture.md` |
-| #119 | `needs:tasks` | high — new feature seam, stage relocation, discovery walk, tri-state, ADR-0014 guard |
-| #120 | `ready-for-agent` | broad but mechanical; every site enumerated in the call-site checklist |
-| #121 | `needs:tasks` | high — removing the union contribution is an interaction between the feature contract and the flatten walk |
-| #122 | `ready-for-agent` | broad but enumerated; no design calls left |
+| #119 | `needs:tasks`     | high — new feature seam, stage relocation, discovery walk, tri-state, ADR-0014 guard                                                                              |
+| #120 | `ready-for-agent` | broad but mechanical; every site enumerated in the call-site checklist                                                                                            |
+| #121 | `needs:tasks`     | high — removing the union contribution is an interaction between the feature contract and the flatten walk                                                        |
+| #122 | `ready-for-agent` | broad but enumerated; no design calls left                                                                                                                        |
 
 Breadth fired the count trigger on #120 and #122; difficulty did not, so
 neither carries `needs:tasks`.

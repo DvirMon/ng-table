@@ -11,7 +11,7 @@ element selector (other than `.heading-anchor`, which is prose's own concern, no
 styling). Evidence:
 
 - `spec.md`'s front matter is explicit: `does_not_own: "Inline code and links — see Inline Code
-  Chip.md / Inline Link.md"`. Prose's own "owns" list is H1–H4, heading anchors, lists,
+Chip.md / Inline Link.md"`. Prose's own "owns" list is H1–H4, heading anchors, lists,
   blockquote/hr, strong/em — inline code and links are named exclusions, not omissions.
 - Both `code-chip.ts` and `inline-link.ts` are real standalone components with their own
   (default/Emulated) encapsulation — `<ngpt-code-chip>`/`<ngpt-inline-link>` carry their own
@@ -26,7 +26,7 @@ styling). Evidence:
   both are authored as literal nested component tags in the same projected content.
 
 Given that, `ViewEncapsulation.None` is not load-bearing for code/link styling at all — it's
-needed *only* for the elements that have no dedicated component (headings, lists, blockquote, hr,
+needed _only_ for the elements that have no dedicated component (headings, lists, blockquote, hr,
 strong/em), which is exactly what CONVENTIONS.md #9 and this spec's "owns" list describe.
 
 **Loose end, not resolved by this build:** `spec.md`'s own "HTML/CSS mock" section shows plain
@@ -47,7 +47,7 @@ unaffected in both modes. Reasons:
 - CONVENTIONS.md's fixed contract line says measure exists "for Home's headline scale" (singular)
   and the task brief calls out H2 specifically.
 - Home's own H1 is not rendered through `ngpt-prose` at all — it's page-local, owned by the
-  `hero-band` block ("owns the announcement pill, H1 clamp, lede...").  There is currently no case
+  `hero-band` block ("owns the announcement pill, H1 clamp, lede..."). There is currently no case
   where a marketing-measure prose block would ever contain an H1.
 - Home's feature-grid H3s stay at the docs `title-medium` scale in both the frame and the page spec
   (no marketing H3 step is mentioned anywhere); only the H2 eyebrow-adjacent heading gets the
@@ -122,16 +122,16 @@ writes the projected content, per the spec's own HTML mock.
 
 ## Selector: `ngpt-prose` → `article[ngptProse], div[ngptProse]`
 
-| | Before | After |
-|---|---|---|
-| Selector | `ngpt-prose` (element, kebab-case) | `article[ngptProse], div[ngptProse]` (attribute, camelCase) |
-| Host element | a custom `<ngpt-prose>` tag with no semantics | the consumer's own `<article>` / `<div>` |
-| Call form | `<ngpt-prose>…</ngpt-prose>` | `<article ngptProse>…</article>` |
-| `measure` input | unchanged | unchanged |
-| `data-measure` host attr | unchanged | unchanged |
-| `ViewEncapsulation.None` | unchanged | unchanged |
-| `class: 'ngpt-prose'` host binding | unchanged | unchanged |
-| Template | `<ng-content />` | `<ng-content />` |
+|                                    | Before                                        | After                                                       |
+| ---------------------------------- | --------------------------------------------- | ----------------------------------------------------------- |
+| Selector                           | `ngpt-prose` (element, kebab-case)            | `article[ngptProse], div[ngptProse]` (attribute, camelCase) |
+| Host element                       | a custom `<ngpt-prose>` tag with no semantics | the consumer's own `<article>` / `<div>`                    |
+| Call form                          | `<ngpt-prose>…</ngpt-prose>`                  | `<article ngptProse>…</article>`                            |
+| `measure` input                    | unchanged                                     | unchanged                                                   |
+| `data-measure` host attr           | unchanged                                     | unchanged                                                   |
+| `ViewEncapsulation.None`           | unchanged                                     | unchanged                                                   |
+| `class: 'ngpt-prose'` host binding | unchanged                                     | unchanged                                                   |
+| Template                           | `<ng-content />`                              | `<ng-content />`                                            |
 
 Driven by ADR-0005: a DS primitive whose job is to style existing native elements is
 attribute-hosted, never an element wrapper. Prose is the clearest case in the app — it emitted a
@@ -150,7 +150,7 @@ instead, per its own `docs/decisions.md`). This was the cheapest possible moment
 **Do not "fix" either of these later.** They are not leftovers from the element-selector shape.
 
 - **`ViewEncapsulation.None` stays.** The reason has nothing to do with the host element. Under
-  emulated encapsulation, nodes projected through `<ng-content>` carry the *declaring* component's
+  emulated encapsulation, nodes projected through `<ng-content>` carry the _declaring_ component's
   encapsulation id, not prose's — so a `:host h2` rule compiled with prose's `_nghost`/`_ngcontent`
   attributes could never match the consumer's headings. Prose exists **only** to style content it
   does not declare, so emulated encapsulation would leave it styling nothing at all. Changing
@@ -176,7 +176,7 @@ looked convenient:
   (`Doc Article.dc.html`, `API Reference.dc.html`, `Section Landing.dc.html`) each put exactly one
   H1 plus a lede plus H2 sections inside it. That is a self-contained document: `<article>`.
   `spec.md`'s a11y line ("One H1 per page; never skip a level") is an article-shaped contract.
-- **`div`** — `pages/home/docs/spec.md` § Section rhythm makes prose a *fragment*: every Home
+- **`div`** — `pages/home/docs/spec.md` § Section rhythm makes prose a _fragment_: every Home
   section opens with a `category-badge` eyebrow, then "`prose` H2 at
   `--ngpt-sys-typescale-headline-marketing`", then an optional single paragraph, all inside one
   `<section>`. Slot 5 is the same shape ("`prose` H2 + one paragraph + a command row"). A heading

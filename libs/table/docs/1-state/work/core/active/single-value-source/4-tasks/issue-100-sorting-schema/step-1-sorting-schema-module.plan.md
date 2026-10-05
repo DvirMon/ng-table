@@ -55,11 +55,17 @@ export type SortingPath<TRow, TValues extends ColumnValueMap> = {
   readonly [K in ColumnIdIn<TValues>]: SortingHandle<TRow, K, TValues[K]>;
 };
 
-export type SortingSchemaFn<TRow, TValues extends ColumnValueMap> =
-  (path: SortingPath<TRow, TValues>) => void;
+export type SortingSchemaFn<TRow, TValues extends ColumnValueMap> = (
+  path: SortingPath<TRow, TValues>,
+) => void;
 
-export interface SortNullsOpts { order?: 'first' | 'last'; emptyString?: 'is-empty' }
-export interface SortableOpts { enable: () => boolean }
+export interface SortNullsOpts {
+  order?: 'first' | 'last';
+  emptyString?: 'is-empty';
+}
+export interface SortableOpts {
+  enable: () => boolean;
+}
 
 // Rule union: 'sort-nulls' | 'sort-fn' | 'sortable', each with `columnId`.
 export type AnySortingRule<TRow> = SortNullsRule | SortFnRule<TRow> | SortableRule;
@@ -84,7 +90,7 @@ member that `GroupingHandle` carries, so copy that shape exactly.
 /** Types a reusable per-column sorting schema. Identity at runtime —
  * call the result on a handle: `money(path.total)`. */
 export function sortingSchema<TRow>(
-  fn: (column: SortingHandle<TRow>) => void
+  fn: (column: SortingHandle<TRow>) => void,
 ): (column: SortingHandle<TRow>) => void {
   return fn;
 }
@@ -127,4 +133,5 @@ export function sortingSchema<TRow>(
 - [ ] `sortingSchema` returns its argument unchanged.
 
 ---
+
 [Step 2: Wire `withSorting({ schema })`](step-2-wire-with-sorting.plan.md) →

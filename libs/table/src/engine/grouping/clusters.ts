@@ -73,7 +73,7 @@ function reportNonPrimitiveGroupValue(columnId: string): void {
   console.error(
     `[withGrouping] field "${columnId}" groups on a non-primitive value — every distinct ` +
       'object collapses into one group. Declare groupKey on that field to key the group ' +
-      'on a primitive.'
+      'on a primitive.',
   );
 }
 
@@ -99,7 +99,7 @@ export function buildClusters<T>(
   items: T[],
   levels: readonly string[],
   accessor: (item: T, columnId: string) => unknown,
-  reportedFields: Set<string> = new Set()
+  reportedFields: Set<string> = new Set(),
 ): ClusterNode<T>[] {
   const [columnId, ...rest] = levels;
   if (columnId === undefined) {
@@ -137,7 +137,7 @@ export function readGroupValue<TRow>(
   columnId: string,
   columnById: ReadonlyMap<string, ColumnDef<TRow>>,
   reportedColumns: Set<string>,
-  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>
+  extractValueByColumn?: ReadonlyMap<string, (v: unknown) => unknown>,
 ): unknown {
   const column = columnById.get(columnId);
   const raw = column ? readAccessor(column, row, reportedColumns) : undefined;
@@ -151,7 +151,7 @@ export function readGroupValue<TRow>(
  */
 export function groupSourceOf<TRow>(
   rows: readonly TRow[],
-  treeLinks: TreeLinkSource<TRow> | undefined
+  treeLinks: TreeLinkSource<TRow> | undefined,
 ): (row: TRow) => TRow {
   return treeLinks ? createRootLookup(rows, treeLinks) : (row) => row;
 }
@@ -165,7 +165,7 @@ export function groupSourceOf<TRow>(
  */
 function createRootLookup<TRow>(
   rows: readonly TRow[],
-  treeLinks: TreeLinkSource<TRow>
+  treeLinks: TreeLinkSource<TRow>,
 ): (row: TRow) => TRow {
   // Note: walk the resolved `parentById`, never the raw `parentOf` — the raw link loops forever
   // on a cycle.
@@ -210,7 +210,7 @@ export function buildClusterNodes<TRow>(
   rows: TRow[],
   levels: readonly string[],
   columns: ColumnDef<TRow>[],
-  opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn' | 'treeLinks'>
+  opts?: Pick<ClusterOpts<TRow>, 'extractValueByColumn' | 'treeLinks'>,
 ): ClusterNode<TRow>[] {
   // Note: the one clustering path behind `clusterRows`, `rowsBeneathGroup`, `collectGroupIds`
   // and `collectAppliedLevels`, so their trees cannot drift. Column map and accessor-throw
@@ -224,8 +224,8 @@ export function buildClusterNodes<TRow>(
       columnId,
       columnById,
       reportedColumns,
-      opts?.extractValueByColumn
-    )
+      opts?.extractValueByColumn,
+    ),
   );
 }
 
@@ -234,7 +234,7 @@ function reportGroupWhenError(columnId: string): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     `[withGrouping] when threw for column "${columnId}". Admitting the cluster (rendering ` +
-      'it as a group) for the affected cluster(s) in this evaluation.'
+      'it as a group) for the affected cluster(s) in this evaluation.',
   );
 }
 
@@ -246,7 +246,7 @@ function evaluateGroupWhen<TRow>(
   summary: ClusterSummary<TRow>,
   columnId: string,
   reportedColumns: Set<string>,
-  ctx: ValueOfContext<TRow>
+  ctx: ValueOfContext<TRow>,
 ): boolean {
   if (!predicate) {
     return true;
@@ -278,7 +278,7 @@ export function admitClusters<T, TRow>(
   columns: () => readonly ColumnDef<TRow>[],
   knownIds: ReadonlySet<string>,
   label: string,
-  ctx: ValueOfContext<TRow> = buildValueOfContext(columns, knownIds, label)
+  ctx: ValueOfContext<TRow> = buildValueOfContext(columns, knownIds, label),
 ): ClusterNode<T>[] {
   if (!when && !columnWhen?.size) {
     return nodes;
@@ -289,19 +289,13 @@ export function admitClusters<T, TRow>(
       key: node.value,
       rows: toRows(node.items),
     };
-    const admittedByTable = evaluateGroupWhen(
-      when,
-      summary,
-      node.columnId,
-      reportedColumns,
-      ctx
-    );
+    const admittedByTable = evaluateGroupWhen(when, summary, node.columnId, reportedColumns, ctx);
     const admittedByColumn = evaluateGroupWhen(
       columnWhen?.get(node.columnId),
       summary,
       node.columnId,
       reportedColumns,
-      ctx
+      ctx,
     );
     const admitted = admittedByTable && admittedByColumn;
     const children = admitted
@@ -314,7 +308,7 @@ export function admitClusters<T, TRow>(
           columns,
           knownIds,
           label,
-          ctx
+          ctx,
         )
       : node.children;
     return { ...node, admitted, children };
@@ -325,7 +319,7 @@ export function admitClusters<T, TRow>(
  * `pipeline.ts` and `queries.ts` to flatten a judged tree back to `T[]`. */
 export function flattenLeaves<T>(nodes: ClusterNode<T>[]): T[] {
   return nodes.flatMap((node) =>
-    node.admitted && node.children.length > 0 ? flattenLeaves(node.children) : node.items
+    node.admitted && node.children.length > 0 ? flattenLeaves(node.children) : node.items,
   );
 }
 
@@ -334,7 +328,7 @@ function reportGroupOrderError(): void {
   // runtime-degradation logging abstraction to reuse in this codebase yet.
   console.error(
     '[withGrouping] groupOrder threw while ordering group siblings. Falling back to stable ' +
-      'first-occurrence order for the affected level(s) in this evaluation.'
+      'first-occurrence order for the affected level(s) in this evaluation.',
   );
 }
 
@@ -349,10 +343,9 @@ export function sortClusters<T, TRow>(
   nodes: ClusterNode<T>[],
   groupOrderByColumn: ReadonlyMap<string, GroupOrder<TRow>> | undefined,
   toRows: (items: T[]) => TRow[],
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): ClusterNode<T>[] {
-  const comparator =
-    nodes.length > 0 ? groupOrderByColumn?.get(nodes[0].columnId) : undefined;
+  const comparator = nodes.length > 0 ? groupOrderByColumn?.get(nodes[0].columnId) : undefined;
   if (!comparator) {
     return partitionAndRecurse(nodes, groupOrderByColumn, toRows, reported);
   }
@@ -372,7 +365,7 @@ function partitionAndRecurse<T, TRow>(
   nodes: ClusterNode<T>[],
   groupOrderByColumn: ReadonlyMap<string, GroupOrder<TRow>> | undefined,
   toRows: (items: T[]) => TRow[],
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): ClusterNode<T>[] {
   const recursed = nodes.map((node) => {
     const children = sortClusters(node.children, groupOrderByColumn, toRows, reported);
@@ -388,7 +381,7 @@ function orderWithComparator<T, TRow>(
   nodes: ClusterNode<T>[],
   comparator: GroupOrder<TRow>,
   toRows: (items: T[]) => TRow[],
-  reported: { done: boolean }
+  reported: { done: boolean },
 ): ClusterNode<T>[] {
   try {
     const summaries = nodes.map((node) => ({

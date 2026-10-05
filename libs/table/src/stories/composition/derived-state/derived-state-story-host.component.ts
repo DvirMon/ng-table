@@ -33,7 +33,9 @@ export class DerivedStateStoryHostComponent {
     // `equals()`'s generics collapse `TCriterion` to `unknown` when called bare inside an
     // object-literal schema — saturating them keeps `activeDept` typed as `string | null`
     // instead of `unknown`. Latent defect in `filters/rules.ts`; flagged, not fixed here.
-    withFiltering({ schema: (path) => ({ dept: equals<CompositionRow, 'dept', string>(path.dept) }) }),
+    withFiltering({
+      schema: (path) => ({ dept: equals<CompositionRow, 'dept', string>(path.dept) }),
+    }),
     withSelection(
       {},
       withComputed((store) => ({

@@ -8,9 +8,9 @@
 
 ## Files
 
-| File | Action |
-|---|---|
-| `libs/shared/table/src/filters/index.ts` | edit |
+| File                                     | Action |
+| ---------------------------------------- | ------ |
+| `libs/shared/table/src/filters/index.ts` | edit   |
 
 ## Why This Step Exists
 
@@ -72,4 +72,5 @@ the header correction on Step 5.
 - [ ] `nx run shared-table:typecheck` is clean
 
 ---
+
 ← [Step 5: Delete the ambient recorder](step-5-delete-recorder.plan.md)

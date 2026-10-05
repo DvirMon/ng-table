@@ -5,32 +5,70 @@ atomic: Organism
 spec: specs/Search.md
 frame: components/Search.dc.html
 owns:
-  - "Two surfaces: the navbar field and the ⌘K overlay"
-  - "The shared keyboard-chip atom"
-  - "Overlay scrim, panel, input row, result list, empty states, footer legend"
-  - "Full keyboard model"
+  - 'Two surfaces: the navbar field and the ⌘K overlay'
+  - 'The shared keyboard-chip atom'
+  - 'Overlay scrim, panel, input row, result list, empty states, footer legend'
+  - 'Full keyboard model'
 does_not_own:
-  - "Search indexing/ranking — see Search Index.md"
+  - 'Search indexing/ranking — see Search Index.md'
 depends_on:
-  - "foundations/Radius and Elevation.md (shape)"
-  - "foundations/Motion.md (motion)"
-  - "foundations/Color.md (color)"
-  - "foundations/Iconography.md (icons)"
-  - "foundations/Typography.md (typography)"
+  - 'foundations/Radius and Elevation.md (shape)'
+  - 'foundations/Motion.md (motion)'
+  - 'foundations/Color.md (color)'
+  - 'foundations/Iconography.md (icons)'
+  - 'foundations/Typography.md (typography)'
 states:
-  - "field idle"
-  - "field hover"
-  - "field focus"
-  - "overlay open"
-  - "typing"
-  - "results"
-  - "no results"
-  - "empty query"
-  - "result hovered"
-  - "result keyboard-selected"
+  - 'field idle'
+  - 'field hover'
+  - 'field focus'
+  - 'overlay open'
+  - 'typing'
+  - 'results'
+  - 'no results'
+  - 'empty query'
+  - 'result hovered'
+  - 'result keyboard-selected'
 a11y:
-  - "role=\"dialog\" aria-modal; focus trapped, Escape closes and restores focus; results are an aria-activedescendant listbox"
-tokens: [--ngpt-comp-search-field-width, --ngpt-comp-search-field-height, --ngpt-sys-space-250, --ngpt-sys-shape-corner-small, --ngpt-bg-raised, --ngpt-comp-control-border-default, --ngpt-comp-pill-border-hover, --ngpt-focus-ring, --ngpt-sys-icon-size-md, --ngpt-text-muted, --ngpt-sys-space-200, --ngpt-sys-typescale-code, --ngpt-sys-space-050, --ngpt-sys-shape-corner-extra-small, --ngpt-bg-code-chip, --ngpt-sys-scrim, --ngpt-sys-z-modal-scrim, --ngpt-sys-z-modal, --ngpt-comp-search-panel-width, --ngpt-comp-search-panel-max-height, --ngpt-bg-elevated, --ngpt-border-subtle, --ngpt-sys-shape-corner-medium, --ngpt-sys-elevation-level2, --ngpt-comp-search-input-height, --ngpt-sys-space-400, --ngpt-sys-typescale-body-large, --ngpt-text-primary, --ngpt-sys-typescale-label-small-alt, --ngpt-sys-space-300, --ngpt-sys-shape-corner-extra-small-alt, --ngpt-text-secondary, --ngpt-accent, --ngpt-bg-active, --ngpt-sys-motion-duration-slow, --ngpt-sys-motion-easing-decelerate]
+  - 'role="dialog" aria-modal; focus trapped, Escape closes and restores focus; results are an aria-activedescendant listbox'
+tokens:
+  [
+    --ngpt-comp-search-field-width,
+    --ngpt-comp-search-field-height,
+    --ngpt-sys-space-250,
+    --ngpt-sys-shape-corner-small,
+    --ngpt-bg-raised,
+    --ngpt-comp-control-border-default,
+    --ngpt-comp-pill-border-hover,
+    --ngpt-focus-ring,
+    --ngpt-sys-icon-size-md,
+    --ngpt-text-muted,
+    --ngpt-sys-space-200,
+    --ngpt-sys-typescale-code,
+    --ngpt-sys-space-050,
+    --ngpt-sys-shape-corner-extra-small,
+    --ngpt-bg-code-chip,
+    --ngpt-sys-scrim,
+    --ngpt-sys-z-modal-scrim,
+    --ngpt-sys-z-modal,
+    --ngpt-comp-search-panel-width,
+    --ngpt-comp-search-panel-max-height,
+    --ngpt-bg-elevated,
+    --ngpt-border-subtle,
+    --ngpt-sys-shape-corner-medium,
+    --ngpt-sys-elevation-level2,
+    --ngpt-comp-search-input-height,
+    --ngpt-sys-space-400,
+    --ngpt-sys-typescale-body-large,
+    --ngpt-text-primary,
+    --ngpt-sys-typescale-label-small-alt,
+    --ngpt-sys-space-300,
+    --ngpt-sys-shape-corner-extra-small-alt,
+    --ngpt-text-secondary,
+    --ngpt-accent,
+    --ngpt-bg-active,
+    --ngpt-sys-motion-duration-slow,
+    --ngpt-sys-motion-easing-decelerate,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -56,20 +94,20 @@ Depends on `foundations/Radius and Elevation.md` (scrim, z-index, elevated surfa
 
 Sits in the navbar's right group, before the Sponsor pill. Below `md` (1024px) it collapses to a single search icon button that opens the same overlay.
 
-| Property | Value | Token |
-|---|---|---|
-| Width | 220px (fixed; icon-only below md) | `--ngpt-comp-search-field-width` |
-| Height | 32px | `--ngpt-comp-search-field-height` |
-| Padding | 0 10px | `--ngpt-sys-space-250` |
-| Radius | 8px | `--ngpt-sys-shape-corner-small` |
-| Background | oklch(0.17 0.005 260) | `--ngpt-bg-raised` |
-| Border (default) | 1px solid oklch(0.3 0.005 260) | `--ngpt-comp-control-border-default` |
-| Border (hover) | 1px solid oklch(0.45 0.005 260) | `--ngpt-comp-pill-border-hover` |
-| Focus treatment | Leading icon recolors to `--ngpt-accent`; no box-shadow ring on the control | `--ngpt-accent` |
-| Leading icon | lucideSearch, 16px, oklch(0.6 0.01 260) | `--ngpt-sys-icon-size-md` |
-| Placeholder | "Search docs", 13px, oklch(0.6 0.01 260) | `--ngpt-text-muted` |
-| Trailing hint | ⌘K keyboard chip, right-aligned | see below |
-| Gap | 8px | `--ngpt-sys-space-200` |
+| Property         | Value                                                                       | Token                                |
+| ---------------- | --------------------------------------------------------------------------- | ------------------------------------ |
+| Width            | 220px (fixed; icon-only below md)                                           | `--ngpt-comp-search-field-width`     |
+| Height           | 32px                                                                        | `--ngpt-comp-search-field-height`    |
+| Padding          | 0 10px                                                                      | `--ngpt-sys-space-250`               |
+| Radius           | 8px                                                                         | `--ngpt-sys-shape-corner-small`      |
+| Background       | oklch(0.17 0.005 260)                                                       | `--ngpt-bg-raised`                   |
+| Border (default) | 1px solid oklch(0.3 0.005 260)                                              | `--ngpt-comp-control-border-default` |
+| Border (hover)   | 1px solid oklch(0.45 0.005 260)                                             | `--ngpt-comp-pill-border-hover`      |
+| Focus treatment  | Leading icon recolors to `--ngpt-accent`; no box-shadow ring on the control | `--ngpt-accent`                      |
+| Leading icon     | lucideSearch, 16px, oklch(0.6 0.01 260)                                     | `--ngpt-sys-icon-size-md`            |
+| Placeholder      | "Search docs", 13px, oklch(0.6 0.01 260)                                    | `--ngpt-text-muted`                  |
+| Trailing hint    | ⌘K keyboard chip, right-aligned                                             | see below                            |
+| Gap              | 8px                                                                         | `--ngpt-sys-space-200`               |
 
 It is a `<button>`, not an `<input>` — the real input lives in the overlay. This avoids two focusable text fields competing for the same query.
 
@@ -110,31 +148,31 @@ template — this is a pre-composed widget, not a generic wrapper, so there is n
 
 Used for the ⌘K hint and the overlay's footer legend.
 
-| Property | Value | Token |
-|---|---|---|
-| Font | JetBrains Mono 11px | `--ngpt-sys-typescale-code` |
-| Padding | 2px 5px | `--ngpt-sys-space-050` |
-| Radius | 4px | `--ngpt-sys-shape-corner-extra-small` |
-| Background | oklch(0.24 0.005 260) | `--ngpt-bg-code-chip` |
-| Text color | oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
+| Property   | Value                 | Token                                 |
+| ---------- | --------------------- | ------------------------------------- |
+| Font       | JetBrains Mono 11px   | `--ngpt-sys-typescale-code`           |
+| Padding    | 2px 5px               | `--ngpt-sys-space-050`                |
+| Radius     | 4px                   | `--ngpt-sys-shape-corner-extra-small` |
+| Background | oklch(0.24 0.005 260) | `--ngpt-bg-code-chip`                 |
+| Text color | oklch(0.85 0.01 260)  | `--ngpt-text-secondary`               |
 
 Chip text is `--ngpt-text-secondary`, not muted: on the 0.24 chip fill, muted measures 4.17:1 and misses
 AA at 11px.
 
 ## Surface 2 — ⌘K overlay
 
-| Property | Value | Token |
-|---|---|---|
-| Scrim | rgba(9, 10, 17, 0.8), no blur | `--ngpt-sys-scrim` |
-| Scrim z-index | 50 | `--ngpt-sys-z-modal-scrim` |
-| Panel z-index | 60 | `--ngpt-sys-z-modal` |
-| Panel position | centered horizontally, 15vh from top | `—` |
-| Panel width | 560px (calc(100vw - 32px) below sm) | `--ngpt-comp-search-panel-width` |
-| Panel max-height | 60vh | `--ngpt-comp-search-panel-max-height` |
-| Panel background | oklch(0.2 0.005 260) | `--ngpt-bg-elevated` |
-| Panel border | 1px solid oklch(0.26 0.005 260) | `--ngpt-border-subtle` |
-| Panel radius | 6px | `--ngpt-sys-shape-corner-extra-small-alt` (was `-medium`/12px) |
-| Panel shadow | `0 0 0 1px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.2)` — search-local hairline, not the shared elevation token | `--_ngpt-search-shadow-hairline` (component-local, `search-overlay.css`) |
+| Property         | Value                                                                                                        | Token                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| Scrim            | rgba(9, 10, 17, 0.8), no blur                                                                                | `--ngpt-sys-scrim`                                                       |
+| Scrim z-index    | 50                                                                                                           | `--ngpt-sys-z-modal-scrim`                                               |
+| Panel z-index    | 60                                                                                                           | `--ngpt-sys-z-modal`                                                     |
+| Panel position   | centered horizontally, 15vh from top                                                                         | `—`                                                                      |
+| Panel width      | 560px (calc(100vw - 32px) below sm)                                                                          | `--ngpt-comp-search-panel-width`                                         |
+| Panel max-height | 60vh                                                                                                         | `--ngpt-comp-search-panel-max-height`                                    |
+| Panel background | oklch(0.2 0.005 260)                                                                                         | `--ngpt-bg-elevated`                                                     |
+| Panel border     | 1px solid oklch(0.26 0.005 260)                                                                              | `--ngpt-border-subtle`                                                   |
+| Panel radius     | 6px                                                                                                          | `--ngpt-sys-shape-corner-extra-small-alt` (was `-medium`/12px)           |
+| Panel shadow     | `0 0 0 1px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.2)` — search-local hairline, not the shared elevation token | `--_ngpt-search-shadow-hairline` (component-local, `search-overlay.css`) |
 
 Scrim change is app-wide (`--ngpt-sys-scrim`/`--ngpt-sys-scrim-blur` in `src/styles/tokens/shape.css`
 — the blur token was removed entirely). Panel shadow change is search-local only —
@@ -142,39 +180,39 @@ Scrim change is app-wide (`--ngpt-sys-scrim`/`--ngpt-sys-scrim-blur` in `src/sty
 
 ### Input row
 
-| Property | Value | Token |
-|---|---|---|
-| Height | 56px | `--ngpt-comp-search-input-height` |
-| Padding | 0 16px | `--ngpt-sys-space-400` |
-| Layout | Inset "well" — its own margin, radius, background, and shadow, not a flat full-width row | `--ngpt-bg-active` (background), `--ngpt-sys-shape-corner-extra-small` (radius), `--_ngpt-search-shadow-hairline` (shadow) |
-| Leading icon | lucideSearch, 16px, oklch(0.55 0.01 260) | `--ngpt-sys-icon-size-md` |
-| Input font | Inter 15px | `--ngpt-sys-typescale-body-large` |
-| Input text | oklch(1 0 0) | `--ngpt-text-primary` |
-| Placeholder | oklch(0.55 0.01 260) | `--ngpt-text-muted` |
-| Trailing | Clear-query button (shown only while `query()` is non-empty; bare — no border in any state, fills `--ngpt-bg-accent-solid` with `--ngpt-text-on-accent` icon on hover/focus-visible) + Esc keyboard chip — two separate elements | `—` |
+| Property     | Value                                                                                                                                                                                                                            | Token                                                                                                                      |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Height       | 56px                                                                                                                                                                                                                             | `--ngpt-comp-search-input-height`                                                                                          |
+| Padding      | 0 16px                                                                                                                                                                                                                           | `--ngpt-sys-space-400`                                                                                                     |
+| Layout       | Inset "well" — its own margin, radius, background, and shadow, not a flat full-width row                                                                                                                                         | `--ngpt-bg-active` (background), `--ngpt-sys-shape-corner-extra-small` (radius), `--_ngpt-search-shadow-hairline` (shadow) |
+| Leading icon | lucideSearch, 16px, oklch(0.55 0.01 260)                                                                                                                                                                                         | `--ngpt-sys-icon-size-md`                                                                                                  |
+| Input font   | Inter 15px                                                                                                                                                                                                                       | `--ngpt-sys-typescale-body-large`                                                                                          |
+| Input text   | oklch(1 0 0)                                                                                                                                                                                                                     | `--ngpt-text-primary`                                                                                                      |
+| Placeholder  | oklch(0.55 0.01 260)                                                                                                                                                                                                             | `--ngpt-text-muted`                                                                                                        |
+| Trailing     | Clear-query button (shown only while `query()` is non-empty; bare — no border in any state, fills `--ngpt-bg-accent-solid` with `--ngpt-text-on-accent` icon on hover/focus-visible) + Esc keyboard chip — two separate elements | `—`                                                                                                                        |
 
 No border or ring on the input itself — the panel is already the focused surface.
 
 ### Result list
 
-| Property | Value | Token |
-|---|---|---|
-| List padding | 8px | `--ngpt-sys-space-200` |
-| Group label | 11.9px / 600 / uppercase / 0.05em, accent-colored, line-height 32px, padding 8px 4px 0, margin 0 -4px. Applies identically to both the "Documentation"/result-group label and the "Recent" label. | `--ngpt-accent` |
-| Row padding | 10px 12px, bottom overridden to 4px (deliberate divergence from reference's 0, see gaps doc item 21) | `--ngpt-sys-space-250 --ngpt-sys-space-300`, bottom `--ngpt-sys-space-100` |
-| Row radius | 4px | `--ngpt-sys-shape-corner-extra-small` (was `-extra-small-alt`/6px) |
-| Row background (idle) | Same well surface as the input row, not transparent | `--ngpt-bg-active` |
-| Row min-height | 56px, not padding-only — same token as the input row | `--ngpt-comp-search-input-height` |
-| Row gap | 0 — flush, per-row hairline shadow reads the boundary instead | `—` |
-| Row shadow | Search-local hairline (see Panel shadow above) | `--_ngpt-search-shadow-hairline` |
-| Leading icon | 20px — result rows: page → file icon, heading → hash icon; recent rows: history/clock icon | see Iconography.md addition below |
-| Hierarchy connector | Heading results only — vertical + horizontal stroke line, no arrowhead, left of the leading icon | `—` (new, see gaps doc) |
-| Trailing icon | Result rows: 22px return-arrow, every row regardless of active state. Recent rows: two 22px action buttons (save-search star, remove-from-history X). | see Iconography.md addition below |
-| Title | Inter 13.5px, oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
-| Path / section line | Inter 12px, oklch(0.55 0.01 260), below title, 2px gap. Result rows only — recent rows show title only. | `--ngpt-text-muted` |
-| Query match highlight | oklch(0.68 0.22 328), 600 weight (color only, no background) | `--ngpt-accent` |
-| Row active (hover or arrow focus) | Solid accent fill, full row, no left-border accent, text/icons recolor to an AA-checked on-accent value. See `docs/decisions.md` § Active row: solid accent fill. | `--ngpt-bg-accent-solid` / `--ngpt-text-on-accent` |
-| Max visible | Capped at 5 results per group — no scroll-to-fit. Implemented in `groupSearchResults()` against `SEARCH_INDEX_MOCK` (a fixture, not real doc content — see decisions.md § Persistence and ranking). | `—` |
+| Property                          | Value                                                                                                                                                                                               | Token                                                                      |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| List padding                      | 8px                                                                                                                                                                                                 | `--ngpt-sys-space-200`                                                     |
+| Group label                       | 11.9px / 600 / uppercase / 0.05em, accent-colored, line-height 32px, padding 8px 4px 0, margin 0 -4px. Applies identically to both the "Documentation"/result-group label and the "Recent" label.   | `--ngpt-accent`                                                            |
+| Row padding                       | 10px 12px, bottom overridden to 4px (deliberate divergence from reference's 0, see gaps doc item 21)                                                                                                | `--ngpt-sys-space-250 --ngpt-sys-space-300`, bottom `--ngpt-sys-space-100` |
+| Row radius                        | 4px                                                                                                                                                                                                 | `--ngpt-sys-shape-corner-extra-small` (was `-extra-small-alt`/6px)         |
+| Row background (idle)             | Same well surface as the input row, not transparent                                                                                                                                                 | `--ngpt-bg-active`                                                         |
+| Row min-height                    | 56px, not padding-only — same token as the input row                                                                                                                                                | `--ngpt-comp-search-input-height`                                          |
+| Row gap                           | 0 — flush, per-row hairline shadow reads the boundary instead                                                                                                                                       | `—`                                                                        |
+| Row shadow                        | Search-local hairline (see Panel shadow above)                                                                                                                                                      | `--_ngpt-search-shadow-hairline`                                           |
+| Leading icon                      | 20px — result rows: page → file icon, heading → hash icon; recent rows: history/clock icon                                                                                                          | see Iconography.md addition below                                          |
+| Hierarchy connector               | Heading results only — vertical + horizontal stroke line, no arrowhead, left of the leading icon                                                                                                    | `—` (new, see gaps doc)                                                    |
+| Trailing icon                     | Result rows: 22px return-arrow, every row regardless of active state. Recent rows: two 22px action buttons (save-search star, remove-from-history X).                                               | see Iconography.md addition below                                          |
+| Title                             | Inter 13.5px, oklch(0.85 0.01 260)                                                                                                                                                                  | `--ngpt-text-secondary`                                                    |
+| Path / section line               | Inter 12px, oklch(0.55 0.01 260), below title, 2px gap. Result rows only — recent rows show title only.                                                                                             | `--ngpt-text-muted`                                                        |
+| Query match highlight             | oklch(0.68 0.22 328), 600 weight (color only, no background)                                                                                                                                        | `--ngpt-accent`                                                            |
+| Row active (hover or arrow focus) | Solid accent fill, full row, no left-border accent, text/icons recolor to an AA-checked on-accent value. See `docs/decisions.md` § Active row: solid accent fill.                                   | `--ngpt-bg-accent-solid` / `--ngpt-text-on-accent`                         |
+| Max visible                       | Capped at 5 results per group — no scroll-to-fit. Implemented in `groupSearchResults()` against `SEARCH_INDEX_MOCK` (a fixture, not real doc content — see decisions.md § Persistence and ranking). | `—`                                                                        |
 
 Exactly one row is active at all times, defaulting to the first — Enter always has an unambiguous target. Recent-search rows share this same `role="option"` listbox, `aria-activedescendant`, and arrow-key model as query results — not a separate Tab-only affordance (`docs/gaps-ngp-reference.md` item 17).
 
@@ -184,11 +222,11 @@ reference SVG paths to source lucide equivalents from.
 
 ### Empty states
 
-| Condition | Content |
-|---|---|
-| Query empty | Recent searches if any, otherwise a 40px-padded centered line: "Search the docs" in 13.5px `--ngpt-text-muted` |
-| No matches | 40px-padded centered block: a 40px `lucideSearchX` icon, "No results for “{query}”" in 13.5px `--ngpt-text-secondary`, a 12px `--ngpt-text-muted` hint line, plus a "Try searching for:" label and a row of clickable suggestion chips (reused `ngptPillButton`) populated from `SEARCH_SUGGESTIONS_MOCK` |
-| Loading | No spinner. Results are local and synchronous; if a network index is added later, hold the previous results rather than flashing empty. |
+| Condition   | Content                                                                                                                                                                                                                                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Query empty | Recent searches if any, otherwise a 40px-padded centered line: "Search the docs" in 13.5px `--ngpt-text-muted`                                                                                                                                                                                            |
+| No matches  | 40px-padded centered block: a 40px `lucideSearchX` icon, "No results for “{query}”" in 13.5px `--ngpt-text-secondary`, a 12px `--ngpt-text-muted` hint line, plus a "Try searching for:" label and a row of clickable suggestion chips (reused `ngptPillButton`) populated from `SEARCH_SUGGESTIONS_MOCK` |
+| Loading     | No spinner. Results are local and synchronous; if a network index is added later, hold the previous results rather than flashing empty.                                                                                                                                                                   |
 
 ### Footer legend
 
@@ -202,13 +240,13 @@ requires.
 
 ## Keyboard and ARIA
 
-| Key | Behavior |
-|---|---|
-| ⌘K / Ctrl+K | Opens from anywhere; focus goes straight to the input |
-| Esc | Closes, restores focus and scroll position to the trigger |
-| ↑ / ↓ | Moves the active row, wrapping; scrolls it into the visible region |
-| Enter | Navigates to the active result and closes |
-| Tab | Cycles within the panel only |
+| Key         | Behavior                                                           |
+| ----------- | ------------------------------------------------------------------ |
+| ⌘K / Ctrl+K | Opens from anywhere; focus goes straight to the input              |
+| Esc         | Closes, restores focus and scroll position to the trigger          |
+| ↑ / ↓       | Moves the active row, wrapping; scrolls it into the visible region |
+| Enter       | Navigates to the active result and closes                          |
+| Tab         | Cycles within the panel only                                       |
 
 Focus is trapped in the panel while open and the page behind it is scroll-locked. The overlay is `role="dialog" aria-modal="true"` with an `aria-label` of "Search docs"; the input is `role="combobox"` with `aria-expanded`, `aria-controls`, and `aria-activedescendant` pointing at the active row. Result count changes are announced through a polite live region.
 
@@ -236,17 +274,21 @@ Reference render only. The field's `.search-field` block below is implemented as
     <div class="search-group-label">Primitives</div>
     <!-- max 5 rows rendered per group, no scroll-to-fit -->
     <a class="search-row is-active">
-      <ng-icon name="lucideFile" size="20px" /> <!-- or lucideHash for heading results -->
+      <ng-icon name="lucideFile" size="20px" />
+      <!-- or lucideHash for heading results -->
       <!-- heading results also get a tree-connector svg here, left of the icon -->
       <span class="search-row__title">Table Primitive</span>
       <span class="search-row__path">Primitives › Table › Sorting</span>
-      <ng-icon name="lucideCornerDownLeft" size="20px" class="search-row__action" /> <!-- always rendered, every row -->
+      <ng-icon name="lucideCornerDownLeft" size="20px" class="search-row__action" />
+      <!-- always rendered, every row -->
     </a>
   </div>
   <div class="search-footer">
     <kbd class="kbd"><ng-icon name="lucideCornerDownLeft" size="15px" /></kbd> select
-    <kbd class="kbd"><ng-icon name="lucideArrowDown" size="15px" /></kbd><kbd class="kbd"><ng-icon name="lucideArrowUp" size="15px" /></kbd> navigate
-    <kbd class="kbd"><ng-icon name="lucideX" size="15px" /></kbd> close <!-- escape glyph, placeholder icon name -->
+    <kbd class="kbd"><ng-icon name="lucideArrowDown" size="15px" /></kbd
+    ><kbd class="kbd"><ng-icon name="lucideArrowUp" size="15px" /></kbd> navigate
+    <kbd class="kbd"><ng-icon name="lucideX" size="15px" /></kbd> close
+    <!-- escape glyph, placeholder icon name -->
   </div>
 </div>
 ```
@@ -266,13 +308,24 @@ Reference render only. The field's `.search-field` block below is implemented as
   font-size: 13px;
   cursor: pointer;
 }
-.search-field:hover { border-color: var(--ngpt-comp-pill-border-hover); }
-.search-field:focus-visible { outline: none; } /* no box-shadow ring — see Open a11y question above */
-.search-field:focus-visible ng-icon { color: var(--ngpt-accent); }
-.search-field__placeholder { flex: 1; text-align: left; }
+.search-field:hover {
+  border-color: var(--ngpt-comp-pill-border-hover);
+}
+.search-field:focus-visible {
+  outline: none;
+} /* no box-shadow ring — see Open a11y question above */
+.search-field:focus-visible ng-icon {
+  color: var(--ngpt-accent);
+}
+.search-field__placeholder {
+  flex: 1;
+  text-align: left;
+}
 
 .kbd {
-  font: 400 11px "JetBrains Mono", monospace;
+  font:
+    400 11px 'JetBrains Mono',
+    monospace;
   padding: 2px 5px;
   border-radius: var(--ngpt-sys-shape-corner-extra-small);
   background: var(--ngpt-bg-code-chip);
@@ -288,7 +341,9 @@ Reference render only. The field's `.search-field` block below is implemented as
   opacity: 0;
   transition: opacity var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate);
 }
-.search-scrim.is-open { opacity: 1; }
+.search-scrim.is-open {
+  opacity: 1;
+}
 
 .search-panel {
   position: fixed;
@@ -309,7 +364,10 @@ Reference render only. The field's `.search-field` block below is implemented as
     opacity var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate),
     transform var(--ngpt-sys-motion-duration-slow) var(--ngpt-sys-motion-easing-decelerate);
 }
-.search-panel.is-open { opacity: 1; transform: translate(-50%, 0); }
+.search-panel.is-open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
 
 .search-input-row {
   display: flex;
@@ -325,13 +383,23 @@ Reference render only. The field's `.search-field` block below is implemented as
   border: none;
   background: none;
   outline: none;
-  font: 400 15px Inter, sans-serif;
+  font:
+    400 15px Inter,
+    sans-serif;
   color: var(--ngpt-text-primary);
 }
 
-.search-results { padding: 8px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.search-results {
+  padding: 8px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .search-group-label {
-  font: 600 11px Inter, sans-serif;
+  font:
+    600 11px Inter,
+    sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ngpt-text-muted);
@@ -345,18 +413,37 @@ Reference render only. The field's `.search-field` block below is implemented as
   border-radius: var(--ngpt-sys-shape-corner-extra-small); /* 4px, was 6px */
   text-decoration: none;
 }
-.search-row__content { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.search-row__title { font-size: 13.5px; color: var(--ngpt-text-secondary); }
-.search-row__path { font-size: 12px; color: var(--ngpt-text-muted); }
-.search-row mark { background: none; color: var(--ngpt-accent); font-weight: 600; }
-.search-row__action { flex-shrink: 0; } /* rendered on every row, not just active */
+.search-row__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.search-row__title {
+  font-size: 13.5px;
+  color: var(--ngpt-text-secondary);
+}
+.search-row__path {
+  font-size: 12px;
+  color: var(--ngpt-text-muted);
+}
+.search-row mark {
+  background: none;
+  color: var(--ngpt-accent);
+  font-weight: 600;
+}
+.search-row__action {
+  flex-shrink: 0;
+} /* rendered on every row, not just active */
 .search-row.is-active {
   background: var(--ngpt-bg-accent-solid); /* no left border, full-bleed */
 }
 .search-row.is-active .search-row__title,
 .search-row.is-active .search-row__path,
 .search-row.is-active .search-row__icon,
-.search-row.is-active .search-row__action { color: var(--ngpt-text-on-accent); } /* AA-checked, see decisions.md */
+.search-row.is-active .search-row__action {
+  color: var(--ngpt-text-on-accent);
+} /* AA-checked, see decisions.md */
 
 .search-footer {
   display: flex;
@@ -370,10 +457,18 @@ Reference render only. The field's `.search-field` block below is implemented as
 }
 
 @media (max-width: 1023px) {
-  .search-field { width: 32px; }
-  .search-field__placeholder, .search-field .kbd { display: none; }
+  .search-field {
+    width: 32px;
+  }
+  .search-field__placeholder,
+  .search-field .kbd {
+    display: none;
+  }
 }
 @media (max-width: 639px) {
-  .search-panel { width: calc(100vw - 32px); top: 8vh; }
+  .search-panel {
+    width: calc(100vw - 32px);
+    top: 8vh;
+  }
 }
 ```

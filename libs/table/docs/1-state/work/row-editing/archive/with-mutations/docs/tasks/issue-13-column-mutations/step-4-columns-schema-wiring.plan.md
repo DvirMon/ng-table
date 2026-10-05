@@ -55,4 +55,5 @@ touches the `ColumnsSchemaStore` contract type too.
 - `with-columns-schema/*.spec.ts` still passes (fixed in this step if the mock shape needed updating).
 
 ---
+
 ← [Step 3: `api/update-columns.ts`](step-3-update-columns-free-functions.plan.md) | [Step 5: `table.mock.ts`](step-5-table-mock.plan.md) →

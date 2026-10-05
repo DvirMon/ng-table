@@ -149,7 +149,10 @@ export class LiveOptimisticStoryHostComponent {
     const isCreate = this.flags.pendingCreateIds().has(id);
 
     this.rowEditApi
-      .saveRow(id, row, isCreate, { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() })
+      .saveRow(id, row, isCreate, {
+        forceFailure: this.forceFailure(),
+        latencyMs: this.latencyMs(),
+      })
       .subscribe({
         next: (saved) => {
           if (isCreate) {

@@ -24,11 +24,10 @@ store and the arity escape hatch, and comes back out of
 different causes, and only this one gates #115, #100 and the grouping
 retrofit.
 
-The issue's acceptance criterion is explicit about where it lands: *"A
-`*.types.spec.ts` proves the map resolves both arms and rejects a typo'd
-column id, **extending `api/create-table.types.spec.ts` rather than
-sitting beside it**"*. That file is already the seam for "what a
-`createTable()` call returns, at the type level" — a second file asserting
+The issue's acceptance criterion is explicit about where it lands: _"A
+`_.types.spec.ts`proves the map resolves both arms and rejects a typo'd
+column id, **extending`api/create-table.types.spec.ts`rather than
+sitting beside it**"*. That file is already the seam for "what a`createTable()` call returns, at the type level" — a second file asserting
 the same domain would split ownership of one statement across two places.
 
 ## What To Do
@@ -134,4 +133,5 @@ existing four do.
       the assertion to make it pass.
 
 ---
+
 ← [Step 4: The generator carries the map into every slot](step-4-generator-carries-the-map.plan.md) | [Step 6: Record the decision](step-6-record-the-decision.plan.md) →

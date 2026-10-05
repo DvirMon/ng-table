@@ -1,5 +1,5 @@
 ---
-title: "Step 2 — tools/generate-overloads.ts: 15 createTable + 15 composeFeatures overloads as call-signature interfaces"
+title: 'Step 2 — tools/generate-overloads.ts: 15 createTable + 15 composeFeatures overloads as call-signature interfaces'
 type: task-step
 issue: 69
 ---
@@ -43,13 +43,15 @@ diff a types-only artefact:
 export interface CreateTableOverloads {
   <TRow>(data: TableDataInput<TRow>, config: TableConfig<TRow>): TableStore<TRow>;
   <TRow, O1 extends object>(
-    data: TableDataInput<TRow>, config: TableConfig<TRow>,
-    f1: Feature<TableStore<TRow>, O1>
+    data: TableDataInput<TRow>,
+    config: TableConfig<TRow>,
+    f1: Feature<TableStore<TRow>, O1>,
   ): TableStore<TRow> & O1;
   <TRow, O1 extends object, O2 extends object>(
-    data: TableDataInput<TRow>, config: TableConfig<TRow>,
+    data: TableDataInput<TRow>,
+    config: TableConfig<TRow>,
     f1: Feature<TableStore<TRow>, O1>,
-    f2: Feature<TableStore<TRow> & O1, O2>
+    f2: Feature<TableStore<TRow> & O1, O2>,
   ): TableStore<TRow> & O1 & O2;
   // ... through f15
 }
@@ -61,7 +63,8 @@ export interface CreateTableOverloads {
 export interface ComposeFeaturesOverloads {
   <In extends Shape, O1 extends object>(f1: Feature<In, O1>): Feature<In, O1>;
   <In extends Shape, O1 extends object, O2 extends object>(
-    f1: Feature<In, O1>, f2: Feature<In & O1, O2>
+    f1: Feature<In, O1>,
+    f2: Feature<In & O1, O2>,
   ): Feature<In, O1 & O2>;
   // ... through f15
 }
@@ -124,4 +127,5 @@ export interface ComposeFeaturesOverloads {
 - [ ] Emitted files compile on their own (`tsc --noEmit`) once Step 1 is in.
 
 ---
+
 ← [Step 1: types — Feature<In, Out> contract](step-1-feature-contract-types.plan.md) | [Step 3: compose-table.ts — fold hands each feature the store](step-3-fold-store-only-input.plan.md) →

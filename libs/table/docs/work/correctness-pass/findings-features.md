@@ -26,9 +26,10 @@ table at all.
 with
 
 ```ts
-withGrouping({ initial: ['createdAt'],
-  schema: (p) => applyGroupKey(p.createdAt,
-    (v) => (v as Date).toISOString().slice(0,7)) })
+withGrouping({
+  initial: ['createdAt'],
+  schema: (p) => applyGroupKey(p.createdAt, (v) => (v as Date).toISOString().slice(0, 7)),
+});
 ```
 
 Row 2 throws inside `buildClusters` → out of `clusterRows` → the `group`
@@ -43,7 +44,8 @@ Fires on three independent paths: the `group` pipeline stage
 
 One function away, `when` (`clusters.ts:165`), `groupOrder`
 (`clusters.ts:286`) and `aggregateFn` (`render.ts:57`) each have a guard
-+ dedupe. `extractValue` is the one grouping callback missed.
+
+- dedupe. `extractValue` is the one grouping callback missed.
 
 ## F2 — `withSelection`'s selectability predicates are unwrapped, and one is read from the template
 
@@ -191,7 +193,7 @@ branch (`:80-83`) is safer only by accident — a string there throws
 (`core.ts:76-80`). Group ids are synthesized by `toGroupId()`
 (`clusters.ts:76`) as `group:>region:string:west` and are never in
 `indexById` — never announced, never pruned. `withGrouping`'s own doc
-points at this path: *"Feeds `table.tree.expand(table.groupIds())`"*
+points at this path: _"Feeds `table.tree.expand(table.groupIds())`"_
 (`with-grouping/feature.ts:69-70`).
 
 **Scenario.** Grouping by `customerId` with a search-box-driven filter;
@@ -272,7 +274,7 @@ ADR-0014 assigns the "filter does not apply" fallback to.
   members; `includeHidden` branches correctly between `value()` and
   `rows()`.
 - **`with-sorting.ts`'s ordering core** — stable (`[...rows].sort`,
-  ES2019+); empty/nulls placement correctly *not* multiplied by `sign`
+  ES2019+); empty/nulls placement correctly _not_ multiplied by `sign`
   (`:173`); multi-rule tie-breaking walks comparators in rule order; an
   unknown column id drops out via `flatMap` rather than throwing.
 

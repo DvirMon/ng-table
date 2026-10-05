@@ -1,7 +1,7 @@
 ---
 title: Tree UI layer — decisions
 type: decisions
-ticket: "#165"
+ticket: '#165'
 date: 2026-09-30
 audience: developers
 ---
@@ -14,16 +14,16 @@ decisions also get a `TR`-row in
 
 ## Dependency ranking (2026-09-30)
 
-| Node | Sub-feature | Depends on | Rank |
-|---|---|---|---|
-| N1 | Directive family — which directives carry tree UI; fate of `expansion.md`'s tree path | — | core |
-| N3 | Treegrid role on the table host and cells | N1 | dependent |
-| N2 | Row semantics — `aria-level`, `aria-expanded` ownership, `data-*` presence hooks | N1, N3 | dependent |
-| N4 | Row toggle — activation, keyboard, disabled, host variants | N1 | dependent |
-| N5 | Indentation — `data-depth` to a CSS value / shipped sheet | N2 | dependent |
-| N6 | Context-row styling beyond the `data-context-row` hook | N5 | dependent |
-| N7 | Group-header rows in a tree + grouping table | N1, N4 | dependent |
-| N8 | Treegrid keyboard navigation (arrow keys) | N3, N4 | dependent |
+| Node | Sub-feature                                                                           | Depends on | Rank      |
+| ---- | ------------------------------------------------------------------------------------- | ---------- | --------- |
+| N1   | Directive family — which directives carry tree UI; fate of `expansion.md`'s tree path | —          | core      |
+| N3   | Treegrid role on the table host and cells                                             | N1         | dependent |
+| N2   | Row semantics — `aria-level`, `aria-expanded` ownership, `data-*` presence hooks      | N1, N3     | dependent |
+| N4   | Row toggle — activation, keyboard, disabled, host variants                            | N1         | dependent |
+| N5   | Indentation — `data-depth` to a CSS value / shipped sheet                             | N2         | dependent |
+| N6   | Context-row styling beyond the `data-context-row` hook                                | N5         | dependent |
+| N7   | Group-header rows in a tree + grouping table                                          | N1, N4     | dependent |
+| N8   | Treegrid keyboard navigation (arrow keys)                                             | N3, N4     | dependent |
 
 ## Decisions
 

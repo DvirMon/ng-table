@@ -3,12 +3,12 @@
 **Issue:** [#130](https://github.com/DvirMon/ng-table/issues/130)
 **Status:** 4 / 4 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Declaration types and the data-first builder | ✅ done | — |
-| 2 | Runtime spec: `create-columns.spec.ts` | ✅ done | — |
-| 3 | Type proofs: `create-columns.types.spec.ts` | ✅ done | — |
-| 4 | Record the probe answers | ✅ done | — |
+| Step | Title                                        | Status  | PR  |
+| ---- | -------------------------------------------- | ------- | --- |
+| 1    | Declaration types and the data-first builder | ✅ done | —   |
+| 2    | Runtime spec: `create-columns.spec.ts`       | ✅ done | —   |
+| 3    | Type proofs: `create-columns.types.spec.ts`  | ✅ done | —   |
+| 4    | Record the probe answers                     | ✅ done | —   |
 
 ## Graph
 

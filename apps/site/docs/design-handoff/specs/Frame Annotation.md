@@ -5,17 +5,17 @@ atomic: —
 spec: specs/Frame Annotation.md
 frame: null
 owns:
-  - "The data-role / data-spec / data-purpose / data-content attribute vocabulary on reference frames"
-  - "The mock-content banner and the role-overlay toggle"
-  - "The rule that all annotation is stripped from production output"
+  - 'The data-role / data-spec / data-purpose / data-content attribute vocabulary on reference frames'
+  - 'The mock-content banner and the role-overlay toggle'
+  - 'The rule that all annotation is stripped from production output'
 does_not_own:
   - "Any component's styling or behavior — each component spec owns its own"
-  - "Which components a page composes — see specs/pages/"
+  - 'Which components a page composes — see specs/pages/'
 depends_on:
-  - "specs/index.md (the id vocabulary data-role draws from)"
+  - 'specs/index.md (the id vocabulary data-role draws from)'
 states: []
 a11y:
-  - "Annotation chrome is inert: aria-hidden where decorative, never in the tab order ahead of the skip link"
+  - 'Annotation chrome is inert: aria-hidden where decorative, never in the tab order ahead of the skip link'
 tokens: [--ngpt-accent, --ngpt-status-warning]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
@@ -33,12 +33,12 @@ Without this convention, every frame invents its own scheme and a generator has 
 
 Every semantically meaningful block in a frame carries these four:
 
-| Attribute | Required | Value |
-| --- | --- | --- |
-| `data-role` | yes | The block's role, from the vocabulary below. Dotted for variants: `callout.warning`. |
-| `data-spec` | yes | Path to the spec that owns it, e.g. `specs/Callout.md`. The agent's next read. |
-| `data-purpose` | yes | One or two sentences on **when to use this block**, not what it looks like. Appearance is the spec's job; intent is what a frame cannot otherwise convey. |
-| `data-content` | yes | `derived` or `MOCK`. See below. |
+| Attribute      | Required | Value                                                                                                                                                     |
+| -------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `data-role`    | yes      | The block's role, from the vocabulary below. Dotted for variants: `callout.warning`.                                                                      |
+| `data-spec`    | yes      | Path to the spec that owns it, e.g. `specs/Callout.md`. The agent's next read.                                                                            |
+| `data-purpose` | yes      | One or two sentences on **when to use this block**, not what it looks like. Appearance is the spec's job; intent is what a frame cannot otherwise convey. |
+| `data-content` | yes      | `derived` or `MOCK`. See below.                                                                                                                           |
 
 ### `data-role` vocabulary
 
@@ -56,22 +56,22 @@ component is missing a spec.
 
 The useful content is the choice a reader has to make. Compare:
 
-- Weak: *"Amber callout with a warning icon."* The spec already says that.
-- Strong: *"WARNING variant. Use ONLY where ignoring the note costs the reader something: a performance
-  cliff, a footgun, a breaking constraint. Overuse is what makes readers stop seeing amber at all."*
+- Weak: _"Amber callout with a warning icon."_ The spec already says that.
+- Strong: _"WARNING variant. Use ONLY where ignoring the note costs the reader something: a performance
+  cliff, a footgun, a breaking constraint. Overuse is what makes readers stop seeing amber at all."_
 
 ### `data-content` — mock or derived
 
 The distinction that keeps a frame from being mistaken for a data source.
 
-| Value | Meaning |
-| --- | --- |
+| Value     | Meaning                                                                                                                                                 |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `derived` | This content comes from a real source — the nav tree, `entry.label`, the page's own headings. A generator should wire it up, not copy the literal text. |
-| `MOCK` | Invented placeholder. Structure is spec-accurate; the words are not real. Never carry them into production. |
+| `MOCK`    | Invented placeholder. Structure is spec-accurate; the words are not real. Never carry them into production.                                             |
 
 Body prose, code samples and callout copy are `MOCK` unless the project holds actual documentation.
 Sidebar items, eyebrows, H1s, TOC entries and prev/next are `derived` — they are computed from the tree
-per `Content Model.md`, so a frame showing them literally is showing the *result*, not the input.
+per `Content Model.md`, so a frame showing them literally is showing the _result_, not the input.
 
 ## Mock banner
 

@@ -33,14 +33,14 @@ class HostComponent {
 }
 
 function getDirective(fixture: ReturnType<typeof TestBed.createComponent>): NgpTableRowDirective {
-  return fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(NgpTableRowDirective, null) !== null
-  ).injector.get(NgpTableRowDirective);
+  return fixture.debugElement
+    .query((debugEl) => debugEl.injector.get(NgpTableRowDirective, null) !== null)
+    .injector.get(NgpTableRowDirective);
 }
 
 function getProbe(fixture: ReturnType<typeof TestBed.createComponent>): HostProbeComponent {
   const componentInstance: unknown = fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(HostProbeComponent, null) !== null
+    (debugEl) => debugEl.injector.get(HostProbeComponent, null) !== null,
   ).componentInstance;
   if (!isHostProbeComponent(componentInstance)) {
     throw new Error('Expected HostProbeComponent instance');
@@ -50,7 +50,7 @@ function getProbe(fixture: ReturnType<typeof TestBed.createComponent>): HostProb
 
 function getRowElement(fixture: ReturnType<typeof TestBed.createComponent>): HTMLElement {
   const nativeElement: unknown = fixture.debugElement.query(
-    (debugEl) => debugEl.injector.get(NgpTableRowDirective, null) !== null
+    (debugEl) => debugEl.injector.get(NgpTableRowDirective, null) !== null,
   ).nativeElement;
   if (!(nativeElement instanceof HTMLElement)) {
     throw new Error('Expected an HTMLElement');
@@ -96,7 +96,9 @@ describe('NgpTableRowDirective', () => {
   it('keeps computeds and host bindings reactive when renderRow is updated post-init', () => {
     TestBed.configureTestingModule({ imports: [HostComponent] });
     const fixture = TestBed.createComponent(HostComponent);
-    fixture.componentInstance.renderRow.set(mockDataRenderRow({ id: 'row-1', kind: 'row', depth: 0 }));
+    fixture.componentInstance.renderRow.set(
+      mockDataRenderRow({ id: 'row-1', kind: 'row', depth: 0 }),
+    );
     fixture.detectChanges();
 
     const directive = getDirective(fixture);

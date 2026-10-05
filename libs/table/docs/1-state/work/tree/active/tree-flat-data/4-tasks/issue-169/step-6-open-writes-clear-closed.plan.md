@@ -8,6 +8,7 @@ files:
   - libs/table/src/api/features/with-tree/feature.ts
   - libs/table/src/api/features/with-tree/feature.spec.ts
 ---
+
 # Step 6 — Open-set writes clear closed rows
 
 This step makes the writes that open rows also clear them from the closed-while-revealed set.
@@ -36,4 +37,5 @@ Decisions: [D28](../../1-decisions.md)
 - [ ] `set(['c1'])` shows it as open too.
 
 ---
+
 ← [Step 5: Close a revealed row](step-5-close-revealed-row.plan.md) | [Step 7: expand() includeHidden](step-7-expand-include-hidden.plan.md) →

@@ -5,21 +5,21 @@ atomic: —
 spec: specs/Assets and Content Source.md
 frame: null
 owns:
-  - "The brand asset inventory: what files exist, at what sizes, in what format"
-  - "Font delivery"
-  - "Where article content lives and how it maps to tree entries"
-  - "Placeholder policy for assets that do not exist yet"
+  - 'The brand asset inventory: what files exist, at what sizes, in what format'
+  - 'Font delivery'
+  - 'Where article content lives and how it maps to tree entries'
+  - 'Placeholder policy for assets that do not exist yet'
 does_not_own:
-  - "Type scale or family choice — see foundations/Typography.md"
-  - "Icon library choice — see foundations/Iconography.md"
-  - "The tree — see Content Model.md"
-  - "Hosting, CDN, or build pipeline"
+  - 'Type scale or family choice — see foundations/Typography.md'
+  - 'Icon library choice — see foundations/Iconography.md'
+  - 'The tree — see Content Model.md'
+  - 'Hosting, CDN, or build pipeline'
 depends_on:
-  - "Content Model.md (entries and slugs)"
-  - "foundations/Typography.md (families and weights)"
+  - 'Content Model.md (entries and slugs)'
+  - 'foundations/Typography.md (families and weights)'
 states: []
 a11y:
-  - "Every content image needs authored alt text; decorative marks are aria-hidden"
+  - 'Every content image needs authored alt text; decorative marks are aria-hidden'
 tokens: []
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
@@ -31,15 +31,15 @@ sense; they block because nobody wrote them down.
 
 ## Brand assets
 
-| Asset | Spec | Status |
-| --- | --- | --- |
-| Logo mark | SVG, square, single-color, `currentColor` so the band and the docs navbar share one file | **Does not exist.** A 22px rounded square stands in. |
-| Wordmark | Text, not artwork — "NGP Table", set in `--ngpt-sys-typescale-title-nav` per `layout/Top Navbar.md` | Exists by definition |
-| Favicon | The mark as `.ico` (16/32) plus a 180px `apple-touch-icon.png` | **Does not exist** |
-| OG image | 1200×630 PNG: wordmark and the hero's one-line positioning on `--ngpt-accent-surface` | **Does not exist** |
-| Hero visual | 16:9, product screenshot or diagram | **Does not exist.** Removed from the band; see `pages/Home.md`. |
-| Company logos | Monochrome, single-color, ~132×34 optical | **Do not exist.** Placeholder slots on Home. |
-| Testimonial avatars | 40px square, round-cropped by CSS not by file | **Do not exist** |
+| Asset               | Spec                                                                                                | Status                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Logo mark           | SVG, square, single-color, `currentColor` so the band and the docs navbar share one file            | **Does not exist.** A 22px rounded square stands in.            |
+| Wordmark            | Text, not artwork — "NGP Table", set in `--ngpt-sys-typescale-title-nav` per `layout/Top Navbar.md` | Exists by definition                                            |
+| Favicon             | The mark as `.ico` (16/32) plus a 180px `apple-touch-icon.png`                                      | **Does not exist**                                              |
+| OG image            | 1200×630 PNG: wordmark and the hero's one-line positioning on `--ngpt-accent-surface`               | **Does not exist**                                              |
+| Hero visual         | 16:9, product screenshot or diagram                                                                 | **Does not exist.** Removed from the band; see `pages/Home.md`. |
+| Company logos       | Monochrome, single-color, ~132×34 optical                                                           | **Do not exist.** Placeholder slots on Home.                    |
+| Testimonial avatars | 40px square, round-cropped by CSS not by file                                                       | **Do not exist**                                                |
 
 The mark should be a single `currentColor` SVG rather than a light and a dark file. The system is
 dark-only, but the band inverts it to white, and one file that inherits color handles both.
@@ -63,9 +63,12 @@ Inter (400/500/600/700) and JetBrains Mono (400) — `foundations/Typography.md`
 woff2 subsets were never produced, and a spec nobody can satisfy is worse than a third-party request).
 
 ```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  rel="stylesheet"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400&display=swap"
+/>
 ```
 
 `display=swap` is what keeps first paint readable — a docs site is read, and unstyled text beats no text.

@@ -35,14 +35,14 @@ config — array-index default + `reorderColumns()` mutation, same as today, no 
 
 ## Two roles, never conflated
 
-- **Config seed** — a build-time value written into a *feature's* initial state at construction
+- **Config seed** — a build-time value written into a _feature's_ initial state at construction
   (not `ColumnDef` — that's the array's job now). `applyPinned` (Tier 2) is the example: it seeds
   `withColumnPinning()`'s `columnPinning: {left, right}` state, which has no array-literal
   equivalent — see [tier-2-layout.md](tier-2-layout.md). Static; no reactivity.
 - **Rule** — a store-owned reactive/async binding that calls `updateColumns()` when its source
   changes.
 
-A single rule call is *either* a seed (only for properties with no `ColumnDef`/`col()` home, e.g.
+A single rule call is _either_ a seed (only for properties with no `ColumnDef`/`col()` home, e.g.
 pinning) or a rule (reactive/async on a `ColumnDef` field), decided by which property it targets.
 
 ## One law: the store always owns reactivity
@@ -50,10 +50,10 @@ pinning) or a rule (reactive/async on a `ColumnDef` field), decided by which pro
 Every rule function accepts up to two input shapes (narrowed from three — static dropped, see
 above), all routing to the same store-owned patcher:
 
-| Input shape | Wiring | Example |
-|---|---|---|
-| **reactive** `{ when: () => T }` | store `effect()` → `updateColumns()` on change (live) | `visible(path.status, { when: () => role() === 'admin' })` |
-| **async** `{ params, factory, onSuccess, onError }` | store `resource()` + `effect()` → `updateColumns()` | `visibleAsync(path.status, {...})` |
+| Input shape                                         | Wiring                                                | Example                                                    |
+| --------------------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| **reactive** `{ when: () => T }`                    | store `effect()` → `updateColumns()` on change (live) | `visible(path.status, { when: () => role() === 'admin' })` |
+| **async** `{ params, factory, onSuccess, onError }` | store `resource()` + `effect()` → `updateColumns()`   | `visibleAsync(path.status, {...})`                         |
 
 > **`{ when }` object form, not a bare function.** Signal Forms deprecated passing a raw function to
 > `hidden`/`disabled` (`packages/forms/signals/src/api/rules/hidden.ts:45-50`) precisely because the
@@ -61,7 +61,7 @@ above), all routing to the same store-owned patcher:
 > [Signal Forms techniques](signal-forms-techniques.md#3---when--object-form-not-bare-fn--adopt).
 
 **Seeds keep a static input** (e.g. `applyPinned(path.id, 'left')`) — the narrowing above only
-removes static from *rule* functions that duplicate an existing `ColumnDef`/array field. A seed like
+removes static from _rule_ functions that duplicate an existing `ColumnDef`/array field. A seed like
 `applyPinned` has no array-literal equivalent to defer to (pinning isn't a `ColumnDef` field at
 all), so its one and only input shape is the static value it seeds into the target feature's initial
 state. No duplication exists there, so nothing to narrow.

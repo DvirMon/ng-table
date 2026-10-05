@@ -38,7 +38,7 @@ createTable(
   {
     trackBy: 'id',
     columns: createColumns(data, (col) => [
-      col('name'),                                        // accessor/visible/order defaulted
+      col('name'), // accessor/visible/order defaulted
       col('status'),
       col('fullName', { accessor: (row) => `${row.first} ${row.last}` }),
     ]),
@@ -60,12 +60,12 @@ entirely, see [columns.md COL4](../../decisions/columns.md).)
 
 ## The Override Boundary
 
-| Owned by | Examples | Overridable from template? |
-|---|---|---|
-| Store (logical — drives behavior) | `id`, `accessor`, `visible`, `order`, `label`, `meta` — `ColumnDef` carries no per-feature config at all (#100); sorting/filtering/grouping behavior is declared through each feature's own `schema` | No |
-| Directive (presentation — drives appearance only) | `width`, header label / custom header + cell templates | Yes, local only |
+| Owned by                                          | Examples                                                                                                                                                                                             | Overridable from template? |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| Store (logical — drives behavior)                 | `id`, `accessor`, `visible`, `order`, `label`, `meta` — `ColumnDef` carries no per-feature config at all (#100); sorting/filtering/grouping behavior is declared through each feature's own `schema` | No                         |
+| Directive (presentation — drives appearance only) | `width`, header label / custom header + cell templates                                                                                                                                               | Yes, local only            |
 
-**Rule of thumb:** if a property affects *what data flows through the pipeline or how it's computed*, it's store-owned with no override. If it only affects *how something looks/renders in this particular template usage*, it's a directive-local input.
+**Rule of thumb:** if a property affects _what data flows through the pipeline or how it's computed_, it's store-owned with no override. If it only affects _how something looks/renders in this particular template usage_, it's a directive-local input.
 
 Note the current `ColumnDef` carries **no presentation fields at all** — no `width`, no `label`. So today every presentation property is directive-only, with no store-side fallback; the "store's copy is an unused default" framing from v0.1 describes fields that were never implemented. See Open Questions.
 
@@ -77,7 +77,10 @@ export class NgpTableColumnDirective {
 
   private readonly table = inject(NGP_TABLE_STORE);
   readonly column = computed(() =>
-    this.table.store().columns().find((c) => c.id === this.columnId())
+    this.table
+      .store()
+      .columns()
+      .find((c) => c.id === this.columnId()),
   );
 }
 ```
@@ -100,16 +103,17 @@ A template override never writes back to the store — `accessor`, `visible`, `o
 
 Columns are rendered via native `@for` over the store's columns, per `overview.md`'s rendering philosophy (no custom NGP structural directives). `col.id` from the loop variable is the single source of truth referenced everywhere the column needs identifying — in `[ngpTableColumn]`, in sort activation (see `sort.md`), in cell rendering (see `core.md`) — avoiding string-literal duplication.
 
-The consumer's own template holds the `createTable()` instance directly (it's a component field), so it reads `table.columns()` — it does not go through `NGP_TABLE_STORE`; that token exists for *directives* nested inside the table (see `core.md`).
+The consumer's own template holds the `createTable()` instance directly (it's a component field), so it reads `table.columns()` — it does not go through `NGP_TABLE_STORE`; that token exists for _directives_ nested inside the table (see `core.md`).
 
 **`store.columns()` is unfiltered and unsorted** — it holds every column in author order, including `visible: false` ones. Presentation order and visibility are the store's job, not the template's: `table.renderColumns()` is the visible columns in render order, the column-side twin of `renderRows` ([#142](https://github.com/DvirMon/ng-table/issues/142)). A template renders straight from it — no filter, no sort:
 
 ```html
 <table [ngpTable]="table">
   <thead>
-    <tr>   <!-- header row carries no ngpTableRow — it has no RenderRow, see core.md -->
+    <tr>
+      <!-- header row carries no ngpTableRow — it has no RenderRow, see core.md -->
       @for (col of table.renderColumns(); track col.id) {
-        <th [ngpTableColumn]="col.id">…</th>
+      <th [ngpTableColumn]="col.id">…</th>
       }
     </tr>
   </thead>
@@ -123,5 +127,5 @@ The consumer's own template holds the `createTable()` instance directly (it's a 
 ## Open Questions
 
 - [ ] Custom header/cell template mechanism (`ngpColumnHeader`-style `@ContentChild`) shown above as illustrative — exact API (input vs. structural template ref, naming) not yet finalized.
-- [ ] **Presentation fields on `ColumnDef`** — `width` and a header `label` are referenced throughout this file but exist nowhere in `api/types.ts`. Decide: keep presentation strictly directive-local (status quo, template must supply labels itself), or add optional presentation fields to `ColumnDefInput` so a column can carry its own default label/width. Blocks `resizing.md`, which needs to know whether `[ngpColumnWidth]` overrides a store value or *is* the only value.
+- [ ] **Presentation fields on `ColumnDef`** — `width` and a header `label` are referenced throughout this file but exist nowhere in `api/types.ts`. Decide: keep presentation strictly directive-local (status quo, template must supply labels itself), or add optional presentation fields to `ColumnDefInput` so a column can carry its own default label/width. Blocks `resizing.md`, which needs to know whether `[ngpColumnWidth]` overrides a store value or _is_ the only value.
 - [x] **Should the DS ship the visible/order derivation?** Yes — `table.renderColumns()`, shipped in [#142](https://github.com/DvirMon/ng-table/issues/142)/[#143](https://github.com/DvirMon/ng-table/issues/143). See `1-state/columns.md`.

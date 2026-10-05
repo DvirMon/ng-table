@@ -74,15 +74,15 @@ existing `ngDevMode = false` last-wins case stays.
 For each case, ask which module has to change to break it
 (`spec-files-assert-own-domain-only`):
 
-| Case | Now owned by | Action |
-|---|---|---|
-| `schema.spec.ts:132-145` (unknown id via `resolveColumnsConfig`) | `createColumns` | Delete. §1 covers it |
-| `metadata.spec.ts:91-101` (duplicate key via `resolveColumnsConfig`) | `createColumns` | Delete. §1 covers it |
-| `metadata.spec.ts:103-125` (non-throwing `resolveColumnsConfig` cases) | whatever `resolve.ts` became | Rewrite against the new signature, or delete if Step 2 made them trivial |
-| `schema.spec.ts:104-127` (non-throwing `resolveColumnsConfig` cases) | same | same |
-| `create-table.spec.ts:261-275` (`badSet` built outside `expect`) | `createColumns` | Delete. Its comment's premise ("only `resolveColumnsConfig` checks") is now false |
-| `wire-columns-schema.spec.ts:407-421`, `:478-492` | `createColumns` | Delete. Fix the `:295` comment that names `resolve.ts` |
-| `with-sorting.spec.ts:513-525` (`sortNulls` twice) | `createColumns` | Delete, or keep as a sorting-side smoke test only if it asserts something sorting owns. It doesn't today |
+| Case                                                                   | Now owned by                 | Action                                                                                                   |
+| ---------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `schema.spec.ts:132-145` (unknown id via `resolveColumnsConfig`)       | `createColumns`              | Delete. §1 covers it                                                                                     |
+| `metadata.spec.ts:91-101` (duplicate key via `resolveColumnsConfig`)   | `createColumns`              | Delete. §1 covers it                                                                                     |
+| `metadata.spec.ts:103-125` (non-throwing `resolveColumnsConfig` cases) | whatever `resolve.ts` became | Rewrite against the new signature, or delete if Step 2 made them trivial                                 |
+| `schema.spec.ts:104-127` (non-throwing `resolveColumnsConfig` cases)   | same                         | same                                                                                                     |
+| `create-table.spec.ts:261-275` (`badSet` built outside `expect`)       | `createColumns`              | Delete. Its comment's premise ("only `resolveColumnsConfig` checks") is now false                        |
+| `wire-columns-schema.spec.ts:407-421`, `:478-492`                      | `createColumns`              | Delete. Fix the `:295` comment that names `resolve.ts`                                                   |
+| `with-sorting.spec.ts:513-525` (`sortNulls` twice)                     | `createColumns`              | Delete, or keep as a sorting-side smoke test only if it asserts something sorting owns. It doesn't today |
 
 ## Implementation Notes
 
@@ -118,4 +118,5 @@ For each case, ask which module has to change to break it
       only those).
 
 ---
+
 ← [Step 2: Move the checks into `createColumns`](step-2-relocate-into-create-columns.plan.md) | [Step 4: G76 split specs](step-4-g76-split-specs.plan.md) →

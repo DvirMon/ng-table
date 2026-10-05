@@ -1,6 +1,6 @@
 ---
 title: Architecture — detail panel a11y directives (#199)
-ticket: "#199"
+ticket: '#199'
 capability: expansion
 date: 2026-10-01
 grounded-against: Angular 22.1.2 (installed), libs/table/src @ docs/199-panel-directives
@@ -12,21 +12,21 @@ Consumed by `/to-tasks`. Paths and snippets are current as of the date above.
 
 ## Settled — not open for relitigation
 
-| # | Decision | Source |
-|---|---|---|
-| 1 | Toggle↔panel link: internal registry provided by `ngpTable`, keyed by `RowId` | D1 / E44 |
-| 2 | Names `ngpTablePanelToggle`, `ngpTablePanel` | D2 / E45 |
-| 3 | `[ngpTablePanel]` takes a `RowId` | D3 / E46 |
-| 4 | `id`/`inert` by host binding; leaving panel gets `inert` via `Renderer2.setAttribute` in `DestroyRef.onDestroy` | D4 / E47 |
-| 5 | Focus return only to a connected toggle; row-gone is #201 | D5 / E48 |
-| 6 | Esc: `(keydown.escape)` host listener → `close()`, skipped on `defaultPrevented`; then `preventDefault()` marks it handled | D6 / E49 / E58 |
-| 7 | `inert`, not `until-found` | D7 / E50 |
-| 8 | Focus return from `close()` (exportAs) + `onDestroy`; never an effect | D8 / E51 |
-| 9 | Dev throws: missing `withExpansion()` (per directive), duplicate panel | D9 / E52, #209 D9 |
-| 10 | Toggle click = `toggle(id)`; single-open is `withExpansion({ multi })` (#210) | D10 / E53, E54 |
-| 11 | Names consumer-owned: no label input/default/warning | D11 / E55, ADR-0029 #3 |
-| 12 | Id = per-table prefix + escaped `RowId` | D13 / E56 |
-| 13 | Toggle slice builds on #209's core; panel slice independent | D14, #209 D6 |
+| #   | Decision                                                                                                                   | Source                 |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| 1   | Toggle↔panel link: internal registry provided by `ngpTable`, keyed by `RowId`                                             | D1 / E44               |
+| 2   | Names `ngpTablePanelToggle`, `ngpTablePanel`                                                                               | D2 / E45               |
+| 3   | `[ngpTablePanel]` takes a `RowId`                                                                                          | D3 / E46               |
+| 4   | `id`/`inert` by host binding; leaving panel gets `inert` via `Renderer2.setAttribute` in `DestroyRef.onDestroy`            | D4 / E47               |
+| 5   | Focus return only to a connected toggle; row-gone is #201                                                                  | D5 / E48               |
+| 6   | Esc: `(keydown.escape)` host listener → `close()`, skipped on `defaultPrevented`; then `preventDefault()` marks it handled | D6 / E49 / E58         |
+| 7   | `inert`, not `until-found`                                                                                                 | D7 / E50               |
+| 8   | Focus return from `close()` (exportAs) + `onDestroy`; never an effect                                                      | D8 / E51               |
+| 9   | Dev throws: missing `withExpansion()` (per directive), duplicate panel                                                     | D9 / E52, #209 D9      |
+| 10  | Toggle click = `toggle(id)`; single-open is `withExpansion({ multi })` (#210)                                              | D10 / E53, E54         |
+| 11  | Names consumer-owned: no label input/default/warning                                                                       | D11 / E55, ADR-0029 #3 |
+| 12  | Id = per-table prefix + escaped `RowId`                                                                                    | D13 / E56              |
+| 13  | Toggle slice builds on #209's core; panel slice independent                                                                | D14, #209 D6           |
 
 ## Verified framework facts (Angular 22.1.2, `node_modules/@angular/core/fesm2022/`)
 
@@ -50,12 +50,12 @@ Consumed by `/to-tasks`. Paths and snippets are current as of the date above.
 ## Current source this builds on
 
 - `libs/table/src/directives/ngp-table.directive.ts` — `providers: [{ provide:
-  NGP_TABLE_STORE, useExisting: NgpTableDirective }]`. The registry provider is added here.
+NGP_TABLE_STORE, useExisting: NgpTableDirective }]`. The registry provider is added here.
 - `libs/table/src/directives/table.tokens.ts` — `NGP_TABLE_STORE`, `NGP_TABLE_ROW`
   (DI types erased to `unknown`). It is `export *`'d from `index.ts:8`, so the internal
   registry token does **not** go here — it lives in its own unexported file (see layout).
 - `libs/table/src/directives/ngp-table-row.directive.ts` — `ngpTableRow:
-  InputSignal<RenderRow<TRow>>`; the toggle reads `row.ngpTableRow().id`.
+InputSignal<RenderRow<TRow>>`; the toggle reads `row.ngpTableRow().id`.
 - `libs/table/src/directives/ngp-table-tree-toggle.directive.ts` — precedent: type guard
   `hasTree()` over `unknown`, `assertTreeComposed()` dev throw, `button[...]` selector.
 - `libs/table/src/api/features/with-expansion.ts` — `ExpansionSlice`: `()`,
@@ -102,7 +102,7 @@ export const NGP_TABLE_PANEL_REGISTRY = new InjectionToken<PanelRegistry>(...);
 })
 export class NgpTablePanelDirective {
   readonly ngpTablePanel = input.required<RowId>();
-  close(): void;                         // collapse([id]); returnFocus({ allowBody: true })
+  close(): void; // collapse([id]); returnFocus({ allowBody: true })
 }
 ```
 
@@ -129,20 +129,20 @@ export class NgpTablePanelToggleDirective {}
 - `isOpen = computed(() => expansion().has(row.ngpTableRow().id))`;
   `toggle = () => expansion.toggle(row.ngpTableRow().id)`.
 - Dev throw when the table lacks `withExpansion()`: a `hasExpansion(table: unknown): table
-  is ExpansionMembers` guard, mirroring `hasTree()`; message names `withExpansion()`.
+is ExpansionMembers` guard, mirroring `hasTree()`; message names `withExpansion()`.
 
 ## File layout
 
-| File | Change |
-|---|---|
-| `libs/table/src/directives/panel-registry.ts` | new, internal: registry factory + token |
-| `libs/table/src/directives/ngp-table.directive.ts` | add registry provider |
-| `libs/table/src/directives/ngp-table-panel.directive.ts` | new |
-| `libs/table/src/directives/ngp-table-panel-toggle.directive.ts` | new (after #209 core) |
-| `libs/table/src/directives/ngp-table-panel.directive.spec.ts` | new: the one test seam (both directives) |
-| `libs/table/src/index.ts` | export both directives |
-| `libs/table/docs/3-ui/directives/expansion.md` | rewrite in place per D12 |
-| `libs/table/docs/0-product/expansion.md` | §6.2 U2–U4 point at the new spec |
+| File                                                            | Change                                   |
+| --------------------------------------------------------------- | ---------------------------------------- |
+| `libs/table/src/directives/panel-registry.ts`                   | new, internal: registry factory + token  |
+| `libs/table/src/directives/ngp-table.directive.ts`              | add registry provider                    |
+| `libs/table/src/directives/ngp-table-panel.directive.ts`        | new                                      |
+| `libs/table/src/directives/ngp-table-panel-toggle.directive.ts` | new (after #209 core)                    |
+| `libs/table/src/directives/ngp-table-panel.directive.spec.ts`   | new: the one test seam (both directives) |
+| `libs/table/src/index.ts`                                       | export both directives                   |
+| `libs/table/docs/3-ui/directives/expansion.md`                  | rewrite in place per D12                 |
+| `libs/table/docs/0-product/expansion.md`                        | §6.2 U2–U4 point at the new spec         |
 
 ## Slicing hint
 

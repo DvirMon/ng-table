@@ -6,15 +6,15 @@ Siblings (not yet written): `alt-2-stage-context-predicate.md`, `alt-3-tree-shap
 ## The objection
 
 ADR-0017 keeps hiding out of the features — correct, and not up for revisiting. It pays for that
-by adding a *pipeline slot no feature may claim*. Four constructs exist only to say "this entry
+by adding a _pipeline slot no feature may claim_. Four constructs exist only to say "this entry
 isn't a feature":
 
-| Construct | Why it exists |
-|---|---|
-| `'prune'` in `RENDER_ORDER` | the slot itself |
-| `Exclude<RenderStage, 'prune'>` in `RenderStages` | forbid a feature claiming it |
-| `CLAIMABLE_RENDER_STAGES` | re-derive the list *without* it, for `compose-table.ts`'s fold |
-| `if (stage === 'prune')` in `runRenderStages` | the reduce special-cases its own order array |
+| Construct                                         | Why it exists                                                  |
+| ------------------------------------------------- | -------------------------------------------------------------- |
+| `'prune'` in `RENDER_ORDER`                       | the slot itself                                                |
+| `Exclude<RenderStage, 'prune'>` in `RenderStages` | forbid a feature claiming it                                   |
+| `CLAIMABLE_RENDER_STAGES`                         | re-derive the list _without_ it, for `compose-table.ts`'s fold |
+| `if (stage === 'prune')` in `runRenderStages`     | the reduce special-cases its own order array                   |
 
 Plus one unchecked, load-bearing rule: `'prune'` must sit after every claimable stage. Nothing
 enforces that — it is a position in a hand-written array.
@@ -53,7 +53,7 @@ export function runRenderStages<TRow>(rows, stages) {
 const renderRows = computed(() => {
   const byId = indexById();
   const shaped = runRenderStages(seedRenderRows(rows()), renderStages);
-  const visible = pruneUnexpandedDescendants(shaped, expanded());   // ← was a stage
+  const visible = pruneUnexpandedDescendants(shaped, expanded()); // ← was a stage
   return visible.map((row, index) => ({
     ...row,
     index,
@@ -87,7 +87,7 @@ Does not fix:
 
 ## The one decision this forces
 
-`'paginate'` sits *after* `'prune'` today, so a page counts visible rows (spec-132 story 6). It
+`'paginate'` sits _after_ `'prune'` today, so a page counts visible rows (spec-132 story 6). It
 has **no claimant** — no feature implements it; it is a reserved name.
 
 Fold the prune into finalize and pagination can no longer be a feature stage: it would run before

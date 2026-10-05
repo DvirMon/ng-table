@@ -25,7 +25,7 @@ separate domains and implemented as a single welded unit, and every seam between
 - **The filters object cannot be used without the table's evaluator.** Everything needed to turn
   a filter model into a row predicate lives behind an internal symbol stamped onto the object
   after construction, readable only by a function the feature imports. A consumer holding a
-  filters object cannot ask it the one question it exists to answer: *does this row match?*
+  filters object cannot ask it the one question it exists to answer: _does this row match?_
 - **The feature declares a type parameter it never uses.** The criterion-map type is threaded
   through the feature's config purely so it survives the trip, and doing so leaks two rules a
   developer must know and cannot discover: the type must be declared one particular way, and one
@@ -230,7 +230,7 @@ matcher(): (row: TRow) => boolean;
 Wiring is the consumer's, and it is one expression:
 
 ```ts
-withFiltering({ predicates: () => [this.filters().matcher()] })
+withFiltering({ predicates: () => [this.filters().matcher()] });
 ```
 
 Neither side imports the other. The table never learns what a criterion is; the filter model never
@@ -321,10 +321,10 @@ table behavior is the exact defect being removed.
 
 Two existing seams, no new ones:
 
-| Seam | Owns |
-|---|---|
-| The filter-model factory's own spec | the new root method, the row-type rejection, and the criterion-map typing that currently lives in the feature's spec |
-| The filtering feature's spec | composition, narrowing by predicates, AND across terms, contributing no members, manual mode, trailing blocks seeing post-filter rows, and per-term degradation |
+| Seam                                | Owns                                                                                                                                                            |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The filter-model factory's own spec | the new root method, the row-type rejection, and the criterion-map typing that currently lives in the feature's spec                                            |
+| The filtering feature's spec        | composition, narrowing by predicates, AND across terms, contributing no members, manual mode, trailing blocks seeing post-filter rows, and per-term degradation |
 
 The integration case proving the two compose lands on the feature's seam, and there is exactly one
 of it. Its purpose is to prove the wiring expression works, not to re-test either side.
@@ -337,7 +337,7 @@ changes. No test file is deleted outright, so no coverage is lost in the move.
 - **The filtering feature** — rewritten to predicates. Kept and rewritten: composes into a table,
   narrows rows, ANDs across terms, never narrows when nothing is active, contributes no members,
   manual mode, trailing block sees post-filter rows. Deleted: the criterion-map type tests, since
-  the parameter is gone. Inverted: the assertion that a mismatched row type is *accepted* becomes
+  the parameter is gone. Inverted: the assertion that a mismatched row type is _accepted_ becomes
   an assertion that it is rejected. Added: a throwing term is dropped while siblings keep
   narrowing.
 - **The filter-model factory** — gains the new root method's tests, and receives the OR-semantics,

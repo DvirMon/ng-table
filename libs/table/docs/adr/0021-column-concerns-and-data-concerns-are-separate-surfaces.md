@@ -7,16 +7,16 @@
 > **Read [ADR-0027](0027-schema-declaration-surface.md) before acting on the "Path vocabulary
 > follows the surface" section below.** Its row for a feature's config — "path names row fields
 > (`Extract<keyof TRow, string>`)" — no longer holds. Since the column `accessor` is now the
-> single value source (ADR-0024), a feature reads a value *through* its column and therefore keys
+> single value source (ADR-0024), a feature reads a value _through_ its column and therefore keys
 > by declared column id, the same vocabulary `columnsSchema` always used — ADR-0027 states this as
 > the general rule and reconciles it explicitly. The Decision's own test — a capability belongs to
 > the column surface if it needs nothing from the row data, to a feature if it reads rows — is
 > unaffected, as is everything in "Applying the test".
-**Related:** [ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md) (narrowed by this ADR
-to `columnsSchema` only), [ADR-0020](0020-open-stage-registration-for-third-party-features.md)
-(third-party feature authors are bound by the rule below),
-[ADR-0018](0018-when-vs-enable-predicate-naming.md) (the other naming rule a schema fn obeys),
-[ADR-0004](0004-table-source-layout.md) (layout by contract boundary)
+> **Related:** [ADR-0019](0019-columns-path-keyed-by-declared-column-ids.md) (narrowed by this ADR
+> to `columnsSchema` only), [ADR-0020](0020-open-stage-registration-for-third-party-features.md)
+> (third-party feature authors are bound by the rule below),
+> [ADR-0018](0018-when-vs-enable-predicate-naming.md) (the other naming rule a schema fn obeys),
+> [ADR-0004](0004-table-source-layout.md) (layout by contract boundary)
 
 **Source:** grouping decision D7 —
 [`../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md`](../1-state/work/grouping/active/grouping-config-simplification/2-decisions.md).
@@ -50,25 +50,25 @@ That is the whole test. Everything below follows from it.
 
 ### Path vocabulary follows the surface
 
-| Declared on | Path names | Examples |
-|---|---|---|
+| Declared on                 | Path names                                    | Examples                                       |
+| --------------------------- | --------------------------------------------- | ---------------------------------------------- |
 | `TableConfig.columnsSchema` | declared column ids (`ColumnsPath`, ADR-0019) | `applyVisible`, `applySortNulls`, `metadata()` |
-| a feature's config | row fields (`Extract<keyof TRow, string>`) | `withFiltering`, `withGrouping` |
+| a feature's config          | row fields (`Extract<keyof TRow, string>`)    | `withFiltering`, `withGrouping`                |
 
 A feature's schema fn never names a column. It names the data it operates on.
 
 ### Applying the test
 
-| Capability | Reads rows? | Surface |
-|---|---|---|
-| visibility | no | column |
-| null-sort policy | no | column |
-| column metadata | no | column |
-| column pinning | no | column |
-| sorting | yes — compares row values | feature |
-| grouping | yes — partitions row values | feature |
-| filtering | yes — tests row values | feature |
-| selection, expansion | yes — keys on row ids | feature |
+| Capability           | Reads rows?                 | Surface |
+| -------------------- | --------------------------- | ------- |
+| visibility           | no                          | column  |
+| null-sort policy     | no                          | column  |
+| column metadata      | no                          | column  |
+| column pinning       | no                          | column  |
+| sorting              | yes — compares row values   | feature |
+| grouping             | yes — partitions row values | feature |
+| filtering            | yes — tests row values      | feature |
+| selection, expansion | yes — keys on row ids       | feature |
 
 A table with zero rows loaded still renders its columns, their visibility and their pinned regions
 correctly. That is the operational form of the test: **if it works on an empty table, it is a
@@ -91,11 +91,11 @@ does not. A new capability that splits this way is following the rule, not bendi
   it from rows (a heat-map cell background, a value-driven row class) would be miscategorised. The
   rows/no-rows test has an edge you can check.
 - **Declaration site decides, full stop.** Rejected as circular. It describes the outcome without
-  saying how to pick the declaration site for something new. It is a true *consequence* of this
+  saying how to pick the declaration site for something new. It is a true _consequence_ of this
   ADR, not its rule.
 - **State ownership / cross-column scope decides.** Rejected — and it is worth recording why,
   because it was argued at length before being discarded. It conflates two independent axes:
-  whether state is per-column or spans columns (a question *inside* the column layer), and whether
+  whether state is per-column or spans columns (a question _inside_ the column layer), and whether
   it derives from columns or from rows (this ADR's question). Total pinned width spans columns and
   reads no rows; under this alternative it would wrongly land in a feature.
 - **One entry point through column definitions, AG Grid style.** Rejected — it is the architecture
@@ -117,12 +117,12 @@ does not. A new capability that splits this way is following the rule, not bendi
   `applyGroupKey` extractor can compute different things with nothing checking they agree — a
   group header can disagree with the column beneath it. Accepted knowingly in exchange for
   features that operate on data the table does not display. See D7.
-- **A capability that reads rows *and* wants column-scoped policy declares on both surfaces**, as
+- **A capability that reads rows _and_ wants column-scoped policy declares on both surfaces**, as
   sorting already does. That is two declarations, not one with a mode flag.
 
 ## Open
 
-1. **Rendering is not covered by this rule.** The test partitions *state and declaration*. It says
+1. **Rendering is not covered by this rule.** The test partitions _state and declaration_. It says
    nothing about the render layer, where a column concern and a data concern genuinely collide: a
    full-width spanning group row versus pinned columns split into separate scroll regions. AG Grid
    needed a dedicated grid option plus per-region renderer instantiation to reconcile exactly that

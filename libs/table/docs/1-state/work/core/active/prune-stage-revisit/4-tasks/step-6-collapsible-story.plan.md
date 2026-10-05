@@ -10,16 +10,16 @@
 
 ## Files
 
-| Path | Action |
-|---|---|
-| `…/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` | edit (lines 77, 79) |
-| `…/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts` | edit (JSDoc, ~line 25) |
-| `libs/table/src/stories/grouping/grouping.mdx` | edit (~line 427) |
+| Path                                                                                     | Action                 |
+| ---------------------------------------------------------------------------------------- | ---------------------- |
+| `…/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html` | edit (lines 77, 79)    |
+| `…/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.ts`   | edit (JSDoc, ~line 25) |
+| `libs/table/src/stories/grouping/grouping.mdx`                                           | edit (~line 427)       |
 
 ## Why This Step Exists
 
 This is the consumer-visible half of D3 — the reason the migration is
-*additively* non-neutral rather than fully behaviour-neutral. Before
+_additively_ non-neutral rather than fully behaviour-neutral. Before
 Step 1, a group header had no `isExpanded`, so this template reached
 past the row into `table.expandedRows().has(row.id)` while the detail
 row beside it (line 109) already read `row.isExpanded`. Two spellings
@@ -56,7 +56,7 @@ teaching the workaround.
 - Grep the other story hosts for
   `expandedRows().has(` before finishing — if another story reaches
   past the row for the same reason, fix it here and say so. If it
-  reaches for a *different* reason (an `expandAll` affordance, a
+  reaches for a _different_ reason (an `expandAll` affordance, a
   count), leave it.
 
 ## Risks / Watchouts
@@ -88,4 +88,5 @@ teaching the workaround.
       split between header and detail-row spellings.
 
 ---
+
 ← [Step 5: core.spec and the wording sweep](step-5-core-spec-and-sweep.plan.md) | [Step 7: ADRs and maintainer docs](step-7-adrs-and-docs.plan.md) →

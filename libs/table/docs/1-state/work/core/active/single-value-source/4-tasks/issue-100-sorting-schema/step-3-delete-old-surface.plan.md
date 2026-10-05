@@ -75,4 +75,5 @@ the columns schema.
 - [ ] `columns-schema/rules.ts` exports only `visible` and `visibleAsync`.
 
 ---
+
 ← [Step 2: Wire `withSorting({ schema })`](step-2-wire-with-sorting.plan.md) | [Step 4: Runtime spec](step-4-runtime-spec.plan.md) →

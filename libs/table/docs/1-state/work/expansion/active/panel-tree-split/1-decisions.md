@@ -2,7 +2,7 @@
 title: Decisions — split withExpansion() into panel + withTree()
 type: decisions
 capability: expansion
-ticket: "101"
+ticket: '101'
 date: 2026-09-20
 audience: developers
 ---
@@ -22,17 +22,17 @@ Written contract: [`2-spec.md`](2-spec.md) · [`3-architecture.md`](3-architectu
 
 Sub-features of #101, edges between nodes (not against existing code):
 
-| Node | What it settles | Rank |
-|---|---|---|
-| **D** `withTree()` data contract | nested `childrenAccessor` vs flat + path/subRows | core |
-| **S** store surface | what `createExpansionStore()` owns: `everExpanded`, multi-id write / `setExpanded` | core |
-| **A** `createExpansionStore()` extraction | the factory itself | dependent (S) |
-| **B** `withExpansion()` narrowed to panel | what is left, incl. `expandAll` without an accessor | dependent (S, A) |
-| **C** `withTree()` built | config, `'tree'` stage, `isExpandable` | dependent (D, A) |
-| **F** `expansionState` tri-state | which feature, built when | dependent (D, C) |
-| **H** G6 — nested rows have no `sourceIndex` | where the fix lands | dependent (C) |
-| **I** group-collapse delegation to panel | already true in code; confirm the surface it needs | dependent (B) |
-| **J** docs split + ADR accept | spec split, PRD stories 10/23/31, ADR → accepted | leaf |
+| Node                                         | What it settles                                                                    | Rank             |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- | ---------------- |
+| **D** `withTree()` data contract             | nested `childrenAccessor` vs flat + path/subRows                                   | core             |
+| **S** store surface                          | what `createExpansionStore()` owns: `everExpanded`, multi-id write / `setExpanded` | core             |
+| **A** `createExpansionStore()` extraction    | the factory itself                                                                 | dependent (S)    |
+| **B** `withExpansion()` narrowed to panel    | what is left, incl. `expandAll` without an accessor                                | dependent (S, A) |
+| **C** `withTree()` built                     | config, `'tree'` stage, `isExpandable`                                             | dependent (D, A) |
+| **F** `expansionState` tri-state             | which feature, built when                                                          | dependent (D, C) |
+| **H** G6 — nested rows have no `sourceIndex` | where the fix lands                                                                | dependent (C)    |
+| **I** group-collapse delegation to panel     | already true in code; confirm the surface it needs                                 | dependent (B)    |
+| **J** docs split + ADR accept                | spec split, PRD stories 10/23/31, ADR → accepted                                   | leaf             |
 
 ```
 D ──► C ──► F
@@ -51,7 +51,7 @@ The ADR is dated 2026-09-03; ADR-0022/0023 landed after it.
 
 1. **`depth` is no longer feature-owned.** `engine/flatten.ts` is "the only
    producer of `depth` and `parentId`". ADR-0012 Decision 2 ("`withTree()`
-   owns … `depth`") is stale — `withTree()` owns *nesting* (`RenderNode.children`),
+   owns … `depth`") is stale — `withTree()` owns _nesting_ (`RenderNode.children`),
    the engine owns depth.
 2. **`sourceIndex` is stamped centrally.** `engine/core.ts`'s `renderRows`
    resolves it from `indexById`, built from top-level `config.data()` only. So
@@ -93,7 +93,7 @@ depth is fixed by declared levels while a path's varies per row. Giving
 `withTree()` that shape would duplicate `buildClusters` under a second
 feature name.
 
-What grouping structurally *cannot* do is the parent-pointer shape: a
+What grouping structurally _cannot_ do is the parent-pointer shape: a
 group header is synthetic by definition, and here the parent is a real
 row that renders its own cells, resolves a `sourceIndex` and is
 editable. That is `withTree()`'s whole reason to exist.
@@ -151,7 +151,7 @@ withTree()               —
 
 **Why.** `everExpanded` exists so a collapsed detail panel stays
 mounted and its collapse is a class flip rather than a teardown. A
-tree child *is* a row, and collapsing it is meant to destroy it — the
+tree child _is_ a row, and collapsing it is meant to destroy it — the
 member would carry no tree meaning. Follows the editing precedent
 (`api/features/editing/state.ts`): the shared store stops at the
 common state, and each feature adds its own on top.
@@ -184,13 +184,13 @@ verbs for two operations.
 
 **Call sites this breaks** (all in-repo, all grouping):
 
-| Site | Today | After |
-|---|---|---|
-| `grouping-collapsible-story-host.component.ts:83` | `table.expandAll(table.groupIds())` | `table.setExpanded(table.groupIds())` |
-| `grouping-collapsible-story-host.component.ts:87` | `table.collapseAll()` | `table.setExpanded([])` |
-| `with-grouping/feature.spec.ts:866` | `store.collapseAll()` | `store.setExpanded([])` |
-| `with-grouping/feature.ts:68` (JSDoc) | names `expandAll(table.groupIds())` | re-point |
-| `grouping.mdx:422-424`, story host JSDoc + template copy | same | re-point |
+| Site                                                     | Today                               | After                                 |
+| -------------------------------------------------------- | ----------------------------------- | ------------------------------------- |
+| `grouping-collapsible-story-host.component.ts:83`        | `table.expandAll(table.groupIds())` | `table.setExpanded(table.groupIds())` |
+| `grouping-collapsible-story-host.component.ts:87`        | `table.collapseAll()`               | `table.setExpanded([])`               |
+| `with-grouping/feature.spec.ts:866`                      | `store.collapseAll()`               | `store.setExpanded([])`               |
+| `with-grouping/feature.ts:68` (JSDoc)                    | names `expandAll(table.groupIds())` | re-point                              |
+| `grouping.mdx:422-424`, story host JSDoc + template copy | same                                | re-point                              |
 
 Public API break beyond the repo: `expandAll`/`collapseAll` are
 exported members of `withExpansion()`. Same breaking-change budget the
@@ -217,8 +217,8 @@ themselves — nothing for the feature to own. The spec's justification
 `expandAll()`, so the marginal cost is one `computed()` — it adds a
 member to the `withTree()` slice rather than a slice of its own.
 
-Closes the spec's open question *"Does `expansionState` land here or in
-`withTree()`?"* and the issue's second open question.
+Closes the spec's open question _"Does `expansionState` land here or in
+`withTree()`?"_ and the issue's second open question.
 
 ### D6 — both features ship as ADR-0015 slices, in this issue (2026-09-20)
 
@@ -235,7 +235,7 @@ construct. The alternative — inventing `treeExpandedRows`,
 consumers absorb two breaking changes instead of one.
 
 **Deviates from the issue's sequencing note**, which put all slicing in
-#50. Still correct in spirit: #50 slices *four settled features* rather
+#50. Still correct in spirit: #50 slices _four settled features_ rather
 than tearing a freshly-split one in half. These two arrive sliced.
 
 ADR-0015's own table assigns one `expansion` slice returning
@@ -270,15 +270,15 @@ ids replaces `collapseAll()`.
 Full surface:
 
 ```ts
-table.expansion()              // Set<RowId>
-table.expansion.everExpanded()
-table.expansion.changed        // Observable<RowId>
-table.expansion.toggle/expand/collapse/set
+table.expansion(); // Set<RowId>
+table.expansion.everExpanded();
+table.expansion.changed; // Observable<RowId>
+table.expansion.toggle / expand / collapse / set;
 
-table.tree()                   // Set<RowId>
-table.tree.changed
-table.tree.toggle/expand/collapse/set
-table.tree.state()             // 'all' | 'some' | 'none'
+table.tree(); // Set<RowId>
+table.tree.changed;
+table.tree.toggle / expand / collapse / set;
+table.tree.state(); // 'all' | 'some' | 'none'
 ```
 
 **Why the merge:** `general-mechanism-over-enumerated-cases` asks for
@@ -338,12 +338,12 @@ tree at all, and requiring the accessor would force
 
 ```ts
 interface WithTreeConfig<TRow> {
-  childrenAccessor?: (row: TRow) => TRow[] | undefined;  // omitted = no row tree
+  childrenAccessor?: (row: TRow) => TRow[] | undefined; // omitted = no row tree
   isExpandable?: (row: TRow) => boolean;
 }
 
-withTree()                          // collapse only — group headers
-withTree({ childrenAccessor: fn })  // row tree
+withTree(); // collapse only — group headers
+withTree({ childrenAccessor: fn }); // row tree
 ```
 
 D2's goal is preserved: **nothing reads `row.children` anywhere**, so
@@ -372,15 +372,15 @@ a few lines; deferring means a second issue reopening the same file.
 **Recorded for the spec, not a fork.** Raised while comparing the two
 features' configuration surfaces.
 
-| | grouping | tree |
-|---|---|---|
-| hierarchy comes from | declared levels (config) | the rows themselves |
-| depth | fixed by the declaration | varies per row |
-| reorderable at runtime | yes (`setGroupLevels`) | no — would mean rewriting data |
-| configuration | "group by what?" | "how do I read the parent link?" |
+|                        | grouping                 | tree                             |
+| ---------------------- | ------------------------ | -------------------------------- |
+| hierarchy comes from   | declared levels (config) | the rows themselves              |
+| depth                  | fixed by the declaration | varies per row                   |
+| reorderable at runtime | yes (`setGroupLevels`)   | no — would mean rewriting data   |
+| configuration          | "group by what?"         | "how do I read the parent link?" |
 
 `withTree()` therefore has no levels API and never gains one — a
-declared-axis hierarchy *is* `withGrouping()` (D1). The only
+declared-axis hierarchy _is_ `withGrouping()` (D1). The only
 row-selection knob is `isExpandable`, whose default (accessor returned
 a non-empty array) covers the normal case; it exists for lazy children,
 where the accessor honestly returns `undefined` but the chevron must

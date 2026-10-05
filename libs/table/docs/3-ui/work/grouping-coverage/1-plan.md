@@ -27,24 +27,24 @@ that follow.
 
 ## Decisions being executed
 
-| # | Decision | Why |
-|---|---|---|
-| D1 | `grouping-order/` composes `withSorting()` | The row sort is the *contrast that defines* group order. Without it the story cannot answer "isn't this just sorting?" — the first question `applyGroupOrder` raises. Distinct from the `withSorting()` removed from `grouping-collapsible/` in `3af4fcf`, where sorting was instrumentation against collapse state. |
-| D2 | Only `grouping-aggregates/` shows totals | Three hosts kept `groupingConfig` after the config split. A group total now appears on exactly one canvas. |
-| D3 | `stickyHeaders` arg on `grouping-basic/` | The CSS rule survives in `grouping-story.css` with nothing applying it. Sticky is a CSS recipe over `data-row-kind`, not a grouping API option — same category as `showCount`, so it adds no second lesson. |
-| D4 | Criteria that cannot fail become a spec assertion | Three product-doc criteria rest on `PIPELINE_ORDER = ['filter','group','sort','expand']`; no data, config or user action can make them false. They are regression guards, not story requirements. |
+| #   | Decision                                          | Why                                                                                                                                                                                                                                                                                                                  |
+| --- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | `grouping-order/` composes `withSorting()`        | The row sort is the _contrast that defines_ group order. Without it the story cannot answer "isn't this just sorting?" — the first question `applyGroupOrder` raises. Distinct from the `withSorting()` removed from `grouping-collapsible/` in `3af4fcf`, where sorting was instrumentation against collapse state. |
+| D2  | Only `grouping-aggregates/` shows totals          | Three hosts kept `groupingConfig` after the config split. A group total now appears on exactly one canvas.                                                                                                                                                                                                           |
+| D3  | `stickyHeaders` arg on `grouping-basic/`          | The CSS rule survives in `grouping-story.css` with nothing applying it. Sticky is a CSS recipe over `data-row-kind`, not a grouping API option — same category as `showCount`, so it adds no second lesson.                                                                                                          |
+| D4  | Criteria that cannot fail become a spec assertion | Three product-doc criteria rest on `PIPELINE_ORDER = ['filter','group','sort','expand']`; no data, config or user action can make them false. They are regression guards, not story requirements.                                                                                                                    |
 
 ### D4 in detail
 
-| Criterion | Where | Why it cannot fail |
-|---|---|---|
-| "The ordering reflects the filtered rows" | §3.4 crit. 2 | Clustering runs on post-filter rows |
-| "The ordering updates when the data does" | §3.4 crit. 3 | The chain is `computed()` over the rows signal |
-| "A group with no surviving rows disappears" | F-G1 crit. 2 | An empty cluster is unrepresentable |
+| Criterion                                   | Where        | Why it cannot fail                             |
+| ------------------------------------------- | ------------ | ---------------------------------------------- |
+| "The ordering reflects the filtered rows"   | §3.4 crit. 2 | Clustering runs on post-filter rows            |
+| "The ordering updates when the data does"   | §3.4 crit. 3 | The chain is `computed()` over the rows signal |
+| "A group with no surviving rows disappears" | F-G1 crit. 2 | An empty cluster is unrepresentable            |
 
 The first is in the doc because **AG Grid gets it wrong** — `initialGroupOrderComparator` runs
 before filtering and aggregation. §8.4 already records that as a differentiator; a competitive
-claim is not a user story. §3.4's own design status said *"worth a test, not a decision"* while
+claim is not a user story. §3.4's own design status said _"worth a test, not a decision"_ while
 the coverage mark demanded an on-canvas demo. The design status was right.
 
 **Nothing currently pins filter-before-group.** The one genuine risk — someone editing
@@ -52,21 +52,21 @@ the coverage mark demanded an on-canvas demo. The design status was right.
 
 ## Accepted costs
 
-- **F-G1 loses its summaries demo.** Its first criterion is "counts *and* summaries are computed
+- **F-G1 loses its summaries demo.** Its first criterion is "counts _and_ summaries are computed
   over the rows that survived the filter", and `grouping-selection/` was the only host composing
   `withFiltering()`. After D2 the counts half still renders; the summaries half becomes an
   argument from `PIPELINE_ORDER`. F-G1 stays 🟡, now for two reasons rather than one.
 - **`grouping-order/` becomes a two-feature host** (D1) — the shape the lesson audit spent a
   session removing. The audit supplies its own precedent at
   [`3-lesson-audit.md:187-189`](../grouping-stories/3-lesson-audit.md), which kept
-  `withFiltering()` in `grouping-selection/` because it produces *a visible state change*. In
+  `withFiltering()` in `grouping-selection/` because it produces _a visible state change_. In
   `grouping-collapsible/` the sort's outcome was "the screen is unchanged" — an invariant you
   have to notice not happening. Here both sides move, and which thing moved is the whole content
   of `applyGroupOrder`. Recorded so the next audit does not read this as a D5 reversal.
-- **S-G1's second criterion is deliberately violated.** It reads *"What does not happen: the
-  header shows a sort indicator while the table does not change."* Under a real comparator,
+- **S-G1's second criterion is deliberately violated.** It reads _"What does not happen: the
+  header shows a sort indicator while the table does not change."_ Under a real comparator,
   clicking the grouped column in `grouping-order/` does exactly that. The user story's verb is
-  *"I want to understand why nothing moved"*, so the mark stands at ✅ — but step 5 must name the
+  _"I want to understand why nothing moved"_, so the mark stands at ✅ — but step 5 must name the
   trade in a sentence rather than marking it silently. The product doc already predicts this at
   `:740` and traces it to D5's accepted cost.
 - **S-G1 and S-G2 are currently ✅/🟡 on paper and uncovered in fact.** Their coverage cites
@@ -79,7 +79,7 @@ the coverage mark demanded an on-canvas demo. The design status was right.
 
 Both are applied in step 6:
 
-1. **G-2 is not `row-editing.md`'s problem.** That doc already marks G-2 ❌ *(forward-looking)*
+1. **G-2 is not `row-editing.md`'s problem.** That doc already marks G-2 ❌ _(forward-looking)_
    and never mentions `grouping-crud/`. The dead claim is in **`0-product/grouping.md:664-666`**,
    in grouping's own §5 — which also contradicts itself, asserting a coverage claim for G-2 one
    sentence after saying `row-editing.md` owns the mark. Deleting that sentence fixes the dead

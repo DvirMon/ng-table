@@ -9,6 +9,7 @@ files:
   - libs/table/src/api/features/with-tree/feature.ts
   - libs/table/src/api/features/with-tree/feature.spec.ts
 ---
+
 # Step 4 — Reveal context rows
 
 This step makes context rows render expanded under a filter, without writing the open set.
@@ -44,4 +45,5 @@ Decisions: [D20 (a, b)](../../1-decisions.md), ADR-0014 (spec stories 26, 27, 29
 - [ ] A narrower predicate reveals only the matching rows.
 
 ---
+
 ← [Step 3: table.tree.contextRowIds](step-3-context-row-ids.plan.md) | [Step 5: Close a revealed row](step-5-close-revealed-row.plan.md) →

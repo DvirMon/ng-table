@@ -3,15 +3,15 @@
 **Issue:** [#141](https://github.com/DvirMon/ng-table/issues/141)
 **Status:** 7 / 7 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | State and product docs | ✅ done | — |
-| 2 | Columns and UI docs | ✅ done | — |
-| 3 | ADR amendments | ✅ done | — |
-| 4 | `CLAUDE.md` invariants and layout rows | ✅ done | — |
-| 5 | Check #140's order-window doc | ✅ done | — |
-| 6 | Columns decisions log | ✅ done | — |
-| 7 | Regenerate `llms.txt` and run the gates | ✅ done | — |
+| Step | Title                                   | Status  | PR  |
+| ---- | --------------------------------------- | ------- | --- |
+| 1    | State and product docs                  | ✅ done | —   |
+| 2    | Columns and UI docs                     | ✅ done | —   |
+| 3    | ADR amendments                          | ✅ done | —   |
+| 4    | `CLAUDE.md` invariants and layout rows  | ✅ done | —   |
+| 5    | Check #140's order-window doc           | ✅ done | —   |
+| 6    | Columns decisions log                   | ✅ done | —   |
+| 7    | Regenerate `llms.txt` and run the gates | ✅ done | —   |
 
 ## Graph
 

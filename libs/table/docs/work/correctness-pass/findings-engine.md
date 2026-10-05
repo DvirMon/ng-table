@@ -36,7 +36,7 @@ Two more sites, same callback family:
   the `linkedSignal` behind `value()`, then `criterion()` and the filter
   stage.
 
-`evaluateRecord` (`evaluator.ts:40-67`) *is* correctly wrapped — the
+`evaluateRecord` (`evaluator.ts:40-67`) _is_ correctly wrapped — the
 guard was written for the predicate and never extended to the two
 callbacks in front of it.
 
@@ -67,12 +67,12 @@ column).
 
 ## 3. `engine/columns-schema/wiring.ts:44-48, 62, 70, 72` — four unwrapped schema callbacks
 
-| Line | Callback |
-|---|---|
+| Line  | Callback                                            |
+| ----- | --------------------------------------------------- |
 | 44-48 | `rule.logic(ctx)` — `metadata()` / `applyVisible()` |
-| 62 | `rule.params(ctx)` |
-| 70 | `rule.onSuccess(value)` |
-| 72 | `rule.onError(resourceRef.error())` |
+| 62    | `rule.params(ctx)`                                  |
+| 70    | `rule.onSuccess(value)`                             |
+| 72    | `rule.onError(resourceRef.error())`                 |
 
 **Scenario.** `applyVisible(p.total, (ctx) => ctx.columns().find((c) => c.id === 'currency')!.visible)`,
 then `table.columns.update(setColumns(without('currency')))` → `find`
@@ -94,7 +94,7 @@ const at = indexById.get(id);
 const isFreshCacheHit = at !== undefined && trackBy(rows[at]) === id;
 ```
 
-`rows[at]` is not bounds-checked. When `indexById` is stale *and* `rows`
+`rows[at]` is not bounds-checked. When `indexById` is stale _and_ `rows`
 is shorter, `at >= rows.length` → `trackBy(undefined)` → `TypeError`
 (both the key form via `normalizeTrackBy`'s `row[key]`, and a consumer
 `(r) => r.id`).
@@ -104,9 +104,7 @@ library itself uses at `mutations/row-edit-mutations.ts:67`:
 
 ```ts
 // rows: [{id:'a'},{id:'b'},{id:'c'}], indexById: {a:0,b:1,c:2}
-table.value.update((rows, ctx) =>
-  patchRow('c', { name: 'x' })(removeRow('a')(rows, ctx), ctx)
-);
+table.value.update((rows, ctx) => patchRow('c', { name: 'x' })(removeRow('a')(rows, ctx), ctx));
 ```
 
 `removeRow` returns a 2-element array; `patchRow` calls
@@ -116,7 +114,7 @@ table.value.update((rows, ctx) =>
 The doc comment at `rows.ts:36-39` asserts this is impossible ("always
 correct since the fallback never trusts a stale hit") and names chained
 writes as the reason the guard exists. The guard handles a hit pointing
-at a *different* row, not one pointing past the end. Fix is one clause:
+at a _different_ row, not one pointing past the end. Fix is one clause:
 `at !== undefined && at < rows.length && …`. Latent today (every
 internal caller passes a post-`insertRow` array, which only grows), but
 `RowUpdater`/`EditingUpdater` composition is public.
@@ -132,7 +130,7 @@ const columns = computed(() => foldColumnRules(baseColumns(), columnRules));
 
 `columnRules` is a plain mutable array that `composeTable()` keeps
 pushing into during the fold (`compose-table.ts:121-123`). A rule pushed
-*after* the computed has evaluated changes no tracked dependency, so the
+_after_ the computed has evaluated changes no tracked dependency, so the
 computed doesn't re-run.
 
 `core.ts:14-17` claims this is safe because registries are read at
@@ -144,9 +142,11 @@ eagerly in the factory body to validate declared levels.
 **Scenario.**
 
 ```ts
-createTable(data, { trackBy: 'id', columns },
+createTable(
+  data,
+  { trackBy: 'id', columns },
   withGrouping({ initial: ['dept'] }),
-  myFeature   // { columnRules: [{ columnId: 'dept', key: MY_KEY, result: someSignal }] }
+  myFeature, // { columnRules: [{ columnId: 'dept', key: MY_KEY, result: someSignal }] }
 );
 ```
 
@@ -202,7 +202,7 @@ The early `return` leaves later entries' `result` signals unread, so the
 enclosing computed (`api/features/with-grouping/feature.ts:140`) does
 not depend on them. Unlike `buildFiltersRoot`'s deliberate short-circuit
 (`filters/state.ts:174-184`, sound because an untracked node cannot
-change a `true`), an untracked entry here *can* change the answer.
+change a `true`), an untracked entry here _can_ change the answer.
 
 **Scenario.** Two `applyGroupingAsync` rules — `dept` (entry 0, resource
 stuck `'loading'` behind a slow endpoint) and `region` (entry 1). First
@@ -260,7 +260,7 @@ return meta ? { ...withVisible, meta } : withVisible;
 plus `columnsSchema: (p) => { metadata(p.total, ALIGN_KEY, 'right'); }`.
 `readColumnMeta(col, ALIGN_KEY)` → `'right'`;
 `readColumnMeta(col, WIDTH_KEY)` → `undefined`. The authored entry
-vanishes with no error, purely because some *other* key on the same
+vanishes with no error, purely because some _other_ key on the same
 column had a rule. A column with no rules keeps its `meta` (fast path at
 line 161), so the behavior differs between columns in one table.
 
@@ -273,14 +273,14 @@ Construction checks are ruled dev-only and stripped from production. In
 (`assertUniqueColumnIds`, with the local `declare const ngDevMode` at
 `columns.ts:17`). Ungated:
 
-| Site | Check |
-|---|---|
-| `slots.ts:73` | stage / render-stage / member collisions |
-| `rows.ts:19` | `trackBy` resolving to a non-`RowId` |
-| `columns-schema/resolve.ts:44` | duplicate `metadata()` per key per column |
+| Site                           | Check                                            |
+| ------------------------------ | ------------------------------------------------ |
+| `slots.ts:73`                  | stage / render-stage / member collisions         |
+| `rows.ts:19`                   | `trackBy` resolving to a non-`RowId`             |
+| `columns-schema/resolve.ts:44` | duplicate `metadata()` per key per column        |
 | `columns-schema/resolve.ts:23` | `assertDeclarationsAreKnown` (unknown column id) |
-| `filters/validate.ts:16, 22` | empty `anyOf`; two filters on one path |
-| `filters/build.ts:45` | schema fn not returning an object literal |
+| `filters/validate.ts:16, 22`   | empty `anyOf`; two filters on one path           |
+| `filters/build.ts:45`          | schema fn not returning an object literal        |
 
 A conformance gap against a decision dated today, not a wrong result on
 its own — hence ranked below 1-9. Worth one pass, since the gating idiom

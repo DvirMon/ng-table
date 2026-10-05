@@ -8,13 +8,13 @@
 
 ## Files
 
-| File | Line | Action |
-|---|---|---|
-| `libs/shared/table/src/stories/composition/derived-state/derived-state-story-host.component.ts` | 37 | edit |
-| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts` | 188 | edit |
-| `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | 75 | edit |
-| `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts` | 72 | edit |
-| `libs/shared/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.ts` | 177 | edit |
+| File                                                                                                      | Line | Action |
+| --------------------------------------------------------------------------------------------------------- | ---- | ------ |
+| `libs/shared/table/src/stories/composition/derived-state/derived-state-story-host.component.ts`           | 37   | edit   |
+| `libs/shared/table/src/stories/filtering/client-filtering/client-filtering-story-host.component.ts`       | 188  | edit   |
+| `libs/shared/table/src/stories/filtering/selection-filtering/selection-filtering-story-host.component.ts` | 75   | edit   |
+| `libs/shared/table/src/stories/grouping/grouping-selection/grouping-selection-story-host.component.ts`    | 72   | edit   |
+| `libs/shared/table/src/stories/grouping/grouping-static/grouping-static-story-host.component.ts`          | 177  | edit   |
 
 ## Why This Step Exists
 
@@ -24,7 +24,7 @@ five story hosts are the only non-spec consumers in the repo.
 
 They are also the only artifacts that prove the wiring expression works in a real Angular
 component rather than in a test harness — `withFiltering({ predicates: () => [this.filters().matcher()] })`
-is the composition the spec names as *the* consumer-side seam.
+is the composition the spec names as _the_ consumer-side seam.
 
 ## What To Do
 
@@ -32,10 +32,10 @@ Replace the config object at each of the five sites:
 
 ```ts
 // before
-withFiltering({ filters: this.filters })
+withFiltering({ filters: this.filters });
 
 // after
-withFiltering({ predicates: () => [this.filters().matcher()] })
+withFiltering({ predicates: () => [this.filters().matcher()] });
 ```
 
 Nothing else in these hosts changes. The `createFilters()` declarations, the criterion types, the
@@ -85,4 +85,5 @@ the table, not what the model is.
 - [ ] Story behavior is visually unchanged — each story filters exactly as it did before
 
 ---
+
 [Step 2: Move the criterion-map typing assertions](step-2-move-criterion-map-typing.plan.md) →

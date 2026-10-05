@@ -1,5 +1,5 @@
 ---
-title: "Step 7 — 1-state/filters.md: code: none → shipped, then regenerate status.md"
+title: 'Step 7 — 1-state/filters.md: code: none → shipped, then regenerate status.md'
 type: task-step
 plan: ../../1-gap-analysis.md
 node: E
@@ -59,4 +59,5 @@ Node E, scope already reduced by the research check: two of its three facts fixe
 - [ ] `npm run table:status` named as pending for the user to run.
 
 ---
+
 ← [Step 6: selection-filtering/](step-6-selection-filtering-story.plan.md) | [Step 8: architecture.md U5](step-8-architecture-u5-method-names.plan.md) →

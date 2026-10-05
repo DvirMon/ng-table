@@ -96,7 +96,7 @@ export function revertEdit<TRow>(id: RowId, row?: TRow): EditingUpdater<TRow> {
     writeData(
       findRow(data, trackBy, id, indexById) !== undefined
         ? data.map((r) => (trackBy(r) === id ? value : r)) // still there — replace
-        : insertRow<TRow>(value, { at: snapshot.at })(data, { trackBy, indexById }) // gone — put it back
+        : insertRow<TRow>(value, { at: snapshot.at })(data, { trackBy, indexById }), // gone — put it back
     );
 
     return {
@@ -167,7 +167,7 @@ export function removeEdit<TRow>(id: RowId): EditingUpdater<TRow> {
 export function patchEdit<TRow>(
   id: RowId,
   partial: Partial<TRow>,
-  options: PatchEditOptions = {}
+  options: PatchEditOptions = {},
 ): EditingUpdater<TRow> {
   return (state, { data, trackBy, writeData, indexById }) => {
     const at = resolveIndex(data, id, { trackBy, indexById });

@@ -38,7 +38,7 @@ describe('setColumns — case 1: order is rejected', () => {
       table.columns.update(
         // @ts-expect-error — order is not writable through setColumns; it derives from array
         // position only
-        setColumns([{ id: 'name', order: 0 }])
+        setColumns([{ id: 'name', order: 0 }]),
       );
     });
   });
@@ -51,7 +51,7 @@ describe('setColumns — case 2: meta is rejected', () => {
 
       table.columns.update(
         // @ts-expect-error — meta is not writable through setColumns; use metadata() instead
-        setColumns([{ id: 'name', meta: new Map() }])
+        setColumns([{ id: 'name', meta: new Map() }]),
       );
     });
   });
@@ -64,7 +64,7 @@ describe('setColumns — case 3: an unknown id is rejected', () => {
 
       table.columns.update(
         // @ts-expect-error — 'nam' was never declared as a column id
-        setColumns([{ id: 'nam' }])
+        setColumns([{ id: 'nam' }]),
       );
     });
   });
@@ -96,7 +96,7 @@ describe('setColumns — case 5: accessor/visible/label are accepted', () => {
             visible: false,
             accessor: (row) => row.name,
           },
-        ])
+        ]),
       );
     });
   });

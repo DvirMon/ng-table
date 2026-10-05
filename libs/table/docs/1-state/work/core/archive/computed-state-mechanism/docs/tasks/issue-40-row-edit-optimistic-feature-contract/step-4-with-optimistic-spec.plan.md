@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — with-optimistic.spec.ts: positional form, derive-only block, composed-together throw"
+title: 'Step 4 — with-optimistic.spec.ts: positional form, derive-only block, composed-together throw'
 type: task-step
 issue: 74
 ---
@@ -82,4 +82,5 @@ contract is the ADR-0007 throw, in either order.
 - [ ] Runtime green (`vitest run …/with-optimistic.spec.ts`) — the user runs it.
 
 ---
+
 ← [Step 3: with-row-edit.ts](step-3-with-row-edit.plan.md) | [Step 5: with-row-edit.spec.ts + optimistic-mutations.spec.ts](step-5-with-row-edit-spec.plan.md) →

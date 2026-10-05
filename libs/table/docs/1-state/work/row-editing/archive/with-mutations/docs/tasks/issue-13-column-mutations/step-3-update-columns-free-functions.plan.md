@@ -28,25 +28,19 @@ Create `api/update-columns.ts`:
 
 ```ts
 import type { WritableSignal } from '@angular/core';
-import {
-  applyColumnOrder,
-  resolveColumnDefs,
-  toggleColumnVisible,
-} from '../engine/columns';
+import { applyColumnOrder, resolveColumnDefs, toggleColumnVisible } from '../engine/columns';
 import type { ColumnDef, ColumnDefInput, ColumnsUpdater } from './types';
 
 /** The one general write: applies `updater` to the store's columns signal. */
 export function updateColumns<TRow>(
   table: { columns: WritableSignal<ColumnDef<TRow>[]> },
-  updater: ColumnsUpdater<TRow>
+  updater: ColumnsUpdater<TRow>,
 ): void {
   table.columns.update(updater);
 }
 
 /** Replaces the full column list, resolving sparse `ColumnDefInput`s to full `ColumnDef`s. */
-export function setColumns<TRow>(
-  defs: ColumnDefInput<TRow>[]
-): ColumnsUpdater<TRow> {
+export function setColumns<TRow>(defs: ColumnDefInput<TRow>[]): ColumnsUpdater<TRow> {
   return () => resolveColumnDefs(defs);
 }
 
@@ -86,4 +80,5 @@ export function toggleColumnVisibility<TRow>(id: string): ColumnsUpdater<TRow> {
 - `updateColumns(table, setColumns(defs))` / `updateColumns(table, reorderColumns(ids))` / `updateColumns(table, toggleColumnVisibility(id))` all typecheck against a `{ columns: WritableSignal<ColumnDef<TRow>[]> }`.
 
 ---
+
 ← [Step 2: `api/types.ts`](step-2-api-types-writable-columns.plan.md) | [Step 4: `with-columns-schema` wiring update](step-4-columns-schema-wiring.plan.md) →

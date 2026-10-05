@@ -8,6 +8,7 @@ files:
   - libs/table/src/directives/ngp-table-tree-row.directive.spec.ts (new)
   - libs/table/src/index.ts
 ---
+
 # Step 5 — Tree-row directive
 
 This step adds `ngpTableTreeRow`, which marks context rows with a `data-context-row` attribute.
@@ -44,4 +45,5 @@ Decisions: [D18, D21](../../1-decisions.md)
 - [ ] The attribute is removed when the same row stops being a context row.
 
 ---
+
 ← [Step 4: Filter keeps ancestors](step-4-filter-keeps-ancestors.plan.md) | [Step 6: hasChildren follows the filtered view](step-6-filtered-has-children.plan.md) →

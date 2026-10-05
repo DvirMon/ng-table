@@ -84,4 +84,5 @@ unchanged.
 - [ ] No one-argument `FiltersPath<` left in `libs/table/src`.
 
 ---
+
 ← [Step 6: Type specs](step-6-type-specs.plan.md) | [Step 8: Docs, decisions and `llms.txt`](step-8-docs-and-decisions.plan.md) →

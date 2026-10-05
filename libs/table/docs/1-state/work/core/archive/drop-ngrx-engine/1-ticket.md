@@ -31,7 +31,7 @@ below for why.
 "@ngrx/signals": "22.0.0-rc.0"
 ```
 
-Stable Angular, pinned to a *release candidate* of ngrx, because a stable ngrx for this
+Stable Angular, pinned to a _release candidate_ of ngrx, because a stable ngrx for this
 Angular major wasn't available. This is the lock-step cost already being paid, not a
 hypothetical. Every future Angular major repeats it.
 
@@ -72,7 +72,7 @@ experiments.
 - **The decisive finding, independent of assignability:** even with a carrier in place, the
   unannotated `withExpansion()` still resolved to `Signal<unknown[]>`. `SignalStoreFeature`'s
   parameter is a conditional/mapped type, and TypeScript does not infer through those. There
-  is no inference site for `TRow` to land in, for *any* carrier shape. This is the root cause
+  is no inference site for `TRow` to land in, for _any_ carrier shape. This is the root cause
   the present ticket removes.
 - **Constraint-as-contextual-type is a sound TS mechanism** — verified in isolation with
   exact-type assertions and negative cases. It is not the thing that's broken; ngrx's types
@@ -99,12 +99,12 @@ repo, nobody has.
 
 Four non-spec files import `@ngrx/signals`:
 
-| File | What it uses |
-|---|---|
-| `table.store.ts` | `signalStore`, `signalStoreFeature`, `withState`, `withProps`, `withMethods`, `withComputed`, `patchState`, `SignalStoreFeature` |
-| `with-expansion.ts` | `signalStoreFeature`, `withState`, `withProps`, `withMethods`, `patchState`, `type` |
-| `with-sorting.ts` | same shape as expansion |
-| `with-columns-schema.ts` | same shape, plus `withHooks` |
+| File                     | What it uses                                                                                                                     |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `table.store.ts`         | `signalStore`, `signalStoreFeature`, `withState`, `withProps`, `withMethods`, `withComputed`, `patchState`, `SignalStoreFeature` |
+| `with-expansion.ts`      | `signalStoreFeature`, `withState`, `withProps`, `withMethods`, `patchState`, `type`                                              |
+| `with-sorting.ts`        | same shape as expansion                                                                                                          |
+| `with-columns-schema.ts` | same shape, plus `withHooks`                                                                                                     |
 
 Occurrence counts across non-spec files: `signalStoreFeature` 14, `patchState` 13,
 `withState`/`withProps`/`withMethods` 6 each, `signalStore` 4, `withHooks`/`withComputed` 3

@@ -12,7 +12,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideArrowDown, lucideArrowUp, lucideCornerDownLeft, lucideSearch, lucideSearchX, lucideX } from '@ng-icons/lucide';
+import {
+  lucideArrowDown,
+  lucideArrowUp,
+  lucideCornerDownLeft,
+  lucideSearch,
+  lucideSearchX,
+  lucideX,
+} from '@ng-icons/lucide';
 import { NgpFocusTrap } from 'ng-primitives/focus-trap';
 import { IconButton } from '../icon-button/icon-button';
 import { Kbd } from '../kbd/kbd';
@@ -80,7 +87,9 @@ export class SearchOverlay {
   private readonly activeResultIndex = signal(0);
 
   readonly hasQuery = computed(() => this.query().trim().length > 0);
-  private readonly flatResults = computed(() => this.resultGroups().flatMap((group) => group.results));
+  private readonly flatResults = computed(() =>
+    this.resultGroups().flatMap((group) => group.results),
+  );
   readonly hasResults = computed(() => this.flatResults().length > 0);
   /**
    * The active listbox — query results while there's a query, recent searches otherwise. Both
@@ -88,12 +97,14 @@ export class SearchOverlay {
    * (`docs/gaps-ngp-reference.md` item 17), so keyboard nav and the active-id computation walk
    * whichever one is currently showing.
    */
-  private readonly flatSelectable = computed<readonly SearchResultRecord[] | readonly RecentSearchEntry[]>(
-    () => (this.hasQuery() ? this.flatResults() : this.recentSearches()),
-  );
+  private readonly flatSelectable = computed<
+    readonly SearchResultRecord[] | readonly RecentSearchEntry[]
+  >(() => (this.hasQuery() ? this.flatResults() : this.recentSearches()));
   readonly hasSelectableRows = computed(() => this.flatSelectable().length > 0);
   /** Bare id of the active row — what each row component's `active` input compares against. */
-  readonly activeRowId = computed(() => this.flatSelectable()[this.activeResultIndex()]?.id ?? null);
+  readonly activeRowId = computed(
+    () => this.flatSelectable()[this.activeResultIndex()]?.id ?? null,
+  );
   readonly activeResultId = computed(() => {
     const active = this.flatSelectable()[this.activeResultIndex()];
     return active ? `search-result-${active.id}` : null;

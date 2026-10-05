@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — Nine row-edit story hosts + two schema files on positional createTable()"
+title: 'Step 1 — Nine row-edit story hosts + two schema files on positional createTable()'
 type: task-step
 issue: 75
 status: done
@@ -39,13 +39,13 @@ call and the schema helper it used.
 
 Nothing — already on the branch. The final call shapes, for the record:
 
-| Host | Call |
-|---|---|
-| live-table | `createTable(this.data, editTableConfig, withSorting(), withOptimistic())` |
-| live-optimistic | `createTable(this.data, editTableConfig, withOptimistic())` |
-| external-write, form-write-mutations, gated-single-pessimistic, gated-single-optimistic | `createTable(this.data, editTableConfig, withRowEdit())` |
-| gated-multiple-optimistic, gated-bulk-optimistic | `createTable(this.data, editTableConfig, withRowEdit({ multiple: () => true }))` |
-| sorting-editing | `createTable(this.data, sortEditTableConfig, withSorting(), withRowEdit())` |
+| Host                                                                                    | Call                                                                             |
+| --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| live-table                                                                              | `createTable(this.data, editTableConfig, withSorting(), withOptimistic())`       |
+| live-optimistic                                                                         | `createTable(this.data, editTableConfig, withOptimistic())`                      |
+| external-write, form-write-mutations, gated-single-pessimistic, gated-single-optimistic | `createTable(this.data, editTableConfig, withRowEdit())`                         |
+| gated-multiple-optimistic, gated-bulk-optimistic                                        | `createTable(this.data, editTableConfig, withRowEdit({ multiple: () => true }))` |
+| sorting-editing                                                                         | `createTable(this.data, sortEditTableConfig, withSorting(), withRowEdit())`      |
 
 ## Implementation Notes
 
@@ -75,4 +75,5 @@ Re-verified 2026-09-13 against `fe23c9a`:
 - [x] All nine hosts call `createTable(this.data, <config>, ...features)`
 
 ---
+
 [Step 2: tidy the two unformatted sorting-editing lines](step-2-format-touched-lines.plan.md) →

@@ -1,10 +1,10 @@
 <div class="story-host">
   <p class="story-host__hint">
-    <code>groupOrder</code> orders group <strong>headers</strong> among their siblings at one
-    level — not which groups exist, which is <code>when</code>, and not which columns are levels,
-    which is <code>initial</code>. Clicking a column that is a level can only ever move headers,
-    never rows, because every row under one of its groups holds the same value — whether it moves
-    them at all is what the comparator decides. Pick a comparator in Controls.
+    <code>groupOrder</code> orders group <strong>headers</strong> among their siblings at one level
+    — not which groups exist, which is <code>when</code>, and not which columns are levels, which is
+    <code>initial</code>. Clicking a column that is a level can only ever move headers, never rows,
+    because every row under one of its groups holds the same value — whether it moves them at all is
+    what the comparator decides. Pick a comparator in Controls.
   </p>
 
   <div class="story-host__toolbar">
@@ -18,9 +18,9 @@
     @case ('first-occurrence') {
       <p class="grouping-story__notice">
         No ordering opinion — the comparator returns a constant <code>0</code> and the sort is
-        stable, so siblings keep the order each key was <em>first seen</em> while scanning the
-        rows. This is also what you get by declaring no comparator at all. The rows reach
-        clustering already sorted, so the headers inherit the row sort.
+        stable, so siblings keep the order each key was <em>first seen</em> while scanning the rows.
+        This is also what you get by declaring no comparator at all. The rows reach clustering
+        already sorted, so the headers inherit the row sort.
       </p>
     }
     @case ('by-label') {
@@ -34,16 +34,16 @@
     @case ('by-count') {
       <p class="grouping-story__notice">
         <code>b.rows.length - a.rows.length</code> — biggest cluster first.
-        <code>GroupSummary.rows</code> is the cluster's own leaves, which is what makes ordering
-        by size, or by a total, possible at all. Headers stay in size order; a row sort never
-        reaches this comparator.
+        <code>GroupSummary.rows</code> is the cluster's own leaves, which is what makes ordering by
+        size, or by a total, possible at all. Headers stay in size order; a row sort never reaches
+        this comparator.
       </p>
     }
     @case ('external-list') {
       <p class="grouping-story__notice">
         A caller-supplied ranking — <strong>{{ externalOrder.join(' → ') }}</strong> — with values
-        absent from it sorting last. The shape a saved report or a pinned-priority list takes.
-        That order survives every row sort applied on top of it.
+        absent from it sorting last. The shape a saved report or a pinned-priority list takes. That
+        order survives every row sort applied on top of it.
       </p>
     }
     @case ('throwing') {
@@ -59,9 +59,12 @@
 
   <p class="grouping-story__notice">
     A comparator is declared for <strong>Rep</strong> too, but <strong>Rep</strong> is
-    {{ isRepGrouped() ? 'currently a level, so that declaration is now in effect' : 'not a level, so that declaration is inert' }}.
-    <code>groupOrder</code> never activates a level — on a column with no active level it is
-    a silent no-op. That is the split from <code>grouping</code>.
+    {{
+      isRepGrouped()
+        ? 'currently a level, so that declaration is now in effect'
+        : 'not a level, so that declaration is inert'
+    }}. <code>groupOrder</code> never activates a level — on a column with no active level it is a
+    silent no-op. That is the split from <code>grouping</code>.
   </p>
 
   <table class="story-host__table grouping-story__table">

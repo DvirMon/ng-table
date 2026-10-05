@@ -64,4 +64,5 @@ Assertions (`expectTypeOf` / `@ts-expect-error`) on a table built with
       and the check fails).
 
 ---
+
 ← [Step 4: Runtime spec](step-4-runtime-spec.plan.md) | [Step 6: Docs, decisions and `llms.txt`](step-6-docs-and-decisions.plan.md) →

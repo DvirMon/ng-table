@@ -1,5 +1,5 @@
 ---
-title: "Step 5 — grouping-static demonstrates rows with no group value staying flat"
+title: 'Step 5 — grouping-static demonstrates rows with no group value staying flat'
 type: task-step
 issue: 119
 ---
@@ -36,7 +36,7 @@ currently promises the opposite behaviour.
 That is the behaviour this slice makes configurable, so the story that states it is the story that
 has to show the alternative. Extending it beats a new story host: the mechanism is one config key,
 the fixture already carries all three blank keys (`fixtures/types.ts` documents `region` as
-nullable *and* optional precisely for this), and `grouping-static` is already the "no second
+nullable _and_ optional precisely for this), and `grouping-static` is already the "no second
 feature composed, copyable as-is" story — which is exactly the frame a consumer reaching for
 `groupWhen` is in.
 
@@ -80,7 +80,7 @@ so it does not earn a `.utils.ts` (`extract-encapsulated-logic` § Don't extract
 ### 2. A toolbar control
 
 Add a checkbox beside the existing controls, labelled for the domain fact rather than the API:
-*"Keep deals with no region flat"*. Follow whatever binding shape the toolbar already uses for
+_"Keep deals with no region flat"_. Follow whatever binding shape the toolbar already uses for
 `showCount`/`stickyHeaders` — do not introduce a second control idiom.
 
 ### 3. `argTypes` and the description
@@ -148,4 +148,5 @@ export const BlankRegionsFlat: Story = { args: { keepBlankRegionsFlat: true } };
 - [ ] `nx run shared-table:typecheck` clean, on a source-clean run.
 
 ---
+
 ← [Step 4: Tests](step-4-tests.plan.md) | [Step 6: Documentation](step-6-docs.plan.md) →

@@ -34,10 +34,7 @@ interface Row {
 // reads `path.<id>` off these columns (the schema tests below use `makeColumnSet()` instead),
 // so `TableStore<Row>`'s default `ColumnValueMap` stays the exact type `makeStore()` composes.
 function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>[]> {
-  return createColumns(noData<Row>(), (col) => [
-    col('name'),
-    col('status'),
-  ]);
+  return createColumns(noData<Row>(), (col) => [col('name'), col('status')]);
 }
 
 // Mirrors `makeColumns()`'s two columns, via `createColumns()`, for the call sites that need
@@ -45,7 +42,7 @@ function makeColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, unknown>
 // `columnsSchema` config property.
 function makeColumnSet(
   data: () => readonly Row[] | undefined,
-  schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>
+  schema?: ColumnsSchemaFn<Row, 'name' | 'status'> | ColumnSchema<Row>,
 ) {
   return createColumns(data, (col) => [col('name'), col('status')], schema);
 }
@@ -69,11 +66,9 @@ function makeRenderColumns(): ColumnSet<Row, readonly ColumnDecl<Row, string, un
 // form. Columns tests pass no rows; row tests seed rows via the `data` param.
 function makeStore(
   columns: ReturnType<typeof makeColumns> = makeColumns(),
-  data: Row[] = []
+  data: Row[] = [],
 ): TableStore<Row> {
-  return TestBed.runInInjectionContext(() =>
-    createTable(signal(data), { trackBy: 'id', columns })
-  );
+  return TestBed.runInInjectionContext(() => createTable(signal(data), { trackBy: 'id', columns }));
 }
 
 /**
@@ -107,9 +102,7 @@ describe('createTable', () => {
   it('normalizes a string trackBy shorthand into a function', () => {
     const store = makeStore();
 
-    expect(store.trackBy({ id: 'r1', name: 'Ann', status: 'active' })).toBe(
-      'r1'
-    );
+    expect(store.trackBy({ id: 'r1', name: 'Ann', status: 'active' })).toBe('r1');
   });
 
   it('accepts a trackBy function as-is', () => {
@@ -117,18 +110,16 @@ describe('createTable', () => {
       createTable(signal<Row[]>([]), {
         trackBy: (row: Row) => `row-${row.id}`,
         columns: makeColumns(),
-      })
+      }),
     );
 
-    expect(store.trackBy({ id: 'r1', name: 'Ann', status: 'active' })).toBe(
-      'row-r1'
-    );
+    expect(store.trackBy({ id: 'r1', name: 'Ann', status: 'active' })).toBe('row-r1');
   });
 
   it('rows reflect the data signal directly, no internal effect', () => {
     const data = signal<Row[]>([{ id: 'r1', name: 'Ann', status: 'active' }]);
     const store = TestBed.runInInjectionContext(() =>
-      createTable(data, { trackBy: 'id', columns: makeColumns() })
+      createTable(data, { trackBy: 'id', columns: makeColumns() }),
     );
 
     expect(store.rows()).toEqual([{ id: 'r1', name: 'Ann', status: 'active' }]);
@@ -174,13 +165,10 @@ describe('createTable', () => {
 
   it('renderRows() derives its ids from trackBy', () => {
     const store = TestBed.runInInjectionContext(() =>
-      createTable(
-        signal<Row[]>([{ id: 'r1', name: 'Ann', status: 'active' }]),
-        {
-          trackBy: (row: Row) => `row-${row.id}`,
-          columns: makeColumns(),
-        }
-      )
+      createTable(signal<Row[]>([{ id: 'r1', name: 'Ann', status: 'active' }]), {
+        trackBy: (row: Row) => `row-${row.id}`,
+        columns: makeColumns(),
+      }),
     );
 
     expect(store.renderRows()[0].id).toBe('row-r1');
@@ -194,8 +182,8 @@ describe('createTable', () => {
           { id: 'r2', name: 'Bob', status: 'inactive' },
         ]),
         { trackBy: 'id', columns: makeColumns() },
-        withReversibleSort()
-      )
+        withReversibleSort(),
+      ),
     );
 
     expect(store.renderRows().map((r) => r.id)).toEqual(['r1', 'r2']);
@@ -206,9 +194,7 @@ describe('createTable', () => {
   });
 
   it('gives each createTable() call independent state', () => {
-    const storeA = makeStore(makeColumns(), [
-      { id: 'r1', name: 'Ann', status: 'active' },
-    ]);
+    const storeA = makeStore(makeColumns(), [{ id: 'r1', name: 'Ann', status: 'active' }]);
     const storeB = makeStore();
 
     expect(storeA.rows()).toHaveLength(1);
@@ -238,12 +224,10 @@ describe('createTable', () => {
         columns: makeColumnSet(data, (path) => {
           visible(path.status, { when: () => false });
         }),
-      })
+      }),
     );
 
-    expect(store.columns().find((column) => column.id === 'status')?.visible).toBe(
-      false
-    );
+    expect(store.columns().find((column) => column.id === 'status')?.visible).toBe(false);
   });
 
   it('applies a standalone columnSchema() value via visible (via a column set’s schema)', () => {
@@ -256,12 +240,10 @@ describe('createTable', () => {
       createTable(data, {
         trackBy: 'id',
         columns: makeColumnSet(data, hideStatus),
-      })
+      }),
     );
 
-    expect(store.columns().find((column) => column.id === 'status')?.visible).toBe(
-      false
-    );
+    expect(store.columns().find((column) => column.id === 'status')?.visible).toBe(false);
   });
 
   it('composes two synthetic features where the second reads the first’s member', () => {
@@ -277,8 +259,8 @@ describe('createTable', () => {
         signal<Row[]>([]),
         { trackBy: 'id', columns: makeColumns() },
         withCount,
-        withDoubledCount
-      )
+        withDoubledCount,
+      ),
     );
 
     expect(store.count()).toBe(2);
@@ -292,15 +274,11 @@ describe('createTable', () => {
       (input) => {
         seenOwnMemberAtConstruction = input.count;
         return { members: { doubled: computed(() => input.count * 2) } };
-      }
+      },
     );
 
     const store = TestBed.runInInjectionContext(() =>
-      createTable(
-        signal<Row[]>([]),
-        { trackBy: 'id', columns: makeColumns() },
-        withDerived
-      )
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withDerived),
     );
 
     expect(seenOwnMemberAtConstruction).toBe(3);
@@ -314,34 +292,26 @@ describe('createTable', () => {
         stages: stageSchema('pipeline', (s) => {
           stage(s.sort, { run: (rows) => rows });
         }),
-      })
+      }),
     );
 
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(
-          signal<Row[]>([]),
-          { trackBy: 'id', columns: makeColumns() },
-          withStagingBlock
-        )
-      )
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withStagingBlock),
+      ),
     ).toThrow(/may only contribute members, but it declared stages/);
   });
 
   it('rejects a derive block that declares a parentLink, naming it', () => {
     const withLinkingBlock = createTableFeature(
       () => ({ members: { count: 3 } }),
-      () => ({ parentLink: () => null })
+      () => ({ parentLink: () => null }),
     );
 
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(
-          signal<Row[]>([]),
-          { trackBy: 'id', columns: makeColumns() },
-          withLinkingBlock
-        )
-      )
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withLinkingBlock),
+      ),
     ).toThrow(/may only contribute members, but it declared parentLink/);
   });
 
@@ -355,16 +325,16 @@ describe('createTable', () => {
       (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
         parentLink: (row) => (row.id === 'r2' ? 'r1' : null),
       }),
-      () => ({ members: { extra: signal(1).asReadonly() } })
+      () => ({ members: { extra: signal(1).asReadonly() } }),
     );
     const withKeepsLinked = createTableFeature(
       (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
         stages: stageSchema<Row>('pipeline', (s) =>
           stage(s.filter, {
             run: (rows, ctx) => rows.filter((row) => ctx.parentOf?.(row) != null),
-          })
+          }),
         ),
-      })
+      }),
     );
 
     const store = TestBed.runInInjectionContext(() =>
@@ -372,8 +342,8 @@ describe('createTable', () => {
         signal<Row[]>(data),
         { trackBy: 'id', columns: makeColumns() },
         withLinkAndDerive,
-        withKeepsLinked
-      )
+        withKeepsLinked,
+      ),
     );
 
     expect(store.rows().map((row) => row.id)).toEqual(['r2']);
@@ -382,17 +352,13 @@ describe('createTable', () => {
   it('rejects a derive block that declares contextRows, naming it', () => {
     const withContextBlock = createTableFeature(
       () => ({ members: { count: 3 } }),
-      () => ({ contextRows: signal<ReadonlySet<RowId>>(new Set()) })
+      () => ({ contextRows: signal<ReadonlySet<RowId>>(new Set()) }),
     );
 
     expect(() =>
       TestBed.runInInjectionContext(() =>
-        createTable(
-          signal<Row[]>([]),
-          { trackBy: 'id', columns: makeColumns() },
-          withContextBlock
-        )
-      )
+        createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, withContextBlock),
+      ),
     ).toThrow(/may only contribute members, but it declared contextRows/);
   });
 
@@ -406,22 +372,22 @@ describe('createTable', () => {
       (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
         contextRows: signal<ReadonlySet<RowId>>(new Set<RowId>(['r2'])),
       }),
-      () => ({ members: { extra: signal(1).asReadonly() } })
+      () => ({ members: { extra: signal(1).asReadonly() } }),
     );
 
     const store = TestBed.runInInjectionContext(() =>
       createTable(
         signal<Row[]>(data),
         { trackBy: 'id', columns: makeColumns() },
-        withContextAndDerive
-      )
+        withContextAndDerive,
+      ),
     );
 
     expect(
       store
         .renderRows()
         .filter((row) => row.isContextRow)
-        .map((row) => row.id)
+        .map((row) => row.id),
     ).toEqual(['r2']);
   });
 
@@ -432,12 +398,12 @@ describe('createTable', () => {
           parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)),
         },
       }),
-      () => ({ members: { extra: signal(1).asReadonly() } })
+      () => ({ members: { extra: signal(1).asReadonly() } }),
     );
     const withLaterLink = createTableFeature(
       (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
         parentLink: (row) => (row.id === 'r2' ? 'r1' : null),
-      })
+      }),
     );
 
     const store = TestBed.runInInjectionContext(() =>
@@ -448,8 +414,8 @@ describe('createTable', () => {
         ]),
         { trackBy: 'id', columns: makeColumns() },
         withCtxFactory,
-        withLaterLink
-      )
+        withLaterLink,
+      ),
     );
 
     expect(store.parentIds()).toEqual([null, 'r1']);
@@ -462,12 +428,12 @@ describe('createTable', () => {
         members: {
           parentIds: computed(() => input.rows().map((row) => ctx.parentOf?.(row) ?? null)),
         },
-      })
+      }),
     );
     const withLaterLink = createTableFeature(
       (_input: TableStore<Row>): TableFeatureSpec<Row, {}> => ({
         parentLink: (row) => (row.id === 'r2' ? 'r1' : null),
-      })
+      }),
     );
 
     const store = TestBed.runInInjectionContext(() =>
@@ -478,8 +444,8 @@ describe('createTable', () => {
         ]),
         { trackBy: 'id', columns: makeColumns() },
         withCtxDerive,
-        withLaterLink
-      )
+        withLaterLink,
+      ),
     );
 
     expect(store.parentIds()).toEqual([null, 'r1']);
@@ -488,7 +454,7 @@ describe('createTable', () => {
   it('rejects a member key declared by both a feature and its derive block, naming the key', () => {
     const withCollidingBlock = createTableFeature(
       () => ({ members: { count: 3 } }),
-      () => ({ members: { count: signal(9).asReadonly() } })
+      () => ({ members: { count: signal(9).asReadonly() } }),
     );
 
     expect(() =>
@@ -496,9 +462,9 @@ describe('createTable', () => {
         createTable(
           signal<Row[]>([]),
           { trackBy: 'id', columns: makeColumns() },
-          withCollidingBlock
-        )
-      )
+          withCollidingBlock,
+        ),
+      ),
     ).toThrow(/the feature and its derive block both provide the "count" store member/);
   });
 
@@ -506,17 +472,11 @@ describe('createTable', () => {
     const inert = createTableFeature(() => ({}));
 
     const withInert = TestBed.runInInjectionContext(() =>
-      createTable(
-        signal<Row[]>([]),
-        { trackBy: 'id', columns: makeColumns() },
-        inert
-      )
+      createTable(signal<Row[]>([]), { trackBy: 'id', columns: makeColumns() }, inert),
     );
     const withoutInert = makeStore();
 
-    expect(Object.keys(withInert).sort()).toEqual(
-      Object.keys(withoutInert).sort()
-    );
+    expect(Object.keys(withInert).sort()).toEqual(Object.keys(withoutInert).sort());
   });
 
   describe('renderColumns', () => {
@@ -569,7 +529,7 @@ describe('createTable', () => {
           columns: makeColumnSet(data, (path) => {
             visible(path.status, { when: () => role() === 'admin' });
           }),
-        })
+        }),
       );
 
       expect(store.renderColumns().map((column) => column.id)).not.toContain('status');
@@ -624,10 +584,7 @@ describe('createTable', () => {
       return createTableFeature(() => ({ members: { a: signal(1).asReadonly() } }));
     }
 
-    function withB(): Feature<
-      TableStore<Invoice> & { a: Signal<number> },
-      { b(): void }
-    > {
+    function withB(): Feature<TableStore<Invoice> & { a: Signal<number> }, { b(): void }> {
       return createTableFeature((store) => ({
         members: {
           b: () => {
@@ -642,14 +599,14 @@ describe('createTable', () => {
      * composed into `composeInvoiceTable()`'s table, so case 21 can assert its member `c` is
      * absent. */
     function withMatchFlag<In extends Shape>(
-      matches: (row: RowOf<In>) => boolean
+      matches: (row: RowOf<In>) => boolean,
     ): Feature<In, { c: Signal<boolean> }> {
       return createTableFeature((store) => {
         // Same static/dynamic seam `compose-table.ts` itself crosses (ADR-0003): `In` only
         // guarantees `rows: Signal<readonly unknown[]>` (`Shape`), so narrowing to
         // `RowOf<In>[]` to call the caller's own typed predicate needs a cast here.
         const hasMatch = computed(() =>
-          (store as unknown as { rows: () => RowOf<In>[] }).rows().some(matches)
+          (store as unknown as { rows: () => RowOf<In>[] }).rows().some(matches),
         );
         return { members: { c: hasMatch } };
       });
@@ -661,8 +618,8 @@ describe('createTable', () => {
           signal<Invoice[]>([]),
           { trackBy: 'id', columns: invoiceColumns },
           withA(),
-          withB()
-        )
+          withB(),
+        ),
       );
     }
 
@@ -699,8 +656,8 @@ describe('createTable', () => {
           signal<Invoice[]>([]),
           { trackBy: 'id', columns: invoiceColumns },
           anyFeature,
-          withA()
-        )
+          withA(),
+        ),
       );
 
       expectTypeOf(table.a).toEqualTypeOf<Signal<number>>();
@@ -714,11 +671,7 @@ describe('createTable', () => {
       // specific acceptance check no longer applies as written. The assertions below still
       // hold and must pass.
       const table = TestBed.runInInjectionContext(() =>
-        createTable(
-          signal<Invoice[]>([]),
-          { trackBy: 'id', columns: invoiceColumns },
-          withA()
-        )
+        createTable(signal<Invoice[]>([]), { trackBy: 'id', columns: invoiceColumns }, withA()),
       );
 
       expectTypeOf(table).not.toHaveProperty('__index');
@@ -733,21 +686,15 @@ describe('createTable', () => {
     it('case 19 — trap 3: the derive helper returns one Feature, not an intersection', () => {
       const withDerived = createTableFeature(
         () => ({ members: { a: signal(1).asReadonly() } }),
-        () => ({ members: { d: signal('x' as const) } })
+        () => ({ members: { d: signal('x' as const) } }),
       );
 
       const table = TestBed.runInInjectionContext(() =>
-        createTable(
-          signal<Invoice[]>([]),
-          { trackBy: 'id', columns: invoiceColumns },
-          withDerived
-        )
+        createTable(signal<Invoice[]>([]), { trackBy: 'id', columns: invoiceColumns }, withDerived),
       );
 
       expectTypeOf(table).not.toBeAny();
-      expectTypeOf<keyof typeof table>().toEqualTypeOf<
-        'a' | 'd' | keyof TableStore<Invoice>
-      >();
+      expectTypeOf<keyof typeof table>().toEqualTypeOf<'a' | 'd' | keyof TableStore<Invoice>>();
     });
 
     it('case 20 — a slot-1 feature reading a later slot’s member is a compile error (D25)', () => {
@@ -794,8 +741,8 @@ describe('createTable', () => {
           noop(),
           noop(),
           // @ts-expect-error — ARITY is 15; a 16th feature argument has no matching overload.
-          noop()
-        )
+          noop(),
+        ),
       );
     });
 
@@ -807,8 +754,8 @@ describe('createTable', () => {
           signal<Invoice[]>([]),
           { trackBy: 'id', columns: invoiceColumns },
           inert,
-          withA()
-        )
+          withA(),
+        ),
       );
 
       // An `& object` contribution (instead of `{}`) would fail this equality even though
@@ -841,8 +788,8 @@ describe('createTable', () => {
           signal<Invoice[]>([]),
           { trackBy: 'id', columns: invoiceColumns },
           withA(),
-          withComputed((s) => ({ n: computed(() => s.a()) }))
-        )
+          withComputed((s) => ({ n: computed(() => s.a()) })),
+        ),
       );
 
       expectTypeOf(table.n).toEqualTypeOf<Signal<number>>();
@@ -873,8 +820,8 @@ describe('createTable', () => {
             void s.b;
             return { n: computed(() => s.a()) };
           }),
-          withB()
-        )
+          withB(),
+        ),
       );
 
       expectTypeOf(table.n).toEqualTypeOf<Signal<number>>();
@@ -890,8 +837,8 @@ describe('createTable', () => {
           createTableFeature((input) => {
             expectTypeOf(input.n).toEqualTypeOf<Signal<number>>();
             return {};
-          })
-        )
+          }),
+        ),
       );
 
       void table;
@@ -910,8 +857,8 @@ describe('createTable', () => {
           (s) => {
             expectTypeOf(s.a).toEqualTypeOf<Signal<number>>();
             return { twice: computed(() => s.a() * 2) };
-          }
-        )
+          },
+        ),
       );
 
       expectTypeOf(withComputedDerived).toMatchTypeOf<
@@ -922,8 +869,8 @@ describe('createTable', () => {
         createTable(
           signal<Invoice[]>([]),
           { trackBy: 'id', columns: invoiceColumns },
-          withComputedDerived
-        )
+          withComputedDerived,
+        ),
       );
 
       expectTypeOf(table.twice).toEqualTypeOf<Signal<number>>();
@@ -952,8 +899,8 @@ describe('createTable', () => {
           withComputed((s) => {
             expectTypeOf(s.n).toEqualTypeOf<Signal<number>>();
             return { doubled: computed(() => s.n() * 2) };
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf(table.doubled).toEqualTypeOf<Signal<number>>();
@@ -1006,17 +953,15 @@ describe('createTable', () => {
             expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
             expectTypeOf(input.b).toEqualTypeOf<() => void>();
             return { members: {} };
-          })
-        )
+          }),
+        ),
       );
     }
 
     it('case 35 — a following slot sees the composite’s full contribution', () => {
       const table = composeCompositeTable();
 
-      expectTypeOf<keyof typeof table>().toEqualTypeOf<
-        'a' | 'b' | keyof TableStore<Invoice>
-      >();
+      expectTypeOf<keyof typeof table>().toEqualTypeOf<'a' | 'b' | keyof TableStore<Invoice>>();
     });
 
     it('case 36 — an inner feature sees earlier inners and the slot before the composite', () => {
@@ -1033,9 +978,9 @@ describe('createTable', () => {
               expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
               expectTypeOf(input.b).toEqualTypeOf<() => void>();
               return { members: {} };
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
 
       void table;
@@ -1052,8 +997,8 @@ describe('createTable', () => {
             expectTypeOf(input.b).toEqualTypeOf<() => void>();
             expectTypeOf(input.c).toEqualTypeOf<Signal<boolean>>();
             return { members: {} };
-          })
-        )
+          }),
+        ),
       );
 
       expectTypeOf<keyof typeof table>().toEqualTypeOf<
@@ -1074,11 +1019,23 @@ describe('createTable', () => {
           signal<Invoice[]>([]),
           { trackBy: 'id', columns: invoiceColumns },
           composeFeatures(
-            inert, inert, inert, inert, inert,
-            inert, inert, inert, inert, inert,
-            inert, inert, inert, inert, inert
-          )
-        )
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+            inert,
+          ),
+        ),
       );
       void fifteen;
 
@@ -1089,24 +1046,48 @@ describe('createTable', () => {
           { trackBy: 'id', columns: invoiceColumns },
           composeFeatures(
             composeFeatures(
-              inert, inert, inert, inert, inert,
-              inert, inert, inert, inert, inert,
-              inert, inert, inert, inert, inert
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
+              inert,
             ),
-            withA()
-          )
-        )
+            withA(),
+          ),
+        ),
       );
 
       expectTypeOf(sixteen.a).toEqualTypeOf<Signal<number>>();
 
       // (c) a 16th *direct* inner argument still matches no overload (mirrors case 22).
       composeFeatures(
-        inert, inert, inert, inert, inert,
-        inert, inert, inert, inert, inert,
-        inert, inert, inert, inert, inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
+        inert,
         // @ts-expect-error — composeFeatures caps at 15 inner features, same as createTable.
-        inert
+        inert,
       );
     });
 
@@ -1129,8 +1110,8 @@ describe('createTable', () => {
             expectTypeOf(input.a).toEqualTypeOf<Signal<number>>();
             expectTypeOf(input.b).toEqualTypeOf<() => void>();
             return { members: {} };
-          })
-        )
+          }),
+        ),
       );
 
       void table;
@@ -1142,7 +1123,7 @@ describe('createTable', () => {
         withMatchFlag((row) => {
           expectTypeOf(row).toEqualTypeOf<unknown>();
           return true;
-        })
+        }),
       );
       void standalone;
 
@@ -1154,9 +1135,9 @@ describe('createTable', () => {
             withMatchFlag((row) => {
               expectTypeOf(row).toEqualTypeOf<Invoice>();
               return row.status === 'open';
-            })
-          )
-        )
+            }),
+          ),
+        ),
       );
       void inline;
     });

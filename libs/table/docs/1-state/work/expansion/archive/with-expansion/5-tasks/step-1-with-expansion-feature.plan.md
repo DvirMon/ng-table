@@ -43,8 +43,8 @@ export interface RenderRow<TRow> {
   readonly kind: 'row' | 'group';
   readonly data: TRow | null;
   readonly aggregates?: Record<string, unknown>;
-  readonly isExpanded?: boolean;   // new — only meaningful if withExpansion() composed
-  readonly hasChildren?: boolean;  // new
+  readonly isExpanded?: boolean; // new — only meaningful if withExpansion() composed
+  readonly hasChildren?: boolean; // new
 }
 ```
 
@@ -99,7 +99,7 @@ function buildExpansionRenderRows<TRow>(
   trackBy: TrackByFn<TRow>,
   expandedRows: Set<RowId>,
   childrenAccessor: (row: TRow) => TRow[] | undefined,
-  depth = 0
+  depth = 0,
 ): RenderRow<TRow>[] {
   return rows.flatMap((row) => {
     const id = trackBy(row);
@@ -136,7 +136,7 @@ store._buildRenderRows = (rows) =>
 
 - If a future session composes `withExpansion()` with `withGrouping()` (not yet built),
   whichever feature runs later in the `features` array wins `_buildRenderRows` outright (plain
-  prop assignment, last write wins) — `with-grouping.md`'s own design expects to *read*
+  prop assignment, last write wins) — `with-grouping.md`'s own design expects to _read_
   `store.expandedRows?.()` rather than fully own the builder, so that composition needs its own
   care when grouping actually lands. Not this step's problem, just flagging so it isn't a
   surprise later.
@@ -161,4 +161,5 @@ store._buildRenderRows = (rows) =>
 - [ ] `nx typecheck shared-design-system` passes
 
 ---
+
 [Step 2: index.ts barrel export](step-2-barrel-export.plan.md) →

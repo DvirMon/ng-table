@@ -59,7 +59,7 @@ export class GroupingCollapsibleStoryHostComponent {
   protected readonly rowsPage = createGroupedRowsResource(() =>
     this.refetchRequests() === 0
       ? undefined
-      : { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() }
+      : { forceFailure: this.forceFailure(), latencyMs: this.latencyMs() },
   );
 
   /** Bridges the resource's read-only page into the `WritableSignal` `createTable()` needs —
@@ -73,7 +73,7 @@ export class GroupingCollapsibleStoryHostComponent {
     this.data,
     groupingConfig,
     withGrouping({ initial: COLLAPSIBLE_GROUPING_LEVELS }),
-    withTree({ parentId: (row) => row.parentId })
+    withTree({ parentId: (row) => row.parentId }),
   );
 
   protected readonly isRefetching = computed(() => this.rowsPage.isLoading());
@@ -82,11 +82,11 @@ export class GroupingCollapsibleStoryHostComponent {
     return error ? toErrorMessage(error, 'Refresh failed.') : '';
   });
   protected readonly replacedRowCount = computed(() =>
-    this.rowsPage.hasValue() ? this.rowsPage.value().total : 0
+    this.rowsPage.hasValue() ? this.rowsPage.value().total : 0,
   );
 
   protected readonly isRenested = computed(
-    () => this.table.grouping()[0] === RENESTED_GROUPING_LEVELS[0]
+    () => this.table.grouping()[0] === RENESTED_GROUPING_LEVELS[0],
   );
 
   protected expandAllGroups(): void {

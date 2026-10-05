@@ -57,4 +57,5 @@ and the ruling lives only in this plan until it is written down.
       `resolveColumnsConfig` as a surviving seam.
 
 ---
+
 ← [Step 4: Array-rejection proofs](step-4-array-rejection-proofs.plan.md)

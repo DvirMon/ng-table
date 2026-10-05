@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  booleanAttribute,
+  computed,
+  input,
+  output,
+} from '@angular/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCornerDownLeft, lucideFile, lucideHash } from '@ng-icons/lucide';
 import { createTrackedPointer } from './search-overlay.utils';
@@ -36,7 +43,9 @@ export class SearchResultRow {
 
   protected readonly rowId = computed(() => `search-result-${this.result().id}`);
   /** DocSearch reference paths (verified live): trunk continues past the branch unless closing. */
-  protected readonly treePath = computed(() => (this.last() ? 'M8 6v21M20 27H8.3' : 'M8 6v42M20 27H8.3'));
+  protected readonly treePath = computed(() =>
+    this.last() ? 'M8 6v21M20 27H8.3' : 'M8 6v42M20 27H8.3',
+  );
 
   private readonly pointer = createTrackedPointer();
 

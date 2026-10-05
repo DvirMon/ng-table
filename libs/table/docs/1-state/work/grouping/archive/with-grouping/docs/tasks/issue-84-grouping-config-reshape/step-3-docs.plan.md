@@ -1,5 +1,5 @@
 ---
-title: "Step 3 — documentation the reshape owes"
+title: 'Step 3 — documentation the reshape owes'
 type: task-step
 issue: 118
 ---
@@ -40,11 +40,11 @@ Replace the `WithGroupingConfig` block and the schema-fn snippet below it:
 
 ```ts
 interface WithGroupingConfig<TRow> {
-  initial?: ColumnId<TRow>[];                                       // D14
-  groupingRule?: () => string[] | undefined;                        // D6, D7 — abstain contract
-  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number;  // D4
+  initial?: ColumnId<TRow>[]; // D14
+  groupingRule?: () => string[] | undefined; // D6, D7 — abstain contract
+  groupOrder?: (a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number; // D4
   schema?: (path: ColumnsPath<TRow, AnyGroupingRule<TRow>>) => void; // D8, #84
-  rules?: AnyGroupingRule<TRow>[];                                  // D8, rules-array layer
+  rules?: AnyGroupingRule<TRow>[]; // D8, rules-array layer
 }
 
 // D8 — schema-fn layer, now a config member rather than an either/or first positional (#84)
@@ -114,4 +114,5 @@ copy, and leave the prose as the record of what was true when it was written.
 - [ ] Every code block in the edited files is copy-pasteable against the shipped signature.
 
 ---
+
 ← [Step 2: Tests for the combined shape](step-2-tests.plan.md)

@@ -14,17 +14,17 @@ rule: >
 
 ## Slots
 
-| Order | Slot | Component | Page-only decision |
-| --- | --- | --- | --- |
-| 1 | shell | `page-shell` | — |
-| 2 | header | `navbar` | Search slot present and is the primary recovery path |
-| 3 | left | `sidebar` | Rendered, no item active |
-| 4 | main | `content-column` | Centered block, not top-aligned |
-| 4.1 | main › eyebrow | `category-badge` | Text: "404" |
-| 4.2 | main › title | `prose` H1 | "Page not found" |
-| 4.3 | main › body | `prose` paragraph + `pill-button` | One paragraph, one button back to the docs root |
-| 5 | right | — | No TOC |
-| 6 | below grid | `page-footer` | — |
+| Order | Slot           | Component                         | Page-only decision                                   |
+| ----- | -------------- | --------------------------------- | ---------------------------------------------------- |
+| 1     | shell          | `page-shell`                      | —                                                    |
+| 2     | header         | `navbar`                          | Search slot present and is the primary recovery path |
+| 3     | left           | `sidebar`                         | Rendered, no item active                             |
+| 4     | main           | `content-column`                  | Centered block, not top-aligned                      |
+| 4.1   | main › eyebrow | `category-badge`                  | Text: "404"                                          |
+| 4.2   | main › title   | `prose` H1                        | "Page not found"                                     |
+| 4.3   | main › body    | `prose` paragraph + `pill-button` | One paragraph, one button back to the docs root      |
+| 5     | right          | —                                 | No TOC                                               |
+| 6     | below grid     | `page-footer`                     | —                                                    |
 
 ## Page-only rules
 

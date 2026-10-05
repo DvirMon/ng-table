@@ -6,6 +6,7 @@ depends_on: [2]
 files:
   - libs/table/CLAUDE.md
 ---
+
 # Step 5 — Drop stale #155 notes
 
 Removes the "execution lands in #155" status note from
@@ -28,4 +29,5 @@ at its resolved position.
 - [ ] `CLAUDE.md` carries no #155 status text.
 
 ---
+
 ← [Step 2: Run the resolved order](step-2-run-resolved-order.plan.md)

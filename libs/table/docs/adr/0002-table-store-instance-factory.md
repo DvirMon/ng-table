@@ -1,6 +1,6 @@
 ---
 status: accepted
-supersedes: "ARCHITECTURE_Overview.md §Store Lifecycle & Scope (class + DI-provider factory)"
+supersedes: 'ARCHITECTURE_Overview.md §Store Lifecycle & Scope (class + DI-provider factory)'
 ---
 
 # `createTable()` returns a store instance, not an injectable class
@@ -27,23 +27,23 @@ protected readonly table = createTable(this.data, { trackBy: 'id', columns }, wi
   to maintain at the store or (future) UI layer.
 - **Engine unchanged.** `@ngrx/signals` still composes the store internally
   (`buildStoreClass()`); only the outer wrapper changed. The internal implementation stays
-  swappable without a breaking change. *(Superseded 2026-08-11 by
+  swappable without a breaking change. _(Superseded 2026-08-11 by
   [ADR-0003](0003-in-house-table-store-engine.md): the engine is now the in-house
   `composeTable()` and `buildStoreClass()` is gone. The swappability claim held — the swap
-  landed with zero consumer diff. The instance-factory decision this ADR records still stands.)*
+  landed with zero consumer diff. The instance-factory decision this ADR records still stands.)_
 - **`config` is structural, read once** at construction — `trackBy` / `columns` /
   `columnsSchema`, mirroring `form()`'s single `rootCompile`. Features are trailing positional
-  arguments, folded once. Only `data` is reactive. *(Amended 2026-09 by #33: the config was a
-  thunk `optsFn` until then; it is now a plain object, and there is no `features` key.)*
+  arguments, folded once. Only `data` is reactive. _(Amended 2026-09 by #33: the config was a
+  thunk `optsFn` until then; it is now a plain object, and there is no `features` key.)_
 - **Writes go through `table.value.update(updater)`** — the per-slice `WritableView` (D30). The
   consumer's own signal is the row set; the engine holds no copy and runs no data effect.
 - **DI wiring is internal.** A child `Injector.create({ providers: [StoreClass], parent })`
   gives the signal store the context its constructor needs, so the consumer never touches
   `providers: []`. An optional `config.injector` supports use outside an injection context
-  (services, tests), the same escape hatch `form()` exposes. *(Superseded 2026-08-11 by
+  (services, tests), the same escape hatch `form()` exposes. _(Superseded 2026-08-11 by
   ADR-0003: there is no store class, so the child injector is gone —
   `runInInjectionContext(injector, …)` supplies the context instead. The injector moved onto
-  the config object with #33's positional surface.)*
+  the config object with #33's positional surface.)_
 
 ## Consequences
 

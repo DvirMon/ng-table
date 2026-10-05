@@ -39,7 +39,7 @@ Author, per `3-architecture.md` § "New types to author":
 declare const COLUMN_DECL: unique symbol;
 
 export interface ColumnDecl<TRow, K extends string, V> {
-  readonly [COLUMN_DECL]: true;          // required — D7
+  readonly [COLUMN_DECL]: true; // required — D7
   readonly id: K;
   readonly label?: string;
   readonly visible?: boolean;
@@ -66,10 +66,7 @@ export interface ColumnBuilder<TRow> {
   ): ColumnDecl<TRow, K, V>;
 }
 
-export interface ColumnSet<
-  TRow,
-  TCols extends readonly ColumnDecl<TRow, string, unknown>[],
-> {
+export interface ColumnSet<TRow, TCols extends readonly ColumnDecl<TRow, string, unknown>[]> {
   readonly columns: TCols;
   readonly rules: readonly ColumnRule<TRow>[];
 }
@@ -82,7 +79,7 @@ export interface ColumnSet<
   off the declaration's own `V`:
   `C extends ColumnDecl<any, string, infer V> ? V : <existing arms>`.
   Required, not cosmetic: `ColumnDecl.accessor` is
-  *optional*, so the existing
+  _optional_, so the existing
   `C extends { accessor: (row: any) => infer V }` arm does
   not match it, and a `col('owner', { accessor })` would fall
   to `TRow['owner']` — the exact lie ADR-0024 closes. The arm
@@ -206,4 +203,5 @@ re-exported.
       regenerated).
 
 ---
+
 [Step 2: Runtime spec](step-2-runtime-spec.plan.md) →

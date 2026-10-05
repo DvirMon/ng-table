@@ -4,6 +4,7 @@ Step: [step-1-resolved-stage-label.plan.md](step-1-resolved-stage-label.plan.md)
 Spec file: `libs/table/src/engine/stage-order.spec.ts`
 
 ## Stubs (red phase)
+
 - None. The step adds no new symbol. It adds one field,
   `readonly label: string`, to the existing `ResolvedStage`.
   The red phase adds the field to the interface only. `assemble`
@@ -11,7 +12,9 @@ Spec file: `libs/table/src/engine/stage-order.spec.ts`
   runtime (`label` is `undefined`), not at compile time.
 
 ## Seams, in red-green order
+
 ### A. Claims and declares resolve carrying their owning feature's label
+
 - Test: `it('a resolved claim and a resolved declare each carry their owning feature\'s label')`
 - Input: `resolveStageOrder('pipeline', [claim('withFilter', 'filter'), claim('withSort', 'sort'), declare('withAudit', 'audit', 'filter', 'after')])`
 - Asserts: `resolved.map(s => [s.name, s.label])` `toEqual`
@@ -29,10 +32,12 @@ block next to the existing ones. Use the file's existing
 `claim` / `declare` fixtures. No new fixtures.
 
 ## Types phase (written in red, proven by green's typecheck)
+
 None. `ResolvedStage` is engine-internal: not re-exported from
 `src/index.ts`, and nothing is inferred from it.
 
 ## Not tested
+
 - Existing assertions in `stage-order.spec.ts`: nothing to
   update. `assertResolvesTo` compares names with `toEqual` and
   each `run` with `toBe`; an extra `label` breaks none of them.

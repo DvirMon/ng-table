@@ -21,7 +21,7 @@ Grilled 2026-09-20. Revisits [ADR-0017](../../../../../adr/0017-engine-owned-des
   layout rather than the schema's generic `<domainPath>/docs/work/<slug>`.
 - **2026-09-20 · E1** — Open registration for third-party render stages
   ([ADR-0020](../../../../../adr/0020-open-stage-registration-for-third-party-features.md), #102)
-  is a **real destination**, not speculative. This reverses the node ranking: E is *upstream* of
+  is a **real destination**, not speculative. This reverses the node ranking: E is _upstream_ of
   A, not downstream. The emission-order invariant must hold against stages the library did not
   author, so "how is it held" is the question that picks the alternative.
 - **2026-09-20 · E2** — `preservesEmissionOrder` (ADR-0020 D3) is a declared boolean an author can
@@ -38,7 +38,7 @@ Grilled 2026-09-20. Revisits [ADR-0017](../../../../../adr/0017-engine-owned-des
   open fork.
 - **2026-09-20 · E3** — Consequence for #102: ADR-0020 **D3**
   (`preservesEmissionOrder`) and the emission-order half of **D5**
-  should be *dropped, not built*. A nested child cannot be emitted
+  should be _dropped, not built_. A nested child cannot be emitted
   above its own parent, so there is no order for a third-party stage
   to preserve and no flag for its author to get wrong. Record this on
   #102 before it moves to `accepted`.
@@ -49,8 +49,8 @@ Grilled 2026-09-20. Revisits [ADR-0017](../../../../../adr/0017-engine-owned-des
   is actually built, and it will no longer be free then.
 - **2026-09-20 · B2** — Consequence for #102: ADR-0020 **D2**'s anchor
   set loses `'paginate'` and `'prune'` both. D2 justified keeping
-  `'paginate'` as "the only way for a future stage to say *before the
-  window is cut*" — with the name gone there is no post-flatten anchor
+  `'paginate'` as "the only way for a future stage to say _before the
+  window is cut_" — with the name gone there is no post-flatten anchor
   at all, so a third-party stage can only run on nested nodes. Update
   D2 before ADR-0020 moves to `accepted`; if a post-flatten anchor is
   wanted, that is the moment to add it back deliberately rather than
@@ -77,7 +77,7 @@ Grilled 2026-09-20. Revisits [ADR-0017](../../../../../adr/0017-engine-owned-des
 - **2026-09-20 · C1** — **The engine owns the recursion.** It ships a
   `mapNodes(nodes, fn)` walk helper; a render stage supplies a
   per-node function and never hand-writes a tree walk. Closes a gap
-  `alt-tree-shaped-stages.md` missed: `'tree'` runs *after* `'group'`,
+  `alt-tree-shaped-stages.md` missed: `'tree'` runs _after_ `'group'`,
   so under a nested IR it must descend through group nodes to reach
   data leaves — a walk it does not have today, and one every
   third-party stage author (#102) would otherwise inherit.
@@ -110,7 +110,7 @@ Grilled 2026-09-20. Revisits [ADR-0017](../../../../../adr/0017-engine-owned-des
   **not** in scope for #105: not a regression, not a fix. Note it on
   #101, which owns the data contract that could admit a cycle.
 - **2026-09-20 · F1** — **#105 lands before #101.** The tree IR goes in
-  against today's `withExpansion()`; #101 then *moves* an
+  against today's `withExpansion()`; #101 then _moves_ an
   already-nesting stage into `withTree()` rather than rewriting it.
   This makes #101's own open question cheaper: under a nested IR,
   `childrenAccessor` vs. `getDataPath()` is two ways to build the same
@@ -161,8 +161,8 @@ refactor.
   markers on the replaced text (ADR-0002). The new ADR supersedes
   **ADR-0017 §Decision D2 only** — D1 (`parentId` exists), D3
   (contributed read-only signal) and D4 (accumulating slot) all stand,
-  though D1's `parentId` changes from *stamped by each stage* to
-  *derived by the walk*.
+  though D1's `parentId` changes from _stamped by each stage_ to
+  _derived by the walk_.
 - **2026-09-20 · G2** — It also amends **ADR-0011**: the render-stage
   signature changes from `RenderRowTransform` to `RenderNodeTransform`,
   so "chained render stages" now chains node transforms.

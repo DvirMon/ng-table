@@ -21,7 +21,7 @@ and never touches the store.
 ## Why This Step Exists
 
 #113 gave `TableStore` a second type parameter, `TId extends string`, and
-threaded it into `columns`. That parameter carries the *id union* and
+threaded it into `columns`. That parameter carries the _id union_ and
 nothing else — there is no slot on the store for the value behind each id,
 and no way to add one without a carrier, because `columns` only ever
 mentions `keyof TValues & string` and nothing infers a map from a `keyof`.
@@ -70,9 +70,7 @@ export interface TableConfig<
 > {
   trackBy: TrackByConfig<TRow>;
   columns: TCols;
-  columnsSchema?:
-    | ColumnsSchemaFn<TRow, ColumnIdIn<ColumnValues<TRow, TCols>>>
-    | ColumnSchema<TRow>;
+  columnsSchema?: ColumnsSchemaFn<TRow, ColumnIdIn<ColumnValues<TRow, TCols>>> | ColumnSchema<TRow>;
   injector?: Injector;
 }
 ```
@@ -134,7 +132,7 @@ explains why it is generic at all — so the feature stays assignable to any
 
 - **`ColumnValuesOf<S>`'s naive spelling matches every object type.**
   `S extends { readonly __columnValues?: infer V } ? V : never` succeeds
-  against *any* object, because the member is optional — a store without
+  against _any_ object, because the member is optional — a store without
   the phantom infers `V = unknown` and the `never` arm is unreachable. The
   recovery must constrain the result back to `ColumnValueMap` and fall back
   to `ColumnValueMap` — **not** `never` — so a partial store or a test
@@ -147,8 +145,8 @@ explains why it is generic at all — so the feature stays assignable to any
   stays assignable to `ColumnDef<TRow, string>[]`. Leave that interface
   alone — same call as #113 Step 1; widening it here would pull the wiring
   into this step's scope for no gain.
-- **`src/stories/**/fixtures/schema.ts` uses `satisfies TableConfig<DealRow>`.**
-  That now defaults `TCols` to the widened array type — which is what the
+- **`src/stories/**/fixtures/schema.ts`uses`satisfies TableConfig<DealRow>`.**
+That now defaults `TCols` to the widened array type — which is what the
   annotation already produced, and the fixture's own comment already says
   so. Confirm the stories still compile; **do not migrate them**.
 - **Do not touch `create-table.overloads.ts` or
@@ -190,4 +188,5 @@ explains why it is generic at all — so the feature stays assignable to any
 - [ ] `git diff --stat` shows exactly three files changed.
 
 ---
+
 ← [Step 2: The capture guard](step-2-capture-guard.plan.md) | [Step 4: The generator carries the map into every slot](step-4-generator-carries-the-map.plan.md) →

@@ -31,6 +31,8 @@ export class CodeBlock {
   /** a11y front-matter: "Scrollable region is focusable and has an accessible name." */
   protected readonly accessibleName = computed<string>(() => {
     const language = this.language();
-    return language ? `${language} code sample, scrollable horizontally` : 'Code sample, scrollable horizontally';
+    return language
+      ? `${language} code sample, scrollable horizontally`
+      : 'Code sample, scrollable horizontally';
   });
 }

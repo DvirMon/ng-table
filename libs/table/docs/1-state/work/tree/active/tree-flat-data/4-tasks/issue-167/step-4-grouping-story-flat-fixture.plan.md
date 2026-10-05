@@ -12,6 +12,7 @@ files:
   - libs/table/src/stories/grouping/grouping-collapsible/grouping-collapsible-story-host.component.html
   - libs/table/src/stories/grouping/grouping.mdx
 ---
+
 # Step 4 — Move the grouping story fixture to flat rows
 
 This step moves the grouping story's deal fixture from nested
@@ -39,8 +40,7 @@ Decisions: [D1](../../1-decisions.md), [D15](../../1-decisions.md).
 
 ## Watch out
 
-- Update any total shown in `grouping.mdx` that assumed d4 was
-  42000.
+- Update any total shown in `grouping.mdx` that assumed d4 was 42000.
 
 ## Out of scope
 
@@ -58,4 +58,5 @@ Decisions: [D1](../../1-decisions.md), [D15](../../1-decisions.md).
 (No test plan for this step — planner returned Seams: none.)
 
 ---
+
 ← [Step 3: tree reads — parentOf / descendantsOf, and removeRow(id[])](step-3-tree-reads.plan.md) | [Step 5: Remove childrenAccessor](step-5-remove-children-accessor.plan.md) →

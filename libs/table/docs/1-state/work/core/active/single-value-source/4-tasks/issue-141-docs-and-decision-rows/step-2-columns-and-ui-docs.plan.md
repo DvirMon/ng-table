@@ -90,4 +90,5 @@ option, not as a hand-written object.
 - [ ] `apps/site` still has no old spelling.
 
 ---
+
 ← [Step 1: State and product docs](step-1-state-and-product-docs.plan.md) | [Step 3: ADR amendments](step-3-adr-amendments.plan.md) →

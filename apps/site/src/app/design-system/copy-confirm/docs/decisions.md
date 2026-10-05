@@ -31,7 +31,7 @@ on `<button ngptPillButton>`. On either of those there is no such rule, so **no 
 `animationend` never fires, and the button is stuck showing "Copied" forever** — the exact failure
 mode the ADR warns about, arrived at by a different route. Fixing it would mean copying the
 keyframes into `pill-button.css` and into every future host's stylesheet: the directive's
-*correctness* scattered across foreign stylesheets it does not own. That is worse than the
+_correctness_ scattered across foreign stylesheets it does not own. That is worse than the
 duplication the extraction set out to remove.
 
 **2. `src/styles/global.css` would collapse the hold under reduced motion, not preserve it.** The
@@ -39,13 +39,15 @@ global block is
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: var(--ngpt-sys-motion-duration-fast) !important; }
+  * {
+    animation-duration: var(--ngpt-sys-motion-duration-fast) !important;
+  }
 }
 ```
 
 That is `120ms`, and it is `!important`, so a local rule cannot win without its own `!important`
 fight inside `icon-button.css`. It does keep `animationend` firing (the ADR's stated hazard is
-`animation: none`, which this app never had), but it turns a 1400ms *reading* dwell into a 120ms
+`animation: none`, which this app never had), but it turns a 1400ms _reading_ dwell into a 120ms
 flash — for users who asked for less motion, and disproportionately for the screen-reader users
 the confirmation is most for. The hold is not motion; it is time to perceive an outcome. WCAG's
 motion guidance is not asking for it to be shortened.
@@ -53,7 +55,7 @@ motion guidance is not asking for it to be shortened.
 `setTimeout` sidesteps this entirely: the global rule reaches CSS animations, not timers, so the
 hold is a constant 1400ms in both motion preferences. That is the intended behavior, and it is
 why no reduced-motion branch appears in this domain (CONVENTIONS rule 9 scopes the
-component-level obligation to components that *apply transforms* — this one applies none).
+component-level obligation to components that _apply transforms_ — this one applies none).
 
 **3. `animationend` bubbles.** The consumer authors the button's children, so any future animated
 descendant would fire `animationend` on the host and revert the state early. Solvable with an
@@ -82,16 +84,16 @@ invisible in tests, which is a worse failure.
 A `@Directive` has no template, so it cannot render the visually-hidden
 `<span aria-live="polite">` the old `icon-button` component did. Three options were on the table:
 
-| Option | Verdict |
-|---|---|
-| Host `[attr.aria-label]` alone | **Does not announce.** An accessible-name change is not a live-region trigger. Screen readers announce a name change only when the element is focused *and* the reader happens to re-poll it — and the copy button often is focused, which is exactly what makes this failure easy to mistake for success in manual testing. |
-| `aria-live="polite"` on the host `<button>` | **Announces the wrong thing, or nothing.** A live region announces on *content* changes inside it. The button's content is the `<ng-icon>`, which is `aria-hidden`, so the mutation the `@switch` produces computes to an empty string. Adding `aria-label` to the region does not fix it: per ARIA, a region's `aria-label` labels the region, it is not the announced text. It also makes the whole button a live region, so any future content change announces. |
-| A body-level polite region the directive writes into | **Shipped.** |
+| Option                                               | Verdict                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Host `[attr.aria-label]` alone                       | **Does not announce.** An accessible-name change is not a live-region trigger. Screen readers announce a name change only when the element is focused _and_ the reader happens to re-poll it — and the copy button often is focused, which is exactly what makes this failure easy to mistake for success in manual testing.                                                                                                                                        |
+| `aria-live="polite"` on the host `<button>`          | **Announces the wrong thing, or nothing.** A live region announces on _content_ changes inside it. The button's content is the `<ng-icon>`, which is `aria-hidden`, so the mutation the `@switch` produces computes to an empty string. Adding `aria-label` to the region does not fix it: per ARIA, a region's `aria-label` labels the region, it is not the announced text. It also makes the whole button a live region, so any future content change announces. |
+| A body-level polite region the directive writes into | **Shipped.**                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 
 `copy-confirm.announcer.ts` is an `@Injectable({ providedIn: 'root' })` service owning one
 `<div role="status" aria-live="polite" aria-atomic="true">` appended to `<body>`, created lazily
 on the first announcement and removed on app destroy. Announcing sets `textContent` to `''` and
-writes the message on the next task — this is what makes a *repeat* copy announce at all, since
+writes the message on the next task — this is what makes a _repeat_ copy announce at all, since
 re-assigning an identical string is not a content change. This is the canonical requirement met
 properly: the region is in the document before the change, and the change is textual.
 
@@ -114,7 +116,7 @@ following that precedent rather than adding an undeclared dependency.
   this was written there was no global visually-hidden utility, so the recipe was applied via
   `element.style`. `src/styles/global.css` now has `.visually-hidden` (handoff B), and since it is
   an unscoped global stylesheet it reaches this node same as any component's — encapsulation only
-  scopes a component's *own* stylesheet, not global ones. The node now gets
+  scopes a component's _own_ stylesheet, not global ones. The node now gets
   `region.classList.add('visually-hidden')` instead.
 
 ## `failedLabel` as an input — the live bug this closes
@@ -147,7 +149,7 @@ implementing it:
 - It would mean inserting a `<textarea>` into the document from a directive — the same
   DOM-insertion concern as the announcer node (see above), except the announcer's insertion is
   scoped to `document.body`, outside any consumer's subtree, while a selection-fallback textarea
-  would need to sit next to the button *inside* the consumer's subtree to be selectable, which
+  would need to sit next to the button _inside_ the consumer's subtree to be selectable, which
   crosses the attribute-hosted invariant outright rather than skirting it.
 - `document.execCommand` is deprecated.
 

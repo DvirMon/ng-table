@@ -3,12 +3,12 @@
 **Issue:** #39
 **Status:** 4 / 4 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | with-selection.ts: `withSelection<In>(config?, derive?)`, F-bounded input | ✅ done | — |
-| 2 | with-expansion.ts: `withExpansion<In>(config?, derive?)`, F-bounded input | ✅ done | — |
-| 3 | with-selection.spec.ts + selection.utils.spec.ts: positional, `hiddenSelected`, reconciliation | ✅ done | — |
-| 4 | with-expansion.spec.ts: positional, typed predicates, trailing block; strip interim args in with-grouping.spec | ✅ done | — |
+| Step | Title                                                                                                          | Status  | PR  |
+| ---- | -------------------------------------------------------------------------------------------------------------- | ------- | --- |
+| 1    | with-selection.ts: `withSelection<In>(config?, derive?)`, F-bounded input                                      | ✅ done | —   |
+| 2    | with-expansion.ts: `withExpansion<In>(config?, derive?)`, F-bounded input                                      | ✅ done | —   |
+| 3    | with-selection.spec.ts + selection.utils.spec.ts: positional, `hiddenSelected`, reconciliation                 | ✅ done | —   |
+| 4    | with-expansion.spec.ts: positional, typed predicates, trailing block; strip interim args in with-grouping.spec | ✅ done | —   |
 
 Graph: `1 → 3`, `2 → 4` (4 also touches with-grouping.spec for Step 1's `withSelection<>` strip).
 Parallel-safe: `[1, 2]`; `[3, 4]` after their code steps. Dependency: `1 → 3`, `2 → 4`.

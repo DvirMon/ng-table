@@ -5,27 +5,41 @@ atomic: Organism
 spec: specs/Code Block.md
 frame: components/Code Block.dc.html
 owns:
-  - "Block container: bg, border, radius, padding, mono type"
-  - "Gutter (line numbers) via CSS counter on .line"
-  - "Line-highlight treatment driven by fence meta"
-  - "Copy button placement"
+  - 'Block container: bg, border, radius, padding, mono type'
+  - 'Gutter (line numbers) via CSS counter on .line'
+  - 'Line-highlight treatment driven by fence meta'
+  - 'Copy button placement'
 does_not_own:
-  - "Syntax colors — Shiki owns those; we only force the theme background transparent"
-  - "The copy button internals — see Icon Button.md"
+  - 'Syntax colors — Shiki owns those; we only force the theme background transparent'
+  - 'The copy button internals — see Icon Button.md'
 depends_on:
-  - "Icon Button.md (icon-button)"
-  - "foundations/Typography.md (typography)"
-  - "foundations/Color.md (color)"
-  - "foundations/Radius and Elevation.md (shape)"
+  - 'Icon Button.md (icon-button)'
+  - 'foundations/Typography.md (typography)'
+  - 'foundations/Color.md (color)'
+  - 'foundations/Radius and Elevation.md (shape)'
 states:
-  - "default"
-  - "numbered (5+ lines)"
-  - "unnumbered (under 5 lines)"
-  - "highlighted line"
-  - "horizontally scrolling"
+  - 'default'
+  - 'numbered (5+ lines)'
+  - 'unnumbered (under 5 lines)'
+  - 'highlighted line'
+  - 'horizontally scrolling'
 a11y:
-  - "Scrollable region is focusable and has an accessible name"
-tokens: [--ngpt-bg-deep, --ngpt-border-subtle, --ngpt-comp-code-gutter-width, --ngpt-comp-code-gutter-text, --ngpt-bg-app, --ngpt-accent, --ngpt-sys-space-400, --ngpt-sys-space-450, --ngpt-sys-shape-corner-small-alt, --ngpt-sys-typescale-code, --ngpt-text-secondary, --ngpt-sys-space-700]
+  - 'Scrollable region is focusable and has an accessible name'
+tokens:
+  [
+    --ngpt-bg-deep,
+    --ngpt-border-subtle,
+    --ngpt-comp-code-gutter-width,
+    --ngpt-comp-code-gutter-text,
+    --ngpt-bg-app,
+    --ngpt-accent,
+    --ngpt-sys-space-400,
+    --ngpt-sys-space-450,
+    --ngpt-sys-shape-corner-small-alt,
+    --ngpt-sys-typescale-code,
+    --ngpt-text-secondary,
+    --ngpt-sys-space-700,
+  ]
 token_values_resolve_in: specs/foundations/ (single source of truth — never restate values here)
 ---
 
@@ -47,14 +61,14 @@ Block-level code surface. Composed of a surface atom (dark panel, border, radius
 
 Highlighting is **Shiki at build time**, used as shipped. The division of responsibility:
 
-| Concern | Owner |
-| --- | --- |
-| Token colors (keyword, string, comment, type…) | Shiki theme — a built-in dark theme, not derived from `--ngpt-*` |
-| Language grammars (TypeScript, Angular HTML) | Shiki |
-| Line highlighting for callouts | Shiki meta — ` ```ts {2,4-6} ` |
-| Panel bg, border, radius, padding | This spec (`--ngpt-bg-deep`, `--ngpt-border-subtle`) |
-| Line-number gutter | This spec |
-| Copy affordance | **Not here** — lives in the Preview Window toolbar as an Icon Button. A code block outside a Preview Window therefore has no copy button; that is deliberate, not an omission. |
+| Concern                                        | Owner                                                                                                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Token colors (keyword, string, comment, type…) | Shiki theme — a built-in dark theme, not derived from `--ngpt-*`                                                                                                               |
+| Language grammars (TypeScript, Angular HTML)   | Shiki                                                                                                                                                                          |
+| Line highlighting for callouts                 | Shiki meta — ` ```ts {2,4-6} `                                                                                                                                                 |
+| Panel bg, border, radius, padding              | This spec (`--ngpt-bg-deep`, `--ngpt-border-subtle`)                                                                                                                           |
+| Line-number gutter                             | This spec                                                                                                                                                                      |
+| Copy affordance                                | **Not here** — lives in the Preview Window toolbar as an Icon Button. A code block outside a Preview Window therefore has no copy button; that is deliberate, not an omission. |
 
 Syntax colors are the one place the system deliberately does not use its own palette: forcing the accent-orange scale onto code tokens costs readability for no gain. Set the Shiki theme's own background to `transparent` so `--ngpt-bg-deep` still owns the surface.
 
@@ -67,26 +81,26 @@ that, so the counter rules hang off a class (`.code-block--numbered`) set by wha
 not off `.code-block` itself. A three-line snippet with a number column reads as a file rather than a
 fragment.
 
-| Property | Value | Token |
-|---|---|---|
-| Gutter width | 40px | `--ngpt-comp-code-gutter-width` |
-| Number color | oklch(0.58 0.005 260) | `--ngpt-comp-code-gutter-text` |
-| Number alignment | right | `—` |
-| Gutter separator | none (whitespace only) | `—` |
-| Highlighted-line bg | oklch(0.16 0.005 260) | `--ngpt-bg-app` (reused as tint) |
-| Highlighted-line marker | 2px left border, `--ngpt-accent` | `—` |
+| Property                | Value                            | Token                            |
+| ----------------------- | -------------------------------- | -------------------------------- |
+| Gutter width            | 40px                             | `--ngpt-comp-code-gutter-width`  |
+| Number color            | oklch(0.58 0.005 260)            | `--ngpt-comp-code-gutter-text`   |
+| Number alignment        | right                            | `—`                              |
+| Gutter separator        | none (whitespace only)           | `—`                              |
+| Highlighted-line bg     | oklch(0.16 0.005 260)            | `--ngpt-bg-app` (reused as tint) |
+| Highlighted-line marker | 2px left border, `--ngpt-accent` | `—`                              |
 
 ## Build spec
 
-| Property | Value | Token |
-|---|---|---|
-| Padding | 16px 18px | `--ngpt-sys-space-400 --ngpt-sys-space-450` |
-| Border radius | 10px | `--ngpt-sys-shape-corner-small-alt` |
-| Background | oklch(0.11 0.004 260) | `--ngpt-bg-deep` |
-| Border | 1px solid oklch(0.26 0.005 260) | `--ngpt-border-subtle` |
-| Font | JetBrains Mono, 13px / 1.6 line-height | `--ngpt-sys-typescale-code` |
-| Text color | oklch(0.85 0.01 260) | `--ngpt-text-secondary` |
-| Margin-bottom | 28px (before next H2) | `--ngpt-sys-space-700` |
+| Property      | Value                                  | Token                                       |
+| ------------- | -------------------------------------- | ------------------------------------------- |
+| Padding       | 16px 18px                              | `--ngpt-sys-space-400 --ngpt-sys-space-450` |
+| Border radius | 10px                                   | `--ngpt-sys-shape-corner-small-alt`         |
+| Background    | oklch(0.11 0.004 260)                  | `--ngpt-bg-deep`                            |
+| Border        | 1px solid oklch(0.26 0.005 260)        | `--ngpt-border-subtle`                      |
+| Font          | JetBrains Mono, 13px / 1.6 line-height | `--ngpt-sys-typescale-code`                 |
+| Text color    | oklch(0.85 0.01 260)                   | `--ngpt-text-secondary`                     |
+| Margin-bottom | 28px (before next H2)                  | `--ngpt-sys-space-700`                      |
 
 ## Notes
 
@@ -119,8 +133,13 @@ Shiki's output, with the gutter added:
 
 /* line-number gutter — Shiki emits .line, the counter supplies the number.
    Opt-in: only blocks carrying --numbered get a gutter. */
-.code-block--numbered code { counter-reset: line; display: block; }
-.code-block--numbered .line { counter-increment: line; }
+.code-block--numbered code {
+  counter-reset: line;
+  display: block;
+}
+.code-block--numbered .line {
+  counter-increment: line;
+}
 .code-block--numbered .line::before {
   content: counter(line);
   display: inline-block;

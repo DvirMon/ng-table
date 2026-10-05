@@ -118,4 +118,5 @@ slices → done. N9 `SortingPath` → done.
 - [ ] Nothing new mentions `filterFn`.
 
 ---
+
 ← [Step 5: Types spec](step-5-types-spec.plan.md)

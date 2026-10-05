@@ -4,20 +4,20 @@
 
 ## Answer
 
-The question's framing — *flat array vs. nested tree* — is not the choice the surveyed libraries
+The question's framing — _flat array vs. nested tree_ — is not the choice the surveyed libraries
 actually made. **Every one of them keeps both, in one pass.** TanStack Table's core row model
-builds `row.subRows` (nested) *and* `rows` / `flatRows` / `rowsById` simultaneously [S1]; MUI X
+builds `row.subRows` (nested) _and_ `rows` / `flatRows` / `rowsById` simultaneously [S1]; MUI X
 stores a tree as a **flat id-keyed node map** (`{id, depth, parent, children: GridRowId[]}`), never
 as object nesting [S2]; Angular CDK Tree maintains `_flattenedNodes` as a synchronous cache
-alongside the nested data [S3]. So the proposal is mainstream — *provided the flat views are
-materialized by the same walk, not derived on demand.*
+alongside the nested data [S3]. So the proposal is mainstream — _provided the flat views are
+materialized by the same walk, not derived on demand._
 
 The measured dangers are **not** recursion depth. Every performance post-mortem found was about
 **breadth** and about **per-node array operations**, not stack depth: TanStack's 30s → <100ms
 grouping fix was a spread-in-a-loop [S4]; AG Grid's tree-data fix removed `splice` calls [S5]; MUI
 X's 10× v6 tree regression was fixed by optimizing one node-removal function [S6][S7]. The one real
 stack overflow found — CDK `#29733` — fires at **~500 siblings, one level deep**, and **only in the
-nested node renderer; the flat one is unaffected** [S8]. That is a *rendering* recursion, not an IR
+nested node renderer; the flat one is unaffected** [S8]. That is a _rendering_ recursion, not an IR
 walk.
 
 The strongest argument against the proposal is **maintenance**, and it comes from Handsontable's
@@ -40,7 +40,7 @@ cost below roughly **10k rows**; the numbers start at 18k [S6], 50k [S4] and 200
   `closed` never means "fixed" there — only the merged PR bodies [S5] are cited. `WebSearch` was
   non-functional this run (returned Wikipedia for every developer query), so this survey is built
   from repository APIs and source, not from blog posts or benchmark write-ups. That is a real gap:
-  **no independent benchmark write-up was located** — see *Not researched*.
+  **no independent benchmark write-up was located** — see _Not researched_.
 
 ## Evidence
 
@@ -51,9 +51,9 @@ cost below roughly **10k rows**; the numbers start at 18k [S6], 50k [S4] and 200
 - It reproduces **only** with `cdk-nested-tree-node`, never with the flat node [S8]. The reporter
   also confirms `treeControl` vs `childrenAccessor` makes no difference — it is the renderer, not
   the data API [S8].
-- CDK's fix is a guard in `_renderNodeChanges`, carrying the reasoning in-source: *"Note: we only
+- CDK's fix is a guard in `_renderNodeChanges`, carrying the reasoning in-source: _"Note: we only
   `detectChanges` from a top-level call, otherwise we risk overflowing the call stack since this
-  method is called recursively (see #29733.)"* [S3]. The recursion was kept; only the per-level
+  method is called recursively (see #29733.)"_ [S3]. The recursion was kept; only the per-level
   change-detection call was moved to the top frame.
 - MUI X also reports `Maximum call stack size exceeded` from a tree operation — but from a
   **cyclic/orphaned tree state** after moving the last child out of a row group, not from depth
@@ -68,21 +68,21 @@ cost below roughly **10k rows**; the numbers start at 18k [S6], 50k [S4] and 200
   `[...previous, row]`; replacing it with `.push()` gave <100ms, i.e. ~300× [S4]. A second reporter
   confirmed the same fix "makes all the difference" at 200,000 rows [S4].
 - AG Grid's `AG-11586` reached its tree-data win the same way: a pre-built `TreeDataNodeCache`
-  populated up front so inserts *query the cache* instead of running "expensive array splice
+  populated up front so inserts _query the cache_ instead of running "expensive array splice
   operations that were the root of the performance issues" [S5].
 - MUI X's v6 tree-data regression was a **10× render-time increase** on ~18,200 rows × 25 columns:
   `sortRowTree` at ~600ms in v5 became ~6s across `rowsStateInitializer` + `createRowTree` in v6
   [S6]. The fix, PR `#9682`, optimized `removeNodeFromTree` alone for **>3× on 10,000 top-level
   rows**; the reviewer called it "a super easy win" [S7].
 - **Sub-tree memoization across an immutable rebuild was not found in any surveyed library.** All
-  four memoize at the *stage* level, keyed on state atoms, and rebuild the whole level below on a
+  four memoize at the _stage_ level, keyed on state atoms, and rebuild the whole level below on a
   miss — see §3.
 
 ### 3. Recompute granularity
 
 - TanStack does **not** do dirty-subtree updates. `createExpandedRowModel` is one
   `tableMemo` whose `memoDeps` are `[expanded, preExpandedRowModel, paginateExpandedRows,
-  manualPagination]` — so **toggling one row invalidates the memo and re-runs the entire walk**
+manualPagination]` — so **toggling one row invalidates the memo and re-runs the entire walk**
   [S14]. This is the shipped 9.2.4 design.
 - The walk it re-runs is exactly the proposed `flattenVisible`: push the row, recurse into
   `subRows` only `if (row.subRows.length && row_getIsExpanded(row))` [S14].
@@ -92,7 +92,7 @@ cost below roughly **10k rows**; the numbers start at 18k [S6], 50k [S4] and 200
 - The core walk is memoized on `[table.options.data]` alone [S1], so a reference-stable data input
   makes the expensive tree construction a once-per-data-change cost, not a per-interaction one.
 - **No number was found for the cost of one whole-walk re-flatten.** The re-walk being cheap is an
-  inference from its shape (one pass, push-only), not a measured claim — listed in *Unverified*.
+  inference from its shape (one pass, push-only), not a measured claim — listed in _Unverified_.
 
 ### 4. Virtual scrolling interaction
 
@@ -105,7 +105,7 @@ cost below roughly **10k rows**; the numbers start at 18k [S6], 50k [S4] and 200
 - Angular CDK never solved it: `cdkVirtualFor` over a tree was requested twice and **both requests
   were closed as duplicates of `#10122`** with no implementation [S15][S16]. The reporter of
   `#16225` was specifically blocked on "2000+ nodes" after Expand All [S15].
-- MUI X `#4268` is the direct statement of the cost of *not* virtualizing a tree: "slowly expands
+- MUI X `#4268` is the direct statement of the cost of _not_ virtualizing a tree: "slowly expands
   heavily nested trees if virtualization is disabled" [S17].
 
 ### 5. Reactivity specifics
@@ -118,8 +118,8 @@ cost below roughly **10k rows**; the numbers start at 18k [S6], 50k [S4] and 200
 - The same source block documents the ordering hazard: change detection is skipped while
   `!this._viewInit`, "if change detection is called while the component's view is still initing,
   then the order of child views initing will be incorrect" [S3].
-- CDK's own TODO in that block is the relevant trajectory note: *"TODO: change to
-  `markForCheck()`, or just switch this component to use signals."* [S3] — i.e. the first-party
+- CDK's own TODO in that block is the relevant trajectory note: _"TODO: change to
+  `markForCheck()`, or just switch this component to use signals."_ [S3] — i.e. the first-party
   Angular tree considers a signal-driven recompute the fix, not the risk.
 - `cdk-tree` was reported at **~6s for 1,000 nodes at a single level**, with even 100 nodes
   visibly delayed; the root cause was `detectChanges` per node insert, and moving it to
@@ -133,7 +133,7 @@ Handsontable's `NestedRows` plugin is the clearest documented evidence, and ever
 
 - Insert next to a top-level parent used the **top-level array position** where the grid counts
   **flattened rows** (0,1,2 vs 0,6,12). "One `alter()` call cannot serve both halves of the
-  operation." It survived undetected because "an insert next to the *first* parent is correct by
+  operation." It survived undetected because "an insert next to the _first_ parent is correct by
   coincidence" [S9].
 - Removing a nested parent walked only **one level down**, because the data side (`filterData()`
   splices the subtree out) and the index side (`removeIndexes()` sees only the listed rows) are
@@ -156,33 +156,33 @@ start and have only optimized within it [S1][S2][S3][S5].
 ### 7. The counter-case — documented problems of flat + parent pointers
 
 - MUI X `#8238`: moving the last child between row groups throws `Maximum call stack size
-  exceeded`, and the emptied group is not deleted [S13]. This is a **parent-pointer consistency**
+exceeded`, and the emptied group is not deleted [S13]. This is a **parent-pointer consistency**
   failure, not a depth failure — the class of bug a derived-from-structure walk cannot produce.
   **Open since March 2023** [S13].
 - Handsontable `#13401`'s "correct by coincidence" finding is the flat-index failure mode in its
   purest form: two index spaces agreed only while no preceding parent had children, and both shared
-  fixtures happened to satisfy that [S9]. This is a direct analogue of this engine's *"correct only
-  because parents are emitted immediately before descendants (unchecked invariant)"*.
+  fixtures happened to satisfy that [S9]. This is a direct analogue of this engine's _"correct only
+  because parents are emitted immediately before descendants (unchecked invariant)"_.
 - AG Grid's pre-cache rewrite exists specifically because incremental maintenance of flat structure
   under tree mutation required `splice` — it replaced mutation-in-place with rebuild-from-cache
-  [S5]. The direction of travel is *away* from incrementally patched flat state.
+  [S5]. The direction of travel is _away_ from incrementally patched flat state.
 
 ## Comparison
 
-| Dimension | flat + `parentId` + prune pass | tree IR + `flattenVisible` |
-|---|---|---|
-| Stack depth | no risk | no documented risk from walk depth; the one overflow found is a *renderer* recursion at ~500 siblings, flat-node variant unaffected [S8][S3] |
-| Allocation | one array per stage | +1 node per row per rebuild. Not the measured bottleneck anywhere; the measured ones were `spread`-in-loop [S4] and `splice` [S5], both of which a push-only walk avoids |
-| Recompute granularity | whole pass per toggle | whole walk per toggle — **same**, and this is what ships in TanStack 9.2.4 [S14]. No library found does dirty-subtree |
-| Virtualization | direct: output *is* the list | needs the flat list + prefix sums materialized beside the tree, as MUI X does [S2]. CDK, which never materialized one, **still has no tree virtual scroll** [S15][S16] |
-| Reactivity | one `computed()`, stable ids | same, if the walk emits stable ids; CDK's differ then produces moves not re-creates [S3] |
-| Maintenance | ordering invariant is unchecked and silent — exactly Handsontable's "correct by coincidence" class [S9]; `depth`/`parentId` hand-stamped per stage, so a new stage can stamp them wrong | `depth`/`parentId`/`hasChildren` derived by the walk — that whole bug class disappears. **But** two representations is the source of all five Handsontable bugs [S9][S10][S11][S12]. The mitigation is that here one function owns both and the tree is engine-internal |
-| Feature friction (sort/filter/paginate/aggregate) | evidence thin — see below | evidence thin. TanStack keeps `flatRows` beside the tree at every stage [S1] precisely so flat-wanting features never walk it; that is the mitigation, and it costs a second array per stage |
+| Dimension                                         | flat + `parentId` + prune pass                                                                                                                                                          | tree IR + `flattenVisible`                                                                                                                                                                                                                                              |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stack depth                                       | no risk                                                                                                                                                                                 | no documented risk from walk depth; the one overflow found is a _renderer_ recursion at ~500 siblings, flat-node variant unaffected [S8][S3]                                                                                                                            |
+| Allocation                                        | one array per stage                                                                                                                                                                     | +1 node per row per rebuild. Not the measured bottleneck anywhere; the measured ones were `spread`-in-loop [S4] and `splice` [S5], both of which a push-only walk avoids                                                                                                |
+| Recompute granularity                             | whole pass per toggle                                                                                                                                                                   | whole walk per toggle — **same**, and this is what ships in TanStack 9.2.4 [S14]. No library found does dirty-subtree                                                                                                                                                   |
+| Virtualization                                    | direct: output _is_ the list                                                                                                                                                            | needs the flat list + prefix sums materialized beside the tree, as MUI X does [S2]. CDK, which never materialized one, **still has no tree virtual scroll** [S15][S16]                                                                                                  |
+| Reactivity                                        | one `computed()`, stable ids                                                                                                                                                            | same, if the walk emits stable ids; CDK's differ then produces moves not re-creates [S3]                                                                                                                                                                                |
+| Maintenance                                       | ordering invariant is unchecked and silent — exactly Handsontable's "correct by coincidence" class [S9]; `depth`/`parentId` hand-stamped per stage, so a new stage can stamp them wrong | `depth`/`parentId`/`hasChildren` derived by the walk — that whole bug class disappears. **But** two representations is the source of all five Handsontable bugs [S9][S10][S11][S12]. The mitigation is that here one function owns both and the tree is engine-internal |
+| Feature friction (sort/filter/paginate/aggregate) | evidence thin — see below                                                                                                                                                               | evidence thin. TanStack keeps `flatRows` beside the tree at every stage [S1] precisely so flat-wanting features never walk it; that is the mitigation, and it costs a second array per stage                                                                            |
 
 **Where the evidence is thin, plainly:** (a) no independent benchmark write-up comparing the two IRs
-was located; (b) no maintainer post-mortem stating "we chose flat *because* tree hurt" was found —
+was located; (b) no maintainer post-mortem stating "we chose flat _because_ tree hurt" was found —
 the libraries surveyed all chose hybrid and never wrote a rationale doc for it; (c) the
-feature-friction row is inference from library *shape*, not from a cited complaint.
+feature-friction row is inference from library _shape_, not from a cited complaint.
 
 ## Synthesis
 
@@ -193,7 +193,7 @@ The libraries disagree on **where the tree lives**, not on whether to have one:
   recompute is acceptable in production at scale.
 - **MUI X (9.13.0)** — no object nesting at all: a flat `id → node` map where edges are id arrays
   [S2]. This is the design that survives mutation best (updating one node does not reallocate its
-  ancestors) and it is the one with a virtualizer that works. It is the *third* option this
+  ancestors) and it is the one with a virtualizer that works. It is the _third_ option this
   discovery's framing omitted, and it is the strongest one if row mutation becomes a concern.
 - **AG Grid** — moved from incremental flat patching to a pre-built cache [S5]; the disagreement
   with MUI's incremental `removeNodeFromTree` optimization [S7] is really a difference in mutation
@@ -227,7 +227,7 @@ churn and no recursion at all — at the cost of the walk being less obvious to 
 - `TanStack/virtual` and `cdk-virtual-scroll` internals; only the CDK feature requests were read.
 - Lazy/async children as a feature axis — no evidence gathered either way.
 - React/Angular reconciliation cost measured against a rebuilt flat array; only CDK's differ
-  *mechanism* was read [S3], not any timing for it.
+  _mechanism_ was read [S3], not any timing for it.
 
 ## Unverified
 
@@ -244,25 +244,25 @@ churn and no recursion at all — at the cost of the walk being less obvious to 
 
 ## Sources
 
-| | Source | Version | Verified |
-|---|---|---|---|
-| S1 | https://github.com/TanStack/table/blob/main/packages/table-core/src/core/row-models/createCoreRowModel.ts | 9.2.4 line | yes — source read; shows `accessRows` building `subRows`, `flatRows` and `rowsById` in one recursive pass, memoized on `[table.options.data]`. Corrects the premise that TanStack is "flat" |
-| S2 | https://github.com/mui/mui-x/blob/master/packages/x-data-grid/src/models/gridRows.ts | 9.13.0 line | yes — source read; `GridTreeBasicNode`/`GridBasicGroupNode` carry `depth`, `parent`, `children: GridRowId[]`, `childrenExpanded`; `GridRowsMeta` carries `positions: number[]`. Establishes the id-map-not-nesting third option |
-| S3 | https://github.com/angular/components/blob/main/src/cdk/tree/tree.ts | main, read 2026-09-17 | yes — source read; `_flattenedNodes` cache, the `#29733` stack-overflow comment, the `forEachOperation`/`forEachIdentityChange` differ pair, and the signals TODO |
-| S4 | https://github.com/TanStack/table/pull/4495 | v8 | yes — page read; 50k rows ~30s → <100ms by replacing spread with `push`; 200k-row confirmation in thread |
-| S5 | https://github.com/ag-grid/ag-grid/pull/7995 | AG-11586 | yes — page read; `TreeDataNodeCache`, avoidance of `splice` named as the root cause |
-| S6 | https://github.com/mui/mui-x/issues/8581 | v6 | yes — page read; 18,200 rows × 25 cols, `sortRowTree` ~600ms (v5) → ~6s (v6) |
-| S7 | https://github.com/mui/mui-x/pull/9682 | merged 2023-07-18 | yes — page read; `removeNodeFromTree`, >3× on 10,000 top-level rows |
-| S8 | https://github.com/angular/components/issues/29733 | cdk 18.2.0 regression | yes — issue body read; ~500 children, 1 level deep, nested node only, flat unaffected |
-| S9 | https://github.com/handsontable/handsontable/pull/13401 | — | yes — PR body read; top-level index vs flattened index, "correct by coincidence" |
-| S10 | https://github.com/handsontable/handsontable/pull/13457 | — | yes — PR body read; subtree removal stopped one level down, 2 orphan rows on a four-level chain |
-| S11 | https://github.com/handsontable/handsontable/pull/13471 | — | yes — PR body read; undo dropped `__children` |
-| S12 | https://github.com/handsontable/handsontable/pull/13492 | — | yes — PR body read; TrimmingMap collapse invalidates the stored visual selection row |
-| S13 | https://github.com/mui/mui-x/issues/8238 | open since 2023-03 | yes — issue body read; `Maximum call stack size exceeded` moving the last child out of a row group |
-| S14 | https://github.com/TanStack/table/blob/main/packages/table-core/src/features/row-expanding/createExpandedRowModel.ts | 9.2.4 line | yes — source read; `memoDeps: [expanded, …]` = whole-walk recompute per toggle; `expandRows` is the recursive visible-flatten |
-| S15 | https://github.com/angular/components/issues/16225 | — | yes — issue + comments read; closed as duplicate of #10122, blocked at 2000+ nodes |
-| S16 | https://github.com/angular/components/issues/19162 | — | yes — issue + comments read; closed as duplicate of #10122 |
-| S17 | https://github.com/mui/mui-x/issues/4268 | — | yes — issue body read; slow expansion of heavily nested trees with virtualization off |
-| S18 | https://github.com/angular/components/issues/11101 | cdk 6.0.0-rc.1 | yes — page read; ~6s for 1,000 nodes, `detectChanges` per insert, ~6× estimated win |
-| S19 | https://github.com/handsontable/handsontable/pull/13454 | 16.2+ | yes — PR body read; row-header width from `levelCount` only |
-| R1 | libs/table/src/engine/render-stages.ts | — | no — located only; not read this run |
+|     | Source                                                                                                               | Version               | Verified                                                                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S1  | https://github.com/TanStack/table/blob/main/packages/table-core/src/core/row-models/createCoreRowModel.ts            | 9.2.4 line            | yes — source read; shows `accessRows` building `subRows`, `flatRows` and `rowsById` in one recursive pass, memoized on `[table.options.data]`. Corrects the premise that TanStack is "flat"                                     |
+| S2  | https://github.com/mui/mui-x/blob/master/packages/x-data-grid/src/models/gridRows.ts                                 | 9.13.0 line           | yes — source read; `GridTreeBasicNode`/`GridBasicGroupNode` carry `depth`, `parent`, `children: GridRowId[]`, `childrenExpanded`; `GridRowsMeta` carries `positions: number[]`. Establishes the id-map-not-nesting third option |
+| S3  | https://github.com/angular/components/blob/main/src/cdk/tree/tree.ts                                                 | main, read 2026-09-17 | yes — source read; `_flattenedNodes` cache, the `#29733` stack-overflow comment, the `forEachOperation`/`forEachIdentityChange` differ pair, and the signals TODO                                                               |
+| S4  | https://github.com/TanStack/table/pull/4495                                                                          | v8                    | yes — page read; 50k rows ~30s → <100ms by replacing spread with `push`; 200k-row confirmation in thread                                                                                                                        |
+| S5  | https://github.com/ag-grid/ag-grid/pull/7995                                                                         | AG-11586              | yes — page read; `TreeDataNodeCache`, avoidance of `splice` named as the root cause                                                                                                                                             |
+| S6  | https://github.com/mui/mui-x/issues/8581                                                                             | v6                    | yes — page read; 18,200 rows × 25 cols, `sortRowTree` ~600ms (v5) → ~6s (v6)                                                                                                                                                    |
+| S7  | https://github.com/mui/mui-x/pull/9682                                                                               | merged 2023-07-18     | yes — page read; `removeNodeFromTree`, >3× on 10,000 top-level rows                                                                                                                                                             |
+| S8  | https://github.com/angular/components/issues/29733                                                                   | cdk 18.2.0 regression | yes — issue body read; ~500 children, 1 level deep, nested node only, flat unaffected                                                                                                                                           |
+| S9  | https://github.com/handsontable/handsontable/pull/13401                                                              | —                     | yes — PR body read; top-level index vs flattened index, "correct by coincidence"                                                                                                                                                |
+| S10 | https://github.com/handsontable/handsontable/pull/13457                                                              | —                     | yes — PR body read; subtree removal stopped one level down, 2 orphan rows on a four-level chain                                                                                                                                 |
+| S11 | https://github.com/handsontable/handsontable/pull/13471                                                              | —                     | yes — PR body read; undo dropped `__children`                                                                                                                                                                                   |
+| S12 | https://github.com/handsontable/handsontable/pull/13492                                                              | —                     | yes — PR body read; TrimmingMap collapse invalidates the stored visual selection row                                                                                                                                            |
+| S13 | https://github.com/mui/mui-x/issues/8238                                                                             | open since 2023-03    | yes — issue body read; `Maximum call stack size exceeded` moving the last child out of a row group                                                                                                                              |
+| S14 | https://github.com/TanStack/table/blob/main/packages/table-core/src/features/row-expanding/createExpandedRowModel.ts | 9.2.4 line            | yes — source read; `memoDeps: [expanded, …]` = whole-walk recompute per toggle; `expandRows` is the recursive visible-flatten                                                                                                   |
+| S15 | https://github.com/angular/components/issues/16225                                                                   | —                     | yes — issue + comments read; closed as duplicate of #10122, blocked at 2000+ nodes                                                                                                                                              |
+| S16 | https://github.com/angular/components/issues/19162                                                                   | —                     | yes — issue + comments read; closed as duplicate of #10122                                                                                                                                                                      |
+| S17 | https://github.com/mui/mui-x/issues/4268                                                                             | —                     | yes — issue body read; slow expansion of heavily nested trees with virtualization off                                                                                                                                           |
+| S18 | https://github.com/angular/components/issues/11101                                                                   | cdk 6.0.0-rc.1        | yes — page read; ~6s for 1,000 nodes, `detectChanges` per insert, ~6× estimated win                                                                                                                                             |
+| S19 | https://github.com/handsontable/handsontable/pull/13454                                                              | 16.2+                 | yes — PR body read; row-header width from `levelCount` only                                                                                                                                                                     |
+| R1  | libs/table/src/engine/render-stages.ts                                                                               | —                     | no — located only; not read this run                                                                                                                                                                                            |

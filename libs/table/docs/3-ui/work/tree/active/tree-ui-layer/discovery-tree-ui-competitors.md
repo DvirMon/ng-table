@@ -39,13 +39,13 @@ Decision ids (D2, D4, …) refer to [`1-decisions.md`](1-decisions.md).
 Read 2026-10-01 over WebFetch, plus local reads of installed
 packages. Nothing was installed and nothing was run.
 
-| Library | Pin | Pin source | What was read |
-|---|---|---|---|
-| AG Grid Enterprise | 36.2.0 | `registry.npmjs.org/ag-grid-community/latest` | docs `.mdoc` and source at tag `b36.2.0` |
-| MUI X Data Grid Pro | 9.14.0 | `registry.npmjs.org/@mui/x-data-grid-pro/latest` | docs `.md` and source at tag `v9.14.0` |
-| TanStack Table | 8.21.3 (guide, example, source); registry latest 9.2.4 | `registry.npmjs.org/@tanstack/table-core/latest` | v8 docs/example at tag `v8.21.3`, v8 `src/` on unpkg. Only `package.json` was read for v9 |
-| PrimeNG TreeTable | 22.1.2 | registry `latest`, and the docs page shows 22.1.2 | docs page, `types/*.d.ts` on unpkg, style file on **`master` (unpinned)** |
-| Angular CDK tree / Material tree | 22.1.7 | `node_modules/@angular/cdk/package.json` (installed) | `fesm2022/tree.mjs` and `_tree-key-manager-chunk.mjs` from **node_modules**; docs and examples from branch **`22.1.x`** (a branch, not a tag) |
+| Library                          | Pin                                                    | Pin source                                           | What was read                                                                                                                                 |
+| -------------------------------- | ------------------------------------------------------ | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| AG Grid Enterprise               | 36.2.0                                                 | `registry.npmjs.org/ag-grid-community/latest`        | docs `.mdoc` and source at tag `b36.2.0`                                                                                                      |
+| MUI X Data Grid Pro              | 9.14.0                                                 | `registry.npmjs.org/@mui/x-data-grid-pro/latest`     | docs `.md` and source at tag `v9.14.0`                                                                                                        |
+| TanStack Table                   | 8.21.3 (guide, example, source); registry latest 9.2.4 | `registry.npmjs.org/@tanstack/table-core/latest`     | v8 docs/example at tag `v8.21.3`, v8 `src/` on unpkg. Only `package.json` was read for v9                                                     |
+| PrimeNG TreeTable                | 22.1.2                                                 | registry `latest`, and the docs page shows 22.1.2    | docs page, `types/*.d.ts` on unpkg, style file on **`master` (unpinned)**                                                                     |
+| Angular CDK tree / Material tree | 22.1.7                                                 | `node_modules/@angular/cdk/package.json` (installed) | `fesm2022/tree.mjs` and `_tree-key-manager-chunk.mjs` from **node_modules**; docs and examples from branch **`22.1.x`** (a branch, not a tag) |
 
 Reliability notes:
 
@@ -54,8 +54,8 @@ Reliability notes:
 - **PrimeNG source could not be read past truncation.**
   `primeng-treetable.mjs` and `treetable.ts` (151 KB) both cut off
   before `TreeTableToggler`/`TTRow`. Those cells cite the 22.1.2
-  `.d.ts` member names plus the docs page. A member's *name and
-  type* are confirmed. Its *body* is not, and that is marked
+  `.d.ts` member names plus the docs page. A member's _name and
+  type_ are confirmed. Its _body_ is not, and that is marked
   Unverified.
 - **A WebFetch summary is not the artifact.** Every source quote
   below was requested verbatim. One summary said MUI renders "no
@@ -75,13 +75,13 @@ Reliability notes:
 
 ### 1. Is the toggle a tab stop?
 
-| | Tab stop? | Element | Cite |
-|---|---|---|---|
-| AG Grid | **No.** A `<span>` icon | `span.ag-group-expanded` / `.ag-group-contracted` | [ag-gcr] |
-| MUI X | **No.** `tabIndex={-1}` | `baseIconButton` (a real button) | [mui-cell] |
-| CDK / Material | **No.** Host attribute `tabindex: "-1"` | any host, `[cdkTreeNodeToggle]` | [cdk-tree] L1456-1464 |
-| PrimeNG | Unverified | `p-treetable-toggler` | [png-dts] |
-| TanStack | **Yes.** The consumer's `<button>` | plain `<button>` in the guide | [ts-guide] |
+|                | Tab stop?                               | Element                                           | Cite                  |
+| -------------- | --------------------------------------- | ------------------------------------------------- | --------------------- |
+| AG Grid        | **No.** A `<span>` icon                 | `span.ag-group-expanded` / `.ag-group-contracted` | [ag-gcr]              |
+| MUI X          | **No.** `tabIndex={-1}`                 | `baseIconButton` (a real button)                  | [mui-cell]            |
+| CDK / Material | **No.** Host attribute `tabindex: "-1"` | any host, `[cdkTreeNodeToggle]`                   | [cdk-tree] L1456-1464 |
+| PrimeNG        | Unverified                              | `p-treetable-toggler`                             | [png-dts]             |
+| TanStack       | **Yes.** The consumer's `<button>`      | plain `<button>` in the guide                     | [ts-guide]            |
 
 - The three libraries with a roving-focus model all keep the
   toggle out of Tab. Focus goes to the cell (AG Grid, MUI X) or
@@ -96,13 +96,13 @@ Reliability notes:
 
 ### 2. Where does the expanded state live, and what is the role?
 
-| | Container role | `aria-expanded` on | `aria-level` | Cite |
-|---|---|---|---|---|
-| AG Grid | `treegrid` (tree data and row grouping) | row **and** group cell | stated in docs; setter not found | [ag-a11y], [ag-rowctrl], [ag-gcr-ctrl] |
-| MUI X Pro | `treegrid` only when `treeData` | row, only when `filteredChildrenCount > 0` | row, `depth + 1`; plus `aria-setsize`/`aria-posinset` | [mui-aria], [mui-row-aria] |
-| PrimeNG | **`table`** | row (`ttRow`) | row (`ttRow`) | [png-doc] |
-| CDK tree | `tree` | `treeitem`, `null` when not expandable | `level + 1`; plus setsize/posinset | [cdk-tree] L1123-1127, L1005-1010 |
-| TanStack | — (headless) | — | — | [ts-guide] |
+|           | Container role                          | `aria-expanded` on                         | `aria-level`                                          | Cite                                   |
+| --------- | --------------------------------------- | ------------------------------------------ | ----------------------------------------------------- | -------------------------------------- |
+| AG Grid   | `treegrid` (tree data and row grouping) | row **and** group cell                     | stated in docs; setter not found                      | [ag-a11y], [ag-rowctrl], [ag-gcr-ctrl] |
+| MUI X Pro | `treegrid` only when `treeData`         | row, only when `filteredChildrenCount > 0` | row, `depth + 1`; plus `aria-setsize`/`aria-posinset` | [mui-aria], [mui-row-aria]             |
+| PrimeNG   | **`table`**                             | row (`ttRow`)                              | row (`ttRow`)                                         | [png-doc]                              |
+| CDK tree  | `tree`                                  | `treeitem`, `null` when not expandable     | `level + 1`; plus setsize/posinset                    | [cdk-tree] L1123-1127, L1005-1010      |
+| TanStack  | — (headless)                            | —                                          | —                                                     | [ts-guide]                             |
 
 - APG allows either one: "aria-expanded state set on either the
   row element or on a cell contained in the row" [apg-tg]. AG Grid
@@ -124,13 +124,13 @@ Reliability notes:
 
 ### 3. Who names the toggle, and does the name carry state?
 
-| | Name | Supplied by | Cite |
-|---|---|---|---|
-| MUI X | "see children" / "hide children" (changes with state) | library locale keys `treeDataExpand`/`treeDataCollapse` | [mui-cell], [mui-locale] |
-| PrimeNG | `toggleButtonAriaLabel` getter | library (text unverified) | [png-dts] |
-| Material example | `'Toggle ' + node.name` (does not change) | consumer | [mat-ex] |
-| AG Grid | none on the icon (not focusable); the cell carries `aria-expanded` | — | [ag-gcr], [ag-gcr-ctrl] |
-| TanStack | consumer; the guide uses emoji `👇`/`👉` | consumer | [ts-guide] |
+|                  | Name                                                               | Supplied by                                             | Cite                     |
+| ---------------- | ------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------ |
+| MUI X            | "see children" / "hide children" (changes with state)              | library locale keys `treeDataExpand`/`treeDataCollapse` | [mui-cell], [mui-locale] |
+| PrimeNG          | `toggleButtonAriaLabel` getter                                     | library (text unverified)                               | [png-dts]                |
+| Material example | `'Toggle ' + node.name` (does not change)                          | consumer                                                | [mat-ex]                 |
+| AG Grid          | none on the icon (not focusable); the cell carries `aria-expanded` | —                                                       | [ag-gcr], [ag-gcr-ctrl]  |
+| TanStack         | consumer; the guide uses emoji `👇`/`👉`                           | consumer                                                | [ts-guide]               |
 
 - MUI X's label changes with state. On MUI X this does not double
   the announcement, because the button itself carries no
@@ -142,14 +142,14 @@ Reliability notes:
 
 ### 4. Which key expands a row?
 
-| | Expand / collapse key | Other | Cite |
-|---|---|---|---|
-| AG Grid | **Enter** on the focused group cell (`suppressEnterExpand`) | double-click on the cell, on by default (`suppressDoubleClickExpand`) | [ag-kbd], [ag-gcr-ctrl] |
-| MUI X | **Space** on the focused grouping cell | Ctrl+Enter is the detail panel, not the tree | [mui-a11y] |
-| PrimeNG | **ArrowRight / ArrowLeft** on the row | Up/Down/Home/End; Enter/Space select the row | [png-doc], [png-dts] |
-| CDK tree | **ArrowRight / ArrowLeft** (swapped in RTL) | `*` expands siblings; Enter/Space *activate* the item; typeahead | [cdk-tkm] L73-110 |
-| CDK toggle | Enter / Space on the toggle host | `preventDefault` on both | [cdk-tree] L1456-1464 |
-| APG treegrid | ArrowRight on a collapsed row; Enter on the first `aria-expanded` cell in cell-only focus | — | [apg-tg] |
+|              | Expand / collapse key                                                                     | Other                                                                 | Cite                    |
+| ------------ | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ----------------------- |
+| AG Grid      | **Enter** on the focused group cell (`suppressEnterExpand`)                               | double-click on the cell, on by default (`suppressDoubleClickExpand`) | [ag-kbd], [ag-gcr-ctrl] |
+| MUI X        | **Space** on the focused grouping cell                                                    | Ctrl+Enter is the detail panel, not the tree                          | [mui-a11y]              |
+| PrimeNG      | **ArrowRight / ArrowLeft** on the row                                                     | Up/Down/Home/End; Enter/Space select the row                          | [png-doc], [png-dts]    |
+| CDK tree     | **ArrowRight / ArrowLeft** (swapped in RTL)                                               | `*` expands siblings; Enter/Space _activate_ the item; typeahead      | [cdk-tkm] L73-110       |
+| CDK toggle   | Enter / Space on the toggle host                                                          | `preventDefault` on both                                              | [cdk-tree] L1456-1464   |
+| APG treegrid | ArrowRight on a collapsed row; Enter on the first `aria-expanded` cell in cell-only focus | —                                                                     | [apg-tg]                |
 
 - Three libraries, three different expand keys. The APG answer
   (arrows) is the one the two tree-shaped libraries use (PrimeNG,
@@ -161,12 +161,12 @@ Reliability notes:
 
 ### 5. Whole-row click and event propagation
 
-| | Whole-row / whole-cell trigger | Does the toggle stop propagation? | Cite |
-|---|---|---|---|
-| AG Grid | double-click on the group cell (default on) | double-clicks on the icons themselves are ignored | [ag-gcr-ctrl] |
-| MUI X | none shipped | **yes**: `event.stopPropagation()`, then `setCellFocus` | [mui-cell] |
-| CDK toggle | the example puts `matTreeNodeToggle` on **both** the node and the button | **yes**: `event.stopPropagation()`, then `focusItem` | [cdk-tree] L1434-1438, [mat-ex] |
-| TanStack | consumer | consumer | [ts-guide] |
+|            | Whole-row / whole-cell trigger                                           | Does the toggle stop propagation?                       | Cite                            |
+| ---------- | ------------------------------------------------------------------------ | ------------------------------------------------------- | ------------------------------- |
+| AG Grid    | double-click on the group cell (default on)                              | double-clicks on the icons themselves are ignored       | [ag-gcr-ctrl]                   |
+| MUI X      | none shipped                                                             | **yes**: `event.stopPropagation()`, then `setCellFocus` | [mui-cell]                      |
+| CDK toggle | the example puts `matTreeNodeToggle` on **both** the node and the button | **yes**: `event.stopPropagation()`, then `focusItem`    | [cdk-tree] L1434-1438, [mat-ex] |
+| TanStack   | consumer                                                                 | consumer                                                | [ts-guide]                      |
 
 - **D12 disagrees with both MUI X and the CDK.** D12 leaves the
   bubble to the consumer. Both vendors that ship a toggle stop it.
@@ -179,13 +179,13 @@ Reliability notes:
 
 ### 6. Indentation: mechanism and step
 
-| | Mechanism | Step | Applied to | Cite |
-|---|---|---|---|---|
-| AG Grid | **CSS variable**: `padding-left: calc(var(--ag-indentation-level) * var(--ag-row-group-indent-size))` | `--ag-row-group-indent-size: calc(var(--ag-cell-widget-spacing) + var(--ag-icon-size))`, one toggle's width | cell wrapper (`.ag-cell-wrapper`) | [ag-css], [ag-theme], [ag-gcr-ctrl] |
-| MUI X | inline `marginLeft: vars.spacing(rowNode.depth * offsetMultiplier)`, `offsetMultiplier` default 2 | 2 spacing units | grouping cell root | [mui-cell] |
-| CDK | inline `paddingLeft`/`paddingRight` (follows `dir`) | `_indent = 40`, `px`, settable with `cdkTreeNodePaddingIndent` | tree node | [cdk-tree] L1340-1365 |
-| PrimeNG | `togglerMarginStart` getter (string) | unverified | the toggler | [png-dts] |
-| TanStack example | inline `paddingLeft: \`${row.depth * 2}rem\`` | 2rem | first cell | [ts-ex] |
+|                  | Mechanism                                                                                             | Step                                                                                                        | Applied to                        | Cite                                |
+| ---------------- | ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | --------------------------------- | ----------------------------------- |
+| AG Grid          | **CSS variable**: `padding-left: calc(var(--ag-indentation-level) * var(--ag-row-group-indent-size))` | `--ag-row-group-indent-size: calc(var(--ag-cell-widget-spacing) + var(--ag-icon-size))`, one toggle's width | cell wrapper (`.ag-cell-wrapper`) | [ag-css], [ag-theme], [ag-gcr-ctrl] |
+| MUI X            | inline `marginLeft: vars.spacing(rowNode.depth * offsetMultiplier)`, `offsetMultiplier` default 2     | 2 spacing units                                                                                             | grouping cell root                | [mui-cell]                          |
+| CDK              | inline `paddingLeft`/`paddingRight` (follows `dir`)                                                   | `_indent = 40`, `px`, settable with `cdkTreeNodePaddingIndent`                                              | tree node                         | [cdk-tree] L1340-1365               |
+| PrimeNG          | `togglerMarginStart` getter (string)                                                                  | unverified                                                                                                  | the toggler                       | [png-dts]                           |
+| TanStack example | inline `paddingLeft: \`${row.depth \* 2}rem\``                                                        | 2rem                                                                                                        | first cell                        | [ts-ex]                             |
 
 - **Only AG Grid indents through a CSS variable.** It also sets an
   `ag-row-level-N` class per row [ag-rowctrl]. That is the same
@@ -201,13 +201,13 @@ Reliability notes:
 
 ### 7. Leaf alignment: what fills the toggle's space on a leaf?
 
-| | Leaf mechanism | In the accessibility tree? | Cite |
-|---|---|---|---|
-| AG Grid | icons hidden; a **margin spacer** class `.ag-row-group-leaf-indent { margin-left: calc(var(--ag-cell-widget-spacing) + var(--ag-icon-size)) }` | no element | [ag-gcr-ctrl], [ag-css] |
-| MUI X | a **fixed-width empty wrapper**: `flex: '0 0 28px'`, `marginRight: vars.spacing(2)`; the button renders only when `filteredDescendantCount > 0` | no element | [mui-cell], [mui-styles] |
-| PrimeNG | the toggler stays, `togglerVisibility: "hidden" \| "visible"` | hidden by `visibility` (inference) | [png-dts] |
-| Material example | a **visible disabled button**: "use a disabled button to provide padding for tree leaf" | yes, as a disabled, unnamed button (inference) | [mat-ex] |
-| TanStack example | a glyph `'🔵'` | as text | [ts-ex] |
+|                  | Leaf mechanism                                                                                                                                  | In the accessibility tree?                     | Cite                     |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ------------------------ |
+| AG Grid          | icons hidden; a **margin spacer** class `.ag-row-group-leaf-indent { margin-left: calc(var(--ag-cell-widget-spacing) + var(--ag-icon-size)) }`  | no element                                     | [ag-gcr-ctrl], [ag-css]  |
+| MUI X            | a **fixed-width empty wrapper**: `flex: '0 0 28px'`, `marginRight: vars.spacing(2)`; the button renders only when `filteredDescendantCount > 0` | no element                                     | [mui-cell], [mui-styles] |
+| PrimeNG          | the toggler stays, `togglerVisibility: "hidden" \| "visible"`                                                                                   | hidden by `visibility` (inference)             | [png-dts]                |
+| Material example | a **visible disabled button**: "use a disabled button to provide padding for tree leaf"                                                         | yes, as a disabled, unnamed button (inference) | [mat-ex]                 |
+| TanStack example | a glyph `'🔵'`                                                                                                                                  | as text                                        | [ts-ex]                  |
 
 - Four answers. **D6 matches PrimeNG** (keep the element, hide it
   with `visibility`), plus `aria-hidden` and `disabled`. AG Grid
@@ -248,13 +248,13 @@ Reliability notes:
 
 ### 10. Orphans (`parentId` points at nothing)
 
-| | What a person sees | Cite |
-|---|---|---|
+|                                   | What a person sees                                                                                                                                                                                                                                              | Cite                             |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
 | AG Grid (`treeDataParentIdField`) | **Row at the root**, plus a console warning: "Parent row not found for row with id=… and parent id=…. Showing row with id=… as a root-level node." (#271). A cycle also moves rows to the root (#270). The docs only say "missing parent rows are not allowed". | [ag-tgs], [ag-err], [ag-selfref] |
-| MUI X (`getTreeDataPath`) | **The missing ancestors are created:** "the Data Grid Pro will automatically create the rows needed to fill the gaps" | [mui-td] |
-| TanStack | Cannot occur. `getSubRows` nests, and the parent is passed by reference, never looked up by id | [ts-core] |
-| PrimeNG | Cannot occur. `TreeNode.children` nests | [png-api] |
-| CDK tree (`childrenAccessor`) | Cannot occur in the nested form. The `levelAccessor` flat form was not read | [cdk-tree] |
+| MUI X (`getTreeDataPath`)         | **The missing ancestors are created:** "the Data Grid Pro will automatically create the rows needed to fill the gaps"                                                                                                                                           | [mui-td]                         |
+| TanStack                          | Cannot occur. `getSubRows` nests, and the parent is passed by reference, never looked up by id                                                                                                                                                                  | [ts-core]                        |
+| PrimeNG                           | Cannot occur. `TreeNode.children` nests                                                                                                                                                                                                                         | [png-api]                        |
+| CDK tree (`childrenAccessor`)     | Cannot occur in the nested form. The `levelAccessor` flat form was not read                                                                                                                                                                                     | [cdk-tree]                       |
 
 - **Two answers where input is flat.** AG Grid says "not allowed"
   in its docs but then promotes the row to the root and warns.
@@ -268,13 +268,13 @@ Reliability notes:
 
 ### 11. Paywall
 
-| | Tree UI tier | Cite |
-|---|---|---|
-| AG Grid | Enterprise. Tree data and self-referential data are marked enterprise | [ag-selfref], [prior-filter] (ag-td) |
-| MUI X | **Pro.** The `treegrid` role and the row `aria-level`/`aria-expanded` live in the `x-data-grid-pro` package | [mui-td], [mui-aria], [mui-row-aria] |
-| TanStack | MIT | [ts-lic] |
-| PrimeNG 22.1.2 | Whole package. PrimeUI "Community License (Free)" under $1M revenue, <5 developers, <10 employees, <$3M funding | [png-lic] |
-| Angular CDK | MIT | `node_modules/@angular/cdk/package.json` |
+|                | Tree UI tier                                                                                                    | Cite                                     |
+| -------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| AG Grid        | Enterprise. Tree data and self-referential data are marked enterprise                                           | [ag-selfref], [prior-filter] (ag-td)     |
+| MUI X          | **Pro.** The `treegrid` role and the row `aria-level`/`aria-expanded` live in the `x-data-grid-pro` package     | [mui-td], [mui-aria], [mui-row-aria]     |
+| TanStack       | MIT                                                                                                             | [ts-lic]                                 |
+| PrimeNG 22.1.2 | Whole package. PrimeUI "Community License (Free)" under $1M revenue, <5 developers, <10 employees, <$3M funding | [png-lic]                                |
+| Angular CDK    | MIT                                                                                                             | `node_modules/@angular/cdk/package.json` |
 
 - **On MUI X, tree accessibility is a paid feature.** The ARIA
   hooks sit in the Pro package next to tree data, so the free grid
@@ -286,22 +286,22 @@ Reliability notes:
 Each cell carries its own citation. Detail and quotes are in the
 Synthesis tables above.
 
-| Axis | AG Grid 36.2.0 | MUI X Pro 9.14.0 | TanStack 8.21.3 | PrimeNG 22.1.2 | CDK/Material 22.1.7 |
-|---|---|---|---|---|---|
-| Toggle element | `<span>` icon [ag-gcr] | IconButton [mui-cell] | consumer `<button>` [ts-guide] | `p-treetable-toggler` [png-dts] | `[cdkTreeNodeToggle]` on any host [cdk-tree] |
-| Toggle tab stop | no [ag-gcr] | no, `-1` [mui-cell] | yes [ts-guide] | unverified | no, `-1` [cdk-tree] |
-| Container role | `treegrid` [ag-a11y] | `treegrid` [mui-aria] | — | `table` [png-doc] | `tree` [cdk-tree] |
-| `aria-expanded` on | row + cell [ag-rowctrl], [ag-gcr-ctrl] | row [mui-row-aria] | — | row [png-doc] | treeitem [cdk-tree] |
-| `aria-level` | yes (docs) [ag-a11y] | `depth+1` [mui-row-aria] | — | row [png-doc] | `level+1` [cdk-tree] |
-| Toggle name | none [ag-gcr-ctrl] | "see/hide children" [mui-locale] | consumer [ts-guide] | library getter [png-dts] | consumer [mat-ex] |
-| Expand key | Enter [ag-kbd] | Space [mui-a11y] | consumer | ArrowRight [png-doc] | ArrowRight [cdk-tkm] |
-| Mouse | icon click, cell double-click [ag-gcr-ctrl] | button click, stops bubble [mui-cell] | consumer [ts-guide] | toggler click [png-dts] | toggle click, stops bubble [cdk-tree] |
-| Indent mechanism | CSS var × size [ag-css] | inline margin [mui-cell] | inline padding (example) [ts-ex] | toggler margin [png-dts] | inline padding, 40px [cdk-tree] |
-| Leaf alignment | margin spacer [ag-css] | 28px empty wrapper [mui-styles] | glyph (example) [ts-ex] | `visibility` [png-dts] | disabled button (example) [mat-ex] |
-| Parent, no visible children | `isExpandable()` [ag-gcr-ctrl] | toggle hidden [mui-cell] | `getRowCanExpand` [ts-guide] | `leaf` flag [png-api] | `isExpandable` input [cdk-tree] |
-| Context-row style | none [prior-filter] | none (count only) [prior-filter] | — | none [prior-filter] | n/a |
-| Orphan | root + warn [ag-tgs], [ag-err] | ancestors created [mui-td] | impossible [ts-core] | impossible [png-api] | impossible (nested) [cdk-tree] |
-| Tier | Enterprise [ag-selfref] | Pro [mui-td] | MIT [ts-lic] | PrimeUI licence [png-lic] | MIT (local `package.json`) |
+| Axis                        | AG Grid 36.2.0                              | MUI X Pro 9.14.0                      | TanStack 8.21.3                  | PrimeNG 22.1.2                  | CDK/Material 22.1.7                          |
+| --------------------------- | ------------------------------------------- | ------------------------------------- | -------------------------------- | ------------------------------- | -------------------------------------------- |
+| Toggle element              | `<span>` icon [ag-gcr]                      | IconButton [mui-cell]                 | consumer `<button>` [ts-guide]   | `p-treetable-toggler` [png-dts] | `[cdkTreeNodeToggle]` on any host [cdk-tree] |
+| Toggle tab stop             | no [ag-gcr]                                 | no, `-1` [mui-cell]                   | yes [ts-guide]                   | unverified                      | no, `-1` [cdk-tree]                          |
+| Container role              | `treegrid` [ag-a11y]                        | `treegrid` [mui-aria]                 | —                                | `table` [png-doc]               | `tree` [cdk-tree]                            |
+| `aria-expanded` on          | row + cell [ag-rowctrl], [ag-gcr-ctrl]      | row [mui-row-aria]                    | —                                | row [png-doc]                   | treeitem [cdk-tree]                          |
+| `aria-level`                | yes (docs) [ag-a11y]                        | `depth+1` [mui-row-aria]              | —                                | row [png-doc]                   | `level+1` [cdk-tree]                         |
+| Toggle name                 | none [ag-gcr-ctrl]                          | "see/hide children" [mui-locale]      | consumer [ts-guide]              | library getter [png-dts]        | consumer [mat-ex]                            |
+| Expand key                  | Enter [ag-kbd]                              | Space [mui-a11y]                      | consumer                         | ArrowRight [png-doc]            | ArrowRight [cdk-tkm]                         |
+| Mouse                       | icon click, cell double-click [ag-gcr-ctrl] | button click, stops bubble [mui-cell] | consumer [ts-guide]              | toggler click [png-dts]         | toggle click, stops bubble [cdk-tree]        |
+| Indent mechanism            | CSS var × size [ag-css]                     | inline margin [mui-cell]              | inline padding (example) [ts-ex] | toggler margin [png-dts]        | inline padding, 40px [cdk-tree]              |
+| Leaf alignment              | margin spacer [ag-css]                      | 28px empty wrapper [mui-styles]       | glyph (example) [ts-ex]          | `visibility` [png-dts]          | disabled button (example) [mat-ex]           |
+| Parent, no visible children | `isExpandable()` [ag-gcr-ctrl]              | toggle hidden [mui-cell]              | `getRowCanExpand` [ts-guide]     | `leaf` flag [png-api]           | `isExpandable` input [cdk-tree]              |
+| Context-row style           | none [prior-filter]                         | none (count only) [prior-filter]      | —                                | none [prior-filter]             | n/a                                          |
+| Orphan                      | root + warn [ag-tgs], [ag-err]              | ancestors created [mui-td]            | impossible [ts-core]             | impossible [png-api]            | impossible (nested) [cdk-tree]               |
+| Tier                        | Enterprise [ag-selfref]                     | Pro [mui-td]                          | MIT [ts-lic]                     | PrimeUI licence [png-lic]       | MIT (local `package.json`)                   |
 
 ## Not researched
 
@@ -351,41 +351,41 @@ Synthesis tables above.
 
 ## Sources
 
-| Ref | Claim it supports | URL |
-|---|---|---|
-| ag-gcr-ctrl | indent class/var, leaf-indent condition, `isExpandable()`, Enter + double-click defaults, cell `aria-expanded`, child count | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRendererCtrl.ts |
-| ag-gcr | toggle icons are `<span>`, no tabindex/role/label | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRenderer.ts |
-| ag-css | `padding-left: calc(var(--ag-indentation-level) * …)`, `.ag-row-group-leaf-indent` | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/theming/core/css/_grid-layout.css |
-| ag-theme | `--ag-row-group-indent-size` = spacing + icon size | https://unpkg.com/ag-grid-community@36.2.0/styles/ag-grid.css |
-| ag-rowctrl | row `aria-expanded` when expandable; `ag-row-level-N`; no `aria-level` | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts |
-| ag-a11y | `treegrid` for tree data/grouping; `aria-expanded`, `aria-level` | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/accessibility/index.mdoc |
-| ag-kbd | "Hitting the Enter key will expand or collapse the group" | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/keyboard-navigation/index.mdoc |
-| ag-selfref | "Cycles and missing parent rows are not allowed"; enterprise | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/tree-data-self-referential/index.mdoc |
-| ag-tgs | `loadSelfRef`: `treeParent = newParent ?? rootNode`, `warn(271)`; `handleCycles` → 270 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/treeData/treeGroupStrategy.ts |
-| ag-err | text of warnings 270, 271 | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/validation/errorMessages/errorText.ts |
-| mui-cell | inline `marginLeft` by depth, `tabIndex={-1}`, label keys, button only when `filteredDescendantCount > 0`, `stopPropagation` + `setCellFocus` | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid-pro/src/components/GridTreeDataGroupingCell.tsx |
-| mui-styles | toggle wrapper `flex: '0 0 28px'` | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid/src/components/containers/GridRootStyles.ts |
-| mui-row-aria | row `aria-level`, `aria-expanded`, `aria-setsize`, `aria-posinset` | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid-pro/src/hooks/features/rows/useGridRowAriaAttributes.tsx |
-| mui-aria | `role: 'treegrid'` when `treeData` | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid-pro/src/hooks/utils/useGridAriaAttributes.tsx |
-| mui-a11y | Space toggles children on the grouping cell; roving tabindex | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/docs/data/data-grid/accessibility/accessibility.md |
-| mui-locale | "see children" / "hide children" | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid/src/constants/localeTextConstants.ts |
-| mui-td | Pro plan; gap rows auto-created | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/docs/data/data-grid/tree-data/tree-data.md |
-| ts-guide | consumer `<button onClick={row.getToggleExpandedHandler()}>`, `getRowCanExpand` | https://raw.githubusercontent.com/TanStack/table/v8.21.3/docs/guide/expanding.md |
-| ts-ex | `paddingLeft: ${row.depth * 2}rem`, leaf `'🔵'` | https://raw.githubusercontent.com/TanStack/table/v8.21.3/examples/react/expanding/src/main.tsx |
-| ts-core | `getSubRows`, parent passed by reference | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getCoreRowModel.ts |
-| ts-lic | MIT | https://unpkg.com/@tanstack/table-core@9.2.4/package.json |
-| png-doc | role `table`; `ttRow` manages `aria-expanded`/`aria-level`; keyboard table; version 22.1.2 | https://primeng.dev/treetable |
-| png-dts | `TreeTableToggler` (`togglerVisibility`, `togglerMarginStart`, `toggleButtonAriaLabel`); `TTRow` key handlers, `focusSiblingToggler` | https://unpkg.com/primeng@22.1.2/types/primeng-treetable.d.ts |
-| png-api | `TreeNode.children`, `leaf` "Used in lazy loading" | https://unpkg.com/primeng@22.1.2/types/primeng-api.d.ts |
-| png-lic | Community License thresholds | https://unpkg.com/primeng@22.1.2/LICENSE.md |
-| cdk-tree | `treeitem` aria bindings L1123-1127; `_getAriaExpanded` L1005-1010; padding L1340-1365; toggle L1430-1464 (read from `node_modules`, 22.1.7) | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/tree.mjs |
-| cdk-tkm | `TreeKeyManager.onKeydown` L73-110 (read from `node_modules`) | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/_tree-key-manager-chunk.mjs |
-| cdk-doc | implements the APG tree widget; `cdkTreeNodePadding` for flat trees | https://raw.githubusercontent.com/angular/components/22.1.x/src/cdk/tree/tree.md |
-| mat-ex | leaf "disabled button to provide padding"; `'Toggle ' + node.name`; toggle on node and button | https://raw.githubusercontent.com/angular/components/22.1.x/src/components-examples/material/tree/tree-flat-overview/tree-flat-overview-example.html |
-| apg-tg | treegrid keys; `aria-expanded` on row or cell | https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/ |
-| mdn-row | `aria-expanded` on a row only inside `treegrid` | https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/row_role |
-| prior-filter | context-row styling, filter orphans, AG Grid enterprise (ag-td) | ../../../../../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-competitors.md |
-| prior-group | grouping-vs-tree (out of scope here) | ../../../../../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-competitors.md |
+| Ref          | Claim it supports                                                                                                                             | URL                                                                                                                                                  |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ag-gcr-ctrl  | indent class/var, leaf-indent condition, `isExpandable()`, Enter + double-click defaults, cell `aria-expanded`, child count                   | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRendererCtrl.ts            |
+| ag-gcr       | toggle icons are `<span>`, no tabindex/role/label                                                                                             | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRenderer.ts                |
+| ag-css       | `padding-left: calc(var(--ag-indentation-level) * …)`, `.ag-row-group-leaf-indent`                                                            | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/theming/core/css/_grid-layout.css                           |
+| ag-theme     | `--ag-row-group-indent-size` = spacing + icon size                                                                                            | https://unpkg.com/ag-grid-community@36.2.0/styles/ag-grid.css                                                                                        |
+| ag-rowctrl   | row `aria-expanded` when expandable; `ag-row-level-N`; no `aria-level`                                                                        | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/rendering/row/rowCtrl.ts                                    |
+| ag-a11y      | `treegrid` for tree data/grouping; `aria-expanded`, `aria-level`                                                                              | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/accessibility/index.mdoc                       |
+| ag-kbd       | "Hitting the Enter key will expand or collapse the group"                                                                                     | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/keyboard-navigation/index.mdoc                 |
+| ag-selfref   | "Cycles and missing parent rows are not allowed"; enterprise                                                                                  | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/documentation/ag-grid-docs/src/content/docs/tree-data-self-referential/index.mdoc          |
+| ag-tgs       | `loadSelfRef`: `treeParent = newParent ?? rootNode`, `warn(271)`; `handleCycles` → 270                                                        | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/treeData/treeGroupStrategy.ts                              |
+| ag-err       | text of warnings 270, 271                                                                                                                     | https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-community/src/validation/errorMessages/errorText.ts                       |
+| mui-cell     | inline `marginLeft` by depth, `tabIndex={-1}`, label keys, button only when `filteredDescendantCount > 0`, `stopPropagation` + `setCellFocus` | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid-pro/src/components/GridTreeDataGroupingCell.tsx                             |
+| mui-styles   | toggle wrapper `flex: '0 0 28px'`                                                                                                             | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid/src/components/containers/GridRootStyles.ts                                 |
+| mui-row-aria | row `aria-level`, `aria-expanded`, `aria-setsize`, `aria-posinset`                                                                            | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid-pro/src/hooks/features/rows/useGridRowAriaAttributes.tsx                    |
+| mui-aria     | `role: 'treegrid'` when `treeData`                                                                                                            | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid-pro/src/hooks/utils/useGridAriaAttributes.tsx                               |
+| mui-a11y     | Space toggles children on the grouping cell; roving tabindex                                                                                  | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/docs/data/data-grid/accessibility/accessibility.md                                               |
+| mui-locale   | "see children" / "hide children"                                                                                                              | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/packages/x-data-grid/src/constants/localeTextConstants.ts                                        |
+| mui-td       | Pro plan; gap rows auto-created                                                                                                               | https://raw.githubusercontent.com/mui/mui-x/v9.14.0/docs/data/data-grid/tree-data/tree-data.md                                                       |
+| ts-guide     | consumer `<button onClick={row.getToggleExpandedHandler()}>`, `getRowCanExpand`                                                               | https://raw.githubusercontent.com/TanStack/table/v8.21.3/docs/guide/expanding.md                                                                     |
+| ts-ex        | `paddingLeft: ${row.depth * 2}rem`, leaf `'🔵'`                                                                                               | https://raw.githubusercontent.com/TanStack/table/v8.21.3/examples/react/expanding/src/main.tsx                                                       |
+| ts-core      | `getSubRows`, parent passed by reference                                                                                                      | https://unpkg.com/@tanstack/table-core@8.21.3/src/utils/getCoreRowModel.ts                                                                           |
+| ts-lic       | MIT                                                                                                                                           | https://unpkg.com/@tanstack/table-core@9.2.4/package.json                                                                                            |
+| png-doc      | role `table`; `ttRow` manages `aria-expanded`/`aria-level`; keyboard table; version 22.1.2                                                    | https://primeng.dev/treetable                                                                                                                        |
+| png-dts      | `TreeTableToggler` (`togglerVisibility`, `togglerMarginStart`, `toggleButtonAriaLabel`); `TTRow` key handlers, `focusSiblingToggler`          | https://unpkg.com/primeng@22.1.2/types/primeng-treetable.d.ts                                                                                        |
+| png-api      | `TreeNode.children`, `leaf` "Used in lazy loading"                                                                                            | https://unpkg.com/primeng@22.1.2/types/primeng-api.d.ts                                                                                              |
+| png-lic      | Community License thresholds                                                                                                                  | https://unpkg.com/primeng@22.1.2/LICENSE.md                                                                                                          |
+| cdk-tree     | `treeitem` aria bindings L1123-1127; `_getAriaExpanded` L1005-1010; padding L1340-1365; toggle L1430-1464 (read from `node_modules`, 22.1.7)  | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/tree.mjs                                                                                              |
+| cdk-tkm      | `TreeKeyManager.onKeydown` L73-110 (read from `node_modules`)                                                                                 | https://unpkg.com/@angular/cdk@22.1.7/fesm2022/_tree-key-manager-chunk.mjs                                                                           |
+| cdk-doc      | implements the APG tree widget; `cdkTreeNodePadding` for flat trees                                                                           | https://raw.githubusercontent.com/angular/components/22.1.x/src/cdk/tree/tree.md                                                                     |
+| mat-ex       | leaf "disabled button to provide padding"; `'Toggle ' + node.name`; toggle on node and button                                                 | https://raw.githubusercontent.com/angular/components/22.1.x/src/components-examples/material/tree/tree-flat-overview/tree-flat-overview-example.html |
+| apg-tg       | treegrid keys; `aria-expanded` on row or cell                                                                                                 | https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/                                                                                                   |
+| mdn-row      | `aria-expanded` on a row only inside `treegrid`                                                                                               | https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Reference/Roles/row_role                                                             |
+| prior-filter | context-row styling, filter orphans, AG Grid enterprise (ag-td)                                                                               | ../../../../../1-state/work/tree/active/tree-flat-data/discovery-tree-filter-competitors.md                                                          |
+| prior-group  | grouping-vs-tree (out of scope here)                                                                                                          | ../../../../../1-state/work/tree/active/tree-flat-data/discovery-tree-grouping-competitors.md                                                        |
 
 [ag-gcr-ctrl]: https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRendererCtrl.ts
 [ag-gcr]: https://raw.githubusercontent.com/ag-grid/ag-grid/b36.2.0/packages/ag-grid-enterprise/src/rowHierarchy/rendering/groupCellRenderer.ts

@@ -23,6 +23,7 @@ files:
 > typecheck green again), its scope now also covers converting
 > both fixtures to `stage()`/`stageSchema()` form, byte-identical
 > `it` bodies/assertions otherwise.
+
 # Step 9 — Refactor withTree
 
 This step converts `withTree`'s conditional render-stage claim
@@ -71,7 +72,7 @@ future claimant).
   the only object-form fixture conversion this step owns.
 - Fix the stale `RENDER_ORDER` comment at `with-tree.spec.ts:586`.
 - The collision message this fixture pins (`'feature 2
-  (withTree) both provide the "tree" render stage'`) must still
+(withTree) both provide the "tree" render stage'`) must still
   match step 5's unchanged wording — if it doesn't, that's step
   5's regression, not this step's.
 - Same behavior-unchanged guard: the full existing
@@ -96,4 +97,5 @@ out explicitly as this step's own done-when, since it's the
 group's closing step).
 
 ---
+
 ← [Step 8: Refactor withGrouping](step-8-refactor-grouping.plan.md) | [Step 10: Barrel export](step-10-barrel-stage-exports.plan.md) →

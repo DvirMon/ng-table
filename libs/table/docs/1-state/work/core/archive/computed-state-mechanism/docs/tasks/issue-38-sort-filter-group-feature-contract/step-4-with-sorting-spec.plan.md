@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — with-sorting.spec.ts: positional form, no row type argument, type assertions, trailing block"
+title: 'Step 4 — with-sorting.spec.ts: positional form, no row type argument, type assertions, trailing block'
 type: task-step
 issue: 72
 ---
@@ -51,7 +51,7 @@ type argument"; the trailing-block return type includes the block's members.
    object. Assertions unchanged. Grep the file: zero occurrences of `withSorting<` afterwards.
 
 3. **New cases:**
-   - *types* — inside a `describe('types')` block (mirroring `create-table.spec.ts`'s comment that
+   - _types_ — inside a `describe('types')` block (mirroring `create-table.spec.ts`'s comment that
      `expectTypeOf` is enforced only by `tsc -p tsconfig.spec.json`):
      - `withSorting()` alone: `expectTypeOf(store.sorting).toEqualTypeOf<Signal<SortRule[]>>()`;
        `expectTypeOf<keyof typeof store>().toEqualTypeOf<keyof TableStore<Row> | keyof SortingMembers>()`
@@ -61,9 +61,9 @@ type argument"; the trailing-block return type includes the block's members.
        `expectTypeOf(s.sorting).toEqualTypeOf<Signal<SortRule[]>>()` and
        `expectTypeOf(s.columns).toEqualTypeOf<Signal<ColumnDef<Row>[]>>()` (read-only projection).
      - derive-first form: `withSorting(withComputed(...))` compiles and contributes the member.
-   - *runtime* — the trailing block recomputes: `toggleSort('name')` → `ruleCount()` goes 0 → 1;
+   - _runtime_ — the trailing block recomputes: `toggleSort('name')` → `ruleCount()` goes 0 → 1;
      `clearSorting()` → 0.
-   - *runtime* — `setSorting`/`sortChanged`/`clearSorting` behaviour cases already present pass
+   - _runtime_ — `setSorting`/`sortChanged`/`clearSorting` behaviour cases already present pass
      unchanged (the "behaviour unchanged" acceptance line).
 
 ## Implementation Notes
@@ -93,4 +93,5 @@ type argument"; the trailing-block return type includes the block's members.
       the user runs it.
 
 ---
+
 ← [Step 3: with-grouping.ts](step-3-with-grouping.plan.md) | [Step 5: with-filtering.spec.ts](step-5-with-filtering-spec.plan.md) →

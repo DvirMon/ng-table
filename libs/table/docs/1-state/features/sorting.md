@@ -27,7 +27,7 @@ interface SortRule {
 }
 
 interface SortingState {
-  sorting: SortRule[];   // ordered — array position = sort priority
+  sorting: SortRule[]; // ordered — array position = sort priority
 }
 ```
 
@@ -40,16 +40,16 @@ interface SortingState {
 
 ## Methods
 
-| Method | Description |
-|---|---|
-| `toggleSort(columnId: string)` | Advances the column through the three-state cycle; single-column replace or multi-column accumulate depending on the `multi` config option (see below); no-ops if the column's `sortable({ enable })` rule currently returns `false` |
-| `setSorting(rules: SortRule[])` | Programmatically replace the full sort state |
-| `clearSorting()` | Clears all sort rules |
+| Method                          | Description                                                                                                                                                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `toggleSort(columnId: string)`  | Advances the column through the three-state cycle; single-column replace or multi-column accumulate depending on the `multi` config option (see below); no-ops if the column's `sortable({ enable })` rule currently returns `false` |
+| `setSorting(rules: SortRule[])` | Programmatically replace the full sort state                                                                                                                                                                                         |
+| `clearSorting()`                | Clears all sort rules                                                                                                                                                                                                                |
 
 ## `multi` Contract
 
 ```ts
-withSorting({ multi: true })
+withSorting({ multi: true });
 ```
 
 - Default is `multi: false` — `toggleSort()` on a different column replaces the sort array with just that column's rule (still asc → desc → unsorted for repeated clicks on the same column).
@@ -59,10 +59,11 @@ withSorting({ multi: true })
 ## `manual` Contract
 
 ```ts
-withSorting({ manual: true })
+withSorting({ manual: true });
 ```
 
 When `manual: true`:
+
 - `toggleSort` / `setSorting` still update state normally.
 - The reactive pipeline **skips the client-side sort step** (assumes data arrives pre-sorted).
 - A `sortChanged` event fires. The consumer wires their own `effect()` to react to the new sort state and writes freshly server-sorted data into their own `data` signal.
@@ -83,7 +84,7 @@ withSorting({
     sortFn(path.amount, (a, b) => a - b);
     sortable(path.id, { enable: () => false });
   },
-})
+});
 ```
 
 Three declarators, not one options object (SO22/SO27) — a column that only
@@ -93,13 +94,13 @@ needs null placement never has to name a comparator slot:
   the store falls back to built-in auto-detection (string/number/date
   comparison) — no auto-detection logic beyond this was specified.
   `compare`'s optional third parameter, `ctx: ValueOfContext<TRow>`, resolves
-  a *different* declared column's accessor value for one row —
+  a _different_ declared column's accessor value for one row —
   `ctx.valueOf(path.total, a)` — the unbound-tier resolver from
   [ADR-0027 Rule 3](../adr/0027-schema-declaration-surface.md#rule-3--resolvers-come-in-two-tiers-and-the-tier-decides-the-arity).
   A two-argument `compare` written before `ctx` existed keeps typechecking and
   sorting identically (additive widening, not a migration). Naming an
   undeclared column id through `ctx.valueOf` throws `[withSorting] Unknown
-  column id "…"`, dev-gated, at the same construction check `schema` already
+column id "…"`, dev-gated, at the same construction check `schema` already
   uses — not a separate one.
 - **`sortable(path.x, { enable })`** — whether the column responds to
   `toggleSort()`. A column with no `sortable` rule is sortable by default.
@@ -119,7 +120,7 @@ const money = sortingSchema<Row>((col) => sortNulls(col, { order: 'last' }));
 schema: (path) => {
   money(path.total);
   money(path.balance);
-}
+};
 ```
 
 Runtime failures degrade rather than crash the table
@@ -188,7 +189,7 @@ sits on `ColumnDef`, i.e. per cell. But the product-level concept is "an empty r
 be derived cell-by-cell without a rule for combining cells.
 
 **S4 — "Empty row" has multiple valid definitions, and they disagree.** At least: every field is
-nullish; *some* field is nullish; the required fields are incomplete; one designated key field is
+nullish; _some_ field is nullish; the required fields are incomplete; one designated key field is
 missing. Different products want different ones, and the same product may want different ones per
 table.
 
@@ -200,6 +201,7 @@ page, the row's group, or the sorted region only? And where does it sit relative
 place by other mechanisms (pinning, O14)?
 
 **S7 — Ownership is unresolved.** Three candidate homes, none evaluated:
+
 - `withSorting()` — extend the existing feature, as the section above provisionally assumes.
 - A separate `withOrdering()` (or similar) feature — if "which rows float" is a distinct concern
   from "how values compare".
@@ -220,7 +222,7 @@ than them — S3 and S7 in particular may make some of them moot.
 ### Relationship to pinning
 
 Null ordering does **not** solve the editable blank-row problem on its own — it only makes the
-empty row's landing spot *stable and configurable*. Holding the row still while the user types is
+empty row's landing spot _stable and configurable_. Holding the row still while the user types is
 OQ-3's job (see above), not a sort-stage exemption. The two are independent controls and should
 not be conflated: `sortNulls` decides where empties land when nothing is being edited; the
 edit-session row-hold decides whether the row moves at all while it is.

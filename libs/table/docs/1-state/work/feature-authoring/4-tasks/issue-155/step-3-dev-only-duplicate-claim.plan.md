@@ -8,6 +8,7 @@ files:
   - libs/table/src/engine/compose-table.spec.ts
   - libs/table/src/ng-dev-mode.testing.ts
 ---
+
 # Step 3 — Duplicate stage claim is dev-only
 
 Gates the duplicate-claim throw in `SlotRegistry` on
@@ -42,4 +43,5 @@ the earlier one and no throw happens.
       [step-3-dev-only-duplicate-claim.test-plan.md](step-3-dev-only-duplicate-claim.test-plan.md).
 
 ---
+
 ← [Step 2: Run the resolved order](step-2-run-resolved-order.plan.md) | [Step 4: Declared names typed to the registries](step-4-declared-name-typing.plan.md) →

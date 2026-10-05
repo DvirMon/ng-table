@@ -30,15 +30,15 @@ as an explicit demand vote, so 👍 there is real signal.
 
 ## Findings — the seven recurring themes
 
-| # | Theme | Strongest evidence | Recency |
-|---|---|---|---|
-| T1 | Expand/collapse state is lost whenever data or another feature's state changes | mui-x [#21398](https://github.com/mui/mui-x/issues/21398) (open), [#13962](https://github.com/mui/mui-x/issues/13962); ag-grid [#600](https://github.com/ag-grid/ag-grid/issues/600), [#1564](https://github.com/ag-grid/ag-grid/issues/1564) | 2015 → **still open 2026** |
-| T2 | Aggregation is wrong, blank, or unreachable below the top group level | TanStack [#3323](https://github.com/TanStack/table/issues/3323), [#6228](https://github.com/TanStack/table/issues/6228), [#5769](https://github.com/TanStack/table/issues/5769) + [disc. #5768](https://github.com/TanStack/table/discussions/5768) | 2021 → **2026** |
-| T3 | Selection semantics on a group header row are ambiguous and keep regressing | ag-grid [#11203](https://github.com/ag-grid/ag-grid/issues/11203), [#11209](https://github.com/ag-grid/ag-grid/issues/11209); TanStack [#5700](https://github.com/TanStack/table/issues/5700), [#4879](https://github.com/TanStack/table/issues/4879) | 2023 → 2025 |
-| T4 | Grouping × (sorting \| filtering \| pagination \| virtual scroll \| editing \| reorder) is broken or explicitly unimplemented | mui-x [#4821](https://github.com/mui/mui-x/issues/4821) (**381 👍**), [#16540](https://github.com/mui/mui-x/issues/16540), [#10417](https://github.com/mui/mui-x/issues/10417); TanStack [#4929](https://github.com/TanStack/table/issues/4929), [#6025](https://github.com/TanStack/table/issues/6025); primeng [#18171](https://github.com/primefaces/primeng/issues/18171), [#11764](https://github.com/primefaces/primeng/issues/11764), [#19293](https://github.com/primefaces/primeng/issues/19293) | 2022 → **2026, mostly open** |
-| T5 | Server-side / manual grouping is documented but not actually usable | TanStack [disc. #4990](https://github.com/TanStack/table/discussions/4990) (**19 👍, 11 comments**), [disc. #3551](https://github.com/TanStack/table/discussions/3551) (9 👍), [disc. #2656](https://github.com/TanStack/table/discussions/2656) (11 👍) | 2020 → 2024, never resolved |
-| T6 | The group key itself is the failure point — nulls, objects, arrays, single-member groups | mui-x [#10729](https://github.com/mui/mui-x/issues/10729), [#9094](https://github.com/mui/mui-x/issues/9094), [#13204](https://github.com/mui/mui-x/issues/13204), [#9032](https://github.com/mui/mui-x/issues/9032); ag-grid [#13347](https://github.com/ag-grid/ag-grid/issues/13347) | 2023 → **2026** |
-| T7 | End-user ergonomics: too many clicks, no totals where you look, header scrolls away | mui-x [#11421](https://github.com/mui/mui-x/issues/11421), [#10671](https://github.com/mui/mui-x/issues/10671), [#16766](https://github.com/mui/mui-x/issues/16766); [Telerik 1525732](https://feedback.telerik.com/blazor/1525732-expand-collapse-a-group-by-clicking-on-the-grouping-row-group-header-not-only-the-arrow-icon) | 2021 → 2025, all open/unplanned |
+| #   | Theme                                                                                                                         | Strongest evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Recency                         |
+| --- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| T1  | Expand/collapse state is lost whenever data or another feature's state changes                                                | mui-x [#21398](https://github.com/mui/mui-x/issues/21398) (open), [#13962](https://github.com/mui/mui-x/issues/13962); ag-grid [#600](https://github.com/ag-grid/ag-grid/issues/600), [#1564](https://github.com/ag-grid/ag-grid/issues/1564)                                                                                                                                                                                                                                                             | 2015 → **still open 2026**      |
+| T2  | Aggregation is wrong, blank, or unreachable below the top group level                                                         | TanStack [#3323](https://github.com/TanStack/table/issues/3323), [#6228](https://github.com/TanStack/table/issues/6228), [#5769](https://github.com/TanStack/table/issues/5769) + [disc. #5768](https://github.com/TanStack/table/discussions/5768)                                                                                                                                                                                                                                                       | 2021 → **2026**                 |
+| T3  | Selection semantics on a group header row are ambiguous and keep regressing                                                   | ag-grid [#11203](https://github.com/ag-grid/ag-grid/issues/11203), [#11209](https://github.com/ag-grid/ag-grid/issues/11209); TanStack [#5700](https://github.com/TanStack/table/issues/5700), [#4879](https://github.com/TanStack/table/issues/4879)                                                                                                                                                                                                                                                     | 2023 → 2025                     |
+| T4  | Grouping × (sorting \| filtering \| pagination \| virtual scroll \| editing \| reorder) is broken or explicitly unimplemented | mui-x [#4821](https://github.com/mui/mui-x/issues/4821) (**381 👍**), [#16540](https://github.com/mui/mui-x/issues/16540), [#10417](https://github.com/mui/mui-x/issues/10417); TanStack [#4929](https://github.com/TanStack/table/issues/4929), [#6025](https://github.com/TanStack/table/issues/6025); primeng [#18171](https://github.com/primefaces/primeng/issues/18171), [#11764](https://github.com/primefaces/primeng/issues/11764), [#19293](https://github.com/primefaces/primeng/issues/19293) | 2022 → **2026, mostly open**    |
+| T5  | Server-side / manual grouping is documented but not actually usable                                                           | TanStack [disc. #4990](https://github.com/TanStack/table/discussions/4990) (**19 👍, 11 comments**), [disc. #3551](https://github.com/TanStack/table/discussions/3551) (9 👍), [disc. #2656](https://github.com/TanStack/table/discussions/2656) (11 👍)                                                                                                                                                                                                                                                  | 2020 → 2024, never resolved     |
+| T6  | The group key itself is the failure point — nulls, objects, arrays, single-member groups                                      | mui-x [#10729](https://github.com/mui/mui-x/issues/10729), [#9094](https://github.com/mui/mui-x/issues/9094), [#13204](https://github.com/mui/mui-x/issues/13204), [#9032](https://github.com/mui/mui-x/issues/9032); ag-grid [#13347](https://github.com/ag-grid/ag-grid/issues/13347)                                                                                                                                                                                                                   | 2023 → **2026**                 |
+| T7  | End-user ergonomics: too many clicks, no totals where you look, header scrolls away                                           | mui-x [#11421](https://github.com/mui/mui-x/issues/11421), [#10671](https://github.com/mui/mui-x/issues/10671), [#16766](https://github.com/mui/mui-x/issues/16766); [Telerik 1525732](https://feedback.telerik.com/blazor/1525732-expand-collapse-a-group-by-clicking-on-the-grouping-row-group-header-not-only-the-arrow-icon)                                                                                                                                                                          | 2021 → 2025, all open/unplanned |
 
 ---
 
@@ -46,20 +46,20 @@ as an explicit demand vote, so 👍 there is real signal.
 
 The single most durable complaint in the corpus. Same bug shape, four libraries, 2015 to 2026.
 
-| Source | Opened | State | What the user said |
-|---|---|---|---|
-| ag-grid [#600](https://github.com/ag-grid/ag-grid/issues/600) | 2015-12-16 | closed (12 comments) | Live data via `setRowData` every 10s. "While updating the data … grouped rows again collapse together. If user expand the row means he cant see the inner rows more then 10 sec." Scroll also jumps to top. |
-| ag-grid [#1564](https://github.com/ag-grid/ag-grid/issues/1564) | 2017-04-01 | closed | FR: "Allow to get and set the expand/collapse state of the groups; Keep them in the grid state." Only `onRowGroupOpened` existed; state wasn't in `getColumnState()`. |
-| mui-x [#13962](https://github.com/mui/mui-x/issues/13962) | 2024-07-24 | closed (`waiting for author`) | "When the rows' data is updated, the row groups auto-collapse." |
-| mui-x [#21398](https://github.com/mui/mui-x/issues/21398) | 2026-02-19 | **open**, labelled `type: bug` | Server-side: "1. Sort model changes 2. `getRows` is called and new data returned 3. Expanded state is lost." Notes the docs only demonstrate persistence "triggered from a button click". |
-| primeng [#19398](https://github.com/primefaces/primeng/issues/19398) | 2026-02-16 | **open** | Can't even get groups open on first paint: "When the page is displayed, all collapse elements must be open." |
+| Source                                                               | Opened     | State                          | What the user said                                                                                                                                                                                          |
+| -------------------------------------------------------------------- | ---------- | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ag-grid [#600](https://github.com/ag-grid/ag-grid/issues/600)        | 2015-12-16 | closed (12 comments)           | Live data via `setRowData` every 10s. "While updating the data … grouped rows again collapse together. If user expand the row means he cant see the inner rows more then 10 sec." Scroll also jumps to top. |
+| ag-grid [#1564](https://github.com/ag-grid/ag-grid/issues/1564)      | 2017-04-01 | closed                         | FR: "Allow to get and set the expand/collapse state of the groups; Keep them in the grid state." Only `onRowGroupOpened` existed; state wasn't in `getColumnState()`.                                       |
+| mui-x [#13962](https://github.com/mui/mui-x/issues/13962)            | 2024-07-24 | closed (`waiting for author`)  | "When the rows' data is updated, the row groups auto-collapse."                                                                                                                                             |
+| mui-x [#21398](https://github.com/mui/mui-x/issues/21398)            | 2026-02-19 | **open**, labelled `type: bug` | Server-side: "1. Sort model changes 2. `getRows` is called and new data returned 3. Expanded state is lost." Notes the docs only demonstrate persistence "triggered from a button click".                   |
+| primeng [#19398](https://github.com/primefaces/primeng/issues/19398) | 2026-02-16 | **open**                       | Can't even get groups open on first paint: "When the page is displayed, all collapse elements must be open."                                                                                                |
 
 **Recency matters here — the 2017 ag-grid request was eventually granted.** The current AG Grid
 grid-state docs list `rowGroupExpansion` and `ssrmRowGroupExpansion` as first-class state keys,
 with a documented caveat that server-side restore needs `serverSideInitialRowCount` set "to a
 value which includes the rows to be shown"
-([grid-state docs](https://www.ag-grid.com/javascript-data-grid/grid-state/)). So T1's *client-side*
-half is a solved problem in the market leader; the *server-side* half is the still-open 2026
+([grid-state docs](https://www.ag-grid.com/javascript-data-grid/grid-state/)). So T1's _client-side_
+half is a solved problem in the market leader; the _server-side_ half is the still-open 2026
 complaint (mui-x #21398).
 
 Two sub-shapes worth separating, because they need different answers:
@@ -69,7 +69,7 @@ Two sub-shapes worth separating, because they need different answers:
 - **Another feature's state changed** (mui-x #21398 — sort model; mui-x
   [#16495](https://github.com/mui/mui-x/issues/16495) — the grouping column itself changed). In
   #16495 (opened 2025-02-06, **open**, last touched 2025-09-09) a detail panel survives the
-  change *visually inconsistently*: "The row's icon remains as a minus icon (-), indicating that
+  change _visually inconsistently_: "The row's icon remains as a minus icon (-), indicating that
   the detail panel is expanded. However, the content of the detail panel is not visible."
   Half-restored is worse than fully reset.
 
@@ -84,14 +84,14 @@ group's detail on open — the state isn't only for restoring, consumers want to
 Three independent reports across five years, all the same root shape: **nested groups do not
 aggregate like top-level groups.**
 
-| Source | Opened | State | Finding |
-|---|---|---|---|
-| TanStack [#3323](https://github.com/TanStack/table/issues/3323) | 2021-06-15 | closed | `aggregateValue` results "only available for aggregations on top level groups (depth = 0)". Reporter located the `!depth` check and proposed removing it. |
-| TanStack [#5769](https://github.com/TanStack/table/issues/5769) | 2024-10-02 | closed, 4 👍 | `childRows` is the same as `leafRows` in `aggregationFns`. |
+| Source                                                                     | Opened     | State         | Finding                                                                                                                                                                                                                                 |
+| -------------------------------------------------------------------------- | ---------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TanStack [#3323](https://github.com/TanStack/table/issues/3323)            | 2021-06-15 | closed        | `aggregateValue` results "only available for aggregations on top level groups (depth = 0)". Reporter located the `!depth` check and proposed removing it.                                                                               |
+| TanStack [#5769](https://github.com/TanStack/table/issues/5769)            | 2024-10-02 | closed, 4 👍  | `childRows` is the same as `leafRows` in `aggregationFns`.                                                                                                                                                                              |
 | TanStack [disc. #5768](https://github.com/TanStack/table/discussions/5768) | 2024-10-02 | **6 upvotes** | Same author states the assumption plainly: subRows should be "the immediate children of the current grouping which might include other grouping rows" — they aren't. Adds: "I kinda wish the aggregationFn was passed the current row." |
-| TanStack [#6228](https://github.com/TanStack/table/issues/6228) | 2026-04-08 | closed, 1 👍 | Grouping by Department + Age with `aggregationFn: 'min'`: works at the Age-group level, but "at the **Department group level (top-level row)**, the Age cell is **completely blank**". |
+| TanStack [#6228](https://github.com/TanStack/table/issues/6228)            | 2026-04-08 | closed, 1 👍  | Grouping by Department + Age with `aggregationFn: 'min'`: works at the Age-group level, but "at the **Department group level (top-level row)**, the Age cell is **completely blank**".                                                  |
 
-The aggregation *callback contract* is a second, distinct complaint — the function isn't given
+The aggregation _callback contract_ is a second, distinct complaint — the function isn't given
 enough to compute anything cross-column:
 
 - mui-x [#11491](https://github.com/mui/mui-x/issues/11491) (2023-12-22, **open**): the custom
@@ -99,7 +99,7 @@ enough to compute anything cross-column:
   values from _other columns_ than the field in question. When I'm in a grouped grid, I need to
   know the subset of rows that go along with the subset of values that I'm getting passed."
 - mui-x [#13027](https://github.com/mui/mui-x/issues/13027) (2024-05-06, **open**, 9 comments):
-  server already computed the aggregate; the consumer wants the group row to display *its own*
+  server already computed the aggregate; the consumer wants the group row to display _its own_
   value rather than the grid's recomputed one. There is no opt-out per group.
 
 **Aggregation over filtered vs. collapsed rows** — the specific worry in the brief — has one
@@ -111,11 +111,11 @@ directly verified hit and one adjacent one:
 - ag-grid [#11209](https://github.com/ag-grid/ag-grid/issues/11209) (2025-07-03, closed) is the
   live version of the same class: with an external filter applied, "the group row select box is
   using all the [children]" including filtered-out ones, so the group shows partially-selected
-  when every *visible* child is selected. That is aggregation-over-the-wrong-row-set, expressed
+  when every _visible_ child is selected. That is aggregation-over-the-wrong-row-set, expressed
   through selection.
 - mui-x [#20897](https://github.com/mui/mui-x/issues/20897) (2026-01-13, **open**,
   `waiting for 👍`) asks for the inverse: "a second 'filter mode' … that won't filter the actual
-  rows and filter aggregated values instead" — e.g. `sum(Donation) = 0`. Filtering *by* an
+  rows and filter aggregated values instead" — e.g. `sum(Donation) = 0`. Filtering _by_ an
   aggregate is a capability nobody ships.
 
 ---
@@ -125,16 +125,16 @@ directly verified hit and one adjacent one:
 Every library has shipped this and every library has broken it. Notably, ag-grid broke it as a
 **regression across a major version**, which suggests the semantics were never pinned down.
 
-| Source | Opened | State | Finding |
-|---|---|---|---|
-| ag-grid [#11203](https://github.com/ag-grid/ag-grid/issues/11203) | 2025-07-01 | closed (internal ref `ag-15361`) | With `groupHideOpenParents`: clicking a parent checkbox selects "Only the line that was checked". Reporter was on 29.3.5 with `groupSelectsChildren: true`, upgraded to 32.3.4, behavior changed. |
-| ag-grid [#11209](https://github.com/ag-grid/ag-grid/issues/11209) | 2025-07-03 | closed | Group shows partial selection when all filter-visible children are selected (see T2). |
-| TanStack [#4879](https://github.com/TanStack/table/issues/4879) | 2023-05-25 | closed, 2 👍 | Group rows don't react to sub-row selection state on flat data. |
-| TanStack [#5700](https://github.com/TanStack/table/issues/5700) | 2024-08-08 | closed, 5 👍 | `getIsSomeRowsSelected` inconsistent under grouping. Reporter's diagnosis is the useful part: "the grouped row being considered in the selected state object of the table, even if it not a 'real' row coming from the dataset." |
-| mui-x [#13962](https://github.com/mui/mui-x/issues/13962) | 2024-07-24 | closed | "When selecting a row group using the checkbox, it does not select all rows within that group." |
+| Source                                                            | Opened     | State                            | Finding                                                                                                                                                                                                                          |
+| ----------------------------------------------------------------- | ---------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ag-grid [#11203](https://github.com/ag-grid/ag-grid/issues/11203) | 2025-07-01 | closed (internal ref `ag-15361`) | With `groupHideOpenParents`: clicking a parent checkbox selects "Only the line that was checked". Reporter was on 29.3.5 with `groupSelectsChildren: true`, upgraded to 32.3.4, behavior changed.                                |
+| ag-grid [#11209](https://github.com/ag-grid/ag-grid/issues/11209) | 2025-07-03 | closed                           | Group shows partial selection when all filter-visible children are selected (see T2).                                                                                                                                            |
+| TanStack [#4879](https://github.com/TanStack/table/issues/4879)   | 2023-05-25 | closed, 2 👍                     | Group rows don't react to sub-row selection state on flat data.                                                                                                                                                                  |
+| TanStack [#5700](https://github.com/TanStack/table/issues/5700)   | 2024-08-08 | closed, 5 👍                     | `getIsSomeRowsSelected` inconsistent under grouping. Reporter's diagnosis is the useful part: "the grouped row being considered in the selected state object of the table, even if it not a 'real' row coming from the dataset." |
+| mui-x [#13962](https://github.com/mui/mui-x/issues/13962)         | 2024-07-24 | closed                           | "When selecting a row group using the checkbox, it does not select all rows within that group."                                                                                                                                  |
 
-**The design question all five expose:** is a group header row a *row* (selectable, counted,
-present in the selection set) or a *view over rows* (its checkbox is a bulk action, and it never
+**The design question all five expose:** is a group header row a _row_ (selectable, counted,
+present in the selection set) or a _view over rows_ (its checkbox is a bulk action, and it never
 appears in the selection set)? TanStack #5700 shows what happens when you never answer: the group
 row lands in the selection map and every downstream count is off by the number of groups.
 
@@ -195,7 +195,7 @@ an aggregate, because ordering runs before aggregation.**
 
 - mui-x [#10417](https://github.com/mui/mui-x/issues/10417) (2023-09-20, **open**) is a pure
   end-user complaint dressed as a feature request: 15k records in a 3-tier group model paginated
-  by *groups*, so "I have some pages with hundreds of rows and others with maybe 15." Wants
+  by _groups_, so "I have some pages with hundreds of rows and others with maybe 15." Wants
   page-size counted in rows, with a group that straddles a page boundary repeating its header at
   the top of the next page.
 - TanStack [#6025](https://github.com/TanStack/table/issues/6025) (2025-05-28, closed, 2 👍):
@@ -233,7 +233,7 @@ it's the leaf node the inline editing disappears and I cannot find any mechanism
 primeng [#18171](https://github.com/primefaces/primeng/issues/18171) (2025-04-26, **open**, last
 touched 2026-09-02) is the cleanest statement that these two features collide: "The combination of
 row grouping and expandable rows does not work properly. 1. The group header gets shown after the
-first row. 2. The `pRowToggler` toggles the expansion of *all* rows of the group." Both group
+first row. 2. The `pRowToggler` toggles the expansion of _all_ rows of the group." Both group
 expansion and row expansion want the same toggle affordance and the same row-level state slot.
 
 mui-x [#16495](https://github.com/mui/mui-x/issues/16495) (see T1) is the same collision from the
@@ -267,7 +267,7 @@ is people discovering the option exists and does nothing usable:
 - `@Eliav2` (2024-06): "If this property doesn't do anything why it's in the docs? It should be
   removed."
 
-It was ultimately answered by a *community member* publishing an external example repo, not by the
+It was ultimately answered by a _community member_ publishing an external example repo, not by the
 library. Two older discussions asked the same thing and also went unanswered:
 [#2656 "Manual Grouping"](https://github.com/TanStack/table/discussions/2656) (2020-08-20,
 **11 upvotes**) and [#3551](https://github.com/TanStack/table/discussions/3551) (2021-11-19,
@@ -297,13 +297,13 @@ server can't tell "top level" from "the null group".
 Every library assumes the grouped value is a primitive that stringifies usefully. Real data
 isn't.
 
-| Source | Opened | State | Finding |
-|---|---|---|---|
-| mui-x [#10729](https://github.com/mui/mui-x/issues/10729) | 2023-10-19 | **open**, 10 comments | Object-valued fields: "If you have a value that is an object the group key is `autogenerategroupORwhatever-[Object Object]`." Reporter: "it feels like there is a contradiction occuring when trying to use all the grids capabilities when it comes to object values." |
-| mui-x [#9094](https://github.com/mui/mui-x/issues/9094) | 2023-05-23 | **open** | null/undefined are deliberately *not* grouped by MUI's design; consumer renders `"---"` via `valueGetter` and wants those rows grouped under that key. |
-| mui-x [#13204](https://github.com/mui/mui-x/issues/13204) | 2024-05-22 | **open**, 1 👍 | Same, expressed as a UX defect: null-valued rows render inline rather than as a group, "so that they can be expanded in the same way as other groups". |
-| mui-x [#15833](https://github.com/mui/mui-x/issues/15833) | 2024-12 | open | Grouping on an array-of-strings column. **Unverified** — surfaced in search results, body not fetched. |
-| ag-grid [#13347](https://github.com/ag-grid/ag-grid/issues/13347) | 2026-03-20 | **open** | `null` group key collapses to an empty `groupKeys` array on the wire (see T5). |
+| Source                                                            | Opened     | State                 | Finding                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------------------------- | ---------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| mui-x [#10729](https://github.com/mui/mui-x/issues/10729)         | 2023-10-19 | **open**, 10 comments | Object-valued fields: "If you have a value that is an object the group key is `autogenerategroupORwhatever-[Object Object]`." Reporter: "it feels like there is a contradiction occuring when trying to use all the grids capabilities when it comes to object values." |
+| mui-x [#9094](https://github.com/mui/mui-x/issues/9094)           | 2023-05-23 | **open**              | null/undefined are deliberately _not_ grouped by MUI's design; consumer renders `"---"` via `valueGetter` and wants those rows grouped under that key.                                                                                                                  |
+| mui-x [#13204](https://github.com/mui/mui-x/issues/13204)         | 2024-05-22 | **open**, 1 👍        | Same, expressed as a UX defect: null-valued rows render inline rather than as a group, "so that they can be expanded in the same way as other groups".                                                                                                                  |
+| mui-x [#15833](https://github.com/mui/mui-x/issues/15833)         | 2024-12    | open                  | Grouping on an array-of-strings column. **Unverified** — surfaced in search results, body not fetched.                                                                                                                                                                  |
+| ag-grid [#13347](https://github.com/ag-grid/ag-grid/issues/13347) | 2026-03-20 | **open**              | `null` group key collapses to an empty `groupKeys` array on the wire (see T5).                                                                                                                                                                                          |
 
 And the single-member-group ergonomics complaint, which is a key-cardinality problem wearing a UX
 hat — mui-x [#9032](https://github.com/mui/mui-x/issues/9032) (2023-05-18, **open**,
@@ -340,7 +340,7 @@ nodes are currently expanded, so an Expand All / Collapse All button can't rende
 
 **Totals are in the wrong place to be read.** mui-x
 [#16766](https://github.com/mui/mui-x/issues/16766) (2025-02-28, **open**) argues from real
-finance usage that group subtotals belong at the *bottom* of the group:
+finance usage that group subtotals belong at the _bottom_ of the group:
 
 > "showing financial or sales data, which is what we are using it for, it really doesn't make any
 > sense to have the sub-totals at the top of the group. Furthermore, our users do not want to
@@ -382,7 +382,7 @@ group header" as plausible-but-unevidenced from this pass.
    [#1590](https://github.com/ag-grid/ag-grid/issues/1590) (2017-04-13), where "Group Column
    Disappears When Hiding Any Other Column."
 
-3. **Group *display* order and group *nesting* order get conflated.** ag-grid
+3. **Group _display_ order and group _nesting_ order get conflated.** ag-grid
    [#14635](https://github.com/ag-grid/ag-grid/issues/14635) (2026-07-28, **open**, last updated
    2026-09-08) — with `groupDisplayType: 'multipleColumns'`, "the last groping column shifted to
    index 0 every time", against the expectation that "Grouping should follow the same order in
@@ -394,7 +394,7 @@ group header" as plausible-but-unevidenced from this pass.
    [#2815](https://github.com/ag-grid/ag-grid/issues/2815) (2018-12-05) — insert by index "always
    appends at the end", with the reporter pointing at `insertOneNode` pushing to the end of
    `childrenAfterGroup`; and [#1672](https://github.com/ag-grid/ag-grid/issues/1672) (2017-05-29),
-   which names the real requirement — add/remove rows *without re-applying grouping*, because "user
+   which names the real requirement — add/remove rows _without re-applying grouping_, because "user
    input will get scattered in grid, and hard to review for user" if the new row immediately jumps
    to whichever group its typed value now matches. That last one is a genuine product question
    (when does a row re-group?) that no library in this survey answers.
@@ -404,7 +404,7 @@ group header" as plausible-but-unevidenced from this pass.
    v8's groupBy measured "much" slower than v7's. mui-x
    [#9197](https://github.com/mui/mui-x/issues/9197) (2023-06-02, closed, `performance` label) —
    100k rows grouped by two columns. Both are closed and neither has a live successor; the
-   *interaction* bugs (T4) outnumber pure perf complaints by roughly ten to one in this corpus.
+   _interaction_ bugs (T4) outnumber pure perf complaints by roughly ten to one in this corpus.
 
 ---
 

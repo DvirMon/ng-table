@@ -1,5 +1,5 @@
 ---
-title: "Step 1 — GroupKey / GroupSummary types"
+title: 'Step 1 — GroupKey / GroupSummary types'
 type: task-step
 issue: 58
 ---
@@ -24,7 +24,7 @@ issue: 58
 ## Why This Step Exists
 
 D4 settles `groupOrder`'s signature as `(a: GroupSummary<TRow>, b: GroupSummary<TRow>) => number`
-over group *contents*, not a bare `GroupKey` — the rejected `compareGroups?: (a: GroupKey, b:
+over group _contents_, not a bare `GroupKey` — the rejected `compareGroups?: (a: GroupKey, b:
 GroupKey) => number` sketch couldn't express count-based ordering. Both types are new; nothing in
 `src/` defines `GroupKey` yet (`engine/grouping.ts`'s `ClusterNode.value: unknown` is the closest
 existing shape it aliases).
@@ -72,4 +72,5 @@ export interface GroupSummary<TRow> {
 - [ ] `tsc --noEmit` passes.
 
 ---
+
 [Step 2: sortClusters() + wiring into clusterRows/buildGroupRenderRows](step-2-engine-sort-clusters.plan.md) →

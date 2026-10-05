@@ -2,7 +2,7 @@
 title: tree-flat-data — architecture (#163)
 type: architecture
 date: 2026-09-27
-ticket: "#163"
+ticket: '#163'
 spec: 2-spec.md
 decisions: 1-decisions.md
 ---
@@ -17,18 +17,18 @@ Consumed by `/to-issues` and `/to-tasks`. Paths are under
 
 D-numbers are `1-decisions.md`; E-numbers the capability log.
 
-| # | Decision | Source |
-|---|---|---|
-| S1 | `childrenAccessor` removed; `parentId?: (row) => RowId \| null \| undefined`; omitted = collapse-only, no `'tree'` claim | D1, D3, E13 |
-| S2 | Parent link is an engine slot contributed by `withTree()`; filter, group and tree stages read the slot, never feature members | D6, ADR-0028 |
-| S3 | Broken links (throw, self, cycle, absent id) degrade to root, subtree intact, report once per evaluation per kind | D4, D12 |
-| S4 | Filter keeps match + ancestors; `includeDescendants` on `withFiltering()` | D5 |
-| S5 | Reveal = derived source: (open ∪ revealed) − closedWhileRevealed; `revealContextRow` predicate; closed ids live only while context | D20 |
-| S6 | `hasChildren` from the filtered view; `expand()`/`state` scan filtered view, `includeHidden` → `data()` | D8, D9 |
-| S7 | Grouping clusters roots only; subtree follows root; count and `aggregateFn` rows include every node | D13–D15 |
-| S8 | `totalRowCount`, `selectAllIds()` count every node after filter | D11 |
-| S9 | `table.tree.parentOf/descendantsOf/contextRowIds` read-only | D12, D20 |
-| S10 | `RenderRow.isContextRow`; `ngpTableTreeRow` binds `data-context-row` (presence) | D18, D21 |
+| #   | Decision                                                                                                                           | Source       |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| S1  | `childrenAccessor` removed; `parentId?: (row) => RowId \| null \| undefined`; omitted = collapse-only, no `'tree'` claim           | D1, D3, E13  |
+| S2  | Parent link is an engine slot contributed by `withTree()`; filter, group and tree stages read the slot, never feature members      | D6, ADR-0028 |
+| S3  | Broken links (throw, self, cycle, absent id) degrade to root, subtree intact, report once per evaluation per kind                  | D4, D12      |
+| S4  | Filter keeps match + ancestors; `includeDescendants` on `withFiltering()`                                                          | D5           |
+| S5  | Reveal = derived source: (open ∪ revealed) − closedWhileRevealed; `revealContextRow` predicate; closed ids live only while context | D20          |
+| S6  | `hasChildren` from the filtered view; `expand()`/`state` scan filtered view, `includeHidden` → `data()`                            | D8, D9       |
+| S7  | Grouping clusters roots only; subtree follows root; count and `aggregateFn` rows include every node                                | D13–D15      |
+| S8  | `totalRowCount`, `selectAllIds()` count every node after filter                                                                    | D11          |
+| S9  | `table.tree.parentOf/descendantsOf/contextRowIds` read-only                                                                        | D12, D20     |
+| S10 | `RenderRow.isContextRow`; `ngpTableTreeRow` binds `data-context-row` (presence)                                                    | D18, D21     |
 
 ## Current source — what changes where
 
@@ -152,21 +152,21 @@ includeDescendants?: boolean;
 
 ## File layout for implementation
 
-| File | Change |
-|---|---|
-| `engine/types.ts` | `contextRows?`, `parentLink?` on `TableFeatureSpec`; `StageContext` |
-| `engine/pipeline.ts`, `engine/render-stages.ts` | transforms take `ctx`; `RenderNode` Omit gains `isContextRow` |
-| `engine/compose-table.ts`, `engine/core.ts` | collect both slots; resolve `parentOf` (single claim); union context rows; pass `ctx`; stamp `isContextRow` |
-| `api/create-table-feature.ts`, `api/features/compose-features.ts` | new keys in `PIPELINE_BEHAVIOR_KEYS` and in the merge |
-| `api/types.ts` | `RenderRow.isContextRow?` |
-| `api/features/with-tree.ts` → likely `api/features/with-tree/` | flat nesting stage, broken-link degradation + reports, reveal source, closed-while-revealed set, reads; grows past one concern — split per `file-organization` (e.g. `feature.ts`, `nest.ts`, `reveal.ts`) only if it does |
-| `api/features/with-filtering/feature.ts` | ancestor/descendant retention via `ctx.parentOf`; `includeDescendants`; `contextRows` contribution |
-| `engine/grouping/pipeline.ts`, `clusters.ts`, `render.ts` | cluster by root value when `ctx.parentOf` is present |
-| `directives/ngp-table-tree-row.directive.ts` (new) + `index.ts` | `tr[ngpTableRow][ngpTableTreeRow]`, `div[…]`; binds `data-context-row` |
-| `api/features/with-tree.spec.ts` | flat fixture; seam 1 cases |
-| `directives/ngp-table-tree-row.directive.spec.ts` (new) | seam 2 |
-| `stories/grouping/fixtures/{mock,types,handlers,http}.ts`, `grouping-collapsible-story-host.component.ts` | nested `children` → flat `parentId`; own-value parent amounts |
-| `docs/1-state/features/tree.md`, filtering feature doc | contract text; nested-to-flat snippet; drop cycle open question |
+| File                                                                                                      | Change                                                                                                                                                                                                                     |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `engine/types.ts`                                                                                         | `contextRows?`, `parentLink?` on `TableFeatureSpec`; `StageContext`                                                                                                                                                        |
+| `engine/pipeline.ts`, `engine/render-stages.ts`                                                           | transforms take `ctx`; `RenderNode` Omit gains `isContextRow`                                                                                                                                                              |
+| `engine/compose-table.ts`, `engine/core.ts`                                                               | collect both slots; resolve `parentOf` (single claim); union context rows; pass `ctx`; stamp `isContextRow`                                                                                                                |
+| `api/create-table-feature.ts`, `api/features/compose-features.ts`                                         | new keys in `PIPELINE_BEHAVIOR_KEYS` and in the merge                                                                                                                                                                      |
+| `api/types.ts`                                                                                            | `RenderRow.isContextRow?`                                                                                                                                                                                                  |
+| `api/features/with-tree.ts` → likely `api/features/with-tree/`                                            | flat nesting stage, broken-link degradation + reports, reveal source, closed-while-revealed set, reads; grows past one concern — split per `file-organization` (e.g. `feature.ts`, `nest.ts`, `reveal.ts`) only if it does |
+| `api/features/with-filtering/feature.ts`                                                                  | ancestor/descendant retention via `ctx.parentOf`; `includeDescendants`; `contextRows` contribution                                                                                                                         |
+| `engine/grouping/pipeline.ts`, `clusters.ts`, `render.ts`                                                 | cluster by root value when `ctx.parentOf` is present                                                                                                                                                                       |
+| `directives/ngp-table-tree-row.directive.ts` (new) + `index.ts`                                           | `tr[ngpTableRow][ngpTableTreeRow]`, `div[…]`; binds `data-context-row`                                                                                                                                                     |
+| `api/features/with-tree.spec.ts`                                                                          | flat fixture; seam 1 cases                                                                                                                                                                                                 |
+| `directives/ngp-table-tree-row.directive.spec.ts` (new)                                                   | seam 2                                                                                                                                                                                                                     |
+| `stories/grouping/fixtures/{mock,types,handlers,http}.ts`, `grouping-collapsible-story-host.component.ts` | nested `children` → flat `parentId`; own-value parent amounts                                                                                                                                                              |
+| `docs/1-state/features/tree.md`, filtering feature doc                                                    | contract text; nested-to-flat snippet; drop cycle open question                                                                                                                                                            |
 
 ## Open questions
 

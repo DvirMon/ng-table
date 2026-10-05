@@ -3,13 +3,13 @@
 **Issue:** [#132](https://github.com/DvirMon/ng-table/issues/132)
 **Status:** 5 / 5 complete
 
-| Step | Title | Status | PR |
-|---|---|---|---|
-| 1 | Split the shared body; gate the construction half | ✅ done | — |
-| 2 | Move the checks into `createColumns` | ✅ done | — |
-| 3 | Construction-check specs | ✅ done | — |
-| 4 | G76 split specs | ✅ done | — |
-| 5 | Record it | ✅ done | — |
+| Step | Title                                             | Status  | PR  |
+| ---- | ------------------------------------------------- | ------- | --- |
+| 1    | Split the shared body; gate the construction half | ✅ done | —   |
+| 2    | Move the checks into `createColumns`              | ✅ done | —   |
+| 3    | Construction-check specs                          | ✅ done | —   |
+| 4    | G76 split specs                                   | ✅ done | —   |
+| 5    | Record it                                         | ✅ done | —   |
 
 ## Graph
 

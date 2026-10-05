@@ -1,5 +1,5 @@
 ---
-title: "Step 4 — rowsOf test coverage"
+title: 'Step 4 — rowsOf test coverage'
 type: task-step
 issue: 65
 ---
@@ -52,7 +52,7 @@ Compose a real table with `withGrouping()` and assert on public members only:
 - **Depth:** two-level grouping — the outer header's `rowsOf` returns every leaf under both inner
   clusters; an inner header returns only its own.
 - **Stale header:** capture a header from `renderRows()`, force a new render pass (change sort, or
-  patch an unrelated field), then call `rowsOf` with the *captured* object — same leaves.
+  patch an unrelated field), then call `rowsOf` with the _captured_ object — same leaves.
 - **Reactivity:** a `computed()` that finds a header by `groupKey`/id and calls `rowsOf`
   recomputes after a `data` write, a filter change, and a grouping change (`TestBed`, read the
   computed between changes).
@@ -92,4 +92,5 @@ Compose a real table with `withGrouping()` and assert on public members only:
 - [ ] `nx test shared-table` passes.
 
 ---
+
 ← [Step 3: rowsOf member](step-3-rows-of-member.plan.md) | [Step 5: Docs](step-5-docs.plan.md) →

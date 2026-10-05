@@ -2,11 +2,11 @@
 
 ## Icon-per-kind mapping
 
-| Kind | Icon | Source |
-|---|---|---|
-| note | `lucideInfo` | spec.md Variants table + Iconography.md placeholder mapping (ⓘ) |
-| tip | `lucideLightbulb` | spec.md Variants table + Iconography.md (inline stroked bulb SVG placeholder) |
-| warning | `lucideTriangleAlert` | spec.md Variants table + Iconography.md (⚠) |
+| Kind    | Icon                  | Source                                                                        |
+| ------- | --------------------- | ----------------------------------------------------------------------------- |
+| note    | `lucideInfo`          | spec.md Variants table + Iconography.md placeholder mapping (ⓘ)               |
+| tip     | `lucideLightbulb`     | spec.md Variants table + Iconography.md (inline stroked bulb SVG placeholder) |
+| warning | `lucideTriangleAlert` | spec.md Variants table + Iconography.md (⚠)                                  |
 
 No deviation — all three match both `spec.md`'s Variants table and `Iconography.md`'s callout rows exactly.
 Registered locally via `viewProviders: [provideIcons({ lucideInfo, lucideLightbulb, lucideTriangleAlert })]`
@@ -20,7 +20,7 @@ per ADR-0004 (no `app.config.ts` touch).
 The fixed contract in `CONVENTIONS.md` only names `kind` (tint + icon) and "projected body content
 (ng-content)." `spec.md`'s Build spec table separately calls out an optional, per-variant-colored Title
 ("Inter 13.5px / 600, variant-colored, margin-bottom 4px"). Angular's default view encapsulation does not
-let `callout.css` style elements that arrive through `<ng-content>` — those nodes keep the *consumer's*
+let `callout.css` style elements that arrive through `<ng-content>` — those nodes keep the _consumer's_
 template scope, not `callout`'s — so a title colored to match the active `data-kind` can't be reliably
 achieved by asking consumers to hand-color their own projected markup.
 
@@ -71,11 +71,11 @@ itself; the single default `<ng-content />` still carries the body, matching the
 
 ## Converted to `aside[ngptCallout]` — ADR-0005
 
-| | Before | After |
-|---|---|---|
-| Selector | `ngpt-callout` (element) | `aside[ngptCallout]` (attribute, camelCase) |
-| Host element | `<ngpt-callout>` custom element | the consumer's own `<aside>` |
-| Call site | `<ngpt-callout kind="warning" title="…">` | `<aside ngptCallout kind="warning" heading="…">` |
+|              | Before                                    | After                                            |
+| ------------ | ----------------------------------------- | ------------------------------------------------ |
+| Selector     | `ngpt-callout` (element)                  | `aside[ngptCallout]` (attribute, camelCase)      |
+| Host element | `<ngpt-callout>` custom element           | the consumer's own `<aside>`                     |
+| Call site    | `<ngpt-callout kind="warning" title="…">` | `<aside ngptCallout kind="warning" heading="…">` |
 
 This component was ADR-0005's own worked example of the tell: a static `role="note"` on a custom element
 is the host compensating for having no native semantics, and `<aside>` — "content only indirectly related
@@ -106,7 +106,7 @@ list with one entry per admonition in a long docs page, and `generic` would drop
 spec asked for. `role="note"` stays as an explicit static host attribute — it is on `<aside>`'s
 **permitted ARIA roles** list, so this is a sanctioned override, not a role clobbering a stronger native
 one. The earlier reading stands unchanged: applied to all three kinds, not only `warning` (the spec's
-a11y line scopes the *calm* role choice to warnings — i.e. `note` rather than `alert` — it does not scope
+a11y line scopes the _calm_ role choice to warnings — i.e. `note` rather than `alert` — it does not scope
 the role to warnings alone).
 
 ### `title` input renamed to `heading`
@@ -115,7 +115,7 @@ the role to warnings alone).
 collides three ways:
 
 1. **Double-write.** Angular feeds a static attribute to a directive input of the same name, so
-   `<aside ngptCallout title="Breaking in v2">` would set the input *and* leave `title` in the DOM — the
+   `<aside ngptCallout title="Breaking in v2">` would set the input _and_ leave `title` in the DOM — the
    consumer gets a native hover tooltip nobody asked for, duplicating text already visible in the block.
 2. **Accessible name.** `title` supplies an accessible name, so it would rename the `note` — and, absent
    the explicit `role`, would have flipped the nested `<aside>` from `generic` back to `complementary`,
@@ -127,7 +127,7 @@ Renamed to `heading` rather than papered over with an alias. It is the more accu
 field is (a visible label line, not a tooltip), it leaves `title` free for its native meaning, and it
 sidesteps the ADR-0005 rule against shadowing native attributes instead of arguing an exception to it.
 `label` was rejected for consistency reasons: in this app (`icon-button`, `dropdown-pill`) `label` already
-means *accessible* label, which this is not. The rendered element keeps its `.callout-title` class — that
+means _accessible_ label, which this is not. The rendered element keeps its `.callout-title` class — that
 is internal styling vocabulary matching the spec's `.callout__title`, not part of the public API.
 
 No call site changed: `callout` has none today.

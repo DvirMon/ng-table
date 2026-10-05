@@ -17,15 +17,15 @@ The NGP Table is a composable architecture documented as **three streams**, numb
 
 ## Technology Stack
 
-| Concern | Choice | Rationale |
-|---|---|---|
-| Framework | Angular 17+ | Signal-native, directive composition |
-| Language | TypeScript | Type-safe feature dependencies |
-| State layer | In-house `composeTable()` engine over Angular signals | Zero runtime dependencies; features declare `members`/`stages`/`renderRows` rather than mutating shared slots. See ADR-0003 |
-| State API | `createTable()` factory (internal abstraction) | Consumers hold a store instance; the engine never crosses the public boundary |
-| Forms (inline edit) | Angular Signal Forms | Signal-native, consistent with stack |
-| Virtual scroll | Angular CDK `ScrollingModule` | UI layer only — no store feature needed |
-| Reference pattern | TanStack Table v8 | Row model pipeline, `manual{X}` flag pattern |
+| Concern             | Choice                                                | Rationale                                                                                                                   |
+| ------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Framework           | Angular 17+                                           | Signal-native, directive composition                                                                                        |
+| Language            | TypeScript                                            | Type-safe feature dependencies                                                                                              |
+| State layer         | In-house `composeTable()` engine over Angular signals | Zero runtime dependencies; features declare `members`/`stages`/`renderRows` rather than mutating shared slots. See ADR-0003 |
+| State API           | `createTable()` factory (internal abstraction)        | Consumers hold a store instance; the engine never crosses the public boundary                                               |
+| Forms (inline edit) | Angular Signal Forms                                  | Signal-native, consistent with stack                                                                                        |
+| Virtual scroll      | Angular CDK `ScrollingModule`                         | UI layer only — no store feature needed                                                                                     |
+| Reference pattern   | TanStack Table v8                                     | Row model pipeline, `manual{X}` flag pattern                                                                                |
 
 ---
 
@@ -58,10 +58,10 @@ Nesting is the one thing the template does **not** recurse over. `renderRows()` 
          depth — the engine's flattenVisible walk omits a collapsed row's descendants
          rather than the template gating them (ADR-0023). -->
     @for (row of store.renderRows(); track row.id) {
-      <tr ngpTableRow [attr.data-depth]="row.depth">
-        <td>{{ row.cells['name'] }}</td>
-        <td>{{ row.cells['status'] }}</td>
-      </tr>
+    <tr ngpTableRow [attr.data-depth]="row.depth">
+      <td>{{ row.cells['name'] }}</td>
+      <td>{{ row.cells['status'] }}</td>
+    </tr>
     }
   </tbody>
 </table>
@@ -82,7 +82,9 @@ Nesting is the one thing the template does **not** recurse over. `renderRows()` 
 The state layer is exposed via our own factory function. Consumers compose only the features they need — tree-shakeable by design.
 
 ```ts
-@Component({ /* no providers — the store is a field-level instance */ })
+@Component({
+  /* no providers — the store is a field-level instance */
+})
 export class ProductsComponent {
   // Data source — the single source of truth; the pipeline reads it directly.
   private readonly products = signal<Product[]>([]);
@@ -105,7 +107,7 @@ export class ProductsComponent {
     effect(() => {
       const page = this.store.pagination();
       const sort = this.store.sorting();
-      this.service.load({ page, sort }).then(data => this.products.set(data));
+      this.service.load({ page, sort }).then((data) => this.products.set(data));
     });
   }
 }
@@ -121,16 +123,16 @@ export class ProductsComponent {
 
 Features are tree-shakeable. Consumers pay only for what they use.
 
-| Public Feature | Internal Split | State Shape |
-|---|---|---|
-| `withSorting()` | — | `{ sorting: SortingState[] }` |
-| `withGrouping()` | — | `{ grouping: string[] }` |
-| `withSelection()` | `withSingleSelection` / `withMultiSelection` (internal) | `{ selection: Record<id, bool>, mode: 'single'\|'multi' }` |
-| `withPagination()` | — | `{ pageIndex, pageSize, totalRows }` |
-| `withInfiniteScroll()` | — | `{ hasMore, isLoading }` |
-| `withExpansion()` | — | `{ expandedRows: Set<id> }` |
-| `withFiltering()` | — | `{ filters: FilterState[] }` |
-| `withDragDrop()` | — | `{ dragState }` |
+| Public Feature         | Internal Split                                          | State Shape                                                |
+| ---------------------- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| `withSorting()`        | —                                                       | `{ sorting: SortingState[] }`                              |
+| `withGrouping()`       | —                                                       | `{ grouping: string[] }`                                   |
+| `withSelection()`      | `withSingleSelection` / `withMultiSelection` (internal) | `{ selection: Record<id, bool>, mode: 'single'\|'multi' }` |
+| `withPagination()`     | —                                                       | `{ pageIndex, pageSize, totalRows }`                       |
+| `withInfiniteScroll()` | —                                                       | `{ hasMore, isLoading }`                                   |
+| `withExpansion()`      | —                                                       | `{ expandedRows: Set<id> }`                                |
+| `withFiltering()`      | —                                                       | `{ filters: FilterState[] }`                               |
+| `withDragDrop()`       | —                                                       | `{ dragState }`                                            |
 
 > Virtual scroll is **UI layer only** (CDK `ScrollingModule`). No store feature needed.
 
@@ -142,10 +144,10 @@ Each feature supports a `manual` flag (inspired by TanStack Table v8). When `man
 
 ```ts
 // All client-side (default)
-createTable(data, { trackBy: 'id', columns }, withSorting(), withPagination())
+createTable(data, { trackBy: 'id', columns }, withSorting(), withPagination());
 
 // Server-side pagination, client-side sort
-createTable(data, { trackBy: 'id', columns }, withSorting(), withPagination({ manual: true }))
+createTable(data, { trackBy: 'id', columns }, withSorting(), withPagination({ manual: true }));
 
 // All server-side
 createTable(
@@ -154,7 +156,7 @@ createTable(
   withSorting({ manual: true }),
   withPagination({ manual: true }),
   withFiltering({ manual: true }),
-)
+);
 ```
 
 **Server-side handler pattern:** The store emits state signals. The consumer reacts to state changes — via their own `effect()` / `httpResource()` — and delivers fresh data by writing into the `data` signal passed to `createTable()`; the pipeline reads it directly. No loader abstraction exists in the store.
@@ -182,10 +184,10 @@ data (WritableSignal, single source of truth)
 ```ts
 createTable(data, {
   columns,
-  trackBy: 'id',                    // string shorthand
+  trackBy: 'id', // string shorthand
   // or
-  trackBy: (row) => row.org + row.userId,  // function for composite keys
-})
+  trackBy: (row) => row.org + row.userId, // function for composite keys
+});
 ```
 
 Internally, string shorthand is normalized to a function **once at store initialization**: `(row) => row['id']`. Zero branching at runtime.
@@ -206,7 +208,9 @@ Example: `withGrouping()` is specified to depend on `withExpansion()` (it delega
 
 ```ts
 // Component-scoped (the store dies with the component) — no providers, no inject()
-@Component({ /* ... */ })
+@Component({
+  /* ... */
+})
 export class ProductsComponent {
   readonly store = createTable(this.data, { trackBy: 'id', columns }, withSorting());
 }
@@ -215,16 +219,16 @@ export class ProductsComponent {
 createTable(data, { trackBy: 'id', columns, injector }, withSorting());
 ```
 
-**Trade:** there is no DI token, so route-scoped or `root`-scoped *shared* table state is not offered — the instance belongs to its owner. Multiple tables on one page = multiple independent instances (the default anyway). No shared global state.
+**Trade:** there is no DI token, so route-scoped or `root`-scoped _shared_ table state is not offered — the instance belongs to its owner. Multiple tables on one page = multiple independent instances (the default anyway). No shared global state.
 
 ---
 
 ## Event Ownership
 
-| Layer | Owns |
-|---|---|
-| Store (state layer) | `selectionChanged`, `sortChanged`, `pageChanged`, `groupChanged`, `filterChanged`, `rowExpanded`, `dataLoaded` |
-| Directives (UI layer) | `rowClicked`, `cellFocused`, `dragStarted`, `dragDropped`, `rowHovered` |
+| Layer                 | Owns                                                                                                           |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Store (state layer)   | `selectionChanged`, `sortChanged`, `pageChanged`, `groupChanged`, `filterChanged`, `rowExpanded`, `dataLoaded` |
+| Directives (UI layer) | `rowClicked`, `cellFocused`, `dragStarted`, `dragDropped`, `rowHovered`                                        |
 
 ---
 

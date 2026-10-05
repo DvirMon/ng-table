@@ -26,7 +26,7 @@ third caller once [#100](https://github.com/DvirMon/ng-table/issues/100)
 lands (G69), and it is blocked on this file existing.
 
 This is node **M2** in [`decisions.md`](../../decisions.md), under
-reading **B**: the *recording* form gets one runner. The *declaring* form
+reading **B**: the _recording_ form gets one runner. The _declaring_ form
 keeps `buildFiltersPath` / `keyRules` in `engine/filters/build.ts` until
 `stageSchema` (ADR-0020, #102) is a second caller — recorded in Step 1.
 
@@ -53,7 +53,7 @@ import { createRecorderSession, type PathRecorder } from './path-proxy';
  */
 export function runRecordedSchema<TRow, TRule, TPath>(
   buildPath: (recorder: PathRecorder<TRow, TRule>) => TPath,
-  fn: (path: TPath) => void
+  fn: (path: TPath) => void,
 ): readonly TRule[] {
   const session = createRecorderSession<TRow, TRule>();
   fn(buildPath(session.recorder));
@@ -70,11 +70,11 @@ moves:
 
 ```ts
 export function runColumnsSchemaFn<TRow, TId extends string, TRule = ColumnRule<TRow>>(
-  fn: (path: ColumnsPath<TRow, TId, TRule>) => void
+  fn: (path: ColumnsPath<TRow, TId, TRule>) => void,
 ): readonly TRule[] {
   return runRecordedSchema<TRow, TRule, ColumnsPath<TRow, TId, TRule>>(
     (recorder) => buildColumnsPath<TRow, TId, TRule>(recorder),
-    fn
+    fn,
   );
 }
 ```
@@ -91,11 +91,11 @@ schema):
 
 ```ts
 export function runGroupingSchemaFn<TRow>(
-  fn: GroupingSchemaFn<TRow>
+  fn: GroupingSchemaFn<TRow>,
 ): readonly AnyGroupingRule<TRow>[] {
   return runRecordedSchema<TRow, AnyGroupingRule<TRow>, GroupingPath<TRow>>(
     (recorder) => buildGroupingPath<TRow>(recorder),
-    fn
+    fn,
   );
 }
 ```
@@ -114,7 +114,7 @@ filename (the file is `columns-schema/schema.ts`).
   inlined into the runner.** Folding the handle literal into
   `run-schema.ts` would make the runner return `Record<string, THandle>`,
   which has to be cast to an unresolved `TPath` — i.e. `as unknown as
-  TPath`, a *new* double cast, immediately after Step 2 removed two. With
+TPath`, a _new_ double cast, immediately after Step 2 removed two. With
   `buildPath` as a parameter each module keeps the one narrow cast it
   already has (`createPathProxy(...) as ColumnsPath<…>`), and the shared
   body has none.
@@ -123,7 +123,7 @@ filename (the file is `columns-schema/schema.ts`).
   and look alike. They are not the same statement: each declares its own
   handle type, and `GroupingHandle` being distinct from `ColumnHandle` is
   a decision (D7), not an accident waiting to be deduped. The runner was
-  the duplicated *logic*.
+  the duplicated _logic_.
 - **The wrappers are kept, not inlined into their callers.** `columnSchema()`
   and `withGrouping()`'s `feature.ts:110` call them by name, as do the
   grouping specs. Keeping them is what makes AC #8 true with no spec edit.
@@ -167,4 +167,5 @@ filename (the file is `columns-schema/schema.ts`).
 - [ ] `nx run shared-table:typecheck-spec` clean.
 
 ---
+
 ← [Step 2: Decouple `path-proxy.ts`](step-2-decouple-path-proxy.plan.md) | [Step 4: Shared identifier check](step-4-shared-identifier-check.plan.md) →

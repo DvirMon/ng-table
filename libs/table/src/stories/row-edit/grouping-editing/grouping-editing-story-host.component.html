@@ -2,9 +2,9 @@
   <p class="story-host__hint">
     <code>withGrouping({{ '{' }} initial: ['category'], when {{ '}' }})</code> composed with a live
     category dropdown. A row with no category yet renders flat, no header — pick a value and it
-    moves under that category's header on the same write, creating the header if it has never
-    been picked before. The row glides into place under its new group header rather than
-    popping there, and a new header fades in the first time a category is picked.
+    moves under that category's header on the same write, creating the header if it has never been
+    picked before. The row glides into place under its new group header rather than popping there,
+    and a new header fades in the first time a category is picked.
   </p>
 
   <p class="story-host__hint">
@@ -12,7 +12,9 @@
     <code>groupOrder</code> keeps the headers alphabetical.
   </p>
 
-  <p class="story-host__hint">No category yet: <strong>{{ ungroupedRowCount() }}</strong></p>
+  <p class="story-host__hint">
+    No category yet: <strong>{{ ungroupedRowCount() }}</strong>
+  </p>
 
   <table class="story-host__table grouping-story__table" [ngpTable]="table" ngpTableRowAnimation>
     <thead>
